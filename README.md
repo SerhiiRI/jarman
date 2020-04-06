@@ -30,7 +30,8 @@ FIXME: listing of options this app accepts.
 
 ## License
 
-Copyright © 2020 FIXME
+Copyright © 2020 Serhii Riznychuk, contact: <serhii.riznychuk@gmail.com>, All rights reserved
+Copyright © 2020 Aleksander Sinkowski, contact: <alekses404@gmail.com>, All rights reserved
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at

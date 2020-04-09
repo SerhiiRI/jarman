@@ -1,16 +1,17 @@
-(ns hrtime.database-manager
-  (:gen-class)
-  (:use
-   seesaw.chooser)
+(ns jarman.datamanager
+  ;; (:gen-class)
+  ;; (:use
+  ;;  seesaw.chooser)
   (:require
-   [hrtime.sql-tool :as toolbox :include-macros true :refer :all]
-   [hrtime.dev-tools :refer [image-scale]]
-   [hrtime.config-manager :refer :all]
-   [hrtime.icon-library :as icon]
-   [excel-clj.core :as excel]
+   [jarman.sql-tool :as toolbox :include-macros true :refer :all]
+   ;; [hrtime.dev-tools :refer [image-scale]]
+   ;; [hrtime.config-manager :refer :all]
+   ;; [hrtime.icon-library :as icon]
+   ;; [excel-clj.core :as excel]
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]
-   [clojure.spec.alpha :as spec]))
+   ;; [clojure.spec.alpha :as spec]
+   ))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -19,20 +20,21 @@
 
 ;; (def ^:dynamic sqlite {:classname "org.sqlite.JDBC" :subprotocol "sqlite" :subname "hrtime-test"})
 
-(def config (config-file "database.edn"))
+;; (def config (config-file "database.edn"))
+;; (def ^:dynamic *table-default-header* (config [:View-table-name]))
 
-
-;; (def ^:dynamic sqlite {:classname    (config [:JDBC-sqlite-configuration :classname])
-;;                        :subprotocol  (config [:JDBC-sqlite-configuration :subprotocol])
-;;                        :subname      (config [:JDBC-sqlite-configuration :subname])})
-
-(def ^:dynamic *table-default-header* (config [:View-table-name]))
-
-;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "192.168.1.31" :port 3306 :dbname "db" :user "hrtime" :password "dupa"})
-;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "hrtime-first" :user "root" :password "123"})
-;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "192.168.1.31" :port 3306 :dbname "db" :user "hrtime" :password "dupa"})
-(def ^:dynamic sql-connection (config [:JDBC-mariadb-configuration-database]))
+;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "ekka-test" :user "root" :password "123"})
+;; (def ^:dynamic sql-connection (config [:JDBC-mariadb-configuration-database]))
 ;; (def ^:dynamic db-test {:dbtype "mysql" :dbname "hrtime-test" :user "root" :password "1234"})
+(def *available-mariadb-engine-list* "set of available engines for key-value tables" ["MEMORY", "InnoDB", "CSV"])
+(jdbc/query sql-connection "SHOW ENGINES" )
+(map (comp second first) (jdbc/query sql-connection "SHOW TABLES" ))
+(map #(jdbc/query sql-connection (format "SHOW COLUMNS FROM %s" %1)) ["cache_register" "entrepreneur" "permission" "point_of_sale" "point_of_sale_group" "point_of_sale_group_links" "repair_contract" "seals" "service_contract" "user"])
+
+
+(reduce (fn [acc t] (into acc {t (jdbc/query sql-connection (format "SHOW COLUMNS FROM %s" t))})) {} ["cache_register" "entrepreneur" "permission" "point_of_sale" "point_of_sale_group" "point_of_sale_group_links" "repair_contract" "seals" "service_contract" "user"])
+
+
 
 
 
@@ -78,7 +80,7 @@
 ;;;;;;;;;;;;;;
 ;;; config ;;;
 ;;;;;;;;;;;;;;
-
+(jdbc/query sql-connection "SHOW TABLES")
 (def user
   (create-table :user
                 :columns [{:first_name [:varchar-100 :default :null]}
@@ -93,7 +95,6 @@
                           {:id_user [:bigint-120-unsigned :null]}]
                 :foreign-keys [{:id_user :user} {:delete :null :update :null}]))
 
-
 (def registration
   (create-table :registration
                 :columns [{:datetime [:datetime :default :null]}
@@ -107,15 +108,16 @@
 
 
 
-(defn drop-all-tables []
-  (jdbc/execute! sql-connection (drop-table :registration))
-  (jdbc/execute! sql-connection (drop-table :card))
-  (jdbc/execute! sql-connection (drop-table :user)))
+;; (defn drop-all-tables []
+;;   (jdbc/execute! sql-connection (drop-table :registration))
+;;   (jdbc/execute! sql-connection (drop-table :card))
+;;   (jdbc/execute! sql-connection (drop-table :user)))
 
-(defn create-all-tables []
-  (jdbc/execute! sql-connection user)
-  (jdbc/execute! sql-connection card)
-  (jdbc/execute! sql-connection registration))
+;; (defn create-all-tables []
+;;   (jdbc/execute! sql-connection user)
+;;   (jdbc/execute! sql-connection card)
+;;   (jdbc/execute! sql-connection registration))
+
 ;; (create-all-tables)
 
 ;;; SQL-lite style

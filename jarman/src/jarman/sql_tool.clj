@@ -655,6 +655,10 @@
 (defn show-databases []
   "SHOW DATABASES")
 
+(defn show-table-columns [value]
+  {:pre [(some? value)]}
+  (format "SHOW COLUMNS FROM %s" (name value)))
+
 (defn drop-table [database-table]
   {:pre [(keyword? database-table)]}
   (format "DROP TABLE IF EXISTS `%s`" (name database-table)))

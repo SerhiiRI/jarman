@@ -1,4 +1,5 @@
 (ns jarman.sql-tool
+  (:refer-clojure :exclude [update])
   (:require
    [clojure.string :as string]
    ;; [hrtime.config-manager :refer :all]

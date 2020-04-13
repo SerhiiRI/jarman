@@ -1,9 +1,17 @@
 (ns jarman.schema-builder
+  (:gen-class)
+  (:refer-clojure :exclude [update])
   (:require
    [jarman.sql-tool :as toolbox :include-macros true :refer :all]
    [clojure.tools.cli :refer [parse-opts]]
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]))
+
+;;; DOC ;;;
+;; To run this tool using next cli notation
+;; $ lein lets-scheme -h
+;; $ lein run -m jarman.schema-builder -h
+;; $ java -jar target/uberjar/lets-scheme -h
 
 (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "ekka-test" :user "root" :password "123"})
 (def available-scheme ["service_contract" "seal" "repair_contract" "point_of_sale_group_links" "point_of_sale_group" "cache_register" "point_of_sale" "enterpreneur" "user" "permission" "METADATA"])
@@ -115,7 +123,7 @@
            `(jdbc/execute! sql-connection (drop-table (keyword '~t))))))
 
 (defn create-scheme-one [scheme]
-  (eval `(jdbc/execute! sql-connection ~(symbol (string/join "/" [*ns* (symbol scheme)])))))
+  (eval `(jdbc/execute! sql-connection ~(symbol (string/join "/" ["jarman.schema-builder" (symbol scheme)])))))
 (defn create-scheme []
   (create-tabels METADATA
                  permission
@@ -180,7 +188,7 @@
 
 (defn cli-create-table [cli-opt-m]
   (let [scm (get-in cli-opt-m [:options :create] nil)]
-    (if (and (not= "*" scm) (some? scm))
+    (if (and (not= "all" scm) (some? scm))
       (do (create-scheme-one scm)
           (println (format "[i] Table by scheme %s created successfuly" (name scm))))
       (do (create-scheme)
@@ -188,7 +196,7 @@
 
 (defn cli-delete-table [cli-opt-m]
   (let [scm (get-in cli-opt-m [:options :delete] nil)]
-    (if (and (not= "*" scm) (some? scm))
+    (if (and (not= "all" scm) (some? scm))
       (do (delete-scheme-one scm)
           (println (format "[i] Table %s deleted successufuly" (name scm))))
       (do (delete-scheme)
@@ -196,19 +204,21 @@
 
 (defn cli-scheme-view [cli-opt-m]
   (if-let [scheme (get-in cli-opt-m [:options :view-scheme] nil)]
-    (println (eval `~(symbol (string/join "/" [*ns* (symbol scheme)]))))
+    (println (eval `~(symbol (string/join "/" ["jarman.schema-builder" (name scheme)]))))
+    ;; (println (eval `~(symbol scheme)))
     (println "[!] (cli-scheme-view): internal error" )))
 
+
 (def cli-options
-  [["-c" "--create SCHEME" "Create table from scheme, use <*> for all"
+  [["-c" "--create SCHEME" "Create table from scheme, use <all> for all"
     :parse-fn #(str %)
-    :validate [#(or (= % "*") (scheme-in? %)) "Scheme not found"]]
-   ["-d" "--delete TABLE" "Delete table by name, use <*> for all"
+    :validate [#(or (= % "all") (scheme-in? %)) "Scheme not found"]]
+   ["-d" "--delete TABLE" "Delete table by name, use <all> for all"
     :parse-fn #(str %)
-    :validate [#(or (= % "*") (table-in? %)) "Table not found"]]
-   [nil "--dummy-data TABLE" "Generate dummy data for table, use <*> for all"
+    :validate [#(or (= % "all") (table-in? %)) "Table not found"]]
+   [nil "--dummy-data TABLE" "Generate dummy data for table, use <all> for all"
     :parse-fn #(str %)
-    :validate [#(or (= % "*") (table-in? %)) "Table not found"]]
+    :validate [#(or (= % "all") (table-in? %)) "Table not found"]]
    [nil "--dummy-size SIZE" "Dummy data size"]
    [nil "--view-scheme SCHEME"
     :parse-fn #(str %)
@@ -216,7 +226,7 @@
    [nil  "--list-schemas" "List available table schemas"]
    ["-l" "--list-tables" "List available table"]
    ["-p" "--print TABLE" "Print table"
-    :parse-fn #(do (println "-> " %) (str %))
+    :parse-fn #(str %)
     :validate [#(table-in? %) "Table not found"]]
    [nil "--csv-like" "combine with --print key"]
    ["-h" "--help"]])
@@ -252,5 +262,5 @@
         (= k1 :delete)       (cli-delete-table cli-opt)
         (= k1 :view-scheme)  (cli-scheme-view cli-opt)
         (= k1 :dummy-data)   (println "[!] Excuse me, functionality not implemented")
-        :else (println "[!] please use -h key, for get help")))))
+        :else (print-helpr cli-opt)))))
 

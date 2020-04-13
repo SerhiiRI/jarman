@@ -14,17 +14,17 @@
   (let [col (string/lower-case col-name)]
     (or (= col "id")
         (= (take 2 col) '(\i \d)))))
-
 (defn is-not-id-col? [col-name]
       (not (is-id-col? col-name)))
 
 (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "ekka-test" :user "root" :password "123"})
-
+;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "" :user "root" :password "123"})
 
 (def *available-mariadb-engine-list* "set of available engines for key-value tables" ["MEMORY", "InnoDB", "CSV"])
 
+;;; 
 ;; (jdbc/query sql-connection "SHOW ENGINES" )
-
+;; (jdbc/execute! sql-connection "CREATE DATABASE `ekka-test` CHARACTER SET = 'utf8' COLLATE = 'utf8_general_ci'")
 
 
 (defn valid-to-view-table? [meta-table])
@@ -83,26 +83,60 @@
 (defn ^clojure.lang.PersistentList update-sql-by-id-template
   ([table m]
    (if (:id m)
-     (update table :set m :where (= :id (:id m)))
+     (update table :set (dissoc m :id) :where (= :id (:id m)))
      (insert table :values (vals m)))))
 
 (defn create-meta []
   (for [table (filter is-not-metatable? (map (comp second first) (jdbc/query sql-connection "SHOW TABLES" )))]
     (let [meta (jdbc/query sql-connection (select :METADATA :where (= :table table)))]
       (if (empty? meta)
-        {:table (get-table-meta table)
-         :prop (vec (map get-table-field-meta (filter #(not= "id" (:field %)) (jdbc/query sql-connection (show-table-columns table)))))}
-        (first meta)))))
-
-(first (for [table (filter is-not-metatable? (map (comp second first) (jdbc/query sql-connection "SHOW TABLES" )))]
-   (let [meta (jdbc/query sql-connection (select :METADATA :where (= :table table)))]
-     (if (empty? meta)
-       {:id nil
-        :table (get-table-meta table)
-        :prop (vec (map get-table-field-meta (filter #(not= "id" (:field %)) (jdbc/query sql-connection (show-table-columns table)))))}
-       (first meta)))))
+        (jdbc/execute! sql-connection (update-sql-by-id-template "METADATA"
+                                    {:id nil
+                                     :table table
+                                     :prop (str {:table (get-table-meta table)
+                                                 :columns (vec (map get-table-field-meta
+                                                                    (filter #(not= "id" (:field %))
+                                                                            (jdbc/query sql-connection (show-table-columns table)))))})}))))))
+(create-meta)
 
 
+(defn clear-meta []
+  (for [table (jdbc/query sql-connection (select :METADATA))]
+    (delete :METADATA :where (= :table (get table :table)))))
+
+(let [x (first (doseq [table (filter is-not-metatable? (map (comp second first) (jdbc/query sql-connection "SHOW TABLES" )))]
+                (let [meta (jdbc/query sql-connection (select :METADATA :where (= :table table)))]
+                  (if (empty? meta)
+                    {:id nil
+                     :table table
+                     :prop (str {:table (get-table-meta table)
+                                     :columns (vec (map get-table-field-meta
+                                                        (filter #(not= "id" (:field %))
+                                                                (jdbc/query sql-connection (show-table-columns table)))))})}
+                    (first meta)))))]
+  (jdbc/execute! sql-connection (update-sql-by-id-template "METADATA" x)))
+
+
+
+(let [x {:id nil, :table "cache_register", :prop "{}"}]
+  (jdbc/execute! sql-connection (update-sql-by-id-template "METADATA" x)))
+
+(jdbc/execute! sql-connection "INSERT INTO METADATA VALUES (null, \\\"cache_register\\\", \\\"{:suka \\\"bliat\\\"}\\\")")
+
+
+
+
+
+(insert "cache_register" :values (vals (first (for [table (filter is-not-metatable? (map (comp second first) (jdbc/query sql-connection "SHOW TABLES" )))]
+                                     (let [meta (jdbc/query sql-connection (select :METADATA :where (= :table table)))]
+                                       (if (empty? meta)
+                                         {:id nil
+                                          :table table
+                                          :prop (prn-str {:table (get-table-meta table)
+                                                          :columns (vec (map get-table-field-meta
+                                                                             (filter #(not= "id" (:field %))
+                                                                                     (jdbc/query sql-connection (show-table-columns table)))))})}
+                                         (first meta)))))))
 
 (defn ^clojure.lang.PersistentList update-sql-by-id-template
   ([table m]
@@ -110,10 +144,12 @@
      (update table :set m :where (= :id (:id m)))
      (insert table :values (vals m)))))
 
+
+
+
+(update :bliat :values )
 (jdbc/execute! sql-connection (update-sql-by-id-template "METADATA"
-                                                         {:id nil
-                                                          :table {:representation "cache_register", :private? false, :scallable? true, :linker? false}
-                                                          :prop "[{:field \"id_point_of_sale\", :representation \"id_point_of_sale\", :description nil, :component-type \"l\", :column-type \"bigint(20) unsigned\", :private? false, :editable true} {:field \"name\", :representation \"name\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable true} {:field \"serial_number\", :representation \"serial_number\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable true} {:field \"fiscal_number\", :representation \"fiscal_number\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable true} {:field \"manufacture_date\", :representation \"manufacture_date\", :description nil, :component-type \"d\", :column-type \"date\", :private? false, :editable true} {:field \"first_registration_date\", :representation \"first_registration_date\", :description nil, :component-type \"d\", :column-type \"date\", :private? false, :editable true} {:field \"is_working\", :representation \"is_working\", :description nil, :component-type \"b\", :column-type \"tinyint(1)\", :private? false, :editable true} {:field \"version\", :representation \"version\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable true} {:field \"id_dev\", :representation \"id_dev\", :description nil, :component-type \"l\", :column-type \"varchar(100)\", :private? false, :editable true} {:field \"producer\", :representation \"producer\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable true} {:field \"modem\", :representation \"modem\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable true} {:field \"modem_model\", :representation \"modem_model\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable true} {:field \"modem_serial_number\", :representation \"modem_serial_number\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable true} {:field \"modem_phone_number\", :representation \"modem_phone_number\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable true}]\n"} ))
+                                                          ))
 
 
 (jdbc/execute! sql-connection (update-sql-by-id-template "METADATA"

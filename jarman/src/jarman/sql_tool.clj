@@ -128,9 +128,9 @@
   "
   ([key value table] (str (symbol table) "." (pair-where-pattern key value)))
   ([key value] (format (cond
-                         (string? value) "%s=\"%s\""
-                         (or (boolean? value) (number? value)) "%s=%s"
-                         :else "%s=%s") (symbol key) value)))
+                         (string? value) "`%s`='%s'"
+                         (or (boolean? value) (number? value)) "`%s`=%s"
+                         :else "`%s`=%s") (symbol key) value)))
 
 (defn tkey
   "Function split dot-linked keyword name
@@ -260,7 +260,7 @@
 (defmacro where-procedure-parser [where-clause]
   (cond (nil? where-clause) `(str "null")
         (symbol? where-clause) where-clause
-        (string? where-clause) `(format "\"%s\"" ~where-clause)
+        (string? where-clause) `(format "'%s'" ~where-clause)
         (keyword? where-clause) `(format "`%s`" (str (symbol ~where-clause)))
         (seqable? where-clause) (let [function (first where-clause) args (rest where-clause)]
                                   (condp = function
@@ -354,7 +354,6 @@
                 (str " VALUES " (~into-sql-values ~values))
 
                 :else nil))))
-
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -652,6 +651,9 @@
 (defn create-database [database-name & {:keys [charset collate] :or {charset "utf8" collate "utf8_general_ci"}}]
   {:pre [(string? database-name)]}
   (apply format "CREATE DATABASE `%s` CHARACTER SET = '%s' COLLATE = '%s';" (map string/trim [database-name charset collate]) ))
+
+(defn show-databases []
+  "SHOW TABLES")
 
 (defn show-databases []
   "SHOW DATABASES")

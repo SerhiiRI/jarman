@@ -162,6 +162,7 @@
 (defn -entity-in? [entity-list]
   (fn [t] (some #(= (string/lower-case t) (string/lower-case %)) entity-list)))
 (def scheme-in? (-entity-in? available-scheme))
+(def meta-in?   (-entity-in? (map :table (jdbc/query sql-connection (select :metadata :column ["`table`"])))))
 (def table-in?  (-entity-in? (let [entity-list (jdbc/query sql-connection "SHOW TABLES")]
                                (if (not-empty entity-list) (map (comp second first) entity-list)))))
 
@@ -210,10 +211,22 @@
 
 
 (def cli-options
-  [["-c" "--create SCHEME" "Create table from scheme, use <all> for all"
+  [["-c" "--create SCHEME" "Create table from scheme, use <all> for all. Automatic generate meta for structure(--create-meta)"
     :parse-fn #(str %)
     :validate [#(or (= % "all") (scheme-in? %)) "Scheme not found"]]
    ["-d" "--delete TABLE" "Delete table by name, use <all> for all"
+    :parse-fn #(str %)
+    :validate [#(or (= % "all") (table-in? %)) "Table not found"]]
+   ;; todo
+   [nil "--create-meta TABLE" "Delete table by name, use <all> for all"
+    :parse-fn #(str %)
+    :validate [#(or (= % "all") (table-in? %)) "Table not found"]]
+   ;; todo
+   [nil "--delete-meta TABLE" "Delete table by name, use <all> for all"
+    :parse-fn #(str %)
+    :validate [#(or (= % "all") (table-in? %)) "Table not found"]]
+   ;; todo
+   [nil "--reset-meta TABLE" "Delete and create meta information about table"
     :parse-fn #(str %)
     :validate [#(or (= % "all") (table-in? %)) "Table not found"]]
    [nil "--dummy-data TABLE" "Generate dummy data for table, use <all> for all"
@@ -244,8 +257,21 @@
 ;; (-main "-c" "*")
 ;; (-main "-c" "METADATA")
 ;; (-main "-d" "METADATA")
+(defn usage []
+  (->> ["lets-scheme - jarman CLI tool, which do controlling jarman environment easyest ."
+        ""
+        "Usage: lets-scheme [action]"
+        ""
+        "Actions:"
+        "  data      Start a new server"
+        "  config    Stop an existing server"
+        "  help      View some documentations"
+        ""
+        "Please refer to the manual page for more information."]
+       (string/join \newline)))
 
-(defn -main [& args]
+
+(defn data-cli [& args]
   (let [cli-opt (parse-opts args cli-options)
         opts (get cli-opt :options)
         args (get cli-opt :arguments)
@@ -263,4 +289,17 @@
         (= k1 :view-scheme)  (cli-scheme-view cli-opt)
         (= k1 :dummy-data)   (println "[!] Excuse me, functionality not implemented")
         :else (print-helpr cli-opt)))))
+
+(defn exit [status msg]
+  (println msg)
+  (System/exit status))
+
+(defn -main [& args]
+  (let [[action & rest-arguments] args]
+    (if action
+      (case action
+        "data"     (apply data-cli rest-arguments)
+        "config"   (exit 0 "[!] config action not yet implemented ")
+        "help"     (exit 0 "[!] help action not yet implemented ")))))
+
 

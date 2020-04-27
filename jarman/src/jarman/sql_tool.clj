@@ -1,4 +1,5 @@
 (ns jarman.sql-tool
+  (:refer-clojure :exclude [update])
   (:require
    [clojure.string :as string]
    ;; [hrtime.config-manager :refer :all]
@@ -127,9 +128,9 @@
   "
   ([key value table] (str (symbol table) "." (pair-where-pattern key value)))
   ([key value] (format (cond
-                         (string? value) "%s=\"%s\""
-                         (or (boolean? value) (number? value)) "%s=%s"
-                         :else "%s=%s") (symbol key) value)))
+                         (string? value) "`%s`='%s'"
+                         (or (boolean? value) (number? value)) "`%s`=%s"
+                         :else "`%s`=%s") (symbol key) value)))
 
 (defn tkey
   "Function split dot-linked keyword name
@@ -259,8 +260,8 @@
 (defmacro where-procedure-parser [where-clause]
   (cond (nil? where-clause) `(str "null")
         (symbol? where-clause) where-clause
-        (string? where-clause) `(format "\"%s\"" ~where-clause)
-        (keyword? where-clause) `(str (symbol ~where-clause))
+        (string? where-clause) `(format "'%s'" ~where-clause)
+        (keyword? where-clause) `(format "`%s`" (str (symbol ~where-clause)))
         (seqable? where-clause) (let [function (first where-clause) args (rest where-clause)]
                                   (condp = function
                                     'or `(or-processor ~@args)
@@ -353,7 +354,6 @@
                 (str " VALUES " (~into-sql-values ~values))
 
                 :else nil))))
-
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -653,7 +653,14 @@
   (apply format "CREATE DATABASE `%s` CHARACTER SET = '%s' COLLATE = '%s';" (map string/trim [database-name charset collate]) ))
 
 (defn show-databases []
+  "SHOW TABLES")
+
+(defn show-databases []
   "SHOW DATABASES")
+
+(defn show-table-columns [value]
+  {:pre [(some? value)]}
+  (format "SHOW COLUMNS FROM %s" (name value)))
 
 (defn drop-table [database-table]
   {:pre [(keyword? database-table)]}

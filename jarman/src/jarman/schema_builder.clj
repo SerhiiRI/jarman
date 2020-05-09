@@ -16,7 +16,6 @@
 (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "ekka-test" :user "root" :password "123"})
 (def available-scheme ["service_contract" "seal" "repair_contract" "point_of_sale_group_links" "point_of_sale_group" "cache_register" "point_of_sale" "enterpreneur" "user" "permission" "METADATA"])
 
-
 (def METADATA
   (create-table :METADATA
                 :columns [{:table [:varchar-100 :default :null]}
@@ -58,7 +57,7 @@
 
 (def cache_register
   (create-table :cache_register
-                :columns [ {:id_point_of_sale [:bigint-20 :unsigned :default :null]}
+                :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
                           {:name [:varchar-100 :default :null]}
                           {:serial_number [:varchar-100 :default :null]}
                           {:fiscal_number [:varchar-100 :default :null]}
@@ -162,7 +161,7 @@
 (defn -entity-in? [entity-list]
   (fn [t] (some #(= (string/lower-case t) (string/lower-case %)) entity-list)))
 (def scheme-in? (-entity-in? available-scheme))
-(def meta-in?   (-entity-in? (map :table (jdbc/query sql-connection (select :metadata :column ["`table`"])))))
+(def meta-in?   (-entity-in? (map :table (jdbc/query sql-connection (select :METADATA :column ["`table`"])))))
 (def table-in?  (-entity-in? (let [entity-list (jdbc/query sql-connection "SHOW TABLES")]
                                (if (not-empty entity-list) (map (comp second first) entity-list)))))
 

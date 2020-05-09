@@ -1,3 +1,61 @@
+;; Description:
+;;    Module generate metainformation for database
+;;   tables(but exclude metainformation for table
+;;   defined in `*meta-rules*` variable. All
+;;   metadata must be saving in `METATABLE`
+;;   database table.
+;;
+;;    One metatable entity describes on top level
+;;   table name and serialized properties, for
+;;   example {:id 412 :table "cache" :props "{}"},
+;;   where `:table` describe 1:1 table name,
+;;   and `:props` properties used for building
+;;   UI and db-logic to program.
+;;
+;; Properties `prop` data:
+;;   {:id 1
+;;    :table "cache_register"
+;;    :prop {:table {:representation "cache_register" :private? false :scallable? true :linker? false}
+;;           :columns [{:field "id_point_of_sale"
+;;                      :representation "id_point_of_sale"
+;;                      :description nil
+;;                      :component-type "l"
+;;                      :column-type "bigint(20) unsigned"
+;;                      :private? false
+;;                      :editable? true}
+;;                     {:field "name"
+;;                      :representation "name" ...}...]
+;;
+;;    Deserialized `prop`(look above) contain
+;;   specially meta for whole table behavior and
+;;   some selected column(not for all, in this
+;;   version, only column 'id' hasn't self meta
+;;   info).
+;;
+;;   Short meta description for table:
+;;    :representation - is name of table which was viewed by user. By default it equal to table name. 
+;;    :private? - specify if table hided for user. False by default
+;;    :scallable? - if it false, program not allowe to extending or reducing column count. Only for UI. 
+;;    :linker? - specify table which created to bind other table with has N to N relations to other. this table by default private.
+;;
+;;   Short meta description for columns:
+;;    :field - database column name.
+;;    :representation - name for end-user. By default equal to :field. 
+;;    :description - some description information, used for UI.
+;;    :column-type - database type of column.
+;;    :private? - true if column must be hided for user UI. 
+;;    :editable? - true if column editable
+;;    :component-type - influed by column-type key, contain one of symbol ("d" "t" "dt" "n" "b" "a"
+;;    "i" nil), which describe some hint to representation information by UI:
+;;          "d" - date
+;;          "t" - time
+;;          "dt" - date and time
+;;          "n" - simple number
+;;          "b" - mean boolean type of data
+;;          "a" - big text block
+;;          "i" - short text input
+;;          nil - no hint, but not must be viewed, only not specified. 
+;;                      
 (ns jarman.data
   (:require
    [jarman.sql-tool :as toolbox :include-macros true :refer :all]
@@ -6,8 +64,6 @@
 
 (def *id-collumn-rules* ["id", "id*"])
 (def *meta-rules* ["metatable" "meta*"])
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; RULE FILTRATOR ;;;
@@ -71,7 +127,6 @@
 
 (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "ekka-test" :user "root" :password "123"})
 ;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "" :user "root" :password "123"})
-
 (def *available-mariadb-engine-list* "set of available engines for key-value tables" ["MEMORY", "InnoDB", "CSV"])
 ;; (jdbc/query sql-connection "SHOW ENGINES" )
 ;; (jdbc/execute! sql-connection "CREATE DATABASE `ekka-test` CHARACTER SET = 'utf8' COLLATE = 'utf8_general_ci'")
@@ -135,8 +190,7 @@
      :component-type (get-component-group-by-type column-field-spec)
      :column-type ttype
      :private? false
-     :editable true}))
-
+     :editable? true}))
 
 (defn- get-meta [table-name]
   {:id nil
@@ -156,6 +210,11 @@
   (for [table (not-allowed-rules ["metatable" "meta*"] (map (comp second first) (jdbc/query sql-connection "SHOW TABLES" )))]
     (let [meta (jdbc/query sql-connection (select :METADATA :where (= :table table)))]
       (if (empty? meta) (jdbc/execute! sql-connection (update-sql-by-id-template "METADATA" (get-meta table)))))))
+
+(defn do-clear-meta []
+  (jdbc/execute! sql-connection (delete :METADATA)))
+
+
 
 
 

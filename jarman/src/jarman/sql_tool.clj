@@ -1,35 +1,34 @@
 (ns jarman.sql-tool
-  (:refer-clojure :exclude [update])
+  (:gen-class)
   (:require
    [clojure.string :as string]
-   ;; [hrtime.config-manager :refer :all]
-   ))
+   [jarman.config-manager :refer :all]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; configuration rules ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; (def ^:dynamic *accepted-alter-table-rules* [:add-column :drop-column :drop-foreign-key :add-foreign-key])
+;; (def ^:dynamic *accepted-forkey-rules* [:restrict :cascade :null :no-action :default])
+;; (def ^:dynamic *accepted-ctable-rules* [:columns :foreign-keys :table-config])
+;; (def ^:dynamic *accepted-select-rules* [:column :inner-join :right-join :left-join :outer-left-join :outer-right-join :where :order])
+;; (def ^:dynamic *accepted-update-rules* [:update-table :set :where])
+;; (def ^:dynamic *accepted-insert-rules* [:values :set])
+;; (def ^:dynamic *accepted-delete-rules* [:where])
+;; (def ^:dynamic *where-border* false)
+;; (def ^:dynamic *data-format* "DB date format" "yyyy-MM-dd HH:mm:ss")
 (def ^:dynamic *accepted-alter-table-rules* [:add-column :drop-column :drop-foreign-key :add-foreign-key])
-(def ^:dynamic *accepted-forkey-rules* [:restrict :cascade :null :no-action :default])
-(def ^:dynamic *accepted-ctable-rules* [:columns :foreign-keys :table-config])
-(def ^:dynamic *accepted-select-rules* [:column :inner-join :right-join :left-join :outer-left-join :outer-right-join :where :order])
-(def ^:dynamic *accepted-update-rules* [:update-table :set :where])
-(def ^:dynamic *accepted-insert-rules* [:values :set])
-(def ^:dynamic *accepted-delete-rules* [:where])
-(def ^:dynamic *where-border* false)
-(def ^:dynamic *data-format* "DB date format" "yyyy-MM-dd HH:mm:ss")
+(def ^:dynamic *accepted-forkey-rules*      [:restrict :cascade :null :no-action :default])
+(def ^:dynamic *accepted-ctable-rules*      [:columns :foreign-keys :table-config])
+(def ^:dynamic *accepted-select-rules*      [:top :count :column :inner-join :right-join :left-join :outer-left-join :outer-right-join :where :order :limit])
+(def ^:dynamic *accepted-update-rules*      [:update-table :set :where])
+(def ^:dynamic *accepted-insert-rules*      [:values :set])
+(def ^:dynamic *accepted-delete-rules*      [:from :where])
+(def ^:dynamic *where-border*               false)
 
+(def cfg (config-file "database.edn"))
+(def ^:dynamic *data-format* "DB date format" (cfg [:Data-Configuration :data-format]))
 
-;; (def cfg (config-file "database.edn"))
-;; (def ^:dynamic *accepted-alter-table-rules* (cfg [:SQL-generator :SQL-rules :accepted-alter-table-rules]))
-;; (def ^:dynamic *accepted-forkey-rules*      (cfg [:SQL-generator :SQL-rules :accepted-alter-table-rules]))
-;; (def ^:dynamic *accepted-ctable-rules*      (cfg [:SQL-generator :SQL-rules :accepted-ctable-rules]))
-;; (def ^:dynamic *accepted-select-rules*      (cfg [:SQL-generator :SQL-rules :accepted-select-rules]))
-;; (def ^:dynamic *accepted-update-rules*      (cfg [:SQL-generator :SQL-rules :accepted-update-rules]))
-;; (def ^:dynamic *accepted-insert-rules*      (cfg [:SQL-generator :SQL-rules :accepted-insert-rules]))
-;; (def ^:dynamic *accepted-delete-rules*      (cfg [:SQL-generator :SQL-rules :accepted-delete-rules]))
-;; (def ^:dynamic *where-border*               (cfg [:SQL-generator :where-border]))
-;; (def ^:dynamic *data-format* "DB date format" (cfg [:Data-Configuration :data-format]))
 
 (defn find-rule [operation-name]
   (condp = (last (string/split (name operation-name) #"/"))
@@ -113,6 +112,11 @@
   [^java.lang.String data-string]
   (.parse (java.text.SimpleDateFormat. *data-format*) data-string))
 
+(defn timestamp-to-date
+  "java.sql.timestamp class to date"
+  [^java.sql.Timestamp tstamp] (date-to-obj (.format (java.text.SimpleDateFormat. "YYYY-MM-dd HH:mm:ss") tstamp)))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; String helperts ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -128,9 +132,9 @@
   "
   ([key value table] (str (symbol table) "." (pair-where-pattern key value)))
   ([key value] (format (cond
-                         (string? value) "`%s`='%s'"
-                         (or (boolean? value) (number? value)) "`%s`=%s"
-                         :else "`%s`=%s") (symbol key) value)))
+                         (string? value) "%s=\"%s\""
+                         (or (boolean? value) (number? value)) "%s=%s"
+                         :else "%s=%s") (symbol key) value)))
 
 (defn tkey
   "Function split dot-linked keyword name
@@ -144,6 +148,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Joining preprocessor ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 
 (defn join-keyword-string [main-table joining-table]
   (let [[table join-column] (list (symbol joining-table)
@@ -210,6 +216,31 @@
 (define-joinrule outer-right-join-string)
 (define-joinrule outer-left-join-string)
 
+(defmacro top-string [current-string top-number table-name]
+  `(if (number? ~top-number)(str ~current-string " TOP " ~top-number)
+       (str ~current-string)))
+
+(defmacro count-string
+  "Example of using rule 
+    :count {:distinct :column}
+    :count :*
+    :count :column
+  Result is {:count <number>}"
+  [current-string count-rule table-name]
+  `(cond
+     (keyword? ~count-rule) (str ~current-string (format " COUNT(%s) as count FROM %s" (name ~count-rule) (name ~table-name)))
+     (map?     ~count-rule) (str ~current-string (if (:distinct ~count-rule)
+                                                   (format " COUNT(DISTINCT %s) as count FROM %s" (name (:distinct ~count-rule)) (name ~table-name))))
+     :else (str ~current-string)))
+
+(defmacro limit-string [current-string limit-number table-name]
+  `(cond
+     (number? ~limit-number) (str ~current-string " LIMIT " ~limit-number)
+     (and (not (string? ~limit-number)) (seqable? ~limit-number) (let [[~'f ~'s]~limit-number] (and (number? ~'f) (number? ~'s))))
+     (str ~current-string " LIMIT " (string/join "," ~limit-number))
+     :else (str ~current-string)))
+
+
 (defmacro column-string [current-string col-vec table-name]
   (let [f (fn [c]
            (cond 
@@ -223,6 +254,7 @@
              :else nil))]
     `(str ~current-string " "
           (string/join ", " (map ~f ~col-vec)) " FROM " (name ~table-name))))
+
 
 (defmacro empty-select-string [current-string _ table-name]
   `(str ~current-string " * FROM " (name ~table-name)))
@@ -260,8 +292,8 @@
 (defmacro where-procedure-parser [where-clause]
   (cond (nil? where-clause) `(str "null")
         (symbol? where-clause) where-clause
-        (string? where-clause) `(format "'%s'" ~where-clause)
-        (keyword? where-clause) `(format "`%s`" (str (symbol ~where-clause)))
+        (string? where-clause) `(format "\"%s\"" ~where-clause)
+        (keyword? where-clause) `(str (symbol ~where-clause))
         (seqable? where-clause) (let [function (first where-clause) args (rest where-clause)]
                                   (condp = function
                                     'or `(or-processor ~@args)
@@ -319,7 +351,8 @@
 
 (defmacro set-string [current-string update-map tabel-name]
   `(str ~current-string " "
-        "SET "
+        (symbol ~tabel-name)
+        " SET "
         (string/join ", " (map #(apply pair-where-pattern %)  ~update-map))))
 
 (defmacro update-table-string [current-string map table-name]
@@ -354,6 +387,7 @@
                 (str " VALUES " (~into-sql-values ~values))
 
                 :else nil))))
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -568,9 +602,19 @@
     (reduce #(if-let [k (key-in? %2 keys)] (conj %1 [%2 k]) %1) [] accepted-lexical-rule)))
 
 (defn select-empty-table-pipeline-applier [key-pipeline]
-  (if (some #(= :column (first %1)) key-pipeline)
+  (if (some #(or (= :count (first %1)) (= :column (first %1))) key-pipeline)
     key-pipeline
     (vec (concat [[:column 'empty-select-string]] key-pipeline))))
+ 
+(defn select-table-top-n-pipeline-applier [key-pipeline]
+  (if (some #(= :top (first %1)) key-pipeline)
+    (vec (concat [[:top 'top-string]] (filter #(not= :top (first %1)) key-pipeline)))
+    key-pipeline))
+
+(defn select-table-count-pipeline-applier [key-pipeline]
+  (if (some #(= :count (first %1)) key-pipeline)
+    (vec (concat [[:count 'count-string]] (filter #(not= :count (first %1)) key-pipeline)))
+    key-pipeline))
 
 (defn get-first-macro-from-pipeline [key-pipeline]
   (if (> (count key-pipeline) 0) [(first key-pipeline)] []))
@@ -588,22 +632,33 @@
    `(define-sql-operation ~operation-name ~(string/upper-case (name operation-name)) ~pipeline-function))
   ([operation-name operation-string pipeline-function]
    `(defmacro ~operation-name [~'table-name & {:as ~'args}]
-     (let [list-of-rules# (~pipeline-function (keys ~'args) ~(jarman.sql-tool/find-rule (name operation-name)))]
+     (let [list-of-rules# (~pipeline-function (keys ~'args) ~(hrtime.sql-tool/find-rule (name operation-name)))]
        `(eval (-> ~~operation-string
                   ~@(for [[~'k ~'F] list-of-rules#]
-                      `(~(symbol (str "jarman.sql-tool" "/" ~'F)) ~~'(k args) (name ~~'table-name)))))))))
+                      `(~(symbol (str "hrtime.sql-tool" "/" ~'F)) ~~'(k args) (name ~~'table-name)))))))))
 
 
 (define-sql-operation insert "INSERT INTO" create-rule-pipeline)
 (define-sql-operation delete "DELETE FROM" (comp delete-empty-table-pipeline-applier create-rule-pipeline))
 (define-sql-operation update (comp delete-empty-table-pipeline-applier create-rule-pipeline))
-(define-sql-operation select (comp select-empty-table-pipeline-applier create-rule-pipeline))
+(define-sql-operation select (comp select-table-count-pipeline-applier select-table-top-n-pipeline-applier select-empty-table-pipeline-applier create-rule-pipeline )) 
 (define-sql-operation create-table "CREATE TABLE IF NOT EXISTS" (comp empty-engine-pipeline-applier create-rule-pipeline))
 (define-sql-operation alter-table "ALTER TABLE" (comp get-first-macro-from-pipeline create-rule-pipeline))
 
+  
+(select :user
+        :column [:id]
+        :where (= :id 10)
+        :top 10
+        :limit [10, 10])
+
+(let [limit-number '(1 31)]
+ (and (not (string? limit-number)) (seqable? limit-number) (let [[f s]limit-number] (and (number? f) (number? s)))))
+
+
 (defn- transform-namespace [symbol-op]
   (if (some #(= \/ %) (str symbol-op)) symbol-op
-      (symbol (str "jarman.sql-tool/" symbol-op))))
+      (symbol (str "hrtime.sql-tool/" symbol-op))))
 
 (defn change-expression
   "Replace or change some construction in clojure s-sql
@@ -614,32 +669,52 @@
 
   Example:
   (change-expression '(select :user) :order [:suka :asc])
-  (change-expression '(select :user) :order '[k-to-sort (get-in (deref inc-dec) [k-to-sort])])(-> '(select :user :where (= 1 2))
+  (change-expression '(select :user) :order '[k-to-sort (get-in (deref inc-dec) [k-to-sort])])
+  (-> '(select :user :where (= 1 2))
     (change-to-expression :where '(between :registration (date) (date 1998)))
     (change-to-expression :column [:column :blait])
     (change-to-expression :order [:column :asc]))
   "
-  [sql-expresion rule-name rule-value]
+  [sql-expresion rule-name rule-value & {:keys [where-rule-joiner] :or {where-rule-joiner 'or}}]
   (let [[h & t] sql-expresion
         s-sql-expresion (concat (list (transform-namespace h)) t)]
-    (if (= [] (find-rule (str (first s-sql-expresion))))  s-sql-expresion
+    (if (= [] (find-rule (str (first s-sql-expresion)))) s-sql-expresion
         (let [i (.indexOf s-sql-expresion rule-name)]
           (if (and (< 0 i) (< i (count s-sql-expresion)))
             (let [s-start (take (+ i 1) s-sql-expresion)
-                  block (nth s-sql-expresion (+ i 1))
-                  s-end (drop (+ i 2) s-sql-expresion)]
+                  block   (nth s-sql-expresion (+ i 1))
+                  s-end   (drop (+ i 2) s-sql-expresion)]
               (let [block-to-change (condp = rule-name
                                       :where (if (map? block)
                                                (into block rule-value)
                                                (if (or (= (first block) 'or) (= (first block) 'and))
                                                  (concat block `(~rule-value))
-                                                 (concat (list 'and) (list block) `(~rule-value))))
+                                                 (concat (list where-rule-joiner) (list block) `(~rule-value))))
                                       block)]
                 (concat s-start (list block-to-change) s-end)))
             (concat s-sql-expresion `(~rule-name ~rule-value)))))))
+;; (eval (change-expression '(select :user :where (= 3 4) ) :where '(or (= 1 :a) (= 1 :a))))
+;; (eval (change-expression '(select :user :where (= 3 4) ) :where '(= 1 :a)))
+;; (eval (change-expression '(select :user ) :where '(or (= 1 :a) (= 1 :a))))
 
-
-
+;; (concat block `(~rule-value))
+(defn reduce-sql-expression
+  "
+  Change rules on s-sql-expression
+  (reduce-sql-expression
+      '(select :user :where (= 1 2))
+      '((:where (between :registration (date) (date 1998)))
+        (:column [:column :blait])
+        (:order [:column :asc])))
+  from: (select :user :where (= 1 2)) 
+  to:   (select :user :where (and (= 1 2) (between :registration (date) (date 1998))) :column [:column :blait] :order [:column :asc])
+  "
+  [sql expression-changes & {:keys [where-rule-joiner] :or {where-rule-joiner 'or}}]
+  (reduce (fn [acc [k v]] (change-expression acc k v :where-rule-joiner where-rule-joiner)) sql expression-changes))
+;; (reduce-sql-expression '(select :user) [[:where ['= :a 1]]
+;;                                         [:where ['= :a 4]] 
+;;                                         [:where ['= :a 2]]] :where-rule-joiner 'or)
+;; (eval (reduce-sql-expression '(select :user :where (and (= 1 2) (= 0 1))) [[:where ['or ['= :a 1] ['= :a 4] ['= :a 2]]]]))
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Create database ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -648,24 +723,15 @@
   {:pre [(string? database-name)]}
   (format "DROP DATABASE `%s`;" (string/trim database-name)))
 
+
 (defn create-database [database-name & {:keys [charset collate] :or {charset "utf8" collate "utf8_general_ci"}}]
   {:pre [(string? database-name)]}
   (apply format "CREATE DATABASE `%s` CHARACTER SET = '%s' COLLATE = '%s';" (map string/trim [database-name charset collate]) ))
 
 (defn show-databases []
-  "SHOW TABLES")
-
-(defn show-databases []
   "SHOW DATABASES")
-
-(defn show-table-columns [value]
-  {:pre [(some? value)]}
-  (format "SHOW COLUMNS FROM %s" (name value)))
 
 (defn drop-table [database-table]
   {:pre [(keyword? database-table)]}
   (format "DROP TABLE IF EXISTS `%s`" (name database-table)))
-
-
-
 

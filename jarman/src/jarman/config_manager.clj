@@ -15,7 +15,7 @@
 ;;    (configuration [:blue] "#00A")
 ;; 
 
-(ns hrtime.config-manager
+(ns jarman.config-manager
   (:gen-class)
   (:require [clojure.string :as string]
             [clojure.java.io :as io]))
@@ -49,20 +49,23 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (let [file*configuration-root* (java.io.File. *configuration-path*)]
-  (if-not file*configuration-root*
+  (if-not (.exists file*configuration-root*)
     (.mkdir file*configuration-root*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Helper test functions ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn in? [col x ]
+(defn- in? [col x ]
   (if (and (not (string? col)) (seqable? col))
     (some #(= x %) col)
     (= x col)))
 
 (defn is-supported?
-  "Example:
+  "Description:
+    Test if file is suppoted. Test if file
+    locate in `*supported-config-files*` list.
+  Example:
      (is-supported? \"temp.clj\") ;=> true
      (is-supported? \"temp.Kt1\") ;=> nil"
   [file-name]
@@ -75,15 +78,16 @@
   {:pre (string? file-name)}
   (.isFile (clojure.java.io/file file-name)))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; debug function ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
 (defn file-extension
-  "Example:
-     (is-supported? \"temp.clj\") ;=> true
-     (is-supported? \"temp.Kt1\") ;=> nil"
+  "Description:
+    Get name of file extenshion for preprocessing file
+  Example:
+     (file-extension \"temp.clj\") ;=> \"clojure\"
+     (file-extension \"temp.Kt1\") ;=> \"unsupported extension\" " 
   [file-name]
   {:pre (string? file-name)}
   (if-not (some #(= \. %) (seq file-name)) nil
@@ -123,21 +127,21 @@
         (debug-tree configuration-path 0)
         (println (str "=====================" _tmp_01)))))
 
-(defn config-map "(config-map \"system.clj\")" [^java.lang.String path]
+(defn- config-map "(config-map \"system.clj\")" [^java.lang.String path]
   (read-string (slurp (java.io.File. (clojure.string/join (java.io.File/separator) [*configuration-path* path])))))
 
-(defn create-if-not-exist [^String path]
+(defn- create-if-not-exist [^String path]
   {:pre [((every-pred string? not-empty) path)]}
   (let [p (clojure.string/join (java.io.File/separator) [*configuration-path* path])]
     (if-not (.exists (io/file p))
-      (do (spit p (prn-str {})) p)
-      p)))
+      (do (spit p(prn-str{}))p)p)))
 
-(defn config-file
+(defn getset-lazy
   "Example: 
      ((config-file \"system.clj\") [:blue])"
   [^java.lang.String path]
-  (fn([] (let [configuration (read-string (slurp (java.io.File. (create-if-not-exist path))))]
+  (fn
+    ([] (let [configuration (read-string (slurp (java.io.File. (create-if-not-exist path))))]
           (if (map? configuration)
             configuration nil)))
     ([keyword-config-path] (let [configuration (read-string (slurp (java.io.File. (create-if-not-exist path))))]
@@ -147,5 +151,23 @@
                                    (if (map? configuration)
                                      (spit (create-if-not-exist path)
                                            (prn-str (assoc-in configuration keyword-config-path value))))) value)))
+
+(defn getset
+  "Example:
+     (getset \"i.am\")
+     (getset \"i.am\" [:blue])
+     (getset \"i.am\" [:blue] \"labudabudadidabuda\")"
+  ([^java.lang.String path]
+   (let [configuration (read-string (slurp (java.io.File. (create-if-not-exist path))))]
+     (if (map? configuration) configuration nil)))
+  ([^java.lang.String path keyword-config-path]
+   (let [configuration (read-string (slurp (java.io.File. (create-if-not-exist path))))]
+     (if (map? configuration)
+       (get-in configuration keyword-config-path nil) nil)))
+  ([^java.lang.String path keyword-config-path value]
+   (let [configuration (read-string (slurp (java.io.File. (create-if-not-exist path))))]
+     (if (map? configuration)
+       (spit (create-if-not-exist path)
+             (prn-str (assoc-in configuration keyword-config-path value))))) value))
 
 

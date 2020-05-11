@@ -1,18 +1,16 @@
-(ns hrtime.dev-tools
+(ns jarman.dev-tools
   (:gen-class)
-  (:use clojure.reflect)
+  (:use clojure.reflect
+        jarman.config-manager)
   (:require [clojure.string :as string]
-            [hrtime.config-manager :as cfg]))
+            [jarman.config-manager :as cm]))
 
-
-(def config (cfg/config-file "config-manager.edn"))
-(def ^:dynamic *icon-library* "final library class-path file" "src/hrtime/icon_library.clj")
-(def ^:dynamic *font-library* "final library class-path file" "src/hrtime/font_library.clj")
-(def ^:dynamic *font-path* "font directory"      (config [:font-configuration-attribute :font-path]))
-(def ^:dynamic *icon-path* "pack icon directory" (config [:icon-configuration-attribute :icon-path]))
-(def ^:dynamic *acceptable-icon-file-format* (config [:icon-configuration-attribute :acceptable-file-format]))
-(def ^:dynamic *acceptable-font-file-format* (config [:font-configuration-attribute :acceptable-file-format]))
-
+(def ^:dynamic *icon-library* "final library class-path file" "src/jarman/icon_library.clj")
+(def ^:dynamic *font-library* "final library class-path file" "src/jarman/font_library.clj")
+(def ^:dynamic *font-path* "font directory"      (cm/getset "config-manager.edn" [:font-configuration-attribute :font-path] "resources/fonts/"))
+(def ^:dynamic *icon-path* "pack icon directory" (cm/getset "config-manager.edn" [:icon-configuration-attribute :icon-path] "icons/main"))
+(def ^:dynamic *acceptable-icon-file-format*     (cm/getset "config-manager.edn" [:icon-configuration-attribute :acceptable-file-format] ["png" "img"]))
+(def ^:dynamic *acceptable-font-file-format*     (cm/getset "config-manager.edn" [:font-configuration-attribute :acceptable-file-format] ["ttf"]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; helper function ;;;
@@ -58,7 +56,6 @@
                          (scaler (.getWidth image))
                          (scaler (.getHeight image))
                          java.awt.Image/SCALE_SMOOTH))))))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Icons library generator ;;;

@@ -7,14 +7,30 @@
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]))
 
-;;; DOC ;;;
+;;;-DOC-;;;
 ;; To run this tool using next cli notation
 ;; $ lein lets-scheme -h
 ;; $ lein run -m jarman.schema-builder -h
 ;; $ java -jar target/uberjar/lets-scheme -h
 
-(def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "ekka-test" :user "root" :password "123"})
-(def available-scheme ["service_contract" "seal" "repair_contract" "point_of_sale_group_links" "point_of_sale_group" "cache_register" "point_of_sale" "enterpreneur" "user" "permission" "METADATA"])
+(def ^:dynamic sql-connection {:dbtype "mysql"
+                               :host "127.0.0.1"
+                               :port 3306
+                               :dbname "ekka-test"
+                               :user "root"
+                               :password "123"})
+
+(def available-scheme ["service_contract"
+                       "seal"
+                       "repair_contract"
+                       "point_of_sale_group_links"
+                       "point_of_sale_group"
+                       "cache_register"
+                       "point_of_sale"
+                       "enterpreneur"
+                       "user"
+                       "permission"
+                       "METADATA"])
 
 (def METADATA
   (create-table :METADATA

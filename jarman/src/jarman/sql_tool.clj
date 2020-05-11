@@ -2,7 +2,8 @@
   (:gen-class)
   (:require
    [clojure.string :as string]
-   [jarman.config-manager :refer :all]))
+   ;; [jarman.config-manager :refer :all]
+   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; configuration rules ;;;
@@ -25,9 +26,7 @@
 (def ^:dynamic *accepted-insert-rules*      [:values :set])
 (def ^:dynamic *accepted-delete-rules*      [:from :where])
 (def ^:dynamic *where-border*               false)
-
-(def cfg (config-file "database.edn"))
-(def ^:dynamic *data-format* "DB date format" (cfg [:Data-Configuration :data-format]))
+(def ^:dynamic *data-format* "DB date format" "yyyy-MM-dd HH:mm:ss")
 
 
 (defn find-rule [operation-name]
@@ -632,10 +631,10 @@
    `(define-sql-operation ~operation-name ~(string/upper-case (name operation-name)) ~pipeline-function))
   ([operation-name operation-string pipeline-function]
    `(defmacro ~operation-name [~'table-name & {:as ~'args}]
-     (let [list-of-rules# (~pipeline-function (keys ~'args) ~(hrtime.sql-tool/find-rule (name operation-name)))]
+     (let [list-of-rules# (~pipeline-function (keys ~'args) ~(jarman.sql-tool/find-rule (name operation-name)))]
        `(eval (-> ~~operation-string
                   ~@(for [[~'k ~'F] list-of-rules#]
-                      `(~(symbol (str "hrtime.sql-tool" "/" ~'F)) ~~'(k args) (name ~~'table-name)))))))))
+                      `(~(symbol (str "jarman.sql-tool" "/" ~'F)) ~~'(k args) (name ~~'table-name)))))))))
 
 
 (define-sql-operation insert "INSERT INTO" create-rule-pipeline)
@@ -658,7 +657,7 @@
 
 (defn- transform-namespace [symbol-op]
   (if (some #(= \/ %) (str symbol-op)) symbol-op
-      (symbol (str "hrtime.sql-tool/" symbol-op))))
+      (symbol (str "jarman.sql-tool/" symbol-op))))
 
 (defn change-expression
   "Replace or change some construction in clojure s-sql
@@ -730,6 +729,10 @@
 
 (defn show-databases []
   "SHOW DATABASES")
+
+(defn show-table-columns [value]
+  {:pre [(some? value)]}
+  (format "SHOW COLUMNS FROM %s" (name value)))
 
 (defn drop-table [database-table]
   {:pre [(keyword? database-table)]}

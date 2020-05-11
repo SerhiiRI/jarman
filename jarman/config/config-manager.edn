@@ -1,0 +1,1 @@
+{:font-configuration-attribute {:font-path "resources/fonts/", :acceptable-file-format ["ttf"]}, :icon-configuration-attribute {:icon-path "icons/main", :acceptable-file-format ["png" "img"]}}

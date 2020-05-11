@@ -15,3 +15,5 @@ profiles.clj
 .cpcache/
 .hgignore
 .hg/
+font_library.clj
+icon_library.clj

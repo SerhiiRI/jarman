@@ -4,7 +4,9 @@
    seesaw.dev
    seesaw.core
    seesaw.border
-   seesaw.mig))
+   seesaw.mig)
+  (:require [clojure.string :as string]
+            [jarman.dev-tools]))
 
 ; (defn component
 ;   ([prop state element]
@@ -82,40 +84,95 @@
       (mig btn (btn2 {:foreground \"#c3a\"})  \"Dupa\")
       (mig btn (btn2 {:foreground \"#c3a\"})  \"Dupa\" {:wrap \"wrap 1\"})"
   [& elements]
-  (fn [] (let [elements-list (if (map? (last elements))
-                         (butlast elements)
-                         elements)
-         conf (if (map? (last elements))
-                (last elements)
-                {:wrap ""})]
-     (seesaw.mig/mig-panel
-      :constraints [(get conf :wrap)
-                    "0px[grow, fill]0px"
-                    "0px[grow, fill]0px"]
-      :items (map (fn [item]
-                    (cond
-                      (string? item) [(label :text item)]
-                      (fn? item)     [(item)]
-                      :else          [item]))
-                  elements-list)))))
+  (fn [] (let [confmap {:wrap "" :h "0px[grow, fill]0px" :v "0px[grow, fill]0px"}
+               elements-list (if (map? (last elements))
+                               (butlast elements)
+                               elements)
+               conf (if (map? (last elements))
+                      (merge confmap (last elements) )
+                      confmap)]
+           (seesaw.mig/mig-panel
+            :constraints [(get conf :wrap)
+                          (get conf :h)
+                          (get conf :v)]
+            :items (map (fn [item]
+                          (cond
+                            (string? item) [(label :text item)]
+                            (fn? item)     [(item)]
+                            :else          [item]))
+                        elements-list)))))
 
-; TODO: upgrade is needed for more component type
-(defn component-button
-  ([state]
+(defn builder-panel
+  "Description:
+       Quick panel builder for components builders, builded components and simple text
+       If map is first then create new panel with merge styles
+   Example: 
+       (def vpanel (builder-panel seesaw.core/vertical-panel {})) -> Create vertical panel
+       (def vpanel-dark (vpanel {:background \"333\"})) -> Create vertical panel used another and add new state to old params
+   "
+  [panel state]
+  (fn [& elements]
+    (if (map? (first elements))
+      (builder-panel panel (merge state (first elements)))
+      (let [confmap state
+            elements-list (if (map? (last elements))
+                            (butlast elements)
+                            elements)
+            conf (if (map? (last elements))
+                   (merge confmap (last elements))
+                   confmap)]
+        (apply panel
+               :items (map (fn [item]
+                             (cond
+                               (string? item) (label :text item)
+                               (fn? item)     (item)
+                               :else          item))
+                           elements-list)
+               (vec (mapcat seq conf)))))))
+
+(defn component
+   "Description:
+       Builder for builde builders uses builded builder befor
+   Example: 
+       (def builder-btn (partial component seesaw.core/button)) -> Create button builder
+       (def btn (builder-btn {:text \"\"})) -> Create button builder with state
+       (def btn (builder-btn {:text \"Test\"})) -> Create button builder with used another and add new state to old params
+   "
+  ([kind state]
    (let [state state]
-     (fn ([](apply seesaw.core/button (vec (mapcat seq state))))
-         ([new-state]
-          (if (= state new-state)
-            (apply seesaw.core/button (vec (mapcat seq state)))
-            (component-button (merge state new-state))))))))
+     (fn ([] (apply kind (vec (mapcat seq state))))
+       ([new-state]
+        (if (= state new-state)
+          (apply kind (vec (mapcat seq state)))
+          (component kind (merge state new-state))))))))
 
 
-(def btn (component-button {:text "The button" :foreground "#ff0000" :background "#000000"}))
-; (def btn2 (btn {:text "A gunwo" :foreground "#ffffff" :border (line-border :thickness 2 :color "#2fc")}))
 
-(def debug-frame (seesaw.core/frame
-                  :title "DEBUG WINDOW" :undecorated? false
-                  :minimum-size [400 :by 400]
-                  :content (mig btn (btn2 {:foreground "#c3a"})  "Dupa")))
+(def flow (builder-panel seesaw.core/flow-panel {}))
+(def vpanel (builder-panel seesaw.core/vertical-panel {}))
+(def hpanel (builder-panel seesaw.core/horizontal-panel {}))
 
-(-> (doto debug-frame (.setLocationRelativeTo nil)) pack! show!)
+(def vpanel-dark (vpanel {:background "#333"}))
+(def builder-btn (partial component seesaw.core/button))
+(def builder-txt (partial component seesaw.core/label))
+(def btn (builder-btn {:text ""}))
+(def txt (builder-txt {:text ""}))
+(def ico (txt {:icon (seesaw.icon/icon (clojure.java.io/file "\\jarman\\icons\\1-64x64.png"))
+                       :border (empty-border :thickness 5)
+                       }))
+
+(-> (doto (seesaw.core/frame
+           :title "DEBUG WINDOW" :undecorated? false
+           :minimum-size [400 :by 400]
+           :content ((mig
+                      (vpanel-dark
+                       (ico {:icon (seesaw.icon/icon (clojure.java.io/file "C:\\Aleks\\Github\\jarman\\jarman\\icons\\main\\1-64x64.png"))})
+                       (ico {:icon (seesaw.icon/icon (clojure.java.io/file "C:\\Aleks\\Github\\jarman\\jarman\\icons\\main\\2-64x64.png"))}))
+                      (builder-txt {:border (line-border :left 1 :color "#666")})
+                      (flow (txt {:text "Content" :halign :center}))
+                      {:h "0px[64]0px[1]0px[grow, fill]0px"
+                       :v "0px[grow, fill]0px"}))) 
+      (.setLocationRelativeTo nil)) pack! show!)
+
+
+;; (show-options (seesaw.core/vertical-panel))

@@ -6,7 +6,8 @@
    seesaw.border
    seesaw.mig)
   (:require [clojure.string :as string]
-            [jarman.dev-tools]))
+            [jarman.dev-tools :as dev]
+            [jarman.icon-library :as icons]))
 
 ; (defn component
 ;   ([prop state element]
@@ -84,23 +85,24 @@
       (mig btn (btn2 {:foreground \"#c3a\"})  \"Dupa\")
       (mig btn (btn2 {:foreground \"#c3a\"})  \"Dupa\" {:wrap \"wrap 1\"})"
   [& elements]
-  (fn [] (let [confmap {:wrap "" :h "0px[grow, fill]0px" :v "0px[grow, fill]0px"}
+  (fn [] (let [confmap {:wrap "" :h "0px[grow, fill]0px" :v "0px[grow, fill]0px" :args []}
                elements-list (if (map? (last elements))
                                (butlast elements)
                                elements)
                conf (if (map? (last elements))
                       (merge confmap (last elements) )
                       confmap)]
-           (seesaw.mig/mig-panel
-            :constraints [(get conf :wrap)
-                          (get conf :h)
-                          (get conf :v)]
-            :items (map (fn [item]
-                          (cond
-                            (string? item) [(label :text item)]
-                            (fn? item)     [(item)]
-                            :else          [item]))
-                        elements-list)))))
+           (apply seesaw.mig/mig-panel
+                  :constraints [(get conf :wrap)
+                                (get conf :h)
+                                (get conf :v)]
+                  :items (map (fn [item]
+                                (cond
+                                  (string? item) [(label :text item)]
+                                  (fn? item)     [(item)]
+                                  :else          [item]))
+                              elements-list)
+                  (get conf :args)))))
 
 (defn builder-panel
   "Description:
@@ -161,18 +163,61 @@
                        :border (empty-border :thickness 5)
                        }))
 
+
+(defn state-merge
+  [key state new-state]
+  (merge state (assoc {} key (merge (get state key) new-state))))
+
+;; State component
+(defn incrementer
+  ([state]
+   (let [state state]
+    (fn 
+      ([] (let [state state] 
+            (hpanel 
+             (btn (get state :add))
+             (txt (get state :number))
+             (btn (get state :take))
+          ;;  {:user-data state}
+             )))
+      ([new-state] (let [state (merge state new-state)]
+                     (hpanel
+                      (btn (get state :add))
+                      (txt (get state :number))
+                      (btn (get state :take)))))
+      ([action key] (cond
+                      (= action "get") (if (= key "all")
+                                         state
+                                         (get state key))
+                      ))))))
+
+(def inc
+  (ref (fn [] (let [bones {:add {:text "+"} :take {:text "-"} :number {:text 0}}
+                    component (incrementer (state-merge :add bones {:listen [:mouse-clicked (fn [e] (alert ((deref inc :get :all))))]}))]
+                component))))
+
+(mig inc)
+(deref inc "get" "all")
+
 (-> (doto (seesaw.core/frame
            :title "DEBUG WINDOW" :undecorated? false
            :minimum-size [400 :by 400]
            :content ((mig
                       (vpanel-dark
-                       (ico {:icon (seesaw.icon/icon (clojure.java.io/file "C:\\Aleks\\Github\\jarman\\jarman\\icons\\main\\1-64x64.png"))})
-                       (ico {:icon (seesaw.icon/icon (clojure.java.io/file "C:\\Aleks\\Github\\jarman\\jarman\\icons\\main\\2-64x64.png"))}))
+                      ;;  (ico {:icon (seesaw.icon/icon (clojure.java.io/file "C:\\Aleks\\Github\\jarman\\jarman\\icons\\main\\1-64x64.png"))})
+                       (ico {:icon (dev/image-scale icons/agree-64-png 80)})
+                       (ico {:icon (dev/image-scale icons/alert-64-png 80)}))
                       (builder-txt {:border (line-border :left 1 :color "#666")})
-                      (flow (txt {:text "Content" :halign :center}))
+                      (vpanel
+                       (txt {:text "Content" :halign :center})
+                       ((deref inc))
+                       )
                       {:h "0px[64]0px[1]0px[grow, fill]0px"
                        :v "0px[grow, fill]0px"}))) 
       (.setLocationRelativeTo nil)) pack! show!)
 
 
-;; (show-options (seesaw.core/vertical-panel))
+
+
+
+;; (show-options (seesaw.core/button))

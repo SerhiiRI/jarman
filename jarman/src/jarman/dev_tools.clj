@@ -59,6 +59,8 @@
                          (scaler (.getHeight image))
                          java.awt.Image/SCALE_SMOOTH))))))
 
+(image-scale jarman.icon-library/a-64-png)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Icons library generator ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -102,7 +104,7 @@
 ;; generation icon library
 (refresh-icon-lib)
 
-(defn debug-icon-panel "Funkcja wy¶wietla okienko z czcionkami w swoim formacie." []
+(defn debug-icon-panel "Funkcja wyï¿½wietla okienko z czcionkami w swoim formacie." []
   (let [get-scale-percent (fn [icon-name]
                             (condp = (last (drop-last 1 (string/split icon-name #"-")))
                               "512" 15 "512x512" 15 "512X512" 15
@@ -158,7 +160,7 @@
 
 
 
-(def registrator-fn (prn-str '(defn registrate-local-font "Zarejestruj czcionkê po ¶cie¿cê"
+(def registrator-fn (prn-str '(defn registrate-local-font "Zarejestruj czcionkï¿½ po ï¿½cieï¿½cï¿½"
                                [font-path] (.registerFont (. java.awt.GraphicsEnvironment getLocalGraphicsEnvironment)
                                                            (java.awt.Font/createFont (java.awt.Font/TRUETYPE_FONT)
                                                                                      (clojure.java.io/file font-path))))))
@@ -191,15 +193,15 @@
 ;;; Font debug, tool ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn show-fonts "Funkcja wy¶wietla listê dostêpnych czcionek, ale nie zwraca ich."
+(defn show-fonts "Funkcja wyï¿½wietla listï¿½ dostï¿½pnych czcionek, ale nie zwraca ich."
   [] (map println (.. java.awt.GraphicsEnvironment getLocalGraphicsEnvironment getAvailableFontFamilyNames)))
 
-(defn get-fonts "Funkcja zwraca nazy dostênych czcionek."
+(defn get-fonts "Funkcja zwraca nazy dostï¿½nych czcionek."
   [] (map identity (.. java.awt.GraphicsEnvironment getLocalGraphicsEnvironment getAvailableFontFamilyNames)))
 
 
-(defn debug-font-panel "Funkcja wy¶wietla okienko z czcionkami w swoim formacie."
-  [& {:keys [txt size] :or {txt "Przyk³adowy tekst od Mr. Jarmana" size 16}}]
+(defn debug-font-panel "Funkcja wyï¿½wietla okienko z czcionkami w swoim formacie."
+  [& {:keys [txt size] :or {txt "Przykï¿½adowy tekst od Mr. Jarmana" size 16}}]
   (-> (seesaw.core/frame :content (seesaw.core/scrollable (seesaw.core/vertical-panel :items (map (fn [font] (seesaw.core/grid-panel
                                                                                                              :columns 2
                                                                                                              :items [(seesaw.core/text :text font

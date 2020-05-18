@@ -588,9 +588,9 @@
 
 
 
-;; (def debug-frame (frame :title "DEBUG WINDOW" :undecorated? false 
-;;               :minimum-size [(style :frame_width) :by (style :frame_heigh)] :content (create-tree)))
-;; (-> (doto debug-frame (.setLocationRelativeTo nil)) pack! show!)
+; (def debug-frame (frame :title "DEBUG WINDOW" :undecorated? false 
+;               :minimum-size [(style :frame_width) :by (style :frame_heigh)] :content (create-tree)))
+; (-> (doto debug-frame (.setLocationRelativeTo nil)) pack! show!)
 
 
 

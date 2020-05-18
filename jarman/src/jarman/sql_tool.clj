@@ -292,7 +292,7 @@
   (cond (nil? where-clause) `(str "null")
         (symbol? where-clause) where-clause
         (string? where-clause) `(format "\"%s\"" ~where-clause)
-        (keyword? where-clause) `(str (symbol ~where-clause))
+        (keyword? where-clause) `(format "`%s`" (str (symbol ~where-clause)))
         (seqable? where-clause) (let [function (first where-clause) args (rest where-clause)]
                                   (condp = function
                                     'or `(or-processor ~@args)

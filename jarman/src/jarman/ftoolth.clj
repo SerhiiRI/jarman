@@ -36,10 +36,17 @@
            (let [~'conf (merge ~'conf ~'new-config)]
              (fn [] ~c)))))))
 
-(defelement button
-  conf {:text "DUPA"}
-  (seesaw.core/button :text (conf :text)
-                      :icon nil))
+(def access-button (defelement access-przycisk
+   conf {:text "DUPA" }
+   (seesaw.core/button :text (conf :text)
+                       :icon nil)))
+
+
+
+
+(access-button)
+
+
 
 (defmacro defelement** [& body]
   (let [ps (butlast body)
@@ -55,18 +62,35 @@
                       :icon nil))
 
 
-(mig _m01
- (label  _01_01)
- button-agree
- (label  _02_01)
- (button-agree {:text "Potwierdzam"}))
+(div _m01
+     (div(label  _01_01)
+         button-agree
+         (label  _02_01))
+
+     (button-agree {:text "Potwierdzam"}))
+(button-agree {:text "Potwierdzam"}))
+(button-agree {:text "Potwierdzam"}))
+(button-agree {:text "Potwierdzam"}))
 
 
 
 
+(dnf )
+
+(button :listen [:onClick (fn [x] 123)])
 
 
 
+(defcomponet
+  Prop {fdjsalfj sa}
+  State (ref {})
+  (div _m01
+     (div(label  _01_01)
+         button-agree
+         (label  _02_01))
+ (button-agree {:text "Potwierdzam"})))
 
 
-
+(component1
+ (defcomponent2 fdsalfdsamfalks
+   fdsafas))

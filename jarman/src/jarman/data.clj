@@ -1,4 +1,4 @@
-;; Description:
+ ;; Description:
 ;;    Module generate metainformation for database
 ;;   tables(but exclude metainformation for table
 ;;   defined in `*meta-rules*` variable. All
@@ -62,8 +62,8 @@
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]))
 
-(def *id-collumn-rules* ["id", "id*"])
-(def *meta-rules* ["metatable" "meta*"])
+(def ^:dynamic *id-collumn-rules* ["id", "id*"])
+(def ^:dynamic *meta-rules* ["metatable" "meta*"])
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; RULE FILTRATOR ;;;
@@ -127,7 +127,7 @@
 
 (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "ekka-test" :user "root" :password "123"})
 ;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "" :user "root" :password "123"})
-(def *available-mariadb-engine-list* "set of available engines for key-value tables" ["MEMORY", "InnoDB", "CSV"])
+(def ^:dynamic *available-mariadb-engine-list* "set of available engines for key-value tables" ["MEMORY", "InnoDB", "CSV"])
 ;; (jdbc/query sql-connection "SHOW ENGINES" )
 ;; (jdbc/execute! sql-connection "CREATE DATABASE `ekka-test` CHARACTER SET = 'utf8' COLLATE = 'utf8_general_ci'")
 
@@ -214,8 +214,13 @@
 (defn do-clear-meta []
   (jdbc/execute! sql-connection (delete :METADATA)))
 
-
-
+(defn getset [& tables]
+  (map (fn [meta] (clojure.core/update meta :prop read-string))
+       (jdbc/query sql-connection
+                   (if-not (empty? tables) 
+                     (let [tables (concat ['or] (map (fn [x] ['= :table (name x)]) tables))]
+                       (eval (change-expression '(select :METADATA) :where tables)))
+                     (select :METADATA)))))
 
 
 

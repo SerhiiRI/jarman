@@ -1,6 +1,8 @@
 (ns jarman.dev-tools
   (:gen-class)
   (:use clojure.reflect
+        seesaw.icon
+        seesaw.core
         jarman.config-manager)
   (:require [clojure.string :as string]
             [jarman.config-manager :as cm]))

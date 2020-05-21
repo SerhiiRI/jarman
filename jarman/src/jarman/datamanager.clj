@@ -1,23 +1,16 @@
 (ns jarman.database-manager
   (:gen-class)
   (:use
-   seesaw.chooser
-   hrtime.layout-lib)
+   seesaw.chooser)
   (:require
-   [hrtime.sql-tool :as toolbox :include-macros true :refer :all]
-   [hrtime.dev-tools :refer [image-scale]]
-   [hrtime.config-manager :refer :all]
-   [hrtime.icon-library :as icon]
-   [excel-clj.core :as excel]
+   [jarman.sql-tool :as toolbox :include-macros true :refer :all]
+   [jarman.dev-tools :refer [image-scale]]
+   ;; [jarman.config-manager :refer :all]
+   [jarman.icon-library :as icon]
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]
-   [clojure.spec.alpha :as spec]
    [clojure.java.io :as io]))
 
-
-(let [propr {:a 1}
-      state {}]
-  (mig [[data state]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; DB configurations ;;;
@@ -26,7 +19,13 @@
 (def pagination-size (config [:pagination-size] 150))
 (def table-default-header (ref (config [:View-table-name])))
 ;; (def sql-connection (ref (config [:JDBC-mariadb-configuration-database])))
-(def sql-connection "Database spec" (ref {:dbtype "mysql", :host "localhost", :port 3306, :dbname "hrtime", :user "root", :password "123"}))
+;; (def sql-connection "Database spec" (ref {:dbtype "mysql", :host "localhost", :port 3306, :dbname "hrtime", :user "root", :password "123"}))
+(def sql-connection (ref {:dbtype "mysql"
+                          :host "127.0.0.1"
+                          :port 3306
+                          :dbname "ekka-test"
+                          :user "root"
+                          :password "123"}))
 
 (defn refreshConfig [] 
   (let [conf (config-file "database.edn")]
@@ -549,21 +548,6 @@
           (vector? table-representation) `(defview* ~rec-name ~rec-keys ~(into-view-map table-representation) ~build-in-sql))))
 
 
-;; (defview User [id first_name last_name work_type act section teta_nr]
-;;   :view [[first_name last_name section work_type act card_nr teta_nr]
-;;          (hrtime.sql-tool/select :user
-;;                                  :column [{:user.id :id} :first_name :last_name :section :work_type :act :card_nr :teta_nr]
-;;                                  :left-join {:card.id_user :user.id})])
-;; (defview Card [id rfid card_nr id_user]
-;;   :view [[card_nr teta_nr first_name last_name id_user]
-;;          (hrtime.sql-tool/select :card
-;;                                  :column [{:card.id :id} :card_nr :teta_nr :first_name :last_name]
-;;                                  :left-join :user)])
-;; (defview Registration [id datetime direction id_user id_card]
-;;   :view [[first_name teta_nr id_card section id card_nr datetime last_name id_user direction]
-;;          (hrtime.sql-tool/select :registration
-;;                                  :column [{:registration.id :id} :datetime :direction :card_nr :teta_nr :first_name :last_name :section]
-;;                                  :left-join [:user :card])])
 (defview User [id first_name last_name work_type act section]
   :view [[first_name last_name section work_type act card_nr]
          (hrtime.sql-tool/select :user

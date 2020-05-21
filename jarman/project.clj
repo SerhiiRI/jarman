@@ -21,6 +21,5 @@
 
   :jar-name "jarman.jar"
   :uberjar-name "jarman-standalone.jar"
-  
   :java-source-paths ["src/java-src"]
   :javac-options     ["-Xlint:unchecked"])

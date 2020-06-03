@@ -90,7 +90,7 @@
                                (butlast elements)
                                elements)
                conf (if (map? (last elements))
-                      (merge confmap (last elements) )
+                      (merge confmap (last elements))
                       confmap)]
            (apply seesaw.mig/mig-panel
                   :constraints [(get conf :wrap)
@@ -133,7 +133,7 @@
                (vec (mapcat seq conf)))))))
 
 (defn component
-   "Description:
+  "Description:
        Builder for builde builders uses builded builder befor
    Example: 
        (def builder-btn (partial component seesaw.core/button)) -> Create button builder
@@ -160,8 +160,7 @@
 (def btn (builder-btn {:text ""}))
 (def txt (builder-txt {:text ""}))
 (def ico (txt {:icon (seesaw.icon/icon (clojure.java.io/file "\\jarman\\icons\\1-64x64.png"))
-                       :border (empty-border :thickness 5)
-                       }))
+               :border (empty-border :thickness 5)}))
 
 
 (defn state-merge
@@ -169,35 +168,40 @@
   (merge state (assoc {} key (merge (get state key) new-state))))
 
 ;; State component
-(defn incrementer
-  ([state]
-   (let [state state]
-    (fn 
-      ([] (let [state state] 
-            (hpanel 
-             (btn (get state :add))
-             (txt (get state :number))
-             (btn (get state :take))
-          ;;  {:user-data state}
-             )))
-      ([new-state] (let [state (merge state new-state)]
+(defn increment-btn
+  "Description:
+       Component (function) with button + and - who edit number label
+   "
+  ([state] (let [increment-btn-state state]
+             (fn
+               ([] (let [state state]
                      (hpanel
                       (btn (get state :add))
                       (txt (get state :number))
                       (btn (get state :take)))))
-      ([action key] (cond
-                      (= action "get") (if (= key "all")
-                                         state
-                                         (get state key))
-                      ))))))
+               ([new-state] (let [state (merge state new-state)]
+                              (hpanel
+                               (btn (get state :add))
+                               (txt (get state :number))
+                               (btn (get state :take)))))))))
 
-(def inc
-  (ref (fn [] (let [bones {:add {:text "+"} :take {:text "-"} :number {:text 0}}
-                    component (incrementer (state-merge :add bones {:listen [:mouse-clicked (fn [e] (alert ((deref inc :get :all))))]}))]
-                component))))
+(defn get-element
+  "Description:
+       Get nth child in parent element (created for events)
+   Example: 
+       (get-element e 1) -> get sec element
+   "
+  [event nth_child]
+  (nth (seesaw.util/children (.getParent (seesaw.core/to-widget event))) nth_child))
 
-(mig inc)
-(deref inc "get" "all")
+;; Component inc/dec
+(def inc (fn [] (let [component (increment-btn {:add {:text "+" :listen [:mouse-clicked (fn [e] (config! (get-element e 1) :text (+ (Integer. (config (get-element e 1) :text)) 1)))]}
+                                                :take {:text "-" :listen [:mouse-clicked (fn [e] (config! (get-element e 1) :text (- (Integer. (config (get-element e 1) :text)) 1)))]}
+                                                :number {:text 0}})]
+                             component)))
+
+;; Działający przykład pobrania rodzica
+;; (def test (flow (label :text "Hello" :listen [:mouse-clicked (fn [e] (config! (.getParent (seesaw.core/to-widget e)) :background "#333"))]))) 
 
 (-> (doto (seesaw.core/frame
            :title "DEBUG WINDOW" :undecorated? false
@@ -209,14 +213,11 @@
                        (ico {:icon (dev/image-scale icons/alert-64-png 80)}))
                       (builder-txt {:border (line-border :left 1 :color "#666")})
                       (vpanel
-                       (txt {:text "Content" :halign :center})
-                       ((deref inc))
-                       )
+                       (txt {:text "Inc and Dec" :halign :center})
+                       (inc))
                       {:h "0px[64]0px[1]0px[grow, fill]0px"
-                       :v "0px[grow, fill]0px"}))) 
+                       :v "0px[grow, fill]0px"})))
       (.setLocationRelativeTo nil)) pack! show!)
-
-
 
 
 

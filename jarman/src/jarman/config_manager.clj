@@ -171,3 +171,17 @@
              (prn-str (assoc-in configuration keyword-config-path value))))) value))
 
 
+
+;; (((fn [f] (f f))
+;;   (fn [f]
+;;     (fn [m offset]
+;;       (if (not (map? m))
+;;         (println (str (apply str (repeat offset " ")) m))
+;;         (for [[k v] m]
+;;           (do 
+;;             ((f f) v (inc offset))
+;;             (println (str (apply str (repeat offset "-")) k)))))))) {:a1 {:d {:kurwa "blair"} :b 123}
+;;                                             :a2 {:b {:c 321 :d {:kurwa "blair"}}}} 0)
+
+
+

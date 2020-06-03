@@ -1,9 +1,7 @@
 (ns jarman.dev-tools
   (:gen-class)
   (:use clojure.reflect
-        seesaw.icon
-        seesaw.core
-        jarman.config-manager)
+        seesaw.core)
   (:require [clojure.string :as string]
             [jarman.config-manager :as cm]))
 
@@ -59,8 +57,6 @@
                          (scaler (.getHeight image))
                          java.awt.Image/SCALE_SMOOTH))))))
 
-(image-scale jarman.icon-library/a-64-png)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Icons library generator ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -80,12 +76,12 @@
   Example:
     (refresh-icon-lib) "[]
   (for [icon-file (sort-by #(.getName %) (filter is-icon-supported? (.listFiles (clojure.java.io/file *icon-path*))))]
-    (let [icon (.getName icon-file)
-          [icon-name icon-format] (if-not (some #(= \. %) (seq icon)) [icon nil]
-                                          (let [splited (clojure.string/split icon #"\.")]
+    (let [icon-f (.getName icon-file)
+          [icon-name icon-format] (if-not (some #(= \. %) (seq icon-f)) [icon-f nil]
+                                          (let [splited (clojure.string/split icon-f #"\.")]
                                             [(apply str (butlast splited)) (last splited)]))
           icon-symbol-name (symbol (str icon-name (if icon-format (str "-" icon-format))))
-          icon-symbol-doc  (format "wrapper for icon %s" (str *icon-path* "/" icon))]
+          icon-symbol-doc  (format "wrapper for icon %s" (str *icon-path* "/" icon-f))]
       [icon-symbol-name icon-symbol-doc (str icon-file)])))
 
 (defn refresh-icon-lib
@@ -102,7 +98,7 @@
     (spit *icon-library* "\n;; All icons\n" :append true)
     (spit *icon-library* (prn-str `(def ~(symbol 'all-icon) ~(vec (map first icon-data)))) :append true)))
 ;; generation icon library
-(refresh-icon-lib)
+;; (refresh-icon-lib)
 
 (defn debug-icon-panel "Funkcja wy�wietla okienko z czcionkami w swoim formacie." []
   (let [get-scale-percent (fn [icon-name]
@@ -212,9 +208,5 @@
                                                                                                   (get-fonts)))))
       seesaw.core/pack!
       seesaw.core/show!))
-
-
-
-
 
 

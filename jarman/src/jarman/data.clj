@@ -1,4 +1,4 @@
- ;; Description:
+;; Description:
 ;;    Module generate metainformation for database
 ;;   tables(but exclude metainformation for table
 ;;   defined in `*meta-rules*` variable. All

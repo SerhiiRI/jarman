@@ -1,9 +1,7 @@
 (ns jarman.dev-tools
   (:gen-class)
   (:use clojure.reflect
-        seesaw.icon
-        seesaw.core
-        jarman.config-manager)
+        seesaw.core)
   (:require [clojure.string :as string]
             [jarman.config-manager :as cm]))
 
@@ -59,7 +57,6 @@
                          (scaler (.getHeight image))
                          java.awt.Image/SCALE_SMOOTH))))))
 
-(image-scale jarman.icon-library/a-64-png)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Icons library generator ;;;

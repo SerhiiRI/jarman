@@ -1,4 +1,4 @@
-(defproject jarman "0.1.1"
+(defproject jarman "1.0.4"
   :description "Jarman"
   :license {:name "EPL-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
@@ -6,6 +6,7 @@
                  [org.clojure/tools.cli "1.0.194"]
                  [seesaw "1.5.0"]
                  [org.clojars.mjdowney/excel-clj "1.2.0"]
+                 [com.velisco/clj-ftp "0.3.12"]
                  [org.clojure/java.jdbc "0.7.10"]
                  [mysql/mysql-connector-java "5.1.6"]]
   :main ^:skip-aot jarman.core

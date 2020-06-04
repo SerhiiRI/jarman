@@ -58,12 +58,7 @@
               out (io/output-stream file)]
     (io/copy in out)))
 
-(defn preprocessor [uri]
-  ;; (apply #'and ((juxt is-url? is-url-allowed? is-url-repository?) uri))
-  (every-pred is-url? is-url-allowed? is-url-repository?)
-  (every-pred is-path?))
-(preprocessor (first *repositories*))
-(preprocessor (second *repositories*))
+
 
 ;; (copy "https://file-examples.com/wp-content/uploads/2017/02/file_example_CSV_5000.csv" "suka.csv")
 ;; (copy "suka.csv" "src/sukabliat.bliat")
@@ -153,4 +148,43 @@
 
 ;; (for [[archive program version artifacts] (map #(re-matches #"(\w+-)(\w+\.\w+\.\w+)(.+)" %) (first *repositories*))])
 
+;; (defn define-preprocessors [preproces-from-path & predicates]
+;;   (if-not (empty? predicates)
+;;     (fn [uri]
+;;       (if ((apply every-pred predicates) uri) preproces-from-path))))
 
+
+;; (preprocessor
+;;  (define-preprocessors preproces-from-url is-url? is-url-allowed? is-url-repository?)
+;;  (define-preprocessors preproces-from-path is-path?))
+
+
+;; (defn preprocessor [& def-preproc-coll]
+;;   (fn [& uri]
+;;     (reduce
+;;      (reduce (fn [a p?] (if-let [processor (p? repository-link)]
+;;                           (conj a (processor repository-link)))) [] def-preproc-coll)))
+;;   (for )
+;; (condp
+;;     (every-pred is-url?
+;;                   is-url-allowed?
+;;                   is-url-repository?) preproces-from-url ;; get all packages from URL link
+;;     (every-pred is-path?)           preproces-from-path ;; get all packages from file system path 
+;;     ))
+
+;; (preprocessor (first *repositories*))
+;; (preprocessor (second *repositories*))
+
+(defn preprocessor [url]
+  (cond 
+    ((every-pred is-url?
+                 is-url-allowed?
+                 is-url-repository?)
+     url) (preproces-from-url url) ;; get all packages from URL link
+    ((every-pred is-path?)
+     url) (preproces-from-path url)
+    nil;; get all packages from file system path
+    ))
+
+(defn get-all-packages [repositories]
+  (mapcat preprocessor *repositories*))

@@ -13,17 +13,39 @@
 ;;    (configuration) 
 ;;    (configuration [:blue]) 
 ;;    (configuration [:blue] "#00A")
-;; 
-
 (ns jarman.config-manager
   (:gen-class)
   (:require [clojure.string :as string]
             [clojure.java.io :as io]))
 
+(defn deep-merge
+  "Recursively merges maps"
+  [& maps]
+  (letfn [(m [& xs]
+            (if (every? #(and (map? %) (not (record? %))) xs)
+              (apply merge-with m xs)
+              (last xs)))]
+    (reduce m maps)))
+
+(defn deep-merge-with
+  "Recursively merges maps. Applies function f when we have duplicate keys."
+  [f & maps]
+  (letfn [(m [& xs]
+            (if (every? #(and (map? %) (not (record? %))) xs)
+              (apply merge-with m xs)
+              (apply f xs)))]
+    (reduce m maps)))
+
+(defn merge-configs [& configs]
+  (let [f-configs (map #(io/file %) configs)]
+    (if (every? #(.exists %) f-configs)
+      (apply deep-merge (map (comp read-string slurp) configs)))))
+
 (defn- separator []
   (if (= (java.io.File/separator) "\\") #"\\" #"/"))
-
-(def ^:dynamic *configuration-path* "configuration path directory" "config")
+;; (def ^:dynamic *program-vers* (-> "project.clj" slurp read-string drop 3))
+;; (def ^:dynacmi *project-clj* `~(apply array-map (drop 3 (-> "project.clj" slurp read-string))))
+(def ^:dynamic *configuration-path* "configuration path directory" "config/default")
 (def ^:dynamic *markdown-files* ["md" "markdown"])
 (def ^:dynamic *xml-files*      ["html" "xhtml" "xml"])
 (def ^:dynamic *text-files*     ["txt" "text" "org"])
@@ -172,16 +194,7 @@
 
 
 
-;; (((fn [f] (f f))
-;;   (fn [f]
-;;     (fn [m offset]
-;;       (if (not (map? m))
-;;         (println (str (apply str (repeat offset " ")) m))
-;;         (for [[k v] m]
-;;           (do 
-;;             ((f f) v (inc offset))
-;;             (println (str (apply str (repeat offset "-")) k)))))))) {:a1 {:d {:kurwa "blair"} :b 123}
-;;                                             :a2 {:b {:c 321 :d {:kurwa "blair"}}}} 0)
+
 
 
 

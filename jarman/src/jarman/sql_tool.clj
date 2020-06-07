@@ -1,5 +1,6 @@
 (ns jarman.sql-tool
   (:gen-class)
+  (:refer-clojure :exclude [update])
   (:require
    [clojure.string :as string]
    ;; [jarman.config-manager :refer :all]

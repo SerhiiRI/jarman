@@ -1,135 +1,116 @@
 (ns jarman.poligon
   (:use seesaw.core
-   seesaw.border
-seesaw.mig))
-
-  ( + 2 2)
-  
-  
-(defn builder-panel
-  "Description:
-       Quick panel builder for components builders, builded components and simple text
-       If map is first then create new panel with merge styles
-   Example: 
-       (def vpanel (builder-panel seesaw.core/vertical-panel {})) -> Create vertical panel
-       (def vpanel-dark (vpanel {:background \"333\"})) -> Create vertical panel used another and add new state to old params
-   "
-  [panel state]
-  (fn [& elements]
-    (if (map? (first elements))
-      (builder-panel panel (merge state (first elements)))
-      (let [confmap state
-            elements-list (if (map? (last elements))
-                            (butlast elements)
-                            elements)
-            conf (if (map? (last elements))
-                   (merge confmap (last elements))
-                   confmap)]
-        (apply panel
-               :items (map (fn [item]
-                             (cond
-                               (string? item) (label :text item)
-                               (fn? item)     (item)
-                               :else          item))
-                           elements-list)
-               (vec (mapcat seq conf)))))))
-
-(defn component
-  "Description:
-       Builder for builde builders uses builded builder befor
-   Example: 
-       (def builder-btn (partial component seesaw.core/button)) -> Create button builder
-       (def btn (builder-btn {:text \"\"})) -> Create button builder with state
-       (def btn (builder-btn {:text \"Test\"})) -> Create button builder with used another and add new state to old params
-   "
-  ([kind state]
-   (let [state state]
-     (fn ([] (apply kind (vec (mapcat seq state))))
-       ([new-state]
-        (if (= state new-state)
-          (apply kind (vec (mapcat seq state)))
-          (component kind (merge state new-state))))))))
+        seesaw.border
+        seesaw.dev
+        seesaw.mig
+        jarman.ftoolth
+        jarman.alerts-service))
 
 
-(defn mig
-  "Description:
-      Simple mig container builder.
-      (mig component1 component2-f \"some-text\" {wrap})
-   Example: 
-      (mig btn)
-      (mig btn (btn2 {:foreground \"#c3a\"}))
-      (mig btn (btn2 {:foreground \"#c3a\"})  \"Dupa\")
-      (mig btn (btn2 {:foreground \"#c3a\"})  \"Dupa\" {:wrap \"wrap 1\"})"
-  [& elements]
-  (fn [] (let [confmap {:wrap "" :h "0px[grow, fill]0px" :v "0px[grow, fill]0px" :args []}
-               elements-list (if (map? (last elements))
-                               (butlast elements)
-                               elements)
-               conf (if (map? (last elements))
-                      (merge confmap (last elements))
-                      confmap)]
-           (apply seesaw.mig/mig-panel
-                  :constraints [(get conf :wrap)
-                                (get conf :h)
-                                (get conf :v)]
-                  :items (map (fn [item]
-                                (cond
-                                  (string? item) [(label :text item)]
-                                  (fn? item)     [(item)]
-                                  :else          [item]))
-                              elements-list)
-                  (get conf :args)))))
-
-
-(def flow (builder-panel seesaw.core/flow-panel {}))
-(def vpanel (builder-panel seesaw.core/vertical-panel {}))
-(def hpanel (builder-panel seesaw.core/horizontal-panel {}))
-  
-  (import javax.swing.JDesktopPane)
-  (import javax.swing.JInternalFrame)
-  (import javax.swing.JFrame)
-  (import javax.swing.JButton)
-  (import javax.swing.JLabel)
-  (import java.awt.Color)
-
-  (def IFrame
-    (let [JIF (doto
-               (new JInternalFrame)
-                (.setVisible true)
-                (.setSize 200 100))]
-      (doto (new JDesktopPane)
-        (.add JIF))))
-
-(import javax.swing.JLayeredPane)
+(import javax.swing.JInternalFrame)
 (import javax.swing.BorderFactory)
+(import javax.swing.JDesktopPane)
+(import javax.swing.JLayeredPane)
+(import javax.swing.JButton)
+(import javax.swing.JFrame)
+(import javax.swing.JLabel)
 (import java.awt.Dimension)
+(import java.awt.Component)
+(import java.awt.Point)
+(import java.awt.Color)
 
-(def JLP (fn [] (doto (new JLayeredPane)
-        ;    (.setBackground java.awt.Color/BLACK)
-        ;    (.setBorder (javax.swing.BorderFactory/createTitledBorder "TEXT"))
-           )))
-  
-(def l1 (fn [](label :text "Komunikat 1" :background "#4cc" 
-                     :bounds [0 260 180 50]
-                     )))
-  
-(def l2 (fn [](label :text "Komunikat 2" :background "#2ac" 
-                     :bounds [0 305 200 50]
-                     )))
-  
-(def app (fn [](hpanel (label :text "I co? Działa to to?" :background "#666" :foreground "#000" :border (empty-border :thickness 10)) 
-                       (label :text "Halo hans" :background "#ccc" :foreground "#000" :border (empty-border :thickness 10))
-                       (button :text "Halo hans" :background "#999" :foreground "#000" :border (empty-border :thickness 10))
-                       {:background "#999" 
-                        :bounds [0 0 300 280]
-                        })))
-  
+(defn countHeight
+  "Description:
+       Function get list of children and sums heights
+   Example: 
+       (countHeight list-of-children) => 42.0
+   "
+  [children]
+  (cond 
+    (> (count children) 0) 
+    (+ (+ (reduce (fn [acc chil] (+ acc (.getHeight (.getSize chil)))) 34 children)))
+    :else 0))
+
+;; To correct working with 200px width in one line should be 23 characters and then tag <br>
+(defn message
+  [mess]
+  (let [prepertext mess]
+   (label :text (format "<html>
+                        <style>
+                          p{font-size: 1.05em; 
+                         font-family: \"Monospaced\", serif; 
+                         color: #fff; 
+                         text-align: right; 
+                         background-color: #292929; 
+                         width: 190; 
+                         padding-left: 10px; 
+                         padding-right: 10px;
+                         padding-top: 5px;
+                         padding-bottom: 5px;
+                         }
+                        </style>
+                        <body>
+                          <p>%s
+                        </body>
+                        </html>" prepertext)
+          :border (empty-border :bottom 2)
+          )))
+
+
+(def alerts-panel (vertical-panel :items [(label)]
+                                  :bounds [0 0 200 200]
+                                  :background (new Color 0 0 0 0)))
+
+(def alerts-s (message-server-creator alerts-panel))
+
+(def writer (text :text ""
+                  :bounds [0 0 200 30]))
+
+(def update-messages-panel-size
+  (fn [] (let [width-window  (.getWidth   (.getSize (to-root alerts-panel)))
+               height-window (.getHeight  (.getSize (to-root alerts-panel)))
+               height-panel  (countHeight (seesaw.util/children alerts-panel))]
+          (config! alerts-panel :bounds [(- width-window 200) (- height-window height-panel)
+                                         200 height-panel]))))
+
+(defn update-messages-panel
+  [] (let [old (config alerts-panel :items)] (do
+                                               (config! writer :text "")
+                                               (update-messages-panel-size)
+                                               )))
+
+(def test-btn (button :text "Wyślij"
+                      :listen [:mouse-clicked (fn [e] (do 
+                                                        (alerts-s :set (message (config writer :text)) 3) 
+                                                        (update-messages-panel)))
+                               :mouse-moved (fn [e] (update-messages-panel-size))
+                               ]
+                      :bounds [0 31 200 50]))
+
+(defn app []
+  "Description:
+       Create panel for absolute position elements and add components
+   "
+  (doto (new JLayeredPane)
+    (.add writer (new Integer 1))
+    (.add test-btn (new Integer 1))
+    (.add alerts-panel (new Integer 10))))
+
+;; (app 0)
+
+(do (alerts-s :rmall)
+    (alerts-s :set (message "No more message") 3))
+
+
 (-> (doto (seesaw.core/frame
            :title "DEBUG WINDOW" :undecorated? false
            :minimum-size [600 :by 400]
-           :content  (doto (JLP) 
-                       (.add (app) (new Integer 1))
-                       (.add (l1) (new Integer 2))
-                       (.add (l2) (new Integer 4))))
-           (.setLocationRelativeTo nil) pack! show!))
+           :content (app)
+           :listen [:component-resized (fn [e] (update-messages-panel-size))])
+      (.setLocationRelativeTo nil) pack! show!))
 
+(do (alerts-s :rmall)
+    (alerts-s :set (message "No more message") 3)
+    (update-messages-panel-size))
+
+;; (show-options (text))

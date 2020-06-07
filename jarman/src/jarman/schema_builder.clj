@@ -3,6 +3,7 @@
   (:refer-clojure :exclude [update])
   (:require
    [jarman.sql-tool :as toolbox :include-macros true :refer :all]
+   [jarman.dev-tools :as dt]
    [clojure.tools.cli :refer [parse-opts]]
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]))
@@ -16,9 +17,15 @@
 (def ^:dynamic sql-connection {:dbtype "mysql"
                                :host "127.0.0.1"
                                :port 3306
-                               :dbname "ekka-test"
+                               :dbname "jarman"
                                :user "root"
-                               :password "123"})
+                               :password "1234"})
+;; (def ^:dynamic sql-connection {:dbtype "mysql"
+;;                                :host "192.168.1.69"
+;;                                :port 3306
+;;                                :dbname "jarman"
+;;                                :user "jarman"
+;;                                :password "dupa"})
 
 (def available-scheme ["service_contract"
                        "seal"
@@ -225,7 +232,7 @@
     (println "[!] (cli-scheme-view): internal error" )))
 
 
-(def cli-options
+(def data-cli-options
   [["-c" "--create SCHEME" "Create table from scheme, use <all> for all. Automatic generate meta for structure(--create-meta)"
     :parse-fn #(str %)
     :validate [#(or (= % "all") (scheme-in? %)) "Scheme not found"]]
@@ -272,22 +279,9 @@
 ;; (-main "-c" "*")
 ;; (-main "-c" "METADATA")
 ;; (-main "-d" "METADATA")
-(defn usage []
-  (->> ["lets-scheme - jarman CLI tool, which do controlling jarman environment easyest ."
-        ""
-        "Usage: lets-scheme [action]"
-        ""
-        "Actions:"
-        "  data      Start a new server"
-        "  config    Stop an existing server"
-        "  help      View some documentations"
-        ""
-        "Please refer to the manual page for more information."]
-       (string/join \newline)))
-
 
 (defn data-cli [& args]
-  (let [cli-opt (parse-opts args cli-options)
+  (let [cli-opt (parse-opts args data-cli-options)
         opts (get cli-opt :options)
         args (get cli-opt :arguments)
         o1 (first (seq opts))
@@ -305,16 +299,53 @@
         (= k1 :dummy-data)   (println "[!] Excuse me, functionality not implemented")
         :else (print-helpr cli-opt)))))
 
+(def structure-cli-options
+  [[nil "--refresh-icons" "Regenerate icon assets library"]
+   [nil "--refresh-fonts" "Regenerate font assets library"]
+   ["-h" "--help"]])
+(defn structure-cli [& args]
+  (let [cli-opt (parse-opts args structure-cli-options)
+        opts (get cli-opt :options)
+        args (get cli-opt :arguments)
+        o1 (first (seq opts))
+        k1 (first o1) v1 (second o1)]
+    (if-let [es (get cli-opt :errors)]
+      (doall (for [e es] (println (format "[!] %s" e))))
+      (cond 
+        (= k1 :refresh-icons) (do (dt/refresh-icon-lib) (println (format "[ok] library by path %s was generated" dt/*icon-library*)))
+        (= k1 :refresh-fonts)(do (dt/refresh-font-lib) (println (format "[ok] library by path %s was generated" dt/*font-library*)))
+        (= k1 :help) (print-helpr structure-cli-options)
+        :else (print-helpr cli-opt)))))
+
+
 (defn exit [status msg]
   (println msg)
   (System/exit status))
 
+(defn usage []
+  (->> ["lets-scheme - jarman CLI tool, which do controlling jarman environment easyest ."
+        ""
+        "Usage: lets-scheme [action]"
+        ""
+        "Actions:"
+        "  data      Database and data manager. Use for building or debuging project data structure"
+        "  config    [!] not yet implemented"
+        "  structure Manager of project structure and resources"
+        "  help      Documentation"
+        ""
+        "Please refer to the manual page for more information."]
+       (string/join \newline)))
+
 (defn -main [& args]
-  (let [[action & rest-arguments] args]
-    (if action
-      (case action
-        "data"     (apply data-cli rest-arguments)
-        "config"   (exit 0 "[!] config action not yet implemented ")
-        "help"     (exit 0 "[!] help action not yet implemented ")))))
+  (if (empty? args)
+    (println (usage))
+    (let [[action & rest-arguments] args]
+      (if action
+        (case action
+          "data"     (apply data-cli rest-arguments)
+          "structure"(apply structure-cli rest-arguments)
+          "config"   (exit 0 "[!] config action not yet implemented ")
+          "help"     (println (usage))
+          (println (usage)))))))
 
 

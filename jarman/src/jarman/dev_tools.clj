@@ -3,7 +3,8 @@
   (:use clojure.reflect
         seesaw.core)
   (:require [clojure.string :as string]
-            [jarman.config-manager :as cm]))
+            [jarman.config-manager :as cm]
+            [clojure.java.io :as io]))
 
 (def ^:dynamic *icon-library* "final library class-path file" "src/jarman/icon_library.clj")
 (def ^:dynamic *font-library* "final library class-path file" "src/jarman/font_library.clj")
@@ -183,7 +184,7 @@
                                      (registrate-local-font font))) :append true)))
 
 ;;; refresh font lib
-(refresh-font-lib)
+;; (refresh-font-lib)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Font debug, tool ;;;
@@ -209,4 +210,31 @@
       seesaw.core/pack!
       seesaw.core/show!))
 
+(defn copy [uri file]
+  (with-open [in (io/input-stream uri)
+              out (io/output-stream file)]
+    (io/copy in out)))
+
+(defn unzip [url dir]
+  (let [saveDir (java.io.File. dir)]
+    (with-open [stream (java.util.zip.ZipInputStream. (io/input-stream "tst/kupa.zip"))]
+      (loop [entry (.getNextEntry stream)]
+        (if entry
+          (let [savePath (str dir java.io.File/separatorChar (.getName entry))
+                saveFile (java.io.File. savePath)]
+            (if (.isDirectory entry)
+              (if-not (.exists saveFile)
+                (.mkdirs saveFile))
+              (let [parentDir (java.io.File. (.substring savePath 0 (.lastIndexOf savePath (int java.io.File/separatorChar))))]
+                (if-not (.exists parentDir) (.mkdirs parentDir))
+                (io/copy stream saveFile)))
+            (recur (.getNextEntry stream))))))))
+
+(defn delete-recursively [fname]
+  (let [func (fn [func f]
+               (when (.isDirectory f)
+                 (doseq [f2 (.listFiles f)]
+                   (func func f2)))
+               (io/delete-file f))]
+    (func func (io/file fname))))
 

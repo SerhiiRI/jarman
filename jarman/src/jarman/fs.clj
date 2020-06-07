@@ -15,13 +15,10 @@
   (when-not (exists? from)
     (throw (IllegalArgumentException. (str from " not found"))))
   (if (and (is-edn? from) (= (.getName (file from)) (.getName (file to))))
-    (do (println (format "cp-edn %s %s" from to))
-        (if-let [cfg (cm/merge-configs from to)]
-          (do (print " Merge configs ")
-              (spit to (prn-str cfg)))
-          (io/copy (file from) (file to))))
-    (do (println (format "cp %s %s" from to))
-        (io/copy (file from) (file to))))  to)
+    (if-let [cfg (cm/merge-configs from to)]
+      (spit to (prn-str cfg))
+      (io/copy (file from) (file to)))
+    (io/copy (file from) (file to)))  to)
 
 (defn create-dir [dir]
   (mkdirs dir))
@@ -52,4 +49,24 @@
                from))
         to))))
 
-
+(defn copy-dir-replace
+  "Copy a directory from `from` to `to`. If `to` already exists,
+  recursively do `config-copy` from `from` to `to`"
+  [from to]
+  (when (exists? from)
+    (if (file? to)
+      (throw (IllegalArgumentException. (str to " is a file")))
+      (let [from (file from)
+            to to
+            trim-size (-> from str count inc)
+            dest #(file to (subs (str %) trim-size))]
+        (mkdirs to)
+        (dorun
+         (walk (fn [root dirs files]
+                 (doseq [dir dirs]
+                   (when-not (directory? dir)
+                     (-> root (file dir) dest mkdirs)))
+                 (doseq [f files]
+                   (copy+ (file root f) (dest (file root f)))))
+               from))
+        to))))

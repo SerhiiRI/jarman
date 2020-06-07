@@ -157,7 +157,6 @@
 (defn preproces-from-path[repository]
   (map #(apply ->PandaPackage (conj (re-matches #"(\w+)-(\w+\.\w+\.\w+)[-.]{0,1}(.+)" (.getName %)) (str %))) (path-list-files repository)))
 
-
 (defn get-all-packages [repositories]
   (letfn [(get-pkg [url] (let [ftp?  (every-pred is-url? is-url-allowed? is-url-repository?)
                                path? (every-pred is-path?)] 
@@ -171,27 +170,37 @@
   (let [ftp? (every-pred is-url? is-url-allowed? is-url-repository?)
         path? (every-pred is-path?)] 
    (cond
-     (ftp?  (:uri package)) (ftp-get-file  (:uri package) (:file package))
-     (path? (:uri package)) (path-get-file (:uri package) (:file package))
+     (ftp?  (:uri package)) (ftp-get-file  (:uri package)) 
+     (path? (:uri package)) (path-get-file (:uri package))
      :else nil)))
 
-;; (update-project (max-version (get-all-packages *repositories*)))
+(update-project (max-version (get-all-packages *repositories*)))
 ;; (fs/config-copy-dir "config" "transact/config")
 (defn update-project [^PandaPackage package]
-  (let [unzip-folder ;; (str (gensym "transact"))
-        "transact"
-        unzip-config-folder (string/join java.io.File/separator [unzip-folder "config"])] 
+  (let [unzip-folder (str (gensym "transact"))
+        unzip-config-folder (string/join java.io.File/separator [unzip-folder "config"])]
+    (println (format "[!] Download package from %s" (:uri package)))
     (if (download-package package)
-      (do (print "INSTALL")
+      (do (println (format "[!] Create folder %s" unzip-folder))
           (fs/create-dir unzip-folder)
+
+          (println (format "[!] Unpack to folder %s" unzip-folder))
           (dv/unzip (:file package) unzip-folder)
+
+          (println (format "[!] Merge configurations in %s" unzip-config-folder))
           (fs/config-copy-dir "config" unzip-config-folder)
-          (fs/config-copy-dir "config" unzip-config-folder)
-          ;; (fs/config-copy-dir unzip-folder gfs/*cwd*)
-          )
+
+          (println "[!] Copy transation folder to cenral program")
+          (fs/copy-dir-replace unzip-folder ".")
+
+          (println (format "[!] Delete update-package %s" (:file package)) )
+          (gfs/delete (:file package))
+
+          (println (format "[!] Delete temporary folder %s" unzip-config-folder) )
+          (gfs/delete-dir unzip-folder)))
       ;; (catch java.io.IOException e)
-      )
-    (println unzip-folder unzip-config-folder)))
+      ))
+
 
 
 

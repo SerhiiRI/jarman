@@ -1,3 +1,12 @@
+(ns jarman.update-manager
+  (:require
+   [clojure.string :as string]
+   [clojure.java.io :as io]
+   [jarman.dev-tools :as dv]
+   [jarman.config-manager :as cm]
+   [miner.ftp :as ftp]
+   [me.raynes.fs :as gfs]
+   [jarman.fs :as fs]))
 ;;; Package standart
 ;;;    jarman-0.1.12-windows.zip
 ;;;    `jarman` - program name. (Declare in `*program-name*`)
@@ -35,20 +44,9 @@
 ;;;     
 
 
-
-(ns jarman.update-manager
-  (:require
-   [clojure.string :as string]
-   [clojure.java.io :as io]
-   [jarman.dev-tools :as dv]
-   [jarman.config-manager :as cm]
-   [miner.ftp :as ftp]
-   [me.raynes.fs :as gfs]
-   [jarman.fs :as fs]))
-
 ;; Struktura danych opisująca jeden package
 (defrecord PandaPackage [file name version artifacts uri])
-(def ^:dynamic *repositories* (cm/getset "repository.edn" [:repositories] ["ftp://jarman:bliatdoit@192.168.1.69/"]))
+(def ^:dynamic *repositories* (cm/getset "repository.edn" [:repositories] ["ftp://jarman:bliatdoit@192.168.1.69"]))
 (def ^:dynamic *program-name* "jarman")
 (def ^:dynamic *program-attr* ["zip" "windows.zip"])
 (def ^:dynamic *program-vers* `~(-> "project.clj" slurp read-string (nth 2)))
@@ -90,29 +88,23 @@
     (ftp/client-cd client "jarman")
     (ftp/client-all-names client)))
 
-(defn ftp-get-file [repo-url file-name]
-  (ftp/with-ftp [client repo-url]
-    (ftp/client-cd client "jarman")
-    (try (let [in (ftp/client-get-stream client file-name)
-               out (io/output-stream file-name)]
-           (io/copy in out) file-name)
-         (catch java.io.IOException e))))
-
-
-(defn ftp-directly-get [file-url]
-  ;;"ftp://localhost:8080/jarman/jarman-0.0.1.zip" => jarman/jarman-0...
- (if-let [[url repo-url path-to-file] (re-matches #"(ftp://.+)/.+/{1}(.+)" file-url)]
-   (if (and repo-url path-to-file)
-     (ftp/with-ftp [client repo-url]
-       (let [all (string/split path-to-file #"/")
-             path (butlast all)
-             file-name (last all)]
-         (doall (map #(ftp/client-cd client (string/trim %)) path))
-         (try (let [in (ftp/client-get-stream client file-name)
-                    out (io/output-stream file-name)]
-                (io/copy in out) file-name)
-              (catch java.io.IOException e)))))))
-
+(defn ftp-get-file
+  ;; ([file-url]
+  ;;  (if-let [[url repo-url path-to-file] (re-matches #"(ftp://.+)/.+/{1}(.+)" file-url)]
+  ;;    (ftp-get-file repo-url path-to-file)))
+  ;; ([repo-url file-name]
+  ;;  (ftp/with-ftp [client repo-url]
+  ;;    (ftp/client-cd client "jarman")
+  ;;    (let [in (ftp/client-get-stream client file-name)
+  ;;              out (io/output-stream file-name)]
+  ;;          (io/copy in out) file-name)
+  ;;    ))
+  ([file-url]
+   (if-let [[url repo-url path-to-file] (re-matches #"(ftp://.+)/.+/{1}(.+)" file-url)]
+     (do (copy url path-to-file)
+         path-to-file)))
+  ([repo-url file-name]
+   (do (copy (string/join "/" [repo-url "jarman" file-name]) file-name))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; PATH file manager ;;;
@@ -123,15 +115,17 @@
     (if-not (.exists path) []
             (filter #(.isFile %) (.listFiles path)))))
 
-(defn path-get-file [path file-name]
-  (with-open [in (io/input-stream path)
-              out (io/output-stream file-name)]
-    (io/copy in out)))
-
-(defn path-directly-get [path]
-  (with-open [in (io/input-stream path)
-              out (io/output-stream (.getName (io/file path)))]
-    (io/copy in out)))
+(defn path-get-file
+  ([path]
+   (with-open [in  (io/input-stream path)
+               out (io/output-stream (.getName (io/file path)))]
+     (io/copy in out)
+     (.getName (io/file path))))
+  ([path file-name]
+   (with-open [in (io/input-stream path)
+               out (io/output-stream file-name)]
+     (io/copy in out)
+     file-name)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; package wrappers ;;;
@@ -175,27 +169,30 @@
 
 (defn download-package [^PandaPackage package]
   (let [ftp? (every-pred is-url? is-url-allowed? is-url-repository?)
-       path? (every-pred is-path?)] 
+        path? (every-pred is-path?)] 
    (cond
-     (ftp? (:uri package))  (ftp-directly-get  (:uri package))
-     (path? (:uri package)) (path-directly-get (:uri package))
+     (ftp?  (:uri package)) (ftp-get-file  (:uri package) (:file package))
+     (path? (:uri package)) (path-get-file (:uri package) (:file package))
      :else nil)))
 
-(max-version (get-all-packages *repositories*))
-(update-project #jarman.update_manager.PandaPackage{:file "jarman-1.0.4.zip", :name "jarman", :version "1.0.4", :artifacts "zip", :uri "ftp://jarman:bliatdoit@192.168.1.69//jarman/jarman-1.0.4.zip"})
-
-
+;; (update-project (max-version (get-all-packages *repositories*)))
+;; (fs/config-copy-dir "config" "transact/config")
 (defn update-project [^PandaPackage package]
-  (let [unzip-folder (gensym "transact")
+  (let [unzip-folder ;; (str (gensym "transact"))
+        "transact"
         unzip-config-folder (string/join java.io.File/separator [unzip-folder "config"])] 
     (if (download-package package)
-      (try
-        (do (dv/unzip (:file package) unzip-folder)
-            (fs/config-copy-dir "config" unzip-config-folder)
-            ;; (fs/config-copy-dir unzip-folder gfs/*cwd*)
-            )
-        (catch java.io.IOException e)))
+      (do (print "INSTALL")
+          (fs/create-dir unzip-folder)
+          (dv/unzip (:file package) unzip-folder)
+          (fs/config-copy-dir "config" unzip-config-folder)
+          (fs/config-copy-dir "config" unzip-config-folder)
+          ;; (fs/config-copy-dir unzip-folder gfs/*cwd*)
+          )
+      ;; (catch java.io.IOException e)
+      )
     (println unzip-folder unzip-config-folder)))
+
 
 
 ;; (unzp "ftp://jarman:bliatdoit@192.168.1.69//jarman/jarman-1.0.4.zip" "kupa.zip")

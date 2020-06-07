@@ -14,10 +14,17 @@
   [from to]
   (when-not (exists? from)
     (throw (IllegalArgumentException. (str from " not found"))))
-  (if (is-edn? from)
-    (if-let [cfg (cm/merge-configs from to)]
-      (spit to (prn-str cfg)))
-    (io/copy (file from) (file to)))  to)
+  (if (and (is-edn? from) (= (.getName (file from)) (.getName (file to))))
+    (do (println (format "cp-edn %s %s" from to))
+        (if-let [cfg (cm/merge-configs from to)]
+          (do (print " Merge configs ")
+              (spit to (prn-str cfg)))
+          (io/copy (file from) (file to))))
+    (do (println (format "cp %s %s" from to))
+        (io/copy (file from) (file to))))  to)
+
+(defn create-dir [dir]
+  (mkdirs dir))
 
 (defn config-copy+
   "Copy src to dest, create directories if needed."
@@ -44,4 +51,5 @@
                    (config-copy+ (file root f) (dest (file root f)))))
                from))
         to))))
+
 

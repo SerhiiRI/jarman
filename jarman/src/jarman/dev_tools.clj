@@ -215,9 +215,9 @@
               out (io/output-stream file)]
     (io/copy in out)))
 
-(defn unzip [url dir]
+(defn unzip [file dir]
   (let [saveDir (java.io.File. dir)]
-    (with-open [stream (java.util.zip.ZipInputStream. (io/input-stream "tst/kupa.zip"))]
+    (with-open [stream (java.util.zip.ZipInputStream. (io/input-stream file))]
       (loop [entry (.getNextEntry stream)]
         (if entry
           (let [savePath (str dir java.io.File/separatorChar (.getName entry))
@@ -229,6 +229,21 @@
                 (if-not (.exists parentDir) (.mkdirs parentDir))
                 (io/copy stream saveFile)))
             (recur (.getNextEntry stream))))))))
+
+;; (defn unzip [file dir]
+;;   (let [saveDir (java.io.File. dir)]
+;;     (with-open [stream (java.util.zip.ZipInputStream. (io/input-stream file))]
+;;       (loop [entry (.getNextEntry stream)]
+;;         (if entry
+;;           (let [savePath (str dir java.io.File/separatorChar (.getName entry))
+;;                 saveFile (java.io.File. savePath)]
+;;             (if (.isDirectory entry)
+;;               (if-not (.exists saveFile)
+;;                 (.mkdirs saveFile))
+;;               (let [parentDir (java.io.File. (.substring savePath 0 (.lastIndexOf savePath (int java.io.File/separatorChar))))]
+;;                 (if-not (.exists parentDir) (.mkdirs parentDir))
+;;                 (io/copy stream saveFile)))
+;;             (recur (.getNextEntry stream))))))))
 
 (defn delete-recursively [fname]
   (let [func (fn [func f]

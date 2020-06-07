@@ -17,3 +17,6 @@ profiles.clj
 .hg/
 font_library.clj
 icon_library.clj
+*.zip
+*.log
+*.exe

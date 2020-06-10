@@ -1,4 +1,4 @@
-(defproject jarman "1.0.4"
+(defproject jarman "1.0.0"
   :description "Jarman"
   :license {:name "EPL-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
@@ -14,6 +14,7 @@
   :repl-options {:init-ns hrtime.core}
   :target-path "target/%s"
   :aliases  {"lets-scheme" ["run" "-m" "jarman.schema-builder"]}
+  
   :profiles {;; :uberjar {:aot :all}
              :lets-scheme {:aot [jarman.schema-builder
                                  jarman.sql-tool]
@@ -24,3 +25,6 @@
   :uberjar-name "jarman-standalone.jar"
   :java-source-paths ["src/java-src"]
   :javac-options     ["-Xlint:unchecked"])
+
+
+

@@ -5,7 +5,7 @@
 (defn is-edn?
   "test if file have .edn extention"
   [path]
-  (let [f (if-not (string? path) path (io/file path))]
+  (let [f (if-not (string? path) path (clojure.java.io/file path))]
     (if (and (.isFile f) (.exists f))
       (= (extension path) ".edn"))))
 
@@ -17,8 +17,8 @@
   (if (and (is-edn? from) (= (.getName (file from)) (.getName (file to))))
     (if-let [cfg (cm/merge-configs from to)]
       (spit to (prn-str cfg))
-      (io/copy (file from) (file to)))
-    (io/copy (file from) (file to)))  to)
+      (clojure.java.io/copy (file from) (file to)))
+    (clojure.java.io/copy (file from) (file to)))  to)
 
 (defn create-dir [dir]
   (mkdirs dir))

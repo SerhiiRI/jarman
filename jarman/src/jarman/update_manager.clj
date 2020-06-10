@@ -88,6 +88,10 @@
     (ftp/client-cd client "jarman")
     (ftp/client-all-names client)))
 
+(defn ftp-put-file [ftp-repo-url repo-path file-path]
+  (ftp/with-ftp [client ftp-repo-url]
+    (ftp/client-cd client repo-path)))
+
 (defn ftp-get-file
   ;; ([file-url]
   ;;  (if-let [[url repo-url path-to-file] (re-matches #"(ftp://.+)/.+/{1}(.+)" file-url)]
@@ -174,7 +178,7 @@
      (path? (:uri package)) (path-get-file (:uri package))
      :else nil)))
 
-(update-project (max-version (get-all-packages *repositories*)))
+
 ;; (fs/config-copy-dir "config" "transact/config")
 (defn update-project [^PandaPackage package]
   (let [unzip-folder (str (gensym "transact"))
@@ -202,7 +206,7 @@
       ))
 
 
-
+;; (update-project (max-version (get-all-packages *repositories*)))
 
 ;; (unzp "ftp://jarman:bliatdoit@192.168.1.69//jarman/jarman-1.0.4.zip" "kupa.zip")
 ;; (unzip "tst/kupa.zip" "tst/kkk")

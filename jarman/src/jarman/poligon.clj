@@ -3,7 +3,7 @@
         seesaw.border
         seesaw.dev
         seesaw.mig
-        jarman.ftoolth
+        ;; jarman.ftoolth
         jarman.alerts-service))
 
 
@@ -19,17 +19,6 @@
 (import java.awt.Point)
 (import java.awt.Color)
 
-(defn countHeight
-  "Description:
-       Function get list of children and sums heights
-   Example: 
-       (countHeight list-of-children) => 42.0
-   "
-  [children]
-  (cond 
-    (> (count children) 0) 
-    (+ (+ (reduce (fn [acc chil] (+ acc (.getHeight (.getSize chil)))) 34 children)))
-    :else 0))
 
 ;; To correct working with 200px width in one line should be 23 characters and then tag <br>
 (defn message
@@ -63,43 +52,25 @@
 
 (def alerts-s (message-server-creator alerts-panel))
 
-(def writer (text :text ""
-                  :bounds [0 0 200 30]))
 
-(def update-messages-panel-size
-  (fn [] (let [width-window  (.getWidth   (.getSize (to-root alerts-panel)))
-               height-window (.getHeight  (.getSize (to-root alerts-panel)))
-               height-panel  (countHeight (seesaw.util/children alerts-panel))]
-          (config! alerts-panel :bounds [(- width-window 200) (- height-window height-panel)
-                                         200 height-panel]))))
+(defn writer [] (text :text ""
+                      :bounds [0 0 200 30]
+                      :listen [:action (fn [x] (do
+                                                 (alerts-s :set (message (config x :text)) 3)
+                                                 (config! x :text "")))]))
 
-(defn update-messages-panel
-  [] (let [old (config alerts-panel :items)] (do
-                                               (config! writer :text "")
-                                               (update-messages-panel-size)
-                                               )))
-
-(def test-btn (button :text "Wyślij"
-                      :listen [:mouse-clicked (fn [e] (do 
-                                                        (alerts-s :set (message (config writer :text)) 3) 
-                                                        (update-messages-panel)))
-                               :mouse-moved (fn [e] (update-messages-panel-size))
-                               ]
-                      :bounds [0 31 200 50]))
 
 (defn app []
   "Description:
        Create panel for absolute position elements and add components
    "
   (doto (new JLayeredPane)
-    (.add writer (new Integer 1))
-    (.add test-btn (new Integer 1))
+    (.add (writer) (new Integer 1))
     (.add alerts-panel (new Integer 10))))
 
-;; (app 0)
 
-(do (alerts-s :rmall)
-    (alerts-s :set (message "No more message") 3))
+;; (do (alerts-s :rmall)
+;;     (alerts-s :set (message "No more message") 3))
 
 
 (-> (doto (seesaw.core/frame
@@ -109,8 +80,13 @@
            :listen [:component-resized (fn [e] (update-messages-panel-size))])
       (.setLocationRelativeTo nil) pack! show!))
 
-(do (alerts-s :rmall)
-    (alerts-s :set (message "No more message") 3)
-    (update-messages-panel-size))
+;; (alerts-s :set (message "aaaa") 0)
+;; (alerts-s :set (message "bbbb") 0)
+;; (alerts-s :count)
+;; (alerts-s :rmall)
+
+;; (do (alerts-s :rmall)
+;;     (alerts-s :set (message "No more message") 3)
+;;     (update-messages-panel-size))
 
 ;; (show-options (text))

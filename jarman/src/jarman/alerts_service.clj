@@ -40,8 +40,9 @@
    "
   [component timelife alerts-storage]
   (.start (Thread. (fn [] (let [id (addAlert component timelife alerts-storage)]
-                            (Thread/sleep (* 1000 timelife))
-                            (rmAlert id alerts-storage))))))
+                            (if (> timelife 0) (do
+                                                 (Thread/sleep (* 1000 timelife))
+                                                 (rmAlert id alerts-storage))))))))
 
 
 (defn rmallAlert
@@ -52,7 +53,17 @@
    "
   [alerts-storage] (reset! alerts-storage []))
 
-
+(defn countHeight
+  "Description:
+       Function get list of children and sums heights
+   Example: 
+       (countHeight list-of-children) => 42.0
+   "
+  [children]
+  (cond
+    (> (count children) 0)
+    (+ (+ (reduce (fn [acc chil] (+ acc (.getHeight (.getSize chil)))) 34 children)))
+    :else 0))
 
 (defn message-server-creator
   "Description:
@@ -65,8 +76,17 @@
     (add-watch alerts-storage :refresh
                (fn [key atom old-state new-state]
                  (cond
-                   (> (count @alerts-storage) 0) (config! message-space :items (map (fn [item] (get item :component)) @alerts-storage))
-                   :else (config! message-space :items [(label :text "No more message.")]))))
+                   (> (count @alerts-storage) 0) (do (print "Refresh alerts")
+                                                     (config! message-space :items (map (fn [item] (get item :component)) @alerts-storage))
+                                                     (Thread/sleep 50)
+                                                     (let [v-size (.getSize    (to-root message-space))
+                                                           vw     (.getWidth   v-size)
+                                                           vh     (.getHeight  v-size)
+                                                           hpanel (countHeight (seesaw.util/children message-space))]
+                                                       (config! message-space :bounds [(- vw 200) (- vh hpanel) 200 hpanel])
+                                                       print hpanel))
+                   :else (do (print "No more message")
+                             (config! message-space :items [])))))
    (fn [action & param]
      (cond
        (= action :set) (let [[component timelife] param] (addAlertTimeout component timelife alerts-storage))
@@ -76,7 +96,7 @@
 
 
 ;; Create new message service
-(def alerts (message-server-creator messages))
+;; (def alerts (message-server-creator messages))
 
 ;; Add message
 ;; (alerts :set (label :text "Hello world!") 3)
@@ -90,11 +110,11 @@
 
 
 ;; Show window with messages
-(-> (doto (seesaw.core/frame
-           :title "Messages window" :undecorated? false
-           :minimum-size [600 :by 400]
-           :content messages)
-      (.setLocationRelativeTo nil) pack! show!))
+;; (-> (doto (seesaw.core/frame
+;;            :title "Messages window" :undecorated? false
+;;            :minimum-size [600 :by 400]
+;;            :content messages)
+;;       (.setLocationRelativeTo nil) pack! show!))
 
 
 ;; (defn sleep

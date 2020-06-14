@@ -12,87 +12,95 @@
 (defrecord Alert [id component timelife])
 
 ;; alerts storage for message/alerts service
-(def alerts-storage (ref []))
+;; (def alerts-storage (ref []))
 
-
-(defn addAlert
-  "Description:
-       Add message to alerts-storage and return id of this alert
-   Example: 
-       (addAlert (label :text \"Hello world!\") 3) => {:id 0 :component (label :text \"Hello world!\") :timelife 3}
-   "
-  [component timelife]
-  (let [id (+ (if (= (last @alerts-storage) nil) -1 (:id (last @alerts-storage))) 1)]
-    (dosync (alter alerts-storage #(conj % (Alert.
-                                           id
-                                           component
-                                           timelife))))
-    id))
 
 (defn rmAlert
   "Description:
-       Remove message by id from alerts-storage
+       Remove message by id from storage
    Example: 
-       (rmAlert 0)
+       (rmAlert 0 storage)
    "
-  [id] (dosync (ref-set alerts-storage (vec (filter
-                                             (fn [item] (not (= (get item :id) id)))
-                                             @alerts-storage)))))
+  [id alerts-storage] (swap! alerts-storage #(vec (filter (fn [item] (not (= (get item :id) id))) %))))
 
+(defn addAlert
+  [component timelife alerts-storage]
+  (let [id (+ (if (= (last @alerts-storage) nil) -1 (:id (last @alerts-storage))) 1)]
+    (swap! alerts-storage #(conj % (Alert.
+                                    id
+                                    component
+                                    timelife)))
+    id))
+
+(defn addAlertTimeout
+  "Description:
+       Add message to storage and return id of this alert
+   Example: 
+       (addAlert (label :text \"Hello world!\") 3 storage) => {:id 0 :component (label :text \"Hello world!\") :timelife 3 atorage}
+   "
+  [component timelife alerts-storage]
+  (.start (Thread. (fn [] (let [id (addAlert component timelife alerts-storage)]
+                            (if (> timelife 0) (do
+                                                 (Thread/sleep (* 1000 timelife))
+                                                 (rmAlert id alerts-storage))))))))
 
 
 (defn rmallAlert
   "Description:
-       Remove all message from alerts-storage
+       Remove all message fromstorage
    Example: 
-       (rmallAlert)
+       (rmallAlert storage)
    "
-  [] (dosync (ref-set alerts-storage [])))
+  [alerts-storage] (reset! alerts-storage []))
 
-
+(defn countHeight
+  "Description:
+       Function get list of children and sums heights
+   Example: 
+       (countHeight list-of-children) => 42.0
+   "
+  [children]
+  (cond
+    (> (count children) 0)
+    (+ (+ (reduce (fn [acc chil] (+ acc (.getHeight (.getSize chil)))) 34 children)))
+    :else 0))
 
 (defn message-server-creator
   "Description:
-       Create srevice for message/alerts menagment and display.
-       Create service (def name-of-service (function-for-service-create space-for-alerts-vertical-panel))
-       Storage for message is a ref list with defrecords Alert
+      
    Example: 
-       (def alerts (message-server-creator messages))  =>  create alerts service
-       (alerts :update)                                =>  display to panel message from storage
-       (alerts :set (label :text \"Hello world!\") 3)  =>  add to storage new message 
-       (alerts :rm 0)                                  =>  delete message with id 0
-       (alerts :rmall)                                 =>  remove all message
+       
    "
   [message-space]
-  (fn [action & param]
-    (cond
-      (= action :update) (cond
-                           (> (count @alerts-storage) 0) (config! message-space :items (map (fn [item] (get item :component)) @alerts-storage))
-                           :else (config! message-space :items [(label :text "No more message.")]))
-      (= action :set) (let [[component timelife] param] (do
-                                                          (addAlert component timelife)
-                                                          (config! message-space :items (map (fn [item] (get item :component)) @alerts-storage))
-                                                          ))
-      (= action :rm) (let [[id] param] (do
-                                         (rmAlert id)
-                                         (cond
-                                           (> (count @alerts-storage) 0) (config! message-space :items (map (fn [item] (get item :component)) @alerts-storage))
-                                           :else (config! message-space :items [(label :text "No more message.")]))))
-      (= action :rmall) (let [] (do
-                                  (rmallAlert)
-                                  (config! message-space :items [(label :text "No more message.")])) [])
-      (= action :count) (let [] (count @alerts-storage)))))
+  (let [alerts-storage (atom [])]
+    (add-watch alerts-storage :refresh
+               (fn [key atom old-state new-state]
+                 (cond
+                   (> (count @alerts-storage) 0) (do (print "Refresh alerts")
+                                                     (config! message-space :items (map (fn [item] (get item :component)) @alerts-storage))
+                                                     (Thread/sleep 50)
+                                                     (let [v-size (.getSize    (to-root message-space))
+                                                           vw     (.getWidth   v-size)
+                                                           vh     (.getHeight  v-size)
+                                                           hpanel (countHeight (seesaw.util/children message-space))]
+                                                       (config! message-space :bounds [(- vw 200) (- vh hpanel) 200 hpanel])
+                                                       print hpanel))
+                   :else (do (print "No more message")
+                             (config! message-space :items [])))))
+   (fn [action & param]
+     (cond
+       (= action :set) (let [[component timelife] param] (addAlertTimeout component timelife alerts-storage))
+       (= action :rm) (let [[id] param] (rmAlert id alerts-storage))
+       (= action :rmall) (rmallAlert alerts-storage)
+       (= action :count) (count @alerts-storage)))))
 
 
 ;; Create new message service
 ;; (def alerts (message-server-creator messages))
 
-;; Display messages
-;; (alerts :update)
-
 ;; Add message
 ;; (alerts :set (label :text "Hello world!") 3)
-;; (alerts :set (label :text "I am sexy and I'm know IT!") 3)
+;; (alerts :set (label :text "I am sexy and I'm know IT!") 1)
 ;; (alerts :set (label :text "Niezgadniesz nigdy Spock gdzie otwarli parasol )") 3)
 
 ;; (alerts :count)

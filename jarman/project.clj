@@ -13,7 +13,7 @@
   :main ^:skip-aot jarman.core
   :repl-options {:init-ns hrtime.core}
   :target-path "target/%s"
-  :aliases  {"lets-scheme" ["run" "-m" "jarman.schema-builder"]}
+  :aliases  {"jarman" ["run" "-m" "jarman.jarman-cli"]}
   
   :profiles {;; :uberjar {:aot :all}
              :lets-scheme {:aot [jarman.schema-builder

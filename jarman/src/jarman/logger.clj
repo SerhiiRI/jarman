@@ -12,11 +12,12 @@
                             (apply str (concat (date) string)) string))))))
 
 (defmacro dolog [& body]
-  (let [logf (format "log-%s.log"
+  (if-not (.exists (clojure.java.io/file "logs"))
+    (.mkdir (clojure.java.io/file "logs")))
+  (let [logf (format "logs/log-%s.log"
                      (.format (java.text.SimpleDateFormat. "MM-YYYY")
                               (java.util.Date.)))]
     `(binding [*out* (jarman.logger/LogWriter (clojure.java.io/writer ~logf :append true))]
        ~@body)))
-
 
 

@@ -7,6 +7,7 @@
    [miner.ftp :as ftp]
    [me.raynes.fs :as gfs]
    [jarman.fs :as fs]))
+
 ;;; Package standart
 ;;;    jarman-0.1.12-windows.zip
 ;;;    `jarman` - program name. (Declare in `*program-name*`)
@@ -187,19 +188,14 @@
     (if (download-package package)
       (do (println (format "[!] Create folder %s" unzip-folder))
           (fs/create-dir unzip-folder)
-
           (println (format "[!] Unpack to folder %s" unzip-folder))
           (dv/unzip (:file package) unzip-folder)
-
           (println (format "[!] Merge configurations in %s" unzip-config-folder))
           (fs/config-copy-dir "config" unzip-config-folder)
-
           (println "[!] Copy transation folder to cenral program")
           (fs/copy-dir-replace unzip-folder ".")
-
           (println (format "[!] Delete update-package %s" (:file package)) )
           (gfs/delete (:file package))
-
           (println (format "[!] Delete temporary folder %s" unzip-config-folder) )
           (gfs/delete-dir unzip-folder)))
       ;; (catch java.io.IOException e)

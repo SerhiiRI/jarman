@@ -84,3 +84,25 @@ pub fn install_path_resolver() -> String {
     };
     install_to_folder(".")
 }
+
+
+pub fn make_desktop_icon(exe_path: &path::Path) -> Result<String,String> {
+    if cfg!(windows) {
+        if let Ok(p) = environment::var("USERPROFILE"){
+            let p = path::Path::new(p.as_str()).join("Desktop");
+
+
+            if let (Ok(desktop_path), Ok(exe_path)) = (fs::canonicalize(p), fs::canonicalize(&exe_path)){
+                let target = desktop_path.to_str().unwrap();
+                let link = exe_path.to_str().unwrap();
+                println!("Desktop -> {}", &target);
+                println!("Exe -> {}", &link);
+                std::process::Command::new("cmd")
+                    .args(&["mklink", link, target])
+                    .output().expect("failed to execute process");
+                return Ok(desktop_path.to_str().unwrap().to_string());
+            } else { return Err("Path not exist".to_string())}
+        }
+    }
+    Err("Desktop icon can be create only on windows-based systems".to_owned())
+}

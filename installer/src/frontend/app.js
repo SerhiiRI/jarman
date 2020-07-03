@@ -62,15 +62,18 @@
 //window.onload = function() { rpc.init(); };
 
 function select_one(status){
-    if(status["status"] === "open"){ return "Startup installation"; };
-    if(status["status"] === "progress") { return "Progress " + status["value"]; };
-    if(status["status"] === "end"){ return "Finish installation"; }
-    return "One big nothing";
+    if(status["status"] === "start"){ return "[<span style='color:#5080d9'>info</span>] Startup installation"; };
+    if(status["status"] === "progress") { return "[<span style='color:green'>ok</span>]" + status["value"]; };
+    if(status["status"] === "error") { return "[<span style='color:red'>error</span>]" + status["value"]; };
+    if(status["status"] === "end"){ document.getElementById("menu").innerHTML = "<span style=\"background:#383838; padding:2px; position:fixed; right: 0px;\" onclick=\"window.external.invoke('some');\"><b><span style=\"color: #e32095\"> X </span></b>close</span>" ;
+    return "[<span style='color:#5080d9'>info</span>] finish installation"; }
+    return "[underfinied stage: " + status["status"] + "]";
 }
+
 
 function render(status){
   var app = document.getElementById("app");
   var sss = select_one(status);
-  app.innerHTML = app.outerHTML + ("<span style='color:green'>&gt;</span> " + sss + "<br/>");
+  app.innerHTML = app.outerHTML + sss + "<br/>";
   app.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }

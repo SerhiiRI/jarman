@@ -13,14 +13,17 @@ use serde_derive;
 use serde_json;
 use web_view::*;
 use crate::tools::files::make_desktop_icon;
+use std::process::exit;
+use crate::tools::package::PandaPackage;
+use std::borrow::Borrow;
 
 
 fn main() {
 
-    // // * * *
-    // // START
-    // // * * *
-    //
+    // * * *
+    // START
+    // * * *
+
     // let all_packages:Vec<package::PandaPackage> = package::FTP::ftp_get_all_packages(&["trashpanda-team.ddns.net:21"]);
     // println!("packages count {:?} ", all_packages.len());
     //
@@ -39,11 +42,11 @@ fn main() {
     // println!("Package was downloaded");
     //
     // // unzip
-    // unziper::unzip(&candidate.file.unwrap());
+    // unziper::unzip(&candidate.clone().file.unwrap());
     // fs::remove_file(std::path::Path::new(&candidate.file.unwrap()));
     //
     // // create desktop icon
-    // println!("{:?}", make_desktop_icon(std::path::Path::new("hrtime.exe")));
+    // println!("{:?}", make_desktop_icon(std::path::Path::new("hrtime.exe")).unwrap());
     //
     // // finish
     // println!("Finish instalation");
@@ -59,7 +62,7 @@ fn main() {
             {styles}
         </head>
         <body>
-            <div id="app"><span onClick="window.external.invoke()"><b><span style="color: red"> X </span></b>close</span> | Loading...</div>
+            <div id="app"><div id="menu"></div> Loading...</div>
         </body>
         <!--[if gte IE 9 | !IE ]> <!-->
 		{scripts}
@@ -70,12 +73,15 @@ fn main() {
     let mut wv = web_view::builder()
         .title("Setup")
         .content(Content::Html(HTML))
-        .size(100,200)
+        .size(500,350)
         .resizable(false)
+        // .frameless(true)
         .debug(true)
         .user_data(Status::Start)
         .invoke_handler(|w, a| {
+            println!("onclick");
             w.exit();
+            // exit(1);
             Ok(())
         })
         .build()
@@ -84,18 +90,65 @@ fn main() {
     let handle = wv.handle();
 
     std::thread::spawn(move || {
-        for i in 0..11 {
-            std::thread::sleep(std::time::Duration::from_millis(500));
-            handle.dispatch(move |_web_view| {
-                render(_web_view, Status::Progress { value: (format!("{}", i * 10)) }).unwrap();
-                Ok(())
-            }).unwrap();
+        // for i in 0..11 {
+        //     std::thread::sleep(std::time::Duration::from_millis(500));
+        //     handle.dispatch(move |_web_view| {
+        //         render(_web_view, Status::Progress { value: (format!("{}", i * 10)) }).unwrap();
+        //         Ok(())
+        //     }).unwrap();
+        // };
+        // std::thread::sleep(std::time::Duration::from_millis(500));
+        // handle.dispatch(|_web_view| {
+        //     render(_web_view, Status::End).unwrap();
+        //     Ok(())
+        // }).unwrap();
+        // * * *
+        // START
+        // * * *
+        handle.dispatch(|w| {render(w, Status::Start).unwrap(); Ok(())}).unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(300));
+
+        let repository_list = ["trashpanda-team.ddns.net:21"];
+        handle.dispatch(move |w| {render(w, Status::Progress {value: (format!("searching packages in repo {:?}",repository_list).to_string())})});
+        let all_packages:Vec<package::PandaPackage> = package::FTP::ftp_get_all_packages(&repository_list);
+        let package_length = all_packages.len();
+        match  package_length {
+            0 => {
+                handle.dispatch(|w| {render(w, Status::Error {value: "Not ethernet connection or repository is empty".to_string()})});
+                handle.dispatch(|w| { render (w, Status::End)});
+            }
+            _ => {
+                handle.dispatch(move|w| {render(w, Status::Progress {value: format!("found {} compatible package  ", package_length)})});
+                let candidate:package::PandaPackage = package::version_resolver(&all_packages.as_slice()).unwrap();
+                let _TMP01 = candidate.file.clone();
+                handle.dispatch(move |w| {render(w, Status::Progress {value: format!("automatically select best candidate: {:?}", _TMP01.unwrap())})});
+
+                let installation_folder = files::install_path_resolver();
+                let s = installation_folder.to_string();
+                handle.dispatch(move |w| { render (w, Status::Progress {value : format!("installation folder {}", s)})});
+                environment::set_current_dir(&installation_folder.as_str());
+
+                // download
+                handle.dispatch(move |w| { render (w, Status::Progress {value : format!("downloading package...").to_string()})});
+                package::FTP::ftp_download_package(candidate.clone()).unwrap();
+                handle.dispatch(move |w| { render (w, Status::Progress {value : format!("package was downloaded").to_string()})});
+
+                // unzip
+                handle.dispatch(move |w| { render (w, Status::Progress {value : format!("extraction package").to_string()})});
+                unziper::unzip(&candidate.clone().file.unwrap());
+                fs::remove_file(std::path::Path::new(&candidate.file.unwrap()));
+
+                // create desktop icon
+                handle.dispatch(|w| { render (w, Status::Progress {value : format!("creating desktop shortuct")})});
+                make_desktop_icon(std::path::Path::new("hrtime.exe")).unwrap();
+
+                // finish
+                handle.dispatch(|w| { render (w, Status::End)});
+
+            }
+
         };
-        std::thread::sleep(std::time::Duration::from_millis(500));
-        handle.dispatch(|_web_view| {
-            render(_web_view, Status::End).unwrap();
-            Ok(())
-        }).unwrap();
+
     });
 
     wv.run().unwrap();
@@ -107,6 +160,7 @@ fn main() {
 pub enum Status {
     Start,
     Progress {value: String},
+    Error{value: String},
     End,
 }
 

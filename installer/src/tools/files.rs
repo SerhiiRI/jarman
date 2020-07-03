@@ -64,7 +64,7 @@ pub fn install_path_resolver() -> String {
             folder_path.push_str(PROGRAM);
         }
         let installation_folder= folder_path.as_str();
-        fs::create_dir_all(path::Path::new(installation_folder));
+        fs::create_dir_all(path::Path::new(installation_folder)).unwrap();
         println!("Program will be installed to {} folder",installation_folder);
         installation_folder.to_string()
     };
@@ -73,6 +73,7 @@ pub fn install_path_resolver() -> String {
         if let Ok(s) = environment::var("PROGRAMFILES") {
             return install_to_folder(s.as_str());
         } else {
+
             if path::Path::new(r"C:\Program Files").exists() {
                 return install_to_folder("C:\\Program Files");
             } else {
@@ -86,23 +87,47 @@ pub fn install_path_resolver() -> String {
 }
 
 
+
+fn absolute_path<P>(path: P) -> std::io::Result<path::PathBuf> where P: AsRef<path::Path>{
+    let path = path.as_ref();
+    let absolute_path = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        environment::current_dir()?.join(path)
+    };
+    Ok(absolute_path)
+}
+
 pub fn make_desktop_icon(exe_path: &path::Path) -> Result<String,String> {
     if cfg!(windows) {
-        if let Ok(p) = environment::var("USERPROFILE"){
-            let p = path::Path::new(p.as_str()).join("Desktop");
-
-
-            if let (Ok(desktop_path), Ok(exe_path)) = (fs::canonicalize(p), fs::canonicalize(&exe_path)){
-                let target = desktop_path.to_str().unwrap();
-                let link = exe_path.to_str().unwrap();
-                println!("Desktop -> {}", &target);
-                println!("Exe -> {}", &link);
-                std::process::Command::new("cmd")
-                    .args(&["mklink", link, target])
-                    .output().expect("failed to execute process");
-                return Ok(desktop_path.to_str().unwrap().to_string());
-            } else { return Err("Path not exist".to_string())}
-        }
+        use powershell_script;
+        if let Ok(p) = environment::var("USERPROFILE") {
+            let p = path::Path::new(p.as_str()).join("Desktop").join("hrtime.lnk");
+            let link = p.to_str().unwrap();
+            let _temporary = absolute_path(&exe_path).unwrap().to_owned();
+            let exe = _temporary.to_str().unwrap();
+            println!("Desktop -> {}", &link);
+            println!("Exe -> {}", &exe);
+            let create_shortcut_ps1 = format!(
+                r#"
+                $SourceFileLocation="{executable}"
+                $ShortcutLocation="{desctop_link}"
+                $WScriptShell=New-Object -ComObject WScript.Shell
+                $Shortcut=$WScriptShell.CreateShortcut($ShortcutLocation)
+                $Shortcut.TargetPath=$SourceFileLocation
+                $Shortcut.Save()"#, executable=&exe, desctop_link=&link);
+            match powershell_script::run(&create_shortcut_ps1.as_str(), true) {
+                Ok(output) => {
+                    println!("{}", output.to_string());
+                    return Ok("created".to_string())
+                }
+                Err(e) => {
+                    println!("{}", e.to_string());
+                    return Err("fail".to_string())
+                }
+            }
+            return Ok("".to_string())
+        } else { return Err("Path not exist".to_string()) }
     }
     Err("Desktop icon can be create only on windows-based systems".to_owned())
 }

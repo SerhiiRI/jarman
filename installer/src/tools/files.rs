@@ -2,9 +2,33 @@ use std::fs;
 use std::path;
 use std::env as environment;
 use std::io::{BufWriter, Write, Read, ErrorKind};
-use std::fs::remove_file;
+use std::path::Path;
 
 const PROGRAM:&str = "Jarman";
+
+pub fn write_static_file<U: AsRef<path::Path>>(FILE: &'static [u8], destination_path: U) -> std::io::Result<()> {
+    let mut buffer = fs::File::create(destination_path)?;
+    let mut pos = 0;
+    while pos < FILE.len() {
+        let bytes_written = buffer.write(&FILE[pos..])?;
+        pos += bytes_written;
+    }
+    Ok(())
+}
+
+pub fn run_exe_file(exe_path: &Path){
+    println!("{:?}",absolute_path(exe_path).unwrap().to_str());
+    let _exe = exe_path.file_name().unwrap();
+    let exe = _exe.to_str().unwrap();
+    let _dir = exe_path.parent().unwrap();
+    let dir = _dir.to_str().unwrap();
+    let command = format!("start /D '{}' {}", dir, exe);
+    println!("{}", command);
+    std::process::Command::new("cmd")
+        .args(&["/C", "start", "/D", dir, exe])
+        .output()
+        .expect(format!("Failed to run {:?}", &exe_path).as_str());
+}
 
 pub fn copy_dir<U: AsRef<path::Path>, V: AsRef<path::Path>>(from: U, to: V) -> Result<(), std::io::Error> {
     let mut stack = Vec::new();
@@ -88,7 +112,18 @@ pub fn install_path_resolver() -> String {
 
 
 
-fn absolute_path<P>(path: P) -> std::io::Result<path::PathBuf> where P: AsRef<path::Path>{
+pub fn remove_path(some_path: &Path){
+    if let _ = fs::metadata(some_path)
+    {
+        if some_path.is_dir() {
+            fs::remove_dir_all(some_path);
+        } else {
+            fs::remove_file(some_path);
+        }
+    }
+}
+
+pub fn absolute_path<P>(path: P) -> std::io::Result<path::PathBuf> where P: AsRef<path::Path>{
     let path = path.as_ref();
     let absolute_path = if path.is_absolute() {
         path.to_path_buf()
@@ -102,7 +137,7 @@ pub fn make_desktop_icon(exe_path: &path::Path) -> Result<String,String> {
     if cfg!(windows) {
         use powershell_script;
         if let Ok(p) = environment::var("USERPROFILE") {
-            let p = path::Path::new(p.as_str()).join("Desktop").join("hrtime.lnk");
+            let p = path::Path::new(p.as_str()).join("Desktop").join(format!("{}.lnk",PROGRAM));
             let link = p.to_str().unwrap();
             let _temporary = absolute_path(&exe_path).unwrap().to_owned();
             let exe = _temporary.to_str().unwrap();

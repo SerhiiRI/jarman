@@ -4,14 +4,11 @@
 	box-sizing: border-box;
 	font-size: 14px;
 	font-family: monospace;
-	background #222936
 }
 
 html, body {
 	height: 100%;
 	overflow: none;
-    background: #222936;
-    color: #ffffff;
 }
 body{
     padding: 10px;

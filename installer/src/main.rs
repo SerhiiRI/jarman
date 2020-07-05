@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 mod tools;
 use tools::package;
 use tools::files;
@@ -12,49 +14,18 @@ use serde::Deserialize;
 use serde_derive;
 use serde_json;
 use web_view::*;
+use std::path;
 use crate::tools::files::make_desktop_icon;
 use std::process::exit;
 use crate::tools::package::PandaPackage;
 use std::borrow::Borrow;
+use std::io::Write;
 
+const VISUAL_x64: &'static [u8] = include_bytes!("..\\bin\\vc_redist.x64.exe");
+const VISUAL_x86: &'static [u8] = include_bytes!("..\\bin\\vc_redist.x86.exe");
+const UNINSTALLR: &'static [u8] = include_bytes!("..\\bin\\uninstaller.exe");
 
 fn main() {
-
-    // * * *
-    // START
-    // * * *
-
-    // let all_packages:Vec<package::PandaPackage> = package::FTP::ftp_get_all_packages(&["trashpanda-team.ddns.net:21"]);
-    // println!("packages count {:?} ", all_packages.len());
-    //
-    // // select one
-    // let candidate:package::PandaPackage = package::version_resolver(&all_packages.as_slice()).unwrap();
-    // println!("[Selected] -> {:?}", &candidate.file);
-    // println!("Start downloading -> {:?} ", &candidate.file);
-    //
-    // // install folder
-    // let installation_folder = files::install_path_resolver();
-    // println!("Installation folder {}", &installation_folder.as_str());
-    // environment::set_current_dir(&installation_folder.as_str());
-    //
-    // // download
-    // package::FTP::ftp_download_package(candidate.clone()).unwrap();
-    // println!("Package was downloaded");
-    //
-    // // unzip
-    // unziper::unzip(&candidate.clone().file.unwrap());
-    // fs::remove_file(std::path::Path::new(&candidate.file.unwrap()));
-    //
-    // // create desktop icon
-    // println!("{:?}", make_desktop_icon(std::path::Path::new("hrtime.exe")).unwrap());
-    //
-    // // finish
-    // println!("Finish instalation");
-
-    // // * * *
-    // // End
-    // // * * *
-
     let HTML = format!(r#"
     <!doctype html>
     <html>
@@ -73,10 +44,10 @@ fn main() {
     let mut wv = web_view::builder()
         .title("Setup")
         .content(Content::Html(HTML))
-        .size(500,350)
+        .size(550,350)
         .resizable(false)
-        // .frameless(true)
-        .debug(true)
+        .frameless(true)
+        .debug(false)
         .user_data(Status::Start)
         .invoke_handler(|w, a| {
             println!("onclick");
@@ -90,23 +61,9 @@ fn main() {
     let handle = wv.handle();
 
     std::thread::spawn(move || {
-        // for i in 0..11 {
-        //     std::thread::sleep(std::time::Duration::from_millis(500));
-        //     handle.dispatch(move |_web_view| {
-        //         render(_web_view, Status::Progress { value: (format!("{}", i * 10)) }).unwrap();
-        //         Ok(())
-        //     }).unwrap();
-        // };
-        // std::thread::sleep(std::time::Duration::from_millis(500));
-        // handle.dispatch(|_web_view| {
-        //     render(_web_view, Status::End).unwrap();
-        //     Ok(())
-        // }).unwrap();
-        // * * *
-        // START
-        // * * *
         handle.dispatch(|w| {render(w, Status::Start).unwrap(); Ok(())}).unwrap();
         std::thread::sleep(std::time::Duration::from_millis(300));
+
 
         let repository_list = ["trashpanda-team.ddns.net:21"];
         handle.dispatch(move |w| {render(w, Status::Progress {value: (format!("searching packages in repo {:?}",repository_list).to_string())})});
@@ -125,8 +82,23 @@ fn main() {
 
                 let installation_folder = files::install_path_resolver();
                 let s = installation_folder.to_string();
-                handle.dispatch(move |w| { render (w, Status::Progress {value : format!("installation folder {}", s)})});
+                handle.dispatch(move |w| { render (w, Status::Progress {value : format!("installation folder {}", s.as_str())})});
                 environment::set_current_dir(&installation_folder.as_str());
+
+                handle.dispatch(move |w| { render (w, Status::Progress {value : format!("installing Microsoft Visual C++ (2015)")})});
+                if cfg!(windows) {
+                    let executor_path = files::absolute_path(&installation_folder).unwrap().join("visual.exe");
+                    let executor_path = executor_path.as_path();
+                    files::write_static_file(if cfg!(target_pointer_width = "64"){VISUAL_x64} else {VISUAL_x86}, executor_path).unwrap();
+                    files::run_exe_file(executor_path);
+                    files::remove_path(executor_path);
+                }
+
+                if cfg!(windows) {
+                    let executor_path = files::absolute_path(&installation_folder).unwrap().join("uninstaller.exe");
+                    let executor_path = executor_path.as_path();
+                    files::write_static_file(UNINSTALLR, executor_path).unwrap();
+                }
 
                 // download
                 handle.dispatch(move |w| { render (w, Status::Progress {value : format!("downloading package...").to_string()})});
@@ -152,7 +124,7 @@ fn main() {
     });
 
     wv.run().unwrap();
-    println!("The end of program");
+
 }
 
 #[derive(Debug, Serialize, Deserialize)]

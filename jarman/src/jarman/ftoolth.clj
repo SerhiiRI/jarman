@@ -9,71 +9,6 @@
             [jarman.dev-tools :as dev]
             [jarman.icon-library :as icons]))
 
-; (defn component
-;   ([prop state element]
-;    (let [propr prop
-;          state state]
-;      (fn([]state)
-;        ([new-state & :keys [comparator-f] :or {comparator-f #'=}]
-;         (let [comparator-f (or comparator-f #'=)]
-;          (if (comparator-f state new-state)
-;            state
-;            (component propr new-state))))))))
-
-; (defn component-button
-;   ([state & [comparator-f]]
-;    (let [state state]
-;      (fn ([](button state))
-;          ([new-state]
-;           (if ( state new-state)
-;             (button state)
-;             (component (merge state new-state))))))))
-
-; (def button (component {:onclik}))
-; (button) => Jbutton 
-; (def button1 (button {:icon "suka"})) => Jbutton
-; (fn
-;   ([] (button state))
-;   ([new-state]
-;    (if (= state new-state)
-;      (button state)
-;      (component (merge state new-state)))))
-
-; (defmacro defelement [component-name & body]
-;   (let [ps (butlast body)
-;         cfg ('conf (apply array-map ps))
-;         c (last body)]
-;     `(let [~'conf ~cfg]
-;        (fn ([] ~c)
-;           ([~'new-config]
-;            (let [~'conf (merge ~'conf ~'new-config)]
-;              (fn [] ~c)))))))
-
-; (defelement button
-;   conf {:text "DUPA"}
-;   (seesaw.core/button :text (conf :text)
-;                       :icon nil))
-
-; (defmacro defelement** [& body]
-;   (let [ps (butlast body)
-;         cfg (get (apply array-map ps) 'conf)
-;         c (last body)]
-;     `(let [conf (ref ~cfg)]
-;        (fn ([] ~c)
-;           ([~'new-config] ~c)))))
-
-; (defelement* button
-;   conf {:text "DUPA"}
-;   (seesaw.core/button :text   (conf :text)
-;                       :icon nil))
-
-
-; (mig _m01
-;  (label  _01_01)
-;  button-agree
-;  (label  _02_01)
-;  (button-agree {:text "Potwierdzam"}))
-
 
 (defn mig
   "Description:
@@ -130,6 +65,7 @@
                                (fn? item)     (item)
                                :else          item))
                            elements-list)
+               :background "#eee"
                (vec (mapcat seq conf)))))))
 
 (defn component
@@ -203,20 +139,56 @@
 ;; Działający przykład pobrania rodzica
 ;; (def test (flow (label :text "Hello" :listen [:mouse-clicked (fn [e] (config! (.getParent (seesaw.core/to-widget e)) :background "#333"))]))) 
 
+
+(def ico-b (ico {:border (line-border :bottom 4 :color "#eee") :size [42 :by 42] :background "#999"}))
+
+(def left-menu
+  (vpanel 
+   (ico-b {:icon (dev/image-scale icons/agree-64-png 60)})
+   (ico-b {:icon (dev/image-scale icons/agree-64-png 60)})
+   (ico-b {:icon (dev/image-scale icons/agree-64-png 60)})
+   (ico-b {:icon (dev/image-scale icons/agree-64-png 60)})
+   ))
+
+(def btn-category (fn []
+                    (btn {:text "Funkcjonalność"
+                          :background "#ddd"
+                          :size [150 :by 42]
+                          :border (line-border :bottom 4 :color "#eee")})))
+
+(def txt-title-of-btn (fn [] 
+                        (txt {:text "Tytuł kategorii"
+                              :background "#eee"
+                              :halign :center
+                              :size [150 :by 42]
+                              :border (line-border :bottom 3 :color "#999")})))
+
 (-> (doto (seesaw.core/frame
            :title "DEBUG WINDOW" :undecorated? false
-           :minimum-size [400 :by 400]
-           :content ((mig
-                      (vpanel-dark
-                      ;;  (ico {:icon (seesaw.icon/icon (clojure.java.io/file "C:\\Aleks\\Github\\jarman\\jarman\\icons\\main\\1-64x64.png"))})
-                       (ico {:icon (dev/image-scale icons/agree-64-png 80)})
-                       (ico {:icon (dev/image-scale icons/alert-64-png 80)}))
-                      (builder-txt {:border (line-border :left 1 :color "#666")})
+           :minimum-size [800 :by 400]
+           :content (hpanel
+                     (mig
+                      ;; (vpanel-dark
+                      ;; ;;  (ico {:icon (seesaw.icon/icon (clojure.java.io/file "C:\\Aleks\\Github\\jarman\\jarman\\icons\\main\\1-64x64.png"))})
+                      ;;  (ico {:icon (dev/image-scale icons/agree-64-png 80)})
+                      ;;  (ico {:icon (dev/image-scale icons/alert-64-png 80)}))
+                      ;; (vpanel
+                      ;;  (txt {:text "Inc and Dec" :halign :center})
+                      ;;  (inc))
+                      left-menu
+                      (builder-txt {:border (line-border :left 1 :color "#999")})
+                      (builder-txt {:border (line-border :left 1 :color "#999")})
                       (vpanel
-                       (txt {:text "Inc and Dec" :halign :center})
-                       (inc))
-                      {:h "0px[64]0px[1]0px[grow, fill]0px"
-                       :v "0px[grow, fill]0px"})))
+                       (txt-title-of-btn)
+                       (btn-category)
+                       (btn-category)
+                       (btn-category)
+                       (btn-category))
+                      (builder-txt {:border (line-border :left 1 :color "#eee")})
+                      (flow (txt {:text "Kontent" :halign :center}))
+                      {:h "0px[42]0px[4]0px[150, fill, center]0px[4]0px[grow, fill]0px"
+                       :v "0px[grow, fill]0px"})
+                     ))
       (.setLocationRelativeTo nil)) pack! show!)
 
 

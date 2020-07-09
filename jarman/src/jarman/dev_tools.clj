@@ -1,11 +1,10 @@
 (ns jarman.dev-tools
   (:gen-class)
   (:use clojure.reflect
-        seesaw.icon
-        seesaw.core
-        jarman.config-manager)
+        seesaw.core)
   (:require [clojure.string :as string]
-            [jarman.config-manager :as cm]))
+            [jarman.config-manager :as cm]
+            [clojure.java.io :as io]))
 
 (def ^:dynamic *icon-library* "final library class-path file" "src/jarman/icon_library.clj")
 (def ^:dynamic *font-library* "final library class-path file" "src/jarman/font_library.clj")
@@ -59,8 +58,6 @@
                          (scaler (.getHeight image))
                          java.awt.Image/SCALE_SMOOTH))))))
 
-(image-scale jarman.icon-library/a-64-png)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Icons library generator ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -80,12 +77,12 @@
   Example:
     (refresh-icon-lib) "[]
   (for [icon-file (sort-by #(.getName %) (filter is-icon-supported? (.listFiles (clojure.java.io/file *icon-path*))))]
-    (let [icon (.getName icon-file)
-          [icon-name icon-format] (if-not (some #(= \. %) (seq icon)) [icon nil]
-                                          (let [splited (clojure.string/split icon #"\.")]
+    (let [icon-f (.getName icon-file)
+          [icon-name icon-format] (if-not (some #(= \. %) (seq icon-f)) [icon-f nil]
+                                          (let [splited (clojure.string/split icon-f #"\.")]
                                             [(apply str (butlast splited)) (last splited)]))
           icon-symbol-name (symbol (str icon-name (if icon-format (str "-" icon-format))))
-          icon-symbol-doc  (format "wrapper for icon %s" (str *icon-path* "/" icon))]
+          icon-symbol-doc  (format "wrapper for icon %s" (str *icon-path* "/" icon-f))]
       [icon-symbol-name icon-symbol-doc (str icon-file)])))
 
 (defn refresh-icon-lib
@@ -102,7 +99,7 @@
     (spit *icon-library* "\n;; All icons\n" :append true)
     (spit *icon-library* (prn-str `(def ~(symbol 'all-icon) ~(vec (map first icon-data)))) :append true)))
 ;; generation icon library
-(refresh-icon-lib)
+;; (refresh-icon-lib)
 
 (defn debug-icon-panel "Funkcja wy�wietla okienko z czcionkami w swoim formacie." []
   (let [get-scale-percent (fn [icon-name]
@@ -187,7 +184,7 @@
                                      (registrate-local-font font))) :append true)))
 
 ;;; refresh font lib
-(refresh-font-lib)
+;; (refresh-font-lib)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Font debug, tool ;;;
@@ -213,8 +210,46 @@
       seesaw.core/pack!
       seesaw.core/show!))
 
+(defn copy [uri file]
+  (with-open [in (io/input-stream uri)
+              out (io/output-stream file)]
+    (io/copy in out)))
 
+(defn unzip [file dir]
+  (let [saveDir (java.io.File. dir)]
+    (with-open [stream (java.util.zip.ZipInputStream. (io/input-stream file))]
+      (loop [entry (.getNextEntry stream)]
+        (if entry
+          (let [savePath (str dir java.io.File/separatorChar (.getName entry))
+                saveFile (java.io.File. savePath)]
+            (if (.isDirectory entry)
+              (if-not (.exists saveFile)
+                (.mkdirs saveFile))
+              (let [parentDir (java.io.File. (.substring savePath 0 (.lastIndexOf savePath (int java.io.File/separatorChar))))]
+                (if-not (.exists parentDir) (.mkdirs parentDir))
+                (io/copy stream saveFile)))
+            (recur (.getNextEntry stream))))))))
 
+;; (defn unzip [file dir]
+;;   (let [saveDir (java.io.File. dir)]
+;;     (with-open [stream (java.util.zip.ZipInputStream. (io/input-stream file))]
+;;       (loop [entry (.getNextEntry stream)]
+;;         (if entry
+;;           (let [savePath (str dir java.io.File/separatorChar (.getName entry))
+;;                 saveFile (java.io.File. savePath)]
+;;             (if (.isDirectory entry)
+;;               (if-not (.exists saveFile)
+;;                 (.mkdirs saveFile))
+;;               (let [parentDir (java.io.File. (.substring savePath 0 (.lastIndexOf savePath (int java.io.File/separatorChar))))]
+;;                 (if-not (.exists parentDir) (.mkdirs parentDir))
+;;                 (io/copy stream saveFile)))
+;;             (recur (.getNextEntry stream))))))))
 
-
+(defn delete-recursively [fname]
+  (let [func (fn [func f]
+               (when (.isDirectory f)
+                 (doseq [f2 (.listFiles f)]
+                   (func func f2)))
+               (io/delete-file f))]
+    (func func (io/file fname))))
 

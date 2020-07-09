@@ -1,11 +1,13 @@
-(ns jarman.schema-builder
+(ns jarman.jarman-cli
   (:gen-class)
   (:refer-clojure :exclude [update])
   (:require
    [jarman.sql-tool :as toolbox :include-macros true :refer :all]
+   [jarman.dev-tools :as dt]
    [clojure.tools.cli :refer [parse-opts]]
    [clojure.string :as string]
-   [clojure.java.jdbc :as jdbc]))
+   [clojure.java.jdbc :as jdbc]
+   [jarman.ftp-toolbox.clj :as ftp]))
 
 ;;;-DOC-;;;
 ;; To run this tool using next cli notation
@@ -16,9 +18,15 @@
 (def ^:dynamic sql-connection {:dbtype "mysql"
                                :host "127.0.0.1"
                                :port 3306
-                               :dbname "ekka-test"
+                               :dbname "jarman"
                                :user "root"
-                               :password "123"})
+                               :password "1234"})
+;; (def ^:dynamic sql-connection {:dbtype "mysql"
+;;                                :host "192.168.1.69"
+;;                                :port 3306
+;;                                :dbname "jarman"
+;;                                :user "jarman"
+;;                                :password "dupa"})
 
 (def available-scheme ["service_contract"
                        "seal"
@@ -202,6 +210,11 @@
 (defn print-lschm [cli-opt-m]
   (println (format "Available schemes:\n\t%s" (string/join ", " available-scheme))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Database manager  ;;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn cli-create-table [cli-opt-m]
   (let [scm (get-in cli-opt-m [:options :create] nil)]
     (if (and (not= "all" scm) (some? scm))
@@ -225,7 +238,7 @@
     (println "[!] (cli-scheme-view): internal error" )))
 
 
-(def cli-options
+(def data-cli-options
   [["-c" "--create SCHEME" "Create table from scheme, use <all> for all. Automatic generate meta for structure(--create-meta)"
     :parse-fn #(str %)
     :validate [#(or (= % "all") (scheme-in? %)) "Scheme not found"]]
@@ -272,22 +285,9 @@
 ;; (-main "-c" "*")
 ;; (-main "-c" "METADATA")
 ;; (-main "-d" "METADATA")
-(defn usage []
-  (->> ["lets-scheme - jarman CLI tool, which do controlling jarman environment easyest ."
-        ""
-        "Usage: lets-scheme [action]"
-        ""
-        "Actions:"
-        "  data      Start a new server"
-        "  config    Stop an existing server"
-        "  help      View some documentations"
-        ""
-        "Please refer to the manual page for more information."]
-       (string/join \newline)))
-
 
 (defn data-cli [& args]
-  (let [cli-opt (parse-opts args cli-options)
+  (let [cli-opt (parse-opts args data-cli-options)
         opts (get cli-opt :options)
         args (get cli-opt :arguments)
         o1 (first (seq opts))
@@ -301,20 +301,126 @@
         (= k1 :list-tables)  (print-ltbls cli-opt)
         (= k1 :create)       (cli-create-table cli-opt)
         (= k1 :delete)       (cli-delete-table cli-opt)
-        (= k1 :view-scheme)  (cli-scheme-view cli-opt)
+        (= k1 :view-scheme)  (cli-scheme-view  cli-opt)
         (= k1 :dummy-data)   (println "[!] Excuse me, functionality not implemented")
         :else (print-helpr cli-opt)))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Project structure manger ;;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def structure-cli-options
+  [[nil "--refresh-icons" "Regenerate icon assets library"]
+   [nil "--refresh-fonts" "Regenerate font assets library"]
+   ["-h" "--help"]])
+(defn structure-cli [& args]
+  (let [cli-opt (parse-opts args structure-cli-options)
+        opts (get cli-opt :options)
+        args (get cli-opt :arguments)
+        o1 (first (seq opts))
+        k1 (first o1) v1 (second o1)]
+    (if-let [es (get cli-opt :errors)]
+      (doall (for [e es] (println (format "[!] %s" e))))
+      (cond 
+        (= k1 :refresh-icons)(do(dt/refresh-icon-lib)(println(format "[ok] library by path %s was generated" dt/*icon-library*)))
+        (= k1 :refresh-fonts)(do(dt/refresh-font-lib)(println(format "[ok] library by path %s was generated" dt/*font-library*)))
+        (= k1 :help)(print-helpr structure-cli-options)
+        :else (print-helpr cli-opt)))))
+
+
+;;;;;;;;;;;;;;;;;;;
+;;; FTP Manager ;;; 
+;;;;;;;;;;;;;;;;;;;
+
+(defn cli-ftp-deploy-package [cli-opt]
+  (if-let [target-package (get-in cli-opt [:options :deploy] nil)]
+    (do (ftp/ftp-put-file (ftp/construct-ftp-url) target-package)
+        (println (format "Succesfuly uplaod file %s to repository" target-package)))))
+(defn cli-ftp-deploy-all []
+  (apply (partial ftp/ftp-put-file (ftp/construct-ftp-url))
+         (filter (every-pred ftp/zip?) (ftp/ftp-list-files (ftp/construct-ftp-url))))
+  (println (format "Succesuly uplaod files")))
+(defn cli-ftp-list-packages-remote []
+  (let [packages (filter (every-pred ftp/zip?) (ftp/ftp-list-files (ftp/construct-ftp-url)))]
+    (if (empty? packages)
+      (println "Repository is empty")
+      (map println packages))))
+(defn cli-ftp-list-files-remote []
+  (let [files (ftp/ftp-list-files (ftp/construct-ftp-url))]
+    (if (empty? files)
+      (println "Repository is empty")
+      (map println files))))
+(defn cli-ftp-list-packages-local  []
+  (let [packages (map #(.getName %) (ftp/list-available-packages))]
+    (if (empty? packages)
+      (println "Repository is empty")
+      (map println packages))))
+
+
+;; (-main "ftp" "--list-packages-server")
+;; (-main "ftp" "--list-files-server")
+;; (-main "ftp" "--list-packages-target")
+;; (-main "ftp" "--deploy" "target/hrtime-1.0.4.zip")
+;; (-main "ftp" "--deploy-all-packages")
+
+
+
+(def ftp-cli-options
+  [["-d" "--deploy PACKAGE" "Upload builded package to the repository host"
+    :parse-fn #(str %)
+    :validate [#(.exists (clojure.java.io/file %)) "Package not found"]]
+   ["-a" "--deploy-all-packages" "Upload all builded packages to repository"]
+   ["-l" "--list-packages-server" "list server packages"]
+   [nil  "--list-files-server" "list files in repository"]
+   ["-t" "--list-packages-target" "list local packages"]])
+(defn ftp-cli [& args]
+  (let [cli-opt (parse-opts args ftp-cli-options)
+        opts (get cli-opt :options)
+        args (get cli-opt :arguments)
+        o1 (first (seq opts))
+        k1 (first o1) v1 (second o1)]
+    (if-let [es (get cli-opt :errors)]
+      (doall (for [e es] (println (format "[!] %s" e))))
+      (cond 
+        (= k1 :deploy)               (cli-ftp-deploy-package cli-opt)
+        (= k1 :deploy-all-packages)  (cli-ftp-deploy-all)
+        (= k1 :list-packages-server) (cli-ftp-list-packages-remote)
+        (= k1 :list-files-server)    (cli-ftp-list-files-remote)
+        (= k1 :list-packages-target) (cli-ftp-list-packages-local)
+        (= k1 :help)                 (print-helpr ftp-cli-options)
+        :else (print-helpr cli-opt)))))
+
 
 (defn exit [status msg]
   (println msg)
   (System/exit status))
 
-(defn -main [& args]
-  (let [[action & rest-arguments] args]
-    (if action
-      (case action
-        "data"     (apply data-cli rest-arguments)
-        "config"   (exit 0 "[!] config action not yet implemented ")
-        "help"     (exit 0 "[!] help action not yet implemented ")))))
+(defn usage []
+  (->> ["lets-scheme - jarman CLI tool, which do controlling jarman environment easyest ."
+        ""
+        "Usage: lets-scheme [action]"
+        ""
+        "Actions:"
+        "  data       Database and data manager. Use for building or debuging project data structure"
+        "  config     -- not yet implemented --"
+        "  structure  Manager of project structure and resources"
+        "  ftp        Ftp tools "
+        "  help       Documentation"
+        ""
+        "Please refer to the manual page for more information."]
+       (string/join \newline)))
 
+(defn -main [& args]
+  (if (empty? args)
+    (println (usage))
+    (let [[action & rest-arguments] args]
+      (if action
+        (case action
+          "data"     (apply data-cli rest-arguments)
+          "structure"(apply structure-cli rest-arguments)
+          "config"   (exit 0 "[!] config action not yet implemented ")
+          "ftp"      (apply ftp-cli rest-arguments)
+          "help"     (println (usage))
+          (println (usage)))))))
 

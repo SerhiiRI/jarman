@@ -65,6 +65,15 @@
     (+ (+ (reduce (fn [acc chil] (+ acc (.getHeight (.getSize chil)))) 34 children)))
     :else 0))
 
+(defn alert-panel-resize
+  [message-space] (let [margin 10
+                        v-size (.getSize    (to-root message-space))
+                        vw     (.getWidth   v-size)
+                        vh     (.getHeight  v-size)
+                        hpanel (countHeight (seesaw.util/children message-space))
+                        wpanel (.getWidth (.preferredSize (first (seesaw.util/children message-space))))]
+                    (config! message-space :bounds [(- vw wpanel (* margin 2)) (- vh hpanel margin) wpanel hpanel])))
+
 (defn message-server-creator
   "Description:
       
@@ -79,14 +88,11 @@
                    (> (count @alerts-storage) 0) (do (print "Refresh alerts")
                                                      (config! message-space :items (map (fn [item] (get item :component)) @alerts-storage))
                                                      (Thread/sleep 50)
-                                                     (let [v-size (.getSize    (to-root message-space))
-                                                           vw     (.getWidth   v-size)
-                                                           vh     (.getHeight  v-size)
-                                                           hpanel (countHeight (seesaw.util/children message-space))]
-                                                       (config! message-space :bounds [(- vw 200) (- vh hpanel) 200 hpanel])
-                                                       print hpanel))
+                                                     (alert-panel-resize message-space))
                    :else (do (print "No more message")
-                             (config! message-space :items [])))))
+                             (config! message-space :items [] :bounds [(.getWidth  (.getSize    (to-root message-space)))
+                                                                       (.getHeight (.getSize    (to-root message-space)))
+                                                                       0 0])))))
    (fn [action & param]
      (cond
        (= action :set) (let [[component timelife] param] (addAlertTimeout component timelife alerts-storage))

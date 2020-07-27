@@ -6,7 +6,8 @@
         ;; jarman.ftoolth
         jarman.dev-tools
         jarman.alerts-service)
-  (:require [jarman.icon-library :as icon]))
+  (:require [jarman.icon-library :as icon]
+            [clojure.string :as string]))
 
 
 (import javax.swing.JInternalFrame)
@@ -21,31 +22,6 @@
 (import java.awt.Point)
 (import java.awt.Color)
 
-
-;; To correct working with 200px width in one line should be 23 characters and then tag <br>
-;; (defn message
-;;   [mess]
-;;   (let [prepertext mess]
-;;    (label :text (format "<html>
-;;                         <style>
-;;                           p{font-size: 1.05em; 
-;;                          font-family: \"Monospaced\", serif; 
-;;                          color: #fff; 
-;;                          text-align: right; 
-;;                          background-color: #292929; 
-;;                          width: 190; 
-;;                          padding-left: 10px; 
-;;                          padding-right: 10px;
-;;                          padding-top: 5px;
-;;                          padding-bottom: 5px;
-;;                          }
-;;                         </style>
-;;                         <body>
-;;                           <p>%s
-;;                         </body>
-;;                         </html>" prepertext)
-;;           :border (empty-border :bottom 2)
-;;           )))
 
 
 (defn message
@@ -68,7 +44,6 @@
                         <style>
                           p{font-size: 1.05em; 
                             font-family: \"Monospaced\", serif; 
-                           padding-left: 20px;
                          }
                         </style>
                         <body>
@@ -76,28 +51,38 @@
                         </body>
                         </html>" txt))]
     (vertical-panel
-     :size [366 :by 96]
-     :background (new Color 0 0 0 0)
-     :border (compound-border (line-border :thickness 2 :color "#66dbe3") (empty-border :thickness 5))
-     :items [(label :text (header (if (> (count args) 1) (first args) "Powiadomienie"))
-                    :icon (image-scale icon/agree-64-png 30)
-                    :foreground font-c
-                    :background back-c
-                    :border (empty-border :thickness 5) )
-             (label :text (body (if (> (count args) 1) (second args) (first args)))
-                    :foreground font-c
-                    :background back-c
-                    :border (empty-border :thickness 5)
-                    :listen [:mouse-entered (fn [e]
-                                              (config! e
+    ;  :background (new Color 0 0 0 0)
+
+     :background back-c
+     :border nil
+     :items [(label
+              :text (header (if (> (count args) 1) (first args) "Powiadomienie"))
+              :icon (image-scale icon/agree-64-png 30)
+              :border nil
+              :foreground font-c
+              :background back-c)
+             (label
+              :text (body (if (> (count args) 1) (second args) (first args)))
+              :border nil
+              :foreground font-c
+              :background back-c
+              :listen [:mouse-entered (fn [e]
+                                        (config! e
                                                       ;;  :background "#a3d487"
                                                       ;;  :foreground "#000"
-                                                       :cursor :hand))
-                             :mouse-exited (fn [e]
-                                             (config! e
+                                                 :cursor :hand))
+                       :mouse-exited (fn [e]
+                                       (config! e
                                                       ;; :background "#363636"
                                                       ;; :foreground "#fff"
-                                                      ))])])))
+                                                ))])
+             (horizontal-panel
+              :items [(label
+                       :icon (image-scale icon/agree-64-png 30))
+                      (label
+                       :icon (image-scale icon/agree-64-png 30))
+                      (label
+                       :icon (image-scale icon/agree-64-png 30))])])))
 
 
 ;; (show-options (horizontal-panel))
@@ -116,13 +101,135 @@
                                                  (config! x :text "")))]))
 
 
+(def btn-icon-f (fn [ico order size txt]
+                  (let [bg-color "#ddd"
+                        bg-color-onenter "#29295e"
+                        size size
+                        y (if (> (* size order) 0) (+ 2 (* size order)) (* size order))]
+                    (label
+                     :halign :center
+                     :icon ico
+                     :bounds [0 y size size]
+                     :background bg-color
+                     :border (line-border :left 4 :color bg-color)
+                     :listen [:mouse-entered (fn [e] (config! e
+                                                              :border (line-border :right 4 :color bg-color-onenter)
+                                                              :icon nil
+                                                              :bounds [0 y (+ 200 size 8) size]
+                                                              :text txt
+                                                              :cursor :hand))
+                              :mouse-exited  (fn [e] (config! e
+                                                              :bounds [0 y size size]
+                                                              :border (line-border :left 4 :color bg-color)
+                                                              :text ""
+                                                              :icon ico
+                                                              :cursor :default))]))))
+
+(def btn-summer-f (fn [txt]
+                    (let [bg-color "#eee"
+                          margin-color "#fff"
+                          border (compound-border (line-border :left 6 :color bg-color) (line-border :bottom 2 :color margin-color))
+                          vsize 35
+                          hsize 200]
+                      (mig-panel
+                       :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
+                       :listen [:mouse-clicked (fn [e] 
+                                                ;;  (config! e :items (vec (map (fn [i] [i]) (reverse (conj (reverse (seesaw.util/children (seesaw.core/to-widget e))) ((label :text "test")))))))
+                                                ;;  (print (vec (map (fn [i] [i]) (reverse (conj (reverse (seesaw.util/children (seesaw.core/to-widget e))) ((label :text "test") (label :text "test2")))))))
+                                                 )]
+                       :items [[(mig-panel
+                                 :constraints ["" "0px[fill]0px" "0px[fill]0px"]
+                                 :background (new Color 0 0 0 0)
+                                 :items [[(label
+                                           :text txt
+                                           :size [(- hsize vsize) :by vsize]
+                                           :background bg-color
+                                           :border border)]
+                                         [(label
+                                           :size [vsize :by vsize]
+                                           :halign :center
+                                           :background bg-color
+                                           :border border
+                                           :icon (image-scale icon/plus-64-png 25))]])]]))))
+
+
+(def btn-tab-f (fn [txt]
+                 (let [gb-color "#eee"
+                       border "#fff"
+                       hsize 70
+                       vsize 30]
+                   (horizontal-panel
+                    :background (new Color 0 0 0 0)
+                    :items [(label
+                             :text txt
+                             :background gb-color
+                             :halign :center
+                             :size [hsize :by vsize]
+                             :listen [:mouse-entered (fn [e] (config! e :cursor :hand))
+                                      :mouse-exited  (fn [e] (config! e :cursor :default))])
+                            (label
+                             :icon (image-scale icon/x-grey2-64-png 15)
+                             :background gb-color
+                             :halign :center
+                             :border (line-border :right 2 :color border)
+                             :size [vsize :by vsize]
+                             :listen [:mouse-entered (fn [e] (config! e :cursor :hand :icon (image-scale icon/x-blue1-64-png 20)))
+                                      :mouse-exited  (fn [e] (config! e :cursor :default :icon (image-scale icon/x-grey2-64-png 15)))])]))))
+
+
+(def mig-menu-lvl-2-f
+  "elements by elements -> [(label)] [(label)] [(label)]"
+  (fn [& args] (mig-panel
+                :background "#fff"
+                :border (line-border :left 4 :right 4 :color "#fff")
+                :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
+                :items (vec args))))
+
+(def mig-menu-lvl-3-f
+  "tabs  -> mig vector with elements    -> [(tab1)(tab2)(tab3)]
+   array -> table like rows and columns -> [(table)]
+   Example: (mig-menu-lvl-3-f [(tab1) (tab2) (tab3)] [(table)])"
+  (fn [tabs array] (let [bg-color "#fff"]
+                     (mig-panel
+                      :background "#fff"
+                      :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
+                      :background "#cc2"
+                      :items [[(horizontal-panel
+                          ; :background (new Color 0 0 0 0)
+                                :background bg-color
+                                :items tabs)]
+                              [(vertical-panel
+                                :background (new Color 0 0 0 0)
+                                :items array)]]))))
+
+(def jarmanapp (grid-panel
+                :bounds [0 0 300 300]
+                ; :background (new Color 0 0 0 0)
+                ;; :background "#a4c"
+                :items [(mig-panel
+                         :constraints [""
+                                       "0px[50, fill]0px[200, fill]0px[fill, grow]0px"
+                                       "0px[fill, grow]0px"]
+                         :items [[(label :background "#eee")]
+                                 [(mig-menu-lvl-2-f [(btn-summer-f "Ukryte opcje 1")]
+                                                    [(btn-summer-f "Ukryte opcje 2")])]
+                                 [(mig-menu-lvl-3-f [(btn-tab-f "Tab 1") (btn-tab-f "Tab 2")]
+                                                    [(label :text "GRID")])]])]))
+
+
+; (show-options (grid-panel))
+
+
 (defn app []
   "Description:
        Create panel for absolute position elements and add components
    "
-  (doto (new JLayeredPane)
-    (.add (writer) (new Integer 1))
-    (.add alerts-panel (new Integer 10))))
+  (let [menu-icon-size 50]
+    (doto (new JLayeredPane)
+      (.add jarmanapp (new Integer 5))
+      (.add alerts-panel (new Integer 10))
+      (.add (btn-icon-f (image-scale icon/user-64x64-2-png menu-icon-size) 0 menu-icon-size "Klienci") (new Integer 10))
+      (.add (btn-icon-f (image-scale icon/settings-64x64-png menu-icon-size) 1 menu-icon-size "Konfiguracja") (new Integer 10)))))
 
 
 ;; (do (alerts-s :rmall)
@@ -130,9 +237,9 @@
 
 (-> (doto (seesaw.core/frame
            :title "DEBUG WINDOW" :undecorated? false
-           :minimum-size [600 :by 400]
+           :minimum-size [1000 :by 600]
            :content (app)
-           :listen [:component-resized (fn [e] (alert-panel-resize alerts-panel))])
+           :listen [:component-resized (fn [e] (template-resize alerts-panel jarmanapp))])
       (.setLocationRelativeTo nil) pack! show!))
 
 (.getWidth (.preferredSize (first (seesaw.util/children alerts-panel))))
@@ -150,4 +257,5 @@
 ;;     (alerts-s :set (message "No more message") 3)
 ;;     (update-messages-panel-size))
 
-;; (show-options (text))
+; (show-options (horizontal-panel))
+

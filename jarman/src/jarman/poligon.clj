@@ -97,7 +97,8 @@
 
 (def btn-icon-f (fn [ico order size txt]
                   (let [bg-color "#ddd"
-                        color-onenter "#29295e"
+                        ;; color-onenter "#29295e"
+                        color-hover-margin "#bbb"
                         bg-color-hover "#d9ecff"
                         size size
                         y (if (> (* size order) 0) (+ 2 (* size order)) (* size order))]
@@ -108,11 +109,11 @@
                      :background bg-color
                      :border (line-border :left 4 :color bg-color)
                      :listen [:mouse-entered (fn [e] (config! e
-                                                              :border (line-border :right 4 :color color-onenter)
+                                                              :cursor :hand
+                                                              :border (line-border :right 4 :color color-hover-margin)
                                                               :background bg-color-hover
                                                               :bounds [0 y (+ 200 size 8) size]
-                                                              :text txt
-                                                              :cursor :hand))
+                                                              :text txt))
                               :mouse-exited  (fn [e] (config! e
                                                               :bounds [0 y size size]
                                                               :border (line-border :left 4 :color bg-color)
@@ -123,25 +124,30 @@
 (def users-functions-f (fn [] (mig-panel
                                :constraints ["wrap 1" "0px[300]0px" "0px[fill]0px"]
                                :background (new Color 0 0 0 0)
-                               :items [[(label :text "Opcja 1")
-                                        (label :text "Opcja 2")]])))
+                               :items [[(label :text "Opcja 1")]
+                                       [(label :text "Opcja 2")]])))
 
-(def btn-summer-f (fn [txt]
+(def btn-summer-f (fn [txt & funcs]
                     (let [bg-color "#eee"
                           margin-color "#fff"
                           border (compound-border (line-border :left 6 :color bg-color) (line-border :bottom 2 :color margin-color))
                           vsize 35
-                          hsize 200]
+                          hsize 200
+                          ico (if (> (count funcs) 0) (image-scale icon/plus-64-png 25))
+                          ico-hover (image-scale icon/minus-grey-64-png 20)]
                       (mig-panel
                        :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
-                       :listen [:mouse-clicked (fn [e] 
-                                                ;;  (config! e :items (vec (map (fn [i] [i]) (reverse (conj (reverse (seesaw.util/children (seesaw.core/to-widget e))) ((label :text "test")))))))
-                                                 (do 
-                                                   (println)
-                                                   (println (vec (conj (seesaw.util/children (seesaw.core/to-widget e)) 
-                                                                                     (users-functions-f)
-                                                                        ))))
-                                                 )]
+                       :listen [:mouse-entered (fn [e] (config! e :cursor :hand))
+                                :mouse-entered (fn [e] (config! e :cursor :default))
+                                :mouse-clicked (fn [e]
+                                                 (if (> (count funcs) 0)
+                                                   (if (== (count (seesaw.util/children (seesaw.core/to-widget e))) 1)
+                                                     (do
+                                                       (config! e :items (vec (map (fn [i] (vec (list i))) (concat (vec (seesaw.util/children (seesaw.core/to-widget e))) (vec funcs)))))
+                                                       (config! (last (seesaw.util/children (first (seesaw.util/children (seesaw.core/to-widget e))))) :icon ico-hover))
+                                                     (do
+                                                       (config! e :items [(vec (list (first (seesaw.util/children (seesaw.core/to-widget e)))))])
+                                                       (config! (last (seesaw.util/children (first (seesaw.util/children (seesaw.core/to-widget e))))) :icon ico)))))]
                        :items [[(mig-panel
                                  :constraints ["" "0px[fill]0px" "0px[fill]0px"]
                                  :background (new Color 0 0 0 0)
@@ -155,9 +161,9 @@
                                            :halign :center
                                            :background bg-color
                                            :border border
-                                           :icon (image-scale icon/plus-64-png 25))]])]]))))
+                                           :icon ico)]])]]))))
 
-[#object[seesaw.core.proxy$javax.swing.JPanel$Tag$fd407141 0xa2f7d6c seesaw.core.proxy$javax.swing.JPanel$Tag$fd407141[,0,0,200x35,layout=net.miginfocom.swing.MigLayout,alignmentX=0.0,alignmentY=0.0,border=,flags=16777225,maximumSize=,minimumSize=,preferredSize=]]] 
+
 
 (def btn-tab-f (fn [txt active]
                  (let [bg-color (if (== active 1) "#eee" "#ccc")
@@ -214,7 +220,9 @@
                                        "0px[50, fill]0px[200, fill]0px[fill, grow]0px"
                                        "0px[fill, grow]0px"]
                          :items [[(label :background "#eee")]
-                                 [(mig-app-left-f  [(btn-summer-f "Ukryte opcje 1")]
+                                 [(mig-app-left-f  [(btn-summer-f "Ukryte opcje 1" 
+                                                                  (label :text "Opcja 1" :background "#fff" :size [200 :by 25])
+                                                                  (label :text "Opcja 2" :background "#fff" :size [200 :by 25]))]
                                                     [(btn-summer-f "Ukryte opcje 2")])]
                                  [(mig-app-right-f [(btn-tab-f "Tab 1" 1) (btn-tab-f "Tab 2" 0)]
                                                    [(label :text "GRID")])]])]))

@@ -110,7 +110,6 @@
                      :listen [:mouse-entered (fn [e] (config! e
                                                               :border (line-border :right 4 :color color-onenter)
                                                               :background bg-color-hover
-                                                              ; :icon nil
                                                               :bounds [0 y (+ 200 size 8) size]
                                                               :text txt
                                                               :cursor :hand))
@@ -119,8 +118,13 @@
                                                               :border (line-border :left 4 :color bg-color)
                                                               :background bg-color
                                                               :text ""
-                                                              ; :icon ico
                                                               :cursor :default))]))))
+
+(def users-functions-f (fn [] (mig-panel
+                               :constraints ["wrap 1" "0px[300]0px" "0px[fill]0px"]
+                               :background (new Color 0 0 0 0)
+                               :items [[(label :text "Opcja 1")
+                                        (label :text "Opcja 2")]])))
 
 (def btn-summer-f (fn [txt]
                     (let [bg-color "#eee"
@@ -132,7 +136,11 @@
                        :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
                        :listen [:mouse-clicked (fn [e] 
                                                 ;;  (config! e :items (vec (map (fn [i] [i]) (reverse (conj (reverse (seesaw.util/children (seesaw.core/to-widget e))) ((label :text "test")))))))
-                                                ;;  (print (vec (map (fn [i] [i]) (reverse (conj (reverse (seesaw.util/children (seesaw.core/to-widget e))) ((label :text "test") (label :text "test2")))))))
+                                                 (do 
+                                                   (println)
+                                                   (println (vec (conj (seesaw.util/children (seesaw.core/to-widget e)) 
+                                                                                     (users-functions-f)
+                                                                        ))))
                                                  )]
                        :items [[(mig-panel
                                  :constraints ["" "0px[fill]0px" "0px[fill]0px"]
@@ -149,10 +157,10 @@
                                            :border border
                                            :icon (image-scale icon/plus-64-png 25))]])]]))))
 
+[#object[seesaw.core.proxy$javax.swing.JPanel$Tag$fd407141 0xa2f7d6c seesaw.core.proxy$javax.swing.JPanel$Tag$fd407141[,0,0,200x35,layout=net.miginfocom.swing.MigLayout,alignmentX=0.0,alignmentY=0.0,border=,flags=16777225,maximumSize=,minimumSize=,preferredSize=]]] 
 
-(def btn-tab-f (fn [txt]
-                 (let [bg-color "#eee"
-                       bg-color-hover "#d9ecff"
+(def btn-tab-f (fn [txt active]
+                 (let [bg-color (if (== active 1) "#eee" "#ccc")
                        border "#fff"
                        hsize 70
                        vsize 30]
@@ -167,10 +175,10 @@
                              :halign :center
                              :border (line-border :right 2 :color border)
                              :size [vsize :by vsize]
-                             :listen [:mouse-entered (fn [e] (config! e :cursor :hand :icon (image-scale icon/x-blue1-64-png 22)))
+                             :listen [:mouse-entered (fn [e] (config! e :cursor :hand :icon (image-scale icon/x-blue1-64-png 15)))
                                       :mouse-exited  (fn [e] (config! e :cursor :default :icon (image-scale icon/x-grey2-64-png 15)))])]
-                    :listen [:mouse-entered (fn [e] (config! e :cursor :hand :background bg-color-hover))
-                             :mouse-exited  (fn [e] (config! e :cursor :default :background bg-color))]))))
+                    :listen [:mouse-entered (fn [e] (config! e :cursor :hand))
+                             :mouse-exited  (fn [e] (config! e :cursor :default))]))))
 
 
 (def mig-app-left-f
@@ -208,7 +216,7 @@
                          :items [[(label :background "#eee")]
                                  [(mig-app-left-f  [(btn-summer-f "Ukryte opcje 1")]
                                                     [(btn-summer-f "Ukryte opcje 2")])]
-                                 [(mig-app-right-f [(btn-tab-f "Tab 1") (btn-tab-f "Tab 2")]
+                                 [(mig-app-right-f [(btn-tab-f "Tab 1" 1) (btn-tab-f "Tab 2" 0)]
                                                    [(label :text "GRID")])]])]))
 
 

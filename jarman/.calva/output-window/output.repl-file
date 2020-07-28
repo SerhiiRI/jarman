@@ -1,0 +1,759 @@
+; This is the Calva evaluation results output window.
+; Leave it open, please. Because quirks.
+; File URLs in stacktrace frames are peekable and clickable.
+; Please see https://calva.io/output/ for docs. Happy coding!
+
+clj::hrtime.core=> 
+#'jarman.alerts-service/message-server-creator
+clj::jarman.alerts-service=> 
+#'jarman.icon-library/all-icon
+clj::jarman.icon-library=> 
+#'jarman.alerts-service/message-server-creator
+clj::jarman.alerts-service=> 
+nil
+clj::jarman.poligon=> 
+; Execution error (IllegalArgumentException) at seesaw.util/check-args (util.clj:24).
+; opts must be a map or have an even number of entries
+[{:file "Compiler.java" :line 3707 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 3223 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 3701 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 3223 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 3223 :method "eval" :flags [:dup :tooling :java]}
+ {:file "Compiler.java" :line 3701 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 3223 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 3701 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 457 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7182 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7132 :method "eval" :flags [:dup :tooling :java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3214" :fn "eval"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3210" :fn "eval"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print"  :method "invoke" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+20
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+#'jarman.poligon/users-functions-f
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+#'jarman.alerts-service/message-server-creator
+clj::jarman.alerts-service=> 
+nil
+clj::jarman.poligon=> 
+; Syntax error reading source at (REPL:160:131).
+; Invalid number: 200x35
+[{:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:433" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:432" :fn "repl/read-eval-print"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+; Execution error (IllegalArgumentException) at net.miginfocom.swing.MigLayout/setComponentConstraintsImpl (REPL:-1).
+; Constraint must be String or ComponentConstraint: class seesaw.core.proxy$javax.swing.JLabel$Tag$fd407141
+[{:file "" :line -1 :method "setComponentConstraintsImpl" :flags [:unknown]}
+ {:file "" :line -1 :method "addLayoutComponent" :flags [:dup :unknown]}
+ {:file "Container.java" :line 1130 :method "addImpl" :flags [:java]}
+ {:file "" :line -1 :method "addImpl" :flags [:unknown]}
+ {:file "Container.java" :line 975 :method "add" :flags [:java]}
+ {:file "" :line -1 :method "add" :flags [:unknown]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/layout.clj:41" :fn "add-widget"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/layout.clj:36" :fn "add-widget"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/mig.clj:32" :fn "add-mig-items"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/mig.clj:29" :fn "add-mig-items"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:114" :fn "apply-option"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:111" :fn "apply-option"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:129" :fn "apply-options*"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:124" :fn "apply-options*"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:136" :fn "apply-options"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:132" :fn "apply-options"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/core.clj:939" :fn "abstract-panel"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/core.clj:935" :fn "abstract-panel"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/core.clj:940" :fn "abstract-panel"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/core.clj:935" :fn "abstract-panel"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/mig.clj:63" :fn "mig-panel"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/mig.clj:44" :fn "mig-panel"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 512 :method "invoke" :flags [:java]}
+ {:file "file:/c:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:123" :fn "users-functions-f"  :method "invokeStatic" :flags [:project :repl :clj]}
+ {:file "file:/c:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:123" :fn "users-functions-f"  :method "invoke" :flags [:dup :project :repl :clj]}
+ {:file "file:/C:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:142" :fn "eval35504"  :method "invokeStatic" :flags [:project :repl :clj]}
+ {:file "file:/C:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:142" :fn "eval35504"  :method "invoke" :flags [:dup :project :repl :clj]}
+ {:file "Compiler.java" :line 7177 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7132 :method "eval" :flags [:dup :tooling :java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3214" :fn "eval"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3210" :fn "eval"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print"  :method "invoke" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+#'jarman.poligon/users-functions-f
+clj::jarman.poligon=> 
+; Execution error (IllegalArgumentException) at net.miginfocom.swing.MigLayout/setComponentConstraintsImpl (REPL:-1).
+; Constraint must be String or ComponentConstraint: class seesaw.core.proxy$javax.swing.JLabel$Tag$fd407141
+[{:file "" :line -1 :method "setComponentConstraintsImpl" :flags [:unknown]}
+ {:file "" :line -1 :method "addLayoutComponent" :flags [:dup :unknown]}
+ {:file "Container.java" :line 1130 :method "addImpl" :flags [:java]}
+ {:file "" :line -1 :method "addImpl" :flags [:unknown]}
+ {:file "Container.java" :line 975 :method "add" :flags [:java]}
+ {:file "" :line -1 :method "add" :flags [:unknown]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/layout.clj:41" :fn "add-widget"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/layout.clj:36" :fn "add-widget"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/mig.clj:32" :fn "add-mig-items"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/mig.clj:29" :fn "add-mig-items"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:114" :fn "apply-option"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:111" :fn "apply-option"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:129" :fn "apply-options*"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:124" :fn "apply-options*"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:136" :fn "apply-options"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:132" :fn "apply-options"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/core.clj:939" :fn "abstract-panel"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/core.clj:935" :fn "abstract-panel"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/core.clj:940" :fn "abstract-panel"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/core.clj:935" :fn "abstract-panel"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/mig.clj:63" :fn "mig-panel"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/mig.clj:44" :fn "mig-panel"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 512 :method "invoke" :flags [:java]}
+ {:file "file:/c:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:123" :fn "users-functions-f"  :method "invokeStatic" :flags [:project :repl :clj]}
+ {:file "file:/c:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:123" :fn "users-functions-f"  :method "invoke" :flags [:dup :project :repl :clj]}
+ {:file "file:/C:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:142" :fn "eval35525"  :method "invokeStatic" :flags [:project :repl :clj]}
+ {:file "file:/C:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:142" :fn "eval35525"  :method "invoke" :flags [:dup :project :repl :clj]}
+ {:file "Compiler.java" :line 7177 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7132 :method "eval" :flags [:dup :tooling :java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3214" :fn "eval"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3210" :fn "eval"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print"  :method "invoke" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+; Syntax error reading source at (REPL:159:131).
+; Invalid number: 200x35
+[{:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:433" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:432" :fn "repl/read-eval-print"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+; Execution error (IllegalArgumentException) at net.miginfocom.swing.MigLayout/setComponentConstraintsImpl (REPL:-1).
+; Constraint must be String or ComponentConstraint: class seesaw.core.proxy$javax.swing.JLabel$Tag$fd407141
+[{:file "" :line -1 :method "setComponentConstraintsImpl" :flags [:unknown]}
+ {:file "" :line -1 :method "addLayoutComponent" :flags [:dup :unknown]}
+ {:file "Container.java" :line 1130 :method "addImpl" :flags [:java]}
+ {:file "" :line -1 :method "addImpl" :flags [:unknown]}
+ {:file "Container.java" :line 975 :method "add" :flags [:java]}
+ {:file "" :line -1 :method "add" :flags [:unknown]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/layout.clj:41" :fn "add-widget"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/layout.clj:36" :fn "add-widget"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/mig.clj:32" :fn "add-mig-items"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/mig.clj:29" :fn "add-mig-items"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:114" :fn "apply-option"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:111" :fn "apply-option"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:129" :fn "apply-options*"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:124" :fn "apply-options*"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:136" :fn "apply-options"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:132" :fn "apply-options"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/core.clj:939" :fn "abstract-panel"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/core.clj:935" :fn "abstract-panel"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/core.clj:940" :fn "abstract-panel"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/core.clj:935" :fn "abstract-panel"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/mig.clj:63" :fn "mig-panel"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/mig.clj:44" :fn "mig-panel"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 512 :method "invoke" :flags [:java]}
+ {:file "file:/c:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:123" :fn "users-functions-f"  :method "invokeStatic" :flags [:project :repl :clj]}
+ {:file "file:/c:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:123" :fn "users-functions-f"  :method "invoke" :flags [:dup :project :repl :clj]}
+ {:file "file:/C:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:141" :fn "eval35682"  :method "invokeStatic" :flags [:project :repl :clj]}
+ {:file "file:/C:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:141" :fn "eval35682"  :method "invoke" :flags [:dup :project :repl :clj]}
+ {:file "Compiler.java" :line 7177 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7132 :method "eval" :flags [:dup :tooling :java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3214" :fn "eval"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3210" :fn "eval"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print"  :method "invoke" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+; Syntax error reading source at (REPL:159:131).
+; Invalid number: 200x35
+[{:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:433" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:432" :fn "repl/read-eval-print"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+; Syntax error reading source at (REPL:159:131).
+; Invalid number: 200x35
+[{:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:433" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:432" :fn "repl/read-eval-print"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+; Syntax error reading source at (REPL:159:131).
+; Invalid number: 200x35
+[{:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:433" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:432" :fn "repl/read-eval-print"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+; Execution error (IllegalArgumentException) at net.miginfocom.swing.MigLayout/setComponentConstraintsImpl (REPL:-1).
+; Constraint must be String or ComponentConstraint: class seesaw.core.proxy$javax.swing.JLabel$Tag$fd407141
+[{:file "" :line -1 :method "setComponentConstraintsImpl" :flags [:unknown]}
+ {:file "" :line -1 :method "addLayoutComponent" :flags [:dup :unknown]}
+ {:file "Container.java" :line 1130 :method "addImpl" :flags [:java]}
+ {:file "" :line -1 :method "addImpl" :flags [:unknown]}
+ {:file "Container.java" :line 975 :method "add" :flags [:java]}
+ {:file "" :line -1 :method "add" :flags [:unknown]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/layout.clj:41" :fn "add-widget"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/layout.clj:36" :fn "add-widget"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/mig.clj:32" :fn "add-mig-items"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/mig.clj:29" :fn "add-mig-items"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:114" :fn "apply-option"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:111" :fn "apply-option"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:129" :fn "apply-options*"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:124" :fn "apply-options*"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:136" :fn "apply-options"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/options.clj:132" :fn "apply-options"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/core.clj:939" :fn "abstract-panel"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/core.clj:935" :fn "abstract-panel"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/core.clj:940" :fn "abstract-panel"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/core.clj:935" :fn "abstract-panel"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/mig.clj:63" :fn "mig-panel"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/seesaw/seesaw/1.5.0/seesaw-1.5.0.jar!/seesaw/mig.clj:44" :fn "mig-panel"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 512 :method "invoke" :flags [:java]}
+ {:file "file:/c:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:123" :fn "users-functions-f"  :method "invokeStatic" :flags [:project :repl :clj]}
+ {:file "file:/c:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:123" :fn "users-functions-f"  :method "invoke" :flags [:dup :project :repl :clj]}
+ {:file "file:/C:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:128" :fn "eval36082"  :method "invokeStatic" :flags [:project :repl :clj]}
+ {:file "file:/C:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:128" :fn "eval36082"  :method "invoke" :flags [:dup :project :repl :clj]}
+ {:file "Compiler.java" :line 7177 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7132 :method "eval" :flags [:dup :tooling :java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3214" :fn "eval"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3210" :fn "eval"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print"  :method "invoke" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+#'jarman.poligon/users-functions-f
+clj::jarman.poligon=> 
+#object[seesaw.core.proxy$javax.swing.JPanel$Tag$fd407141 0x7c01fa08 "seesaw.core.proxy$javax.swing.JPanel$Tag$fd407141[,0,0,0x0,invalid,layout=net.miginfocom.swing.MigLayout,alignmentX=0.0,alignmentY=0.0,border=,flags=16777225,maximumSize=,minimumSize=,preferredSize=]"]
+clj::jarman.poligon=> 
+; Syntax error reading source at (REPL:159:131).
+; Invalid number: 200x35
+[{:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:433" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:432" :fn "repl/read-eval-print"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+#object[seesaw.core.proxy$javax.swing.JPanel$Tag$fd407141 0x5ddeb838 "seesaw.core.proxy$javax.swing.JPanel$Tag$fd407141[,0,0,0x0,invalid,layout=net.miginfocom.swing.MigLayout,alignmentX=0.0,alignmentY=0.0,border=,flags=16777225,maximumSize=,minimumSize=,preferredSize=]"]
+clj::jarman.poligon=> 
+; Syntax error reading source at (REPL:159:131).
+; Invalid number: 200x35
+[{:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:433" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:432" :fn "repl/read-eval-print"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+; Execution error at jarman.poligon/eval36340 (form-init8073460670503239460.clj:141).
+; Unable to convert: class seesaw.core.proxy$javax.swing.JPanel$Tag$fd407141 to Object[]
+[{:file "Util.java" :line 221 :method "runtimeException" :flags [:java]}
+ {:file "RT.java" :line 1721 :method "toArray" :flags [:java]}
+ {:file "LazilyPersistentVector.java" :line 48 :method "create" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:377" :fn "vec"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:367" :fn "vec"  :method "invoke" :flags [:clj]}
+ {:file "file:/C:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:141" :fn "eval36340"  :method "invokeStatic" :flags [:project :repl :clj]}
+ {:file "file:/C:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:141" :fn "eval36340"  :method "invoke" :flags [:dup :project :repl :clj]}
+ {:file "Compiler.java" :line 7177 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7132 :method "eval" :flags [:dup :tooling :java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3214" :fn "eval"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3210" :fn "eval"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print"  :method "invoke" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+; Execution error (ClassCastException) at jarman.poligon/eval36358 (form-init8073460670503239460.clj:141).
+; seesaw.core.proxy$javax.swing.JPanel$Tag$fd407141 cannot be cast to clojure.lang.IFn
+[{:file "file:/C:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:141" :fn "eval36358"  :method "invokeStatic" :flags [:project :repl :clj]}
+ {:file "file:/C:/Aleks/Github/jarman/jarman/src/jarman/poligon.clj:141" :fn "eval36358"  :method "invoke" :flags [:dup :project :repl :clj]}
+ {:file "Compiler.java" :line 7177 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7132 :method "eval" :flags [:dup :tooling :java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3214" :fn "eval"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3210" :fn "eval"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print"  :method "invoke" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+(#object[seesaw.core.proxy$javax.swing.JPanel$Tag$fd407141 0x131bfd1d "seesaw.core.proxy$javax.swing.JPanel$Tag$fd407141[,0,0,0x0,invalid,layout=net.miginfocom.swing.MigLayout,alignmentX=0.0,alignmentY=0.0,border=,flags=16777225,maximumSize=,minimumSize=,preferredSize=]"])
+clj::jarman.poligon=> 
+[#object[seesaw.core.proxy$javax.swing.JPanel$Tag$fd407141 0x1a3185b7 "seesaw.core.proxy$javax.swing.JPanel$Tag$fd407141[,0,0,0x0,invalid,layout=net.miginfocom.swing.MigLayout,alignmentX=0.0,alignmentY=0.0,border=,flags=16777225,maximumSize=,minimumSize=,preferredSize=]"]]
+clj::jarman.poligon=> 
+; Syntax error reading source at (REPL:159:131).
+; Invalid number: 200x35
+[{:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:433" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:432" :fn "repl/read-eval-print"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+#'jarman.poligon/btn-summer-f
+clj::jarman.poligon=> 
+; Syntax error reading source at (REPL:159:131).
+; Invalid number: 200x35
+[{:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:433" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:432" :fn "repl/read-eval-print"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+; Syntax error reading source at (REPL:159:271).
+; No reader function for tag object
+[{:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:433" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:432" :fn "repl/read-eval-print"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+; Syntax error reading source at (REPL:159:271).
+; No reader function for tag object
+[{:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:433" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:432" :fn "repl/read-eval-print"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+; Syntax error reading source at (REPL:159:271).
+; No reader function for tag object
+[{:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:433" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:432" :fn "repl/read-eval-print"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+2
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+; Syntax error reading source at (REPL:159:132).
+; Invalid number: 200x35
+[{:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:433" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:432" :fn "repl/read-eval-print"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+; Syntax error reading source at (REPL:159:132).
+; Invalid number: 200x35
+[{:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:433" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:432" :fn "repl/read-eval-print"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+; Syntax error compiling at (c:\Aleks\Github\jarman\jarman\src\jarman\poligon.clj:141:112).
+; Unable to resolve symbol: e in this context
+[{:file "Compiler.java" :line 6808 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6745 :method "analyze" :flags [:dup :tooling :java]}
+ {:file "Compiler.java" :line 3888 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7109 :method "analyzeSeq" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6789 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6745 :method "analyze" :flags [:dup :tooling :java]}
+ {:file "Compiler.java" :line 3888 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7109 :method "analyzeSeq" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6789 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6745 :method "analyze" :flags [:dup :tooling :java]}
+ {:file "Compiler.java" :line 6120 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 5467 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 4029 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7105 :method "analyzeSeq" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6789 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7174 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7132 :method "eval" :flags [:dup :tooling :java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3214" :fn "eval"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3210" :fn "eval"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print"  :method "invoke" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+; Syntax error (ArityException) compiling count at (c:\Aleks\Github\jarman\jarman\src\jarman\poligon.clj:141:84).
+; Wrong number of args (2) passed to: clojure.core/count--inliner--5521
+[{:file "Compiler.java" :line 7115 :method "analyzeSeq" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6789 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6745 :method "analyze" :flags [:dup :tooling :java]}
+ {:file "Compiler.java" :line 3888 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7109 :method "analyzeSeq" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6789 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6745 :method "analyze" :flags [:dup :tooling :java]}
+ {:file "Compiler.java" :line 2824 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7107 :method "analyzeSeq" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6789 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6745 :method "analyze" :flags [:dup :tooling :java]}
+ {:file "Compiler.java" :line 2829 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7107 :method "analyzeSeq" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6789 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6745 :method "analyze" :flags [:dup :tooling :java]}
+ {:file "Compiler.java" :line 6120 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7107 :method "analyzeSeq" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6789 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6745 :method "analyze" :flags [:dup :tooling :java]}
+ {:file "Compiler.java" :line 6120 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 5467 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 4029 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7105 :method "analyzeSeq" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6789 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7095 :method "analyzeSeq" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6789 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6745 :method "analyze" :flags [:dup :tooling :java]}
+ {:file "Compiler.java" :line 3260 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6791 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6745 :method "analyze" :flags [:dup :tooling :java]}
+ {:file "Compiler.java" :line 3888 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7109 :method "analyzeSeq" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6789 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6745 :method "analyze" :flags [:dup :tooling :java]}
+ {:file "Compiler.java" :line 6120 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6436 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7107 :method "analyzeSeq" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6789 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7095 :method "analyzeSeq" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6789 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6745 :method "analyze" :flags [:dup :tooling :java]}
+ {:file "Compiler.java" :line 6120 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 5467 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 4029 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7105 :method "analyzeSeq" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6789 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7095 :method "analyzeSeq" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6789 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 38 :method "access$300" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 596 :method "parse" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7107 :method "analyzeSeq" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6789 :method "analyze" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 6745 :method "analyze" :flags [:dup :tooling :java]}
+ {:file "Compiler.java" :line 7181 :method "eval" :flags [:tooling :java]}
+ {:file "Compiler.java" :line 7132 :method "eval" :flags [:dup :tooling :java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3214" :fn "eval"  :method "invokeStatic" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/core.clj:3210" :fn "eval"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:437" :fn "repl/read-eval-print"  :method "invoke" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl/fn"  :method "invoke" :flags [:clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:458" :fn "repl"  :method "invokeStatic" :flags [:dup :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/org/clojure/clojure/1.10.1/clojure-1.10.1.jar!/clojure/main.clj:368" :fn "repl"  :method "doInvoke" :flags [:clj]}
+ {:file "RestFn.java" :line 1523 :method "invoke" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:79" :fn "evaluate"  :method "invokeStatic" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:55" :fn "evaluate"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/interruptible_eval.clj:142" :fn "interruptible-eval/fn/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:171" :fn "session-exec/main-loop/fn"  :method "invoke" :flags [:tooling :clj]}
+ {:file "jar:file:/C:/Users/PRACA/.m2/repository/nrepl/nrepl/0.6.0/nrepl-0.6.0.jar!/nrepl/middleware/session.clj:170" :fn "session-exec/main-loop"  :method "invoke" :flags [:tooling :clj]}
+ {:file "AFn.java" :line 22 :method "run" :flags [:java]}
+ {:file "Thread.java" :line 748 :method "run" :flags [:java]}]
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 
+nil
+clj::jarman.poligon=> 

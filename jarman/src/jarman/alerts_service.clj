@@ -95,7 +95,7 @@
     (add-watch alerts-storage :refresh
                (fn [key atom old-state new-state]
                  (cond
-                   (> (count @alerts-storage) 0) (do (print "Refresh alerts")
+                   (> (count @alerts-storage) 0) (do ;;(print "Refresh alerts")
                                                      (config! message-space :items (map (fn [item] (get item :component)) @alerts-storage))
                                                      (Thread/sleep 50)
                                                      (template-resize message-space))

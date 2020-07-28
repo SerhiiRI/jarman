@@ -66,15 +66,23 @@
     :else 0))
 
 (defn template-resize
-  [message-space app-template] (let [margin 10
-                        v-size (.getSize    (to-root message-space))
-                        vw     (.getWidth   v-size)
-                        vh     (.getHeight  v-size)
-                        hpanel (countHeight (seesaw.util/children message-space))
-                        wpanel (.getWidth (.preferredSize (first (seesaw.util/children message-space))))]
-                    (do 
-                      (config! message-space :bounds [(- vw wpanel (* margin 2)) (- vh hpanel margin) wpanel hpanel])
-                      (config! app-template  :bounds [0 0 vw vh]))))
+  ([app-template]
+   (let [margin 10
+         v-size (.getSize    (to-root app-template))
+         vw     (.getWidth   v-size)
+         vh     (.getHeight  v-size)]
+     (config! app-template  :bounds [0 0 vw vh])))
+  
+  ([message-space app-template]
+   (let [margin 10
+         v-size (.getSize    (to-root message-space))
+         vw     (.getWidth   v-size)
+         vh     (.getHeight  v-size)
+         hpanel (countHeight (seesaw.util/children message-space))
+         wpanel (.getWidth (.preferredSize (first (seesaw.util/children message-space))))]
+     (do
+       (config! message-space :bounds [(- vw wpanel (* margin 2)) (- vh hpanel margin) wpanel hpanel])
+       (config! app-template  :bounds [0 0 vw vh])))))
 
 (defn message-server-creator
   "Description:

@@ -22,77 +22,89 @@
 (import java.awt.Point)
 (import java.awt.Color)
 
+(def hand-hover-on  (fn [e] (config! e :cursor :hand)))
+(def hand-hover-off (fn [e] (config! e :cursor :hand)))
+
+(def func-ico-f (fn [ic] (label :icon (image-scale ic 28)
+                                :background (new Color 0 0 0 0)
+                                :border (empty-border :left 3 :right 3)
+                                :listen [:mouse-entered hand-hover-on])))
+
+(def alert-ico-f (fn [ic] (label :icon (image-scale ic 28)
+                                 :background (new Color 0 0 0 0)
+                                 :border (empty-border :left 3 :right 3))))
+
+(def func-header-f (fn [txt] (label :text txt
+                                    :font {:size 14 :style :bold}
+                                    :background (new Color 0 0 0 0))))
+
+(def func-body-f (fn [txt] (label :text txt
+                                  :font {:size 13}
+                                  :background (new Color 0 0 0 0)
+                                  :border (empty-border :left 5 :right 5 :bottom 2))))
+
 
 
 (defn message
   [& args]
   (let [font-c "#000"
-        back-c "#fff"
-        header (fn [txt] (format
-                          "<html>
-                        <style>
-                          p{font-size: 1.15em; 
-                            font-family: \"Monospaced\", serif; 
-                         }
-                        </style>
-                        <body>
-                          <p>%s</p>
-                        </body>
-                        </html>" txt))
-        body   (fn [txt] (format
-                          "<html>
-                        <style>
-                          p{font-size: 1.05em; 
-                            font-family: \"Monospaced\", serif; 
-                         }
-                        </style>
-                        <body>
-                          <p>%s</p>
-                        </body>
-                        </html>" txt))]
-    (vertical-panel
-    ;  :background (new Color 0 0 0 0)
-
+        back-c "#fff"]
+    (mig-panel
+     :id :alert-box
+     :constraints ["wrap 1" "0px[fill, grow]0px" "0px[20]0px[30]0px[20]0px"]
      :background back-c
      :border nil
-     :items [(label
-              :text (header (if (> (count args) 1) (first args) "Powiadomienie"))
-              :icon (image-scale icon/agree-64-png 30)
-              :border nil
-              :foreground font-c
-              :background back-c)
-             (label
-              :text (body (if (> (count args) 1) (second args) (first args)))
-              :border nil
-              :foreground font-c
-              :background back-c
-              :listen [:mouse-entered (fn [e]
-                                        (config! e :cursor :hand))
-                       :mouse-exited (fn [e]
-                                       (config! e :cursor :pointer))])
-             (horizontal-panel
-              :items [(label
-                       :icon (image-scale icon/agree-64-png 30))
-                      (label
-                       :icon (image-scale icon/agree-64-png 30))
-                      (label
-                       :icon (image-scale icon/agree-64-png 30))])])))
+     :bounds [680 480 300 75]
+     :items [[(flow-panel
+               :align :left
+               :background (new Color 0 0 0 0)
+               :items [(alert-ico-f icon/alert-64-png)
+                       (func-header-f "Powiadomienie")])]
+             [(func-body-f "Tekst powiadomienia ...")]
+             [(flow-panel
+               :align :right
+               :background (new Color 0 0 0 1)
+               :items [(func-ico-f icon/agree-64-png)
+                       (func-ico-f icon/settings-64x64-png)])]]
+    ;;  :items [(label
+    ;;           :text (header (if (> (count args) 1) (first args) "Powiadomienie"))
+    ;;           :icon (image-scale icon/agree-64-png 30)
+    ;;           :border nil
+    ;;           :foreground font-c
+    ;;           :background back-c)
+    ;;          (label
+    ;;           :text (body (if (> (count args) 1) (second args) (first args)))`
+    ;;           :border nil
+    ;;           :foreground font-c
+    ;;           :background back-c
+    ;;           :listen [:mouse-entered (fn [e]
+    ;;                                     (config! e :cursor :hand))
+    ;;                    :mouse-exited (fn [e]
+    ;;                                    (config! e :cursor :pointer))])
+    ;;          (horizontal-panel
+    ;;           :items [(label
+    ;;                    :icon (image-scale icon/agree-64-png 30))
+    ;;                   (label
+    ;;                    :icon (image-scale icon/agree-64-png 30))
+    ;;                   (label
+    ;;                    :icon (image-scale icon/agree-64-png 30))])]
+)))
 
 
 ;; (show-options (horizontal-panel))
 
-(def alerts-panel (vertical-panel :items [(label)]
-                                  :bounds [0 0 300 0]
-                                  :background (new Color 0 0 0 0)))
+;; (def alerts-panel (vertical-panel :items [(label)]
+;;                                   :bounds [0 0 300 0]
+;;                                   :background (new Color 0 0 0 0)))
 
-(def alerts-s (message-server-creator alerts-panel))
+;; (def alerts-s (message-server-creator alerts-panel))
 
 
-(defn writer [] (text :text ""
-                      :bounds [0 0 200 30]
-                      :listen [:action (fn [x] (do
-                                                 (alerts-s :set (message (config x :text)) 3)
-                                                 (config! x :text "")))]))
+;; (defn writer [] (text :text ""
+;;                       :bounds [0 0 200 30]
+;;                       :listen [:action (fn [x] (do
+;;                                                  (alerts-s :set (message (config x :text)) 3)
+;;                                                  (config! x :text "")))]))
 
 
 (def btn-icon-f (fn [ico order size txt]
@@ -213,6 +225,11 @@
                                 :background (new Color 0 0 0 0)
                                 :items array)]]))))
 
+(defn get-elements-in-layered-by-id 
+  [e ids] (let [id (keyword ids)
+               select-id (keyword (string/join["#" ids]))] 
+           (filter (fn [i] (identical? (config i :id) id)) (seesaw.util/children (.getParent (select (to-root e) [select-id]))))))
+
 (def jarmanapp (grid-panel
                 :bounds [0 0 300 300]
                 :items [(mig-panel
@@ -221,8 +238,18 @@
                                        "0px[fill, grow]0px"]
                          :items [[(label :background "#eee")]
                                  [(mig-app-left-f  [(btn-summer-f "Ukryte opcje 1" 
-                                                                  (label :text "Opcja 1" :background "#fff" :size [200 :by 25])
-                                                                  (label :text "Opcja 2" :background "#fff" :size [200 :by 25]))]
+                                                                  (label :text "Opcja 1" :background "#fff" :size [200 :by 25]
+                                                                         :listen [:mouse-clicked (fn [e] (println "Test Option 1 click"))]
+                                                                         )
+                                                                  (label :text "Opcja 2" :background "#fff" :size [200 :by 25]
+                                                                         :listen [:mouse-clicked (fn [e]
+                                                                                                  (let [list-of-alerts (get-elements-in-layered-by-id e "alert-box")]
+                                                                                                    (do 
+                                                                                                      (println "Recolorize")
+                                                                                                      (vec (map (fn [i] (config! i :background "#000")) list-of-alerts))
+                                                                                                      )) 
+                                                                                                   )]
+                                                                         ))]
                                                     [(btn-summer-f "Ukryte opcje 2")])]
                                  [(mig-app-right-f [(btn-tab-f "Tab 1" 1) (btn-tab-f "Tab 2" 0)]
                                                    [(label :text "GRID")])]])]))
@@ -240,7 +267,9 @@
       (.add jarmanapp (new Integer 5))
       ; (.add alerts-panel (new Integer 10)) Alerts messages
       (.add (btn-icon-f (image-scale icon/user-64x64-2-png menu-icon-size) 0 menu-icon-size "Klienci") (new Integer 10))
-      (.add (btn-icon-f (image-scale icon/settings-64x64-png menu-icon-size) 1 menu-icon-size "Konfiguracja") (new Integer 10)))))
+      (.add (btn-icon-f (image-scale icon/settings-64x64-png menu-icon-size) 1 menu-icon-size "Konfiguracja") (new Integer 10))
+      (.add (message "") (new Integer 15))
+      )))
 
 
 ;; (do (alerts-s :rmall)
@@ -252,16 +281,21 @@
            :content (app)
            :listen [:component-resized (fn [e] 
                                         ;  (template-resize alerts-panel jarmanapp)
-                                         (template-resize jarmanapp)
+                                         (do (template-resize jarmanapp)
+                                             )
                                          )]
            )
       (.setLocationRelativeTo nil) pack! show!))
+
+
+
+
 
 ; (.getWidth (.preferredSize (first (seesaw.util/children alerts-panel))))
 
 ; (config alerts-panel :size)
 
-(alerts-s :set (message "Informacja o aktualizacji" "Dostępna nowa aktualizacja, możesz ją pobrać teraz lub później!") 0)
+;; (alerts-s :set (message "Informacja o aktualizacji" "Dostępna nowa aktualizacja, możesz ją pobrać teraz lub później!") 0)
 ;; (alerts-s :set (update-alert "Dostępna nowa aktualizacja" "Dostępna nowa aktualizacja, jeśli masz ochotę zrobić ją teraz to ok.") 0)
 ;; (alerts-s :set (update-alert "Dostępna nowa aktualizacja, jeśli masz ochotę zrobić ją teraz to ok." "Aktualizuj<br>teraz") 0)
 ;; (alerts-s :set (message "bbbb") 0)

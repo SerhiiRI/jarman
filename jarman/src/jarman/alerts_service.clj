@@ -53,36 +53,7 @@
    "
   [alerts-storage] (reset! alerts-storage []))
 
-(defn countHeight
-  "Description:
-       Function get list of children and sums heights
-   Example: 
-       (countHeight list-of-children) => 42.0
-   "
-  [children]
-  (cond
-    (> (count children) 0)
-    (+ (+ (reduce (fn [acc chil] (+ acc (.getHeight (.getSize chil)))) 34 children)))
-    :else 0))
 
-(defn template-resize
-  ([app-template]
-   (let [margin 10
-         v-size (.getSize    (to-root app-template))
-         vw     (.getWidth   v-size)
-         vh     (.getHeight  v-size)]
-     (config! app-template  :bounds [0 0 vw vh])))
-  
-  ([message-space app-template]
-   (let [margin 10
-         v-size (.getSize    (to-root message-space))
-         vw     (.getWidth   v-size)
-         vh     (.getHeight  v-size)
-         hpanel (countHeight (seesaw.util/children message-space))
-         wpanel (.getWidth (.preferredSize (first (seesaw.util/children message-space))))]
-     (do
-       (config! message-space :bounds [(- vw wpanel (* margin 2)) (- vh hpanel margin) wpanel hpanel])
-       (config! app-template  :bounds [0 0 vw vh])))))
 
 (defn message-server-creator
   "Description:
@@ -96,13 +67,15 @@
                (fn [key atom old-state new-state]
                  (cond
                    (> (count @alerts-storage) 0) (do ;;(print "Refresh alerts")
-                                                     (config! message-space :items (map (fn [item] (get item :component)) @alerts-storage))
-                                                     (Thread/sleep 50)
-                                                     (template-resize message-space))
-                   :else (do (print "No more message")
-                             (config! message-space :items [] :bounds [(.getWidth  (.getSize    (to-root message-space)))
-                                                                       (.getHeight (.getSize    (to-root message-space)))
-                                                                       0 0])))))
+                                                    ;;  (config! message-space :items (map (fn [item] (get item :component)) @alerts-storage))
+                                                   (println)
+                                                   (println)
+                                                   (let [list-of-no-alert (filter (fn [i] (not (identical? (config i :id) :alert-box))) (seesaw.util/children message-space))]
+                                                     (println (concat list-of-no-alert (map (fn [item] (get item :component)) @alerts-storage))))
+
+                                                    ;; (Thread/sleep 50)
+                                                    ;;  (template-resize message-space))
+                                                   ))))
    (fn [action & param]
      (cond
        (= action :set) (let [[component timelife] param] (addAlertTimeout component timelife alerts-storage))
@@ -115,7 +88,7 @@
 ;; (def alerts (message-server-creator messages))
 
 ;; Add message
-;; (alerts :set (label :text "Hello world!") 3)
+;; (alerts :set (label :text "Hello world!") 3)a
 ;; (alerts :set (label :text "I am sexy and I'm know IT!") 1)
 ;; (alerts :set (label :text "Niezgadniesz nigdy Spock gdzie otwarli parasol )") 3)
 

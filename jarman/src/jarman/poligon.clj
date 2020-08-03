@@ -5,7 +5,8 @@
         seesaw.mig
         ;; jarman.ftoolth
         jarman.dev-tools
-        jarman.alerts-service)
+        jarman.alerts-service
+        )
   (:require [jarman.icon-library :as icon]
             [clojure.string :as string]))
 
@@ -25,10 +26,11 @@
 (def hand-hover-on  (fn [e] (config! e :cursor :hand)))
 (def hand-hover-off (fn [e] (config! e :cursor :hand)))
 
-(def func-ico-f (fn [ic] (label :icon (image-scale ic 28)
-                                :background (new Color 0 0 0 0)
-                                :border (empty-border :left 3 :right 3)
-                                :listen [:mouse-entered hand-hover-on])))
+(def func-ico-f (fn [ic & args] (label :icon (image-scale ic (if (> (count args) 0) (first args) 28))
+                                       :background (new Color 0 0 0 0)
+                                       :border (empty-border :left 3 :right 3)
+                                       :listen [:mouse-entered hand-hover-on 
+                                                :mouse-clicked (if (> (count args) 1) (second args) (fn [e]))])))
 
 (def alert-ico-f (fn [ic] (label :icon (image-scale ic 28)
                                  :background (new Color 0 0 0 0)
@@ -43,9 +45,46 @@
                                   :background (new Color 0 0 0 0)
                                   :border (empty-border :left 5 :right 5 :bottom 2))))
 
+(defn getWidth [obj] (.width (.getSize obj)))
+(defn getHeight [obj] (.height (.getSize obj)))
 
+(defn template-resize
+  [app-template]
+  (let [margin 10
+        v-size (.getSize    (to-root app-template))
+        vw     (.getWidth   v-size)
+        vh     (.getHeight  v-size)]
+    (config! app-template  :bounds [0 0 vw vh])))
+
+
+(defn get-elements-in-layered-by-id
+  "Description:
+     Set same id inside elements and found them all.
+  Return:
+     List of components/objects => (object[xyz] object(xyz))
+  Example:
+     (get-elements-in-layered-by-id event_or_some_root 'id_in_string')
+  "
+  [e ids] (let [id (keyword ids)
+                select-id (keyword (string/join ["#" ids]))]
+            (filter (fn [i] (identical? (config i :id) id)) (seesaw.util/children (.getParent (select (to-root (seesaw.core/to-widget e)) [select-id]))))))
+
+(def alerts-rebounds-f
+  "Description:
+      This what should be resized with app window.
+   "
+  (fn [e] (let [list-of-alerts (get-elements-in-layered-by-id e "alert-box")
+                bound-x (- (getWidth (to-root (seesaw.core/to-widget e))) (getWidth (first list-of-alerts)) 20)
+                height 120]
+            (doseq [[n elem] (map-indexed #(vector %1 %2) list-of-alerts)]
+              (config! elem :bounds [bound-x (- (- (getHeight (to-root (seesaw.core/to-widget e))) height) (* 80 n)) 300 75])))))
 
 (defn message
+  "Description:
+      Template for messages. Using in JLayeredPanel.
+      X icon remove and rebound displayed message but do not 
+      remove message from storage.
+   "
   [& args]
   (let [font-c "#000"
         back-c "#fff"]
@@ -59,55 +98,29 @@
                :align :left
                :background (new Color 0 0 0 0)
                :items [(alert-ico-f icon/alert-64-png)
-                       (func-header-f "Powiadomienie")])]
-             [(func-body-f "Tekst powiadomienia ...")]
+                       (func-header-f (if (> (count args) 1) (second args) "Powiadomienie"))])]
+             [(func-body-f (if (> (count args) 0) (first args) "Szablon powiadomienia..."))]
              [(flow-panel
                :align :right
                :background (new Color 0 0 0 1)
                :items [(func-ico-f icon/agree-64-png)
-                       (func-ico-f icon/settings-64x64-png)])]]
-    ;;  :items [(label
-    ;;           :text (header (if (> (count args) 1) (first args) "Powiadomienie"))
-    ;;           :icon (image-scale icon/agree-64-png 30)
-    ;;           :border nil
-    ;;           :foreground font-c
-    ;;           :background back-c)
-    ;;          (label
-    ;;           :text (body (if (> (count args) 1) (second args) (first args)))`
-    ;;           :border nil
-    ;;           :foreground font-c
-    ;;           :background back-c
-    ;;           :listen [:mouse-entered (fn [e]
-    ;;                                     (config! e :cursor :hand))
-    ;;                    :mouse-exited (fn [e]
-    ;;                                    (config! e :cursor :pointer))])
-    ;;          (horizontal-panel
-    ;;           :items [(label
-    ;;                    :icon (image-scale icon/agree-64-png 30))
-    ;;                   (label
-    ;;                    :icon (image-scale icon/agree-64-png 30))
-    ;;                   (label
-    ;;                    :icon (image-scale icon/agree-64-png 30))])]
-)))
+                       (func-ico-f icon/settings-64x64-png)
+                       (func-ico-f icon/X-64x64-png 23 (fn [e] (do
+                                                                ;;  (println "X clicked")
+                                                                 (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))
+                                                                       layered (.getParent to-del)]
+                                                                   (.remove layered to-del)
+                                                                   (.repaint layered)
+                                                                   (if (select (to-root layered) [:#alert-box]) (alerts-rebounds-f layered))))))])]])))
 
 
-;; (show-options (horizontal-panel))
 
-;; (def alerts-panel (vertical-panel :items [(label)]
-;;                                   :bounds [0 0 300 0]
-;;                                   :background (new Color 0 0 0 0)))
-
-;; (def alerts-s (message-server-creator alerts-panel))
-
-
-;; (defn writer [] (text :text ""
-;;                       :bounds [0 0 200 30]
-;;                       :listen [:action (fn [x] (do
-;;                                                  (alerts-s :set (message (config x :text)) 3)
-;;                                                  (config! x :text "")))]))
-
-
-(def btn-icon-f (fn [ico order size txt]
+(def btn-icon-f 
+  "Description:
+      Slide buttons used in JLayeredPanel. Norlam state is small square with icon 
+      but on hover it will be wide and text will be inserted.
+   "
+  (fn [ico order size txt]
                   (let [bg-color "#ddd"
                         ;; color-onenter "#29295e"
                         color-hover-margin "#bbb"
@@ -133,13 +146,18 @@
                                                               :text ""
                                                               :cursor :default))]))))
 
-(def users-functions-f (fn [] (mig-panel
-                               :constraints ["wrap 1" "0px[300]0px" "0px[fill]0px"]
-                               :background (new Color 0 0 0 0)
-                               :items [[(label :text "Opcja 1")]
-                                       [(label :text "Opcja 2")]])))
 
-(def btn-summer-f (fn [txt & funcs]
+(def btn-summer-f 
+  "Description:
+      It's a space for main button with more option. 
+      Normal state is one button but after on click 
+      space will be bigger and another buttons will be added.
+      If button don't have any function, can not be expanded.
+   Using Example:
+      (btn-summer-f 'Button name' (Element or Component))
+      (btn-summer-f 'Settings' (button 'Do something'))
+      "
+  (fn [txt & funcs]
                     (let [bg-color "#eee"
                           margin-color "#fff"
                           border (compound-border (line-border :left 6 :color bg-color) (line-border :bottom 2 :color margin-color))
@@ -177,30 +195,38 @@
 
 
 
-(def btn-tab-f (fn [txt active]
-                 (let [bg-color (if (== active 1) "#eee" "#ccc")
-                       border "#fff"
-                       hsize 70
-                       vsize 30]
-                   (horizontal-panel
-                    :background bg-color
-                    :items [(label
-                             :text txt
-                             :halign :center
-                             :size [hsize :by vsize])
-                            (label
-                             :icon (image-scale icon/x-grey2-64-png 15)
-                             :halign :center
-                             :border (line-border :right 2 :color border)
-                             :size [vsize :by vsize]
-                             :listen [:mouse-entered (fn [e] (config! e :cursor :hand :icon (image-scale icon/x-blue1-64-png 15)))
-                                      :mouse-exited  (fn [e] (config! e :cursor :default :icon (image-scale icon/x-grey2-64-png 15)))])]
-                    :listen [:mouse-entered (fn [e] (config! e :cursor :hand))
-                             :mouse-exited  (fn [e] (config! e :cursor :default))]))))
+(def btn-tab-f
+  "Description:
+      Buttons for changing opened tables or functions in right part of app.
+   "
+  (fn [txt active]
+    (let [bg-color (if (== active 1) "#eee" "#ccc")
+          border "#fff"
+          hsize 70
+          vsize 30]
+      (horizontal-panel
+       :background bg-color
+       :items [(label
+                :text txt
+                :halign :center
+                :size [hsize :by vsize])
+               (label
+                :icon (image-scale icon/x-grey2-64-png 15)
+                :halign :center
+                :border (line-border :right 2 :color border)
+                :size [vsize :by vsize]
+                :listen [:mouse-entered (fn [e] (config! e :cursor :hand :icon (image-scale icon/x-blue1-64-png 15)))
+                         :mouse-exited  (fn [e] (config! e :cursor :default :icon (image-scale icon/x-grey2-64-png 15)))])]
+       :listen [:mouse-entered (fn [e] (config! e :cursor :hand))
+                :mouse-exited  (fn [e] (config! e :cursor :default))]))))
 
 
 (def mig-app-left-f
-  "elements by elements -> [(label)] [(label)] [(label)]"
+  "Description:
+      Vertical layout of elements, left part of app for functions)
+   Example:
+      (mig-app-left-f [(btn-summer-f 'Option 1')] [(btn-summer-f 'Option 2')])
+   "
   (fn [& args] (mig-panel
                 :background "#fff"
                 :border (line-border :left 4 :right 4 :color "#fff")
@@ -209,10 +235,14 @@
 
 (def mig-app-right-f
   "Description: 
-      Space for table and tabs on right part of app
-      tabs  -> mig vector with elements    -> [(tab1)(tab2)(tab3)]
-      array -> table like rows and columns -> [(table)]
-   Example: (mig-menu-lvl-3-f [(tab1) (tab2) (tab3)] [(table)])"
+      Vertical layout for tabs and table on right part of app. 
+      Tabs are inside horizontal panel on top.
+    
+   Example: 
+      tabs  -> mig vector with elements    -> [(tab1) (tab2) (tab3)]
+      array -> table like rows and columns -> [(table)]  
+      (mig-menu-lvl-3-f [(tab1) (tab2) (tab3)] 
+                        [(table)])"
   (fn [tabs array] (let [bg-color "#fff"]
                      (mig-panel
                       :background "#fff"
@@ -225,70 +255,67 @@
                                 :background (new Color 0 0 0 0)
                                 :items array)]]))))
 
-(defn get-elements-in-layered-by-id 
-  [e ids] (let [id (keyword ids)
-               select-id (keyword (string/join["#" ids]))] 
-           (filter (fn [i] (identical? (config i :id) id)) (seesaw.util/children (.getParent (select (to-root e) [select-id]))))))
-
-(def jarmanapp (grid-panel
-                :bounds [0 0 300 300]
-                :items [(mig-panel
-                         :constraints [""
-                                       "0px[50, fill]0px[200, fill]0px[fill, grow]0px"
-                                       "0px[fill, grow]0px"]
-                         :items [[(label :background "#eee")]
-                                 [(mig-app-left-f  [(btn-summer-f "Ukryte opcje 1" 
-                                                                  (label :text "Opcja 1" :background "#fff" :size [200 :by 25]
-                                                                         :listen [:mouse-clicked (fn [e] (println "Test Option 1 click"))]
-                                                                         )
-                                                                  (label :text "Opcja 2" :background "#fff" :size [200 :by 25]
-                                                                         :listen [:mouse-clicked (fn [e]
-                                                                                                  (let [list-of-alerts (get-elements-in-layered-by-id e "alert-box")]
-                                                                                                    (do 
-                                                                                                      (println "Recolorize")
-                                                                                                      (vec (map (fn [i] (config! i :background "#000")) list-of-alerts))
-                                                                                                      )) 
-                                                                                                   )]
-                                                                         ))]
-                                                    [(btn-summer-f "Ukryte opcje 2")])]
-                                 [(mig-app-right-f [(btn-tab-f "Tab 1" 1) (btn-tab-f "Tab 2" 0)]
-                                                   [(label :text "GRID")])]])]))
+(def jarmanapp
+  "Main space for app inside JLayeredPanel"
+  (grid-panel
+   :bounds [0 0 300 300]
+   :items [(mig-panel
+            :constraints [""
+                          "0px[50, fill]0px[200, fill]0px[fill, grow]0px"
+                          "0px[fill, grow]0px"]
+            :items [[(label :background "#eee")]
+                    [(mig-app-left-f  [(btn-summer-f "Ukryte opcje 1"
+                                                     (label :text "Opcja 1" :background "#fff" :size [200 :by 25]
+                                                            :listen [:mouse-clicked (fn [e] (println "Test Option 1 click"))])
+                                                     (label :text "Opcja 2" :background "#fff" :size [200 :by 25]
+                                                            :listen [:mouse-clicked (fn [e] (println "Test Option 2 click"))]))]
+                                      [(btn-summer-f "Ukryte opcje 2")])]
+                    [(mig-app-right-f [(btn-tab-f "Tab 1" 1) (btn-tab-f "Tab 2" 0)]
+                                      [(label :text "GRID")])]])]))
 
 
 ; (show-options (grid-panel))
 
 
-(defn app []
+(def app
   "Description:
-       Create panel for absolute position elements and add components
+       Create panel for absolute position elements
    "
   (let [menu-icon-size 50]
     (doto (new JLayeredPane)
       (.add jarmanapp (new Integer 5))
-      ; (.add alerts-panel (new Integer 10)) Alerts messages
       (.add (btn-icon-f (image-scale icon/user-64x64-2-png menu-icon-size) 0 menu-icon-size "Klienci") (new Integer 10))
       (.add (btn-icon-f (image-scale icon/settings-64x64-png menu-icon-size) 1 menu-icon-size "Konfiguracja") (new Integer 10))
-      (.add (message "") (new Integer 15))
+      ;; (.add (message ) (new Integer 15))
+      ;; (.add (message "Wolololo") (new Integer 15))
+      ;; (.add (message "Test powiadomienia" "Test") (new Integer 15))
       )))
+
 
 
 ;; (do (alerts-s :rmall)
 ;;     (alerts-s :set (message "No more message") 3))
 
+(def onresize-f
+  "Description:
+      This what should be resized with app window.
+   "
+  (fn [e] (do
+            (template-resize jarmanapp)
+            (alerts-rebounds-f e))))
+
 (-> (doto (seesaw.core/frame
            :title "DEBUG WINDOW" :undecorated? false
            :minimum-size [1000 :by 600]
-           :content (app)
-           :listen [:component-resized (fn [e] 
-                                        ;  (template-resize alerts-panel jarmanapp)
-                                         (do (template-resize jarmanapp)
-                                             )
-                                         )]
+           :content app
+           :listen [:component-resized (fn [e] (onresize-f e))]
            )
       (.setLocationRelativeTo nil) pack! show!))
 
-
-
+(def alerts-s (message-server-creator app))
+(alerts-s :set (message "FFFFFFUCKQ!") 0)
+(alerts-s :count)
+(alerts-s :rmall)
 
 
 ; (.getWidth (.preferredSize (first (seesaw.util/children alerts-panel))))

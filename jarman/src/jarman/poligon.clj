@@ -11,16 +11,16 @@
             [clojure.string :as string]))
 
 
-(import javax.swing.JInternalFrame)
-(import javax.swing.BorderFactory)
-(import javax.swing.JDesktopPane)
+;; (import javax.swing.JInternalFrame)
+;; (import javax.swing.BorderFactory)
+;; (import javax.swing.JDesktopPane)
+;; (import javax.swing.JButton)
+;; (import javax.swing.JFrame)
+;; (import javax.swing.JLabel)
+;; (import java.awt.Dimension)
+;; (import java.awt.Component)
+;; (import java.awt.Point)
 (import javax.swing.JLayeredPane)
-(import javax.swing.JButton)
-(import javax.swing.JFrame)
-(import javax.swing.JLabel)
-(import java.awt.Dimension)
-(import java.awt.Component)
-(import java.awt.Point)
 (import java.awt.Color)
 
 
@@ -46,20 +46,46 @@
                                   :background (new Color 0 0 0 0)
                                   :border (empty-border :left 5 :right 5 :bottom 2))))
 
-(defn template-resize
-  [app-template]
-  (let [margin 10
-        v-size (.getSize    (to-root app-template))
-        vw     (.getWidth   v-size)
-        vh     (.getHeight  v-size)]
-    (config! app-template  :bounds [0 0 vw vh])))
+(def template-resize
+  (fn [app-template]
+    (let [v-size (.getSize    (to-root app-template))
+          vw     (.getWidth   v-size)
+          vh     (.getHeight  v-size)]
+      (config! app-template  :bounds [0 0 vw vh]))))
+
+
+;; ---------------------------------------------------- APP STARTER v
+(def app-width 1000)
+(def app-height 600)
+(def app-bounds [0 0 app-width app-height])
+
+(def app
+  "Description:
+       Create panel for absolute position elements
+   "
+  (new JLayeredPane))
+
+
+(-> (doto (seesaw.core/frame
+           :title "DEBUG WINDOW" :undecorated? false
+           :minimum-size [1000 :by 600]
+           :content app
+           )
+      (.setLocationRelativeTo nil) pack! show!))
+
+(def alerts-s (message-server-creator app))
+;; ---------------------------------------------------- APP STARTER ^
+
 
 
 (defn message
   "Description:
       Template for messages. Using in JLayeredPanel.
-      X icon remove and rebound displayed message but do not 
-      remove message from storage.
+      X icon remove and rebound displayed message.
+   Example:
+      (message alerts-controller 'header' 'body')
+   Needed:
+      Service from 'message-server-creator' function
    "
   [alerts-controller & args]
   (let [font-c "#000"
@@ -81,17 +107,8 @@
                :background (new Color 0 0 0 1)
                :items [(func-ico-f icon/agree-64-png)
                        (func-ico-f icon/settings-64x64-png)
-                       (func-ico-f icon/X-64x64-png 23 (fn [e] (do
-                                                                ;;  (println "X clicked")
-                                                                 (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))
-                                                                      ;;  layered (.getParent to-del)
-                                                                       ]
-                                                                   (alerts-controller :rm-obj to-del)
-                                                                  ;;  (alerts-s :rm-obj to-del)
-                                                                  ;;  (.remove layered to-del)
-                                                                  ;;  (.repaint layered)
-                                                                  ;;  (alerts-rebounds-f layered)
-                                                                   ))))])]])))
+                       (func-ico-f icon/X-64x64-png 23 (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))]
+                                                                 (alerts-controller :rm-obj to-del))))])]])))
 
 
 
@@ -236,9 +253,11 @@
                                 :items array)]]))))
 
 (def jarmanapp
-  "Main space for app inside JLayeredPanel"
+  "Description:
+      Main space for app components inside JLayeredPanel
+      Bottom layer"
   (grid-panel
-   :bounds [0 0 300 300]
+   :bounds app-bounds
    :items [(mig-panel
             :constraints [""
                           "0px[50, fill]0px[200, fill]0px[fill, grow]0px"
@@ -246,35 +265,14 @@
             :items [[(label :background "#eee")]
                     [(mig-app-left-f  [(btn-summer-f "Ukryte opcje 1"
                                                      (label :text "Opcja 1" :background "#fff" :size [200 :by 25]
-                                                            :listen [:mouse-clicked (fn [e] (println "Test Option 1 click"))])
+                                                            :listen [:mouse-clicked (fn [e] (alerts-s :set (message alerts-s "Option 1 - 3 sek") 3))])
                                                      (label :text "Opcja 2" :background "#fff" :size [200 :by 25]
-                                                            :listen [:mouse-clicked (fn [e] (println "Test Option 2 click"))]))]
+                                                            :listen [:mouse-clicked (fn [e] (alerts-s :set (message alerts-s "Option 2 - 5 sek") 5))]))]
                                       [(btn-summer-f "Ukryte opcje 2")])]
                     [(mig-app-right-f [(btn-tab-f "Tab 1" 1) (btn-tab-f "Tab 2" 0)]
                                       [(label :text "GRID")])]])]))
 
 
-; (show-options (grid-panel))
-
-
-(def app
-  "Description:
-       Create panel for absolute position elements
-   "
-  (let [menu-icon-size 50]
-    (doto (new JLayeredPane)
-      (.add jarmanapp (new Integer 5))
-      (.add (btn-icon-f (image-scale icon/user-64x64-2-png menu-icon-size) 0 menu-icon-size "Klienci") (new Integer 10))
-      (.add (btn-icon-f (image-scale icon/settings-64x64-png menu-icon-size) 1 menu-icon-size "Konfiguracja") (new Integer 10))
-      ;; (.add (message ) (new Integer 15))
-      ;; (.add (message "Wolololo") (new Integer 15))
-      ;; (.add (message "Test powiadomienia" "Test") (new Integer 15))
-      )))
-
-
-
-;; (do (alerts-s :rmall)
-;;     (alerts-s :set (message "No more message") 3))
 
 (def onresize-f
   "Description:
@@ -284,36 +282,23 @@
             (template-resize jarmanapp)
             (alerts-rebounds-f e))))
 
-(-> (doto (seesaw.core/frame
-           :title "DEBUG WINDOW" :undecorated? false
-           :minimum-size [1000 :by 600]
-           :content app
-           :listen [:component-resized (fn [e] (onresize-f e))]
-           )
-      (.setLocationRelativeTo nil) pack! show!))
+(defn app-build
+  "Description:
+      Componenets to set to app
+      Top layer.
+   Example:
+      Just use it (app-build)"
+  [] (let [menu-icon-size 50]
+       (do
+         (.add app jarmanapp (new Integer 5))
+         (.add app (btn-icon-f (image-scale icon/user-64x64-2-png menu-icon-size) 0 menu-icon-size "Klienci") (new Integer 10))
+         (.add app (btn-icon-f (image-scale icon/settings-64x64-png menu-icon-size) 1 menu-icon-size "Konfiguracja") (new Integer 10))
+         (config! (to-root app) :listen [:component-resized (fn [e] (onresize-f e))])
+         (.repaint app))))
 
-(def alerts-s (message-server-creator app))
-
-(alerts-s :set (message alerts-s "FFFFFFUCKQ!") 2)
-(alerts-s :set (message alerts-s "Hell YEAH!") 0)
-(alerts-s :count)
-(alerts-s :rmall)
-
-
-; (.getWidth (.preferredSize (first (seesaw.util/children alerts-panel))))
-
-; (config alerts-panel :size)
-
-;; (alerts-s :set (message "Informacja o aktualizacji" "Dostępna nowa aktualizacja, możesz ją pobrać teraz lub później!") 0)
-;; (alerts-s :set (update-alert "Dostępna nowa aktualizacja" "Dostępna nowa aktualizacja, jeśli masz ochotę zrobić ją teraz to ok.") 0)
-;; (alerts-s :set (update-alert "Dostępna nowa aktualizacja, jeśli masz ochotę zrobić ją teraz to ok." "Aktualizuj<br>teraz") 0)
-;; (alerts-s :set (message "bbbb") 0)
+(app-build)
+;; (alerts-s :set (message alerts-s "FFFFFFUCKQ!") 2)
+;; (alerts-s :set (message alerts-s "Hell YEAH!") 0)
 ;; (alerts-s :count)
 ;; (alerts-s :rmall)
-
-;; (do (alerts-s :rmall)
-;;     (alerts-s :set (message "No more message") 3)
-;;     (update-messages-panel-size))
-
-; (show-options (horizontal-panel))
 

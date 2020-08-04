@@ -47,6 +47,26 @@
 ;; alerts storage for message/alerts service
 ;; (def alerts-storage (ref []))
 
+(def refresh-alerts
+  (fn [message-space alerts-storage] (do
+                                      ;;  (println)
+                                      ;;  (println)
+
+                                      ;;  (println "Remove alerts")
+                                       ;;  TODO: zamienic print na cos innego tak by sie wykonywalo przejscie po mapie
+                                       (print (map (fn [i] (if (identical? (config i :id) :alert-box) (.remove message-space i))) (seesaw.util/children message-space)))
+
+                                      ;;  (println "Add alerts")
+                                       ;;  TODO: zamienic print na cos innego tak by sie wykonywalo przejscie po mapie`
+                                       (print (map (fn [item] (.add message-space (get item :component) (new Integer 15))) @alerts-storage))
+
+                                      ;;  (Thread/sleep 50)
+
+                                      ;;  (println "Rebounds")
+                                       (alerts-rebounds-f message-space)
+
+                                      ;;  (println "Repainting")
+                                       (.repaint message-space))))
 
 (defn rmAlert
   "Description:
@@ -54,7 +74,9 @@
    Example: 
        (rmAlert 0 storage)
    "
-  [id alerts-storage] (swap! alerts-storage #(vec (filter (fn [item] (not (= (get item :id) id))) %))))
+  [id alerts-storage message-space] (do 
+                                      (swap! alerts-storage #(vec (filter (fn [item] (not (= (get item :id) id))) %)))
+                                      (refresh-alerts message-space alerts-storage)))
 
 
 (defn rmAlertObj
@@ -63,7 +85,9 @@
    Example: 
        (rmAlert 0 storage)
    "
-  [obj alerts-storage] (swap! alerts-storage #(vec (filter (fn [item] (not (identical? (get item :component) obj))) %))))
+  [obj alerts-storage message-space] (do
+                                       (swap! alerts-storage #(vec (filter (fn [item] (not (identical? (get item :component) obj))) %)))
+                                       (refresh-alerts message-space alerts-storage)))
 
 
 (defn rmallAlert
@@ -72,7 +96,8 @@
    Example: 
        (rmallAlert storage)
    "
-  [alerts-storage] (reset! alerts-storage []))
+  [alerts-storage message-space] (do (reset! alerts-storage [])
+                                     (refresh-alerts message-space alerts-storage)))
 
 
 (defn addAlert
@@ -86,45 +111,29 @@
 
 
 
+
 (defn addAlertTimeout
   "Description:
        Add message to storage and return id of this alert
    Example: 
        (addAlert (label :text \"Hello world!\") 3 storage) => {:id 0 :component (label :text \"Hello world!\") :timelife 3 atorage}
    "
-  [component timelife alerts-storage]
+  [component timelife alerts-storage message-space]
   (.start (Thread. (fn [] (let [id (addAlert component timelife alerts-storage)]
                             (if (> timelife 0) (do
                                                  (Thread/sleep (* 1000 timelife))
-                                                 (rmAlert id alerts-storage))))))))
+                                                 (rmAlert id alerts-storage message-space))))))))
 
 
-
-
-(def refresh-alerts
-  (fn [message-space alerts-storage] (do
-                                       (println)
-                                       (println)
-
-                                       (println "Remove alerts")
-                                       (println (map (fn [i] (if (identical? (config i :id) :alert-box) (.remove message-space i))) (seesaw.util/children message-space)))
-
-                                       (println "Add alerts")
-                                       (print (map (fn [item] (.add message-space (get item :component) (new Integer 15))) @alerts-storage))
-
-                                       (Thread/sleep 50)
-
-                                       (println "Rebounds")
-                                       (alerts-rebounds-f message-space)
-
-                                       (println "Repainting")
-                                       (.repaint message-space))))
 
 (defn message-server-creator
   "Description:
-      
+      Alerts on JLayeredPane. Service creating storage for message and can controll GUI elements.
    Example: 
-       
+      (def alert-service (message-server-creator my-main-app-gui)) #Server is active
+      (alert-service :set my-message-component)
+      ### (use-service :set (message-fn 'header' 'body') time-life)
+      (alert-service :set (message 'Info' 'Some message text') 3)
    "
   [message-space]
   (let [alerts-storage (atom [])]
@@ -135,9 +144,9 @@
                    :else (.repaint message-space))))
    (fn [action & param]
      (cond
-       (= action :set) (let [[component timelife] param] (addAlertTimeout component timelife alerts-storage))
-       (= action :rm) (let [[id] param] (do (rmAlert id alerts-storage) (refresh-alerts message-space alerts-storage)))
-       (= action :rm-obj) (let [[obj] param] (do (rmAlertObj obj alerts-storage) (refresh-alerts message-space alerts-storage)))
-       (= action :rmall) (do (rmallAlert alerts-storage) (refresh-alerts message-space alerts-storage))
-       (= action :count) (count @alerts-storage)))))
+       (= action :set)    (let [[component timelife] param] (addAlertTimeout component timelife alerts-storage message-space))
+       (= action :rm)     (let [[id] param] (rmAlert id alerts-storage message-space))
+       (= action :rm-obj) (let [[obj] param] (rmAlertObj obj alerts-storage message-space))
+       (= action :rmall)  (rmallAlert alerts-storage message-space)
+       (= action :count)  (count @alerts-storage)))))
 

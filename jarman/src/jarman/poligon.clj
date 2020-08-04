@@ -23,6 +23,7 @@
 (import java.awt.Point)
 (import java.awt.Color)
 
+
 (def hand-hover-on  (fn [e] (config! e :cursor :hand)))
 (def hand-hover-off (fn [e] (config! e :cursor :hand)))
 
@@ -45,9 +46,6 @@
                                   :background (new Color 0 0 0 0)
                                   :border (empty-border :left 5 :right 5 :bottom 2))))
 
-(defn getWidth [obj] (.width (.getSize obj)))
-(defn getHeight [obj] (.height (.getSize obj)))
-
 (defn template-resize
   [app-template]
   (let [margin 10
@@ -57,35 +55,13 @@
     (config! app-template  :bounds [0 0 vw vh])))
 
 
-(defn get-elements-in-layered-by-id
-  "Description:
-     Set same id inside elements and found them all.
-  Return:
-     List of components/objects => (object[xyz] object(xyz))
-  Example:
-     (get-elements-in-layered-by-id event_or_some_root 'id_in_string')
-  "
-  [e ids] (let [id (keyword ids)
-                select-id (keyword (string/join ["#" ids]))]
-            (filter (fn [i] (identical? (config i :id) id)) (seesaw.util/children (.getParent (select (to-root (seesaw.core/to-widget e)) [select-id]))))))
-
-(def alerts-rebounds-f
-  "Description:
-      This what should be resized with app window.
-   "
-  (fn [e] (let [list-of-alerts (get-elements-in-layered-by-id e "alert-box")
-                bound-x (- (getWidth (to-root (seesaw.core/to-widget e))) (getWidth (first list-of-alerts)) 20)
-                height 120]
-            (doseq [[n elem] (map-indexed #(vector %1 %2) list-of-alerts)]
-              (config! elem :bounds [bound-x (- (- (getHeight (to-root (seesaw.core/to-widget e))) height) (* 80 n)) 300 75])))))
-
 (defn message
   "Description:
       Template for messages. Using in JLayeredPanel.
       X icon remove and rebound displayed message but do not 
       remove message from storage.
    "
-  [& args]
+  [alerts-controller & args]
   (let [font-c "#000"
         back-c "#fff"]
     (mig-panel
@@ -108,10 +84,14 @@
                        (func-ico-f icon/X-64x64-png 23 (fn [e] (do
                                                                 ;;  (println "X clicked")
                                                                  (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))
-                                                                       layered (.getParent to-del)]
-                                                                   (.remove layered to-del)
-                                                                   (.repaint layered)
-                                                                   (if (select (to-root layered) [:#alert-box]) (alerts-rebounds-f layered))))))])]])))
+                                                                      ;;  layered (.getParent to-del)
+                                                                       ]
+                                                                   (alerts-controller :rm-obj to-del)
+                                                                  ;;  (alerts-s :rm-obj to-del)
+                                                                  ;;  (.remove layered to-del)
+                                                                  ;;  (.repaint layered)
+                                                                  ;;  (alerts-rebounds-f layered)
+                                                                   ))))])]])))
 
 
 
@@ -313,7 +293,9 @@
       (.setLocationRelativeTo nil) pack! show!))
 
 (def alerts-s (message-server-creator app))
-(alerts-s :set (message "FFFFFFUCKQ!") 0)
+
+(alerts-s :set (message alerts-s "FFFFFFUCKQ!") 2)
+(alerts-s :set (message alerts-s "Hell YEAH!") 0)
 (alerts-s :count)
 (alerts-s :rmall)
 

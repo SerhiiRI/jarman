@@ -14,3 +14,4 @@ pom.xml.asc
 .cpcache/
 jarman/.calva/output-window/output.repl-file
 *.repl-file
+*.repl-file

@@ -87,28 +87,27 @@
    Needed:
       Service from 'message-server-creator' function
    "
-  [alerts-controller & args]
-  (let [font-c "#000"
-        back-c "#fff"]
-    (mig-panel
-     :id :alert-box
-     :constraints ["wrap 1" "0px[fill, grow]0px" "0px[20]0px[30]0px[20]0px"]
-     :background back-c
-     :border nil
-     :bounds [680 480 300 75]
-     :items [[(flow-panel
-               :align :left
-               :background (new Color 0 0 0 0)
-               :items [(alert-ico-f icon/alert-64-png)
-                       (func-header-f (if (> (count args) 1) (second args) "Powiadomienie"))])]
-             [(func-body-f (if (> (count args) 0) (first args) "Szablon powiadomienia..."))]
-             [(flow-panel
-               :align :right
-               :background (new Color 0 0 0 1)
-               :items [(func-ico-f icon/agree-64-png)
-                       (func-ico-f icon/settings-64x64-png)
-                       (func-ico-f icon/X-64x64-png 23 (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))]
-                                                                 (alerts-controller :rm-obj to-del))))])]])))
+  [alerts-controller]
+  (fn [data]
+    (let [font-c "#000"
+          back-c "#fff"
+          close [(func-ico-f icon/X-64x64-png 23 (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (alerts-controller :rm-obj to-del))))]]
+      (mig-panel
+       :id :alert-box
+       :constraints ["wrap 1" "0px[fill, grow]0px" "0px[20]0px[30]0px[20]0px"]
+       :background back-c
+       :border nil
+       :bounds [680 480 300 75]
+       :items [[(flow-panel
+                 :align :left
+                 :background (new Color 0 0 0 0)
+                 :items [(alert-ico-f icon/alert-64-png)
+                         (func-header-f (if (= (contains? data :header) true) (get data :header) "Information"))])]
+               [(func-body-f (if (= (contains? data :body) true) (get data :body) "Template of information..."))]
+               [(flow-panel
+                 :align :right
+                 :background (new Color 0 0 0 1)
+                 :items (if (= (contains? data :btns) true) (concat close (get data :btns)) close))]]))))
 
 
 
@@ -265,9 +264,9 @@
             :items [[(label :background "#eee")]
                     [(mig-app-left-f  [(btn-summer-f "Ukryte opcje 1"
                                                      (label :text "Opcja 1" :background "#fff" :size [200 :by 25]
-                                                            :listen [:mouse-clicked (fn [e] (alerts-s :set (message alerts-s "Option 1 - 3 sek") 3))])
+                                                            :listen [:mouse-clicked (fn [e] (alerts-s :set {:header "Test" :body "Testowa wiadomosc"} (message alerts-s) 3))])
                                                      (label :text "Opcja 2" :background "#fff" :size [200 :by 25]
-                                                            :listen [:mouse-clicked (fn [e] (alerts-s :set (message alerts-s "Option 2 - 5 sek") 5))]))]
+                                                            :listen [:mouse-clicked (fn [e] (alerts-s :set {:header "Witaj" :body "Świecie"} (message alerts-s) 5))]))]
                                       [(btn-summer-f "Ukryte opcje 2")])]
                     [(mig-app-right-f [(btn-tab-f "Tab 1" 1) (btn-tab-f "Tab 2" 0)]
                                       [(label :text "GRID")])]])]))
@@ -297,8 +296,14 @@
          (.repaint app))))
 
 (app-build)
+(alerts-s :show)
+(alerts-s :hide)
+;; (alerts-s :count-all)
+;; (alerts-s :count-active)
+;; (alerts-s :count-hidden)
+;; (alerts-s :clear)
+
 ;; (alerts-s :set (message alerts-s "FFFFFFUCKQ!") 2)
 ;; (alerts-s :set (message alerts-s "Hell YEAH!") 0)
-;; (alerts-s :count)
 ;; (alerts-s :rmall)
 

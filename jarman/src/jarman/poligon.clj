@@ -25,7 +25,7 @@
 
 
 (def hand-hover-on  (fn [e] (config! e :cursor :hand)))
-(def hand-hover-off (fn [e] (config! e :cursor :hand)))
+(def hand-hover-off (fn [e] (config! e :cursor :default)))
 
 (def func-ico-f (fn [ic & args] (label :icon (image-scale ic (if (> (count args) 0) (first args) 28))
                                        :background (new Color 0 0 0 0)
@@ -53,6 +53,43 @@
           vh     (.getHeight  v-size)]
       (config! app-template  :bounds [0 0 vw vh]))))
 
+(defn str-cutter [txt] 
+  (cond
+    (> (count txt) 42) (string/join  "" [(subs txt 0 42) "..."])
+    :else txt))
+
+(defn message
+  "Description:
+      Template for messages. Using in JLayeredPanel.
+      X icon remove and rebound displayed message.
+   Example:
+      (message alerts-controller 'header' 'body')
+   Needed:
+      Service from 'message-server-creator' function
+   "
+  [alerts-controller]
+  (fn [data]
+    (let [font-c "#000"
+          back-c "#fff"
+          close [(func-ico-f icon/loupe-blue1-64-png 23 (fn [e] (alert "Wiadomosc")))
+                 (func-ico-f icon/X-64x64-png 23 (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (alerts-controller :rm-obj to-del))))]]
+      (mig-panel
+       :id :alert-box
+       :constraints ["wrap 1" "0px[fill, grow]0px" "0px[20]0px[30]0px[20]0px"]
+       :background back-c
+       :border nil
+       :bounds [680 480 300 75]
+       :items [[(flow-panel
+                 :align :left
+                 :background (new Color 0 0 0 0)
+                 :items [(alert-ico-f icon/alert-64-png)
+                         (func-header-f (if (= (contains? data :header) true) (str-cutter (get data :header)) "Information"))])]
+               [(func-body-f (if (= (contains? data :body) true) (str-cutter (get data :body)) "Template of information..."))]
+               [(flow-panel
+                 :align :right
+                 :background (new Color 0 0 0 1)
+                 :items (if (= (contains? data :btns) true) (concat close (get data :btns)) close))]]))))
+
 
 ;; ---------------------------------------------------- APP STARTER v
 (def app-width 1000)
@@ -78,37 +115,6 @@
 
 
 
-(defn message
-  "Description:
-      Template for messages. Using in JLayeredPanel.
-      X icon remove and rebound displayed message.
-   Example:
-      (message alerts-controller 'header' 'body')
-   Needed:
-      Service from 'message-server-creator' function
-   "
-  [alerts-controller]
-  (fn [data]
-    (let [font-c "#000"
-          back-c "#fff"
-          close [(func-ico-f icon/X-64x64-png 23 (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (alerts-controller :rm-obj to-del))))]]
-      (mig-panel
-       :id :alert-box
-       :constraints ["wrap 1" "0px[fill, grow]0px" "0px[20]0px[30]0px[20]0px"]
-       :background back-c
-       :border nil
-       :bounds [680 480 300 75]
-       :items [[(flow-panel
-                 :align :left
-                 :background (new Color 0 0 0 0)
-                 :items [(alert-ico-f icon/alert-64-png)
-                         (func-header-f (if (= (contains? data :header) true) (get data :header) "Information"))])]
-               [(func-body-f (if (= (contains? data :body) true) (get data :body) "Template of information..."))]
-               [(flow-panel
-                 :align :right
-                 :background (new Color 0 0 0 1)
-                 :items (if (= (contains? data :btns) true) (concat close (get data :btns)) close))]]))))
-
 
 
 (def btn-icon-f 
@@ -116,13 +122,13 @@
       Slide buttons used in JLayeredPanel. Norlam state is small square with icon 
       but on hover it will be wide and text will be inserted.
    "
-  (fn [ico order size txt]
+  (fn [ico order size txt data-map]
                   (let [bg-color "#ddd"
                         ;; color-onenter "#29295e"
                         color-hover-margin "#bbb"
                         bg-color-hover "#d9ecff"
                         size size
-                        y (if (> (* size order) 0) (+ 2 (* size order)) (* size order))]
+                        y (if (> (* size order) 0) (+ (* 2 order) (* size order)) (* size order))]
                     (label
                      :halign :center
                      :icon ico
@@ -140,10 +146,11 @@
                                                               :border (line-border :left 4 :color bg-color)
                                                               :background bg-color
                                                               :text ""
-                                                              :cursor :default))]))))
+                                                              :cursor :default))
+                              :mouse-clicked (if (= (contains? data-map :onclick) true) (get data-map :onclick) (fn [e]))]))))
 
 
-(def btn-summer-f 
+(def btn-summer-f
   "Description:
       It's a space for main button with more option. 
       Normal state is one button but after on click 
@@ -264,7 +271,7 @@
             :items [[(label :background "#eee")]
                     [(mig-app-left-f  [(btn-summer-f "Ukryte opcje 1"
                                                      (label :text "Opcja 1" :background "#fff" :size [200 :by 25]
-                                                            :listen [:mouse-clicked (fn [e] (alerts-s :set {:header "Test" :body "Testowa wiadomosc"} (message alerts-s) 3))])
+                                                            :listen [:mouse-clicked (fn [e] (alerts-s :set {:header "Test" :body "Bardzo dluga testowa wiadomość, która nie jest taka prosta do ogarnięcia w seesaw."} (message alerts-s) 3))])
                                                      (label :text "Opcja 2" :background "#fff" :size [200 :by 25]
                                                             :listen [:mouse-clicked (fn [e] (alerts-s :set {:header "Witaj" :body "Świecie"} (message alerts-s) 5))]))]
                                       [(btn-summer-f "Ukryte opcje 2")])]
@@ -290,14 +297,15 @@
   [] (let [menu-icon-size 50]
        (do
          (.add app jarmanapp (new Integer 5))
-         (.add app (btn-icon-f (image-scale icon/user-64x64-2-png menu-icon-size) 0 menu-icon-size "Klienci") (new Integer 10))
-         (.add app (btn-icon-f (image-scale icon/settings-64x64-png menu-icon-size) 1 menu-icon-size "Konfiguracja") (new Integer 10))
+         (.add app (btn-icon-f (image-scale icon/user-64x64-2-png menu-icon-size) 0 menu-icon-size "Klienci" {}) (new Integer 10))
+         (.add app (btn-icon-f (image-scale icon/settings-64x64-png menu-icon-size) 1 menu-icon-size "Konfiguracja" {}) (new Integer 10))
+         (.add app (btn-icon-f (image-scale icon/I-64-png menu-icon-size) 2 menu-icon-size "Powiadomienia" {:onclick (fn [e] (alerts-s :show))}) (new Integer 10))
          (config! (to-root app) :listen [:component-resized (fn [e] (onresize-f e))])
          (.repaint app))))
 
 (app-build)
-(alerts-s :show)
-(alerts-s :hide)
+;; (alerts-s :show)
+;; (alerts-s :hide)
 ;; (alerts-s :count-all)
 ;; (alerts-s :count-active)
 ;; (alerts-s :count-hidden)

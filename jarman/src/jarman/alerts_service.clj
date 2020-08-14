@@ -2,8 +2,12 @@
   (:use seesaw.core
         seesaw.border
         seesaw.dev
-        seesaw.mig)
-  (:require [clojure.string :as string]))
+        seesaw.mig
+        jarman.dev-tools)
+  (:require [jarman.icon-library :as icon]
+            [clojure.string :as string]))
+
+(import java.awt.Color)
 
 ;; Panel for messages/alerts
 (def messages (vertical-panel :items [(label)]))
@@ -149,6 +153,36 @@
                                                  (Thread/sleep (* 1000 timelife))
                                                  (rmAlert id alerts-storage message-space))))))))
 
+(defn history-alert
+  [data]
+  (let [bg-c "#fff"
+        hover-c "#d9ecff"
+        bord (empty-border :left 5)
+        x 270
+        y 30]
+    (vertical-panel
+     :background (new Color 0 0 0 0)
+     :border (line-border :bottom 2 :color "#333")
+     :items [(label
+              :size [x :by y]
+              :background bg-c
+              :border bord
+              :text (if (= (contains? data :header) true) (get data :header) "Information"))
+             (label
+              :size [x :by y]
+              :background bg-c
+              :border bord
+              :text (if (= (contains? data :body) true) (get data :body) "Template of information..."))]
+     :listen [:mouse-entered (fn [e] (let [children (seesaw.util/children (seesaw.core/to-widget e))]
+                                       (do
+                                         (config! e :cursor :hand)
+                                         (print (map (fn [item] (config! item :background hover-c)) children))
+                                         )))
+              :mouse-exited (fn [e] (let [children (seesaw.util/children (seesaw.core/to-widget e))]
+                                      (do
+                                        (config! e :cursor :default)
+                                        (print (map (fn [item] (config! item :background bg-c)) children))
+                                        )))])))
 
 (defn all-messages-window
   "Description:
@@ -159,21 +193,59 @@
       message-server-creator for show option
    "
   [message-space alerts-storage]
-  (let [x 300
+  (let [x 330
         y 400
+        x-ico 30
+        bg-c "#333"
         root-size (getSize (to-root message-space))
         center [(- (/ (first root-size) 2) (/ x 2)) (- (/ (last root-size) 2) (/ y 2))]
-        items (vec (map (fn [item] (label :text (string/join ": " [(get item :header) (get item :body)]))) @alerts-storage))
-        space-for-message (scrollable (vertical-panel :items items)
-                                      :bounds [(first center) (last center) x y]
-                                      :id :all-alerts)
+        items (vec (map (fn [item] (history-alert (get item :data))) @alerts-storage))
+        space-for-message (mig-panel
+                           :constraints ["" "" ""]
+                           :bounds [(first center) (last center) x y]
+                           :id :all-alerts
+                           :items [[(scrollable
+                                     (vertical-panel
+                                      :items items
+                                      :background bg-c)
+                                     :hscroll :never
+                                     :vscroll :always
+                                     :size [(- x x-ico 10) :by (- y 15)]
+                                     :border (line-border :thickness 2 :color "#333")
+                                     :listen [:mouse-motion (fn [e] (.repaint (select (to-root e) [:#all-alerts])))
+                                              :mouse-wheel-moved (fn [e] (.repaint (select (to-root e) [:#all-alerts])))])]
+                                   [(vertical-panel
+                                     :size [x-ico :by y]
+                                     :background (new Color 0 0 0 0)
+                                     :items [(flow-panel
+                                              :border (empty-border :bottom 5)
+                                              :size [x-ico :by x-ico]
+                                              :items [(label :icon (image-scale icon/x-blue1-64-png (- x-ico 5))
+                                                             :halign :center
+                                                             :size [x-ico :by x-ico]
+                                                             :listen [:mouse-clicked (fn [e] (refresh-alerts message-space alerts-storage :all-alerts))])])
+                                             
+                                             (flow-panel
+                                              :border (empty-border :bottom 5)
+                                              :size [x-ico :by x-ico]
+                                              :items [(label :icon (image-scale icon/basket-blue1-64x64-png x-ico)
+                                                             :halign :center
+                                                             :size [x-ico :by x-ico]
+                                                             :listen [:mouse-clicked (fn [e] (do 
+                                                                                               (rmallAlert alerts-storage message-space)
+                                                                                               (refresh-alerts message-space alerts-storage :all-alerts)))])])
+                                             ])]])
         ]
     (do
       (println "")
+      (println "")
       (println "------------------------")
       (println "")
-      (println @alerts-storage)
-      (println items)
+      ;; (println @alerts-storage)
+      ;; (println items)
+      ;; (println @alerts-storage)
+      ;; (println (map (fn [item] (get item :header)) @alerts-storage))
+      ;; (println (map (fn [i] (config i :text)) items))
       ;; (println space-for-message)
       (.add message-space space-for-message (new Integer 20))
       )
@@ -203,7 +275,9 @@
         (= action :count-all)     (count @alerts-storage)
         (= action :count-active)  (count (filter (fn [item] (if (= (get item :visible) true) item)) @alerts-storage))
         (= action :count-hidden)  (count (filter (fn [item] (if (= (get item :visible) false) item)) @alerts-storage))
-        (= action :show)   (all-messages-window message-space alerts-storage)
+        (= action :show)   (do
+                             (refresh-alerts message-space alerts-storage :all-alerts)
+                             (all-messages-window message-space alerts-storage))
         (= action :hide)   (refresh-alerts message-space alerts-storage :all-alerts)
         ))))
 

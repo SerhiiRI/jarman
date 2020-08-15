@@ -57,11 +57,11 @@
 
                                       ;;  (println "Remove alerts")
                                        ;;  TODO: zamienic print na cos innego tak by sie wykonywalo przejscie po mapie
-                                    (print (map (fn [i] (if (identical? (config i :id) :alert-box) (.remove message-space i))) (seesaw.util/children message-space)))
+                                    (doall (map (fn [i] (if (identical? (config i :id) :alert-box) (.remove message-space i))) (seesaw.util/children message-space)))
 
                                       ;;  (println "Add alerts")
                                        ;;  TODO: zamienic print na cos innego tak by sie wykonywalo przejscie po mapie`
-                                    (print (map (fn [item] (if (= (get item :visible) true) (.add message-space (get item :component) (new Integer 15)))) @alerts-storage))
+                                    (doall (map (fn [item] (if (= (get item :visible) true) (.add message-space (get item :component) (new Integer 15)))) @alerts-storage))
 
                                       ;;  (Thread/sleep 50)
 
@@ -76,13 +76,13 @@
 
                                       ;;  (println "Remove alerts")
                                        ;;  TODO: zamienic print na cos innego tak by sie wykonywalo przejscie po mapie
-                                             (print (map (fn [i] (if (or (identical? (config i :id) :alert-box)
+                                             (doall (map (fn [i] (if (or (identical? (config i :id) :alert-box)
                                                                          (identical? (config i :id) id-to-remove))
                                                                    (.remove message-space i))) (seesaw.util/children message-space)))
 
                                       ;;  (println "Add alerts")
                                        ;;  TODO: zamienic print na cos innego tak by sie wykonywalo przejscie po mapie`
-                                             (print (map (fn [item] (if (= (get item :visible) true) (.add message-space (get item :component) (new Integer 15)))) @alerts-storage))
+                                             (doall (map (fn [item] (if (= (get item :visible) true) (.add message-space (get item :component) (new Integer 15)))) @alerts-storage))
                                              
                                       ;;  (Thread/sleep 50)
 
@@ -176,12 +176,12 @@
      :listen [:mouse-entered (fn [e] (let [children (seesaw.util/children (seesaw.core/to-widget e))]
                                        (do
                                          (config! e :cursor :hand)
-                                         (print (map (fn [item] (config! item :background hover-c)) children))
+                                         (doall (map (fn [item] (config! item :background hover-c)) children))
                                          )))
               :mouse-exited (fn [e] (let [children (seesaw.util/children (seesaw.core/to-widget e))]
                                       (do
                                         (config! e :cursor :default)
-                                        (print (map (fn [item] (config! item :background bg-c)) children))
+                                        (doall (map (fn [item] (config! item :background bg-c)) children))
                                         )))])))
 
 (defn all-messages-window
@@ -236,19 +236,7 @@
                                                                                                (refresh-alerts message-space alerts-storage :all-alerts)))])])
                                              ])]])
         ]
-    (do
-      (println "")
-      (println "")
-      (println "------------------------")
-      (println "")
-      ;; (println @alerts-storage)
-      ;; (println items)
-      ;; (println @alerts-storage)
-      ;; (println (map (fn [item] (get item :header)) @alerts-storage))
-      ;; (println (map (fn [i] (config i :text)) items))
-      ;; (println space-for-message)
       (.add message-space space-for-message (new Integer 20))
-      )
     ))
 
 

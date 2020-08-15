@@ -1,4 +1,4 @@
-(ns jarman.tools.sql-tool
+(ns jarman.logic.sql-tool
   (:gen-class)
   (:refer-clojure :exclude [update])
   (:require
@@ -622,10 +622,10 @@
    `(define-sql-operation ~operation-name ~(string/upper-case (name operation-name)) ~pipeline-function))
   ([operation-name operation-string pipeline-function]
    `(defmacro ~operation-name [~'table-name & {:as ~'args}]
-     (let [list-of-rules# (~pipeline-function (keys ~'args) ~(jarman.sql-tool/find-rule (name operation-name)))]
+     (let [list-of-rules# (~pipeline-function (keys ~'args) ~(jarman.logic.sql-tool/find-rule (name operation-name)))]
        `(eval (-> ~~operation-string
                   ~@(for [[~'k ~'F] list-of-rules#]
-                      `(~(symbol (str "jarman.sql-tool" "/" ~'F)) ~~'(k args) (name ~~'table-name)))))))))
+                      `(~(symbol (str "jarman.logic.sql-tool" "/" ~'F)) ~~'(k args) (name ~~'table-name)))))))))
 
 
 (define-sql-operation insert "INSERT INTO" create-rule-pipeline)
@@ -635,12 +635,6 @@
 (define-sql-operation create-table "CREATE TABLE IF NOT EXISTS" (comp empty-engine-pipeline-applier create-rule-pipeline))
 (define-sql-operation alter-table "ALTER TABLE" (comp get-first-macro-from-pipeline create-rule-pipeline))
 
-  
-(select :user
-        :column [:id]
-        :where (= :id 10)
-        :top 10
-        :limit [10, 10])
 
 (let [limit-number '(1 31)]
  (and (not (string? limit-number)) (seqable? limit-number) (let [[f s]limit-number] (and (number? f) (number? s)))))

@@ -125,8 +125,9 @@
 (defn is-not-id-col? [col-name]
       (not (is-id-col? col-name)))
 
-(def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "ekka-test" :user "root" :password "123"})
+;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "ekka-test" :user "root" :password "123"})
 ;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "" :user "root" :password "123"})
+(def ^:dynamic sql-connection {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"})
 (def ^:dynamic *available-mariadb-engine-list* "set of available engines for key-value tables" ["MEMORY", "InnoDB", "CSV"])
 ;; (jdbc/query sql-connection "SHOW ENGINES" )
 ;; (jdbc/execute! sql-connection "CREATE DATABASE `ekka-test` CHARACTER SET = 'utf8' COLLATE = 'utf8_general_ci'")
@@ -209,7 +210,8 @@
 (defn do-create-meta []
   (for [table (not-allowed-rules ["metatable" "meta*"] (map (comp second first) (jdbc/query sql-connection "SHOW TABLES" )))]
     (let [meta (jdbc/query sql-connection (select :METADATA :where (= :table table)))]
-      (if (empty? meta) (jdbc/execute! sql-connection (update-sql-by-id-template "METADATA" (get-meta table)))))))
+      (if (empty? meta) ;; jdbc/execute! sql-connection 
+        (update-sql-by-id-template "METADATA" (get-meta table))))))
 
 (defn do-clear-meta []
   (jdbc/execute! sql-connection (delete :METADATA)))

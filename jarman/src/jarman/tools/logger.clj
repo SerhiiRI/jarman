@@ -1,4 +1,4 @@
-(ns jarman.logger)
+(ns jarman.tools.logger)
 
 (defn- date []
   (.format (java.text.SimpleDateFormat. "[dd-MM-YYYY HH:mm:ss] ") (java.util.Date.)))

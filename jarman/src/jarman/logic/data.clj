@@ -56,9 +56,9 @@
 ;;          "i" - short text input
 ;;          nil - no hint, but not must be viewed, only not specified. 
 ;;                      
-(ns jarman.data
+(ns jarman.logic.data
   (:require
-   [jarman.sql-tool :as toolbox :include-macros true :refer :all]
+   [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]))
 

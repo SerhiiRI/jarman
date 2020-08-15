@@ -1,4 +1,4 @@
-(ns jarman.ftp-toolbox.clj
+(ns jarman.tools.ftp-toolbox.clj
   (:require [clojure.java.io :as io]
             [miner.ftp :refer [with-ftp client-put client-mkdirs]]
             [miner.ftp :as ftp]))
@@ -21,10 +21,10 @@
           *ftp-password*
           *ftp-host*))
 
-(file? (clojure.java.io/file "logs\\log-06-2020.log"))
-(log? (clojure.java.io/file "logs\\log-06-2020.log"))
-(program-log? (clojure.java.io/file "logs\\log-06-2020.log"))
-(with-pattern? #"log-(\d{1,2}-\d{4}).*" (clojure.java.io/file "logs\\log-06-2020.log"))
+;; (file? (clojure.java.io/file "logs\\log-06-2020.log"))
+;; (log? (clojure.java.io/file "logs\\log-06-2020.log"))
+;; (program-log? (clojure.java.io/file "logs\\log-06-2020.log"))
+;; (with-pattern? #"log-(\d{1,2}-\d{4}).*" (clojure.java.io/file "logs\\log-06-2020.log"))
 
 (defn extension? [extension f]
   (let [f (if (string? f) (io/file f) f)]

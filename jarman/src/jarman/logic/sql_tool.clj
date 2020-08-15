@@ -1,24 +1,14 @@
-(ns jarman.sql-tool
+(ns jarman.tools.sql-tool
   (:gen-class)
   (:refer-clojure :exclude [update])
   (:require
-   [clojure.string :as string]
-   ;; [jarman.config-manager :refer :all]
-   ))
+   ;; standart lib
+   [clojure.string :as string]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; configuration rules ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; (def ^:dynamic *accepted-alter-table-rules* [:add-column :drop-column :drop-foreign-key :add-foreign-key])
-;; (def ^:dynamic *accepted-forkey-rules* [:restrict :cascade :null :no-action :default])
-;; (def ^:dynamic *accepted-ctable-rules* [:columns :foreign-keys :table-config])
-;; (def ^:dynamic *accepted-select-rules* [:column :inner-join :right-join :left-join :outer-left-join :outer-right-join :where :order])
-;; (def ^:dynamic *accepted-update-rules* [:update-table :set :where])
-;; (def ^:dynamic *accepted-insert-rules* [:values :set])
-;; (def ^:dynamic *accepted-delete-rules* [:where])
-;; (def ^:dynamic *where-border* false)
-;; (def ^:dynamic *data-format* "DB date format" "yyyy-MM-dd HH:mm:ss")
 (def ^:dynamic *accepted-alter-table-rules* [:add-column :drop-column :drop-foreign-key :add-foreign-key])
 (def ^:dynamic *accepted-forkey-rules*      [:restrict :cascade :null :no-action :default])
 (def ^:dynamic *accepted-ctable-rules*      [:columns :foreign-keys :table-config])

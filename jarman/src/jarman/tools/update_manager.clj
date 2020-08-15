@@ -1,12 +1,15 @@
-(ns jarman.update-manager
+(ns jarman.tools.update-manager
   (:require
+   ;; clojure lib
    [clojure.string :as string]
    [clojure.java.io :as io]
-   [jarman.dev-tools :as dv]
-   [jarman.config-manager :as cm]
+   ;; packages 
    [miner.ftp :as ftp]
    [me.raynes.fs :as gfs]
-   [jarman.fs :as fs]))
+   ;; local functionality
+   [jarman.tools.dev-tools :as dv]
+   [jarman.tools.config-manager :as cm]
+   [jarman.tools.fs :as fs]))
 
 ;;; Package standart
 ;;;    jarman-0.1.12-windows.zip

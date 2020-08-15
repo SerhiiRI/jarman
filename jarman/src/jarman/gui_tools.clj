@@ -8,8 +8,8 @@
         seesaw.border
         seesaw.dev
         seesaw.mig
-        jarman.dev-tools)
-  (:require [jarman.icon-library :as icon]
+        jarman.tools.dev-tools)
+  (:require [jarman.resource-lib.icon-library :as icon]
             [clojure.string :as string]))
 
 

@@ -8,10 +8,10 @@
         seesaw.border
         seesaw.dev
         seesaw.mig
-        jarman.dev-tools
+        jarman.tools.dev-tools
         jarman.gui-tools
         jarman.gui-alerts-service)
-  (:require [jarman.icon-library :as icon]
+  (:require [jarman.resource-lib.icon-library :as icon]
             [clojure.string :as string]))
 
 (import javax.swing.JLayeredPane)

@@ -1,13 +1,13 @@
-(ns jarman.dev-tools
+(ns jarman.tools.dev-tools
   (:gen-class)
   (:use clojure.reflect
         seesaw.core)
   (:require [clojure.string :as string]
-            [jarman.config-manager :as cm]
+            [jarman.tools.config-manager :as cm]
             [clojure.java.io :as io]))
 
-(def ^:dynamic *icon-library* "final library class-path file" "src/jarman/icon_library.clj")
-(def ^:dynamic *font-library* "final library class-path file" "src/jarman/font_library.clj")
+(def ^:dynamic *icon-library* "final library class-path file" "src/jarman/resource_lib/icon_library.clj")
+(def ^:dynamic *font-library* "final library class-path file" "src/jarman/resource_lib/font_library.clj")
 (def ^:dynamic *font-path* "font directory"      (cm/getset "config-manager.edn" [:font-configuration-attribute :font-path] "resources/fonts/"))
 (def ^:dynamic *icon-path* "pack icon directory" (cm/getset "config-manager.edn" [:icon-configuration-attribute :icon-path] "icons/main"))
 (def ^:dynamic *acceptable-icon-file-format*     (cm/getset "config-manager.edn" [:icon-configuration-attribute :acceptable-file-format] ["png" "img"]))
@@ -25,16 +25,43 @@
     (some #(= x %) col)
     (= x col)))
 
+(defmacro filter-nil
+  "(filter-nil [nil 1 nil 3 4]) ;=> [1 3 4]"
+  [col]
+  `(filter identity ~col))
+
+(defmacro join
+  "(filter-nil [nil 1 nil 3 4]) ;=> [1 3 4]"
+  [delimiter col]
+  `(clojure.string/join ~delimiter ~col))
+
+(defmacro split
+  "(filter-nil [nil 1 nil 3 4]) ;=> [1 3 4]"
+  [delimiter s]
+  `(clojure.string/split ~s ~delimiter ))
+
 (defn all-methods
   "Print methods for object/class, in argument"
   [some-object]
   (->> some-object
        reflect :members (filter :return-type) (map :name) sort (map #(str "." %) ) distinct println))
 
-(defn namespace-for-path-name [f]
-  (let [f (clojure.string/split (first (clojure.string/split (.getName (clojure.java.io/file f)) #"\.")) #"_")
-        n (first (clojure.string/split (str *ns*) #"\."))]
-    (str n "." (clojure.string/join "-" f))))
+(defn namespace-for-path-name
+  " Function using for generation resources libraries, where namespace created dynamicaly
+  (namespace-for-path-name \"src/jarman/a/b/c_c/some_lib.clj\")
+     ;;=> jarman.a.b.c-c.some-lib.clj"
+  [f]
+  (if-let [[_ in-project-path file] (re-matches #"src/jarman/(.*/){0,1}(.*)" f)]
+    (let [replace_to- (fn [s] (string/replace s #"_" "-"))
+          project-file-name (replace_to- (first (split #"\." file)))
+          project-file-root (first (split #"\." (str *ns*)))
+          project-file-offset (if in-project-path                                 
+                                (join "." (map replace_to- (string/split in-project-path #"[\\/]"))))]
+      (join "."
+       (filter-nil
+        (if project-file-offset
+          [project-file-root project-file-offset project-file-name]
+          [project-file-root project-file-name])))) (println "Error generation namespace. Not validated name:" f)))
 
 (defn ^sun.awt.image.ToolkitImage image-scale "Function scale image by percent size.
   Return `sun.awt.image.ToolkitImage` type.
@@ -98,6 +125,7 @@
       (spit *icon-library* (prn-str `(def ~icon-symbol-name ~icon-symbol-doc ~icon-file)) :append true))
     (spit *icon-library* "\n;; All icons\n" :append true)
     (spit *icon-library* (prn-str `(def ~(symbol 'all-icon) ~(vec (map first icon-data)))) :append true)))
+
 ;; generation icon library
 ;; (refresh-icon-lib)
 
@@ -252,4 +280,3 @@
                    (func func f2)))
                (io/delete-file f))]
     (func func (io/file fname))))
-

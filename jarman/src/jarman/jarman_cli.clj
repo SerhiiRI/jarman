@@ -2,12 +2,13 @@
   (:gen-class)
   (:refer-clojure :exclude [update])
   (:require
-   [jarman.sql-tool :as toolbox :include-macros true :refer :all]
-   [jarman.dev-tools :as dt]
    [clojure.tools.cli :refer [parse-opts]]
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]
-   [jarman.ftp-toolbox.clj :as ftp]))
+   
+   [jarman.tools.ftp-toolbox.clj :as ftp]
+   [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
+   [jarman.tools.dev-tools :as dt]))
 
 ;;;-DOC-;;;
 ;; To run this tool using next cli notation
@@ -15,18 +16,19 @@
 ;; $ lein run -m jarman.schema-builder -h
 ;; $ java -jar target/uberjar/lets-scheme -h
 
-(def ^:dynamic sql-connection {:dbtype "mysql"
-                               :host "127.0.0.1"
-                               :port 3306
-                               :dbname "jarman"
-                               :user "root"
-                               :password "1234"})
 ;; (def ^:dynamic sql-connection {:dbtype "mysql"
-;;                                :host "192.168.1.69"
+;;                                :host "127.0.0.1"
 ;;                                :port 3306
 ;;                                :dbname "jarman"
-;;                                :user "jarman"
-;;                                :password "dupa"})
+;;                                :user "root"
+;;                                :password "1234"})
+
+(def ^:dynamic sql-connection {:dbtype "mysql"
+                               :host "192.168.1.69"
+                               :port 3306
+                               :dbname "jarman"
+                               :user "jarman"
+                               :password "dupa"})
 
 (def available-scheme ["service_contract"
                        "seal"
@@ -181,6 +183,7 @@
 
 (defn fill-random-scheme []
   (create-scheme))
+
 
 (defn -entity-in? [entity-list]
   (fn [t] (some #(= (string/lower-case t) (string/lower-case %)) entity-list)))

@@ -1,6 +1,6 @@
-(ns jarman.fs
+(ns jarman.tools.fs
   (:use me.raynes.fs)
-  (:require [jarman.config-manager :as cm]))
+  (:require [jarman.tools.config-manager :as cm]))
 
 (defn is-edn?
   "test if file have .edn extention"

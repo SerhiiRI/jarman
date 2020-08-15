@@ -12,10 +12,10 @@
 ;; (getset :user :Adam 24) 
 ;;     set value "24" by key "Adam"
 
-(ns jarman.key-value-tool
+(ns jarman.tools.key-value-tool
   (:require
    [clojure.string :as string]
-   [jarman.sql-tool :as toolbox :include-macros true :refer :all]
+   [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    [clojure.java.jdbc :as jdbc]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

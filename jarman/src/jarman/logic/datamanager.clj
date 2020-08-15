@@ -3,13 +3,14 @@
   (:use
    seesaw.chooser)
   (:require
-   [jarman.sql-tool :as toolbox :include-macros true :refer :all]
-   [jarman.dev-tools :refer [image-scale]]
-   ;; [jarman.config-manager :refer :all]
-   [jarman.icon-library :as icon]
+   ;; standart lib
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]
-   [clojure.java.io :as io]))
+   [clojure.java.io :as io]
+   ;; local functionality
+   [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
+   [jarman.logic.dev-tools :refer [image-scale]]
+   [jarman.resource-lib.icon-library :as icon]))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;

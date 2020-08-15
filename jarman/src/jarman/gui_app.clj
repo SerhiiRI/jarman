@@ -65,7 +65,7 @@
    Example: 
       tabs  -> mig vector with elements    -> [(tab1) (tab2) (tab3)]
       array -> table like rows and columns -> [(table)]  
-      (mig-app-right-f [(tab-btn 'Tab 1' true) (tab-btn 'Tab 2' false)] [(label :text 'GRID')])
+      (mig-app-right-f [(tab-btn 'Tab 1' true) (tab-btn 'Tab 2' false)] [(label-fn :text 'GRID')])
    Needed:
       tab-btn component is needed to corectly work
    "
@@ -91,15 +91,15 @@
             :constraints [""
                           "0px[50, fill]0px[200, fill]0px[fill, grow]0px"
                           "0px[fill, grow]0px"]
-            :items [[(label :background "#eee")]
+            :items [[(label-fn :background "#eee")]
                     [(mig-app-left-f  [(expand-btn "Ukryte opcje 1"
-                                                     (label :text "Opcja 1" :background "#fff" :size [200 :by 25]
+                                                     (label-fn :text "Opcja 1" :background "#fff" :size [200 :by 25]
                                                             :listen [:mouse-clicked (fn [e] (alerts-s :set {:header "Test" :body "Bardzo dluga testowa wiadomość, która nie jest taka prosta do ogarnięcia w seesaw."} (message alerts-s) 3))])
-                                                     (label :text "Opcja 2" :background "#fff" :size [200 :by 25]
+                                                     (label-fn :text "Opcja 2" :background "#fff" :size [200 :by 25]
                                                             :listen [:mouse-clicked (fn [e] (alerts-s :set {:header "Witaj" :body "Świecie"} (message alerts-s) 5))]))]
                                       [(expand-btn "Ukryte opcje 2")])]
                     [(mig-app-right-f [(tab-btn "Tab 1" true) (tab-btn "Tab 2" false)]
-                                      [(label :text "GRID")])]])]))
+                                      [(label-fn :text "GRID")])]])]))
 
 
 

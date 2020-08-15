@@ -18,7 +18,7 @@
 ;; (import javax.swing.JDesktopPane)
 ;; (import javax.swing.JButton)
 ;; (import javax.swing.JFrame)
-;; (import javax.swing.JLabel)
+;; (import javax.swing.Jlabel-fn)
 ;; (import java.awt.Dimension)
 ;; (import java.awt.Component)
 ;; (import java.awt.Point)
@@ -29,6 +29,36 @@
 (defn getHeight [obj] (.height (.getSize obj)))
 (defn getSize   [obj] (let [size (.getSize obj)] [(.width size) (.height size)]))
 
+(def getFont
+  (fn [& params] (-> {:size 12 :style :plain :name "Arial"}
+                     ((fn [m] (let [size  (first (filter (fn [item] (if (number? item) item nil)) params))] (if (number? size) (merge m {:size size}) (conj m {})))))
+                     ((fn [m] (let [name  (first (filter (fn [item] (if (string? item) item nil)) params))] (if (string? name) (merge m {:name name}) (conj m {})))))
+                     ((fn [m] (let [style (first (filter (fn [item] (if (= item :bold) item nil)) params))] (if (= style :bold) (merge m {:style :bold}) (conj m {})))))
+                     ((fn [m] (let [style (first (filter (fn [item] (if (= item :italic) item nil)) params))] (if (= style :italic)
+                                                                                                                (if (= (get m :style) :bold) (merge m {:style #{:bold :italic}}) (merge m {:style :italic})) 
+                                                                                                                (conj m {})))))
+                     )))
+
+;; (seesaw.font/font-families)
+;; (label-fn :text "txt")
+
+;; Function for label with pre font
+(def label-fn (fn [& params] (apply label :font (getFont) params)))
+
+(defn middle-bounds 
+  "Description:
+      Return middle bounds with size.
+   Example:
+      [x y w h] => [100 200 250 400]
+      (middle-bounds root 250 400) => [550 400 250 400]
+   Needed:
+      Function need getSize function for get frame width and height
+   "
+  [obj width height] (let [size (getSize obj)
+                           x (first size)
+                           y (last size)]
+                       [(- (/ x 2) (/ width 2)) (- (/ y 2) (/ height 2)) width height]))
+
 (def hand-hover-on  (fn [e] (config! e :cursor :hand)))
 (def hand-hover-off (fn [e] (config! e :cursor :default)))
 
@@ -36,17 +66,22 @@
   "Description:
       Icon btn for message box. Create component with icon btn on bottom.
    Example:
-      (build-bottom-ico-btn icon/loupe-blue1-64-png 23 (fn [e] (alert 'Wiadomosc')))
+      (build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png 23 (fn [e] (alert 'Wiadomosc')))
    Needed:
       Import jarman.dev-tools
       Function need image-scale function for scalling icon
       Function need hand-hover-on function for hand mouse effect
    "
-  [ic & args] (label :icon (image-scale ic (if (> (count args) 0) (first args) 28))
-                     :background (new Color 0 0 0 0)
-                     :border (empty-border :left 3 :right 3)
-                     :listen [:mouse-entered hand-hover-on
-                              :mouse-clicked (if (> (count args) 1) (second args) (fn [e]))]))
+  [ic ic-h layered & args] (label-fn :icon (image-scale ic (if (> (count args) 0) (first args) 28))
+                                     :background (new Color 0 0 0 0)
+                                     :border (empty-border :left 3 :right 3)
+                                     :listen [:mouse-entered (fn [e] (do 
+                                                                       (config! e :icon (image-scale ic-h (if (> (count args) 0) (first args) 28)) :cursor :hand)
+                                                                       (.repaint layered)))
+                                              :mouse-exited (fn [e] (do
+                                                                       (config! e :icon (image-scale ic (if (> (count args) 0) (first args) 28)))
+                                                                       (.repaint layered)))
+                                              :mouse-clicked (if (> (count args) 1) (second args) (fn [e]))]))
 
 (defn build-ico
   "Description:
@@ -57,7 +92,7 @@
       Import jarman.dev-tools
       Function need image-scale function for scalling icon
    "
-  [ic] (label :icon (image-scale ic 28)
+  [ic] (label-fn :icon (image-scale ic 28)
               :background (new Color 0 0 0 0)
               :border (empty-border :left 3 :right 3)))
 
@@ -67,8 +102,8 @@
    Example:
       (build-header 'Information')
    "
-  [txt] (label :text txt
-               :font {:size 14 :style :bold}
+  [txt] (label-fn :text txt
+               :font (getFont 14 :bold)
                :background (new Color 0 0 0 0)))
 
 (defn build-body
@@ -77,8 +112,8 @@
    Example:
       (build-body 'My message')
    "
-  [txt] (label :text txt
-               :font {:size 13}
+  [txt] (label-fn :text txt
+               :font (getFont 13)
                :background (new Color 0 0 0 0)
                :border (empty-border :left 5 :right 5 :bottom 2)))
 
@@ -141,7 +176,7 @@
                         bg-color-hover "#d9ecff"
                         size size
                         y (if (> (* size order) 0) (+ (* 2 order) (* size order)) (* size order))]
-                    (label
+                    (label-fn
                      :halign :center
                      :icon ico
                      :bounds [0 y size size]
@@ -201,12 +236,12 @@
                        :items [[(mig-panel
                                  :constraints ["" "0px[fill]0px" "0px[fill]0px"]
                                  :background (new Color 0 0 0 0)
-                                 :items [[(label
+                                 :items [[(label-fn
                                            :text txt
                                            :size [(- hsize vsize) :by vsize]
                                            :background bg-color
                                            :border border)]
-                                         [(label
+                                         [(label-fn
                                            :size [vsize :by vsize]
                                            :halign :center
                                            :background bg-color
@@ -232,11 +267,11 @@
           vsize 30]
       (horizontal-panel
        :background bg-color
-       :items [(label
+       :items [(label-fn
                 :text txt
                 :halign :center
                 :size [hsize :by vsize])
-               (label
+               (label-fn
                 :icon (image-scale icon/x-grey2-64-png 15)
                 :halign :center
                 :border (line-border :right 2 :color border)

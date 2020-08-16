@@ -260,11 +260,11 @@
       Import jarman.dev-tools
       Function need image-scale function for scalling icon
    "
-  (fn [txt active]
+  (fn [txt active size]
     (let [bg-color (if (= active true) "#eee" "#ccc")
           border "#fff"
-          hsize 70
-          vsize 30]
+          hsize (first size)
+          vsize (last size)]
       (horizontal-panel
        :background bg-color
        :items [(label-fn

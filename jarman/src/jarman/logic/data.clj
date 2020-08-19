@@ -242,6 +242,9 @@
      (update table :set (dissoc m :id) :where (= :id (:id m)))
      (insert table :values (vals m)))))
 
+(defn show-tables []
+  (not-allowed-rules ["metatable" "meta*"] (map (comp second first) (jdbc/query sql-connection "SHOW TABLES" ))))
+
 (defn do-create-meta []
   (for [table (not-allowed-rules ["metatable" "meta*"] (map (comp second first) (jdbc/query sql-connection "SHOW TABLES" )))]
     (let [meta (jdbc/query sql-connection (select :METADATA :where (= :table table)))]
@@ -260,98 +263,97 @@
                        (eval (change-expression '(select :METADATA) :where tables)))
                      (select :METADATA)))))
 
+;; (def u1
+;;   {:id 30
+;;    :table "user"
+;;    :prop {:table {:frontend-name "user"
+;;                   :is-system? false
+;;                   :is-linker? false
+;;                   :allow-modifing? true
+;;                   :allow-deleting? true
+;;                   :allow-linking? true}
+;;           :columns [{:field "login"
+;;                      :representation "login"
+;;                      :description nil
+;;                      :component-type "i"
+;;                      :column-type "varchar(100)"
+;;                      :private? false
+;;                      :editable? true}
+;;                     {:field "password"
+;;                      :representation "password"
+;;                      :description nil
+;;                      :component-type "i"
+;;                      :column-type "varchar(100)"
+;;                      :private? false
+;;                      :editable? true}
+;;                     {:field "first_name"
+;;                      :representation "first_name"
+;;                      :description nil
+;;                      :component-type "i"
+;;                      :column-type "varchar(100)"
+;;                      :private? false
+;;                      :editable? true}
+;;                     {:field "last_name"
+;;                      :representation "last_name"
+;;                      :description nil
+;;                      :component-type "i"
+;;                      :column-type "varchar(100)"
+;;                      :private? false
+;;                      :editable? true}
+;;                     {:field "id_permission"
+;;                      :representation "id_permission"
+;;                      :description nil
+;;                      :component-type "l"
+;;                      :column-type "bigint(120) unsigned"
+;;                      :private? false
+;;                      :editable? true
+;;                      :key-table "permission"}]}})
 
-(def u1
-  {:id 30
-   :table "user"
-   :prop {:table {:frontend-name "user"
-                  :is-system? false
-                  :is-linker? false
-                  :allow-modifing? true
-                  :allow-deleting? true
-                  :allow-linking? true}
-          :columns [{:field "login"
-                     :representation "login"
-                     :description nil
-                     :component-type "i"
-                     :column-type "varchar(100)"
-                     :private? false
-                     :editable? true}
-                    {:field "password"
-                     :representation "password"
-                     :description nil
-                     :component-type "i"
-                     :column-type "varchar(100)"
-                     :private? false
-                     :editable? true}
-                    {:field "first_name"
-                     :representation "first_name"
-                     :description nil
-                     :component-type "i"
-                     :column-type "varchar(100)"
-                     :private? false
-                     :editable? true}
-                    {:field "last_name"
-                     :representation "last_name"
-                     :description nil
-                     :component-type "i"
-                     :column-type "varchar(100)"
-                     :private? false
-                     :editable? true}
-                    {:field "id_permission"
-                     :representation "id_permission"
-                     :description nil
-                     :component-type "l"
-                     :column-type "bigint(120) unsigned"
-                     :private? false
-                     :editable? true
-                     :key-table "permission"}]}})
-
-(def u2
-  {:id 30
-   :table "user"
-   :prop {:table {:frontend-name "user"
-                  :is-system? false
-                  :is-linker? false
-                  :allow-modifing? false
-                  :allow-deleting? true
-                  :allow-linking? true}
-          :columns [{:field "login"
-                     :representation "login"
-                     :description nil
-                     :component-type "i"
-                     :column-type "varchar(100)"
-                     :private? false
-                     :editable? true}
-                    {:field "password"
-                     :representation "password"
-                     :description nil
-                     :component-type "i"
-                     :column-type "varchar(100)"
-                     :private? false
-                     :editable? true}
-                    {:field "first_name"
-                     :representation "first_name"
-                     :description nil
-                     :component-type "i"
-                     :column-type "varchar(100)"
-                     :private? true
-                     :editable? true}
-                    {:field "last_name"
-                     :representation "last_name"
-                     :description nil
-                     :component-type "i"
-                     :column-type "varchar(100)"
-                     :private? false
-                     :editable? true}
-                    {:field "id_permission"
-                     :representation "id_permission"
-                     :description nil
-                     :component-type "l"
-                     :column-type "bigint(120) unsigned"
-                     :private? false
-                     :editable? true
-                     :key-table "permission"}]}})
+;; (def u2
+;;   {:id 30
+;;    :table "user"
+;;    :prop {:table {:frontend-name "user"
+;;                   :is-system? false
+;;                   :is-linker? false
+;;                   :allow-modifing? false
+;;                   :allow-deleting? true
+;;                   :allow-linking? true}
+;;           :columns [{:field "login"
+;;                      :representation "login"
+;;                      :description nil
+;;                      :component-type "i"
+;;                      :column-type "varchar(100)"
+;;                      :private? false
+;;                      :editable? true}
+;;                     {:field "password"
+;;                      :representation "password"
+;;                      :description nil
+;;                      :component-type "i"
+;;                      :column-type "varchar(100)"
+;;                      :private? false
+;;                      :editable? true}
+;;                     {:field "first_name"
+;;                      :representation "first_name"
+;;                      :description nil
+;;                      :component-type "i"
+;;                      :column-type "varchar(100)"
+;;                      :private? true
+;;                      :editable? true}
+;;                     {:field "last_name"
+;;                      :representation "last_name"
+;;                      :description nil
+;;                      :component-type "i"
+;;                      :column-type "varchar(100)"
+;;                      :private? false
+;;                      :editable? true}
+;;                     {:field "id_permission"
+;;                      :representation "id_permission"
+;;                      :description nil
+;;                      :component-type "l"
+;;                      :column-type "bigint(120) unsigned"
+;;                      :private? false
+;;                      :editable? true
+;;                      :key-table "permission"}]}})
 
 
 (defmacro cond-contain [m & body]
@@ -373,21 +375,18 @@
                                            (println "column structural change"))))))))
   (adiff {:prop {:columns [nil nil {:private? false}], :table {:allow-modifing? true}}}))
 
-(data/diff u1 u2)
+;; (data/diff u1 u2)
 
-{:prop {:columns [nil nil {:private? true}]
-        :table   {:allow-modifing? false}}}
+;; {:prop {:columns [nil nil {:private? true}]
+;;         :table   {:allow-modifing? false}}}
+
+;; {:field "id_permission"
+;;  :representation "id_permission"
+;;  :description nil
+;;  :component-type "l"
+;;  :column-type "bigint(120) unsigned"
+;;  :private? false
+;;  :editable? true
+;;  :key-table "permission"}
 
 
-
-
-
-
-{:field "id_permission"
- :representation "id_permission"
- :description nil
- :component-type "l"
- :column-type "bigint(120) unsigned"
- :private? false
- :editable? true
- :key-table "permission"}

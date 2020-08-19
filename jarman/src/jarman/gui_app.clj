@@ -10,7 +10,8 @@
         seesaw.mig
         jarman.tools.dev-tools
         jarman.gui-tools
-        jarman.gui-alerts-service)
+        jarman.gui-alerts-service
+        jarman.logic.data)
   (:require [jarman.resource-lib.icon-library :as icon]
             [clojure.string :as string]))
 
@@ -108,24 +109,69 @@
      :background bg-c
      :items items)))
 
+
+(defn set-col-as-row
+  [data] (label :text (get data :name)
+                :size [(get data :width) :by (cond
+                                               (= (get data :type) "header") (- (get data :height) 2)
+                                               :else                         (- (get data :height) 0))]
+                :icon (cond
+                        (= (get data :type) "key") (image-scale icon/max-64-png (/ (get data :height) 1.3))
+                        :else nil)
+                :background (cond
+                              (= (get data :type) "header") "#666"
+                              (= (get data :type) "key")    "#f7d67c"
+                              :else                         "#fff")
+                :foreground (cond
+                              (= (get data :type) "header") "#fff"
+                              :else                         "#000")
+                :border (cond
+                          (= (get data :type) "header") (compound-border (empty-border :thickness 4))
+                          :else                         (compound-border (empty-border :thickness 4) (line-border :top 1 :color "#000")))))
+
+
+(defn prepare-table-with-map
+  [x y data]
+  (let [w 150
+        item-h 30
+        rows (map (fn [col] (set-col-as-row {:name (get col :field) :width w :height item-h :type (if (contains? col :key-table) "key" "row")})) (get (get data :prop) :columns))
+        items (conj rows (set-col-as-row {:name (get data :table) :width w :height item-h :type "header"}))
+        h (* (count items) item-h)
+        bg-c "#fff"
+        line-size-hover 2
+        border (line-border :thickness 1 :color "#000")
+        border-hover (line-border :thickness line-size-hover :color "#000")
+        ]
+   ;;  (println items)
+    (vertical-panel
+     :tip "Double click to show relation."
+     :id (get data :table)
+     :border border
+     :bounds [x y w h]
+     :background bg-c
+     :items items
+     :listen [:mouse-entered (fn [e] (config! e :cursor :hand :border border-hover :bounds [(- x (/ line-size-hover 2)) (- y (/ line-size-hover 2)) (+ w line-size-hover) (+ h line-size-hover)]))
+              :mouse-exited  (fn [e] (config! e :border border :bounds [x y w h]))])))
+
 ;; (prepare-table 10 10 "Users" "FName" "LName" "LOGIN")
 
 (do
-  (.add layered-for-tabs (prepare-table 10 10 "Persona" "Fname" "Lname" "Addres") (new Integer 0))
-  (.add layered-for-tabs (prepare-table 180 60 "Users" "Login" "Password" "Status") (new Integer 0))
-  (.add layered-for-tabs (prepare-table 580 60 "Users" "Login" "Password" "Status") (new Integer 0))
-  (.add layered-for-tabs (prepare-table 180 460 "Users" "Login" "Password" "Status") (new Integer 0))
+  (.add layered-for-tabs (prepare-table-with-map 10 10 (first (getset "user"))) (new Integer 0))
+  (.add layered-for-tabs (prepare-table-with-map 210 30 (first (getset "permission"))) (new Integer 0))
+  (.add layered-for-tabs (prepare-table-with-map 410 70 (first (getset "point_of_sale"))) (new Integer 0))
+;;   (.add layered-for-tabs (prepare-table 180 60 "Users" "Login" "Password" "Status") (new Integer 0))
+;;   (.add layered-for-tabs (prepare-table 580 60 "Users" "Login" "Password" "Status") (new Integer 0))
+;;   (.add layered-for-tabs (prepare-table 180 460 "Users" "Login" "Password" "Status") (new Integer 0))
   )
 
 (defn refresh-layered-for-tables
   [] (do (if (> (count (seesaw.util/children layered-for-tabs)) 0)
-           (.setPreferredSize layered-for-tabs (new Dimension
-                                                    (let [max-w (apply max (map (fn [item]  (+ (.getX (config item :bounds)) (.getWidth  (config item :bounds)))) (seesaw.util/children layered-for-tabs)))
-                                                          parent-w (getWidth (.getParent layered-for-tabs))]
-                                                      (if (> parent-w max-w) parent-w max-w))
-                                                    (let [max-h (apply max (map (fn [item]  (+ (.getY (config item :bounds)) (.getHeight  (config item :bounds)))) (seesaw.util/children layered-for-tabs)))
-                                                          parent-h (getHeight (.getParent layered-for-tabs))]
-                                                      (if (> parent-h max-h) parent-h max-h))))
+           (let [max-w (apply max (map (fn [item]  (+ (.getX (config item :bounds)) (.getWidth  (config item :bounds)))) (seesaw.util/children layered-for-tabs)))
+                 parent-w (getWidth (.getParent layered-for-tabs))
+                 max-h (apply max (map (fn [item]  (+ (.getY (config item :bounds)) (.getHeight  (config item :bounds)))) (seesaw.util/children layered-for-tabs)))
+                 parent-h (getHeight (.getParent layered-for-tabs))]
+             (do (.setPreferredSize layered-for-tabs (new Dimension (if (> parent-w max-w) parent-w max-w) (if (> parent-h max-h) parent-h max-h)))
+                 (.setSize layered-for-tabs (new Dimension (if (> parent-w max-w) parent-w max-w) (if (> parent-h max-h) parent-h max-h)))))
 
            (.setPreferredSize layered-for-tabs (new Dimension
                                                     (getWidth  (.getParent layered-for-tabs))

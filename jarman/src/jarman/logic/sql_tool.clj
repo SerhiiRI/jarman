@@ -19,7 +19,6 @@
 (def ^:dynamic *where-border*               false)
 (def ^:dynamic *data-format* "DB date format" "yyyy-MM-dd HH:mm:ss")
 
-
 (defn find-rule [operation-name]
   (condp = (last (string/split (name operation-name) #"/"))
     "insert"       *accepted-insert-rules*
@@ -253,7 +252,8 @@
   (if (vector? args)
     `(let [[~'col ~'asc-desc] ~args]
        (if (and (not-empty (name ~'col)) (some #(= ~'asc-desc %) [:asc :desc]))
-         (string/join " " [~current-string "ORDER BY" (name ~'col) (string/upper-case (name ~'asc-desc))])
+         ;; (string/join " " [~current-string "ORDER BY" (name ~'col)
+         (string/join " " [~current-string "ORDER BY" (format "`%s`"(name ~'col)) (string/upper-case (name ~'asc-desc))])
          ~current-string))
     current-string))
 
@@ -282,7 +282,9 @@
 (defmacro where-procedure-parser [where-clause]
   (cond (nil? where-clause) `(str "null")
         (symbol? where-clause) where-clause
-        (string? where-clause) `(format "\"%s\"" ~where-clause)
+        ;; (string? where-clause) `(format "\"%s\"" ~where-clause)
+        (string? where-clause) `(pr-str ~where-clause)
+        ;; (keyword? where-clause) `(str (symbol ~where-clause))
         (keyword? where-clause) `(format "`%s`" (str (symbol ~where-clause)))
         (seqable? where-clause) (let [function (first where-clause) args (rest where-clause)]
                                   (condp = function
@@ -642,7 +644,7 @@
 
 (defn- transform-namespace [symbol-op]
   (if (some #(= \/ %) (str symbol-op)) symbol-op
-      (symbol (str "jarman.sql-tool/" symbol-op))))
+      (symbol (str "jarman.logic.sql-tool/" symbol-op))))
 
 (defn change-expression
   "Replace or change some construction in clojure s-sql
@@ -674,12 +676,13 @@
                                                (if (or (= (first block) 'or) (= (first block) 'and))
                                                  (concat block `(~rule-value))
                                                  (concat (list where-rule-joiner) (list block) `(~rule-value))))
-                                      block)]
+                                      rule-value)]
                 (concat s-start (list block-to-change) s-end)))
             (concat s-sql-expresion `(~rule-name ~rule-value)))))))
 ;; (eval (change-expression '(select :user :where (= 3 4) ) :where '(or (= 1 :a) (= 1 :a))))
 ;; (eval (change-expression '(select :user :where (= 3 4) ) :where '(= 1 :a)))
 ;; (eval (change-expression '(select :user ) :where '(or (= 1 :a) (= 1 :a))))
+;; (change-expression '(select :user :order [:name :desc]) :order [:suka :bliat])
 
 ;; (concat block `(~rule-value))
 (defn reduce-sql-expression

@@ -9,7 +9,7 @@
    [clojure.java.io :as io]
    ;; local functionality
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
-   [jarman.logic.dev-tools :refer [image-scale]]
+   [jarman.tools.dev-tools :refer [image-scale]]
    [jarman.resource-lib.icon-library :as icon]))
 
 

@@ -15,7 +15,12 @@
 ;; Properties `prop` data:
 ;;   {:id 1
 ;;    :table "cache_register"
-;;    :prop {:table {:representation "cache_register" :private? false :scallable? true :linker? false}
+;;    :prop {:table {:frontend-name "user"
+;;                   :is-system? false
+;;                   :is-linker? false 
+;;                   :allow-modifing? true
+;;                   :allow-deleting? true
+;;                   :allow-linking?  true}
 ;;           :columns [{:field "id_point_of_sale"
 ;;                      :representation "id_point_of_sale"
 ;;                      :description nil
@@ -33,10 +38,12 @@
 ;;   info).
 ;;
 ;;   Short meta description for table:
-;;    :representation - is name of table which was viewed by user. By default it equal to table name. 
-;;    :private? - specify if table hided for user. False by default
-;;    :scallable? - if it false, program not allowe to extending or reducing column count. Only for UI. 
-;;    :linker? - specify table which created to bind other table with has N to N relations to other. this table by default private.
+;;    :frontend-name - is name of table which was viewed by user. By default it equal to table name. 
+;;    :is-linker? - specifing table which created to bind other table with has N to N relations to other.
+;;    :is-system? - mark this table as system table.
+;;    :allow-modifing? - if it false, program not allowe to extending or reducing column count. Only for UI. 
+;;    :allow-modifing? - if true, permit user to modify of column specyfication(adding, removing, changing type)
+;;    :allow-linking? - if true, than GUI must give user posible way to adding relation this data table to other.
 ;;
 ;;   Short meta description for columns:
 ;;    :field - database column name.
@@ -57,14 +64,16 @@
 ;;          nil - no hint, but not must be viewed, only not specified. 
 ;;                      
 (ns jarman.logic.data
+  (:refer-clojure :exclude [update])
   (:require
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
+   [clojure.data :as data]
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]))
 
 (def ^:dynamic *id-collumn-rules* ["id", "id*"])
 (def ^:dynamic *meta-rules* ["metatable" "meta*"])
-
+(def *not-allowed-to-edition-tables* ["user" "permission"])
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; RULE FILTRATOR ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -117,11 +126,11 @@
         preds (map f-comp rule-spec)]
     (filter (fn [s] (reduce (fn [a p?] (or a (p? s))) false preds)) col)))
 
-
 (defn is-id-col? [col-name]
   (let [col (string/lower-case col-name)]
     (or (= col "id")
         (= (take 2 col) '(\i \d)))))
+
 (defn is-not-id-col? [col-name]
       (not (is-id-col? col-name)))
 
@@ -140,8 +149,8 @@
     (if (not-empty ctype)
       (if (not-empty (allowed-rules *id-collumn-rules* [cfield])) "l" ;; l - mean linking is linking column 
         (condp in? ctype
-          "date"         "d" ;; datetime
-          "time"         "t" ;; only time
+          "date"         "d"  ;; datetime
+          "time"         "t"  ;; only time
           "datetime"     "dt" ;; datatime
           ["smallint"
            "mediumint"
@@ -177,21 +186,47 @@
   (let [tspec (last (string/split t-name #"_"))
         in?   (fn [col x] (if (string? col) (= x col) (some #(= % x) col)))]
     (condp in? tspec
-      ["lk" "link" "links"]
-      {:representation t-name :private? true :scallable? false :linker? true}
-      {:representation t-name :private? false :scallable? true :linker? false})))
+      ["lk" "link" "links"] {:frontend-name t-name
+                             :is-system? true
+                             :is-linker? true
+                             :allow-modifing? false
+                             :allow-deleting? false
+                             :allow-linking? false}
+      {:frontend-name t-name
+       :is-system? false
+       :is-linker? false
+       :description nil
+       :allow-modifing? true
+       :allow-deleting? true
+       :allow-linking? true})))
+
+;; (jdbc/query sql-connection (show-table-columns :user))
+;; {:field "id", :type "bigint(20) unsigned", :null "NO", :key "PRI", :default nil, :extra "auto_increment"}
+;; {:field "login", :type "varchar(100)", :null "NO", :key "", :default nil, :extra ""}
+;; {:field "password", :type "varchar(100)", :null "NO", :key "", :default nil, :extra ""}
+;; {:field "first_name", :type "varchar(100)", :null "NO", :key "", :default nil, :extra ""}
+;; {:field "last_name", :type "varchar(100)", :null "NO", :key "", :default nil, :extra ""}
+;; {:field "id_permission", :type "bigint(120) unsigned", :null "NO", :key "MUL", :default nil, :extra ""}
+
+(do
+  (defn- key-referense [k-column]
+    (re-matches #"id_(.*)" (name k-column)))
+  (key-referense :is_permission))
 
 (defn- get-table-field-meta [column-field-spec]
   (let [tfield (:field column-field-spec)
         ttype (:type column-field-spec)
+        set_key (fn [m] (if-let [[_ table] (re-matches #"id_(.*)" tfield)]
+                          (assoc m :key-table table) m))
         in?   (fn [col x] (if (string? col) (= x col) (some #(= % x) col)))]
-    {:field tfield
-     :representation tfield
-     :description nil
-     :component-type (get-component-group-by-type column-field-spec)
-     :column-type ttype
-     :private? false
-     :editable? true}))
+    (-> {:field tfield
+         :representation tfield
+         :description nil
+         :component-type (get-component-group-by-type column-field-spec)
+         :column-type ttype
+         :private? false
+         :editable? true}
+        set_key)))
 
 (defn- get-meta [table-name]
   {:id nil
@@ -210,11 +245,12 @@
 (defn do-create-meta []
   (for [table (not-allowed-rules ["metatable" "meta*"] (map (comp second first) (jdbc/query sql-connection "SHOW TABLES" )))]
     (let [meta (jdbc/query sql-connection (select :METADATA :where (= :table table)))]
-      (if (empty? meta) ;; jdbc/execute! sql-connection 
-        (update-sql-by-id-template "METADATA" (get-meta table))))))
+      (if (empty? meta) (jdbc/execute! sql-connection (update-sql-by-id-template "METADATA" (get-meta table)))))))
 
-(defn do-clear-meta []
+(defn do-clear-meta [& body]
+  {:pre [(every? string? body) ]}
   (jdbc/execute! sql-connection (delete :METADATA)))
+
 
 (defn getset [& tables]
   (map (fn [meta] (clojure.core/update meta :prop read-string))
@@ -225,6 +261,133 @@
                      (select :METADATA)))))
 
 
+(def u1
+  {:id 30
+   :table "user"
+   :prop {:table {:frontend-name "user"
+                  :is-system? false
+                  :is-linker? false
+                  :allow-modifing? true
+                  :allow-deleting? true
+                  :allow-linking? true}
+          :columns [{:field "login"
+                     :representation "login"
+                     :description nil
+                     :component-type "i"
+                     :column-type "varchar(100)"
+                     :private? false
+                     :editable? true}
+                    {:field "password"
+                     :representation "password"
+                     :description nil
+                     :component-type "i"
+                     :column-type "varchar(100)"
+                     :private? false
+                     :editable? true}
+                    {:field "first_name"
+                     :representation "first_name"
+                     :description nil
+                     :component-type "i"
+                     :column-type "varchar(100)"
+                     :private? false
+                     :editable? true}
+                    {:field "last_name"
+                     :representation "last_name"
+                     :description nil
+                     :component-type "i"
+                     :column-type "varchar(100)"
+                     :private? false
+                     :editable? true}
+                    {:field "id_permission"
+                     :representation "id_permission"
+                     :description nil
+                     :component-type "l"
+                     :column-type "bigint(120) unsigned"
+                     :private? false
+                     :editable? true
+                     :key-table "permission"}]}})
+
+(def u2
+  {:id 30
+   :table "user"
+   :prop {:table {:frontend-name "user"
+                  :is-system? false
+                  :is-linker? false
+                  :allow-modifing? false
+                  :allow-deleting? true
+                  :allow-linking? true}
+          :columns [{:field "login"
+                     :representation "login"
+                     :description nil
+                     :component-type "i"
+                     :column-type "varchar(100)"
+                     :private? false
+                     :editable? true}
+                    {:field "password"
+                     :representation "password"
+                     :description nil
+                     :component-type "i"
+                     :column-type "varchar(100)"
+                     :private? false
+                     :editable? true}
+                    {:field "first_name"
+                     :representation "first_name"
+                     :description nil
+                     :component-type "i"
+                     :column-type "varchar(100)"
+                     :private? true
+                     :editable? true}
+                    {:field "last_name"
+                     :representation "last_name"
+                     :description nil
+                     :component-type "i"
+                     :column-type "varchar(100)"
+                     :private? false
+                     :editable? true}
+                    {:field "id_permission"
+                     :representation "id_permission"
+                     :description nil
+                     :component-type "l"
+                     :column-type "bigint(120) unsigned"
+                     :private? false
+                     :editable? true
+                     :key-table "permission"}]}})
+
+
+(defmacro cond-contain [m & body]
+  `(condp (fn [kk# mm#] (contains? mm# kk#)) ~m
+       ~@body))
+
+(do
+  (defn adiff [m]
+    (let [key-comparator (fn [k m])]
+      (cond-contain
+       m
+       :table (println "table-name")
+       :id (println "change id")
+       :prop (let [m-prop (:prop m)]
+                 (cond-contain m-prop
+                               :table   (println  "table structural change")
+                               :columns (let [col-columns (:columns m-prop)]
+                                          (doto
+                                           (println "column structural change"))))))))
+  (adiff {:prop {:columns [nil nil {:private? false}], :table {:allow-modifing? true}}}))
+
+(data/diff u1 u2)
+
+{:prop {:columns [nil nil {:private? true}]
+        :table   {:allow-modifing? false}}}
 
 
 
+
+
+
+{:field "id_permission"
+ :representation "id_permission"
+ :description nil
+ :component-type "l"
+ :column-type "bigint(120) unsigned"
+ :private? false
+ :editable? true
+ :key-table "permission"}

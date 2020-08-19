@@ -84,30 +84,30 @@
 
 (def layered-for-tabs (new JLayeredPane))
 
-(defn set-row
-  ([txt w h] (label :text txt
-                    :size [w :by (- h 1)]
-                    :background "#fff"
-                    :border (line-border :top 1 :color "#000")))
-  ([txt w h header?] (label :text txt
-                            :size [w :by h]
-                            :background "#666"
-                            :foreground "#fff")))
+;; (defn set-row
+;;   ([txt w h] (label :text txt
+;;                     :size [w :by (- h 1)]
+;;                     :background "#fff"
+;;                     :border (line-border :top 1 :color "#000")))
+;;   ([txt w h header?] (label :text txt
+;;                             :size [w :by h]
+;;                             :background "#666"
+;;                             :foreground "#fff")))
 
-(defn prepare-table
-  [x y table-name & columns-name]
-  (let [w 150
-        item-h 30
-        rows (map (fn [col] (set-row col w item-h)) columns-name)
-        items (conj rows (set-row table-name w item-h true))
-        h (* (count items) item-h)
-        bg-c "#fff"]
-   ;;  (println items)
-    (vertical-panel
-     :border (line-border :thickness 1 :color "#000")
-     :bounds [x y w h]
-     :background bg-c
-     :items items)))
+;; (defn prepare-table
+;;   [x y table-name & columns-name]
+;;   (let [w 150
+;;         item-h 30
+;;         rows (map (fn [col] (set-row col w item-h)) columns-name)
+;;         items (conj rows (set-row table-name w item-h true))
+;;         h (* (count items) item-h)
+;;         bg-c "#fff"]
+;;    ;;  (println items)
+;;     (vertical-panel
+;;      :border (line-border :thickness 1 :color "#000")
+;;      :bounds [x y w h]
+;;      :background bg-c
+;;      :items items)))
 
 
 (defn set-col-as-row
@@ -116,7 +116,7 @@
                                                (= (get data :type) "header") (- (get data :height) 2)
                                                :else                         (- (get data :height) 0))]
                 :icon (cond
-                        (= (get data :type) "key") (image-scale icon/max-64-png (/ (get data :height) 1.3))
+                        (= (get data :type) "key") (image-scale icon/key-blue-64-png (/ (get data :height) 1))
                         :else nil)
                 :background (cond
                               (= (get data :type) "header") "#666"
@@ -140,8 +140,7 @@
         bg-c "#fff"
         line-size-hover 2
         border (line-border :thickness 1 :color "#000")
-        border-hover (line-border :thickness line-size-hover :color "#000")
-        ]
+        border-hover (line-border :thickness line-size-hover :color "#000")]
    ;;  (println items)
     (vertical-panel
      :tip "Double click to show relation."
@@ -155,14 +154,26 @@
 
 ;; (prepare-table 10 10 "Users" "FName" "LName" "LOGIN")
 
-(do
-  (.add layered-for-tabs (prepare-table-with-map 10 10 (first (getset "user"))) (new Integer 0))
-  (.add layered-for-tabs (prepare-table-with-map 210 30 (first (getset "permission"))) (new Integer 0))
-  (.add layered-for-tabs (prepare-table-with-map 410 70 (first (getset "point_of_sale"))) (new Integer 0))
-;;   (.add layered-for-tabs (prepare-table 180 60 "Users" "Login" "Password" "Status") (new Integer 0))
-;;   (.add layered-for-tabs (prepare-table 580 60 "Users" "Login" "Password" "Status") (new Integer 0))
-;;   (.add layered-for-tabs (prepare-table 180 460 "Users" "Login" "Password" "Status") (new Integer 0))
-  )
+;; (getset)
+
+(reduce (fn [acc tab]
+          (do
+            (.add layered-for-tabs (prepare-table-with-map (* 180 acc) 10 tab) (new Integer 0))
+            (inc acc)))
+        0 (getset))
+
+
+;; (reduce (fn [acc x] (println acc x) (+ acc x)) 0 [1 2 3 4 5])
+
+
+;; (do
+;;   (.add layered-for-tabs (prepare-table-with-map 10 10 (first (getset "user"))) (new Integer 0))
+;;   (.add layered-for-tabs (prepare-table-with-map 210 30 (first (getset "permission"))) (new Integer 0))
+;;   (.add layered-for-tabs (prepare-table-with-map 410 70 (first (getset "point_of_sale"))) (new Integer 0))
+;; ;;   (.add layered-for-tabs (prepare-table 180 60 "Users" "Login" "Password" "Status") (new Integer 0))
+;; ;;   (.add layered-for-tabs (prepare-table 580 60 "Users" "Login" "Password" "Status") (new Integer 0))
+;; ;;   (.add layered-for-tabs (prepare-table 180 460 "Users" "Login" "Password" "Status") (new Integer 0))
+;;   )
 
 (defn refresh-layered-for-tables
   [] (do (if (> (count (seesaw.util/children layered-for-tabs)) 0)
@@ -175,8 +186,7 @@
 
            (.setPreferredSize layered-for-tabs (new Dimension
                                                     (getWidth  (.getParent layered-for-tabs))
-                                                    (getHeight (.getParent layered-for-tabs)))))
-         ))
+                                                    (getHeight (.getParent layered-for-tabs)))))))
 
 (def jarmanapp
   "Description:

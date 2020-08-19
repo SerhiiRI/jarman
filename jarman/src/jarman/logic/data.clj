@@ -373,21 +373,5 @@
                                            (println "column structural change"))))))))
   (adiff {:prop {:columns [nil nil {:private? false}], :table {:allow-modifing? true}}}))
 
-(data/diff u1 u2)
 
-{:prop {:columns [nil nil {:private? true}]
-        :table   {:allow-modifing? false}}}
-
-
-
-
-
-
-{:field "id_permission"
- :representation "id_permission"
- :description nil
- :component-type "l"
- :column-type "bigint(120) unsigned"
- :private? false
- :editable? true
- :key-table "permission"}
+(getset "user")

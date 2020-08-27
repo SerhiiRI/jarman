@@ -360,33 +360,33 @@
   `(condp (fn [kk# mm#] (contains? mm# kk#)) ~m
        ~@body))
 
-(do
-  (defn adiff [m]
-    (let [key-comparator (fn [k m])]
-      (cond-contain
-       m
-       :table (println "Table can not be change after relation")
-       :id (println "Table id can not be changed totaly")
-       :prop (let [m-prop (:prop m)]
-               (cond-contain m-prop
-                             :table (let [t-prop (:table m-prop)]
-                                      (cond-contain t-prop
-                                                    :frontend-name #(assoc-in %1 [:prop :table :frontend-name] ((comp :frontend-name :table :prop) %2))
-                                                    ;; :is-system? false
-                                                    ;; :allow-modifing? false
-                                                    ;; :allow-deleting? true
-                                                    ;; :allow-linking? true
-                                                    ))
-                             :columns (let [c-columns (:columns m-prop)]
-                                        ))))))
-  (adiff {:prop {:columns [nil nil {:private? false}], :table {:allow-modifing? true}}} ) )
+;; (do
+;;   (defn adiff [m]
+;;     (let [key-comparator (fn [k m])]
+;;       (cond-contain
+;;        m
+;;        :table (println "Table can not be change after relation")
+;;        :id (println "Table id can not be changed totaly")
+;;        :prop (let [m-prop (:prop m)]
+;;                (cond-contain m-prop
+;;                              :table (let [t-prop (:table m-prop)]
+;;                                       (cond-contain t-prop
+;;                                                     :frontend-name #(assoc-in %1 [:prop :table :frontend-name] ((comp :frontend-name :table :prop) %2))
+;;                                                     ;; :is-system? false
+;;                                                     ;; :allow-modifing? false
+;;                                                     ;; :allow-deleting? true
+;;                                                     ;; :allow-linking? true
+;;                                                     ))
+;;                              :columns (let [c-columns (:columns m-prop)]
+;;                                         ))))))
+;;   (adiff {:prop {:columns [nil nil {:private? false}], :table {:allow-modifing? true}}} ) )
 
 
 
-(data/diff u1 u2)
-({:prop {:columns [nil nil {:private? false}], :table {:allow-modifing? true}}}
- {:prop {:columns [nil nil {:private? true}], :table {:allow-modifing? false}}}
- {:prop {:columns [{:field "login", :representation "login", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true} {:field "password", :representation "password", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true} {:editable? true, :column-type "varchar(100)", :component-type "i", :description nil, :representation "first_name", :field "first_name"}  {:field "last_name", :representation "last_name", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true} {:field "id_permission", :representation "id_permission", :description nil, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}], :table {:allow-linking? true, :allow-deleting? true, :is-linker? false, :is-system? false, :frontend-name "user"}}, :table "user", :id 30})
+;; (data/diff u1 u2)
+;; ({:prop {:columns [nil nil {:private? false}], :table {:allow-modifing? true}}}
+;;  {:prop {:columns [nil nil {:private? true}], :table {:allow-modifing? false}}}
+;;  {:prop {:columns [{:field "login", :representation "login", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true} {:field "password", :representation "password", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true} {:editable? true, :column-type "varchar(100)", :component-type "i", :description nil, :representation "first_name", :field "first_name"}  {:field "last_name", :representation "last_name", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true} {:field "id_permission", :representation "id_permission", :description nil, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}], :table {:allow-linking? true, :allow-deleting? true, :is-linker? false, :is-system? false, :frontend-name "user"}}, :table "user", :id 30})
 
 ;; {:prop {:columns [nil nil {:private? true}]
 ;;         :table   {:allow-modifing? false}}}
@@ -403,37 +403,37 @@
 
 
 
-(data/diff [{:field "last_name",
-             :representation "NEW NAME",
-             :description nil, :component-type "i",
-             :column-type "varchar(100)",
-             :private? false,
-             :editable? true}
-            {:field "id_permission",
-             :representation "id_permission",
-             :description nil,
-             :component-type "l",
-             :column-type "bigint(120) unsigned",
-             :private? false,
-             :editable? true,
-             :key-table "permission"}]
-           ;; original
-           [{:field "last_name",
-             :representation "last_name",
-             :description nil, :component-type "i",
-             :column-type "varchar(100)",
-             :private? false,
-             :editable? true}
-            {:field "id_permission",
-             :representation "id_permission",
-             :description nil,
-             :component-type "l",
-             :column-type "bigint(120) unsigned",
-             :private? false,
-             :editable? true,
-             :key-table "permission"}])
- [[{:representation "NEW NAME"}] [{:representation "last_name"}] [{:editable? true, :private? false, :column-type "varchar(100)", :component-type "i", :description nil, :field "last_name"} {:field "id_permission", :representation "id_permission", :description nil, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]]
+;; (data/diff [{:field "last_name",
+;;              :representation "NEW NAME",
+;;              :description nil, :component-type "i",
+;;              :column-type "varchar(100)",
+;;              :private? false,
+;;              :editable? true}
+;;             {:field "id_permission",
+;;              :representation "id_permission",
+;;              :description nil,
+;;              :component-type "l",
+;;              :column-type "bigint(120) unsigned",
+;;              :private? false,
+;;              :editable? true,
+;;              :key-table "permission"}]
+;;            ;; original
+;;            [{:field "last_name",
+;;              :representation "last_name",
+;;              :description nil, :component-type "i",
+;;              :column-type "varchar(100)",
+;;              :private? false,
+;;              :editable? true}
+;;             {:field "id_permission",
+;;              :representation "id_permission",
+;;              :description nil,
+;;              :component-type "l",
+;;              :column-type "bigint(120) unsigned",
+;;              :private? false,
+;;              :editable? true,
+;;              :key-table "permission"}])
+;;  [[{:representation "NEW NAME"}] [{:representation "last_name"}] [{:editable? true, :private? false, :column-type "varchar(100)", :component-type "i", :description nil, :field "last_name"} {:field "id_permission", :representation "id_permission", :description nil, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]]
 
-(.indexOf [1 2 3 4 5 6 nil] nil)
+;; (.indexOf [1 2 3 4 5 6 nil] nil)
 
 

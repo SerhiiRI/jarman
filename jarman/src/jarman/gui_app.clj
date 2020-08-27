@@ -1,8 +1,6 @@
-;: FIRST gui_tools.clj
-;; PREV gui_alerts_service.clj
-;; NOW COMPILATION FILE 3/3
-;; STOP
-;; LAST gui_app.clj 
+;; 
+;; Compilation: dev_tool.clj -> data.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
+;; 
 (ns jarman.gui-app
   (:use seesaw.core
         seesaw.border

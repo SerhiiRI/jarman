@@ -612,18 +612,49 @@
 
 ;; (def dbmap (getset))
 ;; 
-
-(defn calculate-tables-height
-  "Description: 
-      Return prefered size for table
-   Example: 
-      (calculate-table-size {:db :data :in :map})   
-   Needed:
-   "
+(defn calculate-tables-size-with-tabs
   [db-data]
-  (doall (map (fn [tab] (vec (list (* 30 (count (get (get tab :prop) :columns))) tab))) db-data)))
+  (let [tabs-with-size (doall (map (fn [tab] (vec (list (vec (list (* 30 (+ 1 (count (get (get tab :prop) :columns))))
+                                                                   (+ 50 (* 6 (last (sort (concat (map (fn [col] (count (get col :representation))) (get (get tab :prop) :columns)) (list (count (get tab :table))))))))))
+                                                        tab
+                                                        )))db-data))]
+    tabs-with-size))
 
-(def dbmap-sorted (reverse (sort-by first (calculate-tables-height dbmap))))
+(defn calculate-tables-size
+  [db-data]
+  (let [tabs-with-size (doall (map (fn [tab] (vec (list
+                                                   (* 30 (+ 1 (count (get (get tab :prop) :columns))))
+                                                   (+ 50 (* 6 (last (sort (concat (map (fn [col] (count (get col :representation))) (get (get tab :prop) :columns)) (list (count (get tab :table))))))))))
+                                     )db-data))]
+    tabs-with-size))
+
+
+(defn calculate-bounds
+  [offset max-tabs-inline]
+  (let [sizes (partition-all max-tabs-inline (calculate-tables-size dbmap))
+        tables (calculate-tables-size-with-tabs dbmap)
+        y-bound (atom 10)
+        pre-bounds (map (fn [row] (let [x-bounds (atom 10)
+                                           bounds-x (map (fn [size] (do
+                                                                      (def xbound @x-bounds)
+                                                                      (swap! x-bounds (fn [last-x] (+ last-x offset (last size))))
+                                                                      xbound))
+                                                         row)]
+                                       (do
+                                         (def lista (list bounds-x @y-bound))
+                                         (swap! y-bound (fn [yb] (+ yb offset (first (first row)))))
+                                         lista)))
+                           sizes)
+        calculated-bounds (apply concat (map (fn [row] (let [x-list  (first row)
+                                                             y       (last row)]
+                                                         (map (fn [x] (vec (list x y))) x-list)))
+                                             pre-bounds))]
+    (map (fn [bounds tabs] (vec (list (concat bounds (reverse (first tabs))) (last tabs)))) calculated-bounds tables)))
+
+
+;;  (calculate-bounds 10 4)
+
+;; (def dbmap-sorted (reverse (sort-by first (calculate-tables-height dbmap))))
 
 
 (defn set-col-as-row
@@ -646,73 +677,48 @@
                           :else                         (compound-border (empty-border :thickness 4) (line-border :top 1 :color "#000")))))
 
 
-
-(def bound-x-atom (atom 10))
-(def col-in-row-atom (atom 0))
-(def max-col-in-row 4)
-
 (defn prepare-table-with-map
-  [offset-x offset-y data]
-  (let [w (+ 50 (* 6 (last (sort (concat (map (fn [col] (count (get col :representation))) (get (get data :prop) :columns)) (list (count (get data :table))))))))
-        x @bound-x-atom
-        mnoznik (int (/ @col-in-row-atom max-col-in-row))
-        y (+ offset-y (* mnoznik (first (nth dbmap-sorted (* max-col-in-row mnoznik)))))
-        row-h 30
-        rows (map (fn [col] (set-col-as-row {:name (get col :field) :width w :height row-h :type (if (contains? col :key-table) "key" "row")})) (get (get data :prop) :columns))
-        items (conj rows (set-col-as-row {:name (get data :table) :width w :height row-h :type "header"}))
-        h (* (count items) row-h)
+  [bounds data]
+  (let [x (nth bounds 0)
+        y (nth bounds 1)
+        w (nth bounds 2)
+        row-h 30  ;; wysokosc wiersza w tabeli reprezentujacego kolumne
+        col-in-rows (map (fn [col] (set-col-as-row {:name (get col :field) :width w :height row-h :type (if (contains? col :key-table) "key" "row")})) (get (get data :prop) :columns))  ;; przygotowanie tabeli bez naglowka
+        camplete-table (conj col-in-rows (set-col-as-row {:name (get data :table) :width w :height row-h :type "header"}))  ;; dodanie naglowka i finalizacja widoku tabeli
+        h (* (count camplete-table) row-h)  ;; podliczenie wysokosci gotowej tabeli
         bg-c "#fff"
-        line-size-hover 2
+        line-size-hover 2  ;; zwiekszenie bordera dla eventu najechania mysza
         border (line-border :thickness 1 :color "#000")
         border-hover (line-border :thickness line-size-hover :color "#000")]
-   ;;  (println items)
     (do
-      (swap! col-in-row-atom inc)
-      (if (> (/ @col-in-row-atom max-col-in-row) (int (/ @col-in-row-atom max-col-in-row))) (swap! bound-x-atom (fn [bxatom] (+ bxatom w offset-x))) (reset! bound-x-atom 10))
+      (if (> @bound-x-atom w)
+        (swap! bound-x-atom (fn [bxatom] (+ bxatom w))))
       (let []
         (vertical-panel
-        :tip "Double click to show relation."
-        :id (get data :table)
-        :border border
-        :bounds [x y w h]
-        :background bg-c
-        :items items
-        :listen [:mouse-entered (fn [e] (config! e :cursor :hand :border border-hover :bounds [(- x (/ line-size-hover 2)) (- y (/ line-size-hover 2)) (+ w line-size-hover) (+ h line-size-hover)]))
-                 :mouse-exited  (fn [e] (config! e :border border :bounds [x y w h]))])))))
+         :tip "Double click to show relation."
+         :id (get data :table)
+         :border border
+         :bounds [x y w h]
+         :background bg-c
+         :items camplete-table
+         :listen [:mouse-entered (fn [e] (config! e :cursor :hand :border border-hover :bounds [(- x (/ line-size-hover 2)) (- y (/ line-size-hover 2)) (+ w line-size-hover) (+ h line-size-hover)]))
+                  :mouse-exited  (fn [e] (config! e :border border :bounds [x y w h]))])))))
 
 
 
-;; (split-at 6 (vec dbmap-sorted))
-
-;; (def calculate-tables-bounds
-;;   [tables-sorted columns-in-row margin]
-;;   (let [splited (split-at columns-in-row (vec tables-sorted))]
-;;     (map (fn [row] (
-;;                     map (fn [tab] (
-                                   
-;;                                    )) row
-;;                     )) splited)))
-
-;; (split-at 2 [[420 {}] [400 {}] [380 {}] [320 {}][220 {}]])
-
-(reduce (fn [acc tab]
-          (do
-            (.add layered-for-tabs (prepare-table-with-map 10 10 (last tab)) (new Integer 0))
-            (inc acc)))
-        0 dbmap-sorted)
+(doall (map (fn [tab-data]
+              (.add layered-for-tabs (prepare-table-with-map (first tab-data) (last tab-data)) (new Integer 5)))
+            (calculate-bounds 20 5)))
 
 
-;; (reduce (fn [acc x] (println acc x) (+ acc x)) 0 [1 2 3 4 5])
 
 
-;; (do
-;;   (.add layered-for-tabs (prepare-table-with-map 10 10 (first (getset "user"))) (new Integer 0))
-;;   (.add layered-for-tabs (prepare-table-with-map 210 30 (first (getset "permission"))) (new Integer 0))
-;;   (.add layered-for-tabs (prepare-table-with-map 410 70 (first (getset "point_of_sale"))) (new Integer 0))
-;; ;;   (.add layered-for-tabs (prepare-table 180 60 "Users" "Login" "Password" "Status") (new Integer 0))
-;; ;;   (.add layered-for-tabs (prepare-table 580 60 "Users" "Login" "Password" "Status") (new Integer 0))
-;; ;;   (.add layered-for-tabs (prepare-table 180 460 "Users" "Login" "Password" "Status") (new Integer 0))
-;;   )
+
+
+
+
+
+
 
 (defn refresh-layered-for-tables
   [] (do (if (> (count (seesaw.util/children layered-for-tabs)) 0)

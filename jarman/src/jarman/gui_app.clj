@@ -82,6 +82,8 @@
 
 (def layered-for-tabs (new JLayeredPane))
 
+;; ================================================VVVVVVVVVV Table in database view
+
 ;; (defn set-row
 ;;   ([txt w h] (label :text txt
 ;;                     :size [w :by (- h 1)]
@@ -160,8 +162,8 @@
 ;; 
 (defn calculate-tables-size-with-tabs
   [db-data]
-  (let [tabs-with-size (doall (map (fn [tab] (vec (list (vec (list (* 30 (+ 1 (count (get (get tab :prop) :columns))))
-                                                                   (+ 50 (* 6 (last (sort (concat (map (fn [col] (count (get col :representation))) (get (get tab :prop) :columns)) (list (count (get tab :table))))))))))
+  (let [tabs-with-size (doall (map (fn [tab] (vec (list (vec (list (* 30 (+ 1 (count (get-in tab [:prop :columns]))))
+                                                                   (+ 50 (* 6 (last (sort (concat (map (fn [col] (count (get col :representation))) (get-in tab [:prop :columns])) (list (count (get tab :table))))))))))
                                                         tab
                                                         )))db-data))]
     tabs-with-size))
@@ -169,8 +171,8 @@
 (defn calculate-tables-size
   [db-data]
   (let [tabs-with-size (doall (map (fn [tab] (vec (list
-                                                   (* 30 (+ 1 (count (get (get tab :prop) :columns))))
-                                                   (+ 50 (* 6 (last (sort (concat (map (fn [col] (count (get col :representation))) (get (get tab :prop) :columns)) (list (count (get tab :table))))))))))
+                                                   (* 30 (+ 1 (count (get-in tab [:prop :columns]))))
+                                                   (+ 50 (* 6 (last (sort (concat (map (fn [col] (count (get col :representation))) (get-in tab [:prop :columns])) (list (count (get tab :table))))))))))
                                      )db-data))]
     tabs-with-size))
 
@@ -195,17 +197,15 @@
                                                              y       (last row)]
                                                          (map (fn [x] (vec (list x y))) x-list)))
                                              pre-bounds))]
-    ;; (map (fn [bounds tabs] (vec (list (concat bounds (reverse (first tabs))) (last tabs)))) calculated-bounds tables)
-    (map (fn [bounds tabs] (conj {:bounds (vec (concat bounds (reverse (first tabs))))}
-                                 (last tabs)))
+    (map (fn [bounds tabs] (assoc-in (last tabs) 
+                                     [:prop :bounds] 
+                                     (vec (concat bounds (reverse (first tabs))))
+                                     ))
          calculated-bounds tables)
     ))
 
 
- (calculate-bounds 10 4)
-
-;; (def dbmap-sorted (reverse (sort-by first (calculate-tables-height dbmap))))
-
+;;  (calculate-bounds 10 4)
 
  
 (defn set-col-as-row
@@ -259,7 +259,7 @@
         y (nth bounds 1)
         w (nth bounds 2)
         row-h 30  ;; wysokosc wiersza w tabeli reprezentujacego kolumne
-        col-in-rows (map (fn [col] (set-col-as-row {:name (get col :field) :width w :height row-h :type (if (contains? col :key-table) "key" "row")})) (get (get data :prop) :columns))  ;; przygotowanie tabeli bez naglowka
+        col-in-rows (map (fn [col] (set-col-as-row {:name (get col :field) :width w :height row-h :type (if (contains? col :key-table) "key" "row")})) (get-in data [:prop :columns]))  ;; przygotowanie tabeli bez naglowka
         camplete-table (conj col-in-rows (set-col-as-row {:name (get data :table) :width w :height row-h :type "header"}))  ;; dodanie naglowka i finalizacja widoku tabeli
         h (* (count camplete-table) row-h)  ;; podliczenie wysokosci gotowej tabeli
         ]
@@ -277,16 +277,12 @@
 (def complete-db-view (atom (calculate-bounds 20 5)))
 
 (doall (map (fn [tab-data]
-              (.add layered-for-tabs (prepare-table-with-map (get tab-data :bounds) tab-data) (new Integer 5)))
+              (.add layered-for-tabs (prepare-table-with-map (get-in tab-data [:prop :bounds] [10 10 100 100]) tab-data) (new Integer 5)))
             @complete-db-view))
 
 
 
-
-
-
-
-
+;; ============================================^^^^^^^^^ Table in databse view
 
 
 

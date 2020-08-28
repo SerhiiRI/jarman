@@ -22,10 +22,15 @@
 ;; (import java.awt.Point)
 (import javax.swing.JLayeredPane)
 (import java.awt.Color)
+(import java.awt.MouseInfo)
+(import java.awt.event.MouseListener)
+(import java.awt.event.MouseEvent)
+(import java.awt.PointerInfo)
 
 (defn getWidth  [obj] (.width (.getSize obj)))
 (defn getHeight [obj] (.height (.getSize obj)))
 (defn getSize   [obj] (let [size (.getSize obj)] [(.width size) (.height size)]))
+(defn getParent [obj] (.getParent (seesaw.core/to-widget obj)))
 
 (def getFont
   (fn [& params] (-> {:size 12 :style :plain :name "Arial"}

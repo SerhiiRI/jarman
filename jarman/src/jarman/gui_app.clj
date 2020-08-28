@@ -107,510 +107,56 @@
 ;;      :background bg-c
 ;;      :items items)))
 
-(def dbmap (list 
-            {:id 21
-            :table "cache_register"
-            :prop
-            {:table
-             {:frontend-name "cache_register"
-              :is-system? false
-              :is-linker? false
-              :allow-modifing? true
-              :allow-deleting? true
-              :allow-linking? true}
-             :columns
-             [{:field "id_point_of_sale"
-               :representation "id_point_of_sale"
-               :description nil
-               :component-type "l"
-               :column-type "bigint(20) unsigned"
-               :private? false
-               :editable? true
-               :key-table "point_of_sale"}
-              {:field "name"
-               :representation "name"
-               :description nil
-               :component-type "i"
-               :column-type "varchar(100)"
-               :private? false
-               :editable? true}
-              {:field "serial_number"
-               :representation "serial_number"
-               :description nil
-               :component-type "i"
-               :column-type "varchar(100)"
-               :private? false
-               :editable? true}
-              {:field "fiscal_number"
-               :representation "fiscal_number"
-               :description nil
-               :component-type "i"
-               :column-type "varchar(100)"
-               :private? false
-               :editable? true}
-              {:field "manufacture_date"
-               :representation "manufacture_date"
-               :description nil
-               :component-type "d"
-               :column-type "date"
-               :private? false
-               :editable? true}
-              {:field "first_registration_date"
-               :representation "first_registration_date"
-               :description nil
-               :component-type "d"
-               :column-type "date"
-               :private? false
-               :editable? true}
-              {:field "is_working"
-               :representation "is_working"
-               :description nil
-               :component-type "b"
-               :column-type "tinyint(1)"
-               :private? false
-               :editable? true}
-              {:field "version"
-               :representation "version"
-               :description nil
-               :component-type "i"
-               :column-type "varchar(100)"
-               :private? false
-               :editable? true}
-              {:field "id_dev"
-               :representation "id_dev"
-               :description nil
-               :component-type "l"
-               :column-type "varchar(100)"
-               :private? false
-               :editable? true
-               :key-table "dev"}
-              {:field "producer"
-               :representation "producer"
-               :description nil
-               :component-type "i"
-               :column-type "varchar(100)"
-               :private? false
-               :editable? true}
-              {:field "modem"
-               :representation "modem"
-               :description nil
-               :component-type "i"
-               :column-type "varchar(100)"
-               :private? false
-               :editable? true}
-              {:field "modem_model"
-               :representation "modem_model"
-               :description nil
-               :component-type "i"
-               :column-type "varchar(100)"
-               :private? false
-               :editable? true}
-              {:field "modem_serial_number"
-               :representation "modem_serial_number"
-               :description nil
-               :component-type "i"
-               :column-type "varchar(100)"
-               :private? false
-               :editable? true}
-              {:field "modem_phone_number"
-               :representation "modem_phone_number"
-               :description nil
-               :component-type "i"
-               :column-type "varchar(100)"
-               :private? false
-               :editable? true}]}}
-  {:id 22
-   :table "enterpreneur"
-   :prop
-   {:table
-    {:frontend-name "enterpreneur"
-     :is-system? false
-     :is-linker? false
-     :allow-modifing? true
-     :allow-deleting? true
-     :allow-linking? true}
-    :columns
-    [{:field "ssreou"
-      :representation "ssreou"
-      :description nil
-      :component-type "a"
-      :column-type "tinytext"
-      :private? false
-      :editable? true}
-     {:field "ownership_form"
-      :representation "ownership_form"
-      :description nil
-      :component-type "i"
-      :column-type "varchar(100)"
-      :private? false
-      :editable? true}
-     {:field "vat_certificate"
-      :representation "vat_certificate"
-      :description nil
-      :component-type "a"
-      :column-type "tinytext"
-      :private? false
-      :editable? true}
-     {:field "individual_tax_number"
-      :representation "individual_tax_number"
-      :description nil
-      :component-type "i"
-      :column-type "varchar(100)"
-      :private? false
-      :editable? true}
-     {:field "director"
-      :representation "director"
-      :description nil
-      :component-type "i"
-      :column-type "varchar(100)"
-      :private? false
-      :editable? true}
-     {:field "accountant"
-      :representation "accountant"
-      :description nil
-      :component-type "i"
-      :column-type "varchar(100)"
-      :private? false
-      :editable? true}
-     {:field "legal_address"
-      :representation "legal_address"
-      :description nil
-      :component-type "i"
-      :column-type "varchar(100)"
-      :private? false
-      :editable? true}
-     {:field "physical_address"
-      :representation "physical_address"
-      :description nil
-      :component-type "i"
-      :column-type "varchar(100)"
-      :private? false
-      :editable? true}
-     {:field "contacts_information"
-      :representation "contacts_information"
-      :description nil
-      :component-type "a"
-      :column-type "mediumtext"
-      :private? false
-      :editable? true}]}}
-  {:id 23
-   :table "permission"
-   :prop
-   {:table
-    {:frontend-name "permission"
-     :is-system? false
-     :is-linker? false
-     :allow-modifing? true
-     :allow-deleting? true
-     :allow-linking? true}
-    :columns
-    [{:field "permission_name"
-      :representation "permission_name"
-      :description nil
-      :component-type "i"
-      :column-type "varchar(20)"
-      :private? false
-      :editable? true}
-     {:field "configuration"
-      :representation "configuration"
-      :description nil
-      :component-type "a"
-      :column-type "tinytext"
-      :private? false
-      :editable? true}]}}
-  {:id 24
-   :table "point_of_sale"
-   :prop
-   {:table
-    {:frontend-name "point_of_sale"
-     :is-system? false
-     :is-linker? false
-     :allow-modifing? true
-     :allow-deleting? true
-     :allow-linking? true}
-    :columns
-    [{:field "id_enterpreneur"
-      :representation "id_enterpreneur"
-      :description nil
-      :component-type "l"
-      :column-type "bigint(20) unsigned"
-      :private? false
-      :editable? true
-      :key-table "enterpreneur"}
-     {:field "name"
-      :representation "name"
-      :description nil
-      :component-type "i"
-      :column-type "varchar(100)"
-      :private? false
-      :editable? true}
-     {:field "physical_address"
-      :representation "physical_address"
-      :description nil
-      :component-type "i"
-      :column-type "varchar(100)"
-      :private? false
-      :editable? true}
-     {:field "telefons"
-      :representation "telefons"
-      :description nil
-      :component-type "i"
-      :column-type "varchar(100)"
-      :private? false
-      :editable? true}]}}
-  {:id 25
-   :table "point_of_sale_group"
-   :prop
-   {:table
-    {:frontend-name "point_of_sale_group"
-     :is-system? false
-     :is-linker? false
-     :allow-modifing? true
-     :allow-deleting? true
-     :allow-linking? true}
-    :columns
-    [{:field "group_name"
-      :representation "group_name"
-      :description nil
-      :component-type "i"
-      :column-type "varchar(100)"
-      :private? false
-      :editable? true}
-     {:field "metadata"
-      :representation "metadata"
-      :description nil
-      :component-type "a"
-      :column-type "mediumtext"
-      :private? false
-      :editable? true}]}}
-  {:id 26
-   :table "point_of_sale_group_links"
-   :prop
-   {:table
-    {:frontend-name "point_of_sale_group_links"
-     :is-system? true
-     :is-linker? true
-     :allow-modifing? false
-     :allow-deleting? false
-     :allow-linking? false}
-    :columns
-    [{:field "id_point_of_sale_group"
-      :representation "id_point_of_sale_group"
-      :description nil
-      :component-type "l"
-      :column-type "bigint(20) unsigned"
-      :private? false
-      :editable? true
-      :key-table "point_of_sale_group"}
-     {:field "id_point_of_sale"
-      :representation "id_point_of_sale"
-      :description nil
-      :component-type "l"
-      :column-type "bigint(20) unsigned"
-      :private? false
-      :editable? true
-      :key-table "point_of_sale"}]}}
-  {:id 27
-   :table "repair_contract"
-   :prop
-   {:table
-    {:frontend-name "repair_contract"
-     :is-system? false
-     :is-linker? false
-     :allow-modifing? true
-     :allow-deleting? true
-     :allow-linking? true}
-    :columns
-    [{:field "id_cache_register"
-      :representation "id_cache_register"
-      :description nil
-      :component-type "l"
-      :column-type "bigint(20) unsigned"
-      :private? false
-      :editable? true
-      :key-table "cache_register"}
-     {:field "id_point_of_sale"
-      :representation "id_point_of_sale"
-      :description nil
-      :component-type "l"
-      :column-type "bigint(20) unsigned"
-      :private? false
-      :editable? true
-      :key-table "point_of_sale"}
-     {:field "creation_contract_date"
-      :representation "creation_contract_date"
-      :description nil
-      :component-type "d"
-      :column-type "date"
-      :private? false
-      :editable? true}
-     {:field "last_change_contract_date"
-      :representation "last_change_contract_date"
-      :description nil
-      :component-type "d"
-      :column-type "date"
-      :private? false
-      :editable? true}
-     {:field "contract_terms_date"
-      :representation "contract_terms_date"
-      :description nil
-      :component-type "d"
-      :column-type "date"
-      :private? false
-      :editable? true}
-     {:field "cache_register_register_date"
-      :representation "cache_register_register_date"
-      :description nil
-      :component-type "d"
-      :column-type "date"
-      :private? false
-      :editable? true}
-     {:field "remove_security_seal_date"
-      :representation "remove_security_seal_date"
-      :description nil
-      :component-type "dt"
-      :column-type "datetime"
-      :private? false
-      :editable? true}
-     {:field "cause_of_removing_seal"
-      :representation "cause_of_removing_seal"
-      :description nil
-      :component-type "a"
-      :column-type "mediumtext"
-      :private? false
-      :editable? true}
-     {:field "technical_problem"
-      :representation "technical_problem"
-      :description nil
-      :component-type "a"
-      :column-type "mediumtext"
-      :private? false
-      :editable? true}
-     {:field "active_seal"
-      :representation "active_seal"
-      :description nil
-      :component-type "a"
-      :column-type "mediumtext"
-      :private? false
-      :editable? true}]}}
-  {:id 28
-   :table "seal"
-   :prop
-   {:table
-    {:frontend-name "seal"
-     :is-system? false
-     :is-linker? false
-     :allow-modifing? true
-     :allow-deleting? true
-     :allow-linking? true}
-    :columns
-    [{:field "seal_number"
-      :representation "seal_number"
-      :description nil
-      :component-type "i"
-      :column-type "varchar(100)"
-      :private? false
-      :editable? true}
-     {:field "to_date"
-      :representation "to_date"
-      :description nil
-      :component-type "d"
-      :column-type "date"
-      :private? false
-      :editable? true}]}}
-  {:id 29
-   :table "service_contract"
-   :prop
-   {:table
-    {:frontend-name "service_contract"
-     :is-system? false
-     :is-linker? false
-     :allow-modifing? true
-     :allow-deleting? true
-     :allow-linking? true}
-    :columns
-    [{:field "id_point_of_sale"
-      :representation "id_point_of_sale"
-      :description nil
-      :component-type "l"
-      :column-type "bigint(20) unsigned"
-      :private? false
-      :editable? true
-      :key-table "point_of_sale"}
-     {:field "register_contract_date"
-      :representation "register_contract_date"
-      :description nil
-      :component-type "d"
-      :column-type "date"
-      :private? false
-      :editable? true}
-     {:field "contract_term_date"
-      :representation "contract_term_date"
-      :description nil
-      :component-type "d"
-      :column-type "date"
-      :private? false
-      :editable? true}
-     {:field "money_per_month"
-      :representation "money_per_month"
-      :description nil
-      :component-type "n"
-      :column-type "int(11)"
-      :private? false
-      :editable? true}]}}
-  {:id 30
-   :table "user"
-   :prop
-   {:table
-    {:frontend-name "user"
-     :is-system? false
-     :is-linker? false
-     :allow-modifing? true
-     :allow-deleting? true
-     :allow-linking? true}
-    :columns
-    [{:field "login"
-      :representation "login"
-      :description nil
-      :component-type "i"
-      :column-type "varchar(100)"
-      :private? false
-      :editable? true}
-     {:field "password"
-      :representation "password"
-      :description nil
-      :component-type "i"
-      :column-type "varchar(100)"
-      :private? false
-      :editable? true}
-     {:field "first_name"
-      :representation "first_name"
-      :description nil
-      :component-type "i"
-      :column-type "varchar(100)"
-      :private? false
-      :editable? true}
-     {:field "last_name"
-      :representation "last_name"
-      :description nil
-      :component-type "i"
-      :column-type "varchar(100)"
-      :private? false
-      :editable? true}
-     {:field "id_permission"
-      :representation "id_permission"
-      :description nil
-      :component-type "l"
-      :column-type "bigint(120) unsigned"
-      :private? false
-      :editable? true
-      :key-table "permission"}]}}))
+;; (def dbmap (list
+;;             {:id 29
+;;              :table "service_contract"
+;;              :prop
+;;              {:table
+;;               {:frontend-name "service_contract"
+;;                :is-system? false
+;;                :is-linker? false
+;;                :allow-modifing? true
+;;                :allow-deleting? true
+;;                :allow-linking? true}
+;;               :columns
+;;               [{:field "id_point_of_sale"
+;;                 :representation "id_point_of_sale"
+;;                 :description nil
+;;                 :component-type "l"
+;;                 :column-type "bigint(20) unsigned"
+;;                 :private? false
+;;                 :editable? true
+;;                 :key-table "point_of_sale"}
+;;                ]}}
+;;             {:id 30
+;;              :table "user"
+;;              :prop
+;;              {:table
+;;               {:frontend-name "user"
+;;                :is-system? false
+;;                :is-linker? false
+;;                :allow-modifing? true
+;;                :allow-deleting? true
+;;                :allow-linking? true}
+;;               :columns
+;;               [{:field "login"
+;;                 :representation "login"
+;;                 :description nil
+;;                 :component-type "i"
+;;                 :column-type "varchar(100)"
+;;                 :private? false
+;;                 :editable? true}
+;;                ]}}))
+
+
+;; (map (fn [tab] (conj {:bounds [0 0 0 0]} tab)) dbmap)
+
 
 ;; (prepare-table 10 10 "Users" "FName" "LName" "LOGIN")
 
 ;; (getset)
 
-;; (def dbmap (getset))
+(def dbmap (getset))
 ;; 
 (defn calculate-tables-size-with-tabs
   [db-data]
@@ -649,14 +195,19 @@
                                                              y       (last row)]
                                                          (map (fn [x] (vec (list x y))) x-list)))
                                              pre-bounds))]
-    (map (fn [bounds tabs] (vec (list (concat bounds (reverse (first tabs))) (last tabs)))) calculated-bounds tables)))
+    ;; (map (fn [bounds tabs] (vec (list (concat bounds (reverse (first tabs))) (last tabs)))) calculated-bounds tables)
+    (map (fn [bounds tabs] (conj {:bounds (vec (concat bounds (reverse (first tabs))))}
+                                 (last tabs)))
+         calculated-bounds tables)
+    ))
 
 
-;;  (calculate-bounds 10 4)
+ (calculate-bounds 10 4)
 
 ;; (def dbmap-sorted (reverse (sort-by first (calculate-tables-height dbmap))))
 
 
+ 
 (defn set-col-as-row
   [data] (label :text (get data :name)
                 :size [(get data :width) :by (cond
@@ -674,41 +225,60 @@
                               :else                         "#000")
                 :border (cond
                           (= (get data :type) "header") (compound-border (empty-border :thickness 4))
-                          :else                         (compound-border (empty-border :thickness 4) (line-border :top 1 :color "#000")))))
+                          :else                         (compound-border (empty-border :thickness 4) (line-border :top 1 :color "#000")))
+                :listen [:mouse-entered (fn [e] (do
+                                                  (cond
+                                                    (= (get data :type) "header") (config! e :cursor :move))))
+                         :mouse-clicked (fn [e] (do
+                                                    ;; (println (.getX (config e :bounds)))
+                                                    ;; (println (.getY (config e :bounds)))
+                                                    ;; (println (.getWidth (config e :bounds)))
+                                                    ;; (println (.getHeight (config e :bounds)))
+                                                    ;; (println (.getX e))
+                                                  ))
+                         :mouse-dragged (fn [e] (cond
+                                                  (= (get data :type) "header") (let [bounds (config (getParent e) :bounds)
+                                                                                      x (- (+ (.getX bounds) (.getX e)) (/ (.getWidth (getParent e)) 2))
+                                                                                      y (- (+ (.getY bounds) (.getY e)) 15)
+                                                                                      w (.getWidth  bounds)
+                                                                                      h (.getHeight bounds)]
+                                                                                  (do
+                                                    ;; (println [x y w h])
+                                                                                    (config! (getParent e) :bounds [x y w h])))))
+                        ;;  :mouse-dragged (fn [e] (config! (getParent e) :bounds []))
+                         ]))
 
 
 (defn prepare-table-with-map
   [bounds data]
-  (let [x (nth bounds 0)
+  (let [bg-c "#fff"
+        line-size-hover 2  ;; zwiekszenie bordera dla eventu najechania mysza
+        border (line-border :thickness 1 :color "#000")
+        border-hover (line-border :thickness line-size-hover :color "#000")
+        x (nth bounds 0)
         y (nth bounds 1)
         w (nth bounds 2)
         row-h 30  ;; wysokosc wiersza w tabeli reprezentujacego kolumne
         col-in-rows (map (fn [col] (set-col-as-row {:name (get col :field) :width w :height row-h :type (if (contains? col :key-table) "key" "row")})) (get (get data :prop) :columns))  ;; przygotowanie tabeli bez naglowka
         camplete-table (conj col-in-rows (set-col-as-row {:name (get data :table) :width w :height row-h :type "header"}))  ;; dodanie naglowka i finalizacja widoku tabeli
         h (* (count camplete-table) row-h)  ;; podliczenie wysokosci gotowej tabeli
-        bg-c "#fff"
-        line-size-hover 2  ;; zwiekszenie bordera dla eventu najechania mysza
-        border (line-border :thickness 1 :color "#000")
-        border-hover (line-border :thickness line-size-hover :color "#000")]
-    (do
-      (if (> @bound-x-atom w)
-        (swap! bound-x-atom (fn [bxatom] (+ bxatom w))))
-      (let []
-        (vertical-panel
-         :tip "Double click to show relation."
-         :id (get data :table)
-         :border border
-         :bounds [x y w h]
-         :background bg-c
-         :items camplete-table
-         :listen [:mouse-entered (fn [e] (config! e :cursor :hand :border border-hover :bounds [(- x (/ line-size-hover 2)) (- y (/ line-size-hover 2)) (+ w line-size-hover) (+ h line-size-hover)]))
-                  :mouse-exited  (fn [e] (config! e :border border :bounds [x y w h]))])))))
+        ]
+    (vertical-panel
+     :tip "Double click to show relation."
+     :id (get data :table)
+     :border border
+     :bounds [x y w h]
+     :background bg-c
+     :items camplete-table
+    ;;  :listen [:mouse-entered (fn [e] (config! e :border border-hover :bounds [(- x (/ line-size-hover 2)) (- y (/ line-size-hover 2)) (+ w line-size-hover) (+ h line-size-hover)]))
+    ;;           :mouse-exited  (fn [e] (config! e :border border :bounds [x y w h]))]
+     )))
 
-
+(def complete-db-view (atom (calculate-bounds 20 5)))
 
 (doall (map (fn [tab-data]
-              (.add layered-for-tabs (prepare-table-with-map (first tab-data) (last tab-data)) (new Integer 5)))
-            (calculate-bounds 20 5)))
+              (.add layered-for-tabs (prepare-table-with-map (get tab-data :bounds) tab-data) (new Integer 5)))
+            @complete-db-view))
 
 
 

@@ -1,8 +1,6 @@
-;: FIRST gui_tools.clj
-;; PREV gui_alerts_service.clj
-;; NOW COMPILATION FILE 3/3
-;; STOP
-;; LAST gui_app.clj 
+;; 
+;; Compilation: dev_tool.clj -> data.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
+;; 
 (ns jarman.gui-app
   (:use seesaw.core
         seesaw.border
@@ -84,6 +82,8 @@
 
 (def layered-for-tabs (new JLayeredPane))
 
+;; ================================================VVVVVVVVVV Table in database view
+
 ;; (defn set-row
 ;;   ([txt w h] (label :text txt
 ;;                     :size [w :by (- h 1)]
@@ -97,10 +97,10 @@
 ;; (defn prepare-table
 ;;   [x y table-name & columns-name]
 ;;   (let [w 150
-;;         item-h 30
-;;         rows (map (fn [col] (set-row col w item-h)) columns-name)
-;;         items (conj rows (set-row table-name w item-h true))
-;;         h (* (count items) item-h)
+;;         row-h 30
+;;         rows (map (fn [col] (set-row col w row-h)) columns-name)
+;;         items (conj rows (set-row table-name w row-h true))
+;;         h (* (count items) row-h)
 ;;         bg-c "#fff"]
 ;;    ;;  (println items)
 ;;     (vertical-panel
@@ -109,7 +109,105 @@
 ;;      :background bg-c
 ;;      :items items)))
 
+;; (def dbmap (list
+;;             {:id 29
+;;              :table "service_contract"
+;;              :prop
+;;              {:table
+;;               {:frontend-name "service_contract"
+;;                :is-system? false
+;;                :is-linker? false
+;;                :allow-modifing? true
+;;                :allow-deleting? true
+;;                :allow-linking? true}
+;;               :columns
+;;               [{:field "id_point_of_sale"
+;;                 :representation "id_point_of_sale"
+;;                 :description nil
+;;                 :component-type "l"
+;;                 :column-type "bigint(20) unsigned"
+;;                 :private? false
+;;                 :editable? true
+;;                 :key-table "point_of_sale"}
+;;                ]}}
+;;             {:id 30
+;;              :table "user"
+;;              :prop
+;;              {:table
+;;               {:frontend-name "user"
+;;                :is-system? false
+;;                :is-linker? false
+;;                :allow-modifing? true
+;;                :allow-deleting? true
+;;                :allow-linking? true}
+;;               :columns
+;;               [{:field "login"
+;;                 :representation "login"
+;;                 :description nil
+;;                 :component-type "i"
+;;                 :column-type "varchar(100)"
+;;                 :private? false
+;;                 :editable? true}
+;;                ]}}))
 
+
+;; (map (fn [tab] (conj {:bounds [0 0 0 0]} tab)) dbmap)
+
+
+;; (prepare-table 10 10 "Users" "FName" "LName" "LOGIN")
+
+;; (getset)
+
+(def dbmap (getset))
+;; 
+(defn calculate-tables-size-with-tabs
+  [db-data]
+  (let [tabs-with-size (doall (map (fn [tab] (vec (list (vec (list (* 30 (+ 1 (count (get-in tab [:prop :columns]))))
+                                                                   (+ 50 (* 6 (last (sort (concat (map (fn [col] (count (get col :representation))) (get-in tab [:prop :columns])) (list (count (get tab :table))))))))))
+                                                        tab
+                                                        )))db-data))]
+    tabs-with-size))
+
+(defn calculate-tables-size
+  [db-data]
+  (let [tabs-with-size (doall (map (fn [tab] (vec (list
+                                                   (* 30 (+ 1 (count (get-in tab [:prop :columns]))))
+                                                   (+ 50 (* 6 (last (sort (concat (map (fn [col] (count (get col :representation))) (get-in tab [:prop :columns])) (list (count (get tab :table))))))))))
+                                     )db-data))]
+    tabs-with-size))
+
+
+(defn calculate-bounds
+  [offset max-tabs-inline]
+  (let [sizes (partition-all max-tabs-inline (calculate-tables-size dbmap))
+        tables (calculate-tables-size-with-tabs dbmap)
+        y-bound (atom 10)
+        pre-bounds (map (fn [row] (let [x-bounds (atom 10)
+                                           bounds-x (map (fn [size] (do
+                                                                      (def xbound @x-bounds)
+                                                                      (swap! x-bounds (fn [last-x] (+ last-x offset (last size))))
+                                                                      xbound))
+                                                         row)]
+                                       (do
+                                         (def lista (list bounds-x @y-bound))
+                                         (swap! y-bound (fn [yb] (+ yb offset (first (first row)))))
+                                         lista)))
+                           sizes)
+        calculated-bounds (apply concat (map (fn [row] (let [x-list  (first row)
+                                                             y       (last row)]
+                                                         (map (fn [x] (vec (list x y))) x-list)))
+                                             pre-bounds))]
+    (map (fn [bounds tabs] (assoc-in (last tabs) 
+                                     [:prop :bounds] 
+                                     (vec (concat bounds (reverse (first tabs))))
+                                     ))
+         calculated-bounds tables)
+    ))
+
+
+;;  (calculate-bounds 10 4)
+
+ 
 (defn set-col-as-row
   [data] (label :text (get data :name)
                 :size [(get data :width) :by (cond
@@ -127,53 +225,66 @@
                               :else                         "#000")
                 :border (cond
                           (= (get data :type) "header") (compound-border (empty-border :thickness 4))
-                          :else                         (compound-border (empty-border :thickness 4) (line-border :top 1 :color "#000")))))
+                          :else                         (compound-border (empty-border :thickness 4) (line-border :top 1 :color "#000")))
+                :listen [:mouse-entered (fn [e] (do
+                                                  (cond
+                                                    (= (get data :type) "header") (config! e :cursor :move))))
+                         :mouse-clicked (fn [e] (do
+                                                    ;; (println (.getX (config e :bounds)))
+                                                    ;; (println (.getY (config e :bounds)))
+                                                    ;; (println (.getWidth (config e :bounds)))
+                                                    ;; (println (.getHeight (config e :bounds)))
+                                                    ;; (println (.getX e))
+                                                  ))
+                         :mouse-dragged (fn [e] (cond
+                                                  (= (get data :type) "header") (let [bounds (config (getParent e) :bounds)
+                                                                                      x (- (+ (.getX bounds) (.getX e)) (/ (.getWidth (getParent e)) 2))
+                                                                                      y (- (+ (.getY bounds) (.getY e)) 15)
+                                                                                      w (.getWidth  bounds)
+                                                                                      h (.getHeight bounds)]
+                                                                                  (do
+                                                    ;; (println [x y w h])
+                                                                                    (config! (getParent e) :bounds [x y w h])))))
+                        ;;  :mouse-dragged (fn [e] (config! (getParent e) :bounds []))
+                         ]))
 
 
 (defn prepare-table-with-map
-  [x y data]
-  (let [w 150
-        item-h 30
-        rows (map (fn [col] (set-col-as-row {:name (get col :field) :width w :height item-h :type (if (contains? col :key-table) "key" "row")})) (get (get data :prop) :columns))
-        items (conj rows (set-col-as-row {:name (get data :table) :width w :height item-h :type "header"}))
-        h (* (count items) item-h)
-        bg-c "#fff"
-        line-size-hover 2
+  [bounds data]
+  (let [bg-c "#fff"
+        line-size-hover 2  ;; zwiekszenie bordera dla eventu najechania mysza
         border (line-border :thickness 1 :color "#000")
-        border-hover (line-border :thickness line-size-hover :color "#000")]
-   ;;  (println items)
+        border-hover (line-border :thickness line-size-hover :color "#000")
+        x (nth bounds 0)
+        y (nth bounds 1)
+        w (nth bounds 2)
+        row-h 30  ;; wysokosc wiersza w tabeli reprezentujacego kolumne
+        col-in-rows (map (fn [col] (set-col-as-row {:name (get col :field) :width w :height row-h :type (if (contains? col :key-table) "key" "row")})) (get-in data [:prop :columns]))  ;; przygotowanie tabeli bez naglowka
+        camplete-table (conj col-in-rows (set-col-as-row {:name (get data :table) :width w :height row-h :type "header"}))  ;; dodanie naglowka i finalizacja widoku tabeli
+        h (* (count camplete-table) row-h)  ;; podliczenie wysokosci gotowej tabeli
+        ]
     (vertical-panel
      :tip "Double click to show relation."
      :id (get data :table)
      :border border
      :bounds [x y w h]
      :background bg-c
-     :items items
-     :listen [:mouse-entered (fn [e] (config! e :cursor :hand :border border-hover :bounds [(- x (/ line-size-hover 2)) (- y (/ line-size-hover 2)) (+ w line-size-hover) (+ h line-size-hover)]))
-              :mouse-exited  (fn [e] (config! e :border border :bounds [x y w h]))])))
+     :items camplete-table
+    ;;  :listen [:mouse-entered (fn [e] (config! e :border border-hover :bounds [(- x (/ line-size-hover 2)) (- y (/ line-size-hover 2)) (+ w line-size-hover) (+ h line-size-hover)]))
+    ;;           :mouse-exited  (fn [e] (config! e :border border :bounds [x y w h]))]
+     )))
 
-;; (prepare-table 10 10 "Users" "FName" "LName" "LOGIN")
+(def complete-db-view (atom (calculate-bounds 20 5)))
 
-;; (getset)
-
-(reduce (fn [acc tab]
-          (do
-            (.add layered-for-tabs (prepare-table-with-map (* 180 acc) 10 tab) (new Integer 0))
-            (inc acc)))
-        0 (getset))
+(doall (map (fn [tab-data]
+              (.add layered-for-tabs (prepare-table-with-map (get-in tab-data [:prop :bounds] [10 10 100 100]) tab-data) (new Integer 5)))
+            @complete-db-view))
 
 
-;; (reduce (fn [acc x] (println acc x) (+ acc x)) 0 [1 2 3 4 5])
+
+;; ============================================^^^^^^^^^ Table in databse view
 
 
-;; (do
-;;   (.add layered-for-tabs (prepare-table-with-map 10 10 (first (getset "user"))) (new Integer 0))
-;;   (.add layered-for-tabs (prepare-table-with-map 210 30 (first (getset "permission"))) (new Integer 0))
-;;   (.add layered-for-tabs (prepare-table-with-map 410 70 (first (getset "point_of_sale"))) (new Integer 0))
-;; ;;   (.add layered-for-tabs (prepare-table 180 60 "Users" "Login" "Password" "Status") (new Integer 0))
-;; ;;   (.add layered-for-tabs (prepare-table 580 60 "Users" "Login" "Password" "Status") (new Integer 0))
-;; ;;   (.add layered-for-tabs (prepare-table 180 460 "Users" "Login" "Password" "Status") (new Integer 0))
-;;   )
 
 (defn refresh-layered-for-tables
   [] (do (if (> (count (seesaw.util/children layered-for-tabs)) 0)

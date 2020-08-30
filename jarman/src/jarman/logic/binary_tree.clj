@@ -6,11 +6,6 @@
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]))
 
-
-
-
-;; (defrecord Node [left right])
-
 (defmacro in? [col e]
   `(some (fn [el#] (= ~e el#)) ~col))
 
@@ -26,4 +21,3 @@
 (defn mnode [& body]
   (fn [k]
     (nth body k nil)))
-

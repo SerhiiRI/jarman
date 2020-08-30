@@ -63,7 +63,7 @@
 ;;          "i" - short text input
 ;;          nil - no hint, but not must be viewed, only not specified. 
 ;;                      
-(ns jarman.logic.data
+(ns jarman.logic.metadata
   (:refer-clojure :exclude [update])
   (:require
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
@@ -93,7 +93,7 @@
       ;;=> (\"something\")
     
   See related:
-    (`jarman.data/allowed-rules`)" 
+    (`jarman.logic.metadata/allowed-rules`)" 
   [rule-spec col]
   (let [f-comp (fn [p] (condp = (.indexOf (seq p) \*)
                          (dec (count p)) #(not= (butlast p) (take (dec (count p)) (string/lower-case %))) 
@@ -117,7 +117,7 @@
       ;;=> (\"dupa\" \"_PRI\" \"_Private\")
 
   See related:
-    (`jarman.data/allowed-rules`)"
+    (`jarman.logic.metadata/allowed-rules`)"
   [rule-spec col]
   (let [f-comp (fn [p] (condp = (.indexOf (seq p) \*)
                          (dec (count p)) #(= (butlast p) (take (dec (count p)) (string/lower-case %))) 
@@ -263,123 +263,259 @@
                        (eval (change-expression '(select :METADATA) :where tables)))
                      (select :METADATA)))))
 
-(def u1
-  {:id 30
-   :table "user"
-   :prop {:table {:frontend-name "user"
-                  :is-system? false
-                  :is-linker? false
-                  :allow-modifing? true
-                  :allow-deleting? true
-                  :allow-linking? true}
-          :columns [{:field "login"
-                     :representation "login"
-                     :description nil
-                     :component-type "i"
-                     :column-type "varchar(100)"
-                     :private? false
-                     :editable? true}
-                    {:field "password"
-                     :representation "password"
-                     :description nil
-                     :component-type "i"
-                     :column-type "varchar(100)"
-                     :private? false
-                     :editable? true}
-                    {:field "first_name"
-                     :representation "first_name"
-                     :description nil
-                     :component-type "i"
-                     :column-type "varchar(100)"
-                     :private? false
-                     :editable? true}
-                    {:field "last_name"
-                     :representation "last_name"
-                     :description nil
-                     :component-type "i"
-                     :column-type "varchar(100)"
-                     :private? false
-                     :editable? true}
-                    {:field "id_permission"
-                     :representation "id_permission"
-                     :description nil
-                     :component-type "l"
-                     :column-type "bigint(120) unsigned"
-                     :private? false
-                     :editable? true
-                     :key-table "permission"}]}})
+(do
+  (def u1
+   {:id 30
+    :table "user"
+    :prop {:table {:frontend-name "user"
+                   :is-system? false
+                   :is-linker? false
+                   :allow-modifing? true
+                   :allow-deleting? true
+                   :allow-linking? true}
+           :columns [{:field "login"
+                      :representation "login"
+                      :description nil
+                      :component-type "i"
+                      :column-type "varchar(100)"
+                      :private? false
+                      :editable? true}
+                     {:field "password"
+                      :representation "password"
+                      :description nil
+                      :component-type "i"
+                      :column-type "varchar(100)"
+                      :private? false
+                      :editable? true}
+                     {:field "first_name"
+                      :representation "first_name"
+                      :description nil
+                      :component-type "i"
+                      :column-type "varchar(100)"
+                      :private? false
+                      :editable? true}
+                     {:field "last_name"
+                      :representation "last_name"
+                      :description nil
+                      :component-type "i"
+                      :column-type "varchar(100)"
+                      :private? false
+                      :editable? true}
+                     {:field "id_permission"
+                      :representation "id_permission"
+                      :description nil
+                      :component-type "l"
+                      :column-type "bigint(120) unsigned"
+                      :private? false
+                      :editable? true
+                      :key-table "permission"}]}})
 
-(def u2
-  {:id 30
-   :table "user"
-   :prop {:table {:frontend-name "user"
-                  :is-system? false
-                  :is-linker? false
-                  :allow-modifing? false
-                  :allow-deleting? true
-                  :allow-linking? true}
-          :columns [{:field "login"
-                     :representation "login"
-                     :description nil
-                     :component-type "i"
-                     :column-type "varchar(100)"
-                     :private? false
-                     :editable? true}
-                    {:field "password"
-                     :representation "password"
-                     :description nil
-                     :component-type "i"
-                     :column-type "varchar(100)"
-                     :private? false
-                     :editable? true}
-                    {:field "first_name"
-                     :representation "first_name"
-                     :description nil
-                     :component-type "i"
-                     :column-type "varchar(100)"
-                     :private? true
-                     :editable? true}
-                    {:field "last_name"
-                     :representation "last_name"
-                     :description nil
-                     :component-type "i"
-                     :column-type "varchar(100)"
-                     :private? false
-                     :editable? true}
-                    {:field "id_permission"
-                     :representation "id_permission"
-                     :description nil
-                     :component-type "l"
-                     :column-type "bigint(120) unsigned"
-                     :private? false
-                     :editable? true
-                     :key-table "permission"}]}})
+  (def u2
+    {:id 30
+     :table "user"
+     :prop {:table {:frontend-name "user"
+                    :is-system? false
+                    :is-linker? false
+                    :allow-modifing? false
+                    :allow-deleting? true
+                    :allow-linking? true}
+            :columns [{:field "login"
+                       :representation "login"
+                       :description nil
+                       :component-type "i"
+                       :column-type "varchar(100)"
+                       :private? false
+                       :editable? true}
+                      {:field "password"
+                       :representation "password"
+                       :description nil
+                       :component-type "i"
+                       :column-type "varchar(100)"
+                       :private? false
+                       :editable? true}
+                      {:field "first_name"
+                       :representation "first_name"
+                       :description nil
+                       :component-type "i"
+                       :column-type "varchar(100)"
+                       :private? true
+                       :editable? true}
+                      {:field "last_name"
+                       :representation "last_name"
+                       :description nil
+                       :component-type "i"
+                       :column-type "varchar(100)"
+                       :private? false
+                       :editable? true}
+                      {:field "id_permission"
+                       :representation "id_permission"
+                       :description nil
+                       :component-type "l"
+                       :column-type "bigint(120) unsigned"
+                       :private? false
+                       :editable? true
+                       :key-table "permission"}]}})
+  (def u1-del-col (update-in u1 [:prop] dissoc :columns))
+  (def u2-del-col (update-in u2 [:prop] dissoc :columns)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; META map toolkit ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmacro cond-contain [m & body]
+(defmacro map-first
+  "Description:
+    The same as `first` function for list.
+  
+  Examples:  
+  (map-first {:a 1 :b 2}) => {:a 1}
+  (map-first {})          => nil"
+  [m]
+  `(if-let [mf# (first (seq ~m))]
+     (into {} (list mf#))))
+
+(defmacro map-rest
+  "Description:
+    The same as `rest` function for list.
+  
+  Examples:
+  (map-rest {:a 1 :b 2 :c 1}) => {:b 2, :c 1}
+  (map-rest {})               => nil"
+  [m] 
+  `(let [mf# (rest (seq ~m))]
+     (if (not-empty mf#) (into {} mf#))))
+
+(defmacro map-destruct
+  "Description:
+    For map return vector of two map, where first
+    is head, and second is tail.
+  
+  Example:
+    (map-destruct {:a 1 :b 2 :c 3}) => [{:a 1} {:b 2, :c 3}]
+    (map-destruct {:a 1})           => [{:a 1} nil]
+    (map-destruct {})               => [nil nil]
+  
+  See related:
+    (`jarman.logic.metadata/map-first`, `jarman.logic.metadata/map-rest`)"
+  [m] 
+  `(let [sm# ~m]
+     (if-let [m-head# (map-first sm#)]
+       (let [m-tail# (map-rest sm#)]
+         [m-head# m-tail#])
+       [nil nil])))
+
+(defmacro cond-contain
+  "Description:
+    Simple macro for easy using pattern-maching on map's
+
+  Example:
+    (cond-contain {:a 1 :b 2}
+      :a (println 1)
+      :b (println 2)
+      3)"
+  [m & body]
   `(condp (fn [kk# mm#] (contains? mm# kk#)) ~m
-       ~@body))
+     ~@body))
 
+
+(do (defn adiff-field [m & [path-offset]]
+      (let [key-replace (fn [p] (fn [m1 m2] (assoc-in m1 p (get-in m2 p "<Error name>"))))]
+        (let [[head-map tail-map] (map-destruct m)]
+          (if head-map
+            (if-let [n (cond-contain m
+                                     :representation (key-replace (conj path-offset :representation))
+                                     :description    (key-replace (conj path-offset :description))
+                                     :component-type (key-replace (conj path-offset :component-type))
+                                     :private?       (key-replace (conj path-offset :private?))
+                                    :editable?      (key-replace (conj path-offset :editable?))
+                                     nil)]
+              (if-not tail-map [n]
+                (concat [n] (adiff-field tail-map path-offset))))))))
+    (reduce (fn [[oryg chang] f]
+              [(f oryg chang) chang])
+            [{:field "id_permission",
+              :representation "id_permission",
+              :description nil,
+              :component-type "BBBBBBBBBBBB",
+              :column-type "BBBBBBBBBBB",
+              :private? false,
+              :editnable? true,
+              :key-table "permission"}
+             {:field "id_permission",
+              :representation "aaaaaaaaaaaaaaaaaaaa"
+              :description "aaaaaaaaaaaaaaaa",
+              :component-type "l",
+              :column-type "bigint(120) unsigned",
+              :private? "aaaaaaaaaaaaaaaa",
+              :editnable? true,
+              :key-table "permission"}]
+            (adiff-field {:representation "id_permission" :description "chujtam" :private? true})))
+
+(defmacro find-column [f col]
+  `(first (filter ~f ~col)))
+
+(defn- find-difference-columns [original changed]
+  (let [do-diff
+        (fn [original changed]
+          (let [[old-elements new-elements] [(ref [])(ref [])]]
+            (doseq [changed-elm changed]
+              (if-let [id_ce (:id changed-elm)]
+                (if-let [old-elm (first (filter (fn [org-elm] (= id_ce (:id org-elm))) original))]
+                  (dosync (commute old-elements #(conj % old-elm)))
+                  (dosync (commute new-elements #(conj % changed-elm))))
+                (dosync (commute new-elements #(conj % changed-elm)))))
+            [@old-elements @new-elements]))]    
+    (let [[old new] (doto (do-diff original changed) println)
+          [old del] (do-diff old original)]
+      {:maybe-changed old
+       :must-create new
+       :must-delete del})))
+
+;; (find-difference-columns
+;;  [{:id 1} {:id 2} {:id 3} {:id 4}]
+;;  [{:id 1} {:id 10} {:id 20} {:id 4} {:id 5} {:id 6} {:id 7} {:id 8} {:id 9}])
+
+
+;; (into  {:a 1
+;;         } {:a 2})
 ;; (do
-;;   (defn adiff [m]
-;;     (let [key-comparator (fn [k m])]
-;;       (cond-contain
-;;        m
-;;        :table (println "Table can not be change after relation")
-;;        :id (println "Table id can not be changed totaly")
-;;        :prop (let [m-prop (:prop m)]
-;;                (cond-contain m-prop
-;;                              :table (let [t-prop (:table m-prop)]
-;;                                       (cond-contain t-prop
-;;                                                     :frontend-name #(assoc-in %1 [:prop :table :frontend-name] ((comp :frontend-name :table :prop) %2))
-;;                                                     ;; :is-system? false
-;;                                                     ;; :allow-modifing? false
-;;                                                     ;; :allow-deleting? true
-;;                                                     ;; :allow-linking? true
-;;                                                     ))
-;;                              :columns (let [c-columns (:columns m-prop)]
-;;                                         ))))))
-;;   (adiff {:prop {:columns [nil nil {:private? false}], :table {:allow-modifing? true}}} ) )
+;;   (defn column-resolver [m1 m2]
+;;     (let [path [:prop :columns]]
+;;       (find-difference-columns m2 m1)
+;;       ))
+;;   (column-resolver
+;;    [{:id 1} {:id 1} {:id 2} {:id 3} {:id 4}]
+;;    [{:id 1} {:id 1} {:id 2} {:id 3} {:id 4} {:id 5} {:id 6} {:id 7} {:id 8} {:id 9}])
+;;   )
+
+
+
+;; (column-resolver u1-del-col u2-del-col)
+
+(do
+  (defn adiff-table [m]
+    (let [path []
+          key-replace (fn [p] (partial (fn [p m1 m2] (assoc-in m1 p (get-in m2 p "<Error name>"))) p))]
+      (cond-contain
+       m
+       :table (key-replace :table)
+       :prop (let [path (conj path :prop)
+                   m-prop (:prop m)]
+               (cond-contain m-prop
+                             :table (let [path (conj path :table) t-prop (:table m-prop)]
+                                      (cond-contain t-prop
+                                                    :frontend-name (key-replace (conj path :frontend-name))
+                                                    :allow-modifing? (key-replace (conj path :allow-modifing?))
+                                                    nil))
+                             :columns (let [c-columns (:columns m-prop)]
+                                        column-resolver))) nil)))
+  ((adiff-table
+    {:prop {:table {:frontend-name "CHUJ"}}})
+   {:id 30, :table "user", :prop {:table {:frontend-name "user", :is-system? false, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :allow-linking? true}}}
+   {:id 30, :table "user", :prop {:table {:frontend-name "CHU1", :is-system? false, :is-linker? false, :allow-modifing? false, :allow-deleting? true, :allow-linking? true}}}))
+
+
+
+
 
 
 
@@ -432,7 +568,11 @@
 ;;              :private? false,
 ;;              :editable? true,
 ;;              :key-table "permission"}])
-;;  [[{:representation "NEW NAME"}] [{:representation "last_name"}] [{:editable? true, :private? false, :column-type "varchar(100)", :component-type "i", :description nil, :field "last_name"} {:field "id_permission", :representation "id_permission", :description nil, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]]
+;; [[{:representation "NEW NAME"}] [{:representation "last_name"}] [{:editable? true, :private? false, :column-type "varchar(100)", :component-type "i", :description nil, :field "last_name"} {:field "id_permission", :representation "id_permission", :description nil, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]]
+
+
+;; (data/diff [0 1 2 3 4 5] [0 1 2 3 4 5 6])
+;; (data/diff [{:a 1} {:b {:c 1}}] [{:c 1} {:b {:c 1}}])
 
 ;; (.indexOf [1 2 3 4 5 6 nil] nil)
 

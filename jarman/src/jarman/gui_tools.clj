@@ -24,8 +24,8 @@
 (import java.awt.Color)
 (import java.awt.MouseInfo)
 (import java.awt.event.MouseListener)
-(import java.awt.event.MouseEvent)
-(import java.awt.PointerInfo)
+;; (import java.awt.event.MouseEvent)
+;; (import java.awt.PointerInfo)
 
 (defn getWidth  [obj] (.width (.getSize obj)))
 (defn getHeight [obj] (.height (.getSize obj)))
@@ -263,22 +263,25 @@
       Import jarman.dev-tools
       Function need image-scale function for scalling icon
    "
-  (fn [txt active size]
+  (fn [title txt active size onclose onclick]
     (let [bg-color (if (= active true) "#eee" "#ccc")
           border "#fff"
           hsize (first size)
           vsize (last size)]
       (horizontal-panel
        :background bg-color
+       :user-data title
        :items [(label-fn
                 :text txt
                 :halign :center
-                :size [hsize :by vsize])
+                :size [hsize :by vsize]
+                :listen [:mouse-clicked onclick])
                (label-fn
                 :icon (image-scale icon/x-grey2-64-png 15)
                 :halign :center
                 :border (line-border :right 2 :color border)
                 :size [vsize :by vsize]
                 :listen [:mouse-entered (fn [e] (config! e :cursor :hand :icon (image-scale icon/x-blue1-64-png 15)))
-                         :mouse-exited  (fn [e] (config! e :cursor :default :icon (image-scale icon/x-grey2-64-png 15)))])]
+                         :mouse-exited  (fn [e] (config! e :cursor :default :icon (image-scale icon/x-grey2-64-png 15)))
+                         :mouse-clicked onclose])]
        :listen [:mouse-entered hand-hover-on]))))

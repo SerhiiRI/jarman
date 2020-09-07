@@ -37,16 +37,19 @@
 
 
 
-(defn load-to-file [dimension]
-  (do (spit ".\\src\\jarman\\logic\\o.html" "")
-     (doall (map #(do
-                    (spit ".\\src\\jarman\\logic\\o.html" % :append true)
-                    (spit ".\\src\\jarman\\logic\\o.html" "\n" :append true))
-                 (for [[n s] dimension]
-                   (let [tmp (slurp ".\\src\\jarman\\logic\\tmp.html")]
-                     (-> tmp
-                         (clojure.string/replace #"%s" n)
-                         (clojure.string/replace #"%t" s))))))))
+(defn load-to-file
+  ([dimension template-file]
+   (load-to-file dimension "tmp.html"))
+  ([dimension template-file]
+   (do (spit ".\\src\\jarman\\logic\\o.html" "")
+       (doall (map #(do
+                      (spit ".\\src\\jarman\\logic\\o.html" % :append true)
+                      (spit ".\\src\\jarman\\logic\\o.html" "\n" :append true))
+                   (for [[n s] dimension]
+                     (let [tmp (slurp ".\\src\\jarman\\logic\\tmp.html")]
+                       (-> tmp
+                           (clojure.string/replace #"%s" n)
+                           (clojure.string/replace #"%t" s)))))))))
 
 ;; (load-to-file s-5)
 ;; (load-to-file s-5-15)

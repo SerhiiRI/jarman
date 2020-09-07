@@ -1,0 +1,42 @@
+<wicket:container wicket:id="%srow">
+    <div class="list-element">
+        <p>%t</p>
+        <div class="row">
+            <div class="col-md-6 col-12">
+                <div class="form-group">
+                    <label wicket:for="%s.zawartosc">Zawartość</label>
+                    <div class="input-group">
+                        <input type="text" wicket:id="%s.zawartosc" name="zawartosc" class="form-control" />
+                        <div class="input-group-append"><span class="input-group-text"> mg/dm<sup>3</sup></span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-12">
+                <div class="form-group">
+                    <label>Ilość substancji w pobranej wodzie <a href="javascript:;" data-html="true"
+                            data-toggle="tooltip" aria-label="<b>4)</b> Ilość substancji w pobranej wodzie jest to ilość substancji zawartych w wodzie pobranej przez
+                                            użytkownika urządzenia wodnego, której zużycie spowodowało powstanie ścieków, obliczona
+                                            w tabeli A, B lub C załącznika nr 3 do rozporządzenia;
+                                            wypełnia się przy ustalaniu opłaty za wprowadzanie ścieków do wód lub do ziemi
+                                            w przypadku pomniejszania ilości substancji zawartych w ściekach o ilość tych substancji zawartych
+                                            w pobranej wodzie, której zużycie spowodowało powstanie tych ścieków, jeżeli podmiot dysponuje
+                                            danymi w tym zakresie, zgodnie z art. 295 ust. 4 ustawy z dnia 27 kwietnia 2001 r. -
+                                            Prawo ochrony środowiska (Dz. U. z 2008 r. Nr 25, poz. 150, z późn. zm.)."
+                            title="<b>4)</b> Ilość substancji w pobranej wodzie jest to ilość substancji zawartych w wodzie pobranej przez
+                                            użytkownika urządzenia wodnego, której zużycie spowodowało powstanie ścieków, obliczona
+                                            w tabeli A, B lub C załącznika nr 3 do rozporządzenia;
+                                            wypełnia się przy ustalaniu opłaty za wprowadzanie ścieków do wód lub do ziemi
+                                            w przypadku pomniejszania ilości substancji zawartych w ściekach o ilość tych substancji zawartych
+                                            w pobranej wodzie, której zużycie spowodowało powstanie tych ścieków, jeżeli podmiot dysponuje
+                                            danymi w tym zakresie, zgodnie z art. 295 ust. 4 ustawy z dnia 27 kwietnia 2001 r. -
+                                            Prawo ochrony środowiska (Dz. U. z 2008 r. Nr 25, poz. 150, z późn. zm.).">
+                            <span class="fa fa-question-circle fa-lg "></span>
+                        </a></label>
+                    <div class="input-group">
+                        <div class="col-12 alert alert-info"><b><span wicket:id="%s.ilosc"></span> kg</b></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</wicket:container>

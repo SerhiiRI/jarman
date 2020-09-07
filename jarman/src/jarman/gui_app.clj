@@ -9,7 +9,7 @@
         jarman.tools.dev-tools
         jarman.gui-tools
         jarman.gui-alerts-service
-        jarman.logic.data)
+        jarman.logic.metadata)
   (:require [jarman.resource-lib.icon-library :as icon]
             [clojure.string :as string]))
 

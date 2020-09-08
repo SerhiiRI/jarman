@@ -1,8 +1,6 @@
-;:
 ;; 
-;; START COMPILATION FILE 1/3
-;; NEXT gui_alerts_service.clj
-;; LAST gui_app.clj
+;; Compilation: dev_tool.clj -> data.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
+;; 
 (ns jarman.gui-tools
   (:use seesaw.core
         seesaw.border
@@ -24,10 +22,15 @@
 ;; (import java.awt.Point)
 (import javax.swing.JLayeredPane)
 (import java.awt.Color)
+(import java.awt.MouseInfo)
+(import java.awt.event.MouseListener)
+;; (import java.awt.event.MouseEvent)
+;; (import java.awt.PointerInfo)
 
 (defn getWidth  [obj] (.width (.getSize obj)))
 (defn getHeight [obj] (.height (.getSize obj)))
 (defn getSize   [obj] (let [size (.getSize obj)] [(.width size) (.height size)]))
+(defn getParent [obj] (.getParent (seesaw.core/to-widget obj)))
 
 (def getFont
   (fn [& params] (-> {:size 12 :style :plain :name "Arial"}
@@ -260,22 +263,25 @@
       Import jarman.dev-tools
       Function need image-scale function for scalling icon
    "
-  (fn [txt active size]
+  (fn [title txt active size onclose onclick]
     (let [bg-color (if (= active true) "#eee" "#ccc")
           border "#fff"
           hsize (first size)
           vsize (last size)]
       (horizontal-panel
        :background bg-color
+       :user-data title
        :items [(label-fn
                 :text txt
                 :halign :center
-                :size [hsize :by vsize])
+                :size [hsize :by vsize]
+                :listen [:mouse-clicked onclick])
                (label-fn
                 :icon (image-scale icon/x-grey2-64-png 15)
                 :halign :center
                 :border (line-border :right 2 :color border)
                 :size [vsize :by vsize]
                 :listen [:mouse-entered (fn [e] (config! e :cursor :hand :icon (image-scale icon/x-blue1-64-png 15)))
-                         :mouse-exited  (fn [e] (config! e :cursor :default :icon (image-scale icon/x-grey2-64-png 15)))])]
+                         :mouse-exited  (fn [e] (config! e :cursor :default :icon (image-scale icon/x-grey2-64-png 15)))
+                         :mouse-clicked onclose])]
        :listen [:mouse-entered hand-hover-on]))))

@@ -6,7 +6,18 @@
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]))
 
+(defmacro in? [col e]
+  `(some (fn [el#] (= ~e el#)) ~col))
 
+(defn in [col e]
+  (in? col e))
 
+(defn node [l r]
+  (fn [k]
+    (condp in k
+         [:left :l 'l] l 
+         [:right :r 'r] r)))
 
-;; (defrecord Node [left right])
+(defn mnode [& body]
+  (fn [k]
+    (nth body k nil)))

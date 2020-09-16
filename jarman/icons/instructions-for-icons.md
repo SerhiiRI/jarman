@@ -1,5 +1,5 @@
 ﻿
-## Some instructions
+~## Some instructions
 
 * Options of icons:
    * all icons are square with a transparent background;
@@ -24,7 +24,7 @@
    * the color is indicated next to the name of the object depicted on the icon,
    * for example `key-blue-64`;
 
-## Your   TRASHPANDA   team
+## Your   TRASHPANDA   team~
 
   
       

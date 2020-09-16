@@ -1,4 +1,4 @@
-# jarman
+# Readme
 
 ## Icon file name specyfication
 

@@ -32,6 +32,8 @@ Copyright © 2020 Serhii Riznychuk, contact: <serhii.riznychuk@gmail.com>, All r
 
 Copyright © 2020 Aleksander Sinkowski, contact: <alekses404@gmail.com>, All rights reserved
 
+Copyright © 2020 Julia Burmych, contact: <julia.burmich@gmail.com>, All rights reserved
+
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
 http://www.eclipse.org/legal/epl-2.0.

@@ -1,4 +1,4 @@
-# Readme
+# README
 
 ## Icon file name specyfication
 

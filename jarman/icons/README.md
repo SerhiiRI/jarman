@@ -45,5 +45,4 @@ at https://www.gnu.org/software/classpath/license.html.
 
 
 
-## Your   TRASHPANDA   team 
 

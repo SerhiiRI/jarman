@@ -1,5 +1,4 @@
 ﻿
-~ 
 ## Some instructions
 
 * Options of icons:
@@ -26,7 +25,6 @@
    * for example `key-blue-64`;
 
 ## Your   TRASHPANDA   team 
-~
 
   
       

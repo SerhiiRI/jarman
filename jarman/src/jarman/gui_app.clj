@@ -1,5 +1,5 @@
 ;; 
-;; Compilation: dev_tool.clj -> data.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
+;; Compilation: dev_tool.clj -> metadata.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
 ;; 
 (ns jarman.gui-app
   (:use seesaw.core
@@ -92,8 +92,8 @@
 ;; (swap! views (fn [storage] (conj storage (label))))
 (def new-layered-for-tabs (fn [] (swap! views (fn [storage] (merge storage {:layered-for-tabs {:component (new JLayeredPane) :id "layered-for-tables" :title "DB View"}})))))
 (def new-test-for-tabs (fn [] (swap! views (fn [storage] (merge storage {:test {:component (label :text "Test") :id "test" :title "Test"}})))))
-(new-layered-for-tabs)
-(new-test-for-tabs)
+;; (new-layered-for-tabs)
+;; (new-test-for-tabs)
 
 ;; (new-layered-for-tabs)
 ;; @views
@@ -224,8 +224,8 @@
               :background (new Color 0 0 0 0)
               :border (line-border :thickness 1 :color border-c)
               :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
-              :items [[(btn "Edit table" icon/pen-blue-grey-64-png)]
-                      [(btn "Delete table" icon/basket-blue1-64x64-png)]
+              :items [[(btn "Edit table" icon/pen-blue-64-png)]
+                      [(btn "Delete table" icon/basket-blue1-64-png)]
                       [(btn "Show relations" icon/connection-blue-64-png)]])))
 
 
@@ -373,8 +373,24 @@
                                        ])]])]))
 
 
+(defn create-bar-with-open-tabs
+  [] (vec (map (fn [item]
+              (let [item-key (get (second item) :title)]
+                (tab-btn item-key item-key true [70 30]
+                         (fn [e] (do
+                                   (config! (select (getRoot e) [:#app-functional-space]) :items [(label)])
+                                   (reset! views (dissoc @views (first item)))))
+                         (fn [e] (do
+                                   (config! (select (getRoot e) [:#app-functional-space]) :items [(scrollable (get (second item) :component) :border nil :id (keyword (get (second item) :id)))]))))))
+            @views)))
 
+;; (create-bar-with-open-tabs)
 
+;; Supervisior for open tabs bar
+(add-watch views :refresh (fn [key atom old-state new-state]
+                            (do 
+                              (config! (select (getRoot app) [:#app-tabs-space]) :items (create-bar-with-open-tabs))
+                              (.repaint app))))
 
 (defn app-build
   "Description:
@@ -389,50 +405,14 @@
        (do
          (.add app jarmanapp (new Integer 5))
          (.add app (slider-ico-btn (image-scale icon/scheme-grey-64x64-png menu-icon-size) 0 menu-icon-size "DB View"
-                                   {:onclick (fn [e] (if (not (identical? (config (first (seesaw.util/children (select (to-root e) [:#app-functional-space]))) :id) (keyword (get-in @views [:layered-for-tabs :id]))))
-                                                       (do
-                                                         (doall (map (fn [tab] (config! tab :background "#ccc")) (seesaw.util/children (select (to-root (seesaw.core/to-widget e)) [:#app-tabs-space]))))
-                                                         (.add (get-in @views [:layered-for-tabs :component]) (db-viewer-menu) (new Integer 1000))
-                                                         (doall (map (fn [tab-data]
-                                                                       (.add (get-in @views [:layered-for-tabs :component]) (prepare-table-with-map (get-in tab-data [:prop :bounds] [10 10 100 100]) tab-data) (new Integer 5)))
-                                                                     (calculate-bounds 20 5)))
-                                                         (config! (select (to-root (seesaw.core/to-widget e)) [:#app-functional-space]) :items [(scrollable (get-in @views [:layered-for-tabs :component]) :border nil :id (keyword (get-in @views [:layered-for-tabs :id])))])
-                                                        ;;  (println (conj (seesaw.util/children (select (to-root (seesaw.core/to-widget e)) [:#app-tabs-space])) (label)))
-                                                         (config! (select (to-root (seesaw.core/to-widget e)) [:#app-tabs-space]) :items  (vec (conj
-                                                                                                                                                (seesaw.util/children (select (to-root (seesaw.core/to-widget e)) [:#app-tabs-space]))
-                                                                                                                                                (tab-btn (get-in @views [:layered-for-tabs :title])
-                                                                                                                                                         (get-in @views [:layered-for-tabs :title])
-                                                                                                                                                         true
-                                                                                                                                                         [70 30]
-                                                                                                                                                         (fn [e] (do
-                                                                                                                                                                   (.removeAll (get-in @views [:layered-for-tabs :component]))
-                                                                                                                                                                   (config! (select (to-root (seesaw.core/to-widget e)) [:#app-functional-space]) :items [(label)])
-                                                                                                                                                                   (config! (select (to-root (seesaw.core/to-widget e)) [:#app-tabs-space]) :items [(label)])))
-                                                                                                                                                         (fn [e] (do
-                                                                                                                                                                   (doall (map (fn [tab] (config! tab :background "#ccc")) (seesaw.util/children (select (to-root (seesaw.core/to-widget e)) [:#app-tabs-space]))))
-                                                                                                                                                                   (config! (getParent e) :background "#eee")
-                                                                                                                                                                   (config! (select (to-root (seesaw.core/to-widget e)) [:#app-functional-space]) :items [(scrollable (get-in @views [:layered-for-tabs :component]) :border nil :id (keyword (get-in @views [:layered-for-tabs :id])))]))))))))))}) (new Integer 10))
+                                   {:onclick (fn [e] (do (new-layered-for-tabs)
+                                                         (config! (select (getRoot e) [:#app-functional-space]) :items [(scrollable (get-in @views [:layered-for-tabs :component]) :border nil :id (keyword (get-in @views [:layered-for-tabs :id])))])
+                                                         ))}) (new Integer 10))
                                                                                                                                           
-         (.add app (slider-ico-btn (image-scale icon/settings-64x64-png menu-icon-size) 1 menu-icon-size "Konfiguracja"
-                                   {:onclick (fn [e] (if (not (identical? (config (first (seesaw.util/children (select (to-root e) [:#app-functional-space]))) :id) (keyword (get-in @views [:test :id]))))
-                                                       (do
-                                                         (doall (map (fn [tab] (config! tab :background "#ccc")) (seesaw.util/children (select (to-root (seesaw.core/to-widget e)) [:#app-tabs-space]))))
-                                                         (config! (select (to-root (seesaw.core/to-widget e)) [:#app-functional-space]) :items [(scrollable (get-in @views [:test :component]) :border nil :id (keyword (get-in @views [:test :id])))])
-                                                         (config! (select (to-root (seesaw.core/to-widget e)) [:#app-tabs-space]) :items (vec (conj
-                                                                                                                                               (seesaw.util/children (select (to-root (seesaw.core/to-widget e)) [:#app-tabs-space]))
-                                                                                                                                               (tab-btn (get-in @views [:test :title]) 
-                                                                                                                                                        (get-in @views [:test :title])
-                                                                                                                                                        true 
-                                                                                                                                                        [70 30]
-                                                                                                                                                        (fn [e] (do
-                                                                                                                                                                  (config! (select (to-root (seesaw.core/to-widget e)) [:#app-functional-space]) :items [(label)])
-                                                                                                                                                                  (config! (select (to-root (seesaw.core/to-widget e)) [:#app-tabs-space]) :items [(label)])
-                                                                                                                                                                  ))
-                                                                                                                                                        (fn [e] (do
-                                                                                                                                                                  (doall (map (fn [tab] (config! tab :background "#ccc")) (seesaw.util/children (select (to-root (seesaw.core/to-widget e)) [:#app-tabs-space]))))
-                                                                                                                                                                  (config! (getParent e) :background "#eee")
-                                                                                                                                                                  (config! (select (to-root (seesaw.core/to-widget e)) [:#app-functional-space]) :items [(scrollable (get-in @views [:test :component]) :border nil :id (keyword (get-in @views [:test :id])))])
-                                                                                                                                                                  )))))))))}) (new Integer 10))
+         (.add app (slider-ico-btn (image-scale icon/settings-64-png menu-icon-size) 1 menu-icon-size "Konfiguracja"
+                                   {:onclick (fn [e] (do (new-test-for-tabs)
+                                                         (config! (select (getRoot e) [:#app-functional-space]) :items [(scrollable (get-in @views [:test :component]) :border nil :id (keyword (get-in @views [:layered-for-tabs :id])))])
+                                                         ))}) (new Integer 10))
          (.add app (slider-ico-btn (image-scale icon/I-64-png menu-icon-size) 2 menu-icon-size "Powiadomienia" {:onclick (fn [e] (alerts-s :show))}) (new Integer 10))
          
         ;;  (onresize-f app)
@@ -463,8 +443,11 @@
 
 (config! (to-root app) :listen [:component-resized (fn [e] (onresize-f e))])
 
+
 ;; Complete window
 (app-build)
+
+
 ;; (refresh-layered-for-tables)
 ;; (if (> (count (seesaw.util/children layered-for-tabs)) 0) (.setSize layered-for-tabs (new Dimension 730 550)))
 

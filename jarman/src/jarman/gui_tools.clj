@@ -1,5 +1,5 @@
 ;; 
-;; Compilation: dev_tool.clj -> data.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
+;; Compilation: dev_tool.clj -> metadata.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
 ;; 
 (ns jarman.gui-tools
   (:use seesaw.core
@@ -31,6 +31,7 @@
 (defn getHeight [obj] (.height (.getSize obj)))
 (defn getSize   [obj] (let [size (.getSize obj)] [(.width size) (.height size)]))
 (defn getParent [obj] (.getParent (seesaw.core/to-widget obj)))
+(defn getRoot   [obj] (to-root (seesaw.core/to-widget obj)))
 
 (def getFont
   (fn [& params] (-> {:size 12 :style :plain :name "Arial"}

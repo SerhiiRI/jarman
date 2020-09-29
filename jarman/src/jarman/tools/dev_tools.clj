@@ -128,7 +128,7 @@
     (spit *icon-library* (prn-str `(def ~(symbol 'all-icon) ~(vec (map first icon-data)))) :append true)))
 
 ;; generation icon library
-; (refresh-icon-lib)
+;; (refresh-icon-lib)
 
 (defn debug-icon-panel "Funkcja wy�wietla okienko z czcionkami w swoim formacie." []
   (let [get-scale-percent (fn [icon-name]
@@ -213,7 +213,7 @@
                                      (registrate-local-font font))) :append true)))
 
 ;;; refresh font lib
-; (refresh-font-lib)
+;; (refresh-font-lib)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Font debug, tool ;;;

@@ -86,12 +86,17 @@
                                 :items array)]]))))
 
 (def views (atom {}))
+(def active-tab (atom :none))
+(def last-active-tab (atom :none))
 ;; (reset! views nil)
 ;; @views
 ;; (swap! views (fn [storage] (conj storage (new JLayeredPane))))
 ;; (swap! views (fn [storage] (conj storage (label))))
-(def new-layered-for-tabs (fn [] (swap! views (fn [storage] (merge storage {:layered-for-tabs {:component (new JLayeredPane) :id "layered-for-tables" :title "DB View"}})))))
-(def new-test-for-tabs (fn [] (swap! views (fn [storage] (merge storage {:test {:component (label :text "Test") :id "test" :title "Test"}})))))
+;; (def new-layered-for-tabs (fn [] (swap! views (fn [storage] (merge storage {:layered-for-tabs {:component (new JLayeredPane) :id "layered-for-tables" :title "DB View"}})))))
+(def new-test-for-tabs (fn [] (do
+                                (swap! views (fn [storage] (merge storage {:test {:component (label :text "Test") :id "test" :title "Test"}})))
+                                (reset! active-tab :test)
+                                )))
 ;; (new-layered-for-tabs)
 ;; (new-test-for-tabs)
 
@@ -196,7 +201,7 @@
 ;;  (calculate-bounds 10 4)
 (defn table-funcs-menu
   "Description:
-       Menu to control view with tables in database"
+       Right Mouse Click Menu on table to control clicked table"
   [id x y] (let [border-c "#bbb"
                  btn (fn [txt ico] (label
                                     :font (getFont 13)
@@ -226,12 +231,12 @@
               :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
               :items [[(btn "Edit table" icon/pen-blue-64-png)]
                       [(btn "Delete table" icon/basket-blue1-64-png)]
-                      [(btn "Show relations" icon/connection-blue-64-png)]])))
+                      [(btn "Show relations" icon/refresh-connection-blue-64-png)]])))
 
 
 (defn set-col-as-row
   "Description:
-      Create row who represetive column in table"
+      Create basic or special row who represetive column in table"
   [data] (let [last-x (atom 0)
                last-y (atom 0)]
            (label :text (get data :name)
@@ -284,7 +289,7 @@
 
 (defn prepare-table-with-map
   "Description:
-     Create tables view on JLayeredPane using map of database
+     Create one table on JLayeredPane using database map
   "
   [bounds data]
   (let [bg-c "#fff"
@@ -314,7 +319,7 @@
 
 (defn db-viewer-menu
   "Description:
-       Menu to control view with tables in database"
+       Menu to control tables view (functionality for db-view)"
   [] (let [btn (fn [txt ico & args] (let
                                      [border-c "#bbb"]
                                       (label
@@ -336,6 +341,26 @@
                 [(btn "Reset view" icon/arrow-blue-left-64-png)]
                 [(btn "Reloade view" icon/refresh-blue-64-png)]])))
 
+
+(defn create-layered-db-view 
+  "Description:
+     Create component and set to @views atom to use in functional space. 
+     Add open tab for db-view to open tabs bar.
+     Set prepare view from @views to functional space.
+   "
+  []
+  (let [id-key :layered-for-tabs]
+   (do
+     (if (= (contains? @views id-key) false)
+       (do
+         (swap! views (fn [storage] (merge storage {id-key {:component (new JLayeredPane) :id "layered-for-tables" :title "DB View"}})))
+         (.add (get-in @views [id-key :component]) (db-viewer-menu) (new Integer 1000))
+         (doall (map (fn [tab-data]
+                       (.add (get-in @views [id-key :component]) (prepare-table-with-map (get-in tab-data [:prop :bounds] [10 10 100 100]) tab-data) (new Integer 5)))
+                     (calculate-bounds 20 5)))))
+     (reset! active-tab id-key)
+     ))
+  )
 
 
 ;; ============================================^^^^^^^^^ Table in databse view
@@ -361,36 +386,50 @@
                                                    (label-fn :text "Opcja 2" :background "#fff" :size [200 :by 25]
                                                              :listen [:mouse-clicked (fn [e] (alerts-s :set {:header "Witaj" :body "Świecie"} (message alerts-s) 5))]))]
                                       [(expand-btn "Ukryte opcje 2")])]
-                    [(mig-app-right-f [;;(label)
-                                      ;;  (tab-btn "Tab 1" true [70 30]) 
-                                      ;;  (tab-btn "Tab 2" false [70 30])
-                                       (label)
-                                       ]
-                                      [
-                                       (label)
-                                      ;;  (label)
-                                      ;;  (scrollable (label) :border nil :id :layered-for-tables)
-                                       ])]])]))
+                    [(mig-app-right-f [(label)]
+                                      [(label)])]])]))
 
 
 (defn create-bar-with-open-tabs
-  [] (vec (map (fn [item]
-              (let [item-key (get (second item) :title)]
-                (tab-btn item-key item-key true [70 30]
-                         (fn [e] (do
-                                   (config! (select (getRoot e) [:#app-functional-space]) :items [(label)])
-                                   (reset! views (dissoc @views (first item)))))
-                         (fn [e] (do
-                                   (config! (select (getRoot e) [:#app-functional-space]) :items [(scrollable (get (second item) :component) :border nil :id (keyword (get (second item) :id)))]))))))
-            @views)))
+  [id-key]
+  (cond
+    (> (count @views) 0) (vec (map (fn [item]
+                                     (let [item-key (get (second item) :title)]
+                                       (tab-btn item-key item-key (if (identical? (first item) id-key) true false) [70 30]
+                                                (fn [e] (do
+                                                          (config! (select (getRoot e) [:#app-functional-space]) :items [(label)])
+                                                          (reset! views (dissoc @views (first item)))
+                                                          (if (contains? @views @last-active-tab) (reset! active-tab @last-active-tab) (do (reset! active-tab :none) (reset! last-active-tab :none)))))
+                                                (fn [e] (do
+                                                          (reset! active-tab (first item))
+                                                          (config! (select (getRoot app) [:#app-functional-space]) :items [(scrollable (get (second item) :component) :border nil :id (keyword (get (second item) :id)))]))))))
+                                   @views))
+    :else [(label)]))
 
 ;; (create-bar-with-open-tabs)
 
 ;; Supervisior for open tabs bar
-(add-watch views :refresh (fn [key atom old-state new-state]
-                            (do 
-                              (config! (select (getRoot app) [:#app-tabs-space]) :items (create-bar-with-open-tabs))
-                              (.repaint app))))
+;; (add-watch views :refresh (fn [key atom old-state new-state]
+;;                             (do 
+;;                               (config! (select (getRoot app) [:#app-tabs-space]) :items (create-bar-with-open-tabs :none))
+;;                               (.repaint app))))
+
+;; Supervisior for open tabs clicked
+(add-watch active-tab :refresh (fn [key atom old-state new-state]
+                                 (do
+                                   (cond
+                                     (contains? @views new-state) (do
+                                                                    (doall (map (fn [tab] (config! tab :background "#ccc")) (seesaw.util/children (select (to-root app) [:#app-tabs-space]))))
+                                                                    (config! (select (getRoot app) [:#app-functional-space]) :items [(scrollable (get-in @views [new-state :component]) :border nil :id (keyword (get-in @views [new-state :id])))])
+                                                                    (config! (select (getRoot app) [:#app-tabs-space]) :items (create-bar-with-open-tabs new-state)))
+                                     :else (do
+                                             (config! (select (getRoot app) [:#app-functional-space]) :items [(label)])
+                                             (config! (select (getRoot app) [:#app-tabs-space]) :items [(label)]))
+                                     ))
+                                 (reset! last-active-tab old-state)
+                                 (.repaint app)))
+
+;; (contains? @views :layered-for-tabs)
 
 (defn app-build
   "Description:
@@ -405,38 +444,34 @@
        (do
          (.add app jarmanapp (new Integer 5))
          (.add app (slider-ico-btn (image-scale icon/scheme-grey-64x64-png menu-icon-size) 0 menu-icon-size "DB View"
-                                   {:onclick (fn [e] (do (new-layered-for-tabs)
-                                                         (config! (select (getRoot e) [:#app-functional-space]) :items [(scrollable (get-in @views [:layered-for-tabs :component]) :border nil :id (keyword (get-in @views [:layered-for-tabs :id])))])
-                                                         ))}) (new Integer 10))
+                                   {:onclick (fn [e] (create-layered-db-view))}) (new Integer 10))
                                                                                                                                           
          (.add app (slider-ico-btn (image-scale icon/settings-64-png menu-icon-size) 1 menu-icon-size "Konfiguracja"
-                                   {:onclick (fn [e] (do (new-test-for-tabs)
-                                                         (config! (select (getRoot e) [:#app-functional-space]) :items [(scrollable (get-in @views [:test :component]) :border nil :id (keyword (get-in @views [:layered-for-tabs :id])))])
-                                                         ))}) (new Integer 10))
+                                   {:onclick (fn [e] (do (new-test-for-tabs)))}) (new Integer 10))
          (.add app (slider-ico-btn (image-scale icon/I-64-png menu-icon-size) 2 menu-icon-size "Powiadomienia" {:onclick (fn [e] (alerts-s :show))}) (new Integer 10))
          
         ;;  (onresize-f app)
          (.repaint app))))
 
-(defn refresh-layered-for-tables
-  [] (do (if (> (count (seesaw.util/children (get-in @views [:layered-for-tabs :component]))) 0)
-           (let [max-w (apply max (map (fn [item]  (+ (.getX (config item :bounds)) (.getWidth  (config item :bounds)))) (seesaw.util/children (get-in @views [:layered-for-tabs :component]))))
-                 parent-w (getWidth (.getParent (get-in @views [:layered-for-tabs :component])))
-                 max-h (apply max (map (fn [item]  (+ (.getY (config item :bounds)) (.getHeight  (config item :bounds)))) (seesaw.util/children (get-in @views [:layered-for-tabs :component]))))
-                 parent-h (getHeight (.getParent (get-in @views [:layered-for-tabs :component])))]
-             (do (.setPreferredSize (get-in @views [:layered-for-tabs :component]) (new Dimension (if (> parent-w max-w) parent-w max-w) (if (> parent-h max-h) parent-h max-h)))
-                 (.setSize (get-in @views [:layered-for-tabs :component]) (new Dimension (if (> parent-w max-w) parent-w max-w) (if (> parent-h max-h) parent-h max-h)))))
+(def refresh-layered-for-tables
+  (fn [] (do (if (= (contains? @views :layered-for-tabs) true)
+               (let [max-w (apply max (map (fn [item]  (+ (.getX (config item :bounds)) (.getWidth  (config item :bounds)))) (seesaw.util/children (get-in @views [:layered-for-tabs :component]))))
+                     parent-w (getWidth (.getParent (get-in @views [:layered-for-tabs :component])))
+                     max-h (apply max (map (fn [item]  (+ (.getY (config item :bounds)) (.getHeight  (config item :bounds)))) (seesaw.util/children (get-in @views [:layered-for-tabs :component]))))
+                     parent-h (getHeight (.getParent (get-in @views [:layered-for-tabs :component])))]
+                 (do (.setPreferredSize (get-in @views [:layered-for-tabs :component]) (new Dimension (if (> parent-w max-w) parent-w max-w) (if (> parent-h max-h) parent-h max-h)))
+                     (.setSize (get-in @views [:layered-for-tabs :component]) (new Dimension (if (> parent-w max-w) parent-w max-w) (if (> parent-h max-h) parent-h max-h)))))
 
-           (.setPreferredSize (get-in @views [:layered-for-tabs :component]) (new Dimension
-                                                    (getWidth  (.getParent (get-in @views [:layered-for-tabs :component])))
-                                                    (getHeight (.getParent (get-in @views [:layered-for-tabs :component]))))))))
+               (.setPreferredSize (get-in @views [:layered-for-tabs :component]) (new Dimension
+                                                                                      (getWidth  (.getParent (get-in @views [:layered-for-tabs :component])))
+                                                                                      (getHeight (.getParent (get-in @views [:layered-for-tabs :component])))))))))
 
 (def onresize-f
   "Description:
       Resize component inside JLayeredPane on main frame resize event.
    "
   (fn [e] (do
-            (refresh-layered-for-tables)
+            refresh-layered-for-tables
             (template-resize jarmanapp)
             (alerts-rebounds-f e)
             (.repaint app))))

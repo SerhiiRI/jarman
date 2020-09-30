@@ -56,9 +56,19 @@
 ;; (swap! views (fn [storage] (conj storage (new JLayeredPane))))
 ;; (swap! views (fn [storage] (conj storage (label))))
 ;; (def new-layered-for-tabs (fn [] (swap! views (fn [storage] (merge storage {:layered-for-tabs {:component (new JLayeredPane) :id "layered-for-tables" :title "DB View"}})))))
-(def new-test-for-tabs (fn [] (do
-                                (swap! views (fn [storage] (merge storage {:test {:component (label :text "Test") :id "test" :title "Test"}})))
-                                (reset! active-tab :test))))
+
+(defn create-view
+  "Description
+     Quick tab template for view component. Just set id, title and component.
+     Next view will be added to @views with tab to open tabs bar.
+   "
+  [id title view]
+  (let [id-key (keyword id)]
+    (do
+      (if (= (contains? @views id-key) false) (swap! views (fn [storage] (merge storage {id-key {:component view :id id :title title}}))))
+      (reset! active-tab id-key))))
+
+
 ;; (new-layered-for-tabs)
 ;; (new-test-for-tabs)
 
@@ -158,19 +168,38 @@
          calculated-bounds tables)))
 
 
+;; -------------------------------------vvvvvvvvvv Edit table
+;; 
+
+(defn table-editor 
+  "Description:
+     View Component for table editor.
+   "
+  [] 
+  (label :text "Edytor tabeli"))
+
+
+;; 
+;; -------------------------------------^^^^^^^^^^ Edit table
+
+
 ;;  (calculate-bounds 10 4)
 (defn table-funcs-menu
   "Description:
        Right Mouse Click Menu on table to control clicked table"
   [id x y] (let [border-c "#bbb"
-                 btn (fn [txt ico] (label
+                 rm-menu (fn [e] (do
+                                  (.remove (get-in @views [:layered-for-tabs :component]) (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))))
+                                  (.repaint (get-in @views [:layered-for-tabs :component]))))
+                 btn (fn [txt ico onclick] (label
                                     :font (getFont 13)
                                     :text txt
                                     :icon (image-scale ico 30)
                                     :background "#fff"
                                     :foreground "#000"
                                     :border (compound-border (empty-border :left 10 :right 15) (line-border :bottom 1 :color border-c))
-                                    :listen [:mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
+                                    :listen [:mouse-clicked onclick
+                                             :mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
                                              :mouse-exited  (fn [e] (do
                                                                       (config! e :background "#fff" :foreground "#000")
                                                                       (let [bounds (config (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :bounds)
@@ -180,18 +209,17 @@
                                                                                 (> mouse-x (- (.getWidth bounds) 5))
                                                                                 (< mouse-y (+ (.getY bounds) 5))
                                                                                 (> mouse-y (- (+ (.getHeight bounds) (.getY bounds)) 5)))
-                                                                          (do
-                                                                            (.remove (get-in @views [:layered-for-tabs :component]) (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))))
-                                                                            (.repaint (get-in @views [:layered-for-tabs :component])))))))]))]
+                                                                          (rm-menu e)))))]))]
              (mig-panel
               :id :db-viewer-menu
               :bounds [x y 150 90]
               :background (new Color 0 0 0 0)
               :border (line-border :thickness 1 :color border-c)
               :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
-              :items [[(btn "Edit table" icon/pen-blue-64-png)]
-                      [(btn "Delete table" icon/basket-blue1-64-png)]
-                      [(btn "Show relations" icon/refresh-connection-blue-64-png)]])))
+              :items [[(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
+                                                                          (create-view "edit-tab" "Edytor tabel" (table-editor)))))]
+                      [(btn "Delete table" icon/basket-blue1-64-png (fn [e]))]
+                      [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]])))
 
 
 (defn set-col-as-row
@@ -302,18 +330,20 @@
                 [(btn "Reloade view" icon/refresh-blue-64-png)]])))
 
 
-(defn create-layered-db-view
+(defn create-view-db-view
   "Description:
      Create component and set to @views atom to use in functional space. 
      Add open tab for db-view to open tabs bar.
      Set prepare view from @views to functional space.
    "
   []
-  (let [id-key :layered-for-tabs]
+  (let [id-txt "layered-for-tabs"
+        id-key (keyword id-txt)
+        title "DB View"]
     (do
       (if (= (contains? @views id-key) false)
         (do
-          (swap! views (fn [storage] (merge storage {id-key {:component (new JLayeredPane) :id "layered-for-tables" :title "DB View"}})))
+          (swap! views (fn [storage] (merge storage {id-key {:component (new JLayeredPane) :id id-txt :title title}})))
           (.add (get-in @views [id-key :component]) (db-viewer-menu) (new Integer 1000))
           (doall (map (fn [tab-data]
                         (.add (get-in @views [id-key :component]) (prepare-table-with-map (get-in tab-data [:prop :bounds] [10 10 100 100]) tab-data) (new Integer 5)))
@@ -354,7 +384,7 @@
                      (mig-panel
                       :id :operation-space
                       :background "#fff"
-                      :constraints ["wrap 1" "0px[fill, grow]0px" "0px[30]0px[fill,grow]0px"]
+                      :constraints ["wrap 1" "0px[fill, grow]0px" "0px[25]0px[fill,grow]0px"]
                       :background "#eee"
                       :items [[(horizontal-panel
                                 :id :app-tabs-space
@@ -382,8 +412,10 @@
                                                    (expand-child-btn "Alert 1 \"Test\""  (fn [e] (alerts-s :set {:header "Test" :body "Bardzo dluga testowa wiadomość, która nie jest taka prosta do ogarnięcia w seesaw."} (message alerts-s) 3)))
                                                    (expand-child-btn "Alert 2 \"Witaj\"" (fn [e] (alerts-s :set {:header "Witaj" :body "Świecie"} (message alerts-s) 5))))]
                                       [(expand-btn "Widoki"
-                                                   (expand-child-btn "DB View" (fn [e] (create-layered-db-view)))
-                                                   (expand-child-btn "Test"    (fn [e] (new-test-for-tabs))))])]
+                                                   (expand-child-btn "DB View" (fn [e] (create-view-db-view)))
+                                                   (expand-child-btn "Test"    (fn [e] (create-view "test1" "Test 1" (label :text "Test 1"))))
+                                                   (expand-child-btn "Test 2"    (fn [e] (create-view "test2" "Test 2" (label :text "Test 2"))))
+                                                   )])]
                     [(mig-app-right-f [(label)]
                                       [(label)])]])]))
 
@@ -396,7 +428,7 @@
   (cond
     (> (count @views) 0) (vec (map (fn [item]
                                      (let [item-key (get (second item) :title)]
-                                       (tab-btn item-key item-key (if (identical? (first item) id-key) true false) [70 30]
+                                       (tab-btn item-key item-key (if (identical? (first item) id-key) true false) [100 25]
                                                 (fn [e] (do
                                                           (reset! views (dissoc @views (first item)))
                                                           (if (get (config (.getParent (seesaw.core/to-widget e)) :user-data) :active) 
@@ -418,6 +450,7 @@
                                      (contains? @views new-state) (do
                                                                     (config! (select (getRoot app) [:#app-functional-space]) :items [(scrollable (get-in @views [new-state :component]) :border nil :id (keyword (get-in @views [new-state :id])))])
                                                                     (config! (select (getRoot app) [:#app-tabs-space]) :items (create-bar-with-open-tabs new-state)))
+                                     (> (count @views) 0) (reset! active-tab (first (first @views)))
                                      :else (do
                                              (reset! last-active-tab :none)
                                              (config! (select (getRoot app) [:#app-functional-space]) :items [(label)])
@@ -438,7 +471,7 @@
        (do
          (.add app jarmanapp (new Integer 5))
          (.add app (slider-ico-btn (image-scale icon/scheme-grey-64x64-png menu-icon-size) 0 menu-icon-size "DB View"
-                                   {:onclick (fn [e] (create-layered-db-view))}) (new Integer 10))
+                                   {:onclick (fn [e] (create-view-db-view))}) (new Integer 10))
                                                                                                                                           
          (.add app (slider-ico-btn (image-scale icon/settings-64-png menu-icon-size) 1 menu-icon-size "Konfiguracja"
                                    {:onclick (fn [e] (do (new-test-for-tabs)))}) (new Integer 10))
@@ -446,6 +479,8 @@
          
         ;;  (onresize-f app)
          (.repaint app))))
+
+
 
 (def refresh-layered-for-tables
   "Description

@@ -268,10 +268,8 @@
 
 (def tab-btn
   "Description:
-      Buttons for changing opened tables or functions in right part of app.
-   Example:
-      (function 'tab-name' 'active/inactive')
-      (tab-btn 'Tab 1' true)
+      Buttons for changing opened views or functions in right part of app.
+      If height in size will be different than 25, you probably should change it in mig-app-right-f. 
    Needed:
       Import jarman.dev-tools
       Function need image-scale function for scalling icon
@@ -299,3 +297,4 @@
                          :mouse-exited  (fn [e] (config! e :icon (image-scale icon/x-grey2-64-png 15)))
                          :mouse-clicked onclose])]
        :listen [:mouse-entered hand-hover-on]))))
+

@@ -252,7 +252,19 @@
                                            :border border
                                            :icon ico)]])]]))))
 
-
+(def expand-child-btn
+  "Description
+     Interactive button inside menu from expand button.
+   "
+  (fn [title onclick & params] (apply label :font (getFont)
+                                      :text title
+                                      :background "#fff"
+                                      :size [200 :by 25]
+                                      :border (empty-border :left 10)
+                                      :listen [:mouse-clicked onclick
+                                               :mouse-entered (fn [e] (config! e  :background "#d9ecff"))
+                                               :mouse-exited  (fn [e] (config! e  :background "#fff"))]
+                                      params)))
 
 (def tab-btn
   "Description:
@@ -271,18 +283,19 @@
           vsize (last size)]
       (horizontal-panel
        :background bg-color
-       :user-data title
+       :user-data {:title title :active active}
        :items [(label-fn
                 :text txt
                 :halign :center
                 :size [hsize :by vsize]
-                :listen [:mouse-clicked onclick])
+                :listen [:mouse-clicked onclick
+                         :mouse-entered (fn [e] (config! e :cursor :hand))])
                (label-fn
                 :icon (image-scale icon/x-grey2-64-png 15)
                 :halign :center
                 :border (line-border :right 2 :color border)
                 :size [vsize :by vsize]
                 :listen [:mouse-entered (fn [e] (config! e :cursor :hand :icon (image-scale icon/x-blue1-64-png 15)))
-                         :mouse-exited  (fn [e] (config! e :cursor :default :icon (image-scale icon/x-grey2-64-png 15)))
+                         :mouse-exited  (fn [e] (config! e :icon (image-scale icon/x-grey2-64-png 15)))
                          :mouse-clicked onclose])]
        :listen [:mouse-entered hand-hover-on]))))

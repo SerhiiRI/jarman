@@ -171,12 +171,28 @@
 ;; -------------------------------------vvvvvvvvvv Edit table
 ;; 
 
-(defn table-editor 
+(show-options (horizontal-panel))
+
+(def create-view-table-editor 
   "Description:
-     View Component for table editor.
+     Create view for table editor.
    "
-  [] 
-  (label :text "Edytor tabeli"))
+  (fn [map id]
+    (let [table  (first (filter (fn [item] (= id (get item :id))) map))
+          id-key (keyword (get table :table))
+          view   (cond
+                   (> (count table) 0) (do
+                                         (scrollable (mig-panel
+                                                      :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
+                                                      :items [[(horizontal-panel :align :center "#333" :items [(edit-table-save-btn "Zapisz zmiany" icon/agree-grey-64-png icon/agree-blue-64-png)
+                                                                                         (edit-table-save-btn "Wycofaj zmiany" icon/refresh-grey-64-png icon/refresh-blue-64-png)])]
+                                                              [(label-fn :text (string/join "" ["Edit table: " (get table :table)])
+                                                                         :font (getFont 14 :bold))]])
+                                                     :border (empty-border :thickness 0)))
+                   :else (label :text "Nie odnaleziono tabeli w mapie :c"))]
+      (do
+        (if (= (contains? @views id-key) false) (swap! views (fn [storage] (merge storage {id-key {:component view :id id :title (string/join "" ["Edit: " (get table :table)])}}))))
+        (reset! active-tab id-key)))))
 
 
 ;; 
@@ -184,42 +200,42 @@
 
 
 ;;  (calculate-bounds 10 4)
-(defn table-funcs-menu
+(def table-funcs-menu
   "Description:
        Right Mouse Click Menu on table to control clicked table"
-  [id x y] (let [border-c "#bbb"
-                 rm-menu (fn [e] (do
-                                  (.remove (get-in @views [:layered-for-tabs :component]) (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))))
-                                  (.repaint (get-in @views [:layered-for-tabs :component]))))
-                 btn (fn [txt ico onclick] (label
-                                    :font (getFont 13)
-                                    :text txt
-                                    :icon (image-scale ico 30)
-                                    :background "#fff"
-                                    :foreground "#000"
-                                    :border (compound-border (empty-border :left 10 :right 15) (line-border :bottom 1 :color border-c))
-                                    :listen [:mouse-clicked onclick
-                                             :mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
-                                             :mouse-exited  (fn [e] (do
-                                                                      (config! e :background "#fff" :foreground "#000")
-                                                                      (let [bounds (config (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :bounds)
-                                                                            mouse-y (+ (+ (.getY e) (.getY (config e :bounds))) (.getY bounds))
-                                                                            mouse-x (.getX e)]
-                                                                        (if (or (< mouse-x 5)
-                                                                                (> mouse-x (- (.getWidth bounds) 5))
-                                                                                (< mouse-y (+ (.getY bounds) 5))
-                                                                                (> mouse-y (- (+ (.getHeight bounds) (.getY bounds)) 5)))
-                                                                          (rm-menu e)))))]))]
-             (mig-panel
-              :id :db-viewer-menu
-              :bounds [x y 150 90]
-              :background (new Color 0 0 0 0)
-              :border (line-border :thickness 1 :color border-c)
-              :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
-              :items [[(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
-                                                                          (create-view "edit-tab" "Edytor tabel" (table-editor)))))]
-                      [(btn "Delete table" icon/basket-blue1-64-png (fn [e]))]
-                      [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]])))
+  (fn [id x y] (let [border-c "#bbb"
+                     rm-menu (fn [e] (do
+                                       (.remove (get-in @views [:layered-for-tabs :component]) (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))))
+                                       (.repaint (get-in @views [:layered-for-tabs :component]))))
+                     btn (fn [txt ico onclick] (label
+                                                :font (getFont 13)
+                                                :text txt
+                                                :icon (image-scale ico 30)
+                                                :background "#fff"
+                                                :foreground "#000"
+                                                :border (compound-border (empty-border :left 10 :right 15) (line-border :bottom 1 :color border-c))
+                                                :listen [:mouse-clicked onclick
+                                                         :mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
+                                                         :mouse-exited  (fn [e] (do
+                                                                                  (config! e :background "#fff" :foreground "#000")
+                                                                                  (let [bounds (config (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :bounds)
+                                                                                        mouse-y (+ (+ (.getY e) (.getY (config e :bounds))) (.getY bounds))
+                                                                                        mouse-x (.getX e)]
+                                                                                    (if (or (< mouse-x 5)
+                                                                                            (> mouse-x (- (.getWidth bounds) 5))
+                                                                                            (< mouse-y (+ (.getY bounds) 5))
+                                                                                            (> mouse-y (- (+ (.getHeight bounds) (.getY bounds)) 5)))
+                                                                                      (rm-menu e)))))]))]
+                 (mig-panel
+                  :id :db-viewer-menu
+                  :bounds [x y 150 90]
+                  :background (new Color 0 0 0 0)
+                  :border (line-border :thickness 1 :color border-c)
+                  :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
+                  :items [[(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
+                                                                              (create-view-table-editor dbmap id))))]
+                          [(btn "Delete table" icon/basket-blue1-64-png (fn [e]))]
+                          [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]]))))
 
 
 (defn set-col-as-row
@@ -250,7 +266,7 @@
                            :mouse-clicked (fn [e]
                                             (if (= (.getButton e) MouseEvent/BUTTON3)
                                               (.add (get-in @views [:layered-for-tabs :component])
-                                                    (table-funcs-menu (config (getParent e) :id)
+                                                    (table-funcs-menu (get (config (getParent e) :user-data) :id)
                                                                       (- (+ (.getX e) (.getX (config (getParent e) :bounds))) 15)
                                                                       (- (+ (+ (.getY e) (.getY (config e :bounds))) (.getY (config (getParent e) :bounds))) 10))
                                                     (new Integer 999))))
@@ -295,6 +311,7 @@
         ]
     (vertical-panel
      :id (get data :table)
+     :user-data {:id (get data :id)}
      :tip "Double click to show relation. PPM to show more function."
      :border border
      :bounds [x y w h]
@@ -474,7 +491,7 @@
                                    {:onclick (fn [e] (create-view-db-view))}) (new Integer 10))
                                                                                                                                           
          (.add app (slider-ico-btn (image-scale icon/settings-64-png menu-icon-size) 1 menu-icon-size "Konfiguracja"
-                                   {:onclick (fn [e] (do (new-test-for-tabs)))}) (new Integer 10))
+                                   {:onclick (fn [e] (do (create-view "test3" "Test 3" (label :text "Test 3"))))}) (new Integer 10))
          (.add app (slider-ico-btn (image-scale icon/I-64-png menu-icon-size) 2 menu-icon-size "Powiadomienia" {:onclick (fn [e] (alerts-s :show))}) (new Integer 10))
          
         ;;  (onresize-f app)

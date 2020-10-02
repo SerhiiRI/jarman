@@ -298,17 +298,22 @@
                          :mouse-clicked onclose])]
        :listen [:mouse-entered hand-hover-on]))))
 
-(def edit-table-save-btn
-  (fn [title ico ico-hover]
-    (let [bg        "#ddd"
-          bg-hover  "#d9ecff"
-          c-border  "#bbb"]
-      (label-fn :text title
-                :font (getFont :bold)
-                :icon (image-scale ico 26)
-                :halign :center
-                :size [150 :by 30]
-                :background bg
-                :border (line-border :thickness 1 :color c-border)
-                :listen [:mouse-entered (fn [e] (config! e :background bg-hover :icon (image-scale ico-hover 26) :cursor :hand))
-                         :mouse-exited (fn [e] (config! e :background bg :icon (image-scale ico 26)))]))))
+(defn edit-table-btn
+  "Description:
+     Interactive button for table editor.
+   "
+  [title ico ico-hover active onclick]
+  (let [bg        "#ddd"
+        bg-hover  "#d9ecff"
+        c-border  "#bbb"]
+    (label-fn :text title
+              :font (getFont :bold)
+              :icon (image-scale ico 26)
+              :halign :center
+              :size [150 :by 30]
+              :background bg
+              :border (line-border :thickness 1 :color c-border)
+              :listen [:mouse-entered (fn [e] (if (get (config e :user-data) :active) (config! e :background bg-hover :icon (image-scale ico-hover 26) :cursor :hand)))
+                       :mouse-exited  (fn [e] (if (get (config e :user-data) :active) (config! e :background bg :icon (image-scale ico 26))))
+                       :mouse-clicked (fn [e] (if (get (config e :user-data) :active) onclick (alert "Przycisk nieaktywny")))]
+              :user-data {:active active})))

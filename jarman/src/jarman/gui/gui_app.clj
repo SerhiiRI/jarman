@@ -171,7 +171,7 @@
 ;; -------------------------------------vvvvvvvvvv Edit table
 ;; 
 
-(show-options (horizontal-panel))
+;; (show-options (horizontal-panel))
 
 (def create-view-table-editor 
   "Description:
@@ -184,10 +184,15 @@
                    (> (count table) 0) (do
                                          (scrollable (mig-panel
                                                       :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
-                                                      :items [[(horizontal-panel :align :center "#333" :items [(edit-table-save-btn "Zapisz zmiany" icon/agree-grey-64-png icon/agree-blue-64-png)
-                                                                                         (edit-table-save-btn "Wycofaj zmiany" icon/refresh-grey-64-png icon/refresh-blue-64-png)])]
-                                                              [(label-fn :text (string/join "" ["Edit table: " (get table :table)])
-                                                                         :font (getFont 14 :bold))]])
+                                                      :items [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"]
+                                                                          :items [[(label-fn :text (string/join "" [">_ Edit table: " (get table :table)])
+                                                                                             :font (getFont 14 :bold)
+                                                                                             :background "#ccc"
+                                                                                             :border (empty-border :left 15))]
+                                                                                  [(edit-table-btn "Zapisz zmiany" icon/agree-grey-64-png icon/agree-blue-64-png true (fn [e] (alert "Przycisk aktywny")))]
+                                                                                  [(edit-table-btn "Wycofaj zmiany" icon/refresh-grey-64-png icon/refresh-blue-64-png false (fn [e]))]])
+                                                               ]
+                                                              ])
                                                      :border (empty-border :thickness 0)))
                    :else (label :text "Nie odnaleziono tabeli w mapie :c"))]
       (do

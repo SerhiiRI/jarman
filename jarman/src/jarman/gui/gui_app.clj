@@ -189,8 +189,32 @@
                                                                                              :font (getFont 14 :bold)
                                                                                              :background "#ccc"
                                                                                              :border (empty-border :left 15))]
-                                                                                  [(edit-table-btn "Zapisz zmiany" icon/agree-grey-64-png icon/agree-blue-64-png true (fn [e] (alert "Przycisk aktywny")))]
-                                                                                  [(edit-table-btn "Wycofaj zmiany" icon/refresh-grey-64-png icon/refresh-blue-64-png false (fn [e]))]])
+                                                                                  [(edit-table-btn
+                                                                                    :edit-view-save-btn
+                                                                                    "Zapisz zmiany"
+                                                                                    icon/agree-grey-64-png
+                                                                                    icon/agree-blue-64-png
+                                                                                    true
+                                                                                    (fn [e] (if (get (config e :user-data) :active)
+                                                                                              (do
+                                                                                                (println "Przycisk aktywny")
+                                                                                                (config! e :user-data {:active false}))
+                                                                                              (do
+                                                                                                (println "Przycisk nieaktywny")
+                                                                                                (config! e :user-data {:active true})))))]
+                                                                                  [(edit-table-btn
+                                                                                    :edit-view-back-btn
+                                                                                    "Wycofaj zmiany"
+                                                                                    icon/refresh-grey-64-png
+                                                                                    icon/refresh-blue-64-png
+                                                                                    false
+                                                                                    (fn [e] (if (get (config e :user-data) :active)
+                                                                                              (do
+                                                                                                (println "Przycisk aktywny")
+                                                                                                (config! e :user-data {:active false}))
+                                                                                              (do
+                                                                                                (println "Przycisk nieaktywny")
+                                                                                                (config! e :user-data {:active true})))))]])
                                                                ]
                                                               ])
                                                      :border (empty-border :thickness 0)))

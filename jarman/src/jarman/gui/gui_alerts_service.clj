@@ -1,5 +1,5 @@
 ;; 
-;; Compilation: dev_tool.clj -> data.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
+;; Compilation: dev_tool.clj -> metadata.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
 ;; 
 (ns jarman.gui-alerts-service
   (:use seesaw.core
@@ -110,7 +110,7 @@
           body   (if (= (contains? data :body) true) (get data :body) "Template of information...")
           layered (alerts-controller :get-space)
           close [(build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png layered 23 (fn [e] (view-selected-message header body layered)))
-                 (build-bottom-ico-btn icon/X-64x64-png icon/x-blue1-64-png layered 23 (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (alerts-controller :rm-obj to-del))))]]
+                 (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered 23 (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (alerts-controller :rm-obj to-del))))]]
       (mig-panel
        :id :alert-box
        :constraints ["wrap 1" "0px[fill, grow]0px" "0px[20]0px[30]0px[20]0px"]
@@ -339,7 +339,7 @@
                                                                          (refresh-alerts layered-pane alerts-storage :all-alerts))])]
                                              [(label-fn
                                                :text "Clear all message"
-                                               :icon (image-scale icon/basket-blue1-64x64-png ico-size)
+                                               :icon (image-scale icon/basket-blue1-64-png ico-size)
                                                :halign :center
                                                :font (getFont 14)
                                                :size [(/ w 2) :by ico-size]

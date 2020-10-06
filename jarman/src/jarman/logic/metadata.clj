@@ -519,27 +519,27 @@
 ;;  {:field "login", :representation "login", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true})
 
 
-(do
-  (defn adiff-table [m]
-    (let [path []
-          key-replace (fn [p] (partial (fn [p m1 m2] (assoc-in m1 p (get-in m2 p "<Error name>"))) p))]
-      (cond-contain
-       m
-       :table (key-replace :table)
-       :prop (let [path (conj path :prop)
-                   m-prop (:prop m)]
-               (cond-contain m-prop
-                             :table (let [path (conj path :table) t-prop (:table m-prop)]
-                                      (cond-contain t-prop
-                                                    :frontend-name (key-replace (conj path :frontend-name))
-                                                    :allow-modifing? (key-replace (conj path :allow-modifing?))
-                                                    nil))
-                             :columns (let [c-columns (:columns m-prop)]
-                                        column-resolver))) nil)))
-  ((adiff-table
-    {:prop {:table {:frontend-name "CHUJ"}}})
-   {:id 30, :table "user", :prop {:table {:frontend-name "user", :is-system? false, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :allow-linking? true}}}
-   {:id 30, :table "user", :prop {:table {:frontend-name "CHU1", :is-system? false, :is-linker? false, :allow-modifing? false, :allow-deleting? true, :allow-linking? true}}}))
+; (do
+;   (defn adiff-table [m]
+;     (let [path []
+;           key-replace (fn [p] (partial (fn [p m1 m2] (assoc-in m1 p (get-in m2 p "<Error name>"))) p))]
+;       (cond-contain
+;        m
+;        :table (key-replace :table)
+;        :prop (let [path (conj path :prop)
+;                    m-prop (:prop m)]
+;                (cond-contain m-prop
+;                              :table (let [path (conj path :table) t-prop (:table m-prop)]
+;                                       (cond-contain t-prop
+;                                                     :frontend-name (key-replace (conj path :frontend-name))
+;                                                     :allow-modifing? (key-replace (conj path :allow-modifing?))
+;                                                     nil))
+;                              :columns (let [c-columns (:columns m-prop)]
+;                                         column-resolver))) nil)))
+;   ((adiff-table
+;     {:prop {:table {:frontend-name "CHUJ"}}})
+;    {:id 30, :table "user", :prop {:table {:frontend-name "user", :is-system? false, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :allow-linking? true}}}
+;    {:id 30, :table "user", :prop {:table {:frontend-name "CHU1", :is-system? false, :is-linker? false, :allow-modifing? false, :allow-deleting? true, :allow-linking? true}}}))
 
 
 

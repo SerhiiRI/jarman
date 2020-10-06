@@ -112,6 +112,7 @@
           icon-symbol-doc  (format "wrapper for icon %s" (str *icon-path* "/" icon-f))]
       [icon-symbol-name icon-symbol-doc (str icon-file)])))
 
+
 (defn refresh-icon-lib
   "Create icon wrapper library in *icon-library* location,
   based on icons located in *icon-path* directory

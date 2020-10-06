@@ -1,5 +1,5 @@
 ;; 
-;; Compilation: dev_tool.clj -> data.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
+;; Compilation: dev_tool.clj -> metadata.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
 ;; 
 (ns jarman.gui-tools
   (:use seesaw.core
@@ -31,6 +31,7 @@
 (defn getHeight [obj] (.height (.getSize obj)))
 (defn getSize   [obj] (let [size (.getSize obj)] [(.width size) (.height size)]))
 (defn getParent [obj] (.getParent (seesaw.core/to-widget obj)))
+(defn getRoot   [obj] (to-root (seesaw.core/to-widget obj)))
 
 (def getFont
   (fn [& params] (-> {:size 12 :style :plain :name "Arial"}
@@ -251,14 +252,24 @@
                                            :border border
                                            :icon ico)]])]]))))
 
-
+(def expand-child-btn
+  "Description
+     Interactive button inside menu from expand button.
+   "
+  (fn [title onclick & params] (apply label :font (getFont)
+                                      :text title
+                                      :background "#fff"
+                                      :size [200 :by 25]
+                                      :border (empty-border :left 10)
+                                      :listen [:mouse-clicked onclick
+                                               :mouse-entered (fn [e] (config! e  :background "#d9ecff"))
+                                               :mouse-exited  (fn [e] (config! e  :background "#fff"))]
+                                      params)))
 
 (def tab-btn
   "Description:
-      Buttons for changing opened tables or functions in right part of app.
-   Example:
-      (function 'tab-name' 'active/inactive')
-      (tab-btn 'Tab 1' true)
+      Buttons for changing opened views or functions in right part of app.
+      If height in size will be different than 25, you probably should change it in mig-app-right-f. 
    Needed:
       Import jarman.dev-tools
       Function need image-scale function for scalling icon
@@ -270,18 +281,41 @@
           vsize (last size)]
       (horizontal-panel
        :background bg-color
-       :user-data title
+       :user-data {:title title :active active}
        :items [(label-fn
                 :text txt
                 :halign :center
                 :size [hsize :by vsize]
-                :listen [:mouse-clicked onclick])
+                :listen [:mouse-clicked onclick
+                         :mouse-entered (fn [e] (config! e :cursor :hand))])
                (label-fn
                 :icon (image-scale icon/x-grey2-64-png 15)
                 :halign :center
                 :border (line-border :right 2 :color border)
                 :size [vsize :by vsize]
                 :listen [:mouse-entered (fn [e] (config! e :cursor :hand :icon (image-scale icon/x-blue1-64-png 15)))
-                         :mouse-exited  (fn [e] (config! e :cursor :default :icon (image-scale icon/x-grey2-64-png 15)))
+                         :mouse-exited  (fn [e] (config! e :icon (image-scale icon/x-grey2-64-png 15)))
                          :mouse-clicked onclose])]
        :listen [:mouse-entered hand-hover-on]))))
+
+(def edit-table-btn
+  "Description:
+     Interactive button for table editor.
+   "
+  
+  (fn [id title ico ico-hover active onclick]
+    (let [bg        "#ddd"
+         bg-hover  "#d9ecff"
+         c-border  "#bbb"]
+     (label :text title
+            :id id
+            :font (getFont :bold)
+            :icon (image-scale ico 26)
+            :halign :center
+            :size [150 :by 30]
+            :background bg
+            :border (line-border :thickness 1 :color c-border)
+            :listen [:mouse-entered (fn [e] (if (get (config e :user-data) :active) (config! e :background bg-hover :icon (image-scale ico-hover 26) :cursor :hand)))
+                     :mouse-exited  (fn [e] (config! e :background bg :icon (image-scale ico 26) :cursor :default))
+                     :mouse-clicked onclick]
+            :user-data {:active active}))))

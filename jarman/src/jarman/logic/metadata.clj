@@ -73,7 +73,7 @@
 
 (def ^:dynamic *id-collumn-rules* ["id", "id*"])
 (def ^:dynamic *meta-rules* ["metatable" "meta*"])
-(def *not-allowed-to-edition-tables* ["user" "permission"])
+(def *not-allowed-to-edition-tables* ["user" "permission"]) 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; RULE FILTRATOR ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -424,13 +424,13 @@
   [f col]
   `(first (filter ~f ~col)))
 
-(((fn [f] (f f))
-  (fn [f]
-    (fn [s n]
-      (if (not (empty? n))
-        ((f f) (+ s (second (first n))) (rest n))
-        s
-        )))) 0 (seq {:a 1 :b 1 :c 1}))
+;; (((fn [f] (f f))
+;;   (fn [f]
+;;     (fn [s n]
+;;       (if (not (empty? n))
+;;         ((f f) (+ s (second (first n))) (rest n))
+;;         s
+;;         )))) 0 (seq {:a 1 :b 1 :c 1}))
 
 
 (do (defn adiff-field [m & [path-offset]]
@@ -467,7 +467,14 @@
 
 
 (defn- find-difference-columns
-  "differ algorythm for comparison two list of metatable column-repr"
+  "differ algorythm for comparison two list of metatable column-repr
+  (find-difference-columns
+     [{:field 10} {:field 20} {:field 4} {:field 5} {:field 6} {:field 7} {:field 8} {:field 9}]
+     [{:field 10} {:field 20} {:field 4}            {:field 6} {:field 7} {:field 8} {:field 9} {:field 111}])
+       ;=> {:maybe-changed [{:field 10} {:field 20} {:field 4} {:field 6} {:field 7} {:field 8} {:field 9}], :must-create [{:field 111}], :must-delete [{:field 5}]}
+
+  
+  "
   [original changed]
   (let [criterion-field :field
         do-diff
@@ -485,32 +492,27 @@
       {:maybe-changed old
        :must-create new
        :must-delete del})))
-
-;; test case where 
-;; (find-difference-columns
-;;  [{:id 1} {:id 10} {:id 20} {:id 4} {:id 5} {:id 6} {:id 7} {:id 8} {:id 9}]
-;;  [{:id 1} {:id 10} {:id 20} {:id 4} {:id 5} {:id 6} {:id 7} {:id 8} {:id 9}] )
+(first (first {:a 1}))
 
 
-;; (do
-;;   (defn column-resolver [original changed]
-;;     (let [original-changed-field (map (comp :columns :prop) [original changed])]
-;;        (apply find-difference-columns original-changed-field)
-;;           )
-;;     )
-  
-;;   (column-resolver {:id 30, :table "user",
-;;                     :prop {:columns [{:field "login", :representation "login", :description nil, :component-type "i"}
-;;                                      {:field "password", :representation "password", :description nil, :component-type "i"}
-;;                                      {:field "first_name", :representation "first_name", :description nil, :component-type "i"}
-;;                                      {:field "last_name", :representation "last_name", :description nil, :component-type "i"}
-;;                                      {:field "id_permission", :representation "id_permission", :description nil, :component-type "l"}]}}
-;;                    {:id 30, :table "user",
-;;                     :prop {:columns [{:field "login", :representation "login", :description nil, :component-type "i"}
-;;                                      {:field "password", :representation "password", :description nil, :component-type "i"}
-;;                                      {:field "first_name", :representation "first_name", :description nil, :component-type "i"}
-;;                                      {:field "last_name", :representation "last_name", :description nil, :component-type "i"}
-;;                                      {:field "id_permission", :representation "id_permission", :description nil, :component-type "l"}]}}))
+
+
+(do
+  (defn column-resolver [original changed]
+    (let [original-changed-field (map (comp :columns :prop) [original changed])]
+       (apply find-difference-columns original-changed-field)))
+  (column-resolver {:id 30, :table "user",
+                    :prop {:columns [{:field "login", :representation "login", :description nil, :component-type "i"}
+                                     {:field "password", :representation "password", :description nil, :component-type "i"}
+                                     {:field "first_name", :representation "first_name", :description nil, :component-type "i"}
+                                     {:field "last_name", :representation "last_name", :description nil, :component-type "i"}
+                                     {:field "id_permission", :representation "id_permission", :description nil, :component-type "l"}]}}
+                   {:id 30, :table "user",
+                    :prop {:columns [{:field "login", :representation "login", :description nil, :component-type "i"}
+                                     {:field "password", :representation "password", :description nil, :component-type "i"}
+                                     {:field "first_name", :representation "first_name", :description nil, :component-type "i"}
+                                     {:field "last_name", :representation "last_name", :description nil, :component-type "i"}
+                                     {:field "id_permission", :representation "id_permission", :description nil, :component-type "l"}]}}))
 
 ;; (=
 ;;  {:field "login", :representation "login", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}

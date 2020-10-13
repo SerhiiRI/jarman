@@ -210,24 +210,31 @@
                                                          :border (empty-border :left 15))]
                                               [(create-save-btn-for-table-editor)]
                                               [(create-restore-btn-for-table-editor)]])]]
-                         (let [mp (vec (get-in (first dbmap) [:prop :table]))
-                               mpc (count mp)]
+                         [[(label :text "Table parameters" :font (getFont 14 :bold) :border (line-border :bottom 2 :color "#ccc"))]]
+                         (let
+                          [mp (vec (get-in (first dbmap) [:prop :table]))
+                           mpc (count mp)]
                            [(vec (let [mp (vec table-info)
-                                       mpc (count mp)]
-                                   (vec (list (mig-panel :constraints ["wrap 4" "0px[25%]5px" "0px[fill]0px"]
-                                                         :items (vec (for [x (range mpc)]
-                                                                      ;;  TODO POŁĄCZENIE
-                                                                       (vec (concat
-                                                                             [(cond
-                                                                                (string? (first (nth mp x))) (text :text (str (first (nth mp x))))
-                                                                                (boolean? (first (nth mp x))) (checkbox :selected? (first (nth mp x)))
-                                                                                :else (label :text (str (first mp))))]
-                                                                             [(cond
-                                                                                (string? (second (nth mp x))) (text :text (str (second (nth mp x))))
-                                                                                (boolean? (second (nth mp x))) (checkbox :selected? (second (nth mp x)))
-                                                                                :else (label :text (str (second mp))))])))))))))]
-
-                           )))
+                                       mpc (count mp)
+                                       txtsize [150 :by 25]]
+                                   [(mig-panel
+                                     :constraints ["wrap 3" "0px[32%]0px" "0px[fill]0px"]
+                                     :items (vec (for [x (range mpc)]
+                                                   [(mig-panel
+                                                     :border (line-border :left 4 :color "#ccc")
+                                                     :constraints ["" "10px[130px]10px[200px]10px" "0px[fill]10px"]
+                                                     :items [[(cond
+                                                                (string? (first (nth mp x))) (text :text (str (first (nth mp x))))
+                                                                (boolean? (first (nth mp x))) (checkbox :selected? (first (nth mp x)))
+                                                                :else (label :text (str (first (nth mp x)))))]
+                                                             [(cond
+                                                                (string? (second (nth mp x))) (text :size txtsize :text (str (second (nth mp x))))
+                                                                (boolean? (second (nth mp x))) (checkbox :selected? (second (nth mp x)))
+                                                                :else (label :size txtsize :text (str (second (nth mp x)))))]])])))]))])
+                         
+                         [[(label :text "Columns parameters" :font (getFont 14 :bold) :border (line-border :bottom 2 :color "#ccc"))]]
+                         
+                         ))
         view   (cond
                  (> (count table) 0) (do
                                        (scrollable (mig-panel
@@ -242,6 +249,13 @@
         ;; (println (str elemensts))
       (if (= (contains? @views id-key) false) (swap! views (fn [storage] (merge storage {id-key {:component view :id id :title (string/join "" ["Edit: " (get table :table)])}}))))
       (reset! active-tab id-key))))
+
+(first (vec (list 
+       (vec (list [(label)]
+                  [(label)]
+
+                  [(label)]
+                  [(label)])))))
 
 ;; (vec (map (fn [x] [(label :text (str x))]) [1 2 3]))
 ;; (vec (list [(label :text "1")] [(label :text "2")] [(label :text "3")]))

@@ -424,46 +424,125 @@
   [f col]
   `(first (filter ~f ~col)))
 
-;; (((fn [f] (f f))
-;;   (fn [f]
-;;     (fn [s n]
-;;       (if (not (empty? n))
-;;         ((f f) (+ s (second (first n))) (rest n))
-;;         s
-;;         )))) 0 (seq {:a 1 :b 1 :c 1}))
 
 
-(do (defn adiff-field [m & [path-offset]]
-      (let [key-replace (fn [p] (fn [m1 m2] (assoc-in m1 p (get-in m2 p "<Error name>"))))]
-        (let [[head-map tail-map] (map-destruct m)]
-          (if head-map
-            (if-let [n (cond-contain m
-                                     :representation (key-replace (conj path-offset :representation))
-                                     :description    (key-replace (conj path-offset :description))
-                                     :component-type (key-replace (conj path-offset :component-type))
-                                     :private?       (key-replace (conj path-offset :private?))
-                                     :editable?      (key-replace (conj path-offset :editable?))
-                                     nil)]
-              (if-not tail-map [n] (concat [n] (adiff-field tail-map path-offset))))))))
-    (reduce (fn [[oryg chang] f]
-              [(f oryg chang) chang])
-            [{:field "id_permission",
-              :representation "id_permission",
-              :description nil,
-              :component-type "BBBBBBBBBBBB",
-              :column-type "BBBBBBBBBBB",
-              :private? false,
-              :editnable? true,
-              :key-table "permission"}
-             {:field "id_permission",
-              :representation "aaaaaaaaaaaaaaaaaaaa"
-              :description "aaaaaaaaaaaaaaaa",
-              :component-type "l",
-              :column-type "bigint(120) unsigned",
-              :private? "aaaaaaaaaaaaaaaa",
-              :editnable? true,
-              :key-table "permission"}]
-            (adiff-field {:representation "id_permission" :description "chujtam" :private? true})))
+(defmacro map-partial [& body]
+  `(map (comp vec concat list) ~@body))
+
+(defn Y-Combinator []
+  (((fn [f] (f f))
+    (fn [f]
+      (fn [s n]
+        (if (not (empty? n))
+          ((f f) (+ s (second (first n))) (rest n))
+          s
+          )))) 0 (seq {:a 1 :b 1 :c 1})))
+
+
+(defn adiff-field [original changed & [path-offset]]
+  (let [m 
+        ;; funkcja robi porówywania map i wypisuje now± mape k³uczów zró¿nicowanych
+        ;; jako warto¶æ klucza wybiera siê z mapy "changed"
+        ;; (map-k-eq {:a 1 :b 2} {:a 3 :b 2}) => {:a 3}
+        (letfn [(map-k-eq [m-key & map-l] (fn [f] (apply f(reduce #(conj %1 (get %2 m-key))[]map-l))))]
+          (reduce (fn[m-acc c-key]
+                    (println (get changed c-key))
+                    (if((map-k-eq c-key original changed) =)
+                      m-acc
+                      (into m-acc {c-key (get changed c-key)}))) {} (keys changed)))]
+    (let [key-replace (fn [p] (fn [m1 m2] (assoc-in m1 p (get-in m2 p "<Error name>"))))]
+      (((fn [f] (f f))
+        (fn [f]
+          (fn [[head-map tail-map] path-offset]
+            (if head-map
+              (if-let [n (cond-contain head-map
+                                       :representation (key-replace (conj path-offset :representation))
+                                       :description    (key-replace (conj path-offset :description))
+                                       :component-type (key-replace (conj path-offset :component-type))
+                                       :private?       (key-replace (conj path-offset :private?))
+                                       :editable?      (key-replace (conj path-offset :editable?))
+                                       nil)]
+                (if-not tail-map [n] (concat [n] ((f f) (map-destruct tail-map) path-offset)))))))) (map-destruct m) path-offset))))
+
+
+(let [m {:representation 123 :editable? false :a 23}
+      path-offset [:some]]
+  (let [key-replace (fn [p] (fn [m1 m2] (assoc-in m1 p (get-in m2 p "<Error name>"))))]
+   (((fn [f] (f f))
+     (fn [f]
+       (fn [[head-map tail-map] path-offset]
+         (if head-map
+           (if-let [n (cond-contain head-map
+                                    :representation (key-replace (conj path-offset :representation))
+                                    :description    (key-replace (conj path-offset :description))
+                                    :component-type (key-replace (conj path-offset :component-type))
+                                    :private?       (key-replace (conj path-offset :private?))
+                                    :editable?      (key-replace (conj path-offset :editable?))
+                                    nil)]
+             (if-not tail-map [n] (concat [n] ((f f) (map-destruct tail-map) path-offset)))))))) (map-destruct m) path-offset)))
+
+(defn apply-changes [original changed & [path-offset]]
+  (reduce (fn [[o c] f] [(f o c) c])[original changed] (adiff-field original changed path-offset)))
+
+(apply-changes 
+ {:field "id_permission",
+  :representation "id_permission",
+  :description nil,
+  :component-type "BBBBBBBBBBBB",
+  :column-type "BBBBBBBBBBB",
+  :private? false,
+  :editnable? true,
+  :key-table "permission"}
+ {:field "id_permission",
+  :representation "aaaaaaaaaaaaaaaaaaaa"
+  :description "aaaaaaaaaaaaaaaa",
+  :component-type "l",
+  :column-type "bigint(120) unsigned",
+  :private? "aaaaaaaaaaaaaaaa",
+  :editnable? true,
+  :key-table "permission"})
+[{:field "id_permission", :representation "aaaaaaaaaaaaaaaaaaaa", :description "aaaaaaaaaaaaaaaa", :component-type "l", :column-type "BBBBBBBBBBB", :private? false, :editnable? true, :key-table "permission"}
+ {:field "id_permission", :representation "aaaaaaaaaaaaaaaaaaaa", :description "aaaaaaaaaaaaaaaa", :component-type "l", :column-type "bigint(120) unsigned", :private? "aaaaaaaaaaaaaaaa", :editnable? true, :key-table "permission"}]
+
+
+
+
+
+
+(compare
+ {:field "id_permission",
+  :representation "id_permission",
+  :description nil,
+  :component-type "BBBBBBBBBBBB",
+  :column-type "BBBBBBBBBBB",
+  :private? false,
+  :editnable? true,
+  :key-table "permission"}
+ {:field "id_permission",
+  :representation "aaaaaaaaaaaaaaaaaaaa"
+  :description "aaaaaaaaaaaaaaaa",
+  :component-type "l",
+  :column-type "bigint(120) unsigned",
+  :private? "aaaaaaaaaaaaaaaa",
+  :editnable? true,
+  :key-table "permission"})
+
+(data/diff {:field "id_permission",
+  :representation "id_permission",
+  :description nil,
+  :component-type "BBBBBBBBBBBB",
+  :column-type "BBBBBBBBBBB",
+  :private? false,
+  :editnable? true,
+            :key-table "permission"}
+           {:field "id_permission",
+            :representation "aaaaaaaaaaaaaaaaaaaa"
+            :description "aaaaaaaaaaaaaaaa",
+            :component-type "l",
+            :column-type "bigint(120) unsigned",
+            :private? "aaaaaaaaaaaaaaaa",
+            :editnable? true,
+            :key-table "permission"})
 
 
 (defn- find-difference-columns
@@ -471,10 +550,7 @@
   (find-difference-columns
      [{:field 10} {:field 20} {:field 4} {:field 5} {:field 6} {:field 7} {:field 8} {:field 9}]
      [{:field 10} {:field 20} {:field 4}            {:field 6} {:field 7} {:field 8} {:field 9} {:field 111}])
-       ;=> {:maybe-changed [{:field 10} {:field 20} {:field 4} {:field 6} {:field 7} {:field 8} {:field 9}], :must-create [{:field 111}], :must-delete [{:field 5}]}
-
-  
-  "
+       ;=> {:maybe-changed [{:field 10} {:field 20} {:field 4} {:field 6} {:field 7} {:field 8} {:field 9}], :must-create [{:field 111}], :must-delete [{:field 5}]} "
   [original changed]
   (let [criterion-field :field
         do-diff

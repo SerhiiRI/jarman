@@ -24,8 +24,8 @@
 
 
 ;; ---------------------------------------------------- APP STARTER v
-(def app-width 1500)
-(def app-height 900)
+(def app-width 1200)
+(def app-height 800)
 (def app-bounds [0 0 app-width app-height])
 
 ;; Prepare operative layer
@@ -171,58 +171,119 @@
 ;; -------------------------------------vvvvvvvvvv Edit table
 ;; 
 
-;; (show-options (horizontal-panel))
+;; (show-options (checkbox))
 
-(def create-view-table-editor 
+(defn create-save-btn-for-table-editor
+  [] (edit-table-btn :edit-view-save-btn "Zapisz zmiany" icon/agree-grey-64-png icon/agree-blue-64-png true
+      (fn [e] (if (get (config e :user-data) :active)
+                (do
+                  (println "Przycisk aktywny")
+                  (config! e :user-data {:active false}))
+                (do
+                  (println "Przycisk nieaktywny")
+                  (config! e :user-data {:active true}))))))
+
+(defn create-restore-btn-for-table-editor
+  [] (edit-table-btn :edit-view-back-btn "Wycofaj zmiany" icon/refresh-grey-64-png icon/refresh-blue-64-png false
+      (fn [e] (if (get (config e :user-data) :active)
+                (do
+                  (println "Przycisk aktywny")
+                  (config! e :user-data {:active false}))
+                (do
+                  (println "Przycisk nieaktywny")
+                  (config! e :user-data {:active true}))))))
+
+
+(defn create-view-table-editor 
   "Description:
      Create view for table editor.
    "
-  (fn [map id]
-    (let [table  (first (filter (fn [item] (= id (get item :id))) map))
-          id-key (keyword (get table :table))
-          view   (cond
-                   (> (count table) 0) (do
-                                         (scrollable (mig-panel
-                                                      :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
-                                                      :items [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"]
-                                                                          :items [[(label-fn :text (string/join "" [">_ Edit table: " (get table :table)])
-                                                                                             :font (getFont 14 :bold)
-                                                                                             :background "#ccc"
-                                                                                             :border (empty-border :left 15))]
-                                                                                  [(edit-table-btn
-                                                                                    :edit-view-save-btn
-                                                                                    "Zapisz zmiany"
-                                                                                    icon/agree-grey-64-png
-                                                                                    icon/agree-blue-64-png
-                                                                                    true
-                                                                                    (fn [e] (if (get (config e :user-data) :active)
-                                                                                              (do
-                                                                                                (println "Przycisk aktywny")
-                                                                                                (config! e :user-data {:active false}))
-                                                                                              (do
-                                                                                                (println "Przycisk nieaktywny")
-                                                                                                (config! e :user-data {:active true})))))]
-                                                                                  [(edit-table-btn
-                                                                                    :edit-view-back-btn
-                                                                                    "Wycofaj zmiany"
-                                                                                    icon/refresh-grey-64-png
-                                                                                    icon/refresh-blue-64-png
-                                                                                    false
-                                                                                    (fn [e] (if (get (config e :user-data) :active)
-                                                                                              (do
-                                                                                                (println "Przycisk aktywny")
-                                                                                                (config! e :user-data {:active false}))
-                                                                                              (do
-                                                                                                (println "Przycisk nieaktywny")
-                                                                                                (config! e :user-data {:active true})))))]])
-                                                               ]
-                                                              ])
-                                                     :border (empty-border :thickness 0)))
-                   :else (label :text "Nie odnaleziono tabeli w mapie :c"))]
-      (do
-        (if (= (contains? @views id-key) false) (swap! views (fn [storage] (merge storage {id-key {:component view :id id :title (string/join "" ["Edit: " (get table :table)])}}))))
-        (reset! active-tab id-key)))))
+  [map id]
+  (let [table      (first (filter (fn [item] (= id (get item :id))) map))
+        table-info (get-in table [:prop :table])
+        id-key     (keyword (get table :table))
+        elems      (vec (concat
+                         [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"]
+                                      :items [[(label-fn :text (string/join "" [">_ Edit table: " (get table :table) " (id: " id ")"])
+                                                         :font (getFont 14 :bold)
+                                                         :background "#ccc"
+                                                         :border (empty-border :left 15))]
+                                              [(create-save-btn-for-table-editor)]
+                                              [(create-restore-btn-for-table-editor)]])]]
+                         [[(label :text "Table parameters" :font (getFont 14 :bold) :border (line-border :bottom 2 :color "#ccc"))]]
+                         (let
+                          [mp (vec (get-in (first dbmap) [:prop :table]))
+                           mpc (count mp)]
+                           [(vec (let [mp (vec table-info)
+                                       mpc (count mp)
+                                       txtsize [150 :by 25]]
+                                   [(mig-panel
+                                     :constraints ["wrap 3" "0px[32%]0px" "0px[fill]0px"]
+                                     :items (vec (for [x (range mpc)]
+                                                   [(mig-panel
+                                                     :border (line-border :left 4 :color "#ccc")
+                                                     :constraints ["" "10px[130px]10px[200px]10px" "0px[fill]10px"]
+                                                     :items [[(cond
+                                                                (string? (first (nth mp x))) (text :text (str (first (nth mp x))))
+                                                                (boolean? (first (nth mp x))) (checkbox :selected? (first (nth mp x)))
+                                                                :else (label :text (str (first (nth mp x)))))]
+                                                             [(cond
+                                                                (string? (second (nth mp x))) (text :size txtsize :text (str (second (nth mp x))))
+                                                                (boolean? (second (nth mp x))) (checkbox :selected? (second (nth mp x)))
+                                                                :else (label :size txtsize :text (str (second (nth mp x)))))]])])))]))])
+                         
+                         [[(label :text "Columns parameters" :font (getFont 14 :bold) :border (line-border :bottom 2 :color "#ccc"))]]
+                         
+                         ))
+        view   (cond
+                 (> (count table) 0) (do
+                                       (scrollable (mig-panel
+                                                    :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
+                                                    :items elems)
+                                                   :border (empty-border :thickness 0)))
+                 :else (label :text "Table not found inside map :c"))]
+    (do
+        ;; (println)
+        ;; (println "info")
+        ;; (println (str table-info))
+        ;; (println (str elemensts))
+      (if (= (contains? @views id-key) false) (swap! views (fn [storage] (merge storage {id-key {:component view :id id :title (string/join "" ["Edit: " (get table :table)])}}))))
+      (reset! active-tab id-key))))
 
+(first (vec (list 
+       (vec (list [(label)]
+                  [(label)]
+
+                  [(label)]
+                  [(label)])))))
+
+;; (vec (map (fn [x] [(label :text (str x))]) [1 2 3]))
+;; (vec (list [(label :text "1")] [(label :text "2")] [(label :text "3")]))
+
+;; (let [mp {:a "b" :c "d"}] 
+;;   (vec (for [x (range (count mp))] (vec (list (label :text (str (nth (vec mp) x))))))))
+
+;; (let [mp {:a "b" :c "d"}] 
+;;   (vec (for [x (range (count mp))] (println (nth (vec mp) x)))))
+
+(vec (concat
+      [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"]
+                   :items [[(label-fn :text (string/join "" [">_ Edit table: " "test" " (id: 1)"])
+                                      :font (getFont 14 :bold)
+                                      :background "#ccc"
+                                      :border (empty-border :left 15))]
+                           [(create-save-btn-for-table-editor)]
+                           [(create-restore-btn-for-table-editor)]])]]
+      (vec (map (fn [[k v]]
+                  (vec (list
+                        (mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"]
+                                   :items [[(label :text (str k))]
+                                                                ;; [(cond
+                                                                ;;    (string? v) (text :text (str v))
+                                                                ;;    (boolean? v) (checkbox :selected? v)
+                                                                ;;    :else (label :text (str v)))]
+                                           ]))))
+                {:a "b"}))))
 
 ;; 
 ;; -------------------------------------^^^^^^^^^^ Edit table

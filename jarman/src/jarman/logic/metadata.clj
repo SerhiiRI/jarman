@@ -73,7 +73,7 @@
 
 (def ^:dynamic *id-collumn-rules* ["id", "id*"])
 (def ^:dynamic *meta-rules* ["metatable" "meta*"])
-(def *not-allowed-to-edition-tables* ["user" "permission"]) 
+(def ^:dynamic *not-allowed-to-edition-tables* ["user" "permission"]) 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; RULE FILTRATOR ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -438,15 +438,14 @@
           s
           )))) 0 (seq {:a 1 :b 1 :c 1})))
 
-
-(defn adiff-field [original changed & [path-offset]]
+;;; TODO: serving path
+(defn- adiff-field [original changed & [path-offset]]
   (let [m 
         ;; funkcja robi porówywania map i wypisuje now± mape k³uczów zró¿nicowanych
         ;; jako warto¶æ klucza wybiera siê z mapy "changed"
         ;; (map-k-eq {:a 1 :b 2} {:a 3 :b 2}) => {:a 3}
         (letfn [(map-k-eq [m-key & map-l] (fn [f] (apply f(reduce #(conj %1 (get %2 m-key))[]map-l))))]
           (reduce (fn[m-acc c-key]
-                    (println (get changed c-key))
                     (if((map-k-eq c-key original changed) =)
                       m-acc
                       (into m-acc {c-key (get changed c-key)}))) {} (keys changed)))]
@@ -454,35 +453,20 @@
       (((fn [f] (f f))
         (fn [f]
           (fn [[head-map tail-map] path-offset]
-            (if head-map
-              (if-let [n (cond-contain head-map
-                                       :representation (key-replace (conj path-offset :representation))
-                                       :description    (key-replace (conj path-offset :description))
-                                       :component-type (key-replace (conj path-offset :component-type))
-                                       :private?       (key-replace (conj path-offset :private?))
-                                       :editable?      (key-replace (conj path-offset :editable?))
-                                       nil)]
-                (if-not tail-map [n] (concat [n] ((f f) (map-destruct tail-map) path-offset)))))))) (map-destruct m) path-offset))))
-
-
-(let [m {:representation 123 :editable? false :a 23}
-      path-offset [:some]]
-  (let [key-replace (fn [p] (fn [m1 m2] (assoc-in m1 p (get-in m2 p "<Error name>"))))]
-   (((fn [f] (f f))
-     (fn [f]
-       (fn [[head-map tail-map] path-offset]
-         (if head-map
-           (if-let [n (cond-contain head-map
-                                    :representation (key-replace (conj path-offset :representation))
-                                    :description    (key-replace (conj path-offset :description))
-                                    :component-type (key-replace (conj path-offset :component-type))
-                                    :private?       (key-replace (conj path-offset :private?))
-                                    :editable?      (key-replace (conj path-offset :editable?))
-                                    nil)]
-             (if-not tail-map [n] (concat [n] ((f f) (map-destruct tail-map) path-offset)))))))) (map-destruct m) path-offset)))
+            (if-not head-map nil 
+                    (if-let [n (cond-contain head-map
+                                             :representation (key-replace (conj path-offset :representation))
+                                             :description    (key-replace (conj path-offset :description))
+                                             :component-type (key-replace (conj path-offset :component-type))
+                                             :private?       (key-replace (conj path-offset :private?))
+                                             :editable?      (key-replace (conj path-offset :editable?))
+                                             nil)]
+                      (concat [n] ((f f) (map-destruct tail-map) path-offset))
+                      ((f f) (map-destruct tail-map) path-offset)))))) (map-destruct m) path-offset))))
 
 (defn apply-changes [original changed & [path-offset]]
-  (reduce (fn [[o c] f] [(f o c) c])[original changed] (adiff-field original changed path-offset)))
+  (let [x (adiff-field original changed path-offset)]
+    (reduce (fn [[o c] f] [(f o c) c])[original changed] x)))
 
 (apply-changes 
  {:field "id_permission",
@@ -501,49 +485,6 @@
   :private? "aaaaaaaaaaaaaaaa",
   :editnable? true,
   :key-table "permission"})
-[{:field "id_permission", :representation "aaaaaaaaaaaaaaaaaaaa", :description "aaaaaaaaaaaaaaaa", :component-type "l", :column-type "BBBBBBBBBBB", :private? false, :editnable? true, :key-table "permission"}
- {:field "id_permission", :representation "aaaaaaaaaaaaaaaaaaaa", :description "aaaaaaaaaaaaaaaa", :component-type "l", :column-type "bigint(120) unsigned", :private? "aaaaaaaaaaaaaaaa", :editnable? true, :key-table "permission"}]
-
-
-
-
-
-
-(compare
- {:field "id_permission",
-  :representation "id_permission",
-  :description nil,
-  :component-type "BBBBBBBBBBBB",
-  :column-type "BBBBBBBBBBB",
-  :private? false,
-  :editnable? true,
-  :key-table "permission"}
- {:field "id_permission",
-  :representation "aaaaaaaaaaaaaaaaaaaa"
-  :description "aaaaaaaaaaaaaaaa",
-  :component-type "l",
-  :column-type "bigint(120) unsigned",
-  :private? "aaaaaaaaaaaaaaaa",
-  :editnable? true,
-  :key-table "permission"})
-
-(data/diff {:field "id_permission",
-  :representation "id_permission",
-  :description nil,
-  :component-type "BBBBBBBBBBBB",
-  :column-type "BBBBBBBBBBB",
-  :private? false,
-  :editnable? true,
-            :key-table "permission"}
-           {:field "id_permission",
-            :representation "aaaaaaaaaaaaaaaaaaaa"
-            :description "aaaaaaaaaaaaaaaa",
-            :component-type "l",
-            :column-type "bigint(120) unsigned",
-            :private? "aaaaaaaaaaaaaaaa",
-            :editnable? true,
-            :key-table "permission"})
-
 
 (defn- find-difference-columns
   "differ algorythm for comparison two list of metatable column-repr
@@ -568,7 +509,7 @@
       {:maybe-changed old
        :must-create new
        :must-delete del})))
-(first (first {:a 1}))
+
 
 
 

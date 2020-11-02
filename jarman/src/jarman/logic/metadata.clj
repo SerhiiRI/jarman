@@ -73,7 +73,7 @@
 
 (def ^:dynamic *id-collumn-rules* ["id", "id*"])
 (def ^:dynamic *meta-rules* ["metatable" "meta*"])
-(def *not-allowed-to-edition-tables* ["user" "permission"]) 
+(def ^:dynamic *not-allowed-to-edition-tables* ["user" "permission"]) 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; RULE FILTRATOR ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -453,12 +453,11 @@
 
 (defn f-diff-prop-columns-fields [original changed & [path-offset]]
   (let [m 
-        ;; funkcja robi porówywania map i wypisuje now± mape k³uczów zró¿nicowanych
-        ;; jako warto¶æ klucza wybiera siê z mapy "changed"
+        ;; funkcja robi porï¿½wywania map i wypisuje nowï¿½ mape kï¿½uczï¿½w zrï¿½nicowanych
+        ;; jako wartoï¿½ï¿½ klucza wybiera siï¿½ z mapy "changed"
         ;; (map-k-eq {:a 1 :b 2} {:a 3 :b 2}) => {:a 3}
         (letfn [(map-k-eq [m-key & map-l] (fn [f] (apply f(reduce #(conj %1 (get %2 m-key))[]map-l))))]
           (reduce (fn[m-acc c-key]
-                    (println (get changed c-key))
                     (if((map-k-eq c-key original changed) =)
                       m-acc
                       (into m-acc {c-key (get changed c-key)}))) {} (keys changed)))]
@@ -500,7 +499,6 @@
   :private? "aaaaaaaaaaaaaaaa",
   :editnable? true,
   :key-table "permission"})
-
 
 (defn- find-difference-columns
   "differ algorythm for comparison two list of metatable column-repr

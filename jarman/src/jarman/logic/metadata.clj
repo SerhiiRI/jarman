@@ -361,6 +361,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; META map toolkit ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro first-key
+  "Description:
+    Get the first key of some map
+  
+  Examples:  
+  (first-key {:a 1 :b 2}) => :a
+  (first-key {})          => nil"
+  [m]
+  `(first (first (seq ~m))))
+
 
 (defmacro map-first
   "Description:
@@ -439,7 +449,9 @@
           )))) 0 (seq {:a 1 :b 1 :c 1})))
 
 
-(defn adiff-field [original changed & [path-offset]]
+
+
+(defn f-diff-prop-columns-fields [original changed & [path-offset]]
   (let [m 
         ;; funkcja robi porówywania map i wypisuje now± mape k³uczów zró¿nicowanych
         ;; jako warto¶æ klucza wybiera siê z mapy "changed"
@@ -465,24 +477,11 @@
                 (if-not tail-map [n] (concat [n] ((f f) (map-destruct tail-map) path-offset)))))))) (map-destruct m) path-offset))))
 
 
-(let [m {:representation 123 :editable? false :a 23}
-      path-offset [:some]]
-  (let [key-replace (fn [p] (fn [m1 m2] (assoc-in m1 p (get-in m2 p "<Error name>"))))]
-   (((fn [f] (f f))
-     (fn [f]
-       (fn [[head-map tail-map] path-offset]
-         (if head-map
-           (if-let [n (cond-contain head-map
-                                    :representation (key-replace (conj path-offset :representation))
-                                    :description    (key-replace (conj path-offset :description))
-                                    :component-type (key-replace (conj path-offset :component-type))
-                                    :private?       (key-replace (conj path-offset :private?))
-                                    :editable?      (key-replace (conj path-offset :editable?))
-                                    nil)]
-             (if-not tail-map [n] (concat [n] ((f f) (map-destruct tail-map) path-offset)))))))) (map-destruct m) path-offset)))
 
-(defn apply-changes [original changed & [path-offset]]
-  (reduce (fn [[o c] f] [(f o c) c])[original changed] (adiff-field original changed path-offset)))
+
+
+(defn apply-diff-prop-column-field [original changed & [path-offset]]
+  (reduce (fn [[o c] f] [(f o c) c])[original changed] (f-diff-prop-columns-fields original changed path-offset)))
 
 (apply-changes 
  {:field "id_permission",
@@ -501,48 +500,6 @@
   :private? "aaaaaaaaaaaaaaaa",
   :editnable? true,
   :key-table "permission"})
-[{:field "id_permission", :representation "aaaaaaaaaaaaaaaaaaaa", :description "aaaaaaaaaaaaaaaa", :component-type "l", :column-type "BBBBBBBBBBB", :private? false, :editnable? true, :key-table "permission"}
- {:field "id_permission", :representation "aaaaaaaaaaaaaaaaaaaa", :description "aaaaaaaaaaaaaaaa", :component-type "l", :column-type "bigint(120) unsigned", :private? "aaaaaaaaaaaaaaaa", :editnable? true, :key-table "permission"}]
-
-
-
-
-
-
-(compare
- {:field "id_permission",
-  :representation "id_permission",
-  :description nil,
-  :component-type "BBBBBBBBBBBB",
-  :column-type "BBBBBBBBBBB",
-  :private? false,
-  :editnable? true,
-  :key-table "permission"}
- {:field "id_permission",
-  :representation "aaaaaaaaaaaaaaaaaaaa"
-  :description "aaaaaaaaaaaaaaaa",
-  :component-type "l",
-  :column-type "bigint(120) unsigned",
-  :private? "aaaaaaaaaaaaaaaa",
-  :editnable? true,
-  :key-table "permission"})
-
-(data/diff {:field "id_permission",
-  :representation "id_permission",
-  :description nil,
-  :component-type "BBBBBBBBBBBB",
-  :column-type "BBBBBBBBBBB",
-  :private? false,
-  :editnable? true,
-            :key-table "permission"}
-           {:field "id_permission",
-            :representation "aaaaaaaaaaaaaaaaaaaa"
-            :description "aaaaaaaaaaaaaaaa",
-            :component-type "l",
-            :column-type "bigint(120) unsigned",
-            :private? "aaaaaaaaaaaaaaaa",
-            :editnable? true,
-            :key-table "permission"})
 
 
 (defn- find-difference-columns
@@ -568,55 +525,148 @@
       {:maybe-changed old
        :must-create new
        :must-delete del})))
-(first (first {:a 1}))
-
-
-
 
 (do
   (defn column-resolver [original changed]
     (let [original-changed-field (map (comp :columns :prop) [original changed])]
-       (apply find-difference-columns original-changed-field)))
+      (apply find-difference-columns original-changed-field)))
   (column-resolver {:id 30, :table "user",
                     :prop {:columns [{:field "login", :representation "login", :description nil, :component-type "i"}
                                      {:field "password", :representation "password", :description nil, :component-type "i"}
-                                     {:field "first_name", :representation "first_name", :description nil, :component-type "i"}
+                                     {:field "DELETED_COLUMN", :representation "first_name", :description nil, :component-type "i"}
+                                     ;; {:field "first_name", :representation "first_name", :description nil, :component-type "i"}
                                      {:field "last_name", :representation "last_name", :description nil, :component-type "i"}
                                      {:field "id_permission", :representation "id_permission", :description nil, :component-type "l"}]}}
                    {:id 30, :table "user",
                     :prop {:columns [{:field "login", :representation "login", :description nil, :component-type "i"}
                                      {:field "password", :representation "password", :description nil, :component-type "i"}
                                      {:field "first_name", :representation "first_name", :description nil, :component-type "i"}
-                                     {:field "last_name", :representation "last_name", :description nil, :component-type "i"}
+                                     ;; {:field "last_name", :representation "last_name", :description nil, :component-type "i"}
+                                     {:field "NEW_COLUMN", :representation "last_name", :description nil, :component-type "i"}
                                      {:field "id_permission", :representation "id_permission", :description nil, :component-type "l"}]}}))
 
-;; (=
-;;  {:field "login", :representation "login", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;  {:field "login", :representation "login", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true})
+{:maybe-changed
+ [{:field "login", :representation "login", :description nil, :component-type "i"}
+  {:field "password", :representation "password", :description nil, :component-type "i"}
+  {:field "id_permission", :representation "id_permission", :description nil, :component-type "l"}]
+
+ :must-create
+ [{:field "first_name", :representation "first_name", :description nil, :component-type "i"}
+  {:field "NEW_COLUMN", :representation "last_name", :description nil, :component-type "i"}]
+
+ :must-delete
+ [{:field "DELETED_COLUMN", :representation "first_name", :description nil, :component-type "i"}
+  {:field "last_name", :representation "last_name", :description nil, :component-type "i"}]}
 
 
-; (do
-;   (defn adiff-table [m]
-;     (let [path []
-;           key-replace (fn [p] (partial (fn [p m1 m2] (assoc-in m1 p (get-in m2 p "<Error name>"))) p))]
-;       (cond-contain
-;        m
-;        :table (key-replace :table)
-;        :prop (let [path (conj path :prop)
-;                    m-prop (:prop m)]
-;                (cond-contain m-prop
-;                              :table (let [path (conj path :table) t-prop (:table m-prop)]
-;                                       (cond-contain t-prop
-;                                                     :frontend-name (key-replace (conj path :frontend-name))
-;                                                     :allow-modifing? (key-replace (conj path :allow-modifing?))
-;                                                     nil))
-;                              :columns (let [c-columns (:columns m-prop)]
-;                                         column-resolver))) nil)))
-;   ((adiff-table
-;     {:prop {:table {:frontend-name "CHUJ"}}})
-;    {:id 30, :table "user", :prop {:table {:frontend-name "user", :is-system? false, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :allow-linking? true}}}
-;    {:id 30, :table "user", :prop {:table {:frontend-name "CHU1", :is-system? false, :is-linker? false, :allow-modifing? false, :allow-deleting? true, :allow-linking? true}}}))
+(find-column
+ #(= (:field %) "login")
+ [{:field "login", :representation "login", :description nil, :component-type "i"}
+  {:field "password", :representation "password", :description nil, :component-type "i"}
+  {:field "id_permission", :representation "id_permission", :description nil, :component-type "l"}])
 
+
+(do
+  (defn adiff-table [m]
+    (let [path []
+          key-replace (fn [p] (partial (fn [p m1 m2] (assoc-in m1 p (get-in m2 p "<Error name>"))) p))]
+      (cond-contain
+       m
+       :table (key-replace :table)
+       :prop (let [path (conj path :prop)
+                   m-prop (:prop m)]
+               (cond-contain
+                m-prop
+                :table (let [path (conj path :table) t-prop (:table m-prop)]
+                         (cond-contain t-prop
+                                       :frontend-name (key-replace (conj path :frontend-name))
+                                       :allow-modifing? (key-replace (conj path :allow-modifing?))
+                                       nil))
+                :columns (let [c-columns (:columns m-prop)]
+                           column-resolver))) nil)))
+  ((adiff-table
+    {:prop {:table {:frontend-name "CHUJ"}}})
+   {:id 30, :table "user", :prop {:table {:frontend-name "user", :is-system? false, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :allow-linking? true}}}
+   {:id 30, :table "user", :prop {:table {:frontend-name "CHU1", :is-system? false, :is-linker? false, :allow-modifing? false, :allow-deleting? true, :allow-linking? true}}}))
+
+(do
+  (defn adiff-table [m]
+    (let [path []
+          key-replace (fn [p] (partial (fn [p m1 m2] (assoc-in m1 p (get-in m2 p "<Error name>"))) p))]
+      (cond-contain
+       m
+       :table (key-replace :table)
+       :prop (let [path (conj path :prop)
+                   m-prop (:prop m)]
+               (cond-contain
+                m-prop
+                :table (let [path (conj path :table) t-prop (:table m-prop)]
+                         (cond-contain t-prop
+                                       :frontend-name (key-replace (conj path :frontend-name))
+                                       :allow-modifing? (key-replace (conj path :allow-modifing?))
+                                       nil))
+                :columns (let [c-columns (:columns m-prop)]
+                           column-resolver))) nil)))
+  ((adiff-table
+    {:prop {:table {:frontend-name "CHUJ"}}})
+   {:id 30, :table "user", :prop {:table {:frontend-name "user", :is-system? false, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :allow-linking? true}}}
+   {:id 30, :table "user", :prop {:table {:frontend-name "CHU1", :is-system? false, :is-linker? false, :allow-modifing? false, :allow-deleting? true, :allow-linking? true}}}))
+
+
+(do
+  (defn keylist
+    "-"
+    [m ref-var path]
+    (let [[head tail] (map-destruct m)
+          m-fk        (first-key head)]
+      (println m-fk)
+      (if (= path [:prop m-fk])
+        (keylist tail ref-var (concat path)))
+      (if (map? (m-fk head))
+        (keylist (m-fk head) ref-var (concat path [m-fk]))
+        (dosync (alter ref-var #(conj %1 (vec (concat path [m-fk]))))))
+      (if tail
+        (keylist tail ref-var (concat path)))))
+  (let [l (ref [])]
+   (keylist ;; {:id {:a :2}
+            ;;  :table "user",
+    ;;  :prop {:table {:frontend-name "user", :is-system? false, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :allow-linking? true}}}
+    u2
+            l
+            nil)
+   @l))
+[[:id]
+ [:table]
+ [:prop :table :frontend-name]
+ [:prop :table :is-system?]
+ [:prop :table :is-linker?]
+ [:prop :table :allow-modifing?]
+ [:prop :table :allow-deleting?]
+ [:prop :table :allow-linking?]
+ [:prop :columns]]
+[[:id :a]
+ [:table]
+ [:prop :table :frontend-name]
+ [:prop :table :is-system?]
+ [:prop :table :is-linker?]
+ [:prop :table :allow-modifing?]
+ [:prop :table :allow-deleting?]
+ [:prop :table :allow-linking?]]
+
+
+(do
+  (defn keylist [m path]
+    (let [[head tail] (map-destruct m)
+          m-fk        (first-key head)]
+      (if (map? (m-fk head))
+        (keylist (m-fk head) (concat path [m-fk]))
+        (vec (concat path [m-fk]))
+        ;; (if tail (keylist tail (concat path [m-fk])))
+        )))
+  (keylist {:id {:a :2}
+            :table "user",
+            :prop {:table {:frontend-name "user", :is-system? false, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :allow-linking? true}}}
+           nil))
 
 
 

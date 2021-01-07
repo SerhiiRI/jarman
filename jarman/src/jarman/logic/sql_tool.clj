@@ -9,7 +9,7 @@
 ;;; configuration rules ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def ^:dynamic *accepted-alter-table-rules* [:add-column :drop-column :drop-foreign-key :add-foreign-key])
+(def ^:dynamic *accepted-alter-table-rules* [:add-column :drop-column :drop-foreign-key :add-foreign-key :modify-column])
 (def ^:dynamic *accepted-forkey-rules*      [:restrict :cascade :null :no-action :default])
 (def ^:dynamic *accepted-ctable-rules*      [:columns :foreign-keys :table-config])
 (def ^:dynamic *accepted-select-rules*      [:top :count :column :inner-join :right-join :left-join :outer-left-join :outer-right-join :where :order :limit])
@@ -18,6 +18,11 @@
 (def ^:dynamic *accepted-delete-rules*      [:from :where])
 (def ^:dynamic *where-border*               false)
 (def ^:dynamic *data-format* "DB date format" "yyyy-MM-dd HH:mm:ss")
+(def ^:dynamic *namespace-lib* "" "jarman.logic.sql-tool")
+
+(defn- transform-namespace [symbol-op]
+  (if (some #(= \/ %) (str symbol-op)) symbol-op
+      (symbol (format "%s/%s" *namespace-lib* symbol-op))))
 
 (defn find-rule [operation-name]
   (condp = (last (string/split (name operation-name) #"/"))
@@ -310,8 +315,6 @@
                                            (into-border (string/join ", " ~element-primitives)))))))
         :else (str where-clause)))
 
-
-
 (defn between-procedure [field v1 v2]
   (format "%s BETWEEN %s AND %s"
           (eval `(where-procedure-parser ~field))
@@ -323,7 +326,6 @@
                     operator
                     (eval `(where-procedure-parser ~field-2))]))
 
-
 (defmacro where-string [s where-block table-name]
   (if (symbol? where-block)
     `(cond (string? ~where-block) (str ~s " WHERE " ~where-block)
@@ -332,10 +334,6 @@
     (cond (string? where-block) `(str ~s " WHERE " ~where-block)
           (map? where-block) `(str ~s " WHERE " (string/join " AND " (map #(apply pair-where-pattern %) ~where-block)))
           (seqable? where-block) `(str ~s " WHERE " (where-procedure-parser ~where-block)))))
-
-
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; set preprocessor ;;;
@@ -381,13 +379,45 @@
                 :else nil))))
 
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; creatennnn-table preprocessor ;;;
+;;; create-table preprocessor ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn ssql-type-parser
+  "Parse database column data type strings to ssql notation if needed.
 
-(defn formater
+  Example
+  (ssql-type-parser \"bigint unsigned\")
+    ;; => [:bigint-unsigned]
+  (ssql-type-parser \"float(1.20) signed not null\")
+    ;; => [:float-1.20-signed :nnull]
+  (ssql-type-parser \"tinyint(1)\")
+    ;; => [:bool]
+  (ssql-type-parser \"varchar(10)\")
+    ;; => [:varchar-10]
+  (ssql-type-parser \"varchar(10) default \\\"empty\\\"\")
+    ;; => [:varchar-10 \"default\" \"\\\"empty\\\"\"]"
+  [s]
+  (let [in? (fn [x c] (some #(= x %) c))
+        sized-type-replace (fn [s] (clojure.string/replace s #"([a-zA-Z]+)\(([\d|\.]+)\)" "$1-$2"))
+        param-type-replace (fn [s p] (clojure.string/replace s (re-pattern (format "([a-zA-Z]+-[\\d|\\.]+|[a-zA-Z]+) %s" p)) (format "$1-%s" p)))
+        to-key-parameter (fn [s c] (vec (for [x (clojure.string/split s #" ")] (if-let [w (re-find #"[a-zA-Z_]+" x)] (if (in? w c) (keyword x) x)))))]
+    (-> s
+        (clojure.string/lower-case)
+        (clojure.string/replace #"  " " ")
+        (clojure.string/replace #"not null" "nnull")
+        (clojure.string/replace #"tinyint\(1\)" "bool")
+        (sized-type-replace)
+        (param-type-replace "signed")
+        (param-type-replace "unsigned")
+        (param-type-replace "zerofill")
+        (to-key-parameter ["null" "nnull" "date" "datetime" "time" "tinyint"
+                           "smallint" "mediumint" "int" "integer" "bigint" "double"
+                           "float" "real" "bool" "boolean" "tinyblob" "blob" "mediumblob"
+                           "longblob" "tinytext" "text" "mediumtext" "longtext" "json"
+                           "varchar" "auto_increment" "default"]))))
+
+(defn ssql-type-formater 
   "Format column table specyficator. Example:
   
   :bigint-120 => BIGINT(120)
@@ -396,8 +426,7 @@
   :bool => TINYINT(1)
   :nnul => NOT NULL
   ....
-  for more, see the code `condp` block
-  "
+  for more, see the code `condp` block"
   [k] (if (string? k) k
           (let [[sql-type n s & _] (string/split (string/lower-case (name k)) #"-")
                 is? (fn [col x] (if (string? col) (= x col) (some #(= % x) col)))
@@ -405,7 +434,7 @@
                 numeral-types (fn [tt nn] (if-not nn (string/upper-case tt)
                                                   (format (if (is? ["signed" "unsigned" "zerofill"] nn) "%s %s"
                                                               (if (and s (not (empty? s)))
-                                                                (if-let [_tmp (formater (keyword s))]
+                                                                (if-let [_tmp (ssql-type-formater (keyword s))]
                                                                   (str "%s(%s) " _tmp)
                                                                   "%s(%s)") "%s(%s)"))
                                                           (string/upper-case tt)
@@ -437,11 +466,10 @@
               nil))))
 
 
-
 (defn create-column
   "Cretea column by map-typed specyfication:
 
-  The key of map is column name, value - is column specyfication, which conctruct to SQL by `formater` function.
+  The key of map is column name, value - is column specyfication, which conctruct to SQL by `ssql-type-formater` function.
   Accepted argument forms
   
   {:id [:bigint-20 \"NOT NULL\" :auto]}  
@@ -451,12 +479,11 @@
   "
   [map-col]
   (let [[[col-name value]] (seq map-col)]
-    (cond (keyword? value) (str (format "`%s`" (name col-name)) (if-let [x (formater value)] (str " " x)))
+    (cond (keyword? value) (str (format "`%s`" (name col-name)) (if-let [x (ssql-type-formater value)] (str " " x)))
           (string? value)  (str (format "`%s`" (name col-name)) (if-not (empty? value) (str " " value)))
-          (seqable? value) (str (format "`%s`" (name col-name)) (let [x (string/join " " (reduce #(if-let [f (formater %2)] (conj %1 f) %1) [] value))]
+          (seqable? value) (str (format "`%s`" (name col-name)) (let [x (string/join " " (reduce #(if-let [f (ssql-type-formater %2)] (conj %1 f) %1) [] value))]
                                                                   (if-not (empty? x) (str " " x))))
           :else "")))
-
 
 (defmacro default-table-config-string [current-string _ table-name]
   `(str ~current-string ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"))
@@ -493,10 +520,23 @@
 
 
 (defn constraint-create
-  "example
-  {:id_permission :permission} {:update :cascade :delete :restrict}"
+  "Description
+   Specyfication for foreight keys. Default is `:default` option
+  You can choose one of options for :update and :delete action
+    :cascade   ;; mean 'CASCADE'
+    :restrict   ;; mean 'RESTRICT'
+    :null    ;; mean 'SET NULL'
+    :no-action   ;; mean 'NO ACTION'
+    :default   ;; mean 'SET DEFAULT'
+  
+  Example
+    {:id_permission :permission} {:update :cascade :delete :restrict}"
   ([table-name tables]
-   (let [[colm rel-tbl] (map name (first (seq tables)))
+   (let [is_id? #(= "id_" (apply str (take 3 (clojure.string/lower-case %))))
+         [colm rel-tbl] (cond
+                          (and (or (string? tables) (keyword? tables)) (is_id? (name tables))) [(name tables) (apply str (drop 3 (name tables)))]
+                          (and (or (string? tables) (keyword? tables)) (not (is_id? (name tables)))) [(str "id_" (name tables)) (name tables)]
+                          :else (map name (first (seq tables))))
          key-name (gensym table-name)]
       (str (format "KEY `%s` (`%s`), " (str key-name) colm)
            (format "CONSTRAINT `%s` FOREIGN KEY (`%s`) REFERENCES `%s` (`id`)" (str key-name) colm rel-tbl))))
@@ -507,20 +547,37 @@
                       :null (format " ON %s SET NULL" %1 )
                       :no-action (format " ON %s NO ACTION" %1)
                       :default (format " ON %s SET DEFAULT" %1) nil)]
-     (let [[colm rel-tbl] (map name (first (seq tables)))
+     (let [is_id? #(= "id_" (apply str (take 3 (clojure.string/lower-case %))))
+           [colm rel-tbl] (cond
+                            (and (or (string? tables) (keyword? tables)) (is_id? (name tables))) [(name tables) (apply str (drop 3 (name tables)))]
+                            (and (or (string? tables) (keyword? tables)) (not (is_id? (name tables)))) [(str "id_" (name tables)) (name tables)]
+                            :else (map name (first (seq tables))))
            key-name (gensym table-name)
            { on-delete :delete on-update :update} update-delete]
        (str (format "KEY `%s` (`%s`), " key-name colm)
             (format "CONSTRAINT `%s` FOREIGN KEY (`%s`) REFERENCES `%s` (`id`)" (str key-name) colm rel-tbl)
             (if on-delete (on-action "DELETE" on-delete))
-            (if on-update (on-action "UPDATE" on-update))
-            )))))
+            (if on-update (on-action "UPDATE" on-update)))))))
+
 
 (defn alter-table-constraint-create
-  "example
-  {:id_permission :permission} {:update :cascade :delete :restrict}"
+  "Description
+  Specyfication for foreight keys. Default is `:defualt` option
+  You can choose one of options for :update and :delete action
+    :cascade   ;; mean 'CASCADE'
+    :restrict   ;; mean 'RESTRICT'
+    :null    ;; mean 'SET NULL'
+    :no-action   ;; mean 'NO ACTION'
+    :default   ;; mean 'SET DEFAULT'
+  
+  Example
+    {:id_permission :permission} {:update :cascade :delete :restrict}"
   ([table-name tables]
-   (let [[colm rel-tbl] (map name (first (seq tables)))
+   (let [is_id? #(= "id_" (apply str (take 3 (clojure.string/lower-case %))))
+         [colm rel-tbl] (cond
+                          (and (or (string? tables) (keyword? tables)) (is_id? (name tables))) [(name tables) (apply str (drop 3 (name tables)))]
+                          (and (or (string? tables) (keyword? tables)) (not (is_id? (name tables)))) [(str "id_" (name tables)) (name tables)]
+                          :else (map name (first (seq tables))))
          key-name (gensym table-name)]
       (str (format "CONSTRAINT `%s` FOREIGN KEY (%s) REFERENCES `%s` (`id`)" (str key-name) colm rel-tbl))))
   ([table-name tables update-delete]
@@ -530,7 +587,11 @@
                       :null (format " ON %s SET NULL" %1 )
                       :no-action (format " ON %s NO ACTION" %1)
                       :default (format " ON %s SET DEFAULT" %1) nil)]
-     (let [[colm rel-tbl] (map name (first (seq tables)))
+     (let [is_id? #(= "id_" (apply str (take 3 (clojure.string/lower-case %))))
+           [colm rel-tbl] (cond
+                            (and (or (string? tables) (keyword? tables)) (is_id? (name tables))) [(name tables) (apply str (drop 3 (name tables)))]
+                            (and (or (string? tables) (keyword? tables)) (not (is_id? (name tables)))) [(str "id_" (name tables)) (name tables)]
+                            :else (map name (first (seq tables))))
            key-name (gensym table-name)
            { on-delete :delete on-update :update} update-delete]
        (str (format "CONSTRAINT `%s` FOREIGN KEY (%s) REFERENCES `%s` (`id`)" (str key-name) colm rel-tbl)
@@ -538,17 +599,26 @@
             (if on-update (on-action "UPDATE" on-update))
             )))))
 
+
+
 (defmacro foreign-keys-string
-  "Function get specyfication in `foreign-keys` argument and regurn linked foreighn key for two table.
-  Foreign key map specyfication by example:
-  Constraint by string => \"CONSTRAINT (`id`) blablabla\"
-  Constraint by map => [{:id_permission :permission} {:update :cascade :delete :restrict}] 
-  Constraint by Vecotor of maps => [[{:id_permission :permission} {:update :cascade :delete :restrict}] [{:id_chujnia :chujnia} {:update :nset :delete :restricted}]]"
+  "Description
+    Function get specyfication in `foreign-keys` argument and regurn linked foreighn key for two table.
+
+  Examples
+    (foreign-keys-string \"\" [{:table :id_suka} {:update :cascade :delete :restrict}] \"\")
+    (foreign-keys-string \"\" [{:table :id_suka} {:update :cascade}] \"\")
+    (foreign-keys-string \"\" [:id_table {:update :cascade}] \"\")
+    (foreign-keys-string \"\" [:table {:update :cascade}] \"\")
+    (foreign-keys-string \"\" [\"table\"] \"\")
+    (foreign-keys-string \"\" [\"id_table\"] \"\")"
   [current-string foreign-keys table-name]
   (cond
     (string? foreign-keys) `(str ~current-string ", " ~foreign-keys)
     (and (vector? foreign-keys) (map? (first foreign-keys))) `(str ~current-string ", " (apply constraint-create ~table-name ~foreign-keys))
     (and (vector? foreign-keys) (vector? (first foreign-keys))) `(str ~current-string ", " (string/join ", " (map #(apply constraint-create ~table-name %) ~foreign-keys)))
+    (and (vector? foreign-keys) (string? (first foreign-keys))) `(str ~current-string ", " (apply constraint-create ~table-name ~foreign-keys))
+    (and (vector? foreign-keys) (keyword? (first foreign-keys))) `(str ~current-string ", " (apply constraint-create ~table-name ~foreign-keys))
     :else current-string))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -579,6 +649,11 @@
   [current-string column-specyfication table-name]
   `(str ~current-string (format " `%s` ADD %s;" ~table-name (create-column ~column-specyfication))))
 
+(defmacro modify-column-string
+  "Modify column type to field. Using in `alter table`:
+  :modify {:suka [:bigint-20 \"NOT NULL\"]}"
+  [current-string column-specyfication table-name]
+  `(str ~current-string (format " `%s` modify %s;" ~table-name (create-column ~column-specyfication))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -613,18 +688,113 @@
 
 (defn empty-engine-pipeline-applier [key-pipeline]
   (if (some #(= :table-config (first %1)) key-pipeline) key-pipeline
-    (conj key-pipeline [:table-config 'default-table-config-string])))
+      (conj key-pipeline [:table-config 'default-table-config-string])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; define-operations ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn- select-doc [] "TODO")
+(defn- update-doc [] "TODO")
+(defn- insert-doc [] "TODO")
+(defn- delete-doc [] "TODO")
+(defn- alter-table-doc [] "TODO")
+(defn- create-table-doc []
+  "Description
+    Ssql experssion function `create-table` using for generation sql strings
+
+  Section contain 
+    Example 
+    Spec-params - specs for keys you may use. See `*accepted-ctable-rules*`
+    Column name spec - specs for column declaration
+    Type name spec - how to declare types
+
+  Example
+    ;; Mainly look like
+    (create-table :point_of_sale
+                  :columns [{:id_enterpreneur [:bigint-20-unsigned :default :null]}
+                            {:name [:varchar-100 :default :null]}
+                            {:physical_address  [:varchar-100 :default :null]}
+                            {:telefons  [:varchar-100 :default :null]}]
+                  :foreign-keys [{:id_enterpreneur :enterpreneur} {:update :cascade}])
+  
+    ;; but you can also put ssql `spec-parameters` into the map
+    ;; WARNING! puting table name into map only with key `:table-name`
+    ;; look on example belove.
+    (create-table {:table-name :point_of_sale
+                   :columns [{:id_enterpreneur [:bigint-20-unsigned :default :null]}
+                             ....
+                   :foreign-keys [{:id_enterpreneur :enterpreneur} {:update :cascade}])}
+  
+    ;; other example of usage 
+    (create-table :table
+              :columns [{:name [:varchar-100 :null]} {:some-int :integer-200} {:id_other_table :bigint-20}]
+              :foreign-keys [{:id_other_table :other_table} {:update :cascade, :delete :null}]
+              :table-config {:engine \"InnoDB\", :charset \"utf8\"})
+
+  Spec-params 
+    :columns - describes column list in notation [{col-spec type-spec}]
+    :table-config - simple configuration map by pattern {[:engine|:charset|:collate]* .+)}
+      {:engine <table engine(defautl: InnoDB)> 
+       :charset <charset for table(default: utf8)>
+       :collate <table collate(default: utf8_general_ci)>} 
+    :foreign-keys - describes key relation to other table see `*accepted-forkey-rules*`
+      Example forms:
+         If you have many keys just set it all in vector
+          [[{:id_enterpreneur :enterpreneur} {:update :cascade :delete [:restrict|:cascade|:null|:no-action|:default]}]
+           [{:id_user :user}]]
+         if you have one foreign key set it vector with two maps, where first is linked id(key), and linked table(value)
+         OPTIONAL second map if you not set it may next \"view\" {:update :default :delete :default}
+          [{:id_enterpreneur :enterpreneur} {:update :cascade :delete [:restrict|:cascade|:null|:no-action|:default]}]
+         Also you can use really \"short\" exteranl keys, look at all posible examples:
+          [[{:table :id_suka} {:update :cascade :delete :restrict}] [...] ... ]
+          [{:table :id_suka} {:update :cascade :delete :restrict}]
+          [{:table :id_suka} {:update :cascade}]
+          [:id_table {:update :cascade}]
+          [:table {:update :cascade}]
+          [\"table\"] 
+          [\"id_table\"]
+
+  Column name spec(col-spec)
+    * - string which validates by pattern [a-z_]{2,} 
+    :id_* - column mean field which would linked with other table as foreign key
+    :meta* - column only for database and program API usage, which not being included to UI
+    :* - simple field. 
+
+  SSQL column type spec(type-spec)
+    * => *
+    :null => NULL
+    :nnull => NOT NULL
+    :date => DATE
+    :datetime => DATETIME
+    :time => TIME
+    :varchar-[0-9]{1,} => VARCHAR(12)
+    :[tinyint|smallint|mediumint|int|integer|bigint|double|float|real]-[0-9|[.|[0-9]{1,}]?]+ => INT(123)
+    :[bool|boolean] => TINYINT(1)
+    :[tinyblob|blob|mediumblob|longblob|tinytext|text|mediumtext|longtext|json] => the same only in uppercase
+    :[auto_increment|autoincrement|auto] => AUTO_INCREMENT
+    :[default|signed|unsigned|zerofill] => used as specyficator to integer types :int-10-unsigned, but 
+       defualt used like [:int-20 default -2]
+    \"*\" -> mean that you can combine SSQL types with strings, for example
+       you may write something like this
+        [:varchar-40 :default :null]
+       but also
+        [\"VARCHAR(40)\" :default \"NULL\"]
+       or if you want totatly in SQL string 
+        \"VARCHAR(40) DEFAULT NULL\"
+       choose what better for you")
 
 (defmacro define-sql-operation
   ([operation-name pipeline-function]
    `(define-sql-operation ~operation-name ~(string/upper-case (name operation-name)) ~pipeline-function))
   ([operation-name operation-string pipeline-function]
-   `(defmacro ~operation-name [~'table-name & {:as ~'args}]
-     (let [list-of-rules# (~pipeline-function (keys ~'args) ~(jarman.logic.sql-tool/find-rule (name operation-name)))]
+   `(defmacro ~operation-name
+      ;; in this line i generate documentation from function by name `<operation-name>-doc`.
+      ;; look above
+      ~((resolve (symbol (str "jarman.logic.sql-tool" "/" operation-name "-doc"))))
+      [~'table-name & {:as ~'args}]
+      (let [~'args (if (map? ~'table-name) (dissoc ~'table-name :table-name) ~'args) 
+            ~'table-name (if (map? ~'table-name) (:table-name ~'table-name) ~'table-name) 
+            list-of-rules# (~pipeline-function (keys ~'args) ~(jarman.logic.sql-tool/find-rule (name operation-name)))]
        `(eval (-> ~~operation-string
                   ~@(for [[~'k ~'F] list-of-rules#]
                       `(~(symbol (str "jarman.logic.sql-tool" "/" ~'F)) ~~'(k args) (name ~~'table-name)))))))))
@@ -637,14 +807,6 @@
 (define-sql-operation create-table "CREATE TABLE IF NOT EXISTS" (comp empty-engine-pipeline-applier create-rule-pipeline))
 (define-sql-operation alter-table "ALTER TABLE" (comp get-first-macro-from-pipeline create-rule-pipeline))
 
-
-(let [limit-number '(1 31)]
- (and (not (string? limit-number)) (seqable? limit-number) (let [[f s]limit-number] (and (number? f) (number? s)))))
-
-
-(defn- transform-namespace [symbol-op]
-  (if (some #(= \/ %) (str symbol-op)) symbol-op
-      (symbol (str "jarman.logic.sql-tool/" symbol-op))))
 
 (defn change-expression
   "Replace or change some construction in clojure s-sql
@@ -659,8 +821,7 @@
   (-> '(select :user :where (= 1 2))
     (change-to-expression :where '(between :registration (date) (date 1998)))
     (change-to-expression :column [:column :blait])
-    (change-to-expression :order [:column :asc]))
-  "
+    (change-to-expression :order [:column :asc]))"
   [sql-expresion rule-name rule-value & {:keys [where-rule-joiner] :or {where-rule-joiner 'or}}]
   (let [[h & t] sql-expresion
         s-sql-expresion (concat (list (transform-namespace h)) t)]
@@ -710,7 +871,6 @@
   {:pre [(string? database-name)]}
   (format "DROP DATABASE `%s`;" (string/trim database-name)))
 
-
 (defn create-database [database-name & {:keys [charset collate] :or {charset "utf8" collate "utf8_general_ci"}}]
   {:pre [(string? database-name)]}
   (apply format "CREATE DATABASE `%s` CHARACTER SET = '%s' COLLATE = '%s';" (map string/trim [database-name charset collate]) ))
@@ -725,4 +885,5 @@
 (defn drop-table [database-table]
   {:pre [(keyword? database-table)]}
   (format "DROP TABLE IF EXISTS `%s`" (name database-table)))
+
 

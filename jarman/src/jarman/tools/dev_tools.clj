@@ -1,3 +1,14 @@
+;;; File contain some usefull functions, hacks, or examples
+;;; Contens:
+;;; * Helper functions - quick usefull hacks
+;;; * AWT/Swing helpers
+;;; * Icons library generator
+;;; * Fonts library generator
+;;; * Font debug, tool
+;;; * Map-type toolkit
+;;; ** head/tail destruction for maps
+;;; ** cond-contain test if key in map
+;;; ** key-paths
 (ns jarman.tools.dev-tools
   (:gen-class)
   (:use clojure.reflect
@@ -47,23 +58,27 @@
        reflect :members (filter :return-type) (map :name) sort (map #(str "." %) ) distinct println))
 
 (defn namespace-for-path-name
-  " Function using for generation resources libraries, where namespace created dynamicaly
-  (namespace-for-path-name \"src/jarman/a/b/c_c/some_lib.clj\")
-     ;;=> jarman.a.b.c-c.some-lib.clj"
-  [f]
-  (if-let [[_ in-project-path file] (re-matches #"src/jarman/(.*/){0,1}(.*)" f)]
-    (let [replace_to- (fn [s] (string/replace s #"_" "-"))
-          project-file-name (replace_to- (first (split #"\." file)))
-          project-file-root (first (split #"\." (str *ns*)))
-          project-file-offset (if in-project-path                                 
-                                (join "." (map replace_to- (string/split in-project-path #"[\\/]"))))]
-      (join "."
-       (filter-nil
-        (if project-file-offset
-          [project-file-root project-file-offset project-file-name]
-          [project-file-root project-file-name])))) (println "Error generation namespace. Not validated name:" f)))
+  "Description
+    Function using for generation resources libraries, where namespace created dynamicaly
 
-(defn ^sun.awt.image.ToolkitImage image-scale "Function scale image by percent size.
+  Example
+    (namespace-for-path-name \"src/jarman/a/b/c_c/some_lib.clj\")
+      => jarman.a.b.c-c.some-lib.clj"
+  [f] (if-let [[_ in-project-path file] (re-matches #"src/jarman/(.*/){0,1}(.*)" f)]
+        (let [replace_to- (fn [s] (string/replace s #"_" "-"))
+              project-file-name (replace_to- (first (split #"\." file)))
+              project-file-root (first (split #"\." (str *ns*)))
+              project-file-offset (if in-project-path (join "." (map replace_to- (string/split in-project-path #"[\\/]"))))]
+          (join "." (filter-nil (if project-file-offset
+                                  [project-file-root project-file-offset project-file-name]
+                                  [project-file-root project-file-name])))) (println "Error generation namespace. Not validated name:" f)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; AWT/Swing helpers ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn ^sun.awt.image.ToolkitImage image-scale
+  "Function scale image by percent size.
   Return `sun.awt.image.ToolkitImage` type.
 
   Example:
@@ -162,8 +177,6 @@
 ;;; Fonts library generator  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
-
 (defn- is-font-supported?
   "Example:
      (is-supported? \"temp.clj\") ;=> true
@@ -225,7 +238,6 @@
 (defn get-fonts "Funkcja zwraca nazy dost�nych czcionek."
   [] (map identity (.. java.awt.GraphicsEnvironment getLocalGraphicsEnvironment getAvailableFontFamilyNames)))
 
-
 (defn debug-font-panel "Funkcja wy�wietla okienko z czcionkami w swoim formacie."
   [& {:keys [txt size] :or {txt "Przyk�adowy tekst od Mr. Jarmana" size 16}}]
   (-> (seesaw.core/frame :content (seesaw.core/scrollable (seesaw.core/vertical-panel :items (map (fn [font] (seesaw.core/grid-panel
@@ -259,25 +271,149 @@
                 (io/copy stream saveFile)))
             (recur (.getNextEntry stream))))))))
 
-;; (defn unzip [file dir]
-;;   (let [saveDir (java.io.File. dir)]
-;;     (with-open [stream (java.util.zip.ZipInputStream. (io/input-stream file))]
-;;       (loop [entry (.getNextEntry stream)]
-;;         (if entry
-;;           (let [savePath (str dir java.io.File/separatorChar (.getName entry))
-;;                 saveFile (java.io.File. savePath)]
-;;             (if (.isDirectory entry)
-;;               (if-not (.exists saveFile)
-;;                 (.mkdirs saveFile))
-;;               (let [parentDir (java.io.File. (.substring savePath 0 (.lastIndexOf savePath (int java.io.File/separatorChar))))]
-;;                 (if-not (.exists parentDir) (.mkdirs parentDir))
-;;                 (io/copy stream saveFile)))
-;;             (recur (.getNextEntry stream))))))))
 
-(defn delete-recursively [fname]
-  (let [func (fn [func f]
-               (when (.isDirectory f)
-                 (doseq [f2 (.listFiles f)]
-                   (func func f2)))
-               (io/delete-file f))]
-    (func func (io/file fname))))
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Map-type toolkit ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmacro first-key
+  "Description:
+    Get the first key of some map
+  
+  Examples:  
+  (first-key {:a 1 :b 2}) => :a
+  (first-key {})          => nil"
+  [m]
+  `(first (first (seq ~m))))
+
+(defmacro map-first
+  "Description:
+    The same as `first` function for list.
+  
+  Examples:  
+  (map-first {:a 1 :b 2}) => {:a 1}
+  (map-first {})          => nil"
+  [m]
+  `(if-let [mf# (first (seq ~m))]
+     (into {} (list mf#))))
+
+(defmacro map-rest
+  "Description:
+    The same as `rest` function for list.
+  
+  Examples:
+  (map-rest {:a 1 :b 2 :c 1}) => {:b 2, :c 1}
+  (map-rest {})               => nil"
+  [m] 
+  `(let [mf# (rest (seq ~m))]
+     (if (not-empty mf#) (into {} mf#))))
+
+(defmacro map-destruct
+  "Description:
+    For map return vector of two map, where first
+    is head, and second is tail.
+  
+  Example:
+    (map-destruct {:a 1 :b 2 :c 3}) => [{:a 1} {:b 2, :c 3}]
+    (map-destruct {:a 1})           => [{:a 1} nil]
+    (map-destruct {})               => [nil nil]
+  
+  See related:
+    (`jarman.logic.metadata/map-first`, `jarman.logic.metadata/map-rest`)"
+  [m] 
+  `(let [sm# ~m]
+     (if-let [m-head# (map-first sm#)]
+       (let [m-tail# (map-rest sm#)]
+         [m-head# m-tail#])
+       [nil nil])))
+
+(defmacro cond-contain
+  "Description
+    Simple macro for easy using pattern-maching on map's
+
+  Example
+    (cond-contain {:a 1 :b 2}
+      :a (println 1)
+      :b (println 2)
+      3)"
+  [m & body]
+  `(condp (fn [kk# mm#] (contains? mm# kk#)) ~m
+     ~@body))
+
+(defmacro find-column
+  "Descripion
+    Short macro for geting first value of lazy seq.
+  
+  Example
+    (find-column #(= % 2) [1 2 3 4])"
+  [f col]
+  `(first (filter ~f ~col)))
+
+(defmacro map-partial
+  "Example
+    (map-partial [1 2 3] [:a :b :c]) => [[1 :a] [2 :b] [3 :c]]"
+  [f & body] `(map (comp vec concat list) ~@body))
+
+(defmacro get-apply
+  "Apply one function to 2-4 maps
+  
+  Example
+    (get-apply + [:a] {:a 1} {:a 1}) ;; => 2"
+  [f path & maps]
+  (let [fx-gets (for [m maps] `(get-in ~m ~path nil))] 
+    `(~f ~@fx-gets)))
+
+(defn Y-Combinator []
+  (((fn [f] (f f))
+    (fn [f]
+      (fn [s n]
+        (if (not (empty? n))
+          ((f f) (+ s (second (first n))) (rest n))
+          s
+          )))) 0 (seq {:a 1 :b 1 :c 1})))
+
+
+(defn- get-key-paths-recur [m ref-var path sequence?]
+  (if (nil? m) (swap! ref-var (fn [path-list] (conj path-list path)))
+      (let [[head tail] (map-destruct m)
+            m-fk (first-key head)
+            v-fk (m-fk head)
+            vct (comp vec concat)]
+        (cond
+          ;; if it map
+          (map? v-fk) (get-key-paths-recur (m-fk head) ref-var (vct path [m-fk]) sequence?)
+          ;; sequable
+          (and sequence? (seqable? v-fk) (not (string? v-fk)))
+          (doall (map
+                  (fn [mm i]
+                    (get-key-paths-recur mm ref-var (vct path [m-fk] [i]) sequence?))
+                  v-fk
+                  (range (count v-fk))))
+          :else (get-key-paths-recur nil ref-var (vct path [m-fk]) sequence?))
+        (if tail
+          (get-key-paths-recur tail ref-var path sequence?)))))
+
+(defn key-paths
+  "Description
+    Get vector's of all keys from map linking it in path.
+    If `sequence?` optionaly parameter is set on true - searching deep include also list's
+  
+  Example
+    (key-paths {:a 1 :b {:t 2 :f 2} :c [{:t 3} {:f 3}]})
+      ;;=> [[:a]
+            [:b :t]
+            [:b :f]
+            [:c]]
+    (key-paths {:a 1 :b {:t 2 :f 2} :c [{:t 3} {:f 3}]} :sequence? true)
+      ;;=> [[:a]
+            [:b :t]
+            [:b :f]
+            [:c 0 :t]
+            [:c 1 :f]]"
+  [m & {:keys [sequence?] :or {sequence? false}}]
+  (let [in-deep-key-path (atom [])]
+    (get-key-paths-recur m in-deep-key-path nil sequence?)
+    @in-deep-key-path))
+
+
+

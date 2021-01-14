@@ -208,21 +208,37 @@
 
 (defn label-btn [txt] (let [bg-color "#eee"
                             color-hover-margin "#bbb"
-                            bg-color-hover "#d9ecff"]
+                            bg-color-hover "#d9ecff"
+                            bg-btn (atom bg-color)]
                         (mig-panel
                          :constraints ["" "10px[fill]10px" "10px[fill]10px"]
-                         :border (line-border :thickness 1 :color "#999")
+                         :border (line-border :right 1 :top 1 :bottom 1 :color "#ccc")
                          :listen [:mouse-entered (fn [e] (config! e :cursor :hand :background bg-color-hover))
-                                  :mouse-exited  (fn [e] (config! e :background bg-color))]
+                                  :mouse-exited  (fn [e] (config! e :background @bg-btn))
+                                  :mouse-clicked  (fn [e] (cond 
+                                                            (= @bg-btn bg-color) (reset! bg-btn bg-color-hover)
+                                                            :else (reset! bg-btn bg-color)
+                                                            ))
+                                  ]
                          :items [[(label :text txt
                                         ;;  :border (line-border :thickness 5 :color bg-color)
                                         ;;  :listen [:mouse-entered (fn [e] (config! e :cursor :hand :background bg-color-hover :border (line-border :thickness 5 :color bg-color-hover)))
                                         ;;           :mouse-exited  (fn [e] (config! e :background bg-color :border (line-border :thickness 5 :color bg-color)))]
                                          )]])))
 
+(gen-class :name jarman.gui-app.test
+           :state state
+           :prefix "-"
+           :main false
+           :methods [[btnOff [] Integer]]
+          ;;  (defn -btnOff [this] ())
+           (defn btnOff [] 5))
+
+(def zz (test.))
+
 (defn create-editor-column-selector
   "Create left table editor view to select column which will be editing on right table editor view"
-  [tekst] (mig-panel :constraints ["wrap 1" "5px[fill]5px" "5px[fill]5px"]
+  [tekst] (mig-panel :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
                      :border (line-border :right 2 :color "#ccc")
                      :items [[(label-btn tekst)]
                              [(label-btn (string/join "" ["Sec: " tekst]))]]))

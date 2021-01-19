@@ -206,55 +206,59 @@
   "Create header GUI component in editor for separate section"
   [name] (label :text name :font (getFont 14 :bold) :border (line-border :bottom 2 :color "#ccc")))
 
-(defn label-btn [txt] (let [bg-color "#eee"
-                            color-hover-margin "#bbb"
-                            bg-color-hover "#d9ecff"
-                            bg-btn (atom bg-color)]
-                        (mig-panel
-                         :constraints ["" "10px[fill]10px" "10px[fill]10px"]
-                         :border (line-border :right 1 :top 1 :bottom 1 :color "#ccc")
-                         :listen [:mouse-entered (fn [e] (config! e :cursor :hand :background bg-color-hover))
-                                  :mouse-exited  (fn [e] (config! e :background @bg-btn))
-                                  :mouse-clicked  (fn [e] (cond 
-                                                            (= @bg-btn bg-color) (reset! bg-btn bg-color-hover)
-                                                            :else (reset! bg-btn bg-color)
-                                                            ))
-                                  ]
-                         :items [[(label :text txt
-                                        ;;  :border (line-border :thickness 5 :color bg-color)
-                                        ;;  :listen [:mouse-entered (fn [e] (config! e :cursor :hand :background bg-color-hover :border (line-border :thickness 5 :color bg-color-hover)))
-                                        ;;           :mouse-exited  (fn [e] (config! e :background bg-color :border (line-border :thickness 5 :color bg-color)))]
-                                         )]])))
+(defn create-editor-column-selector-btn
+  "Description:
+     Select button for create-editor-column-selector, can work with another same buttons"
+  [txt func] (let [bg-color "#eee"
+                   color-hover-margin "#bbb"
+                   bg-color-hover "#d9ecff"
+                   bg-color-clicked "#c8dbee"
+                   bg-btn (atom bg-color)]
+               (mig-panel
+                :constraints ["" "15px[100, fill]15px" "10px[fill]10px"]
+                :border (line-border :left 4 :right 4 :top 1 :bottom 1 :color "#ccc")
+                :id :create-editor-column-selector-btn
+                :user-data bg-btn
+                :listen [:mouse-entered (fn [e] (config! e :cursor :hand :background bg-color-hover))
+                         :mouse-exited  (fn [e] (config! e :background @bg-btn))
+                         :mouse-clicked  (fn [e] (cond
+                                                   (= @bg-btn bg-color)
+                                                   (do
+                                                ;; reset bg and atom inside all buttons in parent
+                                                     (doall (map (fn [b] (do (config! b :background bg-color)
+                                                                             (reset! (config b :user-data) bg-color)))
+                                                                 (seesaw.util/children (.getParent (seesaw.core/to-widget e)))))
+                                                ;; reset atom with color
+                                                     (reset! bg-btn bg-color-clicked)
+                                                ;; update atom with color
+                                                     (config! e :background @bg-btn)
+                                                     (func e))))]
+                :items [[(label :text txt)]])))
 
-(gen-class :name jarman.gui-app.test
-           :state state
-           :prefix "-"
-           :main false
-           :methods [[btnOff [] Integer]]
-          ;;  (defn -btnOff [this] ())
-           (defn btnOff [] 5))
-
-(def zz (test.))
 
 (defn create-editor-column-selector
   "Create left table editor view to select column which will be editing on right table editor view"
-  [tekst] (mig-panel :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
-                     :border (line-border :right 2 :color "#ccc")
-                     :items [[(label-btn tekst)]
-                             [(label-btn (string/join "" ["Sec: " tekst]))]]))
+  [] (mig-panel :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
+                :id :create-editor-column-selector
+                :items [[(create-editor-column-selector-btn "Test 1" (fn [e] (let [value [[(label :text "Selected column: ")]
+                                                                                          [(label :text "Test 1")]
+                                                                                          [(label :text "Value: ")]
+                                                                                          [(label :text "I'm blue dabi dibu du bai")]]]
+                                                                              (config! (select (to-root e) [:#create-editor-column-editor]) :items value))))]
+                        [(create-editor-column-selector-btn "Dłuższy Test 2" (fn [e] (let [value [[(label :text "Selected column: ")]
+                                                                                                  [(label :text "Test 2")]
+                                                                                                  [(label :text "Value: ")]
+                                                                                                  [(label :text "Tylko jedno w głowie maaam, koksu 5 gramm...")]
+                                                                                                  [(label :text "Trashpanda")]
+                                                                                                  [(label :text "Team")]]]
+                                                                               (config! (select (to-root e) [:#create-editor-column-editor]) :items value))))]]))
 
 (defn create-editor-column-editor
   "Create right table editor view to editing selected column in left table editor view"
-  [tekst] (mig-panel :constraints ["wrap 2" "5px[fill]10px[fill]5px" "5px[fill]5px"]
-                     :border (line-border :left 2 :color "#ccc")
-                     :items [[(label :text "Editing column: ")]
-                             [(label :text "Test lewy")]
-                             [(label :text "Param: ")]
-                             [(label :text "Value")]
-                             [(label :text "Sec Param: ")]
-                             [(label :text "Sec Value")]
-                             [(label :text "Next Param")]
-                             [(label :text "Next Value")]]))
+  [] (mig-panel :constraints ["wrap 2" "20px[100, fill]10px[fill]5px" "5px[fill]5px"]
+                :id :create-editor-column-editor
+                :items [[(label :text "Selected column: ")]
+                        [(label :text "")]]))
 
 (defn create-view-table-editor 
   "Description:
@@ -294,8 +298,8 @@
                          [[(create-editor-section-header "Column configuration")]]
                          [[(mig-panel
                             :constraints ["wrap 2" "0px[fill]0px" "0px[fill]0px"]
-                            :items [[(create-editor-column-selector "Test Lewy")] ;; Left part for kolumns to choose to changing
-                                    [(create-editor-column-editor "Test Prawy")] ;; Space for components, using to editing columns
+                            :items [[(create-editor-column-selector)] ;; Left part for kolumns to choose to changing
+                                    [(create-editor-column-editor)] ;; Space for components, using to editing columns
                                     ])]]
                         ;;  todonow
                          ))

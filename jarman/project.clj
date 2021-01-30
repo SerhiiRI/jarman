@@ -23,7 +23,7 @@
                            :uberjar-name "lets-scheme.jar"}}
   :jar-name "jarman.jar"
   :uberjar-name "jarman-standalone.jar"
-  :java-source-paths ["src/java-src"]
+  :java-source-paths ["src/java"]
   :javac-options     ["-Xlint:unchecked"])
 
 

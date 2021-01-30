@@ -415,5 +415,30 @@
     (get-key-paths-recur m in-deep-key-path nil sequence?)
     @in-deep-key-path))
 
+(defmacro cond-let
+  "Description
+    Is macro which combine let+cond
+    cond-let has one 'hack'. It use first
+    binded pattern to automaticaly apply
+    to ONE-WORD predicates
+    Macro automatic transform
+     string? -> (string? T)
 
-
+  Example
+    (cond-let [T \"something\"]
+	string?     \"is string\"
+	boolean?    \"is boolean\"
+	(number? T) \"is number \"  
+	:else nil)"
+  [binding & body]
+  (let [var-name (first binding)
+        cond-list
+        (reduce
+         concat
+         (map #(if (symbol? (first %1))
+                 (list (list (first %1) var-name)
+                       (second %1)) 
+                 %1)(partition 2 body)))]
+    `(let [~@binding]
+       (cond
+         ~@cond-list))))

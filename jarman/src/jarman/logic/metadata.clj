@@ -25,7 +25,7 @@
 ;;                      :representation "id_point_of_sale"
 ;;                      :description nil
 ;;                      :component-type "l"
-;;                      :column-type "bigint(20) unsigned"
+;;                      :column-type "bigint(20) unsigned" 
 ;;                      :private? false
 ;;                      :editable? true}
 ;;                     {:field "name"
@@ -66,7 +66,7 @@
 ;;  UI FAQ
 ;;    1. I want change column-type (not component-type)?
 ;;        Then user must delete column and create new to replace it
-;;    2. I want change component-type?
+;;    2. I want change component-type
 ;;        `TODO` for gui must be realized "type-converter" field rule, for example you can make string from data, but not in reverse direction.
 ;;        This library no detected column-type changes. 
 (ns jarman.logic.metadata
@@ -81,7 +81,8 @@
 
 (def ^:dynamic *id-collumn-rules* ["id", "id*"])
 (def ^:dynamic *meta-rules* ["metatable" "meta*"])
-(def ^:dynamic *not-allowed-to-edition-tables* ["user" "permission"]) 
+(def ^:dynamic *not-allowed-to-edition-tables* ["user" "permission"])
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; RULE FILTRATOR ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -241,10 +242,10 @@
 ;; {:field "id_permission", :type "bigint(120) unsigned", :null "NO", :key "MUL", :default nil, :extra ""}
 
 
-(do
-  (defn- key-referense [k-column]
-    (re-matches #"id_(.*)" (name k-column)))
-  (key-referense :is_permission))
+
+(defn- key-referense [k-column]
+  (re-matches #"id_(.*)" (name k-column)))
+;; (key-referense :is_permission)
 
 (defn- get-table-field-meta [column-field-spec]
   (let [tfield (:field column-field-spec)
@@ -287,7 +288,6 @@
   {:pre [(every? string? body) ]}
   (jdbc/execute! sql-connection (delete :METADATA)))
 
-
 (defn getset
   "get metadate deserialized information for specified tables.
   
@@ -302,13 +302,271 @@
                      (select :METADATA)))))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; TABLE-MAP VALIDATOR ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+(def valid-output-lang
+  {:eng{:value-not-exit-in-table "Value not exist in table-map"
+       :value-not-valid-on-p "Value '%s' not valid by predicate '%s'"
+       :value-not-valid-on-eq "Value '%s' not valid on '%s' equalization pattern"
+       :value-not-in-allow-list "Value '%s' not from allowed list '%s'" 
+       :value-not-valid-on-re "Value '%s' not valid on regexp '%s' pattern"}
+  :pl{:value-not-exit-in-table "Warto¶æ nie istanieje w tabeli"
+      :value-not-valid-on-p "Value '%s' not valid by predicate '%s'"
+      :value-not-valid-on-eq "Value '%s' not valid on '%s' equalization pattern"
+      :value-not-in-allow-list "Value '%s' not from allowed list '%s'" 
+      :value-not-valid-on-re "Value '%s' not valid on regexp '%s' pattern"}
+  :ua{:value-not-exit-in-table "Value not exist in table-map"
+      :value-not-valid-on-p "Value '%s' not valid by predicate '%s'"
+      :value-not-valid-on-eq "Value '%s' not valid on '%s' equalization pattern"
+      :value-not-in-allow-list "Value '%s' not from allowed list '%s'" 
+      :value-not-valid-on-re "Value '%s' not valid on regexp '%s' pattern"}})
+
+(def valid-output (:eng valid-output-lang))
+(def ^:dynamic not-valid-string-f
+  "Lambda for working with validator output map
+
+  Example of argument
+   {:path [:some :path]
+    :msg \"Error message\"}"
+  (fn [m] (println m)))
+
+(defmacro >>=
+  ([x] x)
+  ([x f]
+   `(let [x# (~f ~x)] (if (nil? x#) nil x#)))
+  ([x f & f-list]
+   `(let [x# (~f ~x)]
+      (if (nil? x#) nil
+          (>>= x# ~@f-list)))))
+(defmacro isset? [m key-path & [key-path-preview]]
+  `(if (nil? (get-in ~m [~@key-path] nil))
+     (do (not-valid-string-f {:path (vec (if ~key-path-preview ~key-path-preview ~key-path)) 
+                              :message (format "Value not exist in table-map")}) false)
+     true))
+(defmacro fpattern? [f-pattern msg m key-path & [key-path-preview]]
+  `(let [value# (get-in ~m [~@key-path] nil)
+         path# (if ~key-path-preview ~key-path-preview ~key-path)]
+     (if (~f-pattern value#) true
+         (do (not-valid-string-f {:path path# :message (format "Value '%s' not valid by predicate '%s'" (str value#) ~msg)}) false))))
+(defmacro ispattern? [match m key-path & [key-path-preview]]
+  `(let [value# (get-in ~m [~@key-path] nil)
+         path# (if ~key-path-preview ~key-path-preview ~key-path)]
+     (if (nil? value#) false
+       (if (= value# ~match) true
+           (do (not-valid-string-f
+                {:path path# :message (format "Value '%s' not valid on '%s' equalization pattern"  (str value#) (str ~match))}) false)))))
+(defmacro inpattern? [match-list m key-path & [key-path-preview]]
+  `(let [value# (get-in ~m [~@key-path] nil)
+         path# (if ~key-path-preview ~key-path-preview ~key-path)]
+     (if (nil? value#) false
+       (if (in? [~@match-list] value#) true
+           (do (not-valid-string-f {:path path# :message (format "Value '%s' not from allowed list '%s'"  (str value#) (str [~@match-list]))}) false)))))
+(defmacro repattern? [re m key-path & [key-path-preview]]
+  `(let [value# (get-in ~m [~@key-path] nil)
+         path# (if ~key-path-preview ~key-path-preview ~key-path)]
+     (if (and (not (nil? value#)) (re-find ~re value#))
+       true
+       (do (not-valid-string-f {:path path# :message (format "Value '%s' not valid on regexp '%s' pattern" (str value#) (str ~re))}) false))))
+
+(defmacro do-and [& body]
+  `(do
+     (do ~@body)
+     (binding [~'not-valid-string-f (partial #'identity)]
+       (and ~@body))))
+(defn- verify-table-metadata [m]
+  (do-and
+    (isset? m [:table])
+    (isset? m [:prop :table :frontend-name])
+    (isset? m [:prop :table :is-system?])
+    (isset? m [:prop :table :is-linker?])
+    (isset? m [:prop :table :allow-modifing?])
+    (isset? m [:prop :table :allow-deleting?])
+    (isset? m [:prop :table :allow-linking?])
+    (repattern? #"^[a-z_]{3,}$" m [:table])
+    (repattern? #"^[\w\d\s]+$" m [:prop :table :frontend-name])
+    (inpattern? [true false] m [:prop :table :is-system?])
+    (inpattern? [true false] m [:prop :table :is-linker?])
+    (inpattern? [true false] m [:prop :table :allow-modifing?])
+    (inpattern? [true false] m [:prop :table :allow-deleting?])
+    (inpattern? [true false] m [:prop :table :allow-linking?]))
+  ;; (binding [not-valid-string-f (partial identity)]
+  ;;   (and
+  ;;    (isset? m [:table])
+  ;;    (isset? m [:prop :table :frontend-name])
+  ;;    (isset? m [:prop :table :is-system?])
+  ;;    (isset? m [:prop :table :is-linker?])
+  ;;    (isset? m [:prop :table :allow-modifing?])
+  ;;    (isset? m [:prop :table :allow-deleting?])
+  ;;    (isset? m [:prop :table :allow-linking?])
+  ;;    (repattern? #"^[a-z_]{3,}$" m [:table])
+  ;;    (repattern? #"^[\w\d\s]+$" m [:prop :table :frontend-name])
+  ;;    (inpattern? [true false] m [:prop :table :is-system?])
+  ;;    (inpattern? [true false] m [:prop :table :is-linker?])
+  ;;    (inpattern? [true false] m [:prop :table :allow-modifing?])
+  ;;    (inpattern? [true false] m [:prop :table :allow-deleting?])
+  ;;    (inpattern? [true false] m [:prop :table :allow-linking?])))
+  )
+;; (defn- verify-table-metadata [m]
+;;   (do
+;;     (isset? m [:table])
+;;     (isset? m [:prop :table :frontend-name])
+;;     (isset? m [:prop :table :is-system?])
+;;     (isset? m [:prop :table :is-linker?])
+;;     (isset? m [:prop :table :allow-modifing?])
+;;     (isset? m [:prop :table :allow-deleting?])
+;;     (isset? m [:prop :table :allow-linking?])
+;;     (repattern? #"^[a-z_]{3,}$" m [:table])
+;;     (repattern? #"^[\w\d\s]+$" m [:prop :table :frontend-name])
+;;     (inpattern? [true false] m [:prop :table :is-system?])
+;;     (inpattern? [true false] m [:prop :table :is-linker?])
+;;     (inpattern? [true false] m [:prop :table :allow-modifing?])
+;;     (inpattern? [true false] m [:prop :table :allow-deleting?])
+;;     (inpattern? [true false] m [:prop :table :allow-linking?]))
+;;   (binding [not-valid-string-f (partial identity)]
+;;     (and
+;;      (isset? m [:table])
+;;      (isset? m [:prop :table :frontend-name])
+;;      (isset? m [:prop :table :is-system?])
+;;      (isset? m [:prop :table :is-linker?])
+;;      (isset? m [:prop :table :allow-modifing?])
+;;      (isset? m [:prop :table :allow-deleting?])
+;;      (isset? m [:prop :table :allow-linking?])
+;;      (repattern? #"^[a-z_]{3,}$" m [:table])
+;;      (repattern? #"^[\w\d\s]+$" m [:prop :table :frontend-name])
+;;      (inpattern? [true false] m [:prop :table :is-system?])
+;;      (inpattern? [true false] m [:prop :table :is-linker?])
+;;      (inpattern? [true false] m [:prop :table :allow-modifing?])
+;;      (inpattern? [true false] m [:prop :table :allow-deleting?])
+;;      (inpattern? [true false] m [:prop :table :allow-linking?]))))
+(defn- verify-column-metadata [p m]
+  (do
+    (isset? m [:field] (conj p :field))
+    (isset? m [:representation] (conj p :representation))
+    (isset? m [:column-type] (conj p :column-type))
+    (isset? m [:component-type] (conj p :component-type))
+    (isset? m [:private?] (conj p :private?))
+    (isset? m [:editable?] (conj p :editable?))
+    (repattern? #"^[a-z_]{3,}$" m [:field] (conj p :field))
+    (repattern? #"^[\w\d\s]+$" m [:representation] (conj p :representation))
+    (inpattern? ["d" "t" "dt" "l" "n" "b" "a" "i" nil] m [:component-type] (conj p :component-type))
+    (inpattern? [true false] m [:private?] (conj p :private?))
+    (inpattern? [true false] m [:editable?] (conj p :editable?))
+    (fpattern? #(or (string? %) (nil? %)) "string? || nil?" m [:description] (conj p :description)))
+  (binding [not-valid-string-f (partial identity)]
+    (and
+     (isset? m [:field] (conj p :field))
+     (isset? m [:representation] (conj p :representation))
+     (isset? m [:column-type] (conj p :column-type))
+     (isset? m [:component-type] (conj p :component-type))
+     (isset? m [:private?] (conj p :private?))
+     (isset? m [:editable?] (conj p :editable?))
+     (repattern? #"^[a-z_]{3,}$" m [:field] (conj p :field))
+     (repattern? #"^[\w\d\s]+$" m [:representation] (conj p :representation))
+     (inpattern? ["d" "t" "dt" "l" "n" "b" "a" "i" nil] m [:component-type] (conj p :component-type))
+     (inpattern? [true false] m [:private?] (conj p :private?))
+     (inpattern? [true false] m [:editable?] (conj p :editable?))
+     (fpattern? #(or (string? %) (nil? %)) "string? || nil?" m [:description] (conj p :description)))))
+
+;;; validators ;;;
+(defn- validate-metadata-table [m]
+  (verify-table-metadata m))
+
+(defn- validate-metadata-columns [m]
+  (let [fields (get-in m [:prop :columns] [])]
+    (if (empty? fields)
+      (not-valid-string-f "Table has empty fields list")
+      (let [i-m-col (map-indexed vector fields)]
+        (every? identity (map (fn [[index m-field]]
+                                (println [index m-field])
+                                (verify-column-metadata [:prop :columns index] m-field))
+                              i-m-col))))))
+
+(defn- validate-metadata-column
+  ([m-field]
+   (verify-column-metadata [] m-field))
+  ([path m-field]
+   (verify-column-metadata path m-field)))
+
+(defn- validate-metadata-all [m]
+  (let [is-valid-table  (validate-metadata-table m)
+        is-valid-column (validate-metadata-columns m)]
+    (and is-valid-column is-valid-table)))
+
+(defn- create-validator [validator]
+  (fn [m-subject]
+    (let [string-buffer (atom [])]
+     (binding [not-valid-string-f #(swap! string-buffer (fn[buffer] (conj buffer %)))]
+       (let [valid? (validator m-subject)
+             output @string-buffer] {:valid? valid? :output output})))))
+
+(def validate-all (create-validator #'validate-metadata-all))
+(def validate-table (create-validator #'validate-metadata-table))
+(def validate-columns (create-validator #'validate-metadata-columns))
+(def validate-one-column (create-validator #'validate-metadata-column))
+
+(validate-all
+ {:id 30, :table "user", :prop
+  {:table {:frontend-name "us er", :is-system? :true, :is-linker? false, :allow-modifing? :true, :allow-deleting? true, :allow-linking? true},
+   :columns
+   [{:field "login", :representation "login", :description nil, :component-type true, :column-type "varchar(100)", :private? false, :editable? :true}
+    {:field "password", :representation "password", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
+    {:field "first_name", :representation "first_name", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
+    {:field "last_name", :representation "last_name", :description nil, :component-type "--", :column-type "varchar(100)", :private? false, :editable? true}
+    {:field "id  _permission", :representation "id_permission", :description 123, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]}})
+{:valid? false,
+ :output [{:path [:prop :table :is-system?], :message "Value ':true' not from allowed list '[true false]'"}
+          {:path [:prop :table :allow-modifing?], :message "Value ':true' not from allowed list '[true false]'"}
+          {:path [:prop :columns 0 :component-type], :message "Value 'true' not from allowed list '[\"d\" \"t\" \"dt\" \"l\" \"n\" \"b\" \"a\" \"i\" nil]'"}
+          {:path [:prop :columns 0 :editable?], :message "Value ':true' not from allowed list '[true false]'"}
+          {:path [:prop :columns 3 :component-type], :message "Value '--' not from allowed list '[\"d\" \"t\" \"dt\" \"l\" \"n\" \"b\" \"a\" \"i\" nil]'"}
+          {:path [:prop :columns 4 :field], :message "Value 'id  _permission' not valid on regexp '^[a-z_]{3,}$' pattern"}
+          {:path [:prop :columns 4 :description], :message "Value '123' not valid by predicate 'string? || nil?'"}]}
+;; {:valid? false,
+;;  :output [{:path [:prop :table :is-system?], :message "Value ':true' not from allowed list '[true false]'"}
+;;           {:path [:prop :table :allow-modifing?], :message "Value ':true' not from allowed list '[true false]'"}
+;;           {:path [:prop :columns 0 :component-type], :message "Value 'true' not from allowed list '[\"d\" \"t\" \"dt\" \"l\" \"n\" \"b\" \"a\" \"i\" nil]'"}
+;;           {:path [:prop :columns 0 :editable?], :message "Value ':true' not from allowed list '[true false]'"}
+;;           {:path [:prop :columns 3 :component-type], :message "Value '--' not from allowed list '[\"d\" \"t\" \"dt\" \"l\" \"n\" \"b\" \"a\" \"i\" nil]'"}
+;;           {:path [:prop :columns 4 :field], :message "Value 'id  _permission' not valid on regexp '^[a-z_]{3,}$' pattern"}
+;;           {:path [:prop :columns 4 :description], :message "Value '123' not valid by predicate 'string? || nil?'"}]}
+
+
+;; (validate-table
+;;  {:id 30, :table "user", :prop
+;;   {:table {:frontend-name "us er", :is-system? :true, :is-linker? false, :allow-modifing? :true, :allow-deleting? true, :allow-linking? true},
+;;    :columns
+;;    [{:field "login", :representation "login", :description nil, :component-type true, :column-type "varchar(100)", :private? false, :editable? :true}
+;;     {:field "password", :representation "password", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
+;;     {:field "first_name", :representation "first_name", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
+;;     {:field "last_name", :representation "last_name", :description nil, :component-type "--", :column-type "varchar(100)", :private? false, :editable? true}
+;;     {:field "id  _permission", :representation "id_permission", :description 123, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]}})
+
+;; (validate-columns
+;;  {:id 30, :table "user", :prop
+;;   {:table {:frontend-name "us er", :is-system? :true, :is-linker? false, :allow-modifing? :true, :allow-deleting? true, :allow-linking? true},
+;;    :columns
+;;    [{:field "login", :representation "login", :description nil, :component-type true, :column-type "varchar(100)", :private? false, :editable? :true}
+;;     {:field "password", :representation "password", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
+;;     {:field "first_name", :representation "first_name", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
+;;     {:field "last_name", :representation "last_name", :description nil, :component-type "--", :column-type "varchar(100)", :private? false, :editable? true}
+;;     {:field "id  _permission", :representation "id_permission", :description 123, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]}})
+
+;; (validate-one-column
+;;  {:field "id  _permission", :representation "id_permission", :description 123, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"})
+
+
+
+
+(defn save-metadata [& mx])
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Table logic comparators ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn do-sql [sql-expression]
-  (if (try (println sql-expression)
+  (if (try (or (println sql-expression) true)
            (catch java.sql.SQLException e (str "caught exception: " (.toString e)) false))
     true
     false))
@@ -430,8 +688,6 @@
 ;;  :must-delete
 ;;  [{:field "DELETED_COLUMN", :representation "first_name", :description nil, :component-type "i"}
 ;;   {:field "last_name", :representation "last_name", :description nil, :component-type "i"}]}
-
-
 
 
 (defn f-diff-prop-columns-fields
@@ -627,10 +883,10 @@
 ;;; DEBUG SECTION ;;;
 ;;;;;;;;;;;;;;;;;;;;;
 
-;; (do
-;;   (do-change
-;;    (apply-table user-original user-changed)
-;;    user-original user-changed))
+(do
+  (do-change
+   (apply-table user-original user-changed)
+   user-original user-changed))
 
 ;; (do
 ;;   (println (format "\n--- CHANGE %s --- " (gensym "LOG_")))
@@ -699,7 +955,6 @@
                    :columns (vec (map (fn [sf] {(keyword (:field sf)) (ssql-type-parser (:column-type sf))}) smpl-fields))
                    :foreign-keys (vec (map (fn [idf] [{(keyword (:field idf)) (keyword (:key-table idf))} {:update :null :delete :null}]) idfl-fields))})))
 
-
 ;; (create-table {:table-name :point_of_sale
 ;;                :columns [{:id_enterpreneur [:bigint-20-unsigned :default :null]}
 ;;                          {:name [:varchar-100 :default :null]}
@@ -720,9 +975,6 @@
 ;;               :columns [{"TEST_NAME"  [:varchar-100 :default :null]}]
 ;;               :foreign-keys ["id_enterpreneur" {:update :cascade}])
 
-
-
-
 (defn create-table-from-meta [original]
   (let [smpl-fields (filter (comp (partial not-allowed-rules ["meta*"]) :field) ((comp :columns :prop) original))
         ;; meta-fields (filter (comp (partial allowed-rules "meta*") :field) ((comp :columns :prop) t))
@@ -732,3 +984,4 @@
                    :foreign-keys (vec (map (fn [idf] [{(keyword (:field idf)) (keyword (:key-table idf))} {:update :null :delete :null}]) idfl-fields))})))
 
 
+        

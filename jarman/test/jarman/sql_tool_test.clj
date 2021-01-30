@@ -141,34 +141,34 @@
 
 (deftest select-testing
   (testing "Test overloaded select cases"
-   (is (= "SELECT name, dla_mamusi, CREDENTAIL.login FROM user-table INNER JOIN CREDENTIAL ON CREDENTIAL.id=user-table.is_user_metadata INNER JOIN METADATA ON METADATA.id=user-table.id_user_metadata RIGHT JOIN A1 ON A1.id_self=user.id_user_a1 RIGHT JOIN B1 ON B1.id_self=USER.id_user_b2 LEFT JOIN suka ON suka.id=user.id_suka LEFT JOIN dupa ON dupa.id=er.id_dupara OUTER LEFT JOIN suka ON suka.id=user-table.id_suka OUTER LEFT JOIN bliat ON bliat.id=user-table.id_bliat OUTER RIGHT JOIN credential ON credential.id=user-table.id_credential WHERE CREDENTAIL.login=\"XXXpussy_destroyer69@gmail.com\" AND CREDENTAIL.password=\"Aleksandr_Bog69\" AND name=\"Aleksandr\" AND dla_mamusi=\"Olek\" AND METADATA.merried=false"
-          (select :user-table
-                  :inner-join {:CREDENTIAL :is_user_metadata :METADATA :id_user_metadata}
-                  :right-join {:A1.id_self :user.id_user_a1 :B1.id_self :USER.id_user_b2}
-                  :left-join ["suka ON suka.id=user.id_suka" "dupa ON dupa.id=er.id_dupara"]
-                  :outer-left-join [:suka :bliat]
-                  :outer-right-join :credential
-                  :column [:name :dla_mamusi :CREDENTAIL.login]
-                  :where {:CREDENTAIL.login "XXXpussy_destroyer69@gmail.com"
-                          :CREDENTAIL.password "Aleksandr_Bog69"
-                          :name "Aleksandr"
-                          :dla_mamusi "Olek"
-                          :METADATA.merried false})))
-   (is (= "SELECT name, dla_mamusi, CREDENTAIL.login FROM user-table INNER JOIN CREDENTIAL ON CREDENTIAL.id=user-table.is_user_metadata INNER JOIN METADATA ON METADATA.id=user-table.id_user_metadata RIGHT JOIN A1 ON A1.id_self=user.id_user_a1 RIGHT JOIN B1 ON B1.id_self=USER.id_user_b2 LEFT JOIN suka ON suka.id=user.id_suka LEFT JOIN dupa ON dupa.id=er.id_dupara OUTER LEFT JOIN suka ON suka.id=user-table.id_suka OUTER LEFT JOIN bliat ON bliat.id=user-table.id_bliat OUTER RIGHT JOIN credential ON credential.id=user-table.id_credential WHERE f1 = 1 OR f1 >= \"bliat\" OR (f2 > 2 AND f2 = \"fuck\" AND f1 BETWEEN 1 AND 1010 AND (suka = \"one\" OR one LIKE (1, 2, 3, 3)))"
-          (select :user-table
-                  :inner-join {:CREDENTIAL :is_user_metadata :METADATA :id_user_metadata}
-                  :right-join {:A1.id_self :user.id_user_a1 :B1.id_self :USER.id_user_b2}
-                  :left-join ["suka ON suka.id=user.id_suka" "dupa ON dupa.id=er.id_dupara"]
-                  :outer-left-join [:suka :bliat]
-                  :outer-right-join :credential
-                  :column [:name :dla_mamusi :CREDENTAIL.login]
-                  :where (or (= :f1 1)
+    (is (= "SELECT name, dla_mamusi, CREDENTAIL.login FROM user-table INNER JOIN CREDENTIAL ON CREDENTIAL.id=user-table.is_user_metadata INNER JOIN METADATA ON METADATA.id=user-table.id_user_metadata RIGHT JOIN A1 ON A1.id_self=user.id_user_a1 RIGHT JOIN B1 ON B1.id_self=USER.id_user_b2 LEFT JOIN suka ON suka.id=user.id_suka LEFT JOIN dupa ON dupa.id=er.id_dupara OUTER LEFT JOIN suka ON suka.id=user-table.id_suka OUTER LEFT JOIN bliat ON bliat.id=user-table.id_bliat OUTER RIGHT JOIN credential ON credential.id=user-table.id_credential WHERE CREDENTAIL.login=\"XXXpussy_destroyer69@gmail.com\" AND CREDENTAIL.password=\"Aleksandr_Bog69\" AND name=\"Aleksandr\" AND dla_mamusi=\"Olek\" AND METADATA.merried=false"
+           (select :user-table
+                   :inner-join {:CREDENTIAL :is_user_metadata :METADATA :id_user_metadata}
+                   :right-join {:A1.id_self :user.id_user_a1 :B1.id_self :USER.id_user_b2}
+                   :left-join ["suka ON suka.id=user.id_suka" "dupa ON dupa.id=er.id_dupara"]
+                   :outer-left-join [:suka :bliat]
+                   :outer-right-join :credential
+                   :column [:name :dla_mamusi :CREDENTAIL.login]
+                   :where {:CREDENTAIL.login "XXXpussy_destroyer69@gmail.com"
+                           :CREDENTAIL.password "Aleksandr_Bog69"
+                           :name "Aleksandr"
+                           :dla_mamusi "Olek"
+                           :METADATA.merried false})))
+    (is (= "SELECT name, dla_mamusi, CREDENTAIL.login FROM user-table INNER JOIN CREDENTIAL ON CREDENTIAL.id=user-table.is_user_metadata INNER JOIN METADATA ON METADATA.id=user-table.id_user_metadata RIGHT JOIN A1 ON A1.id_self=user.id_user_a1 RIGHT JOIN B1 ON B1.id_self=USER.id_user_b2 LEFT JOIN suka ON suka.id=user.id_suka LEFT JOIN dupa ON dupa.id=er.id_dupara OUTER LEFT JOIN suka ON suka.id=user-table.id_suka OUTER LEFT JOIN bliat ON bliat.id=user-table.id_bliat OUTER RIGHT JOIN credential ON credential.id=user-table.id_credential WHERE f1 = 1 OR f1 >= \"bliat\" OR (f2 > 2 AND f2 = \"fuck\" AND f1 BETWEEN 1 AND 1010 AND (suka = \"one\" OR one LIKE (1, 2, 3, 3)))"
+           (select :user-table
+                   :inner-join {:CREDENTIAL :is_user_metadata :METADATA :id_user_metadata}
+                   :right-join {:A1.id_self :user.id_user_a1 :B1.id_self :USER.id_user_b2}
+                   :left-join ["suka ON suka.id=user.id_suka" "dupa ON dupa.id=er.id_dupara"]
+                   :outer-left-join [:suka :bliat]
+                   :outer-right-join :credential
+                   :column [:name :dla_mamusi :CREDENTAIL.login]
+                   :where (or (= :f1 1)
                              (>= :f1 "bliat")
                              (and (> :f2 2)
-                                  (= :f2 "fuck")
-                                  (between :f1 1 (+ 10 1000))
-                                  (or (= :suka "one")
-                                      (in :one [1 2 3 (+ 1 2)])))))))))
+                                (= :f2 "fuck")
+                                (between :f1 1 (+ 10 1000))
+                                (or (= :suka "one")
+                                   (in :one [1 2 3 (+ 1 2)])))))))))
 
 
 (deftest inser-update-delete

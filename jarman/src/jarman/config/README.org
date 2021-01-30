@@ -1,0 +1,107 @@
+* Config module 
+
+  This part of documentation describe /what the fuck/ is that configuration, how you can expand, create and work with it. 
+
+** Sample
+  
+   Sample of map, which construct by swaping all information to memory, using one /configuration/ folder. 
+
+   In zero-depth map level, keys representing files, or folders. All has hierachic structure. On top is /folder/, but they only may be. Folder contains /files/, they has /blocks/ and(or) /parameters/. Files representing phisical files with /.edn/ extension. Other files being omitted, while initialzation is started. 
+
+   Look at the sample of swapped map belove:
+
+   #+begin_src clojure
+     {:conf.edn {:name "Config"
+		 :display :noedit
+		 :type :file
+		 :value {}}
+      :file.edn {:name "Other file"
+		 :display :edit
+		 :type :file
+		 :value {:block0 {}
+			 :block1 {:name "Some Block 1"
+				  :doc "this is block 1 documentation"
+				  :type :block
+				  :display :edit
+				  :value {:param1 {:name "Parameter 1"
+						   :doc "this is param 1 documentation"
+						   :type :param
+						   :component :text
+						   :display :edit
+						   :value "fsakj"}
+					  :block2 {:name [:link :to :translation]
+						   :doc "this is block 2 documentation"
+						   :type :block
+						   :display? :noedit
+						   :value {:param3 {:name [:link :to :translation]
+								    :doc "this is param 3 documentation"
+								    :type :param
+								    :component :textlist
+								    :display? :nil
+								    :value "some,value,string"}}}}}}}}
+
+   #+end_src
+
+** Spec
+
+   Spec is a short description of allowed and valid option's for file/block/param configuration terms. This spec use edn-like construction for describing how to use it. Squre brackets =[]= mean /one of/. If i want to represent /vector/ i use literaly =(vector ...)= word in rounded function brackets. 
+
+   Pointed bracktes =<>= describing a /configuration-term/ or literaly what langugage /type/ must or should be used in this spec. For description names i use /free RegEx notation/ (what mean that it may be located in string or non-string block). Map ={}= mean usualy /HashMap/ clojure data type.
+
+   Question mark =?= on end of keyword mean only that using this k-v pair is optional in situation. Also it mean, that validation for this key-value pair be limited or disabled by default. 
+   
+   Star =*= mean anyone of clojure or other type, what can be serialized. Marked by asterix key not being verified on correctly inputed to map.
+   
+   #+begin_src clojure
+     ;;; <file-spec>
+     {:name ["[\w\d\s]+" (vector (:\w)+)]
+      :display? [:nil :edit :noedit]
+      :type [:block :param :file :init :folder]
+      :value {:param? <param-spec>
+	      :block? <block-spec>}}
+
+     ;;; <block-spec>
+     {:name ["[\w\d\s]+" (vector (:\w)+)]
+      :doc ["\.+" nil (vector (:\w)+)]
+      :type [:block :param]
+      :display? [:nil :edit :noedit]
+      :value {:param? <param-spec>
+	      :block? <block-spec>}}
+
+     ;;; <param-block>
+     {:name ["[\w\d\s]+" (vector (:\w)+)]
+      :doc ["\.+" nil (vector (:\w)+)]
+      :type [:block :param]
+      :display? [:nil :edit :noedit]
+      :component [:text :textnumber :textlist :textcolor :checkbox :listbox :selectbox]
+      :value *}
+   #+end_src
+
+** Error's
+
+   When program staring up, all /.edn/ files from /config/ folder also ready to swap into big configuration map, but must be verified and validated on errors. 
+
+   /Verifing/ mean that every file must be tested on existing location in specifyed by module paths (/config/ by default). /Validating/ mean that content configuration in /.edn/ file allowed to be swapped into configuration system. 
+    
+   Based on any of this stages our module must return to user /swapped configuration/, or return some /debug error message/. For this aims to user, replacing configuration, be returned debug HashMap, which contains debug info, what tell abount type of error's, where it located, and some /hint/, how to fix that. Look at example belove:
+
+   #+begin_src clojure
+     {:timestamp "12:10:02 20-04-2021"
+      :messages
+      [{:message "Not find configuraion folder"
+	:hint "Contact with tech support team"}
+       {:path [:file.edn]
+	:message "File doe's not exist"
+	:hint "Create file in your configuration direcotry."}
+       {:path [:file.edn :block1 :param2]
+	:message "param in config file has bad type"
+	:hint "Phisicaly edit file, or contact with support"}]}
+   #+end_src
+    
+   Spec's is quite simple for understanding. In =:messages= struct list which has also messages struct, requaires only parameter =:message= which describe problems. Keys =:hint= or =:path=, was used only if it context be needed. In map's configuration error =:path= important key, that understandable.
+   Also returend information has =:timestamp= field in =HH:mm:ss dd-MM-YYYY= format.
+
+** TODO Validations
+
+* TODO Backup module
+  

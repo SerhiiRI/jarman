@@ -143,8 +143,6 @@
 ;;; Joining preprocessor ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
-
 (defn join-keyword-string [main-table joining-table]
   (let [[table join-column] (list (symbol joining-table)
                                   (symbol (str "id_" (string/lower-case (symbol joining-table)))))]
@@ -233,7 +231,6 @@
      (and (not (string? ~limit-number)) (seqable? ~limit-number) (let [[~'f ~'s]~limit-number] (and (number? ~'f) (number? ~'s))))
      (str ~current-string " LIMIT " (string/join "," ~limit-number))
      :else (str ~current-string)))
-
 
 (defmacro column-string [current-string col-vec table-name]
   (let [f (fn [c]
@@ -656,6 +653,7 @@
   `(str ~current-string (format " `%s` modify %s;" ~table-name (create-column ~column-specyfication))))
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; pipeline helpers ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -693,14 +691,230 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; define-operations ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- select-doc [] "TODO")
-(defn- update-doc [] "TODO")
-(defn- insert-doc [] "TODO")
-(defn- delete-doc [] "TODO")
-(defn- alter-table-doc [] "TODO")
+(defn- select-doc []
+  "Description
+    SSQL experssion function `select` using for generation SQL select strings. 
+
+  Section contain 
+    Example 
+    Spec-params - specs for keys you may use. See `*accepted-select-rules*`
+    Column name spec - specs for column declaration
+    Type name spec - how to declare types
+
+  Example
+    ;; Big query example
+    (select :user-table
+            :inner-join {:CREDENTIAL :is_user_metadata :METADATA :id_user_metadata}
+            :right-join {:A1.id_self :user.id_user_a1 :B1.id_self :USER.id_user_b2}
+            :left-join [\"suka ON suka.id=user.id_suka\" \"dupa ON dupa.id=er.id_dupara\"]
+            :outer-left-join [:suka :bliat]
+            :outer-right-join :credential
+            :column [:name :dla_mamusi :CREDENTAIL.login]
+            :where (or (= :f1 1)
+                       (>= :f1 \"bliat\")
+                       (and (> :f2 2)
+                            (= :f2 \"fuck\")
+                            (between :f1 1 (+ 10 1000))
+                            (or (= :suka \"one\")
+                                (in :one [1 2 3 (+ 1 2)])))))
+    ;; Columns show
+    (select :user :column [:first_name :second_name \"bliat\" {:age :user_age}])
+       ;; => \"SELECT first_name, second_name, bliat, age AS user_age FROM user\"
+
+    ;; Top
+    (select :user :top 10)
+
+    ;; Limit
+    (select :user :limit 10)
+    (select :user :limit [10 20])
+
+    ;; Count
+    (select :user :count {:distinct :column})
+    (select :user :count :*)
+    (select :user :count :column)
+
+    ;; Where
+    (select :user-table:where {:CREDENTAIL.login \"XXXpussy_destroyer69@gmail.com\" :name \"Aleksandr\"})
+    (select :user-table :where \"user-table.user = \\\"Anatoli\\\" \")
+    (select :user-table
+            :where (or (= :f1 1)
+                       (>= :f1 \"bliat\")
+                       (and (> :f2 2)
+                            (= :f2 \"fuck\")
+                            (between :f1 1 (+ 10 1000))
+                            (or (= :suka \"one\")
+                                (in :one [1 2 3 (+ 1 2)])))))
+
+    
+  Spec-params
+    :top - describe number of record from request. Pattern <num>. 
+    :limit - describe number of record from request. Pattern (<num>|(vector <num> <offset-num>))
+    :count - count raws. Usage {:distinct :<col_name>} | :* (as is, mean all) | :<col_name>
+    :column - specify column which will returned. (:<col_name>|\"<col_name>\"|{<col_name> <replacement_col_name>})+
+    :inner-join - one of join pattern, look on *-join rule
+    :right-join - one of join pattern, look on *-join rule
+    :left-join - one of join pattern, look on *-join rule
+    :outer-left-join - one of join pattern, look on *-join rule
+    :outer-right-join - one of join pattern, look on *-join rule
+    :*-join - has one of possible ways of usage:
+        Table name and specify id_<key> on which table will be link.
+         Pattern: {(<table-name> <table-linking-key>)*}
+         Example: {:CREDENTIAL :is_user_metadata :METADATA :id_user_metadata}
+           ;;=> ... INNER JOIN CREDENTIAL ON CREDENTIAL.id=user-table.is_user_metadata INNER JOIN METADATA...
+
+        Litteraly specify how table's linking beetwean each other. 
+         Pattern: {(:<table-will-joined>.<col_name> :<our-main-table>.<col_name>)*}
+         Example: {:A1.id_self :user.id_user_a1 :B1.id_self :USER.id_user_b2}
+           ;;=> ... RIGHT JOIN A1 ON A1.id_self=user.id_user_a1 RIGHT JOIN B1 ON B1.id_self=USER.id_user_b2
+
+        Specify how table will link, by setting SQL join string's in vector list
+         Pattern: (vector \".*\"...)
+         Example: [\"suka ON suka.id=user.id_suka\" \"dupa ON dupa.id=er.id_dupara\"]
+           ;;=> ... LEFT JOIN suka ON suka.id=user.id_suka LEFT JOIN ....
+
+        Put in vector tables what you want to be linked with our main table 
+         Pattern: (vector <table-name>)
+         Example: [:suka :other]
+           ;;=> ... OUTER LEFT JOIN suka ON suka.id=user-table.id_suka OUTER LEFT ....
+
+        Set table you want to be linked with main table.
+         Pattern: <table-name>
+         Example: :credential
+           ;;=> ... OUTER RIGHT JOIN credential ON credential.id=user-table.id_credential ....
+    :order - set retrun order. Pattern only one (vector <col_name> [:desc|:asc])
+    :where - is where block, which can be implemented with defferens pattern. 
+        Map
+         Pattern: {(<col-name> <value-to-eq>)* }
+         Example: {:CREDENTAIL.login \"XXXpussy_destroyer69@gmail.com\" :name \"Aleksandr\"}
+           ;; => SELECT * FROM user-table WHERE CREDENTAIL.login=\"XXXpussy_destroyer69@gmail.com\" AND name=\"Aleksandr\"
+
+        String construction
+         Pattern: \".*\"
+         Example: \"user-table.name = 'serhii'\"
+           ;; => SELECT * FROM user-table WHERE user-table.user = 'serhii'
+        
+        List where DSL 
+          Pattern: (list (and|or|in|between|=|>|<|>=|<=){1} (<s-exp>)+)
+          Pattern or|and: (list [and|or] (<s-exp>)*)
+          Pattern between: (list between <col-name> <start_range> <end_range>)
+          Pattern in: (list in <col-name> (list (<val>)+))
+          Pattern =|>|<|>=|<=: (list [=|>|<|>=|<=] <col-val-name> <col-val-name> )
+          Example:  (or (= :f1 1)
+                        (>= :f1 \"bliat\")
+                        (and (> :f2 2)
+                             (= :f2 \"fuck\")
+                             (between :f1 1 (+ 10 1000))
+                             (or (= :suka \"one\")
+                                 (in :one [1 2 3 (+ 1 2)]))))
+            ;;=> ... WHERE `f1` = 1 OR `f1` >= \"bliat\" OR (`f2` > 2 AND `f2` = \"fuck\" AND `f1` BETWEEN 1 AND 1010 AND (`suka` = \"one\" OR `one` LIKE (1, 2, 3, 3)))
+
+  Column name spec
+    <num> - [0-9]+
+    <col_name> - mean [a-zA-Z0-9_.]{3,} in keyword or string type :first_name or \"FIRSTNAME\". 
+      If col locate in other table, just set \"table dot col\" notation. For example :table1.table1col or 
+      \"table1.table1col\"
+    <table-name> - the same as <col-name>
+    <s-exp> - mean (([\\w\\d]+|.*])+) or regular s-expression")
+
+(defn- update-doc [] "
+  Description
+    SSQL experssion function `update` using for generation SQL select strings. 
+
+  Section contain 
+    Example 
+    Spec-params - specs for keys you may use. See `*accepted-update-rules*`
+
+  Example
+    (update :user :set {:id nil, :num_c 1, :str_c \"some\"})
+    (update :user :set {:num_c 1, :str_c \"some\"} :where (= :id 10))
+
+  Spec-params
+    :set - udpate {(<col-name> <value-to-eq>)* }
+    :where - is where block, which can be implemented with defferens pattern. 
+        Map
+         Pattern: {(<col-name> <value-to-eq>)* }
+         Example: {:CREDENTAIL.login \"XXXpussy_destroyer69@gmail.com\" :name \"Aleksandr\"}
+           ;; => WHERE CREDENTAIL.login=\"XXXpussy_destroyer69@gmail.com\" AND name=\"Aleksandr\"
+
+        String construction
+         Pattern: \".*\"
+         Example: \"user-table.name = 'serhii'\"
+           ;; => WHERE user-table.user = 'serhii'
+        
+        List where DSL 
+          Pattern: (list (and|or|in|between|=|>|<|>=|<=){1} (<s-exp>)+)
+          Pattern or|and: (list [and|or] (<s-exp>)*)
+          Pattern between: (list between <col-name> <start_range> <end_range>)
+          Pattern in: (list in <col-name> (list (<val>)+))
+          Pattern =|>|<|>=|<=: (list [=|>|<|>=|<=] <col-val-name> <col-val-name> )
+          Example:  (or (= :f1 1)
+                        (>= :f1 \"bliat\")
+                        (and (> :f2 2)
+                             (= :f2 \"fuck\")
+                             (between :f1 1 (+ 10 1000))
+                             (or (= :suka \"one\")
+                                 (in :one [1 2 3 (+ 1 2)]))))
+            ;;=> ... WHERE `f1` = 1 OR `f1` >= \"bliat\" OR (`f2` > 2 AND `f2` = \"fuck\" AND `f1` BETWEEN 1 AND 1010 AND (`suka` = \"one\" OR `one` LIKE (1, 2, 3, 3)))")
+(defn- insert-doc []
+  "Description
+    SSQL experssion function `delete` using for generation SQL select strings. 
+
+  Section contain 
+    Example 
+    Spec-params - specs for keys you may use. See `*accepted-delete-rules*`
+
+  Example
+    (insert :user :set {:id 1, :str1_c \"vasia\", :str2_c \"123\", :num_c 20})
+    (insert :user :values {:id 1, :str1_c \"vasia\", :str2_c \"123\", :num_c 20})
+    (insert :user :values [[1 \"vasia\" \"123\" 20] [2 \"vasia\" \"123\" 20]])
+
+  Spec-params
+    :set - udpate {(<col-name> <value-to-eq>)* }
+    :values - if using map, effect equeal to :set spec. but also you can add multiply values in vector
+      not specifing column (vector (vector (<col-val>)+)+)")
+
+(defn- delete-doc []
+  "Description
+    SSQL experssion function `delete` using for generation SQL select strings. 
+
+  Section contain 
+    Example 
+    Spec-params - specs for keys you may use. See `*accepted-delete-rules*`
+
+  Example
+    (delete :table-name)
+    (delete :table-name :where (= :id 1))
+
+  Spec-params
+    :where - is where block, which can be implemented with defferens pattern. 
+        Map
+         Pattern: {(<col-name> <value-to-eq>)* }
+         Example: {:CREDENTAIL.login \"XXXpussy_destroyer69@gmail.com\" :name \"Aleksandr\"}
+           ;; => WHERE CREDENTAIL.login=\"XXXpussy_destroyer69@gmail.com\" AND name=\"Aleksandr\"
+
+        String construction
+         Pattern: \".*\"
+         Example: \"user-table.name = 'serhii'\"
+           ;; => WHERE user-table.user = 'serhii'
+        
+        List where DSL 
+          Pattern: (list (and|or|in|between|=|>|<|>=|<=){1} (<s-exp>)+)
+          Pattern or|and: (list [and|or] (<s-exp>)*)
+          Pattern between: (list between <col-name> <start_range> <end_range>)
+          Pattern in: (list in <col-name> (list (<val>)+))
+          Pattern =|>|<|>=|<=: (list [=|>|<|>=|<=] <col-val-name> <col-val-name> )
+          Example:  (or (= :f1 1)
+                        (>= :f1 \"bliat\")
+                        (and (> :f2 2)
+                             (= :f2 \"fuck\")
+                             (between :f1 1 (+ 10 1000))
+                             (or (= :suka \"one\")
+                                 (in :one [1 2 3 (+ 1 2)]))))
+            ;;=> ... WHERE `f1` = 1 OR `f1` >= \"bliat\" OR (`f2` > 2 AND `f2` = \"fuck\" AND `f1` BETWEEN 1 AND 1010 AND (`suka` = \"one\" OR `one` LIKE (1, 2, 3, 3)))")
+
 (defn- create-table-doc []
   "Description
-    Ssql experssion function `create-table` using for generation sql strings
+    SSQL experssion function `create-table` using for generation sql strings
 
   Section contain 
     Example 
@@ -783,6 +997,20 @@
         \"VARCHAR(40) DEFAULT NULL\"
        choose what better for you")
 
+(defn- alter-table-doc [] 
+  "Description
+    SSQL experssion function `create-table` using for generation sql strings
+
+  Section contain 
+    Example 
+    Spec-params - specs for keys you may use. See `*accepted-ctable-rules*`
+  
+  Example
+    (alter-table :user :drop-column :bliat)
+    (alter-table :user :drop-foreign-key :bliat)
+    (alter-table :user :add-column {:suka [:boolean]})
+    (alter-table :user :add-foreign-key [{:id_permission :permission} {:update :cascade}])")
+
 (defmacro define-sql-operation
   ([operation-name pipeline-function]
    `(define-sql-operation ~operation-name ~(string/upper-case (name operation-name)) ~pipeline-function))
@@ -806,7 +1034,6 @@
 (define-sql-operation select (comp select-table-count-pipeline-applier select-table-top-n-pipeline-applier select-empty-table-pipeline-applier create-rule-pipeline )) 
 (define-sql-operation create-table "CREATE TABLE IF NOT EXISTS" (comp empty-engine-pipeline-applier create-rule-pipeline))
 (define-sql-operation alter-table "ALTER TABLE" (comp get-first-macro-from-pipeline create-rule-pipeline))
-
 
 (defn change-expression
   "Replace or change some construction in clojure s-sql

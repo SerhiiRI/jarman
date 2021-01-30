@@ -370,12 +370,16 @@
      (if (and (not (nil? value#)) (re-find ~re value#))
        true
        (do (not-valid-string-f {:path path# :message (format "Value '%s' not valid on regexp '%s' pattern" (str value#) (str ~re))}) false))))
+(isset? {:a 1} [:b])
+
+
 
 (defmacro do-and [& body]
   `(do
      (do ~@body)
      (binding [~'not-valid-string-f (partial #'identity)]
        (and ~@body))))
+
 (defn- verify-table-metadata [m]
   (do-and
     (isset? m [:table])
@@ -391,58 +395,10 @@
     (inpattern? [true false] m [:prop :table :is-linker?])
     (inpattern? [true false] m [:prop :table :allow-modifing?])
     (inpattern? [true false] m [:prop :table :allow-deleting?])
-    (inpattern? [true false] m [:prop :table :allow-linking?]))
-  ;; (binding [not-valid-string-f (partial identity)]
-  ;;   (and
-  ;;    (isset? m [:table])
-  ;;    (isset? m [:prop :table :frontend-name])
-  ;;    (isset? m [:prop :table :is-system?])
-  ;;    (isset? m [:prop :table :is-linker?])
-  ;;    (isset? m [:prop :table :allow-modifing?])
-  ;;    (isset? m [:prop :table :allow-deleting?])
-  ;;    (isset? m [:prop :table :allow-linking?])
-  ;;    (repattern? #"^[a-z_]{3,}$" m [:table])
-  ;;    (repattern? #"^[\w\d\s]+$" m [:prop :table :frontend-name])
-  ;;    (inpattern? [true false] m [:prop :table :is-system?])
-  ;;    (inpattern? [true false] m [:prop :table :is-linker?])
-  ;;    (inpattern? [true false] m [:prop :table :allow-modifing?])
-  ;;    (inpattern? [true false] m [:prop :table :allow-deleting?])
-  ;;    (inpattern? [true false] m [:prop :table :allow-linking?])))
-  )
-;; (defn- verify-table-metadata [m]
-;;   (do
-;;     (isset? m [:table])
-;;     (isset? m [:prop :table :frontend-name])
-;;     (isset? m [:prop :table :is-system?])
-;;     (isset? m [:prop :table :is-linker?])
-;;     (isset? m [:prop :table :allow-modifing?])
-;;     (isset? m [:prop :table :allow-deleting?])
-;;     (isset? m [:prop :table :allow-linking?])
-;;     (repattern? #"^[a-z_]{3,}$" m [:table])
-;;     (repattern? #"^[\w\d\s]+$" m [:prop :table :frontend-name])
-;;     (inpattern? [true false] m [:prop :table :is-system?])
-;;     (inpattern? [true false] m [:prop :table :is-linker?])
-;;     (inpattern? [true false] m [:prop :table :allow-modifing?])
-;;     (inpattern? [true false] m [:prop :table :allow-deleting?])
-;;     (inpattern? [true false] m [:prop :table :allow-linking?]))
-;;   (binding [not-valid-string-f (partial identity)]
-;;     (and
-;;      (isset? m [:table])
-;;      (isset? m [:prop :table :frontend-name])
-;;      (isset? m [:prop :table :is-system?])
-;;      (isset? m [:prop :table :is-linker?])
-;;      (isset? m [:prop :table :allow-modifing?])
-;;      (isset? m [:prop :table :allow-deleting?])
-;;      (isset? m [:prop :table :allow-linking?])
-;;      (repattern? #"^[a-z_]{3,}$" m [:table])
-;;      (repattern? #"^[\w\d\s]+$" m [:prop :table :frontend-name])
-;;      (inpattern? [true false] m [:prop :table :is-system?])
-;;      (inpattern? [true false] m [:prop :table :is-linker?])
-;;      (inpattern? [true false] m [:prop :table :allow-modifing?])
-;;      (inpattern? [true false] m [:prop :table :allow-deleting?])
-;;      (inpattern? [true false] m [:prop :table :allow-linking?]))))
+    (inpattern? [true false] m [:prop :table :allow-linking?])))
+
 (defn- verify-column-metadata [p m]
-  (do
+  (do-and
     (isset? m [:field] (conj p :field))
     (isset? m [:representation] (conj p :representation))
     (isset? m [:column-type] (conj p :column-type))
@@ -454,21 +410,7 @@
     (inpattern? ["d" "t" "dt" "l" "n" "b" "a" "i" nil] m [:component-type] (conj p :component-type))
     (inpattern? [true false] m [:private?] (conj p :private?))
     (inpattern? [true false] m [:editable?] (conj p :editable?))
-    (fpattern? #(or (string? %) (nil? %)) "string? || nil?" m [:description] (conj p :description)))
-  (binding [not-valid-string-f (partial identity)]
-    (and
-     (isset? m [:field] (conj p :field))
-     (isset? m [:representation] (conj p :representation))
-     (isset? m [:column-type] (conj p :column-type))
-     (isset? m [:component-type] (conj p :component-type))
-     (isset? m [:private?] (conj p :private?))
-     (isset? m [:editable?] (conj p :editable?))
-     (repattern? #"^[a-z_]{3,}$" m [:field] (conj p :field))
-     (repattern? #"^[\w\d\s]+$" m [:representation] (conj p :representation))
-     (inpattern? ["d" "t" "dt" "l" "n" "b" "a" "i" nil] m [:component-type] (conj p :component-type))
-     (inpattern? [true false] m [:private?] (conj p :private?))
-     (inpattern? [true false] m [:editable?] (conj p :editable?))
-     (fpattern? #(or (string? %) (nil? %)) "string? || nil?" m [:description] (conj p :description)))))
+    (fpattern? #(or (string? %) (nil? %)) "string? || nil?" m [:description] (conj p :description))))
 
 ;;; validators ;;;
 (defn- validate-metadata-table [m]
@@ -502,63 +444,92 @@
        (let [valid? (validator m-subject)
              output @string-buffer] {:valid? valid? :output output})))))
 
-(def validate-all (create-validator #'validate-metadata-all))
-(def validate-table (create-validator #'validate-metadata-table))
-(def validate-columns (create-validator #'validate-metadata-columns))
-(def validate-one-column (create-validator #'validate-metadata-column))
+(def validate-all
+  "Description
+    Validate table map structure 
 
-(validate-all
- {:id 30, :table "user", :prop
-  {:table {:frontend-name "us er", :is-system? :true, :is-linker? false, :allow-modifing? :true, :allow-deleting? true, :allow-linking? true},
-   :columns
-   [{:field "login", :representation "login", :description nil, :component-type true, :column-type "varchar(100)", :private? false, :editable? :true}
-    {:field "password", :representation "password", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-    {:field "first_name", :representation "first_name", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-    {:field "last_name", :representation "last_name", :description nil, :component-type "--", :column-type "varchar(100)", :private? false, :editable? true}
-    {:field "id  _permission", :representation "id_permission", :description 123, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]}})
-{:valid? false,
- :output [{:path [:prop :table :is-system?], :message "Value ':true' not from allowed list '[true false]'"}
-          {:path [:prop :table :allow-modifing?], :message "Value ':true' not from allowed list '[true false]'"}
-          {:path [:prop :columns 0 :component-type], :message "Value 'true' not from allowed list '[\"d\" \"t\" \"dt\" \"l\" \"n\" \"b\" \"a\" \"i\" nil]'"}
-          {:path [:prop :columns 0 :editable?], :message "Value ':true' not from allowed list '[true false]'"}
-          {:path [:prop :columns 3 :component-type], :message "Value '--' not from allowed list '[\"d\" \"t\" \"dt\" \"l\" \"n\" \"b\" \"a\" \"i\" nil]'"}
-          {:path [:prop :columns 4 :field], :message "Value 'id  _permission' not valid on regexp '^[a-z_]{3,}$' pattern"}
-          {:path [:prop :columns 4 :description], :message "Value '123' not valid by predicate 'string? || nil?'"}]}
-;; {:valid? false,
-;;  :output [{:path [:prop :table :is-system?], :message "Value ':true' not from allowed list '[true false]'"}
-;;           {:path [:prop :table :allow-modifing?], :message "Value ':true' not from allowed list '[true false]'"}
-;;           {:path [:prop :columns 0 :component-type], :message "Value 'true' not from allowed list '[\"d\" \"t\" \"dt\" \"l\" \"n\" \"b\" \"a\" \"i\" nil]'"}
-;;           {:path [:prop :columns 0 :editable?], :message "Value ':true' not from allowed list '[true false]'"}
-;;           {:path [:prop :columns 3 :component-type], :message "Value '--' not from allowed list '[\"d\" \"t\" \"dt\" \"l\" \"n\" \"b\" \"a\" \"i\" nil]'"}
-;;           {:path [:prop :columns 4 :field], :message "Value 'id  _permission' not valid on regexp '^[a-z_]{3,}$' pattern"}
-;;           {:path [:prop :columns 4 :description], :message "Value '123' not valid by predicate 'string? || nil?'"}]}
+  Example
+    (validate-all
+     {:id 30, :table \"user\", :prop
+      {:table {:frontend-name \"us er\", :is-system? :true, :is-linker? false, :allow-modifing? :true, :allow-deleting? true, :allow-linking? true},
+      :columns
+      [{:field \"login\", :representation \"login\", :description nil, :component-type true, :column-type \"varchar(100)\", :private? false, :editable? :true}
+       {:field \"password\", :representation \"password\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable? true}
+       {:field \"first_name\", :representation \"first_name\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable? true}
+       {:field \"last_name\", :representation \"last_name\", :description nil, :component-type \"--\", :column-type \"varchar(100)\", :private? false, :editable? true}
+       {:field \"id  _permission\", :representation \"id_permission\", :description 123,
+        :component-type \"l\", :column-type \"bigint(120) unsigned\", :private? false,
+        :editable? true, :key-table \"permission\"}]}})
+     ;;=> 
+      {:valid? false,
+       :output [{:path [:prop :table :is-system?], :message \"Value ':true' not from allowed list '[true false]'\"}
+                {:path [:prop :table :allow-modifing?], :message \"Value ':true' not from allowed list '[true false]'\"}
+                {:path [:prop :columns 0 :component-type], :message \"Value 'true' not from allowed list '[\\\"d\\\" ...]'\"}
+                {:path [:prop :columns 0 :editable?], :message \"Value ':true' not from allowed list '[true false]'\"}
+                {:path [:prop :columns 3 :component-type], :message \"Value '--' not from allowed list '[\\\"d\\\"...]'\"}
+                {:path [:prop :columns 4 :field], :message \"Value 'id  _permission' not valid on regexp '^[a-z_]{3,}$' pattern\"}
+                {:path [:prop :columns 4 :description], :message \"Value '123' not valid by predicate 'string? || nil?'\"}]}"
+  (create-validator #'validate-metadata-all))
 
+(def validate-table
+  "Description
+    Validate only table meta informations
 
-;; (validate-table
-;;  {:id 30, :table "user", :prop
-;;   {:table {:frontend-name "us er", :is-system? :true, :is-linker? false, :allow-modifing? :true, :allow-deleting? true, :allow-linking? true},
-;;    :columns
-;;    [{:field "login", :representation "login", :description nil, :component-type true, :column-type "varchar(100)", :private? false, :editable? :true}
-;;     {:field "password", :representation "password", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;     {:field "first_name", :representation "first_name", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;     {:field "last_name", :representation "last_name", :description nil, :component-type "--", :column-type "varchar(100)", :private? false, :editable? true}
-;;     {:field "id  _permission", :representation "id_permission", :description 123, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]}})
+  Example
+    (validate-table
+     {:id 30, :table \"user\", :prop
+      {:table {:frontend-name \"us er\", :is-system? :true, :is-linker? false, :allow-modifing? :true, :allow-deleting? true, :allow-linking? true},
+      :columns
+       [{:field \"login\", :representation \"login\", :description nil, :component-type true, :column-type \"varchar(100)\", :private? false, :editable? :true}
+        {:field \"password\", :representation \"password\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable? true}
+         ;; ...
+       ]}})
+    ;;=>
+      {:valid? false,
+        :output [{:path [:prop :table :is-system?], :message \"Value ':true' not from allowed list '[true false]'\"}
+                 {:path [:prop :table :allow-modifing?], :message \"Value ':true' not from allowed list '[true false]'\"}]}"
+  (create-validator #'validate-metadata-table))
 
-;; (validate-columns
-;;  {:id 30, :table "user", :prop
-;;   {:table {:frontend-name "us er", :is-system? :true, :is-linker? false, :allow-modifing? :true, :allow-deleting? true, :allow-linking? true},
-;;    :columns
-;;    [{:field "login", :representation "login", :description nil, :component-type true, :column-type "varchar(100)", :private? false, :editable? :true}
-;;     {:field "password", :representation "password", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;     {:field "first_name", :representation "first_name", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;     {:field "last_name", :representation "last_name", :description nil, :component-type "--", :column-type "varchar(100)", :private? false, :editable? true}
-;;     {:field "id  _permission", :representation "id_permission", :description 123, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]}})
+(def validate-columns
+  "Descritption
+    Validate only columns from table spec
 
-;; (validate-one-column
-;;  {:field "id  _permission", :representation "id_permission", :description 123, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"})
+  Example
+    (validate-columns
+     {:id 30, :table \"user\", :prop
+     {:table {:frontend-name \"us er\", :is-system? :true, :is-linker? false, :allow-modifing? :true, :allow-deleting? true, :allow-linking? true},
+      :columns
+      [{:field \"login\", :representation \"login\", :description nil, :component-type true, :column-type \"varchar(100)\", :private? false, :editable? :true}
+       {:field \"password\", :representation \"password\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable? true}
+       {:field \"first_name\", :representation \"first_name\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable? true}
+       {:field \"last_name\", :representation \"last_name\", :description nil, :component-type \"--\", :column-type \"varchar(100)\", :private? false, :editable? true}
+       {:field \"id  _permission\", :representation \"id_permission\",
+        :description 123, :component-type \"l\", :column-type \"bigint(120) unsigned\",
+        :private? false, :editable? true, :key-table \"permission\"}]}})
+    ;;=> 
+     {:valid? false
+      :output [{:path [:prop :columns 0 :component-type], :message \"Value 'true' not from allowed list '[\\\"d\\\"...]'\"}
+               {:path [:prop :columns 0 :editable?], :message \"Value ':true' not from allowed list '[true false]'\"}
+               {:path [:prop :columns 3 :component-type], :message \"Value '--' not from allowed list '[\\\"d\\\"...]'\"}
+               {:path [:prop :columns 4 :field], :message \"Value 'id  _permission' not valid on regexp '^[a-z_]{3,}$' pattern\"}
+               {:path [:prop :columns 4 :description], :message \"Value '123' not valid by predicate 'string? || nil?'\"}]}"
+  (create-validator #'validate-metadata-columns))
 
+(def validate-one-column
+  "Descritption
+    Validate one column from table spec
 
-
+  Warning
+    In returning map, in :output ... :path pathskeypaths
+    will be started at your column name. Not relative to
+    your table
+  
+  Example
+    (validate-one-column
+      {:field \"first _name\", :representation \"first_name\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable? true})
+     ;;=> {:valid? false,
+           :output [{:path [:field], :message \"Value 'first _name' not valid on regexp '^[a-z_]{3,}$' pattern\"}]}"
+  (create-validator #'validate-metadata-column))
 
 (defn save-metadata [& mx])
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

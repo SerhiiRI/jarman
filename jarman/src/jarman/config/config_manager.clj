@@ -1,153 +1,121 @@
-;; How to use it?
-;; config-manager is simply function for managing configuration of application.
-;;
-;; <problem description>
-;;    <problem code solution>
-;;
-;; Print all configuration tree for debbugin aims
-;;    (print-config-tree)
-;;    (print-config-tree "./config")
-;;
-;; Get configuration getter and setter
-;;    (def configuration (config-file \"system.clj\")
-;;    (configuration) 
-;;    (configuration [:blue]) 
-;;    (configuration [:blue] "#00A")
-;; 
-
-(ns hrtime.config-manager
+(ns jarman.config.config-manager
   (:gen-class)
-  (:require [clojure.string :as string]
-            [clojure.java.io :as io]))
+  (:require [clojure.string :as string]))
 
-(defn- separator []
-  (if (= (java.io.File/separator) "\\") #"\\" #"/"))
+(def tak {:conf.edn {:name "Config"
+                     :display? :noedit
+                     :type :file
+                     :value {}}
+          :file.edn {:name "Other file"
+                     :display? :edit
+                     :type :file
+                     :value {:block0 {}
+                             :block1 {:name "Some Block 1"
+                                      :doc "this is block 1 documentation"
+                                      :type :block
+                                      :display? :edit
+                                      :value {:param1 {:name "Parameter 1"
+                                                       :doc "this is param 1 documentation"
+                                                       :type :param
+                                                       :component :text
+                                                       :display? :edit
+                                                       :value {:param4 {:name "First end"
+                                                                        :doc "this is param 4 documentation"
+                                                                        :type :param
+                                                                        :component :textlist
+                                                                        :display? :nil
+                                                                        :value "42"}}}
+                                              :block2 {:name [:link :to :translation]
+                                                       :doc "this is block 2 documentation"
+                                                       :type :block
+                                                       :display? :noedit
+                                                       :value {:param3 {:name [:link :to :translation]
+                                                                        :doc "this is param 3 documentation"
+                                                                        :type :param
+                                                                        :component :textlist
+                                                                        :display? :nil
+                                                                        :value "some,value,string"}}}}}}}})
 
-(def ^:dynamic *configuration-path* "configuration path directory" "config")
-(def ^:dynamic *markdown-files* ["md" "markdown"])
-(def ^:dynamic *xml-files*      ["html" "xhtml" "xml"])
-(def ^:dynamic *text-files*     ["txt" "text" "org"])
-(def ^:dynamic *json-files*     ["json"])
-(def ^:dynamic *clojure-files*  ["clj" "clojure"])
-(def ^:dynamic *config-files*   ["edn"])
-(def ^:dynamic *csv-files*      ["csv"])
-(def ^:dynamic *shell-files*    ["sh" "bash" "fish"])
-(def ^:dynamic *prop-files*     ["properties" "prop" "cfg"])
-(def ^:dynamic *supported-config-files* "list of all supported files"
-  (concat *markdown-files*
-          *xml-files*
-          *text-files*
-          *clojure-files*
-          *config-files*
-          *json-files*
-          *csv-files*  
-          *shell-files*
-          *prop-files*))
+(defn build-part-of-map
+  [map-floor lvl]
+  (map #(let [floor (second %)
+              value (get-in floor [:value])
+              type (get-in floor [:type])
+              comp (get-in floor [:component])
+              name  (get-in floor [:name])]
+          (do
+            (print "\n")
+            (cond
+              (and (map? value)
+                   (not (nil? value))) (do
+                                         (print (apply str (repeat lvl " ")) "+-" name "[" type "]")
+                                         (build-part-of-map value (+ 1 lvl)))
+              :else (print (apply str (repeat lvl " ")) "  >" name ": " value "[" comp "]" "\n"))))
+       map-floor))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Initialize config folder ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(let [file*configuration-root* (java.io.File. *configuration-path*)]
-  (if-not file*configuration-root*
-    (.mkdir file*configuration-root*)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Helper test functions ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn in? [col x ]
-  (if (and (not (string? col)) (seqable? col))
-    (some #(= x %) col)
-    (= x col)))
-
-(defn is-supported?
-  "Example:
-     (is-supported? \"temp.clj\") ;=> true
-     (is-supported? \"temp.Kt1\") ;=> nil"
-  [file-name]
-  {:pre (string? file-name)}
-  (if-not (some #(= \. %) (seq file-name)) nil
-          (let [frmt (last (clojure.string/split file-name #"\."))]
-            (some #(= frmt %) *supported-config-files*))))
-
-(defn is-file? [file-name]
-  {:pre (string? file-name)}
-  (.isFile (clojure.java.io/file file-name)))
-
-
-;;;;;;;;;;;;;;;;;;;;;;
-;;; debug function ;;;
-;;;;;;;;;;;;;;;;;;;;;;
-
-(defn file-extension
-  "Example:
-     (is-supported? \"temp.clj\") ;=> true
-     (is-supported? \"temp.Kt1\") ;=> nil"
-  [file-name]
-  {:pre (string? file-name)}
-  (if-not (some #(= \. %) (seq file-name)) nil
-          (let [frmt (last (clojure.string/split file-name #"\."))]
-            (condp in? frmt
-              *markdown-files*  "markdown"
-              *xml-files*       "xml"
-              *text-files*      "text"
-              *clojure-files*   "clojure"
-              *json-files*      "json"
-              *config-files*    "sys-conf"
-              *csv-files*       "csv"
-              *shell-files*     "script"
-              *prop-files*      "shell"
-              "unsupported file"))))
-
-(defn- debug-tree [str-file-name n]
-  (let [path (clojure.string/split str-file-name (separator))
-        node-name (fn [str-file-name]
-                    (if (and (is-file? str-file-name))
-                      (format "%s [%s]" (.getName (clojure.java.io/file str-file-name)) (file-extension str-file-name))
-                      (format "%s" (.getName (clojure.java.io/file str-file-name)))))]
-    (println (str (last path)))
-    (doseq [f-d (sort-by #(.isDirectory %) (.listFiles (clojure.java.io/file str-file-name)))]
-      (if (.isFile f-d) (println (str (apply str (repeat n "| ")) "| " (node-name (str f-d))))
-          (do (print (str (apply str (repeat n "| ")) "+-")) (debug-tree (str f-d) (inc n)))))))
+(build-part-of-map tak 1)
+;; => 
+;;      +- Config [ :file ](()
+;;      +- Other file [ :file ] 
+;;         > nil :  nil [ nil ] 
+;;       +- Some Block 1 [ :block ] 
+;;        +- Parameter 1 [ :param ]
+;;           > First end :  42 [ :textlist ] 
+;;        +- [:link :to :translation] [ :block ] 
+;;           > [:link :to :translation] :  some,value,string [ :textlist ] 
 
 
-(defn print-config-tree
-  "Example:
-    (print-config-tree)
-    (print-config-tree \"./config\")"
-  ([] (print-config-tree *configuration-path*))
-  ([configuration-path] (let [_tmp_01(apply str (repeat (+ 1 (count configuration-path)) "="))]
-        (println "\nConfiguration tree: |" configuration-path)
-        (println (str "====================|" _tmp_01))
-        (debug-tree configuration-path 0)
-        (println (str "=====================" _tmp_01)))))
 
-(defn config-map "(config-map \"system.clj\")" [^java.lang.String path]
-  (read-string (slurp (java.io.File. (clojure.string/join (java.io.File/separator) [*configuration-path* path])))))
 
-(defn create-if-not-exist [^String path]
-  {:pre [((every-pred string? not-empty) path)]}
-  (let [p (clojure.string/join (java.io.File/separator) [*configuration-path* path])]
-    (if-not (.exists (io/file p))
-      (do (spit p (prn-str {})) p)
-      p)))
+(concat '(1 2 3) '(4 5 6))
+;; => (1 2 3 4 5 6)
+(concat '(1 2 3) [4 5 6])
+;; => (1 2 3 4 5 6)
+(conj '(1 2 3) 4 5 6)
+;; => (6 5 4 1 2 3)
+(conj '(1 2 3) [4 5 6])
+;; => ([4 5 6] 1 2 3)
+(conj [1 2 3 4 5 6] 7 8 9)
+;; => [1 2 3 4 5 6 7 8 9]
 
-(defn config-file
-  "Example: 
-     ((config-file \"system.clj\") [:blue])"
-  [^java.lang.String path]
-  (fn([] (let [configuration (read-string (slurp (java.io.File. (create-if-not-exist path))))]
-          (if (map? configuration)
-            configuration nil)))
-    ([keyword-config-path] (let [configuration (read-string (slurp (java.io.File. (create-if-not-exist path))))]
-                             (if (map? configuration)
-                               (get-in configuration keyword-config-path nil) nil)))
-    ([keyword-config-path value] (let [configuration (read-string (slurp (java.io.File. (create-if-not-exist path))))]
-                                   (if (map? configuration)
-                                     (spit (create-if-not-exist path)
-                                           (prn-str (assoc-in configuration keyword-config-path value))))) value)))
 
-; (print-config-tree :lang_pl)
-; (print-config-tree-conf)
+
+
+(def one {:param4 {:name "Parametr4"
+                   :doc "Więcej tekstu"
+                   :type :param
+                   :component :intput
+                   :display? :edit
+                   :value "dupa"}})
+
+(def two {:param5 {:name "Parametr5"
+                   :doc "Więcej tekstu"
+                   :type :param
+                   :component :intput
+                   :display? :edit
+                   :value "dupa"}
+          :param6 {:name "Parametr6"
+                   :doc "Więcej tekstu"
+                   :type :param
+                   :component :intput
+                   :display? :edit
+                   :value "dupa"}})
+
+(def tree {:block1 {:name ""
+                    :doc "fjsdk"
+                    :type :block
+                    :display? [:none :edit :noedit]
+                    :value {:param8 {:name "Parametr8"
+                                     :doc "Więcej tekstu"
+                                     :type :param
+                                     :component :intput
+                                     :display? :edit
+                                     :value "YEY"}}}})
+
+  (get-in tak [:config.edn :block1 :value :param1 :name])
+
+; (map (fn [x] (first x)) two)
+; (map #(%) one)
+; (get-in one [:value])
+; (map #(println %) one)
+

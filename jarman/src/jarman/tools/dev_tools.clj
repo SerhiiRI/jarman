@@ -16,12 +16,12 @@
             [jarman.tools.config-manager :as cm]
             [clojure.java.io :as io]))
 
-(def ^:dynamic *icon-library* "final library class-path file" "src/jarman/resource_lib/icon_library.clj")
-(def ^:dynamic *font-library* "final library class-path file" "src/jarman/resource_lib/font_library.clj")
-(def ^:dynamic *font-path* "font directory"      (cm/getset "config-manager.edn" [:font-configuration-attribute :font-path] "resources/fonts/"))
-(def ^:dynamic *icon-path* "pack icon directory" (cm/getset "config-manager.edn" [:icon-configuration-attribute :icon-path] "icons/main"))
-(def ^:dynamic *acceptable-icon-file-format*     (cm/getset "config-manager.edn" [:icon-configuration-attribute :acceptable-file-format] ["png" "img"]))
-(def ^:dynamic *acceptable-font-file-format*     (cm/getset "config-manager.edn" [:font-configuration-attribute :acceptable-file-format] ["ttf"]))
+;; (def ^:dynamic *icon-library* "final library class-path file" "src/jarman/resource_lib/icon_library.clj")
+;; (def ^:dynamic *font-library* "final library class-path file" "src/jarman/resource_lib/font_library.clj")
+;; (def ^:dynamic *font-path* "font directory"      (cm/getset "config-manager.edn" [:font-configuration-attribute :font-path] "resources/fonts/"))
+;; (def ^:dynamic *icon-path* "pack icon directory" (cm/getset "config-manager.edn" [:icon-configuration-attribute :icon-path] "icons/main"))
+;; (def ^:dynamic *acceptable-icon-file-format*     (cm/getset "config-manager.edn" [:icon-configuration-attribute :acceptable-file-format] ["png" "img"]))
+;; (def ^:dynamic *acceptable-font-file-format*     (cm/getset "config-manager.edn" [:font-configuration-attribute :acceptable-file-format] ["ttf"]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; helper function ;;;

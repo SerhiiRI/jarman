@@ -1,0 +1,56 @@
+{:pl {:cfg {:init {:name "Pocz±tkowa konfiguracja"
+                   :value {:lang {:name "Jêzyk"
+                                  :doc "Proszê wybraæ jêzyk"}}}
+            :database {}}
+      
+      :ui {:buttons {:remove "Usuñ"
+                     :excel-export "Exportuj do Excela"
+                     :run-app "Po³±cz"
+                     :settings "Ustawienia"
+                     :save "Zapisz"
+                     :search "Szukaj"
+                     :test-connection-success "Nawi±zano po³±czenie z baz± danych."
+                     :test-connection-fail "B³±d ³±czenia, sprawdz konfiguracje"
+                     :register "Rejestr"
+                     :back "Cofnij"
+                     :disconnect-RFID "Od³±cz"
+                     :rfid "Karty RFID"
+                     :filter-clean "Usuñ filtr"
+                     :inputs-clean "Wyczy¶æ"
+                     :workers "Pracownicy"
+                     :test-connection "Testuj po³±czenie"
+                     :save-and-reload "Zapisz i prze³aduj"}
+           :alerts {:changes-saved "Zapisano zmiany do pliku!"
+                    :save-changes? "Czy chcesz zapisaæ zmiany?"
+                    :changes-saved-but-need-reload "Zapisano zmiany! Bêd± one widoczne po restarcie aplikacji."
+                    :delete? "Czy napewno chcesz usun±æ element?"
+                    :testing-connection "£±czenie z baz±"
+                    :title-information "Informacja"
+                    :write-enter-search "Wpisz frazê i kliknij - ENTER - by szukaæ w tabeli."}
+           :basic {:yes "Tak"
+                   :in-short "We"
+                   :click-to-choose "Kliknij by wybraæ"
+                   :config-to-file "Konfiguracja do pliku -> "
+                   :out "Wyj¶cie"
+                   :out-short "Wy"
+                   :search-tool "Wyszukiwarka"
+                   :no "Nie"
+                   :in "Wej¶cie"
+                   :date-start "Data od"
+                   :date-end "Data do"
+                   :search-input "Wyszukaj"
+                   :description "Opis"
+                   :parameters "Parametry"}
+           :tips {:save "Zapisz zmiany."
+                  :clean "Wyczy¶æ pola powy¿ej."
+                  :del "Usuñ pozycjê z tabeli."
+                  :clean-filter "Wyczy¶æ filtr wyszukiwania."
+                  :search "Szukaj po tabeli."
+                  :user-trash-can "Od³±cz u¿ytkownika od karty."
+                  :excel "Zapisz widok do excela."}}
+      }}
+
+{[:block :param :file :init :folder]
+ }
+
+

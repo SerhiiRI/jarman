@@ -10,7 +10,6 @@
 ;;; ** cond-contain test if key in map
 ;;; ** key-paths
 (ns jarman.tools.dev-tools
-  (:gen-class)
   (:use clojure.reflect
         seesaw.core)
   (:require [clojure.string :as string]
@@ -442,3 +441,14 @@
     `(let [~@binding]
        (cond
          ~@cond-list))))
+
+
+
+(defmacro blet
+  "Description:
+     Macro replace action order, first set function, next let argumnts
+   Example:
+     (blet (+ a b) [a 1 b 2]) ;; => 3
+   "
+  [action arg]
+  `(let ~arg ~action))

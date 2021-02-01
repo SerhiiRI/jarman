@@ -371,26 +371,55 @@
           s
           )))) 0 (seq {:a 1 :b 1 :c 1})))
 
-
-(defn- get-key-paths-recur [m ref-var path sequence?]
-  (if (nil? m) (swap! ref-var (fn [path-list] (conj path-list path)))
-      (let [[head tail] (map-destruct m)
-            m-fk (first-key head)
-            v-fk (m-fk head)
-            vct (comp vec concat)]
+(defn get-key-paths-recur [& {:keys [map-part end-path-func path sequence?]}]
+  ;; If `map-part` is nil, then eval function
+  ;; end-path-func. Otherwise destruct `map-part`
+  ;; for continuing recursion
+  (if (nil? map-part) (end-path-func path)
+      (let [[head tail] (map-destruct map-part)
+            map-first-key (first-key head)
+            value-of-first-key (doto (map-first-key head) println )
+            ;; shortlambda
+            vconcat (comp vec concat)]
         (cond
-          ;; if it map
-          (map? v-fk) (get-key-paths-recur (m-fk head) ref-var (vct path [m-fk]) sequence?)
-          ;; sequable
-          (and sequence? (seqable? v-fk) (not (string? v-fk)))
+          
+          ;; Do recusion if it Hashmap
+          (map? value-of-first-key)
+          (get-key-paths-recur
+           :map-part (map-first-key head)
+           :end-path-func end-path-func
+           :path (vconcat path [map-first-key])
+           :sequence? sequence?)
+
+          ;; Do recursion if value is vector
+          ;; and `sequence?` parameter has
+          ;; `true` value
+          (and sequence? (seqable? value-of-first-key) (not (string? value-of-first-key)))
           (doall (map
-                  (fn [mm i]
-                    (get-key-paths-recur mm ref-var (vct path [m-fk] [i]) sequence?))
-                  v-fk
-                  (range (count v-fk))))
-          :else (get-key-paths-recur nil ref-var (vct path [m-fk]) sequence?))
+                  (fn [index-value index]
+                    (get-key-paths-recur
+                     :map-part index-value
+                     :end-path-func end-path-func
+                     :path (vconcat path [map-first-key] [index])
+                     :sequence? sequence?))
+                  value-of-first-key (range (count value-of-first-key))))
+
+          ;; Do recusion with `nil` for `:map-part`
+          ;; if param be nil - then evaluate function
+          ;; `(end-path-func path)`
+          :else (get-key-paths-recur
+                 :map-part nil
+                 :end-path-func end-path-func
+                 :path (vconcat path [map-first-key])
+                 :sequence? sequence?))
+        ;; Recusion in width, without chnaging
+        ;; path deepth
         (if tail
-          (get-key-paths-recur tail ref-var path sequence?)))))
+          (get-key-paths-recur
+           :map-part tail
+           :end-path-func end-path-func
+           :path path
+           :sequence? sequence?)))))
 
 (defn key-paths
   "Description
@@ -410,9 +439,17 @@
             [:c 0 :t]
             [:c 1 :f]]"
   [m & {:keys [sequence?] :or {sequence? false}}]
-  (let [in-deep-key-path (atom [])]
-    (get-key-paths-recur m in-deep-key-path nil sequence?)
-    @in-deep-key-path))
+  (blet (do
+         (get-key-paths-recur
+          :map-part m
+          :end-path-func in-deep-key-path-f
+          :path nil
+          :sequence? sequence?)
+         @in-deep-key-path)
+        
+        [in-deep-key-path (atom [])
+         in-deep-key-path-f (fn [path] (swap! in-deep-key-path (fn [path-list] (conj path-list path ))))]))
+
 
 (defmacro cond-let
   "Description

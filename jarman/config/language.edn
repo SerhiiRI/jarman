@@ -2,7 +2,6 @@
                    :value {:lang {:name "Jêzyk"
                                   :doc "Proszê wybraæ jêzyk"}}}
             :database {}}
-      
       :ui {:buttons {:remove "Usuñ"
                      :excel-export "Exportuj do Excela"
                      :run-app "Po³±cz"

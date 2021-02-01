@@ -1,0 +1,57 @@
+{:Data-Configuration {:doc "Konfiguracja dat"
+                       :type :block
+                       :display :edit
+                       :value {:data-format {:doc "Wybierz format daty dla przechowywania w bazie danych"
+                                             :type :param, :display :edit, :component :text, :value "yyyy-MM-dd HH:mm:ss"}}}
+ :JDBC-mariadb-configuration-database {:name "Konfiguruj JDBC po³±czenia z SQL baz±."
+                                       :doc "Wpisz parametry lub zostaw puste"
+                                       :type :block :display :edit
+                                       :value {:dbtype {:type :param, :display :edit, :component :text, :value "mysql"}
+                                               :host {:type :param, :display :edit, :component :text, :value "10.0.0.69"}
+                                               :port {:type :param, :display :edit, :component :text, :value 3306}
+                                               :dbname {:type :param, :display :edit, :component :text, :value "db"}
+                                               :user {:type :param, :display :edit, :component :text, :value "hrtime"}
+                                               :password {:type :param, :display :edit, :component :text, :value "dupa"}}}
+ :JDBC-sqlite-configuration {:type :block
+                             :display :edit
+                             :name "Konfiguruj JDBC po³±czenia z SQL baz±."
+                             :doc "Ogólnie s± inne typy pol±cznia, na co trzeba bym by³o zrobiæ radiobuttona, no niestety nie mamy czasu na to, wiêc proszê odkonfigurowaæ JDBC-sqlite-configuration bloczek, dla podpiêcia do bazy danych"
+                             :value {:classname {:doc "Wybierz JDBC sterownika odpowiedzialnego za po³±czenie"
+                                                 :type :param :display :edit :component :text :value "org.sqlite.JDBC"}
+                                     :subprotocol {:doc "Wybirze protocól komunikacji"
+                                                   :type :param :display :edit :component :text :value "sqlite"} 
+                                     :subname {:doc "wybierz plik baz danych"
+                                               :type :param :display :edit :component :text :value "hrtime-test"}}}
+
+ :SQL-generator {:name "SQL Generator"
+                 :doc "SQL Generator - to bibliteka która pozwala okre¶liæ wykorzystywane reguly w projekcie. Je¶li jest potrzeba dodaæ regulê proszê wpisaæ jej do listy jednej z regu³"
+                 :type :block :display :edit
+                 :value {:SQL-rules {:accepted-alter-table-rules {:type :param :display :edit :component :textlist :value [:add-column :drop-column :drop-foreign-key :add-foreign-key]}
+                                     :accepted-forkey-rules {:type :param :display :edit :component :textlist :value [:restrict :cascade :null :no-action :default]}
+                                     :accepted-ctable-rules {:type :param :display :edit :component :textlist :value [:columns :foreign-keys :table-config]}
+                                     :accepted-select-rules {:type :param :display :edit :component :textlist :value [:column :inner-join :right-join :left-join :outer-left-join :outer-right-join :where :order]}
+                                     :accepted-update-rules {:type :param :display :edit :component :textlist :value [:update-table :set :where]}
+                                     :accepted-insert-rules {:type :param :display :edit :component :textlist :value [:values :set]}
+                                     :accepted-delete-rules {:type :param :display :edit :component :textlist :value [:from :where]}}
+                         :where-border {:doc "Tworzy SQL reguly z nawiasami je¶li defultowo jest na true to po WHERE orazu id± nawiasy. Domy¶lnie ma na false"
+                                        :type :param :display :edit :component :checkbox :value false}}}
+ :View-table-name {:doc "Odpowiada za nazwy kolumn wy¶wietlanych tabeli z bazy danych"
+                   :type :block :display :edit
+                   :value {:card_nr {:type :param :display :edit :component :text :value "Numer Karty"}
+                           :first_name {:type :param :display :edit :component :text :value "Imie"}
+                           :teta_nr {:type :param :display :edit :component :text :value "Nr w systemie"}
+                           :data-to {:type :param :display :edit :component :text :value "Data do"}
+                           :id_card {:type :param :display :edit :component :text :value "Karta"}
+                           :section {:type :param :display :edit :component :text :value "Dzia³"}
+                           :act {:type :param :display :edit :component :text :value "Nr Akt"}
+                           :rfid {:type :param :display :edit :component :text :value "RFID"}
+                           :datetime {:type :param :display :edit :component :text :value "Data/Czas"}
+                           :last_name {:type :param :display :edit :component :text :value "Nazwisko"}
+                           :id_user {:type :param :display :edit :component :text :value "U¿ytkownik"}
+                           :data-from {:type :param :display :edit :component :text :value "Data od"}
+                           :work_type {:type :param :display :edit :component :text :value "Typ pracownika"}
+                           :direction {:type :param :display :edit :component :text :value "Kierunek"}}}
+ :pagination-size {:type :param
+                   :display :edit
+                   :component :number
+                   :value 150}}

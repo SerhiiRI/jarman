@@ -1,13 +1,12 @@
 {:name "Initial configuration"
  :display :edit
  :type :init
- :value
- {:lang {:name "Language"
-	 :doc [:cfg :init.edn :value :lang :doc]
-	 :type :param
-	 :component :text
-	 :display? :edit
-         :value "pl"}}}
+ :value {:lang {:name "Language"
+	        :doc "Choose language for program "
+	        :type :param
+	        :component :text
+	        :display? :edit
+                :value "pl"}}}
 
 
 

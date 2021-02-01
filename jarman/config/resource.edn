@@ -1,0 +1,28 @@
+{:configuration-attribute {:doc "Wybierz ¶cie¿kê do konfiguracyjnego pliku standardowo wskazuje ona na katalog lokalizacji programu. Parameters: \"C:\\¶cie¿ka\\¶cie¿ka\\¶cie¿ka\" \"/¶cie¿ka/¶cie¿k\" \"¶cie¿ka\""
+                           :type :block
+                           :display :edit
+                           :value {:configuration-path {:type :param
+                                                        :display :edit
+                                                        :component :text
+                                                        :value "config"}}}
+ :font-configuration-attribute {:type :block
+                                :display :edit
+                                :value {:font-path {:doc "Wybierz ¶cie¿kê do katalogu czcionek. Parametry: \"C:\\¶cie¿ka\\¶cie¿ka\\¶cie¿ka\" \"/¶cie¿ka/¶cie¿k\" \"¶cie¿ka\"" :type :param :display :edit :component :text :value "fonts"}
+                                        :acceptable-file-format {:name "Wspierane pliki" :doc "wybierz rozszerzenia dla wspieranych przez system konfiguracji plików" :type :param :display :edit :component :text :value ["ttf"]}}}
+ 
+ :icon-configuration-attribute {:type :block :display :edit
+                                :value {:icon-path {:doc "Wybierz ¶cie¿kê do katalogu ikonek wskazuje ona na katalog lokalizacji programu. Parameters \"C:\\¶cie¿ka\\¶cie¿ka\\¶cie¿ka\" \"/¶cie¿ka/¶cie¿k\" \"¶cie¿ka\"]"
+                                                    :type :param :display :edit :component :text :value "icons"}
+                                        :acceptable-file-format {:name "Wspierane pliki"
+                                                                 :doc "wybierz rozszerzenia dla wspieranych przez system konfiguracji plików"
+                                                                 :type :param :display :edit :component :text :value ["png" "ico" "icon" "jpg" "jpeg"]}}}
+ :supported-files {:name "Wspierane pliki"
+                   :doc "wybierz rozszerzenia dla wspieranych przez system konfiguracji plików"
+                   :type :block :display :edit
+                   :value {:markdown-files {:type :param :display :edit :component :textlist :value ["md" "markdown"]}
+                           :xml-files {:type :param :display :edit :component :textlist :value ["html" "xhtml" "xml"]}
+                           :text-files {:type :param :display :edit :component :textlist :value ["txt" "text" "org"]}
+                           :clojure-files {:type :param :display :edit :component :textlist :value ["clj" "edn" "clojure"]}
+                           :csv-files {:type :param :display :edit :component :textlist :value ["csv"]}
+                           :shell-files {:type :param :display :edit :component :textlist :value ["sh" "bash" "fish"]}
+                           :prop-files {:type :param :display :edit :component :textlist :value ["properties" "prop" "cfg"]}}}}

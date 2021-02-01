@@ -439,14 +439,12 @@
             [:c 0 :t]
             [:c 1 :f]]"
   [m & {:keys [sequence?] :or {sequence? false}}]
-  (blet (do
-         (get-key-paths-recur
-          :map-part m
-          :end-path-func in-deep-key-path-f
-          :path nil
-          :sequence? sequence?)
-         @in-deep-key-path)
-        
+  (blet (get-key-paths-recur
+         :map-part m
+         :end-path-func in-deep-key-path-f
+         :path nil
+         :sequence? sequence?)
+        @in-deep-key-path
         [in-deep-key-path (atom [])
          in-deep-key-path-f (fn [path] (swap! in-deep-key-path (fn [path-list] (conj path-list path ))))]))
 
@@ -471,21 +469,22 @@
         cond-list
         (reduce
          concat
-         (map #(if (symbol? (first %1))
-                 (list (list (first %1) var-name)
-                       (second %1)) 
-                 %1)(partition 2 body)))]
+         (map #(if (symbol? (first %1)) (list (list (first %1) var-name) (second %1)) %1)
+              (partition 2 body)))]
     `(let [~@binding]
        (cond
          ~@cond-list))))
 
-
-
 (defmacro blet
-  "Description:
-     Macro replace action order, first set function, next let argumnts
-   Example:
-     (blet (+ a b) [a 1 b 2]) ;; => 3
-   "
-  [action arg]
-  `(let ~arg ~action))
+  "Description
+    Let with binding in last sexp, otherwise in first block
+  
+  Example
+    (blet (+ a b) [a 1 b 2]) ;; => 3
+    (blet (+ a b) (- a b) [a 1 b 2]) ;; => -1
+  
+  Spec
+    (blet <calcaulation>+ <binding-spec>{1})"
+  [& arguments]
+  {:pre [(> 0 (count arguments )) (vector? (last arguments))]}
+  `(let ~(last arguments) ~@(butlast arguments)))

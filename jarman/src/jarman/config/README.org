@@ -56,7 +56,7 @@
      ;;; <file-spec>
      {:name ["[\w\d\s]+" (vector (:\w)+)]
       :display? [:nil :edit :noedit]
-      :type [:block :param :file :init :folder]
+      :type [:block :param :file :init :directory]
       :value {:param? <param-spec>
 	      :block? <block-spec>}}
 

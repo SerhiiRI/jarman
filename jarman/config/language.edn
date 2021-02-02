@@ -49,7 +49,5 @@
                   :excel "Zapisz widok do excela."}}
       }}
 
-{[:block :param :file :init :folder]
- }
 
 

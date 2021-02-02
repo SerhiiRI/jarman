@@ -1,8 +1,8 @@
 {:Data-Configuration {:doc "Konfiguracja dat"
-                       :type :block
-                       :display :edit
-                       :value {:data-format {:doc "Wybierz format daty dla przechowywania w bazie danych"
-                                             :type :param, :display :edit, :component :text, :value "yyyy-MM-dd HH:mm:ss"}}}
+                      :type :block
+                      :display :edit
+                      :value {:data-format {:doc "Wybierz format daty dla przechowywania w bazie danych"
+                                            :type :param, :display :edit, :component :text, :value "yyyy-MM-dd HH:mm:ss"}}}
  :JDBC-mariadb-configuration-database {:name "Konfiguruj JDBC po³±czenia z SQL baz±."
                                        :doc "Wpisz parametry lub zostaw puste"
                                        :type :block :display :edit

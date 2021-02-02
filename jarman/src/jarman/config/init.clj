@@ -3,7 +3,7 @@
   (:use clojure.reflect
         seesaw.core)
   (:require [clojure.string :as string]
-            [jarman.tools.dev-tools]
+            ;; [jarman.tools.dev-tools]
             [clojure.java.io :as io]))
 
 
@@ -262,16 +262,62 @@
   (if-let [m (clojure.edn/read-string (slurp file))]
     (reduce (fn [acc p](assoc-in acc (butlast p) (last p))){}(key-paths m))))
 
-(defmacro file-folder-to-map-path [])
 
+
+(defmacro folder [])
+
+(defn build-configuration [config-directory]
+  (letfn [(to-file [path] (apply (partial clojure.java.io/file config-directory) (map name path)))
+          (D [d v] {:name d :display? :edit :type :directory :value v})
+          (F [f v] {:name f :display? :edit :type :file :value v})]
+   (
+    [:init.edn] 
+    [:resource.edn]
+    [:database.edn]
+    [:themes :jarman_light.edn]
+    [:themes :theme_config.edn])))
 (defn create-translation [config-directory]
-  (for-folders config-directory
-               [:init.edn]
-               [:resource.edn]
-               [:database.edn]
-               [:themes :jarman_light.edn]
-               [:themes :theme_config.edn]))
+  (letfn [(to-file [path] (apply (partial clojure.java.io/file config-directory) (map name path)))
+          (D [d v]{:name d :display? :edit :type :directory :value v})
+          (F [f v]{:name f :display? :edit :type :file :value v})]
+    (reduce (fn [acc config-paths]
+             (let [f (to-file config-paths)]
+               (if (.exists f) acc
+                   (let [path (map name config-paths) plen (count path)
+                         swapped-config (get-strings-from-config-file f)]
+                     (cond
+                       (= plen 1) (merge acc (F (first path) swapped-config))
+                       (> plen 1) (merge acc (reduce #(D %2 %1) (F (first path) swapped-config) (butlast path))))))))
+            {}
+            [:init.edn] 
+            [:resource.edn]
+            [:database.edn]
+            [:themes :jarman_light.edn]
+            [:themes :theme_config.edn])))
+
+
+(where ((path (map name [:jarman_lenght.edn]))
+        (PL   (count path)))
+       (cond (= PL 1) (fn [configuration] (F (first path) configuration))
+             (> PL 1) (fn [configuration] (reduce #(D %2 %1) (F (first path) configuration) (butlast path)))
+             :else (fn [configuration] configuration)))
+
 (get-strings-from-config-file "./config/init.edn")
+
+(let [k (name 'as-is)
+      f (apply (partial clojure.java.io/file "./config") (map name [:themes :jarman_light.edn]))]
+  (if (.exists f) (into {k (get-strings-from-config-file f)})))
+
+
+(letfn [(D [d v]{:name d :display? :edit :type :directory :value v})
+        (F [f v]{:name f :display? :edit :type :file :value v})]
+  (let [path (map name [:jarman_light.edn])
+       c (count path)]
+   (cond 
+     (= c 1) (fn [configuration] (F (first path) configuration))
+     (> c 1) (fn [configuration] (reduce #(D %2 %1) (F (first path) configuration) (butlast path)))
+     :else (fn [configuration] configuration ))))
+
 
 
 

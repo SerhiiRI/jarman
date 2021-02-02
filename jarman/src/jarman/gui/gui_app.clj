@@ -2,18 +2,23 @@
 ;; Compilation: dev_tool.clj -> metadata.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
 ;; 
 (ns jarman.gui-app
-  (:use seesaw.core
-        seesaw.border
-        seesaw.dev
-        seesaw.mig
-        jarman.tools.dev-tools
-        jarman.gui-tools
-        jarman.gui-alerts-service
-        jarman.logic.metadata
+   (:use seesaw.core
+         seesaw.border
+         seesaw.dev
+         seesaw.mig
+         jarman.tools.dev-tools
+         jarman.gui-tools
+         jarman.gui-alerts-service
+         jarman.logic.metadata
+         jarman.config.config-manager
         ;; jarman.gui.gui-db-view
-        )
-  (:require [jarman.resource-lib.icon-library :as icon]
-            [clojure.string :as string]))
+         )
+   (:require [jarman.resource-lib.icon-library :as icon]
+             [clojure.string :as string]
+            ;;  [jarman.config.config-manager :as cm]
+             ))
+
+;;  (get-color :jarman :bar)
 
 (import javax.swing.JLayeredPane)
 (import javax.swing.JLabel)
@@ -22,10 +27,9 @@
 (import java.awt.event.MouseEvent)
 
 
-
 ;; ---------------------------------------------------- APP STARTER v
-(def app-width 1200)
-(def app-height 800)
+(def app-width (get-frame :width))
+(def app-height (get-frame :heigh))
 (def app-bounds [0 0 app-width app-height])
 
 ;; Prepare operative layer
@@ -204,32 +208,31 @@
 
 (defn create-editor-section-header 
   "Create header GUI component in editor for separate section"
-  [name] (label :text name :font (getFont 14 :bold) :border (line-border :bottom 2 :color "#ccc")))
+  [name] (label :text name :font (getFont 14 :bold) :border (line-border :bottom 2 :color (get-color :background :header))))
 
 (defn create-editor-column-selector-btn
   "Description:
-     Select button for create-editor-column-selector, can work with another same buttons"
-  [txt func] (let [bg-color "#eee"
-                   color-hover-margin "#bbb"
-                   bg-color-hover "#d9ecff"
-                   bg-color-clicked "#c8dbee"
-                   bg-btn (atom bg-color)]
+     Select button who create-editor-column-selector, can work with another same buttons"
+  [txt func] (let [color (get-color :group-buttons :background)
+                   color-hover (get-color :group-buttons :background-hover)
+                   color-clicked (get-color :group-buttons :clicked)
+                   bg-btn (atom color)]
                (mig-panel
                 :constraints ["" "15px[100, fill]15px" "10px[fill]10px"]
-                :border (line-border :left 4 :right 4 :top 1 :bottom 1 :color "#ccc")
+                :border (line-border :left 4 :right 4 :top 1 :bottom 1 :color (get-color :background :header))
                 :id :create-editor-column-selector-btn
                 :user-data bg-btn
-                :listen [:mouse-entered (fn [e] (config! e :cursor :hand :background bg-color-hover))
+                :listen [:mouse-entered (fn [e] (config! e :cursor :hand :background color-hover))
                          :mouse-exited  (fn [e] (config! e :background @bg-btn))
                          :mouse-clicked  (fn [e] (cond
-                                                   (= @bg-btn bg-color)
+                                                   (= @bg-btn color)
                                                    (do
                                                 ;; reset bg and atom inside all buttons in parent
-                                                     (doall (map (fn [b] (do (config! b :background bg-color)
-                                                                             (reset! (config b :user-data) bg-color)))
+                                                     (doall (map (fn [b] (do (config! b :background color)
+                                                                             (reset! (config b :user-data) color)))
                                                                  (seesaw.util/children (.getParent (seesaw.core/to-widget e)))))
                                                 ;; reset atom with color
-                                                     (reset! bg-btn bg-color-clicked)
+                                                     (reset! bg-btn color-clicked)
                                                 ;; update atom with color
                                                      (config! e :background @bg-btn)
                                                      (func e))))]

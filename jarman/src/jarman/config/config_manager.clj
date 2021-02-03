@@ -1,142 +1,184 @@
+;;           (__)    /                             \         
+;;           (oo)   |   No i co sie paczysz?        |
+;;    /-------\/    | Krowy w ASCII żeś nie widzał? |
+;;   / |     || '---|                    Mooo?      |
+;;  *  ||----||   0  \_____________________________/ o 0   o 
+;;     ^^    ^^  .|o.                                 \|00/.
+;;============================================================
+
 (ns jarman.config.config-manager
   (:require [clojure.string :as string]
-            [jarman.tools.dev-tools :include-macros true :refer :all])
-  )
-
-(def tak {:conf.edn {:name "Config"
-                     :display? :noedit
-                     :type :file
-                     :value {}}
-          :file.edn {:name "Other file"
-                     :display? :edit
-                     :type :file
-                     :value {:block0 {:name "Some Block 1"
-                                      :doc "this is block 1 documentation"
-                                      :type :block
-                                      :display? :edit
-                                      :value {:param3 {:name "param3"
-                                                       :doc "this is param 3 documentation"
-                                                       :type :param
-                                                       :component :text
-                                                       :display? :edit
-                                                       :value "321"}
-                                              :block5 {:name "block5"
-                                                       :doc "this is block 5 documentation"
-                                                       :type :block
-                                                       :display? :noedit
-                                                       :value {:param7 {:name [:other :link]
-                                                                        :doc "this is param 7 documentation"
-                                                                        :type :param
-                                                                        :component :textlist
-                                                                        :display? :nil
-                                                                        :value "a,a,a"}}}}}
-                             :block1 {:name "Some Block 1"
-                                      :doc "this is block 1 documentation"
-                                      :type :block
-                                      :display? :edit
-                                      :value {:param1 {:name "Parameter 1"
-                                                       :doc "this is param 1 documentation"
-                                                       :type :param
-                                                       :component :text
-                                                       :display? :edit
-                                                       :value "123"}
-                                              :block2 {:name [:link :to :translation]
-                                                       :doc "this is block 2 documentation"
-                                                       :type :block
-                                                       :display? :noedit
-                                                       :value {:param3 {:name [:link :to :translation]
-                                                                        :doc "this is param 3 documentation"
-                                                                        :type :param
-                                                                        :component :textlist
-                                                                        :display? :nil
-                                                                        :value "some,value,string"}}}}}}}})
-
-(def offset-char "  ")
-(defn is-block? [m] (= (:type m) :block))
-(defn is-file? [m] (= (:type m) :file))
-(defn is-block-file? [m] (or (is-block? m) (is-file? m)))
-(defn is-param? [m] (= (:type m) :param))
-
-(defn printblock
-  ([m p] (printblock 0 m p))
-  ([offset m path] (print (apply str (apply str (repeat offset offset-char))) (format "'%s' - %s" (:name m) (str path))  "\n")))
-(defn printparam
-  ([m p] (printparam 0 m p))
-  ([offset m path] (print (apply str (apply str (repeat offset offset-char))) (format "'%s' - %s" (:name m) (str path)) ":" (:value m) "\n")))
-
-(defn build-part-of-map [level [header tail] path]
-  (if (some? header)
-    ;; for header {:file.edn {....}} we  
-    (let 
-     [k-header ((comp first first) header)
-      header ((comp second first) header)
-      path (conj path k-header)]
-      (cond
-        
-        ;; if Map represent Block or File
-        (is-block-file? header)
-        (do (printblock level header path)
-            (build-part-of-map (inc level) (map-destruct (:value header)) path))
-        
-        ;; fi Map represent Parameters
-        (is-param? header) (printparam level header path))))
-  ;; Do recursive for Tail destruction in the same level
-  (if (some? tail) (build-part-of-map level  (map-destruct tail) path)))
+            [jarman.tools.dev-tools :include-macros true :refer :all]))
 
 
-  (defn recur-config [m]
-   (build-part-of-map 0 (jarman.tools.dev-tools/map-destruct m) []))
+;; ##################################
+;; #                                #
+;; #   Example configuration map    #
+;; #                                #
+;; ##################################
 
-  
-  (recur-config tak)
+(def theme-map {:info  {:name "Jarman Light"
+                        :autor "Trashpanda-Team"
+                        :date "02-02-2021"
+                        :type :file-info}
+                :color {:name "Konfiguracja kolorów skórki"
+                        :doc "blok konfiguracji kolorów zawiera grupowane presety\n kolorów dla tylko podanej skórki. Każdy parameter tego zestawu\n konfigurowany przez pola, które zmieniają kolorki przez podania do nich kolorków\n w systemie heksadycemalnym, 6-ciu, lub 3-szy kolorowym. Kolor jest kolorem\n tylko wtedy jak z przodu jest używany tak zwany symbol\n HEX-kolorów `#`(hash). Parametry: \"#FFF\" \"#fff\" \"#fFf\" \"#123ABC\" \"#123abc\" \"#3AF\""
+                        :type :block
+                        :display :edit
+                        :value {:jarman {:doc "Podstawowe kolory Jarman IDE"
+                                         :type :block
+                                         :display :edit
+                                         :value {:bar {:type :param :display :edit :component :textcolor :value "#292929"}
+                                                 :jarman {:type :param :display :edit :component :textcolor :value "#726ee5"}
+                                                 :light {:type :param :display :edit :component :textcolor :value "#96c1ea"}
+                                                 :dark {:type :param :display :edit :component :textcolor :value "#29295e"}}}
+                                :background {:type :block
+                                             :display :edit
+                                             :value {:main {:type :param :display :edit :component :textcolor :value "#eee"}
+                                                     :button {:type :param :display :edit :component :textcolor :value "#eee"}
+                                                     :button_hover {:type :param :display :edit :component :textcolor :value "#96c1ea"}
+                                                     :button_config {:type :param :display :edit :component :textcolor :value "#fff"}
+                                                     :button_selected {:type :param :display :edit :component :textcolor :value "#ccc"}
+                                                     :button_main {:type :param :display :edit :component :textcolor :value "#fff"}
+                                                     :header {:type :param :display :edit :component :textcolor :value "#ccc"}}}
+                                :group-buttons {:type :block
+                                                :display :edit
+                                                :value {:background {:type :param :display :edit :component :textcolor :value "#eee"}
+                                                        :background-hover {:type :param :display :edit :component :textcolor :value "#d9ecff"}
+                                                        :clicked {:type :param :display :edit :component :textcolor :value "#c8dbee"}}}
+                                :main-button {:type :block
+                                              :display :edit
+                                              :value {:background {:type :param :display :edit :component :textcolor :value "#fff"}
+                                                      :clicked {:type :param :display :edit :component :textcolor :value "#96c1ea"}}}
 
-(concat '(1 2 3) '(4 5 6))
-;; => (1 2 3 4 5 6)
-(concat '(1 2 3) [4 5 6])
-;; => (1 2 3 4 5 6)
-(conj '(1 2 3) 4 5 6)
-;; => (6 5 4 1 2 3)
-(conj '(1 2 3) [4 5 6])
-;; => ([4 5 6] 1 2 3)
-(conj [1 2 3 4 5 6] 7 8 9)
-;; => [1 2 3 4 5 6 7 8 9]
+                                :foreground {:type :block
+                                             :display :edit
+                                             :value {:main {:type :param :display :edit :component :textcolor :value "#000"}
+                                                     :button {:type :param :display :edit :component :textcolor :value "#000"}
+                                                     :button_hover {:type :param :display :edit :component :textcolor :value "#29295e"}
+                                                     :button_selected {:type :param :display :edit :component :textcolor :value "#000"}
+                                                     :doc-font-color {:type :param :display :edit :component :textcolor :value "#999"}
+                                                     :txt-font-color {:type :param :display :edit :component :textcolor :value "#000"}}}
+                                :border {:type :param :display :edit :component :textcolor :value "#ccc"}}}
+                :font {:doc "Konfiguracja głównego okna HRTime"
+                       :type :block
+                       :display :edit
+                       :value {:bold {:type :param :display :edit :component :text :value "Ubuntu Bold"}
+                               :regular {:type :param :display :edit :component :text :value "Ubuntu"}
+                               :medium {:type :param :display :edit :component :text :value "Ubuntu Medium"}
+                               :size-small {:type :param :display :edit :component :number :value 12}
+                               :style {:type :param :display :edit :component :text :value :plain}
+                               :size-medium {:type :param :display :edit :component :number :value 16}
+                               :size-normal {:type :param :display :edit :component :number :value 14}
+                               :size-large {:type :param :display :edit :component :number :value 18}
+                               :light {:type :param :display :edit :component :text :value "Ubuntu Light"}}}
+                :frame {:doc "Konfiguracja głównego okna HRTime applikacji"
+                        :type :block
+                        :display :edit
+                        :value {:width {:type :param :display :edit :component :number :value 1200}
+                                :heigh {:type :param :display :edit :component :number :value 700}}}
+                :ui {:doc "Specjalny przycisk ala Exportuj i t.d."
+                     :type :block
+                     :dispaly :edit
+                     :value {:special-button {:type :block
+                                              :dispaly :edit
+                                              :value {:background {:type :param :display :edit :component :textcolor :value "#3b8276"}
+                                                      :background-hover {:type :param :display :edit :component :textcolor :value "#77e0cf"}
+                                                      :foreground {:type :param :display :edit :component :textcolor :value "#fff"}
+                                                      :foreground-hover {:type :param :display :edit :component :textcolor :value "#000"}
+                                                      :horizontal-align {:type :param :display :edit :component :text :value :center}
+                                                      :cursor {:type :param :display :edit :component :text :value :hand}
+                                                      :font-style {:type :param :display :edit :component :text :value :bold}}}}}})
 
 
-(def one {:param4 {:name "Parametr4"
-                   :doc "Więcej tekstu"
-                   :type :param
-                   :component :intput
-                   :display? :edit
-                   :value "dupa"}})
+;; ##################################
+;; #                                #
+;; #  Easy getter form map creator  #
+;; #                                #
+;; ##################################
 
-(def two {:param5 {:name "Parametr5"
-                   :doc "Więcej tekstu"
-                   :type :param
-                   :component :intput
-                   :display? :edit
-                   :value "dupa"}
-          :param6 {:name "Parametr6"
-                   :doc "Więcej tekstu"
-                   :type :param
-                   :component :intput
-                   :display? :edit
-                   :value "dupa"}})
 
-(def tree {:block1 {:name ""
-                    :doc "fjsdk"
-                    :type :block
-                    :display? [:none :edit :noedit]
-                    :value {:param8 {:name "Parametr8"
-                                     :doc "Więcej tekstu"
-                                     :type :param
-                                     :component :intput
-                                     :display? :edit
-                                     :value "YEY"}}}})
+(def colors-root-path [:color :value])
+(def frame-root-path  [:frame :value])
 
-(get-in tak [:config.edn :block1 :value :param1 :name])
+(def create-value-getter
+  "Description:
+    Build getter from map as functions
+   Example:
+     (def get-frame (create-value-getter :frame)) => (get-frame :width) => 1200
+     (def get-color (create-value-getter :color)) => (get-color :jarman :bar) => #292929
+   "
+  (fn [& pre-path]
+    (fn [& steps]
+      (get-in jarman.config.config-manager/theme-map
+              (concat (interpose :value (vec pre-path)) [:value]
+                      (interpose :value (vec steps)) [:value])))))
 
+(def get-color (create-value-getter :color))
+(def get-frame (create-value-getter :frame))
+(def get-font  (create-value-getter :font))
+;; (get-color :jarman :bar)
+;; (get-frame :width)
+;; (get-font :bold)
+
+
+
+
+;; ####################################################################
+;; #                                                                  #
+;; #                           PROTOTYPES                             #
+;; #                                                                  #
+;; ####################################################################
+
+
+;; ###################################
+;; #                                 #
+;; # Show map values as console tree #
+;; #                                 #
+;; ###################################
+
+;; (def offset-char "  ")
+;; (defn is-block? [m] (= (:type m) :block))
+;; (defn is-file? [m] (= (:type m) :file))
+;; (defn is-block-file? [m] (or (is-block? m) (is-file? m)))
+;; (defn is-param? [m] (= (:type m) :param))
+
+;; (defn printblock
+;;   ([m p] (printblock 0 m p))
+;;   ([offset m path] (print (apply str (apply str (repeat offset offset-char))) (format "'%s' - %s" (:name m) (str path))  "\n")))
+;; (defn printparam
+;;   ([m p] (printparam 0 m p))
+;;   ([offset m path] (print (apply str (apply str (repeat offset offset-char))) (format "'%s' - %s" (:name m) (str path)) ":" (:value m) "\n")))
+
+;; (defn build-part-of-map [level [header tail] path]
+;;   (if (some? header)
+;;     ;; for header {:file.edn {....}} we  
+;;     (let 
+;;      [k-header ((comp first first) header)
+;;       header ((comp second first) header)
+;;       path (conj path k-header)]
+;;       (cond
+
+;;         ;; if Map represent Block or File
+;;         (is-block-file? header)
+;;         (do (printblock level header path)
+;;             (build-part-of-map (inc level) (map-destruct (:value header)) path))
+
+;;         ;; fi Map represent Parameters
+;;         (is-param? header) (printparam level header path))))
+;;   ;; Do recursive for Tail destruction in the same level
+;;   (if (some? tail) (build-part-of-map level  (map-destruct tail) path)))
+
+
+;;   (defn recur-config [m]
+;;    (build-part-of-map 0 (jarman.tools.dev-tools/map-destruct m) []))
+
+  ;;   (recur-config theme-map)
+
+;; (get-in theme-map [:config.edn :block1 :value :param1 :name])
+
+;; (def colors-root-path [:color :value])
 ; (map (fn [x] (first x)) two)
 ; (map #(%) one)
 ; (get-in one [:value])
 ; (map #(println %) one)
-

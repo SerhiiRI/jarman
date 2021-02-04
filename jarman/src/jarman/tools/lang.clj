@@ -9,13 +9,13 @@
 ;;; ** blet
 ;;; ** cond-let
 ;;; * where macro
+;;; * TODO: railway
 ;;; * Map-type toolkit
 ;;; ** head/tail destruction for maps
 ;;; ** cond-contain test if key in map
 ;;; ** get-key-paths-recur with key-paths implementation
 (ns jarman.tools.lang
-  (:use clojure.reflect
-        seesaw.core)
+  (:use clojure.reflect seesaw.core)
   (:require [clojure.string :as string]
             [clojure.java.io :as io]))
 
@@ -64,7 +64,7 @@
   Spec
     (blet <calcaulation>+ <binding-spec>{1})"
   [& arguments]
-  {:pre [(> 0 (count arguments )) (vector? (last arguments))]}
+  {:pre [(vector? (last arguments))]}
   `(let ~(last arguments) ~@(butlast arguments)))
 
 (defmacro cond-let
@@ -106,6 +106,7 @@
                              {:term 'doto :arg 1}
                              {:term 'ift :arg 1}
                              {:term 'ifn :arg 1}
+                             {:term 'ifp :arg 2}
                              {:term 'otherwise :arg 1}])
 
 (defmacro action-linier-preprocess [symbol args]
@@ -117,8 +118,9 @@
     '|> `(~@args)
     'doto `(doto ~(last args) ~(first args))
     'otherwise `(if ~(second args) ~(second args) ~(first args) )
-    'ifn `(if ~(last args) ~(first args) ~(last args))
-    'ift `(if ~(last args) ~(last args) ~(first args)) 
+    'ift `(if ~(last args) ~(first args) ~(last args))
+    'ifn `(if ~(last args) ~(last args) ~(first args))
+    'ifp `(if (~(first args) ~(last args)) ~(last args) ~(second args))
     'nil))
 
 (defmacro recursive-linier-preprocessor
@@ -143,10 +145,34 @@
     `(let [~@let-binding-forms]
        ~@body)))
 
-;; (where ((haf_count (range 10) map #(- % 5) filter #(< 0 %) do count ifn 0)
-;;         (haf_count 10 do string? otherwise "10"))
-;;        haf_count)
+(where ((temp 10 do string? otherwise "10") ;; "10"
+        (temp nil ifn 4) ;; 4
+        (temp nil ift 4) ;; nil
+        (temp nil ifp nil? 4) ;; nil
+        (temp 3 ifp odd? 4) ;; 3
+        (temp 3 do inc do inc) ;; 5
+        (temp 3 |> inc |> inc) ;; 5
+        (temp 4)
+        (temp (range 10) map #(- % 5) filter #(< 0 %) do count ifn 0) ;; 4
+        (temp [1 2 3 4] filter odd?) ;; => (1 3)
+        (temp [1 2 3 4] map odd?) ;; (true false true false)
+        (temp [1 2 3 4] reduce + 0) ;; 10
+        (temp 4 doto println))
+       temp)
 
+(defmacro wlet
+  "Description
+    Let with binding in last sexp, otherwise in first block
+  
+  Example
+    (wlet (+ a b) [a 1 b 2]) ;; => 3
+    (wlet (+ a b) (- a b) [a 1 b 2]) ;; => -1
+  
+  Spec
+    (wlet <calcaulation>+ <binding-spec>{1})"
+  [& arguments]
+  {:pre [(vector? (last arguments))]}
+  `(where ~(last arguments) ~@(butlast arguments)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Map-type toolkit ;;;
@@ -324,9 +350,6 @@
         @in-deep-key-path
         [in-deep-key-path (atom [])
          in-deep-key-path-f (fn [path] (swap! in-deep-key-path (fn [path-list] (conj path-list path ))))]))
-
-
-
 
 
 

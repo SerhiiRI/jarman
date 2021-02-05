@@ -119,8 +119,7 @@
 
 
 (defn swapp-*language*
-  ([] (swapp-*language* *supported-languages*))
-  ([languages]
+  ([]
    (where
     ((language (load-config-file (clojure.java.io/file *config-root* "language.edn"))))
     (reset! *language* language)

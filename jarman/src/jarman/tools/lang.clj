@@ -281,7 +281,7 @@
   (if (nil? map-part) (end-path-func path)
       (let [[head tail] (map-destruct map-part)
             map-first-key (first-key head)
-            value-of-first-key (doto (map-first-key head) println )
+            value-of-first-key (map-first-key head) 
             ;; shortlambda
             vconcat (comp vec concat)]
         (cond

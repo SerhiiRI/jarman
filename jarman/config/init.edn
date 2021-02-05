@@ -6,7 +6,7 @@
 	        :type :param
 	        :component :text
 	        :display? :edit
-                :value "pl"}}}
+                :value :pl}}}
 
 
 

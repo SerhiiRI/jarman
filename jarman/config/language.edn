@@ -1,53 +1,205 @@
-{:pl {:cfg {:init {:name "Pocz±tkowa konfiguracja"
-                   :value {:lang {:name "Jêzyk"
-                                  :doc "Proszê wybraæ jêzyk"}}}
-            :database {}}
-      :ui {:buttons {:remove "Usuñ"
-                     :excel-export "Exportuj do Excela"
-                     :run-app "Po³±cz"
-                     :settings "Ustawienia"
-                     :save "Zapisz"
-                     :search "Szukaj"
-                     :test-connection-success "Nawi±zano po³±czenie z baz± danych."
-                     :test-connection-fail "B³±d ³±czenia, sprawdz konfiguracje"
-                     :register "Rejestr"
-                     :back "Cofnij"
-                     :disconnect-RFID "Od³±cz"
-                     :rfid "Karty RFID"
-                     :filter-clean "Usuñ filtr"
-                     :inputs-clean "Wyczy¶æ"
-                     :workers "Pracownicy"
-                     :test-connection "Testuj po³±czenie"
-                     :save-and-reload "Zapisz i prze³aduj"}
-           :alerts {:changes-saved "Zapisano zmiany do pliku!"
-                    :save-changes? "Czy chcesz zapisaæ zmiany?"
-                    :changes-saved-but-need-reload "Zapisano zmiany! Bêd± one widoczne po restarcie aplikacji."
-                    :delete? "Czy napewno chcesz usun±æ element?"
-                    :testing-connection "£±czenie z baz±"
-                    :title-information "Informacja"
-                    :write-enter-search "Wpisz frazê i kliknij - ENTER - by szukaæ w tabeli."}
-           :basic {:yes "Tak"
-                   :in-short "We"
-                   :click-to-choose "Kliknij by wybraæ"
-                   :config-to-file "Konfiguracja do pliku -> "
-                   :out "Wyj¶cie"
-                   :out-short "Wy"
-                   :search-tool "Wyszukiwarka"
-                   :no "Nie"
-                   :in "Wej¶cie"
-                   :date-start "Data od"
-                   :date-end "Data do"
-                   :search-input "Wyszukaj"
-                   :description "Opis"
-                   :parameters "Parametry"}
-           :tips {:save "Zapisz zmiany."
-                  :clean "Wyczy¶æ pola powy¿ej."
-                  :del "Usuñ pozycjê z tabeli."
-                  :clean-filter "Wyczy¶æ filtr wyszukiwania."
-                  :search "Szukaj po tabeli."
-                  :user-trash-can "Od³±cz u¿ytkownika od karty."
-                  :excel "Zapisz widok do excela."}}
-      }}
-
-
-
+{:pl
+ {:init.edn
+  {:value
+   {:lang {:name "Language", :doc "Choose language for program "}},
+   :name "Initial configuration"},
+  :resource.edn
+  {:name "Resource configurations",
+   :value
+   {:configuration-attribute
+    {:doc
+     "Wybierz ï¿½cieï¿½kï¿½ do konfiguracyjnego pliku standardowo wskazuje ona na katalog lokalizacji programu. Parameters: \"C:\\ï¿½cieï¿½ka\\ï¿½cieï¿½ka\\ï¿½cieï¿½ka\" \"/ï¿½cieï¿½ka/ï¿½cieï¿½k\" \"ï¿½cieï¿½ka\""},
+    :font-configuration-attribute
+    {:value
+     {:font-path
+      {:doc
+       "Wybierz ï¿½cieï¿½kï¿½ do katalogu czcionek. Parametry: \"C:\\ï¿½cieï¿½ka\\ï¿½cieï¿½ka\\ï¿½cieï¿½ka\" \"/ï¿½cieï¿½ka/ï¿½cieï¿½k\" \"ï¿½cieï¿½ka\""},
+      :acceptable-file-format
+      {:name "Wspierane pliki",
+       :doc
+       "wybierz rozszerzenia dla wspieranych przez system konfiguracji plikï¿½w"}}},
+    :icon-configuration-attribute
+    {:value
+     {:icon-path
+      {:doc
+       "Wybierz ï¿½cieï¿½kï¿½ do katalogu ikonek wskazuje ona na katalog lokalizacji programu. Parameters \"C:\\ï¿½cieï¿½ka\\ï¿½cieï¿½ka\\ï¿½cieï¿½ka\" \"/ï¿½cieï¿½ka/ï¿½cieï¿½k\" \"ï¿½cieï¿½ka\"]"},
+      :acceptable-file-format
+      {:name "Wspierane pliki",
+       :doc
+       "wybierz rozszerzenia dla wspieranych przez system konfiguracji plikï¿½w"}}},
+    :supported-files
+    {:name "Wspierane pliki",
+     :doc
+     "wybierz rozszerzenia dla wspieranych przez system konfiguracji plikï¿½w"}}},
+  :database.edn
+  {:name "Database configuration",
+   :value
+   {:Data-Configuration
+    {:doc "Konfiguracja dat",
+     :value
+     {:data-format
+      {:doc "Wybierz format daty dla przechowywania w bazie danych"}}},
+    :JDBC-mariadb-configuration-database
+    {:name "Konfiguruj JDBC poï¿½ï¿½czenia z SQL bazï¿½.",
+     :doc "Wpisz parametry lub zostaw puste"},
+    :JDBC-sqlite-configuration
+    {:name "Konfiguruj JDBC poï¿½ï¿½czenia z SQL bazï¿½.",
+     :doc
+     "Ogï¿½lnie sï¿½ inne typy polï¿½cznia, na co trzeba bym byï¿½o zrobiï¿½ radiobuttona, no niestety nie mamy czasu na to, wiï¿½c proszï¿½ odkonfigurowaï¿½ JDBC-sqlite-configuration bloczek, dla podpiï¿½cia do bazy danych",
+     :value
+     {:classname
+      {:doc "Wybierz JDBC sterownika odpowiedzialnego za poï¿½ï¿½czenie"},
+      :subprotocol {:doc "Wybirze protocï¿½l komunikacji"},
+      :subname {:doc "wybierz plik baz danych"}}},
+    :SQL-generator
+    {:name "SQL Generator",
+     :doc
+     "SQL Generator - to bibliteka ktï¿½ra pozwala okreï¿½liï¿½ wykorzystywane reguly w projekcie. Jeï¿½li jest potrzeba dodaï¿½ regulï¿½ proszï¿½ wpisaï¿½jej do listy jednej z reguï¿½",
+     :value
+     {:where-border
+      {:doc
+       "Tworzy SQL reguly z nawiasami jeï¿½li defultowo jest na true to po WHERE orazu idï¿½ nawiasy. Domyï¿½lnie ma na false"}}},
+    :View-table-name
+    {:doc
+     "Odpowiada za nazwy kolumn wyï¿½wietlanych tabeli z bazy danych"}}},
+  :themes
+  {:name ":themes",
+   :value
+   {:theme_config.edn
+    {:name "Theme configuration",
+     :value
+     {:selected-theme
+      {:name "Konfiguracja skÃ³rki",
+       :doc
+       "Posiada konfiguracje styÅ‚owe globalne dla calego programu. Pole 'Selected theme' zwiera wybranÄ… przez uÅ¼ytkownika skÃ³rkÄ™. KtÃ³ra siÄ™ uruchomi po ponownym restarcie aplikacji."}}}}},
+  :cfg
+  {:init
+   {:name "Startowa konfiguracja",
+    :value {:lang {:name "Jï¿½zyk", :doc "Proszï¿½ wybraï¿½ jï¿½zyk"}}},
+   :database {}},
+  :ui
+  {:buttons
+   {:remove "Usuï¿½",
+    :excel-export "Exportuj do Excela",
+    :run-app "Poï¿½ï¿½cz",
+    :settings "Ustawienia",
+    :save "Zapisz",
+    :search "Szukaj",
+    :test-connection-success "Nawiï¿½zano poï¿½ï¿½czenie z bazï¿½ danych.",
+    :test-connection-fail "Bï¿½ï¿½d ï¿½ï¿½czenia, sprawdz konfiguracje",
+    :register "Rejestr",
+    :back "Cofnij",
+    :disconnect-RFID "Odï¿½ï¿½cz",
+    :rfid "Karty RFID",
+    :filter-clean "Usuï¿½ filtr",
+    :inputs-clean "Wyczyï¿½ï¿½",
+    :workers "Pracownicy",
+    :test-connection "Testuj poï¿½ï¿½czenie",
+    :save-and-reload "Zapisz i przeï¿½aduj"},
+   :alerts
+   {:changes-saved "Zapisano zmiany do pliku!",
+    :save-changes? "Czy chcesz zapisaï¿½ zmiany?",
+    :changes-saved-but-need-reload
+    "Zapisano zmiany! Bï¿½dï¿½ one widoczne po restarcie aplikacji.",
+    :delete? "Czy napewno chcesz usunï¿½ï¿½ element?",
+    :testing-connection "ï¿½ï¿½czenie z bazï¿½",
+    :title-information "Informacja",
+    :write-enter-search
+    "Wpisz frazï¿½ i kliknij - ENTER - by szukaï¿½ w tabeli."},
+   :basic
+   {:description "Opis",
+    :yes "Tak",
+    :search-input "Wyszukaj",
+    :in-short "We",
+    :date-end "Data do",
+    :click-to-choose "Kliknij by wybraï¿½",
+    :config-to-file "Konfiguracja do pliku -> ",
+    :out "Wyjï¿½cie",
+    :date-start "Data od",
+    :out-short "Wy",
+    :search-tool "Wyszukiwarka",
+    :parameters "Parametry",
+    :no "Nie",
+    :in "Wejï¿½cie"},
+   :tips
+   {:save "Zapisz zmiany.",
+    :clean "Wyczyï¿½ï¿½ pola powyï¿½ej.",
+    :del "Usuï¿½ pozycjï¿½ z tabeli.",
+    :clean-filter "Wyczyï¿½ï¿½ filtr wyszukiwania.",
+    :search "Szukaj po tabeli.",
+    :user-trash-can "Odï¿½ï¿½cz uï¿½ytkownika od karty.",
+    :excel "Zapisz widok do excela."}}},
+ :en
+ {:init.edn
+  {:name "Initial configuration",
+   :value
+   {:lang {:name "Language", :doc "Choose language for program "}}},
+  :resource.edn
+  {:name "Resource configurations",
+   :value
+   {:configuration-attribute
+    {:doc
+     "Wybierz ï¿½cieï¿½kï¿½ do konfiguracyjnego pliku standardowo wskazuje ona na katalog lokalizacji programu. Parameters: \"C:\\ï¿½cieï¿½ka\\ï¿½cieï¿½ka\\ï¿½cieï¿½ka\" \"/ï¿½cieï¿½ka/ï¿½cieï¿½k\" \"ï¿½cieï¿½ka\""},
+    :font-configuration-attribute
+    {:value
+     {:font-path
+      {:doc
+       "Wybierz ï¿½cieï¿½kï¿½ do katalogu czcionek. Parametry: \"C:\\ï¿½cieï¿½ka\\ï¿½cieï¿½ka\\ï¿½cieï¿½ka\" \"/ï¿½cieï¿½ka/ï¿½cieï¿½k\" \"ï¿½cieï¿½ka\""},
+      :acceptable-file-format
+      {:name "Wspierane pliki",
+       :doc
+       "wybierz rozszerzenia dla wspieranych przez system konfiguracji plikï¿½w"}}},
+    :icon-configuration-attribute
+    {:value
+     {:icon-path
+      {:doc
+       "Wybierz ï¿½cieï¿½kï¿½ do katalogu ikonek wskazuje ona na katalog lokalizacji programu. Parameters \"C:\\ï¿½cieï¿½ka\\ï¿½cieï¿½ka\\ï¿½cieï¿½ka\" \"/ï¿½cieï¿½ka/ï¿½cieï¿½k\" \"ï¿½cieï¿½ka\"]"},
+      :acceptable-file-format
+      {:name "Wspierane pliki",
+       :doc
+       "wybierz rozszerzenia dla wspieranych przez system konfiguracji plikï¿½w"}}},
+    :supported-files
+    {:name "Wspierane pliki",
+     :doc
+     "wybierz rozszerzenia dla wspieranych przez system konfiguracji plikï¿½w"}}},
+  :database.edn
+  {:name "Database configuration",
+   :value
+   {:Data-Configuration
+    {:doc "Konfiguracja dat",
+     :value
+     {:data-format
+      {:doc "Wybierz format daty dla przechowywania w bazie danych"}}},
+    :JDBC-mariadb-configuration-database
+    {:name "Konfiguruj JDBC poï¿½ï¿½czenia z SQL bazï¿½.",
+     :doc "Wpisz parametry lub zostaw puste"},
+    :JDBC-sqlite-configuration
+    {:name "Konfiguruj JDBC poï¿½ï¿½czenia z SQL bazï¿½.",
+     :doc
+     "Ogï¿½lnie sï¿½ inne typy polï¿½cznia, na co trzeba bym byï¿½o zrobiï¿½ radiobuttona, no niestety nie mamy czasu na to, wiï¿½c proszï¿½ odkonfigurowaï¿½ JDBC-sqlite-configuration bloczek, dla podpiï¿½cia do bazy danych",
+     :value
+     {:classname
+      {:doc "Wybierz JDBC sterownika odpowiedzialnego za poï¿½ï¿½czenie"},
+      :subprotocol {:doc "Wybirze protocï¿½l komunikacji"},
+      :subname {:doc "wybierz plik baz danych"}}},
+    :SQL-generator
+    {:name "SQL Generator",
+     :doc
+     "SQL Generator - to bibliteka ktï¿½ra pozwala okreï¿½liï¿½ wykorzystywane reguly w projekcie. Jeï¿½li jest potrzeba dodaï¿½ regulï¿½ proszï¿½ wpisaï¿½jej do listy jednej z reguï¿½",
+     :value
+     {:where-border
+      {:doc
+       "Tworzy SQL reguly z nawiasami jeï¿½li defultowo jest na true to po WHERE orazu idï¿½ nawiasy. Domyï¿½lnie ma na false"}}},
+    :View-table-name
+    {:doc
+     "Odpowiada za nazwy kolumn wyï¿½wietlanych tabeli z bazy danych"}}},
+  :themes
+  {:name ":themes",
+   :value
+   {:theme_config.edn
+    {:name "Theme configuration",
+     :value
+     {:selected-theme
+      {:name "Konfiguracja skÃ³rki",
+       :doc
+       "Posiada konfiguracje styÅ‚owe globalne dla calego programu. Pole 'Selected theme' zwiera wybranÄ… przez uÅ¼ytkownika skÃ³rkÄ™. KtÃ³ra siÄ™ uruchomi po ponownym restarcie aplikacji."}}}}}}}

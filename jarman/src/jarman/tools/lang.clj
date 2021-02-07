@@ -140,25 +140,29 @@
 (defmacro where-binding-form [binding-form]
   `[~(first binding-form) (recursive-linier-preprocessor ~(first (rest binding-form)) ~(rest (rest binding-form)))])
 
-(defmacro where [binding & body]
+(defmacro where
+  "Description
+  Good alternative to Let construction
+
+  Example 
+   (where ((temp 10 do string? otherwise \"10\") ;; \"10\"
+           (temp nil ifn 4) ;; 4
+           (temp nil ift 4) ;; nil
+           (temp nil ifp nil? 4) ;; nil
+           (temp 3 ifp odd? 4) ;; 3
+           (temp 3 do inc do inc) ;; 5
+           (temp 3 |> inc |> inc) ;; 5
+           (temp 4)
+           (temp (range 10) map #(- % 5) filter #(< 0 %) do count ifn 0) ;; 4
+           (temp [1 2 3 4] filter odd?) ;; => (1 3)
+           (temp [1 2 3 4] map odd?) ;; (true false true false)
+           (temp [1 2 3 4] reduce + 0) ;; 10
+           (temp 4 doto println))
+          temp)"
+  [binding & body]
   (let [let-binding-forms (reduce (fn [acc bnd] (concat acc (macroexpand-1 `(where-binding-form ~bnd)))) [] binding)]
     `(let [~@let-binding-forms]
        ~@body)))
-
-(where ((temp 10 do string? otherwise "10") ;; "10"
-        (temp nil ifn 4) ;; 4
-        (temp nil ift 4) ;; nil
-        (temp nil ifp nil? 4) ;; nil
-        (temp 3 ifp odd? 4) ;; 3
-        (temp 3 do inc do inc) ;; 5
-        (temp 3 |> inc |> inc) ;; 5
-        (temp 4)
-        (temp (range 10) map #(- % 5) filter #(< 0 %) do count ifn 0) ;; 4
-        (temp [1 2 3 4] filter odd?) ;; => (1 3)
-        (temp [1 2 3 4] map odd?) ;; (true false true false)
-        (temp [1 2 3 4] reduce + 0) ;; 10
-        (temp 4 doto println))
-       temp)
 
 (defmacro wlet
   "Description
@@ -350,6 +354,5 @@
         @in-deep-key-path
         [in-deep-key-path (atom [])
          in-deep-key-path-f (fn [path] (swap! in-deep-key-path (fn [path-list] (conj path-list path ))))]))
-
 
 

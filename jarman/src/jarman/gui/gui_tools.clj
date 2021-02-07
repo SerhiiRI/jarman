@@ -10,22 +10,10 @@
   (:require [jarman.resource-lib.icon-library :as icon]
             [clojure.string :as string]))
 
-
-;; (import javax.swing.JInternalFrame)
-;; (import javax.swing.BorderFactory)
-;; (import javax.swing.JDesktopPane)
-;; (import javax.swing.JButton)
-;; (import javax.swing.JFrame)
-;; (import javax.swing.Jlabel-fn)
-;; (import java.awt.Dimension)
-;; (import java.awt.Component)
-;; (import java.awt.Point)
 (import javax.swing.JLayeredPane)
 (import java.awt.Color)
 (import java.awt.MouseInfo)
 (import java.awt.event.MouseListener)
-;; (import java.awt.event.MouseEvent)
-;; (import java.awt.PointerInfo)
 
 (defn getWidth  [obj] (.width (.getSize obj)))
 (defn getHeight [obj] (.height (.getSize obj)))

@@ -9,7 +9,6 @@
          jarman.tools.dev-tools
          jarman.gui-tools
          jarman.gui-alerts-service
-         jarman.logic.metadata
          jarman.config.config-manager
         ;; jarman.gui.gui-db-view
          )
@@ -187,7 +186,7 @@
 ;; (show-options (checkbox))
 
 (defn create-save-btn-for-table-editor
-  [] (edit-table-btn :edit-view-save-btn "Zapisz zmiany" icon/agree-grey-64-png icon/agree-blue-64-png true
+  [] (edit-table-btn :edit-view-save-btn (get-lang-btns :save-changes) icon/agree-grey-64-png icon/agree-blue-64-png true
       (fn [e] (if (get (config e :user-data) :active)
                 (do
                   (println "Przycisk aktywny")
@@ -197,7 +196,7 @@
                   (config! e :user-data {:active true}))))))
 
 (defn create-restore-btn-for-table-editor
-  [] (edit-table-btn :edit-view-back-btn "Wycofaj zmiany" icon/refresh-grey-64-png icon/refresh-blue-64-png false
+  [] (edit-table-btn :edit-view-back-btn (get-lang-btns :back-changes) icon/refresh-grey-64-png icon/refresh-blue-64-png false
       (fn [e] (if (get (config e :user-data) :active)
                 (do
                   (println "Przycisk aktywny")

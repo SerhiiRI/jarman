@@ -7,8 +7,8 @@
 ;;============================================================
 
 (ns jarman.config.config-manager
-  (:require [clojure.string :as string]
-            [jarman.tools.dev-tools :include-macros true :refer :all]))
+  (:use jarman.config.init)
+  (:require [clojure.string :as string]))
 
 
 ;; ##################################
@@ -103,26 +103,37 @@
 
 (def create-value-getter
   "Description:
-    Build getter from map as functions
+    Build getters functions from map with injecting :value or without :value
    Example:
-     (def get-frame (create-value-getter :frame)) => (get-frame :width) => 1200
-     (def get-color (create-value-getter :color)) => (get-color :jarman :bar) => #292929
+     (def get-frame (create-value-getter theme-map true :frame)) => (get-frame :width) => 1200
+     (def get-lang  (create-value-getter @*language* false :pl :ui)) => (get-lang :buttons :remove) => Usuń
    "
-  (fn [& pre-path]
+  (fn [mapa inject-key-value default & pre-path]
     (fn [& steps]
-      (get-in jarman.config.config-manager/theme-map
-              (concat (interpose :value (vec pre-path)) [:value]
-                      (interpose :value (vec steps)) [:value])))))
+      (cond
+        (= inject-key-value true)
+        (let [path (concat (interpose :value (vec pre-path)) [:value]
+                           (interpose :value (vec steps)) [:value])
+              value (get-in mapa path)]
+          (cond (= value nil) default
+                :else value))
+        :else (let [path (concat (vec pre-path) (vec steps))
+                    value (get-in mapa path)]
+                (cond (= value nil) default
+                      :else value))))))
 
-(def get-color (create-value-getter :color))
-(def get-frame (create-value-getter :frame))
-(def get-font  (create-value-getter :font))
+
+
+(def using-lang :pl)
+(def get-color (create-value-getter theme-map true "#000" :color))
+(def get-frame (create-value-getter theme-map true 1000 :frame))
+(def get-font  (create-value-getter theme-map true "Ubuntu" :font))
+(def get-lang  (create-value-getter @*language* false "Unknown" using-lang :ui))
+(def get-lang-btns  (create-value-getter @*language* false "Unknown" using-lang :ui :buttons))
 ;; (get-color :jarman :bar)
 ;; (get-frame :width)
 ;; (get-font :bold)
-
-
-
+;; (get-lang :buttons :remove)
 
 ;; ####################################################################
 ;; #                                                                  #

@@ -54,26 +54,26 @@
    
    #+begin_src clojure
      ;;; <file-spec>
-     {:name ["[\w\d\s]+" (vector (:\w)+)]
+     {:name? ["[\w\d\s]+" (vector (:\w)+)]
       :display? [:nil :edit :noedit]
       :type [:block :param :file :directory :error]
       :value {:param? <param-spec>
 	      :block? <block-spec>}}
 
      ;;; <block-spec>
-     {:name ["[\w\d\s]+" (vector (:\w)+)]
-      :doc ["\.+" nil (vector (:\w)+)]
+     {:name? ["[\w\d\s]+" (vector (:\w)+)]
+      :doc? ["\.+" nil (vector (:\w)+)]
       :type [:block :param :error]
-      :display? [:nil :edit :noedit]
+      :display? [:none :edit :noedit]
       :value {:param? <param-spec>
 	      :block? <block-spec>}}
 
      ;;; <param-block>
-     {:name ["[\w\d\s]+" (vector (:\w)+)]
-      :doc ["\.+" nil (vector (:\w)+)]
+     {:name? ["[\w\d\s]+" (vector (:\w)+)]
+      :doc? ["\.+" nil (vector (:\w)+)]
       :type [:block :param :error]
       :display? [:nil :edit :noedit]
-      :component [:text :textnumber :textlist :textcolor :checkbox :listbox :selectbox]
+      :component? [:text :textnumber :textlist :textcolor :checkbox :listbox :selectbox]
       :value *}
 
      ;;; <error-spec>

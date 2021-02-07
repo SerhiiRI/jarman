@@ -5,6 +5,7 @@
 ;;  *  ||----||   0  \_____________________________/ o 0   o 
 ;;     ^^    ^^  .|o.                                 \|00/.
 ;;============================================================
+;; - ale suchę XD
 
 (ns jarman.config.config-manager
   (:use jarman.config.init)
@@ -91,11 +92,37 @@
                                                       :font-style {:type :param :display :edit :component :text :value :bold}}}}}})
 
 
+;;; @Serhii 
+(defn for-you-with-love
+  ([] (for-you-with-love "no bo wiesz tak szbyciej"))
+  ([text]
+   (let
+       [l (count text)
+        tl "┌" tr "┐"
+        v  "│" h  "─"
+        bl "└" br "┘"]
+     (println
+      (apply
+       str
+       (concat 
+        (concat [tl] (vec (repeat (+ l 2) h)) [tr \newline])
+        (concat [v] (vec (repeat (+ l 2) \space)) [v \newline])
+        (concat [v \space] (seq text) [\space v \newline])
+        (concat [v] (vec (repeat (+ l 2) \space)) [v \newline])
+        (concat [bl](vec (repeat (+ l 2) h)) [br \newline])))))))
+
+;;; transform this poor view
 ;; ##################################
 ;; #                                #
 ;; #  Easy getter form map creator  #
 ;; #                                #
 ;; ##################################
+;;; to this dam'n beatyfull box
+;; ┌──────────────────────────────┐
+;; │                              │
+;; │ Easy getter form map creator │
+;; │                              │
+;; └──────────────────────────────┘
 
 
 (def colors-root-path [:color :value])
@@ -141,55 +168,3 @@
 ;; #                                                                  #
 ;; ####################################################################
 
-
-;; ###################################
-;; #                                 #
-;; # Show map values as console tree #
-;; #                                 #
-;; ###################################
-
-;; (def offset-char "  ")
-;; (defn is-block? [m] (= (:type m) :block))
-;; (defn is-file? [m] (= (:type m) :file))
-;; (defn is-block-file? [m] (or (is-block? m) (is-file? m)))
-;; (defn is-param? [m] (= (:type m) :param))
-
-;; (defn printblock
-;;   ([m p] (printblock 0 m p))
-;;   ([offset m path] (print (apply str (apply str (repeat offset offset-char))) (format "'%s' - %s" (:name m) (str path))  "\n")))
-;; (defn printparam
-;;   ([m p] (printparam 0 m p))
-;;   ([offset m path] (print (apply str (apply str (repeat offset offset-char))) (format "'%s' - %s" (:name m) (str path)) ":" (:value m) "\n")))
-
-;; (defn build-part-of-map [level [header tail] path]
-;;   (if (some? header)
-;;     ;; for header {:file.edn {....}} we  
-;;     (let 
-;;      [k-header ((comp first first) header)
-;;       header ((comp second first) header)
-;;       path (conj path k-header)]
-;;       (cond
-
-;;         ;; if Map represent Block or File
-;;         (is-block-file? header)
-;;         (do (printblock level header path)
-;;             (build-part-of-map (inc level) (map-destruct (:value header)) path))
-
-;;         ;; fi Map represent Parameters
-;;         (is-param? header) (printparam level header path))))
-;;   ;; Do recursive for Tail destruction in the same level
-;;   (if (some? tail) (build-part-of-map level  (map-destruct tail) path)))
-
-
-;;   (defn recur-config [m]
-;;    (build-part-of-map 0 (jarman.tools.dev-tools/map-destruct m) []))
-
-  ;;   (recur-config theme-map)
-
-;; (get-in theme-map [:config.edn :block1 :value :param1 :name])
-
-;; (def colors-root-path [:color :value])
-; (map (fn [x] (first x)) two)
-; (map #(%) one)
-; (get-in one [:value])
-; (map #(println %) one)

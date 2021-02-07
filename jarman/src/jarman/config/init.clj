@@ -1,29 +1,36 @@
 (ns jarman.config.init
   (:gen-class)
-  (:use clojure.reflect
-        seesaw.core)
+  (:use clojure.reflect)
   (:import (java.io IOException))
   (:require [clojure.string :as string]
             [jarman.tools.lang :refer :all]
             [clojure.java.io :as io]))
 
-
+(defn- suka [])
 (def ^:dynamic *config-root* "./config")
 (def ^:dynamic *config-files* [[:init.edn] [:resource.edn] [:database.edn] [:themes :jarman_light.edn] [:themes :theme_config.edn]])
 ;; (def *supported-languages* [:pl :ua])
+(def logs (atom nil))
+(set-validator! logs #(seqable? %))
+(add-watch logs :watcher
+           (fn [key atom old-state new-state]
+             (println (last new-state))))
+
+(def configuration (atom nil))
+(set-validator! configuration #(or (nil? %) (map? %)))
+
+(def language (atom nil))
+(set-validator! language #(or (nil? %) (map? %)))
 
 
-(def *configuration* (atom nil))
-(set-validator! *configuration* #(or (nil? %) (map? %)))
-
-(def *language* (atom nil))
-(set-validator! *language* #(or (nil? %) (map? %)))
-
+;;; Header ;;; 
 
 (defn block [m]
   {:type :block
    :display :edit
    :value m})
+
+;; small header ;;
 
 (defn param [v]
   {:type :param :display :edit :component :text :value v})
@@ -60,22 +67,23 @@
       (try (clojure.edn/read-string (slurp (clojure.java.io/file path)))
            (catch Exception e (EM (format "Error parsing configuration file '%s'" (str path))))))))
 
+
 (do
-  (defn swapp-*configuration*
-    ([] (swapp-*configuration* *config-files*))
+  (defn swapp-configuration
+    ([] (swapp-configuration *config-files*))
     ([keyword-config-file-paths]
      (where
       ((PF-list (<path|file>-list *config-root* keyword-config-file-paths))
        (DM (fn [d v] {d {:name (str d) :display? :edit :type :directory :value v}}))
        (FM (fn [f v] {f v})))
       (reset!
-       *configuration*
+       configuration
        (apply merge (for [[P F :as PF] PF-list
                           :let [L (count PF)]]
                       (cond (= L 1) (load-config-file F)
                             (> L 1) (reduce #(DM %2 %1) (FM (last P) (load-config-file F)) (butlast P))))))
       nil)))
-  (swapp-*configuration* *config-files*))
+  (swapp-configuration *config-files*))
 
 
 
@@ -119,12 +127,11 @@
        (catch Exception e (println (format "Configuration serialization problem for config: " (str m-cfg))))))
 
 
-(defn swapp-*language*
-  ([]
-   (where
-    ((language (load-config-file (clojure.java.io/file *config-root* "language.edn"))))
-    (reset! *language* language)
-    nil)))
+(defn swapp-language []
+  (where
+   ((l (load-config-file (clojure.java.io/file *config-root* "language.edn"))))
+   (reset! language l)
+   nil))
 
 (defn config-lang-merge [m path-list-value]
   (where
@@ -139,14 +146,16 @@
 (defn refresh-translation []
   (where
    ((original (load-config-file (clojure.java.io/file *config-root* "language.edn")))
-    (en-key-path-to-text (key-strings-path @*configuration*))
+    (en-key-path-to-text (key-strings-path @configuration))
     (fill-text (fn [CFG] (config-lang-merge CFG en-key-path-to-text))))
    (-> original
        (update-in [:en] fill-text)
        (update-in [:pl] fill-text)
        ((partial save-cfg-to-file-pp (clojure.java.io/file *config-root* "language.edn"))))
-   (swapp-*language*)))
+   (swapp-language)))
+
+;; (swapp-configuration)
+;; (swapp-language)
+;; (refresh-translatio)
 
 
-(swapp-*language*)
-;; *language*

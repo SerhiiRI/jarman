@@ -2,20 +2,20 @@
 ;; Compilation: dev_tool.clj -> metadata.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
 ;; 
 (ns jarman.gui-app
-   (:use seesaw.core
-         seesaw.border
-         seesaw.dev
-         seesaw.mig
-         jarman.tools.dev-tools
-         jarman.gui-tools
-         jarman.gui-alerts-service
-         jarman.config.config-manager
+  (:use seesaw.core
+        seesaw.border
+        seesaw.dev
+        seesaw.mig
+        jarman.tools.dev-tools
+        jarman.gui-tools
+        jarman.gui-alerts-service
+        jarman.config.config-manager
         ;; jarman.gui.gui-db-view
-         )
-   (:require [jarman.resource-lib.icon-library :as icon]
-             [clojure.string :as string]
+        )
+  (:require [jarman.resource-lib.icon-library :as icon]
+            [clojure.string :as string]
             ;;  [jarman.config.config-manager :as cm]
-             ))
+            ))
 
 ;;  (get-color :jarman :bar)
 
@@ -26,7 +26,12 @@
 (import java.awt.event.MouseEvent)
 
 
-;; ---------------------------------------------------- APP STARTER v
+;; ┌────────────────────────┐
+;; │                        │
+;; │ Start empty App layout │
+;; │                        │
+;; └────────────────────────┘
+
 (def app-width (get-frame :width))
 (def app-height (get-frame :heigh))
 (def app-bounds [0 0 app-width app-height])
@@ -48,9 +53,14 @@
 
 ;; Start message service
 (def alerts-s (message-server-creator app))
-;; ---------------------------------------------------- APP STARTER ^
 
 
+
+;; ┌───────────────────┐
+;; │                   │
+;; │ Prepare app atoms │
+;; │                   │
+;; └───────────────────┘
 
 (def views (atom {}))
 (def active-tab (atom :none))
@@ -131,13 +141,17 @@
 
 
 ;; (map (fn [tab] (conj {:bounds [0 0 0 0]} tab)) dbmap)
-
-
 ;; (prepare-table 10 10 "Users" "FName" "LName" "LOGIN")
-
 ;; (getset)
-
 ;; (def dbmap (getset))
+
+
+
+;; ┌─────────────────────────────┐
+;; │                             │
+;; │ Resize components functions │
+;; │                             │
+;; └─────────────────────────────┘
 
 (defn calculate-tables-size-with-tabs
   [db-data]
@@ -180,32 +194,37 @@
          calculated-bounds tables)))
 
 
-;; -------------------------------------vvvvvvvvvv Edit table
-;; 
+
+
+;; ┌──────────────┐
+;; │              │
+;; │ Table editor │
+;; │              │
+;; └──────────────┘
 
 ;; (show-options (checkbox))
 
 (defn create-save-btn-for-table-editor
-  [] (edit-table-btn :edit-view-save-btn (get-lang-btns :save-changes) icon/agree-grey-64-png icon/agree-blue-64-png true
-      (fn [e] (if (get (config e :user-data) :active)
-                (do
-                  (println "Przycisk aktywny")
-                  (config! e :user-data {:active false}))
-                (do
-                  (println "Przycisk nieaktywny")
-                  (config! e :user-data {:active true}))))))
+  [] (edit-table-btn :edit-view-save-btn (get-lang-btns :save) icon/agree-grey-64-png icon/agree-blue-64-png true
+                     (fn [e] (if (get (config e :user-data) :active)
+                               (do
+                                 (println "Przycisk aktywny")
+                                 (config! e :user-data {:active false}))
+                               (do
+                                 (println "Przycisk nieaktywny")
+                                 (config! e :user-data {:active true}))))))
 
 (defn create-restore-btn-for-table-editor
-  [] (edit-table-btn :edit-view-back-btn (get-lang-btns :back-changes) icon/refresh-grey-64-png icon/refresh-blue-64-png false
-      (fn [e] (if (get (config e :user-data) :active)
-                (do
-                  (println "Przycisk aktywny")
-                  (config! e :user-data {:active false}))
-                (do
-                  (println "Przycisk nieaktywny")
-                  (config! e :user-data {:active true}))))))
+  [] (edit-table-btn :edit-view-back-btn (get-lang-btns :remove) icon/refresh-grey-64-png icon/refresh-blue-64-png false
+                     (fn [e] (if (get (config e :user-data) :active)
+                               (do
+                                 (println "Przycisk aktywny")
+                                 (config! e :user-data {:active false}))
+                               (do
+                                 (println "Przycisk nieaktywny")
+                                 (config! e :user-data {:active true}))))))
 
-(defn create-editor-section-header 
+(defn create-editor-section-header
   "Create header GUI component in editor for separate section"
   [name] (label :text name :font (getFont 14 :bold) :border (line-border :bottom 2 :color (get-color :background :header))))
 
@@ -246,14 +265,14 @@
                                                                                           [(label :text "Test 1")]
                                                                                           [(label :text "Value: ")]
                                                                                           [(label :text "I'm blue dabi dibu du bai")]]]
-                                                                              (config! (select (to-root e) [:#create-editor-column-editor]) :items value))))]
+                                                                               (config! (select (to-root e) [:#create-editor-column-editor]) :items value))))]
                         [(create-editor-column-selector-btn "Dłuższy Test 2" (fn [e] (let [value [[(label :text "Selected column: ")]
                                                                                                   [(label :text "Test 2")]
                                                                                                   [(label :text "Value: ")]
                                                                                                   [(label :text "Tylko jedno w głowie maaam, koksu 5 gramm...")]
                                                                                                   [(label :text "Trashpanda")]
                                                                                                   [(label :text "Team")]]]
-                                                                               (config! (select (to-root e) [:#create-editor-column-editor]) :items value))))]]))
+                                                                                       (config! (select (to-root e) [:#create-editor-column-editor]) :items value))))]]))
 
 (defn create-editor-column-editor
   "Create right table editor view to editing selected column in left table editor view"
@@ -262,7 +281,7 @@
                 :items [[(label :text "Selected column: ")]
                         [(label :text "")]]))
 
-(defn create-view-table-editor 
+(defn create-view-table-editor
   "Description:
      Create view for table editor.
    "
@@ -320,44 +339,6 @@
       (if (= (contains? @views id-key) false) (swap! views (fn [storage] (merge storage {id-key {:component view :id id :title (string/join "" ["Edit: " (get table :table)])}}))))
       (reset! active-tab id-key))))
 
-;; (first (vec (list 
-;;        (vec (list [(label)]
-;;                   [(label)]
-
-;;                   [(label)]
-;;                   [(label)])))))
-
-;; (vec (map (fn [x] [(label :text (str x))]) [1 2 3]))
-;; (vec (list [(label :text "1")] [(label :text "2")] [(label :text "3")]))
-
-;; (let [mp {:a "b" :c "d"}] 
-;;   (vec (for [x (range (count mp))] (vec (list (label :text (str (nth (vec mp) x))))))))
-
-;; (let [mp {:a "b" :c "d"}] 
-;;   (vec (for [x (range (count mp))] (println (nth (vec mp) x)))))
-
-;; (vec (concat
-;;       [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"]
-;;                    :items [[(label-fn :text (string/join "" [">_ Edit table: " "test" " (id: 1)"])
-;;                                       :font (getFont 14 :bold)
-;;                                       :background "#ccc"
-;;                                       :border (empty-border :left 15))]
-;;                            [(create-save-btn-for-table-editor)]
-;;                            [(create-restore-btn-for-table-editor)]])]]
-;;       (vec (map (fn [[k v]]
-;;                   (vec (list
-;;                         (mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"]
-;;                                    :items [[(label :text (str k))]
-;;                                                                 ;; [(cond
-;;                                                                 ;;    (string? v) (text :text (str v))
-;;                                                                 ;;    (boolean? v) (checkbox :selected? v)
-;;                                                                 ;;    :else (label :text (str v)))]
-;;                                            ]))))
-;;                 {:a "b"}))))
-
-;; 
-;; -------------------------------------^^^^^^^^^^ Edit table
-
 
 ;;  (calculate-bounds 10 4)
 (def table-funcs-menu
@@ -392,13 +373,10 @@
                   :background (new Color 0 0 0 0)
                   :border (line-border :thickness 1 :color border-c)
                   :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
-                  :items [
-                          [(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
+                  :items [[(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
                                                                               (create-view-table-editor dbmap id))))]
                           [(btn "Delete table" icon/basket-blue1-64-png (fn [e]))]
-                          [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]
-                          
-                          ]))))
+                          [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]]))))
 
 
 (defn set-col-as-row
@@ -528,12 +506,29 @@
           (doall (map (fn [tab-data]
                         (.add (get-in @views [id-key :component]) (prepare-table-with-map (get-in tab-data [:prop :bounds] [10 10 100 100]) tab-data) (new Integer 5)))
                       (calculate-bounds 20 5)))))
-      
+
       (reset! active-tab id-key))))
 
 
-;; ================================================^^^^^^^^^ Table in database view
 
+
+;; ┌──────────────────┐
+;; │                  │
+;; │ Config generator │
+;; │                  │
+;; └──────────────────┘
+
+(def create-conf-gen 
+  (fn [] (label :text "Config generator")))
+
+
+
+
+;; ┌──────────────────────────┐
+;; │                          │
+;; │ App layout and GUI build │
+;; │                          │
+;; └──────────────────────────┘
 
 (def mig-app-left-f
   "Description:
@@ -594,8 +589,7 @@
                                       [(expand-btn "Widoki"
                                                    (expand-child-btn "DB View" (fn [e] (create-view-db-view)))
                                                    (expand-child-btn "Test"    (fn [e] (create-view "test1" "Test 1" (label :text "Test 1"))))
-                                                   (expand-child-btn "Test 2"    (fn [e] (create-view "test2" "Test 2" (label :text "Test 2"))))
-                                                   )])]
+                                                   (expand-child-btn "Test 2"    (fn [e] (create-view "test2" "Test 2" (label :text "Test 2")))))])]
                     [(mig-app-right-f [(label)]
                                       [(label)])]])]))
 
@@ -611,10 +605,9 @@
                                        (tab-btn item-key item-key (if (identical? (first item) id-key) true false) [100 25]
                                                 (fn [e] (do
                                                           (reset! views (dissoc @views (first item)))
-                                                          (if (get (config (.getParent (seesaw.core/to-widget e)) :user-data) :active) 
-                                                              (reset! active-tab @last-active-tab) 
-                                                              (reset! active-tab @active-tab))
-                                                          ))
+                                                          (if (get (config (.getParent (seesaw.core/to-widget e)) :user-data) :active)
+                                                            (reset! active-tab @last-active-tab)
+                                                            (reset! active-tab @active-tab))))
                                                 (fn [e] (do
                                                           (reset! active-tab (first item))
                                                           (config! (select (getRoot app) [:#app-functional-space]) :items [(scrollable (get (second item) :component) :border nil :id (keyword (get (second item) :id)))]))))))
@@ -622,7 +615,12 @@
     :else [(label)]))
 
 
-;; Supervisior for open tabs clicked
+
+;; ┌──────────────────────────────────────┐
+;; │                                      │
+;; │ Supervisor for open views in tab bar │
+;; │                                      │
+;; └──────────────────────────────────────┘
 (add-watch active-tab :refresh (fn [key atom old-state new-state]
                                  (do
                                    (reset! last-active-tab old-state)
@@ -652,11 +650,11 @@
          (.add app jarmanapp (new Integer 5))
          (.add app (slider-ico-btn (image-scale icon/scheme-grey-64x64-png menu-icon-size) 0 menu-icon-size "DB View"
                                    {:onclick (fn [e] (create-view-db-view))}) (new Integer 10))
-                                                                                                                                          
+
          (.add app (slider-ico-btn (image-scale icon/settings-64-png menu-icon-size) 1 menu-icon-size "Konfiguracja"
-                                   {:onclick (fn [e] (do (create-view "test3" "Test 3" (label :text "Test 3"))))}) (new Integer 10))
+                                   {:onclick (fn [e] (do (create-view "Konfiguracja" "Konfiguracja" (create-conf-gen))))}) (new Integer 10))
          (.add app (slider-ico-btn (image-scale icon/I-64-png menu-icon-size) 2 menu-icon-size "Powiadomienia" {:onclick (fn [e] (alerts-s :show))}) (new Integer 10))
-         
+
         ;;  (onresize-f app)
          (.repaint app))))
 

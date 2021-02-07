@@ -155,7 +155,7 @@
    (swapp-language)))
 
 ;; (swapp-configuration)
-;; (swapp-language)
+(swapp-language)
 ;; (refresh-translatio)
-
-
+;; @language
+;; @configuration

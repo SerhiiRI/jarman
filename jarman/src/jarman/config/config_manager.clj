@@ -124,10 +124,6 @@
 ;; │                              │
 ;; └──────────────────────────────┘
 
-
-(def colors-root-path [:color :value])
-(def frame-root-path  [:frame :value])
-
 (def create-value-getter
   "Description:
     Build getters functions from map with injecting :value or without :value
@@ -150,17 +146,16 @@
                       :else value))))))
 
 
-
-(def using-lang :pl)
-(def get-color (create-value-getter theme-map true "#000" :color))
-(def get-frame (create-value-getter theme-map true 1000 :frame))
-(def get-font  (create-value-getter theme-map true "Ubuntu" :font))
-(def get-lang  (create-value-getter @*language* false "Unknown" using-lang :ui))
-(def get-lang-btns  (create-value-getter @*language* false "Unknown" using-lang :ui :buttons))
+(def using-lang (get-in @configuration [:init.edn :value :lang :value]))
+(def get-color  (create-value-getter theme-map true "#000" :color))
+(def get-frame  (create-value-getter theme-map true 1000 :frame))
+(def get-font   (create-value-getter theme-map true "Ubuntu" :font))
+(def get-lang   (create-value-getter @language false "Unknown" using-lang :ui))
+(def get-lang-btns (create-value-getter @language false "Unknown" using-lang :ui :buttons))
 ;; (get-color :jarman :bar)
 ;; (get-frame :width)
 ;; (get-font :bold)
-;; (get-lang :buttons :remove)
+;; (get-lang-btns :remove)
 
 ;; ####################################################################
 ;; #                                                                  #

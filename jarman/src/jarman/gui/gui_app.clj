@@ -10,6 +10,7 @@
         jarman.gui-tools
         jarman.gui-alerts-service
         jarman.config.config-manager
+        jarman.config.init
         ;; jarman.gui.gui-db-view
         )
   (:require [jarman.resource-lib.icon-library :as icon]
@@ -518,8 +519,84 @@
 ;; │                  │
 ;; └──────────────────┘
 
-(def create-conf-gen 
-  (fn [] (label :text "Config generator")))
+
+(def cg-header (fn [title] (let [bg (get-color :background :main)]
+                            (mig-panel
+                             :constraints ["" "0px[grow, center]0px" "0px[]0px"]
+                             :items [[(label :text title :font (getFont 16))] ]
+                             :background bg
+                             :border (line-border :thickness 10 :color bg)))))
+
+(def cg-body (fn [body] (let [bg (get-color :background :main)]
+                             (mig-panel
+                              :constraints ["wrap" "0px[500:800]0px" "0px[]0px"]
+                              :items [[(label :text body :font (getFont 12))]]
+                              :background bg))))
+
+
+(def create-config-gen
+  "Description
+     Join config generator parts
+   "
+  (fn [start-key] (let [map-part (get-in @configuration start-key)]
+                    (mig-panel
+                     :constraints ["wrap 1" "20px[fill, grow]20px" "20px[]20px"]
+                     :items [[(cg-header (str (get-in map-part [:name])))]
+                             [(cg-body (str (get-in map-part [:display])))]
+                             [(cg-body (str (get-in map-part [:type])))]
+                             [(cg-body (str (get-in map-part [:value])))]]))))
+
+
+
+(def search-edns
+  "Description
+     Search edn files and return paths
+   "
+  (fn [path] (let [next-path (vec (concat [path] [:value]))
+                   options (get-in @configuration next-path)
+                   return (map (fn [option]
+                                 (let [resoult (if (= (get-in @configuration [option :type]) :directory)
+                                                 (vec (concat next-path (vec (search-edns option))))
+                                                 (first option))]
+                                   resoult))
+                               options)]
+               return)))
+
+
+(def create-view-conf-gen
+  "Discription
+     Return expand button with config generator GUI
+   "
+  (fn [] (expand-btn (get-lang-btns :settings)
+                     (map (fn [option]
+                            (let [;; Remember path to edn file
+                                  path (if (= (get-in @configuration [(first option) :type]) :directory)
+                                         (vec (concat [(first option) :value] (search-edns (first option))))
+                                         (vec (list (first option))))
+                                  ;; Return edn
+                                  opt-name (str (last path))
+                                  name (get-in @configuration (vec (concat path [:name])))]
+                              ;; Create expand button for configuration files
+                              (expand-child-btn name
+                                                ;; Create view for Config Generator
+                                                (fn [e] (create-view opt-name name
+                                                                     ;; Create Config Generator parts
+                                                                     (create-config-gen path)))))) @configuration))))
+
+
+
+
+
+(get-in @configuration [:themes :value :theme_config.edn])
+;; (map (fn [option]
+;;        (let [;; Remember path to edn file
+;;              path (if (= (get-in @configuration [(first option) :type]) :directory)
+;;                     (vec (concat [(first option) :type] (search-edns (first option))))
+;;                     (vec (list (first option))))
+;;              ;; Return edn
+;;              opt-name (last path)]
+;;          opt-name
+;;          )) @configuration)
 
 
 
@@ -589,7 +666,8 @@
                                       [(expand-btn "Widoki"
                                                    (expand-child-btn "DB View" (fn [e] (create-view-db-view)))
                                                    (expand-child-btn "Test"    (fn [e] (create-view "test1" "Test 1" (label :text "Test 1"))))
-                                                   (expand-child-btn "Test 2"    (fn [e] (create-view "test2" "Test 2" (label :text "Test 2")))))])]
+                                                   (expand-child-btn "Test 2"    (fn [e] (create-view "test2" "Test 2" (label :text "Test 2")))))]
+                                      [(create-view-conf-gen)])]
                     [(mig-app-right-f [(label)]
                                       [(label)])]])]))
 
@@ -650,10 +728,7 @@
          (.add app jarmanapp (new Integer 5))
          (.add app (slider-ico-btn (image-scale icon/scheme-grey-64x64-png menu-icon-size) 0 menu-icon-size "DB View"
                                    {:onclick (fn [e] (create-view-db-view))}) (new Integer 10))
-
-         (.add app (slider-ico-btn (image-scale icon/settings-64-png menu-icon-size) 1 menu-icon-size "Konfiguracja"
-                                   {:onclick (fn [e] (do (create-view "Konfiguracja" "Konfiguracja" (create-conf-gen))))}) (new Integer 10))
-         (.add app (slider-ico-btn (image-scale icon/I-64-png menu-icon-size) 2 menu-icon-size "Powiadomienia" {:onclick (fn [e] (alerts-s :show))}) (new Integer 10))
+         (.add app (slider-ico-btn (image-scale icon/I-64-png menu-icon-size) 1 menu-icon-size "Powiadomienia" {:onclick (fn [e] (alerts-s :show))}) (new Integer 10))
 
         ;;  (onresize-f app)
          (.repaint app))))

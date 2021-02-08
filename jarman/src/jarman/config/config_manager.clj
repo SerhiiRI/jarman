@@ -60,7 +60,10 @@
                                                      :button_selected {:type :param :display :edit :component :textcolor :value "#000"}
                                                      :doc-font-color {:type :param :display :edit :component :textcolor :value "#999"}
                                                      :txt-font-color {:type :param :display :edit :component :textcolor :value "#000"}}}
-                                :border {:type :param :display :edit :component :textcolor :value "#ccc"}}}
+                                :border {:type :param :display :edit :component :textcolor :value "#ccc"}
+                                :decorate {:type :block
+                                           :display :edit
+                                           :value {:gray-underline {:type :param :display :edit :component :textcolor :value "#ccc"}}}}}
                 :font {:doc "Konfiguracja głównego okna HRTime"
                        :type :block
                        :display :edit

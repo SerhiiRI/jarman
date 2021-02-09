@@ -535,34 +535,78 @@
 
 
 
-(def cg-header (fn [title] (let [bg (get-color :background :main)]
-                            (mig-panel
-                             :constraints ["" "0px[grow, center]0px" "0px[]0px"]
-                             :items [[(label :text title :font (getFont 16))] ]
-                             :background bg
-                             :border (line-border :thickness 10 :color bg)))))
+(def cg-file-header (fn [title] (let [bg (get-color :jarman :light)]
+                             (mig-panel
+                              :constraints ["" "0px[grow, center]0px" "0px[]0px"]
+                              :items [[(label :text title :font (getFont 16))]]
+                              :background bg
+                              :border (line-border :thickness 10 :color bg)))))
+
+(def cg-block-header (fn [title] (let [bg (get-color :background :main)]
+                             (mig-panel
+                              :constraints ["" "0px[grow, center]0px" "0px[]0px"]
+                              :items [[(label :text title :font (getFont 16 :bold))]]
+                              :background bg
+                              :border (line-border :bottom 2 :color (get-color :decorate :underline))))))
 
 (def cg-body (fn [body] (let [bg (get-color :background :main)]
-                             (mig-panel
-                              :constraints ["wrap" "0px[]0px" "0px[]0px"]
-                              :items [[(textarea body :font (getFont 12))]]
-                              :background bg))))
+                          (mig-panel
+                           :constraints ["wrap" "0px[]0px" "0px[]0px"]
+                           :items [[(textarea body :font (getFont 14))]]
+                           :background bg))))
 
+(def cg-lang-view 
+  (fn [path]
+    (mig-panel
+     :constraints ["wrap 1" "50px[]50px" "10px[]0px"]
+     :items [[(cg-block-header (get-in @configuration (vec (concat path [:name]))))]
+             [(textarea (get-in @configuration (vec (concat path [:doc]))) :font (getFont 14))]
+             [(text :text (str (get-in @configuration (vec (concat path [:value])))) :font (getFont 14) :size [200 :by 30])]]
+     )))
 
 (def create-config-gen
   "Description
      Join config generator parts
    "
   (fn [start-key] (let [map-part (get-in @configuration start-key)]
-                    (mig-panel
-                     :size [(first @right-size) :by (second @right-size)]
-                     :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
-                     :items [[(cg-header (str (get-in map-part [:name])))]
-                             [(cg-body (str (get-in map-part [:display])))]
-                             [(cg-body (str (get-in map-part [:type])))]
-                             [(cg-body (str (get-in map-part [:value])))]]))))
+                    (cond (= (get-in map-part [:display]) :edit)
+                          (mig-panel
+                           :size [(first @right-size) :by (second @right-size)]
+                           :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
+                           :items (vec (concat
+                                        [[(cg-file-header (get-in map-part [:name]))]]
+                                        (cond
+                                          (not (= (get-in map-part [:value :lang]) nil))
+                                          [[(cg-lang-view (concat start-key [:value :lang]))]]
+                                          :else []))))))))
+
+;; (def mp
+;;   {:name "Initial configuration"
+;;    :display :edit
+;;    :type :init
+;;    :value
+;;    {:lang
+;;     {:name "Language"
+;;      :doc "Choose language for program "
+;;      :type :param
+;;      :component :text
+;;      :display? :edit
+;;      :value :pl}}})
+
+;; (vec (concat
+;;       [[(cg-header (get-in mp [:name]))]]
+;;       (cond
+;;         (not (= (get-in mp [:value :lang]) nil))
+;;         [[(cg-lang-view (vec (concat [:init.edn] [:value :lang])))]]
+;;         :else [])))
 
 
+
+;;  (map (fn [option] (first option)) (get-in @configuration [:init.edn]))
+
+;; [[(cg-header (str (get-in map-part [:name])))]
+;;  [(cg-create-block (concat start-key [:lang]))]]
+;; (get-in @configuration [:init.edn])
 
 (def search-edns
   "Description
@@ -603,7 +647,7 @@
 
 
 
-(get-in @configuration [:themes :value :theme_config.edn])
+;; (get-in @configuration [:themes :value :theme_config.edn])
 ;; (map (fn [option]
 ;;        (let [;; Remember path to edn file
 ;;              path (if (= (get-in @configuration [(first option) :type]) :directory)
@@ -707,6 +751,7 @@
                                                           (config! (select (getRoot app) [:#app-functional-space]) :items [(scrollable (get (second item) :component) :border nil :id (keyword (get (second item) :id)))]))))))
                                    @views))
     :else [(label)]))
+
 
 
 

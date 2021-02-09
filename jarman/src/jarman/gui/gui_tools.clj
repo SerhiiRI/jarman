@@ -21,7 +21,7 @@
 (defn getParent [obj] (.getParent (seesaw.core/to-widget obj)))
 (defn getRoot   [obj] (to-root (seesaw.core/to-widget obj)))
 (defn findByID [root id] (let [found (seesaw.core/to-widget (select (to-root root) [id]))] found))
-(defn getChildren [parent] (let [children (cchildren (seesaw.core/to-widget parent))] children))
+(defn getChildren [parent] (let [children (seesaw.util/children (seesaw.core/to-widget parent))] children))
 (defn firstToWidget [list] (seesaw.core/to-widget (first list)))
 
 (def getFont

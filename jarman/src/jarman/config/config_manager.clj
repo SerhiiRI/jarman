@@ -36,6 +36,8 @@
                                 :background {:type :block
                                              :display :edit
                                              :value {:main {:type :param :display :edit :component :textcolor :value "#eee"}
+                                                     :dark-header {:type :param :display :edit :component :textcolor :value "#494949"}
+                                                     :combobox {:type :param :display :edit :component :textcolor :value "#fff"}
                                                      :button {:type :param :display :edit :component :textcolor :value "#eee"}
                                                      :button_hover {:type :param :display :edit :component :textcolor :value "#96c1ea"}
                                                      :button_config {:type :param :display :edit :component :textcolor :value "#fff"}
@@ -55,6 +57,7 @@
                                 :foreground {:type :block
                                              :display :edit
                                              :value {:main {:type :param :display :edit :component :textcolor :value "#000"}
+                                                     :dark-header {:type :param :display :edit :component :textcolor :value "#fff"}
                                                      :button {:type :param :display :edit :component :textcolor :value "#000"}
                                                      :button_hover {:type :param :display :edit :component :textcolor :value "#29295e"}
                                                      :button_selected {:type :param :display :edit :component :textcolor :value "#000"}
@@ -150,6 +153,7 @@
 
 
 (def using-lang (get-in @configuration [:init.edn :value :lang :value]))
+(def all-langs  (fn [] (let [langs (vec (map (fn [lng] (first lng)) @language))] (filter #(not(= % using-lang)) langs))))
 (def get-color  (create-value-getter theme-map true "#000" :color))
 (def get-frame  (create-value-getter theme-map true 1000 :frame))
 (def get-font   (create-value-getter theme-map true "Ubuntu" :font))
@@ -159,6 +163,7 @@
 ;; (get-frame :width)
 ;; (get-font :bold)
 ;; (get-lang-btns :remove)
+(all-langs)
 
 ;; ####################################################################
 ;; #                                                                  #

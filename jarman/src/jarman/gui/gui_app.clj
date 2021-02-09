@@ -11,6 +11,7 @@
         jarman.gui-alerts-service
         jarman.config.config-manager
         jarman.config.init
+        jarman.tools.lang
         ;; jarman.gui.gui-db-view
         )
   (:require [jarman.resource-lib.icon-library :as icon]
@@ -535,10 +536,10 @@
 
 
 
-(def cg-file-header (fn [title] (let [bg (get-color :jarman :light)]
+(def cg-file-header (fn [title] (let [bg (get-color :background :dark-header)]
                              (mig-panel
                               :constraints ["" "0px[grow, center]0px" "0px[]0px"]
-                              :items [[(label :text title :font (getFont 16))]]
+                              :items [[(label :text title :font (getFont 16) :foreground (get-color :foreground :dark-header))]]
                               :background bg
                               :border (line-border :thickness 10 :color bg)))))
 
@@ -555,14 +556,21 @@
                            :items [[(textarea body :font (getFont 14))]]
                            :background bg))))
 
+(def cg-combobox (fn [model] (combobox :model model 
+                                       :background (get-color :background :combobox) 
+                                       :font (getFont 14) 
+                                       :size [200 :by 30])))
+
 (def cg-lang-view 
   (fn [path]
-    (mig-panel
-     :constraints ["wrap 1" "50px[]50px" "10px[]0px"]
-     :items [[(cg-block-header (get-in @configuration (vec (concat path [:name]))))]
-             [(textarea (get-in @configuration (vec (concat path [:doc]))) :font (getFont 14))]
-             [(text :text (str (get-in @configuration (vec (concat path [:value])))) :font (getFont 14) :size [200 :by 30])]]
-     )))
+    (let [param (fn [key] (str (get-in @configuration (join-vec path key))))]
+      (cond (identical? (param [:display?]) :edit) (mig-panel
+                                                    :constraints ["wrap 1" "50px[]50px" "10px[]0px"]
+                                                    :items [[(cg-block-header (param [:name]))]
+                                                            [(textarea (param [:doc]) :font (getFont 14))]
+                                                            [(cg-combobox (join-vec (list (param [:value])) (all-langs)))]]))
+      :else (label :text (str (println (param [:display?])))))))
+
 
 (def create-config-gen
   "Description
@@ -576,9 +584,28 @@
                            :items (vec (concat
                                         [[(cg-file-header (get-in map-part [:name]))]]
                                         (cond
-                                          (not (= (get-in map-part [:value :lang]) nil))
-                                          [[(cg-lang-view (concat start-key [:value :lang]))]]
+                                          (not (= (get-in map-part [:value :lang]) nil)) [[(cg-lang-view (concat start-key [:value :lang]))]]
                                           :else []))))))))
+
+
+;; (defn main
+;;   []
+;;   (let [rating-label (label :text "Please choose rating:")
+;;         rating (combobox :model ["1 star" "2 star"])
+;;         location (slider
+;;                   :value 5 :min 0 :max 20
+;;                   :minor-tick-spacing 1 :major-tick-spacing 2
+;;                   :snap-to-ticks? true
+;;                   :paint-ticks? true :paint-labels? true)]
+;;     (seesaw.core/vertical-panel :items [rating-label rating location])))
+
+
+;; (-> (doto (seesaw.core/frame
+;;            :title "DEBUG WINDOW" :undecorated? false
+;;            :minimum-size [200 :by 50]
+;;            :size [app-width :by app-height]
+;;            :content (main))
+;;       (.setLocationRelativeTo nil) pack! show!))
 
 ;; (def mp
 ;;   {:name "Initial configuration"

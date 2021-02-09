@@ -63,6 +63,7 @@
 ;; │                   │
 ;; └───────────────────┘
 
+(def right-size (atom [0 0]))
 (def views (atom {}))
 (def active-tab (atom :none))
 (def last-active-tab (atom :none))
@@ -513,11 +514,25 @@
 
 
 
+
+(def app-functional-space-resize
+  "Description
+     Resize app functional space (this space on right).
+   "
+  (fn [e] (let [AFS (firstToWidget (getChildren (findByID e :#app-functional-space)))
+                leaf (try (seesaw.util/children AFS) (catch Exception e (str e)))
+                w (- (getWidth AFS) 20)
+                h (- (getHeight AFS) 20)]
+            (if (= leaf nil) (fn []) (do
+                                       (reset! right-size [w h])
+                                       (config! (seesaw.core/to-widget (get-in @views [@active-tab :component])) :size [w :by h]))))))
+
 ;; ┌──────────────────┐
 ;; │                  │
 ;; │ Config generator │
 ;; │                  │
 ;; └──────────────────┘
+
 
 
 (def cg-header (fn [title] (let [bg (get-color :background :main)]
@@ -529,8 +544,8 @@
 
 (def cg-body (fn [body] (let [bg (get-color :background :main)]
                              (mig-panel
-                              :constraints ["wrap" "0px[500:800]0px" "0px[]0px"]
-                              :items [[(label :text body :font (getFont 12))]]
+                              :constraints ["wrap" "0px[]0px" "0px[]0px"]
+                              :items [[(textarea body :font (getFont 12))]]
                               :background bg))))
 
 
@@ -540,7 +555,8 @@
    "
   (fn [start-key] (let [map-part (get-in @configuration start-key)]
                     (mig-panel
-                     :constraints ["wrap 1" "20px[fill, grow]20px" "20px[]20px"]
+                     :size [(first @right-size) :by (second @right-size)]
+                     :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
                      :items [[(cg-header (str (get-in map-part [:name])))]
                              [(cg-body (str (get-in map-part [:display])))]
                              [(cg-body (str (get-in map-part [:type])))]
@@ -751,6 +767,9 @@
                                                                                       (getWidth  (.getParent (get-in @views [:layered-for-tabs :component])))
                                                                                       (getHeight (.getParent (get-in @views [:layered-for-tabs :component])))))))))
 
+
+
+
 (def onresize-f
   "Description:
       Resize component inside JLayeredPane on main frame resize event.
@@ -759,6 +778,7 @@
             refresh-layered-for-tables
             (template-resize jarmanapp)
             (alerts-rebounds-f e)
+            (app-functional-space-resize e)
             (.repaint app))))
 
 (config! (to-root app) :listen [:component-resized (fn [e] (onresize-f e))])

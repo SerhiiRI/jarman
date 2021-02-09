@@ -20,6 +20,9 @@
 (defn getSize   [obj] (let [size (.getSize obj)] [(.width size) (.height size)]))
 (defn getParent [obj] (.getParent (seesaw.core/to-widget obj)))
 (defn getRoot   [obj] (to-root (seesaw.core/to-widget obj)))
+(defn findByID [root id] (let [found (seesaw.core/to-widget (select (to-root root) [id]))] found))
+(defn getChildren [parent] (let [children (cchildren (seesaw.core/to-widget parent))] children))
+(defn firstToWidget [list] (seesaw.core/to-widget (first list)))
 
 (def getFont
   (fn [& params] (-> {:size 12 :style :plain :name "Arial"}
@@ -36,6 +39,21 @@
 
 ;; Function for label with pre font
 (def label-fn (fn [& params] (apply label :font (getFont) params)))
+
+(def htmling 
+  "Description
+     Build word wrap html
+   "
+  (fn [body] (string/join "" ["<html><body style='width: 100%; overflow-wrap: break-word;'>" body "</body><html>"])))
+
+(defmacro textarea 
+  "Description
+     TextArea with word wrap
+   "
+  [text & args] `(label :text `~(htmling ~text) ~@args))
+
+;; (macroexpand-1 `(textarea "ala am kota" :border (line-border :thickness 1 :color "#a23")))
+
 
 (defn middle-bounds 
   "Description:

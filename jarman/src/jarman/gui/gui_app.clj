@@ -561,15 +561,19 @@
                                        :font (getFont 14) 
                                        :size [200 :by 30])))
 
-(def cg-lang-view 
+(def cg-block-view 
   (fn [path]
-    (let [param (fn [key] (str (get-in @configuration (join-vec path key))))]
-      (cond (identical? (param [:display?]) :edit) (mig-panel
-                                                    :constraints ["wrap 1" "50px[]50px" "10px[]0px"]
-                                                    :items [[(cg-block-header (param [:name]))]
-                                                            [(textarea (param [:doc]) :font (getFont 14))]
-                                                            [(cg-combobox (join-vec (list (param [:value])) (all-langs)))]]))
-      :else (label :text (str (println (param [:display?])))))))
+    (let [param (fn [key] (get-in @configuration (join-vec path key)))]
+      (do
+        (println (cg-combobox (join-vec (list (param [:value])) (all-langs))))
+        (cond (= (param [:display]) :edit)
+              (mig-panel
+               :constraints ["wrap 1" "50px[]50px" "10px[]0px"]
+               :items [[(cg-block-header (param [:name]))]
+                       [(textarea (param [:doc]) :font (getFont 14))]
+                       [(cg-combobox (join-vec (list (param [:value])) (all-langs)))]])
+              :else (label)))
+      )))
 
 
 (def create-config-gen
@@ -582,10 +586,13 @@
                            :size [(first @right-size) :by (second @right-size)]
                            :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
                            :items (vec (concat
+                                        ;; Header of section/config file
                                         [[(cg-file-header (get-in map-part [:name]))]]
-                                        (cond
-                                          (not (= (get-in map-part [:value :lang]) nil)) [[(cg-lang-view (concat start-key [:value :lang]))]]
-                                          :else []))))))))
+                                               ;; Foreach on init values and create configuration blocks
+                                        (vec (map
+                                              (fn [param] [(cg-block-view (join-vec start-key [:value] (list (first param))))])
+                                              (get-in map-part [:value]))))))))))
+
 
 
 ;; (defn main

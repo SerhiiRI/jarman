@@ -1,14 +1,14 @@
 ;; 
 ;; Compilation: dev_tool.clj -> metadata.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
 ;; 
-(ns jarman.gui-app
+(ns jarman.gui.gui-app
   (:use seesaw.core
         seesaw.border
         seesaw.dev
-        seesaw.mig
-        jarman.gui-tools
-        jarman.gui-alerts-service)
+        seesaw.mig)
   (:require [jarman.resource-lib.icon-library :as icon]
+            [jarman.gui.gui-tools :refer :all]
+            [jarman.gui.gui-alerts-service :refer :all]
             [clojure.string :as string]))
 
 (import javax.swing.JLayeredPane)

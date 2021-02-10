@@ -1,23 +1,23 @@
 ;; 
 ;; Compilation: dev_tool.clj -> metadata.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
 ;; 
-(ns jarman.gui-app
+(ns jarman.gui.gui-app
   (:use seesaw.core
         seesaw.border
         seesaw.dev
-        seesaw.mig
-        jarman.tools.dev-tools
-        jarman.gui-tools
-        jarman.gui-alerts-service
-        jarman.config.config-manager
-        jarman.config.init
-        jarman.tools.lang
-        ;; jarman.gui.gui-db-view
-        )
-  (:require [jarman.resource-lib.icon-library :as icon]
-            [clojure.string :as string]
-            ;;  [jarman.config.config-manager :as cm]
-            ))
+        seesaw.mig)
+  (:require [clojure.string :as string]
+            ;; resource 
+            [jarman.resource-lib.icon-library :as icon]
+            ;; logics
+            [jarman.config.config-manager :refer :all]
+            [jarman.gui.gui-tools :refer :all]
+            [jarman.gui.gui-alerts-service :refer :all]
+            ;; deverloper tools 
+            [jarman.tools.swing :as stool]
+            [jarman.tools.lang :refer :all]
+            ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
+            [jarman.config.init :refer [configuration language]]))
 
 ;;  (get-color :jarman :bar)
 
@@ -354,7 +354,7 @@
                      btn (fn [txt ico onclick] (label
                                                 :font (getFont 13)
                                                 :text txt
-                                                :icon (image-scale ico 30)
+                                                :icon (stool/image-scale ico 30)
                                                 :background "#fff"
                                                 :foreground "#000"
                                                 :border (compound-border (empty-border :left 10 :right 15) (line-border :bottom 1 :color border-c))
@@ -392,7 +392,7 @@
                                                  (= (get data :type) "header") (- (get data :height) 2)
                                                  :else                         (- (get data :height) 0))]
                   :icon (cond
-                          (= (get data :type) "key") (image-scale icon/key-blue-64-png (/ (get data :height) 1))
+                          (= (get data :type) "key") (stool/image-scale icon/key-blue-64-png (/ (get data :height) 1))
                           :else nil)
                   :background (cond
                                 (= (get data :type) "header") "#666"
@@ -474,7 +474,7 @@
                                       (label
                                        :font (getFont 13)
                                        :text txt
-                                       :icon (image-scale ico 30)
+                                       :icon (stool/image-scale ico 30)
                                        :background "#fff"
                                        :foreground "#000"
                                        :border (compound-border (empty-border :left 10 :right 15) (line-border :thickness 1 :color border-c))
@@ -814,9 +814,9 @@
   [] (let [menu-icon-size 50]
        (do
          (.add app jarmanapp (new Integer 5))
-         (.add app (slider-ico-btn (image-scale icon/scheme-grey-64x64-png menu-icon-size) 0 menu-icon-size "DB View"
+         (.add app (slider-ico-btn (stool/image-scale icon/scheme-grey-64x64-png menu-icon-size) 0 menu-icon-size "DB View"
                                    {:onclick (fn [e] (create-view-db-view))}) (new Integer 10))
-         (.add app (slider-ico-btn (image-scale icon/I-64-png menu-icon-size) 1 menu-icon-size "Powiadomienia" {:onclick (fn [e] (alerts-s :show))}) (new Integer 10))
+         (.add app (slider-ico-btn (stool/image-scale icon/I-64-png menu-icon-size) 1 menu-icon-size "Powiadomienia" {:onclick (fn [e] (alerts-s :show))}) (new Integer 10))
 
         ;;  (onresize-f app)
          (.repaint app))))

@@ -1,6 +1,7 @@
 (ns jarman.config.spec
   (:import (java.io IOException))
-  (:require [jarman.tools.lang :refer [in?]]
+  (:require [jarman.tools.lang :refer [in? blet]]
+            [jarman.config.tools :refer [recur-walk-throw]]
             [clojure.spec.alpha :as s]))
 
 
@@ -30,17 +31,10 @@
 ;;      {:log "\.+"
 ;;       :type :error}
 
-(s/def ::ne-string
-  (every-pred string? not-empty))
-
+(s/def ::ne-string (every-pred string? not-empty))
 (s/valid? ::ne-string "123")
 
-
-(s/def ::url
-  (s/and
-   ::ne-string
-   (partial re-matches #"(?i)^http(s?)://.*")))
-
+(s/def ::url (s/and ::ne-string (partial re-matches #"(?i)^http(s?)://.*")))
 (s/valid? ::url "test")
 (s/valid? ::url "http://test.com")
 (s/valid? ::url nil)
@@ -88,7 +82,6 @@
                    :page/description]
           :opt-un [:page/status]))
 
-
 (s/def ::ne-string (every-pred string? not-empty))
 (s/def :block/name-str (s/and ::ne-string (partial re-matches #"[\w\d\s]+")))
 (s/def :block/doc-str ::ne-string)
@@ -102,49 +95,60 @@
 (s/def :block/doc (fn [x](or (s/valid? :block/doc-str x) (s/valid? :block/keywoard-path x))))
 (s/def :block/log ::ne-string)
 
+
+;;; parts of configuration structure validateion
+;;; patterns
 (s/def :block/block
   (s/keys :req-un [:block/type
                    :block/value]
           :opt-un [:block/name
                    :block/doc
-                   :block/display
-                   :block/component]))
-
+                   :block/display]))
+(s/def :block/parameter
+  (s/keys :req-un [:block/component
+                   :block/type
+                   :block/value
+                   :block/name]
+          :opt-un [:block/doc
+                   :block/display]))
 (s/def :block/error
   (s/keys :req-un [:block/type
                    :block/log]))
 
-(s/valid? :block/block {:type :block
-                        :doc "dfkasj"
-                        :value "suka"})
-(s/valid? :block/error {:type :error
-                        :log "suka"})
+(s/def :block/valid-segment
+  (fn [m] (s/valid? (condp in? (:type m)
+                     [:block
+                      :file
+                      :directory]  :block/block
+                     [:param]      :block/parameter
+                     [:error]      :block/error 
+                     (fn [_] false)) m)))
+
+(defn- valid-config-logger [m logger]
+  (let [sumvalid (atom true)
+        f (fn [block path]
+            (let [vld? (s/valid? :block/valid-segment block)]
+              (swap! sumvalid (fn [a](and a vld?)))
+              (if-not vld? (logger block path))))]
+    (recur-walk-throw m f [])
+    @sumvalid))
 
 
-(defn config-in-deepth [m]
-  (if-let [key-validator
-           (condp in? (:type m)
-             [:block :param :file :directory] :block/block 
-             [:error] :block/error 
-             (fn [_] true))]
-    (if (map? (:value m))
-      (and (s/valid? key-validator m) (config-in-deepth (:value m)))
-      (s/valid? key-validator m))
-    ))
+(defn valid-param [m]
+  (s/valid? :block/parameter m))
+(defn valid-block [m]
+  (s/valid? :block/block m))
+(defn valid-segment [m]
+  (blet {:valid? (valid-config-logger m logger) :output @output}
+        [output (atom [])
+         logger (fn [segment path]
+                  (swap! output 
+                   #(conj %
+                     {:path path
+                      :message (format "Not valid section - %s" (str (assoc segment :value '...)))})))]))
 
-(config-in-deepth {:type :block
-                   :doc "dfkasj"
-                   :value "suka"})
 
-(s/valid? ::config-block {:type :block
-                          :suak ""
-                          :value 213
-                          :name "dsakf"})
-(s/valid? ::config-block {:name [:ala 123]})
 
-(re-matches #"[\w\d\s\.]+" "")
-;; (s/def ::valid-block)
-{:name ["Some think" (vector (:\w)+)]
- :display [:none :edit :noedit]
- :type [:block :param :file :directory :error]
- }
+
+
+

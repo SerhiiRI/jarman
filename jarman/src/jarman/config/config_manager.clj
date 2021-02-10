@@ -158,13 +158,13 @@
 (def get-color  (create-value-getter theme-map true "#000" :color))
 (def get-frame  (create-value-getter theme-map true 1000 :frame))
 (def get-font   (create-value-getter theme-map true "Ubuntu" :font))
-(def get-lang   (create-value-getter @language false "Unknown" using-lang :ui))
+(def get-lang   (create-value-getter @language false "Unknown" using-lang))
 (def get-lang-btns (create-value-getter @language false "Unknown" using-lang :ui :buttons))
 ;; (get-color :jarman :bar)
 ;; (get-frame :width)
 ;; (get-font :bold)
 ;; (get-lang-btns :remove)
-(all-langs)
+;; (all-langs)
 
 ;; ####################################################################
 ;; #                                                                  #

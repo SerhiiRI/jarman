@@ -485,7 +485,7 @@
         :background (new Color 0 0 0 0)
         :constraints ["" "5px[fill]0px" "0px[30px, fill]0px"]
         :items [[(btn "Show all relation" icon/refresh-connection-blue-64-png)]
-                [(btn "Save view" icon/agree-64-png true)]
+                [(btn "Save view" icon/agree-grey-64-png true)]
                 [(btn "Reset view" icon/arrow-blue-left-64-png)]
                 [(btn "Reloade view" icon/refresh-blue-64-png)]])))
 
@@ -535,6 +535,12 @@
                                     :background bg
                                     :border (line-border :bottom 2 :color (get-color :decorate :underline))))))
 
+(def cg-param-header (fn [title] (let [bg (get-color :background :main)]
+                                   (mig-panel
+                                    :constraints ["" "0px[grow, center]0px" "0px[]0px"]
+                                    :items [[(label :text title :font (getFont 16 :bold))]]
+                                    :background bg))))
+
 (def cg-body (fn [body] (let [bg (get-color :background :main)]
                           (mig-panel
                            :constraints ["wrap" "0px[]0px" "0px[]0px"]
@@ -551,30 +557,33 @@
                               :font (getFont 14)
                               :size [200 :by 30])))
 
-(def cg-block-view (fn []))
 (def cg-block-view
   (fn [start-key]
     (let [param (fn [key] (get-in @configuration (join-vec start-key key)))]
-      (do
-        (println "Create block" start-key)
-        (println "Display" (param [:display]))
-        (println "Value" (param [:value]))
-        (cond (= (param [:display]) :edit)
-              (mig-panel
-               :constraints ["wrap 1" "50px[]50px" "10px[]0px"]
-               :items (join-mig-items
-                       (cg-block-header (str (param [:name])))
-                       (textarea (str (param [:doc])) :font (getFont 14))
-                       (cond (= (param [:component]) :combobox) (cg-combobox (join-vec (list (param [:value])) (all-langs)))
-                             (= (param [:component]) :text)     (cg-input (str (param :value)))
-                            ;; TODO: Exception clojure.lang.Keyword 
-                            ;; (and (not (string? (param [:value]))) (seqable? (param [:value]))) (map (fn [param]
-                            ;;                                                                            (cg-block-view (join-vec start-key [:value] (list (first param)))))
-                            ;;                                                                          (param [:value]))
-                             :else (textarea (str (param [:value])) :font (getFont 12)))))
-              :else (label))))))
+      (cond (= (param [:display]) :edit)
+            (mig-panel
+             :constraints ["wrap 1" "50px[]50px" "10px[]0px"]
+            ;;  :border (if (= (param [:type]) :block) (line-border :top 2 :color (get-color :decorate :gray-underline)) (empty-border))
+             :items (join-mig-items
+                     (if (= (param [:type]) :block) (cg-block-header (str (param [:name]))) (cg-param-header (str (param [:name]))))
+                     (textarea (str (param [:doc])) :font (getFont 14))
+                     (cond (= (param [:component]) :combobox) (cg-combobox (if (= (last start-key) :lang)
+                                                                             (join-vec (list (param [:value])) (all-langs))
+                                                                             (vec (list (param [:value])))))
+                           (= (param [:component]) :text) (cg-input (str (param [:value])))
+                           (map? (param [:value])) (map (fn [next-param]
+                                                          (cg-block-view (join-vec start-key [:value] (list (first next-param)))))
+                                                        (param [:value]))
+                           :else (textarea (str (param [:value])) :font (getFont 12)))))
+            :else (label)))))
 
-;; (get-in @configuration [:resource.edn :value :configuration-attribute  :value :configuration-path :component])
+
+(get-in @configuration [:resource.edn])
+;; ;; => {:configuration-path {:type :param, :display :edit, :component :text, :value "config"}}
+;; (get-in language [:pl :value :configuration-attribute])
+;; ;; => {:type :param, :display :edit, :component :text, :value "config"}
+
+
 
 (def create-config-gen
   "Description
@@ -584,7 +593,7 @@
                     (cond (= (get-in map-part [:display]) :edit)
                           (mig-panel
                             ;; :size [(first @right-size) :by (second @right-size)]
-                          :border (line-border :bottom 50 :color (get-color :background :main))
+                           :border (line-border :bottom 50 :color (get-color :background :main))
                            :constraints ["wrap 1" (string/join "" ["20px[:" (first @right-size) ", grow, fill]20px"]) "20px[]20px"]
                            :items (join-mig-items
                                    ;; Header of section/config file
@@ -632,20 +641,6 @@
                                                                      ;; Create Config Generator parts
                                                                      (create-config-gen path)))))) @configuration))))
 
-
-
-
-
-;; (get-in @configuration [:themes :value :theme_config.edn])
-;; (map (fn [option]
-;;        (let [;; Remember path to edn file
-;;              path (if (= (get-in @configuration [(first option) :type]) :directory)
-;;                     (vec (concat [(first option) :type] (search-edns (first option))))
-;;                     (vec (list (first option))))
-;;              ;; Return edn
-;;              opt-name (last path)]
-;;          opt-name
-;;          )) @configuration)
 
 
 
@@ -703,6 +698,7 @@
       Main space for app inside JLayeredPane. There is menu with expand btns and space for tables with tab btns.
    "
   (grid-panel
+   ;; TODO: Components are writing to output, they can not
    :bounds app-bounds
    :items [(mig-panel
             :constraints [""
@@ -715,7 +711,7 @@
                                       [(expand-btn "Widoki"
                                                    (expand-child-btn "DB View" (fn [e] (create-view-db-view)))
                                                    (expand-child-btn "Test"    (fn [e] (create-view "test1" "Test 1" (label :text "Test 1"))))
-                                                   (expand-child-btn "Test 2"    (fn [e] (create-view "test2" "Test 2" (label :text "Test 2")))))]
+                                                   (expand-child-btn "Test 2"  (fn [e] (create-view "test2" "Test 2" (label :text "Test 2")))))]
                                       [(create-view-conf-gen)])]
                     [(mig-app-right-f [(label)]
                                       [(label)])]])]))
@@ -779,7 +775,7 @@
   [] (let [menu-icon-size 50]
        (do
          (.add app jarmanapp (new Integer 5))
-         (.add app (slider-ico-btn (stool/image-scale icon/scheme-grey-64x64-png menu-icon-size) 0 menu-icon-size "DB View"
+         (.add app (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png menu-icon-size) 0 menu-icon-size "DB View"
                                    {:onclick (fn [e] (create-view-db-view))}) (new Integer 10))
          (.add app (slider-ico-btn (stool/image-scale icon/I-64-png menu-icon-size) 1 menu-icon-size "Powiadomienia" {:onclick (fn [e] (alerts-s :show))}) (new Integer 10))
 

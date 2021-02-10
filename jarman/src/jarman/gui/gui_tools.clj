@@ -139,7 +139,7 @@
 
 (def template-resize
   "Discription:
-      Function for JLayeredPane for resize it to app window.
+      Function for main JLayeredPane for resize it to app window.
    Example:
       (template-resize my-app)
    "

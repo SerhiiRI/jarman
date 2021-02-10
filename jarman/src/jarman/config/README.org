@@ -32,12 +32,12 @@
 					  :block2 {:name [:link :to :translation]
 						   :doc "this is block 2 documentation"
 						   :type :block
-						   :display? :noedit
+						   :display :noedit
 						   :value {:param3 {:name [:link :to :translation]
 								    :doc "this is param 3 documentation"
 								    :type :param
 								    :component :textlist
-								    :display? :nil
+								    :display :nil
 								    :value "some,value,string"}}}}}}}}
 
    #+end_src

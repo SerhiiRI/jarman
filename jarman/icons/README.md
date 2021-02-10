@@ -12,11 +12,11 @@
 * Names:
    * the first word is always the name of the object depicted on the icon,
    for example `key-blue-64`;
-   * the second word is a continuation of the name or definition of color
+   * the second word is a continuation of the name or definition of color,
    for examle `a-up-blue-128` or `basket-blue-64`;
   * when there are multiple color icon options:
   for example `x-blue1-64` and `x-blue-64`;
-  * when the difference is not in color but in shape (for example, transparent background);
+  * when the difference is not in color but in shape for example,
   for example `xml-64`, `xml1-64`;
 
  

@@ -37,6 +37,15 @@
   [col]
   `(filter identity ~col))
 
+(defmacro join-vec
+  "(join-vec [:a :d] [:b :c]) => [:a :d :b :c]"
+  [& vecs]
+  `(vec (concat ~@vecs)))
+
+;; (def axc [:a :d])
+;; (macroexpand-1 `(join-vec axc [:b :c]))
+;; (join-vec axc [:b :c])
+
 (defmacro join
   "(filter-nil [nil 1 nil 3 4]) ;=> [1 3 4]"
   [delimiter col]

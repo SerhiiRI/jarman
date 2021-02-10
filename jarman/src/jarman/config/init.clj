@@ -8,7 +8,7 @@
 
 (defn- suka [])
 (def ^:dynamic *config-root* "./config")
-(def ^:dynamic *config-files* [[:init.edn][:resource.edn][:database.edn][:themes :jarman_light.edn][:themes :theme_config.edn]])
+(def ^:dynamic *config-files* [[:init.edn] [:resource.edn] [:database.edn] [:themes :jarman_light.edn] [:themes :theme_config.edn]])
 ;; (def *supported-languages* [:pl :ua])
 (def logs (atom nil))
 (set-validator! logs #(seqable? %))
@@ -41,10 +41,10 @@
    {}
    (partition 2 kv)))
 
-(defmacro is-block? [m] `(= (:type ~m) :block)) 
-(defmacro is-param? [m] `(= (:type ~m) :param)) 
-(defmacro is-file? [m] `(= (:type ~m) :file)) 
-(defmacro is-directory? [m] `(= (:type ~m) :directory)) 
+(defmacro is-block? [m] `(= (:type ~m) :block))
+(defmacro is-param? [m] `(= (:type ~m) :param))
+(defmacro is-file? [m] `(= (:type ~m) :file))
+(defmacro is-directory? [m] `(= (:type ~m) :directory))
 (defmacro is-error? [m] `(= (:type ~m) :error))
 (defmacro is-keyword-list [kv-list]
   `(every? keyword? ~kv-list))
@@ -79,7 +79,7 @@
       (reset!
        configuration
        (apply merge (for [[P F :as PF] PF-list
-                          :let [L (count PF)]] 
+                          :let [L (count PF)]]
                       (cond (= L 1) (load-config-file F)
                             (> L 1) (reduce #(DM %2 %1) (FM (last P) (load-config-file F)) (butlast P))))))
       nil)))
@@ -90,17 +90,17 @@
 
 (defn key-strings-path
   [m & {:keys [sequence?] :or {sequence? false}}]
-  (blet 
-    (get-key-paths-recur
-     :map-part m
-     :end-path-func in-deep-key-path-f
-     :path nil
-     :sequence? sequence?)
-    @in-deep-key-path
-    [in-deep-key-path (atom [])
-     in-deep-key-path-f (fn [path]
-                          (if (and (string? (get-in m path)) (not= :value (last path)))
-                            (swap! in-deep-key-path (fn [path-list] (conj path-list (conj path (get-in m path)))))))]))
+  (blet
+   (get-key-paths-recur
+    :map-part m
+    :end-path-func in-deep-key-path-f
+    :path nil
+    :sequence? sequence?)
+   @in-deep-key-path
+   [in-deep-key-path (atom [])
+    in-deep-key-path-f (fn [path]
+                         (if (and (string? (get-in m path)) (not= :value (last path)))
+                           (swap! in-deep-key-path (fn [path-list] (conj path-list (conj path (get-in m path)))))))]))
 
 
 
@@ -137,9 +137,9 @@
   (where
    ((_TMP01 (atom m)))
    (doall (for [px-t path-list-value
-          :let [path (vec (butlast px-t))]]
-      (if (nil? (get-in m path nil))
-        (swap! _TMP01 #(assoc-in % path (last px-t))))))
+                :let [path (vec (butlast px-t))]]
+            (if (nil? (get-in m path nil))
+              (swap! _TMP01 #(assoc-in % path (last px-t))))))
    @_TMP01))
 
 
@@ -155,7 +155,7 @@
    (swapp-language)))
 
 ;; (swapp-configuration)
-;; (swapp-language)
+(swapp-language)
 ;; (refresh-translatio)
-
-
+;; @language
+;; @configuration

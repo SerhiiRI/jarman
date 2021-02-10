@@ -6,10 +6,8 @@
         seesaw.border
         seesaw.dev
         seesaw.mig
-        jarman.tools.dev-tools
         jarman.gui-tools
-        jarman.gui-alerts-service
-        jarman.logic.metadata)
+        jarman.gui-alerts-service)
   (:require [jarman.resource-lib.icon-library :as icon]
             [clojure.string :as string]))
 

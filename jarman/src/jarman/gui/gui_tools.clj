@@ -10,28 +10,19 @@
   (:require [jarman.resource-lib.icon-library :as icon]
             [clojure.string :as string]))
 
-
-;; (import javax.swing.JInternalFrame)
-;; (import javax.swing.BorderFactory)
-;; (import javax.swing.JDesktopPane)
-;; (import javax.swing.JButton)
-;; (import javax.swing.JFrame)
-;; (import javax.swing.Jlabel-fn)
-;; (import java.awt.Dimension)
-;; (import java.awt.Component)
-;; (import java.awt.Point)
 (import javax.swing.JLayeredPane)
 (import java.awt.Color)
 (import java.awt.MouseInfo)
 (import java.awt.event.MouseListener)
-;; (import java.awt.event.MouseEvent)
-;; (import java.awt.PointerInfo)
 
 (defn getWidth  [obj] (.width (.getSize obj)))
 (defn getHeight [obj] (.height (.getSize obj)))
 (defn getSize   [obj] (let [size (.getSize obj)] [(.width size) (.height size)]))
 (defn getParent [obj] (.getParent (seesaw.core/to-widget obj)))
 (defn getRoot   [obj] (to-root (seesaw.core/to-widget obj)))
+(defn findByID [root id] (let [found (seesaw.core/to-widget (select (to-root root) [id]))] found))
+(defn getChildren [parent] (let [children (seesaw.util/children (seesaw.core/to-widget parent))] children))
+(defn firstToWidget [list] (seesaw.core/to-widget (first list)))
 
 (def getFont
   (fn [& params] (-> {:size 12 :style :plain :name "Arial"}
@@ -48,6 +39,21 @@
 
 ;; Function for label with pre font
 (def label-fn (fn [& params] (apply label :font (getFont) params)))
+
+(def htmling 
+  "Description
+     Build word wrap html
+   "
+  (fn [body] (string/join "" ["<html><body style='width: 100%; overflow-wrap: break-word;'>" body "</body><html>"])))
+
+(defmacro textarea 
+  "Description
+     TextArea with word wrap
+   "
+  [text & args] `(label :text `~(htmling ~text) ~@args))
+
+;; (macroexpand-1 `(textarea "ala am kota" :border (line-border :thickness 1 :color "#a23")))
+
 
 (defn middle-bounds 
   "Description:
@@ -221,36 +227,40 @@
                           border (compound-border (line-border :left 6 :color bg-color) (line-border :bottom 2 :color margin-color))
                           vsize 35
                           hsize 200
-                          ico (if (> (count inside-btns) 0) (image-scale icon/plus-64-png 25))
+                          inside-btns-to-use (if (seqable? (first inside-btns)) (first inside-btns) inside-btns)
+                          ico (if (> (count inside-btns-to-use) 0) (image-scale icon/plus-64-png 25))
                           ico-hover (image-scale icon/minus-grey-64-png 20)]
-                      (mig-panel
-                       :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
-                       :listen [:mouse-entered hand-hover-on
-                                :mouse-clicked (fn [e]
-                                                 (if (> (count inside-btns) 0)
-                                                   (if (== (count (seesaw.util/children (seesaw.core/to-widget e))) 1)
-                                                     (do
+                      
+                      (do 
+                        (println inside-btns-to-use)
+                        (mig-panel
+                        :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
+                        :listen [:mouse-entered hand-hover-on
+                                 :mouse-clicked (fn [e]
+                                                  (if (> (count inside-btns-to-use) 0)
+                                                    (if (== (count (seesaw.util/children (seesaw.core/to-widget e))) 1)
+                                                      (do
                                                       ;;  Add inside buttons to mig with expand button
-                                                       (config! e :items (vec (map (fn [item] (vec (list item))) (concat (vec (seesaw.util/children (seesaw.core/to-widget e))) (vec inside-btns)))))
-                                                       (config! (last (seesaw.util/children (first (seesaw.util/children (seesaw.core/to-widget e))))) :icon ico-hover))
-                                                     (do
+                                                        (config! e :items (vec (map (fn [item] (vec (list item))) (concat (vec (seesaw.util/children (seesaw.core/to-widget e))) (vec inside-btns-to-use)))))
+                                                        (config! (last (seesaw.util/children (first (seesaw.util/children (seesaw.core/to-widget e))))) :icon ico-hover))
+                                                      (do
                                                       ;;  Remove inside buttons form mig without expand button
-                                                       (config! e :items [(vec (list (first (seesaw.util/children (seesaw.core/to-widget e)))))])
-                                                       (config! (last (seesaw.util/children (first (seesaw.util/children (seesaw.core/to-widget e))))) :icon ico)))))]
-                       :items [[(mig-panel
-                                 :constraints ["" "0px[fill]0px" "0px[fill]0px"]
-                                 :background (new Color 0 0 0 0)
-                                 :items [[(label-fn
-                                           :text txt
-                                           :size [(- hsize vsize) :by vsize]
-                                           :background bg-color
-                                           :border border)]
-                                         [(label-fn
-                                           :size [vsize :by vsize]
-                                           :halign :center
-                                           :background bg-color
-                                           :border border
-                                           :icon ico)]])]]))))
+                                                        (config! e :items [(vec (list (first (seesaw.util/children (seesaw.core/to-widget e)))))])
+                                                        (config! (last (seesaw.util/children (first (seesaw.util/children (seesaw.core/to-widget e))))) :icon ico)))))]
+                        :items [[(mig-panel
+                                  :constraints ["" "0px[fill]0px" "0px[fill]0px"]
+                                  :background (new Color 0 0 0 0)
+                                  :items [[(label-fn
+                                            :text txt
+                                            :size [(- hsize vsize) :by vsize]
+                                            :background bg-color
+                                            :border border)]
+                                          [(label-fn
+                                            :size [vsize :by vsize]
+                                            :halign :center
+                                            :background bg-color
+                                            :border border
+                                            :icon ico)]])]])))))
 
 (def expand-child-btn
   "Description

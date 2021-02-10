@@ -205,7 +205,6 @@
 ;; │              │
 ;; └──────────────┘
 
-;; (show-options (checkbox))
 
 (defn create-save-btn-for-table-editor
   [] (edit-table-btn :edit-view-save-btn (get-lang-btns :save) icon/agree-grey-64-png icon/agree-blue-64-png true
@@ -514,20 +513,6 @@
 
 
 
-
-
-(def app-functional-space-resize
-  "Description
-     Resize app functional space (this space on right).
-   "
-  (fn [e] (let [AFS (firstToWidget (getChildren (findByID e :#app-functional-space)))
-                leaf (try (seesaw.util/children AFS) (catch Exception e (str e)))
-                w (- (getWidth AFS) 20)
-                h (- (getHeight AFS) 20)]
-            (if (= leaf nil) (fn []) (do
-                                       (reset! right-size [w h])
-                                       (config! (seesaw.core/to-widget (get-in @views [@active-tab :component])) :size [w :by h]))))))
-
 ;; ┌──────────────────┐
 ;; │                  │
 ;; │ Config generator │
@@ -537,18 +522,18 @@
 
 
 (def cg-file-header (fn [title] (let [bg (get-color :background :dark-header)]
-                             (mig-panel
-                              :constraints ["" "0px[grow, center]0px" "0px[]0px"]
-                              :items [[(label :text title :font (getFont 16) :foreground (get-color :foreground :dark-header))]]
-                              :background bg
-                              :border (line-border :thickness 10 :color bg)))))
+                                  (mig-panel
+                                   :constraints ["" "0px[grow, center]0px" "0px[]0px"]
+                                   :items [[(label :text title :font (getFont 16) :foreground (get-color :foreground :dark-header))]]
+                                   :background bg
+                                   :border (line-border :thickness 10 :color bg)))))
 
 (def cg-block-header (fn [title] (let [bg (get-color :background :main)]
-                             (mig-panel
-                              :constraints ["" "0px[grow, center]0px" "0px[]0px"]
-                              :items [[(label :text title :font (getFont 16 :bold))]]
-                              :background bg
-                              :border (line-border :bottom 2 :color (get-color :decorate :underline))))))
+                                   (mig-panel
+                                    :constraints ["" "0px[grow, center]0px" "0px[]0px"]
+                                    :items [[(label :text title :font (getFont 16 :bold))]]
+                                    :background bg
+                                    :border (line-border :bottom 2 :color (get-color :decorate :underline))))))
 
 (def cg-body (fn [body] (let [bg (get-color :background :main)]
                           (mig-panel
@@ -556,25 +541,40 @@
                            :items [[(textarea body :font (getFont 14))]]
                            :background bg))))
 
-(def cg-combobox (fn [model] (combobox :model model 
-                                       :background (get-color :background :combobox) 
-                                       :font (getFont 14) 
+(def cg-combobox (fn [model] (combobox :model model
+                                       :background (get-color :background :combobox)
+                                       :font (getFont 14)
                                        :size [200 :by 30])))
 
-(def cg-block-view 
-  (fn [path]
-    (let [param (fn [key] (get-in @configuration (join-vec path key)))]
+(def cg-input (fn [txt] (text :text txt
+                              :background (get-color :background :input)
+                              :font (getFont 14)
+                              :size [200 :by 30])))
+
+(def cg-block-view (fn []))
+(def cg-block-view
+  (fn [start-key]
+    (let [param (fn [key] (get-in @configuration (join-vec start-key key)))]
       (do
-        (println (cg-combobox (join-vec (list (param [:value])) (all-langs))))
+        (println "Create block" start-key)
+        (println "Display" (param [:display]))
+        (println "Value" (param [:value]))
         (cond (= (param [:display]) :edit)
               (mig-panel
                :constraints ["wrap 1" "50px[]50px" "10px[]0px"]
-               :items [[(cg-block-header (param [:name]))]
-                       [(textarea (param [:doc]) :font (getFont 14))]
-                       [(cg-combobox (join-vec (list (param [:value])) (all-langs)))]])
-              :else (label)))
-      )))
+               :items (join-mig-items
+                       (cg-block-header (str (param [:name])))
+                       (textarea (str (param [:doc])) :font (getFont 14))
+                       (cond (= (param [:component]) :combobox) (cg-combobox (join-vec (list (param [:value])) (all-langs)))
+                             (= (param [:component]) :text)     (cg-input (str (param :value)))
+                            ;; TODO: Exception clojure.lang.Keyword 
+                            ;; (and (not (string? (param [:value]))) (seqable? (param [:value]))) (map (fn [param]
+                            ;;                                                                            (cg-block-view (join-vec start-key [:value] (list (first param)))))
+                            ;;                                                                          (param [:value]))
+                             :else (textarea (str (param [:value])) :font (getFont 12)))))
+              :else (label))))))
 
+;; (get-in @configuration [:resource.edn :value :configuration-attribute  :value :configuration-path :component])
 
 (def create-config-gen
   "Description
@@ -583,64 +583,19 @@
   (fn [start-key] (let [map-part (get-in @configuration start-key)]
                     (cond (= (get-in map-part [:display]) :edit)
                           (mig-panel
-                           :size [(first @right-size) :by (second @right-size)]
-                           :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
-                           :items (vec (concat
-                                        ;; Header of section/config file
-                                        [[(cg-file-header (get-in map-part [:name]))]]
-                                               ;; Foreach on init values and create configuration blocks
-                                        (vec (map
-                                              (fn [param] [(cg-block-view (join-vec start-key [:value] (list (first param))))])
-                                              (get-in map-part [:value]))))))))))
+                            ;; :size [(first @right-size) :by (second @right-size)]
+                          :border (line-border :bottom 50 :color (get-color :background :main))
+                           :constraints ["wrap 1" (string/join "" ["20px[:" (first @right-size) ", grow, fill]20px"]) "20px[]20px"]
+                           :items (join-mig-items
+                                   ;; Header of section/config file
+                                   (cg-file-header (get-in map-part [:name]))
+                                   ;; Foreach on init values and create configuration blocks
+                                   (map
+                                    (fn [param] (cg-block-view (join-vec start-key [:value] (list (first param)))))
+                                    (get-in map-part [:value]))))))))
 
 
 
-;; (defn main
-;;   []
-;;   (let [rating-label (label :text "Please choose rating:")
-;;         rating (combobox :model ["1 star" "2 star"])
-;;         location (slider
-;;                   :value 5 :min 0 :max 20
-;;                   :minor-tick-spacing 1 :major-tick-spacing 2
-;;                   :snap-to-ticks? true
-;;                   :paint-ticks? true :paint-labels? true)]
-;;     (seesaw.core/vertical-panel :items [rating-label rating location])))
-
-
-;; (-> (doto (seesaw.core/frame
-;;            :title "DEBUG WINDOW" :undecorated? false
-;;            :minimum-size [200 :by 50]
-;;            :size [app-width :by app-height]
-;;            :content (main))
-;;       (.setLocationRelativeTo nil) pack! show!))
-
-;; (def mp
-;;   {:name "Initial configuration"
-;;    :display :edit
-;;    :type :init
-;;    :value
-;;    {:lang
-;;     {:name "Language"
-;;      :doc "Choose language for program "
-;;      :type :param
-;;      :component :text
-;;      :display? :edit
-;;      :value :pl}}})
-
-;; (vec (concat
-;;       [[(cg-header (get-in mp [:name]))]]
-;;       (cond
-;;         (not (= (get-in mp [:value :lang]) nil))
-;;         [[(cg-lang-view (vec (concat [:init.edn] [:value :lang])))]]
-;;         :else [])))
-
-
-
-;;  (map (fn [option] (first option)) (get-in @configuration [:init.edn]))
-
-;; [[(cg-header (str (get-in map-part [:name])))]
-;;  [(cg-create-block (concat start-key [:lang]))]]
-;; (get-in @configuration [:init.edn])
 
 (def search-edns
   "Description
@@ -782,7 +737,10 @@
                                                             (reset! active-tab @active-tab))))
                                                 (fn [e] (do
                                                           (reset! active-tab (first item))
-                                                          (config! (select (getRoot app) [:#app-functional-space]) :items [(scrollable (get (second item) :component) :border nil :id (keyword (get (second item) :id)))]))))))
+                                                          (config! (select (getRoot app) [:#app-functional-space])
+                                                                   :items [(scrollable (get (second item) :component)
+                                                                                       :border nil
+                                                                                       :id (keyword (get (second item) :id)))]))))))
                                    @views))
     :else [(label)]))
 
@@ -847,7 +805,19 @@
                                                                                       (getHeight (.getParent (get-in @views [:layered-for-tabs :component])))))))))
 
 
-
+(def app-functional-space-resize
+  "Description
+     Resize app functional space (this space on right).
+   "
+  (fn [e] (let [AFS (firstToWidget (getChildren (findByID e :#app-functional-space)))
+                leaf (try (seesaw.util/children AFS) (catch Exception e (str e)))
+                w (- (getWidth AFS) 20)
+                h (- (getHeight AFS) 20)]
+            (if (= leaf nil) (fn []) (do
+                                       ;; Refresh size of app functional space (space on right)
+                                       (reset! right-size [w h])
+                                      ;;  (config! (seesaw.core/to-widget (get-in @views [@active-tab :component])) :size [w :by h])
+                                       )))))
 
 (def onresize-f
   "Description:

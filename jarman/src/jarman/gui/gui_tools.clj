@@ -8,7 +8,8 @@
         seesaw.mig)
   (:require [jarman.resource-lib.icon-library :as icon]
             [jarman.tools.swing :as stool]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [jarman.tools.lang :refer :all]))
 
 (import javax.swing.JLayeredPane)
 (import java.awt.Color)
@@ -54,6 +55,14 @@
 
 ;; (macroexpand-1 `(textarea "ala am kota" :border (line-border :thickness 1 :color "#a23")))
 
+(def join-mig-items
+  "Description
+     Join items and convert to mig's items vector
+   Example
+     (join-mig (list (label) (list (label) (label)))) => [[(label)] [(label)] [(label)]]
+   "
+  (fn [& args]
+    (join-vec (map #(vector %) (flatten args)))))
 
 (defn middle-bounds 
   "Description:

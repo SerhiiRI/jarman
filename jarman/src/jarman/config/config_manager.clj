@@ -38,6 +38,7 @@
                                              :value {:main {:type :param :display :edit :component :textcolor :value "#eee"}
                                                      :dark-header {:type :param :display :edit :component :textcolor :value "#494949"}
                                                      :combobox {:type :param :display :edit :component :textcolor :value "#fff"}
+                                                     :input {:type :param :display :edit :component :textcolor :value "#fff"}
                                                      :button {:type :param :display :edit :component :textcolor :value "#eee"}
                                                      :button_hover {:type :param :display :edit :component :textcolor :value "#96c1ea"}
                                                      :button_config {:type :param :display :edit :component :textcolor :value "#fff"}
@@ -103,19 +104,19 @@
   ([] (for-you-with-love "no bo wiesz tak szbyciej"))
   ([text]
    (let
-       [l (count text)
-        tl "┌" tr "┐"
-        v  "│" h  "─"
-        bl "└" br "┘"]
+    [l (count text)
+     tl "┌" tr "┐"
+     v  "│" h  "─"
+     bl "└" br "┘"]
      (println
       (apply
        str
-       (concat 
+       (concat
         (concat [tl] (vec (repeat (+ l 2) h)) [tr \newline])
         (concat [v] (vec (repeat (+ l 2) \space)) [v \newline])
         (concat [v \space] (seq text) [\space v \newline])
         (concat [v] (vec (repeat (+ l 2) \space)) [v \newline])
-        (concat [bl](vec (repeat (+ l 2) h)) [br \newline])))))))
+        (concat [bl] (vec (repeat (+ l 2) h)) [br \newline])))))))
 
 ;;; transform this poor view
 ;; ##################################
@@ -153,7 +154,7 @@
 
 
 (def using-lang (get-in @configuration [:init.edn :value :lang :value]))
-(def all-langs  (fn [] (let [langs (vec (map (fn [lng] (first lng)) @language))] (filter #(not(= % using-lang)) langs))))
+(def all-langs  (fn [] (let [langs (vec (map (fn [lng] (first lng)) @language))] (filter #(not (= % using-lang)) langs))))
 (def get-color  (create-value-getter theme-map true "#000" :color))
 (def get-frame  (create-value-getter theme-map true 1000 :frame))
 (def get-font   (create-value-getter theme-map true "Ubuntu" :font))

@@ -1,13 +1,13 @@
 ;; 
 ;; Compilation: dev_tool.clj -> metadata.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
 ;; 
-(ns jarman.gui-tools
+(ns jarman.gui.gui-tools
   (:use seesaw.core
         seesaw.border
         seesaw.dev
-        seesaw.mig
-        jarman.tools.dev-tools)
+        seesaw.mig)
   (:require [jarman.resource-lib.icon-library :as icon]
+            [jarman.tools.swing :as stool]
             [clojure.string :as string]))
 
 (import javax.swing.JLayeredPane)
@@ -79,17 +79,17 @@
       (build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png 23 (fn [e] (alert 'Wiadomosc')))
    Needed:
       Import jarman.dev-tools
-      Function need image-scale function for scalling icon
+      Function need stool/image-scale function for scalling icon
       Function need hand-hover-on function for hand mouse effect
    "
-  [ic ic-h layered & args] (label-fn :icon (image-scale ic (if (> (count args) 0) (first args) 28))
+  [ic ic-h layered & args] (label-fn :icon (stool/image-scale ic (if (> (count args) 0) (first args) 28))
                                      :background (new Color 0 0 0 0)
                                      :border (empty-border :left 3 :right 3)
                                      :listen [:mouse-entered (fn [e] (do 
-                                                                       (config! e :icon (image-scale ic-h (if (> (count args) 0) (first args) 28)) :cursor :hand)
+                                                                       (config! e :icon (stool/image-scale ic-h (if (> (count args) 0) (first args) 28)) :cursor :hand)
                                                                        (.repaint layered)))
                                               :mouse-exited (fn [e] (do
-                                                                       (config! e :icon (image-scale ic (if (> (count args) 0) (first args) 28)))
+                                                                       (config! e :icon (stool/image-scale ic (if (> (count args) 0) (first args) 28)))
                                                                        (.repaint layered)))
                                               :mouse-clicked (if (> (count args) 1) (second args) (fn [e]))]))
 
@@ -100,9 +100,9 @@
       (build-ico icon/alert-64-png)
    Needed:
       Import jarman.dev-tools
-      Function need image-scale function for scalling icon
+      Function need stool/image-scale function for scalling icon
    "
-  [ic] (label-fn :icon (image-scale ic 28)
+  [ic] (label-fn :icon (stool/image-scale ic 28)
               :background (new Color 0 0 0 0)
               :border (empty-border :left 3 :right 3)))
 
@@ -178,7 +178,7 @@
       but on hover it will be wide and text will be inserted.
    Example:
       (function icon size header map-with-other-params)
-      (slider-ico-btn (image-scale icon/user-64x64-2-png 50) 0 50 'Klienci' {:onclick (fn [e] (alert 'Clicked'))})
+      (slider-ico-btn (stool/image-scale icon/user-64x64-2-png 50) 0 50 'Klienci' {:onclick (fn [e] (alert 'Clicked'))})
    "
   (fn [ico order size txt extends]
                   (let [bg-color "#ddd"
@@ -219,7 +219,7 @@
       (expand-btn 'Settings' (button 'Do something') (button 'Do something else'))
    Needed:
       Import jarman.dev-tools
-      Function need image-scale function for scalling icon
+      Function need stool/image-scale function for scalling icon
       "
   (fn [txt & inside-btns]
                     (let [bg-color "#eee"
@@ -228,8 +228,8 @@
                           vsize 35
                           hsize 200
                           inside-btns-to-use (if (seqable? (first inside-btns)) (first inside-btns) inside-btns)
-                          ico (if (> (count inside-btns-to-use) 0) (image-scale icon/plus-64-png 25))
-                          ico-hover (image-scale icon/minus-grey-64-png 20)]
+                          ico (if (> (count inside-btns-to-use) 0) (stool/image-scale icon/plus-64-png 25))
+                          ico-hover (stool/image-scale icon/minus-grey-64-png 20)]
                       
                       (do 
                         (println inside-btns-to-use)
@@ -282,7 +282,7 @@
       If height in size will be different than 25, you probably should change it in mig-app-right-f. 
    Needed:
       Import jarman.dev-tools
-      Function need image-scale function for scalling icon
+      Function need stool/image-scale function for scalling icon
    "
   (fn [title txt active size onclose onclick]
     (let [bg-color (if (= active true) "#eee" "#ccc")
@@ -299,12 +299,12 @@
                 :listen [:mouse-clicked onclick
                          :mouse-entered (fn [e] (config! e :cursor :hand))])
                (label-fn
-                :icon (image-scale icon/x-grey2-64-png 15)
+                :icon (stool/image-scale icon/x-grey2-64-png 15)
                 :halign :center
                 :border (line-border :right 2 :color border)
                 :size [vsize :by vsize]
-                :listen [:mouse-entered (fn [e] (config! e :cursor :hand :icon (image-scale icon/x-blue1-64-png 15)))
-                         :mouse-exited  (fn [e] (config! e :icon (image-scale icon/x-grey2-64-png 15)))
+                :listen [:mouse-entered (fn [e] (config! e :cursor :hand :icon (stool/image-scale icon/x-blue1-64-png 15)))
+                         :mouse-exited  (fn [e] (config! e :icon (stool/image-scale icon/x-grey2-64-png 15)))
                          :mouse-clicked onclose])]
        :listen [:mouse-entered hand-hover-on]))))
 
@@ -320,12 +320,12 @@
      (label :text title
             :id id
             :font (getFont :bold)
-            :icon (image-scale ico 26)
+            :icon (stool/image-scale ico 26)
             :halign :center
             :size [150 :by 30]
             :background bg
             :border (line-border :thickness 1 :color c-border)
-            :listen [:mouse-entered (fn [e] (if (get (config e :user-data) :active) (config! e :background bg-hover :icon (image-scale ico-hover 26) :cursor :hand)))
-                     :mouse-exited  (fn [e] (config! e :background bg :icon (image-scale ico 26) :cursor :default))
+            :listen [:mouse-entered (fn [e] (if (get (config e :user-data) :active) (config! e :background bg-hover :icon (stool/image-scale ico-hover 26) :cursor :hand)))
+                     :mouse-exited  (fn [e] (config! e :background bg :icon (stool/image-scale ico 26) :cursor :default))
                      :mouse-clicked onclick]
             :user-data {:active active}))))

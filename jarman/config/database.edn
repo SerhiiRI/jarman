@@ -1,5 +1,5 @@
 {:name "Database configuration"
- :display? :edit
+ :display :edit
  :type :file
  :value {:Data-Configuration {:doc "Konfiguracja dat"
                               :type :block

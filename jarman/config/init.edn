@@ -4,9 +4,9 @@
  :value {:lang {:name "Language"
 	        :doc "Choose language for program "
 	        :type :param
-	        :component :text
-	        :display? :edit
-                :value :pl}}}
+	        :component :combobox
+	        :display :edit
+            :value :pl}}}	
 
 
 

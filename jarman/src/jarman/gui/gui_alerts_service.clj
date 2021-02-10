@@ -1,17 +1,17 @@
 ;; 
 ;; Compilation: dev_tool.clj -> metadata.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
 ;; 
-(ns jarman.gui-alerts-service
+(ns jarman.gui.gui-alerts-service
+  (:import (java.awt Color))
   (:use seesaw.core
         seesaw.border
         seesaw.dev
-        seesaw.mig
-        jarman.tools.dev-tools
-        jarman.gui-tools)
-  (:require [jarman.resource-lib.icon-library :as icon]
+        seesaw.mig)
+  (:require [jarman.gui.gui-tools :refer :all]
+            [jarman.resource-lib.icon-library :as icon]
+            [jarman.tools.swing :as stool]
+            [jarman.config.config-manager :refer :all]
             [clojure.string :as string]))
-
-(import java.awt.Color)
 
 
 ;; Defrecord for elements in alerts-storage
@@ -25,7 +25,7 @@
       (view-selected-message header body layered-pane)
    Needed:
       Import jarman.dev-tool
-      Function need image-scale for scaling button icon
+      Function need stool/image-scale for scaling button icon
       Function need middle-bounds for auto calculating bound
    "
   [header body layered-pane]
@@ -66,7 +66,7 @@
                                              :hscroll :never
                                              :border nil)]
                                 [(label-fn
-                                  :icon (image-scale ico (- ico-size 5))
+                                  :icon (stool/image-scale ico (- ico-size 5))
                                   :size [w :by ico-size]
                                   :foreground btn-fg-c
                                   :background btn-bg-c
@@ -74,12 +74,12 @@
                                   :font (getFont 14)
                                   :halign :center
                                   :listen [:mouse-entered (fn [e] (config! e 
-                                                                           ;; :icon (image-scale ico-hover (- ico-size 5))
+                                                                           ;; :icon (stool/image-scale ico-hover (- ico-size 5))
                                                                            ;; :foreground btn-fg-c-hover 
                                                                            :background btn-bg-c-hover 
                                                                            :cursor :hand))
                                            :mouse-exited  (fn [e] (config! e
-                                                                           ;; :icon (image-scale ico (- ico-size 5))
+                                                                           ;; :icon (stool/image-scale ico (- ico-size 5))
                                                                            ;; :foreground btn-fg-c
                                                                            :background btn-bg-c))
                                            :mouse-clicked (fn [e] (do
@@ -328,7 +328,7 @@
                                      :border (line-border :top 1 :color bg-c)
                                      :items [[(label-fn
                                                :text "Exit"
-                                               :icon (image-scale icon/x-blue1-64-png (- ico-size 5))
+                                               :icon (stool/image-scale icon/x-blue1-64-png (- ico-size 5))
                                                :halign :center
                                                :font (getFont 14)
                                                :size [(/ w 2) :by ico-size]
@@ -339,7 +339,8 @@
                                                                          (refresh-alerts layered-pane alerts-storage :all-alerts))])]
                                              [(label-fn
                                                :text "Clear all message"
-                                               :icon (image-scale icon/basket-blue1-64-png ico-size)
+                                               :icon (stool/image-scale icon/basket-blue1-64-png ico-size)
+                                               ;; :icon (stool/image-scale icon/basket-blue1-64x64-png ico-size)
                                                :halign :center
                                                :font (getFont 14)
                                                :size [(/ w 2) :by ico-size]

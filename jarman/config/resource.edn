@@ -1,5 +1,5 @@
 {:name "Resource configurations"
- :display? :edit
+ :display :edit
  :type :file
  :value {:configuration-attribute {:doc "Wybierz ¶cie¿kê do konfiguracyjnego pliku standardowo wskazuje ona na katalog lokalizacji programu. Parameters: \"C:\\¶cie¿ka\\¶cie¿ka\\¶cie¿ka\" \"/¶cie¿ka/¶cie¿k\" \"¶cie¿ka\""
                                    :type :block

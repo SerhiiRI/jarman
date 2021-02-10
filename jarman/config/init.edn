@@ -5,7 +5,7 @@
 	        :doc "Choose language for program "
 	        :type :param
 	        :component :text
-	        :display? :edit
+	        :display :edit
                 :value :pl}}}
 
 

@@ -520,65 +520,59 @@
 ;; └──────────────────┘
 
 
+(def cg-file-header (fn [title] (mig-panel
+                                 :constraints ["" "0px[grow, center]0px" "0px[]0px"]
+                                 :items [[(label :text title :font (getFont 16) :foreground (get-color :foreground :dark-header))]]
+                                 :background (get-color :background :dark-header)
+                                 :border (line-border :thickness 10 :color (get-color :background :dark-header)))))
 
-(def cg-file-header (fn [title] (let [bg (get-color :background :dark-header)]
-                                  (mig-panel
-                                   :constraints ["" "0px[grow, center]0px" "0px[]0px"]
-                                   :items [[(label :text title :font (getFont 16) :foreground (get-color :foreground :dark-header))]]
-                                   :background bg
-                                   :border (line-border :thickness 10 :color bg)))))
+(def cg-block-header (fn [title] (label :text title :font (getFont 16 :bold) 
+                                        :border (compound-border  (line-border :bottom 2 :color (get-color :decorate :underline)) (empty-border :bottom 5)))))
 
-(def cg-block-header (fn [title] (let [bg (get-color :background :main)]
-                                   (mig-panel
-                                    :constraints ["" "0px[grow, center]0px" "0px[]0px"]
-                                    :items [[(label :text title :font (getFont 16 :bold))]]
-                                    :background bg
-                                    :border (line-border :bottom 2 :color (get-color :decorate :underline))))))
+(def cg-param-header (fn [title] (label :text title :font (getFont 14 :bold))))
 
-(def cg-param-header (fn [title] (let [bg (get-color :background :main)]
-                                   (mig-panel
-                                    :constraints ["" "0px[grow, center]0px" "0px[]0px"]
-                                    :items [[(label :text title :font (getFont 16 :bold))]]
-                                    :background bg))))
+(def cg-combobox (fn [model] (mig-panel
+                              :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
+                              :items [[(combobox :model model :font (getFont 14) 
+                                                 :background (get-color :background :combobox) 
+                                                 :size [200 :by 30])]])))
 
-(def cg-body (fn [body] (let [bg (get-color :background :main)]
-                          (mig-panel
-                           :constraints ["wrap" "0px[]0px" "0px[]0px"]
-                           :items [[(textarea body :font (getFont 14))]]
-                           :background bg))))
+(def cg-input (fn [value] (mig-panel
+                         :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
+                         :items [[(text :text value :font (getFont 14) 
+                                        :background (get-color :background :input)
+                                        :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5) 
+                                                                 (line-border :bottom 2 :color (get-color :decorate :gray-underline))))]])))
 
-(def cg-combobox (fn [model] (combobox :model model
-                                       :background (get-color :background :combobox)
-                                       :font (getFont 14)
-                                       :size [200 :by 30])))
-
-(def cg-input (fn [txt] (text :text txt
-                              :background (get-color :background :input)
-                              :font (getFont 14)
-                              :size [200 :by 30])))
 
 (def cg-block-view
   (fn [start-key]
-    (let [param (fn [key] (get-in @configuration (join-vec start-key key)))]
+    (let [param (fn [key] (get-in @configuration (join-vec start-key key)))
+          type? (fn [key] (= (param [:type]) key))
+          comp? (fn [key] (= (param [:component]) key))]
       (cond (= (param [:display]) :edit)
             (mig-panel
-             :constraints ["wrap 1" "50px[]50px" "10px[]0px"]
-            ;;  :border (if (= (param [:type]) :block) (line-border :top 2 :color (get-color :decorate :gray-underline)) (empty-border))
+             :constraints ["wrap 1" "20px[]50px" "5px[]0px"]
+             :border (cond (type :block) (empty-border :bottom 10)
+                           :else nil)
              :items (join-mig-items
-                     (if (= (param [:type]) :block) (cg-block-header (str (param [:name]))) (cg-param-header (str (param [:name]))))
-                     (textarea (str (param [:doc])) :font (getFont 14))
-                     (cond (= (param [:component]) :combobox) (cg-combobox (if (= (last start-key) :lang)
-                                                                             (join-vec (list (param [:value])) (all-langs))
-                                                                             (vec (list (param [:value])))))
-                           (= (param [:component]) :text) (cg-input (str (param [:value])))
+                     (cond  (type? :block) (cg-block-header (str (param [:name])))
+                            (type? :param) (cg-param-header (str (param [:name]))))
+                     (if-not (nil? (param [:doc])) (textarea (str (param [:doc])) :font (getFont 14)) ())
+                     (if (and (type? :block) (not (nil? (param [:doc])))) (label :border (empty-border :top 10)) ())
+                     (cond (comp? :combobox) (cg-combobox (if (= (last start-key) :lang)
+                                                            (join-vec (list (param [:value])) (all-langs))
+                                                            (vec (list (param [:value])))))
+                           (comp? :checkbox) (cg-combobox (if (= (param [:value]) true) [true false] [false true]))
+                           (or (comp? :textlist) (comp? :text)) (cg-input (str (param [:value])))
                            (map? (param [:value])) (map (fn [next-param]
                                                           (cg-block-view (join-vec start-key [:value] (list (first next-param)))))
                                                         (param [:value]))
                            :else (textarea (str (param [:value])) :font (getFont 12)))))
-            :else (label)))))
+            :else ()))))
 
 
-(get-in @configuration [:resource.edn])
+;; (get-in @configuration [:resource.edn])
 ;; ;; => {:configuration-path {:type :param, :display :edit, :component :text, :value "config"}}
 ;; (get-in language [:pl :value :configuration-attribute])
 ;; ;; => {:type :param, :display :edit, :component :text, :value "config"}

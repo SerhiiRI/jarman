@@ -2,11 +2,11 @@
  :display :edit
  :type :init
  :value {:lang {:name "Language"
-	        :doc "Choose language for program "
-	        :type :param
-	        :component :combobox
-	        :display :edit
-            :value :pl}}}	
+                :doc "Choose language for program "
+                :type :param
+                :component :combobox
+                :display :edit
+                :value :pl}}}	
 
 
 

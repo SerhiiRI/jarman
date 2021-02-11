@@ -67,7 +67,9 @@
                                 :border {:type :param :display :edit :component :textcolor :value "#ccc"}
                                 :decorate {:type :block
                                            :display :edit
-                                           :value {:gray-underline {:type :param :display :edit :component :textcolor :value "#ccc"}}}}}
+                                           :value {:underline {:type :param :display :edit :component :textcolor :value "#000"}
+                                                   :gray-underline {:type :param :display :edit :component :textcolor :value "#ccc"}}
+                                           }}}
                 :font {:doc "Konfiguracja głównego okna HRTime"
                        :type :block
                        :display :edit

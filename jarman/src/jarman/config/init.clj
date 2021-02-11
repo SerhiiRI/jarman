@@ -74,7 +74,7 @@
     ([keyword-config-file-paths]
      (where
       ((PF-list (<path|file>-list *config-root* keyword-config-file-paths))
-       (DM (fn [d v] {d {:name (str d) :display? :edit :type :directory :value v}}))
+       (DM (fn [d v] {d {:name (str d) :display :edit :type :directory :value v}}))
        (FM (fn [f v] {f v})))
       (reset!
        configuration

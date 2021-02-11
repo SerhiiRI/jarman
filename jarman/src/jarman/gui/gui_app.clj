@@ -545,12 +545,13 @@
                                                                  (line-border :bottom 2 :color (get-color :decorate :gray-underline))))]])))
 
 
+
 (def cg-block-view
   (fn [start-key]
     (let [param (fn [key] (get-in @configuration (join-vec start-key key)))
           type? (fn [key] (= (param [:type]) key))
           comp? (fn [key] (= (param [:component]) key))
-          name (if (nil? (param [:name])) (str (last start-key)) (str (param [:name])))]
+          name (if (nil? (param [:name])) (key-to-title (last start-key)) (str (param [:name])))]
       (cond (= (param [:display]) :edit)
             (mig-panel
              :constraints ["wrap 1" "20px[]50px" "5px[]0px"]
@@ -561,9 +562,9 @@
                             (type? :param) (cg-param-header name))
                      (if-not (nil? (param [:doc])) (textarea (str (param [:doc])) :font (getFont 14)) ())
                      (if (and (type? :block) (not (nil? (param [:doc])))) (label :border (empty-border :top 10)) ())
-                     (cond (comp? :combobox) (cg-combobox (if (= (last start-key) :lang)
-                                                            (join-vec (list (param [:value])) (all-langs))
-                                                            (vec (list (param [:value])))))
+                     (cond (comp? :combobox) (cg-combobox (cond (= (last start-key) :lang) (map #(txt-to-UP %1) (join-vec (list (param [:value])) (all-langs)))
+                                                                (vector? (param [:value])) [(txt-to-title (first (param [:value])))]
+                                                                :else (vec (list (param [:value])))))
                            (comp? :checkbox) (cg-combobox (if (= (param [:value]) true) [true false] [false true]))
                            (or (comp? :textlist) (comp? :text) (comp? :number)) (cg-input (str (param [:value])))
                            (map? (param [:value])) (map (fn [next-param]
@@ -577,7 +578,6 @@
 ;; ;; => {:configuration-path {:type :param, :display :edit, :component :text, :value "config"}}
 ;; (get-in language [:pl :value :configuration-attribute])
 ;; ;; => {:type :param, :display :edit, :component :text, :value "config"}
-
 
 
 (def create-config-gen

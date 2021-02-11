@@ -304,6 +304,7 @@
        :items [(label-fn
                 :text txt
                 :halign :center
+                :border (empty-border :left 5 :right 5)
                 :size [hsize :by vsize]
                 :listen [:mouse-clicked onclick
                          :mouse-entered (fn [e] (config! e :cursor :hand))])

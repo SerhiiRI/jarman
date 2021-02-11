@@ -42,9 +42,9 @@
   [& vecs]
   `(vec (concat ~@vecs)))
 
-;; (def axc [:a :d])
-;; (macroexpand-1 `(join-vec axc [:b :c]))
-;; (join-vec axc [:b :c])
+(defn key-to-title [key] (-> (string/replace (str key) #":" "") (string/replace  #"[-_]" " ") (string/replace  #"^." #(.toUpperCase %1))))
+(defn txt-to-title [txt] (-> (string/replace (str txt) #":" "") (string/replace  #"[-_]" " ") (string/replace  #"^." #(.toUpperCase %1))))
+(defn txt-to-UP [txt] (-> (string/replace (str txt) #":" "") (string/replace  #"[-_]" " ") (string/replace  #"." #(.toUpperCase %1))))
 
 (defmacro join
   "(filter-nil [nil 1 nil 3 4]) ;=> [1 3 4]"

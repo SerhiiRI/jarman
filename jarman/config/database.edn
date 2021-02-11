@@ -6,7 +6,7 @@
                               :display :edit
                               :value {:data-format {:name "Format"
                                                     :doc "Format w jakim data ma być przechowywana w bazie danych."
-                                                    :type :param, 
+                                                    :type :param
                                                     :display :edit, :component :text, :value "yyyy-MM-dd HH:mm:ss"}}}
          :JDBC-mariadb-configuration-database {:name "Konfiguruj JDBC połączenia z bazą SQL."
                                                :doc "Wpisz parametry konfiguracji lub zostaw puste pola"
@@ -26,7 +26,7 @@
                                                          :type :param :display :edit :component :text :value "org.sqlite.JDBC"}
                                              :subprotocol {:name "Protokół"
                                                            :doc "Wybierz protokół komunikacji"
-                                                           :type :param :display :edit :component :text :value "sqlite"} 
+                                                           :type :param :display :edit :component :text :value "sqlite"}
                                              :subname {:name "Plik bazy"
                                                        :doc "wybierz plik baz danych"
                                                        :type :param :display :edit :component :text :value "hrtime-test"}}}
@@ -65,7 +65,11 @@
                                    :data-from {:type :param :display :edit :component :text :value "Data od"}
                                    :work_type {:type :param :display :edit :component :text :value "Typ pracownika"}
                                    :direction {:type :param :display :edit :component :text :value "Kierunek"}}}
-         :pagination-size {:type :param
-                           :display :edit
-                           :component :number
-                           :value 150}}}
+         :pagination {:name "Paginacja"
+                      :type :block :display :edit
+                      :value {:pagination-size {:name "Rozmiar paginacji"
+                                                :doc "Ilość wierszy w tabeli przy jednym doładowaniu danych."
+                                                :type :param
+                                                :display :edit
+                                                :component :number
+                                                :value 150}}}}}

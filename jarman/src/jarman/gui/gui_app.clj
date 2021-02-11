@@ -549,22 +549,23 @@
   (fn [start-key]
     (let [param (fn [key] (get-in @configuration (join-vec start-key key)))
           type? (fn [key] (= (param [:type]) key))
-          comp? (fn [key] (= (param [:component]) key))]
+          comp? (fn [key] (= (param [:component]) key))
+          name (if (nil? (param [:name])) (str (last start-key)) (str (param [:name])))]
       (cond (= (param [:display]) :edit)
             (mig-panel
              :constraints ["wrap 1" "20px[]50px" "5px[]0px"]
              :border (cond (type :block) (empty-border :bottom 10)
                            :else nil)
              :items (join-mig-items
-                     (cond  (type? :block) (cg-block-header (str (param [:name])))
-                            (type? :param) (cg-param-header (str (param [:name]))))
+                     (cond  (type? :block) (cg-block-header name)
+                            (type? :param) (cg-param-header name))
                      (if-not (nil? (param [:doc])) (textarea (str (param [:doc])) :font (getFont 14)) ())
                      (if (and (type? :block) (not (nil? (param [:doc])))) (label :border (empty-border :top 10)) ())
                      (cond (comp? :combobox) (cg-combobox (if (= (last start-key) :lang)
                                                             (join-vec (list (param [:value])) (all-langs))
                                                             (vec (list (param [:value])))))
                            (comp? :checkbox) (cg-combobox (if (= (param [:value]) true) [true false] [false true]))
-                           (or (comp? :textlist) (comp? :text)) (cg-input (str (param [:value])))
+                           (or (comp? :textlist) (comp? :text) (comp? :number)) (cg-input (str (param [:value])))
                            (map? (param [:value])) (map (fn [next-param]
                                                           (cg-block-view (join-vec start-key [:value] (list (first next-param)))))
                                                         (param [:value]))

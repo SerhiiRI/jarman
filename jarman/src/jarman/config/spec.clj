@@ -1,53 +1,75 @@
+;; For more information about specyfication, please read README.org file in this directory.
 (ns jarman.config.spec
   (:import (java.io IOException))
-  (:require [jarman.tools.lang :refer [in? blet]]
+  (:require [jarman.tools.lang :refer [in? in-r? wlet blet where]]
             [jarman.config.tools :refer [recur-walk-throw]]
             [clojure.spec.alpha :as s]))
 
+;;;;;;;;;;;;;;;;;;;
+;;; SPEC SCHEME ;;;
+;;;;;;;;;;;;;;;;;;;
 
-;; {:name ["[\w\d\s]+" (vector (:\w)+)]
-;;       :display [:nil :edit :noedit]
-;;       :type [:block :param :file :directory :error]
-;;       :value {:param? <param-spec>
-;; 	      :block? <block-spec>}}
+;; Quick Scheme intro about
+;; spec's to  every part of 
+;; configuration map:
+;; 
+;;  SEGMENT SPEC :block/block -- (See `block-segment`)
+;;   :name    :block/name 
+;;   :doc     :block/doc
+;;   :type    :block/type -- (See `segment-type`) REQUIRED 
+;;   :display :block/display -- (See `segment-display`)
+;;   :value   :block/value -- REQUIRED 
+;;
+;;  PARAMETER SPEC :block/param -- (See `param-segment`)
+;;   :name      :block/name
+;;   :doc       :block/doc
+;;   :type      :block/type -- (See `segment-type`) REQUIRED
+;;   :display   :block/display -- (See `segment-display`)
+;;   :component :block/component -- (See `parameter-components`) REQUIRED
+;;   :value     :block/value -- REQUIRED
+;;
+;;  ERROR SPEC :block/error -- (See `error-segment`)
+;;   :log   :block/log  -- REQUIRED
+;;   :type  :block/type -- REQUIRED
 
-;;      ;;; <block-spec>
-;;      {:name ["[\w\d\s]+" (vector (:\w)+)]
-;;       :doc ["\.+" nil (vector (:\w)+)]
-;;       :type [:block :param :error]
-;;       :display [:nil :edit :noedit]
-;;       :value {:param? <param-spec>
-;; 	      :block? <block-spec>}}
+(def ^:private block-segment [:block :file :directory])
+(def ^:private param-segment [:param])
+(def ^:private error-segment [:error])
+(def ^:private segment-type [:block :file :directory :param :error])
+(def ^:private segment-display [:none :edit :noedit])
+;;; component types
+(def ^:private component-n-url [:listurl])
+(def ^:private component-url [:texturl])
+(def ^:private component-n-text-num [:textlist :listbox :selectbox])
+(def ^:private component-text [:text])
+(def ^:private component-color [:textcolor])
+(def ^:private component-number [:textnumber])
+(def ^:private component-checkbox [:checkbox])
+(def ^:private parameter-components (flatten [component-n-url component-url component-n-text-num component-text component-number component-checkbox component-color]))
 
-;;      ;;; <param-block>
-;;      {:name ["[\w\d\s]+" (vector (:\w)+)]
-;;       :doc ["\.+" nil (vector (:\w)+)]
-;;       :type [:block :param :error]
-;;       :display [:nil :edit :noedit]
-;;       :component [:text :textnumber :textlist :textcolor :checkbox :listbox :selectbox]
-;;       :value *}
-
-;;      ;;; <error-spec>
-;;      {:log "\.+"
-;;       :type :error}
+;;;;;;;;;;;;;;;;;;;;;;
+;;; List of spec's ;;;
+;;;;;;;;;;;;;;;;;;;;;;
 
 (s/def ::ne-string (every-pred string? not-empty))
-(s/valid? ::ne-string "123")
+;; (s/valid? ::ne-string "123")
 
 (s/def ::url (s/and ::ne-string (partial re-matches #"(?i)^http(s?)://.*")))
-(s/valid? ::url "test")
-(s/valid? ::url "http://test.com")
-(s/valid? ::url nil)
-
+;; (s/valid? ::url "test")
+;; (s/valid? ::url "http://test.com")
+;; (s/valid? ::url nil)
 
 (s/def ::url-list (s/coll-of ::url))
-(s/valid? ::url-list ["http://test.com" "http://ya.ru"]) ;; => true
-(s/valid? ::url-list ["http://test.com" "dunno.com"]);; => false
+;; (s/valid? ::url-list ["http://test.com" "http://ya.ru"]) ;; => true
+;; (s/valid? ::url-list ["http://test.com" "dunno.com"]);; => false
 
-(s/def ::params (s/map-of keyword? string?))
-(s/valid? ::params {:foo "test"});; => true
-(s/valid? ::params {"foo" "test"});; => false
+(s/def ::rgb-color (s/and ::ne-string (partial re-matches #"#([0-9a-f]{3}|[0-9a-f]{6})")))
+;; (s/valid? ::rgb-color"#00f")
+;; (s/valid? ::rgb-color "#00fa0f")
 
+;; (s/def ::params (s/map-of keyword? string?))
+;; (s/valid? ::params {:foo "test"});; => true
+;; (s/valid? ::params {"foo" "test"});; => false
 
 ;;; Notation of spec/keys
 ;; :req - required key
@@ -56,96 +78,287 @@
 ;; -fq - fully qualified key namespecing
 ;;; Examples
 ;; :req, :req-un, :opt, :opt-un
-(s/def ::page
-  (s/keys :req-un [:page/address
-                   :page/description]))
+
+;; (s/def ::page
+;;   (s/keys :req-un [:page/address
+;;                    :page/description]))
 
 
-(s/valid? ::page {:address "clojure.org" :description "Clojure Language"})
-(s/valid? ::page {:address "https://clojure.org/" :description ""})
-(s/valid? ::page {:address "https://clojure.org/"})
-(s/valid? ::page {:page/address "https://clojure.org/":page/description "Clojure Language"})
+;; (s/valid? ::page {:address "clojure.org" :description "Clojure Language"})
+;; (s/valid? ::page {:address "https://clojure.org/" :description ""})
+;; (s/valid? ::page {:address "https://clojure.org/"})
+;; (s/valid? ::page {:page/address "https://clojure.org/":page/description "Clojure Language"})
 
-(s/def ::page-fq
-  (s/keys :req-fq [:page/address
-                   :page/description]))
+;; (s/def ::page-fq
+;;   (s/keys :req-fq [:page/address
+;;                    :page/description]))
 
-(s/valid? ::page-fq {:address "clojure.org" :description "Clojure Language"})
-(s/valid? ::page-fq {:address "https://clojure.org/" :description ""})
-(s/valid? ::page-fq {:address "https://clojure.org/"})
-(s/valid? ::page-fq {:page/address "https://clojure.org/":page/description "Clojure Language"})
+;; (s/valid? ::page-fq {:address "clojure.org" :description "Clojure Language"})
+;; (s/valid? ::page-fq {:address "https://clojure.org/" :description ""})
+;; (s/valid? ::page-fq {:address "https://clojure.org/"})
+;; (s/valid? ::page-fq {:page/address "https://clojure.org/":page/description "Clojure Language"})
+;; (s/def :page/status int?)
+;; (s/def ::page-status
+;;   (s/keys :req-un [:page/address
+;;                    :page/description]
+;;           :opt-un [:page/status]))
 
 
-(s/def :page/status int?)
-(s/def ::page-status
-  (s/keys :req-un [:page/address
-                   :page/description]
-          :opt-un [:page/status]))
+;;;;;;;;;;;;;;;;;;;;;;;
+;;; Logistic spec's ;;;
+;;;;;;;;;;;;;;;;;;;;;;;
 
-(s/def ::ne-string (every-pred string? not-empty))
-(s/def :block/name-str (s/and ::ne-string (partial re-matches #"[\w\d\s]+")))
+;;; structural block logic
+(s/def :block/name-str ::ne-string)
 (s/def :block/doc-str ::ne-string)
-(s/def :block/keywoard-path (every-pred vector? (partial every? keyword?)))
-(s/def :block/name (fn [x] (or (s/valid? :block/name-str x) (s/valid? :block/keywoard-path x))))
-
-(s/def :block/type (fn [x] (some #(= x %) [:block :param :file :directory :error])))
-(s/def :block/display (fn [x] (some #(= x %) [:none :edit :noedit])))
-(s/def :block/component (fn [x] (some #(= x %) [:text :textnumber :textlist :textcolor :checkbox :listbox :selectbox])))
+(s/def :block/keyword-path (every-pred vector? (partial every? keyword?)))
+(s/def :block/name (s/or :name :block/name-str :keyword-path :block/keyword-path))
+;; (s/def :block/name (fn [x] (or (s/valid? :block/name-str x) (s/valid? :block/keywoard-path x))))
+(s/def :block/type (fn [x] (in-r? x segment-type)))
+(s/def :block/display (fn [x] (in-r? x segment-display))) 
+(s/def :block/component (fn [x] (in-r? x parameter-components)))
 (s/def :block/value any?)
-(s/def :block/doc (fn [x](or (s/valid? :block/doc-str x) (s/valid? :block/keywoard-path x))))
+(s/def :block/doc (s/or :string :block/doc-str :keyword-path :block/keyword-path))
 (s/def :block/log ::ne-string)
+;;; parameter spec's
+(s/def :param/value any?)
+(s/def :param/component/text ::ne-string)
+(s/def :param/component/сheck boolean?)
+(s/def :param/component/number number?)
+(s/def :param/component/url ::url)
+(s/def :param/component/color ::rgb-color)
+(s/def :param/component/urlist ::url-list)
+(s/def :param/component/list (s/and vector? (s/or :textlist (s/coll-of ::ne-string)
+                                                  :numberlist (s/coll-of number?))))
 
 
-;;; parts of configuration structure validateion
-;;; patterns
+
+;; (let [;; m {:type :param :display :edit :component :textnumber :value 123}
+;;       ;; m {:type :param :display :edit :component :selectbox :value ["1" "2" "3"]}
+;;       ;; m {:type :param :display :edit :component :selectbox :value [0 1 2 3]}
+;;       ;; m {:type :param :display :edit :component :texturl :value "http://test.com"}
+;;       ;; m {:type :param :display :edit :component :listurl :value ["http://test.com" "http://ya.ru"]}
+;;       ;; m {:type :param :display :edit :component :checkbox :value false}
+;;       ;; m {:type :param :display :edit :component :text :value "123"}
+;;       ;; m {:type :param :display :edit :component :BAD :value 123}
+;;       ;; m {:type :param :display :edit :component :textcolor :value "#fff000"}
+;;       ;; m {:type :param :display :edit :component :textcolor :value "#f0e"}
+;;       ]
+;;   (s/valid? (doto (condp in? (:component m)
+;;               component-n-url :param/component/urlist
+;;               component-url :param/component/url
+;;               component-n-text-num :param/component/list
+;;               component-text :param/component/text
+;;               component-number :param/component/number
+;;               component-checkbox :param/component/сheck
+;;               component-color :param/component/rgb-color
+;;               (fn [_] false)) println )
+;;            (:value m)))
+;; (s/def ::ltext (s/coll-of :param/component/text))
+;; (s/valid? ::ltext ["1" "2"])
+;; (s/def ::lnums (s/coll-of :param/component/number))
+;; (s/valid? ::lnums [1 2 3])
+;; (s/def ::llist (s/or :text ::ltext
+;;                      :list ::lnums))
+;; (s/valid? ::llist [1 2 3])
+;; (s/valid? ::llist ["1 2 3"])
+
+
+
+;; Whole map validators
+;; for block `block-segment`
 (s/def :block/block
-  (s/keys :req-un [:block/type
-                   :block/value]
-          :opt-un [:block/name
-                   :block/doc
-                   :block/display]))
+  (s/keys :req-un [:block/type :block/value]
+          :opt-un [:block/name :block/doc :block/display]))
+
+;; Whole map validators
+;; for block `param-segment`
 (s/def :block/parameter
-  (s/keys :req-un [:block/component
-                   :block/type
-                   :block/value
-                   :block/name]
-          :opt-un [:block/doc
-                   :block/display]))
+  (s/keys :req-un [:block/component :block/type :param/value]
+          :opt-un [:block/name :block/doc :block/display]))
+
+;; Whole map validators
+;; for block `error-segment`
 (s/def :block/error
-  (s/keys :req-un [:block/type
-                   :block/log]))
+  (s/keys :req-un [:block/type :block/log]))
 
-(s/def :block/valid-segment
-  (fn [m] (s/valid? (condp in? (:type m)
-                     [:block
-                      :file
-                      :directory]  :block/block
-                     [:param]      :block/parameter
-                     [:error]      :block/error 
-                     (fn [_] false)) m)))
+;; Select one of spec validator
+;; depending on `segment-type` in
+;; `:type` key in segment
+(s/def :block/segment
+  (fn [m] (s/valid?
+          (condp in? (:type m)
+            block-segment :block/block
+            param-segment :block/parameter
+            error-segment :block/error 
+            (fn [_] false)) m)))
 
-(defn- valid-config-logger [m logger]
+(defn- valid-config-logger
+  "Description
+    Logistic function which do `recur-walk-throw`
+    throw the configuration map
+
+  Params
+    m - configuraion map
+    logger - function which apply map segment of
+      configuration, and keyword path to segment
+      (logger {...} [:one...])"
+  [m logger]
   (let [sumvalid (atom true)
         f (fn [block path]
-            (let [vld? (s/valid? :block/valid-segment block)]
+            (let [vld? (s/valid? :block/segment block)]
               (swap! sumvalid (fn [a](and a vld?)))
               (if-not vld? (logger block path))))]
     (recur-walk-throw m f [])
     @sumvalid))
 
+(defn segment-short
+  "Description
+    Get segment block map, and return bit more shortest
+    version of it, prepared to printing.
 
-(defn valid-param [m]
+  Example
+    Original long segment 
+     {:doc \"some really long documentation string\"
+      :name \"looooong, very long string\"
+      :display :edit
+      :value {:param1 {:type :param...} ...}}
+    Will be transfromed to
+     {:doc \"some really...\"
+      :name \"looooong....\"
+      :display :edit
+      :value '...}"
+  [segment]
+  (wlet
+   (-> segment hide-value short-name short-doc)
+   ((hide-value
+     (fn [m] (if (:value m) (assoc m :value '...) m)))
+    (short-doc
+     (fn [m] (let [mdoc (:doc m)]
+              (if (and mdoc (string? mdoc) (< 25 (count mdoc)))
+                (assoc m :doc (apply str (concat (take 19 mdoc) "..."))) m))))
+    (short-name
+     (fn [m] (let [mname (:name m)]
+              (if (and mname (string? mname) (< 25 (count mname)))
+                (assoc m :name (apply str (concat (take 19 mname) "..."))) m)))))))
+
+(defn- unvalid-block-out
+  "Description
+    return information about unvalid block
+
+  Warning
+    This function does not try valid segment!
+    Only test parameter. It mean that parameter
+    `m` already being unvalid.
+
+  Example 
+     (unvalid-block-out {:type :param, :display :BAD, :component :BAD, :value \"10.0.0.69\"} [:database ...])
+      ;;=> {:path [:database ...]
+            :messages
+            [\"Undefinied dispaly status key ':BAD' in {:type :param, :display :BAD, :component :BAD, :value ...}\"
+             \"Unknown param. component type key ':BAD' in {:type :param, :display :BAD, :component :BAD, :value ...}\"
+            ]}" [m path-to-section]
+  (wlet
+   (if-let [T (:type m)]      (if (not (s/valid? :block/type T))      (join (format "Undefinied section type key '%s'" T))))
+   (if-let [N (:name m)]      (if (not (s/valid? :block/name N))      (join (format "Name is not String or Keyword-Path '%s'" N))))
+   (if-let [D (:doc m)]       (if (not (s/valid? :block/doc  D))      (join (format "Documentation is not String or Keyword-Path '%s'" D))))
+   (if-let [D (:display m)]   (if (not (s/valid? :block/display D))   (join (format "Undefinied dispaly status key '%s'" D))))
+   (if-let [C (:component m)] (if (not (s/valid? :block/component C)) (join (format "Unknown param. component type key '%s'" C))))
+   (if (empty? @MESSAGES)     (join "Undefinied valid exception"))
+   {:path path-to-section :messages @MESSAGES}
+   ((MESSAGES (ref []))
+    (short-m  (str (segment-short m)))
+    (join #(dosync (alter MESSAGES (fn [MX](conj MX (format "%s in %s" % short-m)))))))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Validators without output ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn valid-param-test
+  "Description
+    Return true/false after do validation
+    on parameter map block"
+  [m] {:pre [(map? m)]}
   (s/valid? :block/parameter m))
-(defn valid-block [m]
+
+(defn valid-block-test
+  "Description
+    Return true/false after do validation
+    on segment map block"
+  [m] {:pre [(map? m)]}
   (s/valid? :block/block m))
-(defn valid-segment [m]
+
+(defn valid-error-test
+  "Description
+    Return true/false after do validation
+    on error map block"
+  [m] {:pre [(map? m)]}
+  (s/valid? :block/error m))
+
+(defn valid-segment-test
+  "Description
+    Return true/false after do validation
+    on undefinied segment map block"
+  [m] {:pre [(map? m)]}
+  (valid-config-logger m (fn [_unused_1 _unused_2])))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Validators with information output ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn valid-block
+  "Description
+    Do validation on block segment of configuraion,
+    and return information map as result
+
+  Example
+    (valid-block {:type :block, :display :BAD :value {....})
+    ;;=>
+     {:valid? false
+      :output {:path [:path :in :map]
+               :messages [\"Undefinied dispaly status key ':BAD' in {:type :block, :display :BAD, :component :BAD, :value ...}\"]}}"
+  ([m] (valid-param m nil))
+  ([m path] {:pre [(map? m)]}
+   (if (s/valid? :block/block m)
+     {:valid? true :output nil}
+     {:valid? false :output (unvalid-block-out m path)})))
+
+(defn valid-param
+  "Description
+    Do validation on parameter segment of configuraion,
+    and return information map as result
+
+  Example
+    (valid-param {:type :param, :display :BAD, :component :BAD, :value \"10.0.0.69\"})
+    ;;=>
+     {:valid? false
+      :output {:path [:path :in :map]
+               :messages [\"Undefinied dispaly status key ':BAD' in {:type :param, :display :BAD, :component :BAD, :value ...}\"
+                          \"Unknown param. component type key ':BAD' in {:type :param, :display :BAD, :component :BAD, :value ...}\"]}}"
+  ([m] (valid-param m nil))
+  ([m path] {:pre [(map? m)]}
+   (if (s/valid? :block/parameter m)
+     {:valid? true :output nil}
+     {:valid? false :output (unvalid-block-out m path)})))
+
+(defn valid-segment
+  "Description
+    Do recursive validation on undefinied segment
+    of configuraion, and return information map as result
+
+  Return Example
+    {:valid? false
+     :output {:path [:path :in :map]
+              :messages [\"Undefinied dispaly status key ':BAD' in {:type :param, :display :BAD, :component :BAD, :value ...}\"
+                         \"Unknown param. component type key ':BAD' in {:type :param, :display :BAD, :component :BAD, :value ...}\"]}}"
+  [m] {:pre [(map? m)]}
   (blet {:valid? (valid-config-logger m logger) :output @output}
         [output (atom [])
          logger (fn [segment path]
                   (swap! output 
-                   #(conj %
-                     {:path path
-                      :message (format "Not valid section - %s" (str (assoc segment :value '...)))})))]))
+                   #(conj % (unvalid-block-out segment path))))]))
 
 
 

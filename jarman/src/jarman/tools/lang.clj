@@ -32,6 +32,13 @@
     (some #(= x %) col)
     (= x col)))
 
+(defn in-r?
+  "Is the `in?` fucntion but with reverse arguemnts 
+  (in? 1 [1 2 3 4 5 6])
+   (in? 1 1)"
+  [x col]
+  (in? col x))
+
 (defmacro filter-nil
   "(filter-nil [nil 1 nil 3 4]) ;=> [1 3 4]"
   [col]
@@ -175,16 +182,15 @@
 
 (defmacro wlet
   "Description
-    Let with binding in last sexp, otherwise in first block
+    Is where with binding block on end of expresion
   
   Example
-    (wlet (+ a b) [a 1 b 2]) ;; => 3
-    (wlet (+ a b) (- a b) [a 1 b 2]) ;; => -1
+    (wlet (+ a b) ((a 1) (b 2)) ;; => 3
+    (wlet (+ a b) (- a b) ((a 1) (b 2))) ;; => -1
   
   Spec
     (wlet <calcaulation>+ <binding-spec>{1})"
   [& arguments]
-  {:pre [(vector? (last arguments))]}
   `(where ~(last arguments) ~@(butlast arguments)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;

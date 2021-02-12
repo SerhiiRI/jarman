@@ -6,8 +6,7 @@
                               :display :edit
                               :value {:data-format {:doc "Wybierz format daty dla przechowywania w bazie danych"
                                                     :type :param, :display :edit, :component :text, :value "yyyy-MM-dd HH:mm:ss"}}}
-         :JDBC-mariadb-configuration-database {:name "Konfiguruj JDBC po³±czenia z SQL baz±."
-                                               :doc "Wpisz parametry lub zostaw puste"
+         :JDBC-mariadb-configuration-database {:name "REALLY NAME"
                                                :type :block :display :edit
                                                :value {:dbtype {:type :param, :display :edit, :component :text, :value "mysql"}
                                                        :host {:type :param, :display :edit, :component :text, :value "10.0.0.69"}
@@ -29,13 +28,14 @@
          :SQL-generator {:name "SQL Generator"
                          :doc "SQL Generator - to bibliteka która pozwala okre¶liæ wykorzystywane reguly w projekcie. Je¶li jest potrzeba dodaæ regulê proszê wpisaæ jej do listy jednej z regu³"
                          :type :block :display :edit
-                         :value {:SQL-rules {:accepted-alter-table-rules {:type :param :display :edit :component :textlist :value [:add-column :drop-column :drop-foreign-key :add-foreign-key]}
-                                             :accepted-forkey-rules {:type :param :display :edit :component :textlist :value [:restrict :cascade :null :no-action :default]}
-                                             :accepted-ctable-rules {:type :param :display :edit :component :textlist :value [:columns :foreign-keys :table-config]}
-                                             :accepted-select-rules {:type :param :display :edit :component :textlist :value [:column :inner-join :right-join :left-join :outer-left-join :outer-right-join :where :order]}
-                                             :accepted-update-rules {:type :param :display :edit :component :textlist :value [:update-table :set :where]}
-                                             :accepted-insert-rules {:type :param :display :edit :component :textlist :value [:values :set]}
-                                             :accepted-delete-rules {:type :param :display :edit :component :textlist :value [:from :where]}}
+                         :value {:SQL-rules {:type :block
+                                             :value {:accepted-alter-table-rules {:type :param :display :edit :component :textlist :value [:add-column :drop-column :drop-foreign-key :add-foreign-key]}
+                                              :accepted-forkey-rules {:type :param :display :edit :component :textlist :value [:restrict :cascade :null :no-action :default]}
+                                              :accepted-ctable-rules {:type :param :display :edit :component :textlist :value [:columns :foreign-keys :table-config]}
+                                              :accepted-select-rules {:type :param :display :edit :component :textlist :value [:column :inner-join :right-join :left-join :outer-left-join :outer-right-join :where :order]}
+                                              :accepted-update-rules {:type :param :display :edit :component :textlist :value [:update-table :set :where]}
+                                              :accepted-insert-rules {:type :param :display :edit :component :textlist :value [:values :set]}
+                                              :accepted-delete-rules {:type :param :display :edit :component :textlist :value [:from :where]}}}
                                  :where-border {:doc "Tworzy SQL reguly z nawiasami je¶li defultowo jest na true to po WHERE orazu id± nawiasy. Domy¶lnie ma na false"
                                                 :type :param :display :edit :component :checkbox :value false}}}
          :View-table-name {:doc "Odpowiada za nazwy kolumn wy¶wietlanych tabeli z bazy danych"
@@ -56,5 +56,5 @@
                                    :direction {:type :param :display :edit :component :text :value "Kierunek"}}}
          :pagination-size {:type :param
                            :display :edit
-                           :component :number
+                           :component :textnumber
                            :value 150}}}

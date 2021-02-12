@@ -1,10 +1,10 @@
 {:name "Initial configuration"
  :display :edit
- :type :init
+ :type :file
  :value {:lang {:name "Language"
 	        :doc "Choose language for program "
 	        :type :param
-	        :component :combobox
+	        :component :selectbox
 	        :display :edit
             :value :pl}}}	
 

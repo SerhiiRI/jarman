@@ -4,6 +4,6 @@
  :value {:selected-theme {:name "Konfiguracja skórki"
                           :doc "Posiada konfiguracje styłowe globalne dla calego programu. Pole 'Selected theme' zwiera wybraną przez użytkownika skórkę. Która się uruchomi po ponownym restarcie aplikacji."
                           :type :param
-                          :component :selectbox
+                          :component :combobox
                           :display :edit
                           :value ["jarman_light"]}}}

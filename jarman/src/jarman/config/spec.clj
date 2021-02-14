@@ -48,6 +48,29 @@
 (def ^:private parameter-components (flatten [component-n-url component-url component-n-text-num component-text component-number component-checkbox component-color]))
 
 ;;;;;;;;;;;;;;;;;;;;;;
+;;; Quick template ;;;
+;;;;;;;;;;;;;;;;;;;;;;
+
+(defn error-block
+  "Generate error segment by spec convinience" [log]
+  {:pre [(string? log)]}
+  {:type :error :log log})
+
+(defn directory-block [dir-name value]
+  {:pre [(string? dir-name)]}
+  {:name dir-name :display? :edit :type :directory :value value})
+
+(defn file-block [file-name value]
+  {:pre [(string? file-name)]}
+  {:name file-name :display? :edit :type :file :value value})
+
+(defn config-block [value]
+  {:display? :edit :type :block :value value})
+
+(defn param-block [value]
+  {:display? :edit :type :param :value value})
+
+;;;;;;;;;;;;;;;;;;;;;;
 ;;; List of spec's ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
@@ -319,7 +342,7 @@
      {:valid? false
       :output {:path [:path :in :map]
                :messages [\"Undefinied dispaly status key ':BAD' in {:type :block, :display :BAD, :component :BAD, :value ...}\"]}}"
-  ([m] (valid-param m nil))
+  ([m] (valid-block m nil))
   ([m path] {:pre [(map? m)]}
    (if (s/valid? :block/block m)
      {:valid? true :output nil}

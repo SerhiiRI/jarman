@@ -113,17 +113,20 @@
 ;;; where macro ;;;
 ;;;;;;;;;;;;;;;;;;;
 
-(def recursive-linier-terms [{:term 'reduce :arg 2}
-                             {:term 'map :arg 1}
-                             {:term 'filter :arg 1}
-                             {:term 'if :arg 2}
-                             {:term 'do :arg 1}
-                             {:term '|> :arg 1}
-                             {:term 'doto :arg 1}
-                             {:term 'ift :arg 1}
-                             {:term 'ifn :arg 1}
-                             {:term 'ifp :arg 2}
-                             {:term 'otherwise :arg 1}])
+(def ^:private recursive-linier-terms
+  [{:term 'reduce :arg 2}
+   {:term 'map :arg 1}
+   {:term 'filter :arg 1}
+   {:term 'if :arg 2}
+   {:term 'do :arg 1}
+   {:term '|> :arg 1}
+   {:term 'doto :arg 1}
+   {:term 'ift :arg 1}
+   {:term 'ifn :arg 1}
+   {:term 'ifp :arg 2}
+   {:term 'iff1 :arg 2}
+   {:term 'iff2 :arg 3}
+   {:term 'otherwise :arg 1}])
 
 (defmacro action-linier-preprocess [symbol args]
   (condp = symbol
@@ -137,6 +140,8 @@
     'ift `(if ~(last args) ~(first args) ~(last args))
     'ifn `(if ~(last args) ~(last args) ~(first args))
     'ifp `(if (~(first args) ~(last args)) ~(last args) ~(second args))
+    'iff1 `(if (~(first args) ~(last args)) ~(last args) (~(second args) ~(last args)))
+    'iff2 `(if (~(first args) ~(last args)) (~(second args) ~(last args)) (~(nth args 2 #'identity) ~(last args)))
     'nil))
 
 (defmacro recursive-linier-preprocessor
@@ -158,13 +163,15 @@
 
 (defmacro where
   "Description
-  Good alternative to Let construction
+    Let on steroids
 
   Example 
    (where ((temp 10 do string? otherwise \"10\") ;; \"10\"
            (temp nil ifn 4) ;; 4
            (temp nil ift 4) ;; nil
            (temp nil ifp nil? 4) ;; nil
+           (temp 3 iff1 nil? inc) ;; 4
+           (temp 3 iff2 odd? inc dec) ;; 4
            (temp 3 ifp odd? 4) ;; 3
            (temp 3 do inc do inc) ;; 5
            (temp 3 |> inc |> inc) ;; 5
@@ -369,5 +376,19 @@
         @in-deep-key-path
         [in-deep-key-path (atom [])
          in-deep-key-path-f (fn [path] (swap! in-deep-key-path (fn [path-list] (conj path-list path ))))]))
+
+
+(defn deep-merge-with
+  "Like merge-with, but merges maps recursively, applying the given fn
+  only when there's a non-map at a particular level.
+  (deep-merge-with + {:a {:b {:c 1 :d {:x 1 :y 2}} :e 3} :f 4}
+                     {:a {:b {:c 2 :d {:z 9} :z 3} :e 100}})
+  -> {:a {:b {:z 3, :c 3, :d {:z 9, :x 1, :y 2}}, :e 103}, :f 4}"
+  [f & maps]
+  (apply
+    (fn m [& maps]
+      (if (every? map? maps)
+        (apply merge-with m maps)
+        (apply f maps))) maps))
 
 

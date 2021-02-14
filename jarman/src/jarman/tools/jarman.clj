@@ -37,3 +37,66 @@
             (apply str (repeat @offset "*"))
             (format " %s" (:header e)))))
        ))nil))
+
+(defn- comment-header-parser
+  "Description
+    Parse comment line
+
+  Spec
+    :header - some string
+    :h-size - [0,1]
+  
+  Example
+    (comment-header-parser \";; suka bliat ;;\") 
+       ;;=> {:header \"suka bliat\", :h-size 1}"
+  [e]
+  (if-let [[_ hb header he] (re-matches #"^(;{2,3})\s*([\w\d\s]*[\w\d]{1})\s*(;{2,3})$" e)]
+        (let [chb (count hb) che (count he)]
+          (if (= chb che)
+            {:header header :h-size (- 2 (dec chb))}))))
+
+(defn def-parser [e]
+  (if-let [[_ def-type spec name] (re-matches #"\((defn-|def|defn|defmacro){1}\s(\^:dynamic\s|\^:private\s)?([\w-\*]{2,}).*" e)]
+    {:name name :private? (if (or (= spec "^:private ") (= def-type "defn-")) "private")
+     :type (case def-type "def" "variable" "defn" "function" "defn-" "function" "defmacro" "macro")}))
+
+(defn- line-parser [n e]
+ (if (or
+      (clojure.string/starts-with? e "(def")
+      (clojure.string/starts-with? e ";;"))
+   (let [e (-> e (clojure.string/replace #"\\r" "") clojure.string/trim)]
+     (if-let [struct
+              (cond
+                (clojure.string/starts-with? e "(def") (def-parser e) 
+                (clojure.string/starts-with? e ";;") (comment-header-parser e))]
+      (assoc struct :line n)))))
+
+;; (defn- parse-header [e]
+;;  (re-matches #";{2,4}\s+CONTEXT\s+v(ersion )?(\d.\d).*" ";; CONTEXT version 0.1"))
+
+(defn hard-context-tree [file]
+  (if (.exists (clojure.java.io/file file))
+   (let [pc #(println (apply str ";; " %&))
+         offset (atom 0)
+         structure (filter identity (map-indexed line-parser (clojure.string/split (slurp file) #"\n")))]
+     (pc "CONTEXT version 0.1")
+     (pc "Content: ")
+     (doall
+      (for [e (sort-by :line structure)]
+        (if (nil? (:header e)) 
+          (do
+            (pc (apply str (repeat (+ 2 @offset) " ")) (format (if (:private? e)
+                                                                 " # %s (%s)"
+                                                                 " %s (%s)")
+                                                               (:name e)
+                                                               (:type e))))
+          (do
+            (swap! offset (fn [_] (inc (:h-size e))))
+            (pc (apply str (repeat @offset "*")) (format " %s" (:header e)))))
+        ))))nil)
+
+;; (hard-context-tree "./src/jarman/config/init.clj")
+
+
+
+

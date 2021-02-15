@@ -32,20 +32,51 @@
 ;;   :log   :block/log  -- REQUIRED
 ;;   :type  :block/type -- REQUIRED
 
-(def ^:private block-segment [:block :file :directory])
-(def ^:private param-segment [:param])
-(def ^:private error-segment [:error])
-(def ^:private segment-type [:block :file :directory :param :error])
-(def ^:private segment-display [:none :edit :noedit])
+;; (do
+;;   (println "----") 
+;;   (map #(println (format "(def %s :%s)" (name %) (name %))) '(:block :file :directory :param :error :block :file :directory :param :error :none :edit :noedit)))
+;; (do
+;;   (println "----") 
+;;   (map #(println (format "(def %s :%s)" (name %) (name %))) '(:listurl :texturl :textlist :listbox :selectbox :text :textcolor :textnumber :checkbox)))
+(def $block :block)
+(def $file :file)
+(def $directory :directory)
+(def $param :param)
+(def $error :error)
+(def $block :block)
+(def $file :file)
+(def $directory :directory)
+(def $param :param)
+(def $error :error)
+(def $none :none)
+(def $edit :edit)
+(def $noedit :noedit)
+
+;;; component spec key
+(def $listurl :listurl)
+(def $texturl :texturl)
+(def $textlist :textlist)
+(def $listbox :listbox)
+(def $selectbox :selectbox)
+(def $text :text)
+(def $textcolor :textcolor)
+(def $textnumber :textnumber)
+(def $checkbox :checkbox)
+
+(def block-segment [$block $file $directory])
+(def param-segment [$param])
+(def error-segment [$error])
+(def segment-type [$block $file $directory $param $error])
+(def segment-display [$none $edit $noedit])
 ;;; component types
-(def ^:private component-n-url [:listurl])
-(def ^:private component-url [:texturl])
-(def ^:private component-n-text-num [:textlist :listbox :selectbox])
-(def ^:private component-text [:text])
-(def ^:private component-color [:textcolor])
-(def ^:private component-number [:textnumber])
-(def ^:private component-checkbox [:checkbox])
-(def ^:private parameter-components (flatten [component-n-url component-url component-n-text-num component-text component-number component-checkbox component-color]))
+(def component-n-url [$listurl])
+(def component-url [$texturl])
+(def component-n-text-num [$textlist $listbox $selectbox])
+(def component-text [$text])
+(def component-color [$textcolor])
+(def component-number [$textnumber])
+(def component-checkbox [$checkbox])
+(def parameter-components (flatten [component-n-url component-url component-n-text-num component-text component-number component-checkbox component-color]))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; Quick template ;;;
@@ -58,17 +89,17 @@
 
 (defn directory-block [dir-name value]
   {:pre [(string? dir-name)]}
-  {:name dir-name :display? :edit :type :directory :value value})
+  {:name dir-name :display :edit :type :directory :value value})
 
 (defn file-block [file-name value]
   {:pre [(string? file-name)]}
-  {:name file-name :display? :edit :type :file :value value})
+  {:name file-name :display :edit :type :file :value value})
 
 (defn config-block [value]
-  {:display? :edit :type :block :value value})
+  {:display :edit :type :block :value value})
 
 (defn param-block [value]
-  {:display? :edit :type :param :value value})
+  {:display :edit :type :param :value value})
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; List of spec's ;;;
@@ -151,9 +182,7 @@
 (s/def :param/component/url ::url)
 (s/def :param/component/color ::rgb-color)
 (s/def :param/component/urlist ::url-list)
-(s/def :param/component/list (s/and vector? (s/or :textlist (s/coll-of ::ne-string)
-                                                  :numberlist (s/coll-of number?))))
-
+(s/def :param/component/list (s/and vector? (s/or :textlist (s/coll-of ::ne-string) :numberlist (s/coll-of number?))))
 
 
 ;; (let [;; m {:type :param :display :edit :component :textnumber :value 123}
@@ -185,7 +214,6 @@
 ;;                      :list ::lnums))
 ;; (s/valid? ::llist [1 2 3])
 ;; (s/valid? ::llist ["1 2 3"])
-
 
 
 ;; Whole map validators

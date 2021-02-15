@@ -77,9 +77,9 @@
 
 (defn debug-walk [m]
   (let [a (atom true)
-        f #(do
-             (print (:type %1))
-             (println %2))]
+        f (fn [block path]
+            (print (:type block))
+            (println path))]
    (recur-walk-throw m f [])))
 ;; (debug-walk config)
 

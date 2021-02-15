@@ -36,7 +36,7 @@
                          :type :block :display :edit
                          :value {:SQL-rules {:name "Reguły"
                                              :doc "Twórz własne reguły SQL"
-                                             :type :param
+                                             :type :block
                                              :display :edit
                                              :value {:accepted-alter-table-rules {:type :param :display :edit :component :textlist :value [:add-column :drop-column :drop-foreign-key :add-foreign-key]}
                                                      :accepted-forkey-rules {:type :param :display :edit :component :textlist :value [:restrict :cascade :null :no-action :default]}
@@ -71,5 +71,5 @@
                                                 :doc "Ilość wierszy w tabeli przy jednym doładowaniu danych."
                                                 :type :param
                                                 :display :edit
-                                                :component :number
+                                                :component :textnumber
                                                 :value 150}}}}}

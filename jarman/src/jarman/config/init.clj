@@ -90,13 +90,14 @@
 
 (defn swapp-language []
   (if (nil? @configuration) (swapp-configuration))
-  (if (map? @configuration)
-   (where
-    ((LANG-KEYWORD (GETC @configuration :init.edn :lang))
-     (IS-ERROR? (fn [languages] (= :error (:type languages))))
-     (l (load-config-file (clojure.java.io/file *config-root* *config-language*)) iff1 IS-ERROR? LANG-KEYWORD))
-    (reset! language l)
-    nil)))
+  (if (not= false (:valid? @configuration))
+    (where
+     ((LANG-KEYWORD (GETC @configuration :init.edn :lang)))
+     (if LANG-KEYWORD
+       (where
+        ((IS-ERROR? (fn [languages] (= :error (:type languages))))
+         (l (load-config-file (clojure.java.io/file *config-root* *config-language*)) iff1 IS-ERROR? LANG-KEYWORD))
+        (reset! language l)))))nil)
 
 (defn swapp-all
   "Description
@@ -114,6 +115,7 @@
   (swapp-language)
   nil)
 
+(swapp-all)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; PERSIST CONFIG FUNCTION ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

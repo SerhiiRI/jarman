@@ -73,7 +73,7 @@
       :doc? ["\.+" nil (vector (:\w)+)]
       :type [:block :param :error]
       :display? [:nil :edit :noedit]
-      :component? [:text :textnumber :textlist :textcolor :checkbox :listbox :selectbox]
+      :component? [:listurl :texturl :textlist :listbox :selectbox :text :textnumber :checkbox :textcolor]
       :value *}
 
      ;;; <error-spec>

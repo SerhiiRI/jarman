@@ -555,18 +555,18 @@
       (cond (= (param [:display]) :edit)
             (mig-panel
              :constraints ["wrap 1" "20px[]50px" "5px[]0px"]
-             :border (cond (type :block) (empty-border :bottom 10)
+             :border (cond (type? :block) (empty-border :bottom 10)
                            :else nil)
              :items (join-mig-items
                      (cond  (type? :block) (cg-block-header name)
                             (type? :param) (cg-param-header name))
                      (if-not (nil? (param [:doc])) (textarea (str (param [:doc])) :font (getFont 14)) ())
                      (if (and (type? :block) (not (nil? (param [:doc])))) (label :border (empty-border :top 10)) ())
-                     (cond (comp? :combobox) (cg-combobox (cond (= (last start-key) :lang) (map #(txt-to-UP %1) (join-vec (list (param [:value])) (all-langs)))
+                     (cond (comp? :selectbox) (cg-combobox (cond (= (last start-key) :lang) (map #(txt-to-UP %1) (join-vec (list (param [:value])) [:en]))
                                                                 (vector? (param [:value])) [(txt-to-title (first (param [:value])))]
                                                                 :else (vec (list (param [:value])))))
                            (comp? :checkbox) (cg-combobox (if (= (param [:value]) true) [true false] [false true]))
-                           (or (comp? :textlist) (comp? :text) (comp? :number)) (cg-input (str (param [:value])))
+                           (or (comp? :textlist) (comp? :text) (comp? :textnumber)) (cg-input (str (param [:value])))
                            (map? (param [:value])) (map (fn [next-param]
                                                           (cg-block-view (join-vec start-key [:value] (list (first next-param)))))
                                                         (param [:value]))
@@ -599,21 +599,19 @@
                                     (get-in map-part [:value]))))))))
 
 
+;; (get-in @configuration [:init.edn])
 
-
-(def search-edns
+(def search-config-files
   "Description
      Search edn files and return paths
    "
-  (fn [path] (let [next-path (vec (concat [path] [:value]))
-                   options (get-in @configuration next-path)
-                   return (map (fn [option]
-                                 (let [resoult (if (= (get-in @configuration [option :type]) :directory)
-                                                 (vec (concat next-path (vec (search-edns option))))
-                                                 (first option))]
-                                   resoult))
-                               options)]
-               return)))
+  (fn [global-config path]
+    (let [from-path (get-in @global-config [path])]
+      (cond (= (get-in from-path [:type]) :file) path
+            (not (nil? (get-in from-path [:value]))) (search-config-files (join-vec path :value))
+            ;; (> (count from-path) 2) (map (fn [step] (search-config-files (join-vec path [step]))) from-path)
+            ;; :else (print "Else" from-path)
+            ))))
 
 
 (def create-view-conf-gen
@@ -623,18 +621,22 @@
   (fn [] (expand-btn (get-lang-btns :settings)
                      (map (fn [option]
                             (let [;; Remember path to edn file
-                                  path (if (= (get-in @configuration [(first option) :type]) :directory)
-                                         (vec (concat [(first option) :value] (search-edns (first option))))
-                                         (vec (list (first option))))
-                                  ;; Return edn
-                                  opt-name (str (last path))
-                                  name (get-in @configuration (vec (concat path [:name])))]
+                                  path (search-config-files configuration (first option))]
                               ;; Create expand button for configuration files
-                              (expand-child-btn name
+                              (do 
+                                (println "Sciezka" path)
+                                (map 
+                                 (fn [expanded]
+                                   (let [name (get-in @configuration (join-vec expanded [:name]))
+                                         opt-name (str (last path))]
+                                     (expand-child-btn name
                                                 ;; Create view for Config Generator
-                                                (fn [e] (create-view opt-name name
+                                                       (fn [e] (create-view opt-name name
                                                                      ;; Create Config Generator parts
-                                                                     (create-config-gen path)))))) @configuration))))
+                                                                            (create-config-gen path))))))
+                                     path
+                                     )))) 
+                          @configuration))))
 
 
 

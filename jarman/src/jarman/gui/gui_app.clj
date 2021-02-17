@@ -520,16 +520,16 @@
 ;; └──────────────────┘
 
 
-(def cg-file-header (fn [title] (mig-panel
+(def set-confgen-header-file (fn [title] (mig-panel
                                  :constraints ["" "0px[grow, center]0px" "0px[]0px"]
                                  :items [[(label :text title :font (getFont 16) :foreground (get-color :foreground :dark-header))]]
                                  :background (get-color :background :dark-header)
                                  :border (line-border :thickness 10 :color (get-color :background :dark-header)))))
 
-(def cg-block-header (fn [title] (label :text title :font (getFont 16 :bold) 
+(def set-confgen-header-block (fn [title] (label :text title :font (getFont 16 :bold) 
                                         :border (compound-border  (line-border :bottom 2 :color (get-color :decorate :underline)) (empty-border :bottom 5)))))
 
-(def cg-param-header (fn [title] (label :text title :font (getFont 14 :bold))))
+(def set-confgen-header-param (fn [title] (label :text title :font (getFont 14 :bold))))
 
 (def cg-combobox (fn [model] (mig-panel
                               :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
@@ -546,7 +546,7 @@
 
 
 
-(def cg-block-view
+(def set-confgen-component-block
   (fn [start-key]
     (let [param (fn [key] (get-in @configuration (join-vec start-key key)))
           type? (fn [key] (= (param [:type]) key))
@@ -558,17 +558,17 @@
              :border (cond (type? :block) (empty-border :bottom 10)
                            :else nil)
              :items (join-mig-items
-                     (cond  (type? :block) (cg-block-header name)
-                            (type? :param) (cg-param-header name))
+                     (cond  (type? :block) (set-confgen-header-block name)
+                            (type? :param) (set-confgen-header-param name))
                      (if-not (nil? (param [:doc])) (textarea (str (param [:doc])) :font (getFont 14)) ())
                      (if (and (type? :block) (not (nil? (param [:doc])))) (label :border (empty-border :top 10)) ())
                      (cond (comp? :selectbox) (cg-combobox (cond (= (last start-key) :lang) (map #(txt-to-UP %1) (join-vec (list (param [:value])) [:en]))
                                                                 (vector? (param [:value])) [(txt-to-title (first (param [:value])))]
                                                                 :else (vec (list (param [:value])))))
                            (comp? :checkbox) (cg-combobox (if (= (param [:value]) true) [true false] [false true]))
-                           (or (comp? :textlist) (comp? :text) (comp? :textnumber)) (cg-input (str (param [:value])))
+                           (or (comp? :textlist) (comp? :text) (comp? :textnumber) (comp? :textcolor)) (cg-input (str (param [:value])))
                            (map? (param [:value])) (map (fn [next-param]
-                                                          (cg-block-view (join-vec start-key [:value] (list (first next-param)))))
+                                                          (set-confgen-component-block (join-vec start-key [:value] (list (first next-param)))))
                                                         (param [:value]))
                            :else (textarea (str (param [:value])) :font (getFont 12)))))
             :else ()))))
@@ -592,10 +592,11 @@
                            :constraints ["wrap 1" (string/join "" ["20px[:" (first @right-size) ", grow, fill]20px"]) "20px[]20px"]
                            :items (join-mig-items
                                    ;; Header of section/config file
-                                   (cg-file-header (get-in map-part [:name]))
+                                   (set-confgen-header-file (get-in map-part [:name]))
                                    ;; Foreach on init values and create configuration blocks
                                    (map
-                                    (fn [param] (cg-block-view (join-vec start-key [:value] (list (first param)))))
+                                    (fn [param]
+                                      (set-confgen-component-block (join-vec start-key [:value] (list (first param)))))
                                     (get-in map-part [:value]))))))))
 
 
@@ -603,42 +604,36 @@
 
 (def search-config-files
   "Description
-     Search edn files and return paths
+     Search files and return paths
    "
   (fn [global-config path]
-    (let [from-path (get-in @global-config [path])]
-      (cond (= (get-in from-path [:type]) :file) path
-            (not (nil? (get-in from-path [:value]))) (search-config-files (join-vec path :value))
-            ;; (> (count from-path) 2) (map (fn [step] (search-config-files (join-vec path [step]))) from-path)
-            ;; :else (print "Else" from-path)
-            ))))
+    (let [root (get-in @global-config path)
+          type (get-in root [:type])]
+      (cond (= type :file) path
+            (= type :directory) (search-config-files global-config (join-vec path [:value])) 
+            (nil? type) (map
+                         (fn [leaf]
+                           (search-config-files global-config (join-vec path [(first leaf)])))
+                         root)))))
 
+(def prepare-config-paths
+  "Search and finde file fragemnt in config map, next return paths list to this fragments"
+  (fn [conf] (all-vec-to-floor
+              (map (fn [option]
+                     (search-config-files conf [(first option)]))
+                   @conf))))
 
 (def create-view-conf-gen
   "Discription
      Return expand button with config generator GUI
+     Complete component
    "
   (fn [] (expand-btn (get-lang-btns :settings)
-                     (map (fn [option]
-                            (let [;; Remember path to edn file
-                                  path (search-config-files configuration (first option))]
-                              ;; Create expand button for configuration files
-                              (do 
-                                (println "Sciezka" path)
-                                (map 
-                                 (fn [expanded]
-                                   (let [name (get-in @configuration (join-vec expanded [:name]))
-                                         opt-name (str (last path))]
-                                     (expand-child-btn name
-                                                ;; Create view for Config Generator
-                                                       (fn [e] (create-view opt-name name
-                                                                     ;; Create Config Generator parts
-                                                                            (create-config-gen path))))))
-                                     path
-                                     )))) 
-                          @configuration))))
-
-
+                     (map (fn [path]
+                            (let [name (get-in @configuration (join-vec path [:name]))
+                                  id (last path)]
+                              (expand-child-btn name (fn [e] (create-view id name (create-config-gen path))))))
+                          (prepare-config-paths configuration)))))
 
 
 

@@ -241,7 +241,7 @@
                           ico-hover (stool/image-scale icon/minus-grey-64-png 20)]
                       
                       (do 
-                        (println inside-btns-to-use)
+                        ;; (println inside-btns-to-use)
                         (mig-panel
                         :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
                         :listen [:mouse-entered hand-hover-on

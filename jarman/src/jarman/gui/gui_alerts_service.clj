@@ -43,6 +43,7 @@
         header-size 30
         ico-size 30
         box-border 2
+        padding 6
         ico icon/x-grey2-64-png
       ;;   ico-hover icon/x-blue1-64-png
         bounds (middle-bounds (to-root layered-pane) (+ w box-border box-border) (+ h box-border box-border))]
@@ -58,10 +59,12 @@
                                            :foreground header-fg-c
                                            :background header-bg-c
                                            :font (getFont 15 :bold))]
-                                [(scrollable (label-fn :text (format "<html><body><p style=\"word-wrap: normal;\">%s</p></body><html>" body)
+                                [(scrollable (label-fn :text (htmling body)
+                                             ;;  :text (format "<html><body><p style=\"word-wrap: normal;\">%s</p></body><html>" body)
                                                        :size [w :by (- h ico-size ico-size)]
                                                        :font (getFont 13)
                                                        :background bg-c
+                                                       :border (empty-border :thickness padding)
                                                        :valign :top)
                                              :hscroll :never
                                              :border nil)]

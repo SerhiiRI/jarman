@@ -65,6 +65,8 @@
 ;; └───────────────────┘
 
 (def right-size (atom [0 0]))
+(def storage-with-changes (atom {})) ;; Store view id as key and component id which is path in config map too {:view link-to-atom}
+
 (def views (atom {}))
 (def active-tab (atom :none))
 (def last-active-tab (atom :none))
@@ -94,6 +96,7 @@
 ;; @views
 
 ;; ================================================VVVVVVVVVV Table in database view
+
 
 
 (def dbmap (list
@@ -521,33 +524,46 @@
 
 
 (def set-confgen-header-file (fn [title] (mig-panel
-                                 :constraints ["" "0px[grow, center]0px" "0px[]0px"]
-                                 :items [[(label :text title :font (getFont 16) :foreground (get-color :foreground :dark-header))]]
-                                 :background (get-color :background :dark-header)
-                                 :border (line-border :thickness 10 :color (get-color :background :dark-header)))))
+                                          :constraints ["" "0px[grow, center]0px" "0px[]0px"]
+                                          :items [[(label :text title :font (getFont 16) :foreground (get-color :foreground :dark-header))]]
+                                          :background (get-color :background :dark-header)
+                                          :border (line-border :thickness 10 :color (get-color :background :dark-header)))))
 
-(def set-confgen-header-block (fn [title] (label :text title :font (getFont 16 :bold) 
-                                        :border (compound-border  (line-border :bottom 2 :color (get-color :decorate :underline)) (empty-border :bottom 5)))))
+(def set-confgen-header-block (fn [title] (label :text title :font (getFont 16 :bold)
+                                                 :border (compound-border  (line-border :bottom 2 :color (get-color :decorate :underline)) (empty-border :bottom 5)))))
 
 (def set-confgen-header-param (fn [title] (label :text title :font (getFont 14 :bold))))
 
-(def cg-combobox (fn [model] (mig-panel
-                              :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
-                              :items [[(combobox :model model :font (getFont 14) 
-                                                 :background (get-color :background :combobox) 
-                                                 :size [200 :by 30])]])))
+(def cg-combobox (fn [changing-list path model]
+                   (mig-panel
+                    :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
+                    :items [[(combobox :model model :font (getFont 14)
+                                       :background (get-color :background :combobox)
+                                       :size [200 :by 30]
+                                       :listen [:item-state-changed (fn [e]
+                                                              (cond (not (= (config e :selected-item) (first model)))
+                                                                    (swap! changing-list (fn [changes] (merge changes {(map-path-to-key path) [path (config e :selected-item)]})))
+                                                                    (not (nil? (get-in @changing-list [(map-path-to-key path)])))
+                                                                    (swap! changing-list (fn [changes] (dissoc changes (map-path-to-key path))))))])]])))
 
-(def cg-input (fn [value] (mig-panel
-                         :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
-                         :items [[(text :text value :font (getFont 14) 
-                                        :background (get-color :background :input)
-                                        :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5) 
-                                                                 (line-border :bottom 2 :color (get-color :decorate :gray-underline))))]])))
+(def cg-input (fn [changing-list path value]
+                (mig-panel
+                 :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
+                 :items [[(text :text value :font (getFont 14)
+                                :background (get-color :background :input)
+                                :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
+                                                         (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
+                                :listen [:caret-update (fn [e]
+                                                         (cond (not (= (config e :text) value))
+                                                               (swap! changing-list (fn [changes] (merge changes {(map-path-to-key path) [path (config e :text)]})))
+                                                               (not (nil? (get-in @changing-list [(map-path-to-key path)])))
+                                                               (swap! changing-list (fn [changes] (dissoc changes (map-path-to-key path))))))])]])))
 
 
+;; (show-events (text))
 
 (def set-confgen-component-block
-  (fn [start-key]
+  (fn [changing-list start-key]
     (let [param (fn [key] (get-in @configuration (join-vec start-key key)))
           type? (fn [key] (= (param [:type]) key))
           comp? (fn [key] (= (param [:component]) key))
@@ -562,13 +578,13 @@
                             (type? :param) (set-confgen-header-param name))
                      (if-not (nil? (param [:doc])) (textarea (str (param [:doc])) :font (getFont 14)) ())
                      (if (and (type? :block) (not (nil? (param [:doc])))) (label :border (empty-border :top 10)) ())
-                     (cond (comp? :selectbox) (cg-combobox (cond (= (last start-key) :lang) (map #(txt-to-UP %1) (join-vec (list (param [:value])) [:en]))
-                                                                (vector? (param [:value])) [(txt-to-title (first (param [:value])))]
-                                                                :else (vec (list (param [:value])))))
-                           (comp? :checkbox) (cg-combobox (if (= (param [:value]) true) [true false] [false true]))
-                           (or (comp? :textlist) (comp? :text) (comp? :textnumber) (comp? :textcolor)) (cg-input (str (param [:value])))
+                     (cond (comp? :selectbox) (cg-combobox changing-list start-key (cond (= (last start-key) :lang) (map #(txt-to-UP %1) (join-vec (list (param [:value])) [:en]))
+                                                                 (vector? (param [:value])) [(txt-to-title (first (param [:value])))]
+                                                                 :else (vec (list (param [:value])))))
+                           (comp? :checkbox) (cg-combobox changing-list start-key (if (= (param [:value]) true) [true false] [false true]))
+                           (or (comp? :textlist) (comp? :text) (comp? :textnumber) (comp? :textcolor)) (cg-input changing-list start-key (str (param [:value])))
                            (map? (param [:value])) (map (fn [next-param]
-                                                          (set-confgen-component-block (join-vec start-key [:value] (list (first next-param)))))
+                                                          (set-confgen-component-block changing-list (join-vec start-key [:value] (list (first next-param)))))
                                                         (param [:value]))
                            :else (textarea (str (param [:value])) :font (getFont 12)))))
             :else ()))))
@@ -582,22 +598,26 @@
 
 (def create-config-gen
   "Description
-     Join config generator parts
+     Join config generator parts and set view on right functional panel
    "
-  (fn [start-key] (let [map-part (get-in @configuration start-key)]
+  (fn [start-key] (let [map-part (get-in @configuration start-key)
+                        changeing-list (atom {})]
                     (cond (= (get-in map-part [:display]) :edit)
-                          (mig-panel
+                          (do
+                            (swap! storage-with-changes (fn [changes-atoms] (merge changes-atoms {(last start-key) changeing-list})))
+                            (mig-panel
                             ;; :size [(first @right-size) :by (second @right-size)]
-                           :border (line-border :bottom 50 :color (get-color :background :main))
-                           :constraints ["wrap 1" (string/join "" ["20px[:" (first @right-size) ", grow, fill]20px"]) "20px[]20px"]
-                           :items (join-mig-items
+                             :border (line-border :bottom 50 :color (get-color :background :main))
+                             :constraints ["wrap 1" (string/join "" ["20px[:" (first @right-size) ", grow, fill]20px"]) "20px[]20px"]
+                             :items (join-mig-items
                                    ;; Header of section/config file
-                                   (set-confgen-header-file (get-in map-part [:name]))
+                                     (set-confgen-header-file (get-in map-part [:name]))
+                                     (label :text "Show changes" :listen [:mouse-clicked (fn [e] (println "Changes" @changeing-list))])
                                    ;; Foreach on init values and create configuration blocks
-                                   (map
-                                    (fn [param]
-                                      (set-confgen-component-block (join-vec start-key [:value] (list (first param)))))
-                                    (get-in map-part [:value]))))))))
+                                     (map
+                                      (fn [param]
+                                        (set-confgen-component-block changeing-list (join-vec start-key [:value] (list (first param)))))
+                                      (get-in map-part [:value])))))))))
 
 
 ;; (get-in @configuration [:init.edn])
@@ -610,7 +630,7 @@
     (let [root (get-in @global-config path)
           type (get-in root [:type])]
       (cond (= type :file) path
-            (= type :directory) (search-config-files global-config (join-vec path [:value])) 
+            (= type :directory) (search-config-files global-config (join-vec path [:value]))
             (nil? type) (map
                          (fn [leaf]
                            (search-config-files global-config (join-vec path [(first leaf)])))
@@ -623,7 +643,7 @@
                      (search-config-files conf [(first option)]))
                    @conf))))
 
-(def create-view-conf-gen
+(def create-view-config-generator
   "Discription
      Return expand button with config generator GUI
      Complete component
@@ -690,7 +710,6 @@
       Main space for app inside JLayeredPane. There is menu with expand btns and space for tables with tab btns.
    "
   (grid-panel
-   ;; TODO: Components are writing to output, they can not
    :bounds app-bounds
    :items [(mig-panel
             :constraints [""
@@ -704,7 +723,7 @@
                                                    (expand-child-btn "DB View" (fn [e] (create-view-db-view)))
                                                    (expand-child-btn "Test"    (fn [e] (create-view "test1" "Test 1" (label :text "Test 1"))))
                                                    (expand-child-btn "Test 2"  (fn [e] (create-view "test2" "Test 2" (label :text "Test 2")))))]
-                                      [(create-view-conf-gen)])]
+                                      [(create-view-config-generator)])]
                     [(mig-app-right-f [(label)]
                                       [(label)])]])]))
 
@@ -716,22 +735,27 @@
   [id-key]
   (cond
     (> (count @views) 0) (vec (map (fn [item]
-                                     (let [item-key (get (second item) :title)]
-                                       (tab-btn item-key item-key (if (identical? (first item) id-key) true false) [100 25]
+                                     (let [view-id (first item)
+                                           item-key (get (second item) :title)
+                                           changes-atom (get-in @storage-with-changes [view-id])]
+                                       (tab-btn item-key item-key (if (identical? view-id id-key) true false) [100 25]
                                                 (fn [e] (do
-                                                          (reset! views (dissoc @views (first item)))
+                                                          ;; TO DO - Question about drop changes and do not save
+                                                          (if-not (empty? @changes-atom) (alerts-s :set {:header "Niezapisane zmiany!" 
+                                                                                                         :body (string/join "" ["W widoku \"" item-key "\" istnieją niezapisane dane: <br>" @changes-atom])} 
+                                                                                                   (message alerts-s) 6)) ;; Check if are changes on view and show alert message
+                                                          (reset! views (dissoc @views view-id)) ;; Remove view from view list
                                                           (if (get (config (.getParent (seesaw.core/to-widget e)) :user-data) :active)
-                                                            (reset! active-tab @last-active-tab)
-                                                            (reset! active-tab @active-tab))))
+                                                            (reset! active-tab @last-active-tab) ;; Close active card
+                                                            (reset! active-tab @active-tab))))   ;; Close card in background
                                                 (fn [e] (do
-                                                          (reset! active-tab (first item))
+                                                          (reset! active-tab view-id)
                                                           (config! (select (getRoot app) [:#app-functional-space])
                                                                    :items [(scrollable (get (second item) :component)
                                                                                        :border nil
                                                                                        :id (keyword (get (second item) :id)))]))))))
                                    @views))
     :else [(label)]))
-
 
 
 
@@ -776,23 +800,6 @@
 
 
 
-(def refresh-layered-for-tables
-  "Description
-     Refresh bounds of DB View JLayredPane.
-   "
-  (fn [] (do (if (contains? @views :layered-for-tabs)
-               (let [max-w (apply max (map (fn [item]  (+ (.getX (config item :bounds)) (.getWidth  (config item :bounds)))) (seesaw.util/children (get-in @views [:layered-for-tabs :component]))))
-                     parent-w (getWidth (.getParent (get-in @views [:layered-for-tabs :component])))
-                     max-h (apply max (map (fn [item]  (+ (.getY (config item :bounds)) (.getHeight  (config item :bounds)))) (seesaw.util/children (get-in @views [:layered-for-tabs :component]))))
-                     parent-h (getHeight (.getParent (get-in @views [:layered-for-tabs :component])))]
-                 (do (.setPreferredSize (get-in @views [:layered-for-tabs :component]) (new Dimension (if (> parent-w max-w) parent-w max-w) (if (> parent-h max-h) parent-h max-h)))
-                     (.setSize (get-in @views [:layered-for-tabs :component]) (new Dimension (if (> parent-w max-w) parent-w max-w) (if (> parent-h max-h) parent-h max-h)))))
-
-               (.setPreferredSize (get-in @views [:layered-for-tabs :component]) (new Dimension
-                                                                                      (getWidth  (.getParent (get-in @views [:layered-for-tabs :component])))
-                                                                                      (getHeight (.getParent (get-in @views [:layered-for-tabs :component])))))))))
-
-
 (def app-functional-space-resize
   "Description
      Resize app functional space (this space on right).
@@ -800,19 +807,16 @@
   (fn [e] (let [AFS (firstToWidget (getChildren (findByID e :#app-functional-space)))
                 leaf (try (seesaw.util/children AFS) (catch Exception e (str e)))
                 w (- (getWidth AFS) 20)
-                h (- (getHeight AFS) 20)]
-            (if (= leaf nil) (fn []) (do
-                                       ;; Refresh size of app functional space (space on right)
-                                       (reset! right-size [w h])
-                                      ;;  (config! (seesaw.core/to-widget (get-in @views [@active-tab :component])) :size [w :by h])
-                                       )))))
+                h (- (getHeight AFS) 20)
+                frame-w (getWidth (to-root e))
+                frame-h (getHeight (to-root e))]
+            (if (= leaf nil) (fn []) (reset! right-size [w h])))))
 
 (def onresize-f
   "Description:
       Resize component inside JLayeredPane on main frame resize event.
    "
   (fn [e] (do
-            refresh-layered-for-tables
             (template-resize jarmanapp)
             (alerts-rebounds-f e)
             (app-functional-space-resize e)

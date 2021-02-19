@@ -84,6 +84,7 @@
 (defn build-bottom-ico-btn
   "Description:
       Icon btn for message box. Create component with icon btn on bottom.
+   Layered should be atom.
    Example:
       (build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png 23 (fn [e] (alert 'Wiadomosc')))
    Needed:
@@ -96,10 +97,10 @@
                                      :border (empty-border :left 3 :right 3)
                                      :listen [:mouse-entered (fn [e] (do 
                                                                        (config! e :icon (stool/image-scale ic-h (if (> (count args) 0) (first args) 28)) :cursor :hand)
-                                                                       (.repaint layered)))
+                                                                       (.repaint @layered)))
                                               :mouse-exited (fn [e] (do
                                                                        (config! e :icon (stool/image-scale ic (if (> (count args) 0) (first args) 28)))
-                                                                       (.repaint layered)))
+                                                                       (.repaint @layered)))
                                               :mouse-clicked (if (> (count args) 1) (second args) (fn [e]))]))
 
 (defn build-ico

@@ -16,13 +16,48 @@
             ;; deverloper tools 
             [jarman.tools.swing :as stool]
             [jarman.tools.lang :refer :all]
-            [jarman.gui.gui-seed :refer :all]
+            [jarman.gui.gui-frame :refer :all]
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
             [jarman.config.init :refer [configuration language]]))
 
+;;  (get-color :jarman :bar)
+
 (import javax.swing.JLayeredPane)
+;; (import javax.swing.JLabel)
 (import java.awt.Color)
+;; (import java.awt.Dimension)
 (import java.awt.event.MouseEvent)
+
+
+;; ┌────────────────────────┐
+;; │                        │
+;; │ Start empty App layout │
+;; │                        │
+;; └────────────────────────┘
+
+;; (def app-width (get-frame :width))
+;; (def app-height (get-frame :heigh))
+;; (def app-bounds [0 0 app-width app-height])
+
+;; ;; Prepare operative layer
+;; (def app
+;;   "Description:
+;;        Create panel for absolute position elements. In real it is GUI.
+;;    "
+;;   (new JLayeredPane))
+
+;; ;; Start app window
+;; (-> (doto (seesaw.core/frame
+;;            :title "DEBUG WINDOW" :undecorated? false
+;;            :minimum-size [app-width :by app-height]
+;;            :size [app-width :by app-height]
+;;            :content app)
+;;       (.setLocationRelativeTo nil) pack! show!))
+
+;; ;; Start message service
+;; (def alerts-s (message-server-creator app))
+
+
 
 ;; ┌───────────────────┐
 ;; │                   │
@@ -51,7 +86,7 @@
   [id title view]
   (let [id-key (keyword id)]
     (do
-      (if (= (contains? @views id-key) false) (swap! views (fn [storage] (merge storage {id-key {:component view :id id :title title}}))) (fn []))
+      (if (= (contains? @views id-key) false) (swap! views (fn [storage] (merge storage {id-key {:component view :id id :title title}}))))
       (reset! active-tab id-key))))
 
 
@@ -307,7 +342,7 @@
         ;; (println "info")
         ;; (println (str table-info))
         ;; (println (str elemensts))
-      (if (= (contains? @views id-key) false) (swap! views (fn [storage] (merge storage {id-key {:component view :id id :title (string/join "" ["Edit: " (get table :table)])}}))) (fn []))
+      (if (= (contains? @views id-key) false) (swap! views (fn [storage] (merge storage {id-key {:component view :id id :title (string/join "" ["Edit: " (get table :table)])}}))))
       (reset! active-tab id-key))))
 
 
@@ -730,25 +765,85 @@
 ;; │ Supervisor for open views in tab bar │
 ;; │                                      │
 ;; └──────────────────────────────────────┘
-(add-watch active-tab :refresh
-           (fn [key atom old-state new-state]
-             (do
-               (reset! last-active-tab old-state)
-               (cond
-                 (contains? @views new-state) (do
-                                                (config! (select (getRoot @app) [:#app-functional-space]) :items [(scrollable (get-in @views [new-state :component]) :border nil :id (keyword (get-in @views [new-state :id])))])
-                                                (config! (select (getRoot @app) [:#app-tabs-space]) :items (create-bar-with-open-tabs new-state)))
-                 (> (count @views) 0) (reset! active-tab (first (first @views)))
-                 :else (do
-                         (reset! last-active-tab :none)
-                         (config! (select (getRoot @app) [:#app-functional-space]) :items [(label)])
-                         (config! (select (getRoot @app) [:#app-tabs-space]) :items [(label)]))))
-             (.repaint @app))) @app
+(add-watch active-tab :refresh (fn [key atom old-state new-state]
+                                 (do
+                                   (reset! last-active-tab old-state)
+                                   (cond
+                                     (contains? @views new-state) (do
+                                                                    (config! (select (getRoot @app) [:#app-functional-space]) :items [(scrollable (get-in @views [new-state :component]) :border nil :id (keyword (get-in @views [new-state :id])))])
+                                                                    (config! (select (getRoot @app) [:#app-tabs-space]) :items (create-bar-with-open-tabs new-state)))
+                                     (> (count @views) 0) (reset! active-tab (first (first @views)))
+                                     :else (do
+                                             (reset! last-active-tab :none)
+                                             (config! (select (getRoot @app) [:#app-functional-space]) :items [(label)])
+                                             (config! (select (getRoot @app) [:#app-tabs-space]) :items [(label)]))))
+                                 (.repaint @app))) @app
 
 (build :items (list
                jarmanapp
-               (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png 50) 0 50 "DB View" {:onclick (fn [e] (create-view-db-view))})
-               (slider-ico-btn (stool/image-scale icon/I-64-png 50) 1 50 "Powiadomienia" {:onclick (fn [e] (alerts-s :show))})))
+               (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png 50) 0 50 "DB View"
+                               {:onclick (fn [e] (create-view-db-view))})
+               (slider-ico-btn (stool/image-scale icon/I-64-png 50) 1 50 "Powiadomienia" {:onclick (fn [e] (alerts-s :show))}))
+       )
+
+
+;; (defn app-build
+;;   "Description:
+;;       Change starter window. Add prepare components and functions.
+;;    Example:
+;;       (app-build)
+;;    Neede:
+;;       Function need jarmanapp with app content
+;;       Function need btn-icon-f function for category buttons
+;;    "
+;;   [] (let [menu-icon-size 50]
+;;        (do
+        ;;  (.add app jarmanapp (new Integer 5))
+        ;;  (.add app (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png menu-icon-size) 0 menu-icon-size "DB View"
+        ;;                            {:onclick (fn [e] (create-view-db-view))}) (new Integer 10))
+        ;;  (.add app (slider-ico-btn (stool/image-scale icon/I-64-png menu-icon-size) 1 menu-icon-size "Powiadomienia" {:onclick (fn [e] (alerts-s :show))}) (new Integer 10))
+
+;;         ;;  (onresize-f app)
+;;          (.repaint app))))
+
+
+
+;; (def app-functional-space-resize
+;;   "Description
+;;      Resize app functional space (this space on right).
+;;    "
+;;   (fn [e] (let [AFS (firstToWidget (getChildren (findByID e :#app-functional-space)))
+;;                 leaf (try (seesaw.util/children AFS) (catch Exception e (str e)))
+;;                 w (- (getWidth AFS) 20)
+;;                 h (- (getHeight AFS) 20)
+;;                 frame-w (getWidth (to-root e))
+;;                 frame-h (getHeight (to-root e))]
+;;             (if (= leaf nil) (fn []) (reset! right-size [w h])))))
+
+;; (def onresize-f
+;;   "Description:
+;;       Resize component inside JLayeredPane on main frame resize event.
+;;    "
+;;   (fn [e] (do
+;;             (template-resize jarmanapp)
+;;             (alerts-rebounds-f e)
+;;             (app-functional-space-resize e)
+;;             (.repaint app))))
+
+;; (config! (to-root app) :listen [:component-resized (fn [e] (onresize-f e))])
+
+
+;; Complete window
+;; (app-build)
+
+
+
+
+
+
+;; (refresh-layered-for-tables)
+;; (if (> (count (seesaw.util/children layered-for-tabs)) 0) (.setSize layered-for-tabs (new Dimension 730 550)))
+
 
 ;; (alerts-s :show)
 ;; (alerts-s :hide)

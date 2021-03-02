@@ -16,11 +16,16 @@
   :aliases  {"jarman" ["run" "-m" "jarman.jarman-cli"]}
   
   :profiles {;; :uberjar {:aot :all}
+             ;;:dev {;; :dependencies [[autodoc "1.1.2"]]
+             ;;      :plugins [[funcool/codeina "0.4.0" :exclusions [org.clojure/clojure]]]}
              :lets-scheme {:aot [jarman.schema-builder
                                  jarman.sql-tool]
                            :main jarman.schema-builder
                            :jar-name "lets-scheme-lib.jar"
                            :uberjar-name "lets-scheme.jar"}}
+  :codeina {:sources ["src"]
+            :reader :clojure}
+  ;; :plugins [[funcool/codeina "0.5.0"]]
   :jar-name "jarman.jar"
   :uberjar-name "jarman-standalone.jar"
   :java-source-paths ["src/java"]

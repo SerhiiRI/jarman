@@ -1,4 +1,4 @@
-(ns jarman.database-manager
+(ns jarman.logic.database-manager
   (:gen-class)
   (:use
    seesaw.chooser)

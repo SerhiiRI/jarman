@@ -1,4 +1,4 @@
-(ns jarman.new-data-manager
+(ns jarman.logic.new-data-manager
   (:gen-class)
   (:require [jarman.sql-tool :as sql :include-macros true :refer :all]
             [jarman.config-manager :as cm]

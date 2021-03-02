@@ -38,7 +38,7 @@
     (if-let [cfg (cm/merge-configs from to)]
       (spit to (prn-str cfg))
       (clojure.java.io/copy (file from) (file to)))
-    (clojure.java.io/copy (file from) (file to)))  to)
+    (clojure.java.io/copy (file from) (file to))) to)
 
 (defn create-dir [dir]
   (mkdirs dir))

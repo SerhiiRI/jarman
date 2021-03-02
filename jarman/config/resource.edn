@@ -1,42 +1,101 @@
-{:name "Resource configurations"
- :display :edit
- :type :file
- :value {:configuration-attribute {:name "Lokalizacja programu"
-                                   :doc "Wybierz ścieżkę do konfiguracyjnego pliku standardowo. Wskazuje ona na katalog, w którym zlokalizowany jest programu. Wzór: \"C:\\ścieżka\\ścieżka\\ścieżka\" \"/ścieżka/ścieżka\" \"ścieżka\""
-                                   :type :block
-                                   :display :edit
-                                   :value {:configuration-path {:name "Ścieżka programu"
-                                                                :type :param
-                                                                :display :edit
-                                                                :component :text
-                                                                :value "config"}}}
-         :font-configuration-attribute {:name "Rozszerzenia"
-                                        :type :block
-                                        :display :edit
-                                        :value {:font-path {:name "Lokalizacja czcionek"
-                                                            :doc "Wybierz ścieżkę do katalogu czcionek. Wzór: \"C:\\ścieżka\\ścieżka\\ścieżka\" \"/ścieżka/ścieżka\" \"ścieżka\"" 
-                                                            :type :param :display :edit :component :text :value "fonts"}
-                                                :acceptable-file-format {:name "Wspierane pliki" 
-                                                                         :doc "wybierz rozszerzenia dla wspieranych przez system plików konfiguracji." 
-                                                                         :type :param :display :edit :component :text :value ["ttf"]}}}
-         
-         :icon-configuration-attribute {:name "Ikonki"
-                                        :type :block 
-                                        :display :edit
-                                        :value {:icon-path {:name "Lokalizacja ikonek"
-                                                            :doc "Wybierz ścieżkę do katalogu ikonek, wskazuje ona na katalog z programem. Wzór \"C:\\ścieżka\\ścieżka\\ścieżka\" \"/ścieżka/ścieżka\" \"ścieżka\""
-                                                            :type :param :display :edit :component :text :value "icons"}
-                                                :acceptable-file-format {:name "Wspierane pliki"
-                                                                         :doc "Wybierz rozszerzenia dla wspieranych przez system konfiguracji plikowych."
-                                                                         :type :param :display :edit :component :text :value ["png" "ico" "icon" "jpg" "jpeg"]}}}
-         :supported-files {:name "Wspierane rozszerzenia"
-                           :doc "Wybierz rozszerzenia dla wspieranych przez system plików konfiguracji."
-                           :type :block 
-                           :display :edit
-                           :value {:markdown-files {:type :param :display :edit :component :textlist :value ["md" "markdown"]}
-                                   :xml-files {:type :param :display :edit :component :textlist :value ["html" "xhtml" "xml"]}
-                                   :text-files {:type :param :display :edit :component :textlist :value ["txt" "text" "org"]}
-                                   :clojure-files {:type :param :display :edit :component :textlist :value ["clj" "edn" "clojure"]}
-                                   :csv-files {:type :param :display :edit :component :textlist :value ["csv"]}
-                                   :shell-files {:type :param :display :edit :component :textlist :value ["sh" "bash" "fish"]}
-                                   :prop-files {:type :param :display :edit :component :textlist :value ["properties" "prop" "cfg"]}}}}}
+{:name "Resource configurations",
+ :display :edit,
+ :type :file,
+ :value
+ {:configuration-attribute
+  {:name "Lokalizacja programu",
+   :doc
+   "Wybierz ścieżkę do konfiguracyjnego pliku standardowo. Wskazuje ona na katalog, w którym zlokalizowany jest programu. Wzór: \"C:\\ścieżka\\ścieżka\\ścieżka\" \"/ścieżka/ścieżka\" \"ścieżka\"",
+   :type :block,
+   :display :edit,
+   :value
+   {:configuration-path
+    {:name "Ścieżka programu",
+     :type :param,
+     :display :edit,
+     :component :text,
+     :value "config"}}},
+  :font-configuration-attribute
+  {:name "Rozszerzenia",
+   :type :block,
+   :display :edit,
+   :value
+   {:font-path
+    {:name "Lokalizacja czcionek",
+     :doc
+     "Wybierz ścieżkę do katalogu czcionek. Wzór: \"C:\\ścieżka\\ścieżka\\ścieżka\" \"/ścieżka/ścieżka\" \"ścieżka\"",
+     :type :param,
+     :display :edit,
+     :component :text,
+     :value "fonts"},
+    :acceptable-file-format
+    {:name "Wspierane pliki",
+     :doc
+     "wybierz rozszerzenia dla wspieranych przez system plików konfiguracji.",
+     :type :param,
+     :display :edit,
+     :component :text,
+     :value ["ttf"]}}},
+  :icon-configuration-attribute
+  {:name "Ikonki",
+   :type :block,
+   :display :edit,
+   :value
+   {:icon-path
+    {:name "Lokalizacja ikonek",
+     :doc
+     "Wybierz ścieżkę do katalogu ikonek, wskazuje ona na katalog z programem. Wzór \"C:\\ścieżka\\ścieżka\\ścieżka\" \"/ścieżka/ścieżka\" \"ścieżka\"",
+     :type :param,
+     :display :edit,
+     :component :text,
+     :value "icons"},
+    :acceptable-file-format
+    {:name "Wspierane pliki",
+     :doc
+     "Wybierz rozszerzenia dla wspieranych przez system konfiguracji plikowych.",
+     :type :param,
+     :display :edit,
+     :component :text,
+     :value ["png" "ico" "icon" "jpg" "jpeg"]}}},
+  :supported-files
+  {:name "Wspierane rozszerzenia",
+   :doc
+   "Wybierz rozszerzenia dla wspieranych przez system plików konfiguracji.",
+   :type :block,
+   :display :edit,
+   :value
+   {:markdown-files
+    {:type :param,
+     :display :edit,
+     :component :textlist,
+     :value ["md" "markdown"]},
+    :xml-files
+    {:type :param,
+     :display :edit,
+     :component :textlist,
+     :value ["html" "xhtml" "xml"]},
+    :text-files
+    {:type :param,
+     :display :edit,
+     :component :textlist,
+     :value ["txt" "text" "org"]},
+    :clojure-files
+    {:type :param,
+     :display :edit,
+     :component :textlist,
+     :value ["clj" "edn" "clojure"]},
+    :csv-files
+    {:type :param,
+     :display :edit,
+     :component :textlist,
+     :value ["csv"]},
+    :shell-files
+    {:type :param,
+     :display :edit,
+     :component :textlist,
+     :value ["sh" "bash" "fish"]},
+    :prop-files
+    {:type :param,
+     :display :edit,
+     :component :textlist,
+     :value ["properties" "prop" "cfg"]}}}}}

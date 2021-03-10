@@ -47,9 +47,9 @@
                                                      :header {:type :param :display :edit :component :textcolor :value "#ccc"}}}
                                 :group-buttons {:type :block
                                                 :display :edit
-                                                :value {:background {:type :param :display :edit :component :textcolor :value "#eee"}
-                                                        :background-hover {:type :param :display :edit :component :textcolor :value "#d9ecff"}
-                                                        :clicked {:type :param :display :edit :component :textcolor :value "#c8dbee"}}}
+                                                :value {:background {:type :param :display :edit :component :textcolor :value "#fff"}
+                                                        :background-hover {:type :param :display :edit :component :textcolor :value "#91c8ff"}
+                                                        :clicked {:type :param :display :edit :component :textcolor :value "#d9ecff"}}}
                                 :main-button {:type :block
                                               :display :edit
                                               :value {:background {:type :param :display :edit :component :textcolor :value "#fff"}
@@ -64,7 +64,13 @@
                                                      :button_selected {:type :param :display :edit :component :textcolor :value "#000"}
                                                      :doc-font-color {:type :param :display :edit :component :textcolor :value "#999"}
                                                      :txt-font-color {:type :param :display :edit :component :textcolor :value "#000"}}}
-                                :border {:type :param :display :edit :component :textcolor :value "#ccc"}
+                                
+                                :border {:type :block
+                                             :display :edit
+                                             :value {:white {:type :param :display :edit :component :textcolor :value "#fff"}
+                                                     :gray {:type :param :display :edit :component :textcolor :value "#ccc"}
+                                                     :dark-gray {:type :param :display :edit :component :textcolor :value "#666"}}}
+
                                 :decorate {:type :block
                                            :display :edit
                                            :value {:underline {:type :param :display :edit :component :textcolor :value "#000"}
@@ -162,6 +168,7 @@
 (def get-font   (create-value-getter theme-map true "Ubuntu" :font))
 (def get-lang   (create-value-getter @language false "Unknown" []))
 (def get-lang-btns (create-value-getter @language false "Unknown" :ui :buttons))
+
 
 ;; (get-color :jarman :bar)
 ;; (get-frame :width)

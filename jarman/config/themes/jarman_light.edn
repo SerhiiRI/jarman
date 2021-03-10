@@ -26,6 +26,11 @@
                                        :display :edit
                                        :value {:background {:type :param :display :edit :component :textcolor :value "#fff"}
                                                :clicked {:type :param :display :edit :component :textcolor :value "#96c1ea"}}}
+                         :group-button {:type :block
+                                        :display :edit
+                                        :value {:background {:type :param :display :edit :component :textcolor :value "#fff"}
+                                                :background-hover {:type :param :display :edit :component :textcolor :value "#ccc"}
+                                                :clicked {:type :param :display :edit :component :textcolor :value "#96c1ea"}}}
 
                          :foreground {:type :block
                                       :display :edit

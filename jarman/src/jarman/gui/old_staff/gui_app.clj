@@ -211,24 +211,12 @@
 
 
 (defn create-save-btn-for-table-editor
-  [] (edit-table-btn :edit-view-save-btn (get-lang-btns :save) icon/agree-grey-64-png icon/agree-blue-64-png true
-                     (fn [e] (if (get (config e :user-data) :active)
-                               (do
-                                 (println "Przycisk aktywny")
-                                 (config! e :user-data {:active false}))
-                               (do
-                                 (println "Przycisk nieaktywny")
-                                 (config! e :user-data {:active true}))))))
+  [] (table-editor--component--bar-btn :edit-view-save-btn (get-lang-btns :save) icon/agree-grey-64-png icon/agree-blue-64-png
+                     (fn [e])))
 
 (defn create-restore-btn-for-table-editor
-  [] (edit-table-btn :edit-view-back-btn (get-lang-btns :remove) icon/refresh-grey-64-png icon/refresh-blue-64-png false
-                     (fn [e] (if (get (config e :user-data) :active)
-                               (do
-                                 (println "Przycisk aktywny")
-                                 (config! e :user-data {:active false}))
-                               (do
-                                 (println "Przycisk nieaktywny")
-                                 (config! e :user-data {:active true}))))))
+  [] (table-editor--component--bar-btn :edit-view-back-btn (get-lang-btns :remove) icon/refresh-grey-64-png icon/refresh-blue-64-png
+                     (fn [e])))
 
 (defn create-editor-section-header
   "Create header GUI component in editor for separate section"
@@ -543,9 +531,9 @@
                                        :size [200 :by 30]
                                        :listen [:item-state-changed (fn [e]
                                                               (cond (not (= (config e :selected-item) (first model)))
-                                                                    (swap! changing-list (fn [changes] (merge changes {(map-path-to-key path) [path (config e :selected-item)]})))
-                                                                    (not (nil? (get-in @changing-list [(map-path-to-key path)])))
-                                                                    (swap! changing-list (fn [changes] (dissoc changes (map-path-to-key path))))))])]])))
+                                                                    (swap! changing-list (fn [changes] (merge changes {(convert-mappath-to-key path) [path (config e :selected-item)]})))
+                                                                    (not (nil? (get-in @changing-list [(convert-mappath-to-key path)])))
+                                                                    (swap! changing-list (fn [changes] (dissoc changes (convert-mappath-to-key path))))))])]])))
 
 (def cg-input (fn [changing-list path value]
                 (mig-panel
@@ -556,9 +544,9 @@
                                                          (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
                                 :listen [:caret-update (fn [e]
                                                          (cond (not (= (config e :text) value))
-                                                               (swap! changing-list (fn [changes] (merge changes {(map-path-to-key path) [path (config e :text)]})))
-                                                               (not (nil? (get-in @changing-list [(map-path-to-key path)])))
-                                                               (swap! changing-list (fn [changes] (dissoc changes (map-path-to-key path))))))])]])))
+                                                               (swap! changing-list (fn [changes] (merge changes {(convert-mappath-to-key path) [path (config e :text)]})))
+                                                               (not (nil? (get-in @changing-list [(convert-mappath-to-key path)])))
+                                                               (swap! changing-list (fn [changes] (dissoc changes (convert-mappath-to-key path))))))])]])))
 
 
 ;; (show-events (text))

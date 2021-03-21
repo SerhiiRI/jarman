@@ -319,12 +319,12 @@
                          :mouse-clicked onclose])]
        :listen [:mouse-entered hand-hover-on]))))
 
-(def edit-table-btn
+(def table-editor--component--bar-btn
   "Description:
      Interactive button for table editor.
    "
   
-  (fn [id title ico ico-hover active onclick]
+  (fn [id title ico ico-hover onclick]
     (let [bg        "#ddd"
          bg-hover  "#d9ecff"
          c-border  "#bbb"]
@@ -336,7 +336,6 @@
             :size [150 :by 30]
             :background bg
             :border (line-border :thickness 1 :color c-border)
-            :listen [:mouse-entered (fn [e] (if (get (config e :user-data) :active) (config! e :background bg-hover :icon (stool/image-scale ico-hover 26) :cursor :hand)))
+            :listen [:mouse-entered (fn [e] (config! e :background bg-hover :icon (stool/image-scale ico-hover 26) :cursor :hand))
                      :mouse-exited  (fn [e] (config! e :background bg :icon (stool/image-scale ico 26) :cursor :default))
-                     :mouse-clicked onclick]
-            :user-data {:active active}))))
+                     :mouse-clicked onclick]))))

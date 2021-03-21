@@ -63,7 +63,8 @@
 (defn txt-to-title [txt] (-> (string/replace (str txt) #":" "") (string/replace  #"[-_]" " ") (string/replace  #"^." #(.toUpperCase %1))))
 (defn txt-to-UP [txt] (-> (string/replace (str txt) #":" "") (string/replace  #"[-_]" " ") (string/replace  #"." #(.toUpperCase %1))))
 (defn rm-colon [txt] (-> (string/replace (str txt) #":" "")))
-(defn map-path-to-key [path] (keyword (rm-colon (string/join "-" path))))
+(defn convert-mappath-to-key [path] (keyword (rm-colon (string/join "-" path))))
+(defn convert-str-to-hashkey [str] (keyword (string/join "" ["#" str])))
 
 (defmacro join
   "(filter-nil [nil 1 nil 3 4]) ;=> [1 3 4]"

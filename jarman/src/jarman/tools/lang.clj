@@ -49,9 +49,22 @@
   [& vecs]
   `(vec (concat ~@vecs)))
 
+(def all-vec-to-floor
+  "(all-vec-to-floor ([:a] ([:d :x] [:e :y] ([:z])))) ;; => ([:a] [:d :x] [:e :y] [:z])"
+  (fn [vects]
+    (do
+      (defn r-unwrapper [result example]
+        (reduce #(if (vector? %2)
+                   (conj %1 %2)
+                   (concat %1 (r-unwrapper [] %2))) result example))
+      (r-unwrapper [] vects))))
+
 (defn key-to-title [key] (-> (string/replace (str key) #":" "") (string/replace  #"[-_]" " ") (string/replace  #"^." #(.toUpperCase %1))))
 (defn txt-to-title [txt] (-> (string/replace (str txt) #":" "") (string/replace  #"[-_]" " ") (string/replace  #"^." #(.toUpperCase %1))))
 (defn txt-to-UP [txt] (-> (string/replace (str txt) #":" "") (string/replace  #"[-_]" " ") (string/replace  #"." #(.toUpperCase %1))))
+(defn rm-colon [txt] (-> (string/replace (str txt) #":" "")))
+(defn convert-mappath-to-key [path] (keyword (rm-colon (string/join "-" path))))
+(defn convert-str-to-hashkey [str] (keyword (string/join "" ["#" str])))
 
 (defmacro join
   "(filter-nil [nil 1 nil 3 4]) ;=> [1 3 4]"

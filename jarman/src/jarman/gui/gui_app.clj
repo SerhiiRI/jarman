@@ -16,46 +16,13 @@
             ;; deverloper tools 
             [jarman.tools.swing :as stool]
             [jarman.tools.lang :refer :all]
+            [jarman.gui.gui-seed :refer :all]
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
             [jarman.config.init :refer [configuration language]]))
 
-;;  (get-color :jarman :bar)
-
 (import javax.swing.JLayeredPane)
-(import javax.swing.JLabel)
 (import java.awt.Color)
-(import java.awt.Dimension)
 (import java.awt.event.MouseEvent)
-
-
-;; ┌────────────────────────┐
-;; │                        │
-;; │ Start empty App layout │
-;; │                        │
-;; └────────────────────────┘
-
-(def app-width (get-frame :width))
-(def app-height (get-frame :heigh))
-(def app-bounds [0 0 app-width app-height])
-
-;; Prepare operative layer
-(def app
-  "Description:
-       Create panel for absolute position elements. In real it is GUI.
-   "
-  (new JLayeredPane))
-
-;; Start app window
-(-> (doto (seesaw.core/frame
-           :title "DEBUG WINDOW" :undecorated? false
-           :minimum-size [app-width :by app-height]
-           :size [app-width :by app-height]
-           :content app)
-      (.setLocationRelativeTo nil) pack! show!))
-
-;; Start message service
-(def alerts-s (message-server-creator app))
-
 
 
 ;; ┌───────────────────┐
@@ -65,6 +32,59 @@
 ;; └───────────────────┘
 
 (def right-size (atom [0 0]))
+
+
+
+;; ┌────────────────────┐
+;; │                    │
+;; │ Changes controller │
+;; │                    │
+;; └────────────────────┘
+
+
+(def storage-with-changes (atom {})) ;; Store view id as key and component id which is path in config map too {:view link-to-atom}
+
+(def add-changes-controller
+  "Description:
+       Add changes controller for views. Storage only stores atoms from bigest view component.
+   Example:
+       (add-changes-controller view-id changing-list) where changing-list is an atom inside view/biggest component.
+   "
+  (fn [view-id changing-list]
+    (swap! storage-with-changes (fn [changes-atoms] (merge changes-atoms {view-id changing-list})))))
+
+(def get-changes-atom
+  "Description:
+       Function return atom address to list of changes for view by view-id.
+   Example:
+       (get-changes-atom :init.edn) => {:init.edn-value-lang [[:init.edn :value :lang] EN]}
+   "
+  (fn [view-id]
+    (get-in @storage-with-changes [view-id])))
+
+(def set-change-to-view-atom
+  (fn [changing-list path new-value]
+    (swap! changing-list (fn [changes] (merge changes {(convert-mappath-to-key path) [path new-value]})))))
+
+(def remove-change-from-view-atom
+  (fn [changing-list path]
+    (swap! changing-list (fn [changes] (dissoc changes (convert-mappath-to-key path))))))
+
+(def track-changes
+  (fn [changing-list value-path event component-key value]
+    (cond
+      ;; if something was change
+      (not (= (config event component-key) value)) (set-change-to-view-atom changing-list value-path (config event component-key))
+      ;; if back to orginal value
+      (not (nil? (get-in @changing-list [(convert-mappath-to-key value-path)]))) (remove-change-from-view-atom changing-list value-path))))
+
+
+;; ┌───────────────────────────┐
+;; │                           │
+;; │ Views and tabs controller │
+;; │                           │
+;; └───────────────────────────┘
+
 (def views (atom {}))
 (def active-tab (atom :none))
 (def last-active-tab (atom :none))
@@ -83,9 +103,13 @@
   [id title view]
   (let [id-key (keyword id)]
     (do
-      (if (= (contains? @views id-key) false) (swap! views (fn [storage] (merge storage {id-key {:component view :id id :title title}}))))
+      (if (= (contains? @views id-key) false) (swap! views (fn [storage] (merge storage {id-key {:component view :id id :title title}}))) (fn []))
       (reset! active-tab id-key))))
 
+(def add-view-to-tab-bar-if-not-exist
+  (fn [view-id view id title]
+    (if (= (contains? @views view-id) false)
+      (swap! views (fn [storage] (merge storage {view-id {:component view :id id :title (string/join "" ["Edit: " title])}}))) (fn []))))
 
 ;; (new-layered-for-tabs)
 ;; (new-test-for-tabs)
@@ -96,51 +120,59 @@
 ;; ================================================VVVVVVVVVV Table in database view
 
 
-(def dbmap (list
-            {:id 29
-             :table "service_contract"
-             :prop
-             {:table
-              {:frontend-name "service_contract"
-               :is-system? false
-               :is-linker? false
-               :allow-modifing? true
-               :allow-deleting? true
-               :allow-linking? true}
-              :columns
-              [{:field "id_point_of_sale"
-                :representation "id_point_of_sale"
-                :description nil
-                :component-type "l"
-                :column-type "bigint(20) unsigned"
-                :private? false
-                :editable? true
-                :key-table "point_of_sale"}
-               {:field "name_of_sale"
-                :representation "Miejsce sprzedaży"
-                :description "Opisuje miejsce sprzedaży"
-                :component-type "l"
-                :column-type "bigint(20) unsigned"
-                :private? false
-                :editable? true}]}}
-            {:id 30
-             :table "user"
-             :prop
-             {:table
-              {:frontend-name "user"
-               :is-system? false
-               :is-linker? false
-               :allow-modifing? true
-               :allow-deleting? true
-               :allow-linking? true}
-              :columns
-              [{:field "login"
-                :representation "login"
-                :description nil
-                :component-type "i"
-                :column-type "varchar(100)"
-                :private? false
-                :editable? true}]}}))
+
+(def dbmap (atom (list
+                  {:id 29
+                   :table "service_contract"
+                   :prop
+                   {:table
+                    {:frontend-name "service_contract"
+                     :is-system? false
+                     :is-linker? false
+                     :allow-modifing? true
+                     :allow-deleting? true
+                     :allow-linking? true}
+                    :columns
+                    [{:field "id_point_of_sale"
+                      :representation "id_point_of_sale"
+                      :description nil
+                      :component-type "l"
+                      :column-type "bigint(20) unsigned"
+                      :private? false
+                      :editable? true
+                      :key-table "point_of_sale"}
+                     {:field "name_of_sale"
+                      :representation "Miejsce sprzedaży"
+                      :description "Opisuje miejsce sprzedaży"
+                      :component-type "l"
+                      :column-type "bigint(20) unsigned"
+                      :private? false
+                      :editable? true}
+                     {:field "some_poop"
+                      :representation "Nazwa nazw"
+                      :description "Opisuje nazw"
+                      :component-type "1"
+                      :column-type "bigint(20) unsigned"
+                      :private? false
+                      :editable? true}]}}
+                  {:id 30
+                   :table "user"
+                   :prop
+                   {:table
+                    {:frontend-name "user"
+                     :is-system? false
+                     :is-linker? false
+                     :allow-modifing? true
+                     :allow-deleting? true
+                     :allow-linking? true}
+                    :columns
+                    [{:field "login"
+                      :representation "login"
+                      :description nil
+                      :component-type "i"
+                      :column-type "varchar(100)"
+                      :private? false
+                      :editable? true}]}})))
 
 
 ;; (map (fn [tab] (conj {:bounds [0 0 0 0]} tab)) dbmap)
@@ -173,8 +205,8 @@
 
 (defn calculate-bounds
   [offset max-tabs-inline]
-  (let [sizes (partition-all max-tabs-inline (calculate-tables-size dbmap))
-        tables (calculate-tables-size-with-tabs dbmap)
+  (let [sizes (partition-all max-tabs-inline (calculate-tables-size @dbmap))
+        tables (calculate-tables-size-with-tabs @dbmap)
         y-bound (atom 10)
         pre-bounds (map (fn [row] (let [x-bounds (atom 10)
                                         bounds-x (map (fn [size] (do
@@ -205,42 +237,22 @@
 ;; │              │
 ;; └──────────────┘
 
-
-(defn create-save-btn-for-table-editor
-  [] (edit-table-btn :edit-view-save-btn (get-lang-btns :save) icon/agree-grey-64-png icon/agree-blue-64-png true
-                     (fn [e] (if (get (config e :user-data) :active)
-                               (do
-                                 (println "Przycisk aktywny")
-                                 (config! e :user-data {:active false}))
-                               (do
-                                 (println "Przycisk nieaktywny")
-                                 (config! e :user-data {:active true}))))))
-
-(defn create-restore-btn-for-table-editor
-  [] (edit-table-btn :edit-view-back-btn (get-lang-btns :remove) icon/refresh-grey-64-png icon/refresh-blue-64-png false
-                     (fn [e] (if (get (config e :user-data) :active)
-                               (do
-                                 (println "Przycisk aktywny")
-                                 (config! e :user-data {:active false}))
-                               (do
-                                 (println "Przycisk nieaktywny")
-                                 (config! e :user-data {:active true}))))))
-
-(defn create-editor-section-header
+(defn table-editor--element--header
   "Create header GUI component in editor for separate section"
   [name] (label :text name :font (getFont 14 :bold) :border (line-border :bottom 2 :color (get-color :background :header))))
 
-(defn create-editor-column-selector-btn
+(defn table-editor--component--column-picker-btn
   "Description:
-     Select button who create-editor-column-selector, can work with another same buttons"
+     Select button who table-editor--component--column-picker, can work with another same buttons"
   [txt func] (let [color (get-color :group-buttons :background)
                    color-hover (get-color :group-buttons :background-hover)
                    color-clicked (get-color :group-buttons :clicked)
                    bg-btn (atom color)]
                (mig-panel
                 :constraints ["" "15px[100, fill]15px" "10px[fill]10px"]
-                :border (line-border :left 4 :right 4 :top 1 :bottom 1 :color (get-color :background :header))
-                :id :create-editor-column-selector-btn
+                :border (line-border :left 0 :right 0 :top 1 :bottom 1 :color (get-color :border :gray))
+                :id :table-editor--component--column-picker-btn
+                :background color
                 :user-data bg-btn
                 :listen [:mouse-entered (fn [e] (config! e :cursor :hand :background color-hover))
                          :mouse-exited  (fn [e] (config! e :background @bg-btn))
@@ -258,74 +270,140 @@
                                                      (func e))))]
                 :items [[(label :text txt)]])))
 
+(def table-editor--element--header-view
+  (fn [value]
+    (text :text value
+          :font (getFont 14)
+          :background (get-color :background :input)
+          :editable? false
+          :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
+                                   (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
 
-(defn create-editor-column-selector
+(def table-editor--element--small-input
+  (fn [changing-list value-path value]
+    (text :text value :font (getFont 12)
+          :background (get-color :background :input)
+          :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
+                                   (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
+          :listen [:caret-update (fn [event] (track-changes changing-list value-path event :text value))])))
+
+
+(def table-editor--element--input
+  (fn [changing-list value-path value]
+    (text :text value :font (getFont 12)
+          :background (get-color :background :input)
+          :border (compound-border (empty-border :left 15 :right 20 :top 8 :bottom 8)
+                                   (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
+          :listen [:caret-update (fn [event] (track-changes changing-list value-path event :text value))]
+          )))
+
+(def switch-column-to-editing
+  (fn [changing-list value-path event column column-editor-id]
+    (config! (select (to-root event) [(convert-str-to-hashkey column-editor-id)])
+             :items (join-mig-items (map
+                                     (fn [column-parameter]
+                                       (list
+                                        (label :text (str (first column-parameter)))
+                                        (table-editor--element--input changing-list value-path (str (second column-parameter)))))
+                                     column)))))
+
+(defn table-editor--component--column-picker
   "Create left table editor view to select column which will be editing on right table editor view"
-  [] (mig-panel :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
-                :id :create-editor-column-selector
-                :items [[(create-editor-column-selector-btn "Test 1" (fn [e] (let [value [[(label :text "Selected column: ")]
-                                                                                          [(label :text "Test 1")]
-                                                                                          [(label :text "Value: ")]
-                                                                                          [(label :text "I'm blue dabi dibu du bai")]]]
-                                                                               (config! (select (to-root e) [:#create-editor-column-editor]) :items value))))]
-                        [(create-editor-column-selector-btn "Dłuższy Test 2" (fn [e] (let [value [[(label :text "Selected column: ")]
-                                                                                                  [(label :text "Test 2")]
-                                                                                                  [(label :text "Value: ")]
-                                                                                                  [(label :text "Tylko jedno w głowie maaam, koksu 5 gramm...")]
-                                                                                                  [(label :text "Trashpanda")]
-                                                                                                  [(label :text "Team")]]]
-                                                                                       (config! (select (to-root e) [:#create-editor-column-editor]) :items value))))]]))
+  [changing-list column-editor-id columns value-path] (mig-panel :constraints ["wrap 1" "0px[100:,fill]0px" "0px[fill]0px"]
+                      ;;  :id (keyword column-editor-id)
+                       :items
+                       (join-mig-items
+                        (map (fn [column]
+                               (let [value-path (join-vec value-path [(get-in column [:field])])]
+                                ;;  (println value-path)
+                                 (table-editor--component--column-picker-btn
+                                  (get-in column [:representation])
+                                  (fn [event] (switch-column-to-editing changing-list value-path event column column-editor-id)))))
+                             columns))))
 
-(defn create-editor-column-editor
+(defn table-editor--component--space-for-column-editor
   "Create right table editor view to editing selected column in left table editor view"
-  [] (mig-panel :constraints ["wrap 2" "20px[100, fill]10px[fill]5px" "5px[fill]5px"]
-                :id :create-editor-column-editor
-                :items [[(label :text "Selected column: ")]
-                        [(label :text "")]]))
+  [column-editor-id] (mig-panel :constraints ["wrap 2" "20px[100, fill]10px[150:,fill]5px" "5px[fill]5px"]
+                :id (keyword column-editor-id)
+                :items [[(label)]]
+                :border (line-border :left 4 :color (get-color :border :dark-gray))))
 
-(defn create-view-table-editor
+
+(defn table-editor--element--btn-save
+  [changing-list]
+  (table-editor--component--bar-btn :edit-view-save-btn (get-lang-btns :save) icon/agree-grey-64-png icon/agree-blue-64-png
+                                    (fn [e] (println "Changes" @changing-list))))
+
+(defn table-editor--element--btn-restore
+  [] (table-editor--component--bar-btn :edit-view-back-btn (get-lang-btns :remove) icon/refresh-grey-64-png icon/refresh-blue-64-png
+                                       (fn [e]))) ;;TODO
+
+(def get-table-configuration-from-list-by-table-id
+  (fn [atom--tables-configurations table-id]
+    (let [map (first (filter (fn [item] (= table-id (get item :id))) @atom--tables-configurations))]
+      (do ;;(println map)
+        map))))
+
+(def table-editor--element--checkbox
+  (fn [changing-list value-path value]
+    (checkbox :selected? value
+              :listen [:state-changed (fn [event] (track-changes changing-list value-path event :selected? value))])))
+
+
+;; (show-events (checkbox))
+
+
+(def table-editor--element--table-parameter-name
+  (fn [table-property index] (label :text (str (first (nth (vec table-property) index))))))
+
+(def table-editor--element--table-parameter-value
+  (fn [changing-list table-property tab-value-path index txtsize]
+    (let [param-name  (first  (nth (vec table-property) index))
+          param-value (second (nth (vec table-property) index))
+          value-path (join-vec tab-value-path [(keyword param-name)])]
+      (cond
+        (string?  param-value) (table-editor--element--small-input changing-list value-path (str param-value))
+        (boolean? param-value) (table-editor--element--checkbox    changing-list value-path param-value)
+        :else (label :size txtsize :text (str param-value))))))
+
+(defn create-view--table-editor
   "Description:
-     Create view for table editor.
+     Create view for table editor. Marge all component to one big view.
    "
-  [map id]
-  (let [table      (first (filter (fn [item] (= id (get item :id))) map)) ;; Get table by id
-        table-info (get-in table [:prop :table]) ;; Get table property
-        id-key     (keyword (get table :table))  ;; Get name of table and create keyword to check tabs bar (opens views)
-        columns    (get-in table [:prop :columns])
-        elems      (vec (concat
-                         [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"] ;; menu bar for editor
-                                      :items [[(label-fn :text (string/join "" [">_ Edit table: " (get table :table)])
-                                                         :font (getFont 14 :bold)
-                                                         :background "#ccc"
-                                                         :border (empty-border :left 15))]
-                                              [(create-save-btn-for-table-editor)]
-                                              [(create-restore-btn-for-table-editor)]])]]
-                         [[(create-editor-section-header "Table configuration")]] ;; Header of next section
-                         [(vec (let [mp (vec table-info)  ;; Params for table config
-                                     mpc (count mp)
-                                     txtsize [150 :by 25]]
-                                 [(mig-panel
-                                   :constraints ["wrap 3" "0px[32%]0px" "0px[fill]0px"]
-                                   :items (vec (for [x (range mpc)]
-                                                 [(mig-panel
-                                                   :border (line-border :left 4 :color "#ccc")
-                                                   :constraints ["" "10px[130px]10px[200px]10px" "0px[fill]10px"]
-                                                   :items [[(cond
-                                                              (string? (first (nth mp x))) (text :text (str (first (nth mp x))))
-                                                              (boolean? (first (nth mp x))) (checkbox :selected? (first (nth mp x)))
-                                                              :else (label :text (str (first (nth mp x)))))]
-                                                           [(cond
-                                                              (string? (second (nth mp x))) (text :size txtsize :text (str (second (nth mp x))))
-                                                              (boolean? (second (nth mp x))) (checkbox :selected? (second (nth mp x)))
-                                                              :else (label :size txtsize :text (str (second (nth mp x)))))]])])))]))]
-                         [[(create-editor-section-header "Column configuration")]]
-                         [[(mig-panel
-                            :constraints ["wrap 2" "0px[fill]0px" "0px[fill]0px"]
-                            :items [[(create-editor-column-selector)] ;; Left part for kolumns to choose to changing
-                                    [(create-editor-column-editor)] ;; Space for components, using to editing columns
-                                    ])]]
-                        ;;  todonow
-                         ))
+  [atom--tables-configurations table-id]
+  (let [changing-list (atom {})
+        table          (get-table-configuration-from-list-by-table-id atom--tables-configurations table-id)
+        col-value-path [:prop :columns]
+        tab-value-path [:prop :table]
+        columns        (get-in table col-value-path) ;; Get columns list
+        table-property (get-in table tab-value-path) ;; Get table property
+        view-id        (keyword (get table :table))  ;; Get name of table and create keyword to check tabs bar (opens views)
+        elems          (join-vec
+                    ;; Table info
+                        [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"] ;; menu bar for editor
+                                     :items [[(table-editor--element--header-view (string/join "" [">_ Edit table: " (get-in table [:prop :table :frontend-name])]))]
+                                             [(table-editor--element--btn-save changing-list)]
+                                             [(table-editor--element--btn-restore)]])]]
+                    ;; Table properties 
+                        [[(table-editor--element--header "Table configuration")]]
+                        [(vec (let [table-property-count (count table-property)
+                                    txtsize [150 :by 25]]
+                                [(mig-panel
+                                  :constraints ["wrap 3" "0px[32%]0px" "0px[fill]0px"]
+                                  :items (vec (for [index (range table-property-count)]
+                                                [(mig-panel
+                                                  :border (line-border :left 4 :color "#ccc")
+                                                  :constraints ["" "10px[100:]10px" "0px[fill]10px"]
+                                                  :items [[(table-editor--element--table-parameter-name  table-property index)]
+                                                          [(table-editor--element--table-parameter-value changing-list table-property tab-value-path index txtsize)]])])))]))]
+                    ;; Columns properties
+                        [[(table-editor--element--header "Column configuration")]]
+                        [[(let [column-editor-id "table-editor--component--space-for-column-editor"]
+                            (mig-panel ;; Left and Right functional space
+                             :constraints ["wrap 2" "0px[fill]0px" "0px[fill]0px"]
+                             :items [[(table-editor--component--column-picker changing-list column-editor-id columns col-value-path)] ;; Left part for columns to choose for doing changes.
+                                     [(table-editor--component--space-for-column-editor column-editor-id)] ;; Space for components. Using to editing columns.
+                                     ]))]])
         view   (cond
                  (> (count table) 0) (do
                                        (scrollable (mig-panel
@@ -334,54 +412,58 @@
                                                    :border (empty-border :thickness 0)))
                  :else (label :text "Table not found inside metadata :c"))]
     (do
-        ;; (println)
-        ;; (println "info")
-        ;; (println (str table-info))
-        ;; (println (str elemensts))
-      (if (= (contains? @views id-key) false) (swap! views (fn [storage] (merge storage {id-key {:component view :id id :title (string/join "" ["Edit: " (get table :table)])}}))))
-      (reset! active-tab id-key))))
+      (add-changes-controller view-id changing-list)
+      (add-view-to-tab-bar-if-not-exist view-id view table-id (get table :table))
+      (reset! active-tab view-id))))
+
+
+;; ┌─────────┐
+;; │         │
+;; │ DB View │
+;; │         │
+;; └─────────┘
 
 
 ;;  (calculate-bounds 10 4)
-(def table-funcs-menu
+(def db-view--apsolute-pop--rmb-table-actions
   "Description:
        Right Mouse Click Menu on table to control clicked table"
-  (fn [id x y] (let [border-c "#bbb"
-                     rm-menu (fn [e] (do
-                                       (.remove (get-in @views [:layered-for-tabs :component]) (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))))
-                                       (.repaint (get-in @views [:layered-for-tabs :component]))))
-                     btn (fn [txt ico onclick] (label
-                                                :font (getFont 13)
-                                                :text txt
-                                                :icon (stool/image-scale ico 30)
-                                                :background "#fff"
-                                                :foreground "#000"
-                                                :border (compound-border (empty-border :left 10 :right 15) (line-border :bottom 1 :color border-c))
-                                                :listen [:mouse-clicked onclick
-                                                         :mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
-                                                         :mouse-exited  (fn [e] (do
-                                                                                  (config! e :background "#fff" :foreground "#000")
-                                                                                  (let [bounds (config (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :bounds)
-                                                                                        mouse-y (+ (+ (.getY e) (.getY (config e :bounds))) (.getY bounds))
-                                                                                        mouse-x (.getX e)]
-                                                                                    (if (or (< mouse-x 5)
-                                                                                            (> mouse-x (- (.getWidth bounds) 5))
-                                                                                            (< mouse-y (+ (.getY bounds) 5))
-                                                                                            (> mouse-y (- (+ (.getHeight bounds) (.getY bounds)) 5)))
-                                                                                      (rm-menu e)))))]))]
-                 (mig-panel
-                  :id :db-viewer-menu
-                  :bounds [x y 150 90]
-                  :background (new Color 0 0 0 0)
-                  :border (line-border :thickness 1 :color border-c)
-                  :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
-                  :items [[(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
-                                                                              (create-view-table-editor dbmap id))))]
-                          [(btn "Delete table" icon/basket-blue1-64-png (fn [e]))]
-                          [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]]))))
+  (fn [atom--tables-configurations table-id x y] (let [border-c "#bbb"
+                                                       rm-menu (fn [e] (do
+                                                                         (.remove (get-in @views [:layered-for-tabs :component]) (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))))
+                                                                         (.repaint (get-in @views [:layered-for-tabs :component]))))
+                                                       btn (fn [txt ico onclick] (label
+                                                                                  :font (getFont 13)
+                                                                                  :text txt
+                                                                                  :icon (stool/image-scale ico 30)
+                                                                                  :background "#fff"
+                                                                                  :foreground "#000"
+                                                                                  :border (compound-border (empty-border :left 10 :right 15) (line-border :bottom 1 :color border-c))
+                                                                                  :listen [:mouse-clicked onclick
+                                                                                           :mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
+                                                                                           :mouse-exited  (fn [e] (do
+                                                                                                                    (config! e :background "#fff" :foreground "#000")
+                                                                                                                    (let [bounds (config (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :bounds)
+                                                                                                                          mouse-y (+ (+ (.getY e) (.getY (config e :bounds))) (.getY bounds))
+                                                                                                                          mouse-x (.getX e)]
+                                                                                                                      (if (or (< mouse-x 5)
+                                                                                                                              (> mouse-x (- (.getWidth bounds) 5))
+                                                                                                                              (< mouse-y (+ (.getY bounds) 5))
+                                                                                                                              (> mouse-y (- (+ (.getHeight bounds) (.getY bounds)) 5)))
+                                                                                                                        (rm-menu e)))))]))]
+                                                   (mig-panel
+                                                    :id :db-viewer--component--menu-bar
+                                                    :bounds [x y 150 90]
+                                                    :background (new Color 0 0 0 0)
+                                                    :border (line-border :thickness 1 :color border-c)
+                                                    :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
+                                                    :items [[(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
+                                                                                                                (create-view--table-editor atom--tables-configurations table-id))))]
+                                                            [(btn "Delete table" icon/basket-blue1-64-png (fn [e]))]
+                                                            [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]]))))
 
 
-(defn set-col-as-row
+(defn table-visualizer--element--col-as-row
   "Description:
       Create a primary or special row that represents a column in the table"
   [data] (let [last-x (atom 0)
@@ -409,10 +491,13 @@
                            :mouse-clicked (fn [e]
                                             (if (= (.getButton e) MouseEvent/BUTTON3)
                                               (.add (get-in @views [:layered-for-tabs :component])
-                                                    (table-funcs-menu (get (config (getParent e) :user-data) :id)
-                                                                      (- (+ (.getX e) (.getX (config (getParent e) :bounds))) 15)
-                                                                      (- (+ (+ (.getY e) (.getY (config e :bounds))) (.getY (config (getParent e) :bounds))) 10))
-                                                    (new Integer 999))))
+                                                    (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
+                                                     dbmap ;; forward list of table configuration
+                                                     (get (config (getParent e) :user-data) :id) ;; Get table id
+                                                     (- (+ (.getX e) (.getX (config (getParent e) :bounds))) 15) ;; calculate popup position
+                                                     (- (+ (+ (.getY e) (.getY (config e :bounds))) (.getY (config (getParent e) :bounds))) 10))
+                                                    (new Integer 999) ;; z-index
+                                                    )))
                            :mouse-dragged (fn [e]
                                             (do
                                               (if (= @last-x 0) (reset! last-x (.getX e)))
@@ -434,7 +519,7 @@
                                                        (reset! last-y 0)))])))
 
 
-(defn prepare-table-with-map
+(defn db-viewer--component--table
   "Description:
      Create one table on JLayeredPane using database map
   "
@@ -448,8 +533,8 @@
         y (+ 30 (nth bounds 1))
         w (nth bounds 2)
         row-h 30  ;; wysokosc wiersza w tabeli reprezentujacego kolumne
-        col-in-rows (map (fn [col] (set-col-as-row {:name (get col :field) :width w :height row-h :type (if (contains? col :key-table) "key" "row") :border-c border-c})) (get-in data [:prop :columns]))  ;; przygotowanie tabeli bez naglowka
-        camplete-table (conj col-in-rows (set-col-as-row {:name (get data :table) :width w :height row-h :type "header" :border-c border-c}))  ;; dodanie naglowka i finalizacja widoku tabeli
+        col-in-rows (map (fn [col] (table-visualizer--element--col-as-row {:name (get col :field) :width w :height row-h :type (if (contains? col :key-table) "key" "row") :border-c border-c})) (get-in data [:prop :columns]))  ;; przygotowanie tabeli bez naglowka
+        camplete-table (conj col-in-rows (table-visualizer--element--col-as-row {:name (get data :table) :width w :height row-h :type "header" :border-c border-c}))  ;; dodanie naglowka i finalizacja widoku tabeli
         h (* (count camplete-table) row-h)  ;; podliczenie wysokosci gotowej tabeli
         ]
     (vertical-panel
@@ -465,7 +550,7 @@
 ;; (println MouseEvent/BUTTON3)
 
 
-(defn db-viewer-menu
+(defn db-viewer--component--menu-bar
   "Description:
        Menu to control tables view (functionality for db-view)"
   [] (let [btn (fn [txt ico & args] (let
@@ -480,7 +565,7 @@
                                        :listen [:mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
                                                 :mouse-exited  (fn [e] (config! e :background "#fff" :foreground "#000"))])))]
        (mig-panel
-        :id :db-viewer-menu
+        :id :db-viewer--component--menu-bar
         :bounds [0 5 1000 30]
         :background (new Color 0 0 0 0)
         :constraints ["" "5px[fill]0px" "0px[30px, fill]0px"]
@@ -490,7 +575,7 @@
                 [(btn "Reloade view" icon/refresh-blue-64-png)]])))
 
 
-(defn create-view-db-view
+(defn create-view--db-view
   "Description:
      Create component and set to @views atom to use in functional space. 
      Add open tab for db-view to open tabs bar.
@@ -504,50 +589,107 @@
       (if (= (contains? @views id-key) false)
         (do
           (swap! views (fn [storage] (merge storage {id-key {:component (new JLayeredPane) :id id-txt :title title}})))
-          (.add (get-in @views [id-key :component]) (db-viewer-menu) (new Integer 1000))
+          (.add (get-in @views [id-key :component]) (db-viewer--component--menu-bar) (new Integer 1000))
           (doall (map (fn [tab-data]
-                        (.add (get-in @views [id-key :component]) (prepare-table-with-map (get-in tab-data [:prop :bounds] [10 10 100 100]) tab-data) (new Integer 5)))
+                        (.add (get-in @views [id-key :component]) (db-viewer--component--table (get-in tab-data [:prop :bounds] [10 10 100 100]) tab-data) (new Integer 5)))
                       (calculate-bounds 20 5)))))
 
       (reset! active-tab id-key))))
 
 
 
-;; ┌──────────────────┐
-;; │                  │
-;; │ Config generator │
-;; │                  │
-;; └──────────────────┘
+;; ┌─────────────────────────┐
+;; │                         │
+;; │ Create config generator │
+;; │                         │
+;; └─────────────────────────┘
 
 
-(def cg-file-header (fn [title] (mig-panel
-                                 :constraints ["" "0px[grow, center]0px" "0px[]0px"]
-                                 :items [[(label :text title :font (getFont 16) :foreground (get-color :foreground :dark-header))]]
-                                 :background (get-color :background :dark-header)
-                                 :border (line-border :thickness 10 :color (get-color :background :dark-header)))))
+(def confgen--element--header-file
+  (fn [title] (mig-panel
+               :constraints ["" "0px[grow, center]0px" "0px[]0px"]
+               :items [[(label :text title :font (getFont 16) :foreground (get-color :foreground :dark-header))]]
+               :background (get-color :background :dark-header)
+               :border (line-border :thickness 10 :color (get-color :background :dark-header)))))
 
-(def cg-block-header (fn [title] (label :text title :font (getFont 16 :bold) 
-                                        :border (compound-border  (line-border :bottom 2 :color (get-color :decorate :underline)) (empty-border :bottom 5)))))
+(def confgen--element--header-block
+  (fn [title] (label :text title :font (getFont 16 :bold)
+                     :border (compound-border  (line-border :bottom 2 :color (get-color :decorate :underline)) (empty-border :bottom 5)))))
 
-(def cg-param-header (fn [title] (label :text title :font (getFont 14 :bold))))
+(def confgen--element--header-parameter
+  (fn [title]
+    (label :text title :font (getFont 14 :bold))))
 
-(def cg-combobox (fn [model] (mig-panel
-                              :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
-                              :items [[(combobox :model model :font (getFont 14) 
-                                                 :background (get-color :background :combobox) 
-                                                 :size [200 :by 30])]])))
+(def confgen--element--combobox
+  (fn [changing-list path model]
+    (mig-panel
+     :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
+     :items [[(combobox :model model
+                        :font (getFont 14)
+                        :background (get-color :background :combobox)
+                        :size [200 :by 30]
+                        :listen [:item-state-changed (fn [event] (track-changes changing-list path event :selected-item (first model)))])]])))
 
-(def cg-input (fn [value] (mig-panel
-                         :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
-                         :items [[(text :text value :font (getFont 14) 
-                                        :background (get-color :background :input)
-                                        :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5) 
-                                                                 (line-border :bottom 2 :color (get-color :decorate :gray-underline))))]])))
+(def confgen--gui-interface--input
+  (fn [changing-list path value]
+    (mig-panel
+     :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
+     :items [[(text :text value :font (getFont 14)
+                    :background (get-color :background :input)
+                    :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
+                                             (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
+                    :listen [:caret-update (fn [event] (track-changes changing-list path event :text value))])]])))
+
+(def confgen--choose--header
+  (fn [type? name]
+    (cond  (type? :block) (confgen--element--header-block name)
+           (type? :param) (confgen--element--header-parameter name))))
+
+(def confgen--element--textarea
+  (fn [param]
+    (if-not (nil? (param [:doc]))
+      (textarea (str (param [:doc])) :font (getFont 12)) ())))
+
+(def confgen--element--textarea-doc
+  (fn [param]
+    (if-not (nil? (param [:doc]))
+      (textarea (str (param [:doc])) :font (getFont 14)) ())))
+
+(def confgen--element--margin-top-if-doc-exist
+  (fn [type? param] (if (and (type? :block) (not (nil? (param [:doc]))))
+                      (label :border (empty-border :top 10)) ())))
+
+(def confgen--gui-interface--checkbox-as-droplist
+  (fn [param changing-list start-key]
+    (confgen--element--combobox changing-list start-key (if (= (param [:value]) true) [true false] [false true]))))
+
+(def confgen--gui-interface--droplist
+  (fn [param changing-list start-key]
+    (confgen--element--combobox
+     changing-list start-key
+     (cond (= (last start-key) :lang) (map #(txt-to-UP %1) (join-vec (list (param [:value])) [:en]))
+           (vector? (param [:value])) [(txt-to-title (first (param [:value])))]
+           :else (vec (list (param [:value])))))))
+
+(def confgen--recursive--next-configuration-in-map
+  (fn [param confgen--component--tree changing-list start-key]
+    (map (fn [next-param]
+           (confgen--component--tree changing-list (join-vec start-key [:value] (list (first next-param)))))
+         (param [:value]))))
+
+(def confgen--element--gui-interfaces
+  (fn [comp? param confgen--component--tree changing-list start-key]
+    (cond (comp? :selectbox) (confgen--gui-interface--droplist param changing-list start-key)
+          (comp? :checkbox)  (confgen--gui-interface--checkbox-as-droplist param changing-list start-key)
+          (or (comp? :textlist) (comp? :text) (comp? :textnumber) (comp? :textcolor)) (confgen--gui-interface--input changing-list start-key (str (param [:value])))
+          (map? (param [:value])) (confgen--recursive--next-configuration-in-map param confgen--component--tree changing-list start-key)
+          :else (confgen--element--textarea param))))
 
 
+;; (show-events (text))
 
-(def cg-block-view
-  (fn [start-key]
+(def confgen--component--tree
+  (fn [changing-list start-key]
     (let [param (fn [key] (get-in @configuration (join-vec start-key key)))
           type? (fn [key] (= (param [:type]) key))
           comp? (fn [key] (= (param [:component]) key))
@@ -555,23 +697,15 @@
       (cond (= (param [:display]) :edit)
             (mig-panel
              :constraints ["wrap 1" "20px[]50px" "5px[]0px"]
-             :border (cond (type :block) (empty-border :bottom 10)
+             :border (cond (type? :block) (empty-border :bottom 10)
                            :else nil)
              :items (join-mig-items
-                     (cond  (type? :block) (cg-block-header name)
-                            (type? :param) (cg-param-header name))
-                     (if-not (nil? (param [:doc])) (textarea (str (param [:doc])) :font (getFont 14)) ())
-                     (if (and (type? :block) (not (nil? (param [:doc])))) (label :border (empty-border :top 10)) ())
-                     (cond (comp? :combobox) (cg-combobox (cond (= (last start-key) :lang) (map #(txt-to-UP %1) (join-vec (list (param [:value])) (all-langs)))
-                                                                (vector? (param [:value])) [(txt-to-title (first (param [:value])))]
-                                                                :else (vec (list (param [:value])))))
-                           (comp? :checkbox) (cg-combobox (if (= (param [:value]) true) [true false] [false true]))
-                           (or (comp? :textlist) (comp? :text) (comp? :number)) (cg-input (str (param [:value])))
-                           (map? (param [:value])) (map (fn [next-param]
-                                                          (cg-block-view (join-vec start-key [:value] (list (first next-param)))))
-                                                        (param [:value]))
-                           :else (textarea (str (param [:value])) :font (getFont 12)))))
+                     (confgen--choose--header type? name)
+                     (confgen--element--textarea-doc param)
+                     (confgen--element--margin-top-if-doc-exist type? param)
+                     (confgen--element--gui-interfaces comp? param confgen--component--tree changing-list start-key)))
             :else ()))))
+
 
 
 ;; (get-in @configuration [:resource.edn])
@@ -580,63 +714,72 @@
 ;; ;; => {:type :param, :display :edit, :component :text, :value "config"}
 
 
-(def create-config-gen
+(def create-view--confgen
   "Description
-     Join config generator parts
+     Join config generator parts and set view on right functional panel
    "
-  (fn [start-key] (let [map-part (get-in @configuration start-key)]
-                    (cond (= (get-in map-part [:display]) :edit)
-                          (mig-panel
+  (fn [start-key]
+    (let [map-part (get-in @configuration start-key)
+          changing-list (atom {})]
+      (cond (= (get-in map-part [:display]) :edit)
+            (do
+              (add-changes-controller (last start-key) changing-list)
+              (mig-panel
                             ;; :size [(first @right-size) :by (second @right-size)]
-                           :border (line-border :bottom 50 :color (get-color :background :main))
-                           :constraints ["wrap 1" (string/join "" ["20px[:" (first @right-size) ", grow, fill]20px"]) "20px[]20px"]
-                           :items (join-mig-items
+               :border (line-border :bottom 50 :color (get-color :background :main))
+               :constraints ["wrap 1" (string/join "" ["20px[:" (first @right-size) ", grow, fill]20px"]) "20px[]20px"]
+               :items (join-mig-items
                                    ;; Header of section/config file
-                                   (cg-file-header (get-in map-part [:name]))
+                       (confgen--element--header-file (get-in map-part [:name]))
+                       (label :text "Show changes" :listen [:mouse-clicked (fn [e] (println "Changes" @changing-list))])
                                    ;; Foreach on init values and create configuration blocks
-                                   (map
-                                    (fn [param] (cg-block-view (join-vec start-key [:value] (list (first param)))))
-                                    (get-in map-part [:value]))))))))
+                       (map
+                        (fn [param]
+                          (confgen--component--tree changing-list (join-vec start-key [:value] (list (first param)))))
+                        (get-in map-part [:value])))))))))
 
 
+;; ┌─────────────────────────────────────────┐
+;; │                                         │
+;; │ Create expand btns for config generator │
+;; │                                         │
+;; └─────────────────────────────────────────┘
 
 
-(def search-edns
+;; (get-in @configuration [:init.edn])
+
+(def confgen-expand-btn--search-config-files
   "Description
-     Search edn files and return paths
+     Search files and return paths
    "
-  (fn [path] (let [next-path (vec (concat [path] [:value]))
-                   options (get-in @configuration next-path)
-                   return (map (fn [option]
-                                 (let [resoult (if (= (get-in @configuration [option :type]) :directory)
-                                                 (vec (concat next-path (vec (search-edns option))))
-                                                 (first option))]
-                                   resoult))
-                               options)]
-               return)))
+  (fn [global-config path]
+    (let [root (get-in @global-config path)
+          type (get-in root [:type])]
+      (cond (= type :file) path
+            (= type :directory) (confgen-expand-btn--search-config-files global-config (join-vec path [:value]))
+            (nil? type) (map
+                         (fn [leaf]
+                           (confgen-expand-btn--search-config-files global-config (join-vec path [(first leaf)])))
+                         root)))))
 
+(def confgen-expand-btns--prepare-config-paths
+  "Search and finde file fragemnt in config map, next return paths list to this fragments"
+  (fn [conf] (all-vec-to-floor
+              (map (fn [option]
+                     (confgen-expand-btn--search-config-files conf [(first option)]))
+                   @conf))))
 
-(def create-view-conf-gen
+(def create-expand-btns--confgen
   "Discription
      Return expand button with config generator GUI
+     Complete component
    "
   (fn [] (expand-btn (get-lang-btns :settings)
-                     (map (fn [option]
-                            (let [;; Remember path to edn file
-                                  path (if (= (get-in @configuration [(first option) :type]) :directory)
-                                         (vec (concat [(first option) :value] (search-edns (first option))))
-                                         (vec (list (first option))))
-                                  ;; Return edn
-                                  opt-name (str (last path))
-                                  name (get-in @configuration (vec (concat path [:name])))]
-                              ;; Create expand button for configuration files
-                              (expand-child-btn name
-                                                ;; Create view for Config Generator
-                                                (fn [e] (create-view opt-name name
-                                                                     ;; Create Config Generator parts
-                                                                     (create-config-gen path)))))) @configuration))))
-
-
+                     (map (fn [path]
+                            (let [name (get-in @configuration (join-vec path [:name]))
+                                  id (last path)]
+                              (expand-child-btn name (fn [e] (create-view id name (create-view--confgen path))))))
+                          (confgen-expand-btns--prepare-config-paths configuration)))))
 
 
 
@@ -693,8 +836,7 @@
       Main space for app inside JLayeredPane. There is menu with expand btns and space for tables with tab btns.
    "
   (grid-panel
-   ;; TODO: Components are writing to output, they can not
-   :bounds app-bounds
+   :id :rebound-layer
    :items [(mig-panel
             :constraints [""
                           "0px[50, fill]0px[200, fill]0px[fill, grow]15px"
@@ -704,10 +846,10 @@
                                                    (expand-child-btn "Alert 1 \"Test\""  (fn [e] (alerts-s :set {:header "Test" :body "Bardzo dluga testowa wiadomość, która nie jest taka prosta do ogarnięcia w seesaw."} (message alerts-s) 3)))
                                                    (expand-child-btn "Alert 2 \"Witaj\"" (fn [e] (alerts-s :set {:header "Witaj" :body "Świecie"} (message alerts-s) 5))))]
                                       [(expand-btn "Widoki"
-                                                   (expand-child-btn "DB View" (fn [e] (create-view-db-view)))
+                                                   (expand-child-btn "DB View" (fn [e] (create-view--db-view)))
                                                    (expand-child-btn "Test"    (fn [e] (create-view "test1" "Test 1" (label :text "Test 1"))))
                                                    (expand-child-btn "Test 2"  (fn [e] (create-view "test2" "Test 2" (label :text "Test 2")))))]
-                                      [(create-view-conf-gen)])]
+                                      [(create-expand-btns--confgen)])]
                     [(mig-app-right-f [(label)]
                                       [(label)])]])]))
 
@@ -719,16 +861,24 @@
   [id-key]
   (cond
     (> (count @views) 0) (vec (map (fn [item]
-                                     (let [item-key (get (second item) :title)]
-                                       (tab-btn item-key item-key (if (identical? (first item) id-key) true false) [100 25]
+                                     (let [view-id (first item)
+                                           item-key (get (second item) :title)
+                                           changes-atom (get-changes-atom view-id)]
+                                       (tab-btn item-key item-key (if (identical? view-id id-key) true false) [100 25]
                                                 (fn [e] (do
-                                                          (reset! views (dissoc @views (first item)))
+                                                          ;; TO DO - Question about drop changes and do not save
+                                                          (if-not (nil? changes-atom)
+                                                            (if-not (empty? @changes-atom)
+                                                              (alerts-s :set {:header "Niezapisane zmiany!"
+                                                                              :body (string/join "" ["W widoku \"" item-key "\" istnieją niezapisane dane: <br>" @changes-atom])}
+                                                                        (message alerts-s) 6))) ;; Check if are changes on view and show alert message
+                                                          (reset! views (dissoc @views view-id)) ;; Remove view from view list
                                                           (if (get (config (.getParent (seesaw.core/to-widget e)) :user-data) :active)
-                                                            (reset! active-tab @last-active-tab)
-                                                            (reset! active-tab @active-tab))))
+                                                            (reset! active-tab @last-active-tab) ;; Close active card
+                                                            (reset! active-tab @active-tab))))   ;; Close card in background
                                                 (fn [e] (do
-                                                          (reset! active-tab (first item))
-                                                          (config! (select (getRoot app) [:#app-functional-space])
+                                                          (reset! active-tab view-id)
+                                                          (config! (select (getRoot @app) [:#app-functional-space])
                                                                    :items [(scrollable (get (second item) :component)
                                                                                        :border nil
                                                                                        :id (keyword (get (second item) :id)))]))))))
@@ -737,100 +887,30 @@
 
 
 
-
 ;; ┌──────────────────────────────────────┐
 ;; │                                      │
 ;; │ Supervisor for open views in tab bar │
 ;; │                                      │
 ;; └──────────────────────────────────────┘
-(add-watch active-tab :refresh (fn [key atom old-state new-state]
-                                 (do
-                                   (reset! last-active-tab old-state)
-                                   (cond
-                                     (contains? @views new-state) (do
-                                                                    (config! (select (getRoot app) [:#app-functional-space]) :items [(scrollable (get-in @views [new-state :component]) :border nil :id (keyword (get-in @views [new-state :id])))])
-                                                                    (config! (select (getRoot app) [:#app-tabs-space]) :items (create-bar-with-open-tabs new-state)))
-                                     (> (count @views) 0) (reset! active-tab (first (first @views)))
-                                     :else (do
-                                             (reset! last-active-tab :none)
-                                             (config! (select (getRoot app) [:#app-functional-space]) :items [(label)])
-                                             (config! (select (getRoot app) [:#app-tabs-space]) :items [(label)]))))
-                                 (.repaint app)))
+(add-watch active-tab :refresh
+           (fn [key atom old-state new-state]
+             (do
+               (reset! last-active-tab old-state)
+               (cond
+                 (contains? @views new-state) (do
+                                                (config! (select (getRoot @app) [:#app-functional-space]) :items [(scrollable (get-in @views [new-state :component]) :border nil :id (keyword (get-in @views [new-state :id])))])
+                                                (config! (select (getRoot @app) [:#app-tabs-space]) :items (create-bar-with-open-tabs new-state)))
+                 (> (count @views) 0) (reset! active-tab (first (first @views)))
+                 :else (do
+                         (reset! last-active-tab :none)
+                         (config! (select (getRoot @app) [:#app-functional-space]) :items [(label)])
+                         (config! (select (getRoot @app) [:#app-tabs-space]) :items [(label)]))))
+             (.repaint @app))) @app
 
-
-(defn app-build
-  "Description:
-      Change starter window. Add prepare components and functions.
-   Example:
-      (app-build)
-   Neede:
-      Function need jarmanapp with app content
-      Function need btn-icon-f function for category buttons
-   "
-  [] (let [menu-icon-size 50]
-       (do
-         (.add app jarmanapp (new Integer 5))
-         (.add app (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png menu-icon-size) 0 menu-icon-size "DB View"
-                                   {:onclick (fn [e] (create-view-db-view))}) (new Integer 10))
-         (.add app (slider-ico-btn (stool/image-scale icon/I-64-png menu-icon-size) 1 menu-icon-size "Powiadomienia" {:onclick (fn [e] (alerts-s :show))}) (new Integer 10))
-
-        ;;  (onresize-f app)
-         (.repaint app))))
-
-
-
-(def refresh-layered-for-tables
-  "Description
-     Refresh bounds of DB View JLayredPane.
-   "
-  (fn [] (do (if (contains? @views :layered-for-tabs)
-               (let [max-w (apply max (map (fn [item]  (+ (.getX (config item :bounds)) (.getWidth  (config item :bounds)))) (seesaw.util/children (get-in @views [:layered-for-tabs :component]))))
-                     parent-w (getWidth (.getParent (get-in @views [:layered-for-tabs :component])))
-                     max-h (apply max (map (fn [item]  (+ (.getY (config item :bounds)) (.getHeight  (config item :bounds)))) (seesaw.util/children (get-in @views [:layered-for-tabs :component]))))
-                     parent-h (getHeight (.getParent (get-in @views [:layered-for-tabs :component])))]
-                 (do (.setPreferredSize (get-in @views [:layered-for-tabs :component]) (new Dimension (if (> parent-w max-w) parent-w max-w) (if (> parent-h max-h) parent-h max-h)))
-                     (.setSize (get-in @views [:layered-for-tabs :component]) (new Dimension (if (> parent-w max-w) parent-w max-w) (if (> parent-h max-h) parent-h max-h)))))
-
-               (.setPreferredSize (get-in @views [:layered-for-tabs :component]) (new Dimension
-                                                                                      (getWidth  (.getParent (get-in @views [:layered-for-tabs :component])))
-                                                                                      (getHeight (.getParent (get-in @views [:layered-for-tabs :component])))))))))
-
-
-(def app-functional-space-resize
-  "Description
-     Resize app functional space (this space on right).
-   "
-  (fn [e] (let [AFS (firstToWidget (getChildren (findByID e :#app-functional-space)))
-                leaf (try (seesaw.util/children AFS) (catch Exception e (str e)))
-                w (- (getWidth AFS) 20)
-                h (- (getHeight AFS) 20)]
-            (if (= leaf nil) (fn []) (do
-                                       ;; Refresh size of app functional space (space on right)
-                                       (reset! right-size [w h])
-                                      ;;  (config! (seesaw.core/to-widget (get-in @views [@active-tab :component])) :size [w :by h])
-                                       )))))
-
-(def onresize-f
-  "Description:
-      Resize component inside JLayeredPane on main frame resize event.
-   "
-  (fn [e] (do
-            refresh-layered-for-tables
-            (template-resize jarmanapp)
-            (alerts-rebounds-f e)
-            (app-functional-space-resize e)
-            (.repaint app))))
-
-(config! (to-root app) :listen [:component-resized (fn [e] (onresize-f e))])
-
-
-;; Complete window
-(app-build)
-
-
-;; (refresh-layered-for-tables)
-;; (if (> (count (seesaw.util/children layered-for-tabs)) 0) (.setSize layered-for-tabs (new Dimension 730 550)))
-
+(build :items (list
+               jarmanapp
+               (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png 50) 0 50 "DB View" {:onclick (fn [e] (create-view--db-view))})
+               (slider-ico-btn (stool/image-scale icon/I-64-png 50) 1 50 "Powiadomienia" {:onclick (fn [e] (alerts-s :show))})))
 
 ;; (alerts-s :show)
 ;; (alerts-s :hide)

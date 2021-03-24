@@ -17,3 +17,5 @@ pom.xml.asc
 .clj-kondo/*
 .lsp/*
 .vscode/*
+jarman/.vscode/settings.json
+jarman/.lsp/sqlite.db

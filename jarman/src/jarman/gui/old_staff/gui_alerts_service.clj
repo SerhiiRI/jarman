@@ -46,8 +46,8 @@
         padding 6
         ico icon/x-grey2-64-png
       ;;   ico-hover icon/x-blue1-64-png
-        bounds (middle-bounds (to-root @layered-pane) (+ w box-border box-border) (+ h box-border box-border))]
-    (.add @layered-pane (mig-panel
+        bounds (middle-bounds (to-root layered-pane) (+ w box-border box-border) (+ h box-border box-border))]
+    (.add layered-pane (mig-panel
                         :constraints ["wrap 1" (str "0px[" (str w) "]0px") (str "0px[" (str header-size) ", top]0px[" (str (- h header-size ico-size)) ", top]0px[" (str ico-size) ", top]0px")]
                         :id :message-view-box
                         :background (new Color 0 0 0 0)
@@ -86,8 +86,8 @@
                                                                            ;; :foreground btn-fg-c
                                                                            :background btn-bg-c))
                                            :mouse-clicked (fn [e] (do
-                                                                    (.remove @layered-pane (select @layered-pane [:#message-view-box]))
-                                                                    (.repaint @layered-pane)))])]])
+                                                                    (.remove layered-pane (select layered-pane [:#message-view-box]))
+                                                                    (.repaint layered-pane)))])]])
           (new Integer 25))))
 
 (defn message
@@ -111,9 +111,9 @@
           bg-c "#fff"
           header (if (= (contains? data :header) true) (get data :header) "Information")
           body   (if (= (contains? data :body) true) (get data :body) "Template of information...")
-          layered-pane (alerts-controller :get-space)
-          close [(build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png layered-pane 23 (fn [e] (view-selected-message header body layered-pane)))
-                 (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered-pane 23 (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (alerts-controller :rm-obj to-del))))]]
+          layered (alerts-controller :get-space)
+          close [(build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png layered 23 (fn [e] (view-selected-message header body layered)))
+                 (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered 23 (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (alerts-controller :rm-obj to-del))))]]
       (mig-panel
        :id :alert-box
        :constraints ["wrap 1" "0px[fill, grow]0px" "0px[20]0px[30]0px[20]0px"]
@@ -161,24 +161,24 @@
    "
   ([layered-pane alerts-storage] (do
                                     ;;  Remove alerts
-                                    (doall (map (fn [item] (if (identical? (config item :id) :alert-box) (.remove @layered-pane item))) (seesaw.util/children @layered-pane)))
+                                    (doall (map (fn [item] (if (identical? (config item :id) :alert-box) (.remove layered-pane item))) (seesaw.util/children layered-pane)))
                                     ;; Add alerts
-                                    (doall (map (fn [item] (if (= (get item :visible) true) (.add @layered-pane (get item :component) (new Integer 15)))) @alerts-storage))
+                                    (doall (map (fn [item] (if (= (get item :visible) true) (.add layered-pane (get item :component) (new Integer 15)))) @alerts-storage))
                                     ;;  Rebounds message space
-                                    (alerts-rebounds-f @layered-pane)
+                                    (alerts-rebounds-f layered-pane)
                                     ;;  Repainting app
-                                    (.repaint @layered-pane)))
+                                    (.repaint layered-pane)))
   ([layered-pane alerts-storage id-to-remove] (do
                                                  ;;  Remove alerts
                                                  (doall (map (fn [i] (if (or (identical? (config i :id) :alert-box)
                                                                              (identical? (config i :id) id-to-remove))
-                                                                       (.remove @layered-pane i))) (seesaw.util/children @layered-pane)))
+                                                                       (.remove layered-pane i))) (seesaw.util/children layered-pane)))
                                                  ;; Add alerts
-                                                 (doall (map (fn [item] (if (= (get item :visible) true) (.add @layered-pane (get item :component) (new Integer 15)))) @alerts-storage))
+                                                 (doall (map (fn [item] (if (= (get item :visible) true) (.add layered-pane (get item :component) (new Integer 15)))) @alerts-storage))
                                                  ;;  Rebounds message space
-                                                 (alerts-rebounds-f @layered-pane)
+                                                 (alerts-rebounds-f layered-pane)
                                                  ;;  Repainting app
-                                                 (.repaint @layered-pane))))
+                                                 (.repaint layered-pane))))
 
 (defn rmAlert
   "Description:
@@ -301,7 +301,8 @@
         btn-bg-c "#fff"
         btn-bg-c-hover "#ddd"
         border 2
-        bounds (middle-bounds @layered-pane (+ w border border) (+ h border border))
+        root-size (getSize (to-root layered-pane))
+        bounds (middle-bounds layered-pane (+ w border border) (+ h border border))
         items  (vec (map (fn [item] (history-alert (get item :data) layered-pane [w 30])) @alerts-storage))
         space-for-message (mig-panel
                            :constraints ["wrap 1" "0px[fill, grow]0px" (str "0px[" (str header-size) "]0px[" (str (- h header-size ico-size)) "]0px[" (str ico-size) "]0px")]
@@ -355,7 +356,7 @@
                                                                                               ;;  refresh GUI with remove element with id :all-alertsts
                                                                                  (refresh-alerts layered-pane alerts-storage :all-alerts)))])]])]])
         ]
-      (.add @layered-pane space-for-message (new Integer 20))
+      (.add layered-pane space-for-message (new Integer 20))
     ))
 
 
@@ -379,7 +380,7 @@
                (fn [key atom old-state new-state]
                  (cond
                    (> (count @alerts-storage) 0) (refresh-alerts layered-pane alerts-storage)
-                   :else (.repaint @layered-pane))))
+                   :else (.repaint layered-pane))))
     (fn [action & param]
       (cond
         (= action :get-space)     layered-pane

@@ -412,7 +412,3 @@
                    #(conj % (unvalid-block-out segment path))))]))
 
 
-
-
-
-

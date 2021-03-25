@@ -1,75 +1,218 @@
-{:name "Konfiguracja bazy danych"
- :display :edit
- :type :file
- :value {:Data-Configuration {:name "Konfiguracja dat"
-                              :type :block
-                              :display :edit
-                              :value {:data-format {:name "Format"
-                                                    :doc "Format w jakim data ma być przechowywana w bazie danych."
-                                                    :type :param
-                                                    :display :edit, :component :text, :value "yyyy-MM-dd HH:mm:ss"}}}
-         :JDBC-mariadb-configuration-database {:name "Konfiguruj JDBC połączenia z bazą SQL."
-                                               :doc "Wpisz parametry konfiguracji lub zostaw puste pola"
-                                               :type :block :display :edit
-                                               :value {:dbtype {:name "Typ połączenia" :type :param, :display :edit, :component :text, :value "mysql"}
-                                                       :host {:name "Adres IP" :type :param, :display :edit, :component :text, :value "10.0.0.69"}
-                                                       :port {:name "Port" :type :param, :display :edit, :component :text, :value 3306}
-                                                       :dbname {:name "Nazwa bazy" :type :param, :display :edit, :component :text, :value "db"}
-                                                       :user {:name "Użytkownik" :type :param, :display :edit, :component :text, :value "hrtime"}
-                                                       :password {:name "Hasło" :type :param, :display :edit, :component :text, :value "dupa"}}}
-         :JDBC-sqlite-configuration {:type :block
-                                     :display :edit
-                                     :name "Konfiguruj JDBC połączenia z bazą SQL."
-                                     :doc "Ogólnie są inne typy polącznia, na co trzeba by zrobić radiobuttona, no niestety nie mamy czasu na to, więc proszę podać konfigurację JDBC-sqlite-configuration, dla podpięcia do bazy danych"
-                                     :value {:classname {:name "JDBC"
-                                                         :doc "Wybierz JDBC sterownika odpowiedzialnego za połączenie"
-                                                         :type :param :display :edit :component :text :value "org.sqlite.JDBC"}
-                                             :subprotocol {:name "Protokół"
-                                                           :doc "Wybierz protokół komunikacji"
-                                                           :type :param :display :edit :component :text :value "sqlite"}
-                                             :subname {:name "Plik bazy"
-                                                       :doc "wybierz plik baz danych"
-                                                       :type :param :display :edit :component :text :value "hrtime-test"}}}
-
-         :SQL-generator {:name "SQL Generator"
-                         :doc "SQL Generator - to bibliteka, która pozwala określić wykorzystywane reguły w projekcie. Jeśli jest potrzeba dodania reguł proszę wpisać ją do listy reguł"
-                         :type :block :display :edit
-                         :value {:SQL-rules {:name "Reguły"
-                                             :doc "Twórz własne reguły SQL"
-                                             :type :block
-                                             :display :edit
-                                             :value {:accepted-alter-table-rules {:type :param :display :edit :component :textlist :value [:add-column :drop-column :drop-foreign-key :add-foreign-key]}
-                                                     :accepted-forkey-rules {:type :param :display :edit :component :textlist :value [:restrict :cascade :null :no-action :default]}
-                                                     :accepted-ctable-rules {:type :param :display :edit :component :textlist :value [:columns :foreign-keys :table-config]}
-                                                     :accepted-select-rules {:type :param :display :edit :component :textlist :value [:column :inner-join :right-join :left-join :outer-left-join :outer-right-join :where :order]}
-                                                     :accepted-update-rules {:type :param :display :edit :component :textlist :value [:update-table :set :where]}
-                                                     :accepted-insert-rules {:type :param :display :edit :component :textlist :value [:values :set]}
-                                                     :accepted-delete-rules {:type :param :display :edit :component :textlist :value [:from :where]}}}
-                                 :where-border {:name "Dodatkowe reguły SQL"
-                                                :doc "Tworzy SQL reguly z nawiasami jeśli defultowo jest na true to po WHERE od razu idą nawiasy. Domyślnie parametr ustawiony jest na false"
-                                                :type :param :display :edit :component :checkbox :value false}}}
-         :View-table-name {:name "Nazwy"
-                           :doc "Odpowiada za nazwy kolumn wyświetlanych tabeli z bazy danych"
-                           :type :block :display :edit
-                           :value {:card_nr {:type :param :display :edit :component :text :value "Numer Karty"}
-                                   :first_name {:type :param :display :edit :component :text :value "Imie"}
-                                   :teta_nr {:type :param :display :edit :component :text :value "Nr w systemie"}
-                                   :data-to {:type :param :display :edit :component :text :value "Data do"}
-                                   :id_card {:type :param :display :edit :component :text :value "Karta"}
-                                   :section {:type :param :display :edit :component :text :value "Dział"}
-                                   :act {:type :param :display :edit :component :text :value "Nr Akt"}
-                                   :rfid {:type :param :display :edit :component :text :value "RFID"}
-                                   :datetime {:type :param :display :edit :component :text :value "Data/Czas"}
-                                   :last_name {:type :param :display :edit :component :text :value "Nazwisko"}
-                                   :id_user {:type :param :display :edit :component :text :value "Użytkownik"}
-                                   :data-from {:type :param :display :edit :component :text :value "Data od"}
-                                   :work_type {:type :param :display :edit :component :text :value "Typ pracownika"}
-                                   :direction {:type :param :display :edit :component :text :value "Kierunek"}}}
-         :pagination {:name "Paginacja"
-                      :type :block :display :edit
-                      :value {:pagination-size {:name "Rozmiar paginacji"
-                                                :doc "Ilość wierszy w tabeli przy jednym doładowaniu danych."
-                                                :type :param
-                                                :display :edit
-                                                :component :textnumber
-                                                :value 150}}}}}
+{:name "Konfiguracja bazy danych",
+ :display :edit,
+ :type :file,
+ :value
+ {:Data-Configuration
+  {:name "Konfiguracja dat",
+   :type :block,
+   :display :edit,
+   :value
+   {:data-format
+    {:name "Format",
+     :doc "Format w jakim data ma być przechowywana w bazie danych.",
+     :type :param,
+     :display :edit,
+     :component :text,
+     :value "yyyy-MM-dd HH:mm:ss"}}},
+  :JDBC-mariadb-configuration-database
+  {:name "Konfiguruj JDBC połączenia z bazą SQL.",
+   :doc "Wpisz parametry konfiguracji lub zostaw puste pola",
+   :type :block,
+   :display :edit,
+   :value
+   {:dbtype
+    {:name "Typ połączenia",
+     :type :param,
+     :display :edit,
+     :component :text,
+     :value "mysql"},
+    :host
+    {:name "Adres IP",
+     :type :param,
+     :display :edit,
+     :component :text,
+     :value "10.0.0.69"},
+    :port
+    {:name "Port",
+     :type :param,
+     :display :edit,
+     :component :text,
+     :value 3306},
+    :dbname
+    {:name "Nazwa bazy",
+     :type :param,
+     :display :edit,
+     :component :text,
+     :value "db"},
+    :user
+    {:name "Użytkownik",
+     :type :param,
+     :display :edit,
+     :component :text,
+     :value "hrtime"},
+    :password
+    {:name "Hasło",
+     :type :param,
+     :display :edit,
+     :component :text,
+     :value "dupa"}}},
+  :JDBC-sqlite-configuration
+  {:type :block,
+   :display :edit,
+   :name "Konfiguruj JDBC połączenia z bazą SQL.",
+   :doc
+   "Ogólnie są inne typy polącznia, na co trzeba by zrobić radiobuttona, no niestety nie mamy czasu na to, więc proszę podać konfigurację JDBC-sqlite-configuration, dla podpięcia do bazy danych",
+   :value
+   {:classname
+    {:name "JDBC",
+     :doc "Wybierz JDBC sterownika odpowiedzialnego za połączenie",
+     :type :param,
+     :display :edit,
+     :component :text,
+     :value "org.sqlite.JDBC"},
+    :subprotocol
+    {:name "Protokół",
+     :doc "Wybierz protokół komunikacji",
+     :type :param,
+     :display :edit,
+     :component :text,
+     :value "sqlite"},
+    :subname
+    {:name "Plik bazy",
+     :doc "wybierz plik baz danych",
+     :type :param,
+     :display :edit,
+     :component :text,
+     :value "hrtime-test"}}},
+  :SQL-generator
+  {:name "SQL Generator",
+   :doc
+   "SQL Generator - to bibliteka, która pozwala określić wykorzystywane reguły w projekcie. Jeśli jest potrzeba dodania reguł proszę wpisać ją do listy reguł",
+   :type :block,
+   :display :edit,
+   :value
+   {:SQL-rules
+    {:name "Reguły",
+     :doc "Twórz własne reguły SQL",
+     :type :block,
+     :display :edit,
+     :value
+     {:accepted-alter-table-rules
+      {:type :param,
+       :display :edit,
+       :component :textlist,
+       :value
+       [:add-column :drop-column :drop-foreign-key :add-foreign-key]},
+      :accepted-forkey-rules
+      {:type :param,
+       :display :edit,
+       :component :textlist,
+       :value [:restrict :cascade :null :no-action :default]},
+      :accepted-ctable-rules
+      {:type :param,
+       :display :edit,
+       :component :textlist,
+       :value [:columns :foreign-keys :table-config]},
+      :accepted-select-rules
+      {:type :param,
+       :display :edit,
+       :component :textlist,
+       :value
+       [:column
+        :inner-join
+        :right-join
+        :left-join
+        :outer-left-join
+        :outer-right-join
+        :where
+        :order]},
+      :accepted-update-rules
+      {:type :param,
+       :display :edit,
+       :component :textlist,
+       :value [:update-table :set :where]},
+      :accepted-insert-rules
+      {:type :param,
+       :display :edit,
+       :component :textlist,
+       :value [:values :set]},
+      :accepted-delete-rules
+      {:type :param,
+       :display :edit,
+       :component :textlist,
+       :value [:from :where]}}},
+    :where-border
+    {:name "Dodatkowe reguły SQL",
+     :doc
+     "Tworzy SQL reguly z nawiasami jeśli defultowo jest na true to po WHERE od razu idą nawiasy. Domyślnie parametr ustawiony jest na false",
+     :type :param,
+     :display :edit,
+     :component :checkbox,
+     :value false}}},
+  :View-table-name
+  {:name "Nazwy",
+   :doc "Odpowiada za nazwy kolumn wyświetlanych tabeli z bazy danych",
+   :type :block,
+   :display :edit,
+   :value
+   {:card_nr
+    {:type :param,
+     :display :edit,
+     :component :text,
+     :value "Numer Karty"},
+    :first_name
+    {:type :param, :display :edit, :component :text, :value "Imie"},
+    :teta_nr
+    {:type :param,
+     :display :edit,
+     :component :text,
+     :value "Nr w systemie"},
+    :data-to
+    {:type :param, :display :edit, :component :text, :value "Data do"},
+    :id_card
+    {:type :param, :display :edit, :component :text, :value "Karta"},
+    :section
+    {:type :param, :display :edit, :component :text, :value "Dział"},
+    :act
+    {:type :param, :display :edit, :component :text, :value "Nr Akt"},
+    :rfid
+    {:type :param, :display :edit, :component :text, :value "RFID"},
+    :datetime
+    {:type :param,
+     :display :edit,
+     :component :text,
+     :value "Data/Czas"},
+    :last_name
+    {:type :param,
+     :display :edit,
+     :component :text,
+     :value "Nazwisko"},
+    :id_user
+    {:type :param,
+     :display :edit,
+     :component :text,
+     :value "Użytkownik"},
+    :data-from
+    {:type :param, :display :edit, :component :text, :value "Data od"},
+    :work_type
+    {:type :param,
+     :display :edit,
+     :component :text,
+     :value "Typ pracownika"},
+    :direction
+    {:type :param,
+     :display :edit,
+     :component :text,
+     :value "Kierunek"}}},
+  :pagination
+  {:name "Paginacja",
+   :type :block,
+   :display :edit,
+   :value
+   {:pagination-size
+    {:name "Rozmiar paginacji",
+     :doc "Ilość wierszy w tabeli przy jednym doładowaniu danych.",
+     :type :param,
+     :display :edit,
+     :component :textnumber,
+     :value 150}}}}}

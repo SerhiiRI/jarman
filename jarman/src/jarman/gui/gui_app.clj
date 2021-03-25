@@ -938,10 +938,40 @@
                          (config! (select (getRoot @app) [:#app-tabs-space]) :items [(label)]))))
              (.repaint @app))) @app
 
+(defn ontop-panel
+  []
+  (let [last-x (atom 0)
+        last-y (atom 0)]
+    (mig-panel
+     :constraints ["" "0px[]0px" "0px[]0px"]
+     :bounds (middle-bounds (first @app-size) (second @app-size) 600 400)
+     :border (line-border :thickness 2 :color (get-color :decorate :gray-underline))
+     :background "#fff"
+     :id :ontop-panel
+     :visible? false
+     :items [[(label :text "Close" :listen [:mouse-clicked (fn [e] (config! (getParent e) :visible? false))])]]
+     :listen [:mouse-dragged (fn [e] (do
+                                       (if (= @last-x 0) (reset! last-x (.getX e)))
+                                       (if (= @last-y 0) (reset! last-y (.getY e)))
+                                       (let [bounds (config e :bounds)
+                                             pre-x (- (+ (.getX bounds) (.getX e)) @last-x)
+                                             pre-y (- (+ (.getY bounds) (.getY e)) @last-y)
+                                             x (if (> pre-x 0) pre-x 0)
+                                             y (if (> pre-y 0) pre-y 0)
+                                             w (.getWidth  bounds)
+                                             h (.getHeight bounds)]
+                                         (config! e :bounds [x y w h]))))])))
+
+(def pop (atom (ontop-panel)))                               
+
 (build :items (list
                jarmanapp
                (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png 50) 0 50 "DB View" {:onclick (fn [e] (create-view--db-view))})
-               (slider-ico-btn (stool/image-scale icon/I-64-png 50) 1 50 "Powiadomienia" {:onclick (fn [e] (alerts-s :show))})))
+               (slider-ico-btn (stool/image-scale icon/I-64-png 50) 1 50 "Powiadomienia" {:onclick (fn [e] (alerts-s :show))})
+               (slider-ico-btn (stool/image-scale icon/calendar2-64-png 50) 2 50 "Popup panel" {:onclick (fn [e] (config! @pop :visible? true))})
+               @pop))
+
+;; (config! @pop :visible? true)
 
 ;; (alerts-s :show)
 ;; (alerts-s :hide)

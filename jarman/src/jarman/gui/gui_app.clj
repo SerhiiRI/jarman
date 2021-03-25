@@ -247,11 +247,12 @@
   [txt func] (let [color (get-color :group-buttons :background)
                    color-hover (get-color :group-buttons :background-hover)
                    color-clicked (get-color :group-buttons :clicked)
-                   bg-btn (atom color)]
+                   bg-btn (atom color)
+                   id-btn :table-editor--component--column-picker-btn]
                (mig-panel
                 :constraints ["" "15px[100, fill]15px" "10px[fill]10px"]
                 :border (line-border :left 0 :right 0 :top 1 :bottom 1 :color (get-color :border :gray))
-                :id :table-editor--component--column-picker-btn
+                :id id-btn
                 :background color
                 :user-data bg-btn
                 :listen [:mouse-entered (fn [e] (config! e :cursor :hand :background color-hover))
@@ -259,9 +260,10 @@
                          :mouse-clicked  (fn [e] (cond
                                                    (= @bg-btn color)
                                                    (do
-                                                ;; reset bg and atom inside all buttons in parent
-                                                     (doall (map (fn [b] (do (config! b :background color)
-                                                                             (reset! (config b :user-data) color)))
+                                                ;; reset bg and atom inside all buttons in parent if id is ok
+                                                     (doall (map (fn [b] (cond (= (config b :id) id-btn)
+                                                                               (do (config! b :background color)
+                                                                              (reset! (config b :user-data) color))))
                                                                  (seesaw.util/children (.getParent (seesaw.core/to-widget e)))))
                                                 ;; reset atom with color
                                                      (reset! bg-btn color-clicked)
@@ -297,15 +299,42 @@
           :listen [:caret-update (fn [event] (track-changes changing-list value-path event :text value))]
           )))
 
+
+
+(defn table-editor--element--btn-add-col-prop
+  []
+  (mig-panel ;; Button for add parameter to column 
+   :constraints ["" "0px[grow, center]0px" "5px[fill]5px"]
+   :items [[(label :icon (stool/image-scale icon/plus-128-png 15)
+                   :listen [:mouse-clicked (fn [e] (println "Add parameter"))
+                            :mouse-entered (fn [e] (config! e :cursor :hand))])]]
+   :border (compound-border
+            (line-border :top 2 :color (get-color :decorate :gray-underline))
+            (empty-border :left 15 :right 15 :top 5 :bottom 8))))
+
 (def switch-column-to-editing
   (fn [changing-list value-path event column column-editor-id]
     (config! (select (to-root event) [(convert-str-to-hashkey column-editor-id)])
-             :items (join-mig-items (map
-                                     (fn [column-parameter]
-                                       (list
-                                        (label :text (str (first column-parameter)))
-                                        (table-editor--element--input changing-list value-path (str (second column-parameter)))))
-                                     column)))))
+             ;; Right space for column parameters
+             :items [[(mig-panel ;; Editable parameters list
+                       :constraints ["wrap 2" "20px[100, fill]10px[150:,fill]5px" "5px[fill]5px"]
+                       :items (join-mig-items
+                               (map
+                                (fn [column-parameter]
+                                  (list
+                                   (label :text (str (first column-parameter))) ;; Parameter name
+                                   (table-editor--element--input changing-list value-path (str (second column-parameter))))) ;; Parameter value
+                                column)))]
+                     [(table-editor--element--btn-add-col-prop)]])))
+
+
+(def table-editor--element--btn-add-column
+  (fn [] (mig-panel ;; Button for add column to table
+          :constraints ["" "0px[grow, center]0px" "5px[fill]5px"]
+          :items [[(label :icon (stool/image-scale icon/plus-128-png 15))]]
+          :border (compound-border (empty-border :left 15 :right 15 :top 5 :bottom 8))
+          :listen [:mouse-clicked (fn [e] (println "Add column"))
+                   :mouse-entered (fn [e] (config! e :cursor :hand))])))
 
 (defn table-editor--component--column-picker
   "Create left table editor view to select column which will be editing on right table editor view"
@@ -319,11 +348,13 @@
                                  (table-editor--component--column-picker-btn
                                   (get-in column [:representation])
                                   (fn [event] (switch-column-to-editing changing-list value-path event column column-editor-id)))))
-                             columns))))
+                             columns)
+                        (table-editor--element--btn-add-column)
+                        )))
 
 (defn table-editor--component--space-for-column-editor
   "Create right table editor view to editing selected column in left table editor view"
-  [column-editor-id] (mig-panel :constraints ["wrap 2" "20px[100, fill]10px[150:,fill]5px" "5px[fill]5px"]
+  [column-editor-id] (mig-panel :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
                 :id (keyword column-editor-id)
                 :items [[(label)]]
                 :border (line-border :left 4 :color (get-color :border :dark-gray))))

@@ -82,6 +82,8 @@
   (->> some-object
        reflect :members (filter :return-type) (map :name) sort (map #(str "." %) ) distinct println))
 
+(def random-unique-id (fn [] (string/join "" [(java.time.LocalDateTime/now) (rand-int 10000)])))
+
 (defmacro blet
   "Description
     Let with binding in last sexp, otherwise in first block

@@ -79,6 +79,103 @@
       (not (nil? (get-in @changing-list [(convert-mappath-to-key value-path)]))) (remove-change-from-view-atom changing-list value-path))))
 
 
+
+
+;; ┌────────────────────────────┐
+;; │                            │
+;; │ JLayeredPane Popup Service │
+;; │                            │
+;; └────────────────────────────┘
+
+(def popup-menager (atom nil))
+
+(defn ontop-panel
+  [popup-menager storage-id z-index & {:keys [size title body] :or {size [600 400] title "Popup" body (label)}}]
+  (let [last-x (atom 0)
+        last-y (atom 0)
+        w (first size)
+        h (second size)]
+    (mig-panel
+     :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill, center]0px[fill, grow]0px"]
+     :bounds (middle-bounds (first @app-size) (second @app-size) w h)
+     :border (line-border :thickness 2 :color (get-color :decorate :gray-underline))
+     :background "#fff"
+     :id storage-id
+     :visible? true
+     :items (join-mig-items (mig-panel
+                             :constraints ["" "10px[grow]0px[30, center]0px" "5px[]5px"]
+                             :background "#eee"
+                             :items (join-mig-items
+                                     (label :text title)
+                                     (label :icon (stool/image-scale icon/up-grey1-64-png 25)
+                                            :listen [:mouse-clicked (fn [e] (cond (> (.getHeight (getParent (getParent e))) 50)
+                                                                                  (config! (getParent (getParent e)) :bounds  [(.getX (getParent (getParent e)))
+                                                                                                                               (.getY (getParent (getParent e)))
+                                                                                                                               w 30])
+                                                                                  :else (config! (getParent (getParent e)) :bounds [(.getX (getParent (getParent e)))
+                                                                                                                                    (.getY (getParent (getParent e)))
+                                                                                                                                    w h])))
+                                                     :mouse-entered (fn [e] (config! e :cursor :hand))])
+                                     (label :icon (stool/image-scale icon/x-blue2-64-png 20)
+                                            :listen [:mouse-clicked (fn [e] ((@popup-menager :remove) storage-id))
+                                                     :mouse-entered (fn [e] (config! e :cursor :hand))])))
+                            (mig-panel
+                             :constraints ["wrap 1" "0px[grow, center]0px" "0px[grow, center]0px"]
+                             :background "#fff"
+                             :items (join-mig-items body)))
+     :listen [:mouse-clicked (fn [e] ((@popup-menager :move-to-top) storage-id))
+              :mouse-dragged (fn [e] (do
+                                       (if (= @last-x 0) (reset! last-x (.getX e)))
+                                       (if (= @last-y 0) (reset! last-y (.getY e)))
+                                       (let [bounds (config e :bounds)
+                                             pre-x (- (+ (.getX bounds) (.getX e)) @last-x)
+                                             pre-y (- (+ (.getY bounds) (.getY e)) @last-y)
+                                             x (if (> pre-x 0) pre-x 0)
+                                             y (if (> pre-y 0) pre-y 0)
+                                             w (.getWidth  bounds)
+                                             h (.getHeight bounds)]
+                                         (config! e :bounds [x y w h]))))])))
+
+(def atom-popup-hook (atom (label :visible? false)))
+
+(defn create-popup-service
+  [atom-popup-hook]
+  (let [atom-popup-storage (atom {})
+        z-index (atom 1000)
+        JLP (getParent @atom-popup-hook)]
+    (fn [action & {:keys [title, body, size] :or {title "Popup" body (label) size [600 400]}}]
+      (let [unique-id (keyword (random-unique-id))
+            template (fn [component] ;; Set to main JLayeredPane new popup panel
+                       (do (swap! atom-popup-storage (fn [popups] (merge popups {unique-id component}))) ;; add new component to list with auto id
+                           (swap! z-index inc)
+                           (.add JLP (get-in @atom-popup-storage [unique-id]) (new Integer @z-index))
+                           (.repaint JLP)))]
+        (cond
+          (= action :remove) (fn [id]
+                               (let [elems-in-JLP (seesaw.util/children JLP)
+                                     elems-count  (count elems-in-JLP)]
+                                 (reset! atom-popup-storage (dissoc @atom-popup-storage id)) ;; Remove popup from storage
+                                 (doall (map (fn [index] ;; remove popup from main JLayeredPane
+                                               (cond (= (config (nth elems-in-JLP index) :id) id) (.remove JLP index)))
+                                             (range elems-count)))
+                                 (.repaint JLP)))  ;; Refresh GUI
+          (= action :move-to-top) (fn [id]
+                                    (let [elems-in-JLP (seesaw.util/children JLP)
+                                          elems-count  (count elems-in-JLP)]
+                                      (doall (map (fn [index] ;; Change popup order on JLayeredPane 
+                                                    (cond (= (config (nth elems-in-JLP index) :id) id)
+                                                          (.setLayer JLP (nth elems-in-JLP index) @z-index 0)))
+                                                  (range elems-count)))
+                                      (.repaint JLP)) ;; Refresh GUI
+                                    )
+          (= action :new-test)    (template (ontop-panel popup-menager unique-id z-index))
+          (= action :new-message) (template (ontop-panel popup-menager unique-id z-index :title title :body body :size size))
+          (= action :show)        (println @atom-popup-storage)
+          (= action :get-atom-storage) atom-popup-storage)))))
+
+
+
+
 ;; ┌───────────────────────────┐
 ;; │                           │
 ;; │ Views and tabs controller │
@@ -938,38 +1035,29 @@
                          (config! (select (getRoot @app) [:#app-tabs-space]) :items [(label)]))))
              (.repaint @app))) @app
 
-(defn ontop-panel
-  []
-  (let [last-x (atom 0)
-        last-y (atom 0)]
-    (mig-panel
-     :constraints ["" "0px[]0px" "0px[]0px"]
-     :bounds (middle-bounds (first @app-size) (second @app-size) 600 400)
-     :border (line-border :thickness 2 :color (get-color :decorate :gray-underline))
-     :background "#fff"
-     :id :ontop-panel
-     :visible? false
-     :items [[(label :text "Close" :listen [:mouse-clicked (fn [e] (config! (getParent e) :visible? false))])]]
-     :listen [:mouse-dragged (fn [e] (do
-                                       (if (= @last-x 0) (reset! last-x (.getX e)))
-                                       (if (= @last-y 0) (reset! last-y (.getY e)))
-                                       (let [bounds (config e :bounds)
-                                             pre-x (- (+ (.getX bounds) (.getX e)) @last-x)
-                                             pre-y (- (+ (.getY bounds) (.getY e)) @last-y)
-                                             x (if (> pre-x 0) pre-x 0)
-                                             y (if (> pre-y 0) pre-y 0)
-                                             w (.getWidth  bounds)
-                                             h (.getHeight bounds)]
-                                         (config! e :bounds [x y w h]))))])))
 
-(def pop (atom (ontop-panel)))                               
 
-(build :items (list
-               jarmanapp
-               (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png 50) 0 50 "DB View" {:onclick (fn [e] (create-view--db-view))})
-               (slider-ico-btn (stool/image-scale icon/I-64-png 50) 1 50 "Powiadomienia" {:onclick (fn [e] (alerts-s :show))})
-               (slider-ico-btn (stool/image-scale icon/calendar2-64-png 50) 2 50 "Popup panel" {:onclick (fn [e] (config! @pop :visible? true))})
-               @pop))
+
+;; ┌─────────────┐
+;; │             │
+;; │ App starter │
+;; │             │
+;; └─────────────┘
+
+(do
+  (build :items (list
+                 jarmanapp
+                 (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png 50) 0 50 "DB View" {:onclick (fn [e] (create-view--db-view))})
+                 (slider-ico-btn (stool/image-scale icon/I-64-png 50) 1 50 "Powiadomienia" {:onclick (fn [e] (alerts-s :show))})
+                 (slider-ico-btn (stool/image-scale icon/alert-64-png 50) 2 50 "Popup" {:onclick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200]))})
+                 @atom-popup-hook))
+  (reset! popup-menager (create-popup-service atom-popup-hook)))
+
+;; (@popup-menager :new-test)
+;; (@popup-menager :new-yesno)
+
+;; (@popup-menager :show)
+;; (def atm (@popup-menager :get-atom-storage))
 
 ;; (config! @pop :visible? true)
 

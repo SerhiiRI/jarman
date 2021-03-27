@@ -203,6 +203,10 @@
 ;;; BACKUP SYSTEMS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
+(def ^:print backup-name "configurations")
+(def ^:print backup-file-name (format "%s.edn" backup-name))
+(def ^:print backup-file-date-format "YYYY-MM-dd HH:mm:ss")
+
 (defn- backup-swapp-configuration
   "Example
     (backup-swapp-configuration (<path|file>-list *config-root*))"
@@ -220,19 +224,18 @@
    cfg))
 
 (defn- backup-information []
-  {:date (.format (java.text.SimpleDateFormat. "YYYY-MM-dd HH:mm:ss") (java.util.Date.))
+  {:date (.format (java.text.SimpleDateFormat. backup-file-date-format) (java.util.Date.))
    :program-dir env/user-dir})
 
 (defn- backup-keep-10-last-modified
   "Remove 10 last modified backup files, when new backups being created"[]
-  (let [max-bkp 10 l-files (storage/user-list) c-files (count l-files)]
+  (let [max-bkp 10 l-files (storage/user-config-list) c-files (count l-files)]
     (if (> c-files max-bkp) 
-      (doall
-       (map #(-> % .getName storage/user-delete)
-            (take (- c-files max-bkp) 
-                  (sort-by #(-> % .lastModified java.util.Date.)
-                           #(.before %1 %2)
-                           (map io/file l-files))))))))
+      (doall (map #(-> % .getName storage/user-config-delete)
+                  (take (- c-files max-bkp) 
+                        (sort-by #(-> % .lastModified java.util.Date.)
+                                 #(.before %1 %2)
+                                 (map io/file l-files))))))))
 
 (defn make-backup-configuration
   "Description
@@ -256,15 +259,17 @@
         path-list (vec (map first path-file-list))
         tmp-swapped-config (backup-swapp-configuration path-file-list)
         make-backup #(identity {:info (backup-information) :path %1 :backup %2})]
-    (if (.exists (io/file (storage/user-p) "backup.edn"))
-      (let [old-file (clojure.pprint/cl-format nil "backup_~A.edn" (.format (java.text.SimpleDateFormat. "YYYY-MM-dd_HHmmss") (java.util.Date.)))]
-        (storage/user-rename "backup.edn" old-file)))
-    (storage/user-put "backup.edn" (str (make-backup path-list tmp-swapped-config)))
+    (if (.exists (io/file (storage/user-config-dir) backup-file-name))
+      (let [old-file (clojure.pprint/cl-format nil "~A_~A.edn"
+                                               backup-name
+                                               (.format (java.text.SimpleDateFormat. "YYYY-MM-dd_HHmmss") (java.util.Date.)))]
+        (storage/user-config-rename backup-file-name old-file)))
+    (storage/user-config-put backup-file-name (str (make-backup path-list tmp-swapped-config)))
     (backup-keep-10-last-modified)))
 
 (defn- default-backup-loader []
-  (if-let [_TMP0 (storage/user-get "backup.edn")] _TMP0
-    (try (slurp (io/file env/user-dir "backup.edn"))
+  (if-let [_TMP0 (storage/user-config-get backup-file-name)] _TMP0
+    (try (slurp (io/file env/user-dir backup-file-name))
          (catch Exception e nil))))
 
 (defn restore-backup-configuration
@@ -272,17 +277,23 @@
     Restore all backups from user-stored buffer
 
   Example
+    (restore-backup-configuration)
     (restore-backup-configuration default-backup-loader)"
-  [f-backup-loader]
-  (if-let [backup (f-backup-loader)]
-    (try (let [_cfg (read-string backup) cfgs (:backup _cfg) pths (:path _cfg)]
-           (map (fn [[path file]]
-                 (let [-swapped-file-cfg- (GETS cfgs path)]
-                   (when-not (.exists file)
-                     (-> file io/file .getParentFile .mkdirs)
-                     (save-cfg-to-file-pp file -swapped-file-cfg-))))
-               (<path|file>-list *config-root* pths)))
-         (catch Exception e false))))
+  ([] (restore-backup-configuration default-backup-loader))
+  ([f-backup-loader]
+   (if-let [backup (f-backup-loader)]
+     (try (let [_cfg (read-string backup) cfgs (:backup _cfg) pths (:path _cfg)]
+            (map (fn [[path file]]
+                   (let [-swapped-file-cfg- (GETS cfgs path)]
+                     (when-not (.exists file)
+                       (-> file io/file .getParentFile .mkdirs)
+                       (save-cfg-to-file-pp file -swapped-file-cfg-))))
+                 (<path|file>-list *config-root* pths)))
+          (catch Exception e false)))))
+
+;; (make-backup-configuration)
+;; (restore-backup-configuration default-backup-loader)
+;; (storage/user-config-clean)
 
 (defn validate-configuration-files
   "Description

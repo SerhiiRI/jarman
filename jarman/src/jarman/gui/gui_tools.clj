@@ -64,7 +64,7 @@
   (fn [& args]
     (join-vec (map #(vector %) (flatten args)))))
 
-(defn middle-bounds 
+(defn middle-bounds
   "Description:
       Return middle bounds with size.
    Example:
@@ -73,10 +73,14 @@
    Needed:
       Function need getSize function for get frame width and height
    "
-  [obj width height] (let [size (getSize obj)
-                           x (first size)
-                           y (last size)]
-                       [(- (/ x 2) (/ width 2)) (- (/ y 2) (/ height 2)) width height]))
+  ([obj width height] (let [size (getSize obj)
+                            x (first size)
+                            y (last size)]
+                        [(- (/ x 2) (/ width 2)) (- (/ y 2) (/ height 2)) width height]))
+  ([root-w root-h width height] (let [size [root-w root-h]
+                                      x (first size)
+                                      y (last size)]
+                                  [(- (/ x 2) (/ width 2)) (- (/ y 2) (/ height 2)) width height])))
 
 (def hand-hover-on  (fn [e] (config! e :cursor :hand)))
 (def hand-hover-off (fn [e] (config! e :cursor :default)))

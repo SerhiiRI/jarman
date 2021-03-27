@@ -15,6 +15,7 @@
             [jarman.gui.gui-alerts-service :refer :all]
             ;; deverloper tools 
             [jarman.tools.swing :as stool]
+            [jarman.config.spec :as sspec]
             [jarman.tools.lang :refer :all]
             [jarman.gui.gui-seed :refer :all]
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
@@ -458,13 +459,13 @@
 
 
 (defn table-editor--element--btn-save
-  [changing-list]
+  []
   (table-editor--component--bar-btn :edit-view-save-btn (get-lang-btns :save) icon/agree-grey-64-png icon/agree-blue-64-png
-                                    (fn [e] (println "Changes" @changing-list))))
+                                    (fn [e] )))
 
-(defn table-editor--element--btn-restore
-  [] (table-editor--component--bar-btn :edit-view-back-btn (get-lang-btns :remove) icon/refresh-grey-64-png icon/refresh-blue-64-png
-                                       (fn [e]))) ;;TODO
+(defn table-editor--element--btn-show-changes
+  [changing-list] (table-editor--component--bar-btn :edit-view-back-btn (get-lang-btns :show-changes) icon/refresh-grey-64-png icon/refresh-blue-64-png
+                                       (fn [e] (@popup-menager :new-message :title "Changes list" :body (textarea (str @changing-list)) :size [400 300]))))
 
 (def get-table-configuration-from-list-by-table-id
   (fn [atom--tables-configurations table-id]
@@ -510,8 +511,8 @@
                     ;; Table info
                         [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"] ;; menu bar for editor
                                      :items [[(table-editor--element--header-view (string/join "" [">_ Edit table: " (get-in table [:prop :table :frontend-name])]))]
-                                             [(table-editor--element--btn-save changing-list)]
-                                             [(table-editor--element--btn-restore)]])]]
+                                             [(table-editor--element--btn-save )]
+                                             [(table-editor--element--btn-show-changes changing-list)]])]]
                     ;; Table properties 
                         [[(table-editor--element--header "Table configuration")]]
                         [(vec (let [table-property-count (count table-property)
@@ -842,6 +843,13 @@
 ;; ;; => {:type :param, :display :edit, :component :text, :value "config"}
 
 
+;; (let [map (get-in @configuration [:resource.edn :value :font-configuration-attribute :value :acceptable-file-format])
+;;       map {:name "Wspierane pliki", :doc "wybierz rozszerzenia dla wspieranych przez system plików konfiguracji.", :type :param, :display :edit, :component :textlist, :value "abc"}]
+;;   (println map)  
+;;   (sspec/valid-param map))
+
+
+
 (def create-view--confgen
   "Description
      Join config generator parts and set view on right functional panel
@@ -859,7 +867,9 @@
                :items (join-mig-items
                                    ;; Header of section/config file
                        (confgen--element--header-file (get-in map-part [:name]))
-                       (label :text "Show changes" :listen [:mouse-clicked (fn [e] (println "Changes" @changing-list))])
+                       (label :text "Show changes" :listen [:mouse-clicked (fn [e] 
+                                                                            ;;  TODO: Validation
+                                                                             (println "Changes" @changing-list))])
                                    ;; Foreach on init values and create configuration blocks
                        (map
                         (fn [param]
@@ -1052,6 +1062,7 @@
                  (slider-ico-btn (stool/image-scale icon/alert-64-png 50) 2 50 "Popup" {:onclick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200]))})
                  @atom-popup-hook))
   (reset! popup-menager (create-popup-service atom-popup-hook)))
+        
 
 ;; (@popup-menager :new-test)
 ;; (@popup-menager :new-yesno)

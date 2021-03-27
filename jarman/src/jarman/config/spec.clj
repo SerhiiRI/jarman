@@ -401,7 +401,7 @@
 
   Return Example
     {:valid? false
-     :output {:path [:path :in :map]
+     :output [{:path [:path :in :map]
               :messages [\"Undefinied dispaly status key ':BAD' in {:type :param, :display :BAD, :component :BAD, :value ...}\"
                          \"Unknown param. component type key ':BAD' in {:type :param, :display :BAD, :component :BAD, :value ...}\"]}}"
   [m] {:pre [(map? m)]}

@@ -73,21 +73,41 @@
   (:refer-clojure :exclude [update])
   (:require
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
-   [jarman.tools.dev-tools :refer :all]
+   [jarman.tools.lang :refer :all]
    [clojure.data :as data]
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]))
 
+;;;;;;;;;;;;;;;;;;;;;;
+;;; Configurations ;;; 
+;;;;;;;;;;;;;;;;;;;;;;
 
-(def ^:dynamic *id-collumn-rules* ["id", "id*"])
-(def ^:dynamic *meta-rules* ["metatable" "meta*"])
-(def ^:dynamic *not-allowed-to-edition-tables* ["user" "permission"])
+(def ^{:dynamic true :private true} *not-allowed-to-edition-tables* ["user" "permission"])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; SQL CONFIGURATION ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "ekka-test" :user "root" :password "123"})
+(def ^{:dynamic true :private true} sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"})
+;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"})
+;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"})
+(def ^{:dynamic true :private true} *available-mariadb-engine-list* "set of available engines for key-value tables" ["MEMORY", "InnoDB", "CSV"])
+;; (jdbc/query sql-connection "SHOW ENGINES" )
+;; (jdbc/execute! sql-connection "CREATE DATABASE `ekka-test` CHARACTER SET = 'utf8' COLLATE = 'utf8_general_ci'")
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; RULE FILTRATOR ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
-(defn not-allowed-rules
+;;; pattern table matching configuration
+;;; mean that column with this name never
+;;; being added to metadata information.
+;;; The same with table in *meta-rules*
+(def ^{:dynamic true :private true} *id-collumn-rules* ["id", "id*"])
+(def ^{:dynamic true :private true} *meta-rules* ["metatable" "meta*"])
+
+(defn- not-allowed-rules
   "Description:
     The function do filter on `col` list, selected only that string elements, which not allowed by `rule-spec`.
 
@@ -115,15 +135,15 @@
   [rule-spec col]
   (let [rule-spec (if (string? rule-spec) [rule-spec] rule-spec)
         f-comp (fn [p] (condp = (.indexOf (seq p) \*)
-                         (dec (count p)) #(not= (butlast p) (take (dec (count p)) (string/lower-case %))) 
-                         0               #(not= (drop 1 p) (take-last (dec (count p)) (string/lower-case %)))
-                         #(not= p %)))
+                        (dec (count p)) #(not= (butlast p) (take (dec (count p)) (string/lower-case %))) 
+                        0               #(not= (drop 1 p) (take-last (dec (count p)) (string/lower-case %)))
+                        #(not= p %)))
         preds (map f-comp rule-spec)]
     (if (string? col) (reduce (fn [a p?] (and a (p? col))) true preds)
         (filter (fn [s] (reduce (fn [a p?] (and a (p? s))) true preds)) col))))
 
 
-(defn allowed-rules
+(defn- allowed-rules
   "Description:
     The function do filter on `col` list, selected only that string elements, which allowed by `rule-spec`.
 
@@ -151,58 +171,50 @@
   [rule-spec col]
   (let [rule-spec (if (string? rule-spec) [rule-spec] rule-spec)
         f-comp (fn [p] (condp = (.indexOf (seq p) \*)
-                         (dec (count p)) #(= (butlast p) (take (dec (count p)) (string/lower-case %))) 
-                         0               #(= (drop 1 p) (take-last (dec (count p)) (string/lower-case %)))
-                         #(= p %)))
+                        (dec (count p)) #(= (butlast p) (take (dec (count p)) (string/lower-case %))) 
+                        0               #(= (drop 1 p) (take-last (dec (count p)) (string/lower-case %)))
+                        #(= p %)))
         preds (map f-comp rule-spec)]
     (if (string? col) (reduce (fn [a p?] (or a (p? col))) false preds)
         (filter (fn [s] (reduce (fn [a p?] (or a (p? s))) false preds)) col))))
 
-(defn is-id-col? [col-name]
+(defn- is-id-col? [col-name]
   (let [col (string/lower-case col-name)]
     (or (= col "id")
-        (= (take 2 col) '(\i \d)))))
+       (= (take 2 col) '(\i \d)))))
 
-(defn is-not-id-col? [col-name]
-      (not (is-id-col? col-name)))
-
-;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "ekka-test" :user "root" :password "123"})
-(def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"})
-;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"})
-;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"})
-(def ^:dynamic *available-mariadb-engine-list* "set of available engines for key-value tables" ["MEMORY", "InnoDB", "CSV"])
-;; (jdbc/query sql-connection "SHOW ENGINES" )
-;; (jdbc/execute! sql-connection "CREATE DATABASE `ekka-test` CHARACTER SET = 'utf8' COLLATE = 'utf8_general_ci'")
+(defn- is-not-id-col? [col-name]
+  (not (is-id-col? col-name)))
 
 
-(defn get-component-group-by-type [column-field-spec]
+(defn- get-component-group-by-type [column-field-spec]
   (let [ctype  (re-find #"[a-zA-Z]*" (string/lower-case (:type column-field-spec)))
         cfield (:field column-field-spec)
         in?   (fn [col x] (if (string? col) (= x col) (some #(= % x) col)))]
     (if (not-empty ctype)
       (if (not-empty (allowed-rules *id-collumn-rules* [cfield])) "l" ;; l - mean linking is linking column 
-        (condp in? ctype
-          "date"         "d"  ;; datetime
-          "time"         "t"  ;; only time
-          "datetime"     "dt" ;; datatime
-          ["smallint"
-           "mediumint"
-           "int"
-           "integer"
-           "bigint"
-           "double"
-           "float"
-           "real"]       "n" ;; n - mean simple number input
-          ["tinyint"
-           "bool"
-           "boolean"]    "b" ;; b - mean boolean
-          ["tinytext"
-           "text"
-           "mediumtext"
-           "longtext"
-           "json"]       "a" ;; a - mean area, text area
-          "varchar"      "i" ;; i - mean simple text input
-          nil)))))
+          (condp in? ctype
+            "date"         "d" ;; datetime
+            "time"         "t" ;; only time
+            "datetime"     "dt" ;; datatime
+            ["smallint"
+             "mediumint"
+             "int"
+             "integer"
+             "bigint"
+             "double"
+             "float"
+             "real"]       "n" ;; n - mean simple number input
+            ["tinyint"
+             "bool"
+             "boolean"]    "b" ;; b - mean boolean
+            ["tinytext"
+             "text"
+             "mediumtext"
+             "longtext"
+             "json"]       "a" ;; a - mean area, text area
+            "varchar"      "i" ;; i - mean simple text input
+            nil)))))
 
 (defn- get-table-meta
   "Description:
@@ -241,11 +253,8 @@
 ;; {:field "last_name", :type "varchar(100)", :null "NO", :key "", :default nil, :extra ""}
 ;; {:field "id_permission", :type "bigint(120) unsigned", :null "NO", :key "MUL", :default nil, :extra ""}
 
-
-
 (defn- key-referense [k-column]
   (re-matches #"id_(.*)" (name k-column)))
-;; (key-referense :is_permission)
 
 (defn- get-table-field-meta [column-field-spec]
   (let [tfield (:field column-field-spec)
@@ -301,11 +310,9 @@
                        (eval (change-expression '(select :METADATA) :where tables-eq)))
                      (select :METADATA)))))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; TABLE-MAP VALIDATOR ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (def valid-output-lang
   {:eng{:value-not-exit-in-table "Value not exist in table-map"
@@ -333,7 +340,7 @@
     :msg \"Error message\"}"
   (fn [m] (println m)))
 
-(defmacro >>=
+(defmacro ^{:private true} >>=
   ([x] x)
   ([x f]
    `(let [x# (~f ~x)] (if (nil? x#) nil x#)))
@@ -341,40 +348,37 @@
    `(let [x# (~f ~x)]
       (if (nil? x#) nil
           (>>= x# ~@f-list)))))
-(defmacro isset? [m key-path & [key-path-preview]]
+(defmacro ^{:private true} isset? [m key-path & [key-path-preview]]
   `(if (nil? (get-in ~m [~@key-path] nil))
      (do (not-valid-string-f {:path (vec (if ~key-path-preview ~key-path-preview ~key-path)) 
                               :message (format "Value not exist in table-map")}) false)
      true))
-(defmacro fpattern? [f-pattern msg m key-path & [key-path-preview]]
+(defmacro ^{:private true} fpattern? [f-pattern msg m key-path & [key-path-preview]]
   `(let [value# (get-in ~m [~@key-path] nil)
          path# (if ~key-path-preview ~key-path-preview ~key-path)]
      (if (~f-pattern value#) true
          (do (not-valid-string-f {:path path# :message (format "Value '%s' not valid by predicate '%s'" (str value#) ~msg)}) false))))
-(defmacro ispattern? [match m key-path & [key-path-preview]]
+(defmacro ^{:private true} ispattern? [match m key-path & [key-path-preview]]
   `(let [value# (get-in ~m [~@key-path] nil)
          path# (if ~key-path-preview ~key-path-preview ~key-path)]
      (if (nil? value#) false
        (if (= value# ~match) true
            (do (not-valid-string-f
                 {:path path# :message (format "Value '%s' not valid on '%s' equalization pattern"  (str value#) (str ~match))}) false)))))
-(defmacro inpattern? [match-list m key-path & [key-path-preview]]
+(defmacro ^{:private true} inpattern? [match-list m key-path & [key-path-preview]]
   `(let [value# (get-in ~m [~@key-path] nil)
          path# (if ~key-path-preview ~key-path-preview ~key-path)]
      (if (nil? value#) false
        (if (in? [~@match-list] value#) true
            (do (not-valid-string-f {:path path# :message (format "Value '%s' not from allowed list '%s'"  (str value#) (str [~@match-list]))}) false)))))
-(defmacro repattern? [re m key-path & [key-path-preview]]
+(defmacro ^{:private true} repattern? [re m key-path & [key-path-preview]]
   `(let [value# (get-in ~m [~@key-path] nil)
          path# (if ~key-path-preview ~key-path-preview ~key-path)]
      (if (and (not (nil? value#)) (re-find ~re value#))
        true
        (do (not-valid-string-f {:path path# :message (format "Value '%s' not valid on regexp '%s' pattern" (str value#) (str ~re))}) false))))
-(isset? {:a 1} [:b])
 
-
-
-(defmacro do-and [& body]
+(defmacro ^{:private true} do-and [& body]
   `(do
      (do ~@body)
      (binding [~'not-valid-string-f (partial #'identity)]
@@ -531,12 +535,11 @@
            :output [{:path [:field], :message \"Value 'first _name' not valid on regexp '^[a-z_]{3,}$' pattern\"}]}"
   (create-validator #'validate-metadata-column))
 
-(defn save-metadata [& mx])
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Table logic comparators ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn do-sql [sql-expression]
+(defn- do-sql [sql-expression]
   (if (try (or (println sql-expression) true)
            (catch java.sql.SQLException e (str "caught exception: " (.toString e)) false))
     true
@@ -594,15 +597,16 @@
                     [:prop :table :allow-modifing?]
                     [:prop :table :allow-deleting?]
                     [:prop :table :allow-linking?]]))))
-  (adiff-table
-   {:id 30, :table "user",
-    :prop {:table {:frontend-name "user", :is-system? false,
-                   :is-linker? false, :allow-modifing? true,
-                   :allow-deleting? true, :allow-linking? true}}}
-   {:id 30, :table "user",
-    :prop {:table {:frontend-name "CHU1", :is-system? false,
-                   :is-linker? false, :allow-modifing? false,
-                   :allow-deleting? true, :allow-linking? true}}}))
+  ;; (adiff-table
+  ;;  {:id 30, :table "user",
+  ;;   :prop {:table {:frontend-name "user", :is-system? false,
+  ;;                  :is-linker? false, :allow-modifing? true,
+  ;;                  :allow-deleting? true, :allow-linking? true}}}
+  ;;  {:id 30, :table "user",
+  ;;   :prop {:table {:frontend-name "CHU1", :is-system? false,
+  ;;                  :is-linker? false, :allow-modifing? false,
+  ;;                  :allow-deleting? true, :allow-linking? true}}})
+  )
 
 
 (do
@@ -784,6 +788,7 @@
          {column-changed :maybe-changed
           column-created :must-create
           column-deleted :must-delete} (column-resolver original changed)]
+     ;;; `TODO` delete this debug fileds
      (println (apply str "   Actions:"))
      (do (if (not-empty f-table-changes) (println "\ttable chnaged: " (count f-table-changes)))
          (if (not-empty column-deleted) (println "\tcolumn deleted: " (count (delete-fields original column-deleted)))) ;;1
@@ -809,10 +814,10 @@
 ;;; `TODO` persist do database in metadata tabel.
 (defn do-change
   "Description:
-  Function apply lazy fxmap-changes argument as list of SQL applicative functors.
+    Function apply lazy fxmap-changes argument as list of SQL applicative functors.
 
   Example:
-  (do-changes (apply-table original-table changed-table) original-table changed-table)
+    (do-changes (apply-table original-table changed-table) original-table changed-table)
 
   Arguments:
   `fxmap-changes` - special map, generated function `apply-table`
@@ -849,7 +854,6 @@
 
 
 
-
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; DEBUG SECTION ;;;
 ;;;;;;;;;;;;;;;;;;;;;
@@ -879,7 +883,6 @@
 ;;     (do-change
 ;;      (apply-table uo uc)
 ;;      uo uc)))
-
 
 
 (let [t
@@ -953,6 +956,8 @@
     (create-table {:table-name (keyword (:table original))
                    :columns (vec (map (fn [sf] {(keyword (:field sf)) (ssql-type-parser (:column-type sf))}) smpl-fields))
                    :foreign-keys (vec (map (fn [idf] [{(keyword (:field idf)) (keyword (:key-table idf))} {:update :null :delete :null}]) idfl-fields))})))
+
+
 
 
         

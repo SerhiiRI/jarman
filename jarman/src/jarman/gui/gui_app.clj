@@ -17,6 +17,7 @@
             [jarman.tools.swing :as stool]
             [jarman.config.spec :as sspec]
             [jarman.config.init :as iinit]
+            [jarman.logic.metadata :as mmeta]
             [jarman.tools.lang :refer :all]
             [jarman.gui.gui-seed :refer :all]
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
@@ -200,7 +201,7 @@
                            (mig-panel
                             :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
                             :items (join-mig-items (textarea ask :halign :center :font (getFont 14) :border (empty-border :thickness 12))
-                                                   (join-mig-items (create-dialog--answer-btn (get-lang-btns :ok) (fn [e] (return-from-dialog e "OK"))))))))
+                                                   (join-mig-items (create-dialog--answer-btn "OK" (fn [e] (return-from-dialog e "OK"))))))))
          :parent (getParent @atom-popup-hook))
         pack! show!)))
 
@@ -294,64 +295,64 @@
 
 
 
-(def dbmap (atom (list
-                  {:id 29
-                   :table "service_contract"
-                   :prop
-                   {:table
-                    {:frontend-name "service_contract"
-                     :is-system? false
-                     :is-linker? false
-                     :allow-modifing? true
-                     :allow-deleting? true
-                     :allow-linking? true}
-                    :columns
-                    [{:field "id_point_of_sale"
-                      :representation "id_point_of_sale"
-                      :description nil
-                      :component-type "l"
-                      :column-type "bigint(20) unsigned"
-                      :private? false
-                      :editable? true
-                      :key-table "point_of_sale"}
-                     {:field "name_of_sale"
-                      :representation "Miejsce sprzedaży"
-                      :description "Opisuje miejsce sprzedaży"
-                      :component-type "l"
-                      :column-type "bigint(20) unsigned"
-                      :private? false
-                      :editable? true}
-                     {:field "some_poop"
-                      :representation "Nazwa nazw"
-                      :description "Opisuje nazw"
-                      :component-type "1"
-                      :column-type "bigint(20) unsigned"
-                      :private? false
-                      :editable? true}]}}
-                  {:id 30
-                   :table "user"
-                   :prop
-                   {:table
-                    {:frontend-name "user"
-                     :is-system? false
-                     :is-linker? false
-                     :allow-modifing? true
-                     :allow-deleting? true
-                     :allow-linking? true}
-                    :columns
-                    [{:field "login"
-                      :representation "login"
-                      :description nil
-                      :component-type "i"
-                      :column-type "varchar(100)"
-                      :private? false
-                      :editable? true}]}})))
+;; (def dbmap (atom (list
+;;                   {:id 29
+;;                    :table "service_contract"
+;;                    :prop
+;;                    {:table
+;;                     {:frontend-name "service_contract"
+;;                      :is-system? false
+;;                      :is-linker? false
+;;                      :allow-modifing? true
+;;                      :allow-deleting? true
+;;                      :allow-linking? true}
+;;                     :columns
+;;                     [{:field "id_point_of_sale"
+;;                       :representation "id_point_of_sale"
+;;                       :description nil
+;;                       :component-type "l"
+;;                       :column-type "bigint(20) unsigned"
+;;                       :private? false
+;;                       :editable? true
+;;                       :key-table "point_of_sale"}
+;;                      {:field "name_of_sale"
+;;                       :representation "Miejsce sprzedaży"
+;;                       :description "Opisuje miejsce sprzedaży"
+;;                       :component-type "l"
+;;                       :column-type "bigint(20) unsigned"
+;;                       :private? false
+;;                       :editable? true}
+;;                      {:field "some_poop"
+;;                       :representation "Nazwa nazw"
+;;                       :description "Opisuje nazw"
+;;                       :component-type "1"
+;;                       :column-type "bigint(20) unsigned"
+;;                       :private? false
+;;                       :editable? true}]}}
+;;                   {:id 30
+;;                    :table "user"
+;;                    :prop
+;;                    {:table
+;;                     {:frontend-name "user"
+;;                      :is-system? false
+;;                      :is-linker? false
+;;                      :allow-modifing? true
+;;                      :allow-deleting? true
+;;                      :allow-linking? true}
+;;                     :columns
+;;                     [{:field "login"
+;;                       :representation "login"
+;;                       :description nil
+;;                       :component-type "i"
+;;                       :column-type "varchar(100)"
+;;                       :private? false
+;;                       :editable? true}]}})))
 
 
 ;; (map (fn [tab] (conj {:bounds [0 0 0 0]} tab)) dbmap)
 ;; (prepare-table 10 10 "Users" "FName" "LName" "LOGIN")
 ;; (getset)
-;; (def dbmap (getset))
+(def dbmap (atom (mmeta/getset)))
 
 
 
@@ -469,7 +470,7 @@
           :background (get-color :background :input)
           :border (compound-border (empty-border :left 15 :right 20 :top 8 :bottom 8)
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-          :listen [:caret-update (fn [event] (track-changes-used-components changing-list value-path event :text value))])))
+          :listen [:caret-update (fn [e] (track-changes changing-list value-path value (config e :text)))])))
 
 
 
@@ -493,9 +494,10 @@
                        :items (join-mig-items
                                (map
                                 (fn [column-parameter]
-                                  (list
-                                   (label :text (str (first column-parameter))) ;; Parameter name
-                                   (table-editor--element--input changing-list value-path (str (second column-parameter))))) ;; Parameter value
+                                  (let [key-param (first column-parameter)]
+                                    (list
+                                     (label :text (str key-param)) ;; Parameter name
+                                     (table-editor--element--input changing-list (join-vec value-path [key-param]) (str (second column-parameter)))))) ;; Parameter value
                                 column)))]
                      [(table-editor--element--btn-add-col-prop)]])))
 
@@ -510,18 +512,17 @@
 
 (defn table-editor--component--column-picker
   "Create left table editor view to select column which will be editing on right table editor view"
-  [changing-list column-editor-id columns value-path] (mig-panel :constraints ["wrap 1" "0px[100:,fill]0px" "0px[fill]0px"]
-                      ;;  :id (keyword column-editor-id)
-                                                                 :items
-                                                                 (join-mig-items
-                                                                  (map (fn [column]
-                                                                         (let [value-path (join-vec value-path [(get-in column [:field])])]
-                                ;;  (println value-path)
-                                                                           (table-editor--component--column-picker-btn
-                                                                            (get-in column [:representation])
-                                                                            (fn [event] (switch-column-to-editing changing-list value-path event column column-editor-id)))))
-                                                                       columns)
-                                                                  (table-editor--element--btn-add-column))))
+  [changing-list column-editor-id columns value-path]
+  (mig-panel :constraints ["wrap 1" "0px[100:,fill]0px" "0px[fill]0px"]
+             :items
+             (join-mig-items
+              (map (fn [column index]
+                     (let [value-path (join-vec value-path [index])]
+                       (table-editor--component--column-picker-btn
+                        (get-in column [:representation])
+                        (fn [event] (switch-column-to-editing changing-list value-path event column column-editor-id)))))
+                   columns (range (count columns)))
+              (table-editor--element--btn-add-column))))
 
 (defn table-editor--component--space-for-column-editor
   "Create right table editor view to editing selected column in left table editor view"
@@ -530,23 +531,73 @@
                                 :items [[(label)]]
                                 :border (line-border :left 4 :color (get-color :border :dark-gray))))
 
-
-(defn table-editor--element--btn-save
-  [changing-list]
-  (table-editor--component--bar-btn :edit-view-save-btn (get-lang-btns :save) icon/agree-grey-64-png icon/agree-blue-64-png
-                                    (fn [e] 
-                                      ;;  TODO save changes in table
-                                      )))
-
-(defn table-editor--element--btn-show-changes
-  [changing-list] (table-editor--component--bar-btn :edit-view-back-btn (get-lang-btns :show-changes) icon/refresh-grey-64-png icon/refresh-blue-64-png
-                                                    (fn [e] (@popup-menager :new-message :title "Changes list" :body (textarea (str @changing-list)) :size [400 300]))))
-
 (def get-table-configuration-from-list-by-table-id
   (fn [atom--tables-configurations table-id]
     (let [map (first (filter (fn [item] (= table-id (get item :id))) @atom--tables-configurations))]
       (do ;;(println map)
         map))))
+
+(def meta-copy (atom {}))
+(defn table-editor--element--btn-save
+  [changing-list table-id]
+  (table-editor--component--bar-btn :edit-view-save-btn (get-lang-btns :save) icon/agree-grey-64-png icon/agree-blue-64-png
+                                    (fn [e] ;; TODO
+                                      ;; save meta configuration chenages
+                                      ;; (prn "Changes" @changing-list)
+                                      (let [orginal-table (get-table-configuration-from-list-by-table-id dbmap table-id)]
+                                        (reset! meta-copy orginal-table)
+                                       (doall
+                                        (map
+                                         (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
+                                           (prn "Changes" (first (second new-value)) (second (second new-value)))
+                                           (swap! meta-copy (fn [changes] (assoc-in changes (first (second new-value)) (second (second new-value))))))
+                                         @changing-list))
+                                       (let [out (mmeta/validate-all @meta-copy)]
+                                         (cond (= (get-in out [:valid?]) true)
+                                               (doall
+                                                (mmeta/do-change
+                                                 (mmeta/apply-table orginal-table @meta-copy)
+                                                 orginal-table @meta-copy)
+                                                (alerts-s :set {:header "Success!" :body "Changes were saved successfully!"} (message alerts-s) 5))
+                                               :else (@popup-menager :ok :title "Valid faild!" :body (string/join "<br>" ["Validation ended with faild." (get-in out [:output])]))))))))
+
+;; @dbmap
+;; @meta-copy
+
+;; @storage-with-changes
+;; @meta-copy
+;; (mmeta/validate-all {:id 23
+;;   :table "permission"
+;;   :prop
+;;   {:table
+;;    {:frontend-name "permission"
+;;     :is-system? false
+;;     :is-linker? false
+;;     :allow-modifing? true
+;;     :allow-deleting? true
+;;     :allow-linking? true}
+;;    :columns
+;;    [{:field "permission_name"
+;;      :representation "123"
+;;      :description nil
+;;      :component-type "i"
+;;      :column-type "varchar(20)"
+;;      :private? 123
+;;      :editable? true}
+;;     {:field "configuration"
+;;      :representation "-=0=-"
+;;      :description "-908-98-098"
+;;      :component-type "a"
+;;      :column-type "tinytext"
+;;      :private? false
+;;      :editable? true}]}})
+
+
+(defn table-editor--element--btn-show-changes
+  [changing-list] (table-editor--component--bar-btn :edit-view-back-btn (get-lang-btns :show-changes) icon/refresh-grey-64-png icon/refresh-blue-64-png
+                                                    (fn [e] (@popup-menager :new-message :title "Changes list" :body (textarea (str @changing-list)) :size [400 300]))))
+
+
 
 (def table-editor--element--checkbox
   (fn [changing-list value-path value]
@@ -586,7 +637,7 @@
                     ;; Table info
                         [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"] ;; menu bar for editor
                                      :items [[(table-editor--element--header-view (string/join "" [">_ Edit table: " (get-in table [:prop :table :frontend-name])]))]
-                                             [(table-editor--element--btn-save changing-list)]
+                                             [(table-editor--element--btn-save changing-list table-id)]
                                              [(table-editor--element--btn-show-changes changing-list)]])]]
                     ;; Table properties 
                         [[(table-editor--element--header "Table configuration")]]
@@ -976,8 +1027,9 @@
                                    ;; Header of section/config file
                        (confgen--element--header-file (get-in map-part [:name]))
                        (label :text "Show changes" :listen [:mouse-clicked (fn [e]
-                                                                            ;;  TODO: Validation
+                                                                             ;; save changes configuration
                                                                              (prn "Changes" @changing-list)
+                                                                             (reset! configuration-copy @configuration)
                                                                              (doall
                                                                               (map
                                                                                (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
@@ -987,8 +1039,12 @@
                                                                                (cond (get-in out [:valid?])
                                                                                      (do
                                                                                        (cond (get-in (save-all-cofiguration @configuration-copy) [:valid?])
-                                                                                             (make-backup-configuration)
-                                                                                             :else (fn []))) ;; TODO action on faild
+                                                                                             (do
+                                                                                               (alerts-s :set {:header "Success!" :body "Changes were saved successfully!"} (message alerts-s) 5)
+                                                                                               (make-backup-configuration)
+                                                                                               (iinit/swapp-configuration))
+                                                                                             :else (let [m (string/join "<br>" ["Cannot save changes"])]
+                                                                                                     (alerts-s :set {:header "Faild" :body m} (message alerts-s) 5)))) ;; TODO action on faild save changes configuration
                                                                                      :else (let [m (string/join "<br>" ["Cannot save changes" (get-in out [:output])])]
                                                                                              (alerts-s :set {:header "Faild" :body m} (message alerts-s) 5))))
                                                                                ;; (prn @configuration-copy)
@@ -1130,13 +1186,16 @@
                                                           ;; TO DO - Question about drop changes and do not save
                                                           (if-not (nil? changes-atom)
                                                             (if-not (empty? @changes-atom)
-                                                              (alerts-s :set {:header "Niezapisane zmiany!"
-                                                                              :body (string/join "" ["W widoku \"" item-key "\" istnieją niezapisane dane: <br>" @changes-atom])}
-                                                                        (message alerts-s) 6))) ;; Check if are changes on view and show alert message
-                                                          (reset! views (dissoc @views view-id)) ;; Remove view from view list
-                                                          (if (get (config (.getParent (seesaw.core/to-widget e)) :user-data) :active)
-                                                            (reset! active-tab @last-active-tab) ;; Close active card
-                                                            (reset! active-tab @active-tab))))   ;; Close card in background
+                                                              (cond (= (@popup-menager :yesno :title (get-lang-alerts :unsaved-changes-title) :body (get-lang-alerts :unsaved-changes-body) :size [300 150]) "yes")
+                                                                    (do
+                                                                      (reset! views (dissoc @views view-id)) ;; Remove view from view list
+                                                                      (if (get (config (.getParent (seesaw.core/to-widget e)) :user-data) :active)
+                                                                        (reset! active-tab @last-active-tab) ;; Close active card
+                                                                        (reset! active-tab @active-tab))))
+                                                              ;; (alerts-s :set {:header "Niezapisane zmiany!"
+                                                              ;;                 :body (string/join "" ["W widoku \"" item-key "\" istnieją niezapisane dane: <br>" @changes-atom])}
+                                                              ;;           (message alerts-s) 6)
+))))   ;; Close card in background
                                                 (fn [e] (do
                                                           (reset! active-tab view-id)
                                                           (config! (select (getRoot @app) [:#app-functional-space])
@@ -1201,7 +1260,7 @@
                           :else (do
                                   (reset! popup-menager (create-popup-service atom-popup-hook))
                                   (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))
-      
+
 
 
 

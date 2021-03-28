@@ -83,6 +83,7 @@
 (def get-font   (create-value-getter (theme-map) true "Ubuntu" :font))
 (def get-lang   (create-value-getter @language false "Unknown" []))
 (def get-lang-btns (create-value-getter @language false "Unknown" :ui :buttons))
+(def get-lang-alerts (create-value-getter @language false "Unknown" :ui :alerts))
 
 ;; (get-color :jarman :bar)
 ;; (get-frame :width)

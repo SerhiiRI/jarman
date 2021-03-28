@@ -56,6 +56,7 @@
 (def $listurl :listurl)
 (def $texturl :texturl)
 (def $textlist :textlist)
+(def $numberlist :numberlist)
 (def $listbox :listbox)
 (def $selectbox :selectbox)
 (def $text :text)
@@ -71,7 +72,7 @@
 ;;; component types
 (def component-n-url [$listurl])
 (def component-url [$texturl])
-(def component-n-text-num [$textlist $listbox $selectbox])
+(def component-n-text-num [$textlist $listbox $selectbox $numberlist])
 (def component-text [$text])
 (def component-color [$textcolor])
 (def component-number [$textnumber])
@@ -185,9 +186,12 @@
 (s/def :param/component/list (s/and vector? (s/or :textlist (s/coll-of ::ne-string) :numberlist (s/coll-of number?))))
 
 
-;; (let [;; m {:type :param :display :edit :component :textnumber :value 123}
+;; (let [
+;;       ;; m {:type :param :display :edit :component :textnumber :value 123}
 ;;       ;; m {:type :param :display :edit :component :selectbox :value ["1" "2" "3"]}
+;;       ;; m {:type :param :display :edit :component :textlist :value ["1" "2" "3"]}
 ;;       ;; m {:type :param :display :edit :component :selectbox :value [0 1 2 3]}
+;;       ;; m {:type :param :display :edit :component :numberlist :value [0 1 2 3]}
 ;;       ;; m {:type :param :display :edit :component :texturl :value "http://test.com"}
 ;;       ;; m {:type :param :display :edit :component :listurl :value ["http://test.com" "http://ya.ru"]}
 ;;       ;; m {:type :param :display :edit :component :checkbox :value false}
@@ -203,8 +207,8 @@
 ;;               component-text :param/component/text
 ;;               component-number :param/component/number
 ;;               component-checkbox :param/component/сheck
-;;               component-color :param/component/rgb-color
-;;               (fn [_] false)) println )
+;;               component-color :param/component/color
+;;               (fn [_] false)) println)
 ;;            (:value m)))
 ;; (s/def ::ltext (s/coll-of :param/component/text))
 ;; (s/valid? ::ltext ["1" "2"])

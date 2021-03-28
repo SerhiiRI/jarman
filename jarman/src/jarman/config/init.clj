@@ -203,9 +203,9 @@
 ;;; BACKUP SYSTEMS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
-(def ^:print backup-name "configurations")
-(def ^:print backup-file-name (format "%s.edn" backup-name))
-(def ^:print backup-file-date-format "YYYY-MM-dd HH:mm:ss")
+(def ^:private backup-name "configurations")
+(def ^:private backup-file-name (format "%s.edn" backup-name))
+(def ^:private backup-file-date-format "YYYY-MM-dd HH:mm:ss")
 
 (defn- backup-swapp-configuration
   "Example

@@ -196,29 +196,29 @@
         cfield (:field column-field-spec)
         in?   (fn [col x] (if (string? col) (= x col) (some #(= % x) col)))]
     (if (not-empty ctype)
-      (if (not-empty (allowed-rules *id-collumn-rules* [cfield])) "l" ;; l - mean linking is linking column 
-          (condp in? ctype
-            "date"         "d" ;; datetime
-            "time"         "t" ;; only time
-            "datetime"     "dt" ;; datatime
-            ["smallint"
-             "mediumint"
-             "int"
-             "integer"
-             "bigint"
-             "double"
-             "float"
-             "real"]       "n" ;; n - mean simple number input
-            ["tinyint"
-             "bool"
-             "boolean"]    "b" ;; b - mean boolean
-            ["tinytext"
-             "text"
-             "mediumtext"
-             "longtext"
-             "json"]       "a" ;; a - mean area, text area
-            "varchar"      "i" ;; i - mean simple text input
-            nil)))))
+      (if(not-empty (allowed-rules *id-collumn-rules* [cfield])) ["l"] ;; l - mean linking is linking column 
+         (condp in? ctype
+           "date"        ["d" "dt" "i"] ;; datetime
+           "time"        ["t" "i"] ;; only time
+           "datetime"    ["dt" "d" "i"] ;; datatime
+           ["smallint"
+            "mediumint"
+            "int"
+            "integer"
+            "bigint"
+            "double"
+            "float"
+            "real"]       ["n" "i"] ;; n - mean simple number input
+           ["tinyint"
+            "bool"
+            "boolean"]    ["n" "i" "b"] ;; b - mean boolean
+           ["tinytext"
+            "text"
+            "mediumtext"
+            "longtext"
+            "json"]       ["a"] ;; a - mean area, text area
+           "varchar"      ["i"] ;; i - mean simple text input
+           nil)))))
 
 (defn- get-table-meta
   "Description:

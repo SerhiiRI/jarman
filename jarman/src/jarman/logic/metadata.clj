@@ -297,6 +297,8 @@
     (let [meta (jdbc/query sql-connection (select :METADATA :where (= :table table)))]
       (if (empty? meta) (jdbc/execute! sql-connection (update-sql-by-id-template "METADATA" (get-meta table)))))))
 
+;; (do-create-meta)
+
 (defn do-clear-meta [& body]
   {:pre [(every? string? body) ]}
   (jdbc/execute! sql-connection (delete :METADATA)))
@@ -415,7 +417,8 @@
     (isset? m [:editable?] (conj p :editable?))
     (repattern? #"^[a-z_]{3,}$" m [:field] (conj p :field))
     (repattern? #"^[\w\d\s]+$" m [:representation] (conj p :representation))
-    (inpattern? ["d" "t" "dt" "l" "n" "b" "a" "i" nil] m [:component-type] (conj p :component-type))
+    ;; (inpattern? ["d" "t" "dt" "l" "n" "b" "a" "i" nil] m [:component-type] (conj p :component-type))
+    (fpattern? #(every? (fn [cols] (in? ["d" "t" "dt" "l" "n" "b" "a" "i"] cols)) %) "component-type not in allowed [\"d\" \"t\" \"dt\" \"l\" \"n\" \"b\" \"a\" \"i\" nil]" m [:component-type] (conj p :component-type))
     (inpattern? [true false] m [:private?] (conj p :private?))
     (inpattern? [true false] m [:editable?] (conj p :editable?))
     (fpattern? #(or (string? %) (nil? %)) "string? || nil?" m [:description] (conj p :description))))

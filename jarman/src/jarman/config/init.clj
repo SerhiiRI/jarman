@@ -194,18 +194,20 @@
   {:pre [(map? m)]}
   (let [cfg (spec/valid-segment m)]
     (if (:valid? cfg)
-      (doall
-       (map (fn [[path file]](save-cfg-to-file-pp file (GETS m path)))
-            (<path|file>-list *config-root* *config-files*)))
+      (do 
+        (doall
+         (map (fn [[path file]] (save-cfg-to-file-pp file (GETS m path)))
+              (<path|file>-list *config-root* *config-files*))) 
+        cfg)
       cfg)))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; BACKUP SYSTEMS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
-(def ^:print backup-name "configurations")
-(def ^:print backup-file-name (format "%s.edn" backup-name))
-(def ^:print backup-file-date-format "YYYY-MM-dd HH:mm:ss")
+(def ^:private backup-name "configurations")
+(def ^:private backup-file-name (format "%s.edn" backup-name))
+(def ^:private backup-file-date-format "YYYY-MM-dd HH:mm:ss")
 
 (defn- backup-swapp-configuration
   "Example

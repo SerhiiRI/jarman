@@ -263,6 +263,8 @@
     (recur-walk-throw m f [])
     @sumvalid))
 
+;;; (s/valid? :block/segment @jarman.gui.gui-app/configuration-copy)
+
 (defn segment-short
   "Description
     Get segment block map, and return bit more shortest

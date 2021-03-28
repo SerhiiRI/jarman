@@ -14,7 +14,7 @@
      :type :param,
      :display :edit,
      :component :text,
-     :value "config"}}},
+     :value "configa"}}},
   :font-configuration-attribute
   {:name "Rozszerzenia",
    :type :block,
@@ -34,7 +34,7 @@
      "wybierz rozszerzenia dla wspieranych przez system plików konfiguracji.",
      :type :param,
      :display :edit,
-     :component :text,
+     :component :textlist,
      :value ["ttf"]}}},
   :icon-configuration-attribute
   {:name "Ikonki",
@@ -55,7 +55,7 @@
      "Wybierz rozszerzenia dla wspieranych przez system konfiguracji plikowych.",
      :type :param,
      :display :edit,
-     :component :text,
+     :component :textlist,
      :value ["png" "ico" "icon" "jpg" "jpeg"]}}},
   :supported-files
   {:name "Wspierane rozszerzenia",

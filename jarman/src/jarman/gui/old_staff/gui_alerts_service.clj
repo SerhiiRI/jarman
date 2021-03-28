@@ -124,8 +124,8 @@
                  :align :left
                  :background (new Color 0 0 0 0)
                  :items [(build-ico icon/alert-64-png)
-                         (build-header (str-cutter header))])]
-               [(build-body (str-cutter body))]
+                         (build-header (clojure.string/replace  (str-cutter header) #"<\s*\w+(\s\w+=['\"\w]+)*/?>" " "))])]
+               [(build-body (clojure.string/replace  (str-cutter body) #"<\s*\w+(\s\w+=['\"\w]+)*/?>" " "))]
                [(flow-panel
                  :align :right
                  :background (new Color 0 0 0 1)

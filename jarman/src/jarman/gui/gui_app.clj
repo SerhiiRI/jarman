@@ -16,15 +16,15 @@
             ;; deverloper tools 
             [jarman.tools.swing :as stool]
             [jarman.config.spec :as sspec]
+            [jarman.config.init :as iinit]
             [jarman.tools.lang :refer :all]
             [jarman.gui.gui-seed :refer :all]
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
-            [jarman.config.init :refer [configuration language]]))
+            [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]))
 
 (import javax.swing.JLayeredPane)
 (import java.awt.Color)
 (import java.awt.event.MouseEvent)
-
 
 ;; ┌───────────────────┐
 ;; │                   │
@@ -71,11 +71,19 @@
   (fn [changing-list path]
     (swap! changing-list (fn [changes] (dissoc changes (convert-mappath-to-key path))))))
 
-(def track-changes
+(def track-changes-used-components
   (fn [changing-list value-path event component-key value]
     (cond
       ;; if something was change
       (not (= (config event component-key) value)) (set-change-to-view-atom changing-list value-path (config event component-key))
+      ;; if back to orginal value
+      (not (nil? (get-in @changing-list [(convert-mappath-to-key value-path)]))) (remove-change-from-view-atom changing-list value-path))))
+
+(def track-changes
+  (fn [changing-list value-path orginal new-value]
+    (cond
+      ;; if something was change
+      (not (= orginal new-value)) (set-change-to-view-atom changing-list value-path new-value)
       ;; if back to orginal value
       (not (nil? (get-in @changing-list [(convert-mappath-to-key value-path)]))) (remove-change-from-view-atom changing-list value-path))))
 
@@ -87,6 +95,7 @@
 ;; │ JLayeredPane Popup Service │
 ;; │                            │
 ;; └────────────────────────────┘
+
 
 (def popup-menager (atom nil))
 
@@ -139,12 +148,76 @@
 
 (def atom-popup-hook (atom (label :visible? false)))
 
+
+;; ┌──────────────┐
+;; │              │
+;; │ Dialog popup │
+;; │              │
+;; └──────────────┘
+
+(def create-dialog--answer-btn
+  (fn [txt func]
+    (label
+     :text txt
+     :halign :center
+     :listen [:mouse-clicked func
+              :mouse-entered (fn [e] (hand-hover-on e) (button-hover e))
+              :mouse-exited  (fn [e] (button-hover e (get-color :background :button_main)))]
+     :background (get-color :background :button_main)
+     :border (compound-border (empty-border :bottom 10 :top 10)
+                              (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
+
+(def create-dialog-yesno
+  (fn [title ask size]
+    (-> (custom-dialog
+         :title title
+         :modal? true
+         :resizable? false
+         :content (mig-panel
+                   :size [(first size) :by (second size)]
+                   :constraints ["" "0px[fill, grow]0px" "0px[grow, center]0px"]
+                   :items (join-mig-items
+                           (mig-panel
+                            :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
+                            :items (join-mig-items (textarea ask :halign :center :font (getFont 14) :border (empty-border :thickness 12))
+                                                   (mig-panel
+                                                    :constraints ["" "10px[fill, grow]10px" "10px[]10px"]
+                                                    :items (join-mig-items (create-dialog--answer-btn (get-lang-btns :yes) (fn [e] (return-from-dialog e "yes")))
+                                                                           (create-dialog--answer-btn (get-lang-btns :no)  (fn [e] (return-from-dialog e "no")))))))))
+         :parent (getParent @atom-popup-hook))
+        pack! show!)))
+
+(def create-dialog-ok
+  (fn [title ask size]
+    (-> (custom-dialog
+         :title title
+         :modal? true
+         :resizable? false
+         :content (mig-panel
+                   :size [(first size) :by (second size)]
+                   :constraints ["" "0px[fill, grow]0px" "0px[grow, center]0px"]
+                   :items (join-mig-items
+                           (mig-panel
+                            :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
+                            :items (join-mig-items (textarea ask :halign :center :font (getFont 14) :border (empty-border :thickness 12))
+                                                   (join-mig-items (create-dialog--answer-btn (get-lang-btns :ok) (fn [e] (return-from-dialog e "OK"))))))))
+         :parent (getParent @atom-popup-hook))
+        pack! show!)))
+
+
+;; ┌───────────────┐
+;; │               │
+;; │ Popup service │
+;; │               │
+;; └───────────────┘
+
+
 (defn create-popup-service
   [atom-popup-hook]
   (let [atom-popup-storage (atom {})
         z-index (atom 1000)
         JLP (getParent @atom-popup-hook)]
-    (fn [action & {:keys [title, body, size] :or {title "Popup" body (label) size [600 400]}}]
+    (fn [action & {:keys [title, body, size] :or {title "Popup" body (label :text "Popup") size [600 400]}}]
       (let [unique-id (keyword (random-unique-id))
             template (fn [component] ;; Set to main JLayeredPane new popup panel
                        (do (swap! atom-popup-storage (fn [popups] (merge popups {unique-id component}))) ;; add new component to list with auto id
@@ -172,7 +245,9 @@
           (= action :new-test)    (template (ontop-panel popup-menager unique-id z-index))
           (= action :new-message) (template (ontop-panel popup-menager unique-id z-index :title title :body body :size size))
           (= action :show)        (println @atom-popup-storage)
-          (= action :get-atom-storage) atom-popup-storage)))))
+          (= action :get-atom-storage) atom-popup-storage
+          (= action :ok)          (create-dialog-ok title body size)
+          (= action :yesno)       (create-dialog-yesno title body size))))))
 
 
 
@@ -361,7 +436,7 @@
                                                 ;; reset bg and atom inside all buttons in parent if id is ok
                                                      (doall (map (fn [b] (cond (= (config b :id) id-btn)
                                                                                (do (config! b :background color)
-                                                                              (reset! (config b :user-data) color))))
+                                                                                   (reset! (config b :user-data) color))))
                                                                  (seesaw.util/children (.getParent (seesaw.core/to-widget e)))))
                                                 ;; reset atom with color
                                                      (reset! bg-btn color-clicked)
@@ -385,7 +460,7 @@
           :background (get-color :background :input)
           :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-          :listen [:caret-update (fn [event] (track-changes changing-list value-path event :text value))])))
+          :listen [:caret-update (fn [event] (track-changes-used-components changing-list value-path event :text value))])))
 
 
 (def table-editor--element--input
@@ -394,8 +469,7 @@
           :background (get-color :background :input)
           :border (compound-border (empty-border :left 15 :right 20 :top 8 :bottom 8)
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-          :listen [:caret-update (fn [event] (track-changes changing-list value-path event :text value))]
-          )))
+          :listen [:caret-update (fn [event] (track-changes-used-components changing-list value-path event :text value))])))
 
 
 
@@ -438,34 +512,35 @@
   "Create left table editor view to select column which will be editing on right table editor view"
   [changing-list column-editor-id columns value-path] (mig-panel :constraints ["wrap 1" "0px[100:,fill]0px" "0px[fill]0px"]
                       ;;  :id (keyword column-editor-id)
-                       :items
-                       (join-mig-items
-                        (map (fn [column]
-                               (let [value-path (join-vec value-path [(get-in column [:field])])]
+                                                                 :items
+                                                                 (join-mig-items
+                                                                  (map (fn [column]
+                                                                         (let [value-path (join-vec value-path [(get-in column [:field])])]
                                 ;;  (println value-path)
-                                 (table-editor--component--column-picker-btn
-                                  (get-in column [:representation])
-                                  (fn [event] (switch-column-to-editing changing-list value-path event column column-editor-id)))))
-                             columns)
-                        (table-editor--element--btn-add-column)
-                        )))
+                                                                           (table-editor--component--column-picker-btn
+                                                                            (get-in column [:representation])
+                                                                            (fn [event] (switch-column-to-editing changing-list value-path event column column-editor-id)))))
+                                                                       columns)
+                                                                  (table-editor--element--btn-add-column))))
 
 (defn table-editor--component--space-for-column-editor
   "Create right table editor view to editing selected column in left table editor view"
   [column-editor-id] (mig-panel :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
-                :id (keyword column-editor-id)
-                :items [[(label)]]
-                :border (line-border :left 4 :color (get-color :border :dark-gray))))
+                                :id (keyword column-editor-id)
+                                :items [[(label)]]
+                                :border (line-border :left 4 :color (get-color :border :dark-gray))))
 
 
 (defn table-editor--element--btn-save
-  []
+  [changing-list]
   (table-editor--component--bar-btn :edit-view-save-btn (get-lang-btns :save) icon/agree-grey-64-png icon/agree-blue-64-png
-                                    (fn [e] )))
+                                    (fn [e] 
+                                      ;;  TODO save changes in table
+                                      )))
 
 (defn table-editor--element--btn-show-changes
   [changing-list] (table-editor--component--bar-btn :edit-view-back-btn (get-lang-btns :show-changes) icon/refresh-grey-64-png icon/refresh-blue-64-png
-                                       (fn [e] (@popup-menager :new-message :title "Changes list" :body (textarea (str @changing-list)) :size [400 300]))))
+                                                    (fn [e] (@popup-menager :new-message :title "Changes list" :body (textarea (str @changing-list)) :size [400 300]))))
 
 (def get-table-configuration-from-list-by-table-id
   (fn [atom--tables-configurations table-id]
@@ -476,7 +551,7 @@
 (def table-editor--element--checkbox
   (fn [changing-list value-path value]
     (checkbox :selected? value
-              :listen [:state-changed (fn [event] (track-changes changing-list value-path event :selected? value))])))
+              :listen [:state-changed (fn [event] (track-changes-used-components changing-list value-path event :selected? value))])))
 
 
 ;; (show-events (checkbox))
@@ -511,7 +586,7 @@
                     ;; Table info
                         [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"] ;; menu bar for editor
                                      :items [[(table-editor--element--header-view (string/join "" [">_ Edit table: " (get-in table [:prop :table :frontend-name])]))]
-                                             [(table-editor--element--btn-save )]
+                                             [(table-editor--element--btn-save changing-list)]
                                              [(table-editor--element--btn-show-changes changing-list)]])]]
                     ;; Table properties 
                         [[(table-editor--element--header "Table configuration")]]
@@ -757,7 +832,7 @@
                         :font (getFont 14)
                         :background (get-color :background :combobox)
                         :size [200 :by 30]
-                        :listen [:item-state-changed (fn [event] (track-changes changing-list path event :selected-item (first model)))])]])))
+                        :listen [:item-state-changed (fn [event] (track-changes-used-components changing-list path event :selected-item (first model)))])]])))
 
 (def confgen--gui-interface--input
   (fn [changing-list path value]
@@ -767,7 +842,38 @@
                     :background (get-color :background :input)
                     :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
                                              (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-                    :listen [:caret-update (fn [event] (track-changes changing-list path event :text value))])]])))
+                    :listen [:caret-update (fn [event] (track-changes-used-components changing-list path event :text value))])]])))
+
+
+(def confgen--gui-interface--input-textlist
+  (fn [changing-list path value]
+    (let [v (string/join ", " value)]
+      (mig-panel
+       :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
+       :items [[(text :text v :font (getFont 14)
+                      :background (get-color :background :input)
+                      :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
+                                               (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
+                      :listen [:caret-update (fn [event] (track-changes changing-list path value (clojure.string/split (config event :text) #"\s*,\s*")))])]]))))
+
+;; (clojure.string/split "some  ,  strig,value" #"\s*,\s*")
+;; 
+;; Sprawdzenie integerów
+;; (try
+;;   (every? number? (doall (map #(Integer. %) (clojure.string/split "1  ,  23, 54 d" #"\s*,\s*"))))
+;;   (catch Exception e :chwdp))
+
+(def confgen--gui-interface--input-textcolor
+  (fn [changing-list path value]
+    (mig-panel
+     :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
+     :items [[(text :text value :font (getFont 14)
+                    :background (get-color :background :input)
+                    :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
+                                             (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
+                    :listen [:caret-update (fn [event] (track-changes changing-list path value (config event :text))
+                                             (colorizator-text-component event))])]])))
+
 
 (def confgen--choose--header
   (fn [type? name]
@@ -810,7 +916,9 @@
   (fn [comp? param confgen--component--tree changing-list start-key]
     (cond (comp? :selectbox) (confgen--gui-interface--droplist param changing-list start-key)
           (comp? :checkbox)  (confgen--gui-interface--checkbox-as-droplist param changing-list start-key)
-          (or (comp? :textlist) (comp? :text) (comp? :textnumber) (comp? :textcolor)) (confgen--gui-interface--input changing-list start-key (str (param [:value])))
+          (or (comp? :text) (comp? :textnumber)) (confgen--gui-interface--input changing-list start-key (str (param [:value])))
+          (comp? :textlist) (confgen--gui-interface--input-textlist changing-list start-key (param [:value]))
+          (comp? :textcolor) (confgen--gui-interface--input-textcolor changing-list start-key (param [:value]))
           (map? (param [:value])) (confgen--recursive--next-configuration-in-map param confgen--component--tree changing-list start-key)
           :else (confgen--element--textarea param))))
 
@@ -848,7 +956,7 @@
 ;;   (println map)  
 ;;   (sspec/valid-param map))
 
-
+(def configuration-copy (atom @configuration))
 
 (def create-view--confgen
   "Description
@@ -867,9 +975,24 @@
                :items (join-mig-items
                                    ;; Header of section/config file
                        (confgen--element--header-file (get-in map-part [:name]))
-                       (label :text "Show changes" :listen [:mouse-clicked (fn [e] 
+                       (label :text "Show changes" :listen [:mouse-clicked (fn [e]
                                                                             ;;  TODO: Validation
-                                                                             (println "Changes" @changing-list))])
+                                                                             (prn "Changes" @changing-list)
+                                                                             (doall
+                                                                              (map
+                                                                               (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
+                                                                                 (swap! configuration-copy (fn [changes] (assoc-in changes (join-vec (first (second new-value)) [:value]) (second (second new-value))))))
+                                                                               @changing-list))
+                                                                             (let [out (sspec/valid-segment @configuration-copy)]
+                                                                               (cond (get-in out [:valid?])
+                                                                                     (do
+                                                                                       (cond (get-in (save-all-cofiguration @configuration-copy) [:valid?])
+                                                                                             (make-backup-configuration)
+                                                                                             :else (fn []))) ;; TODO action on faild
+                                                                                     :else (let [m (string/join "<br>" ["Cannot save changes" (get-in out [:output])])]
+                                                                                             (alerts-s :set {:header "Faild" :body m} (message alerts-s) 5))))
+                                                                               ;; (prn @configuration-copy)
+                                                                             )])
                                    ;; Foreach on init values and create configuration blocks
                        (map
                         (fn [param]
@@ -1046,26 +1169,64 @@
              (.repaint @app))) @app
 
 
-
-
 ;; ┌─────────────┐
 ;; │             │
 ;; │ App starter │
 ;; │             │
 ;; └─────────────┘
 
-(do
-  (build :items (list
-                 jarmanapp
-                 (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png 50) 0 50 "DB View" {:onclick (fn [e] (create-view--db-view))})
-                 (slider-ico-btn (stool/image-scale icon/I-64-png 50) 1 50 "Powiadomienia" {:onclick (fn [e] (alerts-s :show))})
-                 (slider-ico-btn (stool/image-scale icon/alert-64-png 50) 2 50 "Popup" {:onclick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200]))})
-                 @atom-popup-hook))
-  (reset! popup-menager (create-popup-service atom-popup-hook)))
-        
+(def run
+  (fn []
+    (do
+      (swapp-all)
+      (build :items (list
+                     jarmanapp
+                     (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png 50) 0 50 "DB View" {:onclick (fn [e] (create-view--db-view))})
+                     (slider-ico-btn (stool/image-scale icon/I-64-png 50) 1 50 "Powiadomienia" {:onclick (fn [e] (alerts-s :show))})
+                     (slider-ico-btn (stool/image-scale icon/I-64-png 50) 4 50 "alert" {:onclick (fn [e] (alerts-s :set {:header "Witaj<br>World" :body "Alllle<br>Luja"} (message alerts-s) 5))})
+                     (slider-ico-btn (stool/image-scale icon/alert-64-png 50) 2 50 "Popup" {:onclick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200]))})
+                     (slider-ico-btn (stool/image-scale icon/alert-64-png 50) 3 50 "Dialog" {:onclick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100]))))})
+                     @atom-popup-hook))
+      (reset! popup-menager (create-popup-service atom-popup-hook)))))
+
+(cond (= (iinit/validate-configuration-files) true)
+      (run)
+      :else (cond (= (iinit/restore-backup-configuration) false)
+                  (do
+                    (reset! popup-menager (create-popup-service atom-popup-hook))
+                    (@popup-menager :ok :title "App start failed" :body "Cennot end restore task." :size [300 100]))
+                  :else (do
+                          (= (iinit/validate-configuration-files) true)
+                          (run)
+                          :else (do
+                                  (reset! popup-menager (create-popup-service atom-popup-hook))
+                                  (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))
+      
+
+
+
+
+
+
+;; (def action-on-JLP-children
+;;   (fn [] (let [JLP (getParent @atom-popup-hook)
+;;                elems-in-JLP (seesaw.util/children JLP)
+;;                elems-count  (count elems-in-JLP)]
+;;            (doall (map (fn [index] ;; Change popup order on JLayeredPane 
+;;                          (config! (nth elems-in-JLP index) :visible? true))
+;;                        (range elems-count)))
+;;            (.repaint JLP))))
+
+
+;; (clojure.string/replace "Witaj<br>World" #"<\s*\w+(\s\w+=['\"\w]+)*/?>" " ")
+
+;; (swapp-all)
+
+;; (show-options (custom-dialog))
 
 ;; (@popup-menager :new-test)
 ;; (@popup-menager :new-yesno)
+;; 
 
 ;; (@popup-menager :show)
 ;; (def atm (@popup-menager :get-atom-storage))

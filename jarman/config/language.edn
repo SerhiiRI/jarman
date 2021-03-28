@@ -79,24 +79,27 @@
    :database {}},
   :ui
   {:buttons
-   {:remove "Usuń",
+   {:yes "Tak"
+    :no "Nie"
+    :cancel "Anuluj"
+    :remove "Usuń"
     :show-changes "Wyświetl zmiany"
-    :export-to-excel "Exportuj do Excela",
-    :connect "Połącz",
-    :settings "Ustawienia",
-    :save "Zapisz",
-    :search "Szukaj",
-    :connected-to-database "Nawiązano połączenie z bazą danych.",
-    :connection-error "Błąd połączenia, sprawdz konfigurację.",
-    :register "Rejestr",
-    :back "Cofnij",
-    :goback "Wróć",
-    :disconnect "Odłącz",
-    :rfid-cards "Karty RFID",
-    :clean-filters "Wyczyść filtrowanie",
-    :clean-inputs "Wyczyść pola",
-    :workers "Pracownicy",
-    :test-connection "Testuj połączenie",
+    :export-to-excel "Exportuj do Excela"
+    :connect "Połącz"
+    :settings "Ustawienia"
+    :save "Zapisz"
+    :search "Szukaj"
+    :connected-to-database "Nawiązano połączenie z bazą danych."
+    :connection-error "Błąd połączenia, sprawdz konfigurację."
+    :register "Rejestr"
+    :back "Cofnij"
+    :goback "Wróć"
+    :disconnect "Odłącz"
+    :rfid-cards "Karty RFID"
+    :clean-filters "Wyczyść filtrowanie"
+    :clean-inputs "Wyczyść pola"
+    :workers "Pracownicy"
+    :test-connection "Testuj połączenie"
     :save-and-reload "Zapisz i przeładuj"},
    :alerts
    {:changes-saved "Zapisano zmiany!",
@@ -212,6 +215,9 @@
 :ui
 {:buttons
  {:remove "Remove"
+  :yes "Yes"
+  :no "No"
+  :cancel "Cancel"
   :show-changes "Show changes"
   :export-to-excel "Export to Excel"
   :connect "Connect"

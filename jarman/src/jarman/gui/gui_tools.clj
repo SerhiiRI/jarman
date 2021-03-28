@@ -9,6 +9,7 @@
   (:require [jarman.resource-lib.icon-library :as icon]
             [jarman.tools.swing :as stool]
             [clojure.string :as string]
+            [jarman.config.config-manager :as conf-men]
             [jarman.tools.lang :refer :all]))
 
 (import javax.swing.JLayeredPane)
@@ -84,6 +85,11 @@
 
 (def hand-hover-on  (fn [e] (config! e :cursor :hand)))
 (def hand-hover-off (fn [e] (config! e :cursor :default)))
+
+(defn button-hover
+  ([e] (config! e :background (conf-men/get-color :background :button_hover_light)))
+  ([e color] (config! e :background color)))
+
 
 (defn build-bottom-ico-btn
   "Description:
@@ -343,3 +349,45 @@
             :listen [:mouse-entered (fn [e] (config! e :background bg-hover :icon (stool/image-scale ico-hover 26) :cursor :hand))
                      :mouse-exited  (fn [e] (config! e :background bg :icon (stool/image-scale ico 26) :cursor :default))
                      :mouse-clicked onclick]))))
+
+
+;; (defn parse-to-type [s]
+;;   (if (empty? s) nil
+;;       (if (every? #(some (fn [x] (= x %)) [\1 \2 \3 \4 \5 \6 \7 \8 \9 \0]) s)
+;;         (try (Integer/parseInt (re-find #"\A-?\d+" s))
+;;              (catch Exception e (if (and (= (first s) \:) (not (in? (seq s) \ ))) (symbol s) s))
+;;              (finally nil))
+;;         (if (and (= (first s) \:) (not (in? (seq s) \ ))) (symbol s) s))))
+
+;; (parse-to-type "#123")
+
+(defn colorizator-text-component "Colorize component, by hexadecemal value" [target]
+  (let [lower-str (string/lower-case (string/trim (text target)))
+        smb-arr "0123456789abcdef"
+        [hash & color] lower-str
+        c (count color)]
+    (if (and (= hash \#)
+             (or (= c 3) (= c 6))
+             ;; if 'color' has only smb-arr charset
+             (reduce #(and %1 (some (fn [_s] (= %2 _s)) smb-arr)) true color))
+      (config! target
+               :background lower-str
+               :foreground (let [clr (apply str color)
+                                 hex (read-string (if (= (count clr) 3)
+                                                    (str "0x" clr)
+                                                    (apply str "0x" (map first (partition 2 clr)))))]
+                             (if (< hex 1365) "#FFF" "#000")))
+      (config! target :background "#FFF" :foreground "#000"))))
+
+;; (colorizator-text-component "#123")
+;; (read-string "0xFFFFFF")
+;; (read-string "0x000000")
+;; (defn gradient-generator )
+;; (Integer/toHexString (bit- 0xFF0000 0x251242))
+
+;; ;;; templates for simple text configuration option
+;; (defn text-component [configuration-changer config-key-vector default-text]
+;;   (colorizator-text-component (text :text default-text :background "#FFFFFF"
+;;                                     :listen [:selection (fn [e] (when-let [t (parse-to-type (text e))]
+;;                                                                   (configuration-changer config-key-vector t)
+;;                                                                   (colorizator-text-component e)))])))

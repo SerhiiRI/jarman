@@ -8,7 +8,7 @@
    :value
    {:configuration-attribute
     {:doc
-     "Wybierz �cie�k� do konfiguracyjnego pliku standardowo wskazuje ona na katalog lokalizacji programu. Parameters: \"C:\\�cie�ka\\�cie�ka\\�cie�ka\" \"/�cie�ka/�cie�k\" \"�cie�ka\""},
+     "Wybierz ścieżkę do konfiguracyjnego pliku standardowo wskazuje ona na katalog lokalizacji programu. Parameters: \"C:\\�cie�ka\\�cie�ka\\�cie�ka\" \"/�cie�ka/�cie�k\" \"�cie�ka\""},
     :font-configuration-attribute
     {:value
      {:font-path
@@ -75,59 +75,63 @@
   :cfg
   {:init
    {:name "Startowa konfiguracja",
-    :value {:lang {:name "J�zyk", :doc "Prosz� wybra� j�zyk"}}},
+    :value {:lang {:name "Język", :doc "Proszę wybrać język"}}},
    :database {}},
   :ui
   {:buttons
-   {:remove "Usu�",
-    :excel-export "Exportuj do Excela",
-    :run-app "Po��cz",
-    :settings "Ustawienia",
-    :save "Zapisz",
-    :search "Szukaj",
-    :test-connection-success "Nawi�zano po��czenie z baz� danych.",
-    :test-connection-fail "B��d ��czenia, sprawdz konfiguracje",
-    :register "Rejestr",
-    :back "Cofnij",
-    :disconnect-RFID "Od��cz",
-    :rfid "Karty RFID",
-    :filter-clean "Usu� filtr",
-    :inputs-clean "Wyczy��",
-    :workers "Pracownicy",
-    :test-connection "Testuj po��czenie",
-    :save-and-reload "Zapisz i prze�aduj"},
+   {:yes "Tak"
+    :no "Nie"
+    :cancel "Anuluj"
+    :remove "Usuń"
+    :show-changes "Wyświetl zmiany"
+    :export-to-excel "Exportuj do Excela"
+    :connect "Połącz"
+    :settings "Ustawienia"
+    :save "Zapisz"
+    :search "Szukaj"
+    :connected-to-database "Nawiązano połączenie z bazą danych."
+    :connection-error "Błąd połączenia, sprawdz konfigurację."
+    :register "Rejestr"
+    :back "Cofnij"
+    :goback "Wróć"
+    :disconnect "Odłącz"
+    :rfid-cards "Karty RFID"
+    :clean-filters "Wyczyść filtrowanie"
+    :clean-inputs "Wyczyść pola"
+    :workers "Pracownicy"
+    :test-connection "Testuj połączenie"
+    :save-and-reload "Zapisz i przeładuj"},
    :alerts
-   {:changes-saved "Zapisano zmiany do pliku!",
-    :save-changes? "Czy chcesz zapisa� zmiany?",
+   {:changes-saved "Zapisano zmiany!",
+    :save-changes? "Czy chcesz zapisać zmiany?",
     :changes-saved-but-need-reload
-    "Zapisano zmiany! B�d� one widoczne po restarcie aplikacji.",
-    :delete? "Czy napewno chcesz usun�� element?",
-    :testing-connection "��czenie z baz�",
-    :title-information "Informacja",
-    :write-enter-search
-    "Wpisz fraz� i kliknij - ENTER - by szuka� w tabeli."},
+    "Zapisano zmiany! Będą one widoczne po restarcie aplikacji.",
+    :delete-element? "Czy napewno chcesz usunąć element?",
+    :testing-connection "Testowanie połączenia z bazą danych.",
+    :information "Informacja",
+    :write-enter-search "Wpisz frazę i kliknij - ENTER - by wyszukać w tabeli."},
    :basic
    {:description "Opis",
     :yes "Tak",
     :search-input "Wyszukaj",
     :in-short "We",
     :date-end "Data do",
-    :click-to-choose "Kliknij by wybra�",
+    :click-to-choose "Kliknij by wybrać",
     :config-to-file "Konfiguracja do pliku -> ",
-    :out "Wyj�cie",
+    :out "Wyjście",
     :date-start "Data od",
     :out-short "Wy",
     :search-tool "Wyszukiwarka",
     :parameters "Parametry",
     :no "Nie",
-    :in "Wej�cie"},
+    :in "Wejście"},
    :tips
    {:save "Zapisz zmiany.",
-    :clean "Wyczy�� pola powy�ej.",
-    :del "Usu� pozycj� z tabeli.",
-    :clean-filter "Wyczy�� filtr wyszukiwania.",
+    :clean "Wyczyść pola powyżej.",
+    :del "Usuń pozycję z tabeli.",
+    :clean-filter "Wyczyćś filtr wyszukiwania.",
     :search "Szukaj po tabeli.",
-    :user-trash-can "Od��cz u�ytkownika od karty.",
+    :user-trash-can "Odłącz użytkownika od karty.",
     :excel "Zapisz widok do excela."}}},
  :en
  {:init.edn
@@ -139,7 +143,7 @@
    :value
    {:configuration-attribute
     {:doc
-     "Wybierz �cie�k� do konfiguracyjnego pliku standardowo wskazuje ona na katalog lokalizacji programu. Parameters: \"C:\\�cie�ka\\�cie�ka\\�cie�ka\" \"/�cie�ka/�cie�k\" \"�cie�ka\""},
+     "Wybierz ścieżkę do pliku konfiguracji. Standardowo wskazuje ona na katalog lokalizacji programu. Parameters: \"C:\\ścieżka\\ścieżka\\ścieżka\" \"/ścieżka/ścieżka\" \"ścieżka\""},
     :font-configuration-attribute
     {:value
      {:font-path
@@ -202,4 +206,66 @@
      {:selected-theme
       {:name "Konfiguracja skórki",
        :doc
-       "Posiada konfiguracje styłowe globalne dla calego programu. Pole 'Selected theme' zwiera wybraną przez użytkownika skórkę. Która się uruchomi po ponownym restarcie aplikacji."}}}}}}}
+       "Posiada konfiguracje styłowe globalne dla calego programu. Pole 'Selected theme' zwiera wybraną przez użytkownika skórkę. Która się uruchomi po ponownym restarcie aplikacji."}}}}},
+  :cfg
+{:init
+ {:name "Start configuration"
+  :value {:lang {:name "Lenguage", :doc "Please, choose your lenguage."}}}
+ :database {}}
+:ui
+{:buttons
+ {:remove "Remove"
+  :yes "Yes"
+  :no "No"
+  :cancel "Cancel"
+  :show-changes "Show changes"
+  :export-to-excel "Export to Excel"
+  :connect "Connect"
+  :settings "Settings"
+  :save "Save"
+  :search "Search"
+  :connect-to-database "Connect to database"
+  :register "Register"
+  :back "Back"
+  :goback "Step back"
+  :disconnect "Disconnect"
+  :rfid-cards "RFID cards"
+  :clean-filters "Clean filters"
+  :clean-inputs "Clean fields"
+  :workers "Workers"
+  :test-connection "Test connection"
+  :save-and-reload "Save and reload"}
+ :alerts
+ {:changes-saved "Saved changes!"
+  :save-changes? "Do you want to save changes?"
+  :changes-saved-but-need-reload "Saved changes! Application needs reload."
+  :delete-element? "Are you sure you want to remove item?"
+  :testing-connection "Testing a database connection."
+  :information "Information"
+  :write-enter-search "Enter the phrase and click - Enter - to search in the table."
+  :connected-to-database "Connected to database."
+  :connection-error "Failed connection with database."}
+ :basic
+ {:description "Description"
+  :yes "Yes"
+  :search-input "Search"
+  :in-short "In"
+  :date-end "Date from"
+  :click-to-choose "Click to choose"
+  :config-to-file "Configuration to file -> "
+  :out "Out"
+  :date-start "Date to"
+  :out-short "Out"
+  :search-tool "Search engine"
+  :parameters "Parameters"
+  :no "No"
+  :in "Entrance"}
+ :tips
+ {:save "Save changes."
+  :clean "Clean up fields."
+  :del "Remove item from table."
+  :clean-filter "Clear search filter."
+  :search "Search in table."
+  :user-trash-can "Disconnect user from card."
+  :excel "Save view to excel."}}
+  }}

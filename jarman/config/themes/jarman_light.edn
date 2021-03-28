@@ -21,6 +21,7 @@
                                               :input {:type :param :display :edit :component :textcolor :value "#fff"}
                                               :button {:type :param :display :edit :component :textcolor :value "#eee"}
                                               :button_hover {:type :param :display :edit :component :textcolor :value "#96c1ea"}
+                                              :button_hover_light {:type :param :display :edit :component :textcolor :value "#d9ecff"}
                                               :button_config {:type :param :display :edit :component :textcolor :value "#fff"}
                                               :button_selected {:type :param :display :edit :component :textcolor :value "#ccc"}
                                               :button_main {:type :param :display :edit :component :textcolor :value "#fff"}

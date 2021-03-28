@@ -10,6 +10,7 @@
             [jarman.config.config-manager :refer :all]
             [jarman.gui.gui-tools :refer :all]
             [jarman.gui.gui-alerts-service :refer :all]
+            [jarman.config.init :as sinit]
             ;; deverloper tools 
             [jarman.tools.swing :as stool]
             [jarman.tools.lang :refer :all]

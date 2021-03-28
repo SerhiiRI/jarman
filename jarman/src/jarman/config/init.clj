@@ -194,9 +194,11 @@
   {:pre [(map? m)]}
   (let [cfg (spec/valid-segment m)]
     (if (:valid? cfg)
-      (doall
-       (map (fn [[path file]](save-cfg-to-file-pp file (GETS m path)))
-            (<path|file>-list *config-root* *config-files*)))
+      (do 
+        (doall
+         (map (fn [[path file]] (save-cfg-to-file-pp file (GETS m path)))
+              (<path|file>-list *config-root* *config-files*))) 
+        cfg)
       cfg)))
 
 ;;;;;;;;;;;;;;;;;;;;;;

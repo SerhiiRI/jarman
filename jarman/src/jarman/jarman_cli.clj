@@ -6,9 +6,9 @@
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]
    
-   [jarman.tools.ftp-toolbox.clj :as ftp]
+   [jarman.tools.ftp-toolbox :as ftp]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
-   [jarman.tools.dev-tools :as dt]))
+   [jarman.tools.lang :refer :all]))
 
 ;;;-DOC-;;;
 ;; To run this tool using next cli notation
@@ -16,19 +16,19 @@
 ;; $ lein run -m jarman.schema-builder -h
 ;; $ java -jar target/uberjar/lets-scheme -h
 
-;; (def ^:dynamic sql-connection {:dbtype "mysql"
-;;                                :host "127.0.0.1"
-;;                                :port 3306
-;;                                :dbname "jarman"
-;;                                :user "root"
-;;                                :password "1234"})
-
 (def ^:dynamic sql-connection {:dbtype "mysql"
-                               :host "192.168.1.69"
+                               :host "127.0.0.1"
                                :port 3306
                                :dbname "jarman"
-                               :user "jarman"
-                               :password "dupa"})
+                               :user "root"
+                               :password "1234"})
+
+;; (def ^:dynamic sql-connection {:dbtype "mysql"
+;;                                :host "192.168.1.69"
+;;                                :port 3306
+;;                                :dbname "jarman"
+;;                                :user "jarman"
+;;                                :password "dupa"})
 
 (def available-scheme ["service_contract"
                        "seal"

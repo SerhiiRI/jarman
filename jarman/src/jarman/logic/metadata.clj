@@ -74,10 +74,14 @@
   (:refer-clojure :exclude [update])
   (:require
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
+   [jarman.config.storage :as storage]
+   [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]
    [clojure.data :as data]
    [clojure.string :as string]
-   [clojure.java.jdbc :as jdbc]))
+   [clojure.java.jdbc :as jdbc])
+  (:import (java.util Date)
+           (java.text SimpleDateFormat)))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; Configurations ;;; 
@@ -193,29 +197,29 @@
         cfield (:field column-field-spec)
         in?   (fn [col x] (if (string? col) (= x col) (some #(= % x) col)))]
     (if (not-empty ctype)
-      (if (not-empty (allowed-rules *id-collumn-rules* [cfield])) ["l"] ;; l - mean linking is linking column 
-          (condp in? ctype
-            "date"        ["d" "dt" "i"] ;; datetime
-            "time"        ["t" "i"] ;; only time
-            "datetime"    ["dt" "d" "i"] ;; datatime
-            ["smallint"
-             "mediumint"
-             "int"
-             "integer"
-             "bigint"
-             "double"
-             "float"
-             "real"]       ["n" "i"] ;; n - mean simple number input
-            ["tinyint"
-             "bool"
-             "boolean"]    ["n" "i" "b"] ;; b - mean boolean
-            ["tinytext"
-             "text"
-             "mediumtext"
-             "longtext"
-             "json"]       ["a"] ;; a - mean area, text area
-            "varchar"      ["i"] ;; i - mean simple text input
-            nil)))))
+      (if(not-empty (allowed-rules *id-collumn-rules* [cfield])) ["l"] ;; l - mean linking is linking column 
+         (condp in? ctype
+           "date"        ["d" "dt" "i"] ;; datetime
+           "time"        ["t" "i"] ;; only time
+           "datetime"    ["dt" "d" "i"] ;; datatime
+           ["smallint"
+            "mediumint"
+            "int"
+            "integer"
+            "bigint"
+            "double"
+            "float"
+            "real"]       ["n" "i"] ;; n - mean simple number input
+           ["tinyint"
+            "bool"
+            "boolean"]    ["n" "i" "b"] ;; b - mean boolean
+           ["tinytext"
+            "text"
+            "mediumtext"
+            "longtext"
+            "json"]       ["a"] ;; a - mean area, text area
+           "varchar"      ["i"] ;; i - mean simple text input
+           nil)))))
 
 
 (defn- get-table-meta
@@ -294,6 +298,8 @@
   (for [table (not-allowed-rules ["metatable" "meta*"] (map (comp second first) (jdbc/query sql-connection "SHOW TABLES")))]
     (let [meta (jdbc/query sql-connection (select :METADATA :where (= :table table)))]
       (if (empty? meta) (jdbc/execute! sql-connection (update-sql-by-id-template "METADATA" (get-meta table)))))))
+
+;; (do-create-meta)
 
 (defn do-clear-meta [& body]
   {:pre [(every? string? body)]}
@@ -405,18 +411,19 @@
 
 (defn- verify-column-metadata [p m]
   (do-and
-   (isset? m [:field] (conj p :field))
-   (isset? m [:representation] (conj p :representation))
-   (isset? m [:column-type] (conj p :column-type))
-   (isset? m [:component-type] (conj p :component-type))
-   (isset? m [:private?] (conj p :private?))
-   (isset? m [:editable?] (conj p :editable?))
-   (repattern? #"^[a-z_]{3,}$" m [:field] (conj p :field))
-   (repattern? #"^[\w\d\s]+$" m [:representation] (conj p :representation))
-   (inpattern? ["d" "t" "dt" "l" "n" "b" "a" "i" nil] m [:component-type] (conj p :component-type))
-   (inpattern? [true false] m [:private?] (conj p :private?))
-   (inpattern? [true false] m [:editable?] (conj p :editable?))
-   (fpattern? #(or (string? %) (nil? %)) "string? || nil?" m [:description] (conj p :description))))
+    (isset? m [:field] (conj p :field))
+    (isset? m [:representation] (conj p :representation))
+    (isset? m [:column-type] (conj p :column-type))
+    (isset? m [:component-type] (conj p :component-type))
+    (isset? m [:private?] (conj p :private?))
+    (isset? m [:editable?] (conj p :editable?))
+    (repattern? #"^[a-z_]{3,}$" m [:field] (conj p :field))
+    (repattern? #"^[\w\d\s]+$" m [:representation] (conj p :representation))
+    ;; (inpattern? ["d" "t" "dt" "l" "n" "b" "a" "i" nil] m [:component-type] (conj p :component-type))
+    (fpattern? #(every? (fn [cols] (in? ["d" "t" "dt" "l" "n" "b" "a" "i"] cols)) %) "component-type not in allowed [\"d\" \"t\" \"dt\" \"l\" \"n\" \"b\" \"a\" \"i\" nil]" m [:component-type] (conj p :component-type))
+    (inpattern? [true false] m [:private?] (conj p :private?))
+    (inpattern? [true false] m [:editable?] (conj p :editable?))
+    (fpattern? #(or (string? %) (nil? %)) "string? || nil?" m [:description] (conj p :description))))
 
 ;;; validators ;;;
 (defn- validate-metadata-table [m]
@@ -889,42 +896,7 @@
 
 
 (let [t
-      {:id 24, :table "point_of_sale"
-       :prop
-       {:table {:frontend-name "point_of_sale", :is-system? false, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :allow-linking? true}
-        :columns [{:field "id_enterpreneur"
-                   :representation "id_enterpreneur"
-                   :description nil
-                   :component-type "l"
-                   :column-type "bigint(20) unsigned"
-                   :private? false
-                   :editable? true
-                   :key-table "enterpreneur"}
-                  {:field "name"
-                   :representation "name"
-                   :description nil
-                   :component-type "i"
-                   :column-type "varchar(100)"
-                   :private? false
-                   :editable? true}
-                  {:field "physical_address"
-                   :representation "physical_address"
-                   :description nil
-                   :component-type "i"
-                   :column-type "varchar(100)"
-                   :private? false
-                   :editable? true}
-                  {:field "telefons"
-                   :representation "telefons"
-                   :description nil
-                   :component-type "i"
-                   :column-type "varchar(100)"
-                   :private? false
-                   :editable? true}]}}]
-  {:id_enterpreneur [:bigint-20-unsigned :default :null]}
-  {:name [:varchar-100 :default :null]}
-  {:physical_address  [:varchar-100 :default :null]}
-  {:telefons  [:varchar-100 :default :null]}
+      (first (getset "point_of_sale_group" ))]
   (let [smpl-fields (filter (comp (partial not-allowed-rules ["meta*"]) :field) ((comp :columns :prop) t))
         ;; meta-fields (filter (comp (partial allowed-rules "meta*") :field) ((comp :columns :prop) t))
         idfl-fields (filter (comp (partial allowed-rules "id_*") :field) ((comp :columns :prop) t))]
@@ -961,6 +933,57 @@
                    :foreign-keys (vec (map (fn [idf] [{(keyword (:field idf)) (keyword (:key-table idf))} {:update :null :delete :null}]) idfl-fields))})))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;
+;;; METADATA BACKUP ;;;
+;;;;;;;;;;;;;;;;;;;;;;;
 
+(def ^:private backup-name "metadata")
+(def ^:private backup-file-name (format "%s.edn" backup-name))
+(def ^:private backup-file-date-format )
+;; (defn- backup-keep-10-last-modified
+;;   "Remove 10 last modified backup files, when new backups being created"[]
+;;   (let [max-bkp 10 l-files (storage/user-metadata-list) c-files (count l-files)]
+;;     (if (> c-files max-bkp) 
+;;       (doall (map #(-> % .getName storage/user-metadata-delete)
+;;                   (take (- c-files max-bkp) 
+;;                         (sort-by #(-> % .lastModified Date.)
+;;                                  #(.before %1 %2)
+;;                                  (map clojure.java.io/file l-files))))))))
 
+(defn make-backup-metadata
+  "Description
+    Make backup files 'metadata.edn', if file was created
+    before, rename and add timestamp to name in format
+    YYYY-MM-dd_HHmmss 'metadata_2021-03-22_004353.edn'
+
+  Example
+    (make-backup-metadata)
+  
+  Warning!
+    Timestamp related to event when your backup became
+    a old, and replace to new. Timestamp not mean Time
+    of backup creation
+
+  See
+    `backup-keep-10-last-modified` function which delete
+      oldest file from all backup snapshots, if number
+      of backups will reach 10 files" []
+  (blet
+   ;; if exist backup file, please make new one
+   (if (.exists (clojure.java.io/file (storage/user-metadata-dir) backup-file-name))
+     (blet (storage/user-metadata-rename backup-file-name old-backup-file)
+           [old-backup-file (format "%s_%s.edn" backup-name (.format (SimpleDateFormat. "YYYY-MM-dd_HHmmss") (Date.)))]))
+   ;; Store the metainformation
+   (storage/user-metadata-put backup-file-name (str backup-metadata))
+   ;; clean-up oldest files 
+   ;; (backup-keep-10-last-modified)
+   ;;; make a backup
+   [metadata-list (vec (getset))
+    tables-list (map :table metadata-list)
+    date-format "YYYY-MM-dd HH:mm:ss"
+    backup-metadata
+    {:info {:date (.format (SimpleDateFormat. date-format) (Date.))
+            :program-dir env/user-dir}
+     :table (vec (map :table metadata-list))
+     :backup metadata-list}]))
 

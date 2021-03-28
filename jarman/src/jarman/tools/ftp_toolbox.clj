@@ -1,4 +1,4 @@
-(ns jarman.tools.ftp-toolbox.clj
+(ns jarman.tools.ftp-toolbox
   (:require [clojure.java.io :as io]
             [miner.ftp :refer [with-ftp client-put client-mkdirs]]
             [miner.ftp :as ftp]))

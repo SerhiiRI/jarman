@@ -25,16 +25,17 @@
 ;; (import java.awt.Dimension)
 ;; (import java.awt.event.MouseEvent)
 
-(def app-size (atom [1100 800]))
+(def app-size [1100 800])
+(def atom-app-size (atom [1100 800]))
 (def app (atom nil))
-(def alerts-s (message-server-creator app))
+(def alert-manager (atom nil))
 
 (add-watch
- app-size
+ atom-app-size
  :refresh
  (fn [key atom old-state new-state]
    (do
-     (config! (select @app [:#rebound-layer]) :bounds [0 0 (first @app-size) (second @app-size)])
+     (config! (select @app [:#rebound-layer]) :bounds [0 0 (first @atom-app-size) (second @atom-app-size)])
      (.repaint @app))))
 
 (def box 
@@ -49,10 +50,10 @@
        :id :rebound-layer
        :items [(mig-panel
                 ;; :background "#a23"
-                ;; :size [(first @app-size) :by (second @app-size)]
+                ;; :size [(first @atom-app-size) :by (second @atom-app-size)]
                 :constraints [wraper
-                              (str margin "px[:" (first @app-size) "," hlayout "]" margin "px")
-                              (str margin "px[:" (second @app-size) "," vlayout "]" margin "px")]
+                              (str margin "px[:" (first app-size) "," hlayout "]" margin "px")
+                              (str margin "px[:" (second app-size) "," vlayout "]" margin "px")]
                 :items (join-mig-items items))]))))
 
 
@@ -66,7 +67,7 @@
       (do
         (doseq [i items] (do 
                            (swap! layer inc)
-                           (println "Layer" @layer)
+                           ;;(println "Layer" @layer)
                            (.add JLP i (new Integer @layer))))
     ;;   (.setBackground JLP (new Color 0 0 0))
     ;;   (.setOpaque JLP true)
@@ -80,13 +81,15 @@
     (let [set-items (if-not (list? items) (list items) items)]
       (do
         (reset! app (base set-items))
+        (reset! atom-app-size app-size)
+        (reset! alert-manager (message-server-creator app))
         (-> (doto (seesaw.core/frame
-                   :title "Jarman Debug Window" :undecorated? false
-                   :minimum-size [(first @app-size) :by (second @app-size)]
-                   :size [(first @app-size) :by (first @app-size)]
+                   :title "Mr. Jarman" :undecorated? false
+                   :minimum-size [(first app-size) :by (second app-size)]
+                   :size [(first app-size) :by (first app-size)]
                    :content @app
                 ;;    :on-close :exit
-                   :listen [:component-resized (fn [e] (reset! app-size [(.getWidth (config e :size))
+                   :listen [:component-resized (fn [e] (reset! atom-app-size [(.getWidth (config e :size))
                                                                          (.getHeight (config e :size))]))])
               (.setLocationRelativeTo nil) pack! show!)))
       )))
@@ -94,7 +97,7 @@
 
 ;; (def comps (list (label :text "Mig panel as layer 1")
 ;;                  (label :text "With few responsive elements")
-;;                  (label :text "Secret" :listen [:mouse-clicked (fn [e] (alerts-s :set {:header "Secret" :body "Secreat was found!"} (message alerts-s) 3))])
+;;                  (label :text "Secret" :listen [:mouse-clicked (fn [e] (alert-manager :set {:header "Secret" :body "Secreat was found!"} (message alert-manager) 3))])
 ;;                  (label :text "Oh yeah booiii!")))
 
 ;; (build :items (list (box :items comps :wrap 2)

@@ -36,7 +36,6 @@
 (def right-size (atom [0 0]))
 
 
-
 ;; ┌────────────────────┐
 ;; │                    │
 ;; │ Changes controller │
@@ -108,7 +107,7 @@
         h (second size)]
     (mig-panel
      :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill, center]0px[fill, grow]0px"]
-     :bounds (middle-bounds (first @app-size) (second @app-size) w h)
+     :bounds (middle-bounds (first @atom-app-size) (second @atom-app-size) w h)
      :border (line-border :thickness 2 :color (get-color :decorate :gray-underline))
      :background "#fff"
      :id storage-id
@@ -558,12 +557,11 @@
                                                 (mmeta/do-change
                                                  (mmeta/apply-table orginal-table @meta-copy)
                                                  orginal-table @meta-copy)
-                                                (alerts-s :set {:header "Success!" :body "Changes were saved successfully!"} (message alerts-s) 5))
+                                                (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5))
                                                :else (@popup-menager :ok :title "Valid faild!" :body (string/join "<br>" ["Validation ended with faild." (get-in out [:output])]))))))))
 
 ;; @dbmap
 ;; @meta-copy
-
 ;; @storage-with-changes
 ;; @meta-copy
 ;; (mmeta/validate-all {:id 23
@@ -1040,13 +1038,13 @@
                                                                                      (do
                                                                                        (cond (get-in (save-all-cofiguration @configuration-copy) [:valid?])
                                                                                              (do
-                                                                                               (alerts-s :set {:header "Success!" :body "Changes were saved successfully!"} (message alerts-s) 5)
+                                                                                               (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5)
                                                                                                (make-backup-configuration)
                                                                                                (iinit/swapp-configuration))
                                                                                              :else (let [m (string/join "<br>" ["Cannot save changes"])]
-                                                                                                     (alerts-s :set {:header "Faild" :body m} (message alerts-s) 5)))) ;; TODO action on faild save changes configuration
+                                                                                                     (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5)))) ;; TODO action on faild save changes configuration
                                                                                      :else (let [m (string/join "<br>" ["Cannot save changes" (get-in out [:output])])]
-                                                                                             (alerts-s :set {:header "Faild" :body m} (message alerts-s) 5))))
+                                                                                             (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5))))
                                                                                ;; (prn @configuration-copy)
                                                                              )])
                                    ;; Foreach on init values and create configuration blocks
@@ -1152,23 +1150,23 @@
   "Description:
       Main space for app inside JLayeredPane. There is menu with expand btns and space for tables with tab btns.
    "
-  (grid-panel
-   :id :rebound-layer
-   :items [(mig-panel
-            :constraints [""
-                          "0px[50, fill]0px[200, fill]0px[fill, grow]15px"
-                          "0px[fill, grow]39px"]
-            :items [[(label-fn :background "#eee" :size [50 :by 50])]
-                    [(mig-app-left-f  [(expand-btn "Alerty"
-                                                   (expand-child-btn "Alert 1 \"Test\""  (fn [e] (alerts-s :set {:header "Test" :body "Bardzo dluga testowa wiadomość, która nie jest taka prosta do ogarnięcia w seesaw."} (message alerts-s) 3)))
-                                                   (expand-child-btn "Alert 2 \"Witaj\"" (fn [e] (alerts-s :set {:header "Witaj" :body "Świecie"} (message alerts-s) 5))))]
-                                      [(expand-btn "Widoki"
-                                                   (expand-child-btn "DB View" (fn [e] (create-view--db-view)))
-                                                   (expand-child-btn "Test"    (fn [e] (create-view "test1" "Test 1" (label :text "Test 1"))))
-                                                   (expand-child-btn "Test 2"  (fn [e] (create-view "test2" "Test 2" (label :text "Test 2")))))]
-                                      [(create-expand-btns--confgen)])]
-                    [(mig-app-right-f [(label)]
-                                      [(label)])]])]))
+  (fn [] (grid-panel
+          :id :rebound-layer
+          :items [(mig-panel
+                   :constraints [""
+                                 "0px[50, fill]0px[200, fill]0px[fill, grow]15px"
+                                 "0px[fill, grow]39px"]
+                   :items [[(label-fn :background "#eee" :size [50 :by 50])]
+                           [(mig-app-left-f  [(expand-btn "Alerty"
+                                                          (expand-child-btn "Alert 1 \"Test\""  (fn [e] (@alert-manager :set {:header "Test" :body "Bardzo dluga testowa wiadomość, która nie jest taka prosta do ogarnięcia w seesaw."} (message alert-manager) 3)))
+                                                          (expand-child-btn "Alert 2 \"Witaj\"" (fn [e] (@alert-manager :set {:header "Witaj" :body "Świecie"} (message alert-manager) 5))))]
+                                             [(expand-btn "Widoki"
+                                                          (expand-child-btn "DB View" (fn [e] (create-view--db-view)))
+                                                          (expand-child-btn "Test"    (fn [e] (create-view "test1" "Test 1" (label :text "Test 1"))))
+                                                          (expand-child-btn "Test 2"  (fn [e] (create-view "test2" "Test 2" (label :text "Test 2")))))]
+                                             [(create-expand-btns--confgen)])]
+                           [(mig-app-right-f [(label)]
+                                             [(label)])]])])))
 
 
 (defn create-bar-with-open-tabs
@@ -1182,20 +1180,19 @@
                                            item-key (get (second item) :title)
                                            changes-atom (get-changes-atom view-id)]
                                        (tab-btn item-key item-key (if (identical? view-id id-key) true false) [100 25]
-                                                (fn [e] (do
-                                                          ;; TO DO - Question about drop changes and do not save
+                                                (fn [e] (let [close-view (fn [e] (do
+                                                                                   (reset! views (dissoc @views view-id)) ;; Remove view from view list
+                                                                                   (if (get (config (.getParent (seesaw.core/to-widget e)) :user-data) :active)
+                                                                                     (reset! active-tab @last-active-tab) ;; Close active card
+                                                                                     (reset! active-tab @active-tab))))]
+                                                          
                                                           (if-not (nil? changes-atom)
                                                             (if-not (empty? @changes-atom)
+                                                              ;; Question if changes was not saved
                                                               (cond (= (@popup-menager :yesno :title (get-lang-alerts :unsaved-changes-title) :body (get-lang-alerts :unsaved-changes-body) :size [300 150]) "yes")
-                                                                    (do
-                                                                      (reset! views (dissoc @views view-id)) ;; Remove view from view list
-                                                                      (if (get (config (.getParent (seesaw.core/to-widget e)) :user-data) :active)
-                                                                        (reset! active-tab @last-active-tab) ;; Close active card
-                                                                        (reset! active-tab @active-tab))))
-                                                              ;; (alerts-s :set {:header "Niezapisane zmiany!"
-                                                              ;;                 :body (string/join "" ["W widoku \"" item-key "\" istnieją niezapisane dane: <br>" @changes-atom])}
-                                                              ;;           (message alerts-s) 6)
-))))   ;; Close card in background
+                                                                    (close-view e))
+                                                              (close-view e)) ;; Close view if chages storage for this view is empty 
+                                                            (close-view e)))) ;; Close view if chages storage for this view is nil 
                                                 (fn [e] (do
                                                           (reset! active-tab view-id)
                                                           (config! (select (getRoot @app) [:#app-functional-space])
@@ -1225,7 +1222,7 @@
                          (reset! last-active-tab :none)
                          (config! (select (getRoot @app) [:#app-functional-space]) :items [(label)])
                          (config! (select (getRoot @app) [:#app-tabs-space]) :items [(label)]))))
-             (.repaint @app))) @app
+             (.repaint @app))) ;;@app
 
 
 ;; ┌─────────────┐
@@ -1234,36 +1231,40 @@
 ;; │             │
 ;; └─────────────┘
 
+(def startup (atom nil))
+
 (def run
   (fn []
     (do
       (swapp-all)
+      (try (.dispose (seesaw.core/to-frame @app)) (catch Exception e (println "Exception: " (.getMessage e))))
       (build :items (list
-                     jarmanapp
+                     (jarmanapp)
                      (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png 50) 0 50 "DB View" {:onclick (fn [e] (create-view--db-view))})
-                     (slider-ico-btn (stool/image-scale icon/I-64-png 50) 1 50 "Powiadomienia" {:onclick (fn [e] (alerts-s :show))})
-                     (slider-ico-btn (stool/image-scale icon/I-64-png 50) 4 50 "alert" {:onclick (fn [e] (alerts-s :set {:header "Witaj<br>World" :body "Alllle<br>Luja"} (message alerts-s) 5))})
+                     (slider-ico-btn (stool/image-scale icon/I-64-png 50) 1 50 "Powiadomienia" {:onclick (fn [e] (@alert-manager :show))})
                      (slider-ico-btn (stool/image-scale icon/alert-64-png 50) 2 50 "Popup" {:onclick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200]))})
-                     (slider-ico-btn (stool/image-scale icon/alert-64-png 50) 3 50 "Dialog" {:onclick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100]))))})
+                     (slider-ico-btn (stool/image-scale icon/agree1-blue-64-png 50) 3 50 "Dialog" {:onclick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100]))))})
+                     (slider-ico-btn (stool/image-scale icon/a-blue-64-png 50) 4 50 "alert" {:onclick (fn [e] (@alert-manager :set {:header "Witaj<br>World" :body "Alllle<br>Luja"} (message alert-manager) 5))})
+                     (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png 50) 5 50 "Restart" {:onclick (fn [e] (@startup))})
                      @atom-popup-hook))
       (reset! popup-menager (create-popup-service atom-popup-hook)))))
 
-(cond (= (iinit/validate-configuration-files) true)
-      (run)
-      :else (cond (= (iinit/restore-backup-configuration) false)
-                  (do
-                    (reset! popup-menager (create-popup-service atom-popup-hook))
-                    (@popup-menager :ok :title "App start failed" :body "Cennot end restore task." :size [300 100]))
-                  :else (do
-                          (= (iinit/validate-configuration-files) true)
-                          (run)
-                          :else (do
-                                  (reset! popup-menager (create-popup-service atom-popup-hook))
-                                  (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))
+(reset! startup
+  (fn []
+    (cond (= (iinit/validate-configuration-files) true)
+          (run)
+          :else (cond (= (iinit/restore-backup-configuration) false)
+                      (do
+                        (reset! popup-menager (create-popup-service atom-popup-hook))
+                        (@popup-menager :ok :title "App start failed" :body "Cennot end restore task." :size [300 100]))
+                      :else (do
+                              (= (iinit/validate-configuration-files) true)
+                              (run)
+                              :else (do
+                                      (reset! popup-menager (create-popup-service atom-popup-hook))
+                                      (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
-
-
-
+(@startup)
 
 
 
@@ -1292,9 +1293,10 @@
 
 ;; (config! @pop :visible? true)
 
-;; (alerts-s :show)
-;; (alerts-s :hide)
-;; (alerts-s :count-all)
-;; (alerts-s :count-active)
-;; (alerts-s :count-hidden)
-;; (alerts-s :clear)
+;; (@alert-manager :show)
+;; (@alert-manager :hide)
+;; (@alert-manager :count-all)
+;; (@alert-manager :count-active)
+;; (@alert-manager :count-hidden)
+;; (@alert-manager :clear)
+;; 

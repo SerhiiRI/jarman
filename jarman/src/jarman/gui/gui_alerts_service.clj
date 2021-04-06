@@ -111,9 +111,9 @@
           bg-c "#fff"
           header (if (= (contains? data :header) true) (get data :header) "Information")
           body   (if (= (contains? data :body) true) (get data :body) "Template of information...")
-          layered-pane (alerts-controller :get-space)
+          layered-pane (@alerts-controller :get-space)
           close [(build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png layered-pane 23 (fn [e] (view-selected-message header body layered-pane)))
-                 (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered-pane 23 (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (alerts-controller :rm-obj to-del))))]]
+                 (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered-pane 23 (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (@alerts-controller :rm-obj to-del))))]]
       (mig-panel
        :id :alert-box
        :constraints ["wrap 1" "0px[fill, grow]0px" "0px[20]0px[30]0px[20]0px"]

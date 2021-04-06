@@ -14,7 +14,7 @@
      :type :param,
      :display :edit,
      :component :text,
-     :value "configurationasd"}}},
+     :value "configuration"}}},
   :font-configuration-attribute
   {:name "Rozszerzenia",
    :type :block,

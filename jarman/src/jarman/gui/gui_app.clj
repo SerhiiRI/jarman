@@ -42,7 +42,7 @@
 ;; │                    │
 ;; └────────────────────┘
 
-
+(def work-mode (atom :user-mode))
 (def storage-with-changes (atom {})) ;; Store view id as key and component id which is path in config map too {:view link-to-atom}
 
 (def add-changes-controller
@@ -233,7 +233,7 @@
                                                (cond (= (config (nth elems-in-JLP index) :id) id) (.remove JLP index)))
                                              (range elems-count)))
                                  (.repaint JLP)))  ;; Refresh GUI
-          (= action :move-to-top) (fn [id]
+          (= action :move-to-top) (fn [id] ;; Popup order, popup on top
                                     (let [elems-in-JLP (seesaw.util/children JLP)
                                           elems-count  (count elems-in-JLP)]
                                       (doall (map (fn [index] ;; Change popup order on JLayeredPane 
@@ -455,18 +455,20 @@
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
 
 (def table-editor--element--small-input
-  (fn [changing-list value-path value]
+  (fn [enable changing-list value-path value]
     (text :text value :font (getFont 12)
           :background (get-color :background :input)
+          :enabled? enable
           :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
           :listen [:caret-update (fn [event] (track-changes-used-components changing-list value-path event :text value))])))
 
 
 (def table-editor--element--input
-  (fn [changing-list value-path value]
+  (fn [enable changing-list value-path value]
     (text :text value :font (getFont 12)
           :background (get-color :background :input)
+          :enabled? enable
           :border (compound-border (empty-border :left 15 :right 20 :top 8 :bottom 8)
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
           :listen [:caret-update (fn [e] (track-changes changing-list value-path value (config e :text)))])))
@@ -485,7 +487,7 @@
             (empty-border :left 15 :right 15 :top 5 :bottom 8))))
 
 (def switch-column-to-editing
-  (fn [changing-list value-path event column column-editor-id]
+  (fn [mode changing-list value-path event column column-editor-id]
     (config! (select (to-root event) [(convert-str-to-hashkey column-editor-id)])
              ;; Right space for column parameters
              :items [[(mig-panel ;; Editable parameters list
@@ -496,9 +498,8 @@
                                   (let [key-param (first column-parameter)]
                                     (list
                                      (label :text (str key-param)) ;; Parameter name
-                                     (table-editor--element--input changing-list (join-vec value-path [key-param]) (str (second column-parameter)))))) ;; Parameter value
-                                column)))]
-                     [(table-editor--element--btn-add-col-prop)]])))
+                                     (table-editor--element--input (= mode :dev-mode) changing-list (join-vec value-path [key-param]) (str (second column-parameter)))))) ;; Parameter value
+                                column)))]])))
 
 
 (def table-editor--element--btn-add-column
@@ -511,7 +512,7 @@
 
 (defn table-editor--component--column-picker
   "Create left table editor view to select column which will be editing on right table editor view"
-  [changing-list column-editor-id columns value-path]
+  [mode changing-list column-editor-id columns value-path]
   (mig-panel :constraints ["wrap 1" "0px[100:,fill]0px" "0px[fill]0px"]
              :items
              (join-mig-items
@@ -519,7 +520,7 @@
                      (let [value-path (join-vec value-path [index])]
                        (table-editor--component--column-picker-btn
                         (get-in column [:representation])
-                        (fn [event] (switch-column-to-editing changing-list value-path event column column-editor-id)))))
+                        (fn [event] (switch-column-to-editing mode changing-list value-path event column column-editor-id)))))
                    columns (range (count columns)))
               (table-editor--element--btn-add-column))))
 
@@ -598,8 +599,9 @@
 
 
 (def table-editor--element--checkbox
-  (fn [changing-list value-path value]
+  (fn [enable changing-list value-path value]
     (checkbox :selected? value
+              :enabled? enable
               :listen [:state-changed (fn [event] (track-changes-used-components changing-list value-path event :selected? value))])))
 
 
@@ -610,20 +612,20 @@
   (fn [table-property index] (label :text (str (first (nth (vec table-property) index))))))
 
 (def table-editor--element--table-parameter-value
-  (fn [changing-list table-property tab-value-path index txtsize]
+  (fn [mode changing-list table-property tab-value-path index txtsize]
     (let [param-name  (first  (nth (vec table-property) index))
           param-value (second (nth (vec table-property) index))
           value-path (join-vec tab-value-path [(keyword param-name)])]
       (cond
-        (string?  param-value) (table-editor--element--small-input changing-list value-path (str param-value))
-        (boolean? param-value) (table-editor--element--checkbox    changing-list value-path param-value)
+        (string?  param-value) (table-editor--element--small-input (= mode :dev-mode) changing-list value-path (str param-value))
+        (boolean? param-value) (table-editor--element--checkbox    (= mode :dev-mode) changing-list value-path param-value)
         :else (label :size txtsize :text (str param-value))))))
 
 (defn create-view--table-editor
   "Description:
      Create view for table editor. Marge all component to one big view.
    "
-  [atom--tables-configurations table-id]
+  [mode atom--tables-configurations table-id]
   (let [changing-list (atom {})
         table          (get-table-configuration-from-list-by-table-id atom--tables-configurations table-id)
         col-value-path [:prop :columns]
@@ -634,9 +636,12 @@
         elems          (join-vec
                     ;; Table info
                         [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"] ;; menu bar for editor
-                                     :items [[(table-editor--element--header-view (string/join "" [">_ Edit table: " (get-in table [:prop :table :frontend-name])]))]
-                                             [(table-editor--element--btn-save changing-list table-id)]
-                                             [(table-editor--element--btn-show-changes changing-list)]])]]
+                                     :items (join-mig-items
+                                             [(table-editor--element--header-view (string/join "" [">_ Edit table: " (get-in table [:prop :table :frontend-name])]))]
+                                             (cond (= mode :dev-mode) 
+                                                   (list [(table-editor--element--btn-save changing-list table-id)]
+                                                         [(table-editor--element--btn-show-changes changing-list)])
+                                                   :else [])))]]
                     ;; Table properties 
                         [[(table-editor--element--header "Table configuration")]]
                         [(vec (let [table-property-count (count table-property)
@@ -648,13 +653,13 @@
                                                   :border (line-border :left 4 :color "#ccc")
                                                   :constraints ["" "10px[100:]10px" "0px[fill]10px"]
                                                   :items [[(table-editor--element--table-parameter-name  table-property index)]
-                                                          [(table-editor--element--table-parameter-value changing-list table-property tab-value-path index txtsize)]])])))]))]
+                                                          [(table-editor--element--table-parameter-value mode changing-list table-property tab-value-path index txtsize)]])])))]))]
                     ;; Columns properties
                         [[(table-editor--element--header "Column configuration")]]
                         [[(let [column-editor-id "table-editor--component--space-for-column-editor"]
                             (mig-panel ;; Left and Right functional space
                              :constraints ["wrap 2" "0px[fill]0px" "0px[fill]0px"]
-                             :items [[(table-editor--component--column-picker changing-list column-editor-id columns col-value-path)] ;; Left part for columns to choose for doing changes.
+                             :items [[(table-editor--component--column-picker mode changing-list column-editor-id columns col-value-path)] ;; Left part for columns to choose for doing changes.
                                      [(table-editor--component--space-for-column-editor column-editor-id)] ;; Space for components. Using to editing columns.
                                      ]))]])
         view   (cond
@@ -711,10 +716,9 @@
                                                     :border (line-border :thickness 1 :color border-c)
                                                     :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
                                                     :items [[(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
-                                                                                                                (create-view--table-editor atom--tables-configurations table-id))))]
+                                                                                                                (create-view--table-editor @work-mode atom--tables-configurations table-id))))]
                                                             [(btn "Delete table" icon/basket-blue1-64-png (fn [e]))]
                                                             [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]]))))
-
 
 (defn table-visualizer--element--col-as-row
   "Description:
@@ -742,15 +746,18 @@
                                                     (cond
                                                       (= (get data :type) "header") (config! e :cursor :move))))
                            :mouse-clicked (fn [e]
-                                            (if (= (.getButton e) MouseEvent/BUTTON3)
-                                              (.add (get-in @views [:layered-for-tabs :component])
-                                                    (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
-                                                     dbmap ;; forward list of table configuration
-                                                     (get (config (getParent e) :user-data) :id) ;; Get table id
-                                                     (- (+ (.getX e) (.getX (config (getParent e) :bounds))) 15) ;; calculate popup position
-                                                     (- (+ (+ (.getY e) (.getY (config e :bounds))) (.getY (config (getParent e) :bounds))) 10))
-                                                    (new Integer 999) ;; z-index
-                                                    )))
+                                            (let [table-id (get (config (getParent e) :user-data) :id)]
+                                              (cond (= (.getButton e) MouseEvent/BUTTON3)
+                                                    (.add (get-in @views [:layered-for-tabs :component])
+                                                          (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
+                                                           dbmap ;; forward list of table configuration
+                                                           table-id ;; Get table id
+                                                           (- (+ (.getX e) (.getX (config (getParent e) :bounds))) 15) ;; calculate popup position
+                                                           (- (+ (+ (.getY e) (.getY (config e :bounds))) (.getY (config (getParent e) :bounds))) 10))
+                                                          (new Integer 999) ;; z-index
+                                                          )
+                                                    (= (.getClickCount e) 2) ;; Open table editor by duble click
+                                                    (create-view--table-editor @work-mode dbmap table-id))))
                            :mouse-dragged (fn [e]
                                             (do
                                               (if (= @last-x 0) (reset! last-x (.getX e)))
@@ -1243,9 +1250,17 @@
                      (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png 50) 0 50 "DB View" {:onclick (fn [e] (create-view--db-view))})
                      (slider-ico-btn (stool/image-scale icon/I-64-png 50) 1 50 "Powiadomienia" {:onclick (fn [e] (@alert-manager :show))})
                      (slider-ico-btn (stool/image-scale icon/alert-64-png 50) 2 50 "Popup" {:onclick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200]))})
-                     (slider-ico-btn (stool/image-scale icon/agree1-blue-64-png 50) 3 50 "Dialog" {:onclick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100]))))})
+                     (slider-ico-btn (stool/image-scale icon/agree-grey-64-png 50) 3 50 "Dialog" {:onclick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100]))))})
                      (slider-ico-btn (stool/image-scale icon/a-blue-64-png 50) 4 50 "alert" {:onclick (fn [e] (@alert-manager :set {:header "Witaj<br>World" :body "Alllle<br>Luja"} (message alert-manager) 5))})
                      (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png 50) 5 50 "Restart" {:onclick (fn [e] (@startup))})
+                     (slider-ico-btn (stool/image-scale icon/key-blue-64-png 50) 6 50 "Change work mode" {:onclick (fn [e] 
+                                                                                                                     (cond (= @work-mode :user-mode) 
+                                                                                                                           (do 
+                                                                                                                             (reset! work-mode :dev-mode)
+                                                                                                                             (@alert-manager :set {:header "Work mode" :body "Dev mode activated."} (message alert-manager) 5))
+                                                                                                                                 :else (do
+                                                                                                                                         (reset! work-mode :user-mode)
+                                                                                                                                         (@alert-manager :set {:header "Work mode" :body "Dev mode deactivated."} (message alert-manager) 5))))})
                      @atom-popup-hook))
       (reset! popup-menager (create-popup-service atom-popup-hook)))))
 
@@ -1299,4 +1314,3 @@
 ;; (@alert-manager :count-active)
 ;; (@alert-manager :count-hidden)
 ;; (@alert-manager :clear)
-;; 

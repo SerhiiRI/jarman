@@ -76,13 +76,13 @@
                       :else value))))))
 
 
-;; (def using-lang (get-in @configuration [:init.edn :value :lang :value]))
-;; (def all-langs  (fn [] (let [langs (vec (map (fn [lng] (first lng)) @language))] (filter #(not (= % using-lang)) langs))))
+(def using-lang (get-in @configuration [:init.edn :value :lang :value]))
 (def get-color  (create-value-getter (theme-map) true "#000" :color))
 (def get-frame  (create-value-getter (theme-map) true 1000 :frame))
 (def get-font   (create-value-getter (theme-map) true "Ubuntu" :font))
 (def get-lang   (create-value-getter @language false "Unknown" []))
 (def get-lang-btns (create-value-getter @language false "Unknown" :ui :buttons))
+(def get-lang-alerts (create-value-getter @language false "Unknown" :ui :alerts))
 
 ;; (get-color :jarman :bar)
 ;; (get-frame :width)

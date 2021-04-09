@@ -102,14 +102,16 @@
     :test-connection "Testuj połączenie"
     :save-and-reload "Zapisz i przeładuj"},
    :alerts
-   {:changes-saved "Zapisano zmiany!",
-    :save-changes? "Czy chcesz zapisać zmiany?",
+   {:changes-saved "Zapisano zmiany!"
+    :save-changes? "Czy chcesz zapisać zmiany?"
     :changes-saved-but-need-reload
-    "Zapisano zmiany! Będą one widoczne po restarcie aplikacji.",
-    :delete-element? "Czy napewno chcesz usunąć element?",
-    :testing-connection "Testowanie połączenia z bazą danych.",
-    :information "Informacja",
-    :write-enter-search "Wpisz frazę i kliknij - ENTER - by wyszukać w tabeli."},
+    "Zapisano zmiany! Będą one widoczne po restarcie aplikacji."
+    :delete-element? "Czy napewno chcesz usunąć element?"
+    :testing-connection "Testowanie połączenia z bazą danych."
+    :information "Informacja"
+    :write-enter-search "Wpisz frazę i kliknij - ENTER - by wyszukać w tabeli."
+    :unsaved-changes-title "Nie zapisano zmian!"
+    :unsaved-changes-body "Wprowadzono zmiany w konfiguracji, które nie zostały zapisane. Czy zamknąć okno mimo to?"},
    :basic
    {:description "Opis",
     :yes "Tak",
@@ -244,7 +246,10 @@
   :information "Information"
   :write-enter-search "Enter the phrase and click - Enter - to search in the table."
   :connected-to-database "Connected to database."
-  :connection-error "Failed connection with database."}
+  :connection-error "Failed connection with database."
+  :unsaved-changes-title "Unsaved changes!"
+  :unsaved-changes-body "Configuration changes have been made but not saved. Should I close the window anyway?"
+  }
  :basic
  {:description "Description"
   :yes "Yes"

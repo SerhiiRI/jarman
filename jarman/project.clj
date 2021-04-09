@@ -9,12 +9,12 @@
                  [com.velisco/clj-ftp "0.3.12"]
                  [org.clojure/java.jdbc "0.7.10"]
                  [me.raynes/fs "1.4.6"]
-                 [mysql/mysql-connector-java "5.1.6"]]
+                 [mysql/mysql-connector-java "5.1.6"]
+                 [instaparse "1.4.10"]]
   :main ^:skip-aot jarman.core
   :repl-options {:init-ns hrtime.core}
   :target-path "target/%s"
   :aliases  {"jarman" ["run" "-m" "jarman.jarman-cli"]}
-  
   :profiles {;; :uberjar {:aot :all}
              ;;:dev {;; :dependencies [[autodoc "1.1.2"]]
              ;;      :plugins [[funcool/codeina "0.4.0" :exclusions [org.clojure/clojure]]]}

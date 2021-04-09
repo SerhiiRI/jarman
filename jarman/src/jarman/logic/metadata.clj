@@ -39,29 +39,28 @@
 ;;
 ;;   Short meta description for table:
 ;;    :frontend-name - is name of table which was viewed by user. By default it equal to table name. 
-;;    :is-linker? - specifing table which created to bind other table with has N to N relations to other. (No editable UI)
-;;    :is-system? - mark this table as system table. (No editable UI) 
-;;    :allow-modifing? - if it false, program not allowe to extending or reducing column count. Only for UI. (No editable UI)
-;;    :allow-deleting? - if true, permit user to modify of column specyfication(adding, removing, changing type) (Hide UI)
-;;    :allow-linking? - if true, than GUI must give user posible way to adding relation this data table to other. (Hide UI)
+;;    :is-linker? - specifing table which created to bind other table with has N to N relations to other.
+;;    :is-system? - mark this table as system table.
+;;    :allow-modifing? - if it false, program not allowe to extending or reducing column count. Only for UI. 
+;;    :allow-modifing? - if true, permit user to modify of column specyfication(adding, removing, changing type)
+;;    :allow-linking? - if true, than GUI must give user posible way to adding relation this data table to other.
 ;;
 ;;   Short meta description for columns
 ;;    :field - database column name.
 ;;    :representation - name for end-user. By default equal to :field. 
 ;;    :description - some description information, used for UI.
-;;    :column-type - database type of column. (hide in UI)
-;;    :private? - true if column must be hided for user UI.  
-;;    :editable? - true if column editable 
+;;    :column-type - database type of column.
+;;    :private? - true if column must be hided for user UI. 
+;;    :editable? - true if column editable
 ;;    :component-type - influed by column-type key, contain one of symbol ("d" "t" "dt" "n" "b" "a"
-;;    "i" nil), which describe some hint to representation information by UI: 
-;;          "d" - date ["d" "dt" "i"]
-;;          "t" - time ["t" "i"]
-;;          "dt" - date and time ["dt" "d" "i"]
-;;          "n" - simple number ["n" "i"]
-;;          "b" - mean boolean type of data ["n" "i" "b"]
-;;          "a" - big text block ["a" "i"]
-;;          "i" - short text input ["i"]
-;;          "l" - linking type ["i"]
+;;    "i" nil), which describe some hint to representation information by UI:
+;;          "d" - date
+;;          "t" - time
+;;          "dt" - date and time
+;;          "n" - simple number
+;;          "b" - mean boolean type of data
+;;          "a" - big text block
+;;          "i" - short text input
 ;;          nil - no hint, but not must be viewed, only not specified.
 ;;
 ;;  UI FAQ
@@ -137,13 +136,13 @@
       ;;=> false
     
   See related:
-    (`jarman.logic.metadata/allowed-rules`)"
+    (`jarman.logic.metadata/allowed-rules`)" 
   [rule-spec col]
   (let [rule-spec (if (string? rule-spec) [rule-spec] rule-spec)
         f-comp (fn [p] (condp = (.indexOf (seq p) \*)
-                         (dec (count p)) #(not= (butlast p) (take (dec (count p)) (string/lower-case %)))
-                         0               #(not= (drop 1 p) (take-last (dec (count p)) (string/lower-case %)))
-                         #(not= p %)))
+                        (dec (count p)) #(not= (butlast p) (take (dec (count p)) (string/lower-case %))) 
+                        0               #(not= (drop 1 p) (take-last (dec (count p)) (string/lower-case %)))
+                        #(not= p %)))
         preds (map f-comp rule-spec)]
     (if (string? col) (reduce (fn [a p?] (and a (p? col))) true preds)
         (filter (fn [s] (reduce (fn [a p?] (and a (p? s))) true preds)) col))))
@@ -177,9 +176,9 @@
   [rule-spec col]
   (let [rule-spec (if (string? rule-spec) [rule-spec] rule-spec)
         f-comp (fn [p] (condp = (.indexOf (seq p) \*)
-                         (dec (count p)) #(= (butlast p) (take (dec (count p)) (string/lower-case %)))
-                         0               #(= (drop 1 p) (take-last (dec (count p)) (string/lower-case %)))
-                         #(= p %)))
+                        (dec (count p)) #(= (butlast p) (take (dec (count p)) (string/lower-case %))) 
+                        0               #(= (drop 1 p) (take-last (dec (count p)) (string/lower-case %)))
+                        #(= p %)))
         preds (map f-comp rule-spec)]
     (if (string? col) (reduce (fn [a p?] (or a (p? col))) false preds)
         (filter (fn [s] (reduce (fn [a p?] (or a (p? s))) false preds)) col))))
@@ -187,7 +186,7 @@
 (defn- is-id-col? [col-name]
   (let [col (string/lower-case col-name)]
     (or (= col "id")
-        (= (take 2 col) '(\i \d)))))
+       (= (take 2 col) '(\i \d)))))
 
 (defn- is-not-id-col? [col-name]
   (not (is-id-col? col-name)))
@@ -221,7 +220,6 @@
             "json"]       ["a"] ;; a - mean area, text area
            "varchar"      ["i"] ;; i - mean simple text input
            nil)))))
-
 
 (defn- get-table-meta
   "Description:
@@ -263,11 +261,77 @@
 (defn- key-referense [k-column]
   (re-matches #"id_(.*)" (name k-column)))
 
-(defn- get-table-field-meta [column-field-spec]
+(defn- create-column-type-meta [column-type]
+ (let [meta-type (ssql-type-parser (:type column-type))
+       meta-default
+       (cond
+         (= "YES" (:null column-type))
+         [:default :null]
+         (and (= "NO" (:null column-type)) (some? (:default column-type)))
+         [:nnull :default (:default column-type)]
+         (= "NO" (:null column-type))
+         [:nnull])]
+   (vec (concat meta-type meta-default))))
+
+(defn- create-on-delete-on-update-action
+  "Description
+    Return SSQL on-update/-delete structure 
+
+  Example
+    (create-on-delete-on-update-action \" ON DELETE CASCADE ON UPDATE CASCADE\")
+     ;; => {:delete :cascade :update :cascade}
+    (create-on-delete-on-update-action \"ON DELETEdasf SET NULL\")
+     ;; => nil"
+  [line]
+  (let [action-to (fn [x] (case x "DELETE" :delete "UPDATE" :update))
+        mode-to   (fn [x] (case x "CASCADE" :cascade "RESTRICT" :restrict "SET NULL" :null "NO ACTION" :no-action "SET DEFAULT" :default))]
+    (let [on-u-d
+          (filter some?
+                  (for [pattern (rest (clojure.string/split line #"\s*ON\s*"))]
+                    (if-let [[_ action prop] (re-find #"(DELETE|UPDATE)\s+(CASCADE|SET NULL|NO ACTION|RESTRICT|SET DEFAULT)" pattern)]
+                      [(action-to action) (mode-to prop)])))]
+      (if-not (empty? on-u-d) [(into {} on-u-d)]))))
+
+(defn parse-constrants [s]
+ (if-let [[_ column-name related-table actions]
+          (re-matches #"CONSTRAINT\s`[\w_]*`\sFOREIGN\sKEY\s\(`([\w_]*)`\)\sREFERENCES\s`([\w_]*)`\s\(`[\w_]+`\)(.+)?" s)]
+   (if actions
+     {column-name (vec (concat [{(keyword column-name) (keyword related-table)}] (create-on-delete-on-update-action actions)))}
+     {column-name (vector {(keyword column-name) (keyword related-table)})})))
+
+(defn- get-meta-constrants [table]
+  (let [table (name table)]
+    (let [a (-> (jdbc/query sql-connection (format "show create table %s" table))
+                first seq second second (clojure.string/split #"\n"))]
+      (if-let [c (->> a (map string/trim) (filter #(string/starts-with? % "CONSTRAINT")) first)]
+        (parse-constrants c)))))
+
+(defn- get-meta-constrants [table]
+  (let [table (name table)
+        ;; In return map from sql server we get something
+        ;; like {.. :create table "Create ..}, where 
+        ;; ':create table' is key with !SPACE!, and you cannot
+        ;; get this in simple way, then do 'create table' from
+        ;; string convertation. In clojure level is really may sense
+        create-table-sql-accesor (comp (keyword "create table") first)
+        sql-create-table
+        (-> (jdbc/query sql-connection (format "show create table %s" table))
+            (create-table-sql-accesor)
+            (string/split #"\n"))]
+    (->> sql-create-table
+         (map string/trim)
+         (filter #(string/starts-with? % "CONSTRAINT"))
+         (map parse-constrants)
+         (reduce into))))
+
+(defn- get-table-field-meta [foreign-keys column-field-spec]
+  (println foreign-keys (:field column-field-spec))
   (let [tfield (:field column-field-spec)
-        ttype (:type column-field-spec)
+        ttype (create-column-type-meta column-field-spec)
         set_key (fn [m] (if-let [[_ table] (re-matches #"id_(.*)" tfield)]
-                          (assoc m :key-table table) m))
+                         (assoc m :key-table table) m))
+        set_foreign-keys (fn [m] (if-let [f-key (get foreign-keys tfield nil)]
+                                  (assoc m :foreign-keys f-key) m))
         in?   (fn [col x] (if (string? col) (= x col) (some #(= % x) col)))]
     (-> {:field tfield
          :representation tfield
@@ -276,15 +340,54 @@
          :column-type ttype
          :private? false
          :editable? true}
-        set_key)))
+        set_key
+        set_foreign-keys)))
+
+;;  :column-type [:bigint-120-unsigned :nnull]
+;;  :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}]
+;;  :component-type ["l"]
+;;  :representation "id_permission"
+;;  :key-table "permission"}
+
+;; [{:description nil
+;;   :private? false :editable? true
+;;   :field "id_point_of_sale_group"
+;;   :column-type [:bigint-20-unsigned :default :null]
+;;   :foreign-keys [{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade, :update :cascade}]
+;;   :component-type ["l"]
+;;   :representation "id_point_of_sale_group"
+;;   :key-table "point_of_sale_group"}
+;;  {:description nil
+;;   :private? false
+;;   :editable? true
+;;   :field "id_point_of_sale"
+;;   :column-type [:bigint-20-unsigned :default :null]
+;;   :foreign-keys [{:id_point_of_sale :point_of_sale}]
+;;   :component-type ["l"]
+;;   :representation "id_point_of_sale" :key-table "point_of_sale"}]
+
+;; (create-table :user
+;;               :columns [{:login [:varchar-100 :nnull]}
+;;                         {:password [:varchar-100 :nnull]}
+;;                         {:first_name [:varchar-100 :nnull]}
+;;                         {:last_name [:varchar-100 :nnull]}
+;;                         {:id_permission [:bigint-120-unsigned :nnull]}]
+;;               :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}])
+;; (def point_of_sale_group_links
+;;   (create-table :point_of_sale_group_links
+;;                 :columns [{:id_point_of_sale_group [:bigint-20-unsigned :default :null]}
+;;                           {:id_point_of_sale [:bigint-20-unsigned :default :null]}]
+;;                 :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
+;;                                [{:id_point_of_sale :point_of_sale}]]))
 
 (defn- get-meta [table-name]
-  {:id nil
-   :table table-name
-   :prop (str {:table (get-table-meta table-name)
-               :columns (vec (map get-table-field-meta
-                                  (filter #(not= "id" (:field %))
-                                          (jdbc/query sql-connection (show-table-columns table-name)))))})})
+  (let [all-columns  (jdbc/query sql-connection (show-table-columns table-name))
+        all-constrants (get-meta-constrants table-name)
+        not-id-columns (filter #(not= "id" (:field %)) all-columns)]
+   {:id nil
+    :table table-name
+    :prop (str {:table (get-table-meta table-name)
+                :columns (vec (map (partial get-table-field-meta all-constrants) not-id-columns))})}))
 
 (defn- ^clojure.lang.PersistentList update-sql-by-id-template
   ([table m]
@@ -293,14 +396,12 @@
      (insert table :values (vals m)))))
 
 (defn show-tables []
-  (not-allowed-rules ["metatable" "meta*"] (map (comp second first) (jdbc/query sql-connection "SHOW TABLES"))))
+  (not-allowed-rules ["metatable" "meta*"] (map (comp second first) (jdbc/query sql-connection "SHOW TABLES" ))))
 
 (defn do-create-meta []
-  (for [table (not-allowed-rules ["metatable" "meta*"] (map (comp second first) (jdbc/query sql-connection "SHOW TABLES")))]
+  (for [table (not-allowed-rules ["metatable" "meta*"] (map (comp second first) (jdbc/query sql-connection "SHOW TABLES" )))]
     (let [meta (jdbc/query sql-connection (select :METADATA :where (= :table table)))]
       (if (empty? meta) (jdbc/execute! sql-connection (update-sql-by-id-template "METADATA" (get-meta table)))))))
-
-;; (do-create-meta)
 
 (defn do-clear-meta [& body]
   {:pre [(every? string? body)]}
@@ -308,37 +409,44 @@
 
 (defn getset
   "get metadate deserialized information for specified tables.
-  
-  Example 
-   (getset \"user\") ;=> [{:id 1 :table...}...]"
-  [& tables]
-  (map (fn [meta] (clojure.core/update meta :prop read-string))
-       (jdbc/query sql-connection
-                   (if-not (empty? tables)
-                     (let [tables-eq (concat ['or] (map (fn [x] ['= :table (name x)]) tables))]
-                       (eval (change-expression '(select :METADATA) :where tables-eq)))
-                     (select :METADATA)))))
+        
+        Example 
+        (getset \"user\") ;=> [{:id 1 :table...}...]"
+        [& tables]
+        (map (fn [meta] (clojure.core/update meta :prop read-string))
+             (jdbc/query sql-connection
+                         (if-not (empty? tables) 
+                           (let [tables-eq (concat ['or] (map (fn [x] ['= :table (name x)]) tables))]
+                             (eval (change-expression '(select :METADATA) :where tables-eq)))
+                           (select :METADATA)))))
+
+(defn create-table-by-meta [metadata]
+  (let [smpl-fields (filter (comp (partial not-allowed-rules ["meta*"]) :field) ((comp :columns :prop) metadata))
+        idfl-fields (filter (comp (partial allowed-rules "id_*") :field) ((comp :columns :prop) metadata))]
+    (create-table {:table-name (keyword (:table metadata))
+                   :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
+                   :foreign-keys (vec (map :foreign-keys idfl-fields))})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; TABLE-MAP VALIDATOR ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def valid-output-lang
-  {:eng {:value-not-exit-in-table "Value not exist in table-map"
-         :value-not-valid-on-p "Value '%s' not valid by predicate '%s'"
-         :value-not-valid-on-eq "Value '%s' not valid on '%s' equalization pattern"
-         :value-not-in-allow-list "Value '%s' not from allowed list '%s'"
-         :value-not-valid-on-re "Value '%s' not valid on regexp '%s' pattern"}
-   :pl {:value-not-exit-in-table "Warto�� nie istanieje w tabeli"
-        :value-not-valid-on-p "Value '%s' not valid by predicate '%s'"
-        :value-not-valid-on-eq "Value '%s' not valid on '%s' equalization pattern"
-        :value-not-in-allow-list "Value '%s' not from allowed list '%s'"
-        :value-not-valid-on-re "Value '%s' not valid on regexp '%s' pattern"}
-   :ua {:value-not-exit-in-table "Value not exist in table-map"
-        :value-not-valid-on-p "Value '%s' not valid by predicate '%s'"
-        :value-not-valid-on-eq "Value '%s' not valid on '%s' equalization pattern"
-        :value-not-in-allow-list "Value '%s' not from allowed list '%s'"
-        :value-not-valid-on-re "Value '%s' not valid on regexp '%s' pattern"}})
+  {:eng{:value-not-exit-in-table "Value not exist in table-map"
+       :value-not-valid-on-p "Value '%s' not valid by predicate '%s'"
+       :value-not-valid-on-eq "Value '%s' not valid on '%s' equalization pattern"
+       :value-not-in-allow-list "Value '%s' not from allowed list '%s'" 
+       :value-not-valid-on-re "Value '%s' not valid on regexp '%s' pattern"}
+  :pl{:value-not-exit-in-table "Warto�� nie istanieje w tabeli"
+      :value-not-valid-on-p "Value '%s' not valid by predicate '%s'"
+      :value-not-valid-on-eq "Value '%s' not valid on '%s' equalization pattern"
+      :value-not-in-allow-list "Value '%s' not from allowed list '%s'" 
+      :value-not-valid-on-re "Value '%s' not valid on regexp '%s' pattern"}
+  :ua{:value-not-exit-in-table "Value not exist in table-map"
+      :value-not-valid-on-p "Value '%s' not valid by predicate '%s'"
+      :value-not-valid-on-eq "Value '%s' not valid on '%s' equalization pattern"
+      :value-not-in-allow-list "Value '%s' not from allowed list '%s'" 
+      :value-not-valid-on-re "Value '%s' not valid on regexp '%s' pattern"}})
 
 (def valid-output (:eng valid-output-lang))
 (def ^:dynamic not-valid-string-f
@@ -359,7 +467,7 @@
           (>>= x# ~@f-list)))))
 (defmacro ^{:private true} isset? [m key-path & [key-path-preview]]
   `(if (nil? (get-in ~m [~@key-path] nil))
-     (do (not-valid-string-f {:path (vec (if ~key-path-preview ~key-path-preview ~key-path))
+     (do (not-valid-string-f {:path (vec (if ~key-path-preview ~key-path-preview ~key-path)) 
                               :message (format "Value not exist in table-map")}) false)
      true))
 (defmacro ^{:private true} fpattern? [f-pattern msg m key-path & [key-path-preview]]
@@ -371,15 +479,15 @@
   `(let [value# (get-in ~m [~@key-path] nil)
          path# (if ~key-path-preview ~key-path-preview ~key-path)]
      (if (nil? value#) false
-         (if (= value# ~match) true
-             (do (not-valid-string-f
-                  {:path path# :message (format "Value '%s' not valid on '%s' equalization pattern"  (str value#) (str ~match))}) false)))))
+       (if (= value# ~match) true
+           (do (not-valid-string-f
+                {:path path# :message (format "Value '%s' not valid on '%s' equalization pattern"  (str value#) (str ~match))}) false)))))
 (defmacro ^{:private true} inpattern? [match-list m key-path & [key-path-preview]]
   `(let [value# (get-in ~m [~@key-path] nil)
          path# (if ~key-path-preview ~key-path-preview ~key-path)]
      (if (nil? value#) false
-         (if (in? [~@match-list] value#) true
-             (do (not-valid-string-f {:path path# :message (format "Value '%s' not from allowed list '%s'"  (str value#) (str [~@match-list]))}) false)))))
+       (if (in? [~@match-list] value#) true
+           (do (not-valid-string-f {:path path# :message (format "Value '%s' not from allowed list '%s'"  (str value#) (str [~@match-list]))}) false)))))
 (defmacro ^{:private true} repattern? [re m key-path & [key-path-preview]]
   `(let [value# (get-in ~m [~@key-path] nil)
          path# (if ~key-path-preview ~key-path-preview ~key-path)]
@@ -395,20 +503,20 @@
 
 (defn- verify-table-metadata [m]
   (do-and
-   (isset? m [:table])
-   (isset? m [:prop :table :frontend-name])
-   (isset? m [:prop :table :is-system?])
-   (isset? m [:prop :table :is-linker?])
-   (isset? m [:prop :table :allow-modifing?])
-   (isset? m [:prop :table :allow-deleting?])
-   (isset? m [:prop :table :allow-linking?])
-   (repattern? #"^[a-z_]{3,}$" m [:table])
-   (repattern? #"^[\w\d\s]+$" m [:prop :table :frontend-name])
-   (inpattern? [true false] m [:prop :table :is-system?])
-   (inpattern? [true false] m [:prop :table :is-linker?])
-   (inpattern? [true false] m [:prop :table :allow-modifing?])
-   (inpattern? [true false] m [:prop :table :allow-deleting?])
-   (inpattern? [true false] m [:prop :table :allow-linking?])))
+    (isset? m [:table])
+    (isset? m [:prop :table :frontend-name])
+    (isset? m [:prop :table :is-system?])
+    (isset? m [:prop :table :is-linker?])
+    (isset? m [:prop :table :allow-modifing?])
+    (isset? m [:prop :table :allow-deleting?])
+    (isset? m [:prop :table :allow-linking?])
+    (repattern? #"^[a-z_]{3,}$" m [:table])
+    (repattern? #"^[\w\d\s]+$" m [:prop :table :frontend-name])
+    (inpattern? [true false] m [:prop :table :is-system?])
+    (inpattern? [true false] m [:prop :table :is-linker?])
+    (inpattern? [true false] m [:prop :table :allow-modifing?])
+    (inpattern? [true false] m [:prop :table :allow-deleting?])
+    (inpattern? [true false] m [:prop :table :allow-linking?])))
 
 (defn- verify-column-metadata [p m]
   (do-and
@@ -454,9 +562,9 @@
 (defn- create-validator [validator]
   (fn [m-subject]
     (let [string-buffer (atom [])]
-      (binding [not-valid-string-f #(swap! string-buffer (fn [buffer] (conj buffer %)))]
-        (let [valid? (validator m-subject)
-              output @string-buffer] {:valid? valid? :output output})))))
+     (binding [not-valid-string-f #(swap! string-buffer (fn[buffer] (conj buffer %)))]
+       (let [valid? (validator m-subject)
+             output @string-buffer] {:valid? valid? :output output})))))
 
 (def validate-all
   "Description
@@ -595,8 +703,8 @@
 (do
   (defn adiff-table [original changed]
     (let [key-replace (fn [p] (partial (fn [p m1 m2] (println "replace key " p  " from " (get-in m1 p) " to " (get-in m2 p))
-                                         (assoc-in m1 p (get-in m2 p "<Error name>"))) p))
-          f-comparator (fn [p m1 m2] (get-apply = p m1 m2))]
+                                  (assoc-in m1 p (get-in m2 p "<Error name>"))) p))
+          f-comparator (fn [p m1 m2] (get-apply = p m1 m2)) ]
       (vec (reduce (fn [acc p] (if (get-apply (comp not =) p original changed) (conj acc (key-replace p)) acc))
                    []
                    [;; [:id]
@@ -621,30 +729,30 @@
 
 (do
   (defn- find-difference-columns
-    "DONT EVEN TRY TO UNDERSTAND!
+  "DONT EVEN TRY TO UNDERSTAND!
   differ algorythm for comparison two list of metatable column-repr
   (find-difference-columns
      [{:field 10} {:field 20} {:field 4} {:field 5} {:field 6} {:field 7} {:field 8} {:field 9}]
      [{:field 10} {:field 20} {:field 4}            {:field 6} {:field 7} {:field 8} {:field 9} {:field 111}])
        ;=> {:maybe-changed [{:field 10} {:field 20} {:field 4} {:field 6} {:field 7} {:field 8} {:field 9}], :must-create [{:field 111}], :must-delete [{:field 5}]} "
-    [original changed]
-    (let [criterion-field :field
-          do-diff
-          (fn [original changed]
-            (let [[old-elements new-elements] [(ref []) (ref [])]]
-              (doseq [changed-elm changed]
-                (if-let [id_ce (criterion-field changed-elm)]
-                  (if-let [old-elm (first (filter (fn [org-elm] (= id_ce (criterion-field org-elm))) original))]
-                    (dosync (commute old-elements #(conj % old-elm)))
-                    (dosync (commute new-elements #(conj % changed-elm))))
-                  (dosync (commute new-elements #(conj % changed-elm)))))
-              [@old-elements @new-elements]))]
-      (let [;; [old new] (doto (do-diff original changed) println)
-            [old new] (do-diff original changed)
-            [old del] (do-diff old original)]
-        {:maybe-changed old
-         :must-create new
-         :must-delete del})))
+  [original changed]
+  (let [criterion-field :field
+        do-diff
+        (fn [original changed]
+          (let [[old-elements new-elements] [(ref [])(ref [])]]
+            (doseq [changed-elm changed]
+              (if-let [id_ce (criterion-field changed-elm)]
+                (if-let [old-elm (first (filter (fn [org-elm] (= id_ce (criterion-field org-elm))) original))]
+                  (dosync (commute old-elements #(conj % old-elm)))
+                  (dosync (commute new-elements #(conj % changed-elm))))
+                (dosync (commute new-elements #(conj % changed-elm)))))
+            [@old-elements @new-elements]))]    
+    (let [;; [old new] (doto (do-diff original changed) println)
+          [old new] (do-diff original changed)
+          [old del] (do-diff old original)]
+      {:maybe-changed old
+       :must-create new
+       :must-delete del})))
   (defn column-resolver [original changed]
     (let [original-changed-field (map (comp :columns :prop) [original changed])]
       (apply find-difference-columns original-changed-field)))
@@ -681,11 +789,11 @@
   (let [;; function `map-k-eq` compare elements in map by keys, and return only maps of differ pairs of `map-l`
         ;; For example:
         ;; (map-k-eq {:a 1 :b 2} {:a 3 :b 2}) => {:a 3}
-        m (letfn [(map-k-eq [m-key & map-l] (fn [f] (apply f (reduce #(conj %1 (get %2 m-key)) [] map-l))))]
-            (reduce (fn [m-acc c-key] (if ((map-k-eq c-key original changed) =) m-acc
-                                          (into m-acc {c-key (get changed c-key)}))) {} (keys changed)))]
+        m (letfn [(map-k-eq [m-key & map-l] (fn [f] (apply f(reduce #(conj %1 (get %2 m-key))[]map-l))))]
+            (reduce (fn[m-acc c-key] (if((map-k-eq c-key original changed) =) m-acc
+                                       (into m-acc {c-key (get changed c-key)}))) {} (keys changed)))]
     (let [key-replace (fn [p] (fn [p1 p2] (fn [m1 m2] (println "replace key " (vec (concat p1 p)) " from " (get-in m1 (vec (concat p1 p))) " to " (get-in m2 (vec (concat p2 p))))
-                                            (assoc-in m1 (vec (concat p1 p)) (get-in m2 (vec (concat p2 p)) "<Error name>")))))]
+                                          (assoc-in m1 (vec (concat p1 p)) (get-in m2 (vec (concat p2 p)) "<Error name>")))))]
       (((fn [f] (f f))
         (fn [f]
           (fn [[head-map tail-map]]
@@ -697,7 +805,7 @@
                                        :private?       (key-replace [:private?])
                                        :editable?      (key-replace [:editable?])
                                        nil)]
-                (if-not tail-map [n] (concat [n] ((f f) (map-destruct tail-map))))))))) (map-destruct m)))))
+                   (if-not tail-map [n] (concat [n] ((f f) (map-destruct tail-map))))))))) (map-destruct m)))))
 ;; do not apply it to apply-f-table, it works only with `changed-fields`
 ;; (f-diff-prop-columns-fields
 ;;  {:field "id_permission", :representation "id_permission",
@@ -710,43 +818,43 @@
 ;;   :editnable? true, :key-table "permission"})
 
 
-(def user-original {:id 30
-                    :table "user"
+(def user-original {:id 30,
+                    :table "user",
                     :prop {:table {:frontend-name "user"
                                    :is-system? false :is-linker? false
                                    :allow-modifing? true :allow-deleting? true
                                    :allow-linking? true}
-                           :columns [{:field "login", :representation "login", :description nil, :component-type "i"
+                           :columns [{:field "login", :representation "login", :description nil, :component-type "i",
                                       :column-type "varchar(100)", :private? false, :editable? true}
-                                     {:field "password", :representation "password", :description nil, :component-type "i"
+                                     {:field "password", :representation "password", :description nil, :component-type "i",
                                       :column-type "varchar(100)", :private? false, :editable? true}
-                                     {:field "first_name", :representation "first_name", :description nil
+                                     {:field "first_name", :representation "first_name", :description nil,
                                       :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-                                     {:field "last_name", :representation "last_name", :description nil
+                                     {:field "last_name", :representation "last_name", :description nil,
                                       :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-                                     {:field "id_permission", :representation "id_permission", :description nil
+                                     {:field "id_permission", :representation "id_permission", :description nil,
                                       :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]}})
 ;; :allow-modifing? true
 ;; :frontend-name "Użytkownik"
 ;; :add field "age"
 ;; :delete "first_name
-(def user-changed {:id 30
-                   :table "user"
+(def user-changed {:id 30,
+                   :table "user",
                    :prop {:table {:frontend-name "U�ytkownik"
                                   :is-system? false :is-linker? false
                                   :allow-modifing? false :allow-deleting? true
                                   :allow-linking? true}
-                          :columns [{:field "login", :representation "Logowanie", :description "Logowanie pole", :component-type "i"
+                          :columns [{:field "login", :representation "Logowanie", :description "Logowanie pole", :component-type "i",
                                      :column-type "varchar(100)", :private? false, :editable? true}
-                                    {:field "password", :representation "Haslo", :description nil, :component-type "i"
+                                    {:field "password", :representation "Haslo", :description nil, :component-type "i",
                                      :column-type "varchar(100)", :private? false, :editable? true}
                                     ;; {:field "first_name", :representation "Drugie imie", :description nil,
                                     ;;  :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-                                    {:field "last_name", :representation "last_name", :description nil
+                                    {:field "last_name", :representation "last_name", :description nil,
                                      :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-                                    {:field "age", :representation "Wiek", :description nil
+                                    {:field "age", :representation "Wiek", :description nil,
                                      :component-type "i", :column-type "number", :private? false, :editable? true}
-                                    {:field "id_permission", :representation "id_permission", :description nil
+                                    {:field "id_permission", :representation "id_permission", :description nil,
                                      :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]}})
 
 (do
@@ -782,7 +890,7 @@
     (let [fx ((comp :columns :prop) original)
           yx ((comp :columns :prop) changed)]
       (apply concat (for [[yi y] (map-indexed vector yx)]
-                      (let [[fi f] (find-column #(= (:field (second %)) (:field y)) (map-indexed vector fx))]
+                      (let [[fi f] (find-column #(= (:field (second %))(:field y)) (map-indexed vector fx))]
                         (map #(% [:prop :columns fi] [:prop :columns yi]) (f-diff-prop-columns-fields f y)))))))
   ;; (apply-f-diff
   ;;  (change-fields user-original user-changed)
@@ -792,29 +900,31 @@
 
 
 (do
-  (defn apply-table [original changed]
-    (let [fxmap-changes (atom {})
-          f-table-changes (adiff-table original changed)
-          {column-changed :maybe-changed
-           column-created :must-create
-           column-deleted :must-delete} (column-resolver original changed)]
+ (defn apply-table [original changed]
+   (let [fxmap-changes (atom {})
+         f-table-changes (adiff-table original changed)
+         {column-changed :maybe-changed
+          column-created :must-create
+          column-deleted :must-delete} (column-resolver original changed)]
      ;;; `TODO` delete this debug fileds
-      (println (apply str "   Actions:"))
-      (do (if (not-empty f-table-changes) (println "\ttable chnaged: " (count f-table-changes)))
-          (if (not-empty column-deleted) (println "\tcolumn deleted: " (count (delete-fields original column-deleted)))) ;;1
-          (if (not-empty column-created) (println "\tcolumn created: " (count (create-fields original column-created)))) ;;1 
-          (if (not-empty column-changed) (println "\tcolumn changed: " (count (change-fields original changed)))))
+     (println (apply str "   Actions:"))
+     (do (if (not-empty f-table-changes) (println "\ttable chnaged: " (count f-table-changes)))
+         (if (not-empty column-deleted) (println "\tcolumn deleted: " (count (delete-fields original column-deleted)))) ;;1
+         (if (not-empty column-created) (println "\tcolumn created: " (count (create-fields original column-created)))) ;;1 
+         (if (not-empty column-changed) (println "\tcolumn changed: " (count (change-fields original changed)))))
      ;; (do (if (not-empty f-table-changes) (swap! fxmap-changes #(assoc % :table (count f-table-changes))))
      ;;     (if (not-empty column-deleted) (swap! fxmap-changes #(assoc % :column-deleted (count (delete-fields original column-deleted)))))
      ;;     (if (not-empty column-created) (swap! fxmap-changes #(assoc % :column-created (count (create-fields original column-created)))))
      ;;     (if (not-empty column-changed) (swap! fxmap-changes #(assoc % :column-changed (count (change-fields original changed))))))
+     
+     (do (if (not-empty f-table-changes) (swap! fxmap-changes #(assoc % :table f-table-changes)))
+         (if (not-empty column-deleted) (swap! fxmap-changes #(assoc % :column-deleted (delete-fields original column-deleted))))
+         (if (not-empty column-created) (swap! fxmap-changes #(assoc % :column-created (create-fields original column-created))))
+         (if (not-empty column-changed) (swap! fxmap-changes #(assoc % :column-changed (change-fields original changed)))))
+     @fxmap-changes))
+ (apply-table user-original user-changed))
 
-      (do (if (not-empty f-table-changes) (swap! fxmap-changes #(assoc % :table f-table-changes)))
-          (if (not-empty column-deleted) (swap! fxmap-changes #(assoc % :column-deleted (delete-fields original column-deleted))))
-          (if (not-empty column-created) (swap! fxmap-changes #(assoc % :column-created (create-fields original column-created))))
-          (if (not-empty column-changed) (swap! fxmap-changes #(assoc % :column-changed (change-fields original changed)))))
-      @fxmap-changes))
-  (apply-table user-original user-changed))
+
 
 ;;; `TODO` persist do database in metadata tabel.
 ;;; `TODO` persist do database in metadata tabel.
@@ -827,7 +937,9 @@
     Function apply lazy fxmap-changes argument as list of SQL applicative functors.
 
   Example:
-    (do-changes (apply-table original-table changed-table) original-table changed-table)
+    (do-changes
+      (apply-table original-table changed-table)
+      original-table changed-table)
 
   Arguments:
   `fxmap-changes` - special map, generated function `apply-table`
@@ -856,83 +968,10 @@
                    ;; apply changes only on [one-of keywords-list stages
                    (vec (filter #(some (fn [kwd] (= kwd %)) keywords)
                                 [:table :column-changed :column-deleted :column-created])))]
-    (if-not (empty? keywords)
+    (if-not (empty? keywords) 
       (reduce #(apply-f-diff (get fxmap-changes %2 nil) %1 changed) original [:table :column-changed :column-deleted :column-created])
       (do (println "Chanages not being applied, empty keywords list")
           original))))
-
-
-
-
-;;;;;;;;;;;;;;;;;;;;;
-;;; DEBUG SECTION ;;;
-;;;;;;;;;;;;;;;;;;;;;
-
-(do
-  (do-change
-   (apply-table user-original user-changed)
-   user-original user-changed)
-  nil)
-
-;; (do
-;;   (println (format "\n--- CHANGE %s --- " (gensym "LOG_")))
-;;   (let [uo {:id 30, :table "user",
-;;             :prop {:table {:frontend-name "user", :is-system? false, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :allow-linking? true},
-;;                    :columns [{:field "login", :representation "login", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;                              {:field "password", :representation "password", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;                              {:field "first_name", :representation "first_name", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;                              {:field "last_name", :representation "last_name", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;                              {:field "id_permission", :representation "id_permission", :description nil, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]}}
-;;         uc {:id 30, :table "user",
-;;             :prop {:table {:frontend-name "U�ytkownik", :is-system? false, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :allow-linking? false},
-;;                    :columns [;; {:field "login", :representation "login", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;                              {:field "SUKA", :representation "login", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;                              {:field "password", :representation "PASSWORD", :description nil, :component-type "D", :column-type "varchar(100)", :private? false, :editable? true}
-;;                              {:field "first_name", :representation "first_name", :description nil, :component-type "i", :column-type "MUSTNOT BE CHANGED", :private? false, :editable? true}
-;;                              {:field "last_name", :representation "last_name", :description nil, :component-type "i", :column-type "varchar(100)", :private? true, :editable? true}
-;;                              {:field "id_permission", :representation "id_permission", :description nil, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]}}]
-;;     (do-change
-;;      (apply-table uo uc)
-;;      uo uc)))
-
-
-(let [t
-      (first (getset "point_of_sale_group" ))]
-  (let [smpl-fields (filter (comp (partial not-allowed-rules ["meta*"]) :field) ((comp :columns :prop) t))
-        ;; meta-fields (filter (comp (partial allowed-rules "meta*") :field) ((comp :columns :prop) t))
-        idfl-fields (filter (comp (partial allowed-rules "id_*") :field) ((comp :columns :prop) t))]
-    (create-table {:table-name (keyword (:table t))
-                   :columns (vec (map (fn [sf] {(keyword (:field sf)) (ssql-type-parser (:column-type sf))}) smpl-fields))
-                   :foreign-keys (vec (map (fn [idf] [{(keyword (:field idf)) (keyword (:key-table idf))} {:update :null :delete :null}]) idfl-fields))})))
-
-;; (create-table {:table-name :point_of_sale
-;;                :columns [{:id_enterpreneur [:bigint-20-unsigned :default :null]}
-;;                          {:name [:varchar-100 :default :null]}
-;;                          {:physical_address  [:varchar-100 :default :null]}
-;;                          {:telefons  [:varchar-100 :default :null]}]
-;;                :foreign-keys [{:id_enterpreneur :enterpreneur} {:update :cascade}]})
-
-;; (create-table :table
-;;               :columns [{:name [:varchar-100 :null]} {:some-int :integer-200} {:id_other_table :bigint-20}]
-;;               :foreign-keys [{:id_other_table :other_table} {:update :cascade, :delete :null}]
-;;               :table-config {:engine "InnoDB", :charset "utf8"})
-
-;; (create-table :some
-;;               :columns [{"TEST_NAME"  [:varchar-100 :default :null]}]
-;;               :foreign-keys [{:id_enterpreneur :enterpreneur} {:update :cascade}])
-
-;; (create-table :some
-;;               :columns [{"TEST_NAME"  [:varchar-100 :default :null]}]
-;;               :foreign-keys ["id_enterpreneur" {:update :cascade}])
-
-(defn create-table-from-meta [original]
-  (let [smpl-fields (filter (comp (partial not-allowed-rules ["meta*"]) :field) ((comp :columns :prop) original))
-        ;; meta-fields (filter (comp (partial allowed-rules "meta*") :field) ((comp :columns :prop) t))
-        idfl-fields (filter (comp (partial allowed-rules "id_*") :field) ((comp :columns :prop) original))]
-    (create-table {:table-name (keyword (:table original))
-                   :columns (vec (map (fn [sf] {(keyword (:field sf)) (ssql-type-parser (:column-type sf))}) smpl-fields))
-                   :foreign-keys (vec (map (fn [idf] [{(keyword (:field idf)) (keyword (:key-table idf))} {:update :null :delete :null}]) idfl-fields))})))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; METADATA BACKUP ;;;
@@ -940,7 +979,6 @@
 
 (def ^:private backup-name "metadata")
 (def ^:private backup-file-name (format "%s.edn" backup-name))
-(def ^:private backup-file-date-format )
 ;; (defn- backup-keep-10-last-modified
 ;;   "Remove 10 last modified backup files, when new backups being created"[]
 ;;   (let [max-bkp 10 l-files (storage/user-metadata-list) c-files (count l-files)]

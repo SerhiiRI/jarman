@@ -392,7 +392,6 @@
         [in-deep-key-path (atom [])
          in-deep-key-path-f (fn [path] (swap! in-deep-key-path (fn [path-list] (conj path-list path ))))]))
 
-
 (defn deep-merge-with
   "Like merge-with, but merges maps recursively, applying the given fn
   only when there's a non-map at a particular level.

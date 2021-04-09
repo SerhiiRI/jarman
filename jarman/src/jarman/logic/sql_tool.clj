@@ -186,21 +186,32 @@
                         (cond (keyword? first-value) join-vector-keyword-string
                               (string? first-value) join-vector-string-string))))
 
+;; (defmacro define-joinrule [rule-name]
+;;   (let [rule-array (string/split (str rule-name) #"\-")  rule-lenght (- (count rule-array) 1)
+;;         rule-keyword (keyword (string/join "-"(take rule-lenght rule-array)))
+;;         rule-string (string/join " " (map string/upper-case (take rule-lenght rule-array)))]
+;;     `(defmacro ~rule-name [~'current-string ~'joins-form ~'table-name]
+;;        (if-not (symbol? ~'joins-form)
+;;          (if-let [join-function# (get-function-by-join-type ~'joins-form)]
+;;            (if (and (seqable? ~'joins-form) (not (string? ~'joins-form)))
+;;              `(str ~~'current-string " " (string/join " " (map (fn [~'s#] (str ~~rule-string " " (~join-function# (name ~~'table-name) ~'s#))) ~~'joins-form)))
+;;              `(str ~~'current-string " " ~~rule-string " " (~join-function# (name ~~'table-name) ~~'joins-form))))
+;;          `(if-let [~'join-function# (get-function-by-join-type ~~'joins-form)]
+;;             (if (and (seqable? ~~'joins-form) (not (string? ~~'joins-form)))
+;;               (str ~~'current-string " " (string/join " " (map (fn [~'s#] (str ~~rule-string " " (~'join-function# (name ~~'table-name) ~'s#))) ~~'joins-form)))
+;;               (str ~~'current-string " " ~~rule-string " " (~'join-function# (name ~~'table-name) ~~'joins-form))))))))
+
 (defmacro define-joinrule [rule-name]
   (let [rule-array (string/split (str rule-name) #"\-")  rule-lenght (- (count rule-array) 1)
         rule-keyword (keyword (string/join "-"(take rule-lenght rule-array)))
         rule-string (string/join " " (map string/upper-case (take rule-lenght rule-array)))]
-    `(defmacro ~rule-name [~'current-string ~'joins-form ~'table-name]
-       (if-not (symbol? ~'joins-form)
-         (if-let [join-function# (get-function-by-join-type ~'joins-form)]
-           (if (and (seqable? ~'joins-form) (not (string? ~'joins-form)))
-             `(str ~~'current-string " " (string/join " " (map (fn [~'s#] (str ~~rule-string " " (~join-function# (name ~~'table-name) ~'s#))) ~~'joins-form)))
-             `(str ~~'current-string " " ~~rule-string " " (~join-function# (name ~~'table-name) ~~'joins-form))))
-         `(if-let [~'join-function# (get-function-by-join-type ~~'joins-form)]
-            (if (and (seqable? ~~'joins-form) (not (string? ~~'joins-form)))
-              (str ~~'current-string " " (string/join " " (map (fn [~'s#] (str ~~rule-string " " (~'join-function# (name ~~'table-name) ~'s#))) ~~'joins-form)))
-              (str ~~'current-string " " ~~rule-string " " (~'join-function# (name ~~'table-name) ~~'joins-form))))))))
-
+    `(defn ~rule-name [~'current-string ~'joins-form ~'table-name]
+       (if-let [join-function# (get-function-by-join-type ~'joins-form)]
+         (if (and (seqable? ~'joins-form) (not (string? ~'joins-form)))
+           (str ~'current-string " " (string/join " " (map (fn [s#] (str ~rule-string " " (join-function# (name ~'table-name) s#))) ~'joins-form)))
+           (str ~'current-string " " ~rule-string " " (join-function# (name ~'table-name) ~'joins-form)))))))
+;; (let [d {:CREDENTIAL :is_user_metadata :METADATA :id_user_metadata}]
+;;   (inner-join-string "" d "fdsj"))
 
 (define-joinrule inner-join-string)
 (define-joinrule left-join-string)
@@ -208,31 +219,71 @@
 (define-joinrule outer-right-join-string)
 (define-joinrule outer-left-join-string)
 
-(defmacro top-string [current-string top-number table-name]
-  `(if (number? ~top-number)(str ~current-string " TOP " ~top-number)
-       (str ~current-string)))
+;; (defmacro top-string [current-string top-number table-name]
+;;   `(if (number? ~top-number)(str ~current-string " TOP " ~top-number)
+;;        (str ~current-string)))
+(defn top-string [current-string top-number table-name]
+  (if (number? top-number)(str current-string " TOP " top-number)
+       (str current-string)))
 
-(defmacro count-string
+;; (defmacro count-string
+;;   "Example of using rule 
+;;     :count {:distinct :column}
+;;     :count :*
+;;     :count :column
+;;   Result is {:count <number>}"
+;;   [current-string count-rule table-name]
+;;   `(cond
+;;      (keyword? ~count-rule) (str ~current-string (format " COUNT(%s) as count FROM %s" (name ~count-rule) (name ~table-name)))
+;;      (map?     ~count-rule) (str ~current-string (if (:distinct ~count-rule)
+;;                                                    (format " COUNT(DISTINCT %s) as count FROM %s" (name (:distinct ~count-rule)) (name ~table-name))))
+;;      :else (str ~current-string)))
+(defn count-string
   "Example of using rule 
     :count {:distinct :column}
     :count :*
     :count :column
   Result is {:count <number>}"
   [current-string count-rule table-name]
-  `(cond
-     (keyword? ~count-rule) (str ~current-string (format " COUNT(%s) as count FROM %s" (name ~count-rule) (name ~table-name)))
-     (map?     ~count-rule) (str ~current-string (if (:distinct ~count-rule)
-                                                   (format " COUNT(DISTINCT %s) as count FROM %s" (name (:distinct ~count-rule)) (name ~table-name))))
-     :else (str ~current-string)))
+  (cond
+    (keyword? count-rule)
+    (str current-string (format " COUNT(%s) as count FROM %s" (name count-rule) (name table-name)))
+    
+    (map?     count-rule)
+    (str current-string (if (:distinct count-rule)
+                          (format " COUNT(DISTINCT %s) as count FROM %s" (name (:distinct count-rule)) (name table-name))))
+    
+     :else (str current-string)))
 
-(defmacro limit-string [current-string limit-number table-name]
-  `(cond
-     (number? ~limit-number) (str ~current-string " LIMIT " ~limit-number)
-     (and (not (string? ~limit-number)) (seqable? ~limit-number) (let [[~'f ~'s]~limit-number] (and (number? ~'f) (number? ~'s))))
-     (str ~current-string " LIMIT " (string/join "," ~limit-number))
-     :else (str ~current-string)))
 
-(defmacro column-string [current-string col-vec table-name]
+
+;; (defmacro limit-string [current-string limit-number table-name]
+;;   `(cond
+;;      (number? ~limit-number) (str ~current-string " LIMIT " ~limit-number)
+;;      (and (not (string? ~limit-number)) (seqable? ~limit-number) (let [[~'f ~'s]~limit-number] (and (number? ~'f) (number? ~'s))))
+;;      (str ~current-string " LIMIT " (string/join "," ~limit-number))
+;;      :else (str ~current-string)))
+(defn limit-string [current-string limit-number table-name]
+  (cond
+     (number? limit-number) (str current-string " LIMIT " limit-number)
+     (and (not (string? limit-number)) (seqable? limit-number) (let [[f s]limit-number] (and (number? f) (number? s))))
+     (str current-string " LIMIT " (string/join "," limit-number))
+     :else (str current-string)))
+
+;; (defmacro column-string [current-string col-vec table-name]
+;;   (let [f (fn [c]
+;;            (cond 
+;;              (keyword? c) (str (symbol c))
+;;              (string? c) c
+;;              (and (vector? c) (= (count c) 2))
+;;              (let [[x y] (map #(str (symbol %)) c)]
+;;                              (format "%s AS %s" x y))
+;;              (map? c) (let [[x y] (map #(str (symbol %)) (first (vec c)))]
+;;                         (format "%s AS %s" x y))
+;;              :else nil))]
+;;     `(str ~current-string " "
+;;           (string/join ", " (map ~f ~col-vec)) " FROM " (name ~table-name))))
+(defn column-string [current-string col-vec table-name]
   (let [f (fn [c]
            (cond 
              (keyword? c) (str (symbol c))
@@ -243,21 +294,32 @@
              (map? c) (let [[x y] (map #(str (symbol %)) (first (vec c)))]
                         (format "%s AS %s" x y))
              :else nil))]
-    `(str ~current-string " "
-          (string/join ", " (map ~f ~col-vec)) " FROM " (name ~table-name))))
+    (str current-string " "
+          (string/join ", " (map f col-vec)) " FROM " (name table-name))))
 
 
-(defmacro empty-select-string [current-string _ table-name]
-  `(str ~current-string " * FROM " (name ~table-name)))
+;; (defmacro empty-select-string [current-string _ table-name]
+;;   `(str ~current-string " * FROM " (name ~table-name)))
+(defn empty-select-string [current-string _ table-name]
+  (str current-string " * FROM " (name table-name)))
 
-(defmacro order-string [current-string args table-name]
+(defn order-string [current-string args table-name]
   (if (vector? args)
-    `(let [[~'col ~'asc-desc] ~args]
-       (if (and (not-empty (name ~'col)) (some #(= ~'asc-desc %) [:asc :desc]))
-         ;; (string/join " " [~current-string "ORDER BY" (name ~'col)
-         (string/join " " [~current-string "ORDER BY" (format "`%s`"(name ~'col)) (string/upper-case (name ~'asc-desc))])
-         ~current-string))
+    (let [[col asc-desc] args]
+       (if (and (not-empty (name col)) (some #(= asc-desc %) [:asc :desc]))
+         ;; (string/join " " [current-string "ORDER BY" (name col)
+         (string/join " " [current-string "ORDER BY" (format "`%s`"(name col)) (string/upper-case (name asc-desc))])
+         current-string))
     current-string))
+
+;; (defmacro order-string [current-string args table-name]
+;;   (if (vector? args)
+;;     `(let [[~'col ~'asc-desc] ~args]
+;;        (if (and (not-empty (name ~'col)) (some #(= ~'asc-desc %) [:asc :desc]))
+;;          ;; (string/join " " [~current-string "ORDER BY" (name ~'col)
+;;          (string/join " " [~current-string "ORDER BY" (format "`%s`"(name ~'col)) (string/upper-case (name ~'asc-desc))])
+;;          ~current-string))
+;;     current-string))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -336,44 +398,74 @@
 ;;; set preprocessor ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmacro set-string [current-string update-map tabel-name]
-  `(str ~current-string " "
-        (symbol ~tabel-name)
+(defn set-string [current-string update-map tabel-name]
+  (str current-string " "
+        (symbol tabel-name)
         " SET "
-        (string/join ", " (map #(apply pair-where-pattern %)  ~update-map))))
+        (string/join ", " (map #(apply pair-where-pattern %)  update-map))))
 
-(defmacro update-table-string [current-string map table-name]
-  `(str ~current-string "" ~table-name))
+(defn update-table-string [current-string map table-name]
+  (str current-string "" table-name))
 
-(defmacro low-priority-string [current-string map table-name]
-  `(str ~current-string " LOW_PRIORITY"))
+(defn low-priority-string [current-string map table-name]
+  (str current-string " LOW_PRIORITY"))
 
-(defmacro from-string [current-string map table-name]
-  `(str ~current-string " " (symbol ~table-name) ))
+(defn from-string [current-string map table-name]
+  (str current-string " " (symbol table-name) ))
+
+;; (defmacro set-string [current-string update-map tabel-name]
+;;   `(str ~current-string " "
+;;         (symbol ~tabel-name)
+;;         " SET "
+;;         (string/join ", " (map #(apply pair-where-pattern %)  ~update-map))))
+
+;; (defmacro update-table-string [current-string map table-name]
+;;   `(str ~current-string "" ~table-name))
+
+;; (defmacro low-priority-string [current-string map table-name]
+;;   `(str ~current-string " LOW_PRIORITY"))
+
+;; (defmacro from-string [current-string map table-name]
+;;   `(str ~current-string " " (symbol ~table-name) ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; values preprocessor ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmacro values-string [current-string values table-name]
+;; (defmacro values-string [current-string values table-name]
+;;   (let [into-sql-values (fn [some-list]
+;;                           (str "(" (string/join ", " (map #(eval `(where-procedure-parser ~%)) some-list)) ")"))
+;;         into-sql-map (fn [some-list]
+;;                        (str "(" (string/join ", " (map #(eval `(where-procedure-parser ~%)) (vals some-list))) ")"))]
+;;     `(str ~current-string " " (name ~table-name)
+;;           (cond (map? ~values)
+;;                 (str " SET " (string/join ", " (map #(apply pair-where-pattern %) ~values)))
+;;                 (and (seqable? ~values) (map? (first ~values)))
+;;                 (str " VALUES " (string/join ", " (map ~into-sql-map ~values)))
+;;                 (and (seqable? ~values) (seqable? (first ~values)) (not (string? (first ~values))) (not (nil? (first ~values))))
+;;                 (str " VALUES " (string/join ", " (map ~into-sql-values ~values)))
+;;                 (seqable? ~values)
+;;                 (str " VALUES " (~into-sql-values ~values))
+;;                 :else nil))))
+
+(defn values-string [current-string values table-name]
   (let [into-sql-values (fn [some-list]
-                          (str "(" (string/join ", " (map #(eval `(where-procedure-parser ~%)) some-list)) ")"))
+                          (str "(" (string/join ", " (map #(eval (where-procedure-parser %)) some-list)) ")"))
         into-sql-map (fn [some-list]
-                       (str "(" (string/join ", " (map #(eval `(where-procedure-parser ~%)) (vals some-list))) ")"))]
-    `(str ~current-string " " (name ~table-name)
-          (cond (map? ~values)
-                (str " SET " (string/join ", " (map #(apply pair-where-pattern %) ~values)))
-
-                (and (seqable? ~values) (map? (first ~values)))
-                (str " VALUES " (string/join ", " (map ~into-sql-map ~values)))
-
-                (and (seqable? ~values) (seqable? (first ~values)) (not (string? (first ~values))) (not (nil? (first ~values))))
-                (str " VALUES " (string/join ", " (map ~into-sql-values ~values)))
-
-                (seqable? ~values)
-                (str " VALUES " (~into-sql-values ~values))
-
+                       (str "(" (string/join ", " (map #(eval (where-procedure-parser %)) (vals some-list))) ")"))]
+    (str current-string " " (name table-name)
+          (cond (map? values)
+                (str " SET " (string/join ", " (map #(apply pair-where-pattern %) values)))
+                (and (seqable? values) (map? (first values)))
+                (str " VALUES " (string/join ", " (map into-sql-map values)))
+                (and (seqable? values) (seqable? (first values)) (not (string? (first values))) (not (nil? (first values))))
+                (str " VALUES " (string/join ", " (map into-sql-values values)))
+                (seqable? values)
+                (str " VALUES " (into-sql-values values))
                 :else nil))))
+
+;; (let [kw {:id 1, :str1_c "vasia", :str2_c "123", :num_c 20}]
+;;   (insert :user :values kw))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -482,22 +574,57 @@
                                                                   (if-not (empty? x) (str " " x))))
           :else "")))
 
-(defmacro default-table-config-string [current-string _ table-name]
-  `(str ~current-string ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"))
+;; (defmacro default-table-config-string [current-string _ table-name]
+;;   `(str ~current-string ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"))
 
-(defmacro table-config-string
+(defn default-table-config-string [current-string _ table-name]
+  (str current-string ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"))
+
+;; (defmacro table-config-string
+;;   "Get configuration map with next keys parameters
+;;   :engine - table engine(defautl: InnoDB)
+;;   :charset - charset for table(default: utf8)
+;;   :collate - table collate(default: utf8_general_ci)"
+;;   [current-string conifig-map table-name]
+;;   `(let [{:keys [~'engine ~'charset ~'collate] :or {~'engine "InnoDB"
+;;                                                     ~'charset "utf8"
+;;                                                     ~'collate "utf8_general_ci"}} ~conifig-map]
+;;      (str ~current-string (format ") ENGINE=%s DEFAULT CHARSET=%s COLLATE=%s;" ~'engine ~'charset ~'collate ))))
+
+(defn table-config-string
   "Get configuration map with next keys parameters
   :engine - table engine(defautl: InnoDB)
   :charset - charset for table(default: utf8)
   :collate - table collate(default: utf8_general_ci)"
   [current-string conifig-map table-name]
-  `(let [{:keys [~'engine ~'charset ~'collate] :or {~'engine "InnoDB"
-                                                    ~'charset "utf8"
-                                                    ~'collate "utf8_general_ci"}} ~conifig-map]
-     (str ~current-string (format ") ENGINE=%s DEFAULT CHARSET=%s COLLATE=%s;" ~'engine ~'charset ~'collate ))))
+  (let [{:keys [engine charset collate]
+         :or {engine "InnoDB"
+              charset "utf8"
+              collate "utf8_general_ci"}} conifig-map]
+     (str current-string (format ") ENGINE=%s DEFAULT CHARSET=%s COLLATE=%s;" engine charset collate))))
 
+;; (let [a [{:fuck [:bigint-20 "NOT NULL" :auto]}]]
+;;   (columns-string "" a "dafs"))
+;; (columns-string "" [{:fuck [:bigint-20 "NOT NULL" :auto]}] "dafs")
+;; (defmacro columns-string
+;;   "create columns with type data specyfications.
+;;   Example using for `column-spec` argument:
+  
+;;   \"`id` BIGINT(150) NOT NULL AUTO_INCREMENT\"
+;;   {:fuck [:bigint-20 \"NOT NULL\" :auto]}  
+;;   [{:blia [:bigint-20 \"NOT NULL\" :auto]} {:suka [:varchar-210]}]
+;;   [{:id :bigint-100} {:suka \"TINYTEXT\"}]"
+;;   [current-string column-spec table-name]
+;;   `(str ~current-string (format " `%s` (" ~table-name)
+;;         (string/join ", " [(create-column {:id [:bigint-20-unsigned :nnull :auto]}) 
+;;                            (let [cls# ~column-spec]
+;;                              (cond (string? cls#) cls# 
+;;                                    (map? cls#) (create-column cls#)
+;;                                    (vector? cls#) (string/join ", " (map #(create-column %) cls#))
+;;                                    :else nil)) 
+;;                            "PRIMARY KEY (`id`)"])))
 
-(defmacro columns-string
+(defn columns-string
   "create columns with type data specyfications.
   Example using for `column-spec` argument:
   
@@ -506,12 +633,12 @@
   [{:blia [:bigint-20 \"NOT NULL\" :auto]} {:suka [:varchar-210]}]
   [{:id :bigint-100} {:suka \"TINYTEXT\"}]"
   [current-string column-spec table-name]
-  `(str ~current-string (format " `%s` (" ~table-name)
+  (str current-string (format " `%s` (" table-name)
         (string/join ", " [(create-column {:id [:bigint-20-unsigned :nnull :auto]}) 
-                           (let [cls# ~column-spec]
-                             (cond (string? cls#) cls# 
-                                   (map? cls#) (create-column cls#)
-                                   (vector? cls#) (string/join ", " (map #(create-column %) cls#))
+                           (let [cls column-spec]
+                             (cond (string? cls) cls 
+                                   (map? cls) (create-column cls)
+                                   (vector? cls) (string/join ", " (map #(create-column %) cls))
                                    :else nil)) 
                            "PRIMARY KEY (`id`)"])))
 
@@ -597,8 +724,7 @@
             )))))
 
 
-
-(defmacro foreign-keys-string
+(defn foreign-keys-string
   "Description
     Function get specyfication in `foreign-keys` argument and regurn linked foreighn key for two table.
 
@@ -611,48 +737,118 @@
     (foreign-keys-string \"\" [\"id_table\"] \"\")"
   [current-string foreign-keys table-name]
   (cond
-    (string? foreign-keys) `(str ~current-string ", " ~foreign-keys)
-    (and (vector? foreign-keys) (map? (first foreign-keys))) `(str ~current-string ", " (apply constraint-create ~table-name ~foreign-keys))
-    (and (vector? foreign-keys) (vector? (first foreign-keys))) `(str ~current-string ", " (string/join ", " (map #(apply constraint-create ~table-name %) ~foreign-keys)))
-    (and (vector? foreign-keys) (string? (first foreign-keys))) `(str ~current-string ", " (apply constraint-create ~table-name ~foreign-keys))
-    (and (vector? foreign-keys) (keyword? (first foreign-keys))) `(str ~current-string ", " (apply constraint-create ~table-name ~foreign-keys))
+    (string? foreign-keys)
+    (str current-string ", " foreign-keys)
+    
+    (and (vector? foreign-keys) (map? (first foreign-keys)))
+    (str current-string ", " (apply constraint-create table-name foreign-keys))
+    
+    (and (vector? foreign-keys) (vector? (first foreign-keys)))
+    (str current-string ", " (string/join ", " (map #(apply constraint-create table-name %) foreign-keys)))
+    
+    (and (vector? foreign-keys) (string? (first foreign-keys)))
+    (str current-string ", " (apply constraint-create table-name foreign-keys))
+    
+    (and (vector? foreign-keys) (keyword? (first foreign-keys)))
+    (str current-string ", " (apply constraint-create table-name foreign-keys))
+    
     :else current-string))
+
+;; (defmacro foreign-keys-string
+;;   "Description
+;;     Function get specyfication in `foreign-keys` argument and regurn linked foreighn key for two table.
+
+;;   Examples
+;;     (foreign-keys-string \"\" [{:table :id_suka} {:update :cascade :delete :restrict}] \"\")
+;;     (foreign-keys-string \"\" [{:table :id_suka} {:update :cascade}] \"\")
+;;     (foreign-keys-string \"\" [:id_table {:update :cascade}] \"\")
+;;     (foreign-keys-string \"\" [:table {:update :cascade}] \"\")
+;;     (foreign-keys-string \"\" [\"table\"] \"\")
+;;     (foreign-keys-string \"\" [\"id_table\"] \"\")"
+;;   [current-string foreign-keys table-name]
+;;   (let [foreign-keys `~foreign-keys]
+;;    (cond
+;;      (string? foreign-keys)
+;;      `(str ~current-string ", " ~foreign-keys)
+    
+;;      (and (vector? foreign-keys) (map? (first foreign-keys)))
+;;      `(str ~current-string ", " (apply constraint-create ~table-name ~foreign-keys))
+    
+;;      (and (vector? foreign-keys) (vector? (first foreign-keys)))
+;;      `(str ~current-string ", " (string/join ", " (map #(apply constraint-create ~table-name %) ~foreign-keys)))
+    
+;;      (and (vector? foreign-keys) (string? (first foreign-keys)))
+;;      `(str ~current-string ", " (apply constraint-create ~table-name ~foreign-keys))
+    
+;;      (and (vector? foreign-keys) (keyword? (first foreign-keys)))
+;;      `(str ~current-string ", " (apply constraint-create ~table-name ~foreign-keys))
+    
+;;      :else current-string)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; alter-table functions ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmacro drop-foreign-key-string
+;; (defmacro drop-foreign-key-string
+;;   "Do drop column from table. Using in `alter table`:
+;;   :drop-foreign-key :KEY_name"
+;;   [current-string column-specyfication table-name]
+;;   `(str ~current-string (format " `%s` DROP FOREIGN KEY %s;" ~table-name (name ~column-specyfication ))))
+
+;; (defmacro drop-column-string
+;;   "Do drop column from table. Using in `alter table`:
+;;   :drop-column :name"
+;;   [current-string column-specyfication table-name]
+;;   `(str ~current-string (format " `%s` DROP COLUMN `%s`;" ~table-name (name ~column-specyfication ))))
+
+;; (defmacro add-foreign-key-string
+;;   "Add foreign key to table to table. Using in `alter table`:
+;;   [{:id_permission :permission} {:update :cascade :delete :restrict}]"
+;;   [current-string column-specyfication table-name]
+;;   `(str ~current-string (format " `%s` ADD %s;" ~table-name (apply alter-table-constraint-create ~table-name ~column-specyfication))))
+
+;; (defmacro add-column-string
+;;   "Add column to table. Using in `alter table`:
+;;   :add-column {:suka [:bigint-20 \"NOT NULL\"]}"
+;;   [current-string column-specyfication table-name]
+;;   `(str ~current-string (format " `%s` ADD %s;" ~table-name (create-column ~column-specyfication))))
+
+;; (defmacro modify-column-string
+;;   "Modify column type to field. Using in `alter table`:
+;;   :modify {:suka [:bigint-20 \"NOT NULL\"]}"
+;;   [current-string column-specyfication table-name]
+;;   `(str ~current-string (format " `%s` modify %s;" ~table-name (create-column ~column-specyfication))))
+
+
+(defn drop-foreign-key-string
   "Do drop column from table. Using in `alter table`:
   :drop-foreign-key :KEY_name"
   [current-string column-specyfication table-name]
-  `(str ~current-string (format " `%s` DROP FOREIGN KEY %s;" ~table-name (name ~column-specyfication ))))
+  (str current-string (format " `%s` DROP FOREIGN KEY %s;" table-name (name column-specyfication ))))
 
-(defmacro drop-column-string
+(defn drop-column-string
   "Do drop column from table. Using in `alter table`:
   :drop-column :name"
   [current-string column-specyfication table-name]
-  `(str ~current-string (format " `%s` DROP COLUMN `%s`;" ~table-name (name ~column-specyfication ))))
+  (str current-string (format " `%s` DROP COLUMN `%s`;" table-name (name column-specyfication ))))
 
-(defmacro add-foreign-key-string
+(defn add-foreign-key-string
   "Add foreign key to table to table. Using in `alter table`:
   [{:id_permission :permission} {:update :cascade :delete :restrict}]"
   [current-string column-specyfication table-name]
-  `(str ~current-string (format " `%s` ADD %s;" ~table-name (apply alter-table-constraint-create ~table-name ~column-specyfication))))
+  (str current-string (format " `%s` ADD %s;" table-name (apply alter-table-constraint-create table-name column-specyfication))))
 
-(defmacro add-column-string
+(defn add-column-string
   "Add column to table. Using in `alter table`:
   :add-column {:suka [:bigint-20 \"NOT NULL\"]}"
   [current-string column-specyfication table-name]
-  `(str ~current-string (format " `%s` ADD %s;" ~table-name (create-column ~column-specyfication))))
+  (str current-string (format " `%s` ADD %s;" table-name (create-column column-specyfication))))
 
-(defmacro modify-column-string
+(defn modify-column-string
   "Modify column type to field. Using in `alter table`:
   :modify {:suka [:bigint-20 \"NOT NULL\"]}"
   [current-string column-specyfication table-name]
-  `(str ~current-string (format " `%s` modify %s;" ~table-name (create-column ~column-specyfication))))
-
-
+  (str current-string (format " `%s` modify %s;" table-name (create-column column-specyfication))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; pipeline helpers ;;;
@@ -1018,7 +1214,7 @@
    `(defmacro ~operation-name
       ;; in this line i generate documentation from function by name `<operation-name>-doc`.
       ;; look above
-      ~((resolve (symbol (str "jarman.logic.sql-tool" "/" operation-name "-doc"))))
+      ;; ~((resolve (symbol (str "jarman.logic.sql-tool" "/" operation-name "-doc"))))
       [~'table-name & {:as ~'args}]
       (let [~'args (if (map? ~'table-name) (dissoc ~'table-name :table-name) ~'args) 
             ~'table-name (if (map? ~'table-name) (:table-name ~'table-name) ~'table-name) 

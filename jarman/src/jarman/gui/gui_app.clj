@@ -1291,8 +1291,46 @@
                                       (reset! popup-menager (create-popup-service atom-popup-hook))
                                       (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
-;; (@startup)
+(@startup)
 
+
+(def get-cell-xy 
+  (fn [e table]
+    [(.rowAtPoint table (.getPoint e)) 
+     (.columnAtPoint table (.getPoint e))]))
+
+(def tab1 (atom (table
+                 :model [:columns [:name :lname]
+                         :rows    [["Name" "Lname"] ["Jan" "Kowalski"]]]
+                 :background "#2ac"
+                 :listen [:mouse-clicked (fn [e] (println (get-cell-xy e @tab1)))]
+                 )))
+(def table-test 
+ (fn []
+   (build
+    :title "Mr. Jarman Sheet"
+    :undecorated? false
+    :size [800 600]
+    :items (list (mig-panel
+                  :bounds [0 0 500 300]
+                  :constraints ["wrap 1" "[grow, center]" "[grow, center]"]
+                  :border (empty-border :thickness 10)
+                  :items (join-mig-items
+                          (label :text "Tabelki")
+                          @tab1))))))
+
+;; (table-test)
+
+;; (seesaw.table/insert-at! @tab1 1 ["Apple" "Pie"])
+;; (seesaw.table/remove-at! @tab1 1)
+
+;; (show-options (table))
+
+;; ┌───────────────┐
+;; │               │
+;; │  Login lobby  │
+;; │               │
+;; └───────────────┘
 
 (def simple-button
   (fn [txt func]
@@ -1306,7 +1344,7 @@
      :border (compound-border (empty-border :bottom 10 :top 10)
                               (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
 
-(def startup-login-panel
+(def startup-login-lobby
   (fn []
     (build
      :undecorated? true
@@ -1327,7 +1365,7 @@
                                               (text)
                                               (simple-button "Log in" (fn [e] (@startup))))))))))) 
 
-(startup-login-panel)
+;; (startup-login-lobby)
 
 ;; C:\\Aleks\\Github\\jarman\\jarman\\resources\\imgs\\jarman.png
 ;; (def action-on-JLP-children

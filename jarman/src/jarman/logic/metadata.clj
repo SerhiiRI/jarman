@@ -260,11 +260,77 @@
 (defn- key-referense [k-column]
   (re-matches #"id_(.*)" (name k-column)))
 
-(defn- get-table-field-meta [column-field-spec]
+(defn- create-column-type-meta [column-type]
+ (let [meta-type (ssql-type-parser (:type column-type))
+       meta-default
+       (cond
+         (= "YES" (:null column-type))
+         [:default :null]
+         (and (= "NO" (:null column-type)) (some? (:default column-type)))
+         [:nnull :default (:default column-type)]
+         (= "NO" (:null column-type))
+         [:nnull])]
+   (vec (concat meta-type meta-default))))
+
+(defn- create-on-delete-on-update-action
+  "Description
+    Return SSQL on-update/-delete structure 
+
+  Example
+    (create-on-delete-on-update-action \" ON DELETE CASCADE ON UPDATE CASCADE\")
+     ;; => {:delete :cascade :update :cascade}
+    (create-on-delete-on-update-action \"ON DELETEdasf SET NULL\")
+     ;; => nil"
+  [line]
+  (let [action-to (fn [x] (case x "DELETE" :delete "UPDATE" :update))
+        mode-to   (fn [x] (case x "CASCADE" :cascade "RESTRICT" :restrict "SET NULL" :null "NO ACTION" :no-action "SET DEFAULT" :default))]
+    (let [on-u-d
+          (filter some?
+                  (for [pattern (rest (clojure.string/split line #"\s*ON\s*"))]
+                    (if-let [[_ action prop] (re-find #"(DELETE|UPDATE)\s+(CASCADE|SET NULL|NO ACTION|RESTRICT|SET DEFAULT)" pattern)]
+                      [(action-to action) (mode-to prop)])))]
+      (if-not (empty? on-u-d) [(into {} on-u-d)]))))
+
+(defn parse-constrants [s]
+ (if-let [[_ column-name related-table actions]
+          (re-matches #"CONSTRAINT\s`[\w_]*`\sFOREIGN\sKEY\s\(`([\w_]*)`\)\sREFERENCES\s`([\w_]*)`\s\(`[\w_]+`\)(.+)?" s)]
+   (if actions
+     {column-name (vec (concat [{(keyword column-name) (keyword related-table)}] (create-on-delete-on-update-action actions)))}
+     {column-name (vector {(keyword column-name) (keyword related-table)})})))
+
+(defn- get-meta-constrants [table]
+  (let [table (name table)]
+    (let [a (-> (jdbc/query sql-connection (format "show create table %s" table))
+                first seq second second (clojure.string/split #"\n"))]
+      (if-let [c (->> a (map string/trim) (filter #(string/starts-with? % "CONSTRAINT")) first)]
+        (parse-constrants c)))))
+
+(defn- get-meta-constrants [table]
+  (let [table (name table)
+        ;; In return map from sql server we get something
+        ;; like {.. :create table "Create ..}, where 
+        ;; ':create table' is key with !SPACE!, and you cannot
+        ;; get this in simple way, then do 'create table' from
+        ;; string convertation. In clojure level is really may sense
+        create-table-sql-accesor (comp (keyword "create table") first)
+        sql-create-table
+        (-> (jdbc/query sql-connection (format "show create table %s" table))
+            (create-table-sql-accesor)
+            (string/split #"\n"))]
+    (->> sql-create-table
+         (map string/trim)
+         (filter #(string/starts-with? % "CONSTRAINT"))
+         (map parse-constrants)
+         (reduce into))))
+
+(defn- get-table-field-meta [foreign-keys column-field-spec]
+  (println foreign-keys (:field column-field-spec))
   (let [tfield (:field column-field-spec)
-        ttype (:type column-field-spec)
+        ttype (create-column-type-meta column-field-spec)
         set_key (fn [m] (if-let [[_ table] (re-matches #"id_(.*)" tfield)]
-                          (assoc m :key-table table) m))
+                         (assoc m :key-table table) m))
+        set_foreign-keys (fn [m] (if-let [f-key (get foreign-keys tfield nil)]
+                                  (assoc m :foreign-keys f-key) m))
         in?   (fn [col x] (if (string? col) (= x col) (some #(= % x) col)))]
     (-> {:field tfield
          :representation tfield
@@ -273,15 +339,54 @@
          :column-type ttype
          :private? false
          :editable? true}
-        set_key)))
+        set_key
+        set_foreign-keys)))
+
+;;  :column-type [:bigint-120-unsigned :nnull]
+;;  :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}]
+;;  :component-type ["l"]
+;;  :representation "id_permission"
+;;  :key-table "permission"}
+
+;; [{:description nil
+;;   :private? false :editable? true
+;;   :field "id_point_of_sale_group"
+;;   :column-type [:bigint-20-unsigned :default :null]
+;;   :foreign-keys [{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade, :update :cascade}]
+;;   :component-type ["l"]
+;;   :representation "id_point_of_sale_group"
+;;   :key-table "point_of_sale_group"}
+;;  {:description nil
+;;   :private? false
+;;   :editable? true
+;;   :field "id_point_of_sale"
+;;   :column-type [:bigint-20-unsigned :default :null]
+;;   :foreign-keys [{:id_point_of_sale :point_of_sale}]
+;;   :component-type ["l"]
+;;   :representation "id_point_of_sale" :key-table "point_of_sale"}]
+
+;; (create-table :user
+;;               :columns [{:login [:varchar-100 :nnull]}
+;;                         {:password [:varchar-100 :nnull]}
+;;                         {:first_name [:varchar-100 :nnull]}
+;;                         {:last_name [:varchar-100 :nnull]}
+;;                         {:id_permission [:bigint-120-unsigned :nnull]}]
+;;               :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}])
+;; (def point_of_sale_group_links
+;;   (create-table :point_of_sale_group_links
+;;                 :columns [{:id_point_of_sale_group [:bigint-20-unsigned :default :null]}
+;;                           {:id_point_of_sale [:bigint-20-unsigned :default :null]}]
+;;                 :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
+;;                                [{:id_point_of_sale :point_of_sale}]]))
 
 (defn- get-meta [table-name]
-  {:id nil
-   :table table-name
-   :prop (str {:table (get-table-meta table-name)
-               :columns (vec (map get-table-field-meta
-                                  (filter #(not= "id" (:field %))
-                                          (jdbc/query sql-connection (show-table-columns table-name)))))})})
+  (let [all-columns  (jdbc/query sql-connection (show-table-columns table-name))
+        all-constrants (get-meta-constrants table-name)
+        not-id-columns (filter #(not= "id" (:field %)) all-columns)]
+   {:id nil
+    :table table-name
+    :prop (str {:table (get-table-meta table-name)
+                :columns (vec (map (partial get-table-field-meta all-constrants) not-id-columns))})}))
 
 (defn- ^clojure.lang.PersistentList update-sql-by-id-template
   ([table m]
@@ -297,24 +402,29 @@
     (let [meta (jdbc/query sql-connection (select :METADATA :where (= :table table)))]
       (if (empty? meta) (jdbc/execute! sql-connection (update-sql-by-id-template "METADATA" (get-meta table)))))))
 
-;; (do-create-meta)
-
 (defn do-clear-meta [& body]
-  {:pre [(every? string? body) ]}
+  {:pre [(every? string? body)]}
   (jdbc/execute! sql-connection (delete :METADATA)))
 
 (defn getset
   "get metadate deserialized information for specified tables.
-  
-  Example 
-   (getset \"user\") ;=> [{:id 1 :table...}...]"
-  [& tables]
-  (map (fn [meta] (clojure.core/update meta :prop read-string))
-       (jdbc/query sql-connection
-                   (if-not (empty? tables) 
-                     (let [tables-eq (concat ['or] (map (fn [x] ['= :table (name x)]) tables))]
-                       (eval (change-expression '(select :METADATA) :where tables-eq)))
-                     (select :METADATA)))))
+        
+        Example 
+        (getset \"user\") ;=> [{:id 1 :table...}...]"
+        [& tables]
+        (map (fn [meta] (clojure.core/update meta :prop read-string))
+             (jdbc/query sql-connection
+                         (if-not (empty? tables) 
+                           (let [tables-eq (concat ['or] (map (fn [x] ['= :table (name x)]) tables))]
+                             (eval (change-expression '(select :METADATA) :where tables-eq)))
+                           (select :METADATA)))))
+
+(defn create-table-by-meta [metadata]
+  (let [smpl-fields (filter (comp (partial not-allowed-rules ["meta*"]) :field) ((comp :columns :prop) metadata))
+        idfl-fields (filter (comp (partial allowed-rules "id_*") :field) ((comp :columns :prop) metadata))]
+    (create-table {:table-name (keyword (:table metadata))
+                   :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
+                   :foreign-keys (vec (map :foreign-keys idfl-fields))})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; TABLE-MAP VALIDATOR ;;;
@@ -433,7 +543,7 @@
       (not-valid-string-f "Table has empty fields list")
       (let [i-m-col (map-indexed vector fields)]
         (every? identity (map (fn [[index m-field]]
-                                (println [index m-field])
+                                ;; (println [index m-field])
                                 (verify-column-metadata [:prop :columns index] m-field))
                               i-m-col))))))
 
@@ -813,6 +923,8 @@
      @fxmap-changes))
  (apply-table user-original user-changed))
 
+
+
 ;;; `TODO` persist do database in metadata tabel.
 ;;; `TODO` persist do database in metadata tabel.
 ;;; `TODO` persist do database in metadata tabel.
@@ -824,7 +936,9 @@
     Function apply lazy fxmap-changes argument as list of SQL applicative functors.
 
   Example:
-    (do-changes (apply-table original-table changed-table) original-table changed-table)
+    (do-changes
+      (apply-table original-table changed-table)
+      original-table changed-table)
 
   Arguments:
   `fxmap-changes` - special map, generated function `apply-table`
@@ -858,85 +972,12 @@
       (do (println "Chanages not being applied, empty keywords list")
           original))))
 
-
-
-
-;;;;;;;;;;;;;;;;;;;;;
-;;; DEBUG SECTION ;;;
-;;;;;;;;;;;;;;;;;;;;;
-
-(do
-  (do-change
-   (apply-table user-original user-changed)
-   user-original user-changed))
-
-;; (do
-;;   (println (format "\n--- CHANGE %s --- " (gensym "LOG_")))
-;;   (let [uo {:id 30, :table "user",
-;;             :prop {:table {:frontend-name "user", :is-system? false, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :allow-linking? true},
-;;                    :columns [{:field "login", :representation "login", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;                              {:field "password", :representation "password", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;                              {:field "first_name", :representation "first_name", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;                              {:field "last_name", :representation "last_name", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;                              {:field "id_permission", :representation "id_permission", :description nil, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]}}
-;;         uc {:id 30, :table "user",
-;;             :prop {:table {:frontend-name "U¿ytkownik", :is-system? false, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :allow-linking? false},
-;;                    :columns [;; {:field "login", :representation "login", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;                              {:field "SUKA", :representation "login", :description nil, :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}
-;;                              {:field "password", :representation "PASSWORD", :description nil, :component-type "D", :column-type "varchar(100)", :private? false, :editable? true}
-;;                              {:field "first_name", :representation "first_name", :description nil, :component-type "i", :column-type "MUSTNOT BE CHANGED", :private? false, :editable? true}
-;;                              {:field "last_name", :representation "last_name", :description nil, :component-type "i", :column-type "varchar(100)", :private? true, :editable? true}
-;;                              {:field "id_permission", :representation "id_permission", :description nil, :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]}}]
-;;     (do-change
-;;      (apply-table uo uc)
-;;      uo uc)))
-
-
-(let [t
-      (first (getset "point_of_sale_group" ))]
-  (let [smpl-fields (filter (comp (partial not-allowed-rules ["meta*"]) :field) ((comp :columns :prop) t))
-        ;; meta-fields (filter (comp (partial allowed-rules "meta*") :field) ((comp :columns :prop) t))
-        idfl-fields (filter (comp (partial allowed-rules "id_*") :field) ((comp :columns :prop) t))]
-    (create-table {:table-name (keyword (:table t))
-                   :columns (vec (map (fn [sf] {(keyword (:field sf)) (ssql-type-parser (:column-type sf))}) smpl-fields))
-                   :foreign-keys (vec (map (fn [idf] [{(keyword (:field idf)) (keyword (:key-table idf))} {:update :null :delete :null}]) idfl-fields))})))
-
-;; (create-table {:table-name :point_of_sale
-;;                :columns [{:id_enterpreneur [:bigint-20-unsigned :default :null]}
-;;                          {:name [:varchar-100 :default :null]}
-;;                          {:physical_address  [:varchar-100 :default :null]}
-;;                          {:telefons  [:varchar-100 :default :null]}]
-;;                :foreign-keys [{:id_enterpreneur :enterpreneur} {:update :cascade}]})
-
-;; (create-table :table
-;;               :columns [{:name [:varchar-100 :null]} {:some-int :integer-200} {:id_other_table :bigint-20}]
-;;               :foreign-keys [{:id_other_table :other_table} {:update :cascade, :delete :null}]
-;;               :table-config {:engine "InnoDB", :charset "utf8"})
-
-;; (create-table :some
-;;               :columns [{"TEST_NAME"  [:varchar-100 :default :null]}]
-;;               :foreign-keys [{:id_enterpreneur :enterpreneur} {:update :cascade}])
-
-;; (create-table :some
-;;               :columns [{"TEST_NAME"  [:varchar-100 :default :null]}]
-;;               :foreign-keys ["id_enterpreneur" {:update :cascade}])
-
-(defn create-table-from-meta [original]
-  (let [smpl-fields (filter (comp (partial not-allowed-rules ["meta*"]) :field) ((comp :columns :prop) original))
-        ;; meta-fields (filter (comp (partial allowed-rules "meta*") :field) ((comp :columns :prop) t))
-        idfl-fields (filter (comp (partial allowed-rules "id_*") :field) ((comp :columns :prop) original))]
-    (create-table {:table-name (keyword (:table original))
-                   :columns (vec (map (fn [sf] {(keyword (:field sf)) (ssql-type-parser (:column-type sf))}) smpl-fields))
-                   :foreign-keys (vec (map (fn [idf] [{(keyword (:field idf)) (keyword (:key-table idf))} {:update :null :delete :null}]) idfl-fields))})))
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; METADATA BACKUP ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
 (def ^:private backup-name "metadata")
 (def ^:private backup-file-name (format "%s.edn" backup-name))
-(def ^:private backup-file-date-format )
 ;; (defn- backup-keep-10-last-modified
 ;;   "Remove 10 last modified backup files, when new backups being created"[]
 ;;   (let [max-bkp 10 l-files (storage/user-metadata-list) c-files (count l-files)]

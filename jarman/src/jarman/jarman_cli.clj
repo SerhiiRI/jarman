@@ -184,7 +184,6 @@
 (defn fill-random-scheme []
   (create-scheme))
 
-
 (defn -entity-in? [entity-list]
   (fn [t] (some #(= (string/lower-case t) (string/lower-case %)) entity-list)))
 (def scheme-in? (-entity-in? available-scheme))

@@ -82,7 +82,7 @@
                  undecorated?]
           :or  {title "Mr. Jarman"
                 items (label :text "Hello Boi!" :bounds [100 100 300 300]) 
-                size [(first app-size) (first app-size)]
+                size [(first app-size) (second app-size)]
                 undecorated? false}}]
     (let [set-items (if-not (list? items) (list items) items)]
       (do
@@ -93,7 +93,7 @@
                    :title title 
                    :undecorated? undecorated?
                    :minimum-size [(first size) :by (second size)]
-                   :size [(first size) :by (first size)]
+                   :size [(first size) :by (second size)]
                    :content @app
                 ;;    :on-close :exit
                    :listen [:component-resized (fn [e] (reset! atom-app-size [(.getWidth (config e :size))

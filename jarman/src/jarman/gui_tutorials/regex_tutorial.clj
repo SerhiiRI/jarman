@@ -1,4 +1,4 @@
-(ns test)
+(ns jarman.gui-tutorials.regex-tutorial)
 
 ;; \w - [a-zA-Z]
 ;; \W - [^a-zA-Z]

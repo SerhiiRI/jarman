@@ -13,19 +13,20 @@
            (java.text SimpleDateFormat)))
 
 
-(def ^:dynamic sql-connection {:dbtype "mysql"
-                               :host "127.0.0.1"
-                               :port 3306
-                               :dbname "jarman"
-                               :user "root"
-                               :password "1234"})
-
 ;; (def ^:dynamic sql-connection {:dbtype "mysql"
-;;                                :host "192.168.1.69"
+;;                                :host "127.0.0.1"
 ;;                                :port 3306
 ;;                                :dbname "jarman"
-;;                                :user "jarman"
-;;                                :password "dupa"})
+;;                                :user "root"
+;;                                :password "1234"})
+
+
+(def ^:dynamic sql-connection {:dbtype "mysql"
+                               :host "80.49.157.152"
+                               :port 3306
+                               :dbname "jarman"
+                               :user "jarman"
+                               :password "dupa"})
 
 (def available-scheme ["service_contract"
                        "seal"

@@ -94,8 +94,8 @@
 
 ;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "ekka-test" :user "root" :password "123"})
 ;; (def ^{:dynamic true :private true} sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"})
-(def ^:dynamic sql-connection {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"})
-;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "trashpanda-team.ddns.net" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"})
+(def ^:dynamic sql-connection {:dbtype "mysql" :host "80.49.157.152" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"})
+
 ;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"})
 (def ^{:dynamic true :private true} *available-mariadb-engine-list* "set of available engines for key-value tables" ["MEMORY", "InnoDB", "CSV"])
 ;; (jdbc/query sql-connection "SHOW ENGINES" )
@@ -147,7 +147,6 @@
     (if (string? col) (reduce (fn [a p?] (and a (p? col))) true preds)
         (filter (fn [s] (reduce (fn [a p?] (and a (p? s))) true preds)) col))))
 
-
 (defn- allowed-rules
   "Description:
     The function do filter on `col` list, selected only that string elements, which allowed by `rule-spec`.
@@ -190,7 +189,6 @@
 
 (defn- is-not-id-col? [col-name]
   (not (is-id-col? col-name)))
-
 
 (defn- get-component-group-by-type [column-field-spec]
   (let [ctype  (re-find #"[a-zA-Z]*" (string/lower-case (:type column-field-spec)))
@@ -325,7 +323,6 @@
          (reduce into))))
 
 (defn- get-table-field-meta [foreign-keys column-field-spec]
-  (println foreign-keys (:field column-field-spec))
   (let [tfield (:field column-field-spec)
         ttype (create-column-type-meta column-field-spec)
         set_key (fn [m] (if-let [[_ table] (re-matches #"id_(.*)" tfield)]
@@ -384,10 +381,10 @@
   (let [all-columns  (jdbc/query sql-connection (show-table-columns table-name))
         all-constrants (get-meta-constrants table-name)
         not-id-columns (filter #(not= "id" (:field %)) all-columns)]
-   {:id nil
-    :table table-name
-    :prop (str {:table (get-table-meta table-name)
-                :columns (vec (map (partial get-table-field-meta all-constrants) not-id-columns))})}))
+    {:id nil
+     :table table-name
+     :prop (str {:table (get-table-meta table-name)
+                 :columns (vec (map (partial get-table-field-meta all-constrants) not-id-columns))})}))
 
 (defn- ^clojure.lang.PersistentList update-sql-by-id-template
   ([table m]
@@ -399,9 +396,10 @@
   (not-allowed-rules ["metatable" "meta*"] (map (comp second first) (jdbc/query sql-connection "SHOW TABLES" ))))
 
 (defn do-create-meta []
-  (for [table (not-allowed-rules ["metatable" "meta*"] (map (comp second first) (jdbc/query sql-connection "SHOW TABLES" )))]
+  (for [table (show-tables)]
     (let [meta (jdbc/query sql-connection (select :METADATA :where (= :table table)))]
-      (if (empty? meta) (jdbc/execute! sql-connection (update-sql-by-id-template "METADATA" (get-meta table)))))))
+      (if (empty? meta)
+        (jdbc/execute! sql-connection (update-sql-by-id-template "METADATA" (get-meta table)))))))
 
 (defn do-clear-meta [& body]
   {:pre [(every? string? body)]}
@@ -426,8 +424,8 @@
     (create-table {:table-name (keyword (:table metadata))
                    :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
                    :foreign-keys (vec (map :foreign-keys idfl-fields))})))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; TABLE-MAP VALIDATOR ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

@@ -201,8 +201,7 @@
                                      (registrate-local-font font))) :append true)))
 
 
-;;; refresh font lib
-;; (refresh-font-lib)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Font debug, tool ;;;
@@ -226,6 +225,5 @@
                                                                                                   (get-fonts)))))
       seesaw.core/pack!
       seesaw.core/show!))
-
 
 

@@ -449,10 +449,10 @@
 ;;                 :else nil))))
 
 (defn values-string [current-string values table-name]
-  (let [into-sql-values (fn [some-list]
-                          (str "(" (string/join ", " (map #(eval (where-procedure-parser %)) some-list)) ")"))
-        into-sql-map (fn [some-list]
-                       (str "(" (string/join ", " (map #(eval (where-procedure-parser %)) (vals some-list))) ")"))]
+  (let [wrapp-escape    (fn [some-list] (map #(eval `(where-procedure-parser ~%)) some-list))
+        brackets        (fn [temp-strn] (str "(" temp-strn ")"))
+        into-sql-values (fn [some-list] (brackets (string/join ", " (wrapp-escape some-list))))
+        into-sql-map    (fn [some-list] (brackets (string/join ", " (vals (wrapp-escape some-list)))))]
     (str current-string " " (name table-name)
           (cond (map? values)
                 (str " SET " (string/join ", " (map #(apply pair-where-pattern %) values)))
@@ -463,10 +463,6 @@
                 (seqable? values)
                 (str " VALUES " (into-sql-values values))
                 :else nil))))
-
-;; (let [kw {:id 1, :str1_c "vasia", :str2_c "123", :num_c 20}]
-;;   (insert :user :values kw))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; create-table preprocessor ;;;
@@ -553,7 +549,6 @@
 
               ["default" "signed" "unsigned" "zerofill" ] (string/upper-case sql-type)
               nil))))
-
 
 (defn create-column
   "Cretea column by map-typed specyfication:
@@ -1308,5 +1303,4 @@
 (defn drop-table [database-table]
   {:pre [(keyword? database-table)]}
   (format "DROP TABLE IF EXISTS `%s`" (name database-table)))
-
 

@@ -81,7 +81,7 @@
                  undecorated?]
           :or  {title "Mr. Jarman"
                 items (label :text "Hello Boi!" :bounds [100 100 300 300]) 
-                size [(first @atom-app-size) (first @atom-app-size)]
+                size [(first @atom-app-size) (second @atom-app-size)]
                 undecorated? false}}]
     (let [set-items (if-not (list? items) (list items) items)]
       (do
@@ -89,16 +89,20 @@
         (reset! alert-manager (message-server-creator app))
         (-> (doto (seesaw.core/frame
                    :title title 
+                   :resizable? true
                    :undecorated? undecorated?
+                   :size [(first size) :by (second size)]
                    :minimum-size [(first size) :by (second size)]
-                   :size [(first size) :by (first size)]
                    :content @app
                 ;;    :on-close :exit
                    :listen [:component-resized (fn [e] (reset! atom-app-size [(.getWidth (config e :size))
-                                                                         (.getHeight (config e :size))]))])
+                                                                         (.getHeight (config e :size))])
+                                                 (config! e :size [(first @atom-app-size) :by (second @atom-app-size)]))])
               (.setLocationRelativeTo nil) pack! show!)))
       )))
 
+
+;; (show-options (frame))
 
 ;; (def comps (list (label :text "Mig panel as layer 1")
 ;;                  (label :text "With few responsive elements")

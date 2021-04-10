@@ -27,7 +27,6 @@
 
 
 
-(show-options (form-panel))
 
 (import javax.swing.JLayeredPane)
 (import java.awt.Color)
@@ -46,7 +45,7 @@
 ;; │                    │
 ;; └────────────────────┘
 
-(def work-mode (atom :user-mode))
+(def work-mode (atom :dev-mode))
 (def storage-with-changes (atom {})) ;; Store view id as key and component id which is path in config map too {:view link-to-atom}
 
 (def add-changes-controller
@@ -574,6 +573,7 @@
                                                  (mmeta/do-change
                                                   (mmeta/apply-table orginal-table @meta-copy)
                                                   orginal-table @meta-copy)
+                                                 (reset! dbmap (mmeta/getset))
                                                  (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5))
                                                 :else (@popup-menager :ok :title "Valid faild!" :body (string/join "<br>" ["Validation ended with faild." (get-in out [:output])]))))))))
 
@@ -1297,75 +1297,143 @@
 (@startup)
 
 
-(def get-cell-xy
-  (fn [e table]
-    [(.rowAtPoint table (.getPoint e))
-     (.columnAtPoint table (.getPoint e))]))
+;; (defn get-data-index
+;;   ([e table] (get-data-index e table :else))
+;;   ([e table roworcolumn]
+;;     (cond (= roworcolumn :row) (.rowAtPoint table (.getPoint e))  
+;;           (= roworcolumn :column) (.columnAtPoint table (.getPoint e))
+;;           :else [(.rowAtPoint table (.getPoint e)) (.columnAtPoint table (.getPoint e))])))
 
-(def tab1 (atom (table
-                 :model [:columns [:name :lname]
-                         :rows    [["Name" "Lname"] ["Jan" "Kowalski"]]]
-                 :background "#2ac"
-                 :listen [:mouse-clicked (fn [e] (println (get-cell-xy e @tab1)))])))
-(def table-test
-  (fn []
-    (build
-     :title "Mr. Jarman Sheet"
-     :undecorated? false
-     :size [800 600]
-     :items (list (mig-panel
-                   :bounds [0 0 500 300]
-                   :constraints ["wrap 1" "[grow, center]" "[grow, center]"]
-                   :border (empty-border :thickness 10)
-                   :items (join-mig-items
-                           (label :text "Tabelki")
-                           @tab1))))))
 
-;; (table-test)
 
-;; (seesaw.table/insert-at! @tab1 1 ["Apple" "Pie"])
-;; (seesaw.table/remove-at! @tab1 1)
+;; (def new-table
+;;   (fn []
+;;     (let [table (doto (table-x :model [:columns [{:key :name :text "Imie"} {:key :lname :text "Nazwisko"} {:key :access :text "Dostęp" :class java.lang.Boolean} {:key :num :text "Numer" :class java.lang.Number}]
+;;                                  :rows [["Jan" "Kowalski" true 1]
+;;                                            ["Adam" "Nowak" false 2]
+;;                                            ["Kamila" "Znila" true 3]
+;;                                            ["Fara" "Gonga" false 4]]
+;;                                       ;;  [["Jan" "Kowalski" 1]
+;;                                       ;;   ["Adam" "Nowak" 1]
+;;                                       ;;   ["Kamila" "Znila" 3]
+;;                                       ;;   ["Fara" "Gonga" 2]]
+;;                                        ])
+;;                   (.setColumnControlVisible true)
+;;                   (doto (.isEditable))
+;;                   (.setEditable true))]
+;;       (config! table :listen [:mouse-clicked (fn [e] 
+;;                                                (println (seesaw.core/value table))
+;;                                                (println (seesaw.table/value-at (config e :model) (get-data-index e table :row))))])
+;;       table)))
 
-;; (show-options (table))
 
-;; ┌───────────────┐
-;; │               │
-;; │  Login lobby  │
-;; │               │
-;; └───────────────┘
 
-(def simple-button
-  (fn [txt func]
-    (label
-     :text txt
-     :halign :center
-     :listen [:mouse-clicked func
-              :mouse-entered (fn [e] (hand-hover-on e) (button-hover e))
-              :mouse-exited  (fn [e] (button-hover e (get-color :background :button_main)))]
-     :background (get-color :background :button_main)
-     :border (compound-border (empty-border :bottom 10 :top 10)
-                              (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
+;; (build
+;;  :title "Mr. Jarman Sheet"
+;;  :undecorated? false
+;;  :size [800 600]
+;;  :items (list (mig-panel
+;;                :bounds [0 0 500 300]
+;;                :constraints ["wrap 1" "[grow, center]" "[grow, center]"]
+;;                :border (empty-border :thickness 10)
+;;                :items (join-mig-items
+;;                        (label :text "Tabelki")
+;;                        (let [table (table-x :model (seesaw.table/table-model
+;;                                                     :columns [{:key :name :text "Imie"} 
+;;                                                               {:key :lname :text "Nazwisko"}
+;;                                                               {:key :access :text "Dostęp" :class java.lang.Boolean} 
+;;                                                               {:key :num :text "Numer" :class java.lang.Number}]
+;;                                                     :rows [["Jan" "Kowalski" true 1]
+;;                                                            ["Adam" "Nowak" false 2]
+;;                                                            ["Kamila" "Znila" true 3]
+;;                                                            ["Fara" "Gonga" false 4]]))]
+;;                          (.setColumnControlVisible table true)
+;;                          (.setShowGrid table true)
+;;                          (config! table :listen
+;;                                   [:mouse-clicked
+;;                                    (fn [e]
+;;                                     ;;  (println (seesaw.table/value-at (config e :model) (get-data-index e table :row)))
+;;                                      )
+;;                                    :mouse-motion (fn [e] (.repaint (to-root e)))])
+;;                          (scrollable table)))))) 
 
-(def startup-login-lobby
-  (fn []
-    (build
-     :undecorated? true
-     :size [500 300]
-     :items (list (mig-panel
-                   :bounds [0 0 500 300]
-                   :constraints ["" "[grow, center]" "[grow, center]"]
-                   :border (empty-border :thickness 10)
-                   :items (join-mig-items
-                           (label :text (string/join "" ["<html><img width=\"200\" height=\"200\" src=\"file:" (.toString (clojure.java.io/file "resources\\imgs\\jarman.png")) "\"></html>"]))
-                           (mig-panel :constraints ["wrap 1" "[grow, fill]" "[fill]"]
-                                      :border (empty-border :thickness 50)
-                                      :items (join-mig-items
-                                              (label :text "Mr. Jarman App")
-                                              (label :text "Login")
-                                              (text)
-                                              (label :text "Password")
-                                              (text)
-                                              (simple-button "Log in" (fn [e] (@startup)))))))))))
+
+
+;; ;; run app
+;; (-> (doto (seesaw.core/frame
+;;            :title "title"
+;;            :undecorated? false
+;;            :minimum-size [600 :by 400]
+;;            :content 1(mig-panel
+;;                      :bounds [0 0 500 300]
+;;                      :constraints ["wrap 1" "[grow, center]" "[grow, center]"]
+;;                      :border (empty-border :thickness 10)
+;;                      :items (join-mig-items
+;;                              (label :text "Tabelki")
+;;                              (let [table (table-x :model (seesaw.table/table-model
+;;                                                           :columns [{:key :name :text "Imie"}
+;;                                                                     {:key :lname :text "Nazwisko"}
+;;                                                                     {:key :access :text "Dostęp" :class java.lang.Boolean}
+;;                                                                     {:key :num :text "Numer" :class java.lang.Number}]
+;;                                                           :rows [["Jan" "Kowalski" true 1]
+;;                                                                  ["Adam" "Nowak" false 2]
+;;                                                                  ["Kamila" "Znila" true 3]
+;;                                                                  ["Fara" "Gonga" false 4]]))]
+;;                                (.setColumnControlVisible table true)
+;;                                (.setShowGrid table true)
+;;                                (config! table :listen
+;;                                         [:mouse-clicked
+;;                                          (fn [e]
+;;                                     ;;  (println (seesaw.table/value-at (config e :model) (get-data-index e table :row)))
+;;                                            )
+;;                                          :mouse-motion (fn [e] (.repaint (to-root e)))])
+;;                                (scrollable table))))) (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
+
+;; ;; (show-options (table))
+
+;; ;; (seesaw.table/insert-at! @tab1 1 ["Apple" "Pie"])
+;; ;; (seesaw.table/remove-at! @tab1 1)
+
+;; (show-options (table-x))
+
+;; ;; ┌───────────────┐
+;; ;; │               │
+;; ;; │  Login lobby  │
+;; ;; │               │
+;; ;; └───────────────┘
+
+;; (def simple-button
+;;   (fn [txt func]
+;;     (label
+;;      :text txt
+;;      :halign :center
+;;      :listen [:mouse-clicked func
+;;               :mouse-entered (fn [e] (hand-hover-on e) (button-hover e))
+;;               :mouse-exited  (fn [e] (button-hover e (get-color :background :button_main)))]
+;;      :background (get-color :background :button_main)
+;;      :border (compound-border (empty-border :bottom 10 :top 10)
+;;                               (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
+
+;; (def startup-login-lobby
+;;   (fn []
+;;     (build
+;;      :undecorated? true
+;;      :size [500 300]
+;;      :items (list (mig-panel
+;;                    :bounds [0 0 500 300]
+;;                    :constraints ["" "[grow, center]" "[grow, center]"]
+;;                    :border (empty-border :thickness 10)
+;;                    :items (join-mig-items
+;;                            (label :text (string/join "" ["<html><img width=\"200\" height=\"200\" src=\"file:" (.toString (clojure.java.io/file "resources\\imgs\\jarman.png")) "\"></html>"]))
+;;                            (mig-panel :constraints ["wrap 1" "[grow, fill]" "[fill]"]
+;;                                       :border (empty-border :thickness 50)
+;;                                       :items (join-mig-items
+;;                                               (label :text "Mr. Jarman App")
+;;                                               (label :text "Login")
+;;                                               (text)
+;;                                               (label :text "Password")
+;;                                               (text)
+;;                                               (simple-button "Log in" (fn [e] (@startup)))))))))))
 
 ;; (startup-login-lobby)
 

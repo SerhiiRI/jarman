@@ -435,7 +435,7 @@
        :value-not-valid-on-eq "Value '%s' not valid on '%s' equalization pattern"
        :value-not-in-allow-list "Value '%s' not from allowed list '%s'" 
        :value-not-valid-on-re "Value '%s' not valid on regexp '%s' pattern"}
-  :pl{:value-not-exit-in-table "Warto¶æ nie istanieje w tabeli"
+  :pl{:value-not-exit-in-table "Wartoï¿½ï¿½ nie istanieje w tabeli"
       :value-not-valid-on-p "Value '%s' not valid by predicate '%s'"
       :value-not-valid-on-eq "Value '%s' not valid on '%s' equalization pattern"
       :value-not-in-allow-list "Value '%s' not from allowed list '%s'" 
@@ -838,7 +838,7 @@
 ;; :delete "first_name
 (def user-changed {:id 30,
                    :table "user",
-                   :prop {:table {:frontend-name "U¿ytkownik"
+                   :prop {:table {:frontend-name "Uï¿½ytkownik"
                                   :is-system? false :is-linker? false
                                   :allow-modifing? false :allow-deleting? true
                                   :allow-linking? true}

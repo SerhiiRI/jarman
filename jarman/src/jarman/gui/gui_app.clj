@@ -155,6 +155,18 @@
 ;; │              │
 ;; └──────────────┘
 
+(def simple-button
+  (fn [txt func]
+    (label
+     :text txt
+     :halign :center
+     :listen [:mouse-clicked func
+              :mouse-entered (fn [e] (hand-hover-on e) (button-hover e))
+              :mouse-exited  (fn [e] (button-hover e (get-color :background :button_main)))]
+     :background (get-color :background :button_main)
+     :border (compound-border (empty-border :bottom 10 :top 10)
+                              (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
+
 (def create-dialog--answer-btn
   (fn [txt func]
     (label
@@ -1282,7 +1294,80 @@
 (@startup)
 
 
+(def get-cell-xy 
+  (fn [e table]
+    [(.rowAtPoint table (.getPoint e)) 
+     (.columnAtPoint table (.getPoint e))]))
 
+(def tab1 (atom (table
+                 :model [:columns [:name :lname]
+                         :rows    [["Name" "Lname"] ["Jan" "Kowalski"]]]
+                 :background "#2ac"
+                 :listen [:mouse-clicked (fn [e] (println (get-cell-xy e @tab1)))]
+                 )))
+(def table-test 
+ (fn []
+   (build
+    :title "Mr. Jarman Sheet"
+    :undecorated? false
+    :size [800 600]
+    :items (list (mig-panel
+                  :bounds [0 0 500 300]
+                  :constraints ["wrap 1" "[grow, center]" "[grow, center]"]
+                  :border (empty-border :thickness 10)
+                  :items (join-mig-items
+                          (label :text "Tabelki")
+                          @tab1))))))
+
+;; (table-test)
+
+;; (seesaw.table/insert-at! @tab1 1 ["Apple" "Pie"])
+;; (seesaw.table/remove-at! @tab1 1)
+
+;; (show-options (table))
+
+;; ┌───────────────┐
+;; │               │
+;; │  Login lobby  │
+;; │               │
+;; └───────────────┘
+
+(def simple-button
+  (fn [txt func]
+    (label
+     :text txt
+     :halign :center
+     :listen [:mouse-clicked func
+              :mouse-entered (fn [e] (hand-hover-on e) (button-hover e))
+              :mouse-exited  (fn [e] (button-hover e (get-color :background :button_main)))]
+     :background (get-color :background :button_main)
+     :border (compound-border (empty-border :bottom 10 :top 10)
+                              (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
+
+(def startup-login-lobby
+  (fn []
+    (build
+     :undecorated? true
+     :size [500 300]
+     :items (list (mig-panel
+                   :bounds [0 0 500 300]
+                   :constraints ["" "[grow, center]" "[grow, center]"]
+                   :border (empty-border :thickness 10)
+                   :items (join-mig-items
+                           (label :text (string/join "" ["<html><img width=\"200\" height=\"200\" src=\"file:" (.toString (clojure.java.io/file "resources\\imgs\\jarman.png")) "\"></html>"]))
+                           (mig-panel :constraints ["wrap 1" "[grow, fill]" "[fill]"]
+                                      :border (empty-border :thickness 50)
+                                      :items (join-mig-items
+                                              (label :text "Mr. Jarman App")
+                                              (label :text "Login")
+                                              (text)
+                                              (label :text "Password")
+                                              (text)
+                                              (simple-button "Log in" (fn [e] (@startup))))))))))) 
+
+;; (startup-login-lobby)
+
+;; C:\\Aleks\\Github\\jarman\\jarman\\resources\\imgs\\jarman.png
 ;; (def action-on-JLP-children
 ;;   (fn [] (let [JLP (getParent @atom-popup-hook)
 ;;                elems-in-JLP (seesaw.util/children JLP)
@@ -1291,7 +1376,6 @@
 ;;                          (config! (nth elems-in-JLP index) :visible? true))
 ;;                        (range elems-count)))
 ;;            (.repaint JLP))))
-
 
 ;; (clojure.string/replace "Witaj<br>World" #"<\s*\w+(\s\w+=['\"\w]+)*/?>" " ")
 

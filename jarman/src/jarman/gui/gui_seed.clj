@@ -76,17 +76,24 @@
 
 
 (def build
-  (fn [& {:keys [items]
-          :or  {items (label :text "Hello Boi!" :bounds [100 100 300 300])}}]
+  (fn [& {:keys [title
+                 items 
+                 size
+                 undecorated?]
+          :or  {title "Mr. Jarman"
+                items (label :text "Hello Boi!" :bounds [100 100 300 300]) 
+                size [(first app-size) (first app-size)]
+                undecorated? false}}]
     (let [set-items (if-not (list? items) (list items) items)]
       (do
         (reset! app (base set-items))
         (reset! atom-app-size app-size)
         (reset! alert-manager (message-server-creator app))
         (-> (doto (seesaw.core/frame
-                   :title "Mr. Jarman" :undecorated? false
-                   :minimum-size [(first app-size) :by (second app-size)]
-                   :size [(first app-size) :by (first app-size)]
+                   :title title 
+                   :undecorated? undecorated?
+                   :minimum-size [(first size) :by (second size)]
+                   :size [(first size) :by (first size)]
                    :content @app
                 ;;    :on-close :exit
                    :listen [:component-resized (fn [e] (reset! atom-app-size [(.getWidth (config e :size))

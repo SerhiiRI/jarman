@@ -399,10 +399,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn set-string [current-string update-map tabel-name]
-  (str current-string " "
-        (symbol tabel-name)
-        " SET "
-        (string/join ", " (map #(apply pair-where-pattern %)  update-map))))
+  (let [pair-group (fn [[col-name value]] (str (format "`%s`" (name col-name)) "=" (eval `(where-procedure-parser ~value))))]
+    (str current-string " " (format "`%s`" (name tabel-name)) (str " SET " (string/join ", " (map pair-group update-map))))))
 
 (defn update-table-string [current-string map table-name]
   (str current-string "" table-name))
@@ -432,30 +430,15 @@
 ;;; values preprocessor ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; (defmacro values-string [current-string values table-name]
-;;   (let [into-sql-values (fn [some-list]
-;;                           (str "(" (string/join ", " (map #(eval `(where-procedure-parser ~%)) some-list)) ")"))
-;;         into-sql-map (fn [some-list]
-;;                        (str "(" (string/join ", " (map #(eval `(where-procedure-parser ~%)) (vals some-list))) ")"))]
-;;     `(str ~current-string " " (name ~table-name)
-;;           (cond (map? ~values)
-;;                 (str " SET " (string/join ", " (map #(apply pair-where-pattern %) ~values)))
-;;                 (and (seqable? ~values) (map? (first ~values)))
-;;                 (str " VALUES " (string/join ", " (map ~into-sql-map ~values)))
-;;                 (and (seqable? ~values) (seqable? (first ~values)) (not (string? (first ~values))) (not (nil? (first ~values))))
-;;                 (str " VALUES " (string/join ", " (map ~into-sql-values ~values)))
-;;                 (seqable? ~values)
-;;                 (str " VALUES " (~into-sql-values ~values))
-;;                 :else nil))))
-
 (defn values-string [current-string values table-name]
   (let [wrapp-escape    (fn [some-list] (map #(eval `(where-procedure-parser ~%)) some-list))
         brackets        (fn [temp-strn] (str "(" temp-strn ")"))
         into-sql-values (fn [some-list] (brackets (string/join ", " (wrapp-escape some-list))))
-        into-sql-map    (fn [some-list] (brackets (string/join ", " (vals (wrapp-escape some-list)))))]
+        into-sql-map    (fn [some-list] (brackets (string/join ", " (vals (wrapp-escape some-list)))))
+        pair-group      (fn [[col-name value]] (str (format "`%s`"(name col-name)) "=" (eval `(where-procedure-parser ~value))))]
     (str current-string " " (name table-name)
           (cond (map? values)
-                (str " SET " (string/join ", " (map #(apply pair-where-pattern %) values)))
+                (str " SET " (string/join ", " (map pair-group values)))
                 (and (seqable? values) (map? (first values)))
                 (str " VALUES " (string/join ", " (map into-sql-map values)))
                 (and (seqable? values) (seqable? (first values)) (not (string? (first values))) (not (nil? (first values))))
@@ -850,6 +833,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn delete-empty-table-pipeline-applier [key-pipeline]
+  (println key-pipeline)
   (if (some #(= :from (first %1)) key-pipeline)
     key-pipeline (vec (concat [[:from 'from-string]] key-pipeline))))
 
@@ -1203,6 +1187,8 @@
     (alter-table :user :add-foreign-key [{:id_permission :permission} {:update :cascade}])")
 
 (defmacro define-sql-operation
+  "Description
+    "
   ([operation-name pipeline-function]
    `(define-sql-operation ~operation-name ~(string/upper-case (name operation-name)) ~pipeline-function))
   ([operation-name operation-string pipeline-function]
@@ -1221,7 +1207,7 @@
 
 (define-sql-operation insert "INSERT INTO" create-rule-pipeline)
 (define-sql-operation delete "DELETE FROM" (comp delete-empty-table-pipeline-applier create-rule-pipeline))
-(define-sql-operation update (comp delete-empty-table-pipeline-applier create-rule-pipeline))
+(define-sql-operation update create-rule-pipeline)
 (define-sql-operation select (comp select-table-count-pipeline-applier select-table-top-n-pipeline-applier select-empty-table-pipeline-applier create-rule-pipeline )) 
 (define-sql-operation create-table "CREATE TABLE IF NOT EXISTS" (comp empty-engine-pipeline-applier create-rule-pipeline))
 (define-sql-operation alter-table "ALTER TABLE" (comp get-first-macro-from-pipeline create-rule-pipeline))

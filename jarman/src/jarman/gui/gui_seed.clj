@@ -25,8 +25,7 @@
 ;; (import java.awt.Dimension)
 ;; (import java.awt.event.MouseEvent)
 
-(def app-size [1100 800])
-(def atom-app-size (atom [1100 800]))
+(def atom-app-size (atom [800 600]))
 (def app (atom nil))
 (def alert-manager (atom nil))
 
@@ -52,8 +51,8 @@
                 ;; :background "#a23"
                 ;; :size [(first @atom-app-size) :by (second @atom-app-size)]
                 :constraints [wraper
-                              (str margin "px[:" (first app-size) "," hlayout "]" margin "px")
-                              (str margin "px[:" (second app-size) "," vlayout "]" margin "px")]
+                              (str margin "px[:" (first @atom-app-size) "," hlayout "]" margin "px")
+                              (str margin "px[:" (second @atom-app-size) "," vlayout "]" margin "px")]
                 :items (join-mig-items items))]))))
 
 
@@ -82,12 +81,11 @@
                  undecorated?]
           :or  {title "Mr. Jarman"
                 items (label :text "Hello Boi!" :bounds [100 100 300 300]) 
-                size [(first app-size) (first app-size)]
+                size [(first @atom-app-size) (first @atom-app-size)]
                 undecorated? false}}]
     (let [set-items (if-not (list? items) (list items) items)]
       (do
         (reset! app (base set-items))
-        (reset! atom-app-size app-size)
         (reset! alert-manager (message-server-creator app))
         (-> (doto (seesaw.core/frame
                    :title title 

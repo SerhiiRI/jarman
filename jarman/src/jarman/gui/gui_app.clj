@@ -5,7 +5,8 @@
   (:use seesaw.core
         seesaw.border
         seesaw.dev
-        seesaw.mig)
+        seesaw.mig
+        seesaw.swingx)
   (:require [clojure.string :as string]
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
@@ -23,6 +24,11 @@
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
             [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]))
 
+
+
+
+(show-options (form-panel))
+
 (import javax.swing.JLayeredPane)
 (import java.awt.Color)
 (import java.awt.event.MouseEvent)
@@ -32,8 +38,6 @@
 ;; │ Prepare app atoms │
 ;; │                   │
 ;; └───────────────────┘
-
-(def right-size (atom [0 0]))
 
 
 ;; ┌────────────────────┐
@@ -558,20 +562,20 @@
                                       ;; (prn "Changes" @changing-list)
                                       (let [orginal-table (get-table-configuration-from-list-by-table-id dbmap table-id)]
                                         (reset! meta-copy orginal-table)
-                                       (doall
-                                        (map
-                                         (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
-                                           (prn "Changes" (first (second new-value)) (second (second new-value)))
-                                           (swap! meta-copy (fn [changes] (assoc-in changes (first (second new-value)) (second (second new-value))))))
-                                         @changing-list))
-                                       (let [out (mmeta/validate-all @meta-copy)]
-                                         (cond (= (get-in out [:valid?]) true)
-                                               (doall
-                                                (mmeta/do-change
-                                                 (mmeta/apply-table orginal-table @meta-copy)
-                                                 orginal-table @meta-copy)
-                                                (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5))
-                                               :else (@popup-menager :ok :title "Valid faild!" :body (string/join "<br>" ["Validation ended with faild." (get-in out [:output])]))))))))
+                                        (doall
+                                         (map
+                                          (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
+                                            (prn "Changes" (first (second new-value)) (second (second new-value)))
+                                            (swap! meta-copy (fn [changes] (assoc-in changes (first (second new-value)) (second (second new-value))))))
+                                          @changing-list))
+                                        (let [out (mmeta/validate-all @meta-copy)]
+                                          (cond (= (get-in out [:valid?]) true)
+                                                (doall
+                                                 (mmeta/do-change
+                                                  (mmeta/apply-table orginal-table @meta-copy)
+                                                  orginal-table @meta-copy)
+                                                 (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5))
+                                                :else (@popup-menager :ok :title "Valid faild!" :body (string/join "<br>" ["Validation ended with faild." (get-in out [:output])]))))))))
 
 ;; @dbmap
 ;; @meta-copy
@@ -650,7 +654,7 @@
                         [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"] ;; menu bar for editor
                                      :items (join-mig-items
                                              [(table-editor--element--header-view (string/join "" [">_ Edit table: " (get-in table [:prop :table :frontend-name])]))]
-                                             (cond (= mode :dev-mode) 
+                                             (cond (= mode :dev-mode)
                                                    (list [(table-editor--element--btn-save changing-list table-id)]
                                                          [(table-editor--element--btn-show-changes changing-list)])
                                                    :else [])))]]
@@ -1037,9 +1041,8 @@
             (do
               (add-changes-controller (last start-key) changing-list)
               (mig-panel
-                            ;; :size [(first @right-size) :by (second @right-size)]
                :border (line-border :bottom 50 :color (get-color :background :main))
-               :constraints ["wrap 1" (string/join "" ["20px[:" (first @right-size) ", grow, fill]20px"]) "20px[]20px"]
+               :constraints ["wrap 1" (string/join "" ["20px[" ", grow, fill]20px"]) "20px[]20px"]
                :items (join-mig-items
                                    ;; Header of section/config file
                        (confgen--element--header-file (get-in map-part [:name]))
@@ -1204,7 +1207,7 @@
                                                                                    (if (get (config (.getParent (seesaw.core/to-widget e)) :user-data) :active)
                                                                                      (reset! active-tab @last-active-tab) ;; Close active card
                                                                                      (reset! active-tab @active-tab))))]
-                                                          
+
                                                           (if-not (nil? changes-atom)
                                                             (if-not (empty? @changes-atom)
                                                               ;; Question if changes was not saved
@@ -1265,59 +1268,58 @@
                      (slider-ico-btn (stool/image-scale icon/agree-grey-64-png 50) 3 50 "Dialog" {:onclick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100]))))})
                      (slider-ico-btn (stool/image-scale icon/a-blue-64-png 50) 4 50 "alert" {:onclick (fn [e] (@alert-manager :set {:header "Witaj<br>World" :body "Alllle<br>Luja"} (message alert-manager) 5))})
                      (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png 50) 5 50 "Restart" {:onclick (fn [e] (@startup))})
-                     (slider-ico-btn (stool/image-scale icon/key-blue-64-png 50) 6 50 "Change work mode" {:onclick (fn [e] 
-                                                                                                                     (cond (= @work-mode :user-mode) 
-                                                                                                                           (do 
+                     (slider-ico-btn (stool/image-scale icon/key-blue-64-png 50) 6 50 "Change work mode" {:onclick (fn [e]
+                                                                                                                     (cond (= @work-mode :user-mode)
+                                                                                                                           (do
                                                                                                                              (reset! work-mode :dev-mode)
                                                                                                                              (@alert-manager :set {:header "Work mode" :body "Dev mode activated."} (message alert-manager) 5))
-                                                                                                                                 :else (do
-                                                                                                                                         (reset! work-mode :user-mode)
-                                                                                                                                         (@alert-manager :set {:header "Work mode" :body "Dev mode deactivated."} (message alert-manager) 5))))})
+                                                                                                                           :else (do
+                                                                                                                                   (reset! work-mode :user-mode)
+                                                                                                                                   (@alert-manager :set {:header "Work mode" :body "Dev mode deactivated."} (message alert-manager) 5))))})
                      @atom-popup-hook))
       (reset! popup-menager (create-popup-service atom-popup-hook)))))
 
 (reset! startup
-  (fn []
-    (cond (= (iinit/validate-configuration-files) true)
-          (run)
-          :else (cond (= (iinit/restore-backup-configuration) false)
-                      (do
-                        (reset! popup-menager (create-popup-service atom-popup-hook))
-                        (@popup-menager :ok :title "App start failed" :body "Cennot end restore task." :size [300 100]))
-                      :else (do
-                              (= (iinit/validate-configuration-files) true)
-                              (run)
-                              :else (do
-                                      (reset! popup-menager (create-popup-service atom-popup-hook))
-                                      (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
+        (fn []
+          (cond (= (iinit/validate-configuration-files) true)
+                (run)
+                :else (cond (= (iinit/restore-backup-configuration) false)
+                            (do
+                              (reset! popup-menager (create-popup-service atom-popup-hook))
+                              (@popup-menager :ok :title "App start failed" :body "Cennot end restore task." :size [300 100]))
+                            :else (do
+                                    (= (iinit/validate-configuration-files) true)
+                                    (run)
+                                    :else (do
+                                            (reset! popup-menager (create-popup-service atom-popup-hook))
+                                            (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
 (@startup)
 
 
-(def get-cell-xy 
+(def get-cell-xy
   (fn [e table]
-    [(.rowAtPoint table (.getPoint e)) 
+    [(.rowAtPoint table (.getPoint e))
      (.columnAtPoint table (.getPoint e))]))
 
 (def tab1 (atom (table
                  :model [:columns [:name :lname]
                          :rows    [["Name" "Lname"] ["Jan" "Kowalski"]]]
                  :background "#2ac"
-                 :listen [:mouse-clicked (fn [e] (println (get-cell-xy e @tab1)))]
-                 )))
-(def table-test 
- (fn []
-   (build
-    :title "Mr. Jarman Sheet"
-    :undecorated? false
-    :size [800 600]
-    :items (list (mig-panel
-                  :bounds [0 0 500 300]
-                  :constraints ["wrap 1" "[grow, center]" "[grow, center]"]
-                  :border (empty-border :thickness 10)
-                  :items (join-mig-items
-                          (label :text "Tabelki")
-                          @tab1))))))
+                 :listen [:mouse-clicked (fn [e] (println (get-cell-xy e @tab1)))])))
+(def table-test
+  (fn []
+    (build
+     :title "Mr. Jarman Sheet"
+     :undecorated? false
+     :size [800 600]
+     :items (list (mig-panel
+                   :bounds [0 0 500 300]
+                   :constraints ["wrap 1" "[grow, center]" "[grow, center]"]
+                   :border (empty-border :thickness 10)
+                   :items (join-mig-items
+                           (label :text "Tabelki")
+                           @tab1))))))
 
 ;; (table-test)
 
@@ -1363,7 +1365,7 @@
                                               (text)
                                               (label :text "Password")
                                               (text)
-                                              (simple-button "Log in" (fn [e] (@startup))))))))))) 
+                                              (simple-button "Log in" (fn [e] (@startup)))))))))))
 
 ;; (startup-login-lobby)
 

@@ -438,6 +438,29 @@
 
 
 
+;; ┌────────────────────────────────────────┐
+;; │                                        │
+;; │ Simple components and methods for them │
+;; │                                        │
+;; └────────────────────────────────────────┘
+
+
+(defn get-user-data
+  "Description:
+      Get data in map from :user-data inside seesaw components. 
+      Can use only one level of map: {:key value, :key value, ...}.
+   Example:
+      (label :userdata {:placeholder \"Dupa\"})
+      (get-user-data event) => {:placeholder \"Dupa\"}
+      (get-user-data event :placeholder) => Dupa
+   "
+  ([e] (config e :user-data))
+  ([e key]
+   (get-in (config e :user-data) [key])))
+
+
+
+
 (def simple-button
   "Description:
       Simple button with default style.
@@ -459,6 +482,31 @@
            style)))
 
 
+
+(def text-input
+  "Description:
+    Text component converted to text component with placeholder. Placehlder will be default value.
+ Example:
+    (text-input :placeholder \"Login\" :style [:halign :center])
+ "
+  (fn [& {:keys [placeholder
+                 style]
+          :or   {placeholder "Password"
+                 style []}}]
+    (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
+          fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))]
+      (apply text :text placeholder
+             :user-data {:placeholder placeholder :value "" :edit? false :type :input}
+             :listen [:focus-gained (fn [e]
+                                      (cond (= (value e) placeholder)    (config! e :text ""))
+                                      (config! e :user-data (fn-assoc e :edit? true)))
+                      :focus-lost   (fn [e]
+                                      (cond (= (value e) "") (config! e :text placeholder))
+                                      (config! e :user-data (fn-assoc e :edit? false)))]
+             style))))
+
+
+
 (def password-input
   "Description:
     Text component converted to password input component, placeholder is default value.
@@ -474,16 +522,16 @@
           fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
           fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))]
       (apply text :text placeholder
-             :user-data {:placeholder placeholder :value "" :edit? false}
+             :user-data {:placeholder placeholder :value "" :edit? false :type :password}
              :listen [:focus-gained (fn [e]
                                       (cond (= (fn-get-data e :value) "")    (config! e :text ""))
                                       (config! e :user-data (fn-assoc e :edit? true)))
                       :focus-lost   (fn [e]
-                                      (cond (= (value e) "") (config! e :text (fn-get-data e :placeholder)))
+                                      (cond (= (value e) "") (config! e :text placeholder))
                                       (config! e :user-data (fn-assoc e :edit? false)))
                       :caret-update (fn [e]
                                       (cond (and (= (fn-get-data e :edit?) true)
-                                                 (not (= (value e) (fn-get-data e :placeholder))))
+                                                 (not (= (value e) placeholder)))
                                             (cond (> (count (value e)) 0)
                                                   (let [added-chars (clojure.string/replace (value e) #"\*+" "")]
                                                     (cond (> (count added-chars) 0)

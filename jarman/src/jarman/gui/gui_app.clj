@@ -1302,6 +1302,12 @@
 
 
 
+;; ┌──────────────────────────────────────┐
+;; │                                      │
+;; │ Example of use for simple components │
+;; │                                      │
+;; └──────────────────────────────────────┘
+
 (def example-text-password-button
   "Description
       Create simple jframe with simple components
@@ -1312,13 +1318,28 @@
      :size [400 400]
      :items (list
              (text
+              :class :input
               :text "Just text input component"
               :halign :center
-              :bounds [100 100 200 30])
+              :bounds [100 50 200 30])
+             (jarman.gui.gui-tools/text-input :placeholder "Login"
+                                                  :style [:class :input
+                                                          :halign :center
+                                                          :bounds [100 100 200 30]])
              (jarman.gui.gui-tools/password-input :placeholder "Password component"
-                                                  :style [:halign :center
+                                                  :style [:class :input
+                                                          :halign :center
                                                           :bounds [100 150 200 30]])
-             (jarman.gui.gui-tools/simple-button "Simple button" (fn [e]) :style [:bounds [100 200 200 30]])))))
+             (jarman.gui.gui-tools/simple-button "Simple button" (fn [e] (println (map #(str "Value: " (if (map? (get-user-data %)) ;; if component have map inside :user-data
+                                                                                                         (if (= (get-user-data % :type) :password) ;; if component type inside :user-data is password
+                                                                                                           (get-user-data % :value) ;; return value from :user-data
+                                                                                                           (value %)) ;; else return value from component
+                                                                                                         (value %)))  ;; return value from component
+                                                                                       (select (to-root e) [:.input]) ;; Get all component with class "input"
+                                                                                       )))
+                                                 :style [:bounds [100 200 200 30]])))))
+
+(example-text-password-button)
 
 ;; (defn get-data-index
 ;;   ([e table] (get-data-index e table :else))

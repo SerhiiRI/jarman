@@ -7,6 +7,10 @@
         seesaw.dev
         seesaw.mig
         seesaw.swingx)
+  (:import (javax.swing JLayeredPane JLabel JTable JComboBox DefaultCellEditor )
+           (javax.swing.table TableCellRenderer TableColumn)
+           (java.awt.event MouseEvent)
+           (java.awt Color Component))
   (:require [clojure.string :as string]
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
@@ -1298,6 +1302,46 @@
 (@startup)
 
 
+
+;; ┌──────────────────────────────────────┐
+;; │                                      │
+;; │ Example of use for simple components │
+;; │                                      │
+;; └──────────────────────────────────────┘
+
+(def example-text-password-button
+  "Description
+      Create simple jframe with simple components
+   "
+  (fn []
+    (build
+     :undecorated? false
+     :size [400 400]
+     :items (list
+             (text
+              :class :input
+              :text "Just text input component"
+              :halign :center
+              :bounds [100 50 200 30])
+             (jarman.gui.gui-tools/text-input :placeholder "Login"
+                                                  :style [:class :input
+                                                          :halign :center
+                                                          :bounds [100 100 200 30]])
+             (jarman.gui.gui-tools/password-input :placeholder "Password component"
+                                                  :style [:class :input
+                                                          :halign :center
+                                                          :bounds [100 150 200 30]])
+             (jarman.gui.gui-tools/simple-button "Simple button" (fn [e] (println (map #(str "Value: " (if (map? (get-user-data %)) ;; if component have map inside :user-data
+                                                                                                         (if (= (get-user-data % :type) :password) ;; if component type inside :user-data is password
+                                                                                                           (get-user-data % :value) ;; return value from :user-data
+                                                                                                           (value %)) ;; else return value from component
+                                                                                                         (value %)))  ;; return value from component
+                                                                                       (select (to-root e) [:.input]) ;; Get all component with class "input"
+                                                                                       )))
+                                                 :style [:bounds [100 200 200 30]])))))
+
+(example-text-password-button)
+
 ;; (defn get-data-index
 ;;   ([e table] (get-data-index e table :else))
 ;;   ([e table roworcolumn]
@@ -1328,6 +1372,21 @@
 ;;       table)))
 
 
+;; (def color-label
+;;   (fn []
+;;     (let [isBordered true]
+;;       (doto (proxy [JLabel TableCellRenderer] []
+;;               (^Component getTableCellRendererComponent [^JTable table ^Object color ^Boolean isSelected ^Boolean hasFocus, ^Integer row, ^Integer column]
+;;                 (println "chujtam")
+;;                 (proxy-super setBackground (cast Color color))
+;;                 this))
+;;         (.setOpaque true)))))
+
+;; (def jcomboboxrenderer (fn [] (proxy [JComboBox TableCellRenderer] []
+;;                                 (^Component getTableCellRenderer [^JTable table, ^Object value, ^Boolean isSelected, ^Boolean hasFocus, row, column]
+;;                                   (proxy-super setSelectedItem value)
+;;                                   this))))
+;; (doto (JComboBox.) (.addItem ["true" "false"]))
 
 ;; (build
 ;;  :title "Mr. Jarman Sheet"
@@ -1339,26 +1398,33 @@
 ;;                :border (empty-border :thickness 10)
 ;;                :items (join-mig-items
 ;;                        (label :text "Tabelki")
+;;                        (doto (JComboBox.) (.addItem "true") (.addItem "false"))
 ;;                        (let [table (table-x :model (seesaw.table/table-model
-;;                                                     :columns [{:key :name :text "Imie"} 
-;;                                                               {:key :lname :text "Nazwisko"}
-;;                                                               {:key :access :text "Dostęp" :class java.lang.Boolean} 
+;;                                                     :columns [{:key :name :text "Imie"}
+;;                                                               {:key :lname :text "Kolor" :class java.awt.Color}
+;;                                                               {:key :access :text "Dostęp" :class String}
 ;;                                                               {:key :num :text "Numer" :class java.lang.Number}]
-;;                                                     :rows [["Jan" "Kowalski" true 1]
-;;                                                            ["Adam" "Nowak" false 2]
-;;                                                            ["Kamila" "Znila" true 3]
-;;                                                            ["Fara" "Gonga" false 4]]))]
+;;                                                     :rows [["Jan" (seesaw.color/color "#2a2") "true" 1]
+;;                                                            ["Fara" (seesaw.color/color "#2a2")  "false" 4]]))]
+;;                          (.setDefaultRenderer table Color (color-label))
 ;;                          (.setColumnControlVisible table true)
-;;                          (.setShowGrid table true)
+;;                          (.setFillsViewportHeight table true)
+;;                          (.setShowGrid table false)
+;;                         ;;  (.setColumnMargin (.getColumnModel table) 10)
+;;                          (doto
+;;                           (.getColumn (.getColumnModel table) 2)
+;;                            (.setCellEditor (DefaultCellEditor. (text))))
 ;;                          (config! table :listen
 ;;                                   [:mouse-clicked
 ;;                                    (fn [e]
+;;                                      ;;(println (-> table .getSelectedColumn))
 ;;                                     ;;  (println (seesaw.table/value-at (config e :model) (get-data-index e table :row)))
 ;;                                      )
-;;                                    :mouse-motion (fn [e] (.repaint (to-root e)))])
-;;                          (scrollable table)))))) 
-
-
+;;                                    :mouse-motion (fn [e] ;;(.repaint (to-root e))
+;;                                                    )])
+;;                         ;;  (println (.getColumn (.getColumnModel table) 2))
+                         
+;;                          (scrollable table))))))
 
 ;; ;; run app
 ;; (-> (doto (seesaw.core/frame
@@ -1403,40 +1469,13 @@
 ;; ;; │               │
 ;; ;; └───────────────┘
 
-;; (def simple-button
-;;   (fn [txt func]
-;;     (label
-;;      :text txt
-;;      :halign :center
-;;      :listen [:mouse-clicked func
-;;               :mouse-entered (fn [e] (hand-hover-on e) (button-hover e))
-;;               :mouse-exited  (fn [e] (button-hover e (get-color :background :button_main)))]
-;;      :background (get-color :background :button_main)
-;;      :border (compound-border (empty-border :bottom 10 :top 10)
-;;                               (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
 
-;; (def startup-login-lobby
-;;   (fn []
-;;     (build
-;;      :undecorated? true
-;;      :size [500 300]
-;;      :items (list (mig-panel
-;;                    :bounds [0 0 500 300]
-;;                    :constraints ["" "[grow, center]" "[grow, center]"]
-;;                    :border (empty-border :thickness 10)
-;;                    :items (join-mig-items
-;;                            (label :text (string/join "" ["<html><img width=\"200\" height=\"200\" src=\"file:" (.toString (clojure.java.io/file "resources\\imgs\\jarman.png")) "\"></html>"]))
-;;                            (mig-panel :constraints ["wrap 1" "[grow, fill]" "[fill]"]
-;;                                       :border (empty-border :thickness 50)
-;;                                       :items (join-mig-items
-;;                                               (label :text "Mr. Jarman App")
-;;                                               (label :text "Login")
-;;                                               (text)
-;;                                               (label :text "Password")
-;;                                               (text)
-;;                                               (simple-button "Log in" (fn [e] (@startup)))))))))))
 
-;; (startup-login-lobby)
+
+  
+;; (example-text-password-button)
+
+;; (show-events (text))
 
 ;; C:\\Aleks\\Github\\jarman\\jarman\\resources\\imgs\\jarman.png
 ;; (def action-on-JLP-children

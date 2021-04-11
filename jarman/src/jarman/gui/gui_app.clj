@@ -873,7 +873,6 @@
       (reset! active-tab id-key))))
 
 
-
 ;; ┌─────────────────────────┐
 ;; │                         │
 ;; │ Create config generator │
@@ -928,12 +927,14 @@
                                                (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
                       :listen [:caret-update (fn [event] (track-changes changing-list path value (clojure.string/split (config event :text) #"\s*,\s*")))])]]))))
 
+
 ;; (clojure.string/split "some  ,  strig,value" #"\s*,\s*")
 ;; 
 ;; Sprawdzenie integerów
 ;; (try
 ;;   (every? number? (doall (map #(Integer. %) (clojure.string/split "1  ,  23, 54 d" #"\s*,\s*"))))
 ;;   (catch Exception e :chwdp))
+
 
 (def confgen--gui-interface--input-textcolor
   (fn [changing-list path value]

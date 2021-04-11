@@ -506,7 +506,6 @@
              style))))
 
 
-
 (def password-input
   "Description:
     Text component converted to password input component, placeholder is default value.

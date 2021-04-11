@@ -25,7 +25,7 @@
 ;; (import java.awt.Dimension)
 ;; (import java.awt.event.MouseEvent)
 
-(def atom-app-size (atom [800 600]))
+(def atom-app-size (atom [1200 700]))
 (def app (atom nil))
 (def alert-manager (atom nil))
 
@@ -35,7 +35,7 @@
  (fn [key atom old-state new-state]
    (do
      (config! (select @app [:#rebound-layer]) :bounds [0 0 (first @atom-app-size) (second @atom-app-size)])
-     (.repaint @app))))
+     (.repaint (to-frame @app)))))
 
 (def box 
   (fn [& {:keys [wrap items vlayout hlayout]
@@ -88,18 +88,21 @@
         (reset! app (base set-items))
         (reset! alert-manager (message-server-creator app))
         (-> (doto (seesaw.core/frame
-                   :title title 
+                   :title title
                    :resizable? true
                    :undecorated? undecorated?
                    :size [(first size) :by (second size)]
-                   :minimum-size [(first size) :by (second size)]
+                   :minimum-size [600 :by 400]
                    :content @app
                 ;;    :on-close :exit
-                   :listen [:component-resized (fn [e] (reset! atom-app-size [(.getWidth (config e :size))
-                                                                         (.getHeight (config e :size))])
-                                                 (config! e :size [(first @atom-app-size) :by (second @atom-app-size)]))])
-              (.setLocationRelativeTo nil) pack! show!)))
+                   :listen [:component-resized (fn [e]
+                                                 (let [w (.getWidth  (config e :size))
+                                                       h (.getHeight (config e :size))]
+                                                   (reset! atom-app-size [w h])))])
+              (.setLocationRelativeTo nil) pack! show!))
+        (config! (to-frame @app) :size [(first size) :by (second size)]))
       )))
+
 
 
 ;; (show-options (frame))

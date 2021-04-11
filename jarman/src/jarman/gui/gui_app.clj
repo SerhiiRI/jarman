@@ -1281,7 +1281,8 @@
                                                                                                                                    (reset! work-mode :user-mode)
                                                                                                                                    (@alert-manager :set {:header "Work mode" :body "Dev mode deactivated."} (message alert-manager) 5))))})
                      @atom-popup-hook))
-      (reset! popup-menager (create-popup-service atom-popup-hook)))))
+      (reset! popup-menager (create-popup-service atom-popup-hook))
+      )))
 
 (reset! startup
         (fn []
@@ -1300,7 +1301,7 @@
 
 (@startup)
 
-
+(config! (to-frame @app) :size [1000 :by 800])
 
 ;; ┌──────────────────────────────────────┐
 ;; │                                      │

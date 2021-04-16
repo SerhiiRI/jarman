@@ -1377,7 +1377,6 @@
 ;;     (let [isBordered true]
 ;;       (doto (proxy [JLabel TableCellRenderer] []
 ;;               (^Component getTableCellRendererComponent [^JTable table ^Object color ^Boolean isSelected ^Boolean hasFocus, ^Integer row, ^Integer column]
-;;                 (println "chujtam")
 ;;                 (proxy-super setBackground (cast Color color))
 ;;                 this))
 ;;         (.setOpaque true)))))
@@ -1402,29 +1401,32 @@
 ;;                        (let [table (table-x :model (seesaw.table/table-model
 ;;                                                     :columns [{:key :name :text "Imie"}
 ;;                                                               {:key :lname :text "Kolor" :class java.awt.Color}
-;;                                                               {:key :access :text "Dostęp" :class String}
+;;                                                               {:key :access :text "Dostęp"}
 ;;                                                               {:key :num :text "Numer" :class java.lang.Number}]
 ;;                                                     :rows [["Jan" (seesaw.color/color "#2a2") "true" 1]
 ;;                                                            ["Fara" (seesaw.color/color "#2a2")  "false" 4]]))]
-;;                          (.setDefaultRenderer table Color (color-label))
-;;                          (.setColumnControlVisible table true)
-;;                          (.setFillsViewportHeight table true)
-;;                          (.setShowGrid table false)
+;;                          (doall
+;;                           (.setDefaultRenderer table Color (color-label))
+;;                           (.setColumnControlVisible table true)
+;;                           (.setFillsViewportHeight table true)
+;;                           (.setShowGrid table false)
 ;;                         ;;  (.setColumnMargin (.getColumnModel table) 10)
-;;                          (doto
-;;                           (.getColumn (.getColumnModel table) 2)
-;;                            (.setCellEditor (DefaultCellEditor. (text))))
-;;                          (config! table :listen
-;;                                   [:mouse-clicked
-;;                                    (fn [e]
+;;                           (println "Dupa")
+;;                           (let [col (.getColumn (.getColumnModel table) 2)]
+;;                             (println "Col: " col)
+;;                           ;;  (.setCellEditor (DefaultCellEditor. (doto (JComboBox.) (.addItem ["true" "false"]))))
+;;                             )
+;;                           (config! table :listen
+;;                                    [:mouse-clicked
+;;                                     (fn [e]
 ;;                                      ;;(println (-> table .getSelectedColumn))
 ;;                                     ;;  (println (seesaw.table/value-at (config e :model) (get-data-index e table :row)))
-;;                                      )
-;;                                    :mouse-motion (fn [e] ;;(.repaint (to-root e))
-;;                                                    )])
+;;                                       )
+;;                                     :mouse-motion (fn [e] ;;(.repaint (to-root e))
+;;                                                     )])
 ;;                         ;;  (println (.getColumn (.getColumnModel table) 2))
-                         
-;;                          (scrollable table))))))
+
+;;                           (scrollable table)))))))
 
 ;; ;; run app
 ;; (-> (doto (seesaw.core/frame

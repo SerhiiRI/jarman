@@ -1,4 +1,4 @@
-(ns jarman.gui-tutorials.stylesheet-tutorial
+(ns jarman.gui.gui-tutorials.stylesheet-tutorial
   (:use
    seesaw.core
    seesaw.mig

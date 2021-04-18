@@ -18,6 +18,7 @@
             [jarman.config.config-manager :refer :all]
             [jarman.gui.gui-tools :refer :all]
             [jarman.gui.gui-alerts-service :refer :all]
+            [jarman.gui.gui-views-service :refer :all]
             ;; deverloper tools 
             [jarman.tools.swing :as stool]
             [jarman.config.spec :as sspec]
@@ -29,18 +30,7 @@
             [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]))
 
 
-
-
-
-(import javax.swing.JLayeredPane)
-(import java.awt.Color)
-(import java.awt.event.MouseEvent)
-
-;; ┌───────────────────┐
-;; │                   │
-;; │ Prepare app atoms │
-;; │                   │
-;; └───────────────────┘
+(def jarman-views-service (atom nil))
 
 
 ;; ┌────────────────────┐
@@ -162,17 +152,7 @@
 ;; │              │
 ;; └──────────────┘
 
-(def simple-button
-  (fn [txt func]
-    (label
-     :text txt
-     :halign :center
-     :listen [:mouse-clicked func
-              :mouse-entered (fn [e] (hand-hover-on e) (button-hover e))
-              :mouse-exited  (fn [e] (button-hover e (get-color :background :button_main)))]
-     :background (get-color :background :button_main)
-     :border (compound-border (empty-border :bottom 10 :top 10)
-                              (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
+
 
 (def create-dialog--answer-btn
   (fn [txt func]
@@ -268,45 +248,10 @@
           (= action :ok)          (create-dialog-ok title body size)
           (= action :yesno)       (create-dialog-yesno title body size))))))
 
-
-
-
-;; ┌───────────────────────────┐
-;; │                           │
-;; │ Views and tabs controller │
-;; │                           │
-;; └───────────────────────────┘
-
-(def views (atom {}))
-(def active-tab (atom :none))
-(def last-active-tab (atom :none))
-(def table-in-editor (atom :none))
-;; (reset! views nil)
-;; @views
-;; (swap! views (fn [storage] (conj storage (new JLayeredPane))))
-;; (swap! views (fn [storage] (conj storage (label))))
-;; (def new-layered-for-tabs (fn [] (swap! views (fn [storage] (merge storage {:layered-for-tabs {:component (new JLayeredPane) :id "layered-for-tables" :title "DB View"}})))))
-
-(defn create-view
-  "Description
-     Quick tab template for view component. Just set id, title and component.
-     Next view will be added to @views with tab to open tabs bar.
-   "
-  [id title view]
-  (let [id-key (keyword id)]
-    (do
-      (if (= (contains? @views id-key) false) (swap! views (fn [storage] (merge storage {id-key {:component view :id id :title title}}))) (fn []))
-      (reset! active-tab id-key))))
-
-(def add-view-to-tab-bar-if-not-exist
-  (fn [view-id view id title]
-    (if (= (contains? @views view-id) false)
-      (swap! views (fn [storage] (merge storage {view-id {:component view :id id :title (string/join "" ["Edit: " title])}}))) (fn []))))
-
-;; (new-layered-for-tabs)
+;; (new-layered-id-for-tables-visualizer)
 ;; (new-test-for-tabs)
 
-;; (new-layered-for-tabs)
+;; (new-layered-id-for-tables-visualizer)
 ;; @views
 
 ;; ================================================VVVVVVVVVV Table in database view
@@ -682,17 +627,16 @@
                              :items [[(table-editor--component--column-picker mode changing-list column-editor-id columns col-value-path)] ;; Left part for columns to choose for doing changes.
                                      [(table-editor--component--space-for-column-editor column-editor-id)] ;; Space for components. Using to editing columns.
                                      ]))]])
-        view   (cond
-                 (> (count table) 0) (do
-                                       (scrollable (mig-panel
-                                                    :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
-                                                    :items elems)
-                                                   :border (empty-border :thickness 0)))
-                 :else (label :text "Table not found inside metadata :c"))]
+        component (cond
+                    (> (count table) 0) (do
+                                          (scrollable (mig-panel
+                                                       :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
+                                                       :items elems)
+                                                      :border (empty-border :thickness 0)))
+                    :else (label :text "Table not found inside metadata :c"))]
     (do
       (add-changes-controller view-id changing-list)
-      (add-view-to-tab-bar-if-not-exist view-id view table-id (get table :table))
-      (reset! active-tab view-id))))
+      (@jarman-views-service :set-view :view-id view-id :title (get table :table) :component component))))
 
 
 ;; ┌─────────┐
@@ -706,39 +650,41 @@
 (def db-view--apsolute-pop--rmb-table-actions
   "Description:
        Right Mouse Click Menu on table to control clicked table"
-  (fn [atom--tables-configurations table-id x y] (let [border-c "#bbb"
-                                                       rm-menu (fn [e] (do
-                                                                         (.remove (get-in @views [:layered-for-tabs :component]) (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))))
-                                                                         (.repaint (get-in @views [:layered-for-tabs :component]))))
-                                                       btn (fn [txt ico onclick] (label
-                                                                                  :font (getFont 13)
-                                                                                  :text txt
-                                                                                  :icon (stool/image-scale ico 30)
-                                                                                  :background "#fff"
-                                                                                  :foreground "#000"
-                                                                                  :border (compound-border (empty-border :left 10 :right 15) (line-border :bottom 1 :color border-c))
-                                                                                  :listen [:mouse-clicked onclick
-                                                                                           :mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
-                                                                                           :mouse-exited  (fn [e] (do
-                                                                                                                    (config! e :background "#fff" :foreground "#000")
-                                                                                                                    (let [bounds (config (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :bounds)
-                                                                                                                          mouse-y (+ (+ (.getY e) (.getY (config e :bounds))) (.getY bounds))
-                                                                                                                          mouse-x (.getX e)]
-                                                                                                                      (if (or (< mouse-x 5)
-                                                                                                                              (> mouse-x (- (.getWidth bounds) 5))
-                                                                                                                              (< mouse-y (+ (.getY bounds) 5))
-                                                                                                                              (> mouse-y (- (+ (.getHeight bounds) (.getY bounds)) 5)))
-                                                                                                                        (rm-menu e)))))]))]
-                                                   (mig-panel
-                                                    :id :db-viewer--component--menu-bar
-                                                    :bounds [x y 150 90]
-                                                    :background (new Color 0 0 0 0)
-                                                    :border (line-border :thickness 1 :color border-c)
-                                                    :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
-                                                    :items [[(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
-                                                                                                                (create-view--table-editor @work-mode atom--tables-configurations table-id))))]
-                                                            [(btn "Delete table" icon/basket-blue1-64-png (fn [e]))]
-                                                            [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]]))))
+  (fn [atom--tables-configurations table-id x y]
+    (let [border-c "#bbb"
+          rm-menu (fn [e] (let [layered (@jarman-views-service :get-component :view-id :layered-id-for-tables-visualizer)
+                                popup-menu (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e)))]
+                            (.remove  layered popup-menu)
+                            (.repaint layered)))
+          btn (fn [txt ico onclick] (label
+                                     :font (getFont 13)
+                                     :text txt
+                                     :icon (stool/image-scale ico 30)
+                                     :background "#fff"
+                                     :foreground "#000"
+                                     :border (compound-border (empty-border :left 10 :right 15) (line-border :bottom 1 :color border-c))
+                                     :listen [:mouse-clicked onclick
+                                              :mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
+                                              :mouse-exited  (fn [e] (do
+                                                                       (config! e :background "#fff" :foreground "#000")
+                                                                       (let [bounds (config (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :bounds)
+                                                                             mouse-y (+ (+ (.getY e) (.getY (config e :bounds))) (.getY bounds))
+                                                                             mouse-x (.getX e)]
+                                                                         (if (or (< mouse-x 5)
+                                                                                 (> mouse-x (- (.getWidth bounds) 5))
+                                                                                 (< mouse-y (+ (.getY bounds) 5))
+                                                                                 (> mouse-y (- (+ (.getHeight bounds) (.getY bounds)) 5)))
+                                                                           (rm-menu e)))))]))]
+      (mig-panel
+       :id :db-viewer--component--menu-bar
+       :bounds [x y 150 90]
+       :background (new Color 0 0 0 0)
+       :border (line-border :thickness 1 :color border-c)
+       :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
+       :items [[(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
+                                                                   (create-view--table-editor @work-mode atom--tables-configurations table-id))))]
+               [(btn "Delete table" icon/basket-blue1-64-png (fn [e]))]
+               [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]]))))
 
 (defn table-visualizer--element--col-as-row
   "Description:
@@ -768,7 +714,7 @@
                            :mouse-clicked (fn [e]
                                             (let [table-id (get (config (getParent e) :user-data) :id)]
                                               (cond (= (.getButton e) MouseEvent/BUTTON3)
-                                                    (.add (get-in @views [:layered-for-tabs :component])
+                                                    (.add (@jarman-views-service :get-component :view-id :layered-id-for-tables-visualizer)
                                                           (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
                                                            dbmap ;; forward list of table configuration
                                                            table-id ;; Get table id
@@ -862,20 +808,17 @@
      Set prepare view from @views to functional space.
    "
   []
-  (let [id-txt "layered-for-tabs"
-        id-key (keyword id-txt)
+  (let [view-id-txt "layered-id-for-tables-visualizer"
+        view-id (keyword view-id-txt)
         title "DB View"]
     (do
-      (if (= (contains? @views id-key) false)
+      (if (@jarman-views-service :exist? :view-id view-id)
         (do
-          (swap! views (fn [storage] (merge storage {id-key {:component (new JLayeredPane) :id id-txt :title title}})))
-          (.add (get-in @views [id-key :component]) (db-viewer--component--menu-bar) (new Integer 1000))
+          (@jarman-views-service :set :view-id view-id :title title :component (new JLayeredPane))
+          (.add (@jarman-views-service :get-component :view-id view-id) (db-viewer--component--menu-bar) (new Integer 1000))
           (doall (map (fn [tab-data]
-                        (.add (get-in @views [id-key :component]) (db-viewer--component--table (get-in tab-data [:prop :bounds] [10 10 100 100]) tab-data) (new Integer 5)))
-                      (calculate-bounds 20 5)))))
-
-      (reset! active-tab id-key))))
-
+                        (.add (@jarman-views-service :get-component :view-id view-id) (db-viewer--component--table (get-in tab-data [:prop :bounds] [10 10 100 100]) tab-data) (new Integer 5)))
+                      (calculate-bounds 20 5))))))))
 
 
 ;; ┌─────────────────────────┐
@@ -1044,41 +987,41 @@
       (cond (= (get-in map-part [:display]) :edit)
             (do
               (add-changes-controller (last start-key) changing-list)
-              (mig-panel
-               :border (line-border :bottom 50 :color (get-color :background :main))
-               :constraints ["wrap 1" (string/join "" ["20px[" ", grow, fill]20px"]) "20px[]20px"]
-               :items (join-mig-items
+              (scrollable
+               (mig-panel
+                :border (line-border :bottom 50 :color (get-color :background :main))
+                :constraints ["wrap 1" (string/join "" ["20px[" ", grow, fill]20px"]) "20px[]20px"]
+                :items (join-mig-items
                                    ;; Header of section/config file
-                       (confgen--element--header-file (get-in map-part [:name]))
-                       (label :text "Show changes" :listen [:mouse-clicked (fn [e]
+                        (confgen--element--header-file (get-in map-part [:name]))
+                        (label :text "Show changes" :listen [:mouse-clicked (fn [e]
                                                                              ;; save changes configuration
-                                                                             (prn "Changes" @changing-list)
-                                                                             (reset! configuration-copy @configuration)
-                                                                             (doall
-                                                                              (map
-                                                                               (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
-                                                                                 (swap! configuration-copy (fn [changes] (assoc-in changes (join-vec (first (second new-value)) [:value]) (second (second new-value))))))
-                                                                               @changing-list))
-                                                                             (let [out (sspec/valid-segment @configuration-copy)]
-                                                                               (cond (get-in out [:valid?])
-                                                                                     (do
-                                                                                       (cond (get-in (save-all-cofiguration @configuration-copy) [:valid?])
-                                                                                             (do
-                                                                                               (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5)
-                                                                                               (make-backup-configuration)
-                                                                                               (iinit/swapp-configuration))
-                                                                                             :else (let [m (string/join "<br>" ["Cannot save changes"])]
-                                                                                                     (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5)))) ;; TODO action on faild save changes configuration
-                                                                                     :else (let [m (string/join "<br>" ["Cannot save changes" (get-in out [:output])])]
-                                                                                             (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5))))
+                                                                              (prn "Changes" @changing-list)
+                                                                              (reset! configuration-copy @configuration)
+                                                                              (doall
+                                                                               (map
+                                                                                (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
+                                                                                  (swap! configuration-copy (fn [changes] (assoc-in changes (join-vec (first (second new-value)) [:value]) (second (second new-value))))))
+                                                                                @changing-list))
+                                                                              (let [out (sspec/valid-segment @configuration-copy)]
+                                                                                (cond (get-in out [:valid?])
+                                                                                      (do
+                                                                                        (cond (get-in (save-all-cofiguration @configuration-copy) [:valid?])
+                                                                                              (do
+                                                                                                (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5)
+                                                                                                (make-backup-configuration)
+                                                                                                (iinit/swapp-configuration))
+                                                                                              :else (let [m (string/join "<br>" ["Cannot save changes"])]
+                                                                                                      (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5)))) ;; TODO action on faild save changes configuration
+                                                                                      :else (let [m (string/join "<br>" ["Cannot save changes" (get-in out [:output])])]
+                                                                                              (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5))))
                                                                                ;; (prn @configuration-copy)
-                                                                             )])
+                                                                              )])
                                    ;; Foreach on init values and create configuration blocks
-                       (map
-                        (fn [param]
-                          (confgen--component--tree changing-list (join-vec start-key [:value] (list (first param)))))
-                        (get-in map-part [:value])))))))))
-
+                        (map
+                         (fn [param]
+                           (confgen--component--tree changing-list (join-vec start-key [:value] (list (first param)))))
+                         (get-in map-part [:value]))))))))))
 
 ;; ┌─────────────────────────────────────────┐
 ;; │                                         │
@@ -1117,9 +1060,10 @@
    "
   (fn [] (expand-btn (get-lang-btns :settings)
                      (map (fn [path]
-                            (let [name (get-in @configuration (join-vec path [:name]))
-                                  id (last path)]
-                              (expand-child-btn name (fn [e] (create-view id name (create-view--confgen path))))))
+                            (let [title (get-in @configuration (join-vec path [:name]))
+                                  view-id (last path)]
+                              (expand-child-btn title (fn [e]
+                                                        (@jarman-views-service :set-view :view-id view-id :title title :component (create-view--confgen path))))))
                           (confgen-expand-btns--prepare-config-paths configuration)))))
 
 
@@ -1144,31 +1088,35 @@
                 :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
                 :items (vec args))))
 
-(def mig-app-right-f
+(def right-part-of-jarman-as-space-for-views-service
   "Description: 
       Vertical layout for tabs and table on right part of app. 
       Tabs are inside horizontal panel on top.
    Example: 
       tabs  -> mig vector with elements    -> [(tab1) (tab2) (tab3)]
       array -> table like rows and columns -> [(table)]  
-      (mig-app-right-f [(tab-btn 'Tab 1' true) (tab-btn 'Tab 2' false)] [(label-fn :text 'GRID')])
+      (right-part-of-jarman-as-space-for-views-service [(tab-btn 'Tab 1' true) (tab-btn 'Tab 2' false)] [(label-fn :text 'GRID')])
    Needed:
       tab-btn component is needed to corectly work
    "
-  (fn [tabs array] (let [bg-color "#fff"]
-                     (mig-panel
-                      :id :operation-space
-                      :background "#fff"
-                      :constraints ["wrap 1" "0px[fill, grow]0px" "0px[25]0px[fill,grow]0px"]
-                      :background "#eee"
-                      :items [[(horizontal-panel
-                                :id :app-tabs-space
-                                :background bg-color
-                                :items tabs)]
-                              [(vertical-panel
-                                :id :app-functional-space
-                                :background (new Color 0 0 0 0)
-                                :items array)]]))))
+  (fn [tabs array]
+    (let [bg-color "#fff"
+          tabs-space (horizontal-panel
+                      :id :app-tabs-space
+                      :background bg-color
+                      :items tabs)
+          views-space (vertical-panel
+                       :id :app-functional-space
+                       :background (new Color 0 0 0 0)
+                       :items array)]
+      (reset! jarman-views-service (new-views-service tabs-space views-space))
+      (mig-panel
+       :id :operation-space
+       :background "#fff"
+       :constraints ["wrap 1" "0px[fill, grow]0px" "0px[25]0px[fill,grow]0px"]
+       :background "#eee"
+       :items [[tabs-space]
+               [views-space]]))))
 
 
 
@@ -1187,68 +1135,17 @@
                                                           (expand-child-btn "Alert 1 \"Test\""  (fn [e] (@alert-manager :set {:header "Test" :body "Bardzo dluga testowa wiadomość, która nie jest taka prosta do ogarnięcia w seesaw."} (message alert-manager) 3)))
                                                           (expand-child-btn "Alert 2 \"Witaj\"" (fn [e] (@alert-manager :set {:header "Witaj" :body "Świecie"} (message alert-manager) 5))))]
                                              [(expand-btn "Widoki"
-                                                          (expand-child-btn "DB View" (fn [e] (create-view--db-view)))
-                                                          (expand-child-btn "Test"    (fn [e] (create-view "test1" "Test 1" (label :text "Test 1"))))
-                                                          (expand-child-btn "Test 2"  (fn [e] (create-view "test2" "Test 2" (label :text "Test 2")))))]
+                                                          ;; (expand-child-btn "DB View" (fn [e] (create-view--db-view)))
+                                                          (expand-child-btn "Test"    (fn [e] (@jarman-views-service :set-view :view-id "test1" :title "Test 1" :component (label :text "Test 1"))))
+                                                          (expand-child-btn "Test"    (fn [e] (@jarman-views-service :set-view :view-id "test2" :title "Test 2" :component (label :text "Test 2")))))]
                                              [(create-expand-btns--confgen)])]
-                           [(mig-app-right-f [(label)]
-                                             [(label)])]])])))
-
-
-(defn create-bar-with-open-tabs
-  "Description
-    This function create bar with tabs who linking to open views.
-   "
-  [id-key]
-  (cond
-    (> (count @views) 0) (vec (map (fn [item]
-                                     (let [view-id (first item)
-                                           item-key (get (second item) :title)
-                                           changes-atom (get-changes-atom view-id)]
-                                       (tab-btn item-key item-key (if (identical? view-id id-key) true false) [100 25]
-                                                (fn [e] (let [close-view (fn [e] (do
-                                                                                   (reset! views (dissoc @views view-id)) ;; Remove view from view list
-                                                                                   (if (get (config (.getParent (seesaw.core/to-widget e)) :user-data) :active)
-                                                                                     (reset! active-tab @last-active-tab) ;; Close active card
-                                                                                     (reset! active-tab @active-tab))))]
-
-                                                          (if-not (nil? changes-atom)
-                                                            (if-not (empty? @changes-atom)
-                                                              ;; Question if changes was not saved
-                                                              (cond (= (@popup-menager :yesno :title (get-lang-alerts :unsaved-changes-title) :body (get-lang-alerts :unsaved-changes-body) :size [300 150]) "yes")
-                                                                    (close-view e))
-                                                              (close-view e)) ;; Close view if chages storage for this view is empty 
-                                                            (close-view e)))) ;; Close view if chages storage for this view is nil 
-                                                (fn [e] (do
-                                                          (reset! active-tab view-id)
-                                                          (config! (select (getRoot @app) [:#app-functional-space])
-                                                                   :items [(scrollable (get (second item) :component)
-                                                                                       :border nil
-                                                                                       :id (keyword (get (second item) :id)))]))))))
-                                   @views))
-    :else [(label)]))
+                           [(right-part-of-jarman-as-space-for-views-service [(label)]
+                                                                             [(label)])]])])))
 
 
 
-;; ┌──────────────────────────────────────┐
-;; │                                      │
-;; │ Supervisor for open views in tab bar │
-;; │                                      │
-;; └──────────────────────────────────────┘
-(add-watch active-tab :refresh
-           (fn [key atom old-state new-state]
-             (do
-               (reset! last-active-tab old-state)
-               (cond
-                 (contains? @views new-state) (do
-                                                (config! (select (getRoot @app) [:#app-functional-space]) :items [(scrollable (get-in @views [new-state :component]) :border nil :id (keyword (get-in @views [new-state :id])))])
-                                                (config! (select (getRoot @app) [:#app-tabs-space]) :items (create-bar-with-open-tabs new-state)))
-                 (> (count @views) 0) (reset! active-tab (first (first @views)))
-                 :else (do
-                         (reset! last-active-tab :none)
-                         (config! (select (getRoot @app) [:#app-functional-space]) :items [(label)])
-                         (config! (select (getRoot @app) [:#app-tabs-space]) :items [(label)]))))
-             (.repaint @app))) ;;@app
+
+
 
 
 ;; ┌─────────────┐
@@ -1281,8 +1178,8 @@
                                                                                                                                    (reset! work-mode :user-mode)
                                                                                                                                    (@alert-manager :set {:header "Work mode" :body "Dev mode deactivated."} (message alert-manager) 5))))})
                      @atom-popup-hook))
-      (reset! popup-menager (create-popup-service atom-popup-hook))
-      )))
+      (reset! popup-menager (create-popup-service atom-popup-hook)))))
+
 
 (reset! startup
         (fn []
@@ -1301,7 +1198,7 @@
 
 (@startup)
 
-(config! (to-frame @app) :size [1000 :by 800])
+;; (config! (to-frame @app) :size [1000 :by 800])
 
 
 
@@ -1311,37 +1208,37 @@
 ;; │                                      │
 ;; └──────────────────────────────────────┘
 
-(def example-text-password-button
-  "Description
-      Create simple jframe with simple components
-   "
-  (fn []
-    (build
-     :undecorated? false
-     :size [400 400]
-     :items (list
-             (text
-              :class :input
-              :text "Just text input component"
-              :halign :center
-              :bounds [100 50 200 30])
-             (jarman.gui.gui-tools/text-input :placeholder "Login"
-                                                  :style [:class :input
-                                                          :halign :center
-                                                          :bounds [100 100 200 30]])
-             (jarman.gui.gui-tools/password-input :placeholder "Password component"
-                                                  :style [:class :input
-                                                          :halign :center
-                                                          :bounds [100 150 200 30]])
-             (jarman.gui.gui-tools/simple-button "Simple button" (fn [e] (println (map #(str "Value: " (if (map? (get-user-data %)) ;; if component have map inside :user-data
-                                                                                                         (if (= (get-user-data % :type) :password) ;; if component type inside :user-data is password
-                                                                                                           (get-user-data % :value) ;; return value from :user-data
-                                                                                                           (value %)) ;; else return value from component
-                                                                                                         (value %)))  ;; return value from component
-                                                                                       (select (to-root e) [:.input]) ;; Get all component with class "input"
-                                                                                       )))
-                                                 :style [:bounds [100 200 200 30]])))))
+;; (def example-text-password-button
+;;   "Description
+;;       Create simple jframe with simple components
+;;    "
+;;   (fn []
+;;     (build
+;;      :undecorated? false
+;;      :size [400 400]
+;;      :items (list
+;;              (text
+;;               :class :input
+;;               :text "Just text input component"
+;;               :halign :center
+;;               :bounds [100 50 200 30])
+;;              (jarman.gui.gui-tools/text-input :placeholder "Login"
+;;                                                   :style [:class :input
+;;                                                           :halign :center
+;;                                                           :bounds [100 100 200 30]])
+;;              (jarman.gui.gui-tools/password-input :placeholder "Password component"
+;;                                                   :style [:class :input
+;;                                                           :halign :center
+;;                                                           :bounds [100 150 200 30]])
+;;              (jarman.gui.gui-tools/simple-button "Simple button" (fn [e] (println (map #(str "Value: " (if (map? (get-user-data %)) ;; if component have map inside :user-data
+;;                                                                                                          (if (= (get-user-data % :type) :password) ;; if component type inside :user-data is password
+;;                                                                                                            (get-user-data % :value) ;; return value from :user-data
+;;                                                                                                            (value %)) ;; else return value from component
+;;                                                                                                          (value %)))  ;; return value from component
+;;                                                                                        (select (to-root e) [:.input]) ;; Get all component with class "input"
+;;                                                                                        )))
+;;                                                  :style [:bounds [100 200 200 30]])))))
 
-(example-text-password-button)
+;; (example-text-password-button)
 
 

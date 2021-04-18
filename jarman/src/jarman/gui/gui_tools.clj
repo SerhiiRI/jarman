@@ -295,38 +295,6 @@
                                                :mouse-exited  (fn [e] (config! e  :background "#fff"))]
                                       params)))
 
-(def tab-btn
-  "Description:
-      Buttons for changing opened views or functions in right part of app.
-      If height in size will be different than 25, you probably should change it in mig-app-right-f. 
-   Needed:
-      Import jarman.dev-tools
-      Function need stool/image-scale function for scalling icon
-   "
-  (fn [title txt active size onclose onclick]
-    (let [bg-color (if (= active true) "#eee" "#ccc")
-          border "#fff"
-          hsize (first size)
-          vsize (last size)]
-      (horizontal-panel
-       :background bg-color
-       :user-data {:title title :active active}
-       :items [(label-fn
-                :text txt
-                :halign :center
-                :border (empty-border :left 5 :right 5)
-                :size [hsize :by vsize]
-                :listen [:mouse-clicked onclick
-                         :mouse-entered (fn [e] (config! e :cursor :hand))])
-               (label-fn
-                :icon (stool/image-scale icon/x-grey2-64-png 15)
-                :halign :center
-                :border (line-border :right 2 :color border)
-                :size [vsize :by vsize]
-                :listen [:mouse-entered (fn [e] (config! e :cursor :hand :icon (stool/image-scale icon/x-blue1-64-png 15)))
-                         :mouse-exited  (fn [e] (config! e :icon (stool/image-scale icon/x-grey2-64-png 15)))
-                         :mouse-clicked onclose])]
-       :listen [:mouse-entered hand-hover-on]))))
 
 (def table-editor--component--bar-btn
   "Description:

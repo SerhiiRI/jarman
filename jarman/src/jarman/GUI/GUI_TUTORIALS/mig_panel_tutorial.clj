@@ -1,4 +1,4 @@
-(ns jarman.gui-tutorials.mig-panel-tutorial
+(ns jarman.gui.gui-tutorials.mig-panel-tutorial
   (:use
    seesaw.core
    seesaw.mig

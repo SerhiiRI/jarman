@@ -1,4 +1,4 @@
-(ns jarman.gui-tutorials.forms-tutorial
+(ns jarman.gui.gui-tutorials.forms-tutorial
   (:use [seesaw [core :exclude (separator)] forms]
         seesaw.dev))
 

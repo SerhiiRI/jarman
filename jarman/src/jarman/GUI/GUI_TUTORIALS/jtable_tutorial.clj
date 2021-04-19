@@ -60,8 +60,9 @@
 
 
 (def tb (atom (table :model (seesaw.table/table-model
-                             :columns {}
-                             :rows {}))))
+                             :columns [{:key :col1 :text "Col 1"} 
+                                       {:key :col2 :text "Col 2"}]
+                             :rows [["Dane 1" "Dane 2"]]))))
 
 (def mount-table 
   (fn [table filters]

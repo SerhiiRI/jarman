@@ -37,12 +37,12 @@
      (config! (select @app [:#rebound-layer]) :bounds [0 0 (first @atom-app-size) (second @atom-app-size)])
      (.repaint (to-frame @app)))))
 
-(def box 
+(def box
   (fn [& {:keys [wrap items vlayout hlayout]
-          :or  {wrap 0 
+          :or  {wrap 0
                 items (list (label :text "Hello Boi!"))
                 vlayout "center, grow"
-                hlayout "center, grow"}}] 
+                hlayout "center, grow"}}]
     (let [wraper (if (= wrap 0) "" (string/join "" ["wrap" wrap]))
           margin 0]
       (vertical-panel
@@ -64,7 +64,7 @@
     (let [JLP (new JLayeredPane)
           layer (atom 0)]
       (do
-        (doseq [i items] (do 
+        (doseq [i items] (do
                            (swap! layer inc)
                            ;;(println "Layer" @layer)
                            (.add JLP i (new Integer @layer))))
@@ -76,11 +76,11 @@
 
 (def build
   (fn [& {:keys [title
-                 items 
+                 items
                  size
                  undecorated?]
           :or  {title "Mr. Jarman"
-                items (label :text "Hello Boi!" :bounds [100 100 300 300]) 
+                items (label :text "Hello Boi!" :bounds [100 100 300 300])
                 size [(first @atom-app-size) (second @atom-app-size)]
                 undecorated? false}}]
     (let [set-items (if-not (list? items) (list items) items)]
@@ -100,8 +100,7 @@
                                                        h (.getHeight (config e :size))]
                                                    (reset! atom-app-size [w h])))])
               (.setLocationRelativeTo nil) pack! show!))
-        (config! (to-frame @app) :size [(first size) :by (second size)]))
-      )))
+        (config! (to-frame @app) :size [(first size) :by (second size)])))))
 
 
 
@@ -116,3 +115,10 @@
 ;;                     (label :text "Top layer 2" :halign :center :bounds [10 10 100 50] :background "#a44")
 ;;                     (label :text "Top layer 3" :halign :center :bounds [80 40 100 50] :background "#abc")))
 
+
+;; (let [my-frame (-> (doto (seesaw.core/frame
+;;                           :title "test"
+;;                           :size [0 :by 0]
+;;                           :content (label))
+;;                      (.setLocationRelativeTo nil) pack! show!))]
+;;   (config! my-frame :size [600 :by 600]))

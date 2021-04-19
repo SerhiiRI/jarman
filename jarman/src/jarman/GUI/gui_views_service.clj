@@ -20,14 +20,14 @@
       Import jarman.dev-tools
       Function need stool/image-scale function for scalling icon
    "
-  (fn [title active size onclose onclick]
+  (fn [view-id title active size onclose onclick]
     (let [bg-color (if (= active true) "#eee" "#ccc")
           border "#fff"
           hsize (first size)
           vsize (last size)]
       (horizontal-panel
        :background bg-color
-       :user-data {:title title :active active}
+       :user-data {:title title :active active :view-id view-id}
        :items [(label ;; tab title
                 :text title
                 :halign :center
@@ -47,6 +47,8 @@
                                                          :icon (jarman.tools.swing/image-scale icon/x-grey2-64-png 15)))
                          :mouse-clicked onclose])]
        :listen [:mouse-entered (fn [e] (config! e :cursor :hand))]))))
+
+
 
 
 
@@ -87,7 +89,7 @@
                     (switch-view (service-data :view-space) @(service-data :active-tab))))
       ;; (println "Switch")
       ((service-data :update) service-data)
-      ;; (.repaint (to-root (service-data :view-space)))
+      (.repaint (to-root (service-data :view-space)))
       )))
 
 
@@ -102,32 +104,53 @@
                            (switch-tab service-data nil)
                            (do
                              (reset! (service-data :last-active) nil)
-                             ((service-data :update) service-data))))]
-        (if (service-data :onClose) (close-view e))))
-    ))
+                             ((service-data :update) service-data)
+                             )))]
+        (if (service-data :onClose) (close-view e))))))
+
+
+(defn in-list? [coll key] (not (empty? (filter #(= key %) coll))))
+(defn update-tabs-on-bar-space
+  [service-data]
+  (let [list-of-tabs (config (service-data :bar-space) :items)
+        list-of-view-id-in-tabs (map (fn [tab] (get (config tab :user-data) :view-id)) list-of-tabs)]
+    (cond (< (count list-of-tabs) (count @(service-data :views-storage)))
+      (do ;; Add new tab which will be linking to created view
+        (map #((let [view-id (first %)
+                     button-title  (get (second %) :title)
+                     active-view-id (first (first @(service-data :active-tab)))
+                     active? (identical? view-id active-view-id)]
+                 (create--tab-button button-title active? [100 25]
+                                     (close-tab service-data view-id)
+                                     (fn [e] (switch-tab service-data [%])))))
+             (filter #(in-list? list-of-view-id-in-tabs (first %)) @(service-data :views-storage))))
+      (do ;; Close tab which linked to removed view
+        (
+         
+        )))))
 
 
 ;; Create top bar for tabs linking to views
-(def update--tabs-bar
-  "Description
-    This function update bar with tabs who linking to open views.
-   "
-  (fn [service-data]
-    ;; (println "Update tabs")
-    (config! (service-data :bar-space) :items
-             (if-not (nil? @(service-data :active-tab))
-               (vec
-                (map
-                 (fn [view]
-                   (let [view-id (first view)
-                         button-title  (get (second view) :title)
-                         active-view-id (first (first @(service-data :active-tab)))
-                         active? (identical? view-id active-view-id)]
-                     (create--tab-button button-title active? [100 25]
-                                         (close-tab service-data view-id)
-                                         (fn [e] (switch-tab service-data [view])))))
-                 @(service-data :views-storage)))
-               [(label)]))))
+;; (def update--tabs-bar
+;;   "Description
+;;     This function update bar with tabs who linking to open views.
+;;    "
+;;   (fn [service-data]
+;;     ;; (println "Update tabs")
+;;     (config! (service-data :bar-space) :items
+;;              (if-not (nil? @(service-data :active-tab))
+;;                (vec
+;;                 (map
+;;                  (fn [view]
+;;                    (let [view-id (first view)
+;;                          button-title  (get (second view) :title)
+;;                          active-view-id (first (first @(service-data :active-tab)))
+;;                          active? (identical? view-id active-view-id)]
+;;                      (create--tab-button button-title active? [100 25]
+;;                                          (close-tab service-data view-id)
+;;                                          (fn [e] (switch-tab service-data [view])))))
+;;                  @(service-data :views-storage)))
+;;                [(label)]))))
 
 
 
@@ -167,6 +190,7 @@
       (contains? @atom--views-storage view-id))))
 
 
+
 ;; Create new service
 (defn new-views-service
   [bar-space view-space & {:keys [onClose] :or {onClose (fn [] true)}}]
@@ -178,13 +202,15 @@
                                      :last-active  atom--last-active-tab
                                      :view-space   view-space
                                      :bar-space    bar-space
-                                     :update       update--tabs-bar
+                                    ;;  :update       update--tabs-bar
+                                     :update update-tabs-on-bar-space
                                      :onClose      onClose} key))]
     ;; (run-views-supervisior service-data)
-    (update--tabs-bar service-data)
-    (fn [action & {:keys [view-id 
-                          title 
-                          component] 
+    ;; (update--tabs-bar service-data)
+    (update-tabs-on-bar-space service-data)
+    (fn [action & {:keys [view-id
+                          title
+                          component]
                    :or {view-id :none
                         title   ""
                         component nil}}]
@@ -198,11 +224,10 @@
         (= action :get-last)        @atom--last-active-tab
         (= action :get-view-sapce)  view-space
         (= action :get-bar-sapce)   bar-space
-        (= action :clear)           (do 
+        (= action :clear)           (do
                                       (reset! atom--last-active-tab nil)
                                       (reset! atom--active-tab      nil)
-                                      (reset! atom--views-storage   {})
-                                      )
+                                      (reset! atom--views-storage   {}))
         (= action :get-atom-storage) atom--views-storage))))
 
 

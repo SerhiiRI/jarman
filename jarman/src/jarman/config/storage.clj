@@ -78,7 +78,8 @@
      (def ~(symbol (str store-name "-clean")) (make-store-clean store-path#))
      (def ~(symbol (str store-name "-rename")) (make-store-rename store-path#))))
 
-(defstore temprary (io/file env/java-io-tmpdir ".jarman"))
+(defstore temporary (io/file env/java-io-tmpdir ".jarman"))
+(defstore temp-templates (io/file env/java-io-tmpdir ".jarman" "odtfiles"))
 (defstore user-config (io/file env/user-home ".jarman" "config"))
 (defstore user-metadata (io/file env/user-home  ".jarman" "metadata"))
 
@@ -101,3 +102,7 @@
 ;; (user-config-rename "temporary.txt" "123")
 ;; (user-config-dir)
 ;; (user-config-clean)
+
+;; (temporary-list)
+;; (temporary-put "temp.txt" "kill")
+;; (temporary-dir)

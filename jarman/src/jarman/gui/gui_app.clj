@@ -820,7 +820,6 @@
                         (.add (@jarman-views-service :get-component :view-id view-id) (db-viewer--component--table (get-in tab-data [:prop :bounds] [10 10 100 100]) tab-data) (new Integer 5)))
                       (calculate-bounds 20 5))))))))
 
-
 ;; ┌─────────────────────────┐
 ;; │                         │
 ;; │ Create config generator │
@@ -875,12 +874,14 @@
                                                (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
                       :listen [:caret-update (fn [event] (track-changes changing-list path value (clojure.string/split (config event :text) #"\s*,\s*")))])]]))))
 
+
 ;; (clojure.string/split "some  ,  strig,value" #"\s*,\s*")
 ;; 
 ;; Sprawdzenie integerów
 ;; (try
 ;;   (every? number? (doall (map #(Integer. %) (clojure.string/split "1  ,  23, 54 d" #"\s*,\s*"))))
 ;;   (catch Exception e :chwdp))
+
 
 (def confgen--gui-interface--input-textcolor
   (fn [changing-list path value]

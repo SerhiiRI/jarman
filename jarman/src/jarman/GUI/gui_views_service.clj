@@ -87,7 +87,7 @@
                     (switch-view (service-data :view-space) @(service-data :active-tab))))
       ;; (println "Switch")
       ((service-data :update) service-data)
-      ;; (.repaint (to-root (service-data :view-space)))
+      (.repaint (to-root (service-data :view-space)))
       )))
 
 
@@ -101,7 +101,7 @@
                          (if active? ;; If view is active then swith on another
                            (switch-tab service-data nil)
                            (do
-                             (reset! (service-data :last-active) nil)
+                             (reset! (service-data :last-active) nil) ;; TODO sprawdź czy to był ostatni tab
                              ((service-data :update) service-data))))]
         (if (service-data :onClose) (close-view e))))
     ))
@@ -180,7 +180,6 @@
                                      :bar-space    bar-space
                                      :update       update--tabs-bar
                                      :onClose      onClose} key))]
-    ;; (run-views-supervisior service-data)
     (update--tabs-bar service-data)
     (fn [action & {:keys [view-id 
                           title 

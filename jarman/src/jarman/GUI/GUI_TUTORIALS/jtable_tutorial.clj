@@ -50,18 +50,18 @@
 
 (def seed-row
   (fn []
-    ["Jan" "Kowalski" "rybki" (color "#2a2") "tak" true  1 "Mężczyzna" 28 "Zadupolis"
+    [["Jan" "Kowalski" "rybki" (color "#2a2") "tak" true  1 "Mężczyzna" 28 "Zadupolis"
      "Jan" "Kowalski" "rybki" (color "#2a2") "tak" true  1 "Mężczyzna" 28 "Zadupolis"
-     "Jan" "Kowalski" "rybki" (color "#2a2") "tak" true  1 "Mężczyzna" 28 "Zadupolis"]))
+     "Jan" "Kowalski" "rybki" (color "#2a2") "tak" true  1 "Mężczyzna" 28 "Zadupolis"]
+     ["Anna" "Nowak" "pieski" (color "#a2a") "nie" false  0 "Kobieta" 30 "Polis"
+      "Anna" "Nowak" "pieski" (color "#a2a") "nie" false  0 "Kobieta" 30 "Polis"
+      "Anna" "Nowak" "pieski" (color "#a2a") "nie" false  0 "Kobieta" 30 "Polis"]]))
 
 
 
-(def tb (atom (table)))
-
-(let [tmodel (seesaw.table/table-model
-              :columns {}
-              :rows {})]
-  (@tb :model tmodel))
+(def tb (atom (table :model (seesaw.table/table-model
+                             :columns {}
+                             :rows {}))))
 
 (def mount-table 
   (fn [table filters]
@@ -75,7 +75,7 @@
                :listen [:caret-update (fn [e]
                                         (let [sorter (javax.swing.table.TableRowSorter. (.getModel table))]
                                           (.setRowSorter table sorter)
-                                          (.setRowFilter sorter (javax.swing.RowFilter/regexFilter (value e) (int-array 1 [2])))))])]
+                                          (.setRowFilter sorter (javax.swing.RowFilter/regexFilter (value e) (int-array 1 [0])))))])]
         [(do
            (.setDefaultRenderer table Color (color-label))
            (.setDefaultRenderer table JComboBox (drop-list))
@@ -95,10 +95,11 @@
            :minimum-size [600 :by 400]
            :content (mount-table @tb {}))
       (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
+ 
 
-
-(def cols (vec (apply concat (map (fn [x] (seed-col)) (range 3)))))
-(def rows (vec (map (fn [x] (seed-row)) (range 20000))))
+(def cols (vec (apply concat (map (fn [x] (seed-col)) (range 1)))))
+(def rows (concat (vec (map (fn [x] (first (seed-row))) (range 500))) 
+                  (vec (map (fn [x] (second (seed-row))) (range 500)))))
 
 (config! @tb :model (seesaw.table/table-model
                      :columns cols

@@ -57,6 +57,7 @@
 (def create-value-getter
   "Description:
     Build getters functions from map with injecting :value or without :value
+    inject-key-value - set :value key between other keys [:a :value :b :value]
    Example:
      (def get-frame (create-value-getter theme-map true :frame)) => (get-frame :width) => 1200
      (def get-lang  (create-value-getter @*language* false :pl :ui)) => (get-lang :buttons :remove) => Usuń

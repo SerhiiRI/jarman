@@ -32,9 +32,10 @@
                      ((fn [m] (let [name  (first (filter (fn [item] (if (string? item) item nil)) params))] (if (string? name) (merge m {:name name}) (conj m {})))))
                      ((fn [m] (let [style (first (filter (fn [item] (if (= item :bold) item nil)) params))] (if (= style :bold) (merge m {:style :bold}) (conj m {})))))
                      ((fn [m] (let [style (first (filter (fn [item] (if (= item :italic) item nil)) params))] (if (= style :italic)
-                                                                                                                (if (= (get m :style) :bold) (merge m {:style #{:bold :italic}}) (merge m {:style :italic})) 
-                                                                                                                (conj m {})))))
-                     )))
+                                                                                                                (if (= (get m :style) :bold) (merge m {:style #{:bold :italic}}) (merge m {:style :italic}))
+                                                                                                                (conj m {}))))))))
+
+
 
 ;; (seesaw.font/font-families)
 ;; (label-fn :text "txt")
@@ -42,13 +43,13 @@
 ;; Function for label with pre font
 (def label-fn (fn [& params] (apply label :font (getFont) params)))
 
-(def htmling 
+(def htmling
   "Description
      Build word wrap html
    "
   (fn [body] (string/join "" ["<html><body style='width: 100%; overflow-wrap: break-word;'>" body "</body><html>"])))
 
-(defmacro textarea 
+(defmacro textarea
   "Description
      TextArea with word wrap
    "
@@ -105,12 +106,12 @@
   [ic ic-h layered & args] (label-fn :icon (stool/image-scale ic (if (> (count args) 0) (first args) 28))
                                      :background (new Color 0 0 0 0)
                                      :border (empty-border :left 3 :right 3)
-                                     :listen [:mouse-entered (fn [e] (do 
+                                     :listen [:mouse-entered (fn [e] (do
                                                                        (config! e :icon (stool/image-scale ic-h (if (> (count args) 0) (first args) 28)) :cursor :hand)
                                                                        (.repaint @layered)))
                                               :mouse-exited (fn [e] (do
-                                                                       (config! e :icon (stool/image-scale ic (if (> (count args) 0) (first args) 28)))
-                                                                       (.repaint @layered)))
+                                                                      (config! e :icon (stool/image-scale ic (if (> (count args) 0) (first args) 28)))
+                                                                      (.repaint @layered)))
                                               :mouse-clicked (if (> (count args) 1) (second args) (fn [e]))]))
 
 (defn build-ico
@@ -123,18 +124,18 @@
       Function need stool/image-scale function for scalling icon
    "
   [ic] (label-fn :icon (stool/image-scale ic 28)
-              :background (new Color 0 0 0 0)
-              :border (empty-border :left 3 :right 3)))
+                 :background (new Color 0 0 0 0)
+                 :border (empty-border :left 3 :right 3)))
 
-(defn build-header 
+(defn build-header
   "Description:
       Header text for message box. Create component with header text.
    Example:
       (build-header 'Information')
    "
   [txt] (label-fn :text txt
-               :font (getFont 14 :bold)
-               :background (new Color 0 0 0 0)))
+                  :font (getFont 14 :bold)
+                  :background (new Color 0 0 0 0)))
 
 (defn build-body
   "Description:
@@ -143,9 +144,9 @@
       (build-body 'My message')
    "
   [txt] (label-fn :text txt
-               :font (getFont 13)
-               :background (new Color 0 0 0 0)
-               :border (empty-border :left 5 :right 5 :bottom 2)))
+                  :font (getFont 13)
+                  :background (new Color 0 0 0 0)
+                  :border (empty-border :left 5 :right 5 :bottom 2)))
 
 
 (def template-resize
@@ -160,7 +161,7 @@
           vh     (.getHeight  v-size)]
       (config! app-template  :bounds [0 0 vw vh]))))
 
-(defn str-cutter  
+(defn str-cutter
   "Description:
       Cut message and add ...
    Example: 
@@ -191,7 +192,7 @@
             (if outlist outlist nil)))
 
 
-(def slider-ico-btn 
+(def slider-ico-btn
   "Description:
       Slide buttons used in JLayeredPanel. 
       Normal state is small square with icon 
@@ -201,30 +202,30 @@
       (slider-ico-btn (stool/image-scale icon/user-64x64-2-png 50) 0 50 'Klienci' {:onclick (fn [e] (alert 'Clicked'))})
    "
   (fn [ico order size txt extends]
-                  (let [bg-color "#ddd"
-                        color-hover-margin "#bbb"
-                        bg-color-hover "#d9ecff"
-                        size size
-                        y (if (> (* size order) 0) (+ (* 2 order) (* size order)) (* size order))]
-                    (label-fn
-                     :halign :center
-                     :icon ico
-                     :bounds [0 y size size]
-                     :background bg-color
-                     :border (line-border :left 4 :color bg-color)
-                     :listen [:mouse-entered (fn [e] (config! e
-                                                              :cursor :hand
-                                                              :border (line-border :right 4 :color color-hover-margin)
-                                                              :background bg-color-hover
-                                                              :bounds [0 y (+ 200 size 8) size]
-                                                              :text txt))
-                              :mouse-exited  (fn [e] (config! e
-                                                              :bounds [0 y size size]
-                                                              :border (line-border :left 4 :color bg-color)
-                                                              :background bg-color
-                                                              :text ""
-                                                              :cursor :default))
-                              :mouse-clicked (if (= (contains? extends :onclick) true) (get extends :onclick) (fn [e]))]))))
+    (let [bg-color "#ddd"
+          color-hover-margin "#bbb"
+          bg-color-hover "#d9ecff"
+          size size
+          y (if (> (* size order) 0) (+ (* 2 order) (* size order)) (* size order))]
+      (label-fn
+       :halign :center
+       :icon ico
+       :bounds [0 y size size]
+       :background bg-color
+       :border (line-border :left 4 :color bg-color)
+       :listen [:mouse-entered (fn [e] (config! e
+                                                :cursor :hand
+                                                :border (line-border :right 4 :color color-hover-margin)
+                                                :background bg-color-hover
+                                                :bounds [0 y (+ 200 size 8) size]
+                                                :text txt))
+                :mouse-exited  (fn [e] (config! e
+                                                :bounds [0 y size size]
+                                                :border (line-border :left 4 :color bg-color)
+                                                :background bg-color
+                                                :text ""
+                                                :cursor :default))
+                :mouse-clicked (if (= (contains? extends :onclick) true) (get extends :onclick) (fn [e]))]))))
 
 
 (def expand-btn
@@ -242,45 +243,45 @@
       Function need stool/image-scale function for scalling icon
       "
   (fn [txt & inside-btns]
-                    (let [bg-color "#eee"
-                          margin-color "#fff"
-                          border (compound-border (line-border :left 6 :color bg-color) (line-border :bottom 2 :color margin-color))
-                          vsize 35
-                          hsize 200
-                          inside-btns-to-use (if (seqable? (first inside-btns)) (first inside-btns) inside-btns)
-                          ico (if (> (count inside-btns-to-use) 0) (stool/image-scale icon/plus-64-png 25))
-                          ico-hover (stool/image-scale icon/minus-grey-64-png 20)]
-                      
-                      (do 
+    (let [bg-color "#eee"
+          margin-color "#fff"
+          border (compound-border (line-border :left 6 :color bg-color) (line-border :bottom 2 :color margin-color))
+          vsize 35
+          hsize 200
+          inside-btns-to-use (if (seqable? (first inside-btns)) (first inside-btns) inside-btns)
+          ico (if (> (count inside-btns-to-use) 0) (stool/image-scale icon/plus-64-png 25))
+          ico-hover (stool/image-scale icon/minus-grey-64-png 20)]
+
+      (do
                         ;; (println inside-btns-to-use)
-                        (mig-panel
-                        :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
-                        :listen [:mouse-entered hand-hover-on
-                                 :mouse-clicked (fn [e]
-                                                  (if (> (count inside-btns-to-use) 0)
-                                                    (if (== (count (seesaw.util/children (seesaw.core/to-widget e))) 1)
-                                                      (do
+        (mig-panel
+         :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
+         :listen [:mouse-entered hand-hover-on
+                  :mouse-clicked (fn [e]
+                                   (if (> (count inside-btns-to-use) 0)
+                                     (if (== (count (seesaw.util/children (seesaw.core/to-widget e))) 1)
+                                       (do
                                                       ;;  Add inside buttons to mig with expand button
-                                                        (config! e :items (vec (map (fn [item] (vec (list item))) (concat (vec (seesaw.util/children (seesaw.core/to-widget e))) (vec inside-btns-to-use)))))
-                                                        (config! (last (seesaw.util/children (first (seesaw.util/children (seesaw.core/to-widget e))))) :icon ico-hover))
-                                                      (do
+                                         (config! e :items (vec (map (fn [item] (vec (list item))) (concat (vec (seesaw.util/children (seesaw.core/to-widget e))) (vec inside-btns-to-use)))))
+                                         (config! (last (seesaw.util/children (first (seesaw.util/children (seesaw.core/to-widget e))))) :icon ico-hover))
+                                       (do
                                                       ;;  Remove inside buttons form mig without expand button
-                                                        (config! e :items [(vec (list (first (seesaw.util/children (seesaw.core/to-widget e)))))])
-                                                        (config! (last (seesaw.util/children (first (seesaw.util/children (seesaw.core/to-widget e))))) :icon ico)))))]
-                        :items [[(mig-panel
-                                  :constraints ["" "0px[fill]0px" "0px[fill]0px"]
-                                  :background (new Color 0 0 0 0)
-                                  :items [[(label-fn
-                                            :text txt
-                                            :size [(- hsize vsize) :by vsize]
-                                            :background bg-color
-                                            :border border)]
-                                          [(label-fn
-                                            :size [vsize :by vsize]
-                                            :halign :center
-                                            :background bg-color
-                                            :border border
-                                            :icon ico)]])]])))))
+                                         (config! e :items [(vec (list (first (seesaw.util/children (seesaw.core/to-widget e)))))])
+                                         (config! (last (seesaw.util/children (first (seesaw.util/children (seesaw.core/to-widget e))))) :icon ico)))))]
+         :items [[(mig-panel
+                   :constraints ["" "0px[fill]0px" "0px[fill]0px"]
+                   :background (new Color 0 0 0 0)
+                   :items [[(label-fn
+                             :text txt
+                             :size [(- hsize vsize) :by vsize]
+                             :background bg-color
+                             :border border)]
+                           [(label-fn
+                             :size [vsize :by vsize]
+                             :halign :center
+                             :background bg-color
+                             :border border
+                             :icon ico)]])]])))))
 
 (def expand-child-btn
   "Description
@@ -296,59 +297,27 @@
                                                :mouse-exited  (fn [e] (config! e  :background "#fff"))]
                                       params)))
 
-(def tab-btn
-  "Description:
-      Buttons for changing opened views or functions in right part of app.
-      If height in size will be different than 25, you probably should change it in mig-app-right-f. 
-   Needed:
-      Import jarman.dev-tools
-      Function need stool/image-scale function for scalling icon
-   "
-  (fn [title txt active size onclose onclick]
-    (let [bg-color (if (= active true) "#eee" "#ccc")
-          border "#fff"
-          hsize (first size)
-          vsize (last size)]
-      (horizontal-panel
-       :background bg-color
-       :user-data {:title title :active active}
-       :items [(label-fn
-                :text txt
-                :halign :center
-                :border (empty-border :left 5 :right 5)
-                :size [hsize :by vsize]
-                :listen [:mouse-clicked onclick
-                         :mouse-entered (fn [e] (config! e :cursor :hand))])
-               (label-fn
-                :icon (stool/image-scale icon/x-grey2-64-png 15)
-                :halign :center
-                :border (line-border :right 2 :color border)
-                :size [vsize :by vsize]
-                :listen [:mouse-entered (fn [e] (config! e :cursor :hand :icon (stool/image-scale icon/x-blue1-64-png 15)))
-                         :mouse-exited  (fn [e] (config! e :icon (stool/image-scale icon/x-grey2-64-png 15)))
-                         :mouse-clicked onclose])]
-       :listen [:mouse-entered hand-hover-on]))))
 
 (def table-editor--component--bar-btn
   "Description:
      Interactive button for table editor.
    "
-  
+
   (fn [id title ico ico-hover onclick]
     (let [bg        "#ddd"
-         bg-hover  "#d9ecff"
-         c-border  "#bbb"]
-     (label :text title
-            :id id
-            :font (getFont :bold)
-            :icon (stool/image-scale ico 26)
-            :halign :center
-            :size [150 :by 30]
-            :background bg
-            :border (line-border :thickness 1 :color c-border)
-            :listen [:mouse-entered (fn [e] (config! e :background bg-hover :icon (stool/image-scale ico-hover 26) :cursor :hand))
-                     :mouse-exited  (fn [e] (config! e :background bg :icon (stool/image-scale ico 26) :cursor :default))
-                     :mouse-clicked onclick]))))
+          bg-hover  "#d9ecff"
+          c-border  "#bbb"]
+      (label :text title
+             :id id
+             :font (getFont :bold)
+             :icon (stool/image-scale ico 26)
+             :halign :center
+             :size [150 :by 30]
+             :background bg
+             :border (line-border :thickness 1 :color c-border)
+             :listen [:mouse-entered (fn [e] (config! e :background bg-hover :icon (stool/image-scale ico-hover 26) :cursor :hand))
+                      :mouse-exited  (fn [e] (config! e :background bg :icon (stool/image-scale ico 26) :cursor :default))
+                      :mouse-clicked onclick]))))
 
 
 ;; (defn parse-to-type [s]
@@ -391,3 +360,155 @@
 ;;                                     :listen [:selection (fn [e] (when-let [t (parse-to-type (text e))]
 ;;                                                                   (configuration-changer config-key-vector t)
 ;;                                                                   (colorizator-text-component e)))])))
+;;
+
+;; Same as password-input but with debug printlns
+;; (def password-input-with-debug
+;;   (fn [& {:keys [placeholder
+;;                  debug
+;;                  style]
+;;           :or   {placeholder "Password"
+;;                  debug false
+;;                  style []}}]
+;;     (let [fn-letter-count (fn [e] (count (value e)))
+;;           fn-hide-chars   (fn [e] (apply str (repeat (fn-letter-count e) "*")))
+;;           fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
+;;           fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))]
+;;       (apply text :text placeholder
+;;              :user-data {:placeholder placeholder :value "" :edit? false}
+;;              :listen [:focus-gained (fn [e]
+;;                                       (if debug (println "------- focus"))
+;;                                       (cond (= (fn-get-data e :value) "")    (config! e :text ""))
+;;                                       (config! e :user-data (fn-assoc e :edit? true)))
+;;                       :focus-lost   (fn [e]
+;;                                       (if debug (println "------- unfocus"))
+;;                                       (cond (= (value e) "") (config! e :text (fn-get-data e :placeholder)))
+;;                                       (config! e :user-data (fn-assoc e :edit? false)))
+;;                       :caret-update (fn [e]
+;;                                       (cond (and (= (fn-get-data e :edit?) true)
+;;                                                  (not (= (value e) (fn-get-data e :placeholder))))
+;;                                             (cond (> (count (value e)) 0)
+;;                                                   (let [added-chars (clojure.string/replace (value e) #"\*+" "")]
+;;                                                     (cond (> (count added-chars) 0)
+;;                                                           (do
+;;                                                             (if debug (println "-------- Add"))
+;;                                                             (config! e :user-data (fn-assoc e :value (str (fn-get-data e :value) added-chars)))
+;;                                                             (if debug (println "Value data " (fn-get-data e :value)))
+;;                                                             (if debug (println (fn-hide-chars e)))
+;;                                                             (invoke-later (config! e :text (fn-hide-chars e))))
+;;                                                           (< (fn-letter-count e) (count (fn-get-data e :value)))
+;;                                                           (do
+;;                                                             (if debug (println "-------- Delete"))
+;;                                                             (if debug (println (count (config e :text)) ":" (count (fn-get-data e :value))))
+;;                                                             (config! e :user-data (fn-assoc e :value (subs (fn-get-data e :value) 0 (fn-letter-count e))))
+;;                                                             (if debug (println "Value data delete " (fn-get-data e :value)))
+;;                                                             (if debug (println (fn-hide-chars e)))
+;;                                                             (invoke-later (config! e :text (fn-hide-chars e)))))))))]
+;;              style))))
+
+
+
+;; ┌────────────────────────────────────────┐
+;; │                                        │
+;; │ Simple components and methods for them │
+;; │                                        │
+;; └────────────────────────────────────────┘
+
+
+(defn get-user-data
+  "Description:
+      Get data in map from :user-data inside seesaw components. 
+      Can use only one level of map: {:key value, :key value, ...}.
+   Example:
+      (label :userdata {:placeholder \"Dupa\"})
+      (get-user-data event) => {:placeholder \"Dupa\"}
+      (get-user-data event :placeholder) => Dupa
+   "
+  ([e] (config e :user-data))
+  ([e key]
+   (get-in (config e :user-data) [key])))
+
+
+
+
+(def simple-button
+  "Description:
+      Simple button with default style.
+   Example:
+      (simple-button \"Simple button\" (fn [e]) :style [:background \"#fff\"])
+   "
+  (fn [txt func
+       & {:keys [style]
+          :or   {style []}}]
+    (apply label
+           :text txt
+           :halign :center
+           :listen [:mouse-clicked func
+                    :mouse-entered (fn [e] (hand-hover-on e) (button-hover e))
+                    :mouse-exited  (fn [e] (button-hover e (jarman.config.config-manager/get-color :background :button_main)))]
+           :background (jarman.config.config-manager/get-color :background :button_main)
+           :border (compound-border (empty-border :bottom 10 :top 10)
+                                    (line-border :bottom 2 :color (jarman.config.config-manager/get-color :decorate :gray-underline)))
+           style)))
+
+
+
+(def text-input
+  "Description:
+    Text component converted to text component with placeholder. Placehlder will be default value.
+ Example:
+    (text-input :placeholder \"Login\" :style [:halign :center])
+ "
+  (fn [& {:keys [placeholder
+                 style]
+          :or   {placeholder "Password"
+                 style []}}]
+    (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
+          fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))]
+      (apply text :text placeholder
+             :user-data {:placeholder placeholder :value "" :edit? false :type :input}
+             :listen [:focus-gained (fn [e]
+                                      (cond (= (value e) placeholder)    (config! e :text ""))
+                                      (config! e :user-data (fn-assoc e :edit? true)))
+                      :focus-lost   (fn [e]
+                                      (cond (= (value e) "") (config! e :text placeholder))
+                                      (config! e :user-data (fn-assoc e :edit? false)))]
+             style))))
+
+
+(def password-input
+  "Description:
+    Text component converted to password input component, placeholder is default value.
+ Example:
+    (password-input :placeholder \"Password\" :style [:halign :center])
+ "
+  (fn [& {:keys [placeholder
+                 style]
+          :or   {placeholder "Password"
+                 style []}}]
+    (let [fn-letter-count (fn [e] (count (value e)))
+          fn-hide-chars   (fn [e] (apply str (repeat (fn-letter-count e) "*")))
+          fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
+          fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))]
+      (apply text :text placeholder
+             :user-data {:placeholder placeholder :value "" :edit? false :type :password}
+             :listen [:focus-gained (fn [e]
+                                      (cond (= (fn-get-data e :value) "")    (config! e :text ""))
+                                      (config! e :user-data (fn-assoc e :edit? true)))
+                      :focus-lost   (fn [e]
+                                      (cond (= (value e) "") (config! e :text placeholder))
+                                      (config! e :user-data (fn-assoc e :edit? false)))
+                      :caret-update (fn [e]
+                                      (cond (and (= (fn-get-data e :edit?) true)
+                                                 (not (= (value e) placeholder)))
+                                            (cond (> (count (value e)) 0)
+                                                  (let [added-chars (clojure.string/replace (value e) #"\*+" "")]
+                                                    (cond (> (count added-chars) 0)
+                                                          (do
+                                                            (config! e :user-data (fn-assoc e :value (str (fn-get-data e :value) added-chars)))
+                                                            (invoke-later (config! e :text (fn-hide-chars e))))
+                                                          (< (fn-letter-count e) (count (fn-get-data e :value)))
+                                                          (do
+                                                            (config! e :user-data (fn-assoc e :value (subs (fn-get-data e :value) 0 (fn-letter-count e))))
+                                                            (invoke-later (config! e :text (fn-hide-chars e)))))))))]
+             style))))

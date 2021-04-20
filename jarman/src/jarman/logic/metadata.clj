@@ -15,7 +15,7 @@
 ;; Properties `prop` data
 ;;   {:id 1
 ;;    :table "cache_register"
-;;    :prop {:table {:frontend-name "user"
+;;    :prop {:table {:representatoin "user"
 ;;                   :is-system? false
 ;;                   :is-linker? false 
 ;;                   :allow-modifing? true
@@ -27,7 +27,7 @@
 ;;                      :component-type "l"
 ;;                      :column-type "bigint(20) unsigned" 
 ;;                      :private? false
-;;                      :editable? true}
+;;                      :editable? false}
 ;;                     {:field "name"
 ;;                      :representation "name" ...}...]
 ;;
@@ -91,11 +91,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SQL CONFIGURATION ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
+(def ^:dynamic prod? false)
+(def ^:dynamic sql-connection
+  (if prod?
+    ;; {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
+    {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3306, :dbname "jarman", :user "jarman", :password "dupa"}
+    {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"}))
 
 ;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "ekka-test" :user "root" :password "123"})
-;; (def ^{:dynamic true :private true} sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"})
-(def ^:dynamic sql-connection {:dbtype "mysql" :host "80.49.157.152" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"})
-
+(def ^{:dynamic true :private true} sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"})
+;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "80.49.157.152" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"})
 ;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"})
 (def ^{:dynamic true :private true} *available-mariadb-engine-list* "set of available engines for key-value tables" ["MEMORY", "InnoDB", "CSV"])
 ;; (jdbc/query sql-connection "SHOW ENGINES" )
@@ -219,12 +224,15 @@
            "varchar"      ["i"] ;; i - mean simple text input
            nil)))))
 
+;; `TODO` edd field to doc
 (defn- get-table-meta
   "Description:
     Get meta information about table by hame, and construct meta information to GUI
 
   Template of returning meta:
-  {:representation \"table\" :private? true :scallable? false :linker? true}
+  {
+  :field - table name without modifing
+  :representation \"table\" :private? true :scallable? false :linker? true}
   :representation - table name wich would be viewed for user in GUI, must b readable.
   :private? - if is true, than user can be edit this table
   :scallable? - if is set on true, user may add fields to datatable.
@@ -234,13 +242,15 @@
   (let [tspec (last (string/split t-name #"_"))
         in?   (fn [col x] (if (string? col) (= x col) (some #(= % x) col)))]
     (condp in? tspec
-      ["lk" "link" "links"] {:frontend-name t-name
+      ["lk" "link" "links"] {:field t-name
+                             :frontend-name t-name
                              :is-system? true
                              :is-linker? true
                              :allow-modifing? false
                              :allow-deleting? false
                              :allow-linking? false}
-      {:frontend-name t-name
+      {:field t-name
+       :frontend-name t-name
        :is-system? false
        :is-linker? false
        :description nil
@@ -377,20 +387,24 @@
 ;;                 :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
 ;;                                [{:id_point_of_sale :point_of_sale}]]))
 
+
+
+
 (defn- get-meta [table-name]
   (let [all-columns  (jdbc/query sql-connection (show-table-columns table-name))
         all-constrants (get-meta-constrants table-name)
         not-id-columns (filter #(not= "id" (:field %)) all-columns)]
     {:id nil
      :table table-name
-     :prop (str {:table (get-table-meta table-name)
-                 :columns (vec (map (partial get-table-field-meta all-constrants) not-id-columns))})}))
+     :prop {:table (get-table-meta table-name)
+            :columns (vec (map (partial get-table-field-meta all-constrants) not-id-columns))}}))
 
 (defn- ^clojure.lang.PersistentList update-sql-by-id-template
-  ([table m]
-   (if (:id m)
-     (update table :set (dissoc m :id) :where (= :id (:id m)))
-     (insert table :values (vals m)))))
+  [table m]
+  (letfn [(serialize [m] (clojure.core/update m :prop #(str %)))]
+    (if (:id m)
+      (update table :set (serialize (dissoc m :id)) :where (= :id (:id m)))
+      (insert table :values (vals (serialize m))))))
 
 (defn show-tables []
   (not-allowed-rules ["metatable" "meta*"] (map (comp second first) (jdbc/query sql-connection "SHOW TABLES" ))))
@@ -399,33 +413,83 @@
   (for [table (show-tables)]
     (let [meta (jdbc/query sql-connection (select :METADATA :where (= :table table)))]
       (if (empty? meta)
-        (jdbc/execute! sql-connection (update-sql-by-id-template "METADATA" (get-meta table)))))))
+        (jdbc/execute! sql-connection (update-sql-by-id-template "metadata" (get-meta table)))))))
 
 (defn do-clear-meta [& body]
   {:pre [(every? string? body)]}
   (jdbc/execute! sql-connection (delete :METADATA)))
 
+(defn udpate-meta [metadata]
+  (jdbc/execute! sql-connection (update-sql-by-id-template "metadata" metadata)))
+
+(def  ^:private --loaded-metadata (ref nil))
+(defn ^:private swapp-metadata [metadata-list]
+  (dosync (ref-set --loaded-metadata metadata-list)))
+
 (defn getset
   "get metadate deserialized information for specified tables.
         
-        Example 
-        (getset \"user\") ;=> [{:id 1 :table...}...]"
-        [& tables]
-        (map (fn [meta] (clojure.core/update meta :prop read-string))
-             (jdbc/query sql-connection
-                         (if-not (empty? tables) 
-                           (let [tables-eq (concat ['or] (map (fn [x] ['= :table (name x)]) tables))]
-                             (eval (change-expression '(select :METADATA) :where tables-eq)))
-                           (select :METADATA)))))
+  Example 
+    (getset \"user\") ;=> [{:id 1 :table...}...]"
+  [& tables]
+  (let [metadata 
+        (mapv (fn [meta] (clojure.core/update meta :prop read-string))
+              (jdbc/query sql-connection
+                          (if (empty? tables)
+                            (select :METADATA)
+                            (select :METADATA
+                                    :where (or-v (mapv (fn [x] [:= :table (name x)]) tables))))))]
+    (if (empty? tables)
+      (do (swapp-metadata metadata) metadata)
+      metadata)))
 
-(defn create-table-by-meta [metadata]
-  (let [smpl-fields (filter (comp (partial not-allowed-rules ["meta*"]) :field) ((comp :columns :prop) metadata))
-        idfl-fields (filter (comp (partial allowed-rules "id_*") :field) ((comp :columns :prop) metadata))]
-    (create-table {:table-name (keyword (:table metadata))
-                   :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
-                   :foreign-keys (vec (map :foreign-keys idfl-fields))})))
-;
-;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn getset! [& tables]
+  (when-not @--loaded-metadata
+    (swapp-metadata (getset)))
+  (if-not tables @--loaded-metadata
+          (let [tables (map name tables)]
+            (vec (filter #(in? tables (:table %)) @--loaded-metadata)))))
+
+;;; Make references 
+(defn- add-references-to-metadata [metadata front-reference back-reference]
+  (-> (fn [current added]
+        (cond
+          (nil? added) current
+          (and (nil? current)) (vec (distinct(if (sequential? added) added [added])))
+          (and (string? current)) (vec (distinct(if (sequential? added) (conj added current) [current added])))
+          (and (sequential? current)) (vec (distinct(if (sequential? added) (concat current added) (conj current added ) )))
+          :else current))
+      (deep-merge-with
+       metadata
+       {:prop {:table {:ref {:front-references front-reference :back-references back-reference}}}})))
+
+(defn- --recur-make-references [meta-list table-name & {:keys [back-ref]}]
+  (if-let [index-metadata (find-column #(= ((comp :field :table :prop) (second %)) table-name) (deref meta-list))]
+    (let [front-refs (filter :foreign-keys ((comp :columns :prop) (second index-metadata)))]
+        (if (empty? front-refs)
+        (do 
+          (dosync (alter meta-list
+                         (fn [mx] (update-in mx [(first index-metadata)]
+                                            (fn [[i m]]
+                                              [i (add-references-to-metadata m nil back-ref)]))))))
+        (do
+          (dosync (alter meta-list
+                         (fn [mx] (update-in mx [(first index-metadata)]
+                                            (fn [[i m]]
+                                              [i (add-references-to-metadata m (mapv :key-table front-refs) back-ref)])))))
+          (doseq [reference front-refs]
+            (--recur-make-references meta-list (:key-table reference)
+                                     :back-ref ((comp :field :table :prop) (second index-metadata)))))))))
+
+(defn do-create-references []
+  (let [meta-list (ref (vec (map-indexed #(vector %1 %2) (getset))))]
+    (doseq [m @meta-list
+            :let [table (:table (second m))]]
+      (--recur-make-references meta-list table))
+    (doseq [[i metadata] @meta-list]
+      (jdbc/execute! sql-connection (update-sql-by-id-template "metadata" metadata)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; TABLE-MAP VALIDATOR ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -435,7 +499,7 @@
        :value-not-valid-on-eq "Value '%s' not valid on '%s' equalization pattern"
        :value-not-in-allow-list "Value '%s' not from allowed list '%s'" 
        :value-not-valid-on-re "Value '%s' not valid on regexp '%s' pattern"}
-  :pl{:value-not-exit-in-table "Warto�� nie istanieje w tabeli"
+  :pl{:value-not-exit-in-table "Wartoďż˝ďż˝ nie istanieje w tabeli"
       :value-not-valid-on-p "Value '%s' not valid by predicate '%s'"
       :value-not-valid-on-eq "Value '%s' not valid on '%s' equalization pattern"
       :value-not-in-allow-list "Value '%s' not from allowed list '%s'" 
@@ -833,12 +897,12 @@
                                      {:field "id_permission", :representation "id_permission", :description nil,
                                       :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]}})
 ;; :allow-modifing? true
-;; :frontend-name "Użytkownik"
+;; :frontend-name "UĹźytkownik"
 ;; :add field "age"
 ;; :delete "first_name
 (def user-changed {:id 30,
                    :table "user",
-                   :prop {:table {:frontend-name "U�ytkownik"
+                   :prop {:table {:frontend-name "Uďż˝ytkownik"
                                   :is-system? false :is-linker? false
                                   :allow-modifing? false :allow-deleting? true
                                   :allow-linking? true}
@@ -920,7 +984,8 @@
          (if (not-empty column-created) (swap! fxmap-changes #(assoc % :column-created (create-fields original column-created))))
          (if (not-empty column-changed) (swap! fxmap-changes #(assoc % :column-changed (change-fields original changed)))))
      @fxmap-changes))
- (apply-table user-original user-changed))
+ ;; (apply-table user-original user-changed)
+ )
 
 
 
@@ -966,10 +1031,202 @@
                    ;; apply changes only on [one-of keywords-list stages
                    (vec (filter #(some (fn [kwd] (= kwd %)) keywords)
                                 [:table :column-changed :column-deleted :column-created])))]
-    (if-not (empty? keywords) 
-      (reduce #(apply-f-diff (get fxmap-changes %2 nil) %1 changed) original [:table :column-changed :column-deleted :column-created])
-      (do (println "Chanages not being applied, empty keywords list")
-          original))))
+    (->> (if-not (empty? keywords) 
+           (reduce #(apply-f-diff (get fxmap-changes %2 nil) %1 changed) original [:table :column-changed :column-deleted :column-created])
+           (do (println "Chanages not being applied, empty keywords list")
+               original))
+         (update-sql-by-id-template "metadata")
+         (jdbc/execute! sql-connection))))
+
+;;;;;;;;;;;;;;;;
+;;; On meta! ;;;
+;;;;;;;;;;;;;;;;
+
+(defn create-table-by-meta [metadata]
+  (let [smpl-fields (filter (comp (partial not-allowed-rules ["meta*"]) :field) ((comp :columns :prop) metadata))
+        idfl-fields (filter (comp (partial allowed-rules "id_*") :field) ((comp :columns :prop) metadata))]
+    (create-table {:table-name (keyword (:table metadata))
+                   :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
+                   :foreign-keys (vec (map :foreign-keys idfl-fields))})))
+
+;;; TODO unit test
+;; (create-table-by-meta (first (getset "user")))
+;; (create-table :user
+;;               :columns [{:login [:varchar-100 :nnull]}
+;;                         {:password [:varchar-100 :nnull]}
+;;                         {:first_name [:varchar-100 :nnull]}
+;;                         {:last_name [:varchar-100 :nnull]}
+;;                         {:id_permission [:bigint-120-unsigned :nnull]}]
+;;               :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}])
+;; ----- CREATE TABLE 
+;; ----- From script 
+;; => "CREATE TABLE IF NOT EXISTS `user` (`id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT, `login` VARCHAR(100) NOT NULL, `password` VARCHAR(100) NOT NULL, `first_name` VARCHAR(100) NOT NULL, `last_name` VARCHAR(100) NOT NULL, `id_permission` BIGINT(120) UNSIGNED NOT NULL, PRIMARY KEY (`id`), KEY `user17738` (`id_permission`), CONSTRAINT `user17738` FOREIGN KEY (`id_permission`) REFERENCES `permission` (`id`) ON DELETE CASCADE ON UPDATE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"
+;; ----- From meta
+;; => "CREATE TABLE IF NOT EXISTS `user` (`id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT, `login` VARCHAR(100) NOT NULL, `password` VARCHAR(100) NOT NULL, `first_name` VARCHAR(100) NOT NULL, `last_name` VARCHAR(100) NOT NULL, `id_permission` BIGINT(120) UNSIGNED NOT NULL, PRIMARY KEY (`id`), KEY `user17760` (`id_permission`), CONSTRAINT `user17760` FOREIGN KEY (`id_permission`) REFERENCES `permission` (`id`) ON DELETE CASCADE ON UPDATE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"
+
+;; (create-table :point_of_sale_group_links
+;;               :columns [{:id_point_of_sale_group [:bigint-20-unsigned :default :null]}
+;;                         {:id_point_of_sale [:bigint-20-unsigned :default :null]}]
+;;               :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
+;;                              [{:id_point_of_sale :point_of_sale}]])
+;; (create-table-by-meta (first (getset "point_of_sale_group_links")))
+;; ----- CREATE TABLE 
+;; ----- From script
+;; => "CREATE TABLE IF NOT EXISTS `point_of_sale_group_links` (`id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT, `id_point_of_sale_group` BIGINT(20) UNSIGNED DEFAULT NULL, `id_point_of_sale` BIGINT(20) UNSIGNED DEFAULT NULL, PRIMARY KEY (`id`), KEY `point_of_sale_group_links17774` (`id_point_of_sale_group`), CONSTRAINT `point_of_sale_group_links17774` FOREIGN KEY (`id_point_of_sale_group`) REFERENCES `point_of_sale_group` (`id`) ON DELETE CASCADE ON UPDATE CASCADE, KEY `point_of_sale_group_links17775` (`id_point_of_sale`), CONSTRAINT `point_of_sale_group_links17775` FOREIGN KEY (`id_point_of_sale`) REFERENCES `point_of_sale` (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"
+;; ----- From meta
+;; => "CREATE TABLE IF NOT EXISTS `point_of_sale_group_links` (`id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT, `id_point_of_sale_group` BIGINT(20) UNSIGNED DEFAULT NULL, `id_point_of_sale` BIGINT(20) UNSIGNED DEFAULT NULL, PRIMARY KEY (`id`), KEY `point_of_sale_group_links17799` (`id_point_of_sale_group`), CONSTRAINT `point_of_sale_group_links17799` FOREIGN KEY (`id_point_of_sale_group`) REFERENCES `point_of_sale_group` (`id`) ON DELETE CASCADE ON UPDATE CASCADE, KEY `point_of_sale_group_links17800` (`id_point_of_sale`), CONSTRAINT `point_of_sale_group_links17800` FOREIGN KEY (`id_point_of_sale`) REFERENCES `point_of_sale` (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"
+
+(defn recur-find-path [ml]
+  {:tbl ((comp :field :table :prop) ml)
+   :ref (if ((comp :front-references :ref :table :prop) ml)
+          (mapv #(recur-find-path (first (getset! %))) ((comp :front-references :ref :table :prop) ml)))})
+;; (recur-find-path (first (getset :point_of_sale_group_links)))
+;; (recur-find-path (first (getset :user)))
+;; {:tbl "point_of_sale_group_links",
+;;  :ref [{:tbl "point_of_sale_group", :ref nil}
+;;        {:tbl "point_of_sale",
+;;         :ref [{:tbl "enterpreneur", :ref nil}]}]}
+
+
+;; (defmacro ^:private make-name [entity suffix]
+;;   `(symbol (str '~entity '~suffix)))
+
+(defn get-view-column-meta [table-list column-list]
+  (->> table-list
+       (mapcat (fn [t] (vec ((comp :columns :prop) (first (getset! t))))))
+       (filter (fn [c] (in? column-list (keyword (:field c)))))))
+
+(defn- model-column [column]
+    (let [component-type (:component-type column)
+          on-boolean (fn [m] (if (in? component-type "b") (into m {:class java.lang.Boolean}) m))
+          on-number  (fn [m] (if (in? component-type "n") (into m {:class java.lang.Number})  m))]
+      (-> {:key (keyword (:field column)) :text (:representation column)}
+          on-number
+          on-boolean)))
+;; {:field "login", :representation "login", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} 
+;; {:field "first_name", :representation "first_name", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} 
+;; {:field "last_name", :representation "last_name", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} 
+;; {:field "permission_name", :representation "permission_name", :description nil, :component-type ["i"], :column-type [:varchar-20 :default :null], :private? false, :editable? true}
+
+(defn construct-table-model-columns [table-list column-list]
+  (mapv model-column (get-view-column-meta table-list column-list)))
+
+(defn construct-table-model [model-columns data-loader]
+  (fn []
+    [:columns model-columns
+     :rows (data-loader)]))
+
+;;;;;;;;;;;;;;
+;;; JTABLE ;;;
+;;;;;;;;;;;;;;
+
+;; (defn addTableSorter
+;;   "Something to creating table"
+;;   [^javax.swing.JTable T point-lambda]
+;;   (doto (.getTableHeader T)
+;;     (.addMouseListener
+;;      (proxy [java.awt.event.MouseAdapter] []
+;;        (^void mouseClicked [^java.awt.event.MouseEvent e]
+;;         (point-lambda (.getPoint e)))))) T)
+
+;; Eval After table being scrolled to bottom
+;; (defn AdjustmentListener
+;;   "(f [suwaczek-position scrollbarMax]..)" [f]
+;;   (proxy [java.awt.event.AdjustmentListener] []
+;;    (adjustmentValueChanged [^java.awt.event.AdjustmentEvent ae]
+;;      (let [scrollBar (cast javax.swing.JScrollBar (.getAdjustable ae))
+;;            extent (.. scrollBar getModel getExtent)]
+;;        (f (+ (.. scrollBar getValue) extent) (.. scrollBar getMaximum))))))
+
+;; (defn addTableModelListener [f]
+;;   (proxy [javax.swing.event.TableModelListener] []
+;;     (tableChanged [^javax.swing.event.TableModelEvent e]
+;;       (f e))))
+
+;; (let [mig (mig-panel
+;;            :constraints ["" "0px[grow, center]0px" "5px[fill]5px"]
+;;            :items [[(label :text "One")]])
+;;       my-frame (-> (doto (seesaw.core/frame
+;;                           :title "test"
+;;                           :size [0 :by 0]
+;;                           :content mig)
+;;                      (.setLocationRelativeTo nil) pack! show!))]
+;;   (config! my-frame :size [600 :by 600])
+;;   (.add mig (label :text "Two")))
+
+;; [{:key :name :text "Imie"}
+;;  {:key :lname :text "Nazwisko"}
+;;  {:key :lname :text "Zwierzak"}
+;;  {:key :access :text "Kolor"  :class Color}
+;;  {:key :access :text "Dostęp" :class javax.swing.JComboBox}
+;;  {:key :access :text "TF" :class java.lang.Boolean}
+;;  {:key :num :text "Numer" :class java.lang.Number}
+;;  {:key :num :text "Płeć" :class javax.swing.JComboBox}
+;;  {:key :num :text "Wiek" :class java.lang.Number}
+;;  {:key :num :text "Miejscowość"}]
+;; (table :model (seesaw.table/table-model
+;;                :columns [{:key :col1 :text "Col 1"} 
+;;                          {:key :col2 :text "Col 2"}]
+;;                :rows [["Dane 1" "Dane 2"]]))
+
+(defn- construct-table [model listener-fn]
+  (fn []
+    (let [TT (seesaw.core/table :model (model))]
+      (seesaw.core/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (seesaw.core/selection TT)))))
+      (seesaw.core/scrollable TT :hscroll :as-needed :vscroll :as-needed))))
+
+(defn construct-sql [table select-rules]
+  {:pre [(keyword? table)]}
+  (let [m (first (getset table))
+        ;; relations (recur-find-path m)
+        table-name ((comp :field :table :prop) m)
+        columns (map :field ((comp :columns :prop) m))]
+    {:update (fn[entity] (update table-name :set entity :where (=-v :id (:id entity))))
+     :insert (fn[entity] (insert table-name :values (vals entity)))
+     :delete (fn[entity] (if (:id entity) (delete table-name :where (=-v :id (:id entity)))))
+     :select (fn[& {:as args}]
+               (apply (partial select-builder table)
+                      (mapcat vec (into select-rules args))))}))
+
+;; (defmacro defview [table & {:as args}]
+;;   `(let [config#          (atom (assoc ~args :table-name (keyword '~table)))
+;;          backup-config#   (deref config#)
+;;          restore-config#  (fn [] (reset! config# backup-config#))
+         
+;;          ktable#    (:table-name @config#)
+;;          operations#(construct-sql ktable# (:data @config#))
+;;          select#    (:select operations#)
+;;          update#    (:update operations#)
+;;          delete#    (:delete operations#)
+;;          insert#    (:insert operations#)
+;;          data#      (fn [] (jdbc/query sql-connection (select#)))
+;;          export#    (select# :column nil :inner-join nil :where nil)
+;;          model#     (construct-table-model-columns (:tables @config#) (:view @config#))
+;;          table#     (construct-table (construct-table-model model# data#)
+;;                                      (fn [e#] (println e#)))]
+;;      table#))
+
+;; (defview user)
+;; (defview user
+;;   :tables [:user :permission]
+;;   :view   [:first_name :last_name :login :permission_name]
+;;   :data   {:inner-join [:permission]
+;;            :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]})
+
+
+
+;; (let [my-frame (-> (doto (seesaw.core/frame
+;;                           :title "test"
+;;                           :size [0 :by 0]
+;;                           :content
+;;                           ((defview user
+;;                              :tables [:user :permission]
+;;                              :view   [:first_name :last_name :login :permission_name]
+;;                              :data   {:inner-join [:permission]
+;;                                       :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]}))
+;;                           )
+;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
+;;   (seesaw.core/config! my-frame :size [600 :by 600]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; METADATA BACKUP ;;;
@@ -1023,4 +1280,8 @@
             :program-dir env/user-dir}
      :table (vec (map :table metadata-list))
      :backup metadata-list}]))
+
+
+
+
 

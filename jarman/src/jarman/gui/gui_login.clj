@@ -4,163 +4,220 @@
         seesaw.dev
         seesaw.mig
         seesaw.font
-        clostache.parser
+       ;; clostache.parser
         )
  
   (:require [clojure.string :as string]
             [jarman.tools.swing :as stool]
             [jarman.gui.gui-tools :refer :all]
-            [jarman.resource-lib.icon-library :as icon]
-             
-            ))
-
-
-
+            [jarman.resource-lib.icon-library :as icon]))
 
 (map str (.listFiles (clojure.java.io/file "./")))
-(show-options (frame))
-(show-options (label))
-(show-options (scrollable (text)))
 
-;; (def field-login (fn [] (text :editable? true :columns 20 :margin 6
-;;                                :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
-;;                                                         (line-border :bottom 4 :color "#96c1ea")))))
-;;  (def field-pass (fn [] (password :editable? true :columns 20 :margin 6
-;;                               :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
-;;                                                        (line-border :bottom 4 :color "#96c1ea")))))
+(def validate1 {:validate? false :output {:description "DB connection is not set DB connection is not set DB connection is not set DB connection is not set"}})
+(def validate2 {:validate? false :output {:description "some description some description some description"
+                                          :faq [{:q "Why i saw this error"
+                                                 :a "Because your program has trouble"}
+                                                {:q "What it problem mean"
+                                                 :a "Read the fucking descriptin"}]}})
+(def validate3 {:validate? true})
+(def validate4 {:validate? true})
 
+(defn- validation []
+  (cond 
+    ;;(not (:validate? validate1)) (:output validate1)
+    (not (:validate? validate2)) (:output validate2)
+    (not (:validate? validate3)) (:output validate3)
+    (not (:validate? validate4)) (:output validate4)
+    :else nil))
 
-;; (defn authenticate-user [login password]
-;;   (s-query (select :user :where {:login login
-;;                                  :password password})))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; style color and font ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(def dark-grey-color "#676d71")
+(def light-grey-color "#82959f")
+(def blue-green-color "#2c7375")
+(def light-blue-color "#96c1ea")
+(def red-color "#e51a4c")
 
+(defn myFont [size]
+  {:size size :font "Arial" :style :bold})
 
+(declare asks-panel)
+(declare login-panel)
 
-(defn authenticate-user [login password]
-  (if (and (= login "admin") (= password "admin")) true))
+(defn- authenticate-user [login password]
+  (if (and (= login "admin")(= password "admin")) true))
 
+(def ^:private emp-border (empty-border :left 10 :right 10 :top 5 :bottom 5))
 
-;; (defn generate-ask [ask-str answer] (jarman.gui.gui-tools/textarea (apply str (list "<h2>" ask-str "</h2>"))
-;;                                                             :foreground "#2c7375"
-;;                                                             :font (getFont 18)
-;;                                                             :listen [:mouse-entered (fn [e] (do (config! e :foreground "#256599" :cursor :hand) (show! answer)))
-;;                                                                      :mouse-exited  (fn [e] (do (config! e :foreground "#2c7375") (hide! answer)))
-                                                                    
-;;                                                                      ]))
+(defn- some-text [color]
+  (label :text (htmling "<p align= \"justify\">It is a long established fact that a reader will be distracted by the readable content of a page when lookiult model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like)</p>") :foreground color :font (myFont 14)))
 
-
-(def asks-panel (fn []
-                  (mig-panel
-                   :constraints ["wrap 1" "20px[grow, center]" ""]
-                   :items [[(jarman.gui.gui-tools/textarea "<h3>- Why can't i add my table?</h3>" :foreground "#394e74" :font (getFont 18)) "align l"]
-                           [(jarman.gui.gui-tools/textarea "<p align= \"justify\">It is a long established fact that a reader will be distracted by the readable content of a page when lookiult model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like)</p>" :foreground "#738590" )]
-                           [(jarman.gui.gui-tools/textarea "<h3>- Other problems?</h3>" :foreground "#394e74" :font (getFont 18)) "align l"]
-                           [(jarman.gui.gui-tools/textarea "<p align= \"justify\">It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. Thnd the like)</p>" :foreground "#738590" )]]
-                   )))
-
-
-(def info-panel (scrollable
-                 (mig-panel
-                  :constraints ["wrap 1" "[grow, center]" "20px[]20px"]
-                  :items [[(label :icon (stool/image-scale icon/left-blue-64-png 50)
-                                  :listen [:mouse-clicked (fn [e] (config! f :content login-panel))]
-                                  :border (empty-border :right 200)) "align l, split 2"]
-                          [(label :icon (stool/image-scale "resources/imgs/trashpanda2-stars-blue-1024.png" 47))]
-                          [(mig-panel
-                            :constraints ["wrap 1" "100px[:600, grow, center]100px" "20px[]20px"]
-                            :items [
-                                    [(jarman.gui.gui-tools/textarea "<h2>About</h2>" :foreground "#2c7375" :font (getFont 18)) "align l"]
-                                    [(jarman.gui.gui-tools/textarea "<p align= \"justify\" >It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like)</p>" :foreground "#636d77" )]
-                                    [(jarman.gui.gui-tools/textarea "<h2>Jarman</h2>" :foreground "#2c7375" :font (getFont 18)) "align l"]
-                                    [(jarman.gui.gui-tools/textarea "<p align= \"justify\">It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like)</p>" :foreground "#636d77" )]
-                                    [(jarman.gui.gui-tools/textarea "<h2>Contact</h2>" :foreground "#2c7375" :font (getFont 18)) "align l"]
-                                    [(jarman.gui.gui-tools/textarea "<p align= \"justify\">It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like)</p>" :foreground "#636d77" )]
-                                    [(jarman.gui.gui-tools/textarea "<h2>Links</h2>" :foreground "#2c7375" :font (getFont 18)) "align l"] 
-                                    [(jarman.gui.gui-tools/textarea "<p align= \"justify\">http://trashpanda-team.ddns.net</p>" :foreground "#636d77") "align l"]
-                                    [(jarman.gui.gui-tools/textarea "<h2>FAQ</h2>" :foreground "#2c7375" :font (getFont 18)) "align l"]
-                                    [(asks-panel) "align l"]])]])))
+(def ^:private contact-info [(label :text (htmling "<h2>Contacts</h2>") :foreground blue-green-color :font (myFont 14))
+                             (horizontal-panel :items (list (label :text (htmling "<h3>Website:</h3>")
+                                                                   :foreground  dark-grey-color :font (myFont 16)
+                                                                   :border (empty-border :right 8))
+                                                            (label :text (htmling "<h3>http://trashpanda-team.ddns.net</h3>")
+                                                                   :foreground  light-grey-color :font (myFont 16))))
+                             (horizontal-panel :items (list (label :text (htmling "<h3>Phone:</h3>")
+                                                                   :foreground  dark-grey-color :font (myFont 16)
+                                                                   :border (empty-border :right 8))
+                                                            (label :text (htmling "<h3>+380966085615</h3>")
+                                                                   :foreground  light-grey-color :font (myFont 16))))
+                             (horizontal-panel :items (list (label :text (htmling "<h3>Email:</h3>")
+                                                                   :foreground  dark-grey-color :font (myFont 16)
+                                                                   :border (empty-border :right 8))
+                                                            (label :text (htmling "<h3>contact.tteam@gmail.com</h3>")
+                                                                   :foreground  light-grey-color :font (myFont 16))))])
 
 
-(def login-panel (let [flogin (jarman.gui.gui-tools/text-input :placeholder "Login"
-                                                               :style [:class :input
-                                                                       :columns 20
-                                                                       :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
-                                                                                                (line-border :bottom 4 :color "#96c1ea"))
-                                                                       :halign :left
-                                                                       :bounds [100 150 200 30]])
-                       fpass (jarman.gui.gui-tools/password-input :placeholder "Password"
-                                                                  :style [:class :input
-                                                                          :columns 20
-                                                                          :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
-                                                                                                   (line-border :bottom 4 :color "#96c1ea"))
-                                                                          :halign :left
-                                                                          :bounds [100 150 200 30]])]
-                   (mig-panel
-                    :constraints ["wrap 1" "[grow, center]" "30px[]0px"]
-                    :items [
-                            [(label :icon (stool/image-scale "resources/imgs/jarman-text.png" 10))]
-                            
-                            [(mig-panel
-                              :constraints ["" "[grow, fill]" "5px[]0px"]
+(defn- error-panel [errors]
+  (scrollable
+   (mig-panel
+    :constraints ["wrap 1" "[grow, center]" "20px[]20px"]
+    :items [[(label :icon (stool/image-scale icon/alert-red-512-png 8)
+                    :border (empty-border :right 10)) "split 2"]
+            [(label :text (htmling "<h2>ERROR</h2>") :foreground blue-green-color :font (myFont 14))]
+            [(let [mig (mig-panel
+                        :constraints ["wrap 1" "40px[:600, grow, center]40px" "10px[]10px"]
+                        :items [
+                                [(label :text (htmling "<h2>About</h2>")
+                                        :foreground blue-green-color :font (myFont 14)) "align l"]
+                                [(label :text (htmling (str "<p align= \"justify\">" (:description errors) "</p>")) :foreground light-grey-color
+                                        :font (myFont 14)) "align l"]
+                                [(label :text (htmling "<h2>FAQ</h2>")
+                                        :foreground blue-green-color :font (myFont 14)) "align l"]
+                                [(if (= (:faq errors) nil)(label :text "")(asks-panel (:faq errors))) "align l"]])]
+               (doall (map (fn [x] (.add mig x "align l")) contact-info))
+               (.repaint mig) mig)]])
+   :hscroll :never))
+
+
+(defn- asks-panel [faq]
+  (let [mig
+        (mig-panel
+         :constraints ["wrap 1" "20px[grow, center]" "15px[]15px"]
+         :items [])]
+    (doall (map (fn [x] (do (.add mig (label :text (:q x) :foreground blue-green-color :font (myFont 14)) "align l")
+                            (.add mig (label :text (:a x) :foreground light-grey-color :font (myFont 12)) "align l"))) faq))
+    (.repaint mig)
+    mig))
+
+
+(def ^:private info-panel (let [info some-text
+                                faq [{:q "Why i saw this error"
+                                                 :a "Because your program has trouble"}
+                                                {:q "What it problem mean"
+                                                 :a "Read the fucking descriptin"}]]
+                               (scrollable
+                                (mig-panel
+                                 :constraints ["wrap 1" "[grow, center]" "20px[]20px"]
+                                 :items [[(label :icon (stool/image-scale icon/left-blue-64-png 50)
+                                                 :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content login-panel))]
+                                                 :border (empty-border :right 220)) "align l, split 2"]
+                                         [(label :icon (stool/image-scale "resources/imgs/trashpanda2-stars-blue-1024.png" 47))]
+                                         [(let [mig (mig-panel
+                                                     :constraints ["wrap 1" "100px[:600, grow, center]100px" "20px[]20px"]
+                                                     :items [
+                                                             [(label :text (htmling "<h2>About</h2>") :foreground blue-green-color :font (myFont 14)) "align l"]
+                                                             [(info  light-grey-color)]
+                                                             [(label :text (htmling "<h2>Jarman</h2>") :foreground blue-green-color :font (myFont 14)) "align l"]
+                                                             [(info  light-grey-color)]
+                                                             [(label :text (htmling "<h2>Contact</h2>") :foreground blue-green-color :font (myFont 14)) "align l"]
+                                                             [(info  light-grey-color)]
+                                                             [(label :text (htmling "<h2>Links</h2>") :foreground blue-green-color :font (myFont 14)) "align l"] 
+                                                             [(label :text (htmling "<p align= \"justify\">http://trashpanda-team.ddns.net</p>") :foreground light-grey-color :font (myFont 14) ) "align l"]
+                                                             [(label :text (htmling "<h2>FAQ</h2>") :foreground blue-green-color :font (myFont 14)) "align l"]
+                                                             [(asks-panel faq) "align l"]])]
+                                            (doall (map (fn [x] (.add mig x "align l")) contact-info))
+                                            (.repaint mig) mig)]]))))
+
+
+(def ^:private login-panel (let [flogin (jarman.gui.gui-tools/text-input :placeholder "Login"
+                                                                         :style [:class :input
+                                                                                 :columns 20
+                                                                                 :border (compound-border emp-border
+                                                                                                          (line-border :bottom 4 :color light-blue-color))
+                                                                                 :halign :left
+                                                                                 :bounds [100 150 200 30]])
+                                 fpass (jarman.gui.gui-tools/password-input :placeholder "Password"
+                                                                            :style [:class :input
+                                                                                    :columns 20
+                                                                                    :border (compound-border emp-border
+                                                                                                             (line-border :bottom 4 :color light-blue-color))
+                                                                                    :halign :left
+                                                                                    :bounds [100 150 200 30]])]
+                             (mig-panel
+                              :constraints ["wrap 1" "[grow, center]" "30px[]0px"]
                               :items [
-                                      [(label :icon (stool/image-scale icon/user-blue1-64-png 40))]
-                                      [flogin]
-                                      [(label :border (empty-border :right 20))]
-                                      ])]
+                                      [(label :icon (stool/image-scale "resources/imgs/jarman-text.png" 10))]
+                                      
+                                      [(mig-panel
+                                        :constraints ["" "[grow, fill]" "5px[]0px"]
+                                        :items [
+                                                [(label :icon (stool/image-scale icon/user-blue1-64-png 40))]
+                                                [flogin]
+                                                [(label :border (empty-border :right 20))]
+                                                ])]
 
-                            [(mig-panel
-                              :constraints ["" "[grow, fill]" "5px[]0px"]
-                              :items [
-                                      [(label :icon (stool/image-scale icon/key-blue-64-png 40))]
-                                      [fpass]
-                                      [(label :border (empty-border :right 20))] ])]
-                            
-                            [(label :text "LOGIN" :background "#fff"
-                                    :foreground "#96c1ea"
-                                    :border (compound-border (empty-border :bottom 10 :top 10
-                                                                           :left 30 :right 30))
-                                    :listen [:mouse-entered (fn [e] (config! e :background "#deebf7" :foreground "#256599" :cursor :hand))
-                                             :mouse-exited  (fn [e] (config! e :background "#fff" :foreground "#96c1ea"))
-                                             :mouse-clicked (fn [e]  (if (authenticate-user (text flogin) (text fpass))
-                                                                       (do (config! flogin :border (compound-border (empty-border :left 10
-                                                                                                                                  :right 10
-                                                                                                                                  :top 5
-                                                                                                                                  :bottom 5)
-                                                                                                                    (line-border :bottom 4 :color "#96c1ea")))
-                                                                           (config! fpass :border (compound-border (empty-border :left 10
-                                                                                                                                 :right 10
-                                                                                                                                 :top 5
-                                                                                                                                 :bottom 5)
-                                                                                                                   (line-border :bottom 4 :color "#96c1ea"))))
-                                                                       (do (config! flogin :border (compound-border (empty-border :left 10
-                                                                                                                                  :right 10
-                                                                                                                                  :top 5
-                                                                                                                                  :bottom 5)
-                                                                                                                    (line-border :bottom 4 :color "#e51a4c")))
-                                                                           (config! fpass :border (compound-border (empty-border :left 10
-                                                                                                                                 :right 10
-                                                                                                                                 :top 5
-                                                                                                                                 :bottom 5)
-                                                                                                                   (line-border :bottom 4 :color "#e51a4c"))))))])]
-                            [(label :text " " :border
-                                    (empty-border :top 20 :left 860 )) "split 2"]
-                            [(mig-panel
-                              :constraints ["" "[grow, fill]" ""]
-                              :items [
-                                      [(label :icon (stool/image-scale icon/refresh-connection-grey1-64-png 50)
-                                              :border (compound-border (empty-border :right 10 )))]
-                                      [(label :icon (stool/image-scale icon/settings-64-png 50)
-                                              :border (compound-border (empty-border :right 10 )))]
-                                      [(label :icon (stool/image-scale icon/I-grey-64-png 50)
-                                              :listen [:mouse-clicked (fn [e] (config! f :content info-panel))])]])]])))
+                                      [(mig-panel
+                                        :constraints ["" "[grow, fill]" "5px[]0px"]
+                                        :items [
+                                                [(label :icon (stool/image-scale icon/key-blue-64-png 40))]
+                                                [fpass]
+                                                [(label :border (empty-border :right 20))] ])]
+                                      
+                                      [(label :text "LOGIN" :background "#fff"
+                                              :foreground light-blue-color
+                                              :border (compound-border emp-border)
+                                              :listen [:mouse-entered (fn [e] (config! e :background "#deebf7" :foreground "#256599" :cursor :hand))
+                                                       :mouse-exited  (fn [e] (config! e :background "#fff" :foreground light-blue-color))
+                                                       :mouse-clicked (fn [e]  (if (authenticate-user (text flogin) (text fpass))
+                                                                                 (do (config! flogin :border (compound-border emp-border
+                                                                                                                              (line-border :bottom 4 :color light-blue-color)))
+                                                                                     (config! fpass :border (compound-border emp-border
+                                                                                                                             (line-border :bottom 4 :color light-blue-color))))
+                                                                                 (do (config! flogin :border (compound-border emp-border
+                                                                                                                              (line-border :bottom 4 :color red-color)))
+                                                                                     (config! fpass :border (compound-border emp-border
+                                                                                                                             (line-border :bottom 4 :color red-color))))))])]
+                                      [(label :text " " :border
+                                              (empty-border :top 20 :left 860 )) "split 2"]
+                                      [(mig-panel
+                                        :constraints ["" "[grow, fill]" ""]
+                                        :items [
+                                                [(label :icon (stool/image-scale icon/refresh-connection-grey1-64-png 50)
+                                                        :border (compound-border (empty-border :right 10 )))]
+                                                [(label :icon (stool/image-scale icon/settings-64-png 50)
+                                                        :border (compound-border (empty-border :right 10 )))]
+                                                [(label :icon (stool/image-scale icon/I-grey-64-png 50)
+                                                        :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content info-panel))])]])]])))
 
-(def f (frame :title "Jarman-login"
-              :undecorated? false
-              :resizable? false
-              :minimum-size [1000 :by 760]
-              :content login-panel))
+(defn- frame-login []
+  (frame :title "Jarman-login"
+         :undecorated? false
+         :resizable? false
+         :minimum-size [1000 :by 760]
+         :content login-panel))
 
-(-> (doto f (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
+(defn- frame-error []
+  (frame :title "Jarman-error"
+         :undecorated? false
+         :resizable? false
+         :minimum-size [600 :by 600]))
+
+(defn start []
+  (let [res-validation (validation)]
+    (if (= res-validation nil)
+      (-> (doto (frame-login) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
+      (-> (doto (frame-error) (.setLocationRelativeTo nil)) (config! :content (error-panel res-validation)) seesaw.core/pack! seesaw.core/show!))))
+
+;;(start)
+
+
+
+
 
 
 

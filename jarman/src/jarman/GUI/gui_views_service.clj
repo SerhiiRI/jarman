@@ -188,6 +188,3 @@
         (= action :clear)           (do
                                       (reset! atom--views-storage   {}))
         (= action :get-atom-storage) atom--views-storage))))
-
-
-(@jarman.gui.gui-app/startup)

@@ -20,9 +20,8 @@
       Import jarman.dev-tools
       Function need stool/image-scale function for scalling icon
    "
-  (fn [view-id title deactive-color size onclose onclick]
-    (let [bg-color deactive-color
-          border "#fff"
+  (fn [view-id title bg-color size onclose onclick]
+    (let [border "#fff"
           hsize (first size)
           vsize (last size)]
       (horizontal-panel
@@ -48,62 +47,62 @@
                          :mouse-clicked onclose])]
        :listen [:mouse-entered (fn [e] (config! e :cursor :hand))]))))
 
+(def recolor-tab
+  (fn [tab color]
+    (let [title (first  (config tab :items))
+          close (second (config tab :items))]
+      (config! title :background color)
+      (config! close :background color))))
 
 (def deactive-all-tabs
   (fn [service-data]
     (doall
-     (map
-      (fn [tab]
-        (let [title (first  (config tab :items))
-              close (second (config tab :items))
-              deactive-color "#ccc"]
-          (config! title :background deactive-color)
-          (config! close :background deactive-color)))
-      (config (service-data :bar-space) :items)))
+     (map #(recolor-tab % (service-data :deactive-color)) (config (service-data :bar-space) :items)))
     (service-data :repaint)))
+
+(def set-component-to-view-space
+  (fn [service-data component]
+    (config! (service-data :view-space) :items [component])))
 
 (def switch-tab
   (fn [service-data packed-view]
     (fn [e]
       (let [view (first packed-view)
             component (get (second view) :component)
-            active-color "#eee"]
+            tab (.getParent (to-widget e))]
         (deactive-all-tabs service-data)
-        (let [tab (.getParent (to-widget e))
-              title (first  (config tab :items))
-              close (second (config tab :items))]
-          (config! title :background active-color)
-          (config! close :background active-color))
-        (config! (service-data :view-space) :items [component]))
+        (recolor-tab tab (service-data :active-color))
+        (set-component-to-view-space service-data component))
       (service-data :repaint))))
+
+(def whos-active?
+  (fn [service-data]
+    (let [tabs (config (service-data :bar-space) :items)
+          active-color (seesaw.color/color (service-data :active-color))
+          tabs (filter #(= active-color (config (first (config % :items)) :background)) tabs)]
+      (if-not (empty? tabs) (first tabs)))))
 
 (def close-tab
   (fn [service-data packed-view]
     (fn [e]
       (let [view (first packed-view)
-            active-color "#eee"
             tab (.getParent (to-widget e))
-            active? (= (first view) (get (config tab :user-data) :view-id))
+            active-tab (whos-active? service-data)
+            active-id (if-not (nil? active-tab) (get (config active-tab :user-data) :view-id))
+            active? (= active-id (get (config tab :user-data) :view-id))
             close-view (fn [e]
                          (reset! (service-data :views-storage) (dissoc @(service-data :views-storage) (first view))) ;; Remove view from views-storage
                          (.remove (service-data :bar-space) tab) ;; Remove tab from tab-space
-                        ;;  (println "Views? " (count @(service-data :views-storage)))
                          (cond active? ;; If view is active then swith on another and set color for active tab
                                (let [tabs (config (service-data :bar-space) :items)
                                      tab (if-not (empty? tabs) (first tabs))
-                                     title (if-not (nil? tab) (first  (config tab :items)))
-                                     close (if-not (nil? tab) (second (config tab :items)))
-                                     first-view-id (if-not (nil? tab) (get (config tab :user-data) :view-id))]
+                                     view-id (if-not (nil? tab) (get (config tab :user-data) :view-id))]
                                  (if-not (nil? tab)
                                    (do
-                                    ;;  (println "Remove active - set first")
-                                     (config! title :background active-color)
-                                     (config! close :background active-color)
-                                     (config! (service-data :view-space) :items [(get-in @(service-data :views-storage) [first-view-id :component])]))
+                                     (recolor-tab tab (service-data :active-color))
+                                     (set-component-to-view-space service-data (get-in @(service-data :views-storage) [view-id :component])))
                                    (do
-                                    ;;  (println "Remove active - set label")
-                                     (config! (service-data :view-space) :items [(label)])))))
-                         (service-data :repaint))]
+                                     (set-component-to-view-space service-data (label)))))))]
         (if (service-data :onClose) (close-view e))))))
 
 
@@ -114,16 +113,22 @@
    "
   (fn [service-data]
     (fn [view-id title component]
-      ;; (println "Set view")
-      (if (contains? @(service-data :views-storage) view-id)
-        (let [view {view-id (get @(service-data :views-storage) view-id)}] ;; Swicht tab if exist in views-storage
-          (switch-tab service-data view))
+      (if (contains? @(service-data :views-storage) view-id) ;; Swicht tab if exist in views-storage
+        (let [view-data {view-id (get @(service-data :views-storage) view-id)}
+              tabs (config (service-data :bar-space) :items)
+              tab (if (empty? tabs) nil (first (filter (fn [tab]
+                                                         (= (get (config tab :user-data) :view-id) view-id))
+                                                       tabs)))]
+          (if-not (nil? tab) ;; Switch to exist tab and view
+            (do
+              (deactive-all-tabs service-data)
+              (recolor-tab tab (service-data :active-color))
+              (set-component-to-view-space service-data (get-in @(service-data :views-storage) [view-id :component])))))
 
         (let [view {view-id {:component component ;; Add new view to views-storage and switch to new view
                              :view-id view-id
                              :title title}}]
           (swap! (service-data :views-storage) (fn [storage] (merge storage view)))
-          ;; (println "View Added - next switch")
           (let [view-id (first (first view))
                 button-title  (get (second (first view)) :title)
                 tab-button (create--tab-button view-id button-title "#eee" [100 25]
@@ -131,8 +136,7 @@
                                                (switch-tab service-data view))]
             (deactive-all-tabs service-data)
             (.add (service-data :bar-space) tab-button)
-            (config! (service-data :view-space) :items [component])
-            (service-data :repaint))
+            (set-component-to-view-space service-data component))
           (switch-tab service-data view))))))
 
 
@@ -152,7 +156,6 @@
       (contains? @atom--views-storage view-id))))
 
 
-
 ;; Create new service
 (defn new-views-service
   [bar-space view-space & {:keys [onClose] :or {onClose (fn [] true)}}]
@@ -160,8 +163,14 @@
         service-data (fn [key] (get {:views-storage atom--views-storage
                                      :view-space   view-space
                                      :bar-space    bar-space
-                                     :repaint      (.repaint (to-root view-space))
+                                     :active-color   "#eee"
+                                     :deactive-color "#ccc"
+                                     :repaint      (do (.repaint (.getParent view-space))
+                                                       (.revalidate (.getParent view-space)))
                                      :onClose      onClose} key))]
+    (config! view-space :listen [:component-resized (fn [e]
+                                                      ;; (println "Size " [(.getWidth view-space) :by (.getHeight view-space)])
+                                                      )])
     (fn [action & {:keys [view-id
                           title
                           component]

@@ -1,4 +1,4 @@
-(ns jarman.logic.playground
+ (ns jarman.logic.playground
   (:refer-clojure :exclude [update])
   (:require
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
@@ -12,20 +12,24 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
+(def ^:dynamic prod? false)
 
-(def ^:dynamic sql-connection {:dbtype "mysql"
-                               :host "127.0.0.1"
-                               :port 3306
-                               :dbname "jarman"
-                               :user "root"
-                               :password "1234"})
+;;;
+(def ^:dynamic sql-connection
+  (if prod?
+    {:dbtype "mysql" :host "trashpanda-team.ddns.net" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
+    {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"}))
+;; (case db-connection-resolver
+;;   :prod-remote {:dbtype "mysql" :host "trashpanda-team.ddns.net" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
+;;   :prod-local {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
+;;   :local {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"})
 
-;; (def ^:dynamic sql-connection {:dbtype "mysql"
-;;                                :host "80.49.157.152"
-;;                                :port 3306
-;;                                :dbname "jarman"
-;;                                :user "jarman"
-;;                                :password "dupa"})
+(defmacro s-exec [s]
+  `(jdbc/execute! sql-connection ~s))
+(defmacro s-query [s]
+  `(jdbc/query sql-connection ~s))
+
+
 
 (def available-scheme ["service_contract"
                        "seal"
@@ -228,6 +232,7 @@
 (def glastname (generate-random-string-lower 3))
 (def gpassword (generate-random-string-from 3 "1234"))
 (def gid_permission (generate-random-sql-from-col :permission))
+((generate-random-sql-from-col :permission))
 
 (defn fill-permission []
   (def create-permission 
@@ -326,5 +331,11 @@
   (delete-scheme)
   (create-scheme)
   (metadata/do-create-meta)
+  (metadata/do-create-references)
   (refill-test-data))
 
+;;; test validation ;;;
+
+
+(defn authenticate-user [login password]
+ (s-query (select :user :where {:login login :password password})))

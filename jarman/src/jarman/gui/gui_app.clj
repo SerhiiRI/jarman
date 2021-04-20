@@ -1140,8 +1140,8 @@
                                                           (expand-child-btn "Test"    (fn [e] (@jarman-views-service :set-view :view-id "test1" :title "Test 1" :component (label :text "Test 1"))))
                                                           (expand-child-btn "Test"    (fn [e] (@jarman-views-service :set-view :view-id "test2" :title "Test 2" :component (label :text "Test 2")))))]
                                              [(create-expand-btns--confgen)])]
-                           [(right-part-of-jarman-as-space-for-views-service [(label)]
-                                                                             [(label)])]])])))
+                           [(right-part-of-jarman-as-space-for-views-service []
+                                                                             [])]])])))
 
 
 

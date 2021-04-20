@@ -65,6 +65,7 @@
 (defn rm-colon [txt] (-> (string/replace (str txt) #":" "")))
 (defn convert-mappath-to-key [path] (keyword (rm-colon (string/join "-" path))))
 (defn convert-str-to-hashkey [str] (keyword (string/join "" ["#" str])))
+(defn in-list? [coll key] (not (empty? (filter #(= key %) coll))))
 
 (defmacro join
   "(filter-nil [nil 1 nil 3 4]) ;=> [1 3 4]"

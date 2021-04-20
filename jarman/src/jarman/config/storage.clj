@@ -91,7 +91,6 @@
 ;; (user-list)
 ;; (user-clean)
 
-
 ;; (user-config-list)
 ;; (user-config-put "temporary.txt" "sukasuka")
 ;; (user-config-append "temporary.txt" "\n one two three")

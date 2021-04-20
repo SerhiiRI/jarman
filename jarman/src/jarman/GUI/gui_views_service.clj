@@ -50,143 +50,61 @@
 
 
 (def deactive-all-tabs
-  (fn [service-data deactive-color]
+  (fn [service-data]
     (doall
      (map
       (fn [tab]
         (let [title (first  (config tab :items))
-              close (second (config tab :items))]
+              close (second (config tab :items))
+              deactive-color "#ccc"]
           (config! title :background deactive-color)
           (config! close :background deactive-color)))
       (config (service-data :bar-space) :items)))
     (service-data :repaint)))
 
-(def active-by-view-id
-  (fn [service-data active-color view]
-    (let [view-id (first (first view))]
-      (doall
-       (println "Active:" view-id)
-       (doall
-        (map
-         (fn [tab]
-           (let [title (first  (config tab :items))
-                 close (second (config tab :items))
-                 u-data (config tab :user-data)]
-             (cond (= (get u-data :view-id) view-id)
-                   (do
-                     (config! title :background active-color)
-                     (config! close :background active-color)))))
-         (config (service-data :bar-space) :items)))))
-    (service-data :repaint)))
-
-;; Switch active tab
 (def switch-tab
-  (fn [service-data view]
-    (deactive-all-tabs service-data "#ccc")
-    (cond (nil? view)
-            ;; If view is nill
-          (cond (nil? @(service-data :last-active))
-                  ;; if last active is empty
-                (cond (empty? @(service-data :views-storage))
-                        ;; if storage is empty
-                      (do
-                        (config! (service-data :view-space) :items [(label)])
-                        (reset! (service-data :active-tab) nil)
-                        (reset! (service-data :last-active) nil))
-                        ;; if stroeage is not empty
-                      :else (do
-                              (switch-tab service-data (first @(service-data :views-storage)))))
-                              (reset! (service-data :last-active) nil)
-                              (reset! (service-data :active-tab)  nil)
-                  ;; if last active is not empty
-                :else (do
-                        (reset! (service-data :active-tab) nil)
-                        (switch-tab service-data @(service-data :last-active))))
-            ;; if view is not empty
-          :else (do
-                  (if (= @(service-data :last-active) view) 
-                    (reset! @(service-data :last-active) nil) 
-                    (reset! (service-data :last-active) @(service-data :active-tab)))
-                  (reset! (service-data :active-tab) view)
-                  (config! (service-data :view-space) :items [(get (second (first @(service-data :active-tab))) :component)])
-                  ((service-data :update-bar) service-data)))
-                
-    ;; (.repaint (to-root (service-data :bar-space)))
-    ))
-
+  (fn [service-data packed-view]
+    (fn [e]
+      (let [view (first packed-view)
+            component (get (second view) :component)
+            active-color "#eee"]
+        (deactive-all-tabs service-data)
+        (let [tab (.getParent (to-widget e))
+              title (first  (config tab :items))
+              close (second (config tab :items))]
+          (config! title :background active-color)
+          (config! close :background active-color))
+        (config! (service-data :view-space) :items [component]))
+      (service-data :repaint))))
 
 (def close-tab
-  (fn [service-data view-id]
+  (fn [service-data packed-view]
     (fn [e]
-      (let [tab (.getParent (seesaw.core/to-widget e))
-            active? (get (config tab :user-data) :active)
+      (let [view (first packed-view)
+            active-color "#eee"
+            tab (.getParent (to-widget e))
+            active? (= (first view) (get (config tab :user-data) :view-id))
             close-view (fn [e]
-                         (reset! (service-data :views-storage) (dissoc @(service-data :views-storage) view-id)) ;; Remove view from views-storage
-                         (if active? ;; If view is active then swith on another
-                           (do 
-                             (config! (service-data :view-space) :items [(label)])
-                             (switch-tab service-data @(service-data :last-active)))
-                           (do
-                             (reset! (service-data :last-active) nil)
-                             ((service-data :update-bar) service-data))))]
+                         (reset! (service-data :views-storage) (dissoc @(service-data :views-storage) (first view))) ;; Remove view from views-storage
+                         (.remove (service-data :bar-space) tab) ;; Remove tab from tab-space
+                        ;;  (println "Views? " (count @(service-data :views-storage)))
+                         (cond active? ;; If view is active then swith on another and set color for active tab
+                               (let [tabs (config (service-data :bar-space) :items)
+                                     tab (if-not (empty? tabs) (first tabs))
+                                     title (if-not (nil? tab) (first  (config tab :items)))
+                                     close (if-not (nil? tab) (second (config tab :items)))
+                                     first-view-id (if-not (nil? tab) (get (config tab :user-data) :view-id))]
+                                 (if-not (nil? tab)
+                                   (do
+                                    ;;  (println "Remove active - set first")
+                                     (config! title :background active-color)
+                                     (config! close :background active-color)
+                                     (config! (service-data :view-space) :items [(get-in @(service-data :views-storage) [first-view-id :component])]))
+                                   (do
+                                    ;;  (println "Remove active - set label")
+                                     (config! (service-data :view-space) :items [(label)])))))
+                         (service-data :repaint))]
         (if (service-data :onClose) (close-view e))))))
-
-
-(def in-list? (fn [coll key] (not (empty? (filter #(= key %) coll)))))
-(def update-tabs-on-bar-space
-  (fn [service-data]
-    (service-data :repaint)
-    (let [list-of-tabs (config (service-data :bar-space) :items)
-          list-of-view-id-in-tabs (map (fn [tab] (get (config tab :user-data) :view-id)) list-of-tabs)]
-      (cond
-        (< (count list-of-tabs) (count @(service-data :views-storage)))
-        (do ;; Add new tab which will be linking to created view
-          (let [views-list-to-add (filter #(not (in-list? list-of-view-id-in-tabs (first %))) @(service-data :views-storage))]
-            (doall
-             (map (fn [view]
-                    (let [view-id (first view)
-                          button-title  (get (second view) :title)
-                          tab-button (create--tab-button view-id button-title "#ccc" [100 25]
-                                                         (close-tab service-data view-id)
-                                                         (fn [e] (switch-tab service-data [view])))]
-                      (.add (service-data :bar-space) tab-button)
-                      (active-by-view-id service-data "#eee" view)
-                      (service-data :repaint)))
-                  views-list-to-add))))
-
-        (> (count list-of-tabs) (count @(service-data :views-storage)))
-        (do ;; Close tab which linked to removed view
-          (let [get-view-id (fn [t] (get (config t :user-data) :view-id))
-                flow-if-not-in-storage (fn [ta] (= (get @(service-data :views-storage) (get-view-id ta)) nil))
-                to-remove (filter (fn [tab] (flow-if-not-in-storage tab)) list-of-tabs)]
-            (do
-             (doall (map #(.remove (service-data :bar-space) %) to-remove))
-             (cond (not (nil? @(service-data :last-active))) (active-by-view-id service-data "#eee" @(service-data :last-active)))
-             (service-data :repaint))))))))
-
-
-;; Create top bar for tabs linking to views
-;; (def update--tabs-bar
-;;   "Description
-;;     This function update bar with tabs who linking to open views.
-;;    "
-;;   (fn [service-data]
-;;     ;; (println "Update tabs")
-;;     (config! (service-data :bar-space) :items
-;;              (if-not (nil? @(service-data :active-tab))
-;;                (vec
-;;                 (map
-;;                  (fn [view]
-;;                    (let [view-id (first view)
-;;                          button-title  (get (second view) :title)
-;;                          active-view-id (first (first @(service-data :active-tab)))
-;;                          active? (identical? view-id active-view-id)]
-;;                      (create--tab-button button-title active? [100 25]
-;;                                          (close-tab service-data view-id)
-;;                                          (fn [e] (switch-tab service-data [view])))))
-;;                  @(service-data :views-storage)))
-;;                [(label)]))))
-
 
 
 (def set--view
@@ -206,7 +124,15 @@
                              :title title}}]
           (swap! (service-data :views-storage) (fn [storage] (merge storage view)))
           ;; (println "View Added - next switch")
-          ()
+          (let [view-id (first (first view))
+                button-title  (get (second (first view)) :title)
+                tab-button (create--tab-button view-id button-title "#eee" [100 25]
+                                               (close-tab service-data view)
+                                               (switch-tab service-data view))]
+            (deactive-all-tabs service-data)
+            (.add (service-data :bar-space) tab-button)
+            (config! (service-data :view-space) :items [component])
+            (service-data :repaint))
           (switch-tab service-data view))))))
 
 
@@ -231,20 +157,11 @@
 (defn new-views-service
   [bar-space view-space & {:keys [onClose] :or {onClose (fn [] true)}}]
   (let [atom--views-storage   (atom {})
-        atom--active-tab      (atom nil)
-        atom--last-active-tab (atom nil)
         service-data (fn [key] (get {:views-storage atom--views-storage
-                                     :active-tab   atom--active-tab
-                                     :last-active  atom--last-active-tab
                                      :view-space   view-space
                                      :bar-space    bar-space
-                                     :root         (.repaint (to-root view-space))
-                                    ;;  :update-bar       update--tabs-bar
-                                     :update-bar update-tabs-on-bar-space
+                                     :repaint      (.repaint (to-root view-space))
                                      :onClose      onClose} key))]
-    ;; (run-views-supervisior service-data)
-    ;; (update--tabs-bar service-data)
-    ;; (update-tabs-on-bar-space service-data)
     (fn [action & {:keys [view-id
                           title
                           component]
@@ -257,13 +174,9 @@
         (= action :get-component)   ((get-component atom--views-storage) view-id)
         (= action :exist?)          ((exist atom--views-storage) view-id)
         (= action :get-all-view)    @atom--views-storage
-        (= action :get-active)      @atom--active-tab
-        (= action :get-last)        @atom--last-active-tab
         (= action :get-view-sapce)  view-space
         (= action :get-bar-sapce)   bar-space
         (= action :clear)           (do
-                                      (reset! atom--last-active-tab nil)
-                                      (reset! atom--active-tab      nil)
                                       (reset! atom--views-storage   {}))
         (= action :get-atom-storage) atom--views-storage))))
 

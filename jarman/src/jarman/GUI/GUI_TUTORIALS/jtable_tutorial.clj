@@ -38,21 +38,21 @@
 (def seed-col
   (fn []
     [{:key :name :text "Imie"}
-    {:key :lname :text "Nazwisko"}
-    {:key :lname :text "Zwierzak"}
-    {:key :access :text "Kolor"  :class Color}
-    {:key :access :text "Dostęp" :class javax.swing.JComboBox}
-    {:key :access :text "TF" :class java.lang.Boolean}
-    {:key :num :text "Numer" :class java.lang.Number}
-    {:key :num :text "Płeć" :class javax.swing.JComboBox}
-    {:key :num :text "Wiek" :class java.lang.Number}
-    {:key :num :text "Miejscowość"}]))
+     {:key :lname :text "Nazwisko"}
+     {:key :lname :text "Zwierzak"}
+     {:key :access :text "Kolor"  :class Color}
+     {:key :access :text "Dostęp" :class javax.swing.JComboBox}
+     {:key :access :text "TF" :class java.lang.Boolean}
+     {:key :num :text "Numer" :class java.lang.Number}
+     {:key :num :text "Płeć" :class javax.swing.JComboBox}
+     {:key :num :text "Wiek" :class java.lang.Number}
+     {:key :num :text "Miejscowość"}]))
 
 (def seed-row
   (fn []
     [["Jan" "Kowalski" "rybki" (color "#2a2") "tak" true  1 "Mężczyzna" 28 "Zadupolis"
-     "Jan" "Kowalski" "rybki" (color "#2a2") "tak" true  1 "Mężczyzna" 28 "Zadupolis"
-     "Jan" "Kowalski" "rybki" (color "#2a2") "tak" true  1 "Mężczyzna" 28 "Zadupolis"]
+      "Jan" "Kowalski" "rybki" (color "#2a2") "tak" true  1 "Mężczyzna" 28 "Zadupolis"
+      "Jan" "Kowalski" "rybki" (color "#2a2") "tak" true  1 "Mężczyzna" 28 "Zadupolis"]
      ["Anna" "Nowak" "pieski" (color "#a2a") "nie" false  0 "Kobieta" 30 "Polis"
       "Anna" "Nowak" "pieski" (color "#a2a") "nie" false  0 "Kobieta" 30 "Polis"
       "Anna" "Nowak" "pieski" (color "#a2a") "nie" false  0 "Kobieta" 30 "Polis"]]))
@@ -60,11 +60,11 @@
 
 
 (def tb (atom (table :model (seesaw.table/table-model
-                             :columns [{:key :col1 :text "Col 1"} 
+                             :columns [{:key :col1 :text "Col 1"}
                                        {:key :col2 :text "Col 2"}]
                              :rows [["Dane 1" "Dane 2"]]))))
 
-(def mount-table 
+(def mount-table
   (fn [table filters]
     (let []
       (mig-panel
@@ -96,12 +96,13 @@
            :minimum-size [600 :by 400]
            :content (mount-table @tb {}))
       (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
- 
+
 
 (def cols (vec (apply concat (map (fn [x] (seed-col)) (range 1)))))
-(def rows (concat (vec (map (fn [x] (first (seed-row))) (range 500))) 
+(def rows (concat (vec (map (fn [x] (first (seed-row))) (range 500)))
                   (vec (map (fn [x] (second (seed-row))) (range 500)))))
 
 (config! @tb :model (seesaw.table/table-model
                      :columns cols
                      :rows rows))
+

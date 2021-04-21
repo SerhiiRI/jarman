@@ -69,8 +69,9 @@
         (let [view-data (second (first packed-view))
               component (get view-data :component)
               height    (get view-data :pref-height)]
-          (config! (service-data :view-space) :items [(scrollable component)])
-          (config! component :size [300 :by height]))))))
+          (config! (service-data :view-space) :items [(scrollable component :border nil)])
+          (config! component :size [300 :by height])
+          )))))
 
 (def switch-tab
   (fn [service-data packed-view]
@@ -154,10 +155,6 @@
     (fn [view-id]
       (get @atom--views-storage view-id))))
 
-(def get-component
-  (fn [atom--views-storage]
-    (fn [view-id]
-      (get-in @atom--views-storage [view-id :component]))))
 
 (def exist
   (fn [atom--views-storage]
@@ -177,7 +174,6 @@
    "
   [bar-space view-space & {:keys [onClose] :or {onClose (fn [] true)}}]
   (let [atom--views-storage   (atom {})
-        view-height   (atom 0)
         service-data (fn [key] (get {:views-storage atom--views-storage
                                      :view-space   view-space
                                      :bar-space    bar-space
@@ -201,9 +197,10 @@
                                                                                                                                       :else (do
                                                                                                                                               (.getHeight (config component :preferred-size)))))  ;; return f which need args for new view
         (= action :get-view)        ((get-view atom--views-storage) view-id)
-        (= action :get-component)   ((get-component atom--views-storage) view-id)
+        (= action :get-component)   (get-in @atom--views-storage [view-id :component])
         (= action :exist?)          ((exist atom--views-storage) view-id)
         (= action :get-all-view)    @atom--views-storage
+        (= action :get-all-view-ids)    (map #(first %) @atom--views-storage)
         (= action :get-view-sapce)  view-space
         (= action :get-bar-sapce)   bar-space
         (= action :clear)           (do

@@ -629,10 +629,10 @@
                                      ]))]])
         component (cond
                     (> (count table) 0) (do
-                                          (scrollable (mig-panel
-                                                       :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
-                                                       :items elems)
-                                                      :border (empty-border :thickness 0)))
+                                          (mig-panel
+                                           :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
+                                           :items elems)
+                                          :border (empty-border :thickness 0))
                     :else (label :text "Table not found inside metadata :c"))]
     (do
       (add-changes-controller view-id changing-list)
@@ -801,24 +801,23 @@
                 [(btn "Reloade view" icon/refresh-blue-64-png)]])))
 
 
-(defn create-view--db-view
+(def create-view--db-view
   "Description:
      Create component and set to @views atom to use in functional space. 
      Add open tab for db-view to open tabs bar.
      Set prepare view from @views to functional space.
    "
-  []
-  (let [view-id-txt "layered-id-for-tables-visualizer"
-        view-id (keyword view-id-txt)
-        title "DB View"]
-    (do
-      (if (@jarman-views-service :exist? :view-id view-id)
-        (do
-          (@jarman-views-service :set :view-id view-id :title title :component (new JLayeredPane))
-          (.add (@jarman-views-service :get-component :view-id view-id) (db-viewer--component--menu-bar) (new Integer 1000))
-          (doall (map (fn [tab-data]
-                        (.add (@jarman-views-service :get-component :view-id view-id) (db-viewer--component--table (get-in tab-data [:prop :bounds] [10 10 100 100]) tab-data) (new Integer 5)))
-                      (calculate-bounds 20 5))))))))
+  (fn []
+    (let [JLP (JLayeredPane.)]
+      (.add JLP (db-viewer--component--menu-bar) (new Integer 1000))
+      (doall (map (fn [tab-data]
+                    (.add JLP (db-viewer--component--table (get-in tab-data [:prop :bounds] [10 10 100 100]) tab-data) (new Integer 5)))
+                  (calculate-bounds 20 5)))
+      (mig-panel
+       :constraints ["" "" ""]
+       :items [[(.add (JLayeredPane.) (label :text "A tak to działa"))]]))))
+
+
 
 ;; ┌─────────────────────────┐
 ;; │                         │
@@ -1137,7 +1136,7 @@
                                                           (expand-child-btn "Alert 1 \"Test\""  (fn [e] (@alert-manager :set {:header "Test" :body "Bardzo dluga testowa wiadomość, która nie jest taka prosta do ogarnięcia w seesaw."} (message alert-manager) 3)))
                                                           (expand-child-btn "Alert 2 \"Witaj\"" (fn [e] (@alert-manager :set {:header "Witaj" :body "Świecie"} (message alert-manager) 5))))]
                                              [(expand-btn "Widoki"
-                                                          ;; (expand-child-btn "DB View" (fn [e] (create-view--db-view)))
+                                                          (expand-child-btn "DB View" (fn [e] (@jarman-views-service :set-view :view-id "Datbabase" :title "Database" :component (create-view--db-view))))
                                                           (expand-child-btn "Test"    (fn [e] (@jarman-views-service :set-view :view-id "test1" :title "Test 1" :component (label :text "Test 1"))))
                                                           (expand-child-btn "Test"    (fn [e] (@jarman-views-service :set-view :view-id "test2" :title "Test 2" :component (label :text "Test 2"))))
                                                           (expand-child-btn "Test"    (fn [e] (@jarman-views-service :set-view :view-id "test3" :title "Test 3" :component (vertical-panel :items [(label :text "Test 3")])))))]

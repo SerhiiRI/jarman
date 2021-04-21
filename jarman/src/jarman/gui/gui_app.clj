@@ -976,6 +976,7 @@
 ;;   (println map)  
 ;;   (sspec/valid-param map))
 
+
 (def configuration-copy (atom @configuration))
 
 (def create-view--confgen
@@ -988,41 +989,40 @@
       (cond (= (get-in map-part [:display]) :edit)
             (do
               (add-changes-controller (last start-key) changing-list)
-              (scrollable
-               (mig-panel
-                :border (line-border :bottom 50 :color (get-color :background :main))
-                :constraints ["wrap 1" (string/join "" ["20px[" ", grow, fill]20px"]) "20px[]20px"]
-                :items (join-mig-items
+              (mig-panel
+               :border (line-border :bottom 50 :color (get-color :background :main))
+               :constraints ["wrap 1" "[fill, grow]" "20px[]20px"]
+               :items (join-mig-items
                                    ;; Header of section/config file
-                        (confgen--element--header-file (get-in map-part [:name]))
-                        (label :text "Show changes" :listen [:mouse-clicked (fn [e]
+                       (confgen--element--header-file (get-in map-part [:name]))
+                       (label :text "Show changes" :listen [:mouse-clicked (fn [e]
                                                                              ;; save changes configuration
-                                                                              (prn "Changes" @changing-list)
-                                                                              (reset! configuration-copy @configuration)
-                                                                              (doall
-                                                                               (map
-                                                                                (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
-                                                                                  (swap! configuration-copy (fn [changes] (assoc-in changes (join-vec (first (second new-value)) [:value]) (second (second new-value))))))
-                                                                                @changing-list))
-                                                                              (let [out (sspec/valid-segment @configuration-copy)]
-                                                                                (cond (get-in out [:valid?])
-                                                                                      (do
-                                                                                        (cond (get-in (save-all-cofiguration @configuration-copy) [:valid?])
-                                                                                              (do
-                                                                                                (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5)
-                                                                                                (make-backup-configuration)
-                                                                                                (iinit/swapp-configuration))
-                                                                                              :else (let [m (string/join "<br>" ["Cannot save changes"])]
-                                                                                                      (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5)))) ;; TODO action on faild save changes configuration
-                                                                                      :else (let [m (string/join "<br>" ["Cannot save changes" (get-in out [:output])])]
-                                                                                              (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5))))
+                                                                             (prn "Changes" @changing-list)
+                                                                             (reset! configuration-copy @configuration)
+                                                                             (doall
+                                                                              (map
+                                                                               (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
+                                                                                 (swap! configuration-copy (fn [changes] (assoc-in changes (join-vec (first (second new-value)) [:value]) (second (second new-value))))))
+                                                                               @changing-list))
+                                                                             (let [out (sspec/valid-segment @configuration-copy)]
+                                                                               (cond (get-in out [:valid?])
+                                                                                     (do
+                                                                                       (cond (get-in (save-all-cofiguration @configuration-copy) [:valid?])
+                                                                                             (do
+                                                                                               (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5)
+                                                                                               (make-backup-configuration)
+                                                                                               (iinit/swapp-configuration))
+                                                                                             :else (let [m (string/join "<br>" ["Cannot save changes"])]
+                                                                                                     (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5)))) ;; TODO action on faild save changes configuration
+                                                                                     :else (let [m (string/join "<br>" ["Cannot save changes" (get-in out [:output])])]
+                                                                                             (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5))))
                                                                                ;; (prn @configuration-copy)
-                                                                              )])
+                                                                             )])
                                    ;; Foreach on init values and create configuration blocks
-                        (map
-                         (fn [param]
-                           (confgen--component--tree changing-list (join-vec start-key [:value] (list (first param)))))
-                         (get-in map-part [:value]))))))))))
+                       (map
+                        (fn [param]
+                          (confgen--component--tree changing-list (join-vec start-key [:value] (list (first param)))))
+                        (get-in map-part [:value])))))))))
 
 ;; ┌─────────────────────────────────────────┐
 ;; │                                         │
@@ -1109,12 +1109,13 @@
           views-space (vertical-panel
                        :id :app-functional-space
                        :background (new Color 0 0 0 0)
+                       :border (empty-border :right 1)
                        :items array)]
       (reset! jarman-views-service (new-views-service tabs-space views-space))
       (mig-panel
        :id :operation-space
        :background "#fff"
-       :constraints ["wrap 1" "0px[fill, grow]0px" "0px[25]0px[fill,grow]0px"]
+       :constraints ["wrap 1" "0px[fill, grow]0px" "0px[25]0px[fill, grow]0px"]
        :background "#eee"
        :items [[tabs-space]
                [views-space]]))))
@@ -1138,7 +1139,8 @@
                                              [(expand-btn "Widoki"
                                                           ;; (expand-child-btn "DB View" (fn [e] (create-view--db-view)))
                                                           (expand-child-btn "Test"    (fn [e] (@jarman-views-service :set-view :view-id "test1" :title "Test 1" :component (label :text "Test 1"))))
-                                                          (expand-child-btn "Test"    (fn [e] (@jarman-views-service :set-view :view-id "test2" :title "Test 2" :component (label :text "Test 2")))))]
+                                                          (expand-child-btn "Test"    (fn [e] (@jarman-views-service :set-view :view-id "test2" :title "Test 2" :component (label :text "Test 2"))))
+                                                          (expand-child-btn "Test"    (fn [e] (@jarman-views-service :set-view :view-id "test3" :title "Test 3" :component (vertical-panel :items [(label :text "Test 3")])))))]
                                              [(create-expand-btns--confgen)])]
                            [(right-part-of-jarman-as-space-for-views-service []
                                                                              [])]])])))

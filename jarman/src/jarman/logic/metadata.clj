@@ -1224,49 +1224,14 @@
 ;;            :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]})
 
 
-(def create-login-form
-  (fn [metadata]
-    (let [complete (atom {})
-          vp (seesaw.core/vertical-panel :items [])
-          components (concat
-                      (map (fn [meta]
-                             (cond
-                               (= (first (get meta :component-type)) "i")
-                               (seesaw.core/grid-panel :columns 1
-                                                       :size [200 :by 50]
-                                                       :items [(seesaw.core/label
-                                                                :text (get meta :representation))
-                                                               (seesaw.core/text
-                                                                :listen [:caret-update
-                                                                         (fn [e]
-                                                                           (swap! complete (fn [storage] (assoc storage
-                                                                                                                  (keyword (get meta :field))
-                                                                                                                  (seesaw.core/value (seesaw.core/to-widget e))))))])])
-                               (= (first (get meta :component-type)) "l")
-                               (do
-                                 (swap! complete (fn [storage] (assoc storage
-                                                                        (keyword (get meta :field))
-                                                                        (get meta :key-table))))
-                                 (seesaw.core/grid-panel :columns 1
-                                                         :size [200 :by 50]
-                                                         :items [(seesaw.core/label
-                                                                  :text (get meta :representation)
-                                                                  :enabled? false)
-                                                                 (seesaw.core/text
-                                                                  :text (get meta :key-table)
-                                                                  :enabled? false)]))))
-                           metadata)
-                      [(seesaw.core/label :text "Insert" :listen [:mouse-clicked (fn [e] 
-                                                                                   (println "Insert " @complete)
-                                                                                   (println "SQL" ((:user->insert user-view) (merge {:id nil :login nil :password nil :first_name nil :last_name nil :id_permission nil}@complete))))])])]
-      (seesaw.core/config! vp :items components))))
-
-;; (let [my-frame (-> (doto (seesaw.core/frame
-;;                           :title "test"
-;;                           :size [0 :by 0]
-;;                           :content (create-login-form ((comp :columns :prop) (first (getset! :user)))))
-;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
-;;   (seesaw.core/config! my-frame :size [400 :by 400]))
+(let [my-frame (-> (doto (seesaw.core/frame
+                          :title "test"
+                          :size [0 :by 0]
+                          :content (jarman.gui.gui-auto-builder/build-insert-form
+                                    ((comp :columns :prop) (first (getset! :user)))
+                                    {:id nil :login nil :password nil :first_name nil :last_name nil :id_permission nil}))
+                     (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
+  (seesaw.core/config! my-frame :size [400 :by 400]))
 
 ;; (insert :user :values (vals {:id 1 :login "fdas" :password "fdsafdsa" :first_name "dfsajf" :last_name "fjoifs" :id_permission 3}))
 ;; ((:user->insert user-view) {:id 1 :login "fdas" :password "fdsafdsa" :first_name "dfsajf" :last_name "fjoifs" :id_permission 3})

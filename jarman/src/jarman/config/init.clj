@@ -55,7 +55,7 @@
              do vec))
    s-parts))
 
-(defn <path|file>-list
+(defn- <path|file>-list
   "Example
     (<path|file>-list *config-root* [[:init.edn][:resource.edn][:database.edn]
                                      [:themes :jarman_light.edn]

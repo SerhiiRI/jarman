@@ -5,8 +5,7 @@
         seesaw.mig
         seesaw.swingx
         seesaw.color
-   seesaw.style
-        )
+        seesaw.style)
   (:import (javax.swing JLayeredPane)))
 
 

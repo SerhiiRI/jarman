@@ -17,6 +17,7 @@
             ;; logics
             [jarman.config.config-manager :refer :all]
             [jarman.gui.gui-tools :refer :all]
+            [jarman.gui.gui-components :refer :all]
             [jarman.gui.gui-alerts-service :refer :all]
             [jarman.gui.gui-views-service :refer :all]
             ;; deverloper tools 
@@ -1078,13 +1079,14 @@
      Return expand button with config generator GUI
      Complete component
    "
-  (fn [] (expand-btn (get-lang-btns :settings)
-                     (map (fn [path]
-                            (let [title (get-in @configuration (join-vec path [:name]))
-                                  view-id (last path)]
-                              (expand-child-btn title (fn [e]
-                                                        (@jarman-views-service :set-view :view-id view-id :title title :component (create-view--confgen path))))))
-                          (confgen-expand-btns--prepare-config-paths configuration)))))
+  (fn [] (button-expand
+          (get-lang-btns :settings)
+          (map (fn [path]
+                 (let [title (get-in @configuration (join-vec path [:name]))
+                       view-id (last path)]
+                   (button-expand-child title :onClick (fn [e]
+                                             (@jarman-views-service :set-view :view-id view-id :title title :component (create-view--confgen path))))))
+               (confgen-expand-btns--prepare-config-paths configuration)))))
 
 
 
@@ -1098,9 +1100,9 @@
   "Description:
       Vertical layout of elements, left part of app for functions
    Example:
-      (mig-app-left-f  [(expand-btn 'Ukryte opcje 1' (some-button))] [(expand-btn 'Ukryte opcje 2')])
+      (mig-app-left-f  [(button-expand 'Ukryte opcje 1' (some-button))] [(button-expand 'Ukryte opcje 2')])
    Needed:
-      expand-btn component is needed to corectly work
+      button-expand component is needed to corectly work
    "
   (fn [& args] (mig-panel
                 :background "#fff"
@@ -1152,20 +1154,17 @@
                                  "0px[50, fill]0px[200, fill]0px[fill, grow]15px"
                                  "0px[fill, grow]39px"]
                    :items [[(label-fn :background "#eee" :size [50 :by 50])]
-                           [(mig-app-left-f  [(expand-btn "Alerty"
-                                                          (expand-child-btn "Alert 1 \"Test\""  (fn [e] (@alert-manager :set {:header "Test" :body "Bardzo dluga testowa wiadomość, która nie jest taka prosta do ogarnięcia w seesaw."} (message alert-manager) 3)))
-                                                          (expand-child-btn "Alert 2 \"Witaj\"" (fn [e] (@alert-manager :set {:header "Witaj" :body "Świecie"} (message alert-manager) 5))))]
-                                             [(expand-btn "Widoki"
-                                                          (expand-child-btn "DB View" (fn [e] (@jarman-views-service :set-view :view-id "Database" :title "Database" :component create-view--db-view)))
-                                                          (expand-child-btn "Test"    (fn [e] (@jarman-views-service :set-view :view-id "test1" :title "Test 1" :component (label :text "Test 1"))))
-                                                          (expand-child-btn "Test"    (fn [e] (@jarman-views-service :set-view :view-id "test2" :title "Test 2" :component (label :text "Test 2"))))
-                                                          (expand-child-btn "Test"    (fn [e] (@jarman-views-service :set-view :view-id "test3" :title "Test 3" :component (vertical-panel :items [(label :text "Test 3")])))))]
+                           [(mig-app-left-f  [(button-expand "Alerty"
+                                                          (button-expand-child "Alert 1 \"Test\""  :onClick (fn [e] (@alert-manager :set {:header "Test" :body "Bardzo dluga testowa wiadomość, która nie jest taka prosta do ogarnięcia w seesaw."} (message alert-manager) 3)))
+                                                          (button-expand-child "Alert 2 \"Witaj\"" :onClick (fn [e] (@alert-manager :set {:header "Witaj" :body "Świecie"} (message alert-manager) 5))))]
+                                             [(button-expand "Widoki"
+                                                          (button-expand-child "DB View" :onClick (fn [e] (@jarman-views-service :set-view :view-id "Database" :title "Database" :component create-view--db-view)))
+                                                          (button-expand-child "Test"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test1" :title "Test 1" :component (label :text "Test 1"))))
+                                                          (button-expand-child "Test"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test2" :title "Test 2" :component (label :text "Test 2"))))
+                                                          (button-expand-child "Test"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test3" :title "Test 3" :component (vertical-panel :items [(label :text "Test 3")])))))]
                                              [(create-expand-btns--confgen)])]
                            [(right-part-of-jarman-as-space-for-views-service []
                                                                              [])]])])))
-
-
-
 
 
 

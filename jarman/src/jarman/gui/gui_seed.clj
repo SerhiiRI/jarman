@@ -37,23 +37,23 @@
      (config! (select @app [:#rebound-layer]) :bounds [0 0 (first @atom-app-size) (second @atom-app-size)])
      (.repaint (to-frame @app)))))
 
-(def box
-  (fn [& {:keys [wrap items vlayout hlayout]
-          :or  {wrap 0
-                items (list (label :text "Hello Boi!"))
-                vlayout "center, grow"
-                hlayout "center, grow"}}]
-    (let [wraper (if (= wrap 0) "" (string/join "" ["wrap" wrap]))
-          margin 0]
-      (vertical-panel
-       :id :rebound-layer
-       :items [(mig-panel
-                ;; :background "#a23"
-                ;; :size [(first @atom-app-size) :by (second @atom-app-size)]
-                :constraints [wraper
-                              (str margin "px[:" (first @atom-app-size) "," hlayout "]" margin "px")
-                              (str margin "px[:" (second @atom-app-size) "," vlayout "]" margin "px")]
-                :items (join-mig-items items))]))))
+;; (def box
+;;   (fn [& {:keys [wrap items vlayout hlayout]
+;;           :or  {wrap 0
+;;                 items (list (label :text "Hello Boi!"))
+;;                 vlayout "center, grow"
+;;                 hlayout "center, grow"}}]
+;;     (let [wraper (if (= wrap 0) "" (string/join "" ["wrap" wrap]))
+;;           margin 0]
+;;       (vertical-panel
+;;        :id :rebound-layer
+;;        :items [(mig-panel
+;;                 ;; :background "#a23"
+;;                 ;; :size [(first @atom-app-size) :by (second @atom-app-size)]
+;;                 :constraints [wraper
+;;                               (str margin "px[:" (first @atom-app-size) "," hlayout "]" margin "px")
+;;                               (str margin "px[:" (second @atom-app-size) "," vlayout "]" margin "px")]
+;;                 :items (join-mig-items items))]))))
 
 
 (def base
@@ -66,10 +66,7 @@
       (do
         (doseq [i items] (do
                            (swap! layer inc)
-                           ;;(println "Layer" @layer)
                            (.add JLP i (new Integer @layer))))
-    ;;   (.setBackground JLP (new Color 0 0 0))
-    ;;   (.setOpaque JLP true)
         JLP))))
 
 

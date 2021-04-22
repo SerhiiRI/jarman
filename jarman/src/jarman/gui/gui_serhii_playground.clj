@@ -104,6 +104,13 @@
       (catch java.net.ConnectException _ nil)
       (catch Exception _ nil))))
 
+;; (test-connection {:dbtype "mysql"
+;;                   :host "trashpanda-team.ddns.net"
+;;                   :port 3306
+;;                   :dbname "jarman"
+;;                   :user "jarman"
+;;                   :password "dupa"})
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;

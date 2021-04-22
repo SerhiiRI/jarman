@@ -53,9 +53,9 @@
     (input-text :placeholder \"Login\" :style [:halign :center])
  "
   (fn [& {:keys [placeholder
-                 style]
-          :or   {placeholder "Password"
-                 style []}}]
+                 args]
+          :or   {placeholder ""
+                 args []}}]
     (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
           fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))]
       (apply text :text placeholder
@@ -66,30 +66,8 @@
                       :focus-lost   (fn [e]
                                       (cond (= (value e) "") (config! e :text placeholder))
                                       (config! e :user-data (fn-assoc e :edit? false)))]
-             style))))
+             args))))
 
-
-(def input-number
-  "Description:
-    Text component converted to text component with placeholder. Placehlder will be default value.
- Example:
-    (input-text :placeholder \"Login\" :style [:halign :center])
- "
-  (fn [& {:keys [placeholder
-                 style]
-          :or   {placeholder "Password"
-                 style []}}]
-    (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
-          fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))]
-      (apply text :text placeholder
-             :user-data {:placeholder placeholder :value "" :edit? false :type :input}
-             :listen [:focus-gained (fn [e]
-                                      (cond (= (value e) placeholder)    (config! e :text ""))
-                                      (config! e :user-data (fn-assoc e :edit? true)))
-                      :focus-lost   (fn [e]
-                                      (cond (= (value e) "") (config! e :text placeholder))
-                                      (config! e :user-data (fn-assoc e :edit? false)))]
-             style))))
 
 
 (def input-password
@@ -218,9 +196,9 @@
 ;; └────────────────────┘                                       V
 
 ;; BUTTON EXPAND
-(def view (button-expand "Expand" 
-                         (button-expand-child "Expanded")
-                         (button-expand-child "Don't touch me." :onClick (fn [e] (config! (to-widget e) :text "FAQ 🖕( ͡° ᴗ ͡°)🖕" :font (getFont 14 :name "calibri"))))))
+(def view (fn [](button-expand "Expand"
+                          (button-expand-child "Expanded")
+                          (button-expand-child "Don't touch me." :onClick (fn [e] (config! (to-widget e) :text "FAQ 🖕( ͡° ᴗ ͡°)🖕" :font (getFont 14 :name "calibri")))))))
 
 (def label-img
   (fn [file-path w h]
@@ -228,22 +206,82 @@
           gif (label :text (str "<html> <img width=\"" w "\" height=\"" h "\" src=\"file:" img "\">"))]
       gif)))
 
+(def egg (fn []
+           (let [egg1 (label)
+                 egg2 (label)]
+             (flow-panel
+              :items [egg1
+                      (button-expand "Expand"
+                                     (button-expand-child "Expanded")
+                                     (button-expand-child "Don't touch me."
+                                                          :onClick (fn [e]
+                                                                     (config! egg1
+                                                                              :text (value (label-img "egg.gif" 150 130)))
+                                                                     (config! egg2
+                                                                              :text (value (label-img "egg.gif" 150 130))))))
+                      egg2]))))
+
+(def view (fn [](egg)))
+
+
+
+
+(def input-number
+  "Description:
+    Text component converted to automatic double number validator. Return only correct value... Probably always... 
+ Example:
+    ((def input-number :style [:halign :center])
+ "
+  (fn [& {:keys [style display]
+          :or   {style []
+                 display nil}}]
+    (let [last-v (atom "")]
+      (apply text
+             :background "#fff"
+             :listen [:caret-update (fn [e]
+                                      (.repaint (to-root (to-widget e)))
+                                      (if (empty? (value e))
+                                        (do ;; Set "" if :text is empty
+                                          (config! e :text "")
+                                          (reset! last-v ""))
+                                        (do ;; if :text not empty 
+                                          (let [v (re-matches #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$" (value e)) ;; Get only numbers vec or return nil
+                                                v (if-not (nil? v) (first v) nil)]
+                                            (if (nil? v)
+                                              (do ;; if regex return nil then in :text is some text so change :text to ""
+                                                (if-not (and (= "-" (str (first (value e)))) (= 1 (count (value e))))
+                                                  (invoke-later (config! e :text @last-v))))
+                                              (let [check-v (clojure.string/split v #"\.")] ;; split value by dot to check if double
+                                                (if (= (count check-v) 2) ;; if double
+                                                  (if (empty? (first check-v))
+                                                    (do ;; cat first empty value and return number 0.x
+                                                      (invoke-later (config! e :text (read-string (str 0 (second check-v))))))
+                                                    (do ;; remember last correct value
+                                                      (reset! last-v (read-string v))))
+                                                  (if (> (count (first check-v)) 1) ;; if double
+                                                    (let [check-first-char (re-matches #"^[+-]?[1-9][0-9]*$" (first check-v))] ;; cut 0 on front
+                                                      (if (and (nil? check-first-char) (not (= "-" (str (first (value e))))))
+                                                        (do
+                                                          (reset! last-v (clojure.string/join "" (clojure.string/split (first check-v) #"0"))) ;; remember last correct value
+                                                          (invoke-later (config! e :text @last-v)))
+                                                        (do ;; clear space
+                                                          (reset! last-v (read-string v)) ;; remember last correct value
+                                                          )))
+                                                    (do ;; if value is integer
+                                                      (reset! last-v (read-string v)) ;; remember last correct value if integer and when remove last char
+                                                      ))))))))
+                                      (if display (config! display :text @last-v)))]
+             style))))
+
+(def view (fn [] (let [lbl (label)]
+                   (mig-panel :constraints ["" "fill, grow" ""] :border (line-border :thickness 1 :color "#000") :size [200 :by 30] 
+                              :items [[(input-number :display lbl)]
+                                      [lbl]]))))
+
 ;; Show example
-;; (let [my-frame (-> (doto (seesaw.core/frame
-;;                           :title "test"
-;;                           :size [0 :by 0]
-;;                           :content (let [egg1 (label)
-;;                                          egg2 (label)]
-;;                                      (flow-panel
-;;                                       :items [egg1
-;;                                               (button-expand "Expand"
-;;                                                              (button-expand-child "Expanded")
-;;                                                              (button-expand-child "Don't touch me."
-;;                                                                                   :onClick (fn [e]
-;;                                                                                              (config! egg1 
-;;                                                                                                       :text (value (label-img "egg.gif" 150 130)))
-;;                                                                                              (config! egg2 
-;;                                                                                                       :text (value (label-img "egg.gif" 150 130))))))
-;;                                               egg2])))
-;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
-;;   (seesaw.core/config! my-frame :size [800 :by 600]))
+(let [my-frame (-> (doto (seesaw.core/frame
+                          :title "test"
+                          :size [0 :by 0]
+                          :content (view))
+                     (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
+  (seesaw.core/config! my-frame :size [800 :by 600]))

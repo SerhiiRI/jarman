@@ -17,6 +17,7 @@
             ;; logics
             [jarman.config.config-manager :refer :all]
             [jarman.gui.gui-tools :refer :all]
+            [jarman.gui.gui-components :refer :all]
             [jarman.gui.gui-alerts-service :refer :all]
             [jarman.gui.gui-views-service :refer :all]
             ;; deverloper tools 
@@ -341,7 +342,7 @@
 
 
 (defn calculate-bounds
-  [offset max-tabs-inline]
+  [dbmap offset max-tabs-inline]
   (let [sizes (partition-all max-tabs-inline (calculate-tables-size @dbmap))
         tables (calculate-tables-size-with-tabs @dbmap)
         y-bound (atom 10)
@@ -629,10 +630,11 @@
                                      ]))]])
         component (cond
                     (> (count table) 0) (do
-                                          (scrollable (mig-panel
-                                                       :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
-                                                       :items elems)
-                                                      :border (empty-border :thickness 0)))
+                                          (mig-panel
+                                           :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
+                                           :items elems
+                                           :border (empty-border :thickness 0))
+                                          )
                     :else (label :text "Table not found inside metadata :c"))]
     (do
       (add-changes-controller view-id changing-list)
@@ -645,17 +647,30 @@
 ;; │         │
 ;; └─────────┘
 
+(def show-data-in-table
+  (fn [table-id-as-key]
+    (println "Table" table-id-as-key)
+    (let [table (jarman.logic.metadata/defview user
+                  :tables [:user :permission]
+                  :view   [:first_name :last_name :login :permission_name]
+                  :data   {:inner-join [:permission]
+                           :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]})]
+      (mig-panel
+       :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
+       :items [[table]]))))
+
 
 ;;  (calculate-bounds 10 4)
 (def db-view--apsolute-pop--rmb-table-actions
   "Description:
        Right Mouse Click Menu on table to control clicked table"
-  (fn [atom--tables-configurations table-id x y]
+  (fn [JLP atom--tables-configurations table-id x y]
     (let [border-c "#bbb"
-          rm-menu (fn [e] (let [layered (@jarman-views-service :get-component :view-id :layered-id-for-tables-visualizer)
-                                popup-menu (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e)))]
-                            (.remove  layered popup-menu)
-                            (.repaint layered)))
+          selected-tab (filter (fn [tab-conf] (= (second (first tab-conf)) table-id)) @atom--tables-configurations)
+          table-name (get (first selected-tab) :table)
+          rm-menu (fn [e] (let [popup-menu (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e)))]
+                            (.remove  JLP popup-menu)
+                            (.repaint JLP)))
           btn (fn [txt ico onclick] (label
                                      :font (getFont 13)
                                      :text txt
@@ -677,11 +692,12 @@
                                                                            (rm-menu e)))))]))]
       (mig-panel
        :id :db-viewer--component--menu-bar
-       :bounds [x y 150 90]
+       :bounds [x y 150 120]
        :background (new Color 0 0 0 0)
        :border (line-border :thickness 1 :color border-c)
        :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
-       :items [[(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
+       :items [[(btn "Show table" icon/loupe-blue1-64-png (fn [e] (show-data-in-table (keyword table-name))))]
+               [(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
                                                                    (create-view--table-editor @work-mode atom--tables-configurations table-id))))]
                [(btn "Delete table" icon/basket-blue1-64-png (fn [e]))]
                [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]]))))
@@ -714,14 +730,17 @@
                            :mouse-clicked (fn [e]
                                             (let [table-id (get (config (getParent e) :user-data) :id)]
                                               (cond (= (.getButton e) MouseEvent/BUTTON3)
-                                                    (.add (@jarman-views-service :get-component :view-id :layered-id-for-tables-visualizer)
-                                                          (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
-                                                           dbmap ;; forward list of table configuration
-                                                           table-id ;; Get table id
-                                                           (- (+ (.getX e) (.getX (config (getParent e) :bounds))) 15) ;; calculate popup position
-                                                           (- (+ (+ (.getY e) (.getY (config e :bounds))) (.getY (config (getParent e) :bounds))) 10))
-                                                          (new Integer 999) ;; z-index
-                                                          )
+                                                    (let [scrol (select (@jarman-views-service :get-component :view-id :Database) [:#JLP-DB-Visualizer])
+                                                          JLP (first (seesaw.util/children (first (seesaw.util/children scrol))))]
+                                                     (.add JLP
+                                                           (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
+                                                            JLP
+                                                            dbmap ;; forward list of table configuration
+                                                            table-id ;; Get table id
+                                                            (- (+ (.getX e) (.getX (config (getParent e) :bounds))) 15) ;; calculate popup position
+                                                            (- (+ (+ (.getY e) (.getY (config e :bounds))) (.getY (config (getParent e) :bounds))) 10))
+                                                           (new Integer 999) ;; z-index
+                                                           ))
                                                     (= (.getClickCount e) 2) ;; Open table editor by duble click
                                                     (create-view--table-editor @work-mode dbmap table-id))))
                            :mouse-dragged (fn [e]
@@ -756,7 +775,7 @@
         border (line-border :thickness 1 :color border-c)
         border-hover (line-border :thickness line-size-hover :color "#000")
         x (nth bounds 0)
-        y (+ 30 (nth bounds 1))
+        y (+ 0 (nth bounds 1))
         w (nth bounds 2)
         row-h 30  ;; wysokosc wiersza w tabeli reprezentujacego kolumne
         col-in-rows (map (fn [col] (table-visualizer--element--col-as-row {:name (get col :field) :width w :height row-h :type (if (contains? col :key-table) "key" "row") :border-c border-c})) (get-in data [:prop :columns]))  ;; przygotowanie tabeli bez naglowka
@@ -787,38 +806,39 @@
                                        :icon (stool/image-scale ico 30)
                                        :background "#fff"
                                        :foreground "#000"
-                                       :border (compound-border (empty-border :left 10 :right 15) (line-border :thickness 1 :color border-c))
+                                       :border (compound-border (empty-border :left 15 :right 15 :top 5 :bottom 5) (line-border :thickness 1 :color border-c) )
                                        :listen [:mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
                                                 :mouse-exited  (fn [e] (config! e :background "#fff" :foreground "#000"))])))]
        (mig-panel
         :id :db-viewer--component--menu-bar
-        :bounds [0 5 1000 30]
         :background (new Color 0 0 0 0)
-        :constraints ["" "5px[fill]0px" "0px[30px, fill]0px"]
+        :constraints ["" "5px[fill]0px" "5px[fill]5px"]
         :items [[(btn "Show all relation" icon/refresh-connection-blue-64-png)]
                 [(btn "Save view" icon/agree-grey-64-png true)]
                 [(btn "Reset view" icon/arrow-blue-left-64-png)]
                 [(btn "Reloade view" icon/refresh-blue-64-png)]])))
 
 
-(defn create-view--db-view
+
+(def create-view--db-view
   "Description:
      Create component and set to @views atom to use in functional space. 
      Add open tab for db-view to open tabs bar.
      Set prepare view from @views to functional space.
    "
-  []
-  (let [view-id-txt "layered-id-for-tables-visualizer"
-        view-id (keyword view-id-txt)
-        title "DB View"]
-    (do
-      (if (@jarman-views-service :exist? :view-id view-id)
-        (do
-          (@jarman-views-service :set :view-id view-id :title title :component (new JLayeredPane))
-          (.add (@jarman-views-service :get-component :view-id view-id) (db-viewer--component--menu-bar) (new Integer 1000))
-          (doall (map (fn [tab-data]
-                        (.add (@jarman-views-service :get-component :view-id view-id) (db-viewer--component--table (get-in tab-data [:prop :bounds] [10 10 100 100]) tab-data) (new Integer 5)))
-                      (calculate-bounds 20 5))))))))
+  (let [JLP (to-widget (new JLayeredPane))]
+    (doall (map (fn [tab-data]
+                  (.add JLP (db-viewer--component--table (get-in tab-data [:prop :bounds] [0 0 100 100]) tab-data) (new Integer 5)))
+                (calculate-bounds dbmap 20 5)))
+    (doseq [i [(label :text "A" :bounds [50 50 200 200]) (label :text "B" :bounds [100 100 200 200])]]
+      (.add JLP i (new Integer 5)))
+    (.setMaximumSize JLP (java.awt.Dimension. 300 300))
+    (.setSize JLP (java.awt.Dimension. 300 300))
+    (mig-panel
+     :border nil
+     :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px[grow, fill]0px"]
+     :items [[(db-viewer--component--menu-bar)]
+             [(scrollable JLP :id :JLP-DB-Visualizer :border nil)]])))
 
 ;; ┌─────────────────────────┐
 ;; │                         │
@@ -976,6 +996,7 @@
 ;;   (println map)  
 ;;   (sspec/valid-param map))
 
+
 (def configuration-copy (atom @configuration))
 
 (def create-view--confgen
@@ -988,41 +1009,40 @@
       (cond (= (get-in map-part [:display]) :edit)
             (do
               (add-changes-controller (last start-key) changing-list)
-              (scrollable
-               (mig-panel
-                :border (line-border :bottom 50 :color (get-color :background :main))
-                :constraints ["wrap 1" (string/join "" ["20px[" ", grow, fill]20px"]) "20px[]20px"]
-                :items (join-mig-items
+              (mig-panel
+               :border (line-border :bottom 50 :color (get-color :background :main))
+               :constraints ["wrap 1" "[fill, grow]" "20px[]20px"]
+               :items (join-mig-items
                                    ;; Header of section/config file
-                        (confgen--element--header-file (get-in map-part [:name]))
-                        (label :text "Show changes" :listen [:mouse-clicked (fn [e]
+                       (confgen--element--header-file (get-in map-part [:name]))
+                       (label :text "Show changes" :listen [:mouse-clicked (fn [e]
                                                                              ;; save changes configuration
-                                                                              (prn "Changes" @changing-list)
-                                                                              (reset! configuration-copy @configuration)
-                                                                              (doall
-                                                                               (map
-                                                                                (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
-                                                                                  (swap! configuration-copy (fn [changes] (assoc-in changes (join-vec (first (second new-value)) [:value]) (second (second new-value))))))
-                                                                                @changing-list))
-                                                                              (let [out (sspec/valid-segment @configuration-copy)]
-                                                                                (cond (get-in out [:valid?])
-                                                                                      (do
-                                                                                        (cond (get-in (save-all-cofiguration @configuration-copy) [:valid?])
-                                                                                              (do
-                                                                                                (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5)
-                                                                                                (make-backup-configuration)
-                                                                                                (iinit/swapp-configuration))
-                                                                                              :else (let [m (string/join "<br>" ["Cannot save changes"])]
-                                                                                                      (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5)))) ;; TODO action on faild save changes configuration
-                                                                                      :else (let [m (string/join "<br>" ["Cannot save changes" (get-in out [:output])])]
-                                                                                              (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5))))
+                                                                             (prn "Changes" @changing-list)
+                                                                             (reset! configuration-copy @configuration)
+                                                                             (doall
+                                                                              (map
+                                                                               (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
+                                                                                 (swap! configuration-copy (fn [changes] (assoc-in changes (join-vec (first (second new-value)) [:value]) (second (second new-value))))))
+                                                                               @changing-list))
+                                                                             (let [out (sspec/valid-segment @configuration-copy)]
+                                                                               (cond (get-in out [:valid?])
+                                                                                     (do
+                                                                                       (cond (get-in (save-all-cofiguration @configuration-copy) [:valid?])
+                                                                                             (do
+                                                                                               (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5)
+                                                                                               (make-backup-configuration)
+                                                                                               (iinit/swapp-configuration))
+                                                                                             :else (let [m (string/join "<br>" ["Cannot save changes"])]
+                                                                                                     (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5)))) ;; TODO action on faild save changes configuration
+                                                                                     :else (let [m (string/join "<br>" ["Cannot save changes" (get-in out [:output])])]
+                                                                                             (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5))))
                                                                                ;; (prn @configuration-copy)
-                                                                              )])
+                                                                             )])
                                    ;; Foreach on init values and create configuration blocks
-                        (map
-                         (fn [param]
-                           (confgen--component--tree changing-list (join-vec start-key [:value] (list (first param)))))
-                         (get-in map-part [:value]))))))))))
+                       (map
+                        (fn [param]
+                          (confgen--component--tree changing-list (join-vec start-key [:value] (list (first param)))))
+                        (get-in map-part [:value])))))))))
 
 ;; ┌─────────────────────────────────────────┐
 ;; │                                         │
@@ -1059,13 +1079,14 @@
      Return expand button with config generator GUI
      Complete component
    "
-  (fn [] (expand-btn (get-lang-btns :settings)
-                     (map (fn [path]
-                            (let [title (get-in @configuration (join-vec path [:name]))
-                                  view-id (last path)]
-                              (expand-child-btn title (fn [e]
-                                                        (@jarman-views-service :set-view :view-id view-id :title title :component (create-view--confgen path))))))
-                          (confgen-expand-btns--prepare-config-paths configuration)))))
+  (fn [] (button-expand
+          (get-lang-btns :settings)
+          (map (fn [path]
+                 (let [title (get-in @configuration (join-vec path [:name]))
+                       view-id (last path)]
+                   (button-expand-child title :onClick (fn [e]
+                                             (@jarman-views-service :set-view :view-id view-id :title title :component (create-view--confgen path))))))
+               (confgen-expand-btns--prepare-config-paths configuration)))))
 
 
 
@@ -1079,9 +1100,9 @@
   "Description:
       Vertical layout of elements, left part of app for functions
    Example:
-      (mig-app-left-f  [(expand-btn 'Ukryte opcje 1' (some-button))] [(expand-btn 'Ukryte opcje 2')])
+      (mig-app-left-f  [(button-expand 'Ukryte opcje 1' (some-button))] [(button-expand 'Ukryte opcje 2')])
    Needed:
-      expand-btn component is needed to corectly work
+      button-expand component is needed to corectly work
    "
   (fn [& args] (mig-panel
                 :background "#fff"
@@ -1109,12 +1130,13 @@
           views-space (vertical-panel
                        :id :app-functional-space
                        :background (new Color 0 0 0 0)
+                       :border (empty-border :right 1)
                        :items array)]
       (reset! jarman-views-service (new-views-service tabs-space views-space))
       (mig-panel
        :id :operation-space
        :background "#fff"
-       :constraints ["wrap 1" "0px[fill, grow]0px" "0px[25]0px[fill,grow]0px"]
+       :constraints ["wrap 1" "0px[fill, grow]0px" "0px[25]0px[fill, grow]0px"]
        :background "#eee"
        :items [[tabs-space]
                [views-space]]))))
@@ -1132,19 +1154,17 @@
                                  "0px[50, fill]0px[200, fill]0px[fill, grow]15px"
                                  "0px[fill, grow]39px"]
                    :items [[(label-fn :background "#eee" :size [50 :by 50])]
-                           [(mig-app-left-f  [(expand-btn "Alerty"
-                                                          (expand-child-btn "Alert 1 \"Test\""  (fn [e] (@alert-manager :set {:header "Test" :body "Bardzo dluga testowa wiadomość, która nie jest taka prosta do ogarnięcia w seesaw."} (message alert-manager) 3)))
-                                                          (expand-child-btn "Alert 2 \"Witaj\"" (fn [e] (@alert-manager :set {:header "Witaj" :body "Świecie"} (message alert-manager) 5))))]
-                                             [(expand-btn "Widoki"
-                                                          ;; (expand-child-btn "DB View" (fn [e] (create-view--db-view)))
-                                                          (expand-child-btn "Test"    (fn [e] (@jarman-views-service :set-view :view-id "test1" :title "Test 1" :component (label :text "Test 1"))))
-                                                          (expand-child-btn "Test"    (fn [e] (@jarman-views-service :set-view :view-id "test2" :title "Test 2" :component (label :text "Test 2")))))]
+                           [(mig-app-left-f  [(button-expand "Alerty"
+                                                          (button-expand-child "Alert 1 \"Test\""  :onClick (fn [e] (@alert-manager :set {:header "Test" :body "Bardzo dluga testowa wiadomość, która nie jest taka prosta do ogarnięcia w seesaw."} (message alert-manager) 3)))
+                                                          (button-expand-child "Alert 2 \"Witaj\"" :onClick (fn [e] (@alert-manager :set {:header "Witaj" :body "Świecie"} (message alert-manager) 5))))]
+                                             [(button-expand "Widoki"
+                                                          (button-expand-child "DB View" :onClick (fn [e] (@jarman-views-service :set-view :view-id "Database" :title "Database" :component create-view--db-view)))
+                                                          (button-expand-child "Test"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test1" :title "Test 1" :component (label :text "Test 1"))))
+                                                          (button-expand-child "Test"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test2" :title "Test 2" :component (label :text "Test 2"))))
+                                                          (button-expand-child "Test"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test3" :title "Test 3" :component (vertical-panel :items [(label :text "Test 3")])))))]
                                              [(create-expand-btns--confgen)])]
                            [(right-part-of-jarman-as-space-for-views-service []
                                                                              [])]])])))
-
-
-
 
 
 
@@ -1164,7 +1184,7 @@
       (try (.dispose (seesaw.core/to-frame @app)) (catch Exception e (println "Exception: " (.getMessage e))))
       (build :items (list
                      (jarmanapp)
-                     (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png 50) 0 50 "DB View" {:onclick (fn [e] (create-view--db-view))})
+                     (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png 50) 0 50 "DB View" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "Database" :title "Database" :component create-view--db-view))})
                      (slider-ico-btn (stool/image-scale icon/I-64-png 50) 1 50 "Powiadomienia" {:onclick (fn [e] (@alert-manager :show))})
                      (slider-ico-btn (stool/image-scale icon/alert-64-png 50) 2 50 "Popup" {:onclick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200]))})
                      (slider-ico-btn (stool/image-scale icon/agree-grey-64-png 50) 3 50 "Dialog" {:onclick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100]))))})

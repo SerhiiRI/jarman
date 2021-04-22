@@ -1,0 +1,249 @@
+(ns jarman.gui.gui-components
+  (:use seesaw.core
+        seesaw.border
+        seesaw.dev
+        seesaw.mig
+        seesaw.util)
+  (:require [jarman.resource-lib.icon-library :as icon]
+            [jarman.tools.swing :as stool]
+            [jarman.gui.gui-tools :refer :all]
+            [jarman.config.config-manager :refer :all])
+  (:import (java.awt Color)))
+
+
+
+;; ┌────────────────────┐
+;; │                    │
+;; │ Basic components   │
+;; │                    │________________________________________
+;; └────────────────────┘                                       V
+
+(defmacro textarea
+  "Description
+     TextArea with word wrap
+   "
+  [text & args] `(label :text `~(htmling ~text) ~@args))
+
+
+(defn button-basic
+  "Description:
+      Simple button with default style.
+   Example:
+      (simple-button \"Simple button\" (fn [e]) :style [:background \"#fff\"])
+   "
+  [txt func & {:keys [style]
+               :or   {style []}}]
+  (fn [] (apply label
+                :text txt
+                :halign :center
+                :listen [:mouse-clicked func
+                         :mouse-entered (fn [e] (hand-hover-on e) (button-hover e))
+                         :mouse-exited  (fn [e] (button-hover e (get-color :background :button_main)))]
+                :background (get-color :background :button_main)
+                :border (compound-border (empty-border :bottom 10 :top 10)
+                                         (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
+                style)))
+
+
+
+(def input-text
+  "Description:
+    Text component converted to text component with placeholder. Placehlder will be default value.
+ Example:
+    (input-text :placeholder \"Login\" :style [:halign :center])
+ "
+  (fn [& {:keys [placeholder
+                 style]
+          :or   {placeholder "Password"
+                 style []}}]
+    (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
+          fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))]
+      (apply text :text placeholder
+             :user-data {:placeholder placeholder :value "" :edit? false :type :input}
+             :listen [:focus-gained (fn [e]
+                                      (cond (= (value e) placeholder)    (config! e :text ""))
+                                      (config! e :user-data (fn-assoc e :edit? true)))
+                      :focus-lost   (fn [e]
+                                      (cond (= (value e) "") (config! e :text placeholder))
+                                      (config! e :user-data (fn-assoc e :edit? false)))]
+             style))))
+
+
+(def input-number
+  "Description:
+    Text component converted to text component with placeholder. Placehlder will be default value.
+ Example:
+    (input-text :placeholder \"Login\" :style [:halign :center])
+ "
+  (fn [& {:keys [placeholder
+                 style]
+          :or   {placeholder "Password"
+                 style []}}]
+    (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
+          fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))]
+      (apply text :text placeholder
+             :user-data {:placeholder placeholder :value "" :edit? false :type :input}
+             :listen [:focus-gained (fn [e]
+                                      (cond (= (value e) placeholder)    (config! e :text ""))
+                                      (config! e :user-data (fn-assoc e :edit? true)))
+                      :focus-lost   (fn [e]
+                                      (cond (= (value e) "") (config! e :text placeholder))
+                                      (config! e :user-data (fn-assoc e :edit? false)))]
+             style))))
+
+
+(def input-password
+  "Description:
+    Text component converted to password input component, placeholder is default value.
+ Example:
+    ((def input-password :placeholder \"Password\" :style [:halign :center])
+ "
+  (fn [& {:keys [placeholder
+                 style]
+          :or   {placeholder "Password"
+                 style []}}]
+    (let [fn-letter-count (fn [e] (count (value e)))
+          fn-hide-chars   (fn [e] (apply str (repeat (fn-letter-count e) "*")))
+          fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
+          fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))]
+      (apply text :text placeholder
+             :user-data {:placeholder placeholder :value "" :edit? false :type :password}
+             :listen [:focus-gained (fn [e]
+                                      (cond (= (fn-get-data e :value) "")    (config! e :text ""))
+                                      (config! e :user-data (fn-assoc e :edit? true)))
+                      :focus-lost   (fn [e]
+                                      (cond (= (value e) "") (config! e :text placeholder))
+                                      (config! e :user-data (fn-assoc e :edit? false)))
+                      :caret-update (fn [e]
+                                      (cond (and (= (fn-get-data e :edit?) true)
+                                                 (not (= (value e) placeholder)))
+                                            (cond (> (count (value e)) 0)
+                                                  (let [added-chars (clojure.string/replace (value e) #"\*+" "")]
+                                                    (cond (> (count added-chars) 0)
+                                                          (do
+                                                            (config! e :user-data (fn-assoc e :value (str (fn-get-data e :value) added-chars)))
+                                                            (invoke-later (config! e :text (fn-hide-chars e))))
+                                                          (< (fn-letter-count e) (count (fn-get-data e :value)))
+                                                          (do
+                                                            (config! e :user-data (fn-assoc e :value (subs (fn-get-data e :value) 0 (fn-letter-count e))))
+                                                            (invoke-later (config! e :text (fn-hide-chars e)))))))))]
+             style))))
+
+
+
+;; ┌────────────────────┐
+;; │                    │
+;; │ Expand buttons     │
+;; │                    │________________________________________
+;; └────────────────────┘                                       V
+
+(def button-expand
+  "Description:
+      It's a space for main button with more option. 
+      Normal state is one button but after on click 
+      space will be bigger and another buttons will be added.
+      If button don't have any function, can not be expanded.
+   Example:
+      (button-expand 'Button name' (Element or Component))
+      (button-expand 'Profile' (button 'Do something'))
+      (button-expand 'Settings' (button 'Do something') (button 'Do something else'))
+   Needed:
+      Import jarman.dev-tools
+      Function need stool/image-scale function for scalling icon
+      "
+  (fn [txt & inside-btns]
+    (let [bg-color "#eee"
+          margin-color "#fff"
+          border (compound-border (line-border :left 6 :color bg-color) (line-border :bottom 2 :color margin-color))
+          vsize 35
+          hsize 200
+          inside-btns-to-use (if (seqable? (first inside-btns)) (first inside-btns) inside-btns)
+          ico (if (> (count inside-btns-to-use) 0) (stool/image-scale icon/plus-64-png 25))
+          ico-hover (stool/image-scale icon/minus-grey-64-png 20)]
+
+      (do
+                        ;; (println inside-btns-to-use)
+        (mig-panel
+         :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
+         :listen [:mouse-entered hand-hover-on
+                  :mouse-clicked (fn [e]
+                                   (if (> (count inside-btns-to-use) 0)
+                                     (if (== (count (children (seesaw.core/to-widget e))) 1)
+                                       (do
+                                                      ;;  Add inside buttons to mig with expand button
+                                         (config! e :items (vec (map (fn [item] (vec (list item))) (concat (vec (children (to-widget e))) (vec inside-btns-to-use)))))
+                                         (config! (last (children (first (children (to-widget e))))) :icon ico-hover))
+                                       (do
+                                                      ;;  Remove inside buttons form mig without expand button
+                                         (config! e :items [(vec (list (first (children (seesaw.core/to-widget e)))))])
+                                         (config! (last (children (first (children (to-widget e))))) :icon ico)))))]
+         :items [[(mig-panel
+                   :constraints ["" "0px[fill]0px" "0px[fill]0px"]
+                   :background (new Color 0 0 0 0)
+                   :items [[(label
+                             :text txt
+                             :size [(- hsize vsize) :by vsize]
+                             :background bg-color
+                             :border border)]
+                           [(label
+                             :size [vsize :by vsize]
+                             :halign :center
+                             :background bg-color
+                             :border border
+                             :icon ico)]])]])))))
+
+(def button-expand-child
+  "Description
+     Interactive button inside menu from expand button.
+   "
+  (fn [title
+       & {:keys [onClick args]
+          :or {onClick (fn [e] (println "Clicked: " title))
+               args []}}]
+    (apply label :font (getFont)
+           :text title
+           :background "#fff"
+           :size [200 :by 25]
+           :border (empty-border :left 10)
+           :listen [:mouse-clicked onClick
+                    :mouse-entered (fn [e] (config! e  :background "#d9ecff"))
+                    :mouse-exited  (fn [e] (config! e  :background "#fff"))]
+           args)))
+
+
+;; ┌────────────────────┐
+;; │                    │
+;; │ Examples           │
+;; │                    │________________________________________
+;; └────────────────────┘                                       V
+
+;; BUTTON EXPAND
+(def view (button-expand "Expand" 
+                         (button-expand-child "Expanded")
+                         (button-expand-child "Don't touch me." :onClick (fn [e] (config! (to-widget e) :text "FAQ 🖕( ͡° ᴗ ͡°)🖕" :font (getFont 14 :name "calibri"))))))
+
+(def label-img
+  (fn [file-path w h]
+    (let [img (clojure.java.io/file (str "resources/imgs/" file-path))
+          gif (label :text (str "<html> <img width=\"" w "\" height=\"" h "\" src=\"file:" img "\">"))]
+      gif)))
+
+;; Show example
+;; (let [my-frame (-> (doto (seesaw.core/frame
+;;                           :title "test"
+;;                           :size [0 :by 0]
+;;                           :content (let [egg1 (label)
+;;                                          egg2 (label)]
+;;                                      (flow-panel
+;;                                       :items [egg1
+;;                                               (button-expand "Expand"
+;;                                                              (button-expand-child "Expanded")
+;;                                                              (button-expand-child "Don't touch me."
+;;                                                                                   :onClick (fn [e]
+;;                                                                                              (config! egg1 
+;;                                                                                                       :text (value (label-img "egg.gif" 150 130)))
+;;                                                                                              (config! egg2 
+;;                                                                                                       :text (value (label-img "egg.gif" 150 130))))))
+;;                                               egg2])))
+;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
+;;   (seesaw.core/config! my-frame :size [800 :by 600]))

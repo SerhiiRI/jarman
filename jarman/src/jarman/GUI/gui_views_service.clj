@@ -61,8 +61,17 @@
     (service-data :repaint)))
 
 (def set-component-to-view-space
-  (fn [service-data component]
-    (config! (service-data :view-space) :items [component])))
+  (fn [service-data packed-view]
+    (if (nil? packed-view)
+      (do 
+        (config! (service-data :view-space) :items [(label)]))
+      (do
+        (let [view-data (second (first packed-view))
+              component (get view-data :component)
+              height    (get view-data :pref-height)]
+          (config! (service-data :view-space) :items [(scrollable component :border nil)])
+          (config! component :size [300 :by height])
+          )))))
 
 (def switch-tab
   (fn [service-data packed-view]
@@ -72,7 +81,7 @@
             tab (.getParent (to-widget e))]
         (deactive-all-tabs service-data)
         (recolor-tab tab (service-data :active-color))
-        (set-component-to-view-space service-data component))
+        (set-component-to-view-space service-data packed-view))
       (service-data :repaint))))
 
 (def whos-active?
@@ -100,9 +109,9 @@
                                  (if-not (nil? tab)
                                    (do
                                      (recolor-tab tab (service-data :active-color))
-                                     (set-component-to-view-space service-data (get-in @(service-data :views-storage) [view-id :component])))
+                                     (set-component-to-view-space service-data {view-id (get @(service-data :views-storage) view-id)}))
                                    (do
-                                     (set-component-to-view-space service-data (label)))))))]
+                                     (set-component-to-view-space service-data nil))))))]
         (if (service-data :onClose) (close-view e))))))
 
 
@@ -112,9 +121,9 @@
      Next view will be added to @views with tab to open tabs bar.
    "
   (fn [service-data]
-    (fn [view-id title component]
+    (fn [view-id title component pref-height]
       (if (contains? @(service-data :views-storage) view-id) ;; Swicht tab if exist in views-storage
-        (let [view-data {view-id (get @(service-data :views-storage) view-id)}
+        (let [view {view-id (get @(service-data :views-storage) view-id)}
               tabs (config (service-data :bar-space) :items)
               tab (if (empty? tabs) nil (first (filter (fn [tab]
                                                          (= (get (config tab :user-data) :view-id) view-id))
@@ -123,11 +132,12 @@
             (do
               (deactive-all-tabs service-data)
               (recolor-tab tab (service-data :active-color))
-              (set-component-to-view-space service-data (get-in @(service-data :views-storage) [view-id :component])))))
+              (set-component-to-view-space service-data view))))
 
         (let [view {view-id {:component component ;; Add new view to views-storage and switch to new view
                              :view-id view-id
-                             :title title}}]
+                             :title title
+                             :pref-height pref-height}}]
           (swap! (service-data :views-storage) (fn [storage] (merge storage view)))
           (let [view-id (first (first view))
                 button-title  (get (second (first view)) :title)
@@ -136,7 +146,7 @@
                                                (switch-tab service-data view))]
             (deactive-all-tabs service-data)
             (.add (service-data :bar-space) tab-button)
-            (set-component-to-view-space service-data component))
+            (set-component-to-view-space service-data view))
           (switch-tab service-data view))))))
 
 
@@ -145,19 +155,23 @@
     (fn [view-id]
       (get @atom--views-storage view-id))))
 
-(def get-component
-  (fn [atom--views-storage]
-    (fn [view-id]
-      (get-in @atom--views-storage [view-id :component]))))
 
 (def exist
   (fn [atom--views-storage]
     (fn [view-id]
       (contains? @atom--views-storage view-id))))
 
-
 ;; Create new service
 (defn new-views-service
+  "Description:
+      Service create closed enviroment that controls views and tabs.
+      Service performs scaling views using prefer size and static size.
+      Argument :component should be an mig-panel.
+      Just create service and use :set-view to adding modules.
+   Example:
+      (def my-serv (new-view-service bar-space views-space)) => nowy serwis widoków
+      (my-serv :set-view :view-id \"test1\" :title \"Test 1\" :component (label :text \"Test 1\"))
+   "
   [bar-space view-space & {:keys [onClose] :or {onClose (fn [] true)}}]
   (let [atom--views-storage   (atom {})
         service-data (fn [key] (get {:views-storage atom--views-storage
@@ -168,21 +182,25 @@
                                      :repaint      (do (.repaint (.getParent view-space))
                                                        (.revalidate (.getParent view-space)))
                                      :onClose      onClose} key))]
-    (config! view-space :listen [:component-resized (fn [e]
-                                                      ;; (println "Size " [(.getWidth view-space) :by (.getHeight view-space)])
-                                                      )])
     (fn [action & {:keys [view-id
                           title
-                          component]
+                          component
+                          pref-height]
                    :or {view-id :none
                         title   ""
-                        component nil}}]
+                        component nil
+                        pref-height 0}}]
       (cond
-        (= action :set-view)        ((set--view service-data) (if (keyword? view-id) view-id (keyword view-id)) title component)  ;; return f which need args for new view
+        (= action :set-view)        ((set--view service-data) (if (keyword? view-id) view-id (keyword view-id)) title component (cond (and (= 0 pref-height) (nil? component))
+                                                                                                                                      0
+                                                                                                                                      (< 0 pref-height) (pref-height)
+                                                                                                                                      :else (do
+                                                                                                                                              (.getHeight (config component :preferred-size)))))  ;; return f which need args for new view
         (= action :get-view)        ((get-view atom--views-storage) view-id)
-        (= action :get-component)   ((get-component atom--views-storage) view-id)
+        (= action :get-component)   (get-in @atom--views-storage [view-id :component])
         (= action :exist?)          ((exist atom--views-storage) view-id)
         (= action :get-all-view)    @atom--views-storage
+        (= action :get-all-view-ids)    (map #(first %) @atom--views-storage)
         (= action :get-view-sapce)  view-space
         (= action :get-bar-sapce)   bar-space
         (= action :clear)           (do

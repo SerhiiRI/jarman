@@ -1369,9 +1369,6 @@
     create-rule-pipeline))
 
 
-
-;; (map #(println (format "if-%s" %) (list 'build-partial (symbol %))) '[top limit count column order inner-join right-join left-join outer-left-join outer-right-join where])
-
 (defn select-builder [table-name & {:keys [top limit count column order inner-join right-join left-join outer-left-join outer-right-join where]}]
   ;; (println [:top top] [:limit limit] [:count count] [:column column] [:order order] [:inner-join inner-join] [:right-join right-join] [:left-join left-join] [:outer-left-join outer-left-join] [:outer-right-join outer-right-join] [:where where])
   (let [if-top (build-partial top)

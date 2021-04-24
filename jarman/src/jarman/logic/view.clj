@@ -5,14 +5,17 @@
    [clojure.data :as data]
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]
+   [seesaw.util :as sutil]
    ;; Seesaw components
-   [seesaw.core :as seesaw]
+   [seesaw.core :as score]
    [seesaw.border :as sborder]
    [seesaw.dev :as sdev]
    [seesaw.mig :as smig]
    [seesaw.swingx :as swingx]
    ;; Jarman toolkit
    [jarman.tools.lang :refer :all]
+   [jarman.resource-lib.icon-library :as ico]
+   [jarman.tools.swing :as stool]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
@@ -23,10 +26,11 @@
 (def ^:dynamic prod? false)
 (def ^:dynamic sql-connection
   (if prod?
-    ;; {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
-    {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3306, :dbname "jarman", :user "jarman", :password "dupa"}
-    {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"}))
-
+    {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
+    {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
+    ;; {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3306, :dbname "jarman", :user "jarman", :password "dupa"}
+    ;; {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"}
+    ))
 
 ;; (recur-find-path (first (mt/getset :point_of_sale_group_links)))
 ;; (recur-find-path (first (mt/getset :user)))
@@ -94,34 +98,34 @@
 ;; (let [mig (mig-panel
 ;;            :constraints ["" "0px[grow, center]0px" "5px[fill]5px"]
 ;;            :items [[(label :text "One")]])
-;;       my-frame (-> (doto (seesaw/frame
+;;       my-frame (-> (doto (score/frame
 ;;                           :title "test"
 ;;                           :size [0 :by 0]
 ;;                           :content mig)
 ;;                      (.setLocationRelativeTo nil) pack! show!))]
-;;   (config! my-frame :size [600 :by 600])
+;;   (score/config! my-frame :size [600 :by 600])
 ;;   (.add mig (label :text "Two")))
 
 ;; [{:key :name :text "Imie"}
 ;;  {:key :lname :text "Nazwisko"}
 ;;  {:key :lname :text "Zwierzak"}
 ;;  {:key :access :text "Kolor"  :class Color}
-;;  {:key :access :text "Dostêp" :class javax.swing.JComboBox}
+;;  {:key :access :text "Dostï¿½p" :class javax.swing.JComboBox}
 ;;  {:key :access :text "TF" :class java.lang.Boolean}
 ;;  {:key :num :text "Numer" :class java.lang.Number}
-;;  {:key :num :text "P³eæ" :class javax.swing.JComboBox}
+;;  {:key :num :text "Pï¿½eï¿½" :class javax.swing.JComboBox}
 ;;  {:key :num :text "Wiek" :class java.lang.Number}
-;;  {:key :num :text "Miejscowo¶æ"}]
-;; (table :model (seesaw.table/table-model
+;;  {:key :num :text "Miejscowoï¿½ï¿½"}]
+;; (table :model (score.table/table-model
 ;;                :columns [{:key :col1 :text "Col 1"} 
 ;;                          {:key :col2 :text "Col 2"}]
 ;;                :rows [["Dane 1" "Dane 2"]]))
 
 (defn construct-table [model]
   (fn [listener-fn]
-    (let [TT (seesaw/table :model (model))]
-      (seesaw/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (seesaw/selection TT)))))
-      (seesaw/scrollable TT :hscroll :as-needed :vscroll :as-needed))))
+    (let [TT (score/table :model (model))]
+      (score/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (score/selection TT)))))
+      (score/scrollable TT :hscroll :as-needed :vscroll :as-needed))))
 
 (defn construct-sql [table select-rules]
   {:pre [(keyword? table)]}
@@ -170,7 +174,7 @@
   :view   [:first_name :last_name :login :permission_name]
   :data   {:inner-join [:permission]
            :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]})
-
+((:->data user-view))
 ;; ;; (defview user)
 ;; ;; (map :field ((comp :columns :prop) (first (mt/getset! :permission))))
 (defview permission
@@ -197,4 +201,59 @@
 ;;              (rest (line-seq reader))))))
 
 
+
+
+
+(def auto-builder--table-view
+  (fn [controller]
+    (let [ico-open (stool/image-scale ico/plus-64-png 28)
+          ico-close (stool/image-scale ico/minus-grey-64-png 28)
+          form-panel (smig/mig-panel
+                      :constraints ["wrap 1" "0px[300:, grow, fill]0px" "15px[fill]0px"]
+                      :items [[(score/label :text "SEARCH"
+                                                  :halign :center
+                                                  :icon (stool/image-scale
+                                                         ico/loupe-blue-64-png 30))]
+                              [(score/text :text ""
+                                                 :halign :center
+                                                 :border (sborder/compound-border
+                                                          (sborder/empty-border :thickness 5)
+                                                          (sborder/line-border
+                                                           :bottom 1 :color "#eeeeee"))
+                                                 :listen [:action (fn [e]
+                                                                    (when-not (= "" (clojure.string/trim (score/text e)))
+                                                                      (println "SEARCH: " (score/text e))))])]])
+          form-space (score/vertical-panel)
+          hide-show (score/label :icon ico-close :halign :right)
+          form-space (score/config! form-space :items [hide-show form-panel])
+          hide-show (score/config! hide-show :listen [:mouse-clicked (fn [e]
+                                                                 (let [inside (count (sutil/children form-space))]
+                                                                  ;;  (println "Inside " inside)
+                                                                   (cond
+                                                                     (= 1 inside)
+                                                                     (do
+                                                                       (score/config! hide-show :icon ico-close)
+                                                                       (.add form-space form-panel)
+                                                                       (.revalidate form-space))
+                                                                     (= 2 inside)
+                                                                     (do
+                                                                       (score/config! hide-show :icon ico-open)
+                                                                       (.remove form-space 1)
+                                                                       (.revalidate form-space)))))])
+
+          table ((:->table controller) (fn [model] (score/return-from-dialog form-panel model)))
+          view-layout (smig/mig-panel
+                       :constraints ["" "[fill][grow, fill]" "[grow, fill]"]
+                       :items [[form-space]
+                               [table]])]
+      view-layout)))
+
+
+(let [my-frame (-> (doto (score/frame
+                          :title "test"
+                          :size [1000 :by 800]
+                          :content
+                          (auto-builder--table-view user-view))
+                     (.setLocationRelativeTo nil) score/pack! score/show!))]
+  (score/config! my-frame :size [1000 :by 800]))
 

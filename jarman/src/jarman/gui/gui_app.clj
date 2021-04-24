@@ -647,17 +647,17 @@
 ;; │         │
 ;; └─────────┘
 
-(def show-data-in-table
-  (fn [table-id-as-key]
-    (println "Table" table-id-as-key)
-    (let [table (jarman.logic.metadata/defview user
-                  :tables [:user :permission]
-                  :view   [:first_name :last_name :login :permission_name]
-                  :data   {:inner-join [:permission]
-                           :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]})]
-      (mig-panel
-       :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
-       :items [[table]]))))
+;; (def show-data-in-table
+;;   (fn [table-id-as-key]
+;;     (println "Table" table-id-as-key)
+;;     (let [table (jarman.logic.metadata/defview user
+;;                   :tables [:user :permission]
+;;                   :view   [:first_name :last_name :login :permission_name]
+;;                   :data   {:inner-join [:permission]
+;;                            :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]})]
+;;       (mig-panel
+;;        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
+;;        :items [[table]]))))
 
 
 ;;  (calculate-bounds 10 4)

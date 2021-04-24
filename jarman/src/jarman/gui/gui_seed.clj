@@ -93,14 +93,17 @@
                    :content @app
                 ;;    :on-close :exit
                    :listen [:component-resized (fn [e]
+                                                ;;  (println e)
                                                  (let [w (.getWidth  (config e :size))
                                                        h (.getHeight (config e :size))]
-                                                   (reset! atom-app-size [w h])))])
+                                                   (reset! atom-app-size [w h]))
+                                                 (.revalidate (to-widget e)))])
               (.setLocationRelativeTo nil) pack! show!))
         (config! (to-frame @app) :size [(first size) :by (second size)])))))
 
 
-
+;; (build :items (list (label :text "Mig panel as layer 1")))
+ 
 ;; (show-options (frame))
 
 ;; (def comps (list (label :text "Mig panel as layer 1")

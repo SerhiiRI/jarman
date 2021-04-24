@@ -1,17 +1,4 @@
-(ns jarman.gui.gui-login
-  (:use seesaw.core
-        seesaw.border
-        seesaw.dev
-        seesaw.style
-        seesaw.mig
-        seesaw.font)
-  (:import (java.sql SQLException))
-  (:require [clojure.string :as string]
-            [jarman.tools.swing :as stool]
-            [clojure.java.jdbc :as jdbc]
-            [jarman.gui.gui-tools :refer :all]
-            [jarman.resource-lib.icon-library :as icon]
-            [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; validation login ;;;
@@ -405,7 +392,7 @@
       (-> (doto (frame-error) (.setLocationRelativeTo nil)(apply-stylesheet my-style))
           (config! :content (error-panel res-validation)) seesaw.core/pack! seesaw.core/show!))))
 
-(start)
+;;(start)
 
 
 
@@ -415,5 +402,37 @@
 
 
 
+(import 'jarman.test.Chooser)
 
+
+(defn date-to-obj
+  "Make shure, that your date in *data-format*
+
+  Example: 
+    (date-to-obj \"1998-10-10 05:11:22\") ;=> java.util.Date...."
+  [^java.lang.String data-string]
+  (.parse (SimpleDateFormat. "yyyy-MM-dd") data-string))
+
+
+(def get-text-field 
+  (fn [data] (text :text data
+                   :background "#fff"
+                   :columns 20
+                   :border (color-border blue-green-color))))
+
+
+(defn get-calendar [textf]
+  (mig-panel
+   :constraints ["wrap 1" "100px[grow, center]100px" "30px[]30px"]
+   :items [[(Chooser/get_calendar textf (date-to-obj (text textf)))]]))
+
+
+(defn- frame-picker []
+  (frame :title "Jarman"
+         :undecorated? false
+         :resizable? false
+         :minimum-size [1000 :by 760]
+         :content (get-calendar (get-text-field "2019-10-10"))))
+
+ (-> (doto (frame-picker) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
 

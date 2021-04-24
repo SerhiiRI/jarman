@@ -592,7 +592,7 @@
    (repattern? #"^[a-z_]{3,}$" m [:field] (conj p :field))
    (repattern? #"^[\w\d\s]+$" m [:representation] (conj p :representation))
     ;; (inpattern? ["d" "t" "dt" "l" "n" "b" "a" "i" nil] m [:component-type] (conj p :component-type))
-   (fpattern? #(every? (fn [cols] (in? ["d" "t" "dt" "l" "n" "b" "a" "i"] cols)) %) "component-type not in allowed [\"d\" \"t\" \"dt\" \"l\" \"n\" \"b\" \"a\" \"i\" nil]" m [:component-type] (conj p :component-type))
+   (fpattern? #(every? (fn [cols] (in? ["d" "t" "dt" "l" "n" "b" "a" "f" "i"] cols)) %) "component-type not in allowed [\"d\" \"t\" \"dt\" \"l\" \"n\" \"b\" \"a\" \"i\" \"f\" nil]" m [:component-type] (conj p :component-type))
    (inpattern? [true false] m [:private?] (conj p :private?))
    (inpattern? [true false] m [:editable?] (conj p :editable?))
    (fpattern? #(or (string? %) (nil? %)) "string? || nil?" m [:description] (conj p :description))))
@@ -1090,7 +1090,7 @@
 
 
 (defmacro ^:private make-name [entity suffix]
-  `(symbol (str '~entity '~suffix)))
+  `(symbol (str ~entity ~suffix)))
 
 (defn get-view-column-meta [table-list column-list]
   (->> table-list
@@ -1189,66 +1189,66 @@
                (apply (partial select-builder table)
                       (mapcat vec (into select-rules args))))}))
 
-(declare user-view)
 (defmacro defview [table & {:as args}]
-  `(let [config#          (atom (assoc ~args :table-name (keyword '~table)))
-         backup-config#   (deref config#)
-         restore-config#  (fn [] (reset! config# backup-config#))
-         ktable#    (:table-name @config#)
-         colmeta#   ((comp :columns :prop) (first (getset! ktable#)))
-         operations# (construct-sql ktable# (:data @config#))
-         select#    (:select operations#)
-         update#    (:update operations#)
-         delete#    (:delete operations#)
-         insert#    (:insert operations#)
-         data#      (fn [] (jdbc/query sql-connection (select#)))
-         export#    (select# :column nil :inner-join nil :where nil)
-         model#     (construct-table-model-columns (:tables @config#) (:view @config#))
-         table#     (construct-table (construct-table-model model# data#))]
-     (def ~'user-view {:user->table table#
-                       :user->data data#
-                       :user->select select#
-                       :user->update update#
-                       :user->delete delete#
-                       :user->insert insert#
-                       :user->operations operations#
-                       :user->config (fn [] @config#)
-                       :user->col-meta colmeta#})))
+  (let [stable (make-name (str table) "-view")]
+    `(let [config#          (atom (assoc ~args :table-name (keyword '~table)))
+           backup-config#   (deref config#)
+           restore-config#  (fn [] (reset! config# backup-config#))
+           ktable#    (:table-name @config#)
+           stable#    (str @config#)
+           colmeta#   ((comp :columns :prop) (first (getset! ktable#)))
+           operations# (construct-sql ktable# (:data @config#))
+           select#    (:select operations#)
+           update#    (:update operations#)
+           delete#    (:delete operations#)
+           insert#    (:insert operations#)
+           data#      (fn [] (jdbc/query sql-connection (select#)))
+           export#    (select# :column nil :inner-join nil :where nil)
+           model#     (construct-table-model-columns (:tables @config#) (:view @config#))
+           table#     (construct-table (construct-table-model model# data#))]
+       (def ~stable {:->table table#
+                     :->data data#
+                     :->select select#
+                     :->update update#
+                     :->delete delete#
+                     :->insert insert#
+                     :->operations operations#
+                     :->config (fn [] @config#)
+                     :->col-meta colmeta#}))))
 
 
 ;; (defview user)
-;; (defview user
-;;   :tables [:user :permission]
-;;   :view   [:first_name :last_name :login :permission_name]
-;;   :data   {:inner-join [:permission]
-;;            :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]})
+(defview user
+  :tables [:user :permission]
+  :view   [:first_name :last_name :login :permission_name]
+  :data   {:inner-join [:permission]
+           :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]})
 
+;; (defview user)
+;; (map :field ((comp :columns :prop) (first (getset! :permission))))
+(defview permission
+  :tables [:permission]
+  :view   [:permission_name]
+  :data   {:column [:id :permission_name :configuration]})
 
-;; (let [my-frame (-> (doto (seesaw.core/frame
-;;                           :title "test"
-;;                           :size [0 :by 0]
-;;                           :content (jarman.gui.gui-auto-builder/build-insert-form
-;;                                     ((comp :columns :prop) (first (getset! :user)))
-;;                                     {:id nil :login nil :password nil :first_name nil :last_name nil :id_permission nil}))
-;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
-;;   (seesaw.core/config! my-frame :size [400 :by 400]))
+;; (defn export-from-csv [file-path]
+;;   (with-open [reader (io/reader file-path)]
+;;     (doall
+;;         (map (fn [csv-line]
+;;                (let [csv-row (string/split csv-line #",")
+;;                      user (cons nil (drop-last 2 csv-row))
+;;                      u_nr (last user)]
+;;                  (if (or (nil? u_nr ) (empty? u_nr))
+;;                    (let [card (concat (cons nil (take-last 2 csv-row)) [nil])]
+;;                      (jdbc/execute! @sql-connection (toolbox/insert :card :values card))
+;;                      nil)
+;;                    (do (jdbc/execute! @sql-connection (toolbox/insert :user :values user))
+;;                        (let [u_id (:id (first (jdbc/query @sql-connection (select :user :where (= :teta_nr u_nr)))))
+;;                              card (concat (cons nil (take-last 2 csv-row)) [u_id])]
+;;                          (jdbc/execute! @sql-connection (toolbox/insert :card :values card))
+;;                          nil)))))
+;;              (rest (line-seq reader))))))
 
-;; (insert :user :values (vals {:id 1 :login "fdas" :password "fdsafdsa" :first_name "dfsajf" :last_name "fjoifs" :id_permission 3}))
-;; ((:user->insert user-view) {:id 1 :login "fdas" :password "fdsafdsa" :first_name "dfsajf" :last_name "fjoifs" :id_permission 3})
-;; (:user->col-meta user-view)
-;; ;; (seesaw.dev/show-events (seesaw.core/text))
-
-;; (let [my-frame (-> (doto (seesaw.core/frame
-;;                           :title "test"
-;;                           :size [0 :by 0]
-;;                           :content
-;;                           ((defview user
-;;                              :tables [:user :permission]
-;;                              :view   [:first_name :last_name :login :permission_name]
-;;                              :data   {:inner-join [:permission]
-;;                                       :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]})))
-;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
-;;   (seesaw.core/config! my-frame :size [600 :by 600]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; METADATA BACKUP ;;;
@@ -1302,8 +1302,3 @@
             :program-dir env/user-dir}
      :table (vec (map :table metadata-list))
      :backup metadata-list}]))
-
-
-
-
-

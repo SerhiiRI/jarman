@@ -1337,9 +1337,11 @@
             list-of-rules# (~pipeline-function (keys ~'args) (jarman.logic.sql-tool/find-rule operation#))]
         (reduce
          (fn [sql-string# [rule-key# rule-fn#]]
-           ((resolve rule-fn#) sql-string# (rule-key# ~'args) ~'table-name))
+           ((ns-resolve 'jarman.logic.sql-tool rule-fn#) sql-string# (rule-key# ~'args) ~'table-name))
          (string/upper-case operation#)
          list-of-rules#)))))
+
+
 
 (define-sql-operation! insert! "INSERT INTO" create-rule-pipeline)
 (define-sql-operation! delete! "DELETE FROM" (comp delete-empty-table-pipeline-applier
@@ -1357,9 +1359,21 @@
 (defmacro build-partial [part-elem]
   `(fn [m#] (if ~part-elem (into m# {~(keyword (name part-elem)) ~part-elem}) m#)))
 
+(define-sql-operation!
+  select!
+  "SELECT!"
+  (comp
+    select-table-count-pipeline-applier
+    select-table-top-n-pipeline-applier
+    select-empty-table-pipeline-applier
+    create-rule-pipeline))
+
+
+
 ;; (map #(println (format "if-%s" %) (list 'build-partial (symbol %))) '[top limit count column order inner-join right-join left-join outer-left-join outer-right-join where])
 
 (defn select-builder [table-name & {:keys [top limit count column order inner-join right-join left-join outer-left-join outer-right-join where]}]
+  ;; (println [:top top] [:limit limit] [:count count] [:column column] [:order order] [:inner-join inner-join] [:right-join right-join] [:left-join left-join] [:outer-left-join outer-left-join] [:outer-right-join outer-right-join] [:where where])
   (let [if-top (build-partial top)
         if-limit (build-partial limit)
         if-count (build-partial count)

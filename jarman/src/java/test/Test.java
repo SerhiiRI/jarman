@@ -1,4 +1,4 @@
-package jarman.Test;
+package jarman.test;
 
 /**
  * test
@@ -19,3 +19,4 @@ public class Test {
     }
 
 }
+

@@ -47,27 +47,8 @@
   "Copy src to dest, create directories if needed."
   [src dest](mkdirs(parent dest))(config-copy src dest))
 
-(defn config-copy-dir
-  "Copy a directory from `from` to `to`. If `to` already exists,
-  recursively do `config-copy` from `from` to `to`"
-  [from to]
-  (when (exists? from)
-    (if (file? to)
-      (throw (IllegalArgumentException. (str to " is a file")))
-      (let [from (file from)
-            to to
-            trim-size (-> from str count inc)
-            dest #(file to (subs (str %) trim-size))]
-        (mkdirs to)
-        (dorun
-         (walk (fn [root dirs files]
-                 (doseq [dir dirs]
-                   (when-not (directory? dir)
-                     (-> root (file dir) dest mkdirs)))
-                 (doseq [f files]
-                   (config-copy+ (file root f) (dest (file root f)))))
-               from))
-        to))))
+defn config-copy-dir
+
 
 (defn copy-dir-replace
   "Copy a directory from `from` to `to`. If `to` already exists,

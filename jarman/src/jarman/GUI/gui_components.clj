@@ -279,9 +279,9 @@
                                       [lbl]]))))
 
 ;; Show example
-(let [my-frame (-> (doto (seesaw.core/frame
-                          :title "test"
-                          :size [0 :by 0]
-                          :content (view))
-                     (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
-  (seesaw.core/config! my-frame :size [800 :by 600]))
+;; (let [my-frame (-> (doto (seesaw.core/frame
+;;                           :title "test"
+;;                           :size [0 :by 0]
+;;                           :content (view))
+;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
+;;   (seesaw.core/config! my-frame :size [800 :by 600]))

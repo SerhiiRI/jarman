@@ -1,92 +1,278 @@
-;;           (__)    /                             \         
-;;           (oo)   |   No i co sie paczysz?        |
-;;    /-------\/    | Krowy w ASCII żeś nie widzał? |
-;;   / |     || '---|                    Mooo?      |
-;;  *  ||----||   0  \_____________________________/ o 0   o 
-;;     ^^    ^^  .|o.                                 \|00/.
-;;============================================================
-;; - ale suchę XD
-
 (ns jarman.config.config-manager
-  (:use jarman.config.init)
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [jarman.tools.lang :refer :all]
+            [jarman.config.spec :as spec]
+            [jarman.config.tools :as tools]
+            [jarman.config.init :refer :all]))
+
+;;; Make backup of configurains
+
+(def ^:private backup-configuration @configuration)
 
 
-;;; @Serhii 
-(defn for-you-with-love
-  ([] (for-you-with-love "no bo wiesz tak szbyciej"))
-  ([text]
-   (let
-    [l (count text)
-     tl "┌" tr "┐"
-     v  "│" h  "─"
-     bl "└" br "┘"]
-     (println
-      (apply
-       str
-       (concat
-        (concat [tl] (vec (repeat (+ l 2) h)) [tr \newline])
-        (concat [v] (vec (repeat (+ l 2) \space)) [v \newline])
-        (concat [v \space] (seq text) [\space v \newline])
-        (concat [v] (vec (repeat (+ l 2) \space)) [v \newline])
-        (concat [bl] (vec (repeat (+ l 2) h)) [br \newline])))))))
+(defn value-path
+  "Description
+    Macro is wrapper over get-in with interposing `:value` key in
+    `keylist` for geting SEGMENTS VALUES from configuration
+    structure map.
 
-;;; transform this poor view
-;; ##################################
-;; #                                #
-;; #  Easy getter form map creator  #
-;; #                                #
-;; ##################################
-;;; to this dam'n beatyfull box
-;; ┌──────────────────────────────┐
-;; │                              │
-;; │ Easy getter form map creator │
-;; │                              │
-;; └──────────────────────────────┘
+  Path
+    Exampled keylist [:a :b :c] be transfromed to
+     [:a :value :b :value :c :value] path.
+
+  See
+    if you need same macro which get whole segment
+    please use `segment-path`"
+  [keylist]
+  {:pre [(vector? keylist)]}
+  (conj (vec (interpose :value keylist)) :value))
+
+(defn segment-path
+  "Description
+    Macro is wrapper over get-in with interposing `:value` key in
+    `keylist` for geting WHOLE SEGMENT from configuration
+    structure map.
+
+  Path
+    Exampled keylist [:a :b :c] be transfromed to
+     [:a :value :b :value :c] path.
+
+  See
+    if you need same macro which get :value of segment
+    please use `value-path`"
+  [keylist]
+  {:pre [(vector? keylist)]}
+  (vec (interpose :value keylist)))
+
+;;;;;;;;;;;;;;;;;
+;;; MANAGMENT ;;;
+;;;;;;;;;;;;;;;;;
+
+(defn restore-config
+  "Description
+    Restore global configuraition map,
+    if you do something with original
+    This function restore configuration
+    to point when app was started"
+  ([] (reset! configuration backup-configuration)))
+
+(defn restore-backup
+  "Description
+    Restore global configuraition dictionary,
+    if you do something with original
+    This function restore configuration
+    from last validated snapshot from file"
+  ([] (restore-backup-configuration)
+   (swapp-all)))
+
+(defn store
+  "Description
+    Save configuration to configuration directory
+
+  Warning! not recomend to use `m` argument
+    way, becouse it can break configuration down"
+  ([] (save-all-cofiguration @configuration))
+  ([m] (make-backup-configuration)
+   (save-all-cofiguration m)))
+
+(defn store-and-back
+  "Description
+    Save configuration to configuration directory"
+  ([] (make-backup-configuration)
+   (save-all-cofiguration @configuration)))
+
+(defn validate-store
+  "Description
+    Run validation mechanism, which test
+    configuration path directory, on needed
+    file, and check it configurations"
+  ([] validate-configuration-files))
+
+(defn validate-segment
+  "Description
+    If you using 0 arg implementation, validate-segment
+     will check whole in-memory stored configuration
+    You can also test only one segment of configuration
+     structures"
+  ([] (spec/valid-segment @configuration))
+  ([m] (spec/valid-segment m)))
 
 
 
-;; ┌────────────────────┐
-;; │                    │
-;; │ Themes map skipper │
-;; │                    │
-;; └────────────────────┘
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; CONFIGURATION-ACCESSORS ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def theme-map (fn [] (get-in @configuration [:themes :value :current-theme :value])))
+(defn make-get-in [getter]
+  (fn 
+    ([ks] {:pre [(vector? ks)]}
+     (get-in @configuration (getter ks) nil))
+    ([ks not-found]
+     {:pre [(vector? ks)]}
+     (get-in @configuration (getter ks) not-found))))
 
-(def create-value-getter
-  "Description:
-    Build getters functions from map with injecting :value or without :value
-    inject-key-value - set :value key between other keys [:a :value :b :value]
-   Example:
-     (def get-frame (create-value-getter theme-map true :frame)) => (get-frame :width) => 1200
-     (def get-lang  (create-value-getter @*language* false :pl :ui)) => (get-lang :buttons :remove) => Usuń
-   "
-  (fn [mapa inject-key-value default & pre-path]
-    (fn [& steps]
-      (cond
-        (= inject-key-value true)
-        (let [path (vec (concat (interpose :value (vec pre-path)) [:value]
-                            (interpose :value (vec steps)) [:value]))
-              value (get-in mapa path)]
-          (cond (= value nil) default
-                :else value))
-        :else (let [path (concat (vec pre-path) (vec steps))
-                    value (get-in mapa path)]
-                (cond (= value nil) default
-                      :else value))))))
+(defn make-assoc-in [getter]
+  (fn 
+    ([ks value] {:pre [(vector? ks)]}
+     (swap! configuration
+            (fn [cfg] (assoc-in cfg (getter ks) value))))))
 
+(defn make-update-in [getter]
+  (fn 
+    ([ks f] {:pre [(vector? ks)]}
+     (swap! configuration
+            (fn [cfg] (update-in cfg (getter ks) f))))))
 
-(def using-lang (get-in @configuration [:init.edn :value :lang :value]))
-(def get-color  (create-value-getter (theme-map) true "#000" :color))
-(def get-frame  (create-value-getter (theme-map) true 1000 :frame))
-(def get-font   (create-value-getter (theme-map) true "Ubuntu" :font))
-(def get-lang   (create-value-getter @language false "Unknown" []))
-(def get-lang-btns (create-value-getter @language false "Unknown" :ui :buttons))
-(def get-lang-alerts (create-value-getter @language false "Unknown" :ui :alerts))
+(defn make-delete-in [getter]
+  (fn 
+    ([ks] {:pre [(vector? ks)]}
+     (swap! configuration
+            (fn [cfg] (assoc-in cfg (getter ks) nil))))))
 
-;; (get-color :jarman :bar)
-;; (get-frame :width)
-;; (get-font :bold)
-;; (get-lang-btns :remove)
-;; (all-langs)
+;; get-in
+(def get-in-value (make-get-in value-path))
+(def get-in-segment (make-get-in segment-path))
+;; assoc-in 
+(def assoc-in-value (make-assoc-in value-path))
+(def assoc-in-segment (make-assoc-in segment-path))
+;; update-in 
+(def update-in-value (make-update-in value-path))
+(def update-in-segment (make-update-in segment-path))
+;; delete-in
+(def delete-in-value (make-delete-in value-path))
+(def delete-in-segment (make-delete-in segment-path))
+
+;; (get-in-segment [:database.edn :Data-Configuration :data-format])
+;; (get-in-value [:database.edn :Data-Configuration :data-format])
+;; (delete-in-value [:database.edn :Data-Configuration :data-format])
+;; (assoc-in-value [:database.edn :Data-Configuration :data-format] "DUDUDU")
+;; (update-in-value [:database.edn :Data-Configuration :data-format] (fn [x] (format "<h1>%s</h1>" x)))
+
+;;; LANGUAGE ;;;
+
+(defn make-lang-get-in [getter]
+  (fn 
+    ([ks] {:pre [(vector? ks)]}
+     (get-in @language (getter ks) nil))
+    ([ks not-found]
+     {:pre [(vector? ks)]}
+     (get-in @language (getter ks) not-found))))
+
+(defn make-lang-assoc-in [getter]
+  (fn 
+    ([ks value] {:pre [(vector? ks)]}
+     (swap! language
+            (fn [cfg] (assoc-in cfg (getter ks) value))))))
+
+(defn make-lang-update-in [getter]
+  (fn 
+    ([ks f] {:pre [(vector? ks)]}
+     (swap! language
+            (fn [cfg] (update-in cfg (getter ks) f))))))
+
+(defn make-lang-delete-in [getter]
+  (fn 
+    ([ks] {:pre [(vector? ks)]}
+     (swap! language
+            (fn [cfg] (assoc-in cfg (getter ks) nil))))))
+
+;; get-in
+(def get-in-lang-value (make-lang-get-in value-path))
+(def get-in-lang-segment (make-lang-get-in segment-path))
+;; assoc-in 
+(def assoc-in-lang-value (make-lang-assoc-in value-path))
+(def assoc-in-lang-segment (make-lang-assoc-in segment-path))
+;; update-in 
+(def update-in-lang-value (make-lang-update-in value-path))
+(def update-in-lang-segment (make-lang-update-in segment-path))
+;; delete-in
+(def delete-in-lang-value (make-lang-delete-in value-path))
+(def delete-in-lang-segment (make-lang-delete-in segment-path))
+
+;;;;;;;;;;;;;;;;;
+;;; searching ;;;
+;;;;;;;;;;;;;;;;;
+
+(defn search-by-all [pred]
+  (let [a (atom [])
+        f (fn [block path]
+            (if (pred block)
+              (swap! a #(conj % path))))]
+    (tools/recur-walk-throw @configuration f [])
+    @a))
+
+(defn search-by-type [stype]
+  (let [a (atom [])
+        f (fn [block path]
+            (if (= (:type block) stype)
+              (swap! a #(conj % path))))]
+    (tools/recur-walk-throw @configuration f [])
+    @a))
+
+(defn- walk-conf [pred func]
+  (let [f (fn [block path]
+            (if (pred block path) (func block path)))]
+    (tools/recur-walk-throw @configuration f [])
+    nil))
+
+(defn listing-all
+  ([] listing-all nil)
+  ([func]
+   (let [a (atom [])
+         f (fn [block path]
+             (swap! a 
+                   #(conj %
+                     {:block (:type block)
+                      :path path})))]
+     (tools/recur-walk-throw @configuration f [])
+     (if func (map func @a) @a))))
+
+(defn printing-all []
+  (listing-all #(println (:block %) (:path %))))
+
+;;;;;;;;;;;;
+;;; INFO ;;;
+;;;;;;;;;;;;
+
+(defn spec-info-access [] spec/segment-display)
+(defn spec-info-segment [] spec/segment-type)
+(defn spec-info-param-component []
+  {:all spec/parameter-components
+   :url {:one {:type spec/$texturl :value "https://localhost/some/url"}
+         :list {:type spec/$listurl :value ["https://localhost"]}} 
+   :text {:one {:type spec/$text :value "some-text"}
+          :list {:type [spec/$listbox spec/$selectbox spec/$textlist]
+                 :value ["1" "2" "labladudj"]}}
+   :number {:one {:type spec/$textnumber :value 20}
+            :list {:type spec/$numberlist :value [1 2 3 4]}}
+   :color {:one {:type spec/$textcolor :value "#fff123"}}
+   :checkbox {:one {:type spec/$checkbox :value true}}}) 
+
+(defn spec-error-block [log]
+  {:pre [(string? log)]} {:type :error :log log})
+(defn spec-directory-block [dir-name value]
+  {:pre [(string? dir-name)]} {:name dir-name :display :edit :type :directory :value value})
+(defn spec-file-block [file-name value]
+  {:pre [(string? file-name)]} {:name file-name :display :edit :type :file :value value})
+(defn spec-make-segment [name doc display value]
+  {:name name :doc doc :display :edit :type :block :value value})
+(defn spec-make-param [name doc component display value]
+  {:name name :doc doc :type :param :component component :display display :value value})
+
+;;; USER ;;;
+
+(defn theme-map [default & args] 
+  (get-in-value (vec(concat [:themes :current-theme] args)) default))
+(defn lang-configuration-struct-map [default & args] 
+  (get-in-segment (vec(concat [] args)) default))
+(defn lang-standart-struct-map [default & args] 
+  (get-in @language (vec(concat [] args)) default))
+
+(def using-lang (get-in-value [:init.edn :lang]))
+(def get-color (partial theme-map "#000" :color))
+(def get-frame (partial theme-map 1000 :frame))
+(def get-font (partial theme-map "Ubuntu" :font))
+(def get-lang (partial lang-configuration-struct-map "Unknown"))
+(def get-lang-btns (partial lang-standart-struct-map "Unknown" :ui :buttons))
+(def get-lang-alerts (partial lang-standart-struct-map "Unknown" :ui :alerts))
+

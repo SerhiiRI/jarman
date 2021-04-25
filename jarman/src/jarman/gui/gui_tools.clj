@@ -9,8 +9,9 @@
   (:require [jarman.resource-lib.icon-library :as icon]
             [jarman.tools.swing :as stool]
             [clojure.string :as string]
-            [jarman.config.config-manager :as conf-men]
-            [jarman.tools.lang :refer :all]))
+            [jarman.config.config-manager :as conf-man]
+            [jarman.tools.lang :refer :all]
+            [jarman.config.init :as init]))
 
 (import javax.swing.JLayeredPane)
 (import java.awt.Color)
@@ -124,8 +125,31 @@
                 outlist (if selected (filter (fn [i] (identical? (config i :id) id)) (seesaw.util/children (.getParent selected))) nil)]
             (if outlist outlist nil)))
 
+
+(defn theme-map [default & args]
+  (conf-man/get-in-value (vec (concat [:themes :current-theme] args)) default))
+(defn lang-configuration-struct-map [default & args]
+  (conf-man/get-in-segment (vec (concat [] args)) default))
+(defn lang-standart-struct-map [default & args]
+  (get-in @init/language (vec (concat [] args)) default))
+
+(def using-lang (conf-man/get-in-value [:init.edn :lang]))
+(def get-color (partial theme-map "#000" :color))
+(def get-frame (partial theme-map 1000 :frame))
+(def get-font (partial theme-map "Ubuntu" :font))
+(def get-lang (partial lang-configuration-struct-map "Unknown"))
+(def get-lang-btns (partial lang-standart-struct-map "Unknown" :ui :buttons))
+(def get-lang-alerts (partial lang-standart-struct-map "Unknown" :ui :alerts))
+
+
+
+
+
+
+;; ############# COMPONENTS TODO: need move to gui_components.clj
+
 (defn button-hover
-  ([e] (config! e :background (conf-men/get-color :background :button_hover_light)))
+  ([e] (config! e :background (get-color :background :button_hover_light)))
   ([e color] (config! e :background color)))
 
 (defn build-bottom-ico-btn
@@ -283,3 +307,6 @@
                                                     (apply str "0x" (map first (partition 2 clr)))))]
                              (if (< hex 1365) "#FFF" "#000")))
       (config! target :background "#FFF" :foreground "#000"))))
+
+
+

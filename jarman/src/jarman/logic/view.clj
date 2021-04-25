@@ -28,12 +28,12 @@
 (def ^:dynamic prod? false)
 (def ^:dynamic sql-connection
   (if prod?
-    {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
-    {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
-    ;; {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3306, :dbname "jarman", :user "jarman", :password "dupa"}
-    ;; {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"}
-    ))
+    ;; {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
+    {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3306, :dbname "jarman", :user "jarman", :password "dupa"}
+    {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"}))
 
+(defn quick-path [table] 
+ (mt/recur-find-path (first (mt/getset! (keyword table)))))
 ;; (recur-find-path (first (mt/getset :point_of_sale_group_links)))
 ;; (recur-find-path (first (mt/getset :user)))
 ;; {:tbl "point_of_sale_group_links",
@@ -173,19 +173,10 @@
 ;; (:->col-meta user-view)
 ;; (defview user)
 
-
-;; (defview user
-;;   :tables [:user :permission]
-;;   :view   [:first_name :last_name :login :permission_name]
-;;   :data   {:inner-join [:permission]
-;;            :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]}
-;;   :export-doc {:doc1 {:name "some name"
-;;                       :format :odt
-;;                       :model {:model-keys [:User.first_name :User.last_name :Permission.permission_name]
-;;                               :data {:inner-join [:permission]
-;;                                      :columns [{user.id :User.id} {:first_name :User.first_name} ...]}}}}
-;;   :export-data [[:first_name :last_nmame]
-;;                 [:permission_name :login]] ?)
+(defview permission
+  :tables [:permission]
+  :view   [:permission_name]
+  :data   {:column [:id :permission_name :configuration]})
 
 (defview user
   :tables [:user :permission]
@@ -193,15 +184,99 @@
   :data   {:inner-join [:permission]
            :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]})
 
+(defview enterpreneur
+  :tables [:enterpreneur]
+  :view   [:first_name :last_name :login :permission_name]
+  :data   {:column [:ssreou :ownership_form :vat_certificate :individual_tax_number :director :accountant :legal_address :physical_address :contacts_information]})
+
+;; (mapv (comp keyword :field) ((comp :columns :prop) (first (mt/getset! :enterpreneur))))
 
 
-((:->data user-view))
+;; (quick-path :enterpreneur)
+
+(def enterpreneur
+  (create-table :enterpreneur
+                :columns [{:ssreou [:tinytext :nnull]}
+                          {:ownership_form [:varchar-100 :default :null]}
+                          {:vat_certificate [:tinytext :default :null]}
+                          {:individual_tax_number [:varchar-100 :default :null]}
+                          {:director [:varchar-100 :default :null]}
+                          {:accountant [:varchar-100 :default :null]}
+                          {:legal_address [:varchar-100 :default :null]}
+                          {:physical_address [:varchar-100 :default :null]}
+                          {:contacts_information [:mediumtext :default :null]}]))
+
+(def point_of_sale
+  (create-table :point_of_sale
+                :columns [{:id_enterpreneur [:bigint-20-unsigned :default :null]}
+                          {:name [:varchar-100 :default :null]}
+                          {:physical_address  [:varchar-100 :default :null]}
+                          {:telefons  [:varchar-100 :default :null]}]
+                :foreign-keys [{:id_enterpreneur :enterpreneur} {:update :cascade}]))
+
+(def cache_register
+  (create-table :cache_register
+                :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
+                          {:name [:varchar-100 :default :null]}
+                          {:serial_number [:varchar-100 :default :null]}
+                          {:fiscal_number [:varchar-100 :default :null]}
+                          {:manufacture_date [:date :default :null]}
+                          {:first_registration_date [:date :default :null]}
+                          {:is_working [:tinyint-1 :default :null]}
+                          {:version [:varchar-100 :default :null]}
+                          {:id_dev [:varchar-100 :default :null]}
+                          {:producer [:varchar-100 :default :null]}
+                          {:modem [:varchar-100 :default :null]}
+                          {:modem_model [:varchar-100 :default :null]}
+                          {:modem_serial_number [:varchar-100 :default :null]}
+                          {:modem_phone_number [:varchar-100 :default :null]}]
+                :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]))
+
+(def point_of_sale_group
+  (create-table :point_of_sale_group
+                :columns [{:group_name [:varchar-100 :default :null]}
+                          {:information [:mediumtext :default :null]}]))
+
+(def point_of_sale_group_links
+  (create-table :point_of_sale_group_links
+                :columns [{:id_point_of_sale_group [:bigint-20-unsigned :default :null]}
+                          {:id_point_of_sale [:bigint-20-unsigned :default :null]}]
+                :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
+                               [{:id_point_of_sale :point_of_sale}]]))
+
+(def seal
+  (create-table :seal
+                :columns [{:seal_number [:varchar-100 :default :null]}
+                          {:to_date [:date :default :null]}]))
+
+(def service_contract
+  (create-table :service_contract
+                :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
+                          {:register_contract_date [:date :default :null]}
+                          {:contract_term_date [:date :default :null]}
+                          {:money_per_month [:int-11 :default :null]}]
+                :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]))
+
+(def repair_contract
+  (create-table :repair_contract
+                :columns [{:id_cache_register [:bigint-20 :unsigned :default :null]}
+                          {:id_point_of_sale [:bigint-20 :unsigned :default :null]}
+                          {:creation_contract_date [:date :default :null]}
+                          {:last_change_contract_date [:date :default :null]}
+                          {:contract_terms_date [:date :default :null]}
+                          {:cache_register_register_date [:date :default :null]}
+                          {:remove_security_seal_date [:datetime :default :null]}
+                          {:cause_of_removing_seal [:mediumtext :default :null]}
+                          {:technical_problem [:mediumtext :default :null]}
+                          {:active_seal [:mediumtext :default :null]}]
+                :foreign-keys [[{:id_cache_register :cache_register} {:delete :cascade :update :cascade}]
+                               [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]]))
+
+
+
 ;; ;; (defview user)
 ;; ;; (map :field ((comp :columns :prop) (first (mt/getset! :permission))))
-(defview permission
-  :tables [:permission]
-  :view   [:permission_name]
-  :data   {:column [:id :permission_name :configuration]})
+
 
 ;; (defn export-from-csv [file-path]
 ;;   (with-open [reader (io/reader file-path)]

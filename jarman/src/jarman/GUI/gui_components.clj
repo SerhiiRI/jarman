@@ -64,7 +64,7 @@
                                       (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
              :user-data {:placeholder placeholder :value "" :edit? false :type :input}
              :listen [:focus-gained (fn [e]
-                                      (cond (= (value e) placeholder)    (config! e :text ""))
+                                      (cond (= (value e) placeholder) (config! e :text ""))
                                       (config! e :user-data (fn-assoc e :edit? true)))
                       :focus-lost   (fn [e]
                                       (cond (= (value e) "") (config! e :text placeholder))

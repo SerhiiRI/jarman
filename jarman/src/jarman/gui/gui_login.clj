@@ -1,3 +1,19 @@
+(ns jarman.gui.gui-login
+  (:use seesaw.core
+        seesaw.border
+        seesaw.dev
+        seesaw.style
+        seesaw.mig
+        seesaw.font)
+  (:import (java.text SimpleDateFormat))
+  (:require [clojure.string :as string]
+            [jarman.gui.gui-tools :refer :all]
+            [jarman.resource-lib.icon-library :as icon]
+            [clojure.java.jdbc :as jdbc]
+            [jarman.tools.swing :as stool]
+            [jarman.gui.gui-app :as app]
+            [jarman.gui.gui-components :as components]
+            [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -21,7 +37,8 @@
     :else nil))
 
 (defn- authenticate-user [login password]
-  (if (and (= login "admin")(= password "admin")) true))
+  (if (and (= login "a")(= password "a")) true))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; style color and font ;;;
@@ -306,20 +323,19 @@
 
 
 (def  login-panel
-  (let [flogin (jarman.gui.gui-tools/text-input :placeholder "Login"
-                                                :style [:class :input
-                                                        :columns 20
-                                                        :border (compound-border emp-border
-                                                                                 (line-border :bottom 4 :color light-blue-color))
-                                                        :halign :left
-                                                        :bounds [100 150 200 30]])
-        fpass (jarman.gui.gui-tools/password-input :placeholder "Password"
-                                                   :style [:class :input
-                                                           :columns 20
-                                                           :border (compound-border emp-border
-                                                                                    (line-border :bottom 4 :color light-blue-color))
-                                                           :halign :left
-                                                           :bounds [100 150 200 30]])]
+  
+  (let [flogin (components/input-text :placeholder "Login"
+                                      :args [:columns 20
+                                              :border (compound-border emp-border
+                                                                       (line-border :bottom 4 :color light-blue-color))
+                                              :halign :left])
+        fpass (components/input-password :placeholder "Password"
+                                         :style [
+                                                 :columns 20
+                                                 :border (compound-border emp-border
+                                                                          (line-border :bottom 4 :color light-blue-color))
+                                                 :halign :left
+                                                 ])]
     (mig-panel
      :constraints ["wrap 1" "[grow, center]" "30px[]0px"]
      :items [
@@ -345,12 +361,16 @@
                      :border (compound-border emp-border)
                      :listen [:mouse-entered (fn [e] (config! e :background "#deebf7" :foreground "#256599" :cursor :hand))
                               :mouse-exited  (fn [e] (config! e :background "#fff" :foreground light-blue-color))
-                              :mouse-clicked (fn [e]  (if (authenticate-user (text flogin) (text fpass))
-                                                        (do (config! flogin :border (compound-border emp-border
-                                                                                                     (line-border :bottom 4 :color light-blue-color)))
+                              :mouse-clicked (fn [e] (if (authenticate-user (text flogin) (text fpass))
+                                                       (do 
+                                                            (config! flogin :border(compound-border emp-border
+                                                                                                    (line-border :bottom 4 :color light-blue-color)))
                                                             (config! fpass :border (compound-border emp-border
-                                                                                                    (line-border :bottom 4 :color light-blue-color))))
-                                                        (do (config! flogin :border (compound-border emp-border
+                                                                                                    (line-border :bottom 4 :color light-blue-color)))
+                                                            ;;(@app/startup)
+                                                            )
+                                                       (do (println (text flogin))
+                                                         (config! flogin :border (compound-border emp-border
                                                                                                      (line-border :bottom 4 :color red-color)))
                                                             (config! fpass :border (compound-border emp-border
                                                                                                     (line-border :bottom 4 :color red-color))))))])]
@@ -392,47 +412,79 @@
       (-> (doto (frame-error) (.setLocationRelativeTo nil)(apply-stylesheet my-style))
           (config! :content (error-panel res-validation)) seesaw.core/pack! seesaw.core/show!))))
 
-;;(start)
+(start)
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; multi-panel for replace some panels ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(def red-panel
+  (fn []
+    (mig-panel
+     :constraints ["" "[grow, fill]" ""]
+     :items [[(label :text "red"
+                     :border (color-border red-color)
+                     :background red-color )]])))
 
+(def green-panel
+  (fn []
+    (mig-panel
+     :constraints ["" "[grow, fill]" ""]
+     :items [[(label :text "green"
+                     :border (color-border blue-green-color)
+                     :background blue-green-color)]])))
 
+(def blue-panel
+  (fn []
+    (mig-panel
+     :constraints ["" "[grow, fill]" ""]
+     :items [[(label :text "blue"
+                     :border (color-border blue-color)
+                     :background blue-color)]])))
 
-
-
-
-(import 'jarman.test.Chooser)
-
-
-(defn date-to-obj
-  "Make shure, that your date in *data-format*
-
-  Example: 
-    (date-to-obj \"1998-10-10 05:11:22\") ;=> java.util.Date...."
-  [^java.lang.String data-string]
-  (.parse (SimpleDateFormat. "yyyy-MM-dd") data-string))
-
-
-(def get-text-field 
-  (fn [data] (text :text data
-                   :background "#fff"
-                   :columns 20
-                   :border (color-border blue-green-color))))
-
-
-(defn get-calendar [textf]
+(defn multi-panel
+  "Description:
+    get vector of panels and return mig-panel in which these panels are replaced on click of arrow
+   Example:
+    (multi-panel [some-panel-1 some-panel-2 some-panel-3])"
+  [panels title num]
   (mig-panel
-   :constraints ["wrap 1" "100px[grow, center]100px" "30px[]30px"]
-   :items [[(Chooser/get_calendar textf (date-to-obj (text textf)))]]))
+   :constraints ["wrap 3" "[fill][grow, fill, center][fill]" "[fill][grow, fill][fill]15px"] 
+   :items [[(label :text title
+                   :foreground "#256599"
+                   :border (empty-border :left 10)
+                   :font {:size 16 font "Arial" :style :bold}) "span 3"]
+           [((nth panels num)) "span 3"]
+           [(label :icon (stool/image-scale icon/left-blue-64-png 50)
+                   :visible? (if (= num 0) false true)
+                   :listen [:mouse-clicked (fn [e]
+                                             (if (= num 0)
+                                               (config! (to-frame e) :content (multi-panel panels title num))
+                                               (config! (to-frame e) :content (multi-panel panels title (- num 1)))))])
+            "align l"]
+           [(label :text "")]
+           [(label :icon (stool/image-scale icon/right-blue-64-png 36)
+                   :visible? (if (= num (- (count panels) 1)) false true)
+                   :listen [:mouse-clicked (fn [e] (if (=  num (- (count panels) 1))
+                                                     (config! (to-frame e) :content (multi-panel panels title num))
+                                                     (config! (to-frame e) :content (multi-panel panels title (+ num 1)))))])
+            "align r"]]))
 
 
-(defn- frame-picker []
+(defn- test-frame []
   (frame :title "Jarman"
          :undecorated? false
-         :resizable? false
-         :minimum-size [1000 :by 760]
-         :content (get-calendar (get-text-field "2019-10-10"))))
+         :content (multi-panel [red-panel green-panel blue-panel] "Some panel" 0)
+         :resizable? true
+         :minimum-size [800 :by 600]))
 
- (-> (doto (frame-picker) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
+(-> (doto (test-frame) (.setLocationRelativeTo nil) ) seesaw.core/pack! seesaw.core/show!)
+
+
+
+
+
+
+
 

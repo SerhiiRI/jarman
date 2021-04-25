@@ -52,15 +52,19 @@
     (input-text :placeholder \"Login\" :style [:halign :center])
  "
   (fn [& {:keys [placeholder
+                 border
+                 font-size
                  args]
           :or   {placeholder ""
+                 font-size 14
+                 border [10 10 5 5]
                  args []}}]
     (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
           fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))]
       (apply text :text placeholder
-             :font (getFont 14)
+             :font (getFont font-size)
              :background (get-color :background :input)
-             :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
+             :border (compound-border (empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
                                       (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
              :user-data {:placeholder placeholder :value "" :edit? false :type :input}
              :listen [:focus-gained (fn [e]

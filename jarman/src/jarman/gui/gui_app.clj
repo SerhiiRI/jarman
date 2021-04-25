@@ -613,11 +613,11 @@
                         [(vec (let [table-property-count (count table-property)
                                     txtsize [150 :by 25]]
                                 [(mig-panel
-                                  :constraints ["wrap 3" "0px[32%]0px" "0px[fill]0px"]
+                                  :constraints ["wrap 3" "0px[32%, fill]0px" "0px[fill]0px"]
                                   :items (vec (for [index (range table-property-count)]
                                                 [(mig-panel
                                                   :border (line-border :left 4 :color "#ccc")
-                                                  :constraints ["" "10px[100:]10px" "0px[fill]10px"]
+                                                  :constraints ["" "10px[100:]0px[grow, fill]10px" "0px[fill]10px"]
                                                   :items [[(table-editor--element--table-parameter-name  table-property index)]
                                                           [(table-editor--element--table-parameter-value mode changing-list table-property tab-value-path index txtsize)]])])))]))]
                     ;; Columns properties
@@ -837,6 +837,7 @@
      :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px[grow, fill]0px"]
      :items [[(db-viewer--component--menu-bar)]
              [(scrollable JLP :id :JLP-DB-Visualizer :border nil)]])))
+
 
 ;; ┌─────────────────────────┐
 ;; │                         │

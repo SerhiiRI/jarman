@@ -237,10 +237,12 @@
            (scrollable table :size [900 :by 400]))]]))))
 
 ;; New jframe
+
+
+
 (do (doto (seesaw.core/frame
            :title "title"
            :undecorated? false
            :minimum-size [1000 :by 600]
            :content (mount-table @tb :block-columns-by-index [0] :block-columns-by-name ["Kolor"]))
       (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
-

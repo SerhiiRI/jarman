@@ -100,3 +100,20 @@
 
 
 
+(defn for-you-with-love
+  ([] (for-you-with-love "no bo wiesz tak szbyciej"))
+  ([text]
+   (let
+    [l (count text)
+     tl "┌" tr "┐"
+     v  "│" h  "─"
+     bl "└" br "┘"]
+     (println
+      (apply
+       str
+       (concat
+        (concat [tl] (vec (repeat (+ l 2) h)) [tr \newline])
+        (concat [v] (vec (repeat (+ l 2) \space)) [v \newline])
+        (concat [v \space] (seq text) [\space v \newline])
+        (concat [v] (vec (repeat (+ l 2) \space)) [v \newline])
+        (concat [bl] (vec (repeat (+ l 2) h)) [br \newline])))))))

@@ -56,24 +56,25 @@
   (build-part-of-map 0 m []))
 
 (defn recur-walk-throw [m-config f path]
-  (let [[header tail] (map-destruct m-config)]
-    (if (some? header)
-      ;; for header {:file.edn {....}} we  
-      (let [k-header ((comp first first) header)
-            header ((comp second first) header)
-            path (conj path k-header)]
-        (cond
+  (if (not= :stylesheet (:type m-config))
+   (let [[header tail] (map-destruct m-config)]
+     (if (some? header)
+       ;; for header {:file.edn {....}} we  
+       (let [k-header ((comp first first) header)
+             header ((comp second first) header)
+             path (conj path k-header)]
+         (cond
 
-          ;; if Map represent Block or File
-          (map? (:value header))
-          (do (f header path)
-              (recur-walk-throw (:value header) f path))
+           ;; if Map represent Block or File
+           (map? (:value header))
+           (do (f header path)
+               (recur-walk-throw (:value header) f path))
 
-          :else (f header path))))
-    ;; Do recursive for Tail destruction in the same level
-    (if (some? tail) (recur-walk-throw tail f path))))
+           :else (f header path))))
+     ;; Do recursive for Tail destruction in the same level
+     (if (some? tail) (recur-walk-throw tail f path)))))
 
-(def config {:resource.edn (clojure.edn/read-string (slurp "./config/resource.edn"))})
+;; (def config {:resource.edn (clojure.edn/read-string (slurp "./config/resource.edn"))})
 
 (defn debug-walk [m]
   (let [a (atom true)

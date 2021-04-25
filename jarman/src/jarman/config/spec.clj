@@ -40,6 +40,7 @@
 ;;   (map #(println (format "(def %s :%s)" (name %) (name %))) '(:listurl :texturl :textlist :listbox :selectbox :text :textcolor :textnumber :checkbox)))
 (def $block :block)
 (def $file :file)
+(def $stylesheet :stylesheet)
 (def $directory :directory)
 (def $param :param)
 (def $error :error)
@@ -65,9 +66,10 @@
 (def $checkbox :checkbox)
 
 (def block-segment [$block $file $directory])
+(def code-segment [$stylesheet])
 (def param-segment [$param])
 (def error-segment [$error])
-(def segment-type [$block $file $directory $param $error])
+(def segment-type [$block $file $directory $param $error $stylesheet])
 (def segment-display [$none $edit $noedit])
 ;;; component types
 (def component-n-url [$listurl])
@@ -226,6 +228,10 @@
   (s/keys :req-un [:block/type :block/value]
           :opt-un [:block/name :block/doc :block/display]))
 
+(s/def :block/code
+  (s/keys :req-un [:block/type :block/value]
+          :opt-un [:block/name :block/doc :block/display]))
+
 ;; Whole map validators
 ;; for block `param-segment`
 (s/def :block/parameter
@@ -244,6 +250,7 @@
   (fn [m] (s/valid?
           (condp in? (:type m)
             block-segment :block/block
+            code-segment  :block/code
             param-segment :block/parameter
             error-segment :block/error 
             (fn [_] false)) m)))
@@ -266,8 +273,6 @@
               (if-not vld? (logger block path))))]
     (recur-walk-throw m f [])
     @sumvalid))
-
-;;; (s/valid? :block/segment @jarman.gui.gui-app/configuration-copy)
 
 (defn segment-short
   "Description
@@ -326,6 +331,7 @@
    ((MESSAGES (ref []))
     (short-m  (str (segment-short m)))
     (join #(dosync (alter MESSAGES (fn [MX](conj MX (format "%s in %s" % short-m)))))))))
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

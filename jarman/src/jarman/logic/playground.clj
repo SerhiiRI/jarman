@@ -1,4 +1,4 @@
- (ns jarman.logic.playground
+(ns jarman.logic.playground
   (:refer-clojure :exclude [update])
   (:require
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
@@ -11,6 +11,7 @@
    [clojure.java.jdbc :as jdbc])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
+
 
 (def ^:dynamic prod? false)
 
@@ -29,8 +30,6 @@
 (defmacro s-query [s]
   `(jdbc/query sql-connection ~s))
 
-
-
 (def available-scheme ["service_contract"
                        "seal"
                        "repair_contract"
@@ -41,10 +40,18 @@
                        "enterpreneur"
                        "user"
                        "permission"
-                       "METADATA"])
+                       "documents"
+                       "metadata"])
 
-(def METADATA
-  (create-table :METADATA
+(def documents
+ (create-table :documents
+               :columns [{:table [:varchar-100 :default :null]}
+                         {:name [:varchar-200 :default :null]}
+                         {:document [:blob :default :null]}
+                         {:prop [:text :nnull :default "'{}'"]}]))
+
+(def metadata
+  (create-table :metadata
                 :columns [{:table [:varchar-100 :default :null]}
                           {:prop [:text :default :null]}]))
 
@@ -109,7 +116,8 @@
   (create-table :point_of_sale_group_links
                 :columns [{:id_point_of_sale_group [:bigint-20-unsigned :default :null]}
                           {:id_point_of_sale [:bigint-20-unsigned :default :null]}]
-                :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
+                :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} ;; {:delete :cascade :update :cascade}
+                                ]
                                [{:id_point_of_sale :point_of_sale}]]))
 
 (def seal
@@ -148,10 +156,13 @@
   `(do ~@(for [t tables]
            `(jdbc/execute! sql-connection (drop-table (keyword '~t))))))
 
+;; (jdbc/execute! sql-connection point_of_sale_group_links)
+
 (defn create-scheme-one [scheme]
   (eval `(jdbc/execute! sql-connection ~(symbol (string/join "/" ["jarman.schema-builder" (symbol scheme)])))))
 (defn create-scheme []
-  (create-tabels METADATA
+  (create-tabels metadata
+                 documents
                  permission
                  user
                  enterpreneur
@@ -162,6 +173,8 @@
                  repair_contract
                  seal
                  service_contract))
+
+
 
 (defn delete-scheme-one [scheme]
   (eval `(jdbc/execute! sql-connection (drop-table ~(keyword scheme)))))
@@ -176,7 +189,8 @@
                  enterpreneur
                  user
                  permission
-                 METADATA))
+                 documents
+                 metadata))
 
 
 (defn regenerate-scheme []
@@ -232,12 +246,12 @@
 (def glastname (generate-random-string-lower 3))
 (def gpassword (generate-random-string-from 3 "1234"))
 (def gid_permission (generate-random-sql-from-col :permission))
-((generate-random-sql-from-col :permission))
+
 
 (defn fill-permission []
   (def create-permission 
     (fn [name] {:permission_name name
-               :configuration "{}"}))
+               :configuration "'{}'"}))
   (doall
    (map sql-insert
     [(insert :permission :values (create-permission "admin"))
@@ -258,84 +272,185 @@
     (take c (repeatedly #(insert :user :values (create-user)))))))
 
 
+(def gsimplestring (generate-random-string-lower 10))
+(def gownership (generate-random-from-list ["fio" "pp"]))
+(def gidentifier (generate-random-string-from 10 "123456789"))
+
+(defn fill-enterpreneur [c]
+  (def create-enterpreneur
+    (fn [] {:ssreou (gidentifier)
+           :ownership_form (gownership)
+           :vat_certificate (gsimplestring)
+           :individual_tax_number (gidentifier)
+           :director (gfirstname)
+           :accountant (gfirstname)
+           :legal_address (gsimplestring)
+           :physical_address (gsimplestring)
+           :contacts_information (gsimplestring)}))
+  (doall
+   (map
+    sql-insert
+    (take c (repeatedly #(insert :enterpreneur :values (create-enterpreneur)))))))
 
 
-;; (def create-cache_register 
-;;   (fn [] {:is_working nil
-;;          :modem_serial_number nil
-;;          :modem_phone_number nil
-;;          :producer nil
-;;          :first_registration_date nil
-;;          :modem_model nil
-;;          :name nil
-;;          :fiscal_number nil
-;;          :id_dev nil
-;;          :manufacture_date nil
-;;          :modem nil
-;;          :version nil
-;;          :serial_number nil
-;;          :id_point_of_sale nil}))
-;; (def create-enterpreneur 
-;;   (fn [] {:director nil
-;;          :contacts_information nil
-;;          :physical_address nil
-;;          :ownership_form nil
-;;          :accountant nil
-;;          :legal_address nil
-;;          :individual_tax_number nil
-;;          :vat_certificate nil
-;;          :ssreou nil}))
+(def gtable (generate-random-from-list ["service_contract" "seal" "repair_contract" "point_of_sale_group_links" "point_of_sale_group" "cache_register" "point_of_sale" "enterpreneur" "user" "permission"]))
+(defn fill-documents [c]
+  (def create-documents
+    (fn [] {:table (gtable)
+           :name (gsimplestring)
+           :document nil
+           :prop "'{}'"}))
+  (doall
+   (map
+    sql-insert
+    (take c (repeatedly #(insert :documents :values (create-documents)))))))
 
-;; (def create-point_of_sale 
-;;   (fn [] {:id_enterpreneur nil
-;;          :name nil
-;;          :physical_address nil
-;;          :telefons nil}))
-;; (def create-point_of_sale_group 
-;;   (fn [] {:group_name nil
-;;          :information nil}))
-;; (def create-point_of_sale_group_links 
-;;   (fn [] {:id_point_of_sale_group nil
-;;          :id_point_of_sale nil}))
-;; (def create-repair_contract 
-;;   (fn [] {:remove_security_seal_date nil
-;;          :id_cache_register nil
-;;          :last_change_contract_date nil
-;;          :technical_problem nil
-;;          :cause_of_removing_seal nil
-;;          :active_seal nil
-;;          :cache_register_register_date nil
-;;          :id_point_of_sale nil
-;;          :creation_contract_date nil
-;;          :contract_terms_date nil}))
-;; (def create-seal 
-;;   (fn [] {:seal_number nil
-;;          :to_date nil}))
-;; (def create-service_contract 
-;;   (fn [] {:id_point_of_sale nil
-;;          :register_contract_date nil
-;;          :contract_term_date nil
-;;          :money_per_month nil}))
 
-(defn clean-test-data []
-  (do
-    (jdbc/execute! sql-connection (delete :permission)) 
-    (jdbc/execute! sql-connection (delete :user))))
+(def gid_enterpreneur (generate-random-sql-from-col :enterpreneur))
+(defn fill-point_of_sale [c]
+  (def create-point_of_sale
+    (fn []
+      {:id_enterpreneur (gid_enterpreneur)
+       :name (gsimplestring)
+       :physical_address (gsimplestring)
+       :telefons (gsimplestring)}))
+  (doall
+   (map
+    sql-insert
+    (take c (repeatedly #(insert :point_of_sale :values (create-point_of_sale)))))))
 
-(defn refill-test-data []
-  (do
-    (fill-permission)
-    (fill-user 20)))
+(def gid_point_of_sale (generate-random-sql-from-col :point_of_sale))
+(def gboolean (generate-random-from-list [true false]))
+(defn fill-cache_register [c]
+  (def create-cache_register
+    (fn []
+      {:id_point_of_sale (gid_point_of_sale)
+       :name (gsimplestring)
+       :serial_number (gsimplestring)
+       :fiscal_number (gsimplestring)
+       :manufacture_date (.format (java.text.SimpleDateFormat. "YYYY-MM-dd") (java.util.Date.))
+       :first_registration_date (.format (java.text.SimpleDateFormat. "YYYY-MM-dd") (java.util.Date.))
+       :is_working (gboolean)
+       :version (gsimplestring)
+       :id_dev (gboolean)
+       :producer (gsimplestring)
+       :modem (gsimplestring)
+       :modem_model (gsimplestring)
+       :modem_serial_number (gsimplestring)
+       :modem_phone_number (gsimplestring)}))
+  (doall
+   (map
+    sql-insert
+    (take c (repeatedly #(insert :cache_register :values (create-cache_register)))))))
+
+
+(defn fill-point_of_sale_group [c]
+  (def create-point_of_sale_group
+    (fn []
+      {:group_name (gsimplestring)
+       :information (gsimplestring)}))
+  (doall
+   (map
+    sql-insert
+    (take c (repeatedly #(insert :point_of_sale_group :values (create-point_of_sale_group)))))))
+
+
+(def gid_point_of_sale_group (generate-random-sql-from-col :point_of_sale_group))
+(def gid_point_of_sale (generate-random-sql-from-col :point_of_sale))
+(defn fill-point_of_sale_group_links [c]
+  (def create-point_of_sale_group_links
+    (fn []
+      {:id_point_of_sale_group (gid_point_of_sale_group)
+       :id_point_of_sale (gid_point_of_sale)}))
+  (doall
+   (map
+    sql-insert
+    (take c (repeatedly #(insert :point_of_sale_group_links :values (create-point_of_sale_group_links)))))))
+
+(def gsealnumber (generate-random-string-from 10 "0123456789"))
+(defn fill-seal [c]
+  (def create-seal
+    (fn []
+      {:seal_number (gsealnumber)
+       :to_date (.format (java.text.SimpleDateFormat. "YYYY-MM-dd") (java.util.Date.))}))
+  (doall
+   (map
+    sql-insert
+    (take c (repeatedly #(insert :seal :values (create-seal)))))))
+
+(def gpayment (fn [] (rand-int 100000)))
+(defn fill-service_contract [c]
+  (def create-service_contract
+    (fn []
+      {:id_point_of_sale (gid_point_of_sale)
+       :register_contract_date (.format (java.text.SimpleDateFormat. "YYYY-MM-dd") (java.util.Date.))
+       :contract_term_date (.format (java.text.SimpleDateFormat. "YYYY-MM-dd") (java.util.Date.))
+       :money_per_month (gpayment)}))
+  (doall
+   (map
+    sql-insert
+    (take c (repeatedly #(insert :service_contract :values (create-service_contract)))))))
+
+(def gid_cache_register (generate-random-sql-from-col :cache_register))
+(defn fill-repair_contract [c]
+  (def create-repair_contract
+    (fn []
+      {:id_cache_register (gid_cache_register)
+       :id_point_of_sale (gid_point_of_sale)
+       :creation_contract_date (.format (java.text.SimpleDateFormat. "YYYY-MM-dd") (java.util.Date.))
+       :last_change_contract_date (.format (java.text.SimpleDateFormat. "YYYY-MM-dd") (java.util.Date.))
+       :contract_terms_date (.format (java.text.SimpleDateFormat. "YYYY-MM-dd") (java.util.Date.))
+       :cache_register_register_date (.format (java.text.SimpleDateFormat. "YYYY-MM-dd") (java.util.Date.))
+       :remove_security_seal_date nil
+       :cause_of_removing_seal (gsimplestring)
+       :technical_problem (gsimplestring)
+       :active_seal (gsealnumber)}))
+  (doall
+   (map
+    sql-insert
+    (take c (repeatedly #(insert :repair_contract :values (create-repair_contract)))))))
+
+(defn- fn-fish []
+  (fill-permission)
+  (fill-user 30)
+  (fill-enterpreneur 30)
+  (fill-documents 15)
+  (fill-point_of_sale 30)
+  (fill-cache_register 10)
+  (fill-point_of_sale_group 10)
+  (fill-point_of_sale_group_links 10)
+  (fill-seal 50)
+  (fill-service_contract 10)
+  (fill-repair_contract 30))
+
+(defmacro fish [& body]
+  (let [todo
+        (for [[table & args] body]
+          `(do (print (if-let [c# (first [~@args])]
+                        (format "Generating %d row %s . . . " c# '~table)
+                        (format "Generating struct %s . . . " '~table)))
+               (let [t# (string/replace 
+                         (with-out-str (time (apply ~(symbol (format "fill-%s" table)) [~@args])))
+                         #"(\r\n|\"|Elapsed time: )" "")]
+                 (println (format "(%s) done!" t#)))))]
+    `(do
+       (println "Generating Fish")
+       ~@todo )))
 
 (defn regenerate-scheme-test []
   (delete-scheme)
   (create-scheme)
-  (metadata/do-create-meta)
-  (metadata/do-create-references)
-  (refill-test-data))
+  (fish
+   [permission]
+   [user 30]
+   [enterpreneur 10]
+   [point_of_sale 40]
+   [cache_register 30]
+   [point_of_sale_group 7]
+   [point_of_sale_group_links 10]
+   [seal 100]
+   [service_contract 20]
+   [repair_contract 50]
+   [documents 10]))
 
-;;; test validation ;;;
 
-
-(defn authenticate-user [login password]
- (s-query (select :user :where {:login login :password password})))

@@ -5,14 +5,19 @@
    [clojure.data :as data]
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]
+   [seesaw.util :as sutil]
    ;; Seesaw components
-   [seesaw.core :as seesaw]
+   [seesaw.core :as score]
    [seesaw.border :as sborder]
    [seesaw.dev :as sdev]
    [seesaw.mig :as smig]
    [seesaw.swingx :as swingx]
    ;; Jarman toolkit
    [jarman.tools.lang :refer :all]
+   [jarman.gui.gui-tools :as gtool]
+   [jarman.resource-lib.icon-library :as ico]
+   [jarman.tools.swing :as stool]
+   [jarman.gui.gui-components :as comps]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
@@ -23,10 +28,11 @@
 (def ^:dynamic prod? false)
 (def ^:dynamic sql-connection
   (if prod?
-    ;; {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
-    {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3306, :dbname "jarman", :user "jarman", :password "dupa"}
-    {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"}))
-
+    {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
+    {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
+    ;; {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3306, :dbname "jarman", :user "jarman", :password "dupa"}
+    ;; {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"}
+    ))
 
 ;; (recur-find-path (first (mt/getset :point_of_sale_group_links)))
 ;; (recur-find-path (first (mt/getset :user)))
@@ -94,34 +100,34 @@
 ;; (let [mig (mig-panel
 ;;            :constraints ["" "0px[grow, center]0px" "5px[fill]5px"]
 ;;            :items [[(label :text "One")]])
-;;       my-frame (-> (doto (seesaw/frame
+;;       my-frame (-> (doto (score/frame
 ;;                           :title "test"
 ;;                           :size [0 :by 0]
 ;;                           :content mig)
 ;;                      (.setLocationRelativeTo nil) pack! show!))]
-;;   (config! my-frame :size [600 :by 600])
+;;   (score/config! my-frame :size [600 :by 600])
 ;;   (.add mig (label :text "Two")))
 
 ;; [{:key :name :text "Imie"}
 ;;  {:key :lname :text "Nazwisko"}
 ;;  {:key :lname :text "Zwierzak"}
 ;;  {:key :access :text "Kolor"  :class Color}
-;;  {:key :access :text "Dostêp" :class javax.swing.JComboBox}
+;;  {:key :access :text "Dostï¿½p" :class javax.swing.JComboBox}
 ;;  {:key :access :text "TF" :class java.lang.Boolean}
 ;;  {:key :num :text "Numer" :class java.lang.Number}
-;;  {:key :num :text "P³eæ" :class javax.swing.JComboBox}
+;;  {:key :num :text "Pï¿½eï¿½" :class javax.swing.JComboBox}
 ;;  {:key :num :text "Wiek" :class java.lang.Number}
-;;  {:key :num :text "Miejscowo¶æ"}]
-;; (table :model (seesaw.table/table-model
+;;  {:key :num :text "Miejscowoï¿½ï¿½"}]
+;; (table :model (score.table/table-model
 ;;                :columns [{:key :col1 :text "Col 1"} 
 ;;                          {:key :col2 :text "Col 2"}]
 ;;                :rows [["Dane 1" "Dane 2"]]))
 
 (defn construct-table [model]
   (fn [listener-fn]
-    (let [TT (seesaw/table :model (model))]
-      (seesaw/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (seesaw/selection TT)))))
-      (seesaw/scrollable TT :hscroll :as-needed :vscroll :as-needed))))
+    (let [TT (score/table :model (model))]
+      (score/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (score/selection TT)))))
+      (score/scrollable TT :hscroll :as-needed :vscroll :as-needed))))
 
 (defn construct-sql [table select-rules]
   {:pre [(keyword? table)]}
@@ -143,6 +149,7 @@
            restore-config#  (fn [] (reset! config# backup-config#))
            ktable#    (:table-name @config#)
            stable#    (str @config#)
+           tblmeta#   ((comp :table :prop) (first (mt/getset! ktable#)))
            colmeta#   ((comp :columns :prop) (first (mt/getset! ktable#)))
            operations# (construct-sql ktable# (:data @config#))
            select#    (:select operations#)
@@ -161,16 +168,34 @@
                      :->insert insert#
                      :->operations operations#
                      :->config (fn [] @config#)
-                     :->col-meta colmeta#})))) 
-
-
+                     :->col-meta colmeta#
+                     :->tbl-meta tblmeta#}))))
+;; (:->col-meta user-view)
 ;; (defview user)
+
+
+;; (defview user
+;;   :tables [:user :permission]
+;;   :view   [:first_name :last_name :login :permission_name]
+;;   :data   {:inner-join [:permission]
+;;            :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]}
+;;   :export-doc {:doc1 {:name "some name"
+;;                       :format :odt
+;;                       :model {:model-keys [:User.first_name :User.last_name :Permission.permission_name]
+;;                               :data {:inner-join [:permission]
+;;                                      :columns [{user.id :User.id} {:first_name :User.first_name} ...]}}}}
+;;   :export-data [[:first_name :last_nmame]
+;;                 [:permission_name :login]] ?)
+
 (defview user
   :tables [:user :permission]
   :view   [:first_name :last_name :login :permission_name]
   :data   {:inner-join [:permission]
            :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]})
 
+
+
+((:->data user-view))
 ;; ;; (defview user)
 ;; ;; (map :field ((comp :columns :prop) (first (mt/getset! :permission))))
 (defview permission
@@ -198,3 +223,195 @@
 
 
 
+
+(def build-insert-form
+  (fn [metadata & more-comps]
+    (let [complete (atom {})
+          vp (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"] 
+                             :border (sborder/empty-border :thickness 10)
+                             :items [[(score/label)]])
+          components (concat
+                      (map (fn [meta]
+                             (cond
+                               (= (first (get meta :component-type)) "i")
+                               (score/grid-panel :columns 1
+                                                 :size [200 :by 50]
+                                                 :items [(score/label
+                                                          :text (key-to-title (get meta :representation)))
+                                                         (comps/input-text
+                                                          :args [:listen [:caret-update
+                                                                          (fn [e]
+                                                                            (swap! complete (fn [storage] (assoc storage
+                                                                                                                 (keyword (get meta :field))
+                                                                                                                 (score/value (score/to-widget e))))))]])])
+                               (= (first (get meta :component-type)) "l")
+                               (do
+                                 (swap! complete (fn [storage] (assoc storage
+                                                                      (keyword (get meta :field))
+                                                                      (get meta :key-table))))
+                                 (score/grid-panel :columns 1
+                                                   :size [200 :by 50]
+                                                   :items [(score/label
+                                                            :text (key-to-title (get meta :representation))
+                                                            :enabled? false)
+                                                           (comps/input-text
+                                                            :args [:text (get meta :key-table)
+                                                                   :enabled? false])]))))
+                           metadata)
+                      [(score/label :border (sborder/empty-border :top 20))]
+                      [(comps/button-basic "Insert new data" (fn [e] (println "Insert data: " @complete)))
+                      ;;  (score/label :text "Insert" :listen [:mouse-clicked (fn [e]
+                      ;;                                                        (println "Insert " @complete)
+                      ;;                                                             ;;  (println "Map" (merge template-map @complete)
+                      ;;                                                             ;;           ;; ((:user->insert user-view)
+                      ;;                                                             ;;           ;;  (merge {:id nil :login nil :password nil :first_name nil :last_name nil :id_permission nil}
+                      ;;                                                             ;;           ;;   @complete))
+                      ;;                                                             ;;           )
+                      ;;                                                        )])
+                       ]more-comps)]
+      (score/config! vp :items (gtool/join-mig-items components)))))
+
+
+(def auto-builder--table-view
+  (fn [controller]
+    (let [controller (if (nil? controller) user-view controller)
+          ;; ico-open (stool/image-scale ico/plus-64-png 28)
+          ;; ico-close (stool/image-scale ico/minus-grey-64-png 28)
+          hidden-comp (atom (score/label))
+          expand-export (score/flow-panel 
+                         :border (sborder/compound-border (sborder/empty-border :top 5) 
+                                                          (sborder/line-border :top 2 :color "#999")
+                                                          (sborder/empty-border :top 50))
+                         :items [(comps/button-expand "Export" (smig/mig-panel
+                                                                :constraints ["wrap 1" "5px[grow, fill]5px" "10px[fill]0px"]
+                                                                :border (sborder/line-border :left 2 :right 2 :bottom 2 :color "#fff")
+                                                                :items [[(score/horizontal-panel
+                                                                          :items [(comps/input-text :args [:text "\\path\\to\\export"])
+                                                                                  (score/label :text "[-]" :background "#abc" :border (sborder/empty-border :thickness 5))])]
+                                                                        [(score/checkbox :text "ODT" :selected? true)]
+                                                                        [(score/checkbox :text "DOCX")]
+                                                                        [(comps/button-basic "Service raport" (fn [e]))]
+                                                                        [(score/label)]])
+                                                      :background "#fff"
+                                                      :min-height 220
+                                                      :border (sborder/compound-border (sborder/empty-border :left 10 :right 10)))])
+          insert-form (build-insert-form (:->col-meta controller) [expand-export])
+          form-space (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"])
+          hide-show (score/label :text "<<"
+                                 :background "#bbb"
+                                 :foreground "#fff"
+                                 :font (gtool/getFont 16 :bold)
+                                 :border (sborder/empty-border :left 2 :right 2)
+                                 :listen [:mouse-entered gtool/hand-hover-on])
+          ;; default-bg-color (score/config hide-show :background)
+          form-space (score/config! form-space
+                                    :items [[hide-show] [insert-form]])
+          hide-show (score/config! hide-show :listen [:mouse-clicked (fn [e]
+                                                                       (let [inside (count (sutil/children form-space))]
+                                                                  ;;  (println "Inside " inside)
+                                                                         (cond
+                                                                           (= 1 inside)
+                                                                           (do
+                                                                             (score/config! form-space :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"])
+                                                                             (score/config! hide-show :text "<<" :font (gtool/getFont 16 :bold))
+                                                                             (.add form-space @hidden-comp)
+                                                                             (.revalidate form-space))
+                                                                           (= 2 inside)
+                                                                           (do
+                                                                             (score/config! form-space :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"])
+                                                                             (score/config! hide-show :text "..." :valign :top)
+                                                                             (reset! hidden-comp (second (sutil/children form-space)))
+                                                                             (.remove form-space 1)
+                                                                             (.revalidate form-space)))))])
+          update-form (smig/mig-panel :constraints ["" "[200, fill]" "[grow, fill]"]
+                                      :items [[(comps/button-basic "Update Test"
+                                                                   (fn [e]
+                                                                     (println "Update: Twoja stara")
+                                                                     (reset! hidden-comp insert-form)
+                                                                     (.remove form-space 1)
+                                                                     (.add form-space @hidden-comp)
+                                                                     (.revalidate form-space)))]])
+          ;; table ((:->table controller) (fn [model] (score/return-from-dialog form-panel model)))
+          table ((:->table controller) (fn [model] (score/config! form-space :items [[hide-show]
+                                                                                     [update-form]])))
+          view-layout (smig/mig-panel
+                       :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[grow, fill]0px"]
+                       :items [[form-space]
+                               [table]])]
+      view-layout)))
+
+;; (@jarman.gui.gui-app/startup)
+
+;; (let [my-frame (-> (doto (score/frame
+;;                           :title "test"
+;;                           :size [1000 :by 800]
+;;                           :content
+;;                           (auto-builder--table-view user-view))
+;;                      (.setLocationRelativeTo nil) score/pack! score/show!))]
+;;   (score/config! my-frame :size [1000 :by 800]))
+
+
+
+
+
+
+
+
+
+
+
+
+;; (defn construct-dialog [table-fn]
+;;   (let [dialog (seesaw.core/custom-dialog :modal? true :width 400 :height 500 :title "WOKA_WOKA")
+;;         table (table-fn (fn [model] (seesaw.core/return-from-dialog dialog model)))
+;;         dialog (seesaw.core/config!
+;;                 dialog
+;;                 :content (seesaw.mig/mig-panel
+;;                           :constraints ["wrap 1" "0px[grow, fill]0px" "5px[grow, fill]0px"]
+;;                           :items [[(seesaw.core/label :text "SEARCH"
+;;                                                       :halign :center
+;;                                                       :icon (jarman.tools.swing/image-scale
+;;                                                              jarman.resource-lib.icon-library/loupe-blue-64-png 30))]
+;;                                   [(seesaw.core/text :text ""
+;;                                                      :halign :center
+;;                                                      :border (seesaw.border/compound-border
+;;                                                               (seesaw.border/empty-border :thickness 5)
+;;                                                               (seesaw.border/line-border
+;;                                                                :bottom 1 :color "#eeeeee"))
+;;                                                      :listen [:action (fn [e]
+;;                                                                         (when-not (= "" (clojure.string/trim (seesaw.core/text e)))
+;;                                                                           (println "SEARCH: " (seesaw.core/text e))))])]
+;;                                   [table]]))]
+;;     ;; (seesaw.core/show! (doto dialog (.setLocationRelativeTo nil)))
+;;     (.setLocationRelativeTo dialog nil)
+;;     (seesaw.core/show! dialog)))
+
+
+;; (defn auto-builder--table-view [view]
+;;   (let [text-label (seesaw.core/label
+;;                     :cursor :hand
+;;                     :border (seesaw.border/compound-border (seesaw.border/empty-border :thickness 5)
+;;                                                            (seesaw.border/line-border :bottom 1 :color "#222222"))
+;;                     :listen [:mouse-clicked (fn [e]
+;;                                               (let [m (construct-dialog (:->table view))]
+;;                                                 (seesaw.core/config! e :text (:id (doto m println)))))]
+;;                     :text  "<- empty ->")
+;;         dialog-label
+;;         (seesaw.mig/mig-panel
+;;          :constraints ["wrap 1" "0px[grow, fill]0px" "5px[grow, fill]0px"]
+;;          :items
+;;          [[text-label]
+;;           [(seesaw.core/label :icon (jarman.tools.swing/image-scale
+;;                                      jarman.resource-lib.icon-library/basket-grey1-64-png 40)
+;;                               :tip "UOJOJOJOJ"
+;;                               :listen [:mouse-entered (fn [e] (seesaw.core/config!
+;;                                                                e :cursor :hand
+;;                                                                :icon (jarman.tools.swing/image-scale
+;;                                                                       jarman.resource-lib.icon-library/basket-blue1-64-png 40)))
+;;                                        :mouse-exited  (fn [e] (seesaw.core/config!
+;;                                                                e :cursor :default
+;;                                                                :icon (jarman.tools.swing/image-scale
+;;                                                                       jarman.resource-lib.icon-library/basket-grey1-64-png 40)))
+;;                                        :mouse-clicked (fn [e]
+;;                                                         (seesaw.core/config! text-label :text "<- empty ->"))])]])]
+;;     (seesaw.core/grid-panel :rows 1 :columns 3 :items [dialog-label])))

@@ -31,25 +31,25 @@
 
 
 
-(construct-dialog (:->table user-view))
-((:->select user-view))
-(let [my-frame (-> (doto (seesaw.core/frame
-                          :title "test"
-                          :size [0 :by 0]
-                          :content
-                          (construct-dialog-input permission-view))
-                     (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
-  (seesaw.core/config! my-frame :size [600 :by 600]))
+;; (construct-dialog (:->table user-view))
+;; ((:->select user-view))
+;; (let [my-frame (-> (doto (seesaw.core/frame
+;;                           :title "test"
+;;                           :size [0 :by 0]
+;;                           :content
+;;                           (construct-dialog-input permission-view))
+;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
+;;   (seesaw.core/config! my-frame :size [600 :by 600]))
 
-(let [my-frame (-> (doto (seesaw.core/frame
-                          :title "test"
-                          :size [0 :by 0]
-                          :content
-                          (seesaw.core/table :model (table-model
-                                                     :columns [{:key :access :text "TF" :class java.lang.Boolean}]
-                                                     :rows [{:access true}]) ))
-                     (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
-  (seesaw.core/config! my-frame :size [600 :by 600]))
+;; (let [my-frame (-> (doto (seesaw.core/frame
+;;                           :title "test"
+;;                           :size [0 :by 0]
+;;                           :content
+;;                           (seesaw.core/table :model (table-model
+;;                                                      :columns [{:key :access :text "TF" :class java.lang.Boolean}]
+;;                                                      :rows [{:access true}]) ))
+;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
+;;   (seesaw.core/config! my-frame :size [600 :by 600]))
 
 (defn construct-dialog-input [view]
   (let [text-label (seesaw.core/label
@@ -80,47 +80,3 @@
                                        :mouse-clicked (fn [e]
                                                         (seesaw.core/config! text-label :text "<- empty ->"))])]])]
     (seesaw.core/grid-panel :rows 1 :columns 3 :items [dialog-label])))
-
-;; (def create-login-form
-;;   (fn [metadata]
-;;     (let [complete (atom {})
-;;           vp (seesaw.core/vertical-panel :items [])
-;;           components (concat
-;;                       (map (fn [meta]
-;;                              (cond
-;;                                (= (first (get meta :component-type)) "i")
-;;                                (seesaw.core/grid-panel :columns 1
-;;                                                        :size [200 :by 50]
-;;                                                        :items [(seesaw.core/label
-;;                                                                 :text (get meta :representation))
-;;                                                                (seesaw.core/text
-;;                                                                 :listen [:caret-update
-;;                                                                          (fn [e]
-;;                                                                            (swap! complete (fn [storage] (assoc storage
-;;                                                                                                                   (keyword (get meta :field))
-;;                                                                                                                   (seesaw.core/value (seesaw.core/to-widget e))))))])])
-;;                                (= (first (get meta :component-type)) "l")
-;;                                (do
-;;                                  (swap! complete (fn [storage] (assoc storage
-;;                                                                         (keyword (get meta :field))
-;;                                                                         (get meta :key-table))))
-;;                                  (seesaw.core/grid-panel :columns 1
-;;                                                          :size [200 :by 50]
-;;                                                          :items [(seesaw.core/label
-;;                                                                   :text (get meta :representation)
-;;                                                                   :enabled? false)
-;;                                                                  (seesaw.core/text
-;;                                                                   :text (get meta :key-table)
-;;                                                                   :enabled? false)]))))
-;;                            metadata)
-;;                       [(seesaw.core/label :text "Insert" :listen [:mouse-clicked (fn [e] 
-;;                                                                                    (println "Insert " @complete)
-;;                                                                                    (println "SQL" ((:user->insert user-view) (merge {:id nil :login nil :password nil :first_name nil :last_name nil :id_permission nil}@complete))))])])]
-;;       (seesaw.core/config! vp :items components))))
-
-;; (let [my-frame (-> (doto (seesaw.core/frame
-;;                           :title "test"
-;;                           :size [0 :by 0]
-;;                           :content (create-login-form ((comp :columns :prop) (first (getset! :user)))))
-;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
-;;   (seesaw.core/config! my-frame :size [400 :by 400]))

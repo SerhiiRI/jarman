@@ -5,10 +5,13 @@
         seesaw.mig
         seesaw.swingx
         seesaw.color)
-  (:import (javax.swing JLayeredPane JLabel JTable JComboBox DefaultCellEditor JCheckBox)
-           (javax.swing.table TableCellRenderer TableColumn)
-           (java.awt Color Component))
-  (:require [jarman.tools.lang :refer :all]))
+  (:import (javax.swing JLayeredPane  JLabel JTable JTextField JComboBox DefaultCellEditor JCheckBox BoxLayout JPanel AbstractCellEditor)
+           (javax.swing.table TableCellRenderer TableColumn TableCellEditor DefaultTableModel)
+           (java.awt Color Component BorderLayout)
+           (java.awt.event MouseAdapter)
+           )
+  (:require [jarman.tools.lang :refer :all]
+            [jarman.gui.swing.table :as stable]))
 
 
 
@@ -20,6 +23,63 @@
                 (proxy-super setBackground (cast Color color))
                 this))
         (.setOpaque true)))))
+
+
+(def headerEv
+  (fn [vp txt table]
+    (let []
+      (doto (proxy [MouseAdapter] []
+              (mouseClicked [^MouseAdapter e]
+                            (println)
+                            (println "----------------------")
+                            (println "VP"   (config vp :id))
+                (config! txt :text "Dupa")
+                            (.grabFocus txt)
+                            (.requestFocus txt true)
+                (.repaint (.getTableHeader table))
+                (.repaint txt)))))))
+
+;; (def header-with-filter-input
+;;   (fn []
+;;     (let []
+;;       (doto (proxy [JPanel TableCellRenderer TableCellEditor] []
+;;               (^Boolean isCellEditable [^Integer row ^Integer col] true)
+;;               (^Component getTableCellRendererComponent [^JTable table ^Object value ^Boolean isSelected ^Boolean hasFocus, ^Integer row, ^Integer column]
+;;                 (let [lbl (label :text value)
+;;                       txt (text :editable? true :listen [:caret-update (fn [e] (.repaint table)
+;;                                                                          (.revalidate table)
+;;                                                                          (.repaint table))])
+;;                       vp (vertical-panel :items [lbl txt] :id :dupa)]
+;;                   (if hasFocus (do (println "Focus") (.requestFocus txt true)))
+;;                                                           ;; (.addMouseListener (.getTableHeader table) (headerEv vp txt table))
+;;                   vp)
+;;                                                         ;; (vertical-panel [(label :text value) (text)])
+;;                 ))
+;;         (.setOpaque true)
+;;         ))))
+
+(def header-with-filter-input
+  (fn []
+    (let []
+      (doto (proxy [JTextField TableCellRenderer] []
+              (^Component getTableCellRendererComponent [^JTable table ^Object value ^Boolean isSelected ^Boolean hasFocus, ^Integer row, ^Integer column]
+                                                        
+                                                        this))
+        (.setOpaque true)
+        ))))
+
+
+(def header-with-filter-input-editor
+  (fn []
+    (let []
+      (doto (proxy [JTextField TableCellEditor] []
+              (^Component getTableCellRendererComponent [^JTable table ^Object value ^Boolean isSelected ^Boolean hasFocus, ^Integer row, ^Integer column]
+                                                        
+                                                        this))
+        (.setOpaque true)
+        ))))
+
+;; (* (.getColumnCount @tb) (.getRowCount @tb))
 
 (def drop-list
   (fn []
@@ -33,8 +93,39 @@
                 (.setSelectedItem this value)
                 (.setEditor this (.getEditor this))
                 ;; (if (= hasFocus true) (do (println "Combo focus")))
-                this))
+                (.getModel table)
+                this)
+              )
         (.setOpaque true)))))
+
+(def input-txt
+  (fn []
+    (let [my-text-field (text)]
+      (proxy [AbstractCellEditor TableCellEditor] []
+        (^Component getTableCellEditorComponent [^JTable table, ^Object value, isSelected, row, column]
+          my-text-field)
+        (^Object getCellEditorValue []
+          (value my-text-field))
+        (^Boolean isCellEditable [e] true)))))
+
+
+
+;; (def EditableTableModel
+;;   (fn []
+;;     (let []
+;;       (doto (proxy [DefaultTableModel] []
+;;               (^Boolean isCellEditable [^Integer row ^Integer col] true))))))
+
+;; (defprotocol CellEditable
+;;   (isCellEditable [this row col]))
+
+;; ;; (extend-protocol CellEditable
+;; ;;   javax.swing.table.DefaultTableModel
+;; ;;   (isCellEditable [this row col] true))
+
+;; (extend-type javax.swing.table.DefaultTableModel
+;;   CellEditable
+;;   (isCellEditable [this row col] "dupa"))
 
 (def seed-col
   (fn []
@@ -64,10 +155,9 @@
                   (vec (map (fn [x] (nth (seed-row) 2)) (range 10)))
                   (vec (map (fn [x] (last (seed-row))) (range 10))))))
 
-(def tb (atom (table-x :model (seesaw.table/table-model
+(def tb (atom (table :model (stable/table-model
                                :columns (cols)
                                :rows (rows)))))
-
 
 (def mount-table
   (fn [table &
@@ -83,48 +173,66 @@
        :border (empty-border :thickness 10)
        :items
        [[(label :text "Tabelki")]
-        [(horizontal-panel :items
-                           (map
-                            (fn [col-name col-idx]
-                              (if (or (in? block-columns-by-name col-name) (in? block-columns-by-index col-idx))
-                                (do (println (str "V-" col-idx ": Offline"))
-                                    (grid-panel
-                                     :columns 1
-                                     :items [(label :text col-name
-                                                    :enabled? false
-                                                    :size [col-w :by 20])
-                                             (text
-                                              :enabled? false
-                                              :size [col-w :by 20])]))
-                                (grid-panel
-                                 :columns 1
-                                 :items [(label :text col-name
-                                                :size [col-w :by 20])
-                                         (text
-                                          :size [col-w :by 20]
-                                          :listen [:action (fn [e]
-                                                             (let [h-panel (seesaw.util/children (.getParent (.getParent (to-widget e))))
-                                                                   all-inputs (map #(second (seesaw.util/children %)) h-panel)
-                                                                   sorter (javax.swing.table.TableRowSorter. (.getModel table))]
-                                                               (.setRowSorter table sorter)
-                                                               (let [pre-filters (doall
-                                                                                  (map (fn [inp idx]
-                                                                                         (if-not (empty? (value inp))
-                                                                                           (do
-                                                                                             (println (str "VF-" idx ": " (value inp)))
-                                                                                             (javax.swing.RowFilter/regexFilter (value inp) (int-array 1 [idx])))))
-                                                                                       all-inputs (range col-c)))
-                                                                     filters (doall (filter #(not (nil? %)) pre-filters))]
-                                                                 (.setRowFilter sorter (javax.swing.RowFilter/andFilter filters)))))])])))
-                            col-names (range col-c)))]
+        ;; [(horizontal-panel :items
+        ;;                    (map
+        ;;                     (fn [col-name col-idx]
+        ;;                       (if (or (in? block-columns-by-name col-name) (in? block-columns-by-index col-idx))
+        ;;                         (do (println (str "V-" col-idx ": Offline"))
+        ;;                             (grid-panel
+        ;;                              :columns 1
+        ;;                              :items [(label :text col-name
+        ;;                                             :enabled? false
+        ;;                                             :size [col-w :by 20])
+        ;;                                      (text
+        ;;                                       :enabled? false
+        ;;                                       :size [col-w :by 20])]))
+        ;;                         (grid-panel
+        ;;                          :columns 1
+        ;;                          :items [(label :text col-name
+        ;;                                         :size [col-w :by 20])
+        ;;                                  (text
+        ;;                                   :size [col-w :by 20]
+        ;;                                   :listen [:action (fn [e]
+        ;;                                                      (let [h-panel (seesaw.util/children (.getParent (.getParent (to-widget e))))
+        ;;                                                            all-inputs (map #(second (seesaw.util/children %)) h-panel)
+        ;;                                                            sorter (javax.swing.table.TableRowSorter. (.getModel table))]
+        ;;                                                        (.setRowSorter table sorter)
+        ;;                                                        (let [pre-filters (doall
+        ;;                                                                           (map (fn [inp idx]
+        ;;                                                                                  (if-not (empty? (value inp))
+        ;;                                                                                    (do
+        ;;                                                                                      (println (str "VF-" idx ": " (value inp)))
+        ;;                                                                                      (javax.swing.RowFilter/regexFilter (value inp) (int-array 1 [idx])))))
+        ;;                                                                                all-inputs (range col-c)))
+        ;;                                                              filters (doall (filter #(not (nil? %)) pre-filters))]
+        ;;                                                          (.setRowFilter sorter (javax.swing.RowFilter/andFilter filters)))))])])))
+        ;;                     col-names (range col-c)))]
         [(do
+          ;;  (.setDefaultRenderer (.getTableHeader table) (header-with-filter-input))
            (.setAutoResizeMode table JTable/AUTO_RESIZE_ALL_COLUMNS)
            (.setDefaultRenderer table Color (color-label))
            (.setDefaultRenderer table JComboBox (drop-list))
            (.setFillsViewportHeight table true)
            (.setShowGrid table false)
+           (.setCellEditor (.getColumn (.getColumnModel table) 0) (input-txt))
+           (.setCellEditor (.getColumn (.getColumnModel (.getTableHeader table)) 0) (input-txt))
+          ;;  (-> table .getTableHeader .getColumnModel (.getColumn 0) (.setCellEditor (input-txt)))
+           ;;  (doall
+          ;;   (map (fn [idx]
+          ;;          (.setCellEditor (.getColumn (.getColumnModel (.getTableHeader table)) idx) (DefaultCellEditor. (header-with-filter-input-editor)
+          ;;                                                                   ;;  (doto (JComboBox.) (.addItem "tak") (.addItem "nie"))
+          ;;                                                                                       )))
+          ;;        (range (.getColumnCount table))))
+
+          ;;  (.setEditable table true)
+          ;;  (println (.isCellEditable table 0 4))
+          ;;  (println (.isCellEditable table -1 4))
+          ;;  (.addMouseListener (.getTableHeader table) (headerEv))
+          ;;  (.setAutoCreateRowSorter table true)
            (config! table :listen
-                    [:mouse-clicked (fn [e])
+                    [:mouse-clicked (fn [e] (do
+                                              ;; (println "Column" (.getSelectedColumn table) "Row" (.getSelectedRow table))
+                                              ))
                      :mouse-motion (fn [e])])
            (scrollable table :size [900 :by 400]))]]))))
 

@@ -25,25 +25,24 @@
   [text & args] `(label :text `~(htmling ~text) ~@args))
 
 
-(defn button-basic
+(def button-basic
   "Description:
       Simple button with default style.
    Example:
       (simple-button \"Simple button\" (fn [e]) :style [:background \"#fff\"])
    "
-  [txt func & {:keys [style]
-               :or   {style []}}]
-  (fn [] (apply label
-                :text txt
-                :halign :center
-                :listen [:mouse-clicked func
-                         :mouse-entered (fn [e] (hand-hover-on e) (button-hover e))
-                         :mouse-exited  (fn [e] (button-hover e (get-color :background :button_main)))]
-                :background (get-color :background :button_main)
-                :border (compound-border (empty-border :bottom 10 :top 10)
-                                         (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-                style)))
-
+  (fn [txt func & {:keys [args]
+                   :or   {args []}}]
+    (apply label
+           :text txt
+           :halign :center
+           :listen [:mouse-clicked func
+                    :mouse-entered (fn [e] (hand-hover-on e) (button-hover e))
+                    :mouse-exited  (fn [e] (button-hover e (get-color :background :button_main)))]
+           :background (get-color :background :button_main)
+           :border (compound-border (empty-border :bottom 10 :top 10)
+                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
+           args)))
 
 
 (def input-text
@@ -59,6 +58,10 @@
     (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
           fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))]
       (apply text :text placeholder
+             :font (getFont 14)
+             :background (get-color :background :input)
+             :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
+                                      (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
              :user-data {:placeholder placeholder :value "" :edit? false :type :input}
              :listen [:focus-gained (fn [e]
                                       (cond (= (value e) placeholder)    (config! e :text ""))
@@ -129,46 +132,57 @@
       Import jarman.dev-tools
       Function need stool/image-scale function for scalling icon
       "
-  (fn [txt & inside-btns]
-    (let [bg-color "#eee"
-          margin-color "#fff"
-          border (compound-border (line-border :left 6 :color bg-color) (line-border :bottom 2 :color margin-color))
-          vsize 35
-          hsize 200
-          inside-btns-to-use (if (seqable? (first inside-btns)) (first inside-btns) inside-btns)
-          ico (if (> (count inside-btns-to-use) 0) (stool/image-scale icon/plus-64-png 25))
-          ico-hover (stool/image-scale icon/minus-grey-64-png 20)]
-
+  (fn [txt inside-btns
+       & {:keys [background
+                 border-color
+                 border
+                 vsize
+                 min-height
+                 ico
+                 ico-hover]
+          :or {background "#eee"
+               border-color "#fff"
+               border (compound-border (line-border :left 6 :color background))
+               vsize 35
+               min-height 200
+               ico  (stool/image-scale icon/plus-64-png 25)
+               ico-hover (stool/image-scale icon/minus-grey-64-png 20)}}]
+    (let [inside-btns (if (nil? inside-btns) {} inside-btns)
+          inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns))
+          ico (if-not (empty? inside-btns) (stool/image-scale icon/plus-64-png 25) nil)
+          title (label
+                 :text txt
+                 :background (Color. 0 0 0 0))
+          icon (label
+                :size [vsize :by vsize]
+                :halign :center
+                :background (Color. 0 0 0 0)
+                :icon ico)
+          mig (mig-panel :constraints ["wrap 1" (str "0px[" min-height ":, grow, fill]0px") "0px[fill]0px"])
+          expand-btn (mig-panel
+                      :constraints ["" (str "10px[grow, fill]0px[" vsize "]0px") "0px[fill]0px"]
+                      :background background
+                      :border border
+                      :items [[title]
+                              [icon]])]
       (do
-                        ;; (println inside-btns-to-use)
-        (mig-panel
-         :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
-         :listen [:mouse-entered hand-hover-on
-                  :mouse-clicked (fn [e]
-                                   (if (> (count inside-btns-to-use) 0)
-                                     (if (== (count (children (seesaw.core/to-widget e))) 1)
-                                       (do
-                                                      ;;  Add inside buttons to mig with expand button
-                                         (config! e :items (vec (map (fn [item] (vec (list item))) (concat (vec (children (to-widget e))) (vec inside-btns-to-use)))))
-                                         (config! (last (children (first (children (to-widget e))))) :icon ico-hover))
-                                       (do
-                                                      ;;  Remove inside buttons form mig without expand button
-                                         (config! e :items [(vec (list (first (children (seesaw.core/to-widget e)))))])
-                                         (config! (last (children (first (children (to-widget e))))) :icon ico)))))]
-         :items [[(mig-panel
-                   :constraints ["" "0px[fill]0px" "0px[fill]0px"]
-                   :background (new Color 0 0 0 0)
-                   :items [[(label
-                             :text txt
-                             :size [(- hsize vsize) :by vsize]
-                             :background bg-color
-                             :border border)]
-                           [(label
-                             :size [vsize :by vsize]
-                             :halign :center
-                             :background bg-color
-                             :border border
-                             :icon ico)]])]])))))
+        (config! mig
+                 :items [[expand-btn]]
+                 :listen [:mouse-entered hand-hover-on
+                          :mouse-clicked (fn [e]
+                                           (if-not (empty? inside-btns)
+                                             (if (= (count (seesaw.util/children mig)) 1)
+                                               (do ;;  Add inside buttons to mig with expand button
+                                                 (config! icon :icon ico-hover)
+                                                 (doall (map #(.add mig %) inside-btns))
+                                                 (.revalidate mig))
+                                               (do ;;  Remove inside buttons form mig without expand button
+                                                 (config! icon :icon ico-hover)
+                                                 (doall (map #(.remove mig %) (reverse (drop 1 (range (count (children mig)))))))
+                                                 (.revalidate mig))))
+                                           )])))))
+                                                 
+
 
 (def button-expand-child
   "Description
@@ -187,6 +201,8 @@
                     :mouse-entered (fn [e] (config! e  :background "#d9ecff"))
                     :mouse-exited  (fn [e] (config! e  :background "#fff"))]
            args)))
+
+
 
 
 ;; ┌────────────────────┐
@@ -265,11 +281,11 @@
                                                           (reset! last-v (clojure.string/join "" (clojure.string/split (first check-v) #"0"))) ;; remember last correct value
                                                           (invoke-later (config! e :text @last-v)))
                                                         (do ;; clear space
-                                                          (reset! last-v (read-string v)) ;; remember last correct value
-                                                          )))
+                                                          (reset! last-v (read-string v))))) ;; remember last correct value
+                                                          
                                                     (do ;; if value is integer
-                                                      (reset! last-v (read-string v)) ;; remember last correct value if integer and when remove last char
-                                                      ))))))))
+                                                      (reset! last-v (read-string v)))))))))) ;; remember last correct value if integer and when remove last char
+                                                      
                                       (if display (config! display :text @last-v)))]
              style))))
 
@@ -279,9 +295,9 @@
                                       [lbl]]))))
 
 ;; Show example
-(let [my-frame (-> (doto (seesaw.core/frame
-                          :title "test"
-                          :size [0 :by 0]
-                          :content (view))
-                     (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
-  (seesaw.core/config! my-frame :size [800 :by 600]))
+;; (let [my-frame (-> (doto (seesaw.core/frame
+;;                           :title "test"
+;;                           :size [0 :by 0]
+;;                           :content (view))
+;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
+;;   (seesaw.core/config! my-frame :size [800 :by 600]))

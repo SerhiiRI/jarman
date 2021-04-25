@@ -210,27 +210,37 @@
     (let [bg-color "#ddd"
           color-hover-margin "#bbb"
           bg-color-hover "#d9ecff"
-          size size
-          y (if (> (* size order) 0) (+ (* 2 order) (* size order)) (* size order))]
-      (label-fn
-       :halign :center
-       :icon ico
-       :bounds [0 y size size]
-       :background bg-color
-       :border (line-border :left 4 :color bg-color)
-       :listen [:mouse-entered (fn [e] (config! e
-                                                :cursor :hand
-                                                :border (line-border :right 4 :color color-hover-margin)
-                                                :background bg-color-hover
-                                                :bounds [0 y (+ 200 size 8) size]
-                                                :text txt))
-                :mouse-exited  (fn [e] (config! e
-                                                :bounds [0 y size size]
-                                                :border (line-border :left 4 :color bg-color)
-                                                :background bg-color
-                                                :text ""
-                                                :cursor :default))
-                :mouse-clicked (if (= (contains? extends :onclick) true) (get extends :onclick) (fn [e]))]))))
+          bg-color-hover "#fafafa"
+          y (if (> (* size order) 0) (- (+ (* 2 order) (* size order)) (* 2 (* 1 order))) (* size order))
+          icon (label :halign :center
+                      :icon ico
+                      :size [size :by size])
+          title (label ;; :halign :center
+                 :text txt
+                 :font (getFont 15))
+          mig (mig-panel
+               :constraints ["" (str "0px[" size "]15px[grow, fill]0px") (str "0px[" size "]0px")]
+               :bounds [0 y size size]
+               :background bg-color
+               :border  (line-border :bottom 2 :color "#eee")
+               :items (join-mig-items icon))]
+      (config! mig :listen [:mouse-entered (fn [e] (config! e
+                                                            :cursor :hand
+                                                            :border  (line-border :bottom 3 :color "#999")
+                                                            :background bg-color-hover
+                                                            ;; :bounds [0 y (+ (.getWidth (config title :preferred-size)) size 100) size]
+                                                            :bounds [0 y (+ (.getWidth (select (.getParent mig) [:#expand-menu-space])) size) size])
+                                             ;; (println (config title :preferred-size))
+                                             (.add mig title)
+                                             (.revalidate mig))
+                            :mouse-exited  (fn [e] (config! e
+                                                            :bounds [0 y size size]
+                                                            :border  (line-border :bottom 2 :color "#eee")
+                                                            :background bg-color)
+                                             (.remove mig 1)
+                                             (.revalidate mig))
+                            :mouse-clicked (if (= (contains? extends :onclick) true) (get extends :onclick) (fn [e]))])
+      mig)))
 
 
 

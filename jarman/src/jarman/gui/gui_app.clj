@@ -1155,8 +1155,8 @@
        :id :rebound-layer
        :items [(mig-panel
                 :constraints [""
-                              "0px[200]0px[grow, fill]10px"
-                              "0px[grow, fill]35px"]
+                              "0px[200]0px[grow, fill]15px"
+                              "0px[grow, fill]38px"]
                 :border (line-border :left margin-left :color bg-color)
                 :items [;; [(label-fn :background "#eee" :size [50 :by 50])]
                         [(mig-app-left-f  [(button-expand "Alerty"

@@ -155,7 +155,7 @@
                   (vec (map (fn [x] (nth (seed-row) 2)) (range 10)))
                   (vec (map (fn [x] (last (seed-row))) (range 10))))))
 
-(def tb (atom (table :model (stable/table-model
+(def tb (atom (score/table-x :model (stable/table-model
                                :columns (cols)
                                :rows (rows)))))
 

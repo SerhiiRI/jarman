@@ -177,7 +177,7 @@
                                                  (doall (map #(.add mig %) inside-btns))
                                                  (.revalidate mig))
                                                (do ;;  Remove inside buttons form mig without expand button
-                                                 (config! icon :icon ico-hover)
+                                                 (config! icon :icon ico)
                                                  (doall (map #(.remove mig %) (reverse (drop 1 (range (count (children mig)))))))
                                                  (.revalidate mig))))
                                            )])))))

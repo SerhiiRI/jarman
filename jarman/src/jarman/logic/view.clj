@@ -125,7 +125,7 @@
 
 (defn construct-table [model]
   (fn [listener-fn]
-    (let [TT (score/table :model (model))]
+    (let [TT (swingx/table-x :model (model))]
       (score/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (score/selection TT)))))
       (score/scrollable TT :hscroll :as-needed :vscroll :as-needed))))
 
@@ -233,7 +233,7 @@
           components (concat
                       (map (fn [meta]
                              (cond
-                               (= (first (get meta :component-type)) "i")
+                               (and (= (first (get meta :component-type)) "i") (get meta :editable?))
                                (score/grid-panel :columns 1
                                                  :size [200 :by 50]
                                                  :items [(score/label
@@ -271,6 +271,7 @@
                        ]more-comps)]
       (score/config! vp :items (gtool/join-mig-items components)))))
 
+;; (:->col-meta permission-view)
 
 (def auto-builder--table-view
   (fn [controller]
@@ -287,7 +288,10 @@
                                                                 :border (sborder/line-border :left 2 :right 2 :bottom 2 :color "#fff")
                                                                 :items [[(score/horizontal-panel
                                                                           :items [(comps/input-text :args [:text "\\path\\to\\export"])
-                                                                                  (score/label :text "[-]" :background "#abc" :border (sborder/empty-border :thickness 5))])]
+                                                                                  (score/label :text "[-]" 
+                                                                                               :background "#abc" 
+                                                                                               :border (sborder/empty-border :thickness 5)
+                                                                                               :listen [:mouse-clicked (fn [e] (println "Export clicked"))])])]
                                                                         [(score/checkbox :text "ODT" :selected? true)]
                                                                         [(score/checkbox :text "DOCX")]
                                                                         [(comps/button-basic "Service raport" (fn [e]))]

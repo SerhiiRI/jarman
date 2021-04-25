@@ -69,7 +69,9 @@
         (let [view-data (second (first packed-view))
               component (get view-data :component)
               height    (get view-data :pref-height)]
-          (config! (service-data :view-space) :items [(scrollable component :border nil)])
+          (config! (service-data :view-space) :items [(let [scr (scrollable component :border nil)]  ;; speed up scrolling
+                                                        (.setUnitIncrement (.getVerticalScrollBar scr) 20)
+                                                        scr)])
           (config! component :size [300 :by height])
           )))))
 

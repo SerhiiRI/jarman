@@ -633,8 +633,7 @@
                                           (mig-panel
                                            :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
                                            :items elems
-                                           :border (empty-border :thickness 0))
-                                          )
+                                           :border (empty-border :thickness 0)))
                     :else (label :text "Table not found inside metadata :c"))]
     (do
       (add-changes-controller view-id changing-list)
@@ -696,8 +695,7 @@
        :background (new Color 0 0 0 0)
        :border (line-border :thickness 1 :color border-c)
        :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
-       :items [[(btn "Show table" icon/loupe-blue1-64-png (fn [e] (show-data-in-table (keyword table-name))))]
-               [(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
+       :items [[(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
                                                                    (create-view--table-editor @work-mode atom--tables-configurations table-id))))]
                [(btn "Delete table" icon/basket-blue1-64-png (fn [e]))]
                [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]]))))
@@ -732,15 +730,15 @@
                                               (cond (= (.getButton e) MouseEvent/BUTTON3)
                                                     (let [scrol (select (@jarman-views-service :get-component :view-id :Database) [:#JLP-DB-Visualizer])
                                                           JLP (first (seesaw.util/children (first (seesaw.util/children scrol))))]
-                                                     (.add JLP
-                                                           (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
-                                                            JLP
-                                                            dbmap ;; forward list of table configuration
-                                                            table-id ;; Get table id
-                                                            (- (+ (.getX e) (.getX (config (getParent e) :bounds))) 15) ;; calculate popup position
-                                                            (- (+ (+ (.getY e) (.getY (config e :bounds))) (.getY (config (getParent e) :bounds))) 10))
-                                                           (new Integer 999) ;; z-index
-                                                           ))
+                                                      (.add JLP
+                                                            (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
+                                                             JLP
+                                                             dbmap ;; forward list of table configuration
+                                                             table-id ;; Get table id
+                                                             (- (+ (.getX e) (.getX (config (getParent e) :bounds))) 15) ;; calculate popup position
+                                                             (- (+ (+ (.getY e) (.getY (config e :bounds))) (.getY (config (getParent e) :bounds))) 10))
+                                                            (new Integer 999) ;; z-index
+                                                            ))
                                                     (= (.getClickCount e) 2) ;; Open table editor by duble click
                                                     (create-view--table-editor @work-mode dbmap table-id))))
                            :mouse-dragged (fn [e]
@@ -806,7 +804,7 @@
                                        :icon (stool/image-scale ico 30)
                                        :background "#fff"
                                        :foreground "#000"
-                                       :border (compound-border (empty-border :left 15 :right 15 :top 5 :bottom 5) (line-border :thickness 1 :color border-c) )
+                                       :border (compound-border (empty-border :left 15 :right 15 :top 5 :bottom 5) (line-border :thickness 1 :color border-c))
                                        :listen [:mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
                                                 :mouse-exited  (fn [e] (config! e :background "#fff" :foreground "#000"))])))]
        (mig-panel
@@ -1085,7 +1083,7 @@
                  (let [title (get-in @configuration (join-vec path [:name]))
                        view-id (last path)]
                    (button-expand-child title :onClick (fn [e]
-                                             (@jarman-views-service :set-view :view-id view-id :title title :component (create-view--confgen path))))))
+                                                         (@jarman-views-service :set-view :view-id view-id :title title :component (create-view--confgen path))))))
                (confgen-expand-btns--prepare-config-paths configuration)))))
 
 
@@ -1100,11 +1098,12 @@
   "Description:
       Vertical layout of elements, left part of app for functions
    Example:
-      (mig-app-left-f  [(button-expand 'Ukryte opcje 1' (some-button))] [(button-expand 'Ukryte opcje 2')])
+      (mig-app-left-f  [(button-expand 'Ukryte opcje 1' [(some-button)])] [(button-expand 'Ukryte opcje 2')])
    Needed:
       button-expand component is needed to corectly work
    "
   (fn [& args] (mig-panel
+                :id :expand-menu-space
                 :background "#fff"
                 :border (line-border :left 4 :right 4 :color "#fff")
                 :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
@@ -1138,6 +1137,7 @@
        :background "#fff"
        :constraints ["wrap 1" "0px[fill, grow]0px" "0px[25]0px[fill, grow]0px"]
        :background "#eee"
+       :border (line-border :left 1 :color "#999")
        :items [[tabs-space]
                [views-space]]))))
 
@@ -1147,24 +1147,30 @@
   "Description:
       Main space for app inside JLayeredPane. There is menu with expand btns and space for tables with tab btns.
    "
-  (fn [] (grid-panel
-          :id :rebound-layer
-          :items [(mig-panel
-                   :constraints [""
-                                 "0px[50, fill]0px[200, fill]0px[fill, grow]15px"
-                                 "0px[fill, grow]39px"]
-                   :items [[(label-fn :background "#eee" :size [50 :by 50])]
-                           [(mig-app-left-f  [(button-expand "Alerty"
-                                                          (button-expand-child "Alert 1 \"Test\""  :onClick (fn [e] (@alert-manager :set {:header "Test" :body "Bardzo dluga testowa wiadomość, która nie jest taka prosta do ogarnięcia w seesaw."} (message alert-manager) 3)))
-                                                          (button-expand-child "Alert 2 \"Witaj\"" :onClick (fn [e] (@alert-manager :set {:header "Witaj" :body "Świecie"} (message alert-manager) 5))))]
-                                             [(button-expand "Widoki"
-                                                          (button-expand-child "DB View" :onClick (fn [e] (@jarman-views-service :set-view :view-id "Database" :title "Database" :component create-view--db-view)))
-                                                          (button-expand-child "Test"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test1" :title "Test 1" :component (label :text "Test 1"))))
-                                                          (button-expand-child "Test"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test2" :title "Test 2" :component (label :text "Test 2"))))
-                                                          (button-expand-child "Test"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test3" :title "Test 3" :component (vertical-panel :items [(label :text "Test 3")])))))]
-                                             [(create-expand-btns--confgen)])]
-                           [(right-part-of-jarman-as-space-for-views-service []
-                                                                             [])]])])))
+  (fn [& {:keys [margin-left]
+          :or {margin-left 0}}]
+    (let [bg-color "#ddd"
+          vhr-color "#999"]
+      (grid-panel
+       :id :rebound-layer
+       :items [(mig-panel
+                :constraints [""
+                              "0px[200]0px[grow, fill]10px"
+                              "0px[grow, fill]35px"]
+                :border (line-border :left margin-left :color bg-color)
+                :items [;; [(label-fn :background "#eee" :size [50 :by 50])]
+                        [(mig-app-left-f  [(button-expand "Alerty"
+                                                          [(button-expand-child "Alert 1 \"Test\""  :onClick (fn [e] (@alert-manager :set {:header "Test" :body "Bardzo dluga testowa wiadomość, która nie jest taka prosta do ogarnięcia w seesaw."} (message alert-manager) 3)))
+                                                           (button-expand-child "Alert 2 \"Witaj\"" :onClick (fn [e] (@alert-manager :set {:header "Witaj" :body "Świecie"} (message alert-manager) 5)))])]
+                                          [(button-expand "Widoki"
+                                                          [(button-expand-child "Test 1"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test1" :title "Test 1" :component (label :text "Test 1"))))
+                                                           (button-expand-child "Test 2"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test2" :title "Test 2" :component (label :text "Test 2"))))
+                                                           (button-expand-child "Test 3"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test3" :title "Test 3" :component (vertical-panel :items [(label :text "Test 3")]))))
+                                                           (button-expand-child "DB View" :onClick (fn [e] (@jarman-views-service :set-view :view-id "Database" :title "Database" :component create-view--db-view)))
+                                                           (button-expand-child "Users table" :onClick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :component (jarman.logic.view/auto-builder--table-view nil))))])]
+                                          [(create-expand-btns--confgen)])]
+                        [(right-part-of-jarman-as-space-for-views-service []
+                                                                          [])]])]))))
 
 
 
@@ -1182,23 +1188,25 @@
     (do
       (swapp-all)
       (try (.dispose (seesaw.core/to-frame @app)) (catch Exception e (println "Exception: " (.getMessage e))))
-      (build :items (list
-                     (jarmanapp)
-                     (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png 50) 0 50 "DB View" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "Database" :title "Database" :component create-view--db-view))})
-                     (slider-ico-btn (stool/image-scale icon/I-64-png 50) 1 50 "Powiadomienia" {:onclick (fn [e] (@alert-manager :show))})
-                     (slider-ico-btn (stool/image-scale icon/alert-64-png 50) 2 50 "Popup" {:onclick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200]))})
-                     (slider-ico-btn (stool/image-scale icon/agree-grey-64-png 50) 3 50 "Dialog" {:onclick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100]))))})
-                     (slider-ico-btn (stool/image-scale icon/a-blue-64-png 50) 4 50 "alert" {:onclick (fn [e] (@alert-manager :set {:header "Witaj<br>World" :body "Alllle<br>Luja"} (message alert-manager) 5))})
-                     (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png 50) 5 50 "Restart" {:onclick (fn [e] (@startup))})
-                     (slider-ico-btn (stool/image-scale icon/key-blue-64-png 50) 6 50 "Change work mode" {:onclick (fn [e]
-                                                                                                                     (cond (= @work-mode :user-mode)
-                                                                                                                           (do
-                                                                                                                             (reset! work-mode :dev-mode)
-                                                                                                                             (@alert-manager :set {:header "Work mode" :body "Dev mode activated."} (message alert-manager) 5))
-                                                                                                                           :else (do
-                                                                                                                                   (reset! work-mode :user-mode)
-                                                                                                                                   (@alert-manager :set {:header "Work mode" :body "Dev mode deactivated."} (message alert-manager) 5))))})
-                     @atom-popup-hook))
+      (build :items (let [img-scale 40]
+                      (list
+                       (jarmanapp :margin-left img-scale)
+                       (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB View" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "Database" :title "Database" :component create-view--db-view))})
+                       (slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Powiadomienia" {:onclick (fn [e] (@alert-manager :show))})
+                       (slider-ico-btn (stool/image-scale icon/alert-64-png img-scale) 2 img-scale "Popup" {:onclick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200]))})
+                       (slider-ico-btn (stool/image-scale icon/agree-grey-64-png img-scale) 3 img-scale "Dialog" {:onclick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100]))))})
+                       (slider-ico-btn (stool/image-scale icon/a-blue-64-png img-scale) 4 img-scale "alert" {:onclick (fn [e] (@alert-manager :set {:header "Witaj<br>World" :body "Alllle<br>Luja"} (message alert-manager) 5))})
+                       (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 5 img-scale "Restart" {:onclick (fn [e] (@startup))})
+                       (slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 6 img-scale "Change work mode" {:onclick (fn [e]
+                                                                                                                                     (cond (= @work-mode :user-mode)
+                                                                                                                                           (do
+                                                                                                                                             (reset! work-mode :dev-mode)
+                                                                                                                                             (@alert-manager :set {:header "Work mode" :body "Dev mode activated."} (message alert-manager) 5))
+                                                                                                                                           :else (do
+                                                                                                                                                   (reset! work-mode :user-mode)
+                                                                                                                                                   (@alert-manager :set {:header "Work mode" :body "Dev mode deactivated."} (message alert-manager) 5))))})
+                       (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 7 img-scale "Table Auto Generator" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :component (jarman.logic.view/auto-builder--table-view nil)))})
+                       @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook)))))
 
 

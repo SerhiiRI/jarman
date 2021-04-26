@@ -4,7 +4,6 @@
    ;; Clojure toolkit 
    [clojure.data :as data]
    [clojure.string :as string]
-   [clojure.java.jdbc :as jdbc]
    [seesaw.util :as sutil]
    ;; Seesaw components
    [seesaw.core :as score]
@@ -13,6 +12,7 @@
    [seesaw.mig :as smig]
    [seesaw.swingx :as swingx]
    ;; Jarman toolkit
+   [jarman.logic.connection :as db]
    [jarman.tools.lang :refer :all]
    [jarman.gui.gui-tools :as gtool]
    [jarman.resource-lib.icon-library :as ico]
@@ -25,22 +25,15 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
-(def ^:dynamic prod? false)
-(def ^:dynamic sql-connection
-  (if prod?
-    ;; {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
-    {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3306, :dbname "jarman", :user "jarman", :password "dupa"}
-    {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"}))
 
 (defn quick-path [table] 
- (mt/recur-find-path (first (mt/getset! (keyword table)))))
+  (mt/recur-find-path (first (mt/getset! (keyword table)))))
 ;; (recur-find-path (first (mt/getset :point_of_sale_group_links)))
 ;; (recur-find-path (first (mt/getset :user)))
 ;; {:tbl "point_of_sale_group_links",
 ;;  :ref [{:tbl "point_of_sale_group", :ref nil}
 ;;        {:tbl "point_of_sale",
 ;;         :ref [{:tbl "enterpreneur", :ref nil}]}]}
-
 
 (defmacro ^:private make-name [entity suffix]
   `(symbol (str ~entity ~suffix)))
@@ -69,6 +62,44 @@
   (fn []
     [:columns model-columns
      :rows (data-loader)]))
+
+(get-view-column-meta [:point_of_sale :enterpreneur]
+                      [:name :physical_address :telefons ;; point_of sale 
+                       :ssreou :ownership_form ;; enterprenier 
+                       ])
+
+(defn tf-t-f [table-field]
+  (let [t-f (string/split (name table-field) #"\.")]
+    (mapv keyword t-f)))
+
+(defn t-f-tf [table field]
+  (keyword (str (name table) "." (name (name field)))))
+
+(tf-t-f :suka.bliat)
+(t-f-tf :suka :bliat)
+
+(defn get-view-column-meta [table-list column-list]
+  (->> table-list
+       (map (fn [t] (vec [t ((comp :columns :prop) (first (mt/getset! t)))])))
+       (filter (fn [[t c]] (in? column-list (t-f-tf t (:field c))(keyword (str (name t) (name (:field c)))))))
+       ;; (map second)
+       ))
+
+
+(defn get-view-column-meta [table-list column-list]
+  (->> table-list
+       (mapcat (fn [t] (vec [t ((comp :columns :prop) (first (mt/getset! t)))])))
+       ;; (filter (fn [[t c]] (in? column-list (keyword (:field c)))))
+       ))
+
+(construct-table-model-columns [:point_of_sale :enterpreneur]
+                               [:point_of_sale.name :point_of_sale.physical_address :point_of_sale.telefons :enterprenier.ssreou :enterprenier.ownership_form])
+[{:key :name, :text "name"}
+ {:key :physical_address, :text "physical_address"}
+ {:key :telefons, :text "telefons"}
+ {:key :ssreou, :text "ssreou"}
+ {:key :ownership_form, :text "ownership_form"}
+ {:key :physical_address, :text "physical_address"}]
 
 ;;;;;;;;;;;;;;
 ;;; JTABLE ;;;
@@ -156,11 +187,12 @@
            update#    (:update operations#)
            delete#    (:delete operations#)
            insert#    (:insert operations#)
-           data#      (fn [] (jdbc/query sql-connection (select#)))
+           data#      (fn [] (db/query (select#)))
            export#    (select# :column nil :inner-join nil :where nil)
            model#     (construct-table-model-columns (:tables @config#) (:view @config#))
            table#     (construct-table (construct-table-model model# data#))]
        (def ~stable {:->table table#
+                     :->table-model model#
                      :->data data#
                      :->select select#
                      :->update update#
@@ -186,91 +218,82 @@
 
 (defview enterpreneur
   :tables [:enterpreneur]
-  :view   [:first_name :last_name :login :permission_name]
+  :view   [:ssreou :ownership_form :vat_certificate :individual_tax_number :director :accountant :legal_address :physical_address :contacts_information]
   :data   {:column [:ssreou :ownership_form :vat_certificate :individual_tax_number :director :accountant :legal_address :physical_address :contacts_information]})
 
-;; (mapv (comp keyword :field) ((comp :columns :prop) (first (mt/getset! :enterpreneur))))
+(db/query "SELECT ssreou, ownership_form, vat_certificate, individual_tax_number, director, accountant, legal_address, physical_address, contacts_information FROM `enterpreneur`")
+(let [;; mig (smig/mig-panel
+      ;;      :constraints ["" "0px[grow, center]0px" "5px[fill]5px"]
+      ;;      :items [[(score/label :text "One")]])
+      my-frame (-> (doto (score/frame
+                          :title "test"
+                          :size [0 :by 0]
+                          :content ((:->table point_of_sale-view) (fn [x] (println x))))
+                     (.setLocationRelativeTo nil) score/pack! score/show!))]
+  (score/config! my-frame :size [600 :by 600]))
 
+(defview point_of_sale
+  :tables [:point_of_sale :enterpreneur]
+  :view   [:name :physical_address :telefons ;; point_of sale 
+           :ssreou :ownership_form ;; enterprenier 
+           ]
+  :data   {:inner-join [:enterpreneur]
+           :column [{:point_of_sale.id :id} :name {:point_of_sale.physical_address :physical_address} :telefons :name :id_enterpreneur :ssreou :ownership_form ]})
 
-;; (quick-path :enterpreneur)
+((:->model point_of_sale-view))
+"SELECT point_of_sale.id AS id, name, point_of_sale.physical_address AS physical_address, telefons, name, id_enterpreneur, ssreou, ownership_form FROM `point_of_sale` INNER JOIN enterpreneur ON enterpreneur.id=point_of_sale.id_enterpreneur"
 
-(def enterpreneur
-  (create-table :enterpreneur
-                :columns [{:ssreou [:tinytext :nnull]}
-                          {:ownership_form [:varchar-100 :default :null]}
-                          {:vat_certificate [:tinytext :default :null]}
-                          {:individual_tax_number [:varchar-100 :default :null]}
-                          {:director [:varchar-100 :default :null]}
-                          {:accountant [:varchar-100 :default :null]}
-                          {:legal_address [:varchar-100 :default :null]}
-                          {:physical_address [:varchar-100 :default :null]}
-                          {:contacts_information [:mediumtext :default :null]}]))
+{:cache_register
+ :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
+           {:name [:varchar-100 :default :null]}
+           {:serial_number [:varchar-100 :default :null]}
+           {:fiscal_number [:varchar-100 :default :null]}
+           {:manufacture_date [:date :default :null]}
+           {:first_registration_date [:date :default :null]}
+           {:is_working [:tinyint-1 :default :null]}
+           {:version [:varchar-100 :default :null]}
+           {:id_dev [:varchar-100 :default :null]}
+           {:producer [:varchar-100 :default :null]}
+           {:modem [:varchar-100 :default :null]}
+           {:modem_model [:varchar-100 :default :null]}
+           {:modem_serial_number [:varchar-100 :default :null]}
+           {:modem_phone_number [:varchar-100 :default :null]}]
+ :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]}
 
-(def point_of_sale
-  (create-table :point_of_sale
-                :columns [{:id_enterpreneur [:bigint-20-unsigned :default :null]}
-                          {:name [:varchar-100 :default :null]}
-                          {:physical_address  [:varchar-100 :default :null]}
-                          {:telefons  [:varchar-100 :default :null]}]
-                :foreign-keys [{:id_enterpreneur :enterpreneur} {:update :cascade}]))
+{:point_of_sale_group
+ :columns [{:group_name [:varchar-100 :default :null]}
+           {:information [:mediumtext :default :null]}]}
 
-(def cache_register
-  (create-table :cache_register
-                :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
-                          {:name [:varchar-100 :default :null]}
-                          {:serial_number [:varchar-100 :default :null]}
-                          {:fiscal_number [:varchar-100 :default :null]}
-                          {:manufacture_date [:date :default :null]}
-                          {:first_registration_date [:date :default :null]}
-                          {:is_working [:tinyint-1 :default :null]}
-                          {:version [:varchar-100 :default :null]}
-                          {:id_dev [:varchar-100 :default :null]}
-                          {:producer [:varchar-100 :default :null]}
-                          {:modem [:varchar-100 :default :null]}
-                          {:modem_model [:varchar-100 :default :null]}
-                          {:modem_serial_number [:varchar-100 :default :null]}
-                          {:modem_phone_number [:varchar-100 :default :null]}]
-                :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]))
+{:point_of_sale_group_links
+ :columns [{:id_point_of_sale_group [:bigint-20-unsigned :default :null]}
+           {:id_point_of_sale [:bigint-20-unsigned :default :null]}]
+ :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
+                [{:id_point_of_sale :point_of_sale}]]}
 
-(def point_of_sale_group
-  (create-table :point_of_sale_group
-                :columns [{:group_name [:varchar-100 :default :null]}
-                          {:information [:mediumtext :default :null]}]))
+{:seal
+ :columns [{:seal_number [:varchar-100 :default :null]}
+           {:to_date [:date :default :null]}]}
 
-(def point_of_sale_group_links
-  (create-table :point_of_sale_group_links
-                :columns [{:id_point_of_sale_group [:bigint-20-unsigned :default :null]}
-                          {:id_point_of_sale [:bigint-20-unsigned :default :null]}]
-                :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
-                               [{:id_point_of_sale :point_of_sale}]]))
+{:service_contract
+ :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
+           {:register_contract_date [:date :default :null]}
+           {:contract_term_date [:date :default :null]}
+           {:money_per_month [:int-11 :default :null]}]
+ :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]}
 
-(def seal
-  (create-table :seal
-                :columns [{:seal_number [:varchar-100 :default :null]}
-                          {:to_date [:date :default :null]}]))
-
-(def service_contract
-  (create-table :service_contract
-                :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
-                          {:register_contract_date [:date :default :null]}
-                          {:contract_term_date [:date :default :null]}
-                          {:money_per_month [:int-11 :default :null]}]
-                :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]))
-
-(def repair_contract
-  (create-table :repair_contract
-                :columns [{:id_cache_register [:bigint-20 :unsigned :default :null]}
-                          {:id_point_of_sale [:bigint-20 :unsigned :default :null]}
-                          {:creation_contract_date [:date :default :null]}
-                          {:last_change_contract_date [:date :default :null]}
-                          {:contract_terms_date [:date :default :null]}
-                          {:cache_register_register_date [:date :default :null]}
-                          {:remove_security_seal_date [:datetime :default :null]}
-                          {:cause_of_removing_seal [:mediumtext :default :null]}
-                          {:technical_problem [:mediumtext :default :null]}
-                          {:active_seal [:mediumtext :default :null]}]
-                :foreign-keys [[{:id_cache_register :cache_register} {:delete :cascade :update :cascade}]
-                               [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]]))
+{:repair_contract
+ :columns [{:id_cache_register [:bigint-20 :unsigned :default :null]}
+           {:id_point_of_sale [:bigint-20 :unsigned :default :null]}
+           {:creation_contract_date [:date :default :null]}
+           {:last_change_contract_date [:date :default :null]}
+           {:contract_terms_date [:date :default :null]}
+           {:cache_register_register_date [:date :default :null]}
+           {:remove_security_seal_date [:datetime :default :null]}
+           {:cause_of_removing_seal [:mediumtext :default :null]}
+           {:technical_problem [:mediumtext :default :null]}
+           {:active_seal [:mediumtext :default :null]}]
+ :foreign-keys [[{:id_cache_register :cache_register} {:delete :cascade :update :cascade}]
+                [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]]}
 
 
 
@@ -287,12 +310,12 @@
 ;;                      u_nr (last user)]
 ;;                  (if (or (nil? u_nr ) (empty? u_nr))
 ;;                    (let [card (concat (cons nil (take-last 2 csv-row)) [nil])]
-;;                      (jdbc/execute! @sql-connection (toolbox/insert :card :values card))
+;;                      (db/exec  (toolbox/insert :card :values card))
 ;;                      nil)
-;;                    (do (jdbc/execute! @sql-connection (toolbox/insert :user :values user))
+;;                    (do (db/exec  (toolbox/insert :user :values user))
 ;;                        (let [u_id (:id (first (jdbc/query @sql-connection (select :user :where (= :teta_nr u_nr)))))
 ;;                              card (concat (cons nil (take-last 2 csv-row)) [u_id])]
-;;                          (jdbc/execute! @sql-connection (toolbox/insert :card :values card))
+;;                          (db/exec  (toolbox/insert :card :values card))
 ;;                          nil)))))
 ;;              (rest (line-seq reader))))))
 

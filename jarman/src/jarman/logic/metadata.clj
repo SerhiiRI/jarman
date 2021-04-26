@@ -72,13 +72,13 @@
 (ns jarman.logic.metadata
   (:refer-clojure :exclude [update])
   (:require
+   [clojure.data :as data]
+   [clojure.string :as string]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]
-   [clojure.data :as data]
-   [clojure.string :as string]
-   [clojure.java.jdbc :as jdbc])
+   [jarman.logic.connection :as db])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
@@ -87,25 +87,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;
 
 (def ^{:dynamic true :private true} *not-allowed-to-edition-tables* ["user" "permission"])
-
-;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; SQL CONFIGURATION ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;
-(def ^:dynamic prod? false)
-(def ^:dynamic sql-connection
-  (if prod?
-    ;; {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
-    {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3306, :dbname "jarman", :user "jarman", :password "dupa"}
-    {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"}))
-
-;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "ekka-test" :user "root" :password "123"})
-;; (def ^{:dynamic true :private true} sql-connection {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"})
-(def ^:dynamic sql-connection {:dbtype "mysql" :host "trashpanda-team.ddns.net" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"})
-;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "80.49.157.152" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"})
-;; (def ^:dynamic sql-connection {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"})
-(def ^{:dynamic true :private true} *available-mariadb-engine-list* "set of available engines for key-value tables" ["MEMORY", "InnoDB", "CSV"])
-;; (jdbc/query sql-connection "SHOW ENGINES" )
-;; (jdbc/execute! sql-connection "CREATE DATABASE `ekka-test` CHARACTER SET = 'utf8' COLLATE = 'utf8_general_ci'")
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; RULE FILTRATOR ;;;
@@ -259,7 +240,7 @@
        :allow-deleting? true
        :allow-linking? true})))
 
-;; (jdbc/query sql-connection (show-table-columns :user))
+;; (db/query (show-table-columns :user))
 ;; {:field "id", :type "bigint(20) unsigned", :null "NO", :key "PRI", :default nil, :extra "auto_increment"}
 ;; {:field "login", :type "varchar(100)", :null "NO", :key "", :default nil, :extra ""}
 ;; {:field "password", :type "varchar(100)", :null "NO", :key "", :default nil, :extra ""}
@@ -310,7 +291,7 @@
 
 (defn- get-meta-constrants [table]
   (let [table (name table)]
-    (let [a (-> (jdbc/query sql-connection (format "show create table %s" table))
+    (let [a (-> (db/query (format "show create table %s" table))
                 first seq second second (clojure.string/split #"\n"))]
       (if-let [c (->> a (map string/trim) (filter #(string/starts-with? % "CONSTRAINT")) first)]
         (parse-constrants c)))))
@@ -324,7 +305,7 @@
         ;; string convertation. In clojure level is really may sense
         create-table-sql-accesor (comp (keyword "create table") first)
         sql-create-table
-        (-> (jdbc/query sql-connection (format "show create table %s" table))
+        (-> (db/query (format "show create table %s" table))
             (create-table-sql-accesor)
             (string/split #"\n"))]
     (->> sql-create-table
@@ -388,11 +369,8 @@
 ;;                 :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
 ;;                                [{:id_point_of_sale :point_of_sale}]]))
 
-
-
-
 (defn- get-meta [table-name]
-  (let [all-columns  (jdbc/query sql-connection (show-table-columns table-name))
+  (let [all-columns  (db/query (show-table-columns table-name))
         all-constrants (get-meta-constrants table-name)
         not-id-columns (filter #(not= "id" (:field %)) all-columns)]
     {:id nil
@@ -404,24 +382,25 @@
   [table m]
   (letfn [(serialize [m] (clojure.core/update m :prop #(str %)))]
     (if (:id m)
-      (update table :set (serialize (dissoc m :id)) :where (= :id (:id m)))
+      (update table :set (serialize (dissoc m :id)) :where [:= :id (:id m)])
       (insert table :values (vals (serialize m))))))
 
 (defn show-tables []
-  (not-allowed-rules ["metatable" "meta*"] (map (comp second first) (jdbc/query sql-connection "SHOW TABLES"))))
+  (not-allowed-rules ["metatable" "meta*"] (map (comp second first) (db/query "SHOW TABLES"))))
 
 (defn do-create-meta []
   (for [table (show-tables)]
-    (let [meta (jdbc/query sql-connection (select :metadata :where [:= :table table]))]
+    (let [meta (db/query (select :metadata :where [:= :table table]))]
       (if (empty? meta)
-        (jdbc/execute! sql-connection (update-sql-by-id-template "metadata" (get-meta table)))))))
+        (db/exec (update-sql-by-id-template "metadata" (get-meta table)))))))
 
 (defn do-clear-meta [& body]
   {:pre [(every? string? body)]}
-  (jdbc/execute! sql-connection (delete :metadata)))
-
+  (db/exec (delete :metadata)))
+;; (do-clear-meta)
+;; (do-create-meta)
 (defn udpate-meta [metadata]
-  (jdbc/execute! sql-connection (update-sql-by-id-template "metadata" metadata)))
+  (db/exec (update-sql-by-id-template "metadata" metadata)))
 
 (def  ^:private --loaded-metadata (ref nil))
 (defn ^:private swapp-metadata [metadata-list]
@@ -435,7 +414,7 @@
   [& tables]
   (let [metadata
         (mapv (fn [meta] (clojure.core/update meta :prop read-string))
-              (jdbc/query sql-connection
+              (db/query
                           (if (empty? tables)
                             (select :metadata)
                             (select :metadata
@@ -487,8 +466,10 @@
     (doseq [m @meta-list
             :let [table (:table (second m))]]
       (--recur-make-references meta-list table))
+    @meta-list
     (doseq [[i metadata] @meta-list]
-      (jdbc/execute! sql-connection (update-sql-by-id-template "metadata" metadata)))))
+      (db/exec (update-sql-by-id-template "metadata" metadata)))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; TABLE-MAP VALIDATOR ;;;
@@ -1037,7 +1018,7 @@
            (do (println "Chanages not being applied, empty keywords list")
                original))
          (update-sql-by-id-template "metadata")
-         (jdbc/execute! sql-connection))))
+         (db/exec))))
 
 ;;;;;;;;;;;;;;;;
 ;;; On meta! ;;;
@@ -1077,11 +1058,11 @@
 ;; ----- From meta
 ;; => "CREATE TABLE IF NOT EXISTS `point_of_sale_group_links` (`id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT, `id_point_of_sale_group` BIGINT(20) UNSIGNED DEFAULT NULL, `id_point_of_sale` BIGINT(20) UNSIGNED DEFAULT NULL, PRIMARY KEY (`id`), KEY `point_of_sale_group_links17799` (`id_point_of_sale_group`), CONSTRAINT `point_of_sale_group_links17799` FOREIGN KEY (`id_point_of_sale_group`) REFERENCES `point_of_sale_group` (`id`) ON DELETE CASCADE ON UPDATE CASCADE, KEY `point_of_sale_group_links17800` (`id_point_of_sale`), CONSTRAINT `point_of_sale_group_links17800` FOREIGN KEY (`id_point_of_sale`) REFERENCES `point_of_sale` (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"
 
-
 (defn recur-find-path [ml]
   {:tbl ((comp :field :table :prop) ml)
    :ref (if ((comp :front-references :ref :table :prop) ml)
-          (mapv #(recur-find-path (first (getset! %))) ((comp :front-references :ref :table :prop) ml)))})
+          (mapv #(recur-find-path (first (getset! %)))
+                ((comp :front-references :ref :table :prop) ml)))})
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; METADATA BACKUP ;;;

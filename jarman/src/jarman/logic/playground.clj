@@ -1,34 +1,16 @@
 (ns jarman.logic.playground
   (:refer-clojure :exclude [update])
   (:require
+   [clojure.data :as data]
+   [clojure.string :as string]
+   [jarman.logic.connection :as db]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    [jarman.logic.metadata :as metadata]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
-   [jarman.tools.lang :refer :all]
-   [clojure.data :as data]
-   [clojure.string :as string]
-   [clojure.java.jdbc :as jdbc])
+   [jarman.tools.lang :refer :all])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
-
-
-(def ^:dynamic prod? false)
-
-;;;
-(def ^:dynamic sql-connection
-  (if prod?
-    {:dbtype "mysql" :host "trashpanda-team.ddns.net" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
-    {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"}))
-;; (case db-connection-resolver
-;;   :prod-remote {:dbtype "mysql" :host "trashpanda-team.ddns.net" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
-;;   :prod-local {:dbtype "mysql" :host "192.168.1.69" :port 3306 :dbname "jarman" :user "jarman" :password "dupa"}
-;;   :local {:dbtype "mysql" :host "127.0.0.1" :port 3306 :dbname "jarman" :user "root" :password "1234"})
-
-(defmacro s-exec [s]
-  `(jdbc/execute! sql-connection ~s))
-(defmacro s-query [s]
-  `(jdbc/query sql-connection ~s))
 
 (def available-scheme ["service_contract"
                        "seal"
@@ -116,8 +98,7 @@
   (create-table :point_of_sale_group_links
                 :columns [{:id_point_of_sale_group [:bigint-20-unsigned :default :null]}
                           {:id_point_of_sale [:bigint-20-unsigned :default :null]}]
-                :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} ;; {:delete :cascade :update :cascade}
-                                ]
+                :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
                                [{:id_point_of_sale :point_of_sale}]]))
 
 (def seal
@@ -151,15 +132,15 @@
 
 (defmacro create-tabels [& tables]
   `(do ~@(for [t tables]
-           `(jdbc/execute! sql-connection ~t))))
+           `(db/exec ~t))))
 (defmacro delete-tabels [& tables]
   `(do ~@(for [t tables]
-           `(jdbc/execute! sql-connection (drop-table (keyword '~t))))))
+           `(db/exec (drop-table (keyword '~t))))))
 
-;; (jdbc/execute! sql-connection point_of_sale_group_links)
+;; (db/exec point_of_sale_group_links)
 
 (defn create-scheme-one [scheme]
-  (eval `(jdbc/execute! sql-connection ~(symbol (string/join "/" ["jarman.schema-builder" (symbol scheme)])))))
+  (eval `(db/exec ~(symbol (string/join "/" ["jarman.schema-builder" (symbol scheme)])))))
 (defn create-scheme []
   (create-tabels metadata
                  documents
@@ -177,7 +158,7 @@
 
 
 (defn delete-scheme-one [scheme]
-  (eval `(jdbc/execute! sql-connection (drop-table ~(keyword scheme)))))
+  (eval `(db/exec (drop-table ~(keyword scheme)))))
 (defn delete-scheme []
   (delete-tabels service_contract
                  seal
@@ -197,7 +178,7 @@
   (delete-scheme)
   (create-scheme)
   (metadata/do-create-meta))
-
+(+ 1 2)
 (defn regenerate-metadata []
   (do (metadata/do-clear-meta)
       (metadata/do-create-meta)))
@@ -236,10 +217,10 @@
 (defn select-id-from [table]
   (select table :column [:id]))
 (defn generate-random-sql-from-col [table]
-  ;; [idX (jdbc/query sql-connection (select-id-from table))]
-  (fn [] (rand-nth (map :id (jdbc/query sql-connection (select-id-from table))))))
+  ;; [idX (db/query (select-id-from table))]
+  (fn [] (rand-nth (map :id (db/query (select-id-from table))))))
 
-(def sql-insert (partial jdbc/execute! sql-connection))
+(def sql-insert (partial db/exec))
 
 (def glogin (generate-random-from-list list-words))
 (def gfirstname (generate-random-from-list list-firstname))

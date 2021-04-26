@@ -6,10 +6,9 @@
             [jarman.config.init :refer :all]))
 
 ;;; Make backup of configurains
-
 (def ^:private backup-configuration @configuration)
 
-
+;;; accessors 
 (defn value-path
   "Description
     Macro is wrapper over get-in with interposing `:value` key in
@@ -65,6 +64,11 @@
   ([] (restore-backup-configuration)
    (swapp-all)))
 
+(defn swapp
+  "Description
+    Restore global configuraition dictionary"
+  ([] (swapp-all)))
+
 (defn store
   "Description
     Save configuration to configuration directory
@@ -96,8 +100,6 @@
      structures"
   ([] (spec/valid-segment @configuration))
   ([m] (spec/valid-segment m)))
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; CONFIGURATION-ACCESSORS ;;;

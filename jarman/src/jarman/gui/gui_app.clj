@@ -15,7 +15,7 @@
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
             ;; logics
-            [jarman.config.config-manager :refer :all]
+            [jarman.config.config-manager :as c]
             [jarman.gui.gui-tools :refer :all]
             [jarman.gui.gui-components :refer :all]
             [jarman.gui.gui-alerts-service :refer :all]
@@ -27,9 +27,10 @@
             [jarman.logic.metadata :as mmeta]
             [jarman.tools.lang :refer :all]
             [jarman.gui.gui-seed :refer :all]
-            [jarman.logic.view :refer :all]
+            ;; [jarman.logic.view :refer :all] 
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
-            [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]))
+
+            ))
 
 
 (def jarman-views-service (atom nil))
@@ -967,7 +968,7 @@
 
 (def confgen--component--tree
   (fn [changing-list start-key]
-    (let [param (fn [key] (get-in @configuration (join-vec start-key key)))
+    (let [param (fn [key] (c/get-in-segment (join-vec start-key key)))
           type? (fn [key] (= (param [:type]) key))
           comp? (fn [key] (= (param [:component]) key))
           name (if (nil? (param [:name])) (key-to-title (last start-key)) (str (param [:name])))]
@@ -997,14 +998,14 @@
 ;;   (sspec/valid-param map))
 
 
-(def configuration-copy (atom @configuration))
+(def configuration-copy (atom (c/get-in-segment [])))
 
 (def create-view--confgen
   "Description
      Join config generator parts and set view on right functional panel
    "
   (fn [start-key]
-    (let [map-part (get-in @configuration start-key)
+    (let [map-part (get-in (c/get-in-segment []) start-key)
           changing-list (atom {})]
       (cond (= (get-in map-part [:display]) :edit)
             (do
@@ -1018,24 +1019,23 @@
                        (label :text "Show changes" :listen [:mouse-clicked (fn [e]
                                                                              ;; save changes configuration
                                                                              (prn "Changes" @changing-list)
-                                                                             (reset! configuration-copy @configuration)
-                                                                             (doall
-                                                                              (map
-                                                                               (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
-                                                                                 (swap! configuration-copy (fn [changes] (assoc-in changes (join-vec (first (second new-value)) [:value]) (second (second new-value))))))
-                                                                               @changing-list))
-                                                                             (let [out (sspec/valid-segment @configuration-copy)]
-                                                                               (cond (get-in out [:valid?])
-                                                                                     (do
-                                                                                       (cond (get-in (save-all-cofiguration @configuration-copy) [:valid?])
-                                                                                             (do
-                                                                                               (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5)
-                                                                                               (make-backup-configuration)
-                                                                                               (iinit/swapp-configuration))
-                                                                                             :else (let [m (string/join "<br>" ["Cannot save changes"])]
-                                                                                                     (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5)))) ;; TODO action on faild save changes configuration
-                                                                                     :else (let [m (string/join "<br>" ["Cannot save changes" (get-in out [:output])])]
-                                                                                             (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5))))
+                                                                            ;;  (reset! configuration-copy (c/get-in-segment []))
+                                                                            ;;  (doall
+                                                                            ;;   (map
+                                                                            ;;    (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
+                                                                            ;;      (swap! configuration-copy (fn [changes] (assoc-in changes (join-vec (first (second new-value)) [:value]) (second (second new-value))))))
+                                                                            ;;    @changing-list))
+                                                                            ;;  (let [out (sspec/valid-segment @configuration-copy)]
+                                                                            ;;    (cond (get-in out [:valid?])
+                                                                            ;;          (do
+                                                                            ;;            (cond (get-in (save-all-cofiguration @configuration-copy) [:valid?])
+                                                                            ;;                  (do
+                                                                            ;;                    (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5)
+                                                                            ;;                    (c/store-and-back))
+                                                                            ;;                  :else (let [m (string/join "<br>" ["Cannot save changes"])]
+                                                                            ;;                          (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5)))) ;; TODO action on faild save changes configuration
+                                                                            ;;          :else (let [m (string/join "<br>" ["Cannot save changes" (get-in out [:output])])]
+                                                                            ;;                  (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5))))
                                                                                ;; (prn @configuration-copy)
                                                                              )])
                                    ;; Foreach on init values and create configuration blocks
@@ -1051,14 +1051,12 @@
 ;; └─────────────────────────────────────────┘
 
 
-;; (get-in @configuration [:init.edn])
-
 (def confgen-expand-btn--search-config-files
   "Description
      Search files and return paths
    "
   (fn [global-config path]
-    (let [root (get-in @global-config path)
+    (let [root (get-in global-config path)
           type (get-in root [:type])]
       (cond (= type :file) path
             (= type :directory) (confgen-expand-btn--search-config-files global-config (join-vec path [:value]))
@@ -1072,7 +1070,7 @@
   (fn [conf] (all-vec-to-floor
               (map (fn [option]
                      (confgen-expand-btn--search-config-files conf [(first option)]))
-                   @conf))))
+                   conf))))
 
 (def create-expand-btns--confgen
   "Discription
@@ -1082,11 +1080,11 @@
   (fn [] (button-expand
           (get-lang-btns :settings)
           (map (fn [path]
-                 (let [title (get-in @configuration (join-vec path [:name]))
+                 (let [title (c/get-in-segment (join-vec path [:name]))
                        view-id (last path)]
                    (button-expand-child title :onClick (fn [e]
                                                          (@jarman-views-service :set-view :view-id view-id :title title :component (create-view--confgen path))))))
-               (confgen-expand-btns--prepare-config-paths configuration)))))
+               (confgen-expand-btns--prepare-config-paths (c/get-in-segment []))))))
 
 
 
@@ -1169,7 +1167,8 @@
                                                            (button-expand-child "Test 2"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test2" :title "Test 2" :component (label :text "Test 2"))))
                                                            (button-expand-child "Test 3"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test3" :title "Test 3" :component (vertical-panel :items [(label :text "Test 3")]))))
                                                            (button-expand-child "DB View" :onClick (fn [e] (@jarman-views-service :set-view :view-id "Database" :title "Database" :component create-view--db-view)))
-                                                           (button-expand-child "Users table" :onClick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))])]
+                                                          ;;  (button-expand-child "Users table" :onClick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
+                                                           ])]
                                           [(create-expand-btns--confgen)])]
                         [(right-part-of-jarman-as-space-for-views-service []
                                                                           [])]])]))))
@@ -1188,7 +1187,7 @@
 (def run
   (fn []
     (do
-      (swapp-all)
+      (c/swapp)
       (try (.dispose (seesaw.core/to-frame @app)) (catch Exception e (println "Exception: " (.getMessage e))))
       (build :items (let [img-scale 40]
                       (list
@@ -1207,7 +1206,7 @@
                                                                                                                                            :else (do
                                                                                                                                                    (reset! work-mode :user-mode)
                                                                                                                                                    (@alert-manager :set {:header "Work mode" :body "Dev mode deactivated."} (message alert-manager) 5))))})
-                       (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 7 img-scale "Table Auto Generator" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil)))})
+                      ;;  (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 7 img-scale "Table Auto Generator" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil)))})
                        @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook)))))
 

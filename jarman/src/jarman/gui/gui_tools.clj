@@ -11,7 +11,8 @@
             [clojure.string :as string]
             [jarman.config.config-manager :as conf-man]
             [jarman.tools.lang :refer :all]
-            [jarman.config.init :as init]))
+            ;; [jarman.config.init :as init]
+            ))
 
 (import javax.swing.JLayeredPane)
 (import java.awt.Color)
@@ -126,20 +127,20 @@
             (if outlist outlist nil)))
 
 
-(defn theme-map [default & args]
-  (conf-man/get-in-value (vec (concat [:themes :current-theme] args)) default))
-(defn lang-configuration-struct-map [default & args]
-  (conf-man/get-in-segment (vec (concat [] args)) default))
-(defn lang-standart-struct-map [default & args]
-  (get-in @init/language (vec (concat [] args)) default))
+;; (defn theme-map [default & args]
+;;   (conf-man/get-in-value (vec (concat [:themes :current-theme] args)) default))
+;; (defn lang-configuration-struct-map [default & args]
+;;   (conf-man/get-in-segment (vec (concat [] args)) default))
+;; (defn lang-standart-struct-map [default & args]
+;;   (get-in @init/language (vec (concat [] args)) default))
 
-(def using-lang (conf-man/get-in-value [:init.edn :lang]))
-(def get-color (partial theme-map "#000" :color))
-(def get-frame (partial theme-map 1000 :frame))
-(def get-font (partial theme-map "Ubuntu" :font))
-(def get-lang (partial lang-configuration-struct-map "Unknown"))
-(def get-lang-btns (partial lang-standart-struct-map "Unknown" :ui :buttons))
-(def get-lang-alerts (partial lang-standart-struct-map "Unknown" :ui :alerts))
+;; (def using-lang (conf-man/get-in-value [:init.edn :lang]))
+;; (def get-color (partial theme-map "#000" :color))
+;; (def get-frame (partial theme-map 1000 :frame))
+;; (def get-font (partial theme-map "Ubuntu" :font))
+;; (def get-lang (partial lang-configuration-struct-map "Unknown"))
+;; (def get-lang-btns (partial lang-standart-struct-map "Unknown" :ui :buttons))
+;; (def get-lang-alerts (partial lang-standart-struct-map "Unknown" :ui :alerts))
 
 
 

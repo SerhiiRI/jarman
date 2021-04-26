@@ -6,8 +6,7 @@
         seesaw.util)
   (:require [jarman.resource-lib.icon-library :as icon]
             [jarman.tools.swing :as stool]
-            [jarman.gui.gui-tools :refer :all]
-            [jarman.config.config-manager :refer :all])
+            [jarman.gui.gui-tools :refer :all])
   (:import (java.awt Color)))
 
 

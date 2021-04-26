@@ -1,98 +1,110 @@
-{:name "Konfiguracja bazy danych",
+{:name "Data configuration",
+ :doc "This configuration page describe data binding and data environment of program. De-facto is a backend for jarman.",
  :display :edit,
  :type :file,
  :value
- {:Data-Configuration
-  {:name "Konfiguracja dat",
-   :type :block,
-   :display :edit,
+ {:datalist
+  {:name "Connection to database"
+   :doc "Section describe MySQL/MariaDB connection property need to JDBC connector. You must set right hostname(server ip adress and port), database name also application user and password"
+   :type :block
+   :display :none
    :value
-   {:data-format
-    {:name "Format",
-     :doc "Format w jakim data ma być przechowywana w bazie danych.",
-     :type :param,
+   {:localhost
+    {:name "Localhost",
+     :type :block,
      :display :edit,
-     :component :text,
-     :value "yyyy-MM-dd HH:mm:ss"}}},
-  :JDBC-mariadb-configuration-database
-  {:name "Konfiguruj JDBC połączenia z bazą SQL.",
-   :doc "Wpisz parametry konfiguracji lub zostaw puste pola",
-   :type :block,
-   :display :edit,
-   :value
-   {:dbtype
-    {:name "Typ połączenia",
-     :type :param,
+     :value
+     {:dbtype
+      {:name "Typ połączenia",
+       :type :param,
+       :display :none,
+       :component :text,
+       :value "mysql"},
+      :host
+      {:name "Database host",
+       :doc "Enter jarman SQL database server. It may be IP adress, or domain name, where your server in. Not to set port in this input."
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "127.0.0.1"},
+      :port
+      {:name "Port",
+       :doc "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'"
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "3306"},
+      :dbname
+      {:name "Database name",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "jarman"},
+      :user
+      {:name "User login",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "jarman"},
+      :password
+      {:name "User password",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "dupa"}}}
+    :tpanda
+    {:name "Raspberry",
+     :type :block,
      :display :edit,
-     :component :text,
-     :value "mysql"},
-    :host
-    {:name "Adres IP",
-     :type :param,
-     :display :edit,
-     :component :text,
-     :value "trashpanda-team.ddns.net"},
-    :port
-    {:name "Port",
-     :type :param,
-     :display :edit,
-     :component :text,
-     :value "3306"},
-    :dbname
-    {:name "Nazwa bazy",
-     :type :param,
-     :display :edit,
-     :component :text,
-     :value "jarman"},
-    :user
-    {:name "Użytkownik",
-     :type :param,
-     :display :edit,
-     :component :text,
-     :value "jarman"},
-    :password
-    {:name "Hasło",
-     :type :param,
-     :display :edit,
-     :component :text,
-     :value "dupa"}}},
-  :JDBC-sqlite-configuration
-  {:type :block,
-   :display :edit,
-   :name "Konfiguruj JDBC połączenia z bazą SQL.",
-   :doc
-   "Ogólnie są inne typy polącznia, na co trzeba by zrobić radiobuttona, no niestety nie mamy czasu na to, więc proszę podać konfigurację JDBC-sqlite-configuration, dla podpięcia do bazy danych",
-   :value
-   {:classname
-    {:name "JDBC",
-     :doc "Wybierz JDBC sterownika odpowiedzialnego za połączenie",
-     :type :param,
-     :display :edit,
-     :component :text,
-     :value "org.sqlite.JDBC"},
-    :subprotocol
-    {:name "Protokół",
-     :doc "Wybierz protokół komunikacji",
-     :type :param,
-     :display :edit,
-     :component :text,
-     :value "sqlite"},
-    :subname
-    {:name "Plik bazy",
-     :doc "wybierz plik baz danych",
-     :type :param,
-     :display :edit,
-     :component :text,
-     :value "hrtime-test"}}},
-  :pagination
-  {:name "Paginacja",
-   :type :block,
-   :display :edit,
-   :value
-   {:pagination-size
-    {:name "Rozmiar paginacji",
-     :doc "Ilość wierszy w tabeli przy jednym doładowaniu danych.",
-     :type :param,
-     :display :edit,
-     :component :textnumber,
-     :value 150}}}}}
+     :value
+     {:dbtype
+      {:name "Typ połączenia",
+       :type :param,
+       :display :none,
+       :component :text,
+       :value "mysql"},
+      :host
+      {:name "Database host",
+       :doc "Enter jarman SQL database server. It may be IP adress, or domain name, where your server in. Not to set port in this input."
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "trashpanda-team.ddns.net"},
+      :port
+      {:name "Port",
+       :doc "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'"
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "3306"},
+      :dbname
+      {:name "Database name",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "jarman"},
+      :user
+      {:name "User login",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "jarman"},
+      :password
+      {:name "User password",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "dupa"}}}
+    ;; :pagination
+    ;; {:name "Paginacja",
+    ;;  :type :block,
+    ;;  :display :none,
+    ;;  :value
+    ;;  {:pagination-size
+    ;;   {:name "Rozmiar paginacji",
+    ;;    :doc "Ilość wierszy w tabeli przy jednym doładowaniu danych.",
+    ;;    :type :param,
+    ;;    :display :edit,
+    ;;    :component :textnumber,
+    ;;    :value 150}}}
+    }}}}

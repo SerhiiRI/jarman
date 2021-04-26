@@ -13,8 +13,9 @@
             [jarman.tools.swing :as stool]
             [jarman.gui.gui-app :as app]
             [jarman.gui.gui-components :as components]
-            [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]))
-
+            [jarman.logic.connection :as c]
+            ;; [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]
+            ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; validation login ;;;

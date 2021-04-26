@@ -144,11 +144,12 @@
 (def delete-in-value (make-delete-in value-path))
 (def delete-in-segment (make-delete-in segment-path))
 
-;; (get-in-segment [:database.edn :Data-Configuration :data-format])
-;; (get-in-value [:database.edn :Data-Configuration :data-format])
-;; (delete-in-value [:database.edn :Data-Configuration :data-format])
-;; (assoc-in-value [:database.edn :Data-Configuration :data-format] "DUDUDU")
-;; (update-in-value [:database.edn :Data-Configuration :data-format] (fn [x] (format "<h1>%s</h1>" x)))
+;; (restore-config)
+;; (get-in-segment [:database.edn :datalist :localhost :dbtype])
+;; (get-in-value [:database.edn :datalist :localhost :dbtype])
+;; (delete-in-value [:database.edn :datalist :localhost :dbtype])
+;; (assoc-in-value [:database.edn :datalist :localhost :dbtype] "DUDUDU")
+;; (update-in-value [:database.edn :datalist :localhost :dbtype] (fn [x] (format "<h1>%s</h1>" x)))
 
 ;;; LANGUAGE ;;;
 

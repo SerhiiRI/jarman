@@ -9,18 +9,19 @@
            (java.sql SQLException)))
 
 
-(c/get-in-value [:database.edn :datalist])
-{:localhost {:name "Localhost", :type :block, :display :edit, :value {:dbtype {:name "Typ po³±czenia", :type :param, :display :none, :component :text, :value "mysql"}, :host {:name "Database host", :doc "Enter jarman SQL database server. It may be IP adress, or domain name, where your server in. Not to set port in this input.", :type :param, :display :edit, :component :text, :value "127.0.0.1"}, :port {:name "Port", :doc "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'", :type :param, :display :edit, :component :text, :value "3306"}, :dbname {:name "Database name", :type :param, :display :edit, :component :text, :value "jarman"}, :user {:name "User login", :type :param, :display :edit, :component :text, :value "jarman"}, :password {:name "User password", :type :param, :display :edit, :component :text, :value "dupa"}}}}
-(def ^{:dynamic true :private true} connection-conf :conf)
+;; (c/get-in-value [:database.edn :datalist])
+;; {:localhost {:name "Localhost", :type :block, :display :edit, :value {:dbtype {:name "Typ po³±czenia", :type :param, :display :none, :component :text, :value "mysql"}, :host {:name "Database host", :doc "Enter jarman SQL database server. It may be IP adress, or domain name, where your server in. Not to set port in this input.", :type :param, :display :edit, :component :text, :value "127.0.0.1"}, :port {:name "Port", :doc "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'", :type :param, :display :edit, :component :text, :value "3306"}, :dbname {:name "Database name", :type :param, :display :edit, :component :text, :value "jarman"}, :user {:name "User login", :type :param, :display :edit, :component :text, :value "jarman"}, :password {:name "User password", :type :param, :display :edit, :component :text, :value "dupa"}}}}
+(def ^{:dynamic true :private true} connection-conf :prod)
 (def ^{:dynamic true :private true} connection-list
   {:locallhost {:dbtype "mysql", :host "127.0.0.1", :port 3306, :dbname "jarman", :user "root", :password "1234"}
    :prod {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3306, :dbname "jarman", :user "jarman", :password "dupa"}
-   :conf {:dbtype (c/get-in-value [:database.edn :connector :dbtype])
-          :host (c/get-in-value [:database.edn :connector :host])
-          :port (Integer. (c/get-in-value [:database.edn :connector :port]))
-          :dbname (c/get-in-value [:database.edn :connector :dbname])
-          :user (c/get-in-value [:database.edn :connector :user])
-          :password (c/get-in-value [:database.edn :connector :password])}})
+   ;; :conf {:dbtype (c/get-in-value [:database.edn :connector :dbtype])
+   ;;        :host (c/get-in-value [:database.edn :connector :host])
+   ;;        :port (Integer. (c/get-in-value [:database.edn :connector :port]))
+   ;;        :dbname (c/get-in-value [:database.edn :connector :dbname])
+   ;;        :user (c/get-in-value [:database.edn :connector :user])
+   ;;        :password (c/get-in-value [:database.edn :connector :password])}
+   })
 
 (defn ^{:dynamic true :private true} connection []
   (connection-conf connection-list))

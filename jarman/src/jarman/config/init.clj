@@ -65,6 +65,7 @@
     ((directory (clojure.java.io/file config-root)) 
      (dir? #(.isDirectory %))
      (edn? #(string/ends-with? (.getName %) ".edn"))
+     (clj? #(string/ends-with? (.getName %) ".clj"))
      (path-file-pair #(vector (filepath-to-keypath (.getPath %)) %)))
     (vec
      (map path-file-pair
@@ -80,6 +81,14 @@
     (if-not (is-file-exist path)
       (EM (format "Configuration file '%s' not found" (str path)))
       (try (where ((cfg (clojure.edn/read-string (slurp (clojure.java.io/file path)))))
+                  (if (map? cfg) cfg (EM (format "File '%s' has some type or structural problems" (str path)))))
+           (catch Exception e (EM (format "Error parsing configuration file '%s'" (str path))))))))
+
+(defn load-stylesheet [path]
+  (let [EM (fn [s] (spec/error-block s))]
+    (if-not (is-file-exist path)
+      (EM (format "Configuration file '%s' not found" (str path)))
+      (try (where ((cfg (load-file (str (clojure.java.io/file path)))))
                   (if (map? cfg) cfg (EM (format "File '%s' has some type or structural problems" (str path)))))
            (catch Exception e (EM (format "Error parsing configuration file '%s'" (str path))))))))
 
@@ -125,6 +134,14 @@
     (FILE-LINK CURRENT-THEME do (partial format "%s.edn" ) do #(clojure.java.io/file *config-root* *config-themes* %)))
    (assoc-in M [:themes :value :current-theme] (load-config-file FILE-LINK))))
 
+;; (defn load-stylesheet [path]
+;;   (let [EM (fn [s] (spec/error-block s))]
+;;     (if-not (is-file-exist path)
+;;       (EM (format "Configuration file '%s' not found" (str path)))
+;;       (try (where ((cfg (load-file (str (clojure.java.io/file path)))))
+;;                   (if (map? cfg) cfg (EM (format "File '%s' has some type or structural problems" (str path)))))
+;;            (catch Exception e (EM (format "Error parsing configuration file '%s'" (str path))))))))
+
 (defn swapp-configuration
   ([] (swapp-configuration *config-files*))
   ([keyword-config-file-paths]
@@ -143,7 +160,7 @@
                (> L 1) (reduce #(DM %2 %1) (FM (last P) (load-config-file F) ) (butlast P))))))
      (cfg (load-current-theme cfg) otherwise cfg)
      ;; End-stage validators
-     (cfg (spec/valid-segment cfg)
+     (cfg (spec/valid-segment cfg) 
           do (fn [result] (if (:valid? result) cfg result))
           otherwise nil))
     (reset! configuration cfg)
@@ -153,7 +170,7 @@
   (if (nil? @configuration) (swapp-configuration))
   (if (not= false (:valid? @configuration))
     (where
-     ((LANG-KEYWORD (GETV @configuration [:init.edn :lang])))
+     ((LANG-KEYWORD (GETV @configuration [:init.edn :lang]) do first))
      (if LANG-KEYWORD
        (where
         ((IS-ERROR? (fn [languages] (= :error (:type languages))))

@@ -155,7 +155,7 @@
                   (vec (map (fn [x] (nth (seed-row) 2)) (range 10)))
                   (vec (map (fn [x] (last (seed-row))) (range 10))))))
 
-(def tb (atom (table :model (stable/table-model
+(def tb (atom (score/table-x :model (stable/table-model
                                :columns (cols)
                                :rows (rows)))))
 
@@ -237,10 +237,12 @@
            (scrollable table :size [900 :by 400]))]]))))
 
 ;; New jframe
+
+
+
 (do (doto (seesaw.core/frame
            :title "title"
            :undecorated? false
            :minimum-size [1000 :by 600]
            :content (mount-table @tb :block-columns-by-index [0] :block-columns-by-name ["Kolor"]))
       (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
-

@@ -14,17 +14,16 @@
    ;; Jarman toolkit
    [jarman.logic.connection :as db]
    [jarman.tools.lang :refer :all]
-   [jarman.gui.gui-tools :as gtool]
+   [jarman.gui.gui-tools :refer :all :as gtool]
    [jarman.resource-lib.icon-library :as ico]
    [jarman.tools.swing :as stool]
-   [jarman.gui.gui-components :as comps]
+   [jarman.gui.gui-components :refer :all :as gcomp]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    [jarman.logic.metadata :as mt])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
-
 
 (defn quick-path [table] 
   (mt/recur-find-path (first (mt/getset! (keyword table)))))
@@ -320,44 +319,65 @@
 ;;              (rest (line-seq reader))))))
 
 
+(defn input-text-with-label
+  [ & {:keys [title field size changes value editable? enable?]
+      :or {title ""
+          ;;  size [200 :by 70]
+           changes (atom {})
+           value ""
+           editable? true
+           enable? true
+           field nil}}]
+  (score/grid-panel :columns 1
+                    ;; :size size
+                    :items [(score/label
+                             :text title)
+                            (gcomp/input-text
+                            ;;  :border [10 10 0 0]
+                             :args [:editable? editable?
+                                    :enabled? enable?
+                                    :text value
+                                    :foreground (if editable? "#000" "#456fd1")
+                                    :listen [:mouse-entered (if editable? (fn [e]) hand-hover-on)
+                                             :caret-update (fn [e] 
+                                                             (if-not (nil? field)(swap! changes (fn [storage] (assoc storage (keyword field) (score/value (score/to-widget e)))))))]])]))
 
 
-(def build-insert-form
-  (fn [metadata & more-comps]
+;; (seesaw.dev/show-options (score/text))
+
+(def build-input-form
+  (fn [metadata & {:keys [model 
+                          more-comps]
+                   :or {model []
+                        more-comps [(score/label)]}}]
     (let [complete (atom {})
+          button-title (if (empty? model) "Insert new data" "Update record")
           vp (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"] 
                              :border (sborder/empty-border :thickness 10)
                              :items [[(score/label)]])
           components (concat
                       (map (fn [meta]
-                             (cond
-                               (= (first (get meta :component-type)) "i")
-                               (score/grid-panel :columns 1
-                                                 :size [200 :by 50]
-                                                 :items [(score/label
-                                                          :text (key-to-title (get meta :representation)))
-                                                         (comps/input-text
-                                                          :args [:listen [:caret-update
-                                                                          (fn [e]
-                                                                            (swap! complete (fn [storage] (assoc storage
-                                                                                                                 (keyword (get meta :field))
-                                                                                                                 (score/value (score/to-widget e))))))]])])
-                               (= (first (get meta :component-type)) "l")
-                               (do
-                                 (swap! complete (fn [storage] (assoc storage
-                                                                      (keyword (get meta :field))
-                                                                      (get meta :key-table))))
-                                 (score/grid-panel :columns 1
-                                                   :size [200 :by 50]
-                                                   :items [(score/label
-                                                            :text (key-to-title (get meta :representation))
-                                                            :enabled? false)
-                                                           (comps/input-text
-                                                            :args [:text (get meta :key-table)
-                                                                   :enabled? false])]))))
+                             (let [title (key-to-title (get meta :representation))
+                                   editable? (get meta :editable?)
+                                   field (get meta :field)]
+                               (cond
+                                 (= (first (get meta :component-type)) "i")
+                                 (do ;; Add input-text with label
+                                   (if (empty? model)
+                                     (do ;;Create insert input
+                                       (input-text-with-label :title title :field field :changes complete :editable? editable?))
+                                     (do ;; Create update input
+                                       (input-text-with-label :title title :field field :changes complete :editable? editable? :value (get-in model [(keyword (get meta :representation))])))))
+                                 (= (first (get meta :component-type)) "l")
+                                 (do ;; Add label with disable input-text
+                                   (swap! complete (fn [storage] (assoc storage
+                                                                        (keyword (get meta :field))
+                                                                        (get meta :key-table))))
+                                   (input-text-with-label :title title :changes complete :editable? false :value (get meta :key-table)))))
+                                 )
                            metadata)
                       [(score/label :border (sborder/empty-border :top 20))]
-                      [(comps/button-basic "Insert new data" (fn [e] (println "Insert data: " @complete)))
+                      [(gcomp/button-basic button-title (fn [e] (println "Data from form: " @complete)))
                       ;;  (score/label :text "Insert" :listen [:mouse-clicked (fn [e]
                       ;;                                                        (println "Insert " @complete)
                       ;;                                                             ;;  (println "Map" (merge template-map @complete)
@@ -366,35 +386,55 @@
                       ;;                                                             ;;           ;;   @complete))
                       ;;                                                             ;;           )
                       ;;                                                        )])
-                       ]more-comps)]
+                       more-comps])]
+      ;; (println "Model: " model)
       (score/config! vp :items (gtool/join-mig-items components)))))
 
+
+
+(defn export-expand-panel
+  []
+  (score/flow-panel
+   :border (sborder/compound-border (sborder/empty-border :top 5)
+                                    (sborder/line-border :top 2 :color "#999")
+                                    (sborder/empty-border :top 50))
+   :items [(gcomp/button-expand "Export" (smig/mig-panel
+                                          :constraints ["wrap 1" "5px[grow, fill]5px" "10px[fill]0px"]
+                                          :border (sborder/line-border :left 2 :right 2 :bottom 2 :color "#fff")
+                                          :items [[(score/horizontal-panel
+                                                    :items [(gcomp/input-text :args [:text "\\path\\to\\export"])
+                                                            (score/label :text "[-]"
+                                                                         :background "#abc"
+                                                                         :border (sborder/empty-border :thickness 5)
+                                                                         :listen [:mouse-clicked (fn [e] (println "Export clicked"))])])]
+                                                  [(score/checkbox :text "ODT" :selected? true)]
+                                                  [(score/checkbox :text "DOCX")]
+                                                  [(gcomp/button-basic "Service raport" (fn [e]))]
+                                                  [(score/label)]])
+                                :background "#fff"
+                                :min-height 220
+                                :border (sborder/compound-border (sborder/empty-border :left 10 :right 10)))]))
+
+
+;; (:->col-meta user-view)
 
 (def auto-builder--table-view
   (fn [controller]
     (let [controller (if (nil? controller) user-view controller)
           ;; ico-open (stool/image-scale ico/plus-64-png 28)
           ;; ico-close (stool/image-scale ico/minus-grey-64-png 28)
-          hidden-comp (atom (score/label))
-          expand-export (score/flow-panel 
-                         :border (sborder/compound-border (sborder/empty-border :top 5) 
-                                                          (sborder/line-border :top 2 :color "#999")
-                                                          (sborder/empty-border :top 50))
-                         :items [(comps/button-expand "Export" (smig/mig-panel
-                                                                :constraints ["wrap 1" "5px[grow, fill]5px" "10px[fill]0px"]
-                                                                :border (sborder/line-border :left 2 :right 2 :bottom 2 :color "#fff")
-                                                                :items [[(score/horizontal-panel
-                                                                          :items [(comps/input-text :args [:text "\\path\\to\\export"])
-                                                                                  (score/label :text "[-]" :background "#abc" :border (sborder/empty-border :thickness 5))])]
-                                                                        [(score/checkbox :text "ODT" :selected? true)]
-                                                                        [(score/checkbox :text "DOCX")]
-                                                                        [(comps/button-basic "Service raport" (fn [e]))]
-                                                                        [(score/label)]])
-                                                      :background "#fff"
-                                                      :min-height 220
-                                                      :border (sborder/compound-border (sborder/empty-border :left 10 :right 10)))])
-          insert-form (build-insert-form (:->col-meta controller) [expand-export])
-          form-space (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"])
+          hidden-comp (atom nil)
+          expand-export (fn [](export-expand-panel))
+          insert-form (fn [](build-input-form (:->col-meta controller) :more-comps [(expand-export)]))
+          form-space-open ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
+          form-space-hide ["" "0px[grow, fill]0px" "0px[grow, fill]0px"]
+          view-layout-open ["" "0px[250:, fill]0px[grow, fill]10px" "0px[grow, fill]0px"]
+          view-layout-hide ["" "0px[fill]0px[grow, fill]0px" "0px[grow, fill]0px"]
+          form-space (smig/mig-panel :constraints form-space-open)
+          view-layout (smig/mig-panel
+                       :constraints ["" "0px[250:, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
+          ;;------------
+
           hide-show (score/label :text "<<"
                                  :background "#bbb"
                                  :foreground "#fff"
@@ -403,57 +443,50 @@
                                  :listen [:mouse-entered gtool/hand-hover-on])
           ;; default-bg-color (score/config hide-show :background)
           form-space (score/config! form-space
-                                    :items [[hide-show] [insert-form]])
+                                    :items [[hide-show] [(insert-form)]])
           hide-show (score/config! hide-show :listen [:mouse-clicked (fn [e]
-                                                                       (let [inside (count (sutil/children form-space))]
-                                                                  ;;  (println "Inside " inside)
-                                                                         (cond
-                                                                           (= 1 inside)
+                                                                       (let [inside (sutil/children form-space)]
+                                                                         (if (nil? @hidden-comp)
                                                                            (do
-                                                                             (score/config! form-space :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"])
-                                                                             (score/config! hide-show :text "<<" :font (gtool/getFont 16 :bold))
-                                                                             (.add form-space @hidden-comp)
-                                                                             (.revalidate form-space))
-                                                                           (= 2 inside)
+                                                                             (score/config! view-layout :constraints view-layout-hide)
+                                                                             (score/config! form-space :constraints form-space-hide)
+                                                                             (score/config! hide-show :text "..." :valign :top :halign :center)
+                                                                             ;;--------
+                                                                             (reset! hidden-comp (drop 1 inside))
+                                                                             (doall (map #(.remove form-space %) (reverse (drop 1 (range (count inside))))))
+                                                                             (.revalidate view-layout))
                                                                            (do
-                                                                             (score/config! form-space :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"])
-                                                                             (score/config! hide-show :text "..." :valign :top)
-                                                                             (reset! hidden-comp (second (sutil/children form-space)))
-                                                                             (.remove form-space 1)
-                                                                             (.revalidate form-space)))))])
-          update-form (smig/mig-panel :constraints ["" "[200, fill]" "[grow, fill]"]
-                                      :items [[(comps/button-basic "Update Test"
-                                                                   (fn [e]
-                                                                     (println "Update: Twoja stara")
-                                                                     (reset! hidden-comp insert-form)
-                                                                     (.remove form-space 1)
-                                                                     (.add form-space @hidden-comp)
-                                                                     (.revalidate form-space)))]])
-          ;; table ((:->table controller) (fn [model] (score/return-from-dialog form-panel model)))
-          table ((:->table controller) (fn [model] (score/config! form-space :items [[hide-show]
-                                                                                     [update-form]])))
-          view-layout (smig/mig-panel
-                       :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[grow, fill]0px"]
-                       :items [[form-space]
+                                                                             (score/config! view-layout :constraints view-layout-open)
+                                                                             (score/config! form-space :constraints form-space-open)
+                                                                             (score/config! hide-show :text "<<" :halign :left :font (gtool/getFont 16 :bold))
+                                                                             ;;---------
+                                                                             (doall (map #(.add form-space %) @hidden-comp))
+                                                                             (reset! hidden-comp nil)
+                                                                             (.revalidate view-layout)))))])
+          back-to-insert (fn [](gcomp/button-basic "Return to Insert Form" (fn [e]
+                                                                             (do
+                                                                               (.remove form-space 1)
+                                                                               (.add form-space (insert-form))
+                                                                               (.repaint form-space)
+                                                                               (.revalidate form-space)))))
+          update-form (fn [update] (do (score/config! view-layout :constraints view-layout-open)
+                                       (score/config! form-space :constraints form-space-open)
+                                       (score/config! hide-show :text "<<" :halign :left :font (gtool/getFont 16 :bold))
+                                       (if (nil? hidden-comp)
+                                         (do
+                                           (.add form-space (update)))
+                                         (do
+                                           (reset! hidden-comp nil)
+                                           (doall (map #(.remove form-space %) (reverse (drop 1 (range (count (sutil/children form-space)))))))
+                                           (.add form-space (update))))
+                                       (.revalidate view-layout)))
+          table ((:->table controller) (fn [model] (update-form (fn [] (build-input-form (:->col-meta controller) :model model :more-comps [(back-to-insert) (expand-export)])))))
+          view-layout (score/config! view-layout
+                       :items [[(gcomp/scrollbox form-space :hscroll :never)]
                                [table]])]
       view-layout)))
 
 ;; (@jarman.gui.gui-app/startup)
-
-;; (let [my-frame (-> (doto (score/frame
-;;                           :title "test"
-;;                           :size [1000 :by 800]
-;;                           :content
-;;                           (auto-builder--table-view user-view))
-;;                      (.setLocationRelativeTo nil) score/pack! score/show!))]
-;;   (score/config! my-frame :size [1000 :by 800]))
-
-
-
-
-
-
-
 
 
 
@@ -513,3 +546,16 @@
 ;;                                        :mouse-clicked (fn [e]
 ;;                                                         (seesaw.core/config! text-label :text "<- empty ->"))])]])]
 ;;     (seesaw.core/grid-panel :rows 1 :columns 3 :items [dialog-label])))
+
+
+
+
+;; (let [my-frame (-> (doto (score/frame
+;;                           :title "test"
+;;                           :size [1000 :by 800]
+;;                           :content
+;;                           (auto-builder--table-view user-view))
+;;                      (.setLocationRelativeTo nil) score/pack! score/show!))]
+;;   (score/config! my-frame :size [1000 :by 800]))
+
+

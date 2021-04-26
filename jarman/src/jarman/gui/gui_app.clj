@@ -27,6 +27,7 @@
             [jarman.logic.metadata :as mmeta]
             [jarman.tools.lang :refer :all]
             [jarman.gui.gui-seed :refer :all]
+            [jarman.logic.view :refer :all]
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
             [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]))
 
@@ -613,11 +614,11 @@
                         [(vec (let [table-property-count (count table-property)
                                     txtsize [150 :by 25]]
                                 [(mig-panel
-                                  :constraints ["wrap 3" "0px[32%]0px" "0px[fill]0px"]
+                                  :constraints ["wrap 3" "0px[32%, fill]0px" "0px[fill]0px"]
                                   :items (vec (for [index (range table-property-count)]
                                                 [(mig-panel
                                                   :border (line-border :left 4 :color "#ccc")
-                                                  :constraints ["" "10px[100:]10px" "0px[fill]10px"]
+                                                  :constraints ["" "10px[100:]0px[grow, fill]10px" "0px[fill]10px"]
                                                   :items [[(table-editor--element--table-parameter-name  table-property index)]
                                                           [(table-editor--element--table-parameter-value mode changing-list table-property tab-value-path index txtsize)]])])))]))]
                     ;; Columns properties
@@ -837,6 +838,7 @@
      :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px[grow, fill]0px"]
      :items [[(db-viewer--component--menu-bar)]
              [(scrollable JLP :id :JLP-DB-Visualizer :border nil)]])))
+
 
 ;; ┌─────────────────────────┐
 ;; │                         │
@@ -1155,8 +1157,8 @@
        :id :rebound-layer
        :items [(mig-panel
                 :constraints [""
-                              "0px[200]0px[grow, fill]10px"
-                              "0px[grow, fill]35px"]
+                              "0px[200]0px[grow, fill]15px"
+                              "0px[grow, fill]38px"]
                 :border (line-border :left margin-left :color bg-color)
                 :items [;; [(label-fn :background "#eee" :size [50 :by 50])]
                         [(mig-app-left-f  [(button-expand "Alerty"
@@ -1167,7 +1169,7 @@
                                                            (button-expand-child "Test 2"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test2" :title "Test 2" :component (label :text "Test 2"))))
                                                            (button-expand-child "Test 3"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test3" :title "Test 3" :component (vertical-panel :items [(label :text "Test 3")]))))
                                                            (button-expand-child "DB View" :onClick (fn [e] (@jarman-views-service :set-view :view-id "Database" :title "Database" :component create-view--db-view)))
-                                                           (button-expand-child "Users table" :onClick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :component (jarman.logic.view/auto-builder--table-view nil))))])]
+                                                           (button-expand-child "Users table" :onClick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))])]
                                           [(create-expand-btns--confgen)])]
                         [(right-part-of-jarman-as-space-for-views-service []
                                                                           [])]])]))))
@@ -1205,7 +1207,7 @@
                                                                                                                                            :else (do
                                                                                                                                                    (reset! work-mode :user-mode)
                                                                                                                                                    (@alert-manager :set {:header "Work mode" :body "Dev mode deactivated."} (message alert-manager) 5))))})
-                       (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 7 img-scale "Table Auto Generator" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :component (jarman.logic.view/auto-builder--table-view nil)))})
+                       (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 7 img-scale "Table Auto Generator" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil)))})
                        @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook)))))
 

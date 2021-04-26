@@ -260,21 +260,3 @@
   {:name name :doc doc :display :edit :type :block :value value})
 (defn spec-make-param [name doc component display value]
   {:name name :doc doc :type :param :component component :display display :value value})
-
-;;; USER ;;;
-
-(defn theme-map [default & args] 
-  (get-in-value (vec(concat [:themes :current-theme] args)) default))
-(defn lang-configuration-struct-map [default & args] 
-  (get-in-segment (vec(concat [] args)) default))
-(defn lang-standart-struct-map [default & args] 
-  (get-in @language (vec(concat [] args)) default))
-
-(def using-lang (get-in-value [:init.edn :lang]))
-(def get-color (partial theme-map "#000" :color))
-(def get-frame (partial theme-map 1000 :frame))
-(def get-font (partial theme-map "Ubuntu" :font))
-(def get-lang (partial lang-configuration-struct-map "Unknown"))
-(def get-lang-btns (partial lang-standart-struct-map "Unknown" :ui :buttons))
-(def get-lang-alerts (partial lang-standart-struct-map "Unknown" :ui :alerts))
-

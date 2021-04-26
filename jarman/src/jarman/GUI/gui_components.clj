@@ -18,6 +18,12 @@
 ;; │                    │________________________________________
 ;; └────────────────────┘                                       V
 
+(defn scrollbox
+  [component & args]
+  (let [scr (apply scrollable component :border nil args)]  ;; speed up scrolling
+    (.setUnitIncrement (.getVerticalScrollBar scr) 20)
+    scr))
+
 (defmacro textarea
   "Description
      TextArea with word wrap
@@ -52,19 +58,23 @@
     (input-text :placeholder \"Login\" :style [:halign :center])
  "
   (fn [& {:keys [placeholder
+                 border
+                 font-size
                  args]
           :or   {placeholder ""
+                 font-size 14
+                 border [10 10 5 5]
                  args []}}]
     (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
           fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))]
       (apply text :text placeholder
-             :font (getFont 14)
+             :font (getFont font-size)
              :background (get-color :background :input)
-             :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
+             :border (compound-border (empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
                                       (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
              :user-data {:placeholder placeholder :value "" :edit? false :type :input}
              :listen [:focus-gained (fn [e]
-                                      (cond (= (value e) placeholder)    (config! e :text ""))
+                                      (cond (= (value e) placeholder) (config! e :text ""))
                                       (config! e :user-data (fn-assoc e :edit? true)))
                       :focus-lost   (fn [e]
                                       (cond (= (value e) "") (config! e :text placeholder))
@@ -177,7 +187,7 @@
                                                  (doall (map #(.add mig %) inside-btns))
                                                  (.revalidate mig))
                                                (do ;;  Remove inside buttons form mig without expand button
-                                                 (config! icon :icon ico-hover)
+                                                 (config! icon :icon ico)
                                                  (doall (map #(.remove mig %) (reverse (drop 1 (range (count (children mig)))))))
                                                  (.revalidate mig))))
                                            )])))))

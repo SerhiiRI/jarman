@@ -4,7 +4,9 @@
         seesaw.dev
         seesaw.border)
   (:require [jarman.resource-lib.icon-library :as icon]
-            [jarman.tools.swing :as stool]))
+            [jarman.tools.swing :as stool]
+            [jarman.gui.gui-components :refer :all :as gcomp]
+            ))
 
 ;; ┌───────────────────────────┐
 ;; │                           │
@@ -26,6 +28,7 @@
           vsize (last size)]
       (horizontal-panel
        :background bg-color
+       :border (line-border :bottom 1 :color "#eee")
        :user-data {:title title :view-id view-id}
        :items [(label ;; tab title
                 :text title
@@ -68,9 +71,10 @@
       (do
         (let [view-data (second (first packed-view))
               component (get view-data :component)
-              height    (get view-data :pref-height)]
-          (config! (service-data :view-space) :items [(scrollable component :border nil)])
-          (config! component :size [300 :by height])
+              height    (get view-data :pref-height)
+              scrollable? (get view-data :scrollable?)]
+          (config! (service-data :view-space) :items (if scrollable? [(gcomp/scrollbox component)] [component]))
+          (if scrollable? (config! component :size [300 :by height]))
           )))))
 
 (def switch-tab
@@ -121,7 +125,7 @@
      Next view will be added to @views with tab to open tabs bar.
    "
   (fn [service-data]
-    (fn [view-id title component pref-height]
+    (fn [view-id title component scrollable? pref-height]
       (if (contains? @(service-data :views-storage) view-id) ;; Swicht tab if exist in views-storage
         (let [view {view-id (get @(service-data :views-storage) view-id)}
               tabs (config (service-data :bar-space) :items)
@@ -137,6 +141,7 @@
         (let [view {view-id {:component component ;; Add new view to views-storage and switch to new view
                              :view-id view-id
                              :title title
+                             :scrollable? scrollable?
                              :pref-height pref-height}}]
           (swap! (service-data :views-storage) (fn [storage] (merge storage view)))
           (let [view-id (first (first view))
@@ -172,7 +177,8 @@
       (def my-serv (new-view-service bar-space views-space)) => nowy serwis widoków
       (my-serv :set-view :view-id \"test1\" :title \"Test 1\" :component (label :text \"Test 1\"))
    "
-  [bar-space view-space & {:keys [onClose] :or {onClose (fn [] true)}}]
+  [bar-space view-space & {:keys [onClose]
+                           :or {onClose (fn [] true)}}]
   (let [atom--views-storage   (atom {})
         service-data (fn [key] (get {:views-storage atom--views-storage
                                      :view-space   view-space
@@ -185,17 +191,24 @@
     (fn [action & {:keys [view-id
                           title
                           component
-                          pref-height]
+                          pref-height
+                          scrollable?]
                    :or {view-id :none
                         title   ""
                         component nil
-                        pref-height 0}}]
+                        pref-height 0
+                        scrollable? true}}]
       (cond
-        (= action :set-view)        ((set--view service-data) (if (keyword? view-id) view-id (keyword view-id)) title component (cond (and (= 0 pref-height) (nil? component))
-                                                                                                                                      0
-                                                                                                                                      (< 0 pref-height) (pref-height)
-                                                                                                                                      :else (do
-                                                                                                                                              (.getHeight (config component :preferred-size)))))  ;; return f which need args for new view
+        (= action :set-view)        ((set--view service-data) 
+                                     (if (keyword? view-id) view-id (keyword view-id)) 
+                                     title 
+                                     component
+                                     scrollable?
+                                     (cond (and (= 0 pref-height) (nil? component))
+                                           0
+                                           (< 0 pref-height) (pref-height)
+                                           :else (do
+                                                   (.getHeight (config component :preferred-size)))))  ;; return f which need args for new view
         (= action :get-view)        ((get-view atom--views-storage) view-id)
         (= action :get-component)   (get-in @atom--views-storage [view-id :component])
         (= action :exist?)          ((exist atom--views-storage) view-id)

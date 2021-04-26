@@ -27,6 +27,7 @@
             [jarman.logic.metadata :as mmeta]
             [jarman.tools.lang :refer :all]
             [jarman.gui.gui-seed :refer :all]
+            [jarman.logic.view :refer :all]
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
             [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]))
 
@@ -1168,7 +1169,7 @@
                                                            (button-expand-child "Test 2"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test2" :title "Test 2" :component (label :text "Test 2"))))
                                                            (button-expand-child "Test 3"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test3" :title "Test 3" :component (vertical-panel :items [(label :text "Test 3")]))))
                                                            (button-expand-child "DB View" :onClick (fn [e] (@jarman-views-service :set-view :view-id "Database" :title "Database" :component create-view--db-view)))
-                                                           (button-expand-child "Users table" :onClick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :component (jarman.logic.view/auto-builder--table-view nil))))])]
+                                                           (button-expand-child "Users table" :onClick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))])]
                                           [(create-expand-btns--confgen)])]
                         [(right-part-of-jarman-as-space-for-views-service []
                                                                           [])]])]))))
@@ -1206,7 +1207,7 @@
                                                                                                                                            :else (do
                                                                                                                                                    (reset! work-mode :user-mode)
                                                                                                                                                    (@alert-manager :set {:header "Work mode" :body "Dev mode deactivated."} (message alert-manager) 5))))})
-                       (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 7 img-scale "Table Auto Generator" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :component (jarman.logic.view/auto-builder--table-view nil)))})
+                       (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 7 img-scale "Table Auto Generator" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil)))})
                        @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook)))))
 

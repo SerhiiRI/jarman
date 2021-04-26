@@ -18,6 +18,12 @@
 ;; │                    │________________________________________
 ;; └────────────────────┘                                       V
 
+(defn scrollbox
+  [component & args]
+  (let [scr (apply scrollable component :border nil args)]  ;; speed up scrolling
+    (.setUnitIncrement (.getVerticalScrollBar scr) 20)
+    scr))
+
 (defmacro textarea
   "Description
      TextArea with word wrap

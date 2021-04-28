@@ -55,7 +55,7 @@
     to point when app was started"
   ([] (reset! configuration backup-configuration)))
 
-(defn restore-backup
+(defn restore-from-startup-backup
   "Description
     Restore global configuraition dictionary,
     if you do something with original
@@ -100,6 +100,7 @@
      structures"
   ([] (spec/valid-segment @configuration))
   ([m] (spec/valid-segment m)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; CONFIGURATION-ACCESSORS ;;;
@@ -150,7 +151,73 @@
 ;; (assoc-in-value [:database.edn :Data-Configuration :data-format] "DUDUDU")
 ;; (update-in-value [:database.edn :Data-Configuration :data-format] (fn [x] (format "<h1>%s</h1>" x)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mapping/Coverting ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn- --mapper-cfg-struct [datalist-segment]
+  (->> datalist-segment
+       (map (fn [[k v]]
+              (if (= (:type v) :param)
+                {k (:value v)}
+                {k (--mapper-cfg-struct (:value v))})))
+       (reduce into)))
+
+(defn mapping-from-segment
+  "Description
+    Get simple map key-value scheme from jarman
+    configuration notation, omiting all parameters
+    and Segment strcuture. Reduct block-value-block-value
+    paths to value-value notation
+    For example
+     {:localhost
+      {:name \"Local.. :type :block, ...
+       :value
+       {:dbtype {:name \"Typ po³±czenia\", :type :param,
+                 :display :none, :component :text,
+                 :value \"ALALALALALA\"},
+        :host ...
+    Be converted to
+     {:localhost
+      {:dbtype \"ALALALALALA\"
+       :host \"127.0.0.1\"...}
+      :production
+      {...
+
+    See
+     `mapping-to-segment` function save this simpliced
+      configuration to real configuration structure"
+  [ks]
+  {:pre [(vector? ks)]}
+  (--mapper-cfg-struct (get-in-value ks)))
+
+(defn mapping-to-segment
+  "Description
+    Save to configuration strucutre to real configuration
+    by do demapping short-wroted parameter to whole keys
+    For exmaple mapped(compressed) structure
+     {:localhost
+      {:dbtype \"ALALALALALA\"
+       :host \"127.0.0.1\"...}
+      :production
+      {...
+    Will be set to full lenght keys
+     {:localhost
+      {:name \"Local.. :type :block, ...
+       :value
+       {:dbtype {:name \"Typ po³±czenia\", :type :param,
+                 :display :none, :component :text,
+                 :value \"ALALALALALA\"},
+        :host ..."
+  [ks mapped-cfg]
+  (doall (map #(assoc-in-value
+                (join-vec ks %)
+                (get-in mapped-cfg %)) 
+              (key-paths mapped-cfg))))
+
+;;;;;;;;;;;;;;;;
 ;;; LANGUAGE ;;;
+;;;;;;;;;;;;;;;;
 
 (defn make-lang-get-in [getter]
   (fn 
@@ -256,7 +323,7 @@
   {:pre [(string? dir-name)]} {:name dir-name :display :edit :type :directory :value value})
 (defn spec-file-block [file-name value]
   {:pre [(string? file-name)]} {:name file-name :display :edit :type :file :value value})
-(defn spec-make-segment [name doc display value]
-  {:name name :doc doc :display :edit :type :block :value value})
+(defn spec-make-segment [name doc display type value]
+  {:name name :doc doc :display display :type type :value value})
 (defn spec-make-param [name doc component display value]
   {:name name :doc doc :type :param :component component :display display :value value})

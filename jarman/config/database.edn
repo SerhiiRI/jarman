@@ -9,7 +9,7 @@
    :type :block
    :display :none
    :value
-   {:localhost
+   {:jarman--127_0_0_1
     {:name "Localhost",
      :type :block,
      :display :edit,
@@ -52,7 +52,7 @@
        :display :edit,
        :component :text,
        :value "dupa"}}}
-    :tpanda
+    :jarman--trashpanda-team_ddns_net
     {:name "Raspberry",
      :type :block,
      :display :edit,

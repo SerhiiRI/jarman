@@ -207,24 +207,33 @@
                      (text v-user)
                      (text v-password))))))
 
-(defn config-generator-fields []
-  (let [dbtype-inp (confgen-input (get-element-map :dbtype :value))
-        host-inp (confgen-input (get-element-map :host :value))
-        port-inp (confgen-input (get-element-map :port :value))
-        dbname-inp (confgen-input (get-element-map :dbname :value))
-        user-inp (confgen-input (get-element-map :user :value))
-        password-inp (confgen-input (get-element-map :password :value))
+(:value
+ (:dbtype (:value (:jarman--127_0_0_1 (c/datalist-get)))
+          ))
+
+(:jarman--127_0_0_1 (c/datalist-get))
+
+
+(defn config-generator-fields [key-title]
+  (let [data (key-title (c/datalist-get))
+        dbtype-inp (confgen-input (:value (:dbtype (:value data))))
+        host-inp (confgen-input (:value (:host (:value data))))
+        port-inp (confgen-input (:value (:port (:value data))))
+        dbname-inp (confgen-input (:value (:dbname (:value data))))
+        user-inp (confgen-input (:value (:user (:data))))
+        password-inp (confgen-input (:value (:password (:value data))))
         err-lbl (label :text "" :foreground blue-green-color :font (myFont 14))]
+    (println key-title)
     (mig-panel
      :constraints ["wrap 1" "[grow, center]" "20px[]20px"]
      :items [
-             [(confgen-header (get-name-map :name))]
-             [(grid-panel :columns 1 :items [(confgen-title (get-element-map :dbtype :name)) dbtype-inp])]
-             [(grid-panel :columns 1 :items [(confgen-title (get-element-map :host :name)) host-inp])]
-             [(grid-panel :columns 1 :items [(confgen-title (get-element-map :port :name)) port-inp])]
-             [(grid-panel :columns 1 :items [(confgen-title (get-element-map :dbname :name)) dbname-inp])]
-             [(grid-panel :columns 1 :items [(confgen-title (get-element-map :user :name)) user-inp])]
-             [(grid-panel :columns 1 :items [(confgen-title (get-element-map :password :name)) password-inp])]
+           ;;  [(confgen-header (:name data))]
+             [(grid-panel :columns 1 :items [(confgen-title (:name (:dbtype (:value data)))) dbtype-inp])]
+             [(grid-panel :columns 1 :items [(confgen-title (:name (:host (:value data)))) host-inp])]
+             [(grid-panel :columns 1 :items [(confgen-title (:name (:port (:value data)))) port-inp])]
+             [(grid-panel :columns 1 :items [(confgen-title (:name (:dbname (:value data)))) dbname-inp])]
+             [(grid-panel :columns 1 :items [(confgen-title (:name (:user (:value data)))) user-inp])]
+             [(grid-panel :columns 1 :items [(confgen-title (:name (:password (:value data)))) password-inp])]
              [(label :text "CONNECT" :background "#fff"
                      :class :css1
                      :border (empty-border :top 10 :right 10 :left 10 :bottom 10)
@@ -234,7 +243,7 @@
                                                                       dbname-inp user-inp password-inp err-lbl))])]
               [err-lbl]])))
 
-(def ^:private config-generator-panel
+(defn config-generator-panel [key-title]
   (let [info some-text
         faq [{:q "Why i saw this error"
               :a "Because your program has trouble"}
@@ -255,9 +264,9 @@
                           :items [
                                   [(label :text (htmling "<h2>About</h2>")
                                           :foreground blue-green-color :font (myFont 14)) "align l"]
-                                  [(label :text (get-name-map :doc) :font (myFont 14) :foreground dark-grey-color)
+                                  [(label :text "some-text" :font (myFont 14) :foreground dark-grey-color)
                                    "align l"]
-                                  [(config-generator-fields) "align l"]])]
+                                  [(config-generator-fields key-title) "align l"]])]
                  (doall (map (fn [x] (.add mig x "align l")) (if (= faq nil) nil (asks-panel faq))))
                  (.repaint mig) mig)]])
      :hscroll :never)))
@@ -333,7 +342,7 @@
 (import '(javax.swing JScrollPane))
 (import '(java.awt Dimension))
 
-
+;;(c/swapp)
 (defn db-connect-error []
   [[(vertical-panel
               :background "#fff"
@@ -343,16 +352,27 @@
                                   :border (empty-border :top 5 :left 5 :bottom 5)
                                   :preferred-size  [20 :by 20]))) :north]])
 
+(defn keys-generator [dbname title]
+  (keyword (string/replace (str dbname "--" title) #"\." "_")))
 
-(defn label-to-config [title dbname]
+(defn get-values [some-key]
+  (string/split (string/replace (name some-key) #"\_" ".") #"\--" ))
+
+(defn label-to-config [dbname title key-title]
   (let [icon-conf
         (label :icon (stool/image-scale icon/settings-64-png 40)
                :border (compound-border (empty-border :top 10 :left 55))
                :halign :right
                :visible? false
                :border (empty-border :right 5 :bottom 5)
-               :listen [:mouse-clicked (fn [e] (config! (to-frame e)
-                                                        :content config-generator-panel))])
+               :listen [:mouse-entered (fn [e] (config! e :visible? true))
+                        :mouse-exited (fn [e] (config! e :visible? false))
+                        :mouse-clicked (fn [e] (println "some" (to-frame e)) (config! (to-frame e)
+                                                        
+                                                                                      :content 
+                                                                                      ;;info-panel
+                                                           (config-generator-panel key-title)
+                                                           ))])
         my-panel (border-panel
                   :border (line-border :bottom 4 :color light-grey-color)
                   :maximum-size  [120 :by 120]
@@ -367,11 +387,14 @@
                                                           :border (empty-border :top 5 :left 5 :bottom 5)
                                                           :preferred-size  [20 :by 20]))) :north]
                                     [icon-conf :south]]))
+    (.repaint my-panel)
     (config! my-panel :listen [:mouse-entered (fn [e] (do 
                                                         (config! e :border (line-border :bottom 4 :color light-blue-color))
-                                                        (config! icon-conf :visible? true)))
+                                                        (config! icon-conf :visible? true)
+                                                        ))
                                :mouse-exited  (fn [e] (do (config! e :border (line-border :bottom 4 :color light-grey-color))
-                                                          (config! icon-conf :visible? false)))
+                                                          (config! icon-conf :visible? false)
+                                                          ))
                                :mouse-clicked (fn [e] (if (= dbname "A")
                                                         (do
                                                           (.removeAll my-panel)
@@ -387,29 +410,43 @@
 
 (show-options (border-panel))
 
+(c/datalist-mapper (c/datalist-get))
+
+;;:jarman-127_0_0_1
+
+
+(datalist-mapper (datalist-get))
+;; => {:localhost {:dbtype "mysql", :host "127.0.0.1", :port "3306", :dbname "jarman", :user "jarman", :password "dupa", :value {:dbtype {:value {:value {:value "qq"}}}}}, :tpanda {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port "3306", :dbname "jarman", :user "jarman", :password "dupa"}}
+
+
+
+
+
+
 
 
 (defn configurations-panel []
-  (let [scr
-        (scrollable (mig-panel
+  (let [mig (mig-panel
                      :constraints ["wrap 4" "[grow, center]" "20px[]20px"]
-                     :items [
-                             [(label-to-config "Localhostsssssssssswwwwwwwwww" "Jarman")]
-                             [(label-to-config "Localhost" "A")]
-                             [(label-to-config "Localhost" "Jarman")]
-                             [(label-to-config "Localhost" "Jarman")]
-                             [(label-to-config "Localhost" "Jarman")]
-                             [(label-to-config "Localhost" "Jarman")]
-                             [(label-to-config "Localhost" "Jarman")]
-                           
-                             [(label :icon (stool/image-scale icon/add-png 10))]
-                            
-                             ]) :hscroll :never                            
+                     :items [])
+        scr
+        (scrollable mig  :hscroll :never                            
                     :preferred-size  [600 :by 220])] 
     (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setBorder scr nil)
-    scr))
+    (doall (map (fn [[k v]] (.add mig (label-to-config (:dbname v) (:host v) k)))
+                (c/datalist-mapper (c/datalist-get))))
+    (.add mig (label :icon (stool/image-scale icon/add-png 10)
+                     :background back-color
+                     :border (line-border :color back-color
+                                          :bottom 10
+                                          :top 10
+                                          :left 10
+                                          :right 10)))
+   ;; (.repaint scr)
+    scr)
+  )
 
 (def login-panel
   (let [flogin (components/input-text :placeholder "Login"
@@ -474,7 +511,7 @@
 
 (start)
 
-
+(println "werr")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; multi-panel for replace some panels ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

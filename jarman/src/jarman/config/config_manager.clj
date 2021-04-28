@@ -179,7 +179,10 @@
      (swap! language
             (fn [cfg] (assoc-in cfg (getter ks) nil))))))
 
-;; get-in
+;; get-inf
+(def get-in-lang (fn 
+                   ([ks] (get-in @language ks nil))
+                   ([ks not-found] (get-in @language ks not-found))))
 (def get-in-lang-value (make-lang-get-in value-path))
 (def get-in-lang-segment (make-lang-get-in segment-path))
 ;; assoc-in 

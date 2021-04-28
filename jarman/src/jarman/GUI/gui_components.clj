@@ -17,6 +17,19 @@
 ;; │                    │________________________________________
 ;; └────────────────────┘                                       V
 
+(defn auto-scrollbox
+  [component & args]
+  (let [scrol (apply scrollable component :border nil args)
+        scrol (config! scrol :listen [:property-change
+                                (fn [e] (invoke-later (let [get-root (fn [e](.getParent (.getParent (.getParent (.getSource e)))))
+                                                            vbar 40
+                                                            w (- (.getWidth (get-root e)) vbar)
+                                                            h (.getHeight (config e :preferred-size))]
+                                                        (config! component :size [w :by h]))))])]
+
+    (.setUnitIncrement (.getVerticalScrollBar scrol) 20)
+    scrol))
+
 (defn scrollbox
   [component & args]
   (let [scr (apply scrollable component :border nil args)]  ;; speed up scrolling

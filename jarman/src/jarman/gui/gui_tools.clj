@@ -9,7 +9,7 @@
   (:require [jarman.resource-lib.icon-library :as icon]
             [jarman.tools.swing :as stool]
             [clojure.string :as string]
-            [jarman.config.config-manager :as conf-man]
+            [jarman.config.config-manager :refer :all :as conf-man]
             [jarman.tools.lang :refer :all]
             ;; [jarman.config.init :as init]
             ))
@@ -127,22 +127,22 @@
             (if outlist outlist nil)))
 
 
-;; (defn theme-map [default & args]
-;;   (conf-man/get-in-value (vec (concat [:themes :current-theme] args)) default))
-;; (defn lang-configuration-struct-map [default & args]
-;;   (conf-man/get-in-segment (vec (concat [] args)) default))
+(defn theme-map [default & args]
+  (conf-man/get-in-value (vec (concat [:themes :current-theme] args)) default))
+(defn lang-configuration-struct-map [default & args]
+  (conf-man/get-in-segment (vec (concat [] args)) default))
 ;; (defn lang-standart-struct-map [default & args]
 ;;   (get-in @init/language (vec (concat [] args)) default))
-
-;; (def using-lang (conf-man/get-in-value [:init.edn :lang]))
-;; (def get-color (partial theme-map "#000" :color))
-;; (def get-frame (partial theme-map 1000 :frame))
-;; (def get-font (partial theme-map "Ubuntu" :font))
-;; (def get-lang (partial lang-configuration-struct-map "Unknown"))
-;; (def get-lang-btns (partial lang-standart-struct-map "Unknown" :ui :buttons))
-;; (def get-lang-alerts (partial lang-standart-struct-map "Unknown" :ui :alerts))
+;; (get-in-lang [:ui :buttons])
 
 
+(def using-lang (conf-man/get-in-value [:init.edn :lang]))
+(def get-color (partial theme-map "#000" :color))
+(def get-frame (partial theme-map 1000 :frame))
+(def get-font (partial theme-map "Ubuntu" :font))
+(def get-lang (fn [& path] (get-in-lang (join-vec [:ui] path))))
+(def get-lang-btns (fn [& path] (get-in-lang (join-vec [:ui :buttons] path))))
+(def get-lang-alerts (fn [& path] (get-in-lang (join-vec [:ui :alerts] path))))
 
 
 
@@ -150,7 +150,8 @@
 ;; ############# COMPONENTS TODO: need move to gui_components.clj
 
 (defn button-hover
-  ([e] (config! e :background (get-color :background :button_hover_light)))
+  ([e] (config! e :background (get-color :background :button_hover_light)
+                ))
   ([e color] (config! e :background color)))
 
 (defn build-bottom-ico-btn

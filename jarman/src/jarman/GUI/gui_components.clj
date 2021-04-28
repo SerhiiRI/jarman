@@ -6,8 +6,7 @@
         seesaw.util)
   (:require [jarman.resource-lib.icon-library :as icon]
             [jarman.tools.swing :as stool]
-            [jarman.gui.gui-tools :refer :all]
-            [jarman.config.config-manager :refer :all])
+            [jarman.gui.gui-tools :refer :all])
   (:import (java.awt Color)))
 
 
@@ -17,6 +16,19 @@
 ;; │ Basic components   │
 ;; │                    │________________________________________
 ;; └────────────────────┘                                       V
+
+(defn auto-scrollbox
+  [component & args]
+  (let [scrol (apply scrollable component :border nil args)
+        scrol (config! scrol :listen [:property-change
+                                (fn [e] (invoke-later (let [get-root (fn [e](.getParent (.getParent (.getParent (.getSource e)))))
+                                                            vbar 40
+                                                            w (- (.getWidth (get-root e)) vbar)
+                                                            h (.getHeight (config e :preferred-size))]
+                                                        (config! component :size [w :by h]))))])]
+
+    (.setUnitIncrement (.getVerticalScrollBar scrol) 20)
+    scrol))
 
 (defn scrollbox
   [component & args]

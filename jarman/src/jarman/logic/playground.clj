@@ -30,7 +30,7 @@
                :columns [{:table [:varchar-100 :default :null]}
                          {:name [:varchar-200 :default :null]}
                          {:document [:blob :default :null]}
-                         {:prop [:text :nnull :default "'{}'"]}]))
+                         {:prop [:text :nnull :default "\"{}\""]}]))
 
 (def metadata
   (create-table :metadata
@@ -40,7 +40,7 @@
 (def permission
   (create-table :permission
                 :columns [{:permission_name [:varchar-20 :default :null]}
-                          {:configuration [:tinytext :nnull :default "'{}'"]}]))
+                          {:configuration [:tinytext :nnull :default "\"{}\""]}]))
 
 (def user
   (create-table :user
@@ -178,7 +178,7 @@
   (delete-scheme)
   (create-scheme)
   (metadata/do-create-meta))
-(+ 1 2)
+
 (defn regenerate-metadata []
   (do (metadata/do-clear-meta)
       (metadata/do-create-meta)))
@@ -232,7 +232,7 @@
 (defn fill-permission []
   (def create-permission 
     (fn [name] {:permission_name name
-               :configuration "'{}'"}))
+               :configuration "{}"}))
   (doall
    (map sql-insert
     [(insert :permission :values (create-permission "admin"))
@@ -280,7 +280,7 @@
     (fn [] {:table (gtable)
            :name (gsimplestring)
            :document nil
-           :prop "'{}'"}))
+           :prop "{}"}))
   (doall
    (map
     sql-insert
@@ -421,6 +421,7 @@
 (defn regenerate-scheme-test []
   (delete-scheme)
   (create-scheme)
+  (metadata/do-create-meta)
   (fish
    [permission]
    [user 30]

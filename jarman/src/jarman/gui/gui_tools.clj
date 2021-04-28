@@ -11,6 +11,7 @@
             [clojure.string :as string]
             [jarman.config.config-manager :refer :all :as conf-man]
             [jarman.tools.lang :refer :all]
+            [jarman.logic.changes-service :refer :all :as cs]
             ;; [jarman.config.init :as init]
             ))
 
@@ -18,6 +19,22 @@
 (import java.awt.Color)
 (import java.awt.MouseInfo)
 (import java.awt.event.MouseListener)
+
+
+;; ┌─────────────────────────┐
+;; │                         │
+;; │ Global services         │
+;; │                         │
+;; └─────────────────────────┘
+
+(def changes-service (atom (cs/new-changes-service)))
+
+
+;; ┌─────────────────────────┐
+;; │                         │
+;; │ Quick gui functions     │
+;; │                         │
+;; └─────────────────────────┘
 
 (defn getWidth  [obj] (.width (.getSize obj)))
 (defn getHeight [obj] (.height (.getSize obj)))
@@ -133,7 +150,7 @@
   (conf-man/get-in-segment (vec (concat [] args)) default))
 ;; (defn lang-standart-struct-map [default & args]
 ;;   (get-in @init/language (vec (concat [] args)) default))
-;; (get-in-lang [:ui :buttons])
+(conf-man/get-in-lang [:ui :buttons])
 
 
 (def using-lang (conf-man/get-in-value [:init.edn :lang]))
@@ -145,13 +162,10 @@
 (def get-lang-alerts (fn [& path] (get-in-lang (join-vec [:ui :alerts] path))))
 
 
-
-
 ;; ############# COMPONENTS TODO: need move to gui_components.clj
 
 (defn button-hover
-  ([e] (config! e :background (get-color :background :button_hover_light)
-                ))
+  ([e] (config! e :background (get-color :background :button_hover_light)))
   ([e color] (config! e :background color)))
 
 (defn build-bottom-ico-btn

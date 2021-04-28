@@ -146,7 +146,7 @@
 
 ;; generation icon library
 ;; (refresh-icon-lib)
-
+;; (refresh-font-lib)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Fonts library generator  ;;;

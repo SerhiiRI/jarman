@@ -7,15 +7,13 @@
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
             ;; logics
-            [jarman.config.config-manager :refer :all]
             [jarman.gui.gui-tools :refer :all]
             [jarman.gui.gui-alerts-service :refer :all]
-            [jarman.config.init :as sinit]
             ;; deverloper tools 
             [jarman.tools.swing :as stool]
             [jarman.tools.lang :refer :all]
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
-            [jarman.config.init :refer [configuration language]]))
+            ))
 
 ;;  (get-color :jarman :bar)
 

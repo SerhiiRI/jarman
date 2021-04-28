@@ -145,11 +145,12 @@
 (def delete-in-value (make-delete-in value-path))
 (def delete-in-segment (make-delete-in segment-path))
 
-;; (get-in-segment [:database.edn :Data-Configuration :data-format])
-;; (get-in-value [:database.edn :Data-Configuration :data-format])
-;; (delete-in-value [:database.edn :Data-Configuration :data-format])
-;; (assoc-in-value [:database.edn :Data-Configuration :data-format] "DUDUDU")
-;; (update-in-value [:database.edn :Data-Configuration :data-format] (fn [x] (format "<h1>%s</h1>" x)))
+;; (restore-config)
+;; (get-in-segment [:database.edn :datalist :localhost :dbtype])
+;; (get-in-value [:database.edn :datalist :localhost :dbtype])
+;; (delete-in-value [:database.edn :datalist :localhost :dbtype])
+;; (assoc-in-value [:database.edn :datalist :localhost :dbtype] "DUDUDU")
+;; (update-in-value [:database.edn :datalist :localhost :dbtype] (fn [x] (format "<h1>%s</h1>" x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Mapping/Coverting ;;;
@@ -245,7 +246,10 @@
      (swap! language
             (fn [cfg] (assoc-in cfg (getter ks) nil))))))
 
-;; get-in
+;; get-inf
+(def get-in-lang (fn 
+                   ([ks] (get-in @language ks nil))
+                   ([ks not-found] (get-in @language ks not-found))))
 (def get-in-lang-value (make-lang-get-in value-path))
 (def get-in-lang-segment (make-lang-get-in segment-path))
 ;; assoc-in 

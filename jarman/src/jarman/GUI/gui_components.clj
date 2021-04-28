@@ -22,6 +22,9 @@
   [component & args]
   (let [scr (apply scrollable component :border nil args)]  ;; speed up scrolling
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
+    (.setBorder scr nil)
+;;    for hide scroll    
+;;    (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0)) 
     scr))
 
 (defmacro textarea

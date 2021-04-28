@@ -8,6 +8,7 @@
   (:import (java.text SimpleDateFormat))
   (:require [clojure.string :as string]
             [jarman.gui.gui-tools :refer :all]
+            [jarman.config.config-manager :refer :all]
             [jarman.resource-lib.icon-library :as icon]
             [clojure.java.jdbc :as jdbc]
             [jarman.tools.swing :as stool]
@@ -121,17 +122,18 @@
       (catch Exception _ nil))))
 
 
-(def configuration-copy (atom @configuration))
+;;(def configuration-copy (atom @configuration))
 
-(def keys-connect-JDBC (keys (:value (:JDBC-mariadb-configuration-database (:value (:database.edn @configuration))))))
-(def path-connect-JDBC [:database.edn :value :JDBC-mariadb-configuration-database :value])
-(def path-connect [:database.edn :value :JDBC-mariadb-configuration-database])
+;;(def keys-connect-JDBC (keys (:value (:datalist (:value (:database.edn @configuration))))))
 
-(defn get-element-map [& args]
-  (get-in @configuration (concat path-connect-JDBC args)))
+(def path-connect-JDBC [:database.edn :datalist :localhost :value])
+(def path-connect [:database.edn :value :datalist])
 
-(defn get-name-map [& args]
-  (get-in @configuration (concat path-connect args)))
+;; (defn get-element-map [& args]
+;;   (get-in @configuration (concat path-connect-JDBC args)))
+
+;; (defn get-name-map [& args]
+;;   (get-in @configuration (concat path-connect args)))
 
 (def confgen-header
   (fn [title] (label :text title :font (getFont 16 :bold)
@@ -150,21 +152,25 @@
                :border (color-border light-grey-color))))
 
 (defn update-map [dbtype host port dbname user password]
-  (reset! configuration-copy (-> @configuration-copy
-                                 (assoc-in (concat path-connect-JDBC
-                                                   [:dbtype :value]) dbtype)
-                                 (assoc-in (concat path-connect-JDBC
-                                                   [:host :value]) host)
-                                 (assoc-in (concat path-connect-JDBC
-                                                   [:port :value]) port)
-                                 (assoc-in (concat path-connect-JDBC
-                                                   [:dbname :value]) dbname)
-                                 (assoc-in (concat path-connect-JDBC
-                                                   [:user :value]) user)
-                                 (assoc-in (concat path-connect-JDBC
-                                                   [:password :value]) password)))
-  (save-all-cofiguration @configuration-copy)
-  (swapp-all))
+  (do 
+    (assoc-in-value (vec (concat path-connect-JDBC
+                                [:dbtype :value])) dbtype)
+    ;; (assoc-in-value (concat path-connect-JDBC
+    ;;                   [:host :value]) host)
+    ;; (assoc-in-value (concat path-connect-JDBC
+    ;;                   [:port :value]) port)
+    ;; (assoc-in-value (concat path-connect-JDBC
+    ;;                   [:dbname :value]) dbname)
+    ;; (assoc-in-value (concat path-connect-JDBC
+    ;;                   [:user :value]) user)
+    ;; (assoc-in-value (concat path-connect-JDBC
+    ;;                   [:password :value]) password)
+    )
+  
+  ;;(swapp-all)
+  )
+
+(update-map "qq" "qq" "qq" "qq" "qq" "qq")
 
 (defn validate-fields
   "Description
@@ -322,9 +328,90 @@
                                                                contact-info (concat (asks-panel faq) contact-info))))
                  (.repaint mig) mig)]]))))
 
+(show-options (border-panel))
 
-(def  login-panel
-  
+(import '(javax.swing JScrollPane))
+(import '(java.awt Dimension))
+
+
+(defn db-connect-error []
+  [[(vertical-panel
+              :background "#fff"
+              :items (list (label :text "Some error" :font (myFont 15) :foreground blue-color
+                                  :border (empty-border :top 5 :left 5 :bottom 5))
+                           (label :text "Connection false" :font (myFont 12) :foreground light-grey-color
+                                  :border (empty-border :top 5 :left 5 :bottom 5)
+                                  :preferred-size  [20 :by 20]))) :north]])
+
+
+(defn label-to-config [title dbname]
+  (let [icon-conf
+        (label :icon (stool/image-scale icon/settings-64-png 40)
+               :border (compound-border (empty-border :top 10 :left 55))
+               :halign :right
+               :visible? false
+               :border (empty-border :right 5 :bottom 5)
+               :listen [:mouse-clicked (fn [e] (config! (to-frame e)
+                                                        :content config-generator-panel))])
+        my-panel (border-panel
+                  :border (line-border :bottom 4 :color light-grey-color)
+                  :maximum-size  [120 :by 120]
+                  :preferred-size  [120 :by 120]
+                  :background "#fff")]
+    (do (.removeAll my-panel)
+        (config! my-panel  :items  [[(vertical-panel
+                                      :background "#fff"
+                                      :items (list (label :text dbname :font (myFont 15) :foreground blue-color
+                                                          :border (empty-border :top 5 :left 5 :bottom 5))
+                                                   (label :text title :font (myFont 12) :foreground light-grey-color
+                                                          :border (empty-border :top 5 :left 5 :bottom 5)
+                                                          :preferred-size  [20 :by 20]))) :north]
+                                    [icon-conf :south]]))
+    (config! my-panel :listen [:mouse-entered (fn [e] (do 
+                                                        (config! e :border (line-border :bottom 4 :color light-blue-color))
+                                                        (config! icon-conf :visible? true)))
+                               :mouse-exited  (fn [e] (do (config! e :border (line-border :bottom 4 :color light-grey-color))
+                                                          (config! icon-conf :visible? false)))
+                               :mouse-clicked (fn [e] (if (= dbname "A")
+                                                        (do
+                                                          (.removeAll my-panel)
+                                                          (config! my-panel :items (db-connect-error)
+                                                                   :border (line-border :bottom 4
+                                                                                        :color red-color)
+                                                                   :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content info-panel))
+                                                                            :mouse-exited  (fn [e] (do (config! e :border (line-border :bottom 4 :color red-color))))
+                                                                            :mouse-entered  (fn [e] (do (config! e :border (line-border :bottom 4 :color red-color))))]))
+                                                        )                                                ;;(@app/startup)
+                                                )] )
+    my-panel))
+
+(show-options (border-panel))
+
+
+
+(defn configurations-panel []
+  (let [scr
+        (scrollable (mig-panel
+                     :constraints ["wrap 4" "[grow, center]" "20px[]20px"]
+                     :items [
+                             [(label-to-config "Localhostsssssssssswwwwwwwwww" "Jarman")]
+                             [(label-to-config "Localhost" "A")]
+                             [(label-to-config "Localhost" "Jarman")]
+                             [(label-to-config "Localhost" "Jarman")]
+                             [(label-to-config "Localhost" "Jarman")]
+                             [(label-to-config "Localhost" "Jarman")]
+                             [(label-to-config "Localhost" "Jarman")]
+                           
+                             [(label :icon (stool/image-scale icon/add-png 10))]
+                            
+                             ]) :hscroll :never                            
+                    :preferred-size  [600 :by 220])] 
+    (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
+    (.setUnitIncrement (.getVerticalScrollBar scr) 20)
+    (.setBorder scr nil)
+    scr))
+
+(def login-panel
   (let [flogin (components/input-text :placeholder "Login"
                                       :args [:columns 20
                                               :border (compound-border emp-border
@@ -338,55 +425,27 @@
                                                  :halign :left
                                                  ])]
     (mig-panel
-     :constraints ["wrap 1" "[grow, center]" "30px[]0px"]
-     :items [
-             [(label :icon (stool/image-scale "resources/imgs/jarman-text.png" 10))]
-             
-             [(mig-panel
-               :constraints ["" "[grow, fill]" "5px[]0px"]
-               :items [
-                       [(label :icon (stool/image-scale icon/user-blue1-64-png 40))]
-                       [flogin]
-                       [(label :border (empty-border :right 20))]
-                       ])]
-
-             [(mig-panel
-               :constraints ["" "[grow, fill]" "5px[]0px"]
-               :items [
-                       [(label :icon (stool/image-scale icon/key-blue-64-png 40))]
-                       [fpass]
-                       [(label :border (empty-border :right 20))] ])]
-             
-             [(label :text "LOGIN" :background "#fff"
-                     :foreground light-blue-color
-                     :border (compound-border emp-border)
-                     :listen [:mouse-entered (fn [e] (config! e :background "#deebf7" :foreground "#256599" :cursor :hand))
-                              :mouse-exited  (fn [e] (config! e :background "#fff" :foreground light-blue-color))
-                              :mouse-clicked (fn [e] (if (authenticate-user (text flogin) (text fpass))
-                                                       (do 
-                                                            (config! flogin :border(compound-border emp-border
-                                                                                                    (line-border :bottom 4 :color light-blue-color)))
-                                                            (config! fpass :border (compound-border emp-border
-                                                                                                    (line-border :bottom 4 :color light-blue-color)))
-                                                            ;;(@app/startup)
-                                                            )
-                                                       (do (println (text flogin))
-                                                         (config! flogin :border (compound-border emp-border
-                                                                                                     (line-border :bottom 4 :color red-color)))
-                                                            (config! fpass :border (compound-border emp-border
-                                                                                                    (line-border :bottom 4 :color red-color))))))])]
-             [(label :text " " :border
+     :constraints ["wrap 1" "[grow, center]" "20px[]0px"]
+     :items [[(label :icon (stool/image-scale "resources/imgs/jarman-text.png" 6))]
+             [(vertical-panel :items (list  
+                                      (mig-panel
+                                       :constraints ["" "[grow, fill]" "20px[]20px"]
+                                       :items [[(label :icon (stool/image-scale icon/user-blue1-64-png 40))]
+                                               [flogin]
+                                               [(label :border (empty-border :right 20))]])
+                                      (mig-panel
+                                       :constraints ["" "[grow, fill]" "5px[]10px"]
+                                       :items [[(label :icon (stool/image-scale icon/key-blue-64-png 40))]
+                                               [fpass]
+                                               [(label :border (empty-border :right 20))]])))]
+             [(configurations-panel)]
+             [(label :text "" :border
                      (empty-border :top 20 :left 860 )) "split 2"]
              [(mig-panel
                :constraints ["" "[grow, fill]" ""]
-               :items [
-                      
-                       [(label :icon (stool/image-scale icon/refresh-connection-grey1-64-png 50)
+               :items [[(label :icon (stool/image-scale icon/refresh-connection-grey1-64-png 40)
                                :border (compound-border (empty-border :right 10 )))]
-                       [(label :icon (stool/image-scale icon/settings-64-png 50)
-                               :border (compound-border (empty-border :right 10 ))
-                               :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content config-generator-panel))])]
-                       [(label :icon (stool/image-scale icon/I-grey-64-png 50)
+                       [(label :icon (stool/image-scale icon/I-grey-64-png 40)
                                :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content info-panel))])]])]])))
 
 ;;;;;;;;;;;;;;
@@ -397,7 +456,7 @@
   (frame :title "Jarman-login"
          :undecorated? false
          :resizable? false
-         :minimum-size [1000 :by 760]
+         :minimum-size [800 :by 600]
          :content login-panel))
 
 (defn- frame-error []

@@ -16,7 +16,7 @@
             [jarman.resource-lib.icon-library :as icon]
             ;; logics
             [jarman.config.config-manager :as c]
-            [jarman.gui.gui-tools :refer :all]
+            [jarman.gui.gui-tools :refer :all :as gtool]
             [jarman.gui.gui-components :refer :all]
             [jarman.gui.gui-alerts-service :refer :all]
             [jarman.gui.gui-views-service :refer :all]
@@ -25,8 +25,9 @@
             [jarman.config.spec :as sspec]
             [jarman.config.init :as iinit]
             [jarman.logic.metadata :as mmeta]
-            [jarman.tools.lang :refer :all]
+            [jarman.tools.lang :refer :all :as lang]
             [jarman.gui.gui-seed :refer :all]
+            [jarman.gui.gui-config-generator :refer :all :as cg]
             ;; [jarman.logic.view :refer :all] 
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
 
@@ -841,236 +842,11 @@
              [(scrollable JLP :id :JLP-DB-Visualizer :border nil)]])))
 
 
-;; ┌─────────────────────────┐
-;; │                         │
-;; │ Create config generator │
-;; │                         │
-;; └─────────────────────────┘
-
-
-(def confgen--element--header-file
-  (fn [title] (mig-panel
-               :constraints ["" "0px[grow, center]0px" "0px[]0px"]
-               :items [[(label :text title :font (getFont 16) :foreground (get-color :foreground :dark-header))]]
-               :background (get-color :background :dark-header)
-               :border (line-border :thickness 10 :color (get-color :background :dark-header)))))
-
-(def confgen--element--header-block
-  (fn [title] (label :text title :font (getFont 16 :bold)
-                     :border (compound-border  (line-border :bottom 2 :color (get-color :decorate :underline)) (empty-border :bottom 5)))))
-
-(def confgen--element--header-parameter
-  (fn [title]
-    (label :text title :font (getFont 14 :bold))))
-
-(def confgen--element--combobox
-  (fn [changing-list path model]
-    (mig-panel
-     :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
-     :items [[(combobox :model model
-                        :font (getFont 14)
-                        :background (get-color :background :combobox)
-                        :size [200 :by 30]
-                        :listen [:item-state-changed (fn [event] (track-changes-used-components changing-list path event :selected-item (first model)))])]])))
-
-(def confgen--gui-interface--input
-  (fn [changing-list path value]
-    (mig-panel
-     :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
-     :items [[(text :text value :font (getFont 14)
-                    :background (get-color :background :input)
-                    :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
-                                             (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-                    :listen [:caret-update (fn [event] (track-changes-used-components changing-list path event :text value))])]])))
-
-
-(def confgen--gui-interface--input-textlist
-  (fn [changing-list path value]
-    (let [v (string/join ", " value)]
-      (mig-panel
-       :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
-       :items [[(text :text v :font (getFont 14)
-                      :background (get-color :background :input)
-                      :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
-                                               (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-                      :listen [:caret-update (fn [event] (track-changes changing-list path value (clojure.string/split (config event :text) #"\s*,\s*")))])]]))))
-
-
-;; (clojure.string/split "some  ,  strig,value" #"\s*,\s*")
-;; 
-;; Sprawdzenie integerów
-;; (try
-;;   (every? number? (doall (map #(Integer. %) (clojure.string/split "1  ,  23, 54 d" #"\s*,\s*"))))
-;;   (catch Exception e :chwdp))
-
-
-(def confgen--gui-interface--input-textcolor
-  (fn [changing-list path value]
-    (mig-panel
-     :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
-     :items [[(text :text value :font (getFont 14)
-                    :background (get-color :background :input)
-                    :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
-                                             (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-                    :listen [:caret-update (fn [event] (track-changes changing-list path value (config event :text))
-                                             (colorizator-text-component event))])]])))
-
-
-(def confgen--choose--header
-  (fn [type? name]
-    (cond  (type? :block) (confgen--element--header-block name)
-           (type? :param) (confgen--element--header-parameter name))))
-
-(def confgen--element--textarea
-  (fn [param]
-    (if-not (nil? (param [:doc]))
-      (textarea (str (param [:doc])) :font (getFont 12)) ())))
-
-(def confgen--element--textarea-doc
-  (fn [param]
-    (if-not (nil? (param [:doc]))
-      (textarea (str (param [:doc])) :font (getFont 14)) ())))
-
-(def confgen--element--margin-top-if-doc-exist
-  (fn [type? param] (if (and (type? :block) (not (nil? (param [:doc]))))
-                      (label :border (empty-border :top 10)) ())))
-
-(def confgen--gui-interface--checkbox-as-droplist
-  (fn [param changing-list start-key]
-    (confgen--element--combobox changing-list start-key (if (= (param [:value]) true) [true false] [false true]))))
-
-(def confgen--gui-interface--droplist
-  (fn [param changing-list start-key]
-    (confgen--element--combobox
-     changing-list start-key
-     (cond (= (last start-key) :lang) (map #(txt-to-UP %1) (join-vec (list (param [:value])) [:en]))
-           (vector? (param [:value])) [(txt-to-title (first (param [:value])))]
-           :else (vec (list (param [:value])))))))
-
-(def confgen--recursive--next-configuration-in-map
-  (fn [param confgen--component--tree changing-list start-key]
-    (map (fn [next-param]
-           (confgen--component--tree changing-list (join-vec start-key [:value] (list (first next-param)))))
-         (param [:value]))))
-
-(def confgen--element--gui-interfaces
-  (fn [comp? param confgen--component--tree changing-list start-key]
-    (cond (comp? :selectbox) (confgen--gui-interface--droplist param changing-list start-key)
-          (comp? :checkbox)  (confgen--gui-interface--checkbox-as-droplist param changing-list start-key)
-          (or (comp? :text) (comp? :textnumber)) (confgen--gui-interface--input changing-list start-key (str (param [:value])))
-          (comp? :textlist) (confgen--gui-interface--input-textlist changing-list start-key (param [:value]))
-          (comp? :textcolor) (confgen--gui-interface--input-textcolor changing-list start-key (param [:value]))
-          (map? (param [:value])) (confgen--recursive--next-configuration-in-map param confgen--component--tree changing-list start-key)
-          :else (confgen--element--textarea param))))
-
-
-;; (show-events (text))
-
-(def confgen--component--tree
-  (fn [changing-list start-key]
-    (let [param (fn [key] (c/get-in-segment (join-vec start-key key)))
-          type? (fn [key] (= (param [:type]) key))
-          comp? (fn [key] (= (param [:component]) key))
-          name (if (nil? (param [:name])) (key-to-title (last start-key)) (str (param [:name])))]
-      (cond (= (param [:display]) :edit)
-            (mig-panel
-             :constraints ["wrap 1" "20px[]50px" "5px[]0px"]
-             :border (cond (type? :block) (empty-border :bottom 10)
-                           :else nil)
-             :items (join-mig-items
-                     (confgen--choose--header type? name)
-                     (confgen--element--textarea-doc param)
-                     (confgen--element--margin-top-if-doc-exist type? param)
-                     (confgen--element--gui-interfaces comp? param confgen--component--tree changing-list start-key)))
-            :else ()))))
-
-
-
-;; (get-in @configuration [:resource.edn])
-;; ;; => {:configuration-path {:type :param, :display :edit, :component :text, :value "config"}}
-;; (get-in language [:pl :value :configuration-attribute])
-;; ;; => {:type :param, :display :edit, :component :text, :value "config"}
-
-
-;; (let [map (get-in @configuration [:resource.edn :value :font-configuration-attribute :value :acceptable-file-format])
-;;       map {:name "Wspierane pliki", :doc "wybierz rozszerzenia dla wspieranych przez system plików konfiguracji.", :type :param, :display :edit, :component :textlist, :value "abc"}]
-;;   (println map)  
-;;   (sspec/valid-param map))
-
-
-(def configuration-copy (atom (c/get-in-segment [])))
-
-(def create-view--confgen
-  "Description
-     Join config generator parts and set view on right functional panel
-   "
-  (fn [start-key]
-    (let [map-part (get-in (c/get-in-segment []) start-key)
-          changing-list (atom {})]
-      (cond (= (get-in map-part [:display]) :edit)
-            (do
-              (add-changes-controller (last start-key) changing-list)
-              (mig-panel
-               :border (line-border :bottom 50 :color (get-color :background :main))
-               :constraints ["wrap 1" "[fill, grow]" "20px[]20px"]
-               :items (join-mig-items
-                                   ;; Header of section/config file
-                       (confgen--element--header-file (get-in map-part [:name]))
-                       (label :text "Show changes" :listen [:mouse-clicked (fn [e]
-                                                                             ;; save changes configuration
-                                                                             (prn "Changes" @changing-list)
-                                                                            ;;  (reset! configuration-copy (c/get-in-segment []))
-                                                                            ;;  (doall
-                                                                            ;;   (map
-                                                                            ;;    (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
-                                                                            ;;      (swap! configuration-copy (fn [changes] (assoc-in changes (join-vec (first (second new-value)) [:value]) (second (second new-value))))))
-                                                                            ;;    @changing-list))
-                                                                            ;;  (let [out (sspec/valid-segment @configuration-copy)]
-                                                                            ;;    (cond (get-in out [:valid?])
-                                                                            ;;          (do
-                                                                            ;;            (cond (get-in (save-all-cofiguration @configuration-copy) [:valid?])
-                                                                            ;;                  (do
-                                                                            ;;                    (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5)
-                                                                            ;;                    (c/store-and-back))
-                                                                            ;;                  :else (let [m (string/join "<br>" ["Cannot save changes"])]
-                                                                            ;;                          (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5)))) ;; TODO action on faild save changes configuration
-                                                                            ;;          :else (let [m (string/join "<br>" ["Cannot save changes" (get-in out [:output])])]
-                                                                            ;;                  (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5))))
-                                                                               ;; (prn @configuration-copy)
-                                                                             )])
-                                   ;; Foreach on init values and create configuration blocks
-                       (map
-                        (fn [param]
-                          (confgen--component--tree changing-list (join-vec start-key [:value] (list (first param)))))
-                        (get-in map-part [:value])))))))))
-
 ;; ┌─────────────────────────────────────────┐
 ;; │                                         │
 ;; │ Create expand btns for config generator │
 ;; │                                         │
 ;; └─────────────────────────────────────────┘
-
-
-(def confgen-expand-btn--search-config-files
-  "Description
-     Search files and return paths
-   "
-  (fn [global-config path]
-    (let [root (get-in global-config path)
-          type (get-in root [:type])]
-      (cond (= type :file) path
-            (= type :directory) (confgen-expand-btn--search-config-files global-config (join-vec path [:value]))
-            (nil? type) (map
-                         (fn [leaf]
-                           (confgen-expand-btn--search-config-files global-config (join-vec path [(first leaf)])))
-                         root)))))
-
-(def confgen-expand-btns--prepare-config-paths
-  "Search and finde file fragemnt in config map, next return paths list to this fragments"
-  (fn [conf] (all-vec-to-floor
-              (map (fn [option]
-                     (confgen-expand-btn--search-config-files conf [(first option)]))
-                   conf))))
 
 (def create-expand-btns--confgen
   "Discription
@@ -1078,14 +854,44 @@
      Complete component
    "
   (fn [] (button-expand
-          (get-lang-btns :settings)
-          (map (fn [path]
-                 (let [title (c/get-in-segment (join-vec path [:name]))
-                       view-id (last path)]
-                   (button-expand-child title :onClick (fn [e]
-                                                         (@jarman-views-service :set-view :view-id view-id :title title :component (create-view--confgen path))))))
-               (confgen-expand-btns--prepare-config-paths (c/get-in-segment []))))))
+          (gtool/get-lang-btns :settings)
+          (let [config-file-list-as-keyword (map #(first %) (c/get-in-segment []))
+                config-file-list-as-keyword-to-display (filter #(let [map-part (c/get-in-segment (if (vector? %) % [%]))]
+                                                                  (and (= :file (get map-part :type))
+                                                                       (= :edit (get map-part :display))))
+                                                               config-file-list-as-keyword)]
+            (reverse
+             (conj
+              (map (fn [p]
+                     (let [path (if (vector? p) p [p])
+                           title (get (c/get-in-segment path) :name)
+                           view-id (last path)]
+                       (button-expand-child title :onClick (fn [e]
+                                                             (@jarman-views-service
+                                                              :set-view
+                                                              :view-id view-id
+                                                              :title title
+                                                              :component (cg/create-view--confgen path))))))
+                   config-file-list-as-keyword-to-display)
 
+              (let [path [:themes :theme_config.edn]
+                    title (get (c/get-in-segment path) :name)
+                    view-id :theme_config.edn]
+                (button-expand-child title :onClick (fn [e]
+                                                      (@jarman-views-service
+                                                       :set-view
+                                                       :view-id view-id
+                                                       :title title
+                                                       :component (cg/create-view--confgen path)))))
+              (let [path [:themes :current-theme]
+                    title (get (c/get-in-segment path) :name)
+                    view-id :current-theme]
+                (button-expand-child title :onClick (fn [e]
+                                                      (@jarman-views-service
+                                                       :set-view
+                                                       :view-id view-id
+                                                       :title title
+                                                       :component (cg/create-view--confgen path)))))))))))
 
 
 ;; ┌──────────────────────────┐

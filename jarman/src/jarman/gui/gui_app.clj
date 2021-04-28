@@ -35,58 +35,8 @@
 
 
 (def jarman-views-service (atom nil))
-
-
-;; ┌────────────────────┐
-;; │                    │
-;; │ Changes controller │
-;; │                    │
-;; └────────────────────┘
-
 (def work-mode (atom :dev-mode))
-(def storage-with-changes (atom {})) ;; Store view id as key and component id which is path in config map too {:view link-to-atom}
 
-(def add-changes-controller
-  "Description:
-       Add changes controller for views. Storage only stores atoms from bigest view component.
-   Example:
-       (add-changes-controller view-id changing-list) where changing-list is an atom inside view/biggest component.
-   "
-  (fn [view-id changing-list]
-    (swap! storage-with-changes (fn [changes-atoms] (merge changes-atoms {view-id changing-list})))))
-
-(def get-changes-atom
-  "Description:
-       Function return atom address to list of changes for view by view-id.
-   Example:
-       (get-changes-atom :init.edn) => {:init.edn-value-lang [[:init.edn :value :lang] EN]}
-   "
-  (fn [view-id]
-    (get-in @storage-with-changes [view-id])))
-
-(def set-change-to-view-atom
-  (fn [changing-list path new-value]
-    (swap! changing-list (fn [changes] (merge changes {(convert-mappath-to-key path) [path new-value]})))))
-
-(def remove-change-from-view-atom
-  (fn [changing-list path]
-    (swap! changing-list (fn [changes] (dissoc changes (convert-mappath-to-key path))))))
-
-(def track-changes-used-components
-  (fn [changing-list value-path event component-key value]
-    (cond
-      ;; if something was change
-      (not (= (config event component-key) value)) (set-change-to-view-atom changing-list value-path (config event component-key))
-      ;; if back to orginal value
-      (not (nil? (get-in @changing-list [(convert-mappath-to-key value-path)]))) (remove-change-from-view-atom changing-list value-path))))
-
-(def track-changes
-  (fn [changing-list value-path orginal new-value]
-    (cond
-      ;; if something was change
-      (not (= orginal new-value)) (set-change-to-view-atom changing-list value-path new-value)
-      ;; if back to orginal value
-      (not (nil? (get-in @changing-list [(convert-mappath-to-key value-path)]))) (remove-change-from-view-atom changing-list value-path))))
 
 
 
@@ -260,65 +210,6 @@
 
 ;; ================================================VVVVVVVVVV Table in database view
 
-
-
-;; (def dbmap (atom (list
-;;                   {:id 29
-;;                    :table "service_contract"
-;;                    :prop
-;;                    {:table
-;;                     {:frontend-name "service_contract"
-;;                      :is-system? false
-;;                      :is-linker? false
-;;                      :allow-modifing? true
-;;                      :allow-deleting? true
-;;                      :allow-linking? true}
-;;                     :columns
-;;                     [{:field "id_point_of_sale"
-;;                       :representation "id_point_of_sale"
-;;                       :description nil
-;;                       :component-type "l"
-;;                       :column-type "bigint(20) unsigned"
-;;                       :private? false
-;;                       :editable? true
-;;                       :key-table "point_of_sale"}
-;;                      {:field "name_of_sale"
-;;                       :representation "Miejsce sprzedaży"
-;;                       :description "Opisuje miejsce sprzedaży"
-;;                       :component-type "l"
-;;                       :column-type "bigint(20) unsigned"
-;;                       :private? false
-;;                       :editable? true}
-;;                      {:field "some_poop"
-;;                       :representation "Nazwa nazw"
-;;                       :description "Opisuje nazw"
-;;                       :component-type "1"
-;;                       :column-type "bigint(20) unsigned"
-;;                       :private? false
-;;                       :editable? true}]}}
-;;                   {:id 30
-;;                    :table "user"
-;;                    :prop
-;;                    {:table
-;;                     {:frontend-name "user"
-;;                      :is-system? false
-;;                      :is-linker? false
-;;                      :allow-modifing? true
-;;                      :allow-deleting? true
-;;                      :allow-linking? true}
-;;                     :columns
-;;                     [{:field "login"
-;;                       :representation "login"
-;;                       :description nil
-;;                       :component-type "i"
-;;                       :column-type "varchar(100)"
-;;                       :private? false
-;;                       :editable? true}]}})))
-
-
-;; (map (fn [tab] (conj {:bounds [0 0 0 0]} tab)) dbmap)
-;; (prepare-table 10 10 "Users" "FName" "LName" "LOGIN")
-;; (getset)
 (def dbmap (atom (mmeta/getset)))
 
 
@@ -423,23 +314,23 @@
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
 
 (def table-editor--element--small-input
-  (fn [enable changing-list value-path value]
+  (fn [enable local-changes path-to-value value]
     (text :text value :font (getFont 12)
           :background (get-color :background :input)
           :enabled? enable
           :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-          :listen [:caret-update (fn [event] (track-changes-used-components changing-list value-path event :text value))])))
+          :listen [:caret-update (fn [event] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path-to-value :old-value value :new-value (config event :text)))])))
 
 
 (def table-editor--element--input
-  (fn [enable changing-list value-path value]
+  (fn [enable local-changes path-to-value value]
     (text :text value :font (getFont 12)
           :background (get-color :background :input)
           :enabled? enable
           :border (compound-border (empty-border :left 15 :right 20 :top 8 :bottom 8)
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-          :listen [:caret-update (fn [e] (track-changes changing-list value-path value (config e :text)))])))
+          :listen [:caret-update (fn [e] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path-to-value :old-value value :new-value (config e :text)))])))
 
 
 
@@ -455,7 +346,7 @@
             (empty-border :left 15 :right 15 :top 5 :bottom 8))))
 
 (def switch-column-to-editing
-  (fn [mode changing-list value-path event column column-editor-id]
+  (fn [mode local-changes path-to-value event column column-editor-id]
     (config! (select (to-root event) [(convert-str-to-hashkey column-editor-id)])
              ;; Right space for column parameters
              :items [[(mig-panel ;; Editable parameters list
@@ -466,7 +357,7 @@
                                   (let [key-param (first column-parameter)]
                                     (list
                                      (label :text (str key-param)) ;; Parameter name
-                                     (table-editor--element--input (= mode :dev-mode) changing-list (join-vec value-path [key-param]) (str (second column-parameter)))))) ;; Parameter value
+                                     (table-editor--element--input (= mode :dev-mode) local-changes (join-vec path-to-value [key-param]) (str (second column-parameter)))))) ;; Parameter value
                                 column)))]])))
 
 
@@ -480,15 +371,15 @@
 
 (defn table-editor--component--column-picker
   "Create left table editor view to select column which will be editing on right table editor view"
-  [mode changing-list column-editor-id columns value-path]
+  [mode local-changes column-editor-id columns path-to-value]
   (mig-panel :constraints ["wrap 1" "0px[100:,fill]0px" "0px[fill]0px"]
              :items
              (join-mig-items
               (map (fn [column index]
-                     (let [value-path (join-vec value-path [index])]
+                     (let [path-to-value (join-vec path-to-value [index])]
                        (table-editor--component--column-picker-btn
                         (get-in column [:representation])
-                        (fn [event] (switch-column-to-editing mode changing-list value-path event column column-editor-id)))))
+                        (fn [event] (switch-column-to-editing mode local-changes path-to-value event column column-editor-id)))))
                    columns (range (count columns)))
               (table-editor--element--btn-add-column))))
 
@@ -505,73 +396,25 @@
       (do ;;(println map)
         map))))
 
-(def meta-copy (atom {}))
 (defn table-editor--element--btn-save
-  [changing-list table-id]
+  [local-changes table-id]
   (table-editor--component--bar-btn :edit-view-save-btn (get-lang-btns :save) icon/agree-grey-64-png icon/agree-blue-64-png
                                     (fn [e] ;; TODO
-                                      ;; save meta configuration chenages
-                                      ;; (prn "Changes" @changing-list)
-                                      (let [orginal-table (get-table-configuration-from-list-by-table-id dbmap table-id)]
-                                        (reset! meta-copy orginal-table)
-                                        (doall
-                                         (map
-                                          (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
-                                            (prn "Changes" (first (second new-value)) (second (second new-value)))
-                                            (swap! meta-copy (fn [changes] (assoc-in changes (first (second new-value)) (second (second new-value))))))
-                                          @changing-list))
-                                        (let [out (mmeta/validate-all @meta-copy)]
-                                          (cond (= (get-in out [:valid?]) true)
-                                                (doall
-                                                 (mmeta/do-change
-                                                  (mmeta/apply-table orginal-table @meta-copy)
-                                                  orginal-table @meta-copy)
-                                                 (reset! dbmap (mmeta/getset))
-                                                 (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5))
-                                                :else (@popup-menager :ok :title "Valid faild!" :body (string/join "<br>" ["Validation ended with faild." (get-in out [:output])]))))))))
-
-;; @dbmap
-;; @meta-copy
-;; @storage-with-changes
-;; @meta-copy
-;; (mmeta/validate-all {:id 23
-;;   :table "permission"
-;;   :prop
-;;   {:table
-;;    {:frontend-name "permission"
-;;     :is-system? false
-;;     :is-linker? false
-;;     :allow-modifing? true
-;;     :allow-deleting? true
-;;     :allow-linking? true}
-;;    :columns
-;;    [{:field "permission_name"
-;;      :representation "123"
-;;      :description nil
-;;      :component-type "i"
-;;      :column-type "varchar(20)"
-;;      :private? 123
-;;      :editable? true}
-;;     {:field "configuration"
-;;      :representation "-=0=-"
-;;      :description "-908-98-098"
-;;      :component-type "a"
-;;      :column-type "tinytext"
-;;      :private? false
-;;      :editable? true}]}})
+                                   
+                                      )))
 
 
 (defn table-editor--element--btn-show-changes
-  [changing-list] (table-editor--component--bar-btn :edit-view-back-btn (get-lang-btns :show-changes) icon/refresh-grey-64-png icon/refresh-blue-64-png
-                                                    (fn [e] (@popup-menager :new-message :title "Changes list" :body (textarea (str @changing-list)) :size [400 300]))))
+  [local-changes] (table-editor--component--bar-btn :edit-view-back-btn (get-lang-btns :show-changes) icon/refresh-grey-64-png icon/refresh-blue-64-png
+                                                    (fn [e] (@popup-menager :new-message :title "Changes list" :body (textarea (str @local-changes)) :size [400 300]))))
 
 
 
 (def table-editor--element--checkbox
-  (fn [enable changing-list value-path value]
+  (fn [enable local-changes path-to-value value]
     (checkbox :selected? value
               :enabled? enable
-              :listen [:state-changed (fn [event] (track-changes-used-components changing-list value-path event :selected? value))])))
+              :listen [:state-changed (fn [event] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path-to-value :old-value value :new-value (config event :selected?)))])))
 
 
 ;; (show-events (checkbox))
@@ -581,13 +424,13 @@
   (fn [table-property index] (label :text (str (first (nth (vec table-property) index))))))
 
 (def table-editor--element--table-parameter-value
-  (fn [mode changing-list table-property tab-value-path index txtsize]
+  (fn [mode local-changes table-property tab-path-to-value index txtsize]
     (let [param-name  (first  (nth (vec table-property) index))
           param-value (second (nth (vec table-property) index))
-          value-path (join-vec tab-value-path [(keyword param-name)])]
+          path-to-value (join-vec tab-path-to-value [(keyword param-name)])]
       (cond
-        (string?  param-value) (table-editor--element--small-input (= mode :dev-mode) changing-list value-path (str param-value))
-        (boolean? param-value) (table-editor--element--checkbox    (= mode :dev-mode) changing-list value-path param-value)
+        (string?  param-value) (table-editor--element--small-input (= mode :dev-mode) local-changes path-to-value (str param-value))
+        (boolean? param-value) (table-editor--element--checkbox    (= mode :dev-mode) local-changes path-to-value param-value)
         :else (label :size txtsize :text (str param-value))))))
 
 (defn create-view--table-editor
@@ -595,12 +438,12 @@
      Create view for table editor. Marge all component to one big view.
    "
   [mode atom--tables-configurations table-id]
-  (let [changing-list (atom {})
+  (let [local-changes (atom {})
         table          (get-table-configuration-from-list-by-table-id atom--tables-configurations table-id)
-        col-value-path [:prop :columns]
-        tab-value-path [:prop :table]
-        columns        (get-in table col-value-path) ;; Get columns list
-        table-property (get-in table tab-value-path) ;; Get table property
+        col-path-to-value [:prop :columns]
+        tab-path-to-value [:prop :table]
+        columns        (get-in table col-path-to-value) ;; Get columns list
+        table-property (get-in table tab-path-to-value) ;; Get table property
         view-id        (keyword (get table :table))  ;; Get name of table and create keyword to check tabs bar (opens views)
         elems          (join-vec
                     ;; Table info
@@ -608,8 +451,8 @@
                                      :items (join-mig-items
                                              [(table-editor--element--header-view (string/join "" [">_ Edit table: " (get-in table [:prop :table :frontend-name])]))]
                                              (cond (= mode :dev-mode)
-                                                   (list [(table-editor--element--btn-save changing-list table-id)]
-                                                         [(table-editor--element--btn-show-changes changing-list)])
+                                                   (list [(table-editor--element--btn-save local-changes table-id)]
+                                                         [(table-editor--element--btn-show-changes local-changes)])
                                                    :else [])))]]
                     ;; Table properties 
                         [[(table-editor--element--header "Table configuration")]]
@@ -622,13 +465,13 @@
                                                   :border (line-border :left 4 :color "#ccc")
                                                   :constraints ["" "10px[100:]0px[grow, fill]10px" "0px[fill]10px"]
                                                   :items [[(table-editor--element--table-parameter-name  table-property index)]
-                                                          [(table-editor--element--table-parameter-value mode changing-list table-property tab-value-path index txtsize)]])])))]))]
+                                                          [(table-editor--element--table-parameter-value mode local-changes table-property tab-path-to-value index txtsize)]])])))]))]
                     ;; Columns properties
                         [[(table-editor--element--header "Column configuration")]]
                         [[(let [column-editor-id "table-editor--component--space-for-column-editor"]
                             (mig-panel ;; Left and Right functional space
                              :constraints ["wrap 2" "0px[fill]0px" "0px[fill]0px"]
-                             :items [[(table-editor--component--column-picker mode changing-list column-editor-id columns col-value-path)] ;; Left part for columns to choose for doing changes.
+                             :items [[(table-editor--component--column-picker mode local-changes column-editor-id columns col-path-to-value)] ;; Left part for columns to choose for doing changes.
                                      [(table-editor--component--space-for-column-editor column-editor-id)] ;; Space for components. Using to editing columns.
                                      ]))]])
         component (cond
@@ -639,7 +482,7 @@
                                            :border (empty-border :thickness 0)))
                     :else (label :text "Table not found inside metadata :c"))]
     (do
-      (add-changes-controller view-id changing-list)
+      (@gtool/changes-service :add-controller :view-id view-id :local-changes local-changes)
       (@jarman-views-service :set-view :view-id view-id :title (get table :table) :component component))))
 
 

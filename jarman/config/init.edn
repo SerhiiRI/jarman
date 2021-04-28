@@ -8,4 +8,4 @@
    :type :param,
    :component :selectbox,
    :display :edit,
-   :value [:en :pl]}}}
+   :value ["en" "pl"]}}}

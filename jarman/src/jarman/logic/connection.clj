@@ -1,29 +1,18 @@
 (ns jarman.logic.connection
   (:refer-clojure :exclude [update])
   (:require
+   ;; clojure 
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]
+   [clojure.spec.alpha :as s]
+   ;; jarmans 
+   [jarman.tools.lang :refer :all]
    [jarman.config.config-manager :as c])
   (:import (java.util Date)
            (java.text SimpleDateFormat)
            (java.sql SQLException)))
 
-
-(c/get-in-value [:database.edn :datalist])
-{:localhost {:name "Localhost", :type :block, :display :edit, :value {:dbtype {:name "Typ po³±czenia", :type :param, :display :none, :component :text, :value "mysql"}, :host {:name "Database host", :doc "Enter jarman SQL database server. It may be IP adress, or domain name, where your server in. Not to set port in this input.", :type :param, :display :edit, :component :text, :value "127.0.0.1"}, :port {:name "Port", :doc "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'", :type :param, :display :edit, :component :text, :value "3306"}, :dbname {:name "Database name", :type :param, :display :edit, :component :text, :value "jarman"}, :user {:name "User login", :type :param, :display :edit, :component :text, :value "jarman"}, :password {:name "User password", :type :param, :display :edit, :component :text, :value "dupa"}}}}
-(def ^{:dynamic true :private true} connection-conf :conf)
-(def ^{:dynamic true :private true} connection-list
-  {:locallhost {:dbtype "mysql", :host "127.0.0.1", :port 3306, :dbname "jarman", :user "root", :password "1234"}
-   :prod {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3306, :dbname "jarman", :user "jarman", :password "dupa"}
-   :conf {:dbtype (c/get-in-value [:database.edn :connector :dbtype])
-          :host (c/get-in-value [:database.edn :connector :host])
-          :port (Integer. (c/get-in-value [:database.edn :connector :port]))
-          :dbname (c/get-in-value [:database.edn :connector :dbname])
-          :user (c/get-in-value [:database.edn :connector :user])
-          :password (c/get-in-value [:database.edn :connector :password])}})
-
-(defn ^{:dynamic true :private true} connection []
-  (connection-conf connection-list))
+;;; HELPER FUNCION ;;;
 
 (defn test-connection [db-spec]
   ;; {:pre [(spec/valid? ::db-connector-scheme db-spec)]}
@@ -54,6 +43,123 @@
       (catch java.net.ConnectException _ nil)
       (catch Exception _ nil))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Connection map validators ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(s/def ::ne-string (every-pred string? not-empty))
+(s/def ::str-without-space (s/and ::ne-string #(not (string/includes? % " "))))
+(s/def :connection/dbtype #(in? ["mysql"] %))
+(s/def :connection/host ::ne-string)
+(s/def :connection/port (every-pred number? pos-int?)) 
+(s/def :connection/dbname ::ne-string)
+(s/def :connection/user ::ne-string)
+(s/def :connection/password ::ne-string)
+(s/def ::connection
+  (s/keys :req-un [:connection/dbtype
+                   :connection/host
+                   :connection/port
+                   :connection/dbname
+                   :connection/user
+                   :connection/password]))
+
+(def ^:private connection (ref nil))
+
+(defn connection-validate
+  "Description
+    valid sended configuraion map, which in this version must look like
+     {:dbtype \"mysql\",
+      :host \"127.0.0.1\",
+      :port 3306,
+      :dbname \"jarman\",
+      :user \"root\",
+      :password \"1234\"}"
+  [connection-map]
+  (if (s/valid? ::connection connection-map)
+    true
+    (do (println "Not valid map configuration: ")
+        (clojure.pprint/pprint connection-map))))
+
+(defn connection-set
+  "Description
+    set configuraiton reference variable, but do validation on
+    sended configuraion map, which in this version must look like
+     {:dbtype \"mysql\",
+      :host \"127.0.0.1\",
+      :port 3306,
+      :dbname \"jarman\",
+      :user \"root\",
+      :password \"1234\"}
+    If validation return `true`, then function also return true
+    If validation return `false`, then connection variable not
+    totaly set"
+  [connection-map]
+  (dosync (ref-set connection connection-map)))
+
+(defn connection-get
+  "Description
+    Simply getter for `connection` reference value,
+    Which contain connection to database for JDBC
+    driver. In this version must be look like
+     {:dbtype \"mysql\",
+      :host \"127.0.0.1\",
+      :port 3306,
+      :dbname \"jarman\",
+      :user \"root\",
+      :password \"1234\"}"
+  [](deref connection))
+
+;;; FOR DEBUG CONNECTION
+;; (connection-set
+;;  ;; set selected
+;;  (:localhost
+;;   ;;------------
+;;   {:localhost
+;;    {:dbtype "mysql",
+;;     :host "127.0.0.1",
+;;     :port 3306,
+;;     :dbname "jarman",
+;;     :user "root",
+;;     :password "1234"},
+;;    :trashpanda
+;;    {:dbtype "mysql",
+;;     :host "trashpanda-team.ddns.net",
+;;     :port 3306,
+;;     :dbname "jarman",
+;;     :user "jarman",
+;;     :password "dupa"}}))
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mapper/Converter ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn datalist-get []
+  (c/get-in-value [:database.edn :datalist]))
+
+(defn datalist-params-mapper [param-segment]
+  (->> (seq param-segment)
+       (map (fn [[prm-k {n :name t :type d :display c :component v :value}]]
+              {prm-k v}))
+       (reduce into)))
+
+(defn datalist-mapper [datalist-segment]
+  (->> datalist-segment
+       (map (fn [[k {n :name v :value}]]
+              {k (datalist-params-mapper v)}))
+       (reduce into)))
+
+(defn datalist-update [mapped-datalist]
+  (doall
+   (map #(c/assoc-in-value
+          (vec (concat [:database.edn :datalist] %))
+          (get-in mapped-datalist %)) 
+        (key-paths
+         mapped-datalist))))
+
+;;;;;;;;;;;;;;;;;;;;;
+;;; JDBC WRAPPERS ;;; 
+;;;;;;;;;;;;;;;;;;;;;
+
 (defmacro sqlerr
   ([f]
    `(sqlerr ~f
@@ -70,56 +176,11 @@
            (~f-exception (format "Undefinied problem: %s" (ex-message e#)))))))
 
 (defn exec [s]
-  (jdbc/execute! (connection) s))
+  (jdbc/execute! @connection s))
 (defn query [s]
-  (jdbc/query (connection) s))
+  (jdbc/query @connection s))
 (defn exec! [s]
-  (sqlerr (jdbc/execute! (connection) s)))
+  (sqlerr (jdbc/execute! @connection s)))
 (defn query! [s]
-  (sqlerr (jdbc/query (connection) s)))
-
-(defn connection-section-config
-  [connection-name-alias connection-params-config]
-  {:name connection-name-alias
-   :type :block,
-   :display :none,
-   :value connection-params-config})
-(defn connection-section-params-config[host port dbname login password]
-  {:dbtype
-   {:name "Connection type",
-    :type :param,
-    :display :none,
-    :component :text,
-    :value "mysql"},
-   :host
-   {:name "Database host",
-    :type :param,
-    :display :edit,
-    :component :text,
-    :value host},
-   :port
-   {:name "Port",
-    :type :param,
-    :display :edit,
-    :component :text,
-    :value port},
-   :dbname
-   {:name "Database name",
-    :type :param,
-    :display :edit,
-    :component :text,
-    :value dbname},
-   :user
-   {:name "User login",
-    :type :param,
-    :display :edit,
-    :component :text,
-    :value login},
-   :password
-   {:name "User password",
-    :type :param,
-    :display :edit,
-    :component :text,
-    :value password}}
-)
+  (sqlerr (jdbc/query @connection s)))
 

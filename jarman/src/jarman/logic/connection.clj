@@ -112,7 +112,7 @@
 ;;; FOR DEBUG CONNECTION
 ;; (connection-set
 ;;  ;; set selected
-;;  (:localhost
+;;  (:dell
 ;;   ;;------------
 ;;   {:localhost
 ;;    {:dbtype "mysql",
@@ -121,13 +121,21 @@
 ;;     :dbname "jarman",
 ;;     :user "root",
 ;;     :password "1234"},
-;;    :trashpanda
+;;    :raspberry
 ;;    {:dbtype "mysql",
 ;;     :host "trashpanda-team.ddns.net",
 ;;     :port 3306,
 ;;     :dbname "jarman",
 ;;     :user "jarman",
-;;     :password "dupa"}}))
+;;     :password "dupa"}
+;;    :dell
+;;    {:dbtype "mysql",
+;;     :host "trashpanda-team.ddns.net",
+;;     :port 3307,
+;;     :dbname "jarman",
+;;     :user "root",
+;;     :password "1234"}}))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Mapper/Converter ;;;

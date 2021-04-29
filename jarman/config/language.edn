@@ -94,6 +94,7 @@
     :register "Rejestr"
     :back "Cofnij"
     :goback "Wróć"
+    :restore-last-configuration "Przywróć ostatnią konfigurację"
     :disconnect "Odłącz"
     :rfid-cards "Karty RFID"
     :clean-filters "Wyczyść filtrowanie"
@@ -111,7 +112,9 @@
     :information "Informacja"
     :write-enter-search "Wpisz frazę i kliknij - ENTER - by wyszukać w tabeli."
     :unsaved-changes-title "Nie zapisano zmian!"
-    :unsaved-changes-body "Wprowadzono zmiany w konfiguracji, które nie zostały zapisane. Czy zamknąć okno mimo to?"},
+    :unsaved-changes-body "Wprowadzono zmiany w konfiguracji, które nie zostały zapisane. Czy zamknąć okno mimo to?"
+    :restore-configuration-ok "Przywrócono konfiguracje! Proszę bądź ostrożny następnym razem."
+    :configuration-corrupted "Konfiguracja jest uszkodzona. Spróbuj przywrócić wcześniejszą wersję."},
    :basic
    {:description "Opis",
     :yes "Tak",
@@ -230,6 +233,7 @@
   :register "Register"
   :back "Back"
   :goback "Step back"
+    :restore-last-configuration "Restore last configuration"
   :disconnect "Disconnect"
   :rfid-cards "RFID cards"
   :clean-filters "Clean filters"
@@ -249,7 +253,8 @@
   :connection-error "Failed connection with database."
   :unsaved-changes-title "Unsaved changes!"
   :unsaved-changes-body "Configuration changes have been made but not saved. Should I close the window anyway?"
-  }
+  :restore-configuration-ok "Configurations restored! Please be careful next time."
+  :configuration-corrupted "The configuration is corrupted. Try to roll back to an earlier version."}
  :basic
  {:description "Description"
   :yes "Yes"

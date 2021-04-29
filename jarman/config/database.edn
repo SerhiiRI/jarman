@@ -55,13 +55,8 @@
        :type :param,
        :display :edit,
        :component :text,
-<<<<<<< HEAD
-       :value "dupa"}}}
-    :jarman--trashpanda-team_ddns_net
-=======
        :value "dupa"}}},
     :tpanda
->>>>>>> f46abc6092bd1bfd552ae62a3fe7e38313dc8f5c
     {:name "Raspberry",
      :type :block,
      :display :edit,

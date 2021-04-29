@@ -81,7 +81,7 @@
                           {:first_registration_date [:date :default :null]}
                           {:is_working [:tinyint-1 :default :null]}
                           {:version [:varchar-100 :default :null]}
-                          {:id_dev [:varchar-100 :default :null]}
+                          {:dev_id [:varchar-100 :default :null]}
                           {:producer [:varchar-100 :default :null]}
                           {:modem [:varchar-100 :default :null]}
                           {:modem_model [:varchar-100 :default :null]}
@@ -277,7 +277,7 @@
 (def gtable (generate-random-from-list ["service_contract" "seal" "repair_contract" "point_of_sale_group_links" "point_of_sale_group" "cache_register" "point_of_sale" "enterpreneur" "user" "permission"]))
 (defn fill-documents [c]
   (def create-documents
-    (fn [] {:table (gtable)
+    (fn [] {:documents.table (gtable)
            :name (gsimplestring)
            :document nil
            :prop "{}"}))
@@ -313,7 +313,7 @@
        :first_registration_date (.format (java.text.SimpleDateFormat. "YYYY-MM-dd") (java.util.Date.))
        :is_working (gboolean)
        :version (gsimplestring)
-       :id_dev (gboolean)
+       :dev_id (gboolean)
        :producer (gsimplestring)
        :modem (gsimplestring)
        :modem_model (gsimplestring)
@@ -421,6 +421,7 @@
 (defn regenerate-scheme-test []
   (delete-scheme)
   (create-scheme)
+  (metadata/do-clear-meta)
   (metadata/do-create-meta)
   (fish
    [permission]

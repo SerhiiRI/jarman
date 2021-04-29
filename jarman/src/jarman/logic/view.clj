@@ -6,7 +6,7 @@
    [clojure.string :as string]
    [seesaw.util :as u]
    ;; Seesaw components
-   [seesaw.core :as c]
+   [seesaw.core :as score]
    [seesaw.border :as sborder]
    [seesaw.dev :as sdev]
    [seesaw.mig :as smig]
@@ -218,8 +218,6 @@
 ;;; ------------------------------------------
 
 (defview permission
-  :display :non
-  :permission [:dev :admin]
   :tables [:permission]
   :view   [:permission.permission_name]
   :data   {:column (as-is :permission.id :permission.permission_name :permission.configuration)})
@@ -338,8 +336,6 @@
                   :service_contract.money_per_month
                   :point_of_sale.name
                   :point_of_sale.physical_address)})
-
-
 
 (defview repair_contract
   :tables [:repair_contract :cache_register :point_of_sale]

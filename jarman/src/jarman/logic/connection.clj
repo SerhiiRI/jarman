@@ -110,31 +110,31 @@
   [](deref connection))
 
 ;;; FOR DEBUG CONNECTION
-;; (connection-set
-;;  ;; set selected
-;;  (:dell
-;;   ;;------------
-;;   {:localhost
-;;    {:dbtype "mysql",
-;;     :host "127.0.0.1",
-;;     :port 3306,
-;;     :dbname "jarman",
-;;     :user "root",
-;;     :password "1234"},
-;;    :raspberry
-;;    {:dbtype "mysql",
-;;     :host "trashpanda-team.ddns.net",
-;;     :port 3306,
-;;     :dbname "jarman",
-;;     :user "jarman",
-;;     :password "dupa"}
-;;    :dell
-;;    {:dbtype "mysql",
-;;     :host "trashpanda-team.ddns.net",
-;;     :port 3307,
-;;     :dbname "jarman",
-;;     :user "root",
-;;     :password "1234"}}))
+(connection-set
+ ;; set selected
+ (:raspberry
+  ;;------------
+  {:localhost
+   {:dbtype "mysql",
+    :host "127.0.0.1",
+    :port 3306,
+    :dbname "jarman",
+    :user "root",
+    :password "1234"},
+   :raspberry
+   {:dbtype "mysql",
+    :host "trashpanda-team.ddns.net",
+    :port 3306,
+    :dbname "jarman",
+    :user "jarman",
+    :password "dupa"}
+   :dell
+   {:dbtype "mysql",
+    :host "trashpanda-team.ddns.net",
+    :port 3307,
+    :dbname "jarman",
+    :user "root",
+    :password "1234"}}))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;

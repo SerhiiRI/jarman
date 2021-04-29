@@ -131,9 +131,6 @@
      (format "`%s`.`%s`" (name t) (name f))
      (format "`%s`" (name field)))))
 
-(defn- make-dot-column!
-  ([field] (string/join "."(map (comp (partial format "`%s`") name) (tf-t-f field)))))
-
 (defn- tf-t-f [table-field]
   (let [t-f (string/split (name table-field) #"\.")]
     (mapv keyword t-f)))
@@ -141,6 +138,8 @@
 (defn- t-f-tf [table field]
   (keyword (str (name table) "." (name (name field)))))
 
+(defn- make-dot-column!
+  ([field] (string/join "."(map (comp (partial format "`%s`") name) (tf-t-f field)))))
 
 (defn pair-where-pattern
   "Constuct key-value string view for SQL language parametrized queries

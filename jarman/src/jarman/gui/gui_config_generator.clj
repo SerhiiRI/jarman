@@ -173,7 +173,10 @@
   "Description
      Join config generator parts and set view on right functional panel
    "
-  (fn [start-key]
+  (fn [start-key
+       & {:keys [message-ok message-faild]
+          :or {message-ok (fn [txt] (alert txt))
+               message-faild (fn [txt] (alert txt))}}]
     (let [map-part (cm/get-in-segment start-key)
           local-changes (atom {})]
       (if (= (get-in map-part [:display]) :edit)
@@ -189,11 +192,12 @@
                    (label :text "Show changes" :listen [:mouse-clicked (fn [e] ;; save changes configuration
                                                                          (doall (map #(cm/assoc-in-value (first (second %)) (second (second %)))  @local-changes))
                                                                          (let [validate (cm/store-and-back)]
+                                                                          ;;  (println validate)
                                                                            (if (get validate :valid?)
-                                                                             (do
-                                                                            ;;  (new-message (get-lang-alerts []))
-                                                                               ))
-                                                                           ))])
+                                                                             (do ;; message box if saved successfull
+                                                                               (if-not (nil? message-ok) (message-ok "")))
+                                                                             (do ;; message box if saved faild
+                                                                               (if-not (nil? message-faild) (message-faild (get validate :output)))))))])
                    (let [body (map
                                (fn [param]
                                  (confgen--component--tree local-changes (join-vec start-key (list (first param)))))
@@ -201,9 +205,9 @@
                      body))))))))
 
 ;; Show example
-(let [my-frame (-> (doto (seesaw.core/frame
-                          :title "test"
-                          :size [800 :by 600]
-                          :content (gcomp/auto-scrollbox (create-view--confgen [:resource.edn])))
-                     (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
-  (seesaw.core/config! my-frame :size [800 :by 600]))
+;; (let [my-frame (-> (doto (seesaw.core/frame
+;;                           :title "test"
+;;                           :size [800 :by 600]
+;;                           :content (gcomp/auto-scrollbox (create-view--confgen [:resource.edn])))
+;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
+;;   (seesaw.core/config! my-frame :size [800 :by 600]))

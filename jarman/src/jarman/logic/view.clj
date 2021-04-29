@@ -4,15 +4,16 @@
    ;; Clojure toolkit 
    [clojure.data :as data]
    [clojure.string :as string]
-   [seesaw.util :as sutil]
+   [seesaw.util :as u]
    ;; Seesaw components
-   [seesaw.core :as score]
+   [seesaw.core :as c]
    [seesaw.border :as sborder]
    [seesaw.dev :as sdev]
    [seesaw.mig :as smig]
    [seesaw.swingx :as swingx]
    ;; Jarman toolkit
    [jarman.logic.connection :as db]
+   [jarman.config.config-manager :as cm]
    [jarman.tools.lang :refer :all]
    [jarman.gui.gui-tools :refer :all :as gtool]
    [jarman.resource-lib.icon-library :as ico]
@@ -25,7 +26,7 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
-(defn quick-path [table] 
+(defn quick-path [table]
   (mt/recur-find-path (first (mt/getset! (keyword table)))))
 ;; (recur-find-path (first (mt/getset :point_of_sale_group_links)))
 ;; (recur-find-path (first (mt/getset :user)))
@@ -67,38 +68,38 @@
                        :ssreou :ownership_form ;; enterprenier 
                        ])
 
-(defn tf-t-f [table-field]
-  (let [t-f (string/split (name table-field) #"\.")]
-    (mapv keyword t-f)))
+;; (defn tf-t-f [table-field]
+;;   (let [t-f (string/split (name table-field) #"\.")]
+;;     (mapv keyword t-f)))
 
-(defn t-f-tf [table field]
-  (keyword (str (name table) "." (name (name field)))))
+;; (defn t-f-tf [table field]
+;;   (keyword (str (name table) "." (name (name field)))))
 
-(tf-t-f :suka.bliat)
-(t-f-tf :suka :bliat)
+;; (tf-t-f :suka.bliat)
+;; (t-f-tf :suka :bliat)
 
-(defn get-view-column-meta [table-list column-list]
-  (->> table-list
-       (map (fn [t] (vec [t ((comp :columns :prop) (first (mt/getset! t)))])))
-       (filter (fn [[t c]] (in? column-list (t-f-tf t (:field c))(keyword (str (name t) (name (:field c)))))))
-       ;; (map second)
-       ))
+;; (defn get-view-column-meta [table-list column-list]
+;;   (->> table-list
+;;        (map (fn [t] (vec [t ((comp :columns :prop) (first (mt/getset! t)))])))
+;;        (filter (fn [[t c]] (in? column-list (t-f-tf t (:field c))(keyword (str (name t) (name (:field c)))))))
+;;        ;; (map second)
+;;        ))
 
 
-(defn get-view-column-meta [table-list column-list]
-  (->> table-list
-       (mapcat (fn [t] (vec [t ((comp :columns :prop) (first (mt/getset! t)))])))
-       ;; (filter (fn [[t c]] (in? column-list (keyword (:field c)))))
-       ))
+;; (defn get-view-column-meta [table-list column-list]
+;;   (->> table-list
+;;        (mapcat (fn [t] (vec [t ((comp :columns :prop) (first (mt/getset! t)))])))
+;;        ;; (filter (fn [[t c]] (in? column-list (keyword (:field c)))))
+;;        ))
 
-(construct-table-model-columns [:point_of_sale :enterpreneur]
-                               [:point_of_sale.name :point_of_sale.physical_address :point_of_sale.telefons :enterprenier.ssreou :enterprenier.ownership_form])
-[{:key :name, :text "name"}
- {:key :physical_address, :text "physical_address"}
- {:key :telefons, :text "telefons"}
- {:key :ssreou, :text "ssreou"}
- {:key :ownership_form, :text "ownership_form"}
- {:key :physical_address, :text "physical_address"}]
+;; (construct-table-model-columns [:point_of_sale :enterpreneur]
+;;                                [:name :point_of_sale.physical_address :telefons :ssreou :ownership_form])
+;; [{:key :name, :text "name"}
+;;  {:key :physical_address, :text "physical_address"}
+;;  {:key :telefons, :text "telefons"}
+;;  {:key :ssreou, :text "ssreou"}
+;;  {:key :ownership_form, :text "ownership_form"}
+;;  {:key :physical_address, :text "physical_address"}]
 
 ;;;;;;;;;;;;;;
 ;;; JTABLE ;;;
@@ -130,12 +131,12 @@
 ;; (let [mig (mig-panel
 ;;            :constraints ["" "0px[grow, center]0px" "5px[fill]5px"]
 ;;            :items [[(label :text "One")]])
-;;       my-frame (-> (doto (score/frame
+;;       my-frame (-> (doto (c/frame
 ;;                           :title "test"
 ;;                           :size [0 :by 0]
 ;;                           :content mig)
 ;;                      (.setLocationRelativeTo nil) pack! show!))]
-;;   (score/config! my-frame :size [600 :by 600])
+;;   (c/config! my-frame :size [600 :by 600])
 ;;   (.add mig (label :text "Two")))
 
 ;; [{:key :name :text "Imie"}
@@ -155,9 +156,9 @@
 
 (defn construct-table [model]
   (fn [listener-fn]
-    (let [TT (score/table :model (model))]
-      (score/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (score/selection TT)))))
-      (score/scrollable TT :hscroll :as-needed :vscroll :as-needed))))
+    (let [TT (c/table :model (model))]
+      (c/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (c/selection TT)))))
+      (c/scrollable TT :hscroll :as-needed :vscroll :as-needed))))
 
 (defn construct-sql [table select-rules]
   {:pre [(keyword? table)]}
@@ -205,6 +206,8 @@
 ;; (defview user)
 
 (defview permission
+  :display :non
+  :permission [:dev :admin]
   :tables [:permission]
   :view   [:permission_name]
   :data   {:column [:id :permission_name :configuration]})
@@ -215,84 +218,92 @@
   :data   {:inner-join [:permission]
            :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]})
 
-(defview enterpreneur
-  :tables [:enterpreneur]
-  :view   [:ssreou :ownership_form :vat_certificate :individual_tax_number :director :accountant :legal_address :physical_address :contacts_information]
-  :data   {:column [:ssreou :ownership_form :vat_certificate :individual_tax_number :director :accountant :legal_address :physical_address :contacts_information]})
 
-(db/query "SELECT ssreou, ownership_form, vat_certificate, individual_tax_number, director, accountant, legal_address, physical_address, contacts_information FROM `enterpreneur`")
-(let [;; mig (smig/mig-panel
-      ;;      :constraints ["" "0px[grow, center]0px" "5px[fill]5px"]
-      ;;      :items [[(score/label :text "One")]])
-      my-frame (-> (doto (score/frame
-                          :title "test"
-                          :size [0 :by 0]
-                          :content ((:->table point_of_sale-view) (fn [x] (println x))))
-                     (.setLocationRelativeTo nil) score/pack! score/show!))]
-  (score/config! my-frame :size [600 :by 600]))
+(defview seal
+  :tables [:seal]
+  :view [:seal_number :to_date]
+  :columns [:id :seal_number :to_date])
 
-(defview point_of_sale
-  :tables [:point_of_sale :enterpreneur]
-  :view   [:name :physical_address :telefons ;; point_of sale 
-           :ssreou :ownership_form ;; enterprenier 
-           ]
-  :data   {:inner-join [:enterpreneur]
-           :column [{:point_of_sale.id :id} :name {:point_of_sale.physical_address :physical_address} :telefons :name :id_enterpreneur :ssreou :ownership_form ]})
+((:->data seal-view))
 
-((:->model point_of_sale-view))
-"SELECT point_of_sale.id AS id, name, point_of_sale.physical_address AS physical_address, telefons, name, id_enterpreneur, ssreou, ownership_form FROM `point_of_sale` INNER JOIN enterpreneur ON enterpreneur.id=point_of_sale.id_enterpreneur"
+;; (defview enterpreneur
+;;   :tables [:enterpreneur]
+;;   :view   [:ssreou :ownership_form :vat_certificate :individual_tax_number :director :accountant :legal_address :physical_address :contacts_information]
+;;   :data   {:column [:ssreou :ownership_form :vat_certificate :individual_tax_number :director :accountant :legal_address :physical_address :contacts_information]})
 
-{:cache_register
- :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
-           {:name [:varchar-100 :default :null]}
-           {:serial_number [:varchar-100 :default :null]}
-           {:fiscal_number [:varchar-100 :default :null]}
-           {:manufacture_date [:date :default :null]}
-           {:first_registration_date [:date :default :null]}
-           {:is_working [:tinyint-1 :default :null]}
-           {:version [:varchar-100 :default :null]}
-           {:id_dev [:varchar-100 :default :null]}
-           {:producer [:varchar-100 :default :null]}
-           {:modem [:varchar-100 :default :null]}
-           {:modem_model [:varchar-100 :default :null]}
-           {:modem_serial_number [:varchar-100 :default :null]}
-           {:modem_phone_number [:varchar-100 :default :null]}]
- :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]}
+;; (db/query "SELECT ssreou, ownership_form, vat_certificate, individual_tax_number, director, accountant, legal_address, physical_address, contacts_information FROM `enterpreneur`")
+;; (let [;; mig (smig/mig-panel
+;;       ;;      :constraints ["" "0px[grow, center]0px" "5px[fill]5px"]
+;;       ;;      :items [[(c/label :text "One")]])
+;;       my-frame (-> (doto (c/frame
+;;                           :title "test"
+;;                           :size [0 :by 0]
+;;                           :content ((:->col-meta user-view) (fn [x] (println x))))
+;;                      (.setLocationRelativeTo nil) c/pack! c/show!))]
+;;   (c/config! my-frame :size [600 :by 600]))
 
-{:point_of_sale_group
- :columns [{:group_name [:varchar-100 :default :null]}
-           {:information [:mediumtext :default :null]}]}
+;; (defview point_of_sale
+;;   :tables [:point_of_sale :enterpreneur]
+;;   :view   [:name :physical_address :telefons ;; point_of sale 
+;;            :ssreou :ownership_form ;; enterprenier 
+;;            ]
+;;   :data   {:inner-join [:enterpreneur]
+;;            :column [{:point_of_sale.id :id} :name {:point_of_sale.physical_address :physical_address} :telefons :name :id_enterpreneur :ssreou :ownership_form ]})
 
-{:point_of_sale_group_links
- :columns [{:id_point_of_sale_group [:bigint-20-unsigned :default :null]}
-           {:id_point_of_sale [:bigint-20-unsigned :default :null]}]
- :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
-                [{:id_point_of_sale :point_of_sale}]]}
+;; ((:->model point_of_sale-view))
+;; "SELECT point_of_sale.id AS id, name, point_of_sale.physical_address AS physical_address, telefons, name, id_enterpreneur, ssreou, ownership_form FROM `point_of_sale` INNER JOIN enterpreneur ON enterpreneur.id=point_of_sale.id_enterpreneur"
 
-{:seal
- :columns [{:seal_number [:varchar-100 :default :null]}
-           {:to_date [:date :default :null]}]}
+;; {:cache_register
+;;  :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
+;;            {:name [:varchar-100 :default :null]}
+;;            {:serial_number [:varchar-100 :default :null]}
+;;            {:fiscal_number [:varchar-100 :default :null]}
+;;            {:manufacture_date [:date :default :null]}
+;;            {:first_registration_date [:date :default :null]}
+;;            {:is_working [:tinyint-1 :default :null]}
+;;            {:version [:varchar-100 :default :null]}
+;;            {:id_dev [:varchar-100 :default :null]}
+;;            {:producer [:varchar-100 :default :null]}
+;;            {:modem [:varchar-100 :default :null]}
+;;            {:modem_model [:varchar-100 :default :null]}
+;;            {:modem_serial_number [:varchar-100 :default :null]}
+;;            {:modem_phone_number [:varchar-100 :default :null]}]
+;;  :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]}
 
-{:service_contract
- :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
-           {:register_contract_date [:date :default :null]}
-           {:contract_term_date [:date :default :null]}
-           {:money_per_month [:int-11 :default :null]}]
- :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]}
+;; {:point_of_sale_group
+;;  :columns [{:group_name [:varchar-100 :default :null]}
+;;            {:information [:mediumtext :default :null]}]}
 
-{:repair_contract
- :columns [{:id_cache_register [:bigint-20 :unsigned :default :null]}
-           {:id_point_of_sale [:bigint-20 :unsigned :default :null]}
-           {:creation_contract_date [:date :default :null]}
-           {:last_change_contract_date [:date :default :null]}
-           {:contract_terms_date [:date :default :null]}
-           {:cache_register_register_date [:date :default :null]}
-           {:remove_security_seal_date [:datetime :default :null]}
-           {:cause_of_removing_seal [:mediumtext :default :null]}
-           {:technical_problem [:mediumtext :default :null]}
-           {:active_seal [:mediumtext :default :null]}]
- :foreign-keys [[{:id_cache_register :cache_register} {:delete :cascade :update :cascade}]
-                [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]]}
+;; {:point_of_sale_group_links
+;;  :columns [{:id_point_of_sale_group [:bigint-20-unsigned :default :null]}
+;;            {:id_point_of_sale [:bigint-20-unsigned :default :null]}]
+;;  :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
+;;                 [{:id_point_of_sale :point_of_sale}]]}
+
+;; {:seal
+;;  :columns [{:seal_number [:varchar-100 :default :null]}
+;;            {:to_date [:date :default :null]}]}
+
+;; {:service_contract
+;;  :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
+;;            {:register_contract_date [:date :default :null]}
+;;            {:contract_term_date [:date :default :null]}
+;;            {:money_per_month [:int-11 :default :null]}]
+;;  :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]}
+
+;; {:repair_contract
+;;  :columns [{:id_cache_register [:bigint-20 :unsigned :default :null]}
+;;            {:id_point_of_sale [:bigint-20 :unsigned :default :null]}
+;;            {:creation_contract_date [:date :default :null]}
+;;            {:last_change_contract_date [:date :default :null]}
+;;            {:contract_terms_date [:date :default :null]}
+;;            {:cache_register_register_date [:date :default :null]}
+;;            {:remove_security_seal_date [:datetime :default :null]}
+;;            {:cause_of_removing_seal [:mediumtext :default :null]}
+;;            {:technical_problem [:mediumtext :default :null]}
+;;            {:active_seal [:mediumtext :default :null]}]
+;;  :foreign-keys [[{:id_cache_register :cache_register} {:delete :cascade :update :cascade}]
+;;                 [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]]}
 
 
 
@@ -319,42 +330,24 @@
 ;;              (rest (line-seq reader))))))
 
 
-(defn input-text-with-label
-  [ & {:keys [title field size changes value editable? enable?]
-      :or {title ""
-          ;;  size [200 :by 70]
-           changes (atom {})
-           value ""
-           editable? true
-           enable? true
-           field nil}}]
-  (score/grid-panel :columns 1
-                    ;; :size size
-                    :items [(score/label
-                             :text title)
-                            (gcomp/input-text
-                            ;;  :border [10 10 0 0]
-                             :args [:editable? editable?
-                                    :enabled? enable?
-                                    :text value
-                                    :foreground (if editable? "#000" "#456fd1")
-                                    :listen [:mouse-entered (if editable? (fn [e]) hand-hover-on)
-                                             :caret-update (fn [e] 
-                                                             (if-not (nil? field)(swap! changes (fn [storage] (assoc storage (keyword field) (score/value (score/to-widget e)))))))]])]))
 
-
-;; (seesaw.dev/show-options (score/text))
+;; (seesaw.dev/show-options (c/text))
 
 (def build-input-form
-  (fn [metadata & {:keys [model 
-                          more-comps]
+  (fn [metadata & {:keys [model
+                          more-comps
+                          input-template
+                          start-focus]
                    :or {model []
-                        more-comps [(score/label)]}}]
+                        more-comps [(c/label)]
+                        input-template (fn [title f] (gcomp/button-basic title f))
+                        start-focus nil}}
+       ]
     (let [complete (atom {})
           button-title (if (empty? model) "Insert new data" "Update record")
-          vp (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"] 
+          vp (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
                              :border (sborder/empty-border :thickness 10)
-                             :items [[(score/label)]])
+                             :items [[(c/label)]])
           components (concat
                       (map (fn [meta]
                              (let [title (key-to-title (get meta :representation))
@@ -365,20 +358,19 @@
                                  (do ;; Add input-text with label
                                    (if (empty? model)
                                      (do ;;Create insert input
-                                       (input-text-with-label :title title :field field :changes complete :editable? editable?))
+                                       (gcomp/input-text-with-label-and-atom :title title :field field :changes complete :editable? editable?))
                                      (do ;; Create update input
-                                       (input-text-with-label :title title :field field :changes complete :editable? editable? :value (get-in model [(keyword (get meta :representation))])))))
+                                       (gcomp/input-text-with-label-and-atom :title title :field field :changes complete :editable? editable? :value (get-in model [(keyword (get meta :representation))])))))
                                  (= (first (get meta :component-type)) "l")
                                  (do ;; Add label with disable input-text
                                    (swap! complete (fn [storage] (assoc storage
                                                                         (keyword (get meta :field))
                                                                         (get meta :key-table))))
-                                   (input-text-with-label :title title :changes complete :editable? false :value (get meta :key-table)))))
-                                 )
+                                   (gcomp/input-text-with-label-and-atom :title title :changes complete :editable? false :value (get meta :key-table))))))
                            metadata)
-                      [(score/label :border (sborder/empty-border :top 20))]
-                      [(gcomp/button-basic button-title (fn [e] (println "Data from form: " @complete)))
-                      ;;  (score/label :text "Insert" :listen [:mouse-clicked (fn [e]
+                      [(c/label :border (sborder/empty-border :top 20))]
+                      [(input-template button-title (fn [e] (println "Data from form: " @complete)))
+                      ;;  (c/label :text "Insert" :listen [:mouse-clicked (fn [e]
                       ;;                                                        (println "Insert " @complete)
                       ;;                                                             ;;  (println "Map" (merge template-map @complete)
                       ;;                                                             ;;           ;; ((:user->insert user-view)
@@ -386,31 +378,33 @@
                       ;;                                                             ;;           ;;   @complete))
                       ;;                                                             ;;           )
                       ;;                                                        )])
-                       more-comps])]
-      ;; (println "Model: " model)
-      (score/config! vp :items (gtool/join-mig-items components)))))
+                       more-comps])
+                       builded (c/config! vp :items (gtool/join-mig-items components))]
+      (if-not (nil? start-focus) (reset! start-focus (last (u/children (first components)))))
+      builded
+      )))
 
 
 
 (defn export-expand-panel
   []
-  (score/flow-panel
+  (c/flow-panel
    :border (sborder/compound-border (sborder/empty-border :top 5)
                                     (sborder/line-border :top 2 :color "#999")
                                     (sborder/empty-border :top 50))
    :items [(gcomp/button-expand "Export" (smig/mig-panel
                                           :constraints ["wrap 1" "5px[grow, fill]5px" "10px[fill]0px"]
                                           :border (sborder/line-border :left 2 :right 2 :bottom 2 :color "#fff")
-                                          :items [[(score/horizontal-panel
+                                          :items [[(c/horizontal-panel
                                                     :items [(gcomp/input-text :args [:text "\\path\\to\\export"])
-                                                            (score/label :text "[-]"
+                                                            (c/label :text "[-]"
                                                                          :background "#abc"
                                                                          :border (sborder/empty-border :thickness 5)
                                                                          :listen [:mouse-clicked (fn [e] (println "Export clicked"))])])]
-                                                  [(score/checkbox :text "ODT" :selected? true)]
-                                                  [(score/checkbox :text "DOCX")]
+                                                  [(c/checkbox :text "ODT" :selected? true)]
+                                                  [(c/checkbox :text "DOCX")]
                                                   [(gcomp/button-basic "Service raport" (fn [e]))]
-                                                  [(score/label)]])
+                                                  [(c/label)]])
                                 :background "#fff"
                                 :min-height 220
                                 :border (sborder/compound-border (sborder/empty-border :left 10 :right 10)))]))
@@ -418,78 +412,44 @@
 
 ;; (:->col-meta user-view)
 
-(def auto-builder--table-view
-  (fn [controller]
-    (let [controller (if (nil? controller) user-view controller)
-          ;; ico-open (stool/image-scale ico/plus-64-png 28)
-          ;; ico-close (stool/image-scale ico/minus-grey-64-png 28)
-          hidden-comp (atom nil)
-          expand-export (fn [](export-expand-panel))
-          insert-form (fn [](build-input-form (:->col-meta controller) :more-comps [(expand-export)]))
-          form-space-open ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
-          form-space-hide ["" "0px[grow, fill]0px" "0px[grow, fill]0px"]
-          view-layout-open ["" "0px[250:, fill]0px[grow, fill]10px" "0px[grow, fill]0px"]
-          view-layout-hide ["" "0px[fill]0px[grow, fill]0px" "0px[grow, fill]0px"]
-          form-space (smig/mig-panel :constraints form-space-open)
-          view-layout (smig/mig-panel
-                       :constraints ["" "0px[250:, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
-          ;;------------
 
-          hide-show (score/label :text "<<"
-                                 :background "#bbb"
-                                 :foreground "#fff"
-                                 :font (gtool/getFont 16 :bold)
-                                 :border (sborder/empty-border :left 2 :right 2)
-                                 :listen [:mouse-entered gtool/hand-hover-on])
-          ;; default-bg-color (score/config hide-show :background)
-          form-space (score/config! form-space
-                                    :items [[hide-show] [(insert-form)]])
-          hide-show (score/config! hide-show :listen [:mouse-clicked (fn [e]
-                                                                       (let [inside (sutil/children form-space)]
-                                                                         (if (nil? @hidden-comp)
-                                                                           (do
-                                                                             (score/config! view-layout :constraints view-layout-hide)
-                                                                             (score/config! form-space :constraints form-space-hide)
-                                                                             (score/config! hide-show :text "..." :valign :top :halign :center)
-                                                                             ;;--------
-                                                                             (reset! hidden-comp (drop 1 inside))
-                                                                             (doall (map #(.remove form-space %) (reverse (drop 1 (range (count inside))))))
-                                                                             (.revalidate view-layout))
-                                                                           (do
-                                                                             (score/config! view-layout :constraints view-layout-open)
-                                                                             (score/config! form-space :constraints form-space-open)
-                                                                             (score/config! hide-show :text "<<" :halign :left :font (gtool/getFont 16 :bold))
-                                                                             ;;---------
-                                                                             (doall (map #(.add form-space %) @hidden-comp))
-                                                                             (reset! hidden-comp nil)
-                                                                             (.revalidate view-layout)))))])
-          back-to-insert (fn [](gcomp/button-basic "Return to Insert Form" (fn [e]
-                                                                             (do
-                                                                               (.remove form-space 1)
-                                                                               (.add form-space (insert-form))
-                                                                               (.repaint form-space)
-                                                                               (.revalidate form-space)))))
-          update-form (fn [update] (do (score/config! view-layout :constraints view-layout-open)
-                                       (score/config! form-space :constraints form-space-open)
-                                       (score/config! hide-show :text "<<" :halign :left :font (gtool/getFont 16 :bold))
-                                       (if (nil? hidden-comp)
-                                         (do
-                                           (.add form-space (update)))
-                                         (do
-                                           (reset! hidden-comp nil)
-                                           (doall (map #(.remove form-space %) (reverse (drop 1 (range (count (sutil/children form-space)))))))
-                                           (.add form-space (update))))
-                                       (.revalidate view-layout)))
-          table ((:->table controller) (fn [model] (update-form (fn [] (build-input-form (:->col-meta controller) :model model :more-comps [(back-to-insert) (expand-export)])))))
-          view-layout (score/config! view-layout
-                       :items [[(gcomp/scrollbox form-space :hscroll :never)]
-                               [table]])]
+(def auto-builder--table-view
+  (fn [controller
+       & {:keys [start-focus]
+          :or {start-focus nil}}]
+    (let [x nil ;;------------ Prepare
+          controller    (if (nil? controller) user-view controller)
+          expand-export (fn [] (export-expand-panel))
+          insert-form   (fn [] (build-input-form (:->col-meta controller) :more-comps [(expand-export)] :start-focus start-focus))
+          view-layout   (smig/mig-panel :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
+          table         (fn [] (second (u/children view-layout)))
+          remove-record (fn [model] (gcomp/button-basic "Remove selected record" (fn [e] (println "Removed: " model))))
+          update-form   (fn [model return] (gcomp/expand-form-panel view-layout (build-input-form (:->col-meta controller) :model model :more-comps [(remove-record model) (return) (expand-export)])))
+          x nil ;;------------ Build
+          expand-insert-form (gcomp/scrollbox (gcomp/expand-form-panel view-layout (insert-form)) :hscroll :never)
+          back-to-insert     (fn [] (gcomp/button-basic "<< Return to Insert Form" (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
+          expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
+          table              (fn [] ((:->table controller) (fn [model] (expand-update-form model back-to-insert))))
+          x nil ;;------------ Finish
+          view-layout        (c/config! view-layout :items [[expand-insert-form] [(table)]])
+          ]
+      (println "Foc" (first (u/children (first (u/children (first (u/children view-layout)))))))
+      (.grabFocus (first (u/children (first (u/children (first (u/children view-layout)))))))
       view-layout)))
 
 ;; (@jarman.gui.gui-app/startup)
 
+;; (cm/swapp)
 
-
+;; (let [start-focus (atom nil)
+;;       my-frame (-> (doto (c/frame
+;;                           :title "test"
+;;                           :size [1000 :by 800]
+;;                           :content
+;;                           (auto-builder--table-view user-view :start-focus start-focus))
+;;                      (.setLocationRelativeTo nil) c/pack! c/show!))]
+;;   (c/config! my-frame :size [1000 :by 800])
+;;   (if-not (nil? start-focus) (c/invoke-later (.requestFocus @start-focus true))))
 
 
 ;; (defn construct-dialog [table-fn]
@@ -546,16 +506,5 @@
 ;;                                        :mouse-clicked (fn [e]
 ;;                                                         (seesaw.core/config! text-label :text "<- empty ->"))])]])]
 ;;     (seesaw.core/grid-panel :rows 1 :columns 3 :items [dialog-label])))
-
-
-
-
-;; (let [my-frame (-> (doto (score/frame
-;;                           :title "test"
-;;                           :size [1000 :by 800]
-;;                           :content
-;;                           (auto-builder--table-view user-view))
-;;                      (.setLocationRelativeTo nil) score/pack! score/show!))]
-;;   (score/config! my-frame :size [1000 :by 800]))
 
 

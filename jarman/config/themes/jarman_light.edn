@@ -55,7 +55,11 @@
                          :decorate {:type :block
                                     :display :edit
                                     :value {:underline {:type :param :display :edit :component :textcolor :value "#000"}
-                                            :gray-underline {:type :param :display :edit :component :textcolor :value "#ccc"}}}}}
+                                            :gray-underline {:type :param :display :edit :component :textcolor :value "#ccc"}
+                                            :focus-gained-dark {:type :param :display :edit :component :textcolor :value "#29295e"}
+                                            :focus-gained {:type :param :display :edit :component :textcolor :value "#96c1ea"}
+                                            :focus-lost {:type :param :display :edit :component :textcolor :value "#ccc"}
+                                            }}}}
          :font {:doc "Konfiguracja głównego okna HRTime"
                 :type :block
                 :display :edit

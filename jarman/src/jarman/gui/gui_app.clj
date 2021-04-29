@@ -15,11 +15,11 @@
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
             ;; logics
-            [jarman.config.config-manager :as c]
+            [jarman.config.config-manager :as cm]
             [jarman.gui.gui-tools :refer :all :as gtool]
             [jarman.gui.gui-components :refer :all]
             [jarman.gui.gui-alerts-service :refer :all]
-            [jarman.gui.gui-views-service :refer :all]
+            [jarman.gui.gui-views-service :refer :all :as vs]
             ;; deverloper tools 
             [jarman.tools.swing :as stool]
             [jarman.config.spec :as sspec]
@@ -28,6 +28,7 @@
             [jarman.tools.lang :refer :all :as lang]
             [jarman.gui.gui-seed :refer :all]
             [jarman.gui.gui-config-generator :refer :all :as cg]
+            [jarman.logic.view :refer :all]
             ;; [jarman.logic.view :refer :all] 
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
 
@@ -698,43 +699,54 @@
    "
   (fn [] (button-expand
           (gtool/get-lang-btns :settings)
-          (let [config-file-list-as-keyword (map #(first %) (c/get-in-segment []))
-                config-file-list-as-keyword-to-display (filter #(let [map-part (c/get-in-segment (if (vector? %) % [%]))]
+          (let [config-file-list-as-keyword (map #(first %) (cm/get-in-segment []))
+                config-file-list-as-keyword-to-display (filter #(let [map-part (cm/get-in-segment (if (vector? %) % [%]))]
                                                                   (and (= :file (get map-part :type))
                                                                        (= :edit (get map-part :display))))
-                                                               config-file-list-as-keyword)]
+                                                               config-file-list-as-keyword)
+                restore-button (button-expand-child (get-lang-btns :restore-last-configuration)
+                                                    :onClick (fn [e] (do
+                                                                       (if-not (nil? (cm/restore-config)) (@alert-manager :set {:header "Success!" :body (get-lang-alerts :restore-configuration-ok)} (message alert-manager) 5)))))]
             (reverse
              (conj
               (map (fn [p]
                      (let [path (if (vector? p) p [p])
-                           title (get (c/get-in-segment path) :name)
+                           title (get (cm/get-in-segment path) :name)
                            view-id (last path)]
                        (button-expand-child title :onClick (fn [e]
+
                                                              (@jarman-views-service
                                                               :set-view
                                                               :view-id view-id
                                                               :title title
-                                                              :component (cg/create-view--confgen path))))))
+                                                              :component (cg/create-view--confgen path
+                                                                                                  :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5))))))))
                    config-file-list-as-keyword-to-display)
 
               (let [path [:themes :theme_config.edn]
-                    title (get (c/get-in-segment path) :name)
+                    title (get (cm/get-in-segment path) :name)
                     view-id :theme_config.edn]
                 (button-expand-child title :onClick (fn [e]
                                                       (@jarman-views-service
                                                        :set-view
                                                        :view-id view-id
                                                        :title title
-                                                       :component (cg/create-view--confgen path)))))
+                                                       :component (cg/create-view--confgen path
+                                                                                           :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)))))))
               (let [path [:themes :current-theme]
-                    title (get (c/get-in-segment path) :name)
+                    title (get (cm/get-in-segment path) :name)
                     view-id :current-theme]
                 (button-expand-child title :onClick (fn [e]
-                                                      (@jarman-views-service
-                                                       :set-view
-                                                       :view-id view-id
-                                                       :title title
-                                                       :component (cg/create-view--confgen path)))))))))))
+                                                      (try
+                                                        (@jarman-views-service
+                                                         :set-view
+                                                         :view-id view-id
+                                                         :title title
+                                                         :component (cg/create-view--confgen path
+                                                                                             :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5))))
+                                                        (catch Exception e (do
+                                                                             (@alert-manager :set {:header "Warning!" :body (gtool/get-lang-alerts :configuration-corrupted)} (message alert-manager) 5)))))))
+              restore-button))))))
 
 
 ;; ┌──────────────────────────┐
@@ -780,7 +792,7 @@
                        :background (new Color 0 0 0 0)
                        :border (empty-border :right 1)
                        :items array)]
-      (reset! jarman-views-service (new-views-service tabs-space views-space))
+      (reset! jarman-views-service (vs/new-views-service tabs-space views-space))
       (mig-panel
        :id :operation-space
        :background "#fff"
@@ -836,7 +848,7 @@
 (def run
   (fn []
     (do
-      (c/swapp)
+      (cm/swapp)
       (try (.dispose (seesaw.core/to-frame @app)) (catch Exception e (println "Exception: " (.getMessage e))))
       (build :items (let [img-scale 40]
                       (list
@@ -855,7 +867,7 @@
                                                                                                                                            :else (do
                                                                                                                                                    (reset! work-mode :user-mode)
                                                                                                                                                    (@alert-manager :set {:header "Work mode" :body "Dev mode deactivated."} (message alert-manager) 5))))})
-                      ;;  (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 7 img-scale "Table Auto Generator" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil)))})
+                       (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 7 img-scale "Table Auto Generator" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil)))})
                        @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook)))))
 

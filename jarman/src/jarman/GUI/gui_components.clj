@@ -5,8 +5,12 @@
         seesaw.mig
         seesaw.util)
   (:require [jarman.resource-lib.icon-library :as icon]
+            [seesaw.core :as c]
+            [seesaw.border :as sborder]
+            [seesaw.util :as u]
+            [seesaw.mig :as smig]
             [jarman.tools.swing :as stool]
-            [jarman.gui.gui-tools :refer :all])
+            [jarman.gui.gui-tools :refer :all :as gtool])
   (:import (java.awt Color)))
 
 
@@ -34,6 +38,9 @@
   [component & args]
   (let [scr (apply scrollable component :border nil args)]  ;; speed up scrolling
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
+    (.setBorder scr nil)
+;;    for hide scroll    
+;;    (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0)) 
     scr))
 
 (defmacro textarea
@@ -51,16 +58,23 @@
    "
   (fn [txt func & {:keys [args]
                    :or   {args []}}]
-    (apply label
+    (let [newBorder (fn [underline-color]
+                      (compound-border (empty-border :bottom 10 :top 10)
+                                       (line-border :bottom 2 :color underline-color)))]
+      (apply label
            :text txt
+           :focusable? true
            :halign :center
            :listen [:mouse-clicked func
                     :mouse-entered (fn [e] (hand-hover-on e) (button-hover e))
-                    :mouse-exited  (fn [e] (button-hover e (get-color :background :button_main)))]
+                    :mouse-exited  (fn [e] (button-hover e (get-color :background :button_main)))
+                    :focus-gained  (fn [e] (config! e :border (newBorder (get-color :decorate :focus-gained))))
+                    :focus-lost    (fn [e] (config! e :border (newBorder (get-color :decorate :focus-lost))))
+                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (func e)))
+                    ]
            :background (get-color :background :button_main)
-           :border (compound-border (empty-border :bottom 10 :top 10)
-                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-           args)))
+           :border (newBorder (get-color :decorate :focus-lost))
+           args))))
 
 
 (def input-text
@@ -78,20 +92,105 @@
                  border [10 10 5 5]
                  args []}}]
     (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
-          fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))]
+          fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))
+          newBorder (fn [underline-color]
+                      (compound-border (empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
+                                       (line-border :bottom 2 :color underline-color)))]
       (apply text :text placeholder
              :font (getFont font-size)
              :background (get-color :background :input)
-             :border (compound-border (empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
-                                      (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-             :user-data {:placeholder placeholder :value "" :edit? false :type :input}
+             :border (newBorder (get-color :decorate :focus-lost))
+             :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
              :listen [:focus-gained (fn [e]
+                                      (config! e :border (newBorder (get-color :decorate :focus-gained)))
                                       (cond (= (value e) placeholder) (config! e :text ""))
                                       (config! e :user-data (fn-assoc e :edit? true)))
                       :focus-lost   (fn [e]
+                                      (config! e :border (newBorder (get-color :decorate :focus-lost)))
                                       (cond (= (value e) "") (config! e :text placeholder))
                                       (config! e :user-data (fn-assoc e :edit? false)))]
              args))))
+
+;; (show-events (text))
+
+(defn input-text-with-label-and-atom
+  [& {:keys [title field changes value editable? enable?]
+      :or {title ""
+           changes (atom {})
+           value ""
+           editable? true
+           enable? true
+           field nil}}]
+  (c/grid-panel :columns 1
+                :listen [:focus-gained (fn [e] (println "Foc panel"))]
+                :items [(c/label :text title)
+                        (input-text
+                         :args [:editable? editable?
+                                :enabled? enable?
+                                :text value
+                                :foreground (if editable? "#000" "#456fd1")
+                                :focusable? true
+                                :listen [:mouse-entered (if editable? (fn [e]) hand-hover-on)
+                                         :caret-update (fn [e]
+                                                         (if-not (nil? field) (swap! changes (fn [storage] (assoc storage (keyword field) (c/value (c/to-widget e)))))))
+                                         :focus-gained (fn [e] (config! e :border ((get-user-data e :border-fn) (get-color :decorate :focus-gained))))
+                                         :focus-lost   (fn [e] (config! e :border ((get-user-data e :border-fn) (get-color :decorate :focus-lost))))]])]))
+
+
+(defn expand-form-panel
+  "Description:
+     Create panel who can hide inside components. 
+   Example:
+     (expand-form-panel parent (component or components))
+   "
+  [view-layout comps
+   & {:keys [icon-open
+             icon-hide
+             text-open
+             text-hide
+             focus-color
+             unfocus-color
+             min-open-width]
+      :or {ico-open nil
+           icon-hide nil
+           text-open "<<"
+           text-hide "..."
+           focus-color (get-color :decorate :focus-gained-dark)
+           unfocus-color "#fff"
+           min-open-width 250}}]
+  (let [hidden-comp (atom nil)
+        form-space-open ["wrap 1" (str "0px[" min-open-width ":, grow, fill]0px") "0px[fill]0px"]
+        form-space-hide ["" "0px[grow, fill]0px" "0px[grow, fill]0px"]
+        form-space (smig/mig-panel :constraints form-space-open)
+        onClick (fn [e]
+                  (let [inside (u/children form-space)]
+                    (if (nil? @hidden-comp)
+                      (do
+                        (c/config! form-space :constraints form-space-hide)
+                        (c/config! e :text text-hide :valign :top :halign :center)
+                        (reset! hidden-comp (drop 1 inside))
+                        (doall (map #(.remove form-space %) (reverse (drop 1 (range (count inside))))))
+                        (.revalidate view-layout))
+                      (do
+                        (c/config! form-space :constraints form-space-open)
+                        (c/config! e :text text-open :halign :left :font (gtool/getFont 16 :bold))
+                        (doall (map #(.add form-space %) @hidden-comp))
+                        (reset! hidden-comp nil)
+                        (.revalidate view-layout)))))
+        hide-show (c/label :text text-open
+                           :icon icon-open
+                           :focusable? true
+                           :background "#bbb"
+                           :foreground "#fff"
+                           :font (gtool/getFont 16 :bold)
+                           :border (sborder/empty-border :left 2 :right 2)
+                           :listen [:focus-gained (fn [e] (c/config! e :foreground focus-color))
+                                    :focus-lost   (fn [e] (c/config! e :foreground unfocus-color))
+                                    :mouse-entered gtool/hand-hover-on
+                                    :mouse-clicked onClick
+                                    :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))
+                                    ])]
+    (c/config! form-space :items (join-mig-items hide-show comps))))
 
 
 

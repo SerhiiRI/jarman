@@ -4,15 +4,16 @@
    ;; Clojure toolkit 
    [clojure.data :as data]
    [clojure.string :as string]
-   [seesaw.util :as sutil]
+   [seesaw.util :as u]
    ;; Seesaw components
-   [seesaw.core :as score]
+   [seesaw.core :as c]
    [seesaw.border :as sborder]
    [seesaw.dev :as sdev]
    [seesaw.mig :as smig]
    [seesaw.swingx :as swingx]
    ;; Jarman toolkit
    [jarman.logic.connection :as db]
+   [jarman.config.config-manager :as cm]
    [jarman.tools.lang :refer :all]
    [jarman.gui.gui-tools :refer :all :as gtool]
    [jarman.resource-lib.icon-library :as ico]
@@ -25,7 +26,7 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
-(defn quick-path [table] 
+(defn quick-path [table]
   (mt/recur-find-path (first (mt/getset! (keyword table)))))
 ;; (recur-find-path (first (mt/getset :point_of_sale_group_links)))
 ;; (recur-find-path (first (mt/getset :user)))
@@ -106,12 +107,12 @@
 ;; (let [mig (mig-panel
 ;;            :constraints ["" "0px[grow, center]0px" "5px[fill]5px"]
 ;;            :items [[(label :text "One")]])
-;;       my-frame (-> (doto (score/frame
+;;       my-frame (-> (doto (c/frame
 ;;                           :title "test"
 ;;                           :size [0 :by 0]
 ;;                           :content mig)
 ;;                      (.setLocationRelativeTo nil) pack! show!))]
-;;   (score/config! my-frame :size [600 :by 600])
+;;   (c/config! my-frame :size [600 :by 600])
 ;;   (.add mig (label :text "Two")))
 
 ;; [{:key :name :text "Imie"}
@@ -131,9 +132,9 @@
 
 (defn construct-table [model]
   (fn [listener-fn]
-    (let [TT (score/table :model (model))]
-      (score/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (score/selection TT)))))
-      (score/scrollable TT :hscroll :as-needed :vscroll :as-needed))))
+    (let [TT (c/table :model (model))]
+      (c/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (c/selection TT)))))
+      (c/scrollable TT :hscroll :as-needed :vscroll :as-needed))))
 
 (defn construct-sql [table select-rules]
   {:pre [(keyword? table)]}
@@ -217,6 +218,8 @@
 ;;; ------------------------------------------
 
 (defview permission
+  :display :non
+  :permission [:dev :admin]
   :tables [:permission]
   :view   [:permission.permission_name]
   :data   {:column (as-is :permission.id :permission.permission_name :permission.configuration)})

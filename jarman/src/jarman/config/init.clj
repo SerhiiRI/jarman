@@ -168,7 +168,7 @@
   (if (nil? @configuration) (swapp-configuration))
   (if (not= false (:valid? @configuration))
     (where
-     ((LANG-KEYWORD (GETV @configuration [:init.edn :lang]) do first))
+     ((LANG-KEYWORD (GETV @configuration [:init.edn :lang]) do first do keyword))
      (if LANG-KEYWORD
        (where
         ((IS-ERROR? (fn [languages] (= :error (:type languages))))

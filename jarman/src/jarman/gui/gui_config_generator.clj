@@ -9,13 +9,12 @@
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
             ;; logics
-            [jarman.config.config-manager :as c]
-            [jarman.gui.gui-tools :refer :all]
-            [jarman.gui.gui-components :refer :all]
-            ;; deverloper tools 
-            [jarman.tools.lang :refer :all :as lang]
-            ))
+            [jarman.config.config-manager :as cm]
+            [jarman.gui.gui-tools :refer :all :as gtool]
+            [jarman.gui.gui-components :refer :all :as gcomp]
 
+            ;; deverloper tools 
+            [jarman.tools.lang :refer :all :as lang]))
 
 ;; ┌─────────────────────────┐
 ;; │                         │
@@ -27,65 +26,65 @@
 (def confgen--element--header-file
   (fn [title] (mig-panel
                :constraints ["" "0px[grow, center]0px" "0px[]0px"]
-               :items [[(label :text title :font (getFont 16) :foreground (get-color :foreground :dark-header))]]
-               :background (get-color :background :dark-header)
-               :border (line-border :thickness 10 :color (get-color :background :dark-header)))))
+               :items [[(label :text title :font (getFont 16) :foreground (gtool/get-color :foreground :dark-header))]]
+               :background (gtool/get-color :background :dark-header)
+               :border (line-border :thickness 10 :color (gtool/get-color :background :dark-header)))))
 
 (def confgen--element--header-block
   (fn [title] (label :text title :font (getFont 16 :bold)
-                     :border (compound-border  (line-border :bottom 2 :color (get-color :decorate :underline)) (empty-border :bottom 5)))))
+                     :border (compound-border  (line-border :bottom 2 :color (gtool/get-color :decorate :underline)) (empty-border :bottom 5)))))
 
 (def confgen--element--header-parameter
   (fn [title]
     (label :text title :font (getFont 14 :bold))))
 
 (def confgen--element--combobox
-  (fn [changing-list path model]
+  (fn [local-changes path model]
     (mig-panel
      :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
      :items [[(combobox :model model
                         :font (getFont 14)
-                        :background (get-color :background :combobox)
+                        :background (gtool/get-color :background :combobox)
                         :size [200 :by 30]
-                        ;; :listen [:item-state-changed (fn [event] (track-changes-used-components changing-list path event :selected-item (first model)))]
-                        )]])))
+                        :listen [:item-state-changed (fn [event] (let [choosed (config event :selected-item)
+                                                                       new-model (join-vec [choosed] (filter #(not= choosed %) model))]
+                                                                   (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value model :new-value new-model)))])]])))
+
 
 (def confgen--gui-interface--input
-  (fn [changing-list path value]
+  (fn [local-changes path value]
     (mig-panel
      :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
      :items [[(text :text value :font (getFont 14)
-                    :background (get-color :background :input)
+                    :background (gtool/get-color :background :input)
                     :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
-                                             (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-                    ;; :listen [:caret-update (fn [event] (track-changes-used-components changing-list path event :text value))]
-                    )]])))
+                                             (line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline)))
+                    :listen [:caret-update (fn [event] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value value :new-value (config event :text)))])]])))
 
 
 (def confgen--gui-interface--input-textlist
-  (fn [changing-list path value]
+  (fn [local-changes path value]
     (let [v (string/join ", " value)]
       (mig-panel
        :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
        :items [[(text :text v :font (getFont 14)
-                      :background (get-color :background :input)
+                      :background (gtool/get-color :background :input)
                       :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
-                                               (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-                      ;; :listen [:caret-update (fn [event] (track-changes changing-list path value (clojure.string/split (config event :text) #"\s*,\s*")))]
-                      )]]))))
+                                               (line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline)))
+                      :listen [:caret-update (fn [event] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value value :new-value (clojure.string/split (config event :text) #"\s*,\s*")))])]]))))
 
 
 (def confgen--gui-interface--input-textcolor
-  (fn [changing-list path value]
+  (fn [local-changes path value]
     (mig-panel
      :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
      :items [[(text :text value :font (getFont 14)
                     :background value :foreground "#444"
                     :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
-                                             (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-                    ;; :listen [:caret-update (fn [event] (track-changes changing-list path value (config event :text))
-                    ;;                          (colorizator-text-component event))]
-                    )]])))
+                                             (line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline)))
+                    :listen [:caret-update (fn [event]
+                                             (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value value :new-value (config event :text))
+                                             (colorizator-text-component event))])]])))
 
 
 (def confgen--choose--header
@@ -108,44 +107,46 @@
                       (label :border (empty-border :top 10)) ())))
 
 (def confgen--gui-interface--checkbox-as-droplist
-  (fn [param changing-list start-key]
-    (confgen--element--combobox changing-list start-key (if (= (param :value) true) [true false] [false true]))))
+  (fn [param local-changes start-key]
+    (confgen--element--combobox local-changes start-key (if (= (param :value) true) [true false] [false true]))))
 
 (def confgen--gui-interface--droplist
-  (fn [param changing-list start-key]
+  (fn [param local-changes start-key]
     (confgen--element--combobox
-     changing-list start-key
-     (let [item (cond (= (last start-key) :lang)
-                      (do
-                        (vec (map #(txt-to-UP %) (param :value))))
-                      (vector? (param start-key))
-                      (do
-                        (vec (map #(txt-to-title %) (param :value))))
-                      :else
-                      (do
-                        (param :value)))]
-       item))))
+     local-changes start-key (param :value)
+    ;;  (let [item (cond 
+    ;;               ;; (= (last start-key) :lang)
+    ;;               ;;     (do
+    ;;               ;;       (vec (map #(txt-to-UP %) (param :value))))
+    ;;                   ;; (vector? (param start-key))
+    ;;                   ;; (do
+    ;;                   ;;   (vec (map #(txt-to-title %) (param :value))))
+    ;;                   ;; :else
+    ;;                   (do
+    ;;                     (param :value)))]
+    ;;    item)
+     )))
 
 (def confgen--recursive--next-configuration-in-map
-  (fn [param confgen--component--tree changing-list start-key]
+  (fn [param confgen--component--tree local-changes start-key]
     (map (fn [next-param]
-           (confgen--component--tree changing-list (join-vec start-key (list (first next-param)))))
+           (confgen--component--tree local-changes (join-vec start-key (list (first next-param)))))
          (param :value))))
 
 (def confgen--element--gui-interfaces
-  (fn [comp? param confgen--component--tree changing-list start-key]
-    (cond (comp? :selectbox) (confgen--gui-interface--droplist param changing-list start-key)
-          (comp? :checkbox)  (confgen--gui-interface--checkbox-as-droplist param changing-list start-key)
-          (or (comp? :text) (comp? :textnumber)) (confgen--gui-interface--input changing-list start-key (str (param :value)))
-          (comp? :textlist) (confgen--gui-interface--input-textlist changing-list start-key (param :value))
-          (comp? :textcolor) (confgen--gui-interface--input-textcolor changing-list start-key (param :value))
-          (map? (param :value)) (confgen--recursive--next-configuration-in-map param confgen--component--tree changing-list start-key)
+  (fn [comp? param confgen--component--tree local-changes start-key]
+    (cond (comp? :selectbox) (confgen--gui-interface--droplist param local-changes start-key)
+          (comp? :checkbox)  (confgen--gui-interface--checkbox-as-droplist param local-changes start-key)
+          (or (comp? :text) (comp? :textnumber)) (confgen--gui-interface--input local-changes start-key (str (param :value)))
+          (comp? :textlist) (confgen--gui-interface--input-textlist local-changes start-key (param :value))
+          (comp? :textcolor) (confgen--gui-interface--input-textcolor local-changes start-key (param :value))
+          (map? (param :value)) (confgen--recursive--next-configuration-in-map param confgen--component--tree local-changes start-key)
           :else (confgen--element--textarea param))))
 
 
 (def confgen--component--tree
-  (fn [changing-list start-key]
-    (let [param (fn [key] (get (c/get-in-segment start-key) key))
+  (fn [local-changes start-key]
+    (let [param (fn [key] (get (cm/get-in-segment start-key) key))
           type? (fn [key] (= (param :type) key))
           comp? (fn [key] (= (param :component) key))
           name (if (nil? (param :name)) (key-to-title (last start-key)) (str (param :name)))]
@@ -159,63 +160,54 @@
                    (confgen--choose--header type? name)
                    (confgen--element--textarea-doc param)
                    (confgen--element--margin-top-if-doc-exist type? param)
-                   (confgen--element--gui-interfaces comp? param confgen--component--tree changing-list start-key))))
+                   (confgen--element--gui-interfaces comp? param confgen--component--tree local-changes start-key))))
         (do
           ())))))
 
 
-;; (c/get-in-segment [:themes])
+;; (cm/get-in-segment [:themes])
 
-;; (get-in (get-in (c/get-in-segment []) [:init.edn]) [:display])
+;; (get-in (get-in (cm/get-in-segment []) [:init.edn]) [:display])
 
 (def create-view--confgen
   "Description
      Join config generator parts and set view on right functional panel
    "
-  (fn [start-key]
-    (let [map-part (c/get-in-segment start-key)
-          changing-list (atom {})]
+  (fn [start-key
+       & {:keys [message-ok message-faild]
+          :or {message-ok (fn [txt] (alert txt))
+               message-faild (fn [txt] (alert txt))}}]
+    (let [map-part (cm/get-in-segment start-key)
+          local-changes (atom {})]
       (if (= (get-in map-part [:display]) :edit)
         (do
-          ;; (add-changes-controller (last start-key) changing-list)
+          (@gtool/changes-service :add-controller
+                                  :view-id (last start-key)
+                                  :local-changes local-changes)
           (mig-panel
-           :border (line-border :bottom 50 :color (get-color :background :main))
+           :border (line-border :bottom 50 :color (gtool/get-color :background :main))
            :constraints ["wrap 1" "[fill, grow]" "20px[]20px"]
            :items (join-mig-items
                    (confgen--element--header-file (get-in map-part [:name])) ;; Header of section/config file
-                   (label :text "Show changes" :listen [:mouse-clicked (fn [e]
-                                                                             ;; save changes configuration
-                                                                         (prn "Changes" @changing-list)
-                                                                            ;;  (reset! configuration-copy (c/get-in-segment []))
-                                                                            ;;  (doall
-                                                                            ;;   (map
-                                                                            ;;    (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
-                                                                            ;;      (swap! configuration-copy (fn [changes] (assoc-in changes (join-vec (first (second new-value)) [:value]) (second (second new-value))))))
-                                                                            ;;    @changing-list))
-                                                                            ;;  (let [out (sspec/valid-segment @configuration-copy)]
-                                                                            ;;    (cond (get-in out [:valid?])
-                                                                            ;;          (do
-                                                                            ;;            (cond (get-in (save-all-cofiguration @configuration-copy) [:valid?])
-                                                                            ;;                  (do
-                                                                            ;;                    (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5)
-                                                                            ;;                    (c/store-and-back))
-                                                                            ;;                  :else (let [m (string/join "<br>" ["Cannot save changes"])]
-                                                                            ;;                          (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5)))) ;; TODO action on faild save changes configuration
-                                                                            ;;          :else (let [m (string/join "<br>" ["Cannot save changes" (get-in out [:output])])]
-                                                                            ;;                  (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5))))
-                                                                               ;; (prn @configuration-copy)
-                                                                         )])
-                                   ;; Foreach on init values and create configuration blocks
+                   (label :text "Show changes" :listen [:mouse-clicked (fn [e] ;; save changes configuration
+                                                                         (doall (map #(cm/assoc-in-value (first (second %)) (second (second %)))  @local-changes))
+                                                                         (let [validate (cm/store-and-back)]
+                                                                          ;;  (println validate)
+                                                                           (if (get validate :valid?)
+                                                                             (do ;; message box if saved successfull
+                                                                               (if-not (nil? message-ok) (message-ok "")))
+                                                                             (do ;; message box if saved faild
+                                                                               (if-not (nil? message-faild) (message-faild (get validate :output)))))))])
                    (let [body (map
                                (fn [param]
-                                 (confgen--component--tree changing-list (join-vec start-key (list (first param)))))
+                                 (confgen--component--tree local-changes (join-vec start-key (list (first param)))))
                                (get-in map-part [:value]))]
                      body))))))))
 
 ;; Show example
-(let [my-frame (-> (doto (seesaw.core/frame
-                          :title "test"
-                          :size [800 :by 600]
-                          :content (auto-scrollbox (create-view--confgen [:themes :current-theme])))
-                     (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
-  (seesaw.core/config! my-frame :size [800 :by 600]))
+;; (let [my-frame (-> (doto (seesaw.core/frame
+;;                           :title "test"
+;;                           :size [800 :by 600]
+;;                           :content (gcomp/auto-scrollbox (create-view--confgen [:resource.edn])))
+;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
+;;   (seesaw.core/config! my-frame :size [800 :by 600]))

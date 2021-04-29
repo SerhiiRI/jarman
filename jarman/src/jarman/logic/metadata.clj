@@ -314,15 +314,16 @@
          (map parse-constrants)
          (reduce into))))
 
-(defn- get-table-field-meta [foreign-keys column-field-spec]
+(defn- get-table-field-meta [table-name foreign-keys column-field-spec]
   (let [tfield (:field column-field-spec)
         ttype (create-column-type-meta column-field-spec)
         set_key (fn [m] (if-let [[_ table] (re-matches #"id_(.*)" tfield)]
-                          (assoc m :key-table table) m))
+                         (assoc m :key-table table) m))
         set_foreign-keys (fn [m] (if-let [f-key (get foreign-keys tfield nil)]
-                                   (assoc m :foreign-keys f-key) m))
+                                  (assoc m :foreign-keys f-key) m))
         in?   (fn [col x] (if (string? col) (= x col) (some #(= % x) col)))]
-    (-> {:field tfield
+    (-> {:field (keyword tfield)
+         :field-qualified (keyword (str (name table-name) "." (name tfield)))
          :representation tfield
          :description nil
          :component-type (get-component-group-by-type column-field-spec)
@@ -376,7 +377,7 @@
     {:id nil
      :table table-name
      :prop {:table (get-table-meta table-name)
-            :columns (vec (map (partial get-table-field-meta all-constrants) not-id-columns))}}))
+            :columns (vec (map (partial get-table-field-meta table-name all-constrants) not-id-columns))}}))
 
 (defn- ^clojure.lang.PersistentList update-sql-by-id-template
   [table m]
@@ -390,7 +391,7 @@
 
 (defn do-create-meta []
   (for [table (show-tables)]
-    (let [meta (db/query (select :metadata :where [:= :table table]))]
+    (let [meta (db/query (select :metadata :where [:= :metadata.table table]))]
       (if (empty? meta)
         (db/exec (update-sql-by-id-template "metadata" (get-meta table)))))))
 
@@ -418,7 +419,7 @@
                           (if (empty? tables)
                             (select :metadata)
                             (select :metadata
-                                    :where (or-v (mapv (fn [x] [:= :table (name x)]) tables))))))]
+                                    :where (or-v (mapv (fn [x] [:= :metadata.table (name x)]) tables))))))]
     (if (empty? tables)
       (do (swapp-metadata metadata) metadata)
       metadata)))
@@ -429,6 +430,7 @@
   (if-not tables @--loaded-metadata
           (let [tables (map name tables)]
             (vec (filter #(in? tables (:table %)) @--loaded-metadata)))))
+
 
 ;;; Make references 
 (defn- add-references-to-metadata [metadata front-reference back-reference]

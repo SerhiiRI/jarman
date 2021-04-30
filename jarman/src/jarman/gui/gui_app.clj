@@ -436,10 +436,9 @@
                         (or (string?  param-value)
                             (lang/in? [:frontend-name :description] param-name)) (gcomp/inpose-label
                                                                                   (lang/convert-key-to-title (str param-name))
-                                                                                  (gcomp/input-text-with-atom :local-changes local-changes 
-                                                                                                              :store-id path-to-value 
-                                                                                                              :val param-value 
-                                                                                                              :debug true)
+                                                                                  (gcomp/input-text-with-atom :local-changes local-changes
+                                                                                                              :store-id path-to-value
+                                                                                                              :val param-value)
                                                                                   :vtop 10
                                                                                   :id :text)
                         (boolean? param-value) (table-editor--element--checkbox (= work-mode :dev-mode) local-changes path-to-value param-value (lang/convert-key-to-title param-name))
@@ -448,11 +447,10 @@
                       (cond ;; For admin-mode. Enable and disble components
                         (or (string?  param-value)
                             (lang/in? [:frontend-name :description] param-name)) (gcomp/inpose-label (lang/convert-key-to-title (str param-name))
-                                                                                                     (gcomp/input-text-with-atom :local-changes local-changes 
-                                                                                                                                 :store-id path-to-value 
-                                                                                                                                 :val param-value 
-                                                                                                                                 :enabled? (lang/in? [:frontend-name :description] param-name) 
-                                                                                                                                 :debug true)
+                                                                                                     (gcomp/input-text-with-atom :local-changes local-changes
+                                                                                                                                 :store-id path-to-value
+                                                                                                                                 :val param-value
+                                                                                                                                 :enabled? (lang/in? [:frontend-name :description] param-name))
                                                                                                      :vtop 10
                                                                                                      :id :text)
                         (boolean? param-value) (table-editor--element--checkbox (= work-mode :dev-mode) local-changes path-to-value param-value (lang/convert-key-to-title param-name))

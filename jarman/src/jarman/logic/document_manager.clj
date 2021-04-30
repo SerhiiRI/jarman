@@ -37,6 +37,7 @@
   (db/query (select :documents
                     :column [:id {:documents.table :table} :name :prop])))
 
+
 (defn update-document [document-map]
   (if (:id document-map)
     (let [m (update-in document-map [:prop] pr-str)]
@@ -164,7 +165,7 @@
 ;;   :prop {:suak [:bliat [:ello]]}})
 
 ;; (insert-document
-;;  {:id 7, :table "-----", :name "also-test",
+;;  {:id 7, :table "heyyy", :name "also-test",
 ;;   ;; :document "templates\\dovfdsaidka.odt"
 ;;   :prop {:suak [:bliat [:ello]]}})
 

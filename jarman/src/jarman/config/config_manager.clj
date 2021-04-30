@@ -69,6 +69,7 @@
     Restore global configuraition dictionary"
   ([] (swapp-all)))
 
+
 (defn store
   "Description
     Save configuration to configuration directory
@@ -174,7 +175,7 @@
      {:localhost
       {:name \"Local.. :type :block, ...
        :value
-       {:dbtype {:name \"Typ po³±czenia\", :type :param,
+       {:dbtype {:name \"Typ poï¿½ï¿½czenia\", :type :param,
                  :display :none, :component :text,
                  :value \"ALALALALALA\"},
         :host ...
@@ -206,7 +207,7 @@
      {:localhost
       {:name \"Local.. :type :block, ...
        :value
-       {:dbtype {:name \"Typ po³±czenia\", :type :param,
+       {:dbtype {:name \"Typ poï¿½ï¿½czenia\", :type :param,
                  :display :none, :component :text,
                  :value \"ALALALALALA\"},
         :host ..."

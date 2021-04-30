@@ -623,7 +623,7 @@ Why i saw this error"
                :constraints ["" "[grow, fill]" ""]
                :items [[(label :icon (stool/image-scale icon/refresh-connection-grey1-64-png 40)
                                :border (compound-border (empty-border :right 10 )))]
-                       [(label :icon (stool/image-scale icon/I-grey-64-png 40)
+                       [(label :icon (stool/image-scale icon/a-blue-64-png 40) ;;I-grey-64-png
                                :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content info-panel))])]])]])))
 
 ;;;;;;;;;;;;;;
@@ -695,7 +695,7 @@ Why i saw this error"
                    :border (empty-border :left 10)
                    :font {:size 16 font "Arial" :style :bold}) "span 3"]
            [((nth panels num)) "span 3"]
-           [(label :icon (stool/image-scale icon/left-blue-64-png 50)
+           [(label :icon (stool/image-scale icon/a-up-grey-64-png 50) ;;left-blue-64-png
                    :visible? (if (= num 0) false true)
                    :listen [:mouse-entered (fn [e] (tool/hand-hover-on e))
                             :mouse-exited (fn [e] (tool/hand-hover-off e))
@@ -705,7 +705,7 @@ Why i saw this error"
                                                (config! (to-frame e) :content (multi-panel panels title (- num 1)))))])
             "align l"]
            [(label :text "")]
-           [(label :icon (stool/image-scale icon/right-blue-64-png 36)
+           [(label :icon (stool/image-scale icon/arrow-blue-grey-left-64-png 36) ;;right-blue-64-png
                    :visible? (if (= num (- (count panels) 1)) false true)
                    :listen [:mouse-clicked (fn [e] (if (=  num (- (count panels) 1))
                                                      (config! (to-frame e) :content (multi-panel panels title num))

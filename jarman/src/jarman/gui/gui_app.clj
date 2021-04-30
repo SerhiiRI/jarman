@@ -845,7 +845,7 @@
 
 (def startup (atom nil))
 
-(def run
+(def run-me
   (fn []
     (do
       (cm/swapp)
@@ -875,14 +875,14 @@
 (reset! startup
         (fn []
           (cond (= (iinit/validate-configuration-files) true)
-                (run)
+                (run-me)
                 :else (cond (= (iinit/restore-backup-configuration) false)
                             (do
                               (reset! popup-menager (create-popup-service atom-popup-hook))
                               (@popup-menager :ok :title "App start failed" :body "Cennot end restore task." :size [300 100]))
                             :else (do
                                     (= (iinit/validate-configuration-files) true)
-                                    (run)
+                                    (run-me)
                                     :else (do
                                             (reset! popup-menager (create-popup-service atom-popup-hook))
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))

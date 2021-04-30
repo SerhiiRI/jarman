@@ -220,7 +220,7 @@
         host-inp (confgen-input (:value (:host (:value data))))
         port-inp (confgen-input (:value (:port (:value data))))
         dbname-inp (confgen-input (:value (:dbname (:value data))))
-        user-inp (confgen-input (:value (:user (:data))))
+        user-inp (confgen-input (:value (:user (:value data))))
         password-inp (confgen-input (:value (:password (:value data))))
         err-lbl (label :text "" :foreground blue-green-color :font (myFont 14))]
     (println key-title)
@@ -252,7 +252,7 @@
     (scrollable
      (mig-panel
       :constraints ["wrap 1" "[grow, center]" "20px[]20px"]
-      :items [[(label :icon (stool/image-scale icon/left-blue-64-png 50)
+      :items [[(label :icon (stool/image-scale icon/a-blue-64-png 50) ;; CHANGE ikona była icon/left-blue-64-png
                       :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content login-panel))]
                       :border (empty-border :right 150)) "align l, split 2"]
               ;; [(label :icon (stool/image-scale icon/refresh-connection-grey1-64-png 80)
@@ -279,7 +279,7 @@
   (scrollable
    (mig-panel
     :constraints ["wrap 1" "[grow, center]" "20px[]20px"]
-    :items [[(label :icon (stool/image-scale icon/alert-red-512-png 8)
+    :items [[(label :icon (stool/image-scale icon/a-grey-64-png 8) ;;alert-red-512-png
                     :border (empty-border :right 10)) "split 2"]
             [(label :text (htmling "<h2>ERROR</h2>") :foreground blue-green-color :font (myFont 14))]
             [(let [mig (mig-panel
@@ -314,7 +314,7 @@
     (scrollable
      (mig-panel
       :constraints ["wrap 1" "[grow, center]" "20px[]20px"]
-      :items [[(label :icon (stool/image-scale icon/left-blue-64-png 50)
+      :items [[(label :icon (stool/image-scale icon/a-blue-64-png 50) ;;left-blue-64-png
                       :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content login-panel))]
                       :border (empty-border :right 220)) "align l, split 2"]
               [(label :icon (stool/image-scale "resources/imgs/trashpanda2-stars-blue-1024.png" 47))]
@@ -411,6 +411,7 @@
 (show-options (border-panel))
 
 (c/datalist-mapper (c/datalist-get))
+(c/swapp)
 
 ;;:jarman-127_0_0_1
 
@@ -437,7 +438,7 @@
     (.setBorder scr nil)
     (doall (map (fn [[k v]] (.add mig (label-to-config (:dbname v) (:host v) k)))
                 (c/datalist-mapper (c/datalist-get))))
-    (.add mig (label :icon (stool/image-scale icon/add-png 10)
+    (.add mig (label :icon (stool/image-scale icon/a-grey-64-png 10) ;;add-png
                      :background back-color
                      :border (line-border :color back-color
                                           :bottom 10
@@ -482,7 +483,7 @@
                :constraints ["" "[grow, fill]" ""]
                :items [[(label :icon (stool/image-scale icon/refresh-connection-grey1-64-png 40)
                                :border (compound-border (empty-border :right 10 )))]
-                       [(label :icon (stool/image-scale icon/I-grey-64-png 40)
+                       [(label :icon (stool/image-scale icon/a-blue-64-png 40) ;;I-grey-64-png
                                :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content info-panel))])]])]])))
 
 ;;;;;;;;;;;;;;
@@ -553,7 +554,7 @@
                    :border (empty-border :left 10)
                    :font {:size 16 font "Arial" :style :bold}) "span 3"]
            [((nth panels num)) "span 3"]
-           [(label :icon (stool/image-scale icon/left-blue-64-png 50)
+           [(label :icon (stool/image-scale icon/a-up-grey-64-png 50) ;;left-blue-64-png
                    :visible? (if (= num 0) false true)
                    :listen [:mouse-clicked (fn [e]
                                              (if (= num 0)
@@ -561,7 +562,7 @@
                                                (config! (to-frame e) :content (multi-panel panels title (- num 1)))))])
             "align l"]
            [(label :text "")]
-           [(label :icon (stool/image-scale icon/right-blue-64-png 36)
+           [(label :icon (stool/image-scale icon/arrow-blue-grey-left-64-png 36) ;;right-blue-64-png
                    :visible? (if (= num (- (count panels) 1)) false true)
                    :listen [:mouse-clicked (fn [e] (if (=  num (- (count panels) 1))
                                                      (config! (to-frame e) :content (multi-panel panels title num))

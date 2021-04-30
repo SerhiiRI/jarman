@@ -135,7 +135,20 @@
   (fn [listener-fn]
     (let [TT (swingx/table-x :model (model))]
       (c/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (c/selection TT)))))
+      ;; (.setPreferredScrollableViewportSize (new java.awt.Dimension 1000 1000) TT)
+      ;; (map (fn [size] (.setWidth (.getColumn (.getColumnModel TT) size) 250)) (.getColumnCount (.getColumnModel TT)))
+      ;; (c/config! TT :auto-resize :off)
+      ;; (c/config! TT :column-widths 100)
+      (c/config! TT :horizontal-scroll-enabled? true)
+      (c/config! TT :show-grid? false)
+      (c/config! TT :show-horizontal-lines? true)
       (c/scrollable TT :hscroll :as-needed :vscroll :as-needed))))
+
+;; (run cache_register-view)
+;; 
+;; (seesaw.dev/show-options (c/scrollable (c/label)))
+
+;; (seesaw.dev/show-options (c/table))
 
 (defn construct-sql [table select-rules]
   {:pre [(keyword? table)]}
@@ -209,13 +222,13 @@
 ;;; ------------------------------------------
 ;;; ------------Test frame block--------------
 
-(let [my-frame (-> (doto (score/frame
-                          :title "test"
-                          :size [1000 :by 800]
-                          :content
-                          ((:->table service_contract-view) #(println %)))
-                     (.setLocationRelativeTo nil) score/pack! score/show!))]
-  (score/config! my-frame :size [1000 :by 800]))
+;; (let [my-frame (-> (doto (c/frame
+;;                           :title "test"
+;;                           :size [1000 :by 800]
+;;                           :content
+;;                           ((:->table service_contract-view) #(println %)))
+;;                      (.setLocationRelativeTo nil) c/pack! c/show!))]
+;;   (c/config! my-frame :size [1000 :by 800]))
 
 ;;; ------------Test frame block--------------
 ;;; ------------------------------------------
@@ -225,13 +238,13 @@
   :view   [:permission.permission_name]
   :data   {:column (as-is :permission.id :permission.permission_name :permission.configuration)})
 
-;; (let [my-frame (-> (doto (score/frame
+;; (let [my-frame (-> (doto (c/frame
 ;;                           :title "test"
 ;;                           :size [1000 :by 800]
 ;;                           :content
 ;;                           ((:->table permission-view) (fn [x] (println x))))
-;;                      (.setLocationRelativeTo nil) score/pack! score/show!))]
-;;   (score/config! my-frame :size [1000 :by 800]))
+;;                      (.setLocationRelativeTo nil) c/pack! c/show!))]
+;;   (c/config! my-frame :size [1000 :by 800]))
 
 
 
@@ -465,16 +478,16 @@
                                   (do
                                     (if (empty? model)
                                       (do ;;Create calendar input
-                                        (gcomp/inpose-label title (calendar/calendar-with-atom :field field-qualified :changes complete)))
+                                        (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified :changes complete)))
                                       (do ;; Create update calenda input
-                                        (gcomp/inpose-label title (calendar/calendar-with-atom :field field-qualified :changes complete :set-date v)))))
+                                        (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified :changes complete :set-date v)))))
                                   (lang/in? (get meta :component-type) "i")
                                   (do ;; Add input-text with label
                                     (if (empty? model)
                                       (do ;;Create insert input
-                                        (gcomp/inpose-label title (gcomp/input-text-with-atom :field field-qualified :changes complete :editable? editable?)))
+                                        (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified :changes complete :editable? editable?)))
                                       (do ;; Create update input
-                                        (gcomp/inpose-label title (gcomp/input-text-with-atom :field field-qualified :changes complete :editable? editable? :val v)))))
+                                        (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified :changes complete :editable? editable? :val v)))))
                                   (lang/in? (get meta :component-type) "l")
                                   (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
                                     (let [connected-table (var-get (-> (str "jarman.logic.view/" (get meta :key-table) "-view") symbol resolve))
@@ -504,38 +517,108 @@
       )))
 ;; (mt/getset :user)
 ;; (:->table-model permission-view)
-;; (run repair_contract-view)
 ;; (:->col-meta seal-view)
+;; (run user-view)
 
+;;  (jarman.tools.swing/debug-font-panel)
 
+;;  (run user-view)
+(defn export-print-doc
+  []
+  (let [;;radio-group (c/button-group)
+        panel-bg "#eee"
+        expor-gb "#95dec9"
+        focus-gb "#5ee6bf"
+        icon (c/label :icon (jarman.tools.swing/image-scale ico/enter-64-png 30)
+                      :background panel-bg
+                      :border (sborder/empty-border :thickness 8)
+                      :listen [:mouse-clicked (fn [e] (println "Export clicked"))])
+        template (gcomp/input-text :args [:text "\\path\\save\\to" :font (gtool/getFont  :name "Monospaced")])
+        panel (c/horizontal-panel
+               :items [icon
+                       template])]
+    (c/flow-panel
+     :border (sborder/compound-border (sborder/empty-border :top 5)
+                                      (sborder/line-border :top 2 :color "#999")
+                                      (sborder/empty-border :top 50))
+     :items [(gcomp/button-expand "Export by template" (smig/mig-panel
+                                            :constraints ["wrap 1" "5px[grow, fill]5px" "0px[fill]0px"]
+                                          ;;  :border (sborder/line-border :left 2 :right 2 :bottom 2 :color "#fff")
+                                          ;;  :border (sborder/line-border :left 2 :color "#ccc")
+                                            :background panel-bg
+                                            :items [[(gcomp/hr 2 "#ccc")]
+                                                    [(gcomp/hr 10)]
+                                                    ;;  [(c/radio :id :odt  :text "ODT"  :group radio-group :background bg :selected? true) "split 2"]
+                                                    ;;  [(c/radio :id :docx :text "DOCX" :group radio-group :background bg)]
+                                                    ;; [(gcomp/hr 10)]
+                                                    [panel]
+                                                    ;;  [(gcomp/button-basic "Service raport" (fn [e] (if-let [s (c/selection radio-group)] (println "Selected " (str (c/text s))
+                                                    ;;                                                                                               "\nTemplate: " (str (c/text template))))))]
 
+                                                    [(gcomp/hr 10)]
+                                                    [(gcomp/button-basic "Service raport" (fn [e]) :args [:halign :left])]
+                                                    [(gcomp/button-basic "Clients list"   (fn [e]) :args [:halign :left])]
+                                                    [(gcomp/button-basic "Invoice print"  (fn [e]) :args [:halign :left])]
+                                                    [(gcomp/hr 10)]
+                                                    [(gcomp/hr 2 "#95dec9")]])
+                                  :background "#95dec9"
+                                  ;; :focusable? true
+                                  :border (sborder/compound-border (sborder/empty-border :left 10 :right 10))
+                                  ;; :listen [:focus-gained (fn [e] (c/config! (first (u/children (c/to-widget e))) :background focus-gb))
+                                  ;;          :focus-lost   (fn [e] (c/config! (first (u/children (c/to-widget e))) :background expor-gb))]
+                                  )])))
 
 (defn export-expand-panel
   []
-  (c/flow-panel
-   :border (sborder/compound-border (sborder/empty-border :top 5)
-                                    (sborder/line-border :top 2 :color "#999")
-                                    (sborder/empty-border :top 50))
-   :items [(gcomp/button-expand "Export" (smig/mig-panel
-                                          :constraints ["wrap 1" "5px[grow, fill]5px" "10px[fill]0px"]
-                                          :border (sborder/line-border :left 2 :right 2 :bottom 2 :color "#fff")
-                                          :items [[(c/horizontal-panel
-                                                    :items [(gcomp/input-text :args [:text "\\path\\to\\export"])
-                                                            (c/label :text "[-]"
-                                                                         :background "#abc"
-                                                                         :border (sborder/empty-border :thickness 5)
-                                                                         :listen [:mouse-clicked (fn [e] (println "Export clicked"))])])]
-                                                  [(c/checkbox :text "ODT" :selected? true)]
-                                                  [(c/checkbox :text "DOCX")]
-                                                  [(gcomp/button-basic "Service raport" (fn [e]))]
-                                                  [(c/label)]])
-                                :background "#fff"
-                                :min-height 220
-                                :border (sborder/compound-border (sborder/empty-border :left 10 :right 10)))]))
+  (let [;;radio-group (c/button-group)
+        panel-bg "#eee"
+        expor-gb "#95dec9"
+        focus-gb "#5ee6bf"
+        icon (c/label :icon (jarman.tools.swing/image-scale ico/enter-64-png 30)
+                      :background panel-bg
+                      :border (sborder/empty-border :thickness 8)
+                      :listen [:mouse-clicked (fn [e] (println "Export clicked"))])
+        template (gcomp/input-text :args [:text "\\path\\save\\to"])
+        panel (c/horizontal-panel
+               :items [icon
+                       template])]
+    (c/flow-panel
+     :border (sborder/compound-border (sborder/empty-border :top 5)
+                                      (sborder/line-border :top 2 :color "#999")
+                                      (sborder/empty-border :top 50))
+     :items [(gcomp/button-expand "Export by template" (smig/mig-panel
+                                            :constraints ["wrap 1" "5px[grow, fill]5px" "0px[fill]0px"]
+                                          ;;  :border (sborder/line-border :left 2 :right 2 :bottom 2 :color "#fff")
+                                          ;;  :border (sborder/line-border :left 2 :color "#ccc")
+                                            :background panel-bg
+                                            :items [[(gcomp/hr 2 "#ccc")]
+                                                    [(gcomp/hr 10)]
+                                                    ;;  [(c/radio :id :odt  :text "ODT"  :group radio-group :background bg :selected? true) "split 2"]
+                                                    ;;  [(c/radio :id :docx :text "DOCX" :group radio-group :background bg)]
+                                                    [(gcomp/hr 10)]
+                                                    [panel]
+                                                    ;;  [(gcomp/button-basic "Service raport" (fn [e] (if-let [s (c/selection radio-group)] (println "Selected " (str (c/text s))
+                                                    ;;                                                                                               "\nTemplate: " (str (c/text template))))))]
+
+                                                    [(gcomp/hr 10)]
+                                                    [(gcomp/button-basic "Service raport" (fn [e]) :args [:halign :left])]
+                                                    [(gcomp/button-basic "Clients list"   (fn [e]) :args [:halign :left])]
+                                                    [(gcomp/button-basic "Invoice print"  (fn [e]) :args [:halign :left])]
+                                                    [(gcomp/hr 10)]
+                                                    [(gcomp/hr 2 "#95dec9")]])
+                                  :background "#95dec9"
+                                  ;; :focusable? true
+                                  :border (sborder/compound-border (sborder/empty-border :left 10 :right 10))
+                                  ;; :listen [:focus-gained (fn [e] (c/config! (first (u/children (c/to-widget e))) :background focus-gb))
+                                  ;;          :focus-lost   (fn [e] (c/config! (first (u/children (c/to-widget e))) :background expor-gb))]
+                                  )])))
+
+;; (run user-view)
 
 
 ;; (:->col-meta user-view)
 ;; (:->col-meta (var-get (-> (str "permission" "-view") symbol resolve)))
+
 
 (def auto-builder--table-view
   (fn [controller
@@ -543,9 +626,9 @@
           :or {start-focus nil}}]
     (let [x nil ;;------------ Prepare
           controller    (if (nil? controller) user-view controller)
-          expand-export (fn [] (export-expand-panel))
+          expand-export (fn [] (export-print-doc))
           insert-form   (fn [] (build-input-form (:->col-meta controller) :more-comps [(expand-export)] :start-focus start-focus))
-          view-layout   (smig/mig-panel :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
+          view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
           table         (fn [] (second (u/children view-layout)))
           update-form   (fn [model return] (gcomp/expand-form-panel view-layout (build-input-form (:->col-meta controller) :model model :more-comps [(return) (expand-export)])))
           x nil ;;------------ Build
@@ -554,11 +637,9 @@
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
           table              (fn [] ((:->table controller) (fn [model] (expand-update-form model back-to-insert))))
           x nil ;;------------ Finish
-          view-layout        (c/config! view-layout :items [[expand-insert-form] [(table)]])
-          ]
-      (println "Foc" (first (u/children (first (u/children (first (u/children view-layout)))))))
-      (.grabFocus (first (u/children (first (u/children (first (u/children view-layout)))))))
+          view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])] [(c/vertical-panel :items [(table)])]])]
       view-layout)))
+
 
 ;; (@jarman.gui.gui-app/startup)
 ;; (cm/swapp)
@@ -568,10 +649,12 @@
                                   :title "test"
                                   :size [1000 :by 800]
                                   :content
-                                  (auto-builder--table-view view :start-focus start-focus))
+                                  (auto-builder--table-view view :start-focus start-focus)
+                                  )
                              (.setLocationRelativeTo nil) c/pack! c/show!))]
           (c/config! my-frame :size [1000 :by 800])
           (if-not (nil? start-focus) (c/invoke-later (.requestFocus @start-focus true))))))
+
 
 
 ;; (let [size [200 :by 200]
@@ -644,13 +727,13 @@
 ;;                                                         (seesaw.core/config! text-label :text "<- empty ->"))])]])]
 ;;     (seesaw.core/grid-panel :rows 1 :columns 3 :items [dialog-label])))
 
-;; (let [my-frame (-> (doto (score/frame
+;; (let [my-frame (-> (doto (c/frame
 ;;                           :title "test"
 ;;                           :size [1000 :by 800]
 ;;                           :content
 ;;                           (auto-builder--table-view user-view))
-;;                      (.setLocationRelativeTo nil) score/pack! score/show!))]
-;;   (score/config! my-frame :size [1000 :by 800]))
+;;                      (.setLocationRelativeTo nil) c/pack! c/show!))]
+;;   (c/config! my-frame :size [1000 :by 800]))
 
 
 

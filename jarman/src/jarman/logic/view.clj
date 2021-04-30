@@ -6,7 +6,7 @@
    [clojure.string :as string]
    [seesaw.util :as u]
    ;; Seesaw components
-   [seesaw.core :as score]
+   [seesaw.core :as c]
    [seesaw.border :as sborder]
    [seesaw.dev :as sdev]
    [seesaw.mig :as smig]
@@ -162,9 +162,10 @@
            tblmeta#   ((comp :table :prop) (first (mt/getset! ktable#)))
            colmeta#   ((comp :columns :prop) (first (mt/getset! ktable#)))
            operations# (construct-sql ktable# (:data @config#))
-
+           
+           view#      (:view @config#)
            idfield#   (t-f-tf ktable# :id)
-            
+
            select#    (:select operations#)
            update#    (:update operations#)
            delete#    (:delete operations#)
@@ -174,7 +175,7 @@
            dupdate#   (fn [e#] (db/exec (update# e#)))
            ddelete#   (fn [e#] (db/exec (delete# e#)))
            dinsert#   (fn [e#] (db/exec (insert# e#)))
-           
+
            data#      (fn [] (db/query (select#)))
            export#    (select# :column nil :inner-join nil :where nil)
            model#     (construct-table-model-columns (:tables @config#) (:view @config#))
@@ -196,7 +197,7 @@
                      
                      :->operations operations#
                      :->config (fn [] @config#)
-                     :->view-col view#
+                     :->col-view view#
                      :->col-meta colmeta#
                      :->tbl-meta tblmeta#})
        (swap! ~'views (fn [m-view#] (assoc-in m-view# [ktable#] ~stable)))
@@ -223,6 +224,16 @@
   :tables [:permission]
   :view   [:permission.permission_name]
   :data   {:column (as-is :permission.id :permission.permission_name :permission.configuration)})
+
+;; (let [my-frame (-> (doto (score/frame
+;;                           :title "test"
+;;                           :size [1000 :by 800]
+;;                           :content
+;;                           ((:->table permission-view) (fn [x] (println x))))
+;;                      (.setLocationRelativeTo nil) score/pack! score/show!))]
+;;   (score/config! my-frame :size [1000 :by 800]))
+
+
 
 (defview user
   :tables [:user :permission]
@@ -405,7 +416,7 @@
 
 
 
-(defn construct-dialog [table-fn frame]
+(defn construct-dialog [table-fn selected frame]
   (let [dialog (seesaw.core/custom-dialog :modal? true :width 400 :height 500 :title "Select component")
         table (table-fn (fn [model] (seesaw.core/return-from-dialog dialog model)))
         dialog (seesaw.core/config!
@@ -443,38 +454,42 @@
                                 :items [[(c/label)]])
           components (concat
                       (filter #(not (nil? %)) (map (fn [meta]
-                              (let [field (keyword (get meta :field))
+                              (let [field-qualified (get meta :field-qualified)
                                     title (get meta :representation)
                                     editable? (get meta :editable?)
                                     ;; field (get meta :field)
-                                    v (str (get-in model [(keyword (get meta :representation))]))
+                                    v (str (get-in model [(keyword field-qualified)]))
                                     v (if (empty? v) "" v)]
                                 (cond
                                   (lang/in? (get meta :component-type) "d")
                                   (do
                                     (if (empty? model)
                                       (do ;;Create calendar input
-                                        (gcomp/inpose-label title (calendar/calendar-with-atom :field field :changes complete)))
+                                        (gcomp/inpose-label title (calendar/calendar-with-atom :field field-qualified :changes complete)))
                                       (do ;; Create update calenda input
-                                        (gcomp/inpose-label title (calendar/calendar-with-atom :field field :changes complete :set-date v)))))
+                                        (gcomp/inpose-label title (calendar/calendar-with-atom :field field-qualified :changes complete :set-date v)))))
                                   (lang/in? (get meta :component-type) "i")
                                   (do ;; Add input-text with label
                                     (if (empty? model)
                                       (do ;;Create insert input
-                                        (gcomp/inpose-label title (gcomp/input-text-with-atom :field field :changes complete :editable? editable?)))
+                                        (gcomp/inpose-label title (gcomp/input-text-with-atom :field field-qualified :changes complete :editable? editable?)))
                                       (do ;; Create update input
-                                        (gcomp/inpose-label title (gcomp/input-text-with-atom :field field :changes complete :editable? editable? :val v)))))
+                                        (gcomp/inpose-label title (gcomp/input-text-with-atom :field field-qualified :changes complete :editable? editable? :val v)))))
                                   (lang/in? (get meta :component-type) "l")
                                   (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
-                                    (let [key-table (keyword (str (name (get meta :key-table)) "_name"))
-                                          connected-table (var-get (-> (str "jarman.logic.view/" (get meta :key-table) "-view") symbol resolve))
-                                          v (if (nil? (get model key-table)) "Enter to select" (get model key-table))]
-                                      (if-not (nil? (get model key-table)) (swap! complete (fn [storage] (assoc storage field (get-in model [field])))))
+                                    (let [connected-table (var-get (-> (str "jarman.logic.view/" (get meta :key-table) "-view") symbol resolve))
+                                          selected-representation (fn [dialog-model-view returned-from-dialog]
+                                                                    (->> (:->col-view dialog-model-view)
+                                                                         (map #(get-in returned-from-dialog [%]))
+                                                                         (filter some?)
+                                                                         (string/join ", ")))
+                                          v (selected-representation connected-table model)]
+                                      (if-not (nil? (get model field-qualified)) (swap! complete (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
                                       (gcomp/inpose-label title (gcomp/input-text-with-atom :changes complete :editable? false :val v
-                                                                                            :onClick (fn [e] (let [selected (construct-dialog (:->table connected-table) (:->table connected-table) (c/to-frame e))]
-                                                                                                               (if-not (nil? (get selected :id))
-                                                                                                                 (do (c/config! e :text (get selected key-table))
-                                                                                                                     (swap! complete (fn [storage] (assoc storage field (get selected :id))))))))
+                                                                                            :onClick (fn [e] (let [selected (construct-dialog (:->table connected-table) field-qualified (c/to-frame e))]
+                                                                                                               (if-not (nil? (get selected (:->model->id connected-table)))
+                                                                                                                 (do (c/config! e :text (selected-representation connected-table selected))
+                                                                                                                     (swap! complete (fn [storage] (assoc storage field-qualified (get selected (:->model->id connected-table)))))))))
                                                                                             ))))
                                   )))
                             metadata))
@@ -487,9 +502,13 @@
       (if-not (nil? start-focus) (reset! start-focus (last (u/children (first components)))))
       builded
       )))
-
-(run user-view)
+;; (mt/getset :user)
+;; (:->table-model permission-view)
+;; (run repair_contract-view)
 ;; (:->col-meta seal-view)
+
+
+
 
 (defn export-expand-panel
   []
@@ -530,7 +549,7 @@
           table         (fn [] (second (u/children view-layout)))
           update-form   (fn [model return] (gcomp/expand-form-panel view-layout (build-input-form (:->col-meta controller) :model model :more-comps [(return) (expand-export)])))
           x nil ;;------------ Build
-          expand-insert-form (gcomp/scrollbox (gcomp/expand-form-panel view-layout (insert-form)) :hscroll :never)
+          expand-insert-form (gcomp/scrollbox (gcomp/expand-form-panel view-layout [(c/label :text "Title") (insert-form)]) :hscroll :never)
           back-to-insert     (fn [] (gcomp/button-basic "<< Return to Insert Form" (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
           table              (fn [] ((:->table controller) (fn [model] (expand-update-form model back-to-insert))))

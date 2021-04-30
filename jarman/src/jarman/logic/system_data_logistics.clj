@@ -12,7 +12,6 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
-
 ;; Login to system 
 ;; How to use it?
 ;;

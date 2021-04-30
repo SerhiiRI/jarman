@@ -122,7 +122,7 @@
                 file-name (format "%s.odt" (string/trim (.getString res-set "name")))
                 ^java.io.File
                 file (clojure.java.io/file (storage/document-templates-dir) file-name)
-                ^java.io.FileInputStream
+                ^java.io.FileOutputStream
                 fileStream (java.io.FileOutputStream. file)
                 ^java.io.InputStream
                 input (.getBinaryStream res-set "document")
@@ -130,6 +130,8 @@
             (while (> (.read input buffer) 0)
               (.write fileStream buffer))
             (.close input)
+            (.flush fileStream)
+            (.close fileStream)
             (temporary-push
              (.getLong res-set "id")
              (.getString res-set "table")

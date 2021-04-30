@@ -38,7 +38,7 @@
 ;;   info).
 ;;
 ;;   Short meta description for table:
-;;    :frontend-name - is name of table which was viewed by user. By default it equal to table name. 
+;;    :representation - is name of table which was viewed by user. By default it equal to table name. 
 ;;    :is-linker? - specifing table which created to bind other table with has N to N relations to other.
 ;;    :is-system? - mark this table as system table.
 ;;    :allow-modifing? - if it false, program not allowe to extending or reducing column count. Only for UI. 
@@ -225,14 +225,14 @@
         in?   (fn [col x] (if (string? col) (= x col) (some #(= % x) col)))]
     (condp in? tspec
       ["lk" "link" "links"] {:field t-name
-                             :frontend-name t-name
+                             :representation t-name
                              :is-system? true
                              :is-linker? true
                              :allow-modifing? false
                              :allow-deleting? false
                              :allow-linking? false}
       {:field t-name
-       :frontend-name t-name
+       :representation t-name
        :is-system? false
        :is-linker? false
        :description nil
@@ -550,14 +550,14 @@
 (defn- verify-table-metadata [m]
   (do-and
    (isset? m [:table])
-   (isset? m [:prop :table :frontend-name])
+   (isset? m [:prop :table :representation])
    (isset? m [:prop :table :is-system?])
    (isset? m [:prop :table :is-linker?])
    (isset? m [:prop :table :allow-modifing?])
    (isset? m [:prop :table :allow-deleting?])
    (isset? m [:prop :table :allow-linking?])
    (repattern? #"^[a-z_]{3,}$" m [:table])
-   (repattern? #"^[\w\d\s]+$" m [:prop :table :frontend-name])
+   (repattern? #"^[\w\d\s]+$" m [:prop :table :representation])
    (inpattern? [true false] m [:prop :table :is-system?])
    (inpattern? [true false] m [:prop :table :is-linker?])
    (inpattern? [true false] m [:prop :table :allow-modifing?])
@@ -619,7 +619,7 @@
   Example
     (validate-all
      {:id 30, :table \"user\", :prop
-      {:table {:frontend-name \"us er\", :is-system? :true, :is-linker? false, :allow-modifing? :true, :allow-deleting? true, :allow-linking? true},
+      {:table {:representation \"us er\", :is-system? :true, :is-linker? false, :allow-modifing? :true, :allow-deleting? true, :allow-linking? true},
       :columns
       [{:field \"login\", :representation \"login\", :description nil, :component-type true, :column-type \"varchar(100)\", :private? false, :editable? :true}
        {:field \"password\", :representation \"password\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable? true}
@@ -646,7 +646,7 @@
   Example
     (validate-table
      {:id 30, :table \"user\", :prop
-      {:table {:frontend-name \"us er\", :is-system? :true, :is-linker? false, :allow-modifing? :true, :allow-deleting? true, :allow-linking? true},
+      {:table {:representation \"us er\", :is-system? :true, :is-linker? false, :allow-modifing? :true, :allow-deleting? true, :allow-linking? true},
       :columns
        [{:field \"login\", :representation \"login\", :description nil, :component-type true, :column-type \"varchar(100)\", :private? false, :editable? :true}
         {:field \"password\", :representation \"password\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable? true}
@@ -665,7 +665,7 @@
   Example
     (validate-columns
      {:id 30, :table \"user\", :prop
-     {:table {:frontend-name \"us er\", :is-system? :true, :is-linker? false, :allow-modifing? :true, :allow-deleting? true, :allow-linking? true},
+     {:table {:representation \"us er\", :is-system? :true, :is-linker? false, :allow-modifing? :true, :allow-deleting? true, :allow-linking? true},
       :columns
       [{:field \"login\", :representation \"login\", :description nil, :component-type true, :column-type \"varchar(100)\", :private? false, :editable? :true}
        {:field \"password\", :representation \"password\", :description nil, :component-type \"i\", :column-type \"varchar(100)\", :private? false, :editable? true}
@@ -718,12 +718,12 @@
     Get key-path list for table 
   Example
     (list-key-path {:id 30, :table \"user\",
-                    :prop {:table {:frontend-name \"user\", :is-system? false,
+                    :prop {:table {:representation \"user\", :is-system? false,
                                    :is-linker? false, :allow-modifing? true,
                                    :allow-deleting? true, :allow-linking? true}}})
      ;; => [[:id]
             [:table]
-            [:prop :table :frontend-name]
+            [:prop :table :representation]
             [:prop :table :is-system?]
             [:prop :table :is-linker?]
             [:prop :table :allow-modifing?]
@@ -755,7 +755,7 @@
                    []
                    [;; [:id]
                     ;; [:table]
-                    [:prop :table :frontend-name]
+                    [:prop :table :representation]
                     ;; [:prop :table :is-system?]
                     ;; [:prop :table :is-linker?]
                     [:prop :table :allow-modifing?]
@@ -763,11 +763,11 @@
                     [:prop :table :allow-linking?]]))))
   ;; (adiff-table
   ;;  {:id 30, :table "user",
-  ;;   :prop {:table {:frontend-name "user", :is-system? false,
+  ;;   :prop {:table {:representation "user", :is-system? false,
   ;;                  :is-linker? false, :allow-modifing? true,
   ;;                  :allow-deleting? true, :allow-linking? true}}}
   ;;  {:id 30, :table "user",
-  ;;   :prop {:table {:frontend-name "CHU1", :is-system? false,
+  ;;   :prop {:table {:representation "CHU1", :is-system? false,
   ;;                  :is-linker? false, :allow-modifing? false,
   ;;                  :allow-deleting? true, :allow-linking? true}}})
   )
@@ -866,7 +866,7 @@
 
 (def user-original {:id 30
                     :table "user"
-                    :prop {:table {:frontend-name "user"
+                    :prop {:table {:representation "user"
                                    :is-system? false :is-linker? false
                                    :allow-modifing? true :allow-deleting? true
                                    :allow-linking? true}
@@ -881,12 +881,12 @@
                                      {:field "id_permission", :representation "id_permission", :description nil
                                       :component-type "l", :column-type "bigint(120) unsigned", :private? false, :editable? true, :key-table "permission"}]}})
 ;; :allow-modifing? true
-;; :frontend-name "UĹźytkownik"
+;; :representation "UĹźytkownik"
 ;; :add field "age"
 ;; :delete "first_name
 (def user-changed {:id 30
                    :table "user"
-                   :prop {:table {:frontend-name "Uďż˝ytkownik"
+                   :prop {:table {:representation "Uďż˝ytkownik"
                                   :is-system? false :is-linker? false
                                   :allow-modifing? false :allow-deleting? true
                                   :allow-linking? true}

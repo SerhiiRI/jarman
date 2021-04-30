@@ -75,4 +75,67 @@
 ;; (let [ckfm (java.awt.KeyboardFocusManager/getCurrentKeyboardFocusManager)
 ;;       ked (java.awt.KeyboardFocusManager/getKeyEventDispatchers)]
 ;;   (.removeKeyEventDispatcher ckfm ked))
+;;         public TestPane() {
+;;             lbl = new JLabel("Normal");
+;;             tex = new JTextField("Test code");
+;;             setLayout(new GridBagLayout());
+;;             add(lbl);
+;;             add(tex);
 
+;;             InputMap im = getInputMap(WHEN_IN_FOCUSED_WINDOW);
+;;             ActionMap am = getActionMap();
+;; //            im.put(KeyStroke.getKeyStroke("F"),
+;; //                    "FullScreen");
+;;             im.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "FullScreen");
+;;             am.put("FullScreen", new AbstractAction() {
+;;                 @Override
+;;                 public void actionPerformed(ActionEvent e) {
+;;                     if (fullScreen) {
+;;                         lbl.setText("Normal");
+;;                     } else {
+;;                         lbl.setText("Full Screen");
+;;                     }
+;;                     fullScreen = !fullScreen;
+;;                 }
+;;             });
+
+;;         }
+
+(import '(javax.swing 
+                      JFrame
+                      JPanel
+                      InputMap
+                      JComponent
+                      KeyStroke
+                      Action
+                      AbstractAction)
+        '(java.awt.event ActionEvent
+                         ActionListener
+                         InputEvent
+                         KeyEvent
+                         ActionListener)
+        '(java.awt Graphics Dimension Color)
+        '(java.awt.image BufferedImage))
+
+(def myAction
+     (proxy [AbstractAction ActionListener] []
+       (actionPerformed [e] (println "Action performed!"))))
+
+(def panel
+     (doto
+         (proxy [JPanel] []
+           (paint [g] nil))
+       (.setPreferredSize (new Dimension 800 800))
+       (.. (getInputMap) (put (KeyStroke/getKeyStroke (KeyEvent/VK_F)(InputEvent/CTRL_DOWN_MASK)) "action"))
+       (.. (getInputMap) (put (KeyStroke/getKeyStroke "F2") "action"))
+       (.. (getInputMap) (put (KeyStroke/getKeyStroke \a) "action"))
+       (.. (getActionMap) (put "action" myAction))))
+ 
+(do 
+  (doto
+      (seesaw.core/frame)  
+    (.add panel)
+    (.pack)
+    (.setVisible true)))
+
+(println "Press 'F2' to perform a simple action")

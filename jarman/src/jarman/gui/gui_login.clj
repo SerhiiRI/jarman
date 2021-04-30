@@ -297,7 +297,7 @@
       (.add mig err-lbl)
       ) mig))
 
-(start)
+
 
 
 (defn config-generator-panel [key-title]
@@ -332,33 +332,46 @@ Why i saw this error"
                        ;; [(label :icon (stool/image-scale icon/refresh-connection-grey1-64-png 80)
                        ;;         :border (empty-border :right 30))]
                        [(config-generator-fields key-title)]
-                       [;;(label :text "ddd" :valign :top)  
+                       [;;(label :text "ddd" :valign :top)
 
-                        (let [mig (vertical-panel
-                                  ;; :constraints ["wrap 1" "0px[:200, center]100px" "0px[top]0px"]
+                        (border-panel
+                        
+                         :border (line-border :bottom 4 :color light-grey-color)
+                         :maximum-size  [300 :by 300]
+                         :preferred-size  [300 :by 300]
+                        )
+
+                        ;; (let [mig (mig-panel
+                        ;;            :constraints ["wrap 1" "0px[grow, center]0px" ""]
                                    
-                                   :items (list (label :text (tool/htmling "<h2>About</h2>")
-                                                       :foreground blue-green-color :font (myFont 14))
-                                                (some-text blue-color))
-                                   ;;  [(label :text "some-text" :halign :left :font (myFont 14) :foreground light-grey-color)]
-                                   :maximum-size [200 :by 200]
-                                   )]
-                          (doall (map (fn [x] (.add mig x )) (if (= faq nil) nil (asks-panel faq))))
+                        ;;            :items [[(label :text (tool/htmling "<h2>About</h2>")
+                        ;;                            :maximum-size [100 :by 100]
+                        ;;                            :foreground blue-green-color :font (myFont 14))]
+                        ;;                    [(some-text blue-color)]]
+                        ;;            ;;  [(label :text "some-text" :halign :left :font (myFont 14) :foreground light-grey-color)]
+                                  
+                                   
+                        ;;            )]
+                        ;;   (doall (map (fn [x] (.add mig x )) (if (= faq nil) nil (asks-panel faq))))
                           
-                          (.repaint mig)
+                        ;;   (.repaint mig)
                           
-                          (scrollable mig :hscroll :never :border nil))
-                          
+                        ;;   ;;(scrollable mig :hscroll :never :border nil)
+                        ;;   mig
+                        ;;   )
+                        
+                          "aligny top"
                         ]
                      ])]
    
    
     mig-p))
 
-
-
+(show-options (label))
 
 (start)
+
+
 (println "sdfsfsdffsd")
 
 ;; (defn db-connect-error [key-title]
@@ -473,7 +486,7 @@ Why i saw this error"
                                                                         (.revalidate my-panel))))))))])
     my-panel))
 
-(start)
+
 
 
 
@@ -499,7 +512,7 @@ Why i saw this error"
            :background "#fff"))
     scr))
 
-(start)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; panels for login and error ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

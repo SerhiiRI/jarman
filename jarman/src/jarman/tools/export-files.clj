@@ -23,6 +23,7 @@
 
 (def temp-directory (strg/temp-templates-dir-path))
 
+
 (defn read-data [file-path]
   (let [f (java.io.File. file-path)
         ary (byte-array (.length f))
@@ -41,8 +42,11 @@
    (str export-directory "/" file-name)
    values-map))
 
-(defn get-name-temp-files [path]
-  (second (re-find #".+/([\w\.\d]*)" path)))
+
+;; (defn get-name-temp-files [path]
+;;   (println )
+;;   (println path)
+;;   (second (re-find #".+/([\w\.\d]*)" path)))
 
 (defn push! [q val]
   (swap! q conj val))
@@ -52,11 +56,13 @@
 
 (def data-files (atom []))
 
+;;(push! data-files {(str ":" "ee") ["fr" "r"]} )
+
 (defn delete-file [name-file]
   (reset! data-files (vec (remove #(= (keyword name-file) (first (keys %))) @data-files))))
 
 (defn load-file-tmp-dir [file-name]
-  (write-data 
+  (write-data
    (str temp-directory "/" file-name)
    (second (first (vals (first (filter (fn [x] (= (first (keys x))(keyword file-name))) @data-files)))))))
 
@@ -82,7 +88,8 @@
                                  :mouse-exited  (fn [e] (config! e :background "#fff" :foreground "#96c1ea"))
                                  :mouse-clicked func])))
 
-(def templ-panel (let [descript-field (text :editable? true :columns 16 :margin 6
+(defn templ-panel []
+  (let [descript-field (text :editable? true :columns 16 :margin 6
                                               :border (compound-border emp-border
                                                                        (line-border :bottom 4 :color "#96c1ea")))
                        path-field (text :text env/user-home
@@ -98,8 +105,8 @@
                                                                       (line-border :bottom 4 :color "#e51a4c")))
                                                             (let [path-file (choose-file  :success-fn
                                                                                           (fn [fc file] (.getAbsolutePath file)))
-                                                                  file-name (get-name-temp-files path-file)]
-                                                              (push! data-files {(read-string (str ":" file-name))
+                                                                  file-name (.getName (io/file path-file))]
+                                                              (push! data-files {(keyword file-name)
                                                                                  [(text descript-field)
                                                                                   (read-data path-file)]})
                                                               (config! descript-field
@@ -125,7 +132,7 @@
                    (mig-panel
                     :constraints ["wrap 2" "40px[grow, left]20px" "20px[]20px"]
                     :items [
-                            [(jarman.gui.gui-tools/textarea "<h3>Add description of file:</h3>" :foreground "#2c7375" :font (getFont 18))]
+                            [(label :text "Add description of file:" :foreground "#2c7375" :font (getFont 18))]
                             [combo-keys ]
                             [descript-field]
                             [combo-files "split 3"]
@@ -137,7 +144,7 @@
                             ])))
 
 
-(config! f :content templ-panel)
+(config! f :content  (templ-panel))
 
 (-> (doto f (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
 
@@ -156,3 +163,4 @@
 
 
 ;; (-main)
+(println "-lsljdclsdjckjds")

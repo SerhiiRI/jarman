@@ -22,7 +22,7 @@
       Import jarman.dev-tools
       Function need stool/image-scale function for scalling icon
    "
-  (fn [view-id title bg-color size onclose onclick]
+  (fn [view-id title tab-tip bg-color size onclose onclick]
     (let [border "#fff"
           hsize (first size)
           vsize (last size)]
@@ -32,6 +32,7 @@
        :user-data {:title title :view-id view-id}
        :items [(label ;; tab title
                 :text title
+                :tip (if (nil? tab-tip) title tab-tip)
                 :halign :center
                 :border (empty-border :left 5 :right 5)
                 :size [hsize :by vsize]
@@ -125,7 +126,7 @@
      Next view will be added to @views with tab to open tabs bar.
    "
   (fn [service-data]
-    (fn [view-id title component scrollable? pref-height]
+    (fn [view-id title tab-tip component scrollable? pref-height]
       (if (contains? @(service-data :views-storage) view-id) ;; Swicht tab if exist in views-storage
         (let [view {view-id (get @(service-data :views-storage) view-id)}
               tabs (config (service-data :bar-space) :items)
@@ -146,7 +147,7 @@
           (swap! (service-data :views-storage) (fn [storage] (merge storage view)))
           (let [view-id (first (first view))
                 button-title  (get (second (first view)) :title)
-                tab-button (create--tab-button view-id button-title "#eee" [100 25]
+                tab-button (create--tab-button view-id button-title tab-tip "#eee" [100 25]
                                                (close-tab service-data view)
                                                (switch-tab service-data view))]
             (deactive-all-tabs service-data)
@@ -192,16 +193,19 @@
                           title
                           component
                           pref-height
+                          tab-tip
                           scrollable?]
                    :or {view-id :none
                         title   ""
                         component nil
                         pref-height 0
+                        tab-tip nil
                         scrollable? true}}]
       (cond
-        (= action :set-view)        ((set--view service-data) 
-                                     (if (keyword? view-id) view-id (keyword view-id)) 
-                                     title 
+        (= action :set-view)        ((set--view service-data)
+                                     (if (keyword? view-id) view-id (keyword view-id))
+                                     title
+                                     tab-tip
                                      component
                                      scrollable?
                                      (cond (and (= 0 pref-height) (nil? component))

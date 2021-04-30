@@ -207,14 +207,14 @@
 ;;; Font debug, tool ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn show-fonts "Funkcja wy�wietla list� dost�pnych czcionek, ale nie zwraca ich."
+(defn show-fonts "Funkcja wyświetla listę dostępnych czcionek, ale nie zwraca ich."
   [] (map println (.. java.awt.GraphicsEnvironment getLocalGraphicsEnvironment getAvailableFontFamilyNames)))
 
-(defn get-fonts "Funkcja zwraca nazy dost�nych czcionek."
+(defn get-fonts "Funkcja zwraca nazy dostęnych czcionek."
   [] (map identity (.. java.awt.GraphicsEnvironment getLocalGraphicsEnvironment getAvailableFontFamilyNames)))
 
-(defn debug-font-panel "Funkcja wy�wietla okienko z czcionkami w swoim formacie."
-  [& {:keys [txt size] :or {txt "Przyk�adowy tekst od Mr. Jarmana" size 16}}]
+(defn debug-font-panel "Funkcja wyświetla okienko z czcionkami w swoim formacie."
+  [& {:keys [txt size] :or {txt "Przykładowy tekst. Приклад тексту." size 16}}]
   (-> (seesaw.core/frame :content (seesaw.core/scrollable (seesaw.core/vertical-panel :items (map (fn [font] (seesaw.core/grid-panel
                                                                                                              :columns 2
                                                                                                              :items [(seesaw.core/text :text font
@@ -227,3 +227,4 @@
       seesaw.core/show!))
 
 
+(debug-font-panel)

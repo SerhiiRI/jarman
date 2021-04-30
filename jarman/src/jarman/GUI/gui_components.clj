@@ -21,6 +21,11 @@
 ;; │                    │________________________________________
 ;; └────────────────────┘                                       V
 
+
+(defn hr 
+  ([line-size] (label :border (empty-border :top line-size)))
+  ([line-size line-color] (label :border (line-border :top line-size :color line-color))))
+
 (defn auto-scrollbox
   [component & args]
   (let [scrol (apply scrollable component :border nil args)
@@ -56,10 +61,18 @@
    Example:
       (simple-button \"Simple button\" (fn [e]) :style [:background \"#fff\"])
    "
-  (fn [txt func & {:keys [args]
-                   :or   {args []}}]
+  (fn [txt func & {:keys [args
+                          vtop
+                          vbot
+                          hl
+                          hr]
+                   :or   {args []
+                          vtop 10
+                          vbot 10
+                          hl 10
+                          hr 10}}]
     (let [newBorder (fn [underline-color]
-                      (compound-border (empty-border :bottom 10 :top 10)
+                      (compound-border (empty-border :bottom vbot :top vtop :left hl :right hr)
                                        (line-border :bottom 2 :color underline-color)))]
       (apply label
            :text txt
@@ -119,35 +132,56 @@
 ;; (show-options (text))
 
 (defn inpose-label
-  [title component]
+  "Params: 
+     title
+     component
+   "
+  [title component
+   & {:keys [vtop 
+             id]
+      :or {vtop 0
+           id nil}}]
   (c/grid-panel :columns 1
+                :id id
+                :border (empty-border :top vtop)
                 :items [(c/label :text (if (string? title) title ""))
                         component]))
 
 
 (defn input-text-with-atom
-  [& {:keys [field changes val editable? enable? onClick]
-      :or {changes (atom {})
+  [& {:keys [store-id local-changes val editable? enabled? onClick debug]
+      :or {local-changes (atom {})
            val ""
            editable? true
-           enable? true
-           field nil
-           onClick (fn [e])}}]
+           enabled? true
+           store-id nil
+           onClick (fn [e])
+           debug false}}]
   (input-text
    :args [:editable? editable?
-          :enabled? enable?
+          :enabled? enabled?
           :text val
           :foreground (if editable? "#000" "#456fd1")
           :focusable? true
+          :background (if-not editable? (gtool/get-color :background :light-mute) (gtool/get-color :background :input))
           :listen [:mouse-clicked onClick
                    :action-performed onClick
-                   :mouse-entered (if editable? (fn [e]) hand-hover-on)
+                   :mouse-entered (if editable? (fn [e]) (fn [e] 
+                                                           (hand-hover-on e)
+                                                           (config! e )))
                    :caret-update (fn [e]
-                                   (if-not (nil? field) (swap! changes (fn [storage] (assoc storage field (c/value (c/to-widget e)))))))
+                                   (let [new-v (c/value (c/to-widget e))] 
+                                    (if debug (println "--Input text change" new-v))
+                                    (if debug (println "--Atom" @local-changes))
+                                    (cond
+                                      (and (not (nil? store-id))
+                                           (not (= val new-v)))
+                                      (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
+                                      :else (reset! local-changes (dissoc @local-changes store-id)))))
                    :focus-gained (fn [e] (c/config! e :border ((get-user-data e :border-fn) (get-color :decorate :focus-gained))))
                    :focus-lost   (fn [e] (c/config! e :border ((get-user-data e :border-fn) (get-color :decorate :focus-lost))))]]))
 
-
+ 
 (defn expand-form-panel
   "Description:
      Create panel who can hide inside components. 
@@ -160,17 +194,15 @@
              text-open
              text-hide
              focus-color
-             unfocus-color
-             min-open-width]
+             unfocus-color]
       :or {ico-open nil
            icon-hide nil
            text-open "<<"
            text-hide "..."
            focus-color (get-color :decorate :focus-gained-dark)
-           unfocus-color "#fff"
-           min-open-width 250}}]
+           unfocus-color "#fff"}}]
   (let [hidden-comp (atom nil)
-        form-space-open ["wrap 1" (str "0px[" min-open-width ":, grow, fill]0px") "0px[fill]0px"]
+        form-space-open ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
         form-space-hide ["" "0px[grow, fill]0px" "0px[grow, fill]0px"]
         form-space (smig/mig-panel :constraints form-space-open)
         onClick (fn [e]

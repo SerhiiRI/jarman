@@ -25,7 +25,9 @@
                                               :button_config {:type :param :display :edit :component :textcolor :value "#fff"}
                                               :button_selected {:type :param :display :edit :component :textcolor :value "#ccc"}
                                               :button_main {:type :param :display :edit :component :textcolor :value "#fff"}
-                                              :header {:type :param :display :edit :component :textcolor :value "#ccc"}}}
+                                              :header {:type :param :display :edit :component :textcolor :value "#ccc"}
+                                              :light-mute {:type :param :display :edit :component :textcolor :value "#ddd"}
+                                              }}
                          :group-buttons {:type :block
                                          :display :edit
                                          :value {:background {:type :param :display :edit :component :textcolor :value "#fff"}

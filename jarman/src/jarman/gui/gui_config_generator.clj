@@ -149,7 +149,7 @@
     (let [param (fn [key] (get (cm/get-in-segment start-key) key))
           type? (fn [key] (= (param :type) key))
           comp? (fn [key] (= (param :component) key))
-          name (if (nil? (param :name)) (key-to-title (last start-key)) (str (param :name)))]
+          name (if (nil? (param :name)) (lang/convert-key-to-title (last start-key)) (str (param :name)))]
       (if (= (param :display) :edit)
         (do
           (mig-panel

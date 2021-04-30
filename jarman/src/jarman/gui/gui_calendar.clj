@@ -90,14 +90,14 @@
                                                  (if-not (nil? field) 
                                                    (swap! changes (fn [storage] (assoc storage (keyword field) (value (to-widget e)))))))]])))
 
-(defn- frame-calendar []
-  (frame :title "Jarman"
-         :undecorated? false
-         :resizable? false
-         :minimum-size [1000 :by 760]
-         :content (mig-panel
-                   :constraints ["wrap 1" "100px[grow, center]100px" "30px[]30px"]
-                   :items [[(calendar-panel)]])))
+;; (defn- frame-calendar []
+;;   (frame :title "Jarman"
+;;          :undecorated? false
+;;          :resizable? false
+;;          :minimum-size [1000 :by 760]
+;;          :content (mig-panel
+;;                    :constraints ["wrap 1" "100px[grow, center]100px" "30px[]30px"]
+;;                    :items [[(calendar-panel)]])))
 
- (-> (doto (frame-calendar) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
+;;  (-> (doto (frame-calendar) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
 

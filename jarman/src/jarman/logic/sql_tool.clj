@@ -611,13 +611,13 @@
 ;;; set preprocessor ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; (defn set-string [current-string update-map tabel-name]
-;;   (let [pair-group (fn [[col-name value]] (str (format "`%s`" (name col-name)) "=" (where-procedure-parser-v value)))]
-;;     (str current-string " " (format "`%s`" (name tabel-name)) (str " SET " (string/join ", " (map pair-group update-map))))))
-
 (defn set-string [current-string update-map tabel-name]
-  (let [pair-group (fn [[col-name value]] (str (format "%s" (name col-name)) "=" (where-procedure-parser-v value)))]
-    (str current-string " " (format "%s" (name tabel-name)) (str " SET " (string/join ", " (map pair-group update-map))))))
+  (let [pair-group (fn [[col-name value]] (str (make-dot-column! col-name) "=" (where-procedure-parser-v value)))]
+    (str current-string " " (format "`%s`" (name tabel-name)) (str " SET " (string/join ", " (map pair-group update-map))))))
+
+;; (defn set-string [current-string update-map tabel-name]
+;;   (let [pair-group (fn [[col-name value]] (str (format "%s" (name col-name)) "=" (where-procedure-parser-v value)))]
+;;     (str current-string " " (format "%s" (name tabel-name)) (str " SET " (string/join ", " (map pair-group update-map))))))
 
 (defn update-table-string [current-string map tabel-name]
   (str current-string "" (format "%s" (name tabel-name))))

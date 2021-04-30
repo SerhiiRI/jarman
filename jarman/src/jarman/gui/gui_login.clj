@@ -15,6 +15,7 @@
             [clojure.java.jdbc :as jdbc]
             [jarman.tools.swing :as stool]
             [jarman.gui.gui-app :as app]
+            [jarman.logic.system-data-logistics :as logic]
             [jarman.gui.gui-components :as components]
             [jarman.logic.connection :as c]
             ;; [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]
@@ -50,7 +51,8 @@
 (def light-grey-color "#82959f")
 (def blue-green-color "#2c7375")
 (def light-blue-color "#96c1ea")
-(def red-color "#e51a4c")
+;;(def red-color "#e51a4c")
+(def red-color "#f88158")
 (def back-color "#c5d3dd")
 
 (def my-style {[:.css1] {:foreground blue-green-color}})
@@ -96,12 +98,13 @@
 (def confgen-header
   (fn [title] (label :text title :font (tool/getFont 16 :bold)
                      :foreground blue-green-color
-                     :border (compound-border
-                              (line-border :bottom 2 :color dark-grey-color)(empty-border :bottom 5)))))
+                     ;; :border (compound-border
+                     ;;          (line-border :bottom 2 :color dark-grey-color)(empty-border :bottom 5))
+                     )))
 
 (def confgen-title
   (fn [title]
-    (label :text title :foreground blue-green-color :font (tool/getFont 14 :bold))))
+    (label :text title :foreground light-grey-color :font (tool/getFont 12 :bold))))
 
 (def confgen-input 
   (fn [data] (text :text data :font (tool/getFont 14)
@@ -158,7 +161,7 @@
   (do
     (conf/assoc-in-value [:database.edn :datalist key-title :dbtype] dbtype)
     (conf/assoc-in-value [:database.edn :datalist key-title :host] host)
-    (conf/assoc-in-value [:database.edn :datalist key-title :port] port)
+    (conf/assoc-in-value [:database.edn :datalist key-title :port] (Integer. port))
     (conf/assoc-in-value [:database.edn :datalist key-title :dbname] dbname)
     (conf/assoc-in-value [:database.edn :datalist key-title :user] user)
     (conf/assoc-in-value [:database.edn :datalist key-title :password] password))
@@ -257,75 +260,109 @@
                                                          (config! err-lbl :text "ERROR!! PLEASE RECONNECT" :foreground red-color)
                                                          (config! err-lbl :text "SUCCESS" :foreground blue-green-color)
                                                          ))])
-        btn-ent (label :text "EDDIT" :background "#fff"
-                     :class :css1
-                     :border (empty-border :top 10 :right 10 :left 10 :bottom 10)
-                     :listen [:mouse-entered (fn [e] (config! e :background back-color :cursor :hand))
-                              :mouse-exited  (fn [e] (config! e :background "#fff"))
-                              :mouse-clicked (fn [e] (if (= (validate-fields dbtype-inp host-inp port-inp
-                                                                             dbname-inp user-inp password-inp key-title) "yes")
-                                                       (config! (to-frame e)
+        btn-ent (label :text "Eddit" :background "#fff"
+                       :class :css1
+                       :halign :center
+                       :border (empty-border :top 10 :right 10 :left 10 :bottom 10)
+                       :listen [:mouse-entered (fn [e] (config! e :background back-color :cursor :hand))
+                                :mouse-exited  (fn [e] (config! e :background "#fff"))
+                                :mouse-clicked (fn [e] (if (= (validate-fields dbtype-inp host-inp port-inp
+                                                                               dbname-inp user-inp password-inp key-title) "yes")
+                                                         (config! (to-frame e)
                                                                 :content (login-panel))))])
+        mig-for-btn (mig-panel :constraints ["" "0px[:33%, grow, fill]5px[:33%, grow, fill]0px" ""]
+                                          :items [])
         mig (mig-panel
-             :constraints ["wrap 1" "[grow, center]" "20px[]20px"]
-             :items [[(confgen-header "Some title")]
-                     [(grid-panel :columns 1 :items [(confgen-title (:name (:dbtype (:value template-map)))) dbtype-inp])]
+             :constraints ["wrap 1" "25%[grow, fill, center]25%" "20px[]20px"]
+           
+            ;; :background "#666"
+             :items [[(confgen-header "Raspberry")]
+                     
+                    ;; [(grid-panel :columns 1 :items [(confgen-title (:name (:dbtype (:value template-map)))) dbtype-inp])]
                      [(grid-panel :columns 1 :items [(confgen-title (:name (:host (:value template-map)))) host-inp])]
                      [(grid-panel :columns 1 :items [(confgen-title (:name (:port (:value template-map)))) port-inp])]
                      [(grid-panel :columns 1 :items [(confgen-title (:name (:dbname (:value template-map)))) dbname-inp])]
                      [(grid-panel :columns 1 :items [(confgen-title (:name (:user (:value template-map)))) user-inp])]
-                     [(grid-panel :columns 1 :items [(confgen-title (:name (:password (:value template-map)))) password-inp])]])]
+                     [(grid-panel :columns 1 :items [(confgen-title (:name (:password (:value template-map)))) password-inp])]
+                     [mig-for-btn]])]
     (if (= key-title :empty)
-      (do (config! btn-ent :text "CREATE")
-          (.add mig btn-conn "split 2")
-          (.add mig btn-ent)
-          (.add mig err-lbl))
-      (do (.add mig btn-ent "split 3")
-          (.add mig btn-conn)
-          (.add mig btn-del)
-          (.add mig err-lbl)))
-   mig))
+      (do (config! btn-ent :text "Create")
+          (.add mig-for-btn btn-conn)
+          (.add mig-for-btn btn-ent)
+          (.add mig-for-btn err-lbl)))
+    (do 
+      (.add mig-for-btn btn-ent)
+      (.add mig-for-btn btn-conn)
+      (.add mig-for-btn btn-del)
+      (.add mig err-lbl)
+      ) mig))
+
+(start)
+
 
 (defn config-generator-panel [key-title]
   (let [info some-text
-        faq [{:q "Why i saw this error"
+       
+        faq [{:q "Why i saw this error
+Why i saw this error
+Why i saw this error
+Why i saw this error
+Why i saw this error
+Why i saw this error
+Why i saw this error
+Why i saw this error
+Why i saw this error
+Why i saw this error
+Why i saw this error'
+Why i saw this error"
               :a "Because your program has trouble"}
              {:q "What it problem mean"
               :a "Read the fucking descriptin"}]
-        scr (scrollable
-             (mig-panel
-              :constraints ["wrap 1" "[grow, center]" "20px[]20px"]
-              :items [[(label :icon (stool/image-scale icon/left-blue-64-png 50)
-                              :listen [:mouse-entered (fn [e] (tool/hand-hover-on e))
-                                       :mouse-exited (fn [e] (tool/hand-hover-off e))
-                                       :mouse-clicked (fn [e] (config! (to-frame e) :content (login-panel)))]
-                              :border (empty-border :right 150)) "align l, split 2"]
-                      ;; [(label :icon (stool/image-scale icon/refresh-connection-grey1-64-png 80)
-                      ;;         :border (empty-border :right 30))]
-                      [(label :text "CONNECT TO DATABASE"
-                              :foreground blue-green-color :font (myFont 18)) "align l"]    
-                      [(let [mig (mig-panel
-                                  :constraints ["wrap 1" "100px[:600, grow, center]100px" "20px[]20px"]
-                                  :items [
-                                          [(label :text (tool/htmling "<h2>About</h2>")
-                                                  :foreground blue-green-color :font (myFont 14)) "align l"]
-                                          [(label :text "some-text" :font (myFont 14) :foreground dark-grey-color)
-                                           "align l"]
-                                          [(config-generator-fields key-title) "align l"]])]
-                         (doall (map (fn [x] (.add mig x "align l")) (if (= faq nil) nil (asks-panel faq))))
-                         (.repaint mig) mig)]])
-             :hscroll :never)]
-    (.setUnitIncrement (.getVerticalScrollBar scr) 20)
-    scr))
+        mig-p (mig-panel
+               :constraints ["wrap 2" "0px[grow, fill, center]10px" "20px[grow, fill]20px"]
+               :items [[(mig-panel  :constraints ["" "0px[10%, fill]0px[grow,center]0px[10%, fill]0px" ""]
+                                    :items [[(label :icon (stool/image-scale icon/left-blue-64-png 50)
+                                                    :listen [:mouse-entered (fn [e] (tool/hand-hover-on e))
+                                                             :mouse-exited (fn [e] (tool/hand-hover-off e))
+                                                             :mouse-clicked (fn [e] (config! (to-frame e) :content (login-panel)))])]
+                                            
+                                            [(label :text "CONNECT TO DATABASE"
+                                                    :foreground blue-green-color :font (myFont 18))]
+                                            [(label)]]) "span 2" ]
+                       ;; [(label :icon (stool/image-scale icon/refresh-connection-grey1-64-png 80)
+                       ;;         :border (empty-border :right 30))]
+                       [(config-generator-fields key-title)]
+                       [;;(label :text "ddd" :valign :top)  
 
-(defn db-connect-error []
-  [[(vertical-panel
-              :background "#fff"
-              :items (list (label :text "Some error" :font (myFont 15) :foreground blue-color
-                                  :border (empty-border :top 5 :left 5 :bottom 5))
-                           (label :text "Connection false" :font (myFont 12) :foreground light-grey-color
-                                  :border (empty-border :top 5 :left 5 :bottom 5)
-                                  :preferred-size  [20 :by 20]))) :north]])
+                        (let [mig (vertical-panel
+                                  ;; :constraints ["wrap 1" "0px[:200, center]100px" "0px[top]0px"]
+                                   
+                                   :items (list (label :text (tool/htmling "<h2>About</h2>")
+                                                       :foreground blue-green-color :font (myFont 14))
+                                                (some-text blue-color))
+                                   ;;  [(label :text "some-text" :halign :left :font (myFont 14) :foreground light-grey-color)]
+                                   :maximum-size [200 :by 200]
+                                   )]
+                          (doall (map (fn [x] (.add mig x )) (if (= faq nil) nil (asks-panel faq))))
+                          
+                          (.repaint mig)
+                          
+                          (scrollable mig :hscroll :never :border nil))
+                          
+                        ]
+                     ])]
+   
+   
+    mig-p))
+
+
+
+
+(start)
+(println "sdfsfsdffsd")
+
+;; (defn db-connect-error [key-title]
+;;   [[ :north]])
 
 (defn get-values [some-key]
   (string/split (string/replace (name some-key) #"\_" ".") #"\--" ))
@@ -341,15 +378,52 @@
                         :password (:password data)})))
 
 
-(defn label-to-config [dbname title key-title] 
-  (let [icon-conf
+(defn test-key-login [key-title login pass]
+  (let [data (key-title (c/datalist-mapper (c/datalist-get)))]
+    (if-let [login-fn (logic/login
+                       {:dbtype (:dbtype data)
+                        :host (:host data)
+                        :port (:port data)
+                        :dbname (:dbname data)
+                        :user (:user data)
+                        :password (:password data)})]
+      ;; function login retunr function to
+      ;; make login to user
+      (if (fn? login-fn)
+        (if-let [u (login-fn login pass)]
+          u
+          "USER NOT FOUND")
+        (case login-fn
+          :no-connection-to-database
+          "NOT CONNECTION TO BD"
+          :not-valid-connection
+          "NOT VALID CONNECTION")))))
+
+
+;;(instance? clojure.lang.PersistentArrayMap (test-key-login :jarman--trashpanda-team_ddns_net  "wary" "243"))
+
+
+(defn some-error-v [error title]
+  (vertical-panel
+   :background "#fff"
+   :items (list (label :text error :font (myFont 11) :foreground red-color
+                       :border (empty-border :top 5 :left 5 :bottom 5))
+                (label :text title :font (myFont 10) :foreground light-grey-color
+                       :border (empty-border :top 5 :left 5 :bottom 5)
+                       :preferred-size  [20 :by 20]))))
+
+(defn label-to-config [dbname title key-title login pass] 
+  (let [
+        icon-conf
         (label :icon (stool/image-scale icon/settings-64-png 40)
                :border (compound-border (empty-border :top 10 :left 55))
                :halign :right
                :visible? false
                :border (empty-border :right 5 :bottom 5)
-               :listen [:mouse-entered (fn [e] (do (tool/hand-hover-on e) (config! e :visible? true)))
-                        :mouse-exited (fn [e] (do (tool/hand-hover-off e) (config! e :visible? false)))
+               :listen [:mouse-entered (fn [e] (do (tool/hand-hover-on e) (config! e :visible? true)
+                                                   ))
+                        :mouse-exited (fn [e] (do (tool/hand-hover-off e) (config! e :visible? false)
+                                                  ))
                         :mouse-clicked (fn [e] (do (tool/hand-hover-off e) (config! (to-frame e)
                                                                                :content (config-generator-panel key-title))))])
         my-panel (border-panel
@@ -372,20 +446,38 @@
                                                         (config! icon-conf :visible? true)))
                                :mouse-exited  (fn [e] (do (config! e :border (line-border :bottom 4 :color light-grey-color))
                                                           (config! icon-conf :visible? false)))
-                               :mouse-clicked (fn [e] (if (= (println (test-key-connection key-title)) nil)
-                                                        (do
-                                                          (.removeAll my-panel)
-                                                          (config! my-panel :items (db-connect-error)
-                                                                   :border (line-border :bottom 4
-                                                                                        :color red-color)
-                                                                   :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content info-panel))
-                                                                            :mouse-exited  (fn [e] (do (config! e :border (line-border :bottom 4 :color red-color))))
-                                                                            :mouse-entered  (fn [e] (do (config! e :border (line-border :bottom 4 :color red-color))))]))))])
+                               :mouse-clicked (fn [e] (do (if (nil? (test-key-connection key-title))
+                                                            (do 
+                                                              (.removeAll my-panel)
+                                                              (.add my-panel (some-error-v "Connection false" title))
+                                                              (config! my-panel 
+                                                                       :border (line-border :bottom 4
+                                                                                            :color red-color)
+                                                                       :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content info-panel))
+                                                                                :mouse-exited  (fn [e] (do (config! e :border (line-border :bottom 4 :color red-color))))
+                                                                                :mouse-entered  (fn [e] (do (config! e :border (line-border :bottom 4 :color red-color))))])
+                                                              (.revalidate my-panel))
+                                                            (do
+                                                              (.removeAll my-panel)
+                                                              (let [data-log (test-key-login key-title (text login)
+                                                                                             (get (config pass :user-data) :value))]
+                                                                  (if (instance? clojure.lang.PersistentArrayMap data-log)
+                                                                    (do (.revalidate my-panel)
+                                                                        (.dispose (to-frame e))
+                                                                        (@app/startup))
+                                                                    (do 
+                                                                      (.add my-panel (some-error-v (name data-log) "")
+                                                                            (label :text (name data-log)
+                                                                                            :font (myFont 11) :foreground red-color
+                                                                                            :border (empty-border :top 5 :left 5 :bottom 5)))
+                                                                        (.revalidate my-panel))))))))])
     my-panel))
 
+(start)
 
 
-(defn configurations-panel []
+
+(defn configurations-panel [login pass]
   (let [mig (mig-panel
                      :constraints ["wrap 4" "20px[ left]20px" "20px[]20px"])
         scr
@@ -394,19 +486,20 @@
     (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setBorder scr nil)
-    (doall (map (fn [[k v]] (.add mig (label-to-config (:dbname v) (:host v) k)))
+    (doall (map (fn [[k v]] (.add mig (label-to-config (:dbname v) (:host v) k login pass)))
                 (c/datalist-mapper (c/datalist-get))))
-    (.add mig (label :icon (stool/image-scale icon/add-png 10)
-                     :background back-color
-                     :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content (config-generator-panel :empty)))]
-                     :border (line-border :color back-color
-                                          :bottom 10
-                                          :top 10
-                                          :left 10
-                                          :right 10)))
+    (.add mig
+          (border-panel
+           :center (label :icon (stool/image-scale icon/pen-128-png 34)
+                          :halign :center
+                          :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content (config-generator-panel :empty)))])
+           :border (line-border :bottom 4 :color light-grey-color)
+           :maximum-size  [120 :by 120]
+           :preferred-size  [120 :by 120]
+           :background "#fff"))
     scr))
 
-
+(start)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; panels for login and error ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -431,6 +524,9 @@
              :hscroll :never)]
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     scr))
+
+
+;;(conf/swapp)
 
 (defn asks-panel [faq]
   (let [mig
@@ -482,7 +578,6 @@
 
 (show-options (border-panel))
 
-
 (defn login-panel []
   (let [flogin (components/input-text :placeholder "Login"
                                       :args [:columns 20
@@ -490,8 +585,7 @@
                                                                       (line-border :bottom 4 :color light-blue-color))
                                              :halign :left])
         fpass (components/input-password :placeholder "Password"
-                                         :style [
-                                                 :columns 20
+                                         :style [:columns 20
                                                  :border (compound-border emp-border
                                                                           (line-border :bottom 4 :color light-blue-color))
                                                  :halign :left])]
@@ -509,7 +603,7 @@
                                        :items [[(label :icon (stool/image-scale icon/key-blue-64-png 40))]
                                                [fpass]
                                                [(label :border (empty-border :right 20))]])))]
-             [(configurations-panel)]
+             [(configurations-panel flogin fpass)]
              [(label :text "" :border
                      (empty-border :top 20 :left 860 )) "split 2"]
              [(mig-panel
@@ -544,7 +638,6 @@
           (config! :content (error-panel res-validation)) seesaw.core/pack! seesaw.core/show!))))
 
 (start)
-
 
 
 
@@ -591,8 +684,8 @@
            [((nth panels num)) "span 3"]
            [(label :icon (stool/image-scale icon/left-blue-64-png 50)
                    :visible? (if (= num 0) false true)
-                   :listen [:mouse-entered (fn [e] (hand-hover-on e))
-                            :mouse-exited (fn [e] (hand-hover-off e))
+                   :listen [:mouse-entered (fn [e] (tool/hand-hover-on e))
+                            :mouse-exited (fn [e] (tool/hand-hover-off e))
                             :mouse-clicked (fn [e]
                                              (if (= num 0)
                                                (config! (to-frame e) :content (multi-panel panels title num))

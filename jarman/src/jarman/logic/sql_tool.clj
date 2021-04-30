@@ -115,6 +115,31 @@
 ;;; String helperts ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn- tf-t-f-verify [table-field table]
+  (let [t-f (string/split (name table-field) #"\.")
+        kv-t-f (mapv keyword t-f)]
+    (if (and
+         (= 2 (count kv-t-f))
+         (= (first kv-t-f) (keyword table)))
+      kv-t-f
+      nil)))
+
+(defn- make-dot-column
+  ([field] (format "`%s`" (name field)))
+  ([field table]
+   (if-let [[t f] (tf-t-f-verify field table)]
+     (format "`%s`.`%s`" (name t) (name f))
+     (format "`%s`" (name field)))))
+
+(defn- tf-t-f [table-field]
+  (let [t-f (string/split (name table-field) #"\.")]
+    (mapv keyword t-f)))
+
+(defn- t-f-tf [table field]
+  (keyword (str (name table) "." (name (name field)))))
+
+(defn- make-dot-column!
+  ([field] (string/join "."(map (comp (partial format "`%s`") name) (tf-t-f field)))))
 
 (defn pair-where-pattern
   "Constuct key-value string view for SQL language parametrized queries
@@ -237,9 +262,9 @@
              (string? c) c
              (and (vector? c) (= (count c) 2))
              (let [[x y] (map #(str (symbol %)) c)]
-                             (format "%s AS %s" x y))
+                             (format "%s AS `%s`" x y))
              (map? c) (let [[x y] (map #(str (symbol %)) (first (vec c)))]
-                        (format "%s AS %s" x y))
+                        (format "%s AS `%s`" x y))
              :else nil))]
     (str current-string " "
          (string/join ", " (map f col-vec)) " FROM " (format "`%s`"(name table-name)))))
@@ -251,7 +276,10 @@
   (if (vector? args)
     (let [[col asc-desc] args]
        (if (and (not-empty (name col)) (some #(= asc-desc %) [:asc :desc]))
-         (string/join " " [current-string "ORDER BY" (format "`%s`"(name col)) (string/upper-case (name asc-desc))])
+         (string/join " " [current-string "ORDER BY"
+                           ;; (format "`%s`"(name col))
+                           (format "%s"(name col))
+                           (string/upper-case (name asc-desc))])
          current-string))
     current-string))
 
@@ -276,7 +304,7 @@
   (cond (nil? where-clause) (str "null")
         (symbol? where-clause) where-clause
         (string? where-clause) (pr-str where-clause)
-        (keyword? where-clause) (format "`%s`" (name where-clause))
+        (keyword? where-clause) (name where-clause) ;; (format "`%s`" (name where-clause))
         (seqable? where-clause) (let [function (first where-clause) args (rest where-clause)]
                                   (condp = function
                                     :or (into-border
@@ -352,7 +380,7 @@
   (cond (nil? where-clause) `(str "null")
         (symbol? where-clause) where-clause
         (string? where-clause) `(pr-str ~where-clause)
-        (keyword? where-clause) `(format "`%s`" (str (symbol ~where-clause)))
+        (keyword? where-clause) `(str (symbol ~where-clause)) ;;`(format "`%s`" (str (symbol ~where-clause)))
         (seqable? where-clause) (let [function (first where-clause) args (rest where-clause)]
                                   (condp = function
                                     'or `(or-processor-s ~@args)
@@ -583,30 +611,51 @@
 ;;; set preprocessor ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; (defn set-string [current-string update-map tabel-name]
+;;   (let [pair-group (fn [[col-name value]] (str (format "`%s`" (name col-name)) "=" (where-procedure-parser-v value)))]
+;;     (str current-string " " (format "`%s`" (name tabel-name)) (str " SET " (string/join ", " (map pair-group update-map))))))
+
 (defn set-string [current-string update-map tabel-name]
-  (let [pair-group (fn [[col-name value]] (str (format "`%s`" (name col-name)) "=" (where-procedure-parser-v value)))]
-    (str current-string " " (format "`%s`" (name tabel-name)) (str " SET " (string/join ", " (map pair-group update-map))))))
+  (let [pair-group (fn [[col-name value]] (str (format "%s" (name col-name)) "=" (where-procedure-parser-v value)))]
+    (str current-string " " (format "%s" (name tabel-name)) (str " SET " (string/join ", " (map pair-group update-map))))))
 
 (defn update-table-string [current-string map tabel-name]
-  (str current-string "" (format "`%s`" (name tabel-name))))
+  (str current-string "" (format "%s" (name tabel-name))))
 
 (defn low-priority-string [current-string map table-name]
   (str current-string " LOW_PRIORITY"))
 
 (defn from-string [current-string map tabel-name]
-  (str current-string " " (format "`%s`" (name tabel-name))))
+  (str current-string " " (format "%s" (name tabel-name))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; values preprocessor ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; (defn values-string [current-string values table-name]
+;;   (let [wrapp-escape    (fn [some-list] (map #(where-procedure-parser-v %) some-list))
+;;         brackets        (fn [temp-strn] (str "(" temp-strn ")"))
+;;         into-sql-values (fn [some-list] (brackets (string/join ", " (wrapp-escape some-list))))
+;;         into-sql-map    (fn [some-list] (brackets (string/join ", " (vals (wrapp-escape some-list)))))
+;;         pair-group      (fn [[col-name value]] (str (format "`%s`"(name col-name)) "=" (where-procedure-parser-v value)))]
+;;     (str current-string " " (format "`%s`" (name table-name))
+;;           (cond (map? values)
+;;                 (str " SET " (string/join ", " (map pair-group values)))
+;;                 (and (seqable? values) (map? (first values)))
+;;                 (str " VALUES " (string/join ", " (map into-sql-map values)))
+;;                 (and (seqable? values) (seqable? (first values)) (not (string? (first values))) (not (nil? (first values))))
+;;                 (str " VALUES " (string/join ", " (map into-sql-values values)))
+;;                 (seqable? values)
+;;                 (str " VALUES " (into-sql-values values))
+;;                 :else nil))))
 
 (defn values-string [current-string values table-name]
   (let [wrapp-escape    (fn [some-list] (map #(where-procedure-parser-v %) some-list))
         brackets        (fn [temp-strn] (str "(" temp-strn ")"))
         into-sql-values (fn [some-list] (brackets (string/join ", " (wrapp-escape some-list))))
         into-sql-map    (fn [some-list] (brackets (string/join ", " (vals (wrapp-escape some-list)))))
-        pair-group      (fn [[col-name value]] (str (format "`%s`"(name col-name)) "=" (where-procedure-parser-v value)))]
-    (str current-string " " (format "`%s`" (name table-name))
+        pair-group      (fn [[col-name value]] (str (format "%s"(name col-name)) "=" (where-procedure-parser-v value)))]
+    (str current-string " " (format "%s" (name table-name))
           (cond (map? values)
                 (str " SET " (string/join ", " (map pair-group values)))
                 (and (seqable? values) (map? (first values)))

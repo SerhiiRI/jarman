@@ -6,7 +6,7 @@
    [clojure.string :as string]
    [seesaw.util :as u]
    ;; Seesaw components
-   [seesaw.core :as c]
+   [seesaw.core :as score]
    [seesaw.border :as sborder]
    [seesaw.dev :as sdev]
    [seesaw.mig :as smig]
@@ -39,16 +39,23 @@
 (defmacro ^:private make-name [entity suffix]
   `(symbol (str ~entity ~suffix)))
 
+;; (defn get-view-column-meta [table-list column-list]
+;;   (->> table-list
+;;        (mapcat (fn [t]
+;;                  (->> ((comp :columns :prop) (first (mt/getset! t)))
+;;                       (map (fn [column] (update-in column [:field] #(t-f-tf t %)))))))
+;;        (filter (fn [c] (in? column-list (:field c))))))
+
 (defn get-view-column-meta [table-list column-list]
   (->> table-list
        (mapcat (fn [t] (vec ((comp :columns :prop) (first (mt/getset! t))))))
-       (filter (fn [c] (in? column-list (keyword (:field c)))))))
+       (filter (fn [c] (in? column-list (keyword (:field-qualified c)))))))
 
 (defn- model-column [column]
   (let [component-type (:component-type column)
         on-boolean (fn [m] (if (in? component-type "b") (into m {:class java.lang.Boolean}) m))
         on-number  (fn [m] (if (in? component-type "n") (into m {:class java.lang.Number})  m))]
-    (-> {:key (keyword (:field column)) :text (:representation column)}
+    (-> {:key (keyword (:field-qualified column)) :text (:representation column)}
         on-number
         on-boolean)))
 ;; (model-column {:field "login", :representation "login", :description nil, :component-type ["n"], :column-type [:varchar-100 :nnull], :private? false, :editable? true})
@@ -64,43 +71,12 @@
     [:columns model-columns
      :rows (data-loader)]))
 
-(get-view-column-meta [:point_of_sale :enterpreneur]
-                      [:name :physical_address :telefons ;; point_of sale 
-                       :ssreou :ownership_form ;; enterprenier 
-                       ])
+(defn- tf-t-f [table-field]
+  (let [t-f (string/split (name table-field) #"\.")]
+    (mapv keyword t-f)))
 
-;; (defn tf-t-f [table-field]
-;;   (let [t-f (string/split (name table-field) #"\.")]
-;;     (mapv keyword t-f)))
-
-;; (defn t-f-tf [table field]
-;;   (keyword (str (name table) "." (name (name field)))))
-
-;; (tf-t-f :suka.bliat)
-;; (t-f-tf :suka :bliat)
-
-;; (defn get-view-column-meta [table-list column-list]
-;;   (->> table-list
-;;        (map (fn [t] (vec [t ((comp :columns :prop) (first (mt/getset! t)))])))
-;;        (filter (fn [[t c]] (in? column-list (t-f-tf t (:field c))(keyword (str (name t) (name (:field c)))))))
-;;        ;; (map second)
-;;        ))
-
-
-;; (defn get-view-column-meta [table-list column-list]
-;;   (->> table-list
-;;        (mapcat (fn [t] (vec [t ((comp :columns :prop) (first (mt/getset! t)))])))
-;;        ;; (filter (fn [[t c]] (in? column-list (keyword (:field c)))))
-;;        ))
-
-;; (construct-table-model-columns [:point_of_sale :enterpreneur]
-;;                                [:name :point_of_sale.physical_address :telefons :ssreou :ownership_form])
-;; [{:key :name, :text "name"}
-;;  {:key :physical_address, :text "physical_address"}
-;;  {:key :telefons, :text "telefons"}
-;;  {:key :ssreou, :text "ssreou"}
-;;  {:key :ownership_form, :text "ownership_form"}
-;;  {:key :physical_address, :text "physical_address"}]
+(defn- t-f-tf [table field]
+  (keyword (str (name table) "." (name (name field)))))
 
 ;;;;;;;;;;;;;;
 ;;; JTABLE ;;;
@@ -165,149 +141,241 @@
   {:pre [(keyword? table)]}
   (let [m (first (mt/getset table))
         ;; relations (recur-find-path m)
+        id_column (t-f-tf table :id)
         table-name ((comp :field :table :prop) m)
         columns (map :field ((comp :columns :prop) m))]
-    {:update (fn [entity] (update table-name :set entity :where (=-v :id (:id entity))))
+    {:update (fn [entity] (if (id_column entity) (update table-name :set entity :where (=-v id_column (id_column entity)))))
      :insert (fn [entity] (insert table-name :values (vals entity)))
-     :delete (fn [entity] (if (:id entity) (delete table-name :where (=-v :id (:id entity)))))
+     :delete (fn [entity] (if (id_column entity) (delete table-name :where (=-v id_column (id_column entity)))))
      :select (fn [& {:as args}]
                (apply (partial select-builder table)
                       (mapcat vec (into select-rules args))))}))
 
+(def views (atom {}))
 (defmacro defview [table & {:as args}]
   (let [stable (make-name (str table) "-view")]
     `(let [config#          (atom (assoc ~args :table-name (keyword '~table)))
            backup-config#   (deref config#)
            restore-config#  (fn [] (reset! config# backup-config#))
            ktable#    (:table-name @config#)
-           stable#    (str @config#)
+           ;; stable#    (str @config#)
            tblmeta#   ((comp :table :prop) (first (mt/getset! ktable#)))
            colmeta#   ((comp :columns :prop) (first (mt/getset! ktable#)))
            operations# (construct-sql ktable# (:data @config#))
+
+           idfield#   (t-f-tf ktable# :id)
+            
            select#    (:select operations#)
            update#    (:update operations#)
            delete#    (:delete operations#)
            insert#    (:insert operations#)
-           view#       (:view @config#)
+
+           dselect#   (fn [] (db/exec (select#)))
+           dupdate#   (fn [e#] (db/exec (update# e#)))
+           ddelete#   (fn [e#] (db/exec (delete# e#)))
+           dinsert#   (fn [e#] (db/exec (insert# e#)))
+           
            data#      (fn [] (db/query (select#)))
            export#    (select# :column nil :inner-join nil :where nil)
            model#     (construct-table-model-columns (:tables @config#) (:view @config#))
            table#     (construct-table (construct-table-model model# data#))]
        (def ~stable {:->table table#
                      :->table-model model#
+                     :->model->id idfield#
                      :->data data#
+                     
                      :->select select#
                      :->update update#
                      :->delete delete#
                      :->insert insert#
+
+                     :->dselect dselect#
+                     :->dupdate dupdate#
+                     :->ddelete ddelete#
+                     :->dinsert dinsert#
+                     
                      :->operations operations#
                      :->config (fn [] @config#)
                      :->view-col view#
                      :->col-meta colmeta#
-                     :->tbl-meta tblmeta#}))))
-;; (:->col-meta user-view)
-;; (defview user)
+                     :->tbl-meta tblmeta#})
+       (swap! ~'views (fn [m-view#] (assoc-in m-view# [ktable#] ~stable)))
+       nil)))
+
+(defn as-is [& column-list]
+  (map #(if (keyword? %) {% %} %) column-list))
+
+;;; ------------------------------------------
+;;; ------------Test frame block--------------
+
+(let [my-frame (-> (doto (score/frame
+                          :title "test"
+                          :size [1000 :by 800]
+                          :content
+                          ((:->table service_contract-view) #(println %)))
+                     (.setLocationRelativeTo nil) score/pack! score/show!))]
+  (score/config! my-frame :size [1000 :by 800]))
+
+;;; ------------Test frame block--------------
+;;; ------------------------------------------
 
 (defview permission
   :tables [:permission]
-  :view   [:permission_name]
-  :data   {:column [:id :permission_name :configuration]})
+  :view   [:permission.permission_name]
+  :data   {:column (as-is :permission.id :permission.permission_name :permission.configuration)})
 
 (defview user
   :tables [:user :permission]
-  :view   [:first_name :last_name :login :permission_name]
+  :view   [:user.first_name :user.last_name :user.login :permission.permission_name]
   :data   {:inner-join [:permission]
-           :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]})
+           :column (as-is :user.id :user.login :user.password :user.first_name :user.last_name :permission.permission_name :permission.configuration :user.id_permission)})
 
+(defview enterpreneur
+  :tables [:enterpreneur]
+  :view   [:enterpreneur.ssreou
+           :enterpreneur.ownership_form
+           :enterpreneur.vat_certificate
+           :enterpreneur.individual_tax_number
+           :enterpreneur.director
+           :enterpreneur.accountant
+           :enterpreneur.legal_address
+           :enterpreneur.physical_address
+           :enterpreneur.contacts_information]
+  :data   {:column (as-is
+                    :enterpreneur.id
+                    :enterpreneur.ssreou
+                    :enterpreneur.ownership_form 
+                    :enterpreneur.vat_certificate
+                    :enterpreneur.individual_tax_number
+                    :enterpreneur.director
+                    :enterpreneur.accountant
+                    :enterpreneur.legal_address
+                    :enterpreneur.physical_address
+                    :enterpreneur.contacts_information)})
+
+(defview point_of_sale
+  :tables [:point_of_sale :enterpreneur]
+  :view   [:point_of_sale.name :point_of_sale.physical_address :point_of_sale.telefons
+           :enterpreneur.ssreou :enterpreneur.ownership_form]
+  :data   {:inner-join [:enterpreneur]
+           :column (as-is :point_of_sale.id :point_of_sale.name :point_of_sale.physical_address :point_of_sale.telefons :enterpreneur.id :enterpreneur.ssreou :enterpreneur.ownership_form)})
+
+(defview cache_register
+  :tables [:cache_register :point_of_sale]
+  :view [:cache_register.is_working
+         :cache_register.modem_serial_number
+         :cache_register.modem_phone_number
+         :cache_register.producer
+         :cache_register.first_registration_date
+         :cache_register.modem_model
+         :cache_register.name
+         :cache_register.fiscal_number
+         :cache_register.dev_id
+         :cache_register.manufacture_date
+         :cache_register.modem
+         :cache_register.version
+         :cache_register.serial_number]
+  :data {:inner-join [:point_of_sale]
+         :column (as-is
+                  :cache_register.id
+                  :cache_register.is_working
+                  :cache_register.modem_serial_number
+                  :cache_register.modem_phone_number
+                  :cache_register.producer
+                  :cache_register.first_registration_date
+                  :cache_register.modem_model
+                  :cache_register.name
+                  :cache_register.fiscal_number
+                  :cache_register.dev_id
+                  :cache_register.manufacture_date
+                  :cache_register.modem
+                  :cache_register.version
+                  :cache_register.serial_number
+                  :cache_register.id_point_of_sale)})
+
+(defview point_of_sale_group
+  :tables [:point_of_sale_group]
+  :view [:point_of_sale_group.group_name :point_of_sale_group.information]
+  :data {:column (as-is :point_of_sale_group.id :point_of_sale_group.group_name :point_of_sale_group.information)})
+
+(defview point_of_sale_group_links
+  :tables [:point_of_sale_group_links
+           :point_of_sale_group
+           :point_of_sale]
+  :view [:point_of_sale.name
+         :point_of_sale.physical_address
+         :point_of_sale_group.group_name
+         :point_of_sale_group.information]
+  :data {:inner-join [:point_of_sale :point_of_sale_group]
+         :column (as-is
+                   :point_of_sale_group_links.id
+                   :point_of_sale_group_links.id_point_of_sale_group
+                   :point_of_sale_group_links.id_point_of_sale
+                   :point_of_sale.name
+                   :point_of_sale.physical_address
+                   :point_of_sale_group.group_name
+                   :point_of_sale_group.information)})
 
 (defview seal
   :tables [:seal]
-  :view [:seal_number :to_date]
-  :columns [:id :seal_number :to_date])
+  :view [:seal.seal_number
+         :seal.to_date]
+  :data {:column (as-is :seal.id :seal.seal_number :seal.to_date)})
 
-((:->data seal-view))
+(defview service_contract
+  :tables [:service_contract :point_of_sale]
+  :view [:service_contract.register_contract_date
+         :service_contract.contract_term_date
+         :service_contract.money_per_month
+         :point_of_sale.name
+         :point_of_sale.physical_address]
+  :data {:inner-join [:point_of_sale]
+         :column (as-is
+                  :service_contract.id
+                  :service_contract.id_point_of_sale
+                  :service_contract.register_contract_date
+                  :service_contract.contract_term_date
+                  :service_contract.money_per_month
+                  :point_of_sale.name
+                  :point_of_sale.physical_address)})
 
-;; (defview enterpreneur
-;;   :tables [:enterpreneur]
-;;   :view   [:ssreou :ownership_form :vat_certificate :individual_tax_number :director :accountant :legal_address :physical_address :contacts_information]
-;;   :data   {:column [:ssreou :ownership_form :vat_certificate :individual_tax_number :director :accountant :legal_address :physical_address :contacts_information]})
-
-;; (db/query "SELECT ssreou, ownership_form, vat_certificate, individual_tax_number, director, accountant, legal_address, physical_address, contacts_information FROM `enterpreneur`")
-;; (let [;; mig (smig/mig-panel
-;;       ;;      :constraints ["" "0px[grow, center]0px" "5px[fill]5px"]
-;;       ;;      :items [[(c/label :text "One")]])
-;;       my-frame (-> (doto (c/frame
-;;                           :title "test"
-;;                           :size [0 :by 0]
-;;                           :content ((:->col-meta user-view) (fn [x] (println x))))
-;;                      (.setLocationRelativeTo nil) c/pack! c/show!))]
-;;   (c/config! my-frame :size [600 :by 600]))
-
-;; (defview point_of_sale
-;;   :tables [:point_of_sale :enterpreneur]
-;;   :view   [:name :physical_address :telefons ;; point_of sale 
-;;            :ssreou :ownership_form ;; enterprenier 
-;;            ]
-;;   :data   {:inner-join [:enterpreneur]
-;;            :column [{:point_of_sale.id :id} :name {:point_of_sale.physical_address :physical_address} :telefons :name :id_enterpreneur :ssreou :ownership_form ]})
-
-;; ((:->model point_of_sale-view))
-;; "SELECT point_of_sale.id AS id, name, point_of_sale.physical_address AS physical_address, telefons, name, id_enterpreneur, ssreou, ownership_form FROM `point_of_sale` INNER JOIN enterpreneur ON enterpreneur.id=point_of_sale.id_enterpreneur"
-
-;; {:cache_register
-;;  :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
-;;            {:name [:varchar-100 :default :null]}
-;;            {:serial_number [:varchar-100 :default :null]}
-;;            {:fiscal_number [:varchar-100 :default :null]}
-;;            {:manufacture_date [:date :default :null]}
-;;            {:first_registration_date [:date :default :null]}
-;;            {:is_working [:tinyint-1 :default :null]}
-;;            {:version [:varchar-100 :default :null]}
-;;            {:id_dev [:varchar-100 :default :null]}
-;;            {:producer [:varchar-100 :default :null]}
-;;            {:modem [:varchar-100 :default :null]}
-;;            {:modem_model [:varchar-100 :default :null]}
-;;            {:modem_serial_number [:varchar-100 :default :null]}
-;;            {:modem_phone_number [:varchar-100 :default :null]}]
-;;  :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]}
-
-;; {:point_of_sale_group
-;;  :columns [{:group_name [:varchar-100 :default :null]}
-;;            {:information [:mediumtext :default :null]}]}
-
-;; {:point_of_sale_group_links
-;;  :columns [{:id_point_of_sale_group [:bigint-20-unsigned :default :null]}
-;;            {:id_point_of_sale [:bigint-20-unsigned :default :null]}]
-;;  :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
-;;                 [{:id_point_of_sale :point_of_sale}]]}
-
-;; {:seal
-;;  :columns [{:seal_number [:varchar-100 :default :null]}
-;;            {:to_date [:date :default :null]}]}
-
-;; {:service_contract
-;;  :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
-;;            {:register_contract_date [:date :default :null]}
-;;            {:contract_term_date [:date :default :null]}
-;;            {:money_per_month [:int-11 :default :null]}]
-;;  :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]}
-
-;; {:repair_contract
-;;  :columns [{:id_cache_register [:bigint-20 :unsigned :default :null]}
-;;            {:id_point_of_sale [:bigint-20 :unsigned :default :null]}
-;;            {:creation_contract_date [:date :default :null]}
-;;            {:last_change_contract_date [:date :default :null]}
-;;            {:contract_terms_date [:date :default :null]}
-;;            {:cache_register_register_date [:date :default :null]}
-;;            {:remove_security_seal_date [:datetime :default :null]}
-;;            {:cause_of_removing_seal [:mediumtext :default :null]}
-;;            {:technical_problem [:mediumtext :default :null]}
-;;            {:active_seal [:mediumtext :default :null]}]
-;;  :foreign-keys [[{:id_cache_register :cache_register} {:delete :cascade :update :cascade}]
-;;                 [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]]}
+(defview repair_contract
+  :tables [:repair_contract :cache_register :point_of_sale]
+  :view [:cache_register.modem_serial_number
+                  :cache_register.modem_phone_number
+                  :cache_register.producer
+                  :point_of_sale.name
+                  :point_of_sale.physical_address
+                  :repair_contract.creation_contract_date
+                  :repair_contract.last_change_contract_date
+                  :repair_contract.contract_terms_date
+                  :repair_contract.cache_register_register_date
+                  :repair_contract.remove_security_seal_date
+                  :repair_contract.cause_of_removing_seal
+                  :repair_contract.technical_problem
+                  :repair_contract.active_seal]
+  :data {:inner-join [:point_of_sale :cache_register]
+         :column (as-is
+                  :cache_register.modem_serial_number
+                  :cache_register.modem_phone_number
+                  :cache_register.producer
+                  :point_of_sale.name
+                  :point_of_sale.physical_address
+                  :repair_contract.id
+                  :repair_contract.id_cache_register
+                  :repair_contract.id_point_of_sale
+                  :repair_contract.creation_contract_date
+                  :repair_contract.last_change_contract_date
+                  :repair_contract.contract_terms_date
+                  :repair_contract.cache_register_register_date
+                  :repair_contract.remove_security_seal_date
+                  :repair_contract.cause_of_removing_seal
+                  :repair_contract.technical_problem
+                  :repair_contract.active_seal)})
 
 
-
+;; (mapv (fn [x] (t-f-tf :repair_contract (first x))) 
+;;       (reduce into ))
 ;; ;; (defview user)
 ;; ;; (map :field ((comp :columns :prop) (first (mt/getset! :permission))))
 
@@ -556,6 +624,14 @@
 ;;                                        :mouse-clicked (fn [e]
 ;;                                                         (seesaw.core/config! text-label :text "<- empty ->"))])]])]
 ;;     (seesaw.core/grid-panel :rows 1 :columns 3 :items [dialog-label])))
+
+;; (let [my-frame (-> (doto (score/frame
+;;                           :title "test"
+;;                           :size [1000 :by 800]
+;;                           :content
+;;                           (auto-builder--table-view user-view))
+;;                      (.setLocationRelativeTo nil) score/pack! score/show!))]
+;;   (score/config! my-frame :size [1000 :by 800]))
 
 
 

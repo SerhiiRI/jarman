@@ -56,7 +56,11 @@
        :display :edit,
        :component :text,
        :value "dupa"}}},
+<<<<<<< HEAD
+    :jarman--trashpanda-team_ddns_net
+=======
     :tpanda
+>>>>>>> 0fcf0a41a40e3913d909446d39ba76e711113fea
     {:name "Raspberry",
      :type :block,
      :display :edit,
@@ -88,16 +92,94 @@
        :type :param,
        :display :edit,
        :component :text,
-       :value "jarman"},
+       :value "jarman"}}},
+    :afdf--dsaf
+    {:name "Raspberry",
+     :type :block,
+     :display :edit,
+     :value
+     {:dbtype
+      {:name "Typ poе┌д┘czenia",
+       :type :param,
+       :display :none,
+       :component :text,
+       :value "adsfsad"},
+      :host
+      {:name "Database host",
+       :doc
+       "Enter jarman SQL database server. It may be IP adress, or domain name, where your server in. Not to set port in this input.",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "dsaf"},
+      :port
+      {:name "Port",
+       :doc
+       "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value 3333},
+      :dbname
+      {:name "Database name",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "afdf"},
       :user
       {:name "User login",
        :type :param,
        :display :edit,
        :component :text,
-       :value "jarman"},
+       :value "sadfds"},
       :password
       {:name "User password",
        :type :param,
        :display :edit,
        :component :text,
-       :value "dupa"}}}}}}}
+       :value "sdaf"}}},
+    :sad--dasc
+    {:name "Raspberry",
+     :type :block,
+     :display :edit,
+     :value
+     {:dbtype
+      {:name "Typ poе┌д┘czenia",
+       :type :param,
+       :display :none,
+       :component :text,
+       :value "asdc"},
+      :host
+      {:name "Database host",
+       :doc
+       "Enter jarman SQL database server. It may be IP adress, or domain name, where your server in. Not to set port in this input.",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "dasc"},
+      :port
+      {:name "Port",
+       :doc
+       "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value 33},
+      :dbname
+      {:name "Database name",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "sad"},
+      :user
+      {:name "User login",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "sadc"},
+      :password
+      {:name "User password",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "sadc"}}}}}}}

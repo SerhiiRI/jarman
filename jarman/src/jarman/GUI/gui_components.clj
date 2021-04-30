@@ -83,11 +83,13 @@
  Example:
     (input-text :placeholder \"Login\" :style [:halign :center])
  "
-  (fn [& {:keys [placeholder
+  (fn [& {:keys [v
+                 placeholder
                  border
                  font-size
                  args]
-          :or   {placeholder ""
+          :or   {v ""
+                 placeholder ""
                  font-size 14
                  border [10 10 5 5]
                  args []}}]
@@ -96,7 +98,8 @@
           newBorder (fn [underline-color]
                       (compound-border (empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
                                        (line-border :bottom 2 :color underline-color)))]
-      (apply text :text placeholder
+      (apply text 
+             :text (if (empty? v) placeholder (if (string? v) v (str v)))
              :font (getFont font-size)
              :background (get-color :background :input)
              :border (newBorder (get-color :decorate :focus-lost))
@@ -113,28 +116,36 @@
 
 ;; (show-events (text))
 
-(defn input-text-with-label-and-atom
-  [& {:keys [title field changes value editable? enable?]
-      :or {title ""
-           changes (atom {})
-           value ""
+;; (show-options (text))
+
+(defn inpose-label
+  [title component]
+  (c/grid-panel :columns 1
+                :items [(c/label :text (if (string? title) title ""))
+                        component]))
+
+
+(defn input-text-with-atom
+  [& {:keys [field changes val editable? enable? onClick]
+      :or {changes (atom {})
+           val ""
            editable? true
            enable? true
-           field nil}}]
-  (c/grid-panel :columns 1
-                :listen [:focus-gained (fn [e] (println "Foc panel"))]
-                :items [(c/label :text title)
-                        (input-text
-                         :args [:editable? editable?
-                                :enabled? enable?
-                                :text value
-                                :foreground (if editable? "#000" "#456fd1")
-                                :focusable? true
-                                :listen [:mouse-entered (if editable? (fn [e]) hand-hover-on)
-                                         :caret-update (fn [e]
-                                                         (if-not (nil? field) (swap! changes (fn [storage] (assoc storage (keyword field) (c/value (c/to-widget e)))))))
-                                         :focus-gained (fn [e] (config! e :border ((get-user-data e :border-fn) (get-color :decorate :focus-gained))))
-                                         :focus-lost   (fn [e] (config! e :border ((get-user-data e :border-fn) (get-color :decorate :focus-lost))))]])]))
+           field nil
+           onClick (fn [e])}}]
+  (input-text
+   :args [:editable? editable?
+          :enabled? enable?
+          :text val
+          :foreground (if editable? "#000" "#456fd1")
+          :focusable? true
+          :listen [:mouse-clicked onClick
+                   :action-performed onClick
+                   :mouse-entered (if editable? (fn [e]) hand-hover-on)
+                   :caret-update (fn [e]
+                                   (if-not (nil? field) (swap! changes (fn [storage] (assoc storage field (c/value (c/to-widget e)))))))
+                   :focus-gained (fn [e] (c/config! e :border ((get-user-data e :border-fn) (get-color :decorate :focus-gained))))
+                   :focus-lost   (fn [e] (c/config! e :border ((get-user-data e :border-fn) (get-color :decorate :focus-lost))))]]))
 
 
 (defn expand-form-panel

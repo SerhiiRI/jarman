@@ -110,24 +110,32 @@
   [](deref connection))
 
 ;;; FOR DEBUG CONNECTION
-;; (connection-set
-;;  ;; set selected
-;;  (:localhost
-;;   ;;------------
-;;   {:localhost
-;;    {:dbtype "mysql",
-;;     :host "127.0.0.1",
-;;     :port 3306,
-;;     :dbname "jarman",
-;;     :user "root",
-;;     :password "1234"},
-;;    :trashpanda
-;;    {:dbtype "mysql",
-;;     :host "trashpanda-team.ddns.net",
-;;     :port 3306,
-;;     :dbname "jarman",
-;;     :user "jarman",
-;;     :password "dupa"}}))
+(connection-set
+ ;; set selected
+ (:raspberry
+  ;;------------
+  {:localhost
+   {:dbtype "mysql",
+    :host "127.0.0.1",
+    :port 3306,
+    :dbname "jarman",
+    :user "root",
+    :password "1234"},
+   :raspberry
+   {:dbtype "mysql",
+    :host "trashpanda-team.ddns.net",
+    :port 3306,
+    :dbname "jarman",
+    :user "jarman",
+    :password "dupa"}
+   :dell
+   {:dbtype "mysql",
+    :host "trashpanda-team.ddns.net",
+    :port 3307,
+    :dbname "jarman",
+    :user "root",
+    :password "1234"}}))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Mapper/Converter ;;;

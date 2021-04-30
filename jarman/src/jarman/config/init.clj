@@ -14,7 +14,6 @@
 ;;; CONFIG PRESETS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
-
 (def ^:dynamic *config-root* env/jarman-standart-config)
 (def ^:dynamic *config-themes* "themes")
 (def ^:dynamic *config-language* "language.edn")
@@ -31,7 +30,6 @@
 
 (def language (atom nil))
 (set-validator! language #(or (nil? %) (map? %)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; File logistics ;;;

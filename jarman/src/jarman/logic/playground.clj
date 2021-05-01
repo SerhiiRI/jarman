@@ -25,12 +25,13 @@
                        "documents"
                        "metadata"])
 
+
 (def documents
- (create-table :documents
-               :columns [{:table [:varchar-100 :default :null]}
-                         {:name [:varchar-200 :default :null]}
-                         {:document [:blob :default :null]}
-                         {:prop [:text :nnull :default "\"{}\""]}]))
+  (create-table :documents
+                :columns [{:table [:varchar-100 :default :null]}
+                          {:name [:varchar-200 :default :null]}
+                          {:document [:blob :default :null]}
+                          {:prop [:text :nnull :default "\"{}\""]}]))
 
 (def metadata
   (create-table :metadata
@@ -41,6 +42,8 @@
   (create-table :permission
                 :columns [{:permission_name [:varchar-20 :default :null]}
                           {:configuration [:tinytext :nnull :default "\"{}\""]}]))
+
+
 
 (def user
   (create-table :user
@@ -204,9 +207,9 @@
   (fn [] (apply str (take len (repeatedly #(rand-int 10))))))
 (defn generate-random-from-list [string-list & {:keys [lower? numbers?] :or {lower? false numbers? false}}]
   (fn [] (let [name (atom (rand-nth string-list))]
-          (if lower?   (swap! name (fn [-name] (clojure.string/lower-case -name))))
-          (if numbers? (swap! name (fn [-name] (str -name (str (rand-int 1000))))))
-          @name)))
+           (if lower?   (swap! name (fn [-name] (clojure.string/lower-case -name))))
+           (if numbers? (swap! name (fn [-name] (str -name (str (rand-int 1000))))))
+           @name)))
 (defn round-double
   "Round a double to the given precision (number of significant digits)"
   [precision d]
@@ -232,21 +235,21 @@
 (defn fill-permission []
   (def create-permission 
     (fn [name] {:permission_name name
-               :configuration "{}"}))
+                :configuration "{}"}))
   (doall
    (map sql-insert
-    [(insert :permission :values (create-permission "admin"))
-     (insert :permission :values (create-permission "user"))
-     (insert :permission :values (create-permission "employer"))
-     (insert :permission :values (create-permission "szprot"))])))
+        [(insert :permission :values (create-permission "admin"))
+         (insert :permission :values (create-permission "user"))
+         (insert :permission :values (create-permission "employer"))
+         (insert :permission :values (create-permission "szprot"))])))
 
 (defn fill-user [c]
   (def create-user 
     (fn [] {:login (glogin)
-           :password (gpassword)
-           :first_name (gfirstname)
-           :last_name (glastname)
-           :id_permission (gid_permission)}))
+            :password (gpassword)
+            :first_name (gfirstname)
+            :last_name (glastname)
+            :id_permission (gid_permission)}))
   (doall
    (map
     sql-insert
@@ -260,14 +263,14 @@
 (defn fill-enterpreneur [c]
   (def create-enterpreneur
     (fn [] {:ssreou (gidentifier)
-           :ownership_form (gownership)
-           :vat_certificate (gsimplestring)
-           :individual_tax_number (gidentifier)
-           :director (gfirstname)
-           :accountant (gfirstname)
-           :legal_address (gsimplestring)
-           :physical_address (gsimplestring)
-           :contacts_information (gsimplestring)}))
+            :ownership_form (gownership)
+            :vat_certificate (gsimplestring)
+            :individual_tax_number (gidentifier)
+            :director (gfirstname)
+            :accountant (gfirstname)
+            :legal_address (gsimplestring)
+            :physical_address (gsimplestring)
+            :contacts_information (gsimplestring)}))
   (doall
    (map
     sql-insert
@@ -278,9 +281,9 @@
 (defn fill-documents [c]
   (def create-documents
     (fn [] {:documents.table (gtable)
-           :name (gsimplestring)
-           :document nil
-           :prop "{}"}))
+            :name (gsimplestring)
+            :document nil
+            :prop "{}"}))
   (doall
    (map
     sql-insert

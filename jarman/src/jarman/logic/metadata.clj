@@ -400,7 +400,7 @@
   (db/exec (delete :metadata)))
 ;; (do-clear-meta)
 ;; (do-create-meta)
-(defn udpate-meta [metadata]
+(defn update-meta [metadata]
   (db/exec (update-sql-by-id-template "metadata" metadata)))
 
 (def  ^:private --loaded-metadata (ref nil))
@@ -1026,12 +1026,45 @@
 ;;; On meta! ;;;
 ;;;;;;;;;;;;;;;;
 
+(let
+    [d [{:field :login, :field-qualified :user.login, :representation "Login", :description "?????? ??????????", :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true}
+      {:field :password, :field-qualified :user.password, :representation "password", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true}
+      
+      {:field :first_name, :field-qualified :user.first_name, :representation "first_name", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true}
+      
+      {:field :last_name, :field-qualified :user.last_name, :representation "last_name", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true}
+      
+      {:description nil, :private? false,
+       :editable? true, :field :id_permission,
+       :column-type [:bigint-120-unsigned :nnull],
+       :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}]
+       :component-type ["l"]
+       :representation "id_permission"
+       :field-qualified :user.id_permission
+       :key-table "permission"}]]
+  (sequence (comp (map :foreign-keys) (filter :foreign-keys)) d))
+
+(eduction (filter :a) (map :a) [{:a 1} {:b 2 :a 2} {:c 3}])
+
+(->> [{:a 1} {:b 2 :a 2} {:c 3}]
+     (filter :a)
+     (map :a)
+     )
+
 (defn create-table-by-meta [metadata]
   (let [smpl-fields (filter (comp (partial not-allowed-rules ["meta*"]) :field) ((comp :columns :prop) metadata))
-        idfl-fields (filter (comp (partial allowed-rules "id_*") :field) ((comp :columns :prop) metadata))]
-    (create-table {:table-name (keyword (:table metadata))
-                   :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
-                   :foreign-keys (vec (map :foreign-keys idfl-fields))})))
+        idfl-fields (filter (comp (partial allowed-rules "id_*") :field) ((comp :columns :prop) metadata))
+        fkeys-fields (vec (eduction (filter :foreign-keys) (map :foreign-keys) idfl-fields))]
+    ;; (println (format "--- Create Table %s ---" (:table metadata)))
+    ;; (clojure.pprint/pprint
+    ;;  {:table-name (keyword (:table metadata))
+    ;;   :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
+    ;;   :foreign-keys fkeys-fields})
+    (create-table
+     {:table-name (keyword (:table metadata))
+      :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
+      :foreign-keys fkeys-fields})))
+
 
 ;;; TODO unit test
 ;; (create-table-by-meta (first (getset "user")))
@@ -1118,3 +1151,25 @@
             :program-dir env/user-dir}
      :table (vec (map :table metadata-list))
      :backup metadata-list}]))
+
+(defn- default-backup-loader []
+  (if-let [_TMP0 (storage/user-metadata-get backup-file-name)] _TMP0
+    (try (slurp (clojure.java.io/file env/user-dir backup-file-name))
+         (catch Exception e nil))))
+
+(defn restore-backup-metadata
+  "Description
+    Restore all backups from user-stored buffer
+
+  Example
+    (restore-backup-metadata)
+    (restore-backup-metadata default-backup-loader)"
+  ([] (restore-backup-metadata default-backup-loader))
+  ([f-backup-loader]
+   (if-let [backup (f-backup-loader)]
+     (try (let [backup-swapped (read-string backup)
+                table-list     (:table backup-swapped)
+                metadata-list  (map #(assoc % :id nil) (:backup backup-swapped))
+                info           (:info backup-swapped)]
+            (map #(db/exec (update-sql-by-id-template "metadata" %)) metadata-list))))))
+

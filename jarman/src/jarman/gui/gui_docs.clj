@@ -170,7 +170,6 @@
 
 (defn build-input-form
   [controller model focus & more-comps]
-  
   (let [meta (:->col-meta controller)
         complete (atom {})
         insert-or-update (if (nil? model) "Upload template" "Update template")
@@ -187,37 +186,45 @@
         input-chooser (c/horizontal-panel :items [icon input-text])
         x nil ;;--------Prepare components to seq
         components [(gcomp/inpose-label (get (nth meta 0) :representation) (gcomp/select-box (vec (map #(get % :table) (mt/getset)))
-                                                                                             :store-id (get (nth meta 0) :field-qualified)
+                                                                                             :store-id :documents.table
                                                                                              :local-changes complete
-                                                                                             :selected-item (if (nil? model) "" (get model (get (nth meta 0) :field-qualified)))))
-                    (gcomp/inpose-label (get (nth meta 1) :representation) (gcomp/input-text-with-atom :store-id (get (nth meta 1) :field-qualified) :local-changes complete :val (if (nil? model) "" (get model (get (nth meta 1) :field-qualified)))))
+                                                                                             :selected-item (if (nil? model) "" (get model :documents.table))))
+                    (gcomp/inpose-label (get (nth meta 1) :representation) (gcomp/input-text-with-atom
+                                                                            :store-orginal true
+                                                                            :store-id :documents.name
+                                                                            :local-changes complete
+                                                                            :val (if (nil? model) "" (get model :documents.name))))
+                    (gcomp/inpose-label "Prop" (gcomp/input-text-area :store-id :documents.prop 
+                                                                      :local-changes complete 
+                                                                      :val (if (nil? model) "" (get model :documents.prop))))
                     (gcomp/inpose-label "Choose file with template" input-chooser)
                     (gcomp/hr 10)
                     (gcomp/button-basic insert-or-update (fn [e]
-                                                           (println "atom" @complete)
+                                                          ;;  (println "atom" @complete)
                                                            (if (nil? model)
-                                                             (if (and (not (nil? (get @complete (get (nth meta 0) :field-qualified))))
+                                                             (if (and (not (nil? (get @complete :documents.table)))
                                                                       (not (empty? (c/config input-text :text))))
-                                                               (let [insert-meta {:table    (get @complete (get (nth meta 0) :field-qualified))
-                                                                                  :name     (get @complete (get (nth meta 1) :field-qualified))
+                                                               (let [insert-meta {:table    (get @complete :documents.table)
+                                                                                  :name     (get @complete :documents.name)
                                                                                   :document (c/config input-text :text)
-                                                                                  :prop {}}]
+                                                                                  :prop     (symbol (get @complete :documents.prop))}]
+                                                                 (println "to save" insert-meta)
                                                                  (dm/insert-document insert-meta)))
-                                                             
-                                                             (if (not (nil? (get @complete (get (nth meta 0) :field-qualified))))
+
+                                                             (if (not (nil? (get @complete :documents.table)))
                                                                (let [insert-meta {:id       (get model (:->model->id controller))
-                                                                                  :table    (get @complete (get (nth meta 0) :field-qualified))
-                                                                                  :name     (get @complete (get (nth meta 1) :field-qualified))
-                                                                                  :prop {}}]
+                                                                                  :table    (get @complete :documents.table)
+                                                                                  :name     (get @complete :documents.name)
+                                                                                  :prop     (symbol (get @complete :documents.prop))}]
                                                                  (dm/insert-document insert-meta)
-                                                                 ))
-                                                             )
-                                                           ))
-                    (if (nil? model) (c/label) (gcomp/button-basic delete (fn [e] 
-                                                                            (println "Delete row: " (get model (:->model->id controller)))
+                                                                 (println "to save" insert-meta))))))
+                    (if (nil? model) (c/label) (gcomp/button-basic delete (fn [e]
+                                                                            ;; (println "Delete row: " (get model (:->model->id controller)))
+                                                                            (println "Delete " model)
                                                                             (dm/delete-document {:id (get model (:->model->id controller))}))))]]
     ;; (println "Model" model)
-    (reset! focus (last (u/children (first components))))
+
+    ;; (reset! focus (last (u/children (first components))))
     (c/config! panel :items (join-mig-items components (if (nil? more-comps) (c/label) more-comps)))))
 
 
@@ -247,14 +254,15 @@
 
 ;; ;; (:->col-meta documents-view)
 
-;; (let [start-focus (atom nil)
-;;       my-frame (-> (doto (c/frame
-;;                           :title "test"
-;;                           :size [1000 :by 800]
-;;                           :content (auto-builder--table-view  nil))
-;;                      (.setLocationRelativeTo nil) c/pack! c/show!))]
-;;   (c/config! my-frame :size [1000 :by 800])
-;;   (if-not (nil? start-focus) (c/invoke-later (.requestFocus @start-focus true))))
+(let [start-focus (atom nil)
+      my-frame (-> (doto (c/frame
+                          :title "test"
+                          :size [1000 :by 800]
+                          :content (auto-builder--table-view  nil))
+                     (.setLocationRelativeTo nil) c/pack! c/show!))]
+  (c/config! my-frame :size [1000 :by 800])
+  ;; (if-not (nil? start-focus) (c/invoke-later (.requestFocus @start-focus true)))
+  )
 
 
 

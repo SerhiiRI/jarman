@@ -691,9 +691,10 @@
           insert-form   (fn [] (build-input-form (:->col-meta controller) :more-comps [(expand-export)] :start-focus start-focus))
           view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
           table         (fn [] (second (u/children view-layout)))
-          update-form   (fn [model return] (gcomp/expand-form-panel view-layout (build-input-form (:->col-meta controller) :model model :more-comps [(return) (expand-export)])))
+          header        (fn [] (c/label :text (get (:->tbl-meta controller) :representation) :halign :center :border (sborder/empty-border :top 10)))
+          update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form (:->col-meta controller) :model model :more-comps [(return) (expand-export)])]))
           x nil ;;------------ Build
-          expand-insert-form (gcomp/scrollbox (gcomp/expand-form-panel view-layout [(c/label :text "Title") (insert-form)]) :hscroll :never)
+          expand-insert-form (gcomp/scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never)
           back-to-insert     (fn [] (gcomp/button-basic "<< Return to Insert Form" (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
           table              (fn [] ((:->table controller) (fn [model] (expand-update-form model back-to-insert))))
@@ -715,7 +716,7 @@
                       (c/config! my-frame :size [1000 :by 800])
                       (if-not (nil? start-focus) (c/invoke-later (.requestFocus @start-focus true))))))
 
-
+;; (run user-view)
 
 ;; (let [size [200 :by 200]
 ;;       my-frame (-> (doto (c/frame

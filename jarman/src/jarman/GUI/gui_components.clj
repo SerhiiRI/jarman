@@ -280,7 +280,7 @@
            focus-color (get-color :decorate :focus-gained-dark)
            unfocus-color "#fff"}}]
   (let [hidden-comp (atom nil)
-        form-space-open ["wrap 1" "0px[grow,fill]0px" "0px[fill]0px"]
+        form-space-open ["wrap 1" "0px[250:, grow,fill]10px" "0px[fill]0px"]
         form-space-hide ["" "0px[grow, fill]0px" "0px[grow, fill]0px"]
         form-space (smig/mig-panel :constraints form-space-open)
         onClick (fn [e]

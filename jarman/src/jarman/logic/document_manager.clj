@@ -37,7 +37,6 @@
   (db/query (select :documents
                     :column [:id {:documents.table :table} :name :prop])))
 
-
 (defn update-document [document-map]
   (if (:id document-map)
     (let [m (update-in document-map [:prop] pr-str)]
@@ -165,7 +164,7 @@
 ;;   :prop {:suak [:bliat [:ello]]}})
 
 ;; (insert-document
-;;  {:id 7, :table "heyyy", :name "also-test",
+;;  {:id 7, :table "-----", :name "also-test",
 ;;   ;; :document "templates\\dovfdsaidka.odt"
 ;;   :prop {:suak [:bliat [:ello]]}})
 
@@ -175,5 +174,33 @@
 ;; (download-document
 ;;  {:id 17})
 
-(println "all is done")
 
+(defn select-documents-by-table [table]
+  (map #(update-in % [:prop] read-string)
+       (db/query (select! :documents :column [:id :name :prop]
+                          :where [:= :documents.table (name table)]))))
+
+;; (select-documents-by-table :service_contract)
+
+(defn prepare-export-file [table document-to-export]
+  (let [file-name (format "%s.odt" (name (:name document-to-export)))
+        path-to-template (clojure.java.io/file (storage/document-templates-dir) file-name)
+        id-table-field (keyword (format "%s.id"(name table)))]
+    (if (map? (:prop document-to-export))
+      (fn [model-id export-directory]
+        (if (not (.exists path-to-template))
+          ;; (doc/download-document document-to-export)
+          (println "DOWNLOADING FILE>>>>>"))
+        (println "EXPORT DOCUMENT: ")
+        (println ;;merge-doc
+         "\nFROM: "
+         (str path-to-template)
+         "\nTO: "
+         (str (clojure.java.io/file export-directory file-name))
+         "\nSQL: "
+         (select!
+          (merge {:table-name table}
+                 (:prop document-to-export)
+                 {:where [:= id-table-field model-id]}))))
+      (fn [& body]
+        (println "Exporter property is not map-type")))))

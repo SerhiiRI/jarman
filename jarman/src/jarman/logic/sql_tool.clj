@@ -773,8 +773,11 @@
                                                                   (if-not (empty? x) (str " " x))))
           :else "")))
 
+;; (defn default-table-config-string [current-string _ table-name]
+;;   (str current-string ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"))
+
 (defn default-table-config-string [current-string _ table-name]
-  (str current-string ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"))
+  (str current-string ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;"))
 
 (defn table-config-string
   "Get configuration map with next keys parameters
@@ -784,8 +787,8 @@
   [current-string conifig-map table-name]
   (let [{:keys [engine charset collate]
          :or {engine "InnoDB"
-              charset "utf8"
-              collate "utf8_general_ci"}} conifig-map]
+              charset "utf8mb4"
+              collate "utf8mb4_general_ci"}} conifig-map]
      (str current-string (format ") ENGINE=%s DEFAULT CHARSET=%s COLLATE=%s;" engine charset collate))))
 
 (defn columns-string
@@ -1517,7 +1520,7 @@
   {:pre [(string? database-name)]}
   (format "DROP DATABASE `%s`;" (string/trim database-name)))
 
-(defn create-database [database-name & {:keys [charset collate] :or {charset "utf8" collate "utf8_general_ci"}}]
+(defn create-database [database-name & {:keys [charset collate] :or {charset "utf8mb4" collate "utf8mb4_general_ci"}}]
   {:pre [(string? database-name)]}
   (apply format "CREATE DATABASE `%s` CHARACTER SET = '%s' COLLATE = '%s';" (map string/trim [database-name charset collate]) ))
 

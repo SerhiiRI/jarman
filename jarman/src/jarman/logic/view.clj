@@ -12,6 +12,7 @@
    [seesaw.mig :as smig]
    [seesaw.swingx :as swingx]
    ;; Jarman toolkit
+   [jarman.logic.document-manager :as doc]
    [jarman.logic.connection :as db]
    [jarman.config.config-manager :as cm]
    [jarman.tools.lang :refer :all :as lang]
@@ -150,6 +151,7 @@
 
 ;; (seesaw.dev/show-options (c/table))
 
+
 (defn construct-sql [table select-rules]
   {:pre [(keyword? table)]}
   (let [m (first (mt/getset table))
@@ -164,6 +166,35 @@
                (apply (partial select-builder table)
                       (mapcat vec (into select-rules args))))}))
 
+
+
+;;; GOTOWY MODEL 
+;; {:table-name :point_of_sale
+;;                 :column ({:enterpreneur.director :enterpreneur.director}
+;;                          {:enterpreneur.legal_address :enterpreneur.legal_address}
+;;                          {:enterpreneur.ssreou :enterpreneur.ssreou}
+;;                          {:point_of_sale.name :point_of_sale.name}
+;;                          {:point_of_sale.telefons :point_of_sale.telefons})
+;;                 :inner-join [:enterpreneur]}
+;; ((prepare-export-file
+;;   :point_of_sale
+;;   {:id 4, :name "yaczlvrnke",
+;;    :prop {:table-name :point_of_sale
+;;           :column [{:enterpreneur.director :enterpreneur.director}
+;;                    {:enterpreneur.legal_address :enterpreneur.legal_address}
+;;                    {:enterpreneur.ssreou :enterpreneur.ssreou}
+;;                    {:point_of_sale.name :point_of_sale.name}
+;;                    {:point_of_sale.telefons :point_of_sale.telefons}]
+;;           :inner-join [:enterpreneur]}})
+;;  1 "home//path")
+
+;; (defn pp-str [x]
+;;   (with-out-str (clojure.pprint/pprint x)))
+
+;; (println (pp-str {:table-name :point_of_sale
+;;           :column (as-is :enterpreneur.director :enterpreneur.legal_address :enterpreneur.ssreou :point_of_sale.name :point_of_sale.telefons)
+;;           :inner-join [:enterpreneur]}))
+
 (def views (atom {}))
 (defmacro defview [table & {:as args}]
   (let [stable (make-name (str table) "-view")]
@@ -175,7 +206,7 @@
            tblmeta#   ((comp :table :prop) (first (mt/getset! ktable#)))
            colmeta#   ((comp :columns :prop) (first (mt/getset! ktable#)))
            operations# (construct-sql ktable# (:data @config#))
-           
+
            view#      (:view @config#)
            idfield#   (t-f-tf ktable# :id)
 
@@ -192,12 +223,15 @@
            data#      (fn [] (db/query (select#)))
            export#    (select# :column nil :inner-join nil :where nil)
            model#     (construct-table-model-columns (:tables @config#) (:view @config#))
-           table#     (construct-table (construct-table-model model# data#))]
+           table#     (construct-table (construct-table-model model# data#))
+
+           docs#      (doc/select-documents-by-table ktable#)]
        (def ~stable {:->table table#
                      :->table-model model#
                      :->model->id idfield#
                      :->data data#
-                     
+                     :->table-name ktable#
+
                      :->select select#
                      :->update update#
                      :->delete delete#
@@ -207,12 +241,14 @@
                      :->dupdate dupdate#
                      :->ddelete ddelete#
                      :->dinsert dinsert#
-                     
+
                      :->operations operations#
                      :->config (fn [] @config#)
                      :->col-view view#
                      :->col-meta colmeta#
-                     :->tbl-meta tblmeta#})
+                     :->tbl-meta tblmeta#
+
+                     :->documents docs#})
        (swap! ~'views (fn [m-view#] (assoc-in m-view# [ktable#] ~stable)))
        nil)))
 
@@ -238,6 +274,20 @@
   :view   [:permission.permission_name]
   :data   {:column (as-is :permission.id :permission.permission_name :permission.configuration)})
 
+;;; TEST SEGMENT 
+;; (insert-document
+;;  {:table "-----", :name "also-test",
+;;   :document "templates\\dovidka.odt"
+;;   :prop {:suak [:bliat [:ello]]}})
+
+;; (run documents-view)
+;; (mt/getset! :documents)
+
+(defview documents
+  :tables [:documents]
+  :view   [:documents.table :documents.name :documents.prop]
+  :data   {:column (as-is :documents.id :documents.table :documents.name :documents.prop)})
+
 ;; (let [my-frame (-> (doto (c/frame
 ;;                           :title "test"
 ;;                           :size [1000 :by 800]
@@ -245,8 +295,6 @@
 ;;                           ((:->table permission-view) (fn [x] (println x))))
 ;;                      (.setLocationRelativeTo nil) c/pack! c/show!))]
 ;;   (c/config! my-frame :size [1000 :by 800]))
-
-
 
 (defview user
   :tables [:user :permission]
@@ -268,7 +316,7 @@
   :data   {:column (as-is
                     :enterpreneur.id
                     :enterpreneur.ssreou
-                    :enterpreneur.ownership_form 
+                    :enterpreneur.ownership_form
                     :enterpreneur.vat_certificate
                     :enterpreneur.individual_tax_number
                     :enterpreneur.director
@@ -277,12 +325,16 @@
                     :enterpreneur.physical_address
                     :enterpreneur.contacts_information)})
 
+
+
 (defview point_of_sale
   :tables [:point_of_sale :enterpreneur]
   :view   [:point_of_sale.name :point_of_sale.physical_address :point_of_sale.telefons
            :enterpreneur.ssreou :enterpreneur.ownership_form]
   :data   {:inner-join [:enterpreneur]
-           :column (as-is :point_of_sale.id :point_of_sale.name :point_of_sale.physical_address :point_of_sale.telefons :enterpreneur.id :enterpreneur.ssreou :enterpreneur.ownership_form)})
+           :column (as-is :point_of_sale.id :point_of_sale.name
+                          :point_of_sale.physical_address :point_of_sale.telefons :enterpreneur.id
+                          :enterpreneur.ssreou :enterpreneur.ownership_form)})
 
 (defview cache_register
   :tables [:cache_register :point_of_sale]
@@ -332,13 +384,13 @@
          :point_of_sale_group.information]
   :data {:inner-join [:point_of_sale :point_of_sale_group]
          :column (as-is
-                   :point_of_sale_group_links.id
-                   :point_of_sale_group_links.id_point_of_sale_group
-                   :point_of_sale_group_links.id_point_of_sale
-                   :point_of_sale.name
-                   :point_of_sale.physical_address
-                   :point_of_sale_group.group_name
-                   :point_of_sale_group.information)})
+                  :point_of_sale_group_links.id
+                  :point_of_sale_group_links.id_point_of_sale_group
+                  :point_of_sale_group_links.id_point_of_sale
+                  :point_of_sale.name
+                  :point_of_sale.physical_address
+                  :point_of_sale_group.group_name
+                  :point_of_sale_group.information)})
 
 (defview seal
   :tables [:seal]
@@ -366,18 +418,18 @@
 (defview repair_contract
   :tables [:repair_contract :cache_register :point_of_sale]
   :view [:cache_register.modem_serial_number
-                  :cache_register.modem_phone_number
-                  :cache_register.producer
-                  :point_of_sale.name
-                  :point_of_sale.physical_address
-                  :repair_contract.creation_contract_date
-                  :repair_contract.last_change_contract_date
-                  :repair_contract.contract_terms_date
-                  :repair_contract.cache_register_register_date
-                  :repair_contract.remove_security_seal_date
-                  :repair_contract.cause_of_removing_seal
-                  :repair_contract.technical_problem
-                  :repair_contract.active_seal]
+         :cache_register.modem_phone_number
+         :cache_register.producer
+         :point_of_sale.name
+         :point_of_sale.physical_address
+         :repair_contract.creation_contract_date
+         :repair_contract.last_change_contract_date
+         :repair_contract.contract_terms_date
+         :repair_contract.cache_register_register_date
+         :repair_contract.remove_security_seal_date
+         :repair_contract.cause_of_removing_seal
+         :repair_contract.technical_problem
+         :repair_contract.active_seal]
   :data {:inner-join [:point_of_sale :cache_register]
          :column (as-is
                   :cache_register.modem_serial_number
@@ -436,12 +488,11 @@
                 dialog
                 :content (seesaw.mig/mig-panel
                           :constraints ["wrap 1" "0px[grow, fill]0px" "5px[grow, fill]0px"]
-                          :items [
-                                  ;; [(seesaw.core/label :text "Press Ctrl + F to search"
+                          :items [;; [(seesaw.core/label :text "Press Ctrl + F to search"
                                   ;;                     :halign :center
                                   ;;                     :icon (jarman.tools.swing/image-scale
                                   ;;                            jarman.resource-lib.icon-library/loupe-blue-64-png 30))]
-                                  
+
                                   [table]]))]
     ;; (seesaw.core/show! (doto dialog (.setLocationRelativeTo nil)))
     (.setLocationRelativeTo dialog frame)
@@ -456,8 +507,7 @@
                    :or {model []
                         more-comps [(c/label)]
                         button-template (fn [title f] (gcomp/button-basic title f))
-                        start-focus nil}}
-       ]
+                        start-focus nil}}]
     (let [complete (atom {})
           inser-or-update (if (empty? model) "Insert new data" "Update record")
           delete "Remove selected record"
@@ -467,45 +517,43 @@
                                 :items [[(c/label)]])
           components (concat
                       (filter #(not (nil? %)) (map (fn [meta]
-                              (let [field-qualified (get meta :field-qualified)
-                                    title (get meta :representation)
-                                    editable? (get meta :editable?)
+                                                     (let [field-qualified (get meta :field-qualified)
+                                                           title (get meta :representation)
+                                                           editable? (get meta :editable?)
                                     ;; field (get meta :field)
-                                    v (str (get-in model [(keyword field-qualified)]))
-                                    v (if (empty? v) "" v)]
-                                (cond
-                                  (lang/in? (get meta :component-type) "d")
-                                  (do
-                                    (if (empty? model)
-                                      (do ;;Create calendar input
-                                        (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified :changes complete)))
-                                      (do ;; Create update calenda input
-                                        (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified :changes complete :set-date v)))))
-                                  (lang/in? (get meta :component-type) "i")
-                                  (do ;; Add input-text with label
-                                    (if (empty? model)
-                                      (do ;;Create insert input
-                                        (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified :changes complete :editable? editable?)))
-                                      (do ;; Create update input
-                                        (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified :changes complete :editable? editable? :val v)))))
-                                  (lang/in? (get meta :component-type) "l")
-                                  (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
-                                    (let [connected-table (var-get (-> (str "jarman.logic.view/" (get meta :key-table) "-view") symbol resolve))
-                                          selected-representation (fn [dialog-model-view returned-from-dialog]
-                                                                    (->> (:->col-view dialog-model-view)
-                                                                         (map #(get-in returned-from-dialog [%]))
-                                                                         (filter some?)
-                                                                         (string/join ", ")))
-                                          v (selected-representation connected-table model)]
-                                      (if-not (nil? (get model field-qualified)) (swap! complete (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
-                                      (gcomp/inpose-label title (gcomp/input-text-with-atom :changes complete :editable? false :val v
-                                                                                            :onClick (fn [e] (let [selected (construct-dialog (:->table connected-table) field-qualified (c/to-frame e))]
-                                                                                                               (if-not (nil? (get selected (:->model->id connected-table)))
-                                                                                                                 (do (c/config! e :text (selected-representation connected-table selected))
-                                                                                                                     (swap! complete (fn [storage] (assoc storage field-qualified (get selected (:->model->id connected-table)))))))))
-                                                                                            ))))
-                                  )))
-                            metadata))
+                                                           v (str (get-in model [(keyword field-qualified)]))
+                                                           v (if (empty? v) "" v)]
+                                                       (cond
+                                                         (lang/in? (get meta :component-type) "d")
+                                                         (do
+                                                           (if (empty? model)
+                                                             (do ;;Create calendar input
+                                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified :local-changes complete)))
+                                                             (do ;; Create update calenda input
+                                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified :local-changes complete :set-date (if (empty? v) "1900-01-01" v))))))
+                                                         (lang/in? (get meta :component-type) "i")
+                                                         (do ;; Add input-text with label
+                                                           (if (empty? model)
+                                                             (do ;;Create insert input
+                                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified :local-changes complete :editable? editable?)))
+                                                             (do ;; Create update input
+                                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified :local-changes complete :editable? editable? :val v)))))
+                                                         (lang/in? (get meta :component-type) "l")
+                                                         (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
+                                                           (let [connected-table (var-get (-> (str "jarman.logic.view/" (get meta :key-table) "-view") symbol resolve))
+                                                                 selected-representation (fn [dialog-model-view returned-from-dialog]
+                                                                                           (->> (:->col-view dialog-model-view)
+                                                                                                (map #(get-in returned-from-dialog [%]))
+                                                                                                (filter some?)
+                                                                                                (string/join ", ")))
+                                                                 v (selected-representation connected-table model)]
+                                                             (if-not (nil? (get model field-qualified)) (swap! complete (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
+                                                             (gcomp/inpose-label title (gcomp/input-text-with-atom :local-changes complete :editable? false :val v
+                                                                                                                   :onClick (fn [e] (let [selected (construct-dialog (:->table connected-table) field-qualified (c/to-frame e))]
+                                                                                                                                      (if-not (nil? (get selected (:->model->id connected-table)))
+                                                                                                                                        (do (c/config! e :text (selected-representation connected-table selected))
+                                                                                                                                            (swap! complete (fn [storage] (assoc storage field-qualified (get selected (:->model->id connected-table))))))))))))))))
+                                                   metadata))
                       [(vgap 20)]
                       [(button-template inser-or-update (fn [e] (println "Data from form: " @complete)))]
                       (if (empty? model) [] [(button-template delete (fn [e] (println "Delete: " model)))])
@@ -513,8 +561,7 @@
                       [more-comps])
           builded (c/config! panel :items (gtool/join-mig-items components))]
       (if-not (nil? start-focus) (reset! start-focus (last (u/children (first components)))))
-      builded
-      )))
+      builded)))
 ;; (mt/getset :user)
 ;; (:->table-model permission-view)
 ;; (:->col-meta seal-view)
@@ -542,25 +589,25 @@
                                       (sborder/line-border :top 2 :color "#999")
                                       (sborder/empty-border :top 50))
      :items [(gcomp/button-expand "Export by template" (smig/mig-panel
-                                            :constraints ["wrap 1" "5px[grow, fill]5px" "0px[fill]0px"]
+                                                        :constraints ["wrap 1" "5px[grow, fill]5px" "0px[fill]0px"]
                                           ;;  :border (sborder/line-border :left 2 :right 2 :bottom 2 :color "#fff")
                                           ;;  :border (sborder/line-border :left 2 :color "#ccc")
-                                            :background panel-bg
-                                            :items [[(gcomp/hr 2 "#ccc")]
-                                                    [(gcomp/hr 10)]
+                                                        :background panel-bg
+                                                        :items [[(gcomp/hr 2 "#ccc")]
+                                                                [(gcomp/hr 10)]
                                                     ;;  [(c/radio :id :odt  :text "ODT"  :group radio-group :background bg :selected? true) "split 2"]
                                                     ;;  [(c/radio :id :docx :text "DOCX" :group radio-group :background bg)]
                                                     ;; [(gcomp/hr 10)]
-                                                    [panel]
+                                                                [panel]
                                                     ;;  [(gcomp/button-basic "Service raport" (fn [e] (if-let [s (c/selection radio-group)] (println "Selected " (str (c/text s))
                                                     ;;                                                                                               "\nTemplate: " (str (c/text template))))))]
 
-                                                    [(gcomp/hr 10)]
-                                                    [(gcomp/button-basic "Service raport" (fn [e]) :args [:halign :left])]
-                                                    [(gcomp/button-basic "Clients list"   (fn [e]) :args [:halign :left])]
-                                                    [(gcomp/button-basic "Invoice print"  (fn [e]) :args [:halign :left])]
-                                                    [(gcomp/hr 10)]
-                                                    [(gcomp/hr 2 "#95dec9")]])
+                                                                [(gcomp/hr 10)]
+                                                                [(gcomp/button-basic "Service raport" (fn [e]) :args [:halign :left])]
+                                                                [(gcomp/button-basic "Clients list"   (fn [e]) :args [:halign :left])]
+                                                                [(gcomp/button-basic "Invoice print"  (fn [e]) :args [:halign :left])]
+                                                                [(gcomp/hr 10)]
+                                                                [(gcomp/hr 2 "#95dec9")]])
                                   :background "#95dec9"
                                   ;; :focusable? true
                                   :border (sborder/compound-border (sborder/empty-border :left 10 :right 10))
@@ -587,25 +634,25 @@
                                       (sborder/line-border :top 2 :color "#999")
                                       (sborder/empty-border :top 50))
      :items [(gcomp/button-expand "Export by template" (smig/mig-panel
-                                            :constraints ["wrap 1" "5px[grow, fill]5px" "0px[fill]0px"]
+                                                        :constraints ["wrap 1" "5px[grow, fill]5px" "0px[fill]0px"]
                                           ;;  :border (sborder/line-border :left 2 :right 2 :bottom 2 :color "#fff")
                                           ;;  :border (sborder/line-border :left 2 :color "#ccc")
-                                            :background panel-bg
-                                            :items [[(gcomp/hr 2 "#ccc")]
-                                                    [(gcomp/hr 10)]
+                                                        :background panel-bg
+                                                        :items [[(gcomp/hr 2 "#ccc")]
+                                                                [(gcomp/hr 10)]
                                                     ;;  [(c/radio :id :odt  :text "ODT"  :group radio-group :background bg :selected? true) "split 2"]
                                                     ;;  [(c/radio :id :docx :text "DOCX" :group radio-group :background bg)]
-                                                    [(gcomp/hr 10)]
-                                                    [panel]
+                                                                [(gcomp/hr 10)]
+                                                                [panel]
                                                     ;;  [(gcomp/button-basic "Service raport" (fn [e] (if-let [s (c/selection radio-group)] (println "Selected " (str (c/text s))
                                                     ;;                                                                                               "\nTemplate: " (str (c/text template))))))]
 
-                                                    [(gcomp/hr 10)]
-                                                    [(gcomp/button-basic "Service raport" (fn [e]) :args [:halign :left])]
-                                                    [(gcomp/button-basic "Clients list"   (fn [e]) :args [:halign :left])]
-                                                    [(gcomp/button-basic "Invoice print"  (fn [e]) :args [:halign :left])]
-                                                    [(gcomp/hr 10)]
-                                                    [(gcomp/hr 2 "#95dec9")]])
+                                                                [(gcomp/hr 10)]
+                                                                [(gcomp/button-basic "Service raport" (fn [e]) :args [:halign :left])]
+                                                                [(gcomp/button-basic "Clients list"   (fn [e]) :args [:halign :left])]
+                                                                [(gcomp/button-basic "Invoice print"  (fn [e]) :args [:halign :left])]
+                                                                [(gcomp/hr 10)]
+                                                                [(gcomp/hr 2 "#95dec9")]])
                                   :background "#95dec9"
                                   ;; :focusable? true
                                   :border (sborder/compound-border (sborder/empty-border :left 10 :right 10))
@@ -630,9 +677,10 @@
           insert-form   (fn [] (build-input-form (:->col-meta controller) :more-comps [(expand-export)] :start-focus start-focus))
           view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
           table         (fn [] (second (u/children view-layout)))
-          update-form   (fn [model return] (gcomp/expand-form-panel view-layout (build-input-form (:->col-meta controller) :model model :more-comps [(return) (expand-export)])))
+          header        (fn [] (c/label :text (get (:->tbl-meta controller) :representation) :halign :center :border (sborder/empty-border :top 10)))
+          update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form (:->col-meta controller) :model model :more-comps [(return) (expand-export)])]))
           x nil ;;------------ Build
-          expand-insert-form (gcomp/scrollbox (gcomp/expand-form-panel view-layout [(c/label :text "Title") (insert-form)]) :hscroll :never)
+          expand-insert-form (gcomp/scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never)
           back-to-insert     (fn [] (gcomp/button-basic "<< Return to Insert Form" (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
           table              (fn [] ((:->table controller) (fn [model] (expand-update-form model back-to-insert))))
@@ -645,17 +693,16 @@
 ;; (cm/swapp)
 
 (def run (fn [view] (let [start-focus (atom nil)
-              my-frame (-> (doto (c/frame
-                                  :title "test"
-                                  :size [1000 :by 800]
-                                  :content
-                                  (auto-builder--table-view view :start-focus start-focus)
-                                  )
-                             (.setLocationRelativeTo nil) c/pack! c/show!))]
-          (c/config! my-frame :size [1000 :by 800])
-          (if-not (nil? start-focus) (c/invoke-later (.requestFocus @start-focus true))))))
+                          my-frame (-> (doto (c/frame
+                                              :title "test"
+                                              :size [1000 :by 800]
+                                              :content
+                                              (auto-builder--table-view view :start-focus start-focus))
+                                         (.setLocationRelativeTo nil) c/pack! c/show!))]
+                      (c/config! my-frame :size [1000 :by 800])
+                      (if-not (nil? start-focus) (c/invoke-later (.requestFocus @start-focus true))))))
 
-
+;; (run user-view)
 
 ;; (let [size [200 :by 200]
 ;;       my-frame (-> (doto (c/frame

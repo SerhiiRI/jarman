@@ -94,7 +94,7 @@
     If validation return `false`, then connection variable not
     totaly set"
   [connection-map]
-  (dosync (ref-set connection connection-map)))
+  (dosync (ref-set connection (merge connection-map {:useUnicode true :characterEncoding "UTF-8"}))))
 
 (defn connection-get
   "Description
@@ -107,12 +107,12 @@
       :dbname \"jarman\",
       :user \"root\",
       :password \"1234\"}"
-  [](deref connection))
+  [] (deref connection))
 
 ;;; FOR DEBUG CONNECTION
 (connection-set
  ;; set selected
- (:raspberry
+ (:dell
   ;;------------
   {:localhost
    {:dbtype "mysql",
@@ -135,7 +135,6 @@
     :dbname "jarman",
     :user "root",
     :password "1234"}}))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Mapper/Converter ;;;

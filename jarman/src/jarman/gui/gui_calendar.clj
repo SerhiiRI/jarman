@@ -72,12 +72,12 @@
   (get-calendar (gcomp/input-text :v set-date :args [:enabled? enabled? :editable? editable?])))
 
 (defn calendar-with-atom
-  [& {:keys [changes
+  [& {:keys [local-changes
              field
              set-date
              editable?
              enabled?]
-      :or {changes (atom {})
+      :or {local-changes (atom {})
            field nil
            set-date (date)
            editable? false
@@ -88,7 +88,7 @@
                         :editable? editable?
                         :listen [:caret-update (fn [e]
                                                  (if-not (nil? field) 
-                                                   (swap! changes (fn [storage] (assoc storage (keyword field) (value (to-widget e)))))))]])))
+                                                   (swap! local-changes (fn [storage] (assoc storage (keyword field) (value (to-widget e)))))))]])))
 
 ;; (defn- frame-calendar []
 ;;   (frame :title "Jarman"

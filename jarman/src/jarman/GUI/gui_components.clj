@@ -132,6 +132,7 @@
                                       (config! e :user-data (fn-assoc e :edit? false)))]
              args))))
 
+
 ;; (show-events (text))
 
 ;; (show-options (text))
@@ -153,18 +154,62 @@
                         component]))
 
 
+(defn input-text-area
+  "Description:
+    Text component converted to text component with placeholder. Placehlder will be default value.
+ Example:
+    (input-text :placeholder \"Login\" :style [:halign :center])
+ "
+  ([& {:keys [store-id
+              local-changes
+              val
+              border
+              border-color-focus
+              border-color-unfocus]
+       :or {store-id nil
+            local-changes (atom {})
+            val ""
+            border [10 10 5 5 2]
+            border-color-focus   (get-color :decorate :focus-gained)
+            border-color-unfocus (get-color :decorate :focus-lost)}}]
+   (let [newBorder (fn [underline-color]
+                     (compound-border (empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
+                                      (line-border :bottom (nth border 4) :color underline-color)))]
+     (let [text-area (to-widget (javax.swing.JTextArea.))]
+       (if-not (empty? val) (swap! local-changes (fn [storage] (assoc storage store-id val))))
+       (config!
+        text-area
+        :text (if (empty? val) "" (str val))
+        :minimum-size [50 :by 100]
+        :border (newBorder border-color-focus)
+        :user-data {:border-fn newBorder}
+        :listen [:focus-gained (fn [e]
+                                 (config! e :border (newBorder border-color-focus)))
+                 :focus-lost   (fn [e]
+                                 (config! e :border (newBorder border-color-unfocus)))
+                 :caret-update (fn [e]
+                                 (let [new-v (c/value (c/to-widget e))]
+                                   (cond
+                                     (and (not (nil? store-id))
+                                          (not (= val new-v)))
+                                     (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
+                                     :else (reset! local-changes (dissoc @local-changes store-id)))))])
+       (scrollbox text-area :minimum-size [50 :by 100])))))
+
+
 (defn input-text-with-atom
-  [& {:keys [store-id local-changes val editable? enabled? onClick border-color-focus border-color-unfocus debug]
+  [& {:keys [store-id local-changes val editable? enabled? store-orginal onClick border-color-focus border-color-unfocus debug]
       :or {local-changes (atom {})
            val ""
            editable? true
            enabled? true
+           store-orginal false
            store-id nil
            border-color-focus   (get-color :decorate :focus-gained)
            border-color-unfocus (get-color :decorate :focus-lost)
            onClick (fn [e])
            debug false}}]
-  (if-not (empty? val) (swap! local-changes (fn [storage] (assoc storage store-id val))))
+  (if-not (empty? (str val)) (swap! local-changes (fn [storage] (assoc storage store-id val))))
   (input-text
    :args [:editable? editable?
           :enabled? enabled?
@@ -179,16 +224,15 @@
                                                            (config! e)))
                    :caret-update (fn [e]
                                    (let [new-v (c/value (c/to-widget e))]
-                                     (if debug (println "--Input text change" new-v))
-                                     (if debug (println "--Atom" @local-changes))
                                      (cond
                                        (and (not (nil? store-id))
                                             (not (= val new-v)))
                                        (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
-                                       :else (reset! local-changes (dissoc @local-changes store-id)))))
+                                       (not store-orginal) (reset! local-changes (dissoc @local-changes store-id)))))
                    :focus-gained (fn [e] (c/config! e :border ((get-user-data e :border-fn) border-color-focus)))
                    :focus-lost   (fn [e] (c/config! e :border ((get-user-data e :border-fn) border-color-unfocus)))
                    ]]))
+
 
 
 (defn select-box

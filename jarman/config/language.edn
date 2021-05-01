@@ -103,7 +103,8 @@
     :test-connection "Testuj połączenie"
     :save-and-reload "Zapisz i przeładuj"},
    :alerts
-   {:changes-saved "Zapisano zmiany!"
+   {:success "Sukces!"
+    :changes-saved "Zapisano zmiany!"
     :save-changes? "Czy chcesz zapisać zmiany?"
     :changes-saved-but-need-reload
     "Zapisano zmiany! Będą one widoczne po restarcie aplikacji."
@@ -242,7 +243,9 @@
   :test-connection "Test connection"
   :save-and-reload "Save and reload"}
  :alerts
- {:changes-saved "Saved changes!"
+ {
+  :success "Success!"
+  :changes-saved "Saved changes!"
   :save-changes? "Do you want to save changes?"
   :changes-saved-but-need-reload "Saved changes! Application needs reload."
   :delete-element? "Are you sure you want to remove item?"

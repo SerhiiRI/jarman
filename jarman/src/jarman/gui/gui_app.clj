@@ -34,12 +34,11 @@
             [jarman.gui.gui-docs :as docs]
             ;; [jarman.logic.view :refer :all] 
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
-
             ))
 
 
 (def jarman-views-service (atom nil))
-(def work-mode (atom :dev-mode)) ;; user-mode, admin-mode, dev-mode
+(def work-mode (atom :admin-mode)) ;; user-mode, admin-mode, dev-mode
 
 
 
@@ -214,7 +213,6 @@
 
 ;; ================================================VVVVVVVVVV Table in database view
 
-(def dbmap (atom (mmeta/getset)))
 
 
 
@@ -240,9 +238,9 @@
 
 
 (defn calculate-bounds
-  [dbmap offset max-tabs-inline]
-  (let [sizes (partition-all max-tabs-inline (calculate-tables-size @dbmap))
-        tables (calculate-tables-size-with-tabs @dbmap)
+  [meta offset max-tabs-inline]
+  (let [sizes (partition-all max-tabs-inline (calculate-tables-size meta))
+        tables (calculate-tables-size-with-tabs meta)
         y-bound (atom 10)
         pre-bounds (map (fn [row] (let [x-bounds (atom 10)
                                         bounds-x (map (fn [size] (do
@@ -350,7 +348,7 @@
                                    (let [key-param (first column-parameter)
                                          path-to-value (lang/join-vec path-to-value [key-param])]
                                      (cond
-                                       (= work-mode :dev-mode) 
+                                       (= work-mode :dev-mode)
                                        (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter))) :vtop 10)
                                        (= work-mode :admin-mode)
                                        (cond ;; For admin-mode. Enable and disble components
@@ -393,8 +391,8 @@
                                 :border (line-border :left 4 :color (get-color :border :dark-gray))))
 
 (def get-table-configuration-from-list-by-table-id
-  (fn [atom--tables-configurations table-id]
-    (let [map (first (filter (fn [item] (= table-id (get item :id))) @atom--tables-configurations))]
+  (fn [tables-configurations table-id]
+    (let [map (first (filter (fn [item] (= table-id (get item :id))) tables-configurations))]
       (do ;;(println map)
         map))))
 
@@ -415,42 +413,43 @@
                                         (mmeta/do-change
                                          (mmeta/apply-table table @new-table-meta)
                                          table @new-table-meta)
-                                        
+                                        (cm/swapp)
+                                        (@alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)
                                         ;; (mmeta/apply-table table @new-table-meta)
                                         ))))
 
 
 (defn table-editor--element--btn-show-changes
   [local-changes table] (table-editor--component--bar-btn :edit-view-back-btn (get-lang-btns :show-changes) icon/refresh-grey-64-png icon/refresh-blue-64-png
-                                                    (fn [e] (@popup-menager :new-message
-                                                                            :title "Changes list"
-                                                                            :body (textarea (let [changes (atom "")]
-                                                                                              (doall
-                                                                                               (map
-                                                                                                (fn [change]
-                                                                                                  (let [path (first change)
-                                                                                                        valu (second change)]
-                                                                                                    (swap! changes (fn [txt] (str txt "<br/>" path " \"" (get-in table path) "\" -> \"" valu "\"")))))
-                                                                                                @local-changes))
-                                                                                              @changes))
-                                                                            :size [400 300]))))
+                                                          (fn [e] (@popup-menager :new-message
+                                                                                  :title "Changes list"
+                                                                                  :body (textarea (let [changes (atom "")]
+                                                                                                    (doall
+                                                                                                     (map
+                                                                                                      (fn [change]
+                                                                                                        (let [path (first change)
+                                                                                                              valu (second change)]
+                                                                                                          (swap! changes (fn [txt] (str txt "<br/>" path " \"" (get-in table path) "\" -> \"" valu "\"")))))
+                                                                                                      @local-changes))
+                                                                                                    @changes))
+                                                                                  :size [400 300]))))
 
 
 
 (def table-editor--element--checkbox
   (fn [enable local-changes path-to-value value txt]
-    (checkbox 
+    (checkbox
      :text txt
      :selected? value
-              :enabled? enable
-              :listen [:state-changed (fn [event] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path-to-value :old-value value :new-value (config event :selected?)))])))
+     :enabled? enable
+     :listen [:state-changed (fn [event] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path-to-value :old-value value :new-value (config event :selected?)))])))
 
 
 ;; (show-events (checkbox))
 
 
 (def table-editor--element--table-parameter-name
-  (fn [table-property index] (label :text (lang/convert-key-to-title(str (first (nth (vec table-property) index)))))))
+  (fn [table-property index] (label :text (lang/convert-key-to-title (str (first (nth (vec table-property) index)))))))
 
 (def table-editor--element--table-parameter-value
   (fn [work-mode local-changes table-property tab-path-to-value index txtsize]
@@ -463,38 +462,36 @@
                       (cond
                         (or (string?  param-value)
                             (lang/in? [:representation :description] param-name)) (gcomp/inpose-label
-                                                                                  (lang/convert-key-to-title (str param-name))
-                                                                                  (gcomp/input-text-with-atom :local-changes local-changes
-                                                                                                              :store-id path-to-value
-                                                                                                              :val param-value)
-                                                                                  :vtop 10
-                                                                                  :id :text)
+                                                                                   (lang/convert-key-to-title (str param-name))
+                                                                                   (gcomp/input-text-with-atom :local-changes local-changes
+                                                                                                               :store-id path-to-value
+                                                                                                               :val param-value)
+                                                                                   :vtop 10
+                                                                                   :id :text)
                         (boolean? param-value) (table-editor--element--checkbox (= work-mode :dev-mode) local-changes path-to-value param-value (lang/convert-key-to-title param-name))
                         :else (simple-label))
                       (= work-mode :admin-mode)
                       (cond ;; For admin-mode. Enable and disble components
                         (or (string?  param-value)
                             (lang/in? [:representation :description] param-name)) (gcomp/inpose-label (lang/convert-key-to-title (str param-name))
-                                                                                                     (gcomp/input-text-with-atom :local-changes local-changes
-                                                                                                                                 :store-id path-to-value
-                                                                                                                                 :val param-value
-                                                                                                                                 :enabled? (lang/in? [:representation :description] param-name))
-                                                                                                     :vtop 10
-                                                                                                     :id :text)
+                                                                                                      (gcomp/input-text-with-atom :local-changes local-changes
+                                                                                                                                  :store-id path-to-value
+                                                                                                                                  :val param-value
+                                                                                                                                  :enabled? (lang/in? [:representation :description] param-name))
+                                                                                                      :vtop 10
+                                                                                                      :id :text)
                         (boolean? param-value) (table-editor--element--checkbox (= work-mode :dev-mode) local-changes path-to-value param-value (lang/convert-key-to-title param-name))
                         :else (simple-label))
                       :else (simple-label))]
-      (if-not (nil? component) component (label)))
-  )
-)
+      (if-not (nil? component) component (label)))))
 
 (defn create-view--table-editor
   "Description:
      Create view for table editor. Marge all component to one big view.
    "
-  [work-mode atom--tables-configurations table-id]
+  [work-mode tables-configurations table-id]
   (let [local-changes (atom {})
-        table          (get-table-configuration-from-list-by-table-id atom--tables-configurations table-id)
+        table          (get-table-configuration-from-list-by-table-id tables-configurations table-id)
         col-path-to-value [:prop :columns]
         tab-path-to-value [:prop :table]
         columns        (get-in table col-path-to-value) ;; Get columns list
@@ -538,7 +535,6 @@
       (@gtool/changes-service :add-controller :view-id view-id :local-changes local-changes)
       (@jarman-views-service :set-view :view-id view-id :title (str "Edit: " (get-in table [:prop :table :representation])) :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.") :component component))))
 
-;; (mmeta/getset)
 
 ;; ┌─────────┐
 ;; │         │
@@ -605,7 +601,7 @@
       Create a primary or special row that represents a column in the table"
   [data
    & {:keys [debug]
-      :or {debug false}}] 
+      :or {debug false}}]
   (if debug (println "--Column as row\n--Data: " data))
   (let [last-x (atom 0)
         last-y (atom 0)
@@ -614,7 +610,7 @@
                                                         (= (get data :type) "header") (- (get data :height) 2)
                                                         :else                         (- (get data :height) 0))]
                          :icon (cond
-                                 (= (get data :type) "connection") (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8(get data :height)) 1))
+                                 (= (get data :type) "connection") (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (get data :height)) 1))
                                  (= (get data :type) "key") (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (get data :height)) 1)) ;;(stool/image-scale icon/key-blue-64-png (/ (get data :height) 1))
                                  :else nil)
                          :background (cond
@@ -639,14 +635,14 @@
                                                              (.add JLP
                                                                    (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
                                                                     JLP
-                                                                    dbmap ;; forward list of table configuration
+                                                                    (mmeta/getset) ;; forward list of table configuration
                                                                     table-id ;; Get table id
                                                                     (- (+ (.getX e) (.getX (config (getParent e) :bounds))) 15) ;; calculate popup position
                                                                     (- (+ (+ (.getY e) (.getY (config e :bounds))) (.getY (config (getParent e) :bounds))) 10))
                                                                    (new Integer 999) ;; z-index
                                                                    ))
                                                            (= (.getClickCount e) 2) ;; Open table editor by duble click
-                                                           (create-view--table-editor @work-mode dbmap table-id))))
+                                                           (create-view--table-editor @work-mode (mmeta/getset) table-id))))
                                   :mouse-dragged (fn [e]
                                                    (do
                                                      (if (= @last-x 0) (reset! last-x (.getX e)))
@@ -665,11 +661,11 @@
                                                                                   ;; (println [@last-x @last-y])
                                                                                          (config! (getParent e) :bounds [x y w h]))))))
                                   :mouse-released (fn [e] (do (reset! last-x 0)
-                                                              (reset! last-y 0)))]
-                                                              )]
+                                                              (reset! last-y 0)))])]
 
     (if debug (println "--Column as row: OK"))
     component))
+
 
 
 (defn db-viewer--component--table
@@ -689,15 +685,15 @@
         col-in-rows (map (fn [col]
                            (table-visualizer--element--col-as-row {:name (cond
                                                                            (and (get-in data [:prop :table :is-linker?]) (contains? col :key-table)) (get col :key-table)
-                                                                           :else (get col :representation)) 
+                                                                           :else (get col :representation))
                                                                    :width w :height row-h
                                                                    :type (cond
                                                                            (and (get-in data [:prop :table :is-linker?]) (contains? col :key-table)) "connection"
                                                                            (contains? col :key-table) "key"
-                                                                           :else "row") 
+                                                                           :else "row")
                                                                    :border-c border-c}))
                          (get-in data [:prop :columns]))  ;; przygotowanie tabeli bez naglowka
-        camplete-table (conj col-in-rows (table-visualizer--element--col-as-row {:name (get data :table) :width w :height row-h :type "header" :border-c border-c}))  ;; dodanie naglowka i finalizacja widoku tabeli
+        camplete-table (conj col-in-rows (table-visualizer--element--col-as-row {:name (get-in data [:prop :table :representation]) :width w :height row-h :type "header" :border-c border-c}))  ;; dodanie naglowka i finalizacja widoku tabeli
         h (* (count camplete-table) row-h)  ;; podliczenie wysokosci gotowej tabeli
         ]
     (vertical-panel
@@ -737,27 +733,43 @@
 
 
 
-(def create-view--db-view
+(defn create-view--db-view
   "Description:
      Create component and set to @views atom to use in functional space. 
      Add open tab for db-view to open tabs bar.
      Set prepare view from @views to functional space.
    "
-  (let [JLP (to-widget (new JLayeredPane))]
-    (doall (map (fn [tab-data]
-                  (.add JLP (db-viewer--component--table (get-in tab-data [:prop :bounds] [0 0 100 100]) tab-data) (new Integer 5)))
-                (calculate-bounds dbmap 20 5)))
-    (doseq [i [(label :text "A" :bounds [50 50 200 200]) (label :text "B" :bounds [100 100 200 200])]]
-      (.add JLP i (new Integer 5)))
-    (.setMaximumSize JLP (java.awt.Dimension. 300 300))
-    (.setSize JLP (java.awt.Dimension. 300 300))
-    (mig-panel
-     :border nil
-     :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px[grow, fill]0px"]
-     :items [[
-              (db-viewer--component--menu-bar)]
-             [(scrollable JLP :id :JLP-DB-Visualizer :border nil)]
-             ])))
+  ([]
+   (let [rootJLP (new JLayeredPane)
+         JLP (new JLayeredPane)
+         JLP-bounds (atom {})]
+     (doall (map (fn [tab-data]
+                   (.add JLP (db-viewer--component--table (get-in tab-data [:prop :bounds] [0 0 100 100]) tab-data) (new Integer 5)))
+                 (calculate-bounds (mmeta/getset) 20 5)))
+     (.add rootJLP (scrollable JLP
+                               :id :JLP-DB-Visualizer
+                               :border nil
+                               :bounds [0 0 10000 10000]
+                               :listen [:mouse-released (fn [e] (config! e :cursor :default))
+                                        :mouse-pressed (fn [e]
+                                                         (config! e :cursor :move)
+                                                         (let [x (.getX (config e :bounds))
+                                                               y (.getY (config e :bounds))]
+                                                           (reset! JLP-bounds {:x (.getX e) :y (.getY e) :x-x (- (.getX e) x) :y-y (- (.getY e) y)})))
+                                        :mouse-dragged (fn [e]
+                                                        ;;  (println "Drag JLP: " (.getX e) (.getY e))
+                                                         (let [new-x (- (.getX e) (get @JLP-bounds :x-x))
+                                                               new-y (- (.getY e) (get @JLP-bounds :y-y))]
+                                                           (config! e :bounds [new-x new-y 10000 10000] ;; TODO: need to change width and height on dynamic 
+                                                                    )))]) 
+           (new Integer 1))
+    ;;  (.setMaximumSize JLP (java.awt.Dimension. 300 300))
+    ;;  (.setSize JLP (java.awt.Dimension. 300 300))
+     (mig-panel
+      :border nil
+      :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px[grow, fill]0px"]
+      :items [[(db-viewer--component--menu-bar)]
+              [rootJLP]]))))
 
 
 ;; ┌─────────────────────────────────────────┐
@@ -794,7 +806,7 @@
                                                               :set-view
                                                               :view-id view-id
                                                               :title title
-                                                              :component (try 
+                                                              :component (try
                                                                            (cg/create-view--confgen path :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)))
                                                                            (catch Exception e (str "caught exception: " (.getMessage e)))))))))
                    config-file-list-as-keyword-to-display)
@@ -897,7 +909,7 @@
                 :border (line-border :left margin-left :color bg-color)
                 :items [;; [(label-fn :background "#eee" :size [50 :by 50])]
                         [(mig-app-left-f  [(button-expand "Database"
-                                                          [(button-expand-child "DB Visualiser" :onClick (fn [e] (@jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component create-view--db-view)))
+                                                          [(button-expand-child "DB Visualiser" :onClick (fn [e] (@jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component (create-view--db-view))))
                                                           ;;  (button-expand-child "Users table" :onClick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
                                                            ])]
                                           [(button-expand "Tables"
@@ -906,12 +918,11 @@
                                                                          (let [title (str (name (get-in (:->tbl-meta (controller @view/views)) [:representation])))]
                                                                            (button-expand-child
                                                                             title
-                                                                            :onClick (fn [e](@jarman-views-service :set-view
-                                                                                                             :view-id title
-                                                                                                             :title title
-                                                                                                             :scrollable? false
-                                                                                                             :component (view/auto-builder--table-view (controller @view/views))))
-                                                                            )))
+                                                                            :onClick (fn [e] (@jarman-views-service :set-view
+                                                                                                                    :view-id title
+                                                                                                                    :title title
+                                                                                                                    :scrollable? false
+                                                                                                                    :component (view/auto-builder--table-view (controller @view/views)))))))
                                                                        (keys @view/views)))))]
                                           [(create-expand-btns--confgen)])]
                         [(right-part-of-jarman-as-space-for-views-service []
@@ -936,7 +947,7 @@
       (build :items (let [img-scale 40]
                       (list
                        (jarmanapp :margin-left img-scale)
-                       (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB View" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "Database" :title "Database" :component create-view--db-view))})
+                       (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB View" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component (create-view--db-view)))})
                        (slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Powiadomienia" {:onclick (fn [e] (@alert-manager :show))})
                        (slider-ico-btn (stool/image-scale icon/alert-64-png img-scale) 2 img-scale "Popup" {:onclick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200]))})
                        (slider-ico-btn (stool/image-scale icon/agree-grey-64-png img-scale) 3 img-scale "Dialog" {:onclick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100]))))})

@@ -919,7 +919,7 @@
                                                                            (button-expand-child
                                                                             title
                                                                             :onClick (fn [e] (@jarman-views-service :set-view
-                                                                                                                    :view-id title
+                                                                                                                    :view-id (str "auto-" title)
                                                                                                                     :title title
                                                                                                                     :scrollable? false
                                                                                                                     :component (view/auto-builder--table-view (controller @view/views)))))))
@@ -958,7 +958,6 @@
                                                                                                                                            (= @work-mode :admin-mode) (reset! work-mode :dev-mode)
                                                                                                                                            (= @work-mode :dev-mode)   (reset! work-mode :user-mode))
                                                                                                                                      (@alert-manager :set {:header "Work mode" :body (str "Switched to: " (symbol @work-mode))} (message alert-manager) 5))})
-                       (slider-ico-btn (stool/image-scale icon/calendar2-64-png img-scale) 7 img-scale "Table Auto Generator" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil)))})
                        (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 8 img-scale "Docs Templates" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "Docs-Templates" :title "Docs Templates" :scrollable? false :component (docs/auto-builder--table-view nil)))})
                        @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook)))))
@@ -980,7 +979,7 @@
                                             (reset! popup-menager (create-popup-service atom-popup-hook))
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
-(@startup)
+;; (@startup)
 
 ;; (config! (to-frame @app) :size [1000 :by 800])
 

@@ -245,16 +245,16 @@
 ;; (@jarman.gui.gui-app/startup)
 ;; (cm/swapp)
 
-;; (:->col-meta documents-view)
+;; ;; (:->col-meta documents-view)
 
-(let [start-focus (atom nil)
-      my-frame (-> (doto (c/frame
-                          :title "test"
-                          :size [1000 :by 800]
-                          :content (auto-builder--table-view  nil))
-                     (.setLocationRelativeTo nil) c/pack! c/show!))]
-  (c/config! my-frame :size [1000 :by 800])
-  (if-not (nil? start-focus) (c/invoke-later (.requestFocus @start-focus true))))
+;; (let [start-focus (atom nil)
+;;       my-frame (-> (doto (c/frame
+;;                           :title "test"
+;;                           :size [1000 :by 800]
+;;                           :content (auto-builder--table-view  nil))
+;;                      (.setLocationRelativeTo nil) c/pack! c/show!))]
+;;   (c/config! my-frame :size [1000 :by 800])
+;;   (if-not (nil? start-focus) (c/invoke-later (.requestFocus @start-focus true))))
 
 
 

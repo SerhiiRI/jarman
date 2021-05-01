@@ -15,6 +15,7 @@
             [jarman.config.storage :as strg]
             [kaleidocs.merge :refer [merge-doc]]
             [clojure.java.io :as io]
+            [jarman.logic.document-manager :as doc]
             [clojure.java.io :refer [file output-stream input-stream]])
 
   ;; (:import [org.odftoolkit.odfdom.doc OdfTextDocument]
@@ -24,47 +25,47 @@
 (def temp-directory (strg/temp-templates-dir-path))
 
 
-(defn read-data [file-path]
-  (let [f (java.io.File. file-path)
-        ary (byte-array (.length f))
-        inputStream (java.io.FileInputStream. f)]
-    (.read inputStream ary)
-    (.close inputStream)
-    ary))
+;; (defn read-data [file-path]
+;;   (let [f (java.io.File. file-path)
+;;         ary (byte-array (.length f))
+;;         inputStream (java.io.FileInputStream. f)]
+;;     (.read inputStream ary)
+;;     (.close inputStream)
+;;     ary))
 
-(defn write-data [file-path data]
-  (let [outputStream (java.io.FileOutputStream. file-path)]
-    (.write outputStream data)))
+;; (defn write-data [file-path data]
+;;   (let [outputStream (java.io.FileOutputStream. file-path)]
+;;     (.write outputStream data)))
 
-(defn convert-file [file-name values-map export-directory]
-  (merge-doc
-   (str temp-directory "/" file-name)
-   (str export-directory "/" file-name)
-   values-map))
+;; (defn convert-file [file-name values-map export-directory]
+;;   (merge-doc
+;;    (str temp-directory "/" file-name)
+;;    (str export-directory "/" file-name)
+;;    values-map))
 
 
-;; (defn get-name-temp-files [path]
-;;   (println )
-;;   (println path)
-;;   (second (re-find #".+/([\w\.\d]*)" path)))
+;; ;; (defn get-name-temp-files [path]
+;; ;;   (println )
+;; ;;   (println path)
+;; ;;   (second (re-find #".+/([\w\.\d]*)" path)))
 
-(defn push! [q val]
-  (swap! q conj val))
+;; (defn push! [q val]
+;;   (swap! q conj val))
 
-(defn get-files [a-data]
-  (map (fn [vecfile] (subs (str (first (keys vecfile))) 1)) @a-data))
+;; (defn get-files [a-data]
+;;   (map (fn [vecfile] (subs (str (first (keys vecfile))) 1)) @a-data))
 
-(def data-files (atom []))
+;; (def data-files (atom []))
 
-;;(push! data-files {(str ":" "ee") ["fr" "r"]} )
+;; ;;(push! data-files {(str ":" "ee") ["fr" "r"]} )
 
-(defn delete-file [name-file]
-  (reset! data-files (vec (remove #(= (keyword name-file) (first (keys %))) @data-files))))
+;; (defn delete-file [name-file]
+;;   (reset! data-files (vec (remove #(= (keyword name-file) (first (keys %))) @data-files))))
 
-(defn load-file-tmp-dir [file-name]
-  (write-data
-   (str temp-directory "/" file-name)
-   (second (first (vals (first (filter (fn [x] (= (first (keys x))(keyword file-name))) @data-files)))))))
+;; (defn load-file-tmp-dir [file-name]
+;;   (write-data
+;;    (str temp-directory "/" file-name)
+;;    (second (first (vals (first (filter (fn [x] (= (first (keys x))(keyword file-name))) @data-files)))))))
 
 (def f (frame :title "file"
               :undecorated? false
@@ -72,11 +73,45 @@
               :minimum-size [600 :by 240]
               :content (label)))
 
-(def data-templ [{:enterprener.lastname "Burmych" :user.lastname "Smith" :date "04.10.2005"}
-                 {:user.lastname "Burmych" :user.date "04.10.2021"}
-                 {:user.firstname "Julka" :user.lastname "Burmych"}])
+(def data-templ [{:enterprener.director "Burmych" :enterprener.legal_address "Smith" :enterprener.ssreou "04.10.2005"},
+                 {:service_contract.register_contract_date "Burmych" :service_contract.money_per_month "04.10.2021"},
+                 {:user.first_name "Julka" :user.last_name "Burmych"}])
 
 (def emp-border (empty-border :bottom 10 :top 10 :left 20 :right 20))
+
+
+
+
+
+(map (fn [d] (:name d))(doc/select-documents))
+;; => ("also-test" "xwkgpuzzkl" "nrczxxzgua" "xjjsifqcvx" "mbbzxfvexc" "wcbixstpgy" "also-test" "anwcjsgamg" "piyybjswgw" "user exported action" "user exported action" "Export file" "user exported action" "user exported action" "Сука блять" "also-test" "also-test")
+
+
+(doc/insert-document
+ {:id 17, :table "user", :name "julka-test",
+  :document "templates\\dovidka.odt"
+  :prop {:dark "rose"}})
+
+(defn convert-file [file-name values-map export-directory]
+  (merge-doc
+   (clojure.java.io/file temp-directory file-name)
+   (clojure.java.io/file export-directory file-name)
+   values-map))
+
+(let [find-doc (filter (fn [d] (= "julka-test" (:name d))) (doc/select-documents))]
+  (if-not (= nil find-doc)
+    (do (println "yes")
+      (doc/download-document {:id (:id (first find-doc))})
+      (convert-file
+       "julka-test"
+       (last data-templ) 
+       env/user-home))))
+
+
+
+
+
+;;; panel to frame
 
 (def btn (fn [txt func](label
                         :text txt

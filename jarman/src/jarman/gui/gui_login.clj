@@ -572,7 +572,7 @@
                                :border (compound-border (empty-border :right 10 )))]
                        [(label :icon (stool/image-scale icon/a-blue-64-png 40) ;;I-grey-64-png
                                :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content (info-panel)))])]])]])))
-(start)
+;; (start)
 ;;;;;;;;;;;;;;
 ;;; frames ;;;
 ;;;;;;;;;;;;;;

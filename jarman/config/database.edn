@@ -82,27 +82,25 @@
        :type :param,
        :display :edit,
        :component :text,
-       :value 3306},
+       :value 3307},
       :dbname
       {:name "Database name",
        :type :param,
        :display :edit,
        :component :text,
-       :value "jarman"}
+       :value "jarman"},
       :user
-       {:name "User login",
+      {:name "User login",
        :type :param,
        :display :edit,
        :component :text,
-       :value "jarman"}
+       :value "root"},
       :password
       {:name "User password",
        :type :param,
        :display :edit,
        :component :text,
-       :value "dupa"}}}
-    
-    ,
+       :value "1234"}}},
     :afdf--dsaf
     {:name "Raspberry",
      :type :block,

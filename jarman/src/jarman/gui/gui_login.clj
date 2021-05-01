@@ -55,7 +55,7 @@
 ;;(def red-color "#f88158")
 (def red-color "#f01159")
 (def back-color "#c5d3dd")
-(start)
+;; (start)
 (def my-style {[:.css1] {:foreground blue-green-color}})
 
 (defn color-border [color]
@@ -67,7 +67,7 @@
 (def ^:private emp-border (empty-border :left 10 :right 10 :top 5 :bottom 5))
 
 
-(start)
+;; (start)
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; some-components ;;; 
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -299,7 +299,7 @@
       ) mig))
 
 
-(start)
+;; (start)
 
 (defn config-generator-panel [key-title]
   (let [info some-text
@@ -343,7 +343,7 @@
                           (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr) "aligny top"]])]
     mig-p))
 
-(start)
+;; (start)
 
 (defn get-values [some-key]
   (string/split (string/replace (name some-key) #"\_" ".") #"\--" ))
@@ -385,7 +385,7 @@
    :items (list (label :text error :font (myFont 13) :foreground red-color
                        :border (empty-border :top 5 :left 5 :bottom 5)))))
 
-(start)
+;; (start)
 
 (defn label-to-config [dbname title key-title login pass] 
   (let [dbn  (label :text dbname :font (myFont 15) :foreground blue-color
@@ -447,7 +447,7 @@
                                                             (.revalidate my-panel)))))])
     my-panel))
 
-(start)
+;; (start)
 
 (defn configurations-panel [login pass]
   (let [mig (mig-panel
@@ -470,8 +470,8 @@
            :preferred-size  [120 :by 120]
            :background "#fff"))
     scr))
-
-(start)
+;; 
+;; (start)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; panels for login and error ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -665,18 +665,18 @@
             "align r"]]))
 
 
-(defn- test-frame []
-  (frame :title "Jarman"
-         :undecorated? false
-         :content (multi-panel [red-panel green-panel blue-panel] "Some panel" 0)
-         :resizable? true
-         :minimum-size [800 :by 600]))
+;; (defn- test-frame []
+;;   (frame :title "Jarman"
+;;          :undecorated? false
+;;          :content (multi-panel [red-panel green-panel blue-panel] "Some panel" 0)
+;;          :resizable? true
+;;          :minimum-size [800 :by 600]))
 
-(-> (doto (test-frame) (.setLocationRelativeTo nil) ) seesaw.core/pack! seesaw.core/show!)
-
-
+;; (-> (doto (test-frame) (.setLocationRelativeTo nil) ) seesaw.core/pack! seesaw.core/show!)
 
 
+
+(start)
 
 
 

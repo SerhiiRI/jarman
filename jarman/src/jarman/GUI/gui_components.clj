@@ -120,7 +120,7 @@
              :text (if (empty? v) placeholder (if (string? v) v (str v)))
              :font (getFont font-size :name "Monospaced")
              :background (get-color :background :input)
-             :border (newBorder border-color-focus)
+             :border (newBorder border-color-unfocus)
              :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
              :listen [:focus-gained (fn [e]
                                       (config! e :border (newBorder border-color-focus))
@@ -181,7 +181,7 @@
         text-area
         :text (if (empty? val) "" (str val))
         :minimum-size [50 :by 100]
-        :border (newBorder border-color-focus)
+        :border (newBorder border-color-unfocus)
         :user-data {:border-fn newBorder}
         :listen [:focus-gained (fn [e]
                                  (config! e :border (newBorder border-color-focus)))

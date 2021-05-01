@@ -386,6 +386,42 @@
                        :border (empty-border :top 5 :left 5 :bottom 5)))))
 
 ;; (start)
+(defn info-panel []
+  (let [info some-text
+        faq [{:q "Why i can not get connection with server?"
+              :a "Please check that you have entered the data correctly"}
+             {:q "Where can i find data to connect?"
+              :a "Please contact with your system administrator"}]
+        scr (scrollable
+             (mig-panel
+              :constraints ["wrap 1" "[grow, center]" "20px[]20px"]
+              :items [[(label :icon (stool/image-scale icon/left-blue-64-png 50)
+                              :listen [:mouse-entered (fn [e] (tool/hand-hover-on e))
+                                       :mouse-exited (fn [e] (tool/hand-hover-off e))
+                                       :mouse-clicked (fn [e] (config! (to-frame e) :content (login-panel)))]
+                              :border (empty-border :right 220)) "align l, split 2"]
+                      [(label :icon (stool/image-scale "resources/imgs/trashpanda2-stars-blue-1024.png" 47))]
+                      [(let [mig (mig-panel
+                                  :constraints ["wrap 1" "100px[:600, grow, center]100px" "20px[]20px"]
+                                  :items [[(label :text (tool/htmling "<h2>About</h2>")
+                                                  :foreground blue-green-color :font (myFont 14)) "align l"]
+                                          [(info  light-grey-color)]
+                                          [(label :text (tool/htmling "<h2>Jarman</h2>")
+                                                  :foreground blue-green-color :font (myFont 14)) "align l"]
+                                          [(info  light-grey-color)]
+                                          [(label :text (tool/htmling "<h2>Contact</h2>")
+                                                  :foreground blue-green-color :font (myFont 14)) "align l"]
+                                          [(info  light-grey-color)]
+                                          [(label :text (tool/htmling "<h2>Links</h2>")
+                                                  :foreground blue-green-color :font (myFont 14)) "align l"]
+                                          [(label :text (tool/htmling "<p align= \"justify\">http://trashpanda-team.ddns.net</p>")
+                                                  :foreground light-grey-color :font (myFont 14)) "align l"]])]
+                         (doall (map (fn [x] (.add mig x "align l")) (if (= faq nil)
+                                                                       contact-info (concat (asks-panel faq) contact-info))))
+                         (.repaint mig) mig)]]))]
+    (.setUnitIncrement (.getVerticalScrollBar scr) 20)
+    scr))
+
 
 (defn label-to-config [dbname title key-title login pass] 
   (let [dbn  (label :text dbname :font (myFont 15) :foreground blue-color
@@ -509,41 +545,7 @@
             :foreground blue-green-color
             :font (myFont 14)) mig]))
 
-(defn info-panel []
-  (let [info some-text
-        faq [{:q "Why i can not get connection with server?"
-              :a "Please check that you have entered the data correctly"}
-             {:q "Where can i find data to connect?"
-              :a "Please contact with your system administrator"}]
-        scr (scrollable
-             (mig-panel
-              :constraints ["wrap 1" "[grow, center]" "20px[]20px"]
-              :items [[(label :icon (stool/image-scale icon/left-blue-64-png 50)
-                              :listen [:mouse-entered (fn [e] (tool/hand-hover-on e))
-                                       :mouse-exited (fn [e] (tool/hand-hover-off e))
-                                       :mouse-clicked (fn [e] (config! (to-frame e) :content (login-panel)))]
-                              :border (empty-border :right 220)) "align l, split 2"]
-                      [(label :icon (stool/image-scale "resources/imgs/trashpanda2-stars-blue-1024.png" 47))]
-                      [(let [mig (mig-panel
-                                  :constraints ["wrap 1" "100px[:600, grow, center]100px" "20px[]20px"]
-                                  :items [[(label :text (tool/htmling "<h2>About</h2>")
-                                                  :foreground blue-green-color :font (myFont 14)) "align l"]
-                                          [(info  light-grey-color)]
-                                          [(label :text (tool/htmling "<h2>Jarman</h2>")
-                                                  :foreground blue-green-color :font (myFont 14)) "align l"]
-                                          [(info  light-grey-color)]
-                                          [(label :text (tool/htmling "<h2>Contact</h2>")
-                                                  :foreground blue-green-color :font (myFont 14)) "align l"]
-                                          [(info  light-grey-color)]
-                                          [(label :text (tool/htmling "<h2>Links</h2>")
-                                                  :foreground blue-green-color :font (myFont 14)) "align l"] 
-                                          [(label :text (tool/htmling "<p align= \"justify\">http://trashpanda-team.ddns.net</p>")
-                                                  :foreground light-grey-color :font (myFont 14) ) "align l"]])]
-                         (doall (map (fn [x] (.add mig x "align l")) (if (= faq nil)
-                                                                       contact-info (concat (asks-panel faq) contact-info))))
-                         (.repaint mig) mig)]]))]
-    (.setUnitIncrement (.getVerticalScrollBar scr) 20)
-    scr))
+
 
 (defn login-panel []
   (let [flogin (components/input-text :placeholder "Login"

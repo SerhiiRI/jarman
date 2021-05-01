@@ -12,6 +12,7 @@
    [seesaw.mig :as smig]
    [seesaw.swingx :as swingx]
    ;; Jarman toolkit
+   [jarman.logic.document-manager :as doc]
    [jarman.logic.connection :as db]
    [jarman.config.config-manager :as cm]
    [jarman.tools.lang :refer :all :as lang]
@@ -266,8 +267,6 @@
 ;;                      (.setLocationRelativeTo nil) c/pack! c/show!))]
 ;;   (c/config! my-frame :size [1000 :by 800]))
 
-
-
 (defview user
   :tables [:user :permission]
   :view   [:user.first_name :user.last_name :user.login :permission.permission_name]
@@ -297,12 +296,59 @@
                     :enterpreneur.physical_address
                     :enterpreneur.contacts_information)})
 
+
+;; (def data-templ [{:enterprener.director "Burmych" :enterprener.legal_address "Smith" :enterprener.ssreou "04.10.2005"},
+;;                  {:service_contract.register_contract_date "Burmych" :service_contract.money_per_month "04.10.2021"},
+;;                  {:user.first_name "Julka" :user.last_name "Burmych"}])
+
+;; (doc/insert-document
+;;  {:id 17, :table "user", :name "julka-test",
+;;   :document "templates\\dovidka.odt"
+;;   :prop {:dark "rose"}})
+
+;; (defn convert-file [file-name values-map export-directory]
+;;   (merge-doc
+;;    (clojure.java.io/file temp-directory file-name)
+;;    (clojure.java.io/file export-directory file-name)
+;;    values-map))
+
+;; (let [find-doc (filter (fn [d] (= "julka-test" (:name d))) (doc/select-documents))]
+;;   (if-not (= nil find-doc)
+;;     (do (println "yes")
+;;       (doc/download-document {:id (:id (first find-doc))})
+;;       (convert-file
+;;        "julka-test"
+;;        (last data-templ) 
+;;        env/user-home))))
+
+;; (defn pp-str [x]
+;;   (with-out-str (clojure.pprint/pprint x)))
+
+;; (println (pp-str {:table-name :point_of_sale
+;;           :column (as-is :enterpreneur.director :enterpreneur.legal_address :enterpreneur.ssreou :point_of_sale.name :point_of_sale.telefons)
+;;           :inner-join [:enterpreneur]}))
+  
+;; ((fn [& {:as args}]
+;;    (apply (partial select-builder :point_of_sale)
+;;           (mapcat vec (into {:table-name :point_of_sale
+;;                              :column (as-is :enterpreneur.director :enterpreneur.legal_address :enterpreneur.ssreou :point_of_sale.name :point_of_sale.telefons)
+;;                              :inner-join [:enterpreneur]} args))))
+;;  :where [:= :point_of_sale.id 2])
+
+;; (db/query
+;;  (select! {:table-name :point_of_sale
+;;            :column (as-is :enterpreneur.director :enterpreneur.legal_address :enterpreneur.ssreou :point_of_sale.name :point_of_sale.telefons)
+;;            :inner-join [:enterpreneur]}))
+
+
 (defview point_of_sale
   :tables [:point_of_sale :enterpreneur]
   :view   [:point_of_sale.name :point_of_sale.physical_address :point_of_sale.telefons
            :enterpreneur.ssreou :enterpreneur.ownership_form]
   :data   {:inner-join [:enterpreneur]
-           :column (as-is :point_of_sale.id :point_of_sale.name :point_of_sale.physical_address :point_of_sale.telefons :enterpreneur.id :enterpreneur.ssreou :enterpreneur.ownership_form)})
+           :column (as-is :point_of_sale.id :point_of_sale.name
+                          :point_of_sale.physical_address :point_of_sale.telefons :enterpreneur.id
+                          :enterpreneur.ssreou :enterpreneur.ownership_form)})
 
 (defview cache_register
   :tables [:cache_register :point_of_sale]

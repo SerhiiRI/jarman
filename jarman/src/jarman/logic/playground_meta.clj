@@ -1,4 +1,4 @@
-(ns jarman.logic.playground
+(ns jarman.logic.playground-meta
   (:refer-clojure :exclude [update])
   (:require
    [clojure.data :as data]
@@ -12,180 +12,72 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
-(def available-scheme ["service_contract"
-                       "seal"
-                       "repair_contract"
-                       "point_of_sale_group_links"
-                       "point_of_sale_group"
-                       "cache_register"
-                       "point_of_sale"
-                       "enterpreneur"
-                       "user"
-                       "permission"
-                       "documents"
-                       "metadata"])
-
-
-(def documents
-  (create-table :documents
-                :columns [{:table [:varchar-100 :default :null]}
-                          {:name [:varchar-200 :default :null]}
-                          {:document [:blob :default :null]}
-                          {:prop [:text :nnull :default "\"{}\""]}]))
+(def ^:private backup-name "metadata")
+(def ^:private backup-file-name (format "%s.edn" backup-name))
 
 (def metadata
   (create-table :metadata
                 :columns [{:table [:varchar-100 :default :null]}
                           {:prop [:text :default :null]}]))
 
-(def permission
-  (create-table :permission
-                :columns [{:permission_name [:varchar-20 :default :null]}
-                          {:configuration [:tinytext :nnull :default "\"{}\""]}]))
+(def available-scheme
+  ["documents" "permission" "user" "enterpreneur" "point_of_sale" "cache_register" "point_of_sale_group" "point_of_sale_group_links" "repair_contract" "seal" "service_contract"]
+  ;; ["service_contract" "seal" "repair_contract" "point_of_sale_group_links" "point_of_sale_group" "cache_register" "point_of_sale" "enterpreneur" "user" "permission" "documents" "metadata"]
+  )
 
+(defn- default-backup-loader []
+  (if-let [_TMP0 (storage/user-metadata-get backup-file-name)] _TMP0
+    (try (slurp (clojure.java.io/file env/user-dir backup-file-name))
+         (catch Exception e nil))))
 
+(defn restore-backup-metadata
+  "Description
+    Restore all backups from user-stored buffer
 
-(def user
-  (create-table :user
-                :columns [{:login [:varchar-100 :nnull]}
-                          {:password [:varchar-100 :nnull]}
-                          {:first_name [:varchar-100 :nnull]}
-                          {:last_name [:varchar-100 :nnull]}
-                          {:id_permission [:bigint-120-unsigned :nnull]}]
-                :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}]))
+  Example
+    (restore-backup-metadata)
+    (restore-backup-metadata default-backup-loader)"
+  ([] (restore-backup-metadata default-backup-loader))
+  ([f-backup-loader]
+   (if-let [backup (f-backup-loader)]
+     (try (let [backup-swapped (read-string backup)
+                table-list     (:table backup-swapped)
+                metadata-list  (map #(assoc % :id nil) (:backup backup-swapped))
+                info           (:info backup-swapped)]
+            (doall(map #(metadata/update-meta %) metadata-list))
+            (doall (for [t ["documents" "permission" "user" "enterpreneur"
+                            "point_of_sale" "cache_register" "point_of_sale_group"
+                            "point_of_sale_group_links" "repair_contract" "seal" "service_contract"]]
+               (db/exec (metadata/create-table-by-meta (first (metadata/getset! t)))))))))))
 
-(def enterpreneur
-  (create-table :enterpreneur
-                :columns [{:ssreou [:tinytext :nnull]}
-                          {:ownership_form [:varchar-100 :default :null]}
-                          {:vat_certificate [:tinytext :default :null]}
-                          {:individual_tax_number [:varchar-100 :default :null]}
-                          {:director [:varchar-100 :default :null]}
-                          {:accountant [:varchar-100 :default :null]}
-                          {:legal_address [:varchar-100 :default :null]}
-                          {:physical_address [:varchar-100 :default :null]}
-                          {:contacts_information [:mediumtext :default :null]}]))
-
-(def point_of_sale
-  (create-table :point_of_sale
-                :columns [{:id_enterpreneur [:bigint-20-unsigned :default :null]}
-                          {:name [:varchar-100 :default :null]}
-                          {:physical_address  [:varchar-100 :default :null]}
-                          {:telefons  [:varchar-100 :default :null]}]
-                :foreign-keys [{:id_enterpreneur :enterpreneur} {:update :cascade}]))
-
-(def cache_register
-  (create-table :cache_register
-                :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
-                          {:name [:varchar-100 :default :null]}
-                          {:serial_number [:varchar-100 :default :null]}
-                          {:fiscal_number [:varchar-100 :default :null]}
-                          {:manufacture_date [:date :default :null]}
-                          {:first_registration_date [:date :default :null]}
-                          {:is_working [:tinyint-1 :default :null]}
-                          {:version [:varchar-100 :default :null]}
-                          {:dev_id [:varchar-100 :default :null]}
-                          {:producer [:varchar-100 :default :null]}
-                          {:modem [:varchar-100 :default :null]}
-                          {:modem_model [:varchar-100 :default :null]}
-                          {:modem_serial_number [:varchar-100 :default :null]}
-                          {:modem_phone_number [:varchar-100 :default :null]}]
-                :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]))
-
-(def point_of_sale_group
-  (create-table :point_of_sale_group
-                :columns [{:group_name [:varchar-100 :default :null]}
-                          {:information [:mediumtext :default :null]}]))
-
-(def point_of_sale_group_links
-  (create-table :point_of_sale_group_links
-                :columns [{:id_point_of_sale_group [:bigint-20-unsigned :default :null]}
-                          {:id_point_of_sale [:bigint-20-unsigned :default :null]}]
-                :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
-                               [{:id_point_of_sale :point_of_sale}]]))
-
-(def seal
-  (create-table :seal
-                :columns [{:seal_number [:varchar-100 :default :null]}
-                          {:to_date [:date :default :null]}]))
-
-(def service_contract
-  (create-table :service_contract
-                :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
-                          {:register_contract_date [:date :default :null]}
-                          {:contract_term_date [:date :default :null]}
-                          {:money_per_month [:int-11 :default :null]}]
-                :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]))
-
-(def repair_contract
-  (create-table :repair_contract
-                :columns [{:id_cache_register [:bigint-20 :unsigned :default :null]}
-                          {:id_point_of_sale [:bigint-20 :unsigned :default :null]}
-                          {:creation_contract_date [:date :default :null]}
-                          {:last_change_contract_date [:date :default :null]}
-                          {:contract_terms_date [:date :default :null]}
-                          {:cache_register_register_date [:date :default :null]}
-                          {:remove_security_seal_date [:datetime :default :null]}
-                          {:cause_of_removing_seal [:mediumtext :default :null]}
-                          {:technical_problem [:mediumtext :default :null]}
-                          {:active_seal [:mediumtext :default :null]}]
-                :foreign-keys [[{:id_cache_register :cache_register} {:delete :cascade :update :cascade}]
-                               [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]]))
-
-
-(defmacro create-tabels [& tables]
-  `(do ~@(for [t tables]
-           `(db/exec ~t))))
-(defmacro delete-tabels [& tables]
-  `(do ~@(for [t tables]
-           `(db/exec (drop-table (keyword '~t))))))
-
-;; (db/exec point_of_sale_group_links)
-
-(defn create-scheme-one [scheme]
-  (eval `(db/exec ~(symbol (string/join "/" ["jarman.schema-builder" (symbol scheme)])))))
 (defn create-scheme []
-  (create-tabels metadata
-                 documents
-                 permission
-                 user
-                 enterpreneur
-                 point_of_sale
-                 cache_register
-                 point_of_sale_group
-                 point_of_sale_group_links
-                 repair_contract
-                 seal
-                 service_contract))
+  (db/exec metadata)
+  (restore-backup-metadata)
+  true)
 
-
-
-(defn delete-scheme-one [scheme]
-  (eval `(db/exec (drop-table ~(keyword scheme)))))
 (defn delete-scheme []
-  (delete-tabels service_contract
-                 seal
-                 repair_contract
-                 point_of_sale_group_links
-                 point_of_sale_group
-                 cache_register
-                 point_of_sale
-                 enterpreneur
-                 user
-                 permission
-                 documents
-                 metadata))
-
+  (do
+    (db/exec (toolbox/drop-table :service_contract))
+    (db/exec (toolbox/drop-table :seal))
+    (db/exec (toolbox/drop-table :repair_contract))
+    (db/exec (toolbox/drop-table :point_of_sale_group_links))
+    (db/exec (toolbox/drop-table :point_of_sale_group))
+    (db/exec (toolbox/drop-table :cache_register))
+    (db/exec (toolbox/drop-table :point_of_sale))
+    (db/exec (toolbox/drop-table :enterpreneur))
+    (db/exec (toolbox/drop-table :user))
+    (db/exec (toolbox/drop-table :permission))
+    (db/exec (toolbox/drop-table :documents))
+    (db/exec (toolbox/drop-table :metadata))))
 
 (defn regenerate-scheme []
+  (metadata/make-backup-metadata)
   (delete-scheme)
-  (create-scheme)
-  (metadata/do-create-meta))
+  (create-scheme))
 
 (defn regenerate-metadata []
   (do (metadata/do-clear-meta)
       (metadata/do-create-meta)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; Data generator ;;;
@@ -207,9 +99,9 @@
   (fn [] (apply str (take len (repeatedly #(rand-int 10))))))
 (defn generate-random-from-list [string-list & {:keys [lower? numbers?] :or {lower? false numbers? false}}]
   (fn [] (let [name (atom (rand-nth string-list))]
-           (if lower?   (swap! name (fn [-name] (clojure.string/lower-case -name))))
-           (if numbers? (swap! name (fn [-name] (str -name (str (rand-int 1000))))))
-           @name)))
+          (if lower?   (swap! name (fn [-name] (clojure.string/lower-case -name))))
+          (if numbers? (swap! name (fn [-name] (str -name (str (rand-int 1000))))))
+          @name)))
 (defn round-double
   "Round a double to the given precision (number of significant digits)"
   [precision d]
@@ -235,21 +127,21 @@
 (defn fill-permission []
   (def create-permission 
     (fn [name] {:permission_name name
-                :configuration "{}"}))
+               :configuration "{}"}))
   (doall
    (map sql-insert
-        [(insert :permission :values (create-permission "admin"))
-         (insert :permission :values (create-permission "user"))
-         (insert :permission :values (create-permission "employer"))
-         (insert :permission :values (create-permission "szprot"))])))
+    [(insert :permission :values (create-permission "admin"))
+     (insert :permission :values (create-permission "user"))
+     (insert :permission :values (create-permission "employer"))
+     (insert :permission :values (create-permission "szprot"))])))
 
 (defn fill-user [c]
   (def create-user 
     (fn [] {:login (glogin)
-            :password (gpassword)
-            :first_name (gfirstname)
-            :last_name (glastname)
-            :id_permission (gid_permission)}))
+           :password (gpassword)
+           :first_name (gfirstname)
+           :last_name (glastname)
+           :id_permission (gid_permission)}))
   (doall
    (map
     sql-insert
@@ -263,14 +155,14 @@
 (defn fill-enterpreneur [c]
   (def create-enterpreneur
     (fn [] {:ssreou (gidentifier)
-            :ownership_form (gownership)
-            :vat_certificate (gsimplestring)
-            :individual_tax_number (gidentifier)
-            :director (gfirstname)
-            :accountant (gfirstname)
-            :legal_address (gsimplestring)
-            :physical_address (gsimplestring)
-            :contacts_information (gsimplestring)}))
+           :ownership_form (gownership)
+           :vat_certificate (gsimplestring)
+           :individual_tax_number (gidentifier)
+           :director (gfirstname)
+           :accountant (gfirstname)
+           :legal_address (gsimplestring)
+           :physical_address (gsimplestring)
+           :contacts_information (gsimplestring)}))
   (doall
    (map
     sql-insert
@@ -281,9 +173,9 @@
 (defn fill-documents [c]
   (def create-documents
     (fn [] {:documents.table (gtable)
-            :name (gsimplestring)
-            :document nil
-            :prop "{}"}))
+           :name (gsimplestring)
+           :document nil
+           :prop "{}"}))
   (doall
    (map
     sql-insert
@@ -422,10 +314,11 @@
        ~@todo )))
 
 (defn regenerate-scheme-test []
+  (metadata/make-backup-metadata)
+  ;; (metadata/do-create-meta)
+  ;; (metadata/do-clear-meta)
   (delete-scheme)
   (create-scheme)
-  (metadata/do-clear-meta)
-  (metadata/do-create-meta)
   (fish
    [permission]
    [user 30]
@@ -440,3 +333,4 @@
    [documents 10]))
 
 
+ 

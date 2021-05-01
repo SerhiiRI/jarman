@@ -22,7 +22,7 @@
   ;;          [org.odftoolkit.simple.common.navigation TextNavigation])
   )
 
-(def temp-directory (strg/temp-templates-dir-path))
+(def temp-directory (strg/document-templates-dir-path))
 
 
 ;; (defn read-data [file-path]
@@ -103,9 +103,13 @@
     (do (println "yes")
       (doc/download-document {:id (:id (first find-doc))})
       (convert-file
-       "julka-test"
+       "julka-test.odt"
        (last data-templ) 
        env/user-home))))
+
+
+
+
 
 
 

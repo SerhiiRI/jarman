@@ -7,7 +7,7 @@
  {:datalist
   {:name "Connection to database",
    :doc
-   "Section describe MySQL/MariaDB connection property need to JDBC connector. You must set right hostname(server ip adress and port), database name also application user and password",
+   "Section describe MySQL/MariaDB connection property need to JDBC connector. You must set right hostname(server ip adress and port), database name also application user and passwordq",
    :type :block,
    :display :none,
    :value

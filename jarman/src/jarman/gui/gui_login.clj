@@ -52,9 +52,10 @@
 (def blue-green-color "#2c7375")
 (def light-blue-color "#96c1ea")
 ;;(def red-color "#e51a4c")
-(def red-color "#f88158")
+;;(def red-color "#f88158")
+(def red-color "#f01159")
 (def back-color "#c5d3dd")
-
+(start)
 (def my-style {[:.css1] {:foreground blue-green-color}})
 
 (defn color-border [color]
@@ -65,6 +66,8 @@
 
 (def ^:private emp-border (empty-border :left 10 :right 10 :top 5 :bottom 5))
 
+
+(start)
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; some-components ;;; 
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -274,10 +277,8 @@
                                           :items [])
         mig (mig-panel
              :constraints ["wrap 1" "25%[grow, fill, center]25%" "20px[]20px"]
-           
             ;; :background "#666"
-             :items [[(confgen-header "Raspberry")]
-                     
+             :items [[(confgen-header "Data configuration")]
                     ;; [(grid-panel :columns 1 :items [(confgen-title (:name (:dbtype (:value template-map)))) dbtype-inp])]
                      [(grid-panel :columns 1 :items [(confgen-title (:name (:host (:value template-map)))) host-inp])]
                      [(grid-panel :columns 1 :items [(confgen-title (:name (:port (:value template-map)))) port-inp])]
@@ -298,28 +299,16 @@
       ) mig))
 
 
-
+(start)
 
 (defn config-generator-panel [key-title]
   (let [info some-text
-       
-        faq [{:q "Why i saw this error
-Why i saw this error
-Why i saw this error
-Why i saw this error
-Why i saw this error
-Why i saw this error
-Why i saw this error
-Why i saw this error
-Why i saw this error
-Why i saw this error
-Why i saw this error'
-Why i saw this error"
-              :a "Because your program has trouble"}
-             {:q "What it problem mean"
-              :a "Read the fucking descriptin"}]
+        faq [{:q "Why i can not get connection with server?"
+              :a "Please check that you have entered the data correctly"}
+             {:q "Where can i find data to connect?"
+              :a "Please contact with your system administrator"}]
         mig-p (mig-panel
-               :constraints ["wrap 2" "0px[grow, fill, center]10px" "20px[grow, fill]20px"]
+               :constraints ["wrap 2" "0px[grow, fill, center]80px" "20px[grow, fill]20px"]
                :items [[(mig-panel  :constraints ["" "0px[10%, fill]0px[grow,center]0px[10%, fill]0px" ""]
                                     :items [[(label :icon (stool/image-scale icon/left-blue-64-png 50)
                                                     :listen [:mouse-entered (fn [e] (tool/hand-hover-on e))
@@ -332,54 +321,32 @@ Why i saw this error"
                        ;; [(label :icon (stool/image-scale icon/refresh-connection-grey1-64-png 80)
                        ;;         :border (empty-border :right 30))]
                        [(config-generator-fields key-title)]
-                       [;;(label :text "ddd" :valign :top)
-
-                        (border-panel
-                        
-                         :border (line-border :bottom 4 :color light-grey-color)
-                         :maximum-size  [300 :by 300]
-                         :preferred-size  [300 :by 300]
-                        )
-
-                        ;; (let [mig (mig-panel
-                        ;;            :constraints ["wrap 1" "0px[grow, center]0px" ""]
-                                   
-                        ;;            :items [[(label :text (tool/htmling "<h2>About</h2>")
-                        ;;                            :maximum-size [100 :by 100]
-                        ;;                            :foreground blue-green-color :font (myFont 14))]
-                        ;;                    [(some-text blue-color)]]
-                        ;;            ;;  [(label :text "some-text" :halign :left :font (myFont 14) :foreground light-grey-color)]
-                                  
-                                   
-                        ;;            )]
-                        ;;   (doall (map (fn [x] (.add mig x )) (if (= faq nil) nil (asks-panel faq))))
-                          
-                        ;;   (.repaint mig)
-                          
-                        ;;   ;;(scrollable mig :hscroll :never :border nil)
-                        ;;   mig
-                        ;;   )
-                        
-                          "aligny top"
-                        ]
-                     ])]
-   
-   
+                       [(let [scr (scrollable (doto (border-panel
+                                                     :items [[(vertical-panel
+                                                               :items (concat (list
+                                                                               (label :text (tool/htmling "<h2>About</h2>")
+                                                                                      :foreground blue-green-color :font (myFont 14))
+                                                                               (label :text (tool/htmling "<p align= \"justify\">This configuration page describe data binding and data environment of program. De-facto is a backend for jarman</p>")
+                                                                                      :foreground light-grey-color
+                                                                                      :font (myFont 14))
+                                                                               (label :text (tool/htmling "<p align= \"justify\">You must set right hostname(server ip adress and port), database name also application user and password</p>")
+                                                                                      :border (empty-border :top 10)
+                                                                                      :foreground light-grey-color
+                                                                                      :font (myFont 14))
+                                                                               (label :text (tool/htmling "<h2>FAQ</h2>")
+                                                                                      :foreground blue-green-color :font (myFont 14)))
+                                                                              (flatten (map (fn [x] [(label :text (str "- " (:q x)) :foreground blue-green-color :font (myFont 14) :border (empty-border :top 4 :bottom 4))
+                                                                                                     (label :text (:a x) :foreground light-grey-color :font (myFont 14) :border (empty-border :top 4 :bottom 4))]) faq)))) :north]])
+                                                (.setPreferredSize (new Dimension 340 10000)))
+                                              :hscroll :never :border nil)]
+                          (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
+                          (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr) "aligny top"]])]
     mig-p))
-
-(show-options (label))
 
 (start)
 
-
-(println "sdfsfsdffsd")
-
-;; (defn db-connect-error [key-title]
-;;   [[ :north]])
-
 (defn get-values [some-key]
   (string/split (string/replace (name some-key) #"\_" ".") #"\--" ))
-
 
 (defn test-key-connection [key-title]
   (let [data (key-title (c/datalist-mapper (c/datalist-get)))]
@@ -405,28 +372,30 @@ Why i saw this error"
       (if (fn? login-fn)
         (if-let [u (login-fn login pass)]
           u
-          "USER NOT FOUND")
+          "user not found")
         (case login-fn
           :no-connection-to-database
-          "NOT CONNECTION TO BD"
+          "bad DB connection"
           :not-valid-connection
-          "NOT VALID CONNECTION")))))
+          "not valid connection")))))
 
-
-;;(instance? clojure.lang.PersistentArrayMap (test-key-login :jarman--trashpanda-team_ddns_net  "wary" "243"))
-
-
-(defn some-error-v [error title]
+(defn some-error-v [error]
   (vertical-panel
    :background "#fff"
-   :items (list (label :text error :font (myFont 11) :foreground red-color
-                       :border (empty-border :top 5 :left 5 :bottom 5))
-                (label :text title :font (myFont 10) :foreground light-grey-color
-                       :border (empty-border :top 5 :left 5 :bottom 5)
-                       :preferred-size  [20 :by 20]))))
+   :items (list (label :text error :font (myFont 13) :foreground red-color
+                       :border (empty-border :top 5 :left 5 :bottom 5)))))
+
+(start)
 
 (defn label-to-config [dbname title key-title login pass] 
-  (let [
+  (let [dbn  (label :text dbname :font (myFont 15) :foreground blue-color
+                                                          :border (empty-border :top 5 :left 5 :bottom 5))
+        hostn (label :text title :font (myFont 12) :foreground light-grey-color
+                                                          :border (empty-border :top 5 :left 5 :bottom 5)
+                                                          :preferred-size  [20 :by 20])
+        v-pane (vertical-panel
+                :background "#fff"
+                :items (list dbn hostn))
         icon-conf
         (label :icon (stool/image-scale icon/settings-64-png 40)
                :border (compound-border (empty-border :top 10 :left 55))
@@ -445,13 +414,7 @@ Why i saw this error"
                   :preferred-size  [120 :by 120]
                   :background "#fff")]
     (do (.removeAll my-panel)
-        (config! my-panel  :items  [[(vertical-panel
-                                      :background "#fff"
-                                      :items (list (label :text dbname :font (myFont 15) :foreground blue-color
-                                                          :border (empty-border :top 5 :left 5 :bottom 5))
-                                                   (label :text title :font (myFont 12) :foreground light-grey-color
-                                                          :border (empty-border :top 5 :left 5 :bottom 5)
-                                                          :preferred-size  [20 :by 20]))) :north]
+        (config! my-panel  :items  [[v-pane :north]
                                     [icon-conf :south]]))
     (.repaint my-panel)
     (config! my-panel :listen [:mouse-entered (fn [e] (do 
@@ -459,36 +422,32 @@ Why i saw this error"
                                                         (config! icon-conf :visible? true)))
                                :mouse-exited  (fn [e] (do (config! e :border (line-border :bottom 4 :color light-grey-color))
                                                           (config! icon-conf :visible? false)))
-                               :mouse-clicked (fn [e] (do (if (nil? (test-key-connection key-title))
-                                                            (do 
-                                                              (.removeAll my-panel)
-                                                              (.add my-panel (some-error-v "Connection false" title))
-                                                              (config! my-panel 
-                                                                       :border (line-border :bottom 4
-                                                                                            :color red-color)
-                                                                       :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content info-panel))
-                                                                                :mouse-exited  (fn [e] (do (config! e :border (line-border :bottom 4 :color red-color))))
-                                                                                :mouse-entered  (fn [e] (do (config! e :border (line-border :bottom 4 :color red-color))))])
-                                                              (.revalidate my-panel))
-                                                            (do
-                                                              (.removeAll my-panel)
-                                                              (let [data-log (test-key-login key-title (text login)
+                               :mouse-clicked (fn [e] (let [data-log (test-key-login key-title (text login)
                                                                                              (get (config pass :user-data) :value))]
-                                                                  (if (instance? clojure.lang.PersistentArrayMap data-log)
-                                                                    (do (.revalidate my-panel)
-                                                                        (.dispose (to-frame e))
-                                                                        (@app/startup))
-                                                                    (do 
-                                                                      (.add my-panel (some-error-v (name data-log) "")
-                                                                            (label :text (name data-log)
-                                                                                            :font (myFont 11) :foreground red-color
-                                                                                            :border (empty-border :top 5 :left 5 :bottom 5)))
-                                                                        (.revalidate my-panel))))))))])
+                                                        (if (instance? clojure.lang.PersistentArrayMap data-log)
+                                                          (do (.revalidate my-panel)
+                                                              (.dispose (to-frame e))
+                                                              (@app/startup))
+                                                          (do
+                                                            (config! dbn :foreground red-color)
+                                                            (println (name data-log))
+                                                            (.add v-pane ;; (some-error-v (name data-log))
+                                                                  (label :text (name data-log)
+                                                                         :font (myFont 11) :foreground red-color
+                                                                         :border (empty-border :top 5 :left 5 :bottom 5)) )
+                                                            (config! my-panel 
+                                                                     :border (line-border :bottom 4
+                                                                                          :color red-color)
+                                                                     :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content (info-panel)))
+                                                                              :mouse-exited  (fn [e] (do
+                                                                                                       (config! icon-conf :visible? false)
+                                                                                                       (config! e :border (line-border :bottom 4 :color red-color))))
+                                                                              :mouse-entered  (fn [e] (do (config! icon-conf :visible? true)
+                                                                                                        (config! e :border (line-border :bottom 4 :color red-color))))])
+                                                            (.revalidate my-panel)))))])
     my-panel))
 
-
-
-
+(start)
 
 (defn configurations-panel [login pass]
   (let [mig (mig-panel
@@ -512,7 +471,7 @@ Why i saw this error"
            :background "#fff"))
     scr))
 
-
+(start)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; panels for login and error ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -538,9 +497,6 @@ Why i saw this error"
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     scr))
 
-
-;;(conf/swapp)
-
 (defn asks-panel [faq]
   (let [mig
         (mig-panel
@@ -553,12 +509,12 @@ Why i saw this error"
             :foreground blue-green-color
             :font (myFont 14)) mig]))
 
-(def ^:private info-panel
+(defn info-panel []
   (let [info some-text
-        faq [{:q "Why i saw this error"
-              :a "Because your program has trouble"}
-             {:q "What it problem mean"
-              :a "Read the fucking descriptin"}]
+        faq [{:q "Why i can not get connection with server?"
+              :a "Please check that you have entered the data correctly"}
+             {:q "Where can i find data to connect?"
+              :a "Please contact with your system administrator"}]
         scr (scrollable
              (mig-panel
               :constraints ["wrap 1" "[grow, center]" "20px[]20px"]
@@ -589,11 +545,11 @@ Why i saw this error"
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     scr))
 
-(show-options (border-panel))
-
 (defn login-panel []
   (let [flogin (components/input-text :placeholder "Login"
+                                      
                                       :args [:columns 20
+                                             
                                              :border (compound-border emp-border
                                                                       (line-border :bottom 4 :color light-blue-color))
                                              :halign :left])
@@ -624,7 +580,7 @@ Why i saw this error"
                :items [[(label :icon (stool/image-scale icon/refresh-connection-grey1-64-png 40)
                                :border (compound-border (empty-border :right 10 )))]
                        [(label :icon (stool/image-scale icon/a-blue-64-png 40) ;;I-grey-64-png
-                               :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content info-panel))])]])]])))
+                               :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content (info-panel)))])]])]])))
 
 ;;;;;;;;;;;;;;
 ;;; frames ;;;
@@ -649,10 +605,6 @@ Why i saw this error"
       (-> (doto (frame-login) (.setLocationRelativeTo nil) (apply-stylesheet my-style)) seesaw.core/pack! seesaw.core/show!)
       (-> (doto (frame-error) (.setLocationRelativeTo nil)(apply-stylesheet my-style))
           (config! :content (error-panel res-validation)) seesaw.core/pack! seesaw.core/show!))))
-
-(start)
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; multi-panel for replace some panels ;;;
@@ -721,7 +673,6 @@ Why i saw this error"
          :minimum-size [800 :by 600]))
 
 (-> (doto (test-frame) (.setLocationRelativeTo nil) ) seesaw.core/pack! seesaw.core/show!)
-
 
 
 

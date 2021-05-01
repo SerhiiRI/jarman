@@ -7,16 +7,7 @@
    ;; Clojure toolkit 
    [clojure.data :as data]
    [clojure.string :as string]
-   
-
-   ;; Seesaw components
-   ;; [seesaw.util :as u]
-   ;; [seesaw.core :as c]
-   ;; [seesaw.border :as sborder]
-   ;; [seesaw.dev :as sdev]
-   ;; [seesaw.mig :as smig]
-   ;; [seesaw.swingx :as swingx]
-
+   [kaleidocs.merge :refer [merge-doc]]
    ;; Jarman toolkit
    [jarman.logic.connection :as db]
    [jarman.config.config-manager :as cm]
@@ -191,18 +182,18 @@
     (if (map? (:prop document-to-export))
       (fn [model-id export-directory]
         (if (not (.exists path-to-template))
-          ;; (doc/download-document document-to-export)
-          (println "DOWNLOADING FILE>>>>>"))
-        (println "EXPORT DOCUMENT: ")
-        (println ;;merge-doc
-         "\nFROM: "
-         (str path-to-template)
-         "\nTO: "
-         (str (clojure.java.io/file export-directory file-name))
-         "\nSQL: "
-         (select!
-          (merge {:table-name table}
-                 (:prop document-to-export)
-                 {:where [:= id-table-field model-id]}))))
+          (download-document document-to-export)
+          ;; (println "DOWNLOADING FILE>>>>>")
+          )
+        ;; (println "EXPORT DOCUMENT: ")
+        (if-let [founded (first (db/query (select!
+                                           (merge {:table-name table}
+                                                  (:prop document-to-export)
+                                                  {:where [:= id-table-field model-id]}))))]
+          (merge-doc
+           path-to-template
+           (clojure.java.io/file export-directory file-name)
+           founded)
+          (println "this string shouldn't ever be printed, fatal error")))
       (fn [& body]
         (println "Exporter property is not map-type")))))

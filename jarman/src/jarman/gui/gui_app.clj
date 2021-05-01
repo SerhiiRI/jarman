@@ -30,7 +30,8 @@
             [jarman.tools.lang :refer :all :as lang]
             [jarman.gui.gui-seed :refer :all]
             [jarman.gui.gui-config-generator :refer :all :as cg]
-            [jarman.logic.view :refer :all :as view]
+            [jarman.logic.view :as view]
+            [jarman.gui.gui-docs :as docs]
             ;; [jarman.logic.view :refer :all] 
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
 
@@ -764,6 +765,7 @@
 ;; │                                         │
 ;; └─────────────────────────────────────────┘
 
+
 (def create-expand-btns--confgen
   "Discription
      Return expand button with config generator GUI
@@ -791,7 +793,9 @@
                                                               :set-view
                                                               :view-id view-id
                                                               :title title
-                                                              :component (cg/create-view--confgen path :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5))))))))
+                                                              :component (try 
+                                                                           (cg/create-view--confgen path :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)))
+                                                                           (catch Exception e (str "caught exception: " (.getMessage e)))))))))
                    config-file-list-as-keyword-to-display)
 
               (let [path [:themes :theme_config.edn]
@@ -891,14 +895,8 @@
                               "0px[grow, fill]38px"]
                 :border (line-border :left margin-left :color bg-color)
                 :items [;; [(label-fn :background "#eee" :size [50 :by 50])]
-                        [(mig-app-left-f  [(button-expand "Alerty"
-                                                          [(button-expand-child "Alert 1 \"Test\""  :onClick (fn [e] (@alert-manager :set {:header "Test" :body "Bardzo dluga testowa wiadomość, która nie jest taka prosta do ogarnięcia w seesaw."} (message alert-manager) 3)))
-                                                           (button-expand-child "Alert 2 \"Witaj\"" :onClick (fn [e] (@alert-manager :set {:header "Witaj" :body "Świecie"} (message alert-manager) 5)))])]
-                                          [(button-expand "Widoki"
-                                                          [(button-expand-child "Test 1"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test1" :title "Test 1" :component (label :text "Test 1"))))
-                                                           (button-expand-child "Test 2"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test2" :title "Test 2" :component (label :text "Test 2"))))
-                                                           (button-expand-child "Test 3"    :onClick (fn [e] (@jarman-views-service :set-view :view-id "test3" :title "Test 3" :component (vertical-panel :items [(label :text "Test 3")]))))
-                                                           (button-expand-child "DB View" :onClick (fn [e] (@jarman-views-service :set-view :view-id "Database" :title "Database" :component create-view--db-view)))
+                        [(mig-app-left-f  [(button-expand "Database"
+                                                          [(button-expand-child "DB Visualiser" :onClick (fn [e] (@jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component create-view--db-view)))
                                                           ;;  (button-expand-child "Users table" :onClick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
                                                            ])]
                                           [(button-expand "Tables"
@@ -948,10 +946,12 @@
                                                                                                                                            (= @work-mode :admin-mode) (reset! work-mode :dev-mode)
                                                                                                                                            (= @work-mode :dev-mode)   (reset! work-mode :user-mode))
                                                                                                                                      (@alert-manager :set {:header "Work mode" :body (str "Switched to: " (symbol @work-mode))} (message alert-manager) 5))})
-                       (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 7 img-scale "Table Auto Generator" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil)))})
+                       (slider-ico-btn (stool/image-scale icon/calendar2-64-png img-scale) 7 img-scale "Table Auto Generator" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil)))})
+                       (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 8 img-scale "Docs Templates" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "Docs-Templates" :title "Docs Templates" :scrollable? false :component (docs/auto-builder--table-view nil)))})
                        @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook)))))
 
+;; (@startup)
 
 (reset! startup
         (fn []

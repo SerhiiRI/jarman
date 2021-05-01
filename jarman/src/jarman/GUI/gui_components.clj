@@ -10,6 +10,7 @@
             [seesaw.util :as u]
             [seesaw.mig :as smig]
             [jarman.tools.swing :as stool]
+            [jarman.tools.lang :as lang]
             [jarman.gui.gui-tools :refer :all :as gtool])
   (:import (java.awt Color)))
 
@@ -157,6 +158,7 @@
            store-id nil
            onClick (fn [e])
            debug false}}]
+  (if-not (empty? val) (swap! local-changes (fn [storage] (assoc storage store-id val))))
   (input-text
    :args [:editable? editable?
           :enabled? enabled?
@@ -166,22 +168,47 @@
           :background (if-not editable? (gtool/get-color :background :light-mute) (gtool/get-color :background :input))
           :listen [:mouse-clicked onClick
                    :action-performed onClick
-                   :mouse-entered (if editable? (fn [e]) (fn [e] 
+                   :mouse-entered (if editable? (fn [e]) (fn [e]
                                                            (hand-hover-on e)
-                                                           (config! e )))
+                                                           (config! e)))
                    :caret-update (fn [e]
-                                   (let [new-v (c/value (c/to-widget e))] 
-                                    (if debug (println "--Input text change" new-v))
-                                    (if debug (println "--Atom" @local-changes))
-                                    (cond
-                                      (and (not (nil? store-id))
-                                           (not (= val new-v)))
-                                      (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
-                                      :else (reset! local-changes (dissoc @local-changes store-id)))))
+                                   (let [new-v (c/value (c/to-widget e))]
+                                     (if debug (println "--Input text change" new-v))
+                                     (if debug (println "--Atom" @local-changes))
+                                     (cond
+                                       (and (not (nil? store-id))
+                                            (not (= val new-v)))
+                                       (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
+                                       :else (reset! local-changes (dissoc @local-changes store-id)))))
                    :focus-gained (fn [e] (c/config! e :border ((get-user-data e :border-fn) (get-color :decorate :focus-gained))))
                    :focus-lost   (fn [e] (c/config! e :border ((get-user-data e :border-fn) (get-color :decorate :focus-lost))))]]))
 
+
+(defn select-box
+  ([model
+    & {:keys [store-id local-changes selected-item editable? enabled?]
+       :or   {local-changes (atom {})
+              selected-item ""
+              editable? true
+              enabled? true
+              store-id nil}}]
+   (if-not (empty? selected-item) (swap! local-changes (fn [storage] (assoc storage store-id selected-item))))
+   (c/combobox :model (let [combo-model (if (empty? selected-item) (cons selected-item model) (lang/join-vec [selected-item] (filter #(not= selected-item %) model)))]
+                        combo-model)
+               :font (getFont 14)
+               :enabled? enabled?
+               :editable? editable?
+               :background (gtool/get-color :background :combobox)
+               :listen [:item-state-changed (fn [e] ;;(let [choosed (config e :selected-item)])
+                                              (let [new-v (c/config e :selected-item)]
+                                                ;; (println "new value" new-v)
+                                                (cond
+                                                  (and (not (nil? store-id))
+                                                       (not (= selected-item new-v)))
+                                                  (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
+                                                  :else (reset! local-changes (dissoc @local-changes store-id)))))])))
  
+
 (defn expand-form-panel
   "Description:
      Create panel who can hide inside components. 
@@ -202,7 +229,7 @@
            focus-color (get-color :decorate :focus-gained-dark)
            unfocus-color "#fff"}}]
   (let [hidden-comp (atom nil)
-        form-space-open ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
+        form-space-open ["wrap 1" "0px[grow,fill]0px" "0px[fill]0px"]
         form-space-hide ["" "0px[grow, fill]0px" "0px[grow, fill]0px"]
         form-space (smig/mig-panel :constraints form-space-open)
         onClick (fn [e]

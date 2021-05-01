@@ -496,16 +496,16 @@
                                                          (do
                                                            (if (empty? model)
                                                              (do ;;Create calendar input
-                                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified :changes complete)))
+                                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified :local-changes complete)))
                                                              (do ;; Create update calenda input
-                                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified :changes complete :set-date (if (empty? v) "1900-01-01" v))))))
+                                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified :local-changes complete :set-date (if (empty? v) "1900-01-01" v))))))
                                                          (lang/in? (get meta :component-type) "i")
                                                          (do ;; Add input-text with label
                                                            (if (empty? model)
                                                              (do ;;Create insert input
-                                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified :changes complete :editable? editable?)))
+                                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified :local-changes complete :editable? editable?)))
                                                              (do ;; Create update input
-                                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified :changes complete :editable? editable? :val v)))))
+                                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified :local-changes complete :editable? editable? :val v)))))
                                                          (lang/in? (get meta :component-type) "l")
                                                          (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
                                                            (let [connected-table (var-get (-> (str "jarman.logic.view/" (get meta :key-table) "-view") symbol resolve))
@@ -516,7 +516,7 @@
                                                                                                 (string/join ", ")))
                                                                  v (selected-representation connected-table model)]
                                                              (if-not (nil? (get model field-qualified)) (swap! complete (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
-                                                             (gcomp/inpose-label title (gcomp/input-text-with-atom :changes complete :editable? false :val v
+                                                             (gcomp/inpose-label title (gcomp/input-text-with-atom :local-changes complete :editable? false :val v
                                                                                                                    :onClick (fn [e] (let [selected (construct-dialog (:->table connected-table) field-qualified (c/to-frame e))]
                                                                                                                                       (if-not (nil? (get selected (:->model->id connected-table)))
                                                                                                                                         (do (c/config! e :text (selected-representation connected-table selected))

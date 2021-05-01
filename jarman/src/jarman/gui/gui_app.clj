@@ -411,10 +411,11 @@
                                               (println (str "<br/>" path " \"" (get-in table path) "\" -> \"" valu "\""))
                                               (swap! new-table-meta (fn [atom-table] (assoc-in atom-table (first change) (second change))))))
                                           @local-changes))
-                                        (println "New table meta: " @new-table-meta)
-                                         (mmeta/do-change
-                                          (mmeta/apply-table table @new-table-meta)
-                                          table @new-table-meta)
+                                        ;; (println "New table meta: " @new-table-meta)
+                                        (mmeta/do-change
+                                         (mmeta/apply-table table @new-table-meta)
+                                         table @new-table-meta)
+                                        
                                         ;; (mmeta/apply-table table @new-table-meta)
                                         ))))
 

@@ -315,6 +315,7 @@
 
 
 
+
 (def input-password
   "Description:
     Text component converted to password input component, placeholder is default value.
@@ -322,19 +323,36 @@
     ((def input-password :placeholder \"Password\" :style [:halign :center])
  "
   (fn [& {:keys [placeholder
+                 border
+                 font-size
+                 border-color-focus
+                 border-color-unfocus
                  style]
           :or   {placeholder "Password"
+                 font-size 14
+                 border-color-focus   (get-color :decorate :focus-gained)
+                 border-color-unfocus (get-color :decorate :focus-lost)
+                 border [10 10 5 5 2]
                  style []}}]
     (let [fn-letter-count (fn [e] (count (value e)))
           fn-hide-chars   (fn [e] (apply str (repeat (fn-letter-count e) "*")))
           fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
-          fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))]
-      (apply text :text placeholder
+          fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))
+          newBorder       (fn [underline-color]
+                            (compound-border (empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
+                                             (line-border :bottom (nth border 4) :color underline-color)))]
+      (apply text
+             :text placeholder
+             :font (getFont font-size :name "Monospaced")
+             :background (get-color :background :input)
+             :border (newBorder border-color-unfocus)
              :user-data {:placeholder placeholder :value "" :edit? false :type :password}
              :listen [:focus-gained (fn [e]
+                                      (config! e :border (newBorder border-color-focus))
                                       (cond (= (fn-get-data e :value) "")    (config! e :text ""))
                                       (config! e :user-data (fn-assoc e :edit? true)))
                       :focus-lost   (fn [e]
+                                      (config! e :border (newBorder border-color-unfocus))
                                       (cond (= (value e) "") (config! e :text placeholder))
                                       (config! e :user-data (fn-assoc e :edit? false)))
                       :caret-update (fn [e]

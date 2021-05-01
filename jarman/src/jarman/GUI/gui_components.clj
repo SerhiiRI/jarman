@@ -91,39 +91,43 @@
            args))))
 
 
-(def input-text
+(defn input-text
   "Description:
     Text component converted to text component with placeholder. Placehlder will be default value.
  Example:
     (input-text :placeholder \"Login\" :style [:halign :center])
  "
-  (fn [& {:keys [v
+  ([& {:keys [v
                  placeholder
                  border
                  font-size
+                 border-color-focus
+                 border-color-unfocus
                  args]
           :or   {v ""
                  placeholder ""
                  font-size 14
-                 border [10 10 5 5]
+                 border-color-focus   (get-color :decorate :focus-gained)
+                 border-color-unfocus (get-color :decorate :focus-lost)
+                 border [10 10 5 5 2]
                  args []}}]
     (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
           fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))
           newBorder (fn [underline-color]
                       (compound-border (empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
-                                       (line-border :bottom 2 :color underline-color)))]
+                                       (line-border :bottom (nth border 4) :color underline-color)))]
       (apply text 
              :text (if (empty? v) placeholder (if (string? v) v (str v)))
              :font (getFont font-size :name "Monospaced")
              :background (get-color :background :input)
-             :border (newBorder (get-color :decorate :focus-lost))
+             :border (newBorder border-color-focus)
              :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
              :listen [:focus-gained (fn [e]
-                                      (config! e :border (newBorder (get-color :decorate :focus-gained)))
+                                      (config! e :border (newBorder border-color-focus))
                                       (cond (= (value e) placeholder) (config! e :text ""))
                                       (config! e :user-data (fn-assoc e :edit? true)))
                       :focus-lost   (fn [e]
-                                      (config! e :border (newBorder (get-color :decorate :focus-lost)))
+                                      (config! e :border (newBorder border-color-unfocus))
                                       (cond (= (value e) "") (config! e :text placeholder))
                                       (config! e :user-data (fn-assoc e :edit? false)))]
              args))))
@@ -150,12 +154,14 @@
 
 
 (defn input-text-with-atom
-  [& {:keys [store-id local-changes val editable? enabled? onClick debug]
+  [& {:keys [store-id local-changes val editable? enabled? onClick border-color-focus border-color-unfocus debug]
       :or {local-changes (atom {})
            val ""
            editable? true
            enabled? true
            store-id nil
+           border-color-focus   (get-color :decorate :focus-gained)
+           border-color-unfocus (get-color :decorate :focus-lost)
            onClick (fn [e])
            debug false}}]
   (if-not (empty? val) (swap! local-changes (fn [storage] (assoc storage store-id val))))
@@ -180,8 +186,9 @@
                                             (not (= val new-v)))
                                        (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
                                        :else (reset! local-changes (dissoc @local-changes store-id)))))
-                   :focus-gained (fn [e] (c/config! e :border ((get-user-data e :border-fn) (get-color :decorate :focus-gained))))
-                   :focus-lost   (fn [e] (c/config! e :border ((get-user-data e :border-fn) (get-color :decorate :focus-lost))))]]))
+                   :focus-gained (fn [e] (c/config! e :border ((get-user-data e :border-fn) border-color-focus)))
+                   :focus-lost   (fn [e] (c/config! e :border ((get-user-data e :border-fn) border-color-unfocus)))
+                   ]]))
 
 
 (defn select-box

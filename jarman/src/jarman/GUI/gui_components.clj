@@ -113,7 +113,7 @@
                                        (line-border :bottom 2 :color underline-color)))]
       (apply text 
              :text (if (empty? v) placeholder (if (string? v) v (str v)))
-             :font (getFont font-size)
+             :font (getFont font-size :name "Monospaced")
              :background (get-color :background :input)
              :border (newBorder (get-color :decorate :focus-lost))
              :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
@@ -357,7 +357,7 @@
           :or {onClick (fn [e] (println "Clicked: " title))
                args []}}]
     (apply label :font (getFont)
-           :text title
+           :text (str title)
            :background "#fff"
            :size [200 :by 25]
            :border (empty-border :left 10)

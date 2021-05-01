@@ -14,23 +14,19 @@
   (:require [clojure.string :as string]
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
-            [clojure.pprint :as pp]
             ;; logics
-            [seesaw.util :as u]
-            [jarman.config.config-manager :as cm]
-            [jarman.gui.gui-tools :refer :all :as gtool]
-            [jarman.gui.gui-components :refer :all :as gcomp]
+            [jarman.config.config-manager :as c]
+            [jarman.gui.gui-tools :refer :all]
+            [jarman.gui.gui-components :refer :all]
             [jarman.gui.gui-alerts-service :refer :all]
-            [jarman.gui.gui-views-service :refer :all :as vs]
+            [jarman.gui.gui-views-service :refer :all]
             ;; deverloper tools 
             [jarman.tools.swing :as stool]
             [jarman.config.spec :as sspec]
             [jarman.config.init :as iinit]
             [jarman.logic.metadata :as mmeta]
-            [jarman.tools.lang :refer :all :as lang]
+            [jarman.tools.lang :refer :all]
             [jarman.gui.gui-seed :refer :all]
-            [jarman.gui.gui-config-generator :refer :all :as cg]
-            [jarman.logic.view :refer :all :as view]
             ;; [jarman.logic.view :refer :all] 
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
 
@@ -38,8 +34,58 @@
 
 
 (def jarman-views-service (atom nil))
-(def work-mode (atom :dev-mode)) ;; user-mode, admin-mode, dev-mode
 
+
+;; ┌────────────────────┐
+;; │                    │
+;; │ Changes controller │
+;; │                    │
+;; └────────────────────┘
+
+(def work-mode (atom :dev-mode))
+(def storage-with-changes (atom {})) ;; Store view id as key and component id which is path in config map too {:view link-to-atom}
+
+(def add-changes-controller
+  "Description:
+       Add changes controller for views. Storage only stores atoms from bigest view component.
+   Example:
+       (add-changes-controller view-id changing-list) where changing-list is an atom inside view/biggest component.
+   "
+  (fn [view-id changing-list]
+    (swap! storage-with-changes (fn [changes-atoms] (merge changes-atoms {view-id changing-list})))))
+
+(def get-changes-atom
+  "Description:
+       Function return atom address to list of changes for view by view-id.
+   Example:
+       (get-changes-atom :init.edn) => {:init.edn-value-lang [[:init.edn :value :lang] EN]}
+   "
+  (fn [view-id]
+    (get-in @storage-with-changes [view-id])))
+
+(def set-change-to-view-atom
+  (fn [changing-list path new-value]
+    (swap! changing-list (fn [changes] (merge changes {(convert-mappath-to-key path) [path new-value]})))))
+
+(def remove-change-from-view-atom
+  (fn [changing-list path]
+    (swap! changing-list (fn [changes] (dissoc changes (convert-mappath-to-key path))))))
+
+(def track-changes-used-components
+  (fn [changing-list value-path event component-key value]
+    (cond
+      ;; if something was change
+      (not (= (config event component-key) value)) (set-change-to-view-atom changing-list value-path (config event component-key))
+      ;; if back to orginal value
+      (not (nil? (get-in @changing-list [(convert-mappath-to-key value-path)]))) (remove-change-from-view-atom changing-list value-path))))
+
+(def track-changes
+  (fn [changing-list value-path orginal new-value]
+    (cond
+      ;; if something was change
+      (not (= orginal new-value)) (set-change-to-view-atom changing-list value-path new-value)
+      ;; if back to orginal value
+      (not (nil? (get-in @changing-list [(convert-mappath-to-key value-path)]))) (remove-change-from-view-atom changing-list value-path))))
 
 
 
@@ -213,6 +259,65 @@
 
 ;; ================================================VVVVVVVVVV Table in database view
 
+
+
+;; (def dbmap (atom (list
+;;                   {:id 29
+;;                    :table "service_contract"
+;;                    :prop
+;;                    {:table
+;;                     {:frontend-name "service_contract"
+;;                      :is-system? false
+;;                      :is-linker? false
+;;                      :allow-modifing? true
+;;                      :allow-deleting? true
+;;                      :allow-linking? true}
+;;                     :columns
+;;                     [{:field "id_point_of_sale"
+;;                       :representation "id_point_of_sale"
+;;                       :description nil
+;;                       :component-type "l"
+;;                       :column-type "bigint(20) unsigned"
+;;                       :private? false
+;;                       :editable? true
+;;                       :key-table "point_of_sale"}
+;;                      {:field "name_of_sale"
+;;                       :representation "Miejsce sprzedaży"
+;;                       :description "Opisuje miejsce sprzedaży"
+;;                       :component-type "l"
+;;                       :column-type "bigint(20) unsigned"
+;;                       :private? false
+;;                       :editable? true}
+;;                      {:field "some_poop"
+;;                       :representation "Nazwa nazw"
+;;                       :description "Opisuje nazw"
+;;                       :component-type "1"
+;;                       :column-type "bigint(20) unsigned"
+;;                       :private? false
+;;                       :editable? true}]}}
+;;                   {:id 30
+;;                    :table "user"
+;;                    :prop
+;;                    {:table
+;;                     {:frontend-name "user"
+;;                      :is-system? false
+;;                      :is-linker? false
+;;                      :allow-modifing? true
+;;                      :allow-deleting? true
+;;                      :allow-linking? true}
+;;                     :columns
+;;                     [{:field "login"
+;;                       :representation "login"
+;;                       :description nil
+;;                       :component-type "i"
+;;                       :column-type "varchar(100)"
+;;                       :private? false
+;;                       :editable? true}]}})))
+
+
+;; (map (fn [tab] (conj {:bounds [0 0 0 0]} tab)) dbmap)
+;; (prepare-table 10 10 "Users" "FName" "LName" "LOGIN")
+;; (getset)
 (def dbmap (atom (mmeta/getset)))
 
 
@@ -294,7 +399,8 @@
                          :mouse-exited  (fn [e] (config! e :background @bg-btn))
                          :mouse-clicked  (fn [e] (cond
                                                    (= @bg-btn color)
-                                                   (do ;; reset bg and atom inside all buttons in parent if id is ok
+                                                   (do
+                                                ;; reset bg and atom inside all buttons in parent if id is ok
                                                      (doall (map (fn [b] (cond (= (config b :id) id-btn)
                                                                                (do (config! b :background color)
                                                                                    (reset! (config b :user-data) color))))
@@ -316,51 +422,52 @@
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
 
 (def table-editor--element--small-input
-  (fn [enable local-changes path-to-value value]
+  (fn [enable changing-list value-path value]
     (text :text value :font (getFont 12)
           :background (get-color :background :input)
           :enabled? enable
           :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-          :listen [:caret-update (fn [event] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path-to-value :old-value value :new-value (config event :text)))])))
+          :listen [:caret-update (fn [event] (track-changes-used-components changing-list value-path event :text value))])))
 
 
 (def table-editor--element--input
-  (fn [enable local-changes path-to-value value]
+  (fn [enable changing-list value-path value]
     (text :text value :font (getFont 12)
           :background (get-color :background :input)
           :enabled? enable
           :border (compound-border (empty-border :left 15 :right 20 :top 8 :bottom 8)
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-          :listen [:caret-update (fn [e] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path-to-value :old-value value :new-value (config e :text)))])))
+          :listen [:caret-update (fn [e] (track-changes changing-list value-path value (config e :text)))])))
 
+
+
+(defn table-editor--element--btn-add-col-prop
+  []
+  (mig-panel ;; Button for add parameter to column 
+   :constraints ["" "0px[grow, center]0px" "5px[fill]5px"]
+   :items [[(label :icon (stool/image-scale icon/plus-128-png 15)
+                   :listen [:mouse-clicked (fn [e] (println "Add parameter"))
+                            :mouse-entered (fn [e] (config! e :cursor :hand))])]]
+   :border (compound-border
+            (line-border :top 2 :color (get-color :decorate :gray-underline))
+            (empty-border :left 15 :right 15 :top 5 :bottom 8))))
 
 (def switch-column-to-editing
-  (fn [work-mode local-changes path-to-value event column column-editor-id]
+  (fn [mode changing-list value-path event column column-editor-id]
     (config! (select (to-root event) [(convert-str-to-hashkey column-editor-id)])
              ;; Right space for column parameters
              :items [[(mig-panel ;; Editable parameters list
-                       :constraints ["wrap 1" "20px[250:,fill]5px" "0px[fill]0px"]
+                       :constraints ["wrap 2" "20px[100, fill]10px[150:,fill]5px" "5px[fill]5px"]
                        :items (join-mig-items
-                               (filter
-                                #(not (nil? %))
-                                (map
-                                 (fn [column-parameter]
-                                   (let [key-param (first column-parameter)
-                                         path-to-value (lang/join-vec path-to-value [key-param])]
-                                     (cond
-                                       (= work-mode :dev-mode) 
-                                       (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter))) :vtop 10)
-                                       (= work-mode :admin-mode)
-                                       (cond ;; For admin-mode. Enable and disble components
-                                         (lang/in? [:representation :description] key-param)
-                                         (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter))) :vtop 10)
-                                         (lang/in? [:private? :editable?] key-param)
-                                         (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter)) :enabled? false) :vtop 10))
-                                       :else nil))) ;; Parameter value
-                                 column))))]])))
+                               (map
+                                (fn [column-parameter]
+                                  (let [key-param (first column-parameter)]
+                                    (list
+                                     (label :text (str key-param)) ;; Parameter name
+                                     (table-editor--element--input (= mode :dev-mode) changing-list (join-vec value-path [key-param]) (str (second column-parameter)))))) ;; Parameter value
+                                column)))]])))
 
-;; (@startup)
 
 (def table-editor--element--btn-add-column
   (fn [] (mig-panel ;; Button for add column to table
@@ -372,15 +479,15 @@
 
 (defn table-editor--component--column-picker
   "Create left table editor view to select column which will be editing on right table editor view"
-  [work-mode local-changes column-editor-id columns path-to-value]
+  [mode changing-list column-editor-id columns value-path]
   (mig-panel :constraints ["wrap 1" "0px[100:,fill]0px" "0px[fill]0px"]
              :items
              (join-mig-items
               (map (fn [column index]
-                     (let [path-to-value (join-vec path-to-value [index])]
+                     (let [value-path (join-vec value-path [index])]
                        (table-editor--component--column-picker-btn
                         (get-in column [:representation])
-                        (fn [event] (switch-column-to-editing work-mode local-changes path-to-value event column column-editor-id)))))
+                        (fn [event] (switch-column-to-editing mode changing-list value-path event column column-editor-id)))))
                    columns (range (count columns)))
               (table-editor--element--btn-add-column))))
 
@@ -397,132 +504,130 @@
       (do ;;(println map)
         map))))
 
+(def meta-copy (atom {}))
 (defn table-editor--element--btn-save
-  [local-changes table]
+  [changing-list table-id]
   (table-editor--component--bar-btn :edit-view-save-btn (get-lang-btns :save) icon/agree-grey-64-png icon/agree-blue-64-png
-                                    (fn [e] ;; here
-                                      (let [new-table-meta (atom table)]
+                                    (fn [e] ;; TODO
+                                      ;; save meta configuration chenages
+                                      ;; (prn "Changes" @changing-list)
+                                      (let [orginal-table (get-table-configuration-from-list-by-table-id dbmap table-id)]
+                                        (reset! meta-copy orginal-table)
                                         (doall
                                          (map
-                                          (fn [change]
-                                            (let [path (first change)
-                                                  valu (second change)]
-                                              (println (str "<br/>" path " \"" (get-in table path) "\" -> \"" valu "\""))
-                                              (swap! new-table-meta (fn [atom-table] (assoc-in atom-table (first change) (second change))))))
-                                          @local-changes))
-                                        (println "New table meta: " @new-table-meta)
-                                         (mmeta/do-change
-                                          (mmeta/apply-table table @new-table-meta)
-                                          table @new-table-meta)
-                                        ;; (mmeta/apply-table table @new-table-meta)
-                                        ))))
+                                          (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
+                                            (prn "Changes" (first (second new-value)) (second (second new-value)))
+                                            (swap! meta-copy (fn [changes] (assoc-in changes (first (second new-value)) (second (second new-value))))))
+                                          @changing-list))
+                                        (let [out (mmeta/validate-all @meta-copy)]
+                                          (cond (= (get-in out [:valid?]) true)
+                                                (doall
+                                                 (mmeta/do-change
+                                                  (mmeta/apply-table orginal-table @meta-copy)
+                                                  orginal-table @meta-copy)
+                                                 (reset! dbmap (mmeta/getset))
+                                                 (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5))
+                                                :else (@popup-menager :ok :title "Valid faild!" :body (string/join "<br>" ["Validation ended with faild." (get-in out [:output])]))))))))
+
+;; @dbmap
+;; @meta-copy
+;; @storage-with-changes
+;; @meta-copy
+;; (mmeta/validate-all {:id 23
+;;   :table "permission"
+;;   :prop
+;;   {:table
+;;    {:frontend-name "permission"
+;;     :is-system? false
+;;     :is-linker? false
+;;     :allow-modifing? true
+;;     :allow-deleting? true
+;;     :allow-linking? true}
+;;    :columns
+;;    [{:field "permission_name"
+;;      :representation "123"
+;;      :description nil
+;;      :component-type "i"
+;;      :column-type "varchar(20)"
+;;      :private? 123
+;;      :editable? true}
+;;     {:field "configuration"
+;;      :representation "-=0=-"
+;;      :description "-908-98-098"
+;;      :component-type "a"
+;;      :column-type "tinytext"
+;;      :private? false
+;;      :editable? true}]}})
 
 
 (defn table-editor--element--btn-show-changes
-  [local-changes table] (table-editor--component--bar-btn :edit-view-back-btn (get-lang-btns :show-changes) icon/refresh-grey-64-png icon/refresh-blue-64-png
-                                                    (fn [e] (@popup-menager :new-message
-                                                                            :title "Changes list"
-                                                                            :body (textarea (let [changes (atom "")]
-                                                                                              (doall
-                                                                                               (map
-                                                                                                (fn [change]
-                                                                                                  (let [path (first change)
-                                                                                                        valu (second change)]
-                                                                                                    (swap! changes (fn [txt] (str txt "<br/>" path " \"" (get-in table path) "\" -> \"" valu "\"")))))
-                                                                                                @local-changes))
-                                                                                              @changes))
-                                                                            :size [400 300]))))
+  [changing-list] (table-editor--component--bar-btn :edit-view-back-btn (get-lang-btns :show-changes) icon/refresh-grey-64-png icon/refresh-blue-64-png
+                                                    (fn [e] (@popup-menager :new-message :title "Changes list" :body (textarea (str @changing-list)) :size [400 300]))))
 
 
 
 (def table-editor--element--checkbox
-  (fn [enable local-changes path-to-value value txt]
-    (checkbox 
-     :text txt
-     :selected? value
+  (fn [enable changing-list value-path value]
+    (checkbox :selected? value
               :enabled? enable
-              :listen [:state-changed (fn [event] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path-to-value :old-value value :new-value (config event :selected?)))])))
+              :listen [:state-changed (fn [event] (track-changes-used-components changing-list value-path event :selected? value))])))
 
 
 ;; (show-events (checkbox))
 
 
 (def table-editor--element--table-parameter-name
-  (fn [table-property index] (label :text (lang/convert-key-to-title(str (first (nth (vec table-property) index)))))))
+  (fn [table-property index] (label :text (str (first (nth (vec table-property) index))))))
 
 (def table-editor--element--table-parameter-value
-  (fn [work-mode local-changes table-property tab-path-to-value index txtsize]
+  (fn [mode changing-list table-property tab-value-path index txtsize]
     (let [param-name  (first  (nth (vec table-property) index))
           param-value (second (nth (vec table-property) index))
-          path-to-value (join-vec tab-path-to-value [(keyword param-name)])
-          simple-label (fn [] (label :size txtsize :text (str param-name ": " param-value)))
-          component (cond
-                      (= work-mode :dev-mode)
-                      (cond
-                        (or (string?  param-value)
-                            (lang/in? [:representation :description] param-name)) (gcomp/inpose-label
-                                                                                  (lang/convert-key-to-title (str param-name))
-                                                                                  (gcomp/input-text-with-atom :local-changes local-changes
-                                                                                                              :store-id path-to-value
-                                                                                                              :val param-value)
-                                                                                  :vtop 10
-                                                                                  :id :text)
-                        (boolean? param-value) (table-editor--element--checkbox (= work-mode :dev-mode) local-changes path-to-value param-value (lang/convert-key-to-title param-name))
-                        :else (simple-label))
-                      (= work-mode :admin-mode)
-                      (cond ;; For admin-mode. Enable and disble components
-                        (or (string?  param-value)
-                            (lang/in? [:representation :description] param-name)) (gcomp/inpose-label (lang/convert-key-to-title (str param-name))
-                                                                                                     (gcomp/input-text-with-atom :local-changes local-changes
-                                                                                                                                 :store-id path-to-value
-                                                                                                                                 :val param-value
-                                                                                                                                 :enabled? (lang/in? [:representation :description] param-name))
-                                                                                                     :vtop 10
-                                                                                                     :id :text)
-                        (boolean? param-value) (table-editor--element--checkbox (= work-mode :dev-mode) local-changes path-to-value param-value (lang/convert-key-to-title param-name))
-                        :else (simple-label))
-                      :else (simple-label))]
-      (if-not (nil? component) component (label)))
-  )
-)
+          value-path (join-vec tab-value-path [(keyword param-name)])]
+      (cond
+        (string?  param-value) (table-editor--element--small-input (= mode :dev-mode) changing-list value-path (str param-value))
+        (boolean? param-value) (table-editor--element--checkbox    (= mode :dev-mode) changing-list value-path param-value)
+        :else (label :size txtsize :text (str param-value))))))
 
 (defn create-view--table-editor
   "Description:
      Create view for table editor. Marge all component to one big view.
    "
-  [work-mode atom--tables-configurations table-id]
-  (let [local-changes (atom {})
+  [mode atom--tables-configurations table-id]
+  (let [changing-list (atom {})
         table          (get-table-configuration-from-list-by-table-id atom--tables-configurations table-id)
-        col-path-to-value [:prop :columns]
-        tab-path-to-value [:prop :table]
-        columns        (get-in table col-path-to-value) ;; Get columns list
-        table-property (get-in table tab-path-to-value) ;; Get table property
+        col-value-path [:prop :columns]
+        tab-value-path [:prop :table]
+        columns        (get-in table col-value-path) ;; Get columns list
+        table-property (get-in table tab-value-path) ;; Get table property
         view-id        (keyword (get table :table))  ;; Get name of table and create keyword to check tabs bar (opens views)
         elems          (join-vec
                     ;; Table info
                         [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"] ;; menu bar for editor
                                      :items (join-mig-items
-                                             [(table-editor--element--header-view (str "Edit table: \"" (get-in table [:prop :table :representation]) "\""))]
-                                             (cond (in? [:dev-mode :admin-mode] work-mode)
-                                                   (list [(table-editor--element--btn-save local-changes table)]
-                                                         [(table-editor--element--btn-show-changes local-changes table)])
+                                             [(table-editor--element--header-view (string/join "" [">_ Edit table: " (get-in table [:prop :table :frontend-name])]))]
+                                             (cond (= mode :dev-mode)
+                                                   (list [(table-editor--element--btn-save changing-list table-id)]
+                                                         [(table-editor--element--btn-show-changes changing-list)])
                                                    :else [])))]]
                     ;; Table properties 
                         [[(table-editor--element--header "Table configuration")]]
                         [(vec (let [table-property-count (count table-property)
                                     txtsize [150 :by 25]]
                                 [(mig-panel
-                                  :constraints ["wrap 3" "2%[30%, fill]0px" "0px[grow, fill]0px"]
-                                  :items (gtool/join-mig-items
-                                          (let [table-params-comps (for [index (range table-property-count)]
-                                                                     (table-editor--element--table-parameter-value work-mode local-changes table-property tab-path-to-value index txtsize))]
-                                            table-params-comps)))]))]
+                                  :constraints ["wrap 3" "0px[32%, fill]0px" "0px[fill]0px"]
+                                  :items (vec (for [index (range table-property-count)]
+                                                [(mig-panel
+                                                  :border (line-border :left 4 :color "#ccc")
+                                                  :constraints ["" "10px[100:]0px[grow, fill]10px" "0px[fill]10px"]
+                                                  :items [[(table-editor--element--table-parameter-name  table-property index)]
+                                                          [(table-editor--element--table-parameter-value mode changing-list table-property tab-value-path index txtsize)]])])))]))]
                     ;; Columns properties
                         [[(table-editor--element--header "Column configuration")]]
                         [[(let [column-editor-id "table-editor--component--space-for-column-editor"]
                             (mig-panel ;; Left and Right functional space
                              :constraints ["wrap 2" "0px[fill]0px" "0px[fill]0px"]
-                             :items [[(table-editor--component--column-picker work-mode local-changes column-editor-id columns col-path-to-value)] ;; Left part for columns to choose for doing changes.
+                             :items [[(table-editor--component--column-picker mode changing-list column-editor-id columns col-value-path)] ;; Left part for columns to choose for doing changes.
                                      [(table-editor--component--space-for-column-editor column-editor-id)] ;; Space for components. Using to editing columns.
                                      ]))]])
         component (cond
@@ -533,10 +638,9 @@
                                            :border (empty-border :thickness 0)))
                     :else (label :text "Table not found inside metadata :c"))]
     (do
-      (@gtool/changes-service :add-controller :view-id view-id :local-changes local-changes)
-      (@jarman-views-service :set-view :view-id view-id :title (str "Edit: " (get-in table [:prop :table :representation])) :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.") :component component))))
+      (add-changes-controller view-id changing-list)
+      (@jarman-views-service :set-view :view-id view-id :title (get table :table) :component component))))
 
-;; (mmeta/getset)
 
 ;; ┌─────────┐
 ;; │         │
@@ -589,7 +693,7 @@
                                                                            (rm-menu e)))))]))]
       (mig-panel
        :id :db-viewer--component--menu-bar
-       :bounds [x y 150 80]
+       :bounds [x y 150 120]
        :background (new Color 0 0 0 0)
        :border (line-border :thickness 1 :color border-c)
        :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
@@ -601,73 +705,63 @@
 (defn table-visualizer--element--col-as-row
   "Description:
       Create a primary or special row that represents a column in the table"
-  [data
-   & {:keys [debug]
-      :or {debug false}}] 
-  (if debug (println "--Column as row\n--Data: " data))
-  (let [last-x (atom 0)
-        last-y (atom 0)
-        component (label :text (str (get data :name))
-                         :size [(get data :width) :by (cond
-                                                        (= (get data :type) "header") (- (get data :height) 2)
-                                                        :else                         (- (get data :height) 0))]
-                         :icon (cond
-                                 (= (get data :type) "connection") (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8(get data :height)) 1))
-                                 (= (get data :type) "key") (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (get data :height)) 1)) ;;(stool/image-scale icon/key-blue-64-png (/ (get data :height) 1))
-                                 :else nil)
-                         :background (cond
-                                       (= (get data :type) "header")     "#666"
-                                       (= (get data :type) "key")        "#ace8a7" ;;"#f7d67c"
-                                       (= (get data :type) "connection") "#ace8a7"
-                                       :else "#fff")
-                         :foreground (cond
-                                       (= (get data :type) "header") "#fff"
-                                       :else "#000")
-                         :border (cond
-                                   (= (get data :type) "header") (compound-border (empty-border :thickness 4))
-                                   :else                         (compound-border (empty-border :thickness 4) (line-border :top 1 :color (get data :border-c))))
-                         :listen [:mouse-entered (fn [e] (do
-                                                           (cond
-                                                             (= (get data :type) "header") (config! e :cursor :move))))
-                                  :mouse-clicked (fn [e]
-                                                   (let [table-id (get (config (getParent e) :user-data) :id)]
-                                                     (cond (= (.getButton e) MouseEvent/BUTTON3)
-                                                           (let [scrol (select (@jarman-views-service :get-component :view-id :Database) [:#JLP-DB-Visualizer])
-                                                                 JLP (first (seesaw.util/children (first (seesaw.util/children scrol))))]
-                                                             (.add JLP
-                                                                   (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
-                                                                    JLP
-                                                                    dbmap ;; forward list of table configuration
-                                                                    table-id ;; Get table id
-                                                                    (- (+ (.getX e) (.getX (config (getParent e) :bounds))) 15) ;; calculate popup position
-                                                                    (- (+ (+ (.getY e) (.getY (config e :bounds))) (.getY (config (getParent e) :bounds))) 10))
-                                                                   (new Integer 999) ;; z-index
-                                                                   ))
-                                                           (= (.getClickCount e) 2) ;; Open table editor by duble click
-                                                           (create-view--table-editor @work-mode dbmap table-id))))
-                                  :mouse-dragged (fn [e]
-                                                   (do
-                                                     (if (= @last-x 0) (reset! last-x (.getX e)))
-                                                     (if (= @last-y 0) (reset! last-y (.getY e)))
-                                                     (cond
-                                                       (= (get data :type) "header") (let [bounds (config (getParent e) :bounds)
+  [data] (let [last-x (atom 0)
+               last-y (atom 0)]
+           (label :text (get data :name)
+                  :size [(get data :width) :by (cond
+                                                 (= (get data :type) "header") (- (get data :height) 2)
+                                                 :else                         (- (get data :height) 0))]
+                  :icon (cond
+                          (= (get data :type) "key") (stool/image-scale icon/key-blue-64-png (/ (get data :height) 1))
+                          :else nil)
+                  :background (cond
+                                (= (get data :type) "header") "#666"
+                                (= (get data :type) "key")    "#f7d67c"
+                                :else                         "#fff")
+                  :foreground (cond
+                                (= (get data :type) "header") "#fff"
+                                :else                         "#000")
+                  :border (cond
+                            (= (get data :type) "header") (compound-border (empty-border :thickness 4))
+                            :else                         (compound-border (empty-border :thickness 4) (line-border :top 1 :color (get data :border-c))))
+                  :listen [:mouse-entered (fn [e] (do
+                                                    (cond
+                                                      (= (get data :type) "header") (config! e :cursor :move))))
+                           :mouse-clicked (fn [e]
+                                            (let [table-id (get (config (getParent e) :user-data) :id)]
+                                              (cond (= (.getButton e) MouseEvent/BUTTON3)
+                                                    (let [scrol (select (@jarman-views-service :get-component :view-id :Database) [:#JLP-DB-Visualizer])
+                                                          JLP (first (seesaw.util/children (first (seesaw.util/children scrol))))]
+                                                      (.add JLP
+                                                            (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
+                                                             JLP
+                                                             dbmap ;; forward list of table configuration
+                                                             table-id ;; Get table id
+                                                             (- (+ (.getX e) (.getX (config (getParent e) :bounds))) 15) ;; calculate popup position
+                                                             (- (+ (+ (.getY e) (.getY (config e :bounds))) (.getY (config (getParent e) :bounds))) 10))
+                                                            (new Integer 999) ;; z-index
+                                                            ))
+                                                    (= (.getClickCount e) 2) ;; Open table editor by duble click
+                                                    (create-view--table-editor @work-mode dbmap table-id))))
+                           :mouse-dragged (fn [e]
+                                            (do
+                                              (if (= @last-x 0) (reset! last-x (.getX e)))
+                                              (if (= @last-y 0) (reset! last-y (.getY e)))
+                                              (cond
+                                                (= (get data :type) "header") (let [bounds (config (getParent e) :bounds)
                                                                                     ;; x (- (+ (.getX bounds) (.getX e)) (/ (.getWidth (getParent e)) 2))
                                                                                     ;; y (- (+ (.getY bounds) (.getY e)) 15)
-                                                                                           pre-x (- (+ (.getX bounds) (.getX e)) @last-x)
-                                                                                           pre-y (- (+ (.getY bounds) (.getY e)) @last-y)
-                                                                                           x (if (> pre-x 0) pre-x 0)
-                                                                                           y (if (> pre-y 0) pre-y 0)
-                                                                                           w (.getWidth  bounds)
-                                                                                           h (.getHeight bounds)]
-                                                                                       (do
+                                                                                    pre-x (- (+ (.getX bounds) (.getX e)) @last-x)
+                                                                                    pre-y (- (+ (.getY bounds) (.getY e)) @last-y)
+                                                                                    x (if (> pre-x 0) pre-x 0)
+                                                                                    y (if (> pre-y 0) pre-y 0)
+                                                                                    w (.getWidth  bounds)
+                                                                                    h (.getHeight bounds)]
+                                                                                (do
                                                                                   ;; (println [@last-x @last-y])
-                                                                                         (config! (getParent e) :bounds [x y w h]))))))
-                                  :mouse-released (fn [e] (do (reset! last-x 0)
-                                                              (reset! last-y 0)))]
-                                                              )]
-
-    (if debug (println "--Column as row: OK"))
-    component))
+                                                                                  (config! (getParent e) :bounds [x y w h]))))))
+                           :mouse-released (fn [e] (do (reset! last-x 0)
+                                                       (reset! last-y 0)))])))
 
 
 (defn db-viewer--component--table
@@ -684,17 +778,7 @@
         y (+ 0 (nth bounds 1))
         w (nth bounds 2)
         row-h 30  ;; wysokosc wiersza w tabeli reprezentujacego kolumne
-        col-in-rows (map (fn [col]
-                           (table-visualizer--element--col-as-row {:name (cond
-                                                                           (and (get-in data [:prop :table :is-linker?]) (contains? col :key-table)) (get col :key-table)
-                                                                           :else (get col :representation)) 
-                                                                   :width w :height row-h
-                                                                   :type (cond
-                                                                           (and (get-in data [:prop :table :is-linker?]) (contains? col :key-table)) "connection"
-                                                                           (contains? col :key-table) "key"
-                                                                           :else "row") 
-                                                                   :border-c border-c}))
-                         (get-in data [:prop :columns]))  ;; przygotowanie tabeli bez naglowka
+        col-in-rows (map (fn [col] (table-visualizer--element--col-as-row {:name (get col :field) :width w :height row-h :type (if (contains? col :key-table) "key" "row") :border-c border-c})) (get-in data [:prop :columns]))  ;; przygotowanie tabeli bez naglowka
         camplete-table (conj col-in-rows (table-visualizer--element--col-as-row {:name (get data :table) :width w :height row-h :type "header" :border-c border-c}))  ;; dodanie naglowka i finalizacja widoku tabeli
         h (* (count camplete-table) row-h)  ;; podliczenie wysokosci gotowej tabeli
         ]
@@ -706,6 +790,7 @@
      :bounds [x y w h]
      :background bg-c
      :items camplete-table)))
+
 
 ;; (println MouseEvent/BUTTON3)
 
@@ -752,11 +837,212 @@
     (mig-panel
      :border nil
      :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px[grow, fill]0px"]
-     :items [[
-              (db-viewer--component--menu-bar)]
-             [(scrollable JLP :id :JLP-DB-Visualizer :border nil)]
-             ])))
+     :items [[(db-viewer--component--menu-bar)]
+             [(scrollable JLP :id :JLP-DB-Visualizer :border nil)]])))
 
+
+;; ┌─────────────────────────┐
+;; │                         │
+;; │ Create config generator │
+;; │                         │
+;; └─────────────────────────┘
+
+
+(def confgen--element--header-file
+  (fn [title] (mig-panel
+               :constraints ["" "0px[grow, center]0px" "0px[]0px"]
+               :items [[(label :text title :font (getFont 16) :foreground (get-color :foreground :dark-header))]]
+               :background (get-color :background :dark-header)
+               :border (line-border :thickness 10 :color (get-color :background :dark-header)))))
+
+(def confgen--element--header-block
+  (fn [title] (label :text title :font (getFont 16 :bold)
+                     :border (compound-border  (line-border :bottom 2 :color (get-color :decorate :underline)) (empty-border :bottom 5)))))
+
+(def confgen--element--header-parameter
+  (fn [title]
+    (label :text title :font (getFont 14 :bold))))
+
+(def confgen--element--combobox
+  (fn [changing-list path model]
+    (mig-panel
+     :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
+     :items [[(combobox :model model
+                        :font (getFont 14)
+                        :background (get-color :background :combobox)
+                        :size [200 :by 30]
+                        :listen [:item-state-changed (fn [event] (track-changes-used-components changing-list path event :selected-item (first model)))])]])))
+
+(def confgen--gui-interface--input
+  (fn [changing-list path value]
+    (mig-panel
+     :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
+     :items [[(text :text value :font (getFont 14)
+                    :background (get-color :background :input)
+                    :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
+                                             (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
+                    :listen [:caret-update (fn [event] (track-changes-used-components changing-list path event :text value))])]])))
+
+
+(def confgen--gui-interface--input-textlist
+  (fn [changing-list path value]
+    (let [v (string/join ", " value)]
+      (mig-panel
+       :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
+       :items [[(text :text v :font (getFont 14)
+                      :background (get-color :background :input)
+                      :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
+                                               (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
+                      :listen [:caret-update (fn [event] (track-changes changing-list path value (clojure.string/split (config event :text) #"\s*,\s*")))])]]))))
+
+
+;; (clojure.string/split "some  ,  strig,value" #"\s*,\s*")
+;; 
+;; Sprawdzenie integerów
+;; (try
+;;   (every? number? (doall (map #(Integer. %) (clojure.string/split "1  ,  23, 54 d" #"\s*,\s*"))))
+;;   (catch Exception e :chwdp))
+
+
+(def confgen--gui-interface--input-textcolor
+  (fn [changing-list path value]
+    (mig-panel
+     :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
+     :items [[(text :text value :font (getFont 14)
+                    :background (get-color :background :input)
+                    :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
+                                             (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
+                    :listen [:caret-update (fn [event] (track-changes changing-list path value (config event :text))
+                                             (colorizator-text-component event))])]])))
+
+
+(def confgen--choose--header
+  (fn [type? name]
+    (cond  (type? :block) (confgen--element--header-block name)
+           (type? :param) (confgen--element--header-parameter name))))
+
+(def confgen--element--textarea
+  (fn [param]
+    (if-not (nil? (param [:doc]))
+      (textarea (str (param [:doc])) :font (getFont 12)) ())))
+
+(def confgen--element--textarea-doc
+  (fn [param]
+    (if-not (nil? (param [:doc]))
+      (textarea (str (param [:doc])) :font (getFont 14)) ())))
+
+(def confgen--element--margin-top-if-doc-exist
+  (fn [type? param] (if (and (type? :block) (not (nil? (param [:doc]))))
+                      (label :border (empty-border :top 10)) ())))
+
+(def confgen--gui-interface--checkbox-as-droplist
+  (fn [param changing-list start-key]
+    (confgen--element--combobox changing-list start-key (if (= (param [:value]) true) [true false] [false true]))))
+
+(def confgen--gui-interface--droplist
+  (fn [param changing-list start-key]
+    (confgen--element--combobox
+     changing-list start-key
+     (cond (= (last start-key) :lang) (map #(txt-to-UP %1) (join-vec (list (param [:value])) [:en]))
+           (vector? (param [:value])) [(txt-to-title (first (param [:value])))]
+           :else (vec (list (param [:value])))))))
+
+(def confgen--recursive--next-configuration-in-map
+  (fn [param confgen--component--tree changing-list start-key]
+    (map (fn [next-param]
+           (confgen--component--tree changing-list (join-vec start-key [:value] (list (first next-param)))))
+         (param [:value]))))
+
+(def confgen--element--gui-interfaces
+  (fn [comp? param confgen--component--tree changing-list start-key]
+    (cond (comp? :selectbox) (confgen--gui-interface--droplist param changing-list start-key)
+          (comp? :checkbox)  (confgen--gui-interface--checkbox-as-droplist param changing-list start-key)
+          (or (comp? :text) (comp? :textnumber)) (confgen--gui-interface--input changing-list start-key (str (param [:value])))
+          (comp? :textlist) (confgen--gui-interface--input-textlist changing-list start-key (param [:value]))
+          (comp? :textcolor) (confgen--gui-interface--input-textcolor changing-list start-key (param [:value]))
+          (map? (param [:value])) (confgen--recursive--next-configuration-in-map param confgen--component--tree changing-list start-key)
+          :else (confgen--element--textarea param))))
+
+
+;; (show-events (text))
+
+(def confgen--component--tree
+  (fn [changing-list start-key]
+    (let [param (fn [key] (c/get-in-segment (join-vec start-key key)))
+          type? (fn [key] (= (param [:type]) key))
+          comp? (fn [key] (= (param [:component]) key))
+          name (if (nil? (param [:name])) (key-to-title (last start-key)) (str (param [:name])))]
+      (cond (= (param [:display]) :edit)
+            (mig-panel
+             :constraints ["wrap 1" "20px[]50px" "5px[]0px"]
+             :border (cond (type? :block) (empty-border :bottom 10)
+                           :else nil)
+             :items (join-mig-items
+                     (confgen--choose--header type? name)
+                     (confgen--element--textarea-doc param)
+                     (confgen--element--margin-top-if-doc-exist type? param)
+                     (confgen--element--gui-interfaces comp? param confgen--component--tree changing-list start-key)))
+            :else ()))))
+
+
+
+;; (get-in @configuration [:resource.edn])
+;; ;; => {:configuration-path {:type :param, :display :edit, :component :text, :value "config"}}
+;; (get-in language [:pl :value :configuration-attribute])
+;; ;; => {:type :param, :display :edit, :component :text, :value "config"}
+
+
+;; (let [map (get-in @configuration [:resource.edn :value :font-configuration-attribute :value :acceptable-file-format])
+;;       map {:name "Wspierane pliki", :doc "wybierz rozszerzenia dla wspieranych przez system plików konfiguracji.", :type :param, :display :edit, :component :textlist, :value "abc"}]
+;;   (println map)  
+;;   (sspec/valid-param map))
+
+
+(def configuration-copy (atom (c/get-in-segment [])))
+
+(def create-view--confgen
+  "Description
+     Join config generator parts and set view on right functional panel
+   "
+  (fn [start-key]
+    (let [map-part (get-in (c/get-in-segment []) start-key)
+          changing-list (atom {})]
+      (cond (= (get-in map-part [:display]) :edit)
+            (do
+              (add-changes-controller (last start-key) changing-list)
+              (mig-panel
+               :border (line-border :bottom 50 :color (get-color :background :main))
+               :constraints ["wrap 1" "[fill, grow]" "20px[]20px"]
+               :items (join-mig-items
+                                   ;; Header of section/config file
+                       (confgen--element--header-file (get-in map-part [:name]))
+                       (label :text "Show changes" :listen [:mouse-clicked (fn [e]
+                                                                             ;; save changes configuration
+                                                                             (prn "Changes" @changing-list)
+                                                                            ;;  (reset! configuration-copy (c/get-in-segment []))
+                                                                            ;;  (doall
+                                                                            ;;   (map
+                                                                            ;;    (fn [new-value] ;; (println (first (second new-value)) (second (second new-value)))
+                                                                            ;;      (swap! configuration-copy (fn [changes] (assoc-in changes (join-vec (first (second new-value)) [:value]) (second (second new-value))))))
+                                                                            ;;    @changing-list))
+                                                                            ;;  (let [out (sspec/valid-segment @configuration-copy)]
+                                                                            ;;    (cond (get-in out [:valid?])
+                                                                            ;;          (do
+                                                                            ;;            (cond (get-in (save-all-cofiguration @configuration-copy) [:valid?])
+                                                                            ;;                  (do
+                                                                            ;;                    (@alert-manager :set {:header "Success!" :body "Changes were saved successfully!"} (message alert-manager) 5)
+                                                                            ;;                    (c/store-and-back))
+                                                                            ;;                  :else (let [m (string/join "<br>" ["Cannot save changes"])]
+                                                                            ;;                          (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5)))) ;; TODO action on faild save changes configuration
+                                                                            ;;          :else (let [m (string/join "<br>" ["Cannot save changes" (get-in out [:output])])]
+                                                                            ;;                  (@alert-manager :set {:header "Faild" :body m} (message alert-manager) 5))))
+                                                                               ;; (prn @configuration-copy)
+                                                                             )])
+                                   ;; Foreach on init values and create configuration blocks
+                       (map
+                        (fn [param]
+                          (confgen--component--tree changing-list (join-vec start-key [:value] (list (first param)))))
+                        (get-in map-part [:value])))))))))
 
 ;; ┌─────────────────────────────────────────┐
 ;; │                                         │
@@ -764,60 +1050,42 @@
 ;; │                                         │
 ;; └─────────────────────────────────────────┘
 
+
+(def confgen-expand-btn--search-config-files
+  "Description
+     Search files and return paths
+   "
+  (fn [global-config path]
+    (let [root (get-in global-config path)
+          type (get-in root [:type])]
+      (cond (= type :file) path
+            (= type :directory) (confgen-expand-btn--search-config-files global-config (join-vec path [:value]))
+            (nil? type) (map
+                         (fn [leaf]
+                           (confgen-expand-btn--search-config-files global-config (join-vec path [(first leaf)])))
+                         root)))))
+
+(def confgen-expand-btns--prepare-config-paths
+  "Search and finde file fragemnt in config map, next return paths list to this fragments"
+  (fn [conf] (all-vec-to-floor
+              (map (fn [option]
+                     (confgen-expand-btn--search-config-files conf [(first option)]))
+                   conf))))
+
 (def create-expand-btns--confgen
   "Discription
      Return expand button with config generator GUI
      Complete component
    "
   (fn [] (button-expand
-          (gtool/get-lang-btns :settings)
-          (let [config-file-list-as-keyword (map #(first %) (cm/get-in-segment []))
-                config-file-list-as-keyword-to-display (filter #(let [map-part (cm/get-in-segment (if (vector? %) % [%]))]
-                                                                  (and (= :file (get map-part :type))
-                                                                       (= :edit (get map-part :display))))
-                                                               config-file-list-as-keyword)
-                restore-button (button-expand-child (get-lang-btns :restore-last-configuration)
-                                                    :onClick (fn [e] (do
-                                                                       (if-not (nil? (cm/restore-config)) (@alert-manager :set {:header "Success!" :body (get-lang-alerts :restore-configuration-ok)} (message alert-manager) 5)))))]
-            (reverse
-             (conj
-              (map (fn [p]
-                     (let [path (if (vector? p) p [p])
-                           title (get (cm/get-in-segment path) :name)
-                           view-id (last path)]
-                       (button-expand-child title :onClick (fn [e]
+          (get-lang-btns :settings)
+          (map (fn [path]
+                 (let [title (c/get-in-segment (join-vec path [:name]))
+                       view-id (last path)]
+                   (button-expand-child title :onClick (fn [e]
+                                                         (@jarman-views-service :set-view :view-id view-id :title title :component (create-view--confgen path))))))
+               (confgen-expand-btns--prepare-config-paths (c/get-in-segment []))))))
 
-                                                             (@jarman-views-service
-                                                              :set-view
-                                                              :view-id view-id
-                                                              :title title
-                                                              :component (cg/create-view--confgen path :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5))))))))
-                   config-file-list-as-keyword-to-display)
-
-              (let [path [:themes :theme_config.edn]
-                    title (get (cm/get-in-segment path) :name)
-                    view-id :theme_config.edn]
-                (button-expand-child title :onClick (fn [e]
-                                                      (@jarman-views-service
-                                                       :set-view
-                                                       :view-id view-id
-                                                       :title title
-                                                       :component (cg/create-view--confgen path
-                                                                                           :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)))))))
-              (let [path [:themes :current-theme]
-                    title (get (cm/get-in-segment path) :name)
-                    view-id :current-theme]
-                (button-expand-child title :onClick (fn [e]
-                                                      (try
-                                                        (@jarman-views-service
-                                                         :set-view
-                                                         :view-id view-id
-                                                         :title title
-                                                         :component (cg/create-view--confgen path
-                                                                                             :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5))))
-                                                        (catch Exception e (do
-                                                                             (@alert-manager :set {:header "Warning!" :body (gtool/get-lang-alerts :configuration-corrupted)} (message alert-manager) 5)))))))
-              restore-button))))))
 
 
 ;; ┌──────────────────────────┐
@@ -863,7 +1131,7 @@
                        :background (new Color 0 0 0 0)
                        :border (empty-border :right 1)
                        :items array)]
-      (reset! jarman-views-service (vs/new-views-service tabs-space views-space))
+      (reset! jarman-views-service (new-views-service tabs-space views-space))
       (mig-panel
        :id :operation-space
        :background "#fff"
@@ -901,25 +1169,12 @@
                                                            (button-expand-child "DB View" :onClick (fn [e] (@jarman-views-service :set-view :view-id "Database" :title "Database" :component create-view--db-view)))
                                                           ;;  (button-expand-child "Users table" :onClick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
                                                            ])]
-                                          [(button-expand "Tables"
-                                                          (vec
-                                                           (doall (map (fn [controller]
-                                                                         (let [title (str (name (get-in (:->tbl-meta (controller @view/views)) [:representation])))]
-                                                                           (button-expand-child
-                                                                            title
-                                                                            :onClick (fn [e](@jarman-views-service :set-view
-                                                                                                             :view-id title
-                                                                                                             :title title
-                                                                                                             :scrollable? false
-                                                                                                             :component (view/auto-builder--table-view (controller @view/views))))
-                                                                            )))
-                                                                       (keys @view/views)))))]
                                           [(create-expand-btns--confgen)])]
                         [(right-part-of-jarman-as-space-for-views-service []
                                                                           [])]])]))))
-;; (jarman.logic.metadata/getset)
 
-;; (@startup)
+
+
 
 ;; ┌─────────────┐
 ;; │             │
@@ -929,10 +1184,10 @@
 
 (def startup (atom nil))
 
-(def run-me
+(def run
   (fn []
     (do
-      (cm/swapp)
+      (c/swapp)
       (try (.dispose (seesaw.core/to-frame @app)) (catch Exception e (println "Exception: " (.getMessage e))))
       (build :items (let [img-scale 40]
                       (list
@@ -944,11 +1199,14 @@
                        (slider-ico-btn (stool/image-scale icon/a-blue-64-png img-scale) 4 img-scale "alert" {:onclick (fn [e] (@alert-manager :set {:header "Witaj<br>World" :body "Alllle<br>Luja"} (message alert-manager) 5))})
                        (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 5 img-scale "Restart" {:onclick (fn [e] (@startup))})
                        (slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 6 img-scale "Change work mode" {:onclick (fn [e]
-                                                                                                                                     (cond (= @work-mode :user-mode)  (reset! work-mode :admin-mode)
-                                                                                                                                           (= @work-mode :admin-mode) (reset! work-mode :dev-mode)
-                                                                                                                                           (= @work-mode :dev-mode)   (reset! work-mode :user-mode))
-                                                                                                                                     (@alert-manager :set {:header "Work mode" :body (str "Switched to: " (symbol @work-mode))} (message alert-manager) 5))})
-                       (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 7 img-scale "Table Auto Generator" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil)))})
+                                                                                                                                     (cond (= @work-mode :user-mode)
+                                                                                                                                           (do
+                                                                                                                                             (reset! work-mode :dev-mode)
+                                                                                                                                             (@alert-manager :set {:header "Work mode" :body "Dev mode activated."} (message alert-manager) 5))
+                                                                                                                                           :else (do
+                                                                                                                                                   (reset! work-mode :user-mode)
+                                                                                                                                                   (@alert-manager :set {:header "Work mode" :body "Dev mode deactivated."} (message alert-manager) 5))))})
+                      ;;  (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 7 img-scale "Table Auto Generator" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil)))})
                        @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook)))))
 
@@ -956,14 +1214,14 @@
 (reset! startup
         (fn []
           (cond (= (iinit/validate-configuration-files) true)
-                (run-me)
+                (run)
                 :else (cond (= (iinit/restore-backup-configuration) false)
                             (do
                               (reset! popup-menager (create-popup-service atom-popup-hook))
                               (@popup-menager :ok :title "App start failed" :body "Cennot end restore task." :size [300 100]))
                             :else (do
                                     (= (iinit/validate-configuration-files) true)
-                                    (run-me)
+                                    (run)
                                     :else (do
                                             (reset! popup-menager (create-popup-service atom-popup-hook))
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))

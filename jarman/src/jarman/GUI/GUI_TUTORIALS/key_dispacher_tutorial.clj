@@ -4,6 +4,7 @@
         seesaw.dev
         seesaw.mig))
 
+
 ;; Debug for own KeyEventDispacher
 (def debug-me
   (fn [events-map e debug-on action ]
@@ -39,6 +40,51 @@
                        (if-not (nil? ev) (ev))))))
                 false))))))
 
+;; Own proxy, class for KeyEventDispacher
+(def SupervisiorKeyDispacher
+  "Description:
+      New KeyEventDispacher need map with key number as keword and some function.
+      Function will be invoke on key press and repeate on hold
+   Example:
+      new KeyDispacher {:alt (funkcja => \"You press ALT\")}
+      (KeyDispacher {:18 (fn [] (println \"You press ALT\"))}
+   "
+  (fn []
+    (let []
+      (doto (proxy [java.awt.KeyEventDispatcher] []
+              (^Boolean dispatchKeyEvent [^java.awt.event.KeyEvent e]
+                (println "Key pressed: " (str (.getKeyCode e)))
+                false))))))
+
+;; (def store-key (atom [])
+;; )
+;; ;; Own proxy, class for KeyEventDispacher
+;; (def SequanceKeyDispacher
+;;   "Description:
+;;       New KeyEventDispacher need map with key number as keword and some function.
+;;       Function will be invoke on key press and repeate on hold
+;;    Example:
+;;       new KeyDispacher {:alt (funkcja => \"You press ALT\")}
+;;       (KeyDispacher {:18 (fn [] (println \"You press ALT\"))}
+;;    "
+;;   (fn [long]
+;;     (let []
+;;       (doto (proxy [java.awt.KeyEventDispatcher] []
+;;               (^Boolean dispatchKeyEvent [^java.awt.event.KeyEvent e]
+;;                 ;; (println "Key pressed: " (str (.getKeyCode e)))
+;;                 (println "Long " long)
+;;                                          (let [key (keyword (str (.getKeyCode e)))]
+;;                                            (if-not (= key :0) 
+;;                                              (if (< (count store-key) long)
+;;                                                (do
+;;                                                  (swap! store-key (fn [old-store] (conj old-store key))))
+;;                                                (do
+;;                                                  (let [action-key (clojure.string/join "-" (conj @store-key key))]
+;;                                                    (cond
+;;                                                      (= action-key :18-:82) (println "Reload APP")))))))
+;;                                          false))))))
+
+
 
 ;; New jframe
 (do (doto (seesaw.core/frame
@@ -59,6 +105,7 @@
 
 
 ;; Create new own KeyEventDispacher object using own class. If one was added before then first delete him.
+(def ked (SupervisiorKeyDispacher 2))
 (def ked (KeyDispacher {:18 (fn [] (println "You press ALT"))}))
 
 

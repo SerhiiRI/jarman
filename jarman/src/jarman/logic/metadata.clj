@@ -756,6 +756,7 @@
                    [;; [:id]
                     ;; [:table]
                     [:prop :table :representation]
+                    [:prop :table :description]
                     ;; [:prop :table :is-system?]
                     ;; [:prop :table :is-linker?]
                     [:prop :table :allow-modifing?]
@@ -1015,12 +1016,14 @@
                    ;; apply changes only on [one-of keywords-list stages
                    (vec (filter #(some (fn [kwd] (= kwd %)) keywords)
                                 [:table :column-changed :column-deleted :column-created])))]
-    (->> (if-not (empty? keywords)
-           (reduce #(apply-f-diff (get fxmap-changes %2 nil) %1 changed) original [:table :column-changed :column-deleted :column-created])
-           (do (println "Chanages not being applied, empty keywords list")
-               original))
+    (let [kkkk (if-not (empty? keywords)
+                 (reduce #(apply-f-diff (get fxmap-changes %2 nil) %1 changed) original [:table :column-changed :column-deleted :column-created])
+                 (do (println "Chanages not being applied, empty keywords list")
+                     original))]
+      (println kkkk)
+      (->> kkkk
          (update-sql-by-id-template "metadata")
-         (db/exec))))
+         (db/exec)))))
 
 ;;;;;;;;;;;;;;;;
 ;;; On meta! ;;;

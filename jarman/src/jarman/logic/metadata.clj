@@ -398,11 +398,6 @@
 (defn do-clear-meta [& body]
   {:pre [(every? string? body)]}
   (db/exec (delete :metadata)))
-;; (do-clear-meta)
-;; (do-create-meta)
-;; (getset :user)
-
-;; (update-meta {:id 188, :table "user", :prop {:table {:field "user", :representation "Користувач", :is-system? false, :is-linker? false, :description nil, :allow-modifing? true, :allow-deleting? true, :allow-linking? true}, :columns [{:field :login, :field-qualified :user.login, :representation "login", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :password, :field-qualified :user.password, :representation "password", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :first_name, :field-qualified :user.first_name, :representation "first_name", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :last_name, :field-qualified :user.last_name, :representation "last_name", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:description nil, :private? false, :editable? true, :field :id_permission, :column-type [:bigint-120-unsigned :nnull], :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}], :component-type ["l"], :representation "id_permission", :field-qualified :user.id_permission, :key-table "permission"}]}})
 
 
 (defn update-meta [metadata]
@@ -1141,6 +1136,18 @@
     (try (slurp (clojure.java.io/file env/user-dir backup-file-name))
          (catch Exception e nil))))
 
+;; (do-clear-meta)
+;; (do-create-meta)
+;; (make-backup-metadata)
+;; (restore-backup-metadata)
+
+;; (do-clear-meta)
+;; (do-create-meta)
+;; (getset :user)
+
+;; (update-meta {:id 188, :table "user", :prop {:table {:field "user", :representation "Користувач", :is-system? false, :is-linker? false, :description nil, :allow-modifing? true, :allow-deleting? true, :allow-linking? true}, :columns [{:field :login, :field-qualified :user.login, :representation "login", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :password, :field-qualified :user.password, :representation "password", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :first_name, :field-qualified :user.first_name, :representation "first_name", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :last_name, :field-qualified :user.last_name, :representation "last_name", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:description nil, :private? false, :editable? true, :field :id_permission, :column-type [:bigint-120-unsigned :nnull], :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}], :component-type ["l"], :representation "id_permission", :field-qualified :user.id_permission, :key-table "permission"}]}})
+
+
 (defn restore-backup-metadata
   "Description
     Restore all backups from user-stored buffer
@@ -1157,8 +1164,4 @@
                 info           (:info backup-swapped)]
             (do-clear-meta)
             (map #(db/exec (update-sql-by-id-template "metadata" %)) metadata-list))))))
-;; (do-clear-meta)
-;; (do-create-meta)
-;; (make-backup-metadata)
-;; (restore-backup-metadata)
 

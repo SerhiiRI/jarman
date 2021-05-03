@@ -803,9 +803,7 @@
                                                               :set-view
                                                               :view-id view-id
                                                               :title title
-                                                              :component (try
-                                                                           (cg/create-view--confgen path :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)))
-                                                                           (catch Exception e (str "caught exception: " (.getMessage e)))))))))
+                                                              :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)))))))))
                    config-file-list-as-keyword-to-display)
 
               (let [path [:themes :theme_config.edn]
@@ -816,8 +814,8 @@
                                                        :set-view
                                                        :view-id view-id
                                                        :title title
-                                                       :component (cg/create-view--confgen path
-                                                                                           :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)))))))
+                                                       :component-fn (fn [] (cg/create-view--confgen path
+                                                                                                  :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5))))))))
               (let [path [:themes :current-theme]
                     title (get (cm/get-in-segment path) :name)
                     view-id :current-theme]
@@ -827,8 +825,8 @@
                                                          :set-view
                                                          :view-id view-id
                                                          :title title
-                                                         :component (cg/create-view--confgen path
-                                                                                             :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5))))
+                                                         :component-fn (fn [] (cg/create-view--confgen path
+                                                                                                    :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)))))
                                                         (catch Exception e (do
                                                                              (@alert-manager :set {:header "Warning!" :body (gtool/get-lang-alerts :configuration-corrupted)} (message alert-manager) 5)))))))
               restore-button))))))
@@ -920,7 +918,7 @@
                                                                                                                     :view-id (str "auto-" title)
                                                                                                                     :title title
                                                                                                                     :scrollable? false
-                                                                                                                    :component (view/auto-builder--table-view (controller @view/views)))))))
+                                                                                                                    :component-fn (fn [](view/auto-builder--table-view (controller @view/views))))))))
                                                                        (keys @view/views)))))]
                                           [(create-expand-btns--confgen)])]
                         [(right-part-of-jarman-as-space-for-views-service []
@@ -956,7 +954,7 @@
                                                                                                                                            (= @work-mode :admin-mode) (reset! work-mode :dev-mode)
                                                                                                                                            (= @work-mode :dev-mode)   (reset! work-mode :user-mode))
                                                                                                                                      (@alert-manager :set {:header "Work mode" :body (str "Switched to: " (symbol @work-mode))} (message alert-manager) 5))})
-                       (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 7 img-scale "Docs Templates" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "Docs-Templates" :title "Docs Templates" :scrollable? false :component (docs/auto-builder--table-view nil)))})
+                       (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 7 img-scale "Docs Templates" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "Docs-Templates" :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil))))})
                        @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook)))))
 

@@ -65,28 +65,29 @@
     (service-data :repaint)))
 
 (def set-component-to-view-space
-  (fn [service-data packed-view]
-    (if (nil? packed-view)
-      (do 
-        (config! (service-data :view-space) :items [(label)]))
-      (do
-        (let [view-data (second (first packed-view))
-              component (get view-data :component)
-              height    (get view-data :pref-height)
-              scrollable? (get view-data :scrollable?)]
-          (config! (service-data :view-space) :items (if scrollable? [(gcomp/scrollbox component)] [component]))
-          (if scrollable? (config! component :size [300 :by height]))
-          )))))
+  (fn [service-data view-id]
+    (println "Set view to space")
+    (let [view-data (get @(service-data :views-storage) view-id)]
+     (if (nil? view-data)
+       (do
+         (config! (service-data :view-space) :items [(label)])
+         (config! (service-data :view-space) :user-data :none))
+       (do
+         (let [component (get view-data :component)
+               height    (get view-data :pref-height)
+               scrollable? (get view-data :scrollable?)]
+           (config! (service-data :view-space) :items (if scrollable? [(gcomp/scrollbox component)] [component]))
+           (if scrollable? (config! component :size [300 :by height]))
+           (config! (service-data :view-space) :user-data view-id)))))))
 
 (def switch-tab
-  (fn [service-data packed-view]
+  (fn [service-data view-id]
     (fn [e]
-      (let [view (first packed-view)
-            component (get (second view) :component)
-            tab (.getParent (to-widget e))]
+      (println "Switch tab: " view-id)
+      (let [tab (.getParent (to-widget e))]
         (deactive-all-tabs service-data)
         (recolor-tab tab (service-data :active-color))
-        (set-component-to-view-space service-data packed-view))
+        (set-component-to-view-space service-data view-id))
       (service-data :repaint))))
 
 (def whos-active?
@@ -126,7 +127,7 @@
      Next view will be added to @views with tab to open tabs bar.
    "
   (fn [service-data]
-    (fn [view-id title tab-tip component scrollable? pref-height]
+    (fn [view-id title tab-tip component-fn scrollable? pref-height]
       (if (contains? @(service-data :views-storage) view-id) ;; Swicht tab if exist in views-storage
         (let [view {view-id (get @(service-data :views-storage) view-id)}
               tabs (config (service-data :bar-space) :items)
@@ -137,23 +138,45 @@
             (do
               (deactive-all-tabs service-data)
               (recolor-tab tab (service-data :active-color))
-              (set-component-to-view-space service-data view))))
+              (set-component-to-view-space service-data view-id))))
 
-        (let [view {view-id {:component component ;; Add new view to views-storage and switch to new view
+        (let [view {view-id {:component-fn component-fn
+                             :component (component-fn) ;; Add new view to views-storage and switch to new view
                              :view-id view-id
                              :title title
                              :scrollable? scrollable?
                              :pref-height pref-height}}]
+          (println "View id: " view-id)
           (swap! (service-data :views-storage) (fn [storage] (merge storage view)))
+          (config! (service-data :view-space) :user-data view-id)
           (let [view-id (first (first view))
                 button-title  (get (second (first view)) :title)
                 tab-button (create--tab-button view-id button-title tab-tip "#eee" [100 25]
                                                (close-tab service-data view)
-                                               (switch-tab service-data view))]
+                                               (switch-tab service-data view-id))]
             (deactive-all-tabs service-data)
             (.add (service-data :bar-space) tab-button)
-            (set-component-to-view-space service-data view))
-          (switch-tab service-data view))))))
+            (set-component-to-view-space service-data view-id))
+          (println "Set and switch: " view-id)
+          (switch-tab service-data view-id))))))
+
+
+
+(def reload-view
+  "Description
+     Quick tab template for view component. Just set id, title and component.
+     Next view will be added to @views with tab to open tabs bar.
+   "
+  (fn [service-data]
+    (fn [view-id]
+      (let [reload-fn  (get-in @(service-data :views-storage) [view-id :component-fn])
+            new-comp (reload-fn)]
+        (swap! (service-data :views-storage) (fn [old-stuff] (assoc-in old-stuff [view-id :component] new-comp)))
+        (println "Reload view " view-id " in space " (config (service-data :view-space) :user-data))
+        (if (= (config (service-data :view-space) :user-data) view-id)
+          (println "View" {view-id (get @(service-data :views-storage) view-id)})
+          (set-component-to-view-space service-data {view-id (get @(service-data :views-storage) view-id)}))
+        ))))
 
 
 (def get-view
@@ -191,12 +214,14 @@
                                      :onClose      onClose} key))]
     (fn [action & {:keys [view-id
                           title
+                          component-fn
                           component
                           pref-height
                           tab-tip
                           scrollable?]
                    :or {view-id :none
                         title   ""
+                        component-fn (fn [])
                         component nil
                         pref-height 0
                         tab-tip nil
@@ -206,13 +231,14 @@
                                      (if (keyword? view-id) view-id (keyword view-id))
                                      title
                                      tab-tip
-                                     component
+                                     component-fn
                                      scrollable?
                                      (cond (and (= 0 pref-height) (nil? component))
                                            0
                                            (< 0 pref-height) (pref-height)
                                            :else (do
                                                    (.getHeight (config component :preferred-size)))))  ;; return f which need args for new view
+        (= action :reload)          ((reload-view service-data) view-id)
         (= action :get-view)        ((get-view atom--views-storage) view-id)
         (= action :get-component)   (get-in @atom--views-storage [view-id :component])
         (= action :exist?)          ((exist atom--views-storage) view-id)

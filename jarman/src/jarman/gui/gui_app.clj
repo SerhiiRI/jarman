@@ -314,25 +314,6 @@
           :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
 
-(def table-editor--element--small-input
-  (fn [enable local-changes path-to-value value]
-    (text :text value :font (getFont 12)
-          :background (get-color :background :input)
-          :enabled? enable
-          :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
-                                   (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-          :listen [:caret-update (fn [event] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path-to-value :old-value value :new-value (config event :text)))])))
-
-
-(def table-editor--element--input
-  (fn [enable local-changes path-to-value value]
-    (text :text value :font (getFont 12)
-          :background (get-color :background :input)
-          :enabled? enable
-          :border (compound-border (empty-border :left 15 :right 20 :top 8 :bottom 8)
-                                   (line-border :bottom 2 :color (get-color :decorate :gray-underline)))
-          :listen [:caret-update (fn [e] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path-to-value :old-value value :new-value (config e :text)))])))
-
 
 (def switch-column-to-editing
   (fn [work-mode local-changes path-to-value event column column-editor-id]
@@ -448,9 +429,6 @@
 ;; (show-events (checkbox))
 
 
-(def table-editor--element--table-parameter-name
-  (fn [table-property index] (label :text (lang/convert-key-to-title (str (first (nth (vec table-property) index)))))))
-
 (def table-editor--element--table-parameter-value
   (fn [work-mode local-changes table-property tab-path-to-value index txtsize]
     (let [param-name  (first  (nth (vec table-property) index))
@@ -482,24 +460,25 @@
                         (boolean? param-value) (table-editor--element--checkbox (= work-mode :dev-mode) local-changes path-to-value param-value (lang/convert-key-to-title param-name))))]
       component)))
 
+
+
+
 (defn create-view--table-editor
   "Description:
      Create view for table editor. Marge all component to one big view.
    "
-  [work-mode tables-configurations table-id]
-  (let [local-changes (atom {})
-        table          (get-table-configuration-from-list-by-table-id tables-configurations table-id)
+  [work-mode tables-configurations table-id local-changes]
+  (let [table          (get-table-configuration-from-list-by-table-id (tables-configurations) table-id)
         col-path-to-value [:prop :columns]
         tab-path-to-value [:prop :table]
         columns        (get-in table col-path-to-value) ;; Get columns list
         table-property (get-in table tab-path-to-value) ;; Get table property
-        view-id        (keyword (get table :table))  ;; Get name of table and create keyword to check tabs bar (opens views)
         elems          (join-vec
                     ;; Table info
                         [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"] ;; menu bar for editor
                                      :items (join-mig-items
                                              [(table-editor--element--header-view (str "Edit table: \"" (get-in table [:prop :table :representation]) "\""))]
-                                             (cond (in? [:dev-mode :admin-mode] work-mode)
+                                             (cond (in? [:dev-mode :admin-mode] @work-mode)
                                                    (list [(table-editor--element--btn-save local-changes table)]
                                                          [(table-editor--element--btn-show-changes local-changes table)])
                                                    :else [])))]]
@@ -514,7 +493,7 @@
                                              :constraints ["wrap 3" "2%[30%, fill]0px" "0px[grow, fill]0px"]
                                              :items (gtool/join-mig-items
                                                      (let [table-params-comps (for [index (range table-property-count)]
-                                                                                (table-editor--element--table-parameter-value work-mode local-changes table-property tab-path-to-value index txtsize))]
+                                                                                (table-editor--element--table-parameter-value @work-mode local-changes table-property tab-path-to-value index txtsize))]
                                                        (filter-nil table-params-comps))))]))
                                     (gcomp/hr 15);; Columns properties
                                     (table-editor--element--header "Column configuration")
@@ -522,7 +501,7 @@
                                     (let [column-editor-id "table-editor--component--space-for-column-editor"]
                                       (mig-panel ;; Left and Right functional space
                                        :constraints ["wrap 2" "0px[fill]0px" "0px[fill]0px"]
-                                       :items [[(table-editor--component--column-picker work-mode local-changes column-editor-id columns col-path-to-value)] ;; Left part for columns to choose for doing changes.
+                                       :items [[(table-editor--component--column-picker @work-mode local-changes column-editor-id columns col-path-to-value)] ;; Left part for columns to choose for doing changes.
                                                [(table-editor--component--space-for-column-editor column-editor-id)] ;; Space for components. Using to editing columns.
                                                ])))))]])
         component (cond
@@ -532,9 +511,22 @@
                                            :items elems
                                            :border (empty-border :thickness 0)))
                     :else (label :text "Table not found inside metadata :c"))]
-    (do
-      (@gtool/changes-service :add-controller :view-id view-id :local-changes local-changes)
-      (@jarman-views-service :set-view :view-id view-id :title (str "Edit: " (get-in table [:prop :table :representation])) :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.") :component component  :scrollable? false))))
+    component))
+
+(defn add-to-view-service--table-editor
+  ([work-mode tables-configurations table-id]
+   (let [local-changes (atom {})
+         table          (get-table-configuration-from-list-by-table-id (tables-configurations) table-id)
+         view-id        (keyword (get table :table))  ;; Get name of table and create keyword to check tabs bar (opens views)
+         ]
+     (do
+       (@gtool/changes-service :add-controller :view-id view-id :local-changes local-changes)
+       (@jarman-views-service :set-view 
+                              :view-id view-id 
+                              :title (str "Edit: " (get-in table [:prop :table :representation])) 
+                              :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.") 
+                              :component-fn (fn [] (create-view--table-editor work-mode tables-configurations table-id local-changes)) 
+                              :scrollable? false)))))
 
 
 ;; ┌─────────┐
@@ -593,7 +585,7 @@
        :border (line-border :thickness 1 :color border-c)
        :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
        :items [[(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
-                                                                   (create-view--table-editor @work-mode atom--tables-configurations table-id))))]
+                                                                   (add-to-view-service--table-editor work-mode mmeta/getset table-id))))]
                [(btn "Delete table" icon/basket-blue1-64-png (fn [e]))]
                [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]]))))
 
@@ -643,7 +635,7 @@
                                                                    (new Integer 999) ;; z-index
                                                                    ))
                                                            (= (.getClickCount e) 2) ;; Open table editor by duble click
-                                                           (create-view--table-editor @work-mode (mmeta/getset) table-id))))
+                                                           (add-to-view-service--table-editor work-mode mmeta/getset table-id))))
                                   :mouse-dragged (fn [e]
                                                    (do
                                                      (if (= @last-x 0) (reset! last-x (.getX e)))
@@ -807,7 +799,6 @@
                            title (get (cm/get-in-segment path) :name)
                            view-id (last path)]
                        (button-expand-child title :onClick (fn [e]
-
                                                              (@jarman-views-service
                                                               :set-view
                                                               :view-id view-id
@@ -896,7 +887,8 @@
        :items [[tabs-space]
                [views-space]]))))
 
-
+;; (@jarman-views-service :reload :view-id (keyword "DB Visualiser"))
+;; (@jarman-views-service :get-all-view)
 
 (def jarmanapp
   "Description:
@@ -915,7 +907,7 @@
                 :border (line-border :left margin-left :color bg-color)
                 :items [;; [(label-fn :background "#eee" :size [50 :by 50])]
                         [(mig-app-left-f  [(button-expand "Database"
-                                                          [(button-expand-child "DB Visualiser" :onClick (fn [e] (@jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component (create-view--db-view))))
+                                                          [(button-expand-child "DB Visualiser" :onClick (fn [e] (@jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view)))
                                                           ;;  (button-expand-child "Users table" :onClick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
                                                            ])]
                                           [(button-expand "Tables"
@@ -953,7 +945,7 @@
       (build :items (let [img-scale 40]
                       (list
                        (jarmanapp :margin-left img-scale)
-                       (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB View" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component (create-view--db-view)))})
+                       (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view))})
                        (slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Powiadomienia" {:onclick (fn [e] (@alert-manager :show))})
                        (slider-ico-btn (stool/image-scale icon/alert-64-png img-scale) 2 img-scale "Popup" {:onclick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200]))})
                        (slider-ico-btn (stool/image-scale icon/agree-grey-64-png img-scale) 3 img-scale "Dialog" {:onclick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100]))))})
@@ -985,7 +977,7 @@
                                             (reset! popup-menager (create-popup-service atom-popup-hook))
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
-;; (@startup)
+(@startup)
 
 ;; (config! (to-frame @app) :size [1000 :by 800])
 

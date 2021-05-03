@@ -267,20 +267,27 @@
      (expand-form-panel parent (component or components))
    "
   [view-layout comps
-   & {:keys [icon-open
+   & {:keys [min-w
+             w
+             max-w
+             icon-open
              icon-hide
              text-open
              text-hide
              focus-color
              unfocus-color]
-      :or {ico-open nil
+      :or {min-w 250
+           w 250
+           max-w 250
+           ico-open nil
            icon-hide nil
            text-open "<<"
            text-hide "..."
            focus-color (get-color :decorate :focus-gained-dark)
            unfocus-color "#fff"}}]
   (let [hidden-comp (atom nil)
-        form-space-open ["wrap 1" "0px[250:, grow,fill]10px" "0px[fill]0px"]
+        hsize (if (< max-w w) (str "0px[" min-w ":" w ":" w ", grow,fill]10px") (str "0px[" min-w ":" w ":" max-w ", grow,fill]10px"))
+        form-space-open ["wrap 1" hsize "0px[fill]0px"]
         form-space-hide ["" "0px[grow, fill]0px" "0px[grow, fill]0px"]
         form-space (smig/mig-panel :constraints form-space-open)
         onClick (fn [e]
@@ -309,8 +316,7 @@
                                     :focus-lost   (fn [e] (c/config! e :foreground unfocus-color))
                                     :mouse-entered gtool/hand-hover-on
                                     :mouse-clicked onClick
-                                    :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))
-                                    ])]
+                                    :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))])]
     (c/config! form-space :items (join-mig-items hide-show comps))))
 
 

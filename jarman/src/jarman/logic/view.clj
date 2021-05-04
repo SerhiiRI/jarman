@@ -507,12 +507,14 @@
                           more-comps
                           button-template
                           start-focus
-                          export-comp]
+                          export-comp
+                            alerts]
                    :or {model []
                         more-comps [(c/label)]
                         button-template (fn [title f] (gcomp/button-basic title f))
                         start-focus nil
-                        export-comp nil}}]
+                        export-comp nil
+                        alerts nil}}]
     (let [complete (atom {})
           metadata (:->col-meta controller)
           inser-or-update (if (empty? model) "Insert new data" "Update record")
@@ -578,98 +580,61 @@
 
 ;;  (run user-view)
 (defn export-print-doc
-  [controller id]
+  [controller id alerts]
   (let [;;radio-group (c/button-group)
         panel-bg "#eee"
         expor-gb "#95dec9"
         focus-gb "#5ee6bf"
-        input-text (gcomp/input-text :args [:text (str env/user-home "\\Desktop") :font (gtool/getFont  :name "Monospaced")])
+        input-text (gcomp/input-text :args [:text (str jarman.config.environment/user-home "\\Documents") :font (gtool/getFont  :name "Monospaced")])
         icon (c/label :icon (jarman.tools.swing/image-scale ico/enter-64-png 30)
                       :border (sborder/empty-border :thickness 8)
                       :listen [:mouse-clicked (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
                                                         (c/config! input-text :text new-path)))])
-        panel (c/horizontal-panel
-               :items [icon input-text])]
-    (c/flow-panel
+        panel (smig/mig-panel 
+               :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[fill]0px"]
+               :items [[icon] [input-text]])]
+    (smig/mig-panel
+     :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow]0px"]
      :border (sborder/compound-border (sborder/empty-border :top 5)
                                       (sborder/line-border :top 2 :color "#999")
                                       (sborder/empty-border :top 50))
-     :items [(gcomp/button-expand "Export by template" (smig/mig-panel
-                                                        :constraints ["wrap 1" "5px[grow, fill]5px" "0px[fill]0px"]
+     :items [[(gcomp/button-expand "Export by template" (smig/mig-panel
+                                                         :constraints ["wrap 1" "5px[grow, fill]5px" "0px[fill]0px"]
                                           ;;  :border (sborder/line-border :left 2 :right 2 :bottom 2 :color "#fff")
                                           ;;  :border (sborder/line-border :left 2 :color "#ccc")
-                                                        :background panel-bg
-                                                        :items (gtool/join-mig-items
-                                                                [(gcomp/hr 2 "#ccc")]
-                                                                [(gcomp/hr 10)]
+                                                         :background panel-bg
+                                                         :items (gtool/join-mig-items
+                                                                 [(gcomp/hr 2 "#ccc")]
+                                                                 [(gcomp/hr 10)]
                                                     ;;  [(c/radio :id :odt  :text "ODT"  :group radio-group :background bg :selected? true) "split 2"]
                                                     ;;  [(c/radio :id :docx :text "DOCX" :group radio-group :background bg)]
                                                     ;; [(gcomp/hr 10)]
-                                                                [panel]
+                                                                 [panel]
                                                     ;;  [(gcomp/button-basic "Service raport" (fn [e] (if-let [s (c/selection radio-group)] (println "Selected " (str (c/text s))
                                                     ;;                                                                                               "\nTemplate: " (str (c/text template))))))]
-                                                                [(gcomp/hr 10)]
-                                                                (map (fn [doc-model]
-                                                                       [(gcomp/button-basic (get doc-model :name) 
-                                                                                            (fn [e] 
+                                                                 [(gcomp/hr 10)]
+                                                                 (map (fn [doc-model]
+                                                                        [(gcomp/button-basic (get doc-model :name)
+                                                                                             (fn [e]
                                                                                               ;; do
-                                                                                              ((doc/prepare-export-file (:->table-name controller) doc-model) id (c/config input-text :text))
-                                                                                              ) 
-                                                                                            :args [:halign :left])]) 
-                                                                     (:->documents controller))
-                                                                [(gcomp/hr 10)]
-                                                                [(gcomp/hr 2 "#95dec9")]))
-                                  :background "#95dec9"
+                                                                                               (try
+                                                                                                 ((doc/prepare-export-file (:->table-name controller) doc-model) id (c/config input-text :text))
+                                                                                                 (@jarman.gui.gui-seed/alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :export-doc-ok)} (@jarman.gui.gui-seed/alert-manager :message jarman.gui.gui-seed/alert-manager) 7)
+                                                                                                 (catch Exception e (@jarman.gui.gui-seed/alert-manager :set {:header (gtool/get-lang-alerts :faild) :body (gtool/get-lang-alerts :export-doc-faild)} (@jarman.gui.gui-seed/alert-manager :message jarman.gui.gui-seed/alert-manager) 7)))
+
+                                                                                              ;; ((@jarman.gui.gui-app/jarman-views-service :reload))
+                                                                                              ;; (if-not (nil? alerts) (@alerts :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} (@alerts :message alerts) 5))
+                                                                                               )
+                                                                                             :args [:halign :left])])
+                                                                      (:->documents controller))
+                                                                 [(gcomp/hr 10)]
+                                                                 [(gcomp/hr 2 "#95dec9")]))
+                                   :background "#95dec9"
                                   ;; :focusable? true
-                                  :border (sborder/compound-border (sborder/empty-border :left 10 :right 10))
+                                   :border (sborder/compound-border (sborder/empty-border :left 10 :right 10))
                                   ;; :listen [:focus-gained (fn [e] (c/config! (first (u/children (c/to-widget e))) :background focus-gb))
                                   ;;          :focus-lost   (fn [e] (c/config! (first (u/children (c/to-widget e))) :background expor-gb))]
-                                  )])))
-
-(defn export-expand-panel
-  []
-  (let [;;radio-group (c/button-group)
-        panel-bg "#eee"
-        expor-gb "#95dec9"
-        focus-gb "#5ee6bf"
-        icon (c/label :icon (jarman.tools.swing/image-scale ico/enter-64-png 30)
-                      :background panel-bg
-                      :border (sborder/empty-border :thickness 8)
-                      :listen [:mouse-clicked (fn [e] (println "Export clicked"))])
-        template (gcomp/input-text :args [:text "\\path\\save\\to"])
-        panel (c/horizontal-panel
-               :items [icon
-                       template])]
-    (c/flow-panel
-     :border (sborder/compound-border (sborder/empty-border :top 5)
-                                      (sborder/line-border :top 2 :color "#999")
-                                      (sborder/empty-border :top 50))
-     :items [(gcomp/button-expand "Export by template" (smig/mig-panel
-                                                        :constraints ["wrap 1" "5px[grow, fill]5px" "0px[fill]0px"]
-                                          ;;  :border (sborder/line-border :left 2 :right 2 :bottom 2 :color "#fff")
-                                          ;;  :border (sborder/line-border :left 2 :color "#ccc")
-                                                        :background panel-bg
-                                                        :items [[(gcomp/hr 2 "#ccc")]
-                                                                [(gcomp/hr 10)]
-                                                    ;;  [(c/radio :id :odt  :text "ODT"  :group radio-group :background bg :selected? true) "split 2"]
-                                                    ;;  [(c/radio :id :docx :text "DOCX" :group radio-group :background bg)]
-                                                                [(gcomp/hr 10)]
-                                                                [panel]
-                                                    ;;  [(gcomp/button-basic "Service raport" (fn [e] (if-let [s (c/selection radio-group)] (println "Selected " (str (c/text s))
-                                                    ;;                                                                                               "\nTemplate: " (str (c/text template))))))]
-
-                                                                [(gcomp/hr 10)]
-                                                                [(gcomp/button-basic "Service raport" (fn [e]) :args [:halign :left])]
-                                                                [(gcomp/button-basic "Clients list"   (fn [e]) :args [:halign :left])]
-                                                                [(gcomp/button-basic "Invoice print"  (fn [e]) :args [:halign :left])]
-                                                                [(gcomp/hr 10)]
-                                                                [(gcomp/hr 2 "#95dec9")]])
-                                  :background "#95dec9"
-                                  ;; :focusable? true
-                                  :border (sborder/compound-border (sborder/empty-border :left 10 :right 10))
-                                  ;; :listen [:focus-gained (fn [e] (c/config! (first (u/children (c/to-widget e))) :background focus-gb))
-                                  ;;          :focus-lost   (fn [e] (c/config! (first (u/children (c/to-widget e))) :background expor-gb))]
-                                  )])))
+                                   )]])))
 
 ;; (run user-view)
 
@@ -680,13 +645,15 @@
 
 (def auto-builder--table-view
   (fn [controller
-       & {:keys [start-focus]
-          :or {start-focus nil}}]
+       & {:keys [start-focus
+                 alerts]
+          :or {start-focus nil
+               alerts nil}}]
     (let [x nil ;;------------ Prepare
           controller    (if (nil? controller) user-view controller)
-          expand-export (fn [id] (export-print-doc controller id))
-          insert-form   (fn [] (build-input-form controller :start-focus start-focus))
-          view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
+          expand-export (fn [id] (export-print-doc controller id alerts))
+          insert-form   (fn [] (build-input-form controller :start-focus start-focus :alerts alerts))
+          view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]14px" "0px[grow, fill]38px"])
           table         (fn [] (second (u/children view-layout)))
           header        (fn [] (c/label :text (get (:->tbl-meta controller) :representation) :halign :center :border (sborder/empty-border :top 10)))
           update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form controller :model model :export-comp expand-export :more-comps [(return)])]))

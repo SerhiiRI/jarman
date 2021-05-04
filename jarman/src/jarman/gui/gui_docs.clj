@@ -169,7 +169,7 @@
 ;; (:->col-meta documents-view)
 
 (defn build-input-form
-  [controller model focus & more-comps]
+  [controller model focus alerts & more-comps]
   (let [meta (:->col-meta controller)
         complete (atom {})
         insert-or-update (if (nil? model) "Upload template" "Update template")
@@ -209,7 +209,10 @@
                                                                                   :document (c/config input-text :text)
                                                                                   :prop     (symbol (get @complete :documents.prop))}]
                                                                  (println "to save" insert-meta)
-                                                                 (dm/insert-document insert-meta)))
+                                                                 (dm/insert-document insert-meta)
+                                                                ;;  (if-not (nil? alerts) (@jarman.gui.gui-seed/alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :insert-new-record)} (@jarman.gui.gui-seed/alert-manager :message jarman.gui.gui-seed/alert-manager) 5))
+                                                                 ((@jarman.gui.gui-app/jarman-views-service :reload))
+                                                                 ))
 
                                                              (if (not (nil? (get @complete :documents.table)))
                                                                (let [insert-meta {:id       (get model (:->model->id controller))
@@ -217,11 +220,13 @@
                                                                                   :name     (get @complete :documents.name)
                                                                                   :prop     (symbol (get @complete :documents.prop))}]
                                                                  (dm/insert-document insert-meta)
-                                                                 (println "to save" insert-meta))))))
+                                                                 (println "to save" insert-meta)
+                                                                 ((@jarman.gui.gui-app/jarman-views-service :reload)))))))
                     (if (nil? model) (c/label) (gcomp/button-basic delete (fn [e]
                                                                             ;; (println "Delete row: " (get model (:->model->id controller)))
                                                                             (println "Delete " model)
-                                                                            (dm/delete-document {:id (get model (:->model->id controller))}))))]]
+                                                                            (dm/delete-document {:id (get model (:->model->id controller))})
+                                                                            ((@jarman.gui.gui-app/jarman-views-service :reload)))))]]
     ;; (println "Model" model)
 
     ;; (reset! focus (last (u/children (first components))))
@@ -230,11 +235,13 @@
 
 (def auto-builder--table-view
   (fn [controller
-       & {:keys [start-focus]
-          :or {start-focus (atom {})}}]
+       & {:keys [start-focus
+                 alerts]
+          :or {start-focus (atom {})
+               alerts nil}}]
     (let [controller  (if (nil? controller) documents-view controller)
           x nil ;;------------ Prepare
-          insert-form   (fn [] (build-input-form controller nil start-focus))
+          insert-form   (fn [] (build-input-form controller nil start-focus alerts))
           view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
           table         (fn [] (second (u/children view-layout)))
           header        (fn [] (c/label :text (get (:->tbl-meta controller) :representation) :halign :center :border (sborder/empty-border :top 10)))

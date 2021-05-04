@@ -155,6 +155,7 @@
 
 (def using-lang (conf-man/get-in-value [:init.edn :lang]))
 (def get-color (partial theme-map "#000" :color))
+(def get-comp (partial theme-map "#000" :components))
 (def get-frame (partial theme-map 1000 :frame))
 (def get-font (partial theme-map "Ubuntu" :font))
 (def get-lang (fn [& path] (get-in-lang (join-vec [:ui] path))))

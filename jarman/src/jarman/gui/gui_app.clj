@@ -366,7 +366,7 @@
 
 (defn table-editor--component--space-for-column-editor
   "Create right table editor view to editing selected column in left table editor view"
-  [column-editor-id] (mig-panel :constraints ["wrap 1" "0px[fill]0px" "0px[fill]0px"]
+  [column-editor-id] (mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
                                 :id (keyword column-editor-id)
                                 :items [[(label)]]
                                 :border (line-border :left 4 :color (get-color :border :dark-gray))))
@@ -378,7 +378,10 @@
         map))))
 
 (defn table-editor--element--btn-save
-  [local-changes table]
+  "Description:
+     Invoker-id is a parent whos invoke editor. I mean DB Visualizer.
+   "
+  [local-changes table invoker-id]
   (table-editor--component--bar-btn :edit-view-save-btn (get-lang-btns :save) icon/agree-grey-64-png icon/agree-blue-64-png
                                     (fn [e] 
                                       (let [new-table-meta (atom table)]
@@ -395,8 +398,10 @@
                                          (mmeta/apply-table table @new-table-meta)
                                          table @new-table-meta)
                                         (cm/swapp)
+                                        (println "reload invoker" invoker-id)
+                                        (if-not (nil? invoker-id) ((@jarman-views-service :reload) invoker-id))
+                                        ((@jarman-views-service :reload))
                                         (@alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)
-                                        ;; (mmeta/apply-table table @new-table-meta)
                                         ))))
 
 
@@ -467,7 +472,7 @@
   "Description:
      Create view for table editor. Marge all component to one big view.
    "
-  [work-mode tables-configurations table-id local-changes]
+  [work-mode tables-configurations table-id local-changes invoker-id]
   (let [table          (get-table-configuration-from-list-by-table-id (tables-configurations) table-id)
         col-path-to-value [:prop :columns]
         tab-path-to-value [:prop :table]
@@ -475,16 +480,16 @@
         table-property (get-in table tab-path-to-value) ;; Get table property
         elems          (join-vec
                     ;; Table info
-                        [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "0px[fill]0px"] ;; menu bar for editor
+                        [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "10px[fill]10px"] ;; menu bar for editor
                                      :items (join-mig-items
                                              [(table-editor--element--header-view (str "Edit table: \"" (get-in table [:prop :table :representation]) "\""))]
                                              (cond (in? [:dev-mode :admin-mode] @work-mode)
-                                                   (list [(table-editor--element--btn-save local-changes table)]
+                                                   (list [(table-editor--element--btn-save local-changes table invoker-id)]
                                                          [(table-editor--element--btn-show-changes local-changes table)])
                                                    :else [])))]]
                         [[(scrollbox ;; Scroll section bottom title and button save/reload bar
                            (mig-panel
-                            :constraints ["wrap 1" "[grow, fill]" "[grow, fill]"]
+                            :constraints ["wrap 1" "[grow, fill]" "[fill]"]
                             :items (join-mig-items  ;; Table properties 
                                     (table-editor--element--header "Table configuration")
                                     (vec (let [table-property-count (count table-property)
@@ -500,14 +505,14 @@
                                     (gcomp/hr 15)
                                     (let [column-editor-id "table-editor--component--space-for-column-editor"]
                                       (mig-panel ;; Left and Right functional space
-                                       :constraints ["wrap 2" "0px[fill]0px" "0px[fill]0px"]
+                                       :constraints ["wrap 2" "0px[fill]0px" "0px[grow, fill]0px"]
                                        :items [[(table-editor--component--column-picker @work-mode local-changes column-editor-id columns col-path-to-value)] ;; Left part for columns to choose for doing changes.
                                                [(table-editor--component--space-for-column-editor column-editor-id)] ;; Space for components. Using to editing columns.
                                                ])))))]])
         component (cond
                     (> (count table) 0) (do
                                           (mig-panel
-                                           :constraints ["wrap 1" "20px[grow, fill]20px" "20px[]20px"]
+                                           :constraints ["wrap 1" "20px[grow, fill]20px" "0px[fill]0px[grow, fill]50px"]
                                            :items elems
                                            :border (empty-border :thickness 0)))
                     :else (label :text "Table not found inside metadata :c"))]
@@ -518,14 +523,14 @@
    (let [local-changes (atom {})
          table          (get-table-configuration-from-list-by-table-id (tables-configurations) table-id)
          view-id        (keyword (get table :table))  ;; Get name of table and create keyword to check tabs bar (opens views)
-         ]
+         invoker-id     (@jarman-views-service :get-my-view-id)]
      (do
        (@gtool/changes-service :add-controller :view-id view-id :local-changes local-changes)
        (@jarman-views-service :set-view 
                               :view-id view-id 
                               :title (str "Edit: " (get-in table [:prop :table :representation])) 
-                              :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.") 
-                              :component-fn (fn [] (create-view--table-editor work-mode tables-configurations table-id local-changes)) 
+                              :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.")
+                              :component-fn (fn [] (create-view--table-editor work-mode tables-configurations table-id local-changes invoker-id))
                               :scrollable? false)))))
 
 
@@ -709,26 +714,28 @@
 (defn db-viewer--component--menu-bar
   "Description:
        Menu to control tables view (functionality for db-view)"
-  [] (let [btn (fn [txt ico & args] (let
-                                     [border-c "#bbb"]
-                                      (label
-                                       :font (getFont 13)
-                                       :text txt
-                                       :icon (stool/image-scale ico 30)
-                                       :background "#fff"
-                                       :foreground "#000"
-                                       :border (compound-border (empty-border :left 15 :right 15 :top 5 :bottom 5) (line-border :thickness 1 :color border-c))
-                                       :listen [:mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
-                                                :mouse-exited  (fn [e] (config! e :background "#fff" :foreground "#000"))])))]
+  [] (let [btn (fn [txt ico onClick & args] (let
+                                          [border-c "#bbb"]
+                                           (label
+                                            :font (getFont 13)
+                                            :text txt
+                                            :icon (stool/image-scale ico 30)
+                                            :background "#fff"
+                                            :foreground "#000"
+                                            :border (compound-border (empty-border :left 15 :right 15 :top 5 :bottom 5) (line-border :thickness 1 :color border-c))
+                                            :listen [:mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
+                                                     :mouse-exited  (fn [e] (config! e :background "#fff" :foreground "#000"))
+                                                     :mouse-clicked onClick])))]
        (mig-panel
         :id :db-viewer--component--menu-bar
         :background (new Color 0 0 0 0)
         :constraints ["" "5px[fill]0px" "5px[fill]5px"]
-        :items [[(btn "Show all relation" icon/refresh-connection-blue-64-png)]
-                [(btn "Save view" icon/agree-grey-64-png true)]
-                [(btn "Reset view" icon/arrow-blue-left-64-png)]
-                [(btn "Reloade view" icon/refresh-blue-64-png)]])))
+        :items [[(btn "Show all relation" icon/refresh-connection-blue-64-png (fn [e]))]
+                [(btn "Save view" icon/agree-grey-64-png (fn [e]))]
+                [(btn "Reset view" icon/arrow-blue-left-64-png (fn [e] ))]
+                [(btn "Reloade view" icon/refresh-blue-64-png (fn [e] ((@jarman-views-service :reload))))]])))
 
+;; ((@jarman-views-service :reload))
 
 
 (defn create-view--db-view
@@ -803,6 +810,7 @@
                                                               :set-view
                                                               :view-id view-id
                                                               :title title
+                                                              :scrollable? false
                                                               :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)))))))))
                    config-file-list-as-keyword-to-display)
 
@@ -814,8 +822,9 @@
                                                        :set-view
                                                        :view-id view-id
                                                        :title title
+                                                       :scrollable? false
                                                        :component-fn (fn [] (cg/create-view--confgen path
-                                                                                                  :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5))))))))
+                                                                                                     :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5))))))))
               (let [path [:themes :current-theme]
                     title (get (cm/get-in-segment path) :name)
                     view-id :current-theme]
@@ -825,8 +834,9 @@
                                                          :set-view
                                                          :view-id view-id
                                                          :title title
+                                                         :scrollable? false
                                                          :component-fn (fn [] (cg/create-view--confgen path
-                                                                                                    :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)))))
+                                                                                                       :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)))))
                                                         (catch Exception e (do
                                                                              (@alert-manager :set {:header "Warning!" :body (gtool/get-lang-alerts :configuration-corrupted)} (message alert-manager) 5)))))))
               restore-button))))))
@@ -849,8 +859,9 @@
   (fn [& args] (mig-panel
                 :id :expand-menu-space
                 :background "#fff"
-                :border (line-border :left 4 :right 4 :color "#fff")
-                :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
+                ;; :border (line-border :left 4 :right 4 :color "#fff")
+                       :border (line-border :thickness 4 :color "#c2a")
+                :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill]0px"]
                 :items (vec args))))
 
 (def right-part-of-jarman-as-space-for-views-service
@@ -866,15 +877,18 @@
    "
   (fn [tabs array]
     (let [bg-color "#fff"
-          tabs-space (horizontal-panel
+          tabs-space (mig-panel
+                      :constraints ["" "0px[fill]0px" "0px[]0px"]
                       :id :app-tabs-space
                       :background bg-color
-                      :items tabs)
-          views-space (vertical-panel
+                       :border (line-border :thickness 4 :color "#22a")
+                      :items (join-mig-items tabs))
+          views-space (mig-panel
+                       :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
                        :id :app-functional-space
                        :background (new Color 0 0 0 0)
-                       :border (empty-border :right 1)
-                       :items array)]
+                       :border (line-border :thickness 4 :color "#2ac")
+                       :items (join-mig-items array))]
       (reset! jarman-views-service (vs/new-views-service tabs-space views-space))
       (mig-panel
        :id :operation-space
@@ -896,33 +910,37 @@
           :or {margin-left 0}}]
     (let [bg-color "#ddd"
           vhr-color "#999"]
-      (grid-panel
+      (mig-panel
        :id :rebound-layer
-       :items [(mig-panel
-                :constraints [""
-                              "0px[200]0px[grow, fill]15px"
-                              "0px[grow, fill]38px"]
-                :border (line-border :left margin-left :color bg-color)
-                :items [;; [(label-fn :background "#eee" :size [50 :by 50])]
-                        [(mig-app-left-f  [(button-expand "Database"
-                                                          [(button-expand-child "DB Visualiser" :onClick (fn [e] (@jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view)))
+       :border (compound-border  (line-border :thickness 4 :color "#aac") (line-border :thickness 50 :color "#333"))
+       :constraints [""
+                     "0px[fill]0px[grow, fill]0px"
+                     "0px[grow, fill]0px"]
+      ;;  :border (line-border :left margin-left :color bg-color)a
+       :items [;; [(label-fn :background "#eee" :size [50 :by 50])]
+               [(mig-app-left-f  [(button-expand "Database"
+                                                 [(button-expand-child "DB Visualiser" :onClick (fn [e] (@jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view)))
                                                           ;;  (button-expand-child "Users table" :onClick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
-                                                           ])]
-                                          [(button-expand "Tables"
-                                                          (vec
-                                                           (doall (map (fn [controller]
-                                                                         (let [title (str (name (get-in (:->tbl-meta (controller @view/views)) [:representation])))]
-                                                                           (button-expand-child
-                                                                            title
-                                                                            :onClick (fn [e] (@jarman-views-service :set-view
-                                                                                                                    :view-id (str "auto-" title)
-                                                                                                                    :title title
-                                                                                                                    :scrollable? false
-                                                                                                                    :component-fn (fn [](view/auto-builder--table-view (controller @view/views))))))))
-                                                                       (keys @view/views)))))]
-                                          [(create-expand-btns--confgen)])]
-                        [(right-part-of-jarman-as-space-for-views-service []
-                                                                          [])]])]))))
+                                                  ])]
+                                 [(button-expand "Tables"
+                                                 (vec
+                                                  (doall (map (fn [controller]
+                                                                (let [title (str (name (get-in (:->tbl-meta (controller @view/views)) [:representation])))]
+                                                                  (button-expand-child
+                                                                   title
+                                                                   :onClick (fn [e] (@jarman-views-service :set-view
+                                                                                                           :view-id (str "auto-" title)
+                                                                                                           :title title
+                                                                                                           :scrollable? false
+                                                                                                           :component-fn (fn [] (view/auto-builder--table-view (controller @view/views))))))))
+                                                              (keys @view/views)))))]
+                                 [(create-expand-btns--confgen)]
+                                 [(button-expand "Debug items"
+                                                 [(button-expand-child "Popup" :onClick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200])))
+                                                  (button-expand-child "Dialog" :onClick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100])))))
+                                                  (button-expand-child "alert" :onClick (fn [e] (@alert-manager :set {:header "Witaj<br>World" :body "Alllle<br>Luja"} (message alert-manager) 5)))])])]
+               [(right-part-of-jarman-as-space-for-views-service []
+                                                                 [])]]))))
 ;; (jarman.logic.metadata/getset)
 
 ;; (@startup)
@@ -944,17 +962,15 @@
                       (list
                        (jarmanapp :margin-left img-scale)
                        (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view))})
-                       (slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Powiadomienia" {:onclick (fn [e] (@alert-manager :show))})
-                       (slider-ico-btn (stool/image-scale icon/alert-64-png img-scale) 2 img-scale "Popup" {:onclick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200]))})
-                       (slider-ico-btn (stool/image-scale icon/agree-grey-64-png img-scale) 3 img-scale "Dialog" {:onclick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100]))))})
-                       (slider-ico-btn (stool/image-scale icon/a-blue-64-png img-scale) 4 img-scale "alert" {:onclick (fn [e] (@alert-manager :set {:header "Witaj<br>World" :body "Alllle<br>Luja"} (message alert-manager) 5))})
-                       (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 5 img-scale "Restart" {:onclick (fn [e] (@startup))})
-                       (slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 6 img-scale "Change work mode" {:onclick (fn [e]
+                       (slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Message Store" {:onclick (fn [e] (@alert-manager :show))})
+                       (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 2 img-scale "Restart" {:onclick (fn [e] (@startup))})
+                       (slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 3 img-scale "Change work mode" {:onclick (fn [e]
                                                                                                                                      (cond (= @work-mode :user-mode)  (reset! work-mode :admin-mode)
                                                                                                                                            (= @work-mode :admin-mode) (reset! work-mode :dev-mode)
                                                                                                                                            (= @work-mode :dev-mode)   (reset! work-mode :user-mode))
                                                                                                                                      (@alert-manager :set {:header "Work mode" :body (str "Switched to: " (symbol @work-mode))} (message alert-manager) 5))})
-                       (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 7 img-scale "Docs Templates" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "Docs-Templates" :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil))))})
+                       (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 4 img-scale "Docs Templates" {:onclick (fn [e] (@jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts alert-manager))))})
+                       (slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 5 img-scale "Reload active view" {:onclick (fn [e] ((@jarman-views-service :reload)))})
                        @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook)))))
 
@@ -977,8 +993,9 @@
 
 (@startup)
 
-;; (config! (to-frame @app) :size [1000 :by 800])
+;; (@jarman-views-service :get-all-view)
 
+;; (config! (to-frame @app) :size [1000 :by 800])
 
 
 ;; ┌──────────────────────────────────────┐

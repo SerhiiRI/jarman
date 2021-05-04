@@ -10,7 +10,9 @@
             [jarman.resource-lib.icon-library :as icon]
             ;; logics
             [jarman.config.config-manager :as cm]
-            [jarman.gui.gui-tools :refer :all :as gtool]
+            [jarman.gui.gui-tools :as gtool]
+            [jarman.gui.gui-components :as gcomp]
+            [jarman.tools.swing :as stool]
             [jarman.gui.gui-components :refer :all :as gcomp]
 
             ;; deverloper tools 
@@ -186,24 +188,29 @@
                                   :local-changes local-changes)
           (mig-panel
            :border (line-border :bottom 50 :color (gtool/get-color :background :main))
-           :constraints ["wrap 1" "[fill, grow]" "20px[]20px"]
+           :constraints ["wrap 1" "0px[fill, grow]14px" "0px[]0px[grow, fill]0px[]0px"]
            :items (join-mig-items
                    (confgen--element--header-file (get-in map-part [:name])) ;; Header of section/config file
-                   (label :text "Show changes" :listen [:mouse-clicked (fn [e] ;; save changes configuration
-                                                                         (doall (map #(cm/assoc-in-value (first (second %)) (second (second %)))  @local-changes))
-                                                                         (let [validate (cm/store-and-back)]
+                    
+                   (gcomp/auto-scrollbox (mig-panel
+                                          :constraints ["wrap 1" "0px[fill, grow]0px" "20px[grow, fill]20px"]
+                                          :items (join-mig-items
+                                                  (let [body (map
+                                                              (fn [param]
+                                                                (confgen--component--tree local-changes (join-vec start-key (list (first param)))))
+                                                              (get-in map-part [:value]))]
+                                                    body))))
+                   (gcomp/button-basic "Save changes" (fn [e] ;; save changes configuration
+                                                        (doall (map #(cm/assoc-in-value (first (second %)) (second (second %)))  @local-changes))
+                                                        (let [validate (cm/store-and-back)]
                                                                           ;;  (println validate)
-                                                                           (if (get validate :valid?)
-                                                                             (do ;; message box if saved successfull
-                                                                               (if-not (nil? message-ok) (message-ok "")))
-                                                                             (do ;; message box if saved faild
-                                                                               (if-not (nil? message-faild) (message-faild (get validate :output)))))))])
-                   (let [body (map
-                               (fn [param]
-                                 (confgen--component--tree local-changes (join-vec start-key (list (first param)))))
-                               (get-in map-part [:value]))]
-                     body))))))))
+                                                          (if (get validate :valid?)
+                                                            (do ;; message box if saved successfull
+                                                              (if-not (nil? message-ok) (message-ok "")))
+                                                            (do ;; message box if saved faild
+                                                              (if-not (nil? message-faild) (message-faild (get validate :output)))))))))))))))
 
+;; (@jarman.gui.gui-app/startup)
 ;; Show example
 ;; (let [my-frame (-> (doto (seesaw.core/frame
 ;;                           :title "test"

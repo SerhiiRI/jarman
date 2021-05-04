@@ -34,7 +34,7 @@
                                 (fn [e] (invoke-later (let [get-root (fn [e](.getParent (.getParent (.getParent (.getSource e)))))
                                                             vbar 40
                                                             w (- (.getWidth (get-root e)) vbar)
-                                                            h (.getHeight (config e :preferred-size))]
+                                                            h (+ 50 vbar (.getHeight (config e :preferred-size)))]
                                                         (config! component :size [w :by h]))))])]
 
     (.setUnitIncrement (.getVerticalScrollBar scrol) 20)
@@ -286,7 +286,7 @@
            focus-color (get-color :decorate :focus-gained-dark)
            unfocus-color "#fff"}}]
   (let [hidden-comp (atom nil)
-        hsize (if (< max-w w) (str "0px[" min-w ":" w ":" w ", grow,fill]10px") (str "0px[" min-w ":" w ":" max-w ", grow,fill]10px"))
+        hsize (if (< max-w w) (str "0px[" min-w ":" w ":" w ", grow, fill]10px") (str "0px[" min-w ":" w ":" max-w ", grow,fill]10px"))
         form-space-open ["wrap 1" hsize "0px[fill]0px"]
         form-space-hide ["" "0px[grow, fill]0px" "0px[grow, fill]0px"]
         form-space (smig/mig-panel :constraints form-space-open)

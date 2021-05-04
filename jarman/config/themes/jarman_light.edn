@@ -47,7 +47,6 @@
                                               :button_selected {:type :param :display :edit :component :textcolor :value "#000"}
                                               :doc-font-color {:type :param :display :edit :component :textcolor :value "#999"}
                                               :txt-font-color {:type :param :display :edit :component :textcolor :value "#000"}}}
-
                          :border {:type :block
                                   :display :edit
                                   :value {:white {:type :param :display :edit :component :textcolor :value "#fff"}
@@ -62,6 +61,15 @@
                                             :focus-gained {:type :param :display :edit :component :textcolor :value "#96c1ea"}
                                             :focus-lost {:type :param :display :edit :component :textcolor :value "#ccc"}
                                             }}}}
+         :components {:name "Konfiguracja komponentów"
+                      :doc "Spersonalizuj komponenty"
+                      :type :block
+                      :display :edit
+                      :value {:message-box {:name "Message Box"
+                                            :type :block
+                                            :display :edit
+                                            :value {:border-color {:type :param :display :edit :component :textcolor :value "#96c1ea"}
+                                                    :border-size  {:doc "Bordet size top, bottom, left and right." :type :param :display :edit :component :textlist :value [1 1 1 1]}}}}}
          :font {:doc "Konfiguracja głównego okna HRTime"
                 :type :block
                 :display :edit

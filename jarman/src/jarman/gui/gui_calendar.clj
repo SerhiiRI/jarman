@@ -96,7 +96,7 @@
 ;;          :minimum-size [1000 :by 760]
 ;;          :content (mig-panel
 ;;                    :constraints ["wrap 1" "100px[grow, center]100px" "30px[]30px"]
-;;                    :items [[(get-calendar (text :columns 20))]])))
+;;                    :items [[(get-calendar (text :columns 20 :text nil))]])))
 
 ;;  (-> (doto (frame-calendar) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
 

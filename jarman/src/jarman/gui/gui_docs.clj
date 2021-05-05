@@ -211,7 +211,7 @@
                                                                  (println "to save" insert-meta)
                                                                  (dm/insert-document insert-meta)
                                                                 ;;  (if-not (nil? alerts) (@jarman.gui.gui-seed/alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :insert-new-record)} (@jarman.gui.gui-seed/alert-manager :message jarman.gui.gui-seed/alert-manager) 5))
-                                                                 ((@jarman.gui.gui-app/jarman-views-service :reload))
+                                                                 ((@jarman.gui.gui-seed/jarman-views-service :reload))
                                                                  ))
 
                                                              (if (not (nil? (get @complete :documents.table)))
@@ -221,12 +221,12 @@
                                                                                   :prop     (symbol (get @complete :documents.prop))}]
                                                                  (dm/insert-document insert-meta)
                                                                  (println "to save" insert-meta)
-                                                                 ((@jarman.gui.gui-app/jarman-views-service :reload)))))))
+                                                                 ((@jarman.gui.gui-seed/jarman-views-service :reload)))))))
                     (if (nil? model) (c/label) (gcomp/button-basic delete (fn [e]
                                                                             ;; (println "Delete row: " (get model (:->model->id controller)))
                                                                             (println "Delete " model)
                                                                             (dm/delete-document {:id (get model (:->model->id controller))})
-                                                                            ((@jarman.gui.gui-app/jarman-views-service :reload)))))]]
+                                                                            ((@jarman.gui.gui-seed/jarman-views-service :reload)))))]]
     ;; (println "Model" model)
 
     ;; (reset! focus (last (u/children (first components))))
@@ -256,7 +256,7 @@
       view-layout)))
 
 
-;; (@jarman.gui.gui-app/startup)
+;; (@jarman.gui.gui-seed/startup)
 ;; (cm/swapp)
 
 ;; ;; (:->col-meta documents-view)

@@ -653,7 +653,7 @@
           controller    (if (nil? controller) user-view controller)
           expand-export (fn [id] (export-print-doc controller id alerts))
           insert-form   (fn [] (build-input-form controller :start-focus start-focus :alerts alerts))
-          view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]14px" "0px[grow, fill]38px"])
+          view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]14px" "0px[grow, fill]0px"])
           table         (fn [] (second (u/children view-layout)))
           header        (fn [] (c/label :text (get (:->tbl-meta controller) :representation) :halign :center :border (sborder/empty-border :top 10)))
           update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form controller :model model :export-comp expand-export :more-comps [(return)])]))

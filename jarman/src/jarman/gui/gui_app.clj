@@ -512,7 +512,8 @@
         component (cond
                     (> (count table) 0) (do
                                           (mig-panel
-                                           :constraints ["wrap 1" "20px[grow, fill]20px" "0px[fill]0px[grow, fill]50px"]
+                                           :constraints ["wrap 1" "20px[grow, fill]20px" "0px[fill]0px[grow, fill]0px"]
+                                          ;;  :border (line-border :thicness 1 :color "#f00")
                                            :items elems
                                            :border (empty-border :thickness 0)))
                     :else (label :text "Table not found inside metadata :c"))]
@@ -859,8 +860,7 @@
   (fn [& args] (mig-panel
                 :id :expand-menu-space
                 :background "#fff"
-                ;; :border (line-border :left 4 :right 4 :color "#fff")
-                       :border (line-border :thickness 4 :color "#c2a")
+                :border (line-border :left 4 :right 4 :color "#fff")
                 :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill]0px"]
                 :items (vec args))))
 
@@ -881,19 +881,17 @@
                       :constraints ["" "0px[fill]0px" "0px[]0px"]
                       :id :app-tabs-space
                       :background bg-color
-                       :border (line-border :thickness 4 :color "#22a")
                       :items (join-mig-items tabs))
           views-space (mig-panel
                        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
                        :id :app-functional-space
                        :background (new Color 0 0 0 0)
-                       :border (line-border :thickness 4 :color "#2ac")
                        :items (join-mig-items array))]
       (reset! jarman-views-service (vs/new-views-service tabs-space views-space))
       (mig-panel
        :id :operation-space
        :background "#fff"
-       :constraints ["wrap 1" "0px[fill, grow]0px" "0px[25]0px[fill, grow]0px"]
+       :constraints ["wrap 1" "0px[grow, fill]0px" "0px[25]0px[grow, fill]0px"]
        :background "#eee"
        :border (line-border :left 1 :color "#999")
        :items [[tabs-space]
@@ -912,11 +910,10 @@
           vhr-color "#999"]
       (mig-panel
        :id :rebound-layer
-       :border (compound-border  (line-border :thickness 4 :color "#aac") (line-border :thickness 50 :color "#333"))
        :constraints [""
                      "0px[fill]0px[grow, fill]0px"
                      "0px[grow, fill]0px"]
-      ;;  :border (line-border :left margin-left :color bg-color)a
+       :border (line-border :left margin-left :color bg-color)
        :items [;; [(label-fn :background "#eee" :size [50 :by 50])]
                [(mig-app-left-f  [(button-expand "Database"
                                                  [(button-expand-child "DB Visualiser" :onClick (fn [e] (@jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view)))
@@ -941,6 +938,7 @@
                                                   (button-expand-child "alert" :onClick (fn [e] (@alert-manager :set {:header "Witaj<br>World" :body "Alllle<br>Luja"} (message alert-manager) 5)))])])]
                [(right-part-of-jarman-as-space-for-views-service []
                                                                  [])]]))))
+
 ;; (jarman.logic.metadata/getset)
 
 ;; (@startup)

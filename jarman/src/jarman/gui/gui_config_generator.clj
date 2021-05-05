@@ -28,24 +28,24 @@
 (def confgen--element--header-file
   (fn [title] (mig-panel
                :constraints ["" "0px[grow, center]0px" "0px[]0px"]
-               :items [[(label :text title :font (getFont 16) :foreground (gtool/get-color :foreground :dark-header))]]
+               :items [[(label :text title :font (gtool/getFont 16) :foreground (gtool/get-color :foreground :dark-header))]]
                :background (gtool/get-color :background :dark-header)
                :border (line-border :thickness 10 :color (gtool/get-color :background :dark-header)))))
 
 (def confgen--element--header-block
-  (fn [title] (label :text title :font (getFont 16 :bold)
+  (fn [title] (label :text title :font (gtool/getFont 16 :bold)
                      :border (compound-border  (line-border :bottom 2 :color (gtool/get-color :decorate :underline)) (empty-border :bottom 5)))))
 
 (def confgen--element--header-parameter
   (fn [title]
-    (label :text title :font (getFont 14 :bold))))
+    (label :text title :font (gtool/getFont 14 :bold))))
 
 (def confgen--element--combobox
   (fn [local-changes path model]
     (mig-panel
      :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
      :items [[(combobox :model model
-                        :font (getFont 14)
+                        :font (gtool/getFont 14)
                         :background (gtool/get-color :background :combobox)
                         :size [200 :by 30]
                         :listen [:item-state-changed (fn [event] (let [choosed (config event :selected-item)
@@ -57,7 +57,7 @@
   (fn [local-changes path value]
     (mig-panel
      :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
-     :items [[(text :text value :font (getFont 14)
+     :items [[(text :text value :font (gtool/getFont 14)
                     :background (gtool/get-color :background :input)
                     :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
                                              (line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline)))
@@ -69,7 +69,7 @@
     (let [v (string/join ", " value)]
       (mig-panel
        :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
-       :items [[(text :text v :font (getFont 14)
+       :items [[(text :text v :font (gtool/getFont 14)
                       :background (gtool/get-color :background :input)
                       :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
                                                (line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline)))
@@ -80,13 +80,13 @@
   (fn [local-changes path value]
     (mig-panel
      :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
-     :items [[(text :text value :font (getFont 14)
+     :items [[(text :text value :font (gtool/getFont 14)
                     :background value :foreground "#444"
                     :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
                                              (line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline)))
                     :listen [:caret-update (fn [event]
                                              (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value value :new-value (config event :text))
-                                             (colorizator-text-component event))])]])))
+                                             (gtool/colorizator-text-component event))])]])))
 
 
 (def confgen--choose--header
@@ -97,12 +97,12 @@
 (def confgen--element--textarea
   (fn [param]
     (if-not (nil? (param [:doc]))
-      (textarea (str (param [:doc])) :font (getFont 12)) ())))
+      (textarea (str (param [:doc])) :font (gtool/getFont 12)) ())))
 
 (def confgen--element--textarea-doc
   (fn [param]
     (if-not (nil? (param :doc))
-      (textarea (str (param :doc)) :font (getFont 14)) ())))
+      (textarea (str (param :doc)) :font (gtool/getFont 14)) ())))
 
 (def confgen--element--margin-top-if-doc-exist
   (fn [type? param] (if (and (type? :block) (not (nil? (param :doc))))
@@ -158,7 +158,7 @@
            :constraints ["wrap 1" "20px[]50px" "5px[]0px"]
            :border (cond (type? :block) (empty-border :bottom 10)
                          :else nil)
-           :items (join-mig-items
+           :items (gtool/join-mig-items
                    (confgen--choose--header type? name)
                    (confgen--element--textarea-doc param)
                    (confgen--element--margin-top-if-doc-exist type? param)
@@ -188,13 +188,16 @@
                                   :local-changes local-changes)
           (mig-panel
            :border (line-border :bottom 50 :color (gtool/get-color :background :main))
-           :constraints ["wrap 1" "0px[fill, grow]14px" "0px[]0px[grow, fill]0px[]0px"]
-           :items (join-mig-items
+           :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px[grow, fill]0px[]0px"]
+           :border nil
+          ;;  :border (line-border :thickness 2 :color "#f00")
+
+           :items (gtool/join-mig-items
                    (confgen--element--header-file (get-in map-part [:name])) ;; Header of section/config file
-                    
+
                    (gcomp/auto-scrollbox (mig-panel
-                                          :constraints ["wrap 1" "0px[fill, grow]0px" "20px[grow, fill]20px"]
-                                          :items (join-mig-items
+                                          :constraints ["wrap 1" "0px[fill, grow]0px" "0px[grow, fill]0px"]
+                                          :items (gtool/join-mig-items
                                                   (let [body (map
                                                               (fn [param]
                                                                 (confgen--component--tree local-changes (join-vec start-key (list (first param)))))

@@ -267,20 +267,27 @@
      (expand-form-panel parent (component or components))
    "
   [view-layout comps
-   & {:keys [icon-open
+   & {:keys [min-w
+             w
+             max-w
+             icon-open
              icon-hide
              text-open
              text-hide
              focus-color
              unfocus-color]
-      :or {ico-open nil
+      :or {min-w 250
+           w 250
+           max-w 250
+           ico-open nil
            icon-hide nil
            text-open "<<"
            text-hide "..."
            focus-color (get-color :decorate :focus-gained-dark)
            unfocus-color "#fff"}}]
   (let [hidden-comp (atom nil)
-        form-space-open ["wrap 1" "0px[grow,fill]0px" "0px[fill]0px"]
+        hsize (if (< max-w w) (str "0px[" min-w ":" w ":" w ", grow,fill]10px") (str "0px[" min-w ":" w ":" max-w ", grow,fill]10px"))
+        form-space-open ["wrap 1" hsize "0px[fill]0px"]
         form-space-hide ["" "0px[grow, fill]0px" "0px[grow, fill]0px"]
         form-space (smig/mig-panel :constraints form-space-open)
         onClick (fn [e]
@@ -309,9 +316,9 @@
                                     :focus-lost   (fn [e] (c/config! e :foreground unfocus-color))
                                     :mouse-entered gtool/hand-hover-on
                                     :mouse-clicked onClick
-                                    :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))
-                                    ])]
+                                    :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))])]
     (c/config! form-space :items (join-mig-items hide-show comps))))
+
 
 
 
@@ -322,19 +329,36 @@
     ((def input-password :placeholder \"Password\" :style [:halign :center])
  "
   (fn [& {:keys [placeholder
+                 border
+                 font-size
+                 border-color-focus
+                 border-color-unfocus
                  style]
           :or   {placeholder "Password"
+                 font-size 14
+                 border-color-focus   (get-color :decorate :focus-gained)
+                 border-color-unfocus (get-color :decorate :focus-lost)
+                 border [10 10 5 5 2]
                  style []}}]
     (let [fn-letter-count (fn [e] (count (value e)))
           fn-hide-chars   (fn [e] (apply str (repeat (fn-letter-count e) "*")))
           fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
-          fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))]
-      (apply text :text placeholder
+          fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))
+          newBorder       (fn [underline-color]
+                            (compound-border (empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
+                                             (line-border :bottom (nth border 4) :color underline-color)))]
+      (apply text
+             :text placeholder
+             :font (getFont font-size :name "Monospaced")
+             :background (get-color :background :input)
+             :border (newBorder border-color-unfocus)
              :user-data {:placeholder placeholder :value "" :edit? false :type :password}
              :listen [:focus-gained (fn [e]
+                                      (config! e :border (newBorder border-color-focus))
                                       (cond (= (fn-get-data e :value) "")    (config! e :text ""))
                                       (config! e :user-data (fn-assoc e :edit? true)))
                       :focus-lost   (fn [e]
+                                      (config! e :border (newBorder border-color-unfocus))
                                       (cond (= (value e) "") (config! e :text placeholder))
                                       (config! e :user-data (fn-assoc e :edit? false)))
                       :caret-update (fn [e]

@@ -541,31 +541,20 @@
 
 (defn login-panel []
   (let [flogin (components/input-text :placeholder "Login"
-                                      
-                                      :args [:columns 20
-                                             
-                                             :border (compound-border emp-border
-                                                                      (line-border :bottom 4 :color light-blue-color))
-                                             :halign :left])
+                                      :border-color-hover light-blue-color
+                                      :args [:halign :left])
         fpass (components/input-password :placeholder "Password"
-                                         :style [:columns 20
-                                                 :border (compound-border emp-border
-                                                                          (line-border :bottom 4 :color light-blue-color))
-                                                 :halign :left])]
+                                         :border-color-hover light-blue-color
+                                         :style [:halign :left])]
     (mig-panel
-     :constraints ["wrap 1" "[ center]" "20px[]0px"]
+     :constraints ["wrap 1" "[center]" "20px[]0px"]
      :items [[(label :icon (stool/image-scale "resources/imgs/jarman-text.png" 6))]
-             [(vertical-panel :items (list  
-                                      (mig-panel
-                                       :constraints ["" "[grow, fill]" "20px[]20px"]
-                                       :items [[(label :icon (stool/image-scale icon/user-blue1-64-png 40))]
-                                               [flogin]
-                                               [(label :border (empty-border :right 20))]])
-                                      (mig-panel
-                                       :constraints ["" "[grow, fill]" "5px[]10px"]
-                                       :items [[(label :icon (stool/image-scale icon/key-blue-64-png 40))]
-                                               [fpass]
-                                               [(label :border (empty-border :right 20))]])))]
+             [(mig-panel
+               :constraints ["wrap 2" "10px[fill]10px[200:, fill]" "0px[]20px"]
+               :items [[(label :icon (stool/image-scale icon/user-blue1-64-png 40))]
+                       [flogin]
+                       [(label :icon (stool/image-scale icon/key-blue-64-png 40))]
+                       [fpass]])]
              [(configurations-panel flogin fpass)]
              [(label :text "" :border
                      (empty-border :top 20 :left 860 )) "split 2"]
@@ -575,7 +564,7 @@
                                :border (compound-border (empty-border :right 10 )))]
                        [(label :icon (stool/image-scale icon/a-blue-64-png 40) ;;I-grey-64-png
                                :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content (info-panel)))])]])]])))
-
+;; (start)
 ;;;;;;;;;;;;;;
 ;;; frames ;;;
 ;;;;;;;;;;;;;;

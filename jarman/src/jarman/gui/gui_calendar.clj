@@ -78,7 +78,7 @@
              enabled?]
       :or {local-changes (atom {})
            field nil
-           set-date (date)
+           set-date nil
            editable? false
            enabled? true}}]
   (get-calendar (gcomp/input-text

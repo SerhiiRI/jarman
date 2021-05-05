@@ -161,7 +161,7 @@
         table-name ((comp :field :table :prop) m)
         columns (map :field ((comp :columns :prop) m))]
     {:update (fn [entity] (if (id_column entity) (update table-name :set entity :where (=-v id_column (id_column entity)))))
-     :insert (fn [entity] (insert table-name :values (vals entity)))
+     :insert (fn [entity] (insert table-name :set entity))
      :delete (fn [entity] (if (id_column entity) (delete table-name :where (=-v id_column (id_column entity)))))
      :select (fn [& {:as args}]
                (apply (partial select-builder table)
@@ -504,17 +504,17 @@
 
 (def build-input-form
   (fn [controller & {:keys [model
-                          more-comps
-                          button-template
-                          start-focus
-                          export-comp
+                            more-comps
+                            button-template
+                            start-focus
+                            export-comp
                             alerts]
-                   :or {model []
-                        more-comps [(c/label)]
-                        button-template (fn [title f] (gcomp/button-basic title f))
-                        start-focus nil
-                        export-comp nil
-                        alerts nil}}]
+                     :or {model []
+                          more-comps [(c/label)]
+                          button-template (fn [title f] (gcomp/button-basic title f))
+                          start-focus nil
+                          export-comp nil
+                          alerts nil}}]
     (let [complete (atom {})
           metadata (:->col-meta controller)
           inser-or-update (if (empty? model) "Insert new data" "Update record")
@@ -536,16 +536,24 @@
                                                          (do
                                                            (if (empty? model)
                                                              (do ;;Create calendar input
-                                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified :local-changes complete)))
+                                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified 
+                                                                                                                      :local-changes complete)))
                                                              (do ;; Create update calenda input
-                                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified :local-changes complete :set-date (if (empty? v) "1900-01-01" v))))))
+                                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified 
+                                                                                                                      :local-changes complete 
+                                                                                                                      :set-date (if (empty? v) nil v))))))
                                                          (lang/in? (get meta :component-type) "i")
                                                          (do ;; Add input-text with label
                                                            (if (empty? model)
                                                              (do ;;Create insert input
-                                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified :local-changes complete :editable? editable?)))
+                                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified 
+                                                                                                                     :local-changes complete 
+                                                                                                                     :editable? editable?)))
                                                              (do ;; Create update input
-                                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified :local-changes complete :editable? editable? :val v)))))
+                                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified 
+                                                                                                                     :local-changes complete 
+                                                                                                                     :editable? editable? 
+                                                                                                                     :val v)))))
                                                          (lang/in? (get meta :component-type) "l")
                                                          (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
                                                            (let [connected-table (var-get (-> (str "jarman.logic.view/" (get meta :key-table) "-view") symbol resolve))
@@ -560,17 +568,51 @@
                                                                                                                    :onClick (fn [e] (let [selected (construct-dialog (:->table connected-table) field-qualified (c/to-frame e))]
                                                                                                                                       (if-not (nil? (get selected (:->model->id connected-table)))
                                                                                                                                         (do (c/config! e :text (selected-representation connected-table selected))
-                                                                                                                                            (swap! complete (fn [storage] (assoc storage field-qualified (get selected (:->model->id connected-table))))))))))))))))
+                                                                                                                                            (swap! complete (fn [storage] (assoc storage field-qualified (get selected (:->model->id connected-table)))))))))))))
+                                                         (lang/in? (get meta :component-type) "a")
+                                                         (do 
+                                                           (if (empty? model)
+                                                             (do 
+                                                               (gcomp/inpose-label title (gcomp/input-text-area :store-id field-qualified
+                                                                                                                 :local-changes complete)))
+                                                             (do 
+                                                               (gcomp/inpose-label title (gcomp/input-text-area :store-id field-qualified
+                                                                                                                :local-changes complete
+                                                                                                                :val v))))
+                                                           ))))
                                                    metadata))
                       [(vgap 20)]
-                      [(button-template inser-or-update (fn [e] (println "Data from form: " @complete)))]
-                      (if (empty? model) [] [(button-template delete (fn [e] (println "Delete: " model)))])
+                      [(button-template inser-or-update (fn [e]
+                                                          ;; (println "Data from form: " @complete)
+                                                          ;; (println "Data from model: " model)
+                                                          (if (empty? model)
+                                                            (do
+                                                              ;; ((:->dinsert controller) @complete)
+                                                              ;; (println "Insert " (first (merge model @complete)))
+                                                              (println "Insert " (merge {(keyword (str (get (:->tbl-meta controller) :field) ".id")) nil} (first (merge model @complete))))
+                                                              ((:->dinsert controller) (merge {(keyword (str (get (:->tbl-meta controller) :field) ".id")) nil} (first (merge model @complete))))
+                                                              )
+                                                            (do
+                                                              (println "Update " (merge model @complete))
+                                                              ((:->dupdate controller) (merge model @complete))
+                                                              ))
+                                                          ((@jarman.gui.gui-app/jarman-views-service :reload))))]
+                      (if (empty? model) [] [(button-template delete (fn [e]
+                                                                       ((:->ddelete controller) {(keyword (str (get (:->tbl-meta controller) :field) ".id")) (get model (keyword (str (get (:->tbl-meta controller) :field) ".id")))})
+                                                                       ((@jarman.gui.gui-app/jarman-views-service :reload))))])
                       [(vgap 10)]
                       [more-comps]
                       [(if (nil? export-comp) (c/label) (export-comp (get model (:->model->id controller))))])
           builded (c/config! panel :items (gtool/join-mig-items components))]
       (if-not (nil? start-focus) (reset! start-focus (last (u/children (first components)))))
       builded)))
+
+
+
+;; ((:->data permission-view))
+;; ((:->dupdate permission-view) {:permission.id 4, :permission.permission_name "SSSSSS", :permission.configuration "{}"})
+;; ((:update (construct-sql :permission {})) {:permission.id 4, :permission.permission_name "SSSSSS", :permission.configuration "{}"})
+
 ;; (mt/getset :user)
 ;; (:->table-model permission-view)
 ;; (:->col-meta seal-view)
@@ -590,7 +632,7 @@
                       :border (sborder/empty-border :thickness 8)
                       :listen [:mouse-clicked (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
                                                         (c/config! input-text :text new-path)))])
-        panel (smig/mig-panel 
+        panel (smig/mig-panel
                :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[fill]0px"]
                :items [[icon] [input-text]])]
     (smig/mig-panel
@@ -653,7 +695,7 @@
           controller    (if (nil? controller) user-view controller)
           expand-export (fn [id] (export-print-doc controller id alerts))
           insert-form   (fn [] (build-input-form controller :start-focus start-focus :alerts alerts))
-          view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]14px" "0px[grow, fill]0px"])
+          view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
           table         (fn [] (second (u/children view-layout)))
           header        (fn [] (c/label :text (get (:->tbl-meta controller) :representation) :halign :center :border (sborder/empty-border :top 10)))
           update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form controller :model model :export-comp expand-export :more-comps [(return)])]))

@@ -652,14 +652,14 @@
             "align r"]]))
 
 
-(defn- test-frame []
-  (frame :title "Jarman"
-         :undecorated? false
-         :content (multi-panel [red-panel green-panel blue-panel] "Some panel" 0)
-         :resizable? true
-         :minimum-size [800 :by 600]))
+;; (defn- test-frame []
+;;   (frame :title "Jarman"
+;;          :undecorated? false
+;;          :content (multi-panel [red-panel green-panel blue-panel] "Some panel" 0)
+;;          :resizable? true
+;;          :minimum-size [800 :by 600]))
 
-(-> (doto (test-frame) (.setLocationRelativeTo nil) ) seesaw.core/pack! seesaw.core/show!)
+;; (-> (doto (test-frame) (.setLocationRelativeTo nil) ) seesaw.core/pack! seesaw.core/show!)
 
 
 

@@ -72,12 +72,12 @@
 
 (defn calendar-with-atom
   [& {:keys [local-changes
-             field
+             store-id
              set-date
              editable?
              enabled?]
       :or {local-changes (atom {})
-           field nil
+           store-id nil
            set-date nil
            editable? false
            enabled? true}}]
@@ -86,8 +86,8 @@
                  :args [:enabled? enabled?
                         :editable? editable?
                         :listen [:caret-update (fn [e]
-                                                 (if-not (nil? field) 
-                                                   (swap! local-changes (fn [storage] (assoc storage (keyword field) (value (to-widget e)))))))]])))
+                                                 (if-not (nil? store-id) 
+                                                   (swap! local-changes (fn [storage] (assoc storage (keyword store-id) (value (to-widget e)))))))]])))
 
 ;; (defn- frame-calendar []
 ;;   (frame :title "Jarman"

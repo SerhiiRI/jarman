@@ -949,24 +949,30 @@
 
 (def run-me
   (fn []
-    (do
+    (let [relative (atom nil)]
       (cm/swapp)
-      (try (.dispose (seesaw.core/to-frame @app)) (catch Exception e (println "Exception: " (.getMessage e))))
-      (build :items (let [img-scale 40]
-                      (list
-                       (jarmanapp :margin-left img-scale)
-                       (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser" {:onclick (fn [e] (@gseed/jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view))})
-                       (slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Message Store" {:onclick (fn [e] (@alert-manager :show))})
-                       (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 2 img-scale "Restart" {:onclick (fn [e] (@startup))})
-                       (slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 3 img-scale "Change work mode" {:onclick (fn [e]
-                                                                                                                                     (cond (= @work-mode :user-mode)  (reset! work-mode :admin-mode)
-                                                                                                                                           (= @work-mode :admin-mode) (reset! work-mode :dev-mode)
-                                                                                                                                           (= @work-mode :dev-mode)   (reset! work-mode :user-mode))
-                                                                                                                                     (@alert-manager :set {:header "Work mode" :body (str "Switched to: " (symbol @work-mode))} (message alert-manager) 5))})
-                       (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 4 img-scale "Docs Templates" {:onclick (fn [e] (@gseed/jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts alert-manager))))})
-                       (slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 5 img-scale "Reload active view" {:onclick (fn [e] ((@gseed/jarman-views-service :reload)))})
-                       @atom-popup-hook)))
-      (reset! popup-menager (create-popup-service atom-popup-hook)))))
+      (try
+        (println "last pos" [(.x (.getLocationOnScreen (seesaw.core/to-frame @app))) (.y (.getLocationOnScreen (seesaw.core/to-frame @app)))])
+        (reset! relative [(.x (.getLocationOnScreen (seesaw.core/to-frame @app))) (.y (.getLocationOnScreen (seesaw.core/to-frame @app)))])
+        (.dispose (seesaw.core/to-frame @app))
+        (catch Exception e (println "Exception: " (.getMessage e))))
+      (gseed/build :items (let [img-scale 40]
+                            (list
+                             (jarmanapp :margin-left img-scale)
+                             (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser" {:onclick (fn [e] (@gseed/jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view))})
+                             (slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Message Store" {:onclick (fn [e] (@alert-manager :show))})
+                             (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 2 img-scale "Restart" {:onclick (fn [e] (@startup))})
+                             (slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 3 img-scale "Change work mode" {:onclick (fn [e]
+                                                                                                                                           (cond (= @work-mode :user-mode)  (reset! work-mode :admin-mode)
+                                                                                                                                                 (= @work-mode :admin-mode) (reset! work-mode :dev-mode)
+                                                                                                                                                 (= @work-mode :dev-mode)   (reset! work-mode :user-mode))
+                                                                                                                                           (@alert-manager :set {:header "Work mode" :body (str "Switched to: " (symbol @work-mode))} (message alert-manager) 5))})
+                             (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 4 img-scale "Docs Templates" {:onclick (fn [e] (@gseed/jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts alert-manager))))})
+                             (slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 5 img-scale "Reload active view" {:onclick (fn [e] ((@gseed/jarman-views-service :reload)))})
+                             @atom-popup-hook)))
+      (reset! popup-menager (create-popup-service atom-popup-hook))
+      (if-not (nil? @relative)(.setLocation (to-frame @app) (first @relative) (second @relative))))
+      ))
 
 ;; (@startup)
 
@@ -985,7 +991,7 @@
                                             (reset! popup-menager (create-popup-service atom-popup-hook))
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
-(@startup)
+;; (@startup)
 
 ;; (@gseed/jarman-views-service :get-all-view)
 

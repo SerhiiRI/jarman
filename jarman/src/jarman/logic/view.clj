@@ -589,11 +589,14 @@
                                                             (do
                                                               ;; ((:->dinsert controller) @complete)
                                                               ;; (println "Insert " (first (merge model @complete)))
-                                                              (println "Insert " (merge {(keyword (str (get (:->tbl-meta controller) :field) ".id")) nil} (first (merge model @complete))))
+                                                              ;; (println "Insert " (merge {(keyword (str (get (:->tbl-meta controller) :field) ".id")) nil} (first (merge model @complete))))
+                                                              ;; (println "Insert debug atom: " @complete)
+                                                              ;; (println "Insert debug: " (merge {(keyword (str (get (:->tbl-meta controller) :field) ".id")) nil} (first (merge model @complete))))
                                                               ((:->dinsert controller) (merge {(keyword (str (get (:->tbl-meta controller) :field) ".id")) nil} (first (merge model @complete))))
                                                               )
                                                             (do
-                                                              (println "Update " (merge model @complete))
+                                                              ;; (println "Update " (merge model @complete))
+                                                              ;; (println "Update debug: " (merge model @complete))
                                                               ((:->dupdate controller) (merge model @complete))
                                                               ))
                                                           ((@jarman.gui.gui-seed/jarman-views-service :reload))))]

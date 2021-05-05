@@ -97,7 +97,7 @@
                                                       (reset! atom-app-size [w h]))
                                                     (.revalidate (to-widget e)))])]
           (-> (doto jframe (.setLocationRelativeTo nil) pack! show!))
-          (config! jframe :size [(first size) :by (second size)]))
+          (config! jframe  :icon (stool/image-scale icon/calendar1-64-png 100) :size [(first size) :by (second size)]))
         ))))
 
 ;; (@jarman.gui.gui-app/startup)

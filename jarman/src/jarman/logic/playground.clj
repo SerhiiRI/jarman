@@ -30,6 +30,7 @@
   (create-table :documents
                 :columns [{:table [:varchar-100 :default :null]}
                           {:name [:varchar-200 :default :null]}
+
                           {:document [:blob :default :null]}
                           {:prop [:text :nnull :default "\"{}\""]}]))
 

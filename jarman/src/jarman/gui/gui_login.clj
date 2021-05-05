@@ -229,6 +229,7 @@
          (text v-password)
          key-title)))))
 
+
 (defn config-generator-fields [key-title]
   (let [data (key-title (c/datalist-get))
         dbtype-inp (text :text "mysql" :font (tool/getFont 14)
@@ -564,7 +565,7 @@
                                :border (compound-border (empty-border :right 10 )))]
                        [(label :icon (stool/image-scale icon/a-blue-64-png 40) ;;I-grey-64-png
                                :listen [:mouse-clicked (fn [e] (config! (to-frame e) :content (info-panel)))])]])]])))
-;; (start)
+
 ;;;;;;;;;;;;;;
 ;;; frames ;;;
 ;;;;;;;;;;;;;;
@@ -574,12 +575,14 @@
          :undecorated? false
          :resizable? false
          :minimum-size [800 :by 600]
+         :icon (stool/image-scale icon/calendar1-64-png 100)
          :content (login-panel)))
 
 (defn- frame-error []
   (frame :title "Jarman-error"
          :undecorated? false
          :resizable? false
+         :icon (stool/image-scale icon/calendar1-64-png 100)
          :minimum-size [600 :by 600]))
 
 (defn start []
@@ -660,7 +663,6 @@
 
 
 
-(start)
 
 
 

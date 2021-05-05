@@ -891,10 +891,10 @@
       (mig-panel
        :id :operation-space
        :background "#fff"
-       :constraints ["wrap 1" "0px[grow, fill]0px" "0px[25]0px[grow, fill]0px"]
+       :constraints ["wrap 1" "0px[grow, fill]0px" "0px[28, shrink 0]0px[grow, fill]0px"]
        :background "#eee"
        :border (line-border :left 1 :color "#999")
-       :items [[tabs-space]
+       :items [[(scrollbox tabs-space :hbar-size 3 :args [:vscroll :never])]
                [views-space]]))))
 
 ;; (@jarman-views-service :reload :view-id (keyword "DB Visualiser"))

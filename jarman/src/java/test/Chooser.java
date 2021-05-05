@@ -19,6 +19,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -38,14 +39,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
-/**
- * @author Ares
- * @Describe(Date Chooser class)
- */
 public class Chooser extends JPanel{
 
     private static final long serialVersionUID = -5384012731547358720L;
-
 
     private Calendar calendar;
     private Calendar now = Calendar.getInstance();
@@ -66,8 +62,7 @@ public class Chooser extends JPanel{
     private static int defaultStartDAY = 0;//0 is from Sun, 1 is from Mon, 2 is from Tue
     private static Color hoverColor = Color.BLUE; // hover color
 
-
-    private Chooser(java.util.Date date, String format, int startDAY){
+    private Chooser(String format, int startDAY){
         if(startDAY > -1 && startDAY < 7) defaultStartDAY = startDAY;
         int dayIndex = defaultStartDAY;
         for(int i=0; i<7; i++){
@@ -75,27 +70,25 @@ public class Chooser extends JPanel{
             weekLabels[i] = new WeekLabel(dayIndex, showTEXT[dayIndex]);
             dayIndex ++ ;
         }
-        sdf = new java.text.SimpleDateFormat(format);
+
+        sdf = new java.text.SimpleDateFormat(DEFAULTFORMAT);
+        Date date = null;
+
+        try {
+            date = new SimpleDateFormat(DEFAULTFORMAT).parse(format);
+        }
+        catch (NullPointerException | ParseException e) {
+            date = new java.util.Date();
+        }
+
         sdf.format(new java.util.Date());
         calendar = Calendar.getInstance();
         calendar.setTime(date);
         initCalendarPanel();
     }
 
-    public static Chooser getInstance(java.util.Date date, String format){
-        return new Chooser(date, format, defaultStartDAY);
-    }
-
-    public static Chooser getInstance(java.util.Date date){
-        return getInstance(date, DEFAULTFORMAT);
-    }
-
-    public static Chooser getInstance(String format){
-        return getInstance(new java.util.Date(), format);
-    }
-
-    public static Chooser getInstance(){
-        return getInstance(new java.util.Date(), DEFAULTFORMAT);
+    private static Chooser getInstance(String format) {
+        return new Chooser(format , defaultStartDAY);
     }
 
     private void initCalendarPanel(){
@@ -531,10 +524,21 @@ public class Chooser extends JPanel{
         }
     }
 
-    public static JTextField get_calendar (JTextField textf, Date date){
-	Chooser ser = Chooser.getInstance(date);
-	ser.register(textf);
-	return textf;
+    public static JTextField get_calendar (JTextField textf){
+        Calendar calendar = null;
+        Chooser ser = Chooser.getInstance(textf.getText());
+        ser.register(textf);
+        return textf;
     }
-    
+
+    public static void main(String[] args) throws ParseException {
+        JFrame f = new JFrame();
+        JPanel p = new JPanel();
+        JTextField t = new JTextField(20);
+        t.setText("2020-102");
+        p.add(get_calendar(t));
+        f.add(p);
+        f.setSize(400, 400);
+        f.setVisible(true);
+    }
 }

@@ -56,10 +56,9 @@
   "Set textfield, get datepicker
 
   Example:
-      (Chooser/get_calendar textfield date_obj) :=> obj..text_field... "
+      (Chooser/get_calendar Textfield) :=> obj..text_field... "
   [textf]
-  (Chooser/get_calendar textf (date-to-obj (text textf))))
-
+  (Chooser/get_calendar textf))
 
 (defn calendar-panel
   [& {:keys [set-date
@@ -97,7 +96,8 @@
 ;;          :minimum-size [1000 :by 760]
 ;;          :content (mig-panel
 ;;                    :constraints ["wrap 1" "100px[grow, center]100px" "30px[]30px"]
-;;                    :items [[(calendar-panel)]])))
+;;                    :items [[(get-calendar (text :columns 20))]])))
 
 ;;  (-> (doto (frame-calendar) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
+
 

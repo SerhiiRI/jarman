@@ -29,7 +29,6 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
-
 (defn get-view-column-meta [table-list column-list]
   (->> table-list
        (mapcat (fn [t] (vec ((comp :columns :prop) (first (mt/getset! t))))))
@@ -42,7 +41,6 @@
     (-> {:key (keyword (:field-qualified column)) :text (:representation column)}
         on-number
         on-boolean)))
-
 
 (defn gui-table-model-columns [table-list column-list]
   (mapv model-column (get-view-column-meta table-list column-list)))
@@ -59,7 +57,6 @@
 (defn- t-f-tf [table field]
   (keyword (str (name table) "." (name (name field)))))
 
-
 (defn gui-table [model]
   (fn [listener-fn]
     (let [TT (swingx/table-x :model (model))]
@@ -73,18 +70,14 @@
       (c/config! TT :show-horizontal-lines? true)
       (c/scrollable TT :hscroll :as-needed :vscroll :as-needed))))
 
-
 ;;; PLUGINS ;;;
-
 (defn jarman-table [configuration data-toolkit]
   (println "Configuration atom:")
   (println "\t;;=>" (keys configuration))
   (println "Data toolkit:")
   (println "\t;;=>" (keys data-toolkit)))
 
-
 ;;; CONSTRUCTORS ;;;
-
 (defn metadata-toolkit-constructor [configuration toolkit-map]
   (if-let [table-metadata (first (mt/getset! (:table-name configuration)))]
     {:table-meta   ((comp :table :prop) table-metadata)
@@ -96,7 +89,6 @@
         id_column (t-f-tf (:table-name configuration) :id)
         table-name ((comp :field :table :prop) m)
         columns (map :field ((comp :columns :prop) m))
-
         update-expression (fn [entity] (if (id_column entity)  (update table-name :set entity :where (=-v id_column (id_column entity)))))
         insert-expression (fn [entity] (if (nil? (id_column entity)) (insert table-name :set entity)))
         delete-expression (fn [entity] (if (id_column entity) (delete table-name :where (=-v id_column (id_column entity)))))

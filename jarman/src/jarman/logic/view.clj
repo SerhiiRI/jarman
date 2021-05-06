@@ -127,10 +127,18 @@
         sql-crud-toolkit (rule-react-on sql-crud-toolkit-constructor :query)
         metadata-toolkit (rule-react-on metadata-toolkit-constructor :table-name)
         export-sql-toolkit (rule-react-on export-toolkit-constructor :query)
-        table-toolkit (rule-react-on table-toolkit-constructor :tables :view)
         document-toolkit (rule-react-on document-toolkit-constructor :table-name)]
-    (-> {} sql-crud-toolkit metadata-toolkit export-sql-toolkit table-toolkit document-toolkit)))
+    (-> {} sql-crud-toolkit metadata-toolkit export-sql-toolkit document-toolkit)))
 
+(def ^:private views-configuration+toolkit (atom {}))
+(defn views-configuration+toolkit-get []
+  @views-configuration+toolkit)
+(defn- views-configuration+toolkit-set [keyword-table-name plugin-name plugin-configuration data-toolkit]
+  {:pre [(keyword? keyword-table-name)]}
+  (swap! views-configuration+toolkit
+         (fn [m] (assoc-in m [keyword-table-name plugin-name]
+                          {:configuration plugin-configuration
+                           :data-toolkit data-toolkit}))) nil)
 (defmacro defview [table-model-name & body]
   (let [configurations
         (reduce into 
@@ -138,19 +146,21 @@
                   (if (sequential? form)
                     `{~(keyword (first form)) (hash-map ~@(rest form) :table-name ~(keyword table-model-name))})))]
     `(do ~@(for [form body :let [f (first form)]]
-             `(~f
-               (get ~configurations ~(keyword f))
-                 ;; (data-toolkit-pipeline ~(get configurations (keyword f)))
-               (data-toolkit-pipeline (get ~configurations ~(keyword f)))))
-         nil)))
+             `(let [cfg# ~configurations
+                    ktable# ~(keyword f)
+                    plugin-configuration# (get cfg# ktable#)
+                    plugin-data-toolkit#  (data-toolkit-pipeline (get cfg# ktable#))]
+                (views-configuration+toolkit-set ~(keyword table-model-name)
+                                                 ktable#
+                                                 plugin-configuration#
+                                                 plugin-data-toolkit#)
+                (~f plugin-configuration# plugin-data-toolkit#))) nil)))
 
 ;;; helpers ;;; 
-
 (defn as-is [& column-list]
   (map #(if (keyword? %) {% %} %) column-list))
 
 ;;; gui declarations ;;;
-
 (defview permission
   (jarman-table
    :name "Table"

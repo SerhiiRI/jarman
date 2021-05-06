@@ -24,7 +24,6 @@
 
 
 (import '(com.mxgraph.view mxGraph))
-
 (import '(com.mxgraph.swing mxGraphComponent))
 
 
@@ -47,20 +46,18 @@
   (config! test-frame :content (com.mxgraph.swing.mxGraphComponent. mygraph)))
 
 
-
 (let [mygraph (mxGraph.) 
       parent (.getDefaultParent mygraph)
-      v1 (.insertVertex mygraph parent nil "hello!" 20 20 80 30)
+      v1 (.insertVertex mygraph parent nil (label) 20 20 80 30)
       v2 (.insertVertex mygraph parent nil "wassup!" 240 150 80 30)]
   (-> mygraph .getModel .beginUpdate)
-  (.insertEdge mygraph parent nil "Edge" (label) )
+  (.insertEdge mygraph parent nil "Edge" v1 v2 )
   (-> mygraph .getModel .endUpdate)
-  (config! test-frame :content (com.mxgraph.swing.mxGraphComponent. mygraph)))
+  (config! test-frame :content (border-panel :items [[(com.mxgraph.swing.mxGraphComponent. mygraph) :center]
+                                                     [(label :text "some-text") :north]])))
 
 
-(-> (doto test-frame (.setLocationRelativeTo nil) ) seesaw.core/pack! seesaw.core/show!)
-
-
+(-> (doto test-frame (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
 
 	
 (.insertVertex mygraph parent nil "hello!" 20 20 80 30)

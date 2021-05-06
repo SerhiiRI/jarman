@@ -29,26 +29,6 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
-(defn get-view-column-meta [table-list column-list]
-  (->> table-list
-       (mapcat (fn [t] (vec ((comp :columns :prop) (first (mt/getset! t))))))
-       (filter (fn [c] (in? column-list (keyword (:field-qualified c)))))))
-
-(defn- model-column [column]
-  (let [component-type (:component-type column)
-        on-boolean (fn [m] (if (in? component-type "b") (into m {:class java.lang.Boolean}) m))
-        on-number  (fn [m] (if (in? component-type "n") (into m {:class java.lang.Number})  m))]
-    (-> {:key (keyword (:field-qualified column)) :text (:representation column)}
-        on-number
-        on-boolean)))
-
-(defn gui-table-model-columns [table-list column-list]
-  (mapv model-column (get-view-column-meta table-list column-list)))
-
-(defn gui-table-model [model-columns data-loader]
-  (fn []
-    [:columns model-columns
-     :rows (data-loader)]))
 
 (defn- tf-t-f [table-field]
   (let [t-f (string/split (name table-field) #"\.")]
@@ -56,26 +36,6 @@
 
 (defn- t-f-tf [table field]
   (keyword (str (name table) "." (name (name field)))))
-
-(defn gui-table [model]
-  (fn [listener-fn]
-    (let [TT (swingx/table-x :model (model))]
-      (c/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (c/selection TT)))))
-      ;; (.setPreferredScrollableViewportSize (new java.awt.Dimension 1000 1000) TT)
-      ;; (map (fn [size] (.setWidth (.getColumn (.getColumnModel TT) size) 250)) (.getColumnCount (.getColumnModel TT)))
-      ;; (c/config! TT :auto-resize :off)
-      ;; (c/config! TT :column-widths 100)
-      (c/config! TT :horizontal-scroll-enabled? true)
-      (c/config! TT :show-grid? false)
-      (c/config! TT :show-horizontal-lines? true)
-      (c/scrollable TT :hscroll :as-needed :vscroll :as-needed))))
-
-;;; PLUGINS ;;;
-(defn jarman-table [configuration data-toolkit]
-  (println "Configuration atom:")
-  (println "\t;;=>" (keys configuration))
-  (println "Data toolkit:")
-  (println "\t;;=>" (keys data-toolkit)))
 
 ;;; CONSTRUCTORS ;;;
 (defn metadata-toolkit-constructor [configuration toolkit-map]
@@ -110,14 +70,6 @@
     {:export-select-expression (fn [] (select-expression :column nil :inner-join nil :where nil))
      :export-select (fn [] (db/query (select-expression :column nil :inner-join nil :where nil))) }))
 
-(defn table-toolkit-constructor [configuration toolkit-map]
-  (let [view (:view configuration) tables (:tables configuration)]
-    (if (and view tables) 
-     (let [model-columns (gui-table-model-columns tables view)
-           table-model   (gui-table-model model-columns (:select toolkit-map))]
-       {:table-model table-model
-        :table (gui-table table-model)}))))
-
 (defn document-toolkit-constructor [configuration toolkit-map]
   (let [table-name (:table-name configuration)]
     (doc/select-documents-by-table table-name)))
@@ -127,9 +79,8 @@
         sql-crud-toolkit (rule-react-on sql-crud-toolkit-constructor :query)
         metadata-toolkit (rule-react-on metadata-toolkit-constructor :table-name)
         export-sql-toolkit (rule-react-on export-toolkit-constructor :query)
-        table-toolkit (rule-react-on table-toolkit-constructor :tables :view)
         document-toolkit (rule-react-on document-toolkit-constructor :table-name)]
-    (-> {} sql-crud-toolkit metadata-toolkit export-sql-toolkit table-toolkit document-toolkit)))
+    (-> {} sql-crud-toolkit metadata-toolkit export-sql-toolkit document-toolkit)))
 
 (defmacro defview [table-model-name & body]
   (let [configurations

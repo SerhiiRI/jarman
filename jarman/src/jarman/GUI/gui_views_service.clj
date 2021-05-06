@@ -6,8 +6,7 @@
   (:require [jarman.resource-lib.icon-library :as icon]
             [seesaw.util :as u]
             [jarman.tools.swing :as stool]
-            [jarman.gui.gui-components :refer :all :as gcomp]
-            ))
+            [jarman.gui.gui-components :refer :all :as gcomp]))
 
 ;; ┌───────────────────────────┐
 ;; │                           │
@@ -78,8 +77,7 @@
           (let [component (get view-data :component)
                 height    (get view-data :pref-height)
                 scrollable? (get view-data :scrollable?)
-                scrollable? false
-                ]
+                scrollable? false]
             ;; (println "component to set " component)
             ;; (config! (service-data :view-space) :items (if scrollable? [[(gcomp/scrollbox component)]] [[component]]))
             (config! (service-data :view-space) :items [[component]])
@@ -154,7 +152,8 @@
                              :view-id view-id
                              :title title
                              :scrollable? scrollable?
-                             :pref-height (.getHeight (config component :preferred-size))}}]
+                             :pref-height (.getHeight (config component :preferred-size))}}
+              tmp-store (atom [])]
           ;; (println "View id: " view-id)
           (swap! (service-data :views-storage) (fn [storage] (merge storage view)))
           (config! (service-data :view-space) :user-data view-id)
@@ -164,12 +163,13 @@
                                                (close-tab service-data view-id)
                                                (switch-tab service-data view-id))]
             (deactive-all-tabs service-data)
-            (.add (service-data :bar-space) tab-button)
+            (reset! tmp-store (cons tab-button (u/children (service-data :bar-space))))
+            (doall (map #(.add (service-data :bar-space) %) @tmp-store))
             (set-component-to-view-space service-data view-id))
           ;; (println "Set and switch: " view-id)
           (switch-tab service-data view-id))))))
-
-
+ 
+;; (cons 1 (list 2 3 4))
 
 (def reload-view
   "Description
@@ -188,8 +188,7 @@
         (if (= (config (service-data :view-space) :user-data) view-id)
           (do
             ;; (println "View" {view-id (get @(service-data :views-storage) view-id)})
-            (set-component-to-view-space service-data view-id)))
-        ))))
+            (set-component-to-view-space service-data view-id)))))))
 
 
 
@@ -251,7 +250,7 @@
         (= action :get-view)        ((get-view atom--views-storage) view-id)
         (= action :get-component)   (get-in @atom--views-storage [view-id :component])
         (= action :exist?)          ((exist atom--views-storage) view-id)
-        (= action :get-my-view-id)  (doto (config (service-data :view-space) :user-data) (println ))
+        (= action :get-my-view-id)  (doto (config (service-data :view-space) :user-data) (println))
         (= action :get-all-view)    @atom--views-storage
         (= action :get-all-view-ids)    (map #(first %) @atom--views-storage)
         (= action :get-view-sapce)  view-space

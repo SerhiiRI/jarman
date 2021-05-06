@@ -32,14 +32,10 @@
             [jarman.gui.gui-config-generator :refer :all :as cg]
             [jarman.logic.view :as view]
             [jarman.gui.gui-docs :as docs]
+            [jarman.gui.gui-seed :as gseed]
             ;; [jarman.logic.view :refer :all] 
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
             ))
-
-
-(def jarman-views-service (atom nil))
-(def work-mode (atom :admin-mode)) ;; user-mode, admin-mode, dev-mode
-
 
 
 
@@ -399,8 +395,8 @@
                                          table @new-table-meta)
                                         (cm/swapp)
                                         (println "reload invoker" invoker-id)
-                                        (if-not (nil? invoker-id) ((@jarman-views-service :reload) invoker-id))
-                                        ((@jarman-views-service :reload))
+                                        (if-not (nil? invoker-id) ((@gseed/jarman-views-service :reload) invoker-id))
+                                        ((@gseed/jarman-views-service :reload))
                                         (@alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)
                                         ))))
 
@@ -524,10 +520,10 @@
    (let [local-changes (atom {})
          table          (get-table-configuration-from-list-by-table-id (tables-configurations) table-id)
          view-id        (keyword (get table :table))  ;; Get name of table and create keyword to check tabs bar (opens views)
-         invoker-id     (@jarman-views-service :get-my-view-id)]
+         invoker-id     (@gseed/jarman-views-service :get-my-view-id)]
      (do
        (@gtool/changes-service :add-controller :view-id view-id :local-changes local-changes)
-       (@jarman-views-service :set-view 
+       (@gseed/jarman-views-service :set-view 
                               :view-id view-id 
                               :title (str "Edit: " (get-in table [:prop :table :representation])) 
                               :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.")
@@ -629,7 +625,7 @@
                                   :mouse-clicked (fn [e]
                                                    (let [table-id (get (config (getParent e) :user-data) :id)]
                                                      (cond (= (.getButton e) MouseEvent/BUTTON3)
-                                                           (let [scrol (select (@jarman-views-service :get-component :view-id :Database) [:#JLP-DB-Visualizer])
+                                                           (let [scrol (select (@gseed/jarman-views-service :get-component :view-id :Database) [:#JLP-DB-Visualizer])
                                                                  JLP (first (seesaw.util/children (first (seesaw.util/children scrol))))]
                                                              (.add JLP
                                                                    (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
@@ -734,9 +730,9 @@
         :items [[(btn "Show all relation" icon/refresh-connection-blue-64-png (fn [e]))]
                 [(btn "Save view" icon/agree-grey-64-png (fn [e]))]
                 [(btn "Reset view" icon/arrow-blue-left-64-png (fn [e] ))]
-                [(btn "Reloade view" icon/refresh-blue-64-png (fn [e] ((@jarman-views-service :reload))))]])))
+                [(btn "Reloade view" icon/refresh-blue-64-png (fn [e] ((@gseed/jarman-views-service :reload))))]])))
 
-;; ((@jarman-views-service :reload))
+;; ((@gseed/jarman-views-service :reload))
 
 
 (defn create-view--db-view
@@ -807,7 +803,7 @@
                            title (get (cm/get-in-segment path) :name)
                            view-id (last path)]
                        (button-expand-child title :onClick (fn [e]
-                                                             (@jarman-views-service
+                                                             (@gseed/jarman-views-service
                                                               :set-view
                                                               :view-id view-id
                                                               :title title
@@ -819,7 +815,7 @@
                     title (get (cm/get-in-segment path) :name)
                     view-id :theme_config.edn]
                 (button-expand-child title :onClick (fn [e]
-                                                      (@jarman-views-service
+                                                      (@gseed/jarman-views-service
                                                        :set-view
                                                        :view-id view-id
                                                        :title title
@@ -831,7 +827,7 @@
                     view-id :current-theme]
                 (button-expand-child title :onClick (fn [e]
                                                       (try
-                                                        (@jarman-views-service
+                                                        (@gseed/jarman-views-service
                                                          :set-view
                                                          :view-id view-id
                                                          :title title
@@ -887,18 +883,18 @@
                        :id :app-functional-space
                        :background (new Color 0 0 0 0)
                        :items (join-mig-items array))]
-      (reset! jarman-views-service (vs/new-views-service tabs-space views-space))
+      (reset! gseed/jarman-views-service (vs/new-views-service tabs-space views-space))
       (mig-panel
        :id :operation-space
        :background "#fff"
-       :constraints ["wrap 1" "0px[grow, fill]0px" "0px[25]0px[grow, fill]0px"]
+       :constraints ["wrap 1" "0px[grow, fill]0px" "0px[28, shrink 0]0px[grow, fill]0px"]
        :background "#eee"
        :border (line-border :left 1 :color "#999")
-       :items [[tabs-space]
+       :items [[(scrollbox tabs-space :hbar-size 3 :args [:vscroll :never])]
                [views-space]]))))
 
-;; (@jarman-views-service :reload :view-id (keyword "DB Visualiser"))
-;; (@jarman-views-service :get-all-view)
+;; (@gseed/jarman-views-service :reload :view-id (keyword "DB Visualiser"))
+;; (@gseed/jarman-views-service :get-all-view)
 
 (def jarmanapp
   "Description:
@@ -916,8 +912,8 @@
        :border (line-border :left margin-left :color bg-color)
        :items [;; [(label-fn :background "#eee" :size [50 :by 50])]
                [(mig-app-left-f  [(button-expand "Database"
-                                                 [(button-expand-child "DB Visualiser" :onClick (fn [e] (@jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view)))
-                                                          ;;  (button-expand-child "Users table" :onClick (fn [e] (@jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
+                                                 [(button-expand-child "DB Visualiser" :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view)))
+                                                          ;;  (button-expand-child "Users table" :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
                                                   ])]
                                  [(button-expand "Tables"
                                                  (vec
@@ -925,7 +921,7 @@
                                                                 (let [title (str (name (get-in (:->tbl-meta (controller @view/views)) [:representation])))]
                                                                   (button-expand-child
                                                                    title
-                                                                   :onClick (fn [e] (@jarman-views-service :set-view
+                                                                   :onClick (fn [e] (@gseed/jarman-views-service :set-view
                                                                                                            :view-id (str "auto-" title)
                                                                                                            :title title
                                                                                                            :scrollable? false
@@ -953,24 +949,30 @@
 
 (def run-me
   (fn []
-    (do
+    (let [relative (atom nil)]
       (cm/swapp)
-      (try (.dispose (seesaw.core/to-frame @app)) (catch Exception e (println "Exception: " (.getMessage e))))
-      (build :items (let [img-scale 40]
-                      (list
-                       (jarmanapp :margin-left img-scale)
-                       (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser" {:onclick (fn [e] (@jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view))})
-                       (slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Message Store" {:onclick (fn [e] (@alert-manager :show))})
-                       (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 2 img-scale "Restart" {:onclick (fn [e] (@startup))})
-                       (slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 3 img-scale "Change work mode" {:onclick (fn [e]
-                                                                                                                                     (cond (= @work-mode :user-mode)  (reset! work-mode :admin-mode)
-                                                                                                                                           (= @work-mode :admin-mode) (reset! work-mode :dev-mode)
-                                                                                                                                           (= @work-mode :dev-mode)   (reset! work-mode :user-mode))
-                                                                                                                                     (@alert-manager :set {:header "Work mode" :body (str "Switched to: " (symbol @work-mode))} (message alert-manager) 5))})
-                       (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 4 img-scale "Docs Templates" {:onclick (fn [e] (@jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts alert-manager))))})
-                       (slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 5 img-scale "Reload active view" {:onclick (fn [e] ((@jarman-views-service :reload)))})
-                       @atom-popup-hook)))
-      (reset! popup-menager (create-popup-service atom-popup-hook)))))
+      (try
+        (println "last pos" [(.x (.getLocationOnScreen (seesaw.core/to-frame @app))) (.y (.getLocationOnScreen (seesaw.core/to-frame @app)))])
+        (reset! relative [(.x (.getLocationOnScreen (seesaw.core/to-frame @app))) (.y (.getLocationOnScreen (seesaw.core/to-frame @app)))])
+        (.dispose (seesaw.core/to-frame @app))
+        (catch Exception e (println "Exception: " (.getMessage e))))
+      (gseed/build :items (let [img-scale 40]
+                            (list
+                             (jarmanapp :margin-left img-scale)
+                             (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser" {:onclick (fn [e] (@gseed/jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view))})
+                             (slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Message Store" {:onclick (fn [e] (@alert-manager :show))})
+                             (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 2 img-scale "Restart" {:onclick (fn [e] (@startup))})
+                             (slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 3 img-scale "Change work mode" {:onclick (fn [e]
+                                                                                                                                           (cond (= @work-mode :user-mode)  (reset! work-mode :admin-mode)
+                                                                                                                                                 (= @work-mode :admin-mode) (reset! work-mode :dev-mode)
+                                                                                                                                                 (= @work-mode :dev-mode)   (reset! work-mode :user-mode))
+                                                                                                                                           (@alert-manager :set {:header "Work mode" :body (str "Switched to: " (symbol @work-mode))} (message alert-manager) 5))})
+                             (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 4 img-scale "Docs Templates" {:onclick (fn [e] (@gseed/jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts alert-manager))))})
+                             (slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 5 img-scale "Reload active view" {:onclick (fn [e] ((@gseed/jarman-views-service :reload)))})
+                             @atom-popup-hook)))
+      (reset! popup-menager (create-popup-service atom-popup-hook))
+      (if-not (nil? @relative)(.setLocation (to-frame @app) (first @relative) (second @relative))))
+      ))
 
 ;; (@startup)
 
@@ -989,10 +991,14 @@
                                             (reset! popup-menager (create-popup-service atom-popup-hook))
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
+<<<<<<< HEAD
 ;;(@startup)
 
+=======
+;; (@startup)
+>>>>>>> 1f3d2e55ecd92204cdba9cb5b8d8281b48276c9c
 
-;; (@jarman-views-service :get-all-view)
+;; (@gseed/jarman-views-service :get-all-view)
 
 ;; (config! (to-frame @app) :size [1000 :by 800])
 

@@ -589,17 +589,20 @@
                                                             (do
                                                               ;; ((:->dinsert controller) @complete)
                                                               ;; (println "Insert " (first (merge model @complete)))
-                                                              (println "Insert " (merge {(keyword (str (get (:->tbl-meta controller) :field) ".id")) nil} (first (merge model @complete))))
+                                                              ;; (println "Insert " (merge {(keyword (str (get (:->tbl-meta controller) :field) ".id")) nil} (first (merge model @complete))))
+                                                              ;; (println "Insert debug atom: " @complete)
+                                                              ;; (println "Insert debug: " (merge {(keyword (str (get (:->tbl-meta controller) :field) ".id")) nil} (first (merge model @complete))))
                                                               ((:->dinsert controller) (merge {(keyword (str (get (:->tbl-meta controller) :field) ".id")) nil} (first (merge model @complete))))
                                                               )
                                                             (do
-                                                              (println "Update " (merge model @complete))
+                                                              ;; (println "Update " (merge model @complete))
+                                                              ;; (println "Update debug: " (merge model @complete))
                                                               ((:->dupdate controller) (merge model @complete))
                                                               ))
-                                                          ((@jarman.gui.gui-app/jarman-views-service :reload))))]
+                                                          ((@jarman.gui.gui-seed/jarman-views-service :reload))))]
                       (if (empty? model) [] [(button-template delete (fn [e]
                                                                        ((:->ddelete controller) {(keyword (str (get (:->tbl-meta controller) :field) ".id")) (get model (keyword (str (get (:->tbl-meta controller) :field) ".id")))})
-                                                                       ((@jarman.gui.gui-app/jarman-views-service :reload))))])
+                                                                       ((@jarman.gui.gui-seed/jarman-views-service :reload))))])
                       [(vgap 10)]
                       [more-comps]
                       [(if (nil? export-comp) (c/label) (export-comp (get model (:->model->id controller))))])
@@ -664,7 +667,7 @@
                                                                                                  (@jarman.gui.gui-seed/alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :export-doc-ok)} (@jarman.gui.gui-seed/alert-manager :message jarman.gui.gui-seed/alert-manager) 7)
                                                                                                  (catch Exception e (@jarman.gui.gui-seed/alert-manager :set {:header (gtool/get-lang-alerts :faild) :body (gtool/get-lang-alerts :export-doc-faild)} (@jarman.gui.gui-seed/alert-manager :message jarman.gui.gui-seed/alert-manager) 7)))
 
-                                                                                              ;; ((@jarman.gui.gui-app/jarman-views-service :reload))
+                                                                                              ;; ((@jarman.gui.gui-seed/jarman-views-service :reload))
                                                                                               ;; (if-not (nil? alerts) (@alerts :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} (@alerts :message alerts) 5))
                                                                                                )
                                                                                              :args [:halign :left])])
@@ -709,7 +712,7 @@
       view-layout)))
 
 
-;; (@jarman.gui.gui-app/startup)
+;; (@jarman.gui.gui-seed/startup)
 ;; (cm/swapp)
 
 (def run (fn [view] (let [start-focus (atom nil)

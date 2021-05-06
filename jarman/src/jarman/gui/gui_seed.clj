@@ -17,6 +17,9 @@
 
 ;;  (get-color :jarman :bar)
 
+(def jarman-views-service (atom nil))
+(def work-mode (atom :admin-mode)) ;; user-mode, admin-mode, dev-mode
+
 (import javax.swing.JLayeredPane)
 ;; (import javax.swing.JLabel)
 ;; (import java.awt.Color)

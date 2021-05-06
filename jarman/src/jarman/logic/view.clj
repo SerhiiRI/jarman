@@ -99,18 +99,22 @@
                     `{~(keyword (first form)) (hash-map ~@(rest form) :table-name ~(keyword table-model-name))})))]
     `(do ~@(for [form body :let [f (first form)]]
              `(let [cfg# ~configurations
-                    ktable# ~(keyword f)
-                    plugin-configuration# (get cfg# ktable#)
-                    plugin-data-toolkit#  (data-toolkit-pipeline (get cfg# ktable#))]
-                (views-configuration+toolkit-set ~(keyword table-model-name)
-                                                 ktable#
+                    ktable# ~(keyword table-model-name)
+                    kplugin# ~(keyword f)
+                    plugin-configuration# (get cfg# kplugin#)
+                    plugin-data-toolkit#  (data-toolkit-pipeline (get cfg# kplugin#))]
+                (views-configuration+toolkit-set ktable#
+                                                 kplugin#
                                                  plugin-configuration#
                                                  plugin-data-toolkit#)
-                (~f plugin-configuration# plugin-data-toolkit#))) nil)))
+                (~f [ktable# kplugin#] ~'views-configuration+toolkit-get))) nil)))
 
 ;;; helpers ;;; 
 (defn as-is [& column-list]
   (map #(if (keyword? %) {% %} %) column-list))
+
+;; (defn jarman-table [plugin-path global-cofiguration-getter]
+;;   (println "(Path to plugin)> %s" (str plugin-path)))
 
 ;;; gui declarations ;;;
 (defview permission

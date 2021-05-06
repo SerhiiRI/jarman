@@ -56,10 +56,9 @@
   "Set textfield, get datepicker
 
   Example:
-      (Chooser/get_calendar textfield date_obj) :=> obj..text_field... "
+      (Chooser/get_calendar Textfield) :=> obj..text_field... "
   [textf]
-  (Chooser/get_calendar textf (date-to-obj (text textf))))
-
+  (Chooser/get_calendar textf))
 
 (defn calendar-panel
   [& {:keys [set-date
@@ -73,13 +72,13 @@
 
 (defn calendar-with-atom
   [& {:keys [local-changes
-             field
+             store-id
              set-date
              editable?
              enabled?]
       :or {local-changes (atom {})
-           field nil
-           set-date (date)
+           store-id nil
+           set-date nil
            editable? false
            enabled? true}}]
   (get-calendar (gcomp/input-text
@@ -87,8 +86,8 @@
                  :args [:enabled? enabled?
                         :editable? editable?
                         :listen [:caret-update (fn [e]
-                                                 (if-not (nil? field) 
-                                                   (swap! local-changes (fn [storage] (assoc storage (keyword field) (value (to-widget e)))))))]])))
+                                                 (if-not (nil? store-id) 
+                                                   (swap! local-changes (fn [storage] (assoc storage (keyword store-id) (value (to-widget e)))))))]])))
 
 ;; (defn- frame-calendar []
 ;;   (frame :title "Jarman"
@@ -97,7 +96,8 @@
 ;;          :minimum-size [1000 :by 760]
 ;;          :content (mig-panel
 ;;                    :constraints ["wrap 1" "100px[grow, center]100px" "30px[]30px"]
-;;                    :items [[(calendar-panel)]])))
+;;                    :items [[(get-calendar (text :columns 20 :text nil))]])))
 
 ;;  (-> (doto (frame-calendar) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
+
 

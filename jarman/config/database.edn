@@ -62,7 +62,7 @@
      :display :edit,
      :value
      {:dbtype
-      {:name "Typ połączenia",
+      {:name "Typ poе┌д┘czenia",
        :type :param,
        :display :none,
        :component :text,

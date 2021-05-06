@@ -245,6 +245,7 @@
  :alerts
  {
   :success "Success!"
+  :faild "! Faild !"
   :changes-saved "Saved changes!"
   :save-changes? "Do you want to save changes?"
   :changes-saved-but-need-reload "Saved changes! Application needs reload."
@@ -256,6 +257,8 @@
   :connection-error "Failed connection with database."
   :unsaved-changes-title "Unsaved changes!"
   :unsaved-changes-body "Configuration changes have been made but not saved. Should I close the window anyway?"
+  :export-doc-ok "Successfully exported the document."
+  :export-doc-faild "An error was encountered during export. Action failed."
   :restore-configuration-ok "Configurations restored! Please be careful next time."
   :configuration-corrupted "The configuration is corrupted. Try to roll back to an earlier version."}
  :basic

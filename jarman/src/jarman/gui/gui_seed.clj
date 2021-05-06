@@ -17,6 +17,9 @@
 
 ;;  (get-color :jarman :bar)
 
+(def jarman-views-service (atom nil))
+(def work-mode (atom :admin-mode)) ;; user-mode, admin-mode, dev-mode
+
 (import javax.swing.JLayeredPane)
 ;; (import javax.swing.JLabel)
 ;; (import java.awt.Color)
@@ -82,23 +85,25 @@
       (do
         (reset! app (base set-items))
         (reset! alert-manager (message-server-creator app))
-        (-> (doto (seesaw.core/frame
-                   :title title
-                   :resizable? true
-                   :undecorated? undecorated?
-                   :size [(first size) :by (second size)]
-                   :minimum-size [600 :by 400]
-                   :content @app
+        (let [jframe (seesaw.core/frame
+                      :title title
+                      :resizable? true
+                      :undecorated? undecorated?
+                      :size [(first size) :by (second size)]
+                      :minimum-size [600 :by 400]
+                      :content @app
                 ;;    :on-close :exit
-                   :listen [:component-resized (fn [e]
+                      :listen [:component-resized (fn [e]
                                                 ;;  (println e)
-                                                 (let [w (.getWidth  (config e :size))
-                                                       h (.getHeight (config e :size))]
-                                                   (reset! atom-app-size [w h]))
-                                                 (.revalidate (to-widget e)))])
-              (.setLocationRelativeTo nil) pack! show!))
-        (config! (to-frame @app) :size [(first size) :by (second size)])))))
+                                                    (let [w (.getWidth (.getSize (.getContentPane (to-root e))))
+                                                          h (.getHeight (.getSize (.getContentPane (to-root e))))]
+                                                      (reset! atom-app-size [w h]))
+                                                    (.revalidate (to-widget e)))])]
+          (-> (doto jframe (.setLocationRelativeTo nil) pack! show!))
+          (config! jframe  :icon (stool/image-scale icon/calendar1-64-png 100) :size [(first size) :by (second size)]))
+        ))))
 
+;; (@jarman.gui.gui-app/startup)
 
 ;; (build :items (list (label :text "Mig panel as layer 1")))
  

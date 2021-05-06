@@ -11,6 +11,7 @@
             [jarman.resource-lib.icon-library :as icon]
             [jarman.tools.swing :as stool]
             [jarman.config.config-manager :refer :all]
+            [jarman.gui.gui-tools :as gtool]
             [clojure.string :as string]))
 
 
@@ -113,12 +114,13 @@
           body   (if (= (contains? data :body) true) (get data :body) "Template of information...")
           layered-pane (@alerts-controller :get-space)
           close [(build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png layered-pane 23 (fn [e] (view-selected-message header body layered-pane)))
-                 (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered-pane 23 (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (@alerts-controller :rm-obj to-del))))]]
+                 (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered-pane 23 (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (@alerts-controller :rm-obj to-del))))]
+          [t b l r] (gtool/get-comp :message-box :border-size)]
       (mig-panel
        :id :alert-box
        :constraints ["wrap 1" "0px[fill, grow]0px" "0px[20]0px[30]0px[20]0px"]
        :background bg-c
-       :border nil
+       :border (line-border :top t :bottom b :left l :right r :color (gtool/get-comp :message-box :border-color))
        :bounds [680 480 300 75]
        :items [[(flow-panel
                  :align :left
@@ -384,6 +386,7 @@
       (cond
         (= action :get-space)     layered-pane
         (= action :set)           (let [[data func timelife] param] (addAlertTimeout data (func data) timelife alerts-storage layered-pane))
+        (= action :message)       (let [[alerts-controller] param] (message alerts-controller))
         (= action :rm)            (let [[id] param] (rmAlert id alerts-storage layered-pane))
         (= action :rm-obj)        (let [[obj] param] (rmAlertObj obj alerts-storage layered-pane))
         (= action :clear)         (rmallAlert alerts-storage layered-pane)

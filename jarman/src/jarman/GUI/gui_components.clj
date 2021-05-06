@@ -29,24 +29,47 @@
 
 (defn auto-scrollbox
   [component & args]
-  (let [scrol (apply scrollable component :border nil args)
-        scrol (config! scrol :listen [:property-change
+  (let [scr (apply scrollable component :border nil args)
+        scr (config! scr :listen [:property-change
                                 (fn [e] (invoke-later (let [get-root (fn [e](.getParent (.getParent (.getParent (.getSource e)))))
                                                             vbar 40
                                                             w (- (.getWidth (get-root e)) vbar)
-                                                            h (.getHeight (config e :preferred-size))]
+                                                            h (+ 50 vbar (.getHeight (config e :preferred-size)))]
                                                         (config! component :size [w :by h]))))])]
 
-    (.setUnitIncrement (.getVerticalScrollBar scrol) 20)
-    scrol))
+    (.setUnitIncrement (.getVerticalScrollBar scr) 20)
+    (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. 12 0))
+    (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
+    (.setPreferredSize (.getHorizontalScrollBar scr) (java.awt.Dimension. 0 12))
+    scr))
+
+;; (defn scrollbox
+;;   [component & args]
+;;   (let [scr (apply scrollable component :border nil args)]  ;; speed up scrolling
+;;     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
+;;     (.setBorder scr nil)
+;; ;;    for hide scroll    
+;;    (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. 12 0)) 
+;;     scr))
 
 (defn scrollbox
-  [component & args]
+  [component 
+   & {:keys [args 
+             hbar-size
+             vbar-size
+             ]
+      :or {args []
+           hbar-size 12
+           vbar-size 12
+           }}]
   (let [scr (apply scrollable component :border nil args)]  ;; speed up scrolling
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setBorder scr nil)
 ;;    for hide scroll    
-;;    (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0)) 
+    (.setUnitIncrement (.getVerticalScrollBar scr) 20)
+    (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
+    (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. vbar-size 0))
+    (.setPreferredSize (.getHorizontalScrollBar scr) (java.awt.Dimension. 0 hbar-size))
     scr))
 
 (defmacro textarea
@@ -267,20 +290,27 @@
      (expand-form-panel parent (component or components))
    "
   [view-layout comps
-   & {:keys [icon-open
+   & {:keys [min-w
+             w
+             max-w
+             icon-open
              icon-hide
              text-open
              text-hide
              focus-color
              unfocus-color]
-      :or {ico-open nil
+      :or {min-w 250
+           w 250
+           max-w 250
+           ico-open nil
            icon-hide nil
            text-open "<<"
            text-hide "..."
            focus-color (get-color :decorate :focus-gained-dark)
            unfocus-color "#fff"}}]
   (let [hidden-comp (atom nil)
-        form-space-open ["wrap 1" "0px[250:, grow,fill]10px" "0px[fill]0px"]
+        hsize (if (< max-w w) (str "0px[" min-w ":" w ":" w ", grow, fill]10px") (str "0px[" min-w ":" w ":" max-w ", grow,fill]10px"))
+        form-space-open ["wrap 1" hsize "0px[fill]0px"]
         form-space-hide ["" "0px[grow, fill]0px" "0px[grow, fill]0px"]
         form-space (smig/mig-panel :constraints form-space-open)
         onClick (fn [e]
@@ -309,8 +339,7 @@
                                     :focus-lost   (fn [e] (c/config! e :foreground unfocus-color))
                                     :mouse-entered gtool/hand-hover-on
                                     :mouse-clicked onClick
-                                    :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))
-                                    ])]
+                                    :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))])]
     (c/config! form-space :items (join-mig-items hide-show comps))))
 
 

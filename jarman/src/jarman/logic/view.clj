@@ -18,14 +18,11 @@
    [jarman.config.config-manager :as cm]
    [jarman.tools.lang :refer :all :as lang]
    [jarman.gui.gui-tools :refer :all :as gtool]
-   [jarman.resource-lib.icon-library :as ico]
-   [jarman.tools.swing :as stool]
-   [jarman.gui.gui-components :refer :all :as gcomp]
-   [jarman.gui.gui-calendar :as calendar]
-   [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
-   [jarman.logic.metadata :as mt])
+   [jarman.logic.metadata :as mt]
+   [jarman.plugin.table :as plug]
+   )
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
@@ -113,12 +110,12 @@
 (defn as-is [& column-list]
   (map #(if (keyword? %) {% %} %) column-list))
 
-;; (defn jarman-table [plugin-path global-cofiguration-getter]
+;; (defn plug/jarman-table [plugin-path global-cofiguration-getter]
 ;;   (println "(Path to plugin)> %s" (str plugin-path)))
 
 ;;; gui declarations ;;;
 (defview permission
-  (jarman-table
+  (plug/jarman-table
    :name "Table"
    :place nil
    :tables [:permission]
@@ -126,7 +123,7 @@
    :query   {:column (as-is :permission.id :permission.permission_name :permission.configuration)}))
 
 (defview documents
-  (jarman-table
+  (plug/jarman-table
    :name nil
    :place nil
    :tables [:documents]
@@ -134,7 +131,7 @@
    :query  {:column (as-is :documents.id :documents.table :documents.name :documents.prop)}))
 
 (defview user
-  (jarman-table
+  (plug/jarman-table
    :name nil
    :place nil
    :tables [:user :permission]
@@ -143,7 +140,7 @@
             :column (as-is :user.id :user.login :user.password :user.first_name :user.last_name :permission.permission_name :permission.configuration :user.id_permission)}))
 
 (defview enterpreneur
-  (jarman-table
+  (plug/jarman-table
    :name nil
    :place nil
    :tables [:enterpreneur]
@@ -171,7 +168,7 @@
 
 
 (defview point_of_sale
-  (jarman-table
+  (plug/jarman-table
    :name nil
    :place nil
    :tables [:point_of_sale :enterpreneur]
@@ -183,7 +180,7 @@
                            :enterpreneur.ssreou :enterpreneur.ownership_form)}))
 
 (defview cache_register
-  (jarman-table
+  (plug/jarman-table
    :name nil
    :place nil
    :tables [:cache_register :point_of_sale]
@@ -219,7 +216,7 @@
                     :cache_register.id_point_of_sale)}))
 
 (defview point_of_sale_group
-  (jarman-table
+  (plug/jarman-table
    :name nil
    :place nil
    :tables [:point_of_sale_group]
@@ -227,7 +224,7 @@
    :query {:column (as-is :point_of_sale_group.id :point_of_sale_group.group_name :point_of_sale_group.information)}))
 
 (defview point_of_sale_group_links
-  (jarman-table
+  (plug/jarman-table
    :name nil
    :place nil
    :tables [:point_of_sale_group_links
@@ -248,7 +245,7 @@
                     :point_of_sale_group.information)}))
 
 (defview seal
-  (jarman-table
+  (plug/jarman-table
    :name nil
    :place nil
    :tables [:seal]
@@ -257,7 +254,7 @@
    :query {:column (as-is :seal.id :seal.seal_number :seal.to_date)}))
 
 (defview service_contract
-  (jarman-table
+  (plug/jarman-table
    :name nil
    :place nil
    :tables [:service_contract :point_of_sale]
@@ -277,7 +274,7 @@
                     :point_of_sale.physical_address)}))
 
 (defview repair_contract
-  (jarman-table
+  (plug/jarman-table
    :name nil
    :place nil
    :tables [:repair_contract :cache_register :point_of_sale]

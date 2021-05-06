@@ -136,19 +136,20 @@
                                                                                                                      :val v)))))
                                                          (lang/in? (get meta :component-type) "l")
                                                          (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
-                                                           (let [connected-table (get global-configuration (keyword (get meta :key-table))) ;;(var-get (-> (str "jarman.logic.view/" (get meta :key-table) "-view") symbol resolve))
+                                                           (let [connected-table-conf (get-in global-configuration [(keyword (get meta :key-table)) :configuration])
+                                                                 connected-table-data (get-in global-configuration [(keyword (get meta :key-table)) :data-toolkit])
                                                                  selected-representation (fn [dialog-model-view returned-from-dialog]
                                                                                            (->> (:view dialog-model-view)
                                                                                                 (map #(get-in returned-from-dialog [%]))
                                                                                                 (filter some?)
                                                                                                 (string/join ", ")))
-                                                                 v (selected-representation connected-table model)]
+                                                                 v (selected-representation connected-table-conf model)]
                                                              (if-not (nil? (get model field-qualified)) (swap! complete (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
                                                              (gcomp/inpose-label title (gcomp/input-text-with-atom :local-changes complete :editable? false :val v
-                                                                                                                   :onClick (fn [e] (let [selected (construct-dialog (:->table connected-table) field-qualified (c/to-frame e))]
-                                                                                                                                      (if-not (nil? (get selected (:model-id connected-table)))
-                                                                                                                                        (do (c/config! e :text (selected-representation connected-table selected))
-                                                                                                                                            (swap! complete (fn [storage] (assoc storage field-qualified (get selected (:model-id connected-table)))))))))))))
+                                                                                                                   :onClick (fn [e] (let [selected (construct-dialog (create-table connected-table-conf connected-table-data) field-qualified (c/to-frame e))]
+                                                                                                                                      (if-not (nil? (get selected (:model-id connected-table-data)))
+                                                                                                                                        (do (c/config! e :text (selected-representation connected-table-conf selected))
+                                                                                                                                            (swap! complete (fn [storage] (assoc storage field-qualified (get selected (:model-id connected-table-data)))))))))))))
                                                          (lang/in? (get meta :component-type) "a")
                                                          (do
                                                            (if (empty? model)
@@ -178,10 +179,10 @@
       (if-not (nil? start-focus) (reset! start-focus (last (u/children (first components)))))
       builded)))
 
-;; {:permision {:configuration {}
-;;              :data-toolkit  {}}
-;;  :user      {:configuration {}
-;;              :data-toolkit  {}}}
+;; {:permision {:jarman-table {:configuration {}
+;;                             :data-toolkit  {}}}
+;;  :user      {:jarman-table {:configuration {}
+;;                             :data-toolkit  {}}}}
 
 ;;  (run user-view)
 (defn export-print-doc
@@ -228,18 +229,21 @@
 
 
 (def auto-builder--table-view
-  (fn [configuration data-toolkit global-configuration
+  (fn [plugin-path global-configuration
        & {:keys [start-focus
                  alerts]
           :or {start-focus nil
                alerts nil}}]
-    (let [x nil ;;------------ Prepare
-          expand-export (fn [id] (export-print-doc data-toolkit id alerts))
+    (let [x nil ;;------------ Prepare toolkits
+          data-toolkit  (get-in global-configuration (lang/join-vec plugin-path [:data-toolkit]))
+          configuration  (get-in global-configuration (lang/join-vec plugin-path [:configuration]))
+          x nil ;;------------ Prepare components
+          expand-export (fn [id] (export-print-doc (get-in global-configuration plugin-path) id alerts))
           insert-form   (fn [] (build-input-form data-toolkit global-configuration :start-focus start-focus :alerts alerts))
           view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
           table         (fn [] (second (u/children view-layout)))
           header        (fn [] (c/label :text (get (:table-meta data-toolkit) :representation) :halign :center :border (sborder/empty-border :top 10)))
-          update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit :model model :export-comp expand-export :more-comps [(return)])]))
+          update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit global-configuration :model model :export-comp expand-export :more-comps [(return)])]))
           x nil ;;------------ Build
           expand-insert-form (gcomp/scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never)
           back-to-insert     (fn [] (gcomp/button-basic "<< Return to Insert Form" (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
@@ -250,8 +254,8 @@
       view-layout)))
 
 ;;; PLUGINS ;;;
-(defn jarman-table [configuration data-toolkit global-configuration]
-  (auto-builder--table-view configuration data-toolkit)
+(defn jarman-table [plugin-path global-configuration]
+  (auto-builder--table-view plugin-path (global-configuration))
   )
 
 

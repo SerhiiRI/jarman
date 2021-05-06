@@ -27,7 +27,9 @@
    ;; [jarman.config.environment :as env]
    ;; [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    ;; [jarman.logic.metadata :as mt]
-   [jarman.logic.view-manager :include-macros true :refer :all])
+   [jarman.logic.view-manager :include-macros true :refer :all]
+   [jarman.plugin.table :as plug]
+   )
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 

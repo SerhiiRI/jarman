@@ -20,8 +20,7 @@
    [jarman.tools.swing :as stool]
    [jarman.gui.gui-components :refer :all :as gcomp]
    [jarman.gui.gui-calendar :as calendar]
-   [jarman.logic.metadata :as mt]
-   )
+   [jarman.logic.metadata :as mt])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
@@ -77,7 +76,7 @@
 
 
 (def build-input-form
-  (fn [data-toolkit 
+  (fn [data-toolkit
        global-configuration
        & {:keys [model
                  more-comps
@@ -132,9 +131,9 @@
                                                                                                                      :val v)))))
                                                          (lang/in? (get meta :component-type) "l")
                                                          (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
-                                                           (let [key-table (doto (keyword (get meta :key-table)) (println ))
-                                                                 connected-table-conf (doto (get-in global-configuration [key-table :plug/jarman-table :configuration]) (println ))
-                                                                 connected-table-data (doto (get-in global-configuration [key-table :plug/jarman-table :data-toolkit]) (println ))
+                                                           (let [key-table (doto (keyword (get meta :key-table)) (println))
+                                                                 connected-table-conf (doto (get-in global-configuration [key-table :plug/jarman-table :configuration]) (println))
+                                                                 connected-table-data (doto (get-in global-configuration [key-table :plug/jarman-table :data-toolkit]) (println))
                                                                  selected-representation (fn [dialog-model-view returned-from-dialog]
                                                                                            (->> (get dialog-model-view :view)
                                                                                                 (map #(get-in returned-from-dialog [%]))
@@ -143,11 +142,11 @@
                                                                  v (selected-representation connected-table-conf model)]
                                                              (if-not (nil? (get model field-qualified)) (swap! complete (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
                                                              (gcomp/inpose-label title (gcomp/input-text-with-atom :local-changes complete :editable? false :val v
-                                                                                                                   :onClick (fn [e] 
+                                                                                                                   :onClick (fn [e]
                                                                                                                               (let [selected (construct-dialog (get (create-table connected-table-conf connected-table-data) :table) field-qualified (c/to-frame e))]
-                                                                                                                                      (if-not (nil? (get selected (get connected-table-data :model-id)))
-                                                                                                                                        (do (c/config! e :text (selected-representation connected-table-conf selected))
-                                                                                                                                            (swap! complete (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))))))))))
+                                                                                                                                (if-not (nil? (get selected (get connected-table-data :model-id)))
+                                                                                                                                  (do (c/config! e :text (selected-representation connected-table-conf selected))
+                                                                                                                                      (swap! complete (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))))))))))
                                                          (lang/in? (get meta :component-type) "a")
                                                          (do
                                                            (if (empty? model)
@@ -166,11 +165,11 @@
                                                               (println "Expression insert" ((:insert data-toolkit) (merge {(keyword (str (get (:table-meta data-toolkit) :field) ".id")) nil} (first (merge model @complete))))))
                                                             (do
                                                               (println "Expression update" ((:update data-toolkit) (merge model @complete)))))
-                                                          ;; ((@gseed/jarman-views-service :reload))
+                                                          ((@gseed/jarman-views-service :reload))
                                                           ))]
                       (if (empty? model) [] [(button-template delete (fn [e]
                                                                        (println "Expression delete" ((:delete data-toolkit) {(keyword (str (get (:table-meta data-toolkit) :field) ".id")) (get model (keyword (str (get (:table-meta data-toolkit) :field) ".id")))}))
-                                                                      ;;  ((@gseed/jarman-views-service :reload))
+                                                                       ((@gseed/jarman-views-service :reload))
                                                                        ))])
                       [(vgap 10)]
                       [more-comps]
@@ -253,27 +252,29 @@
           view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])] [(c/vertical-panel :items [(table)])]])]
       view-layout)))
 
-(def vp (c/vertical-panel :items [(c/label)]))
+;; (let [my-frame (-> (doto (c/frame
+;;                           :title "test"
+;;                           :size [300 :by 800]
+;;                           :content vp)
+;;                      (.setLocationRelativeTo nil) c/pack! c/show!))]
+;;   (c/config! my-frame :size [300 :by 800]))
 
-(let [my-frame (-> (doto (c/frame
-                          :title "test"
-                          :size [300 :by 800]
-                          :content vp)
-                     (.setLocationRelativeTo nil) c/pack! c/show!))]
-  (c/config! my-frame :size [300 :by 800]))
+
 
 ;;; PLUGINS ;;;
 (defn jarman-table [plugin-path global-configuration]
-  (.add vp (c/label :text (str plugin-path)
-                    :listen [:mouse-clicked (fn [e]
-                                              (let [my-frame (-> (doto (c/frame
-                                                                        :title "test"
-                                                                        :size [1000 :by 800]
-                                                                        :content (auto-builder--table-view plugin-path (global-configuration)))
-                                                                   (.setLocationRelativeTo nil) c/pack! c/show!))]
-                                                (c/config! my-frame :size [1000 :by 800])))]) )
-  (.revalidate vp)
-  )
-
+  (let [vp (c/select @jarman.gui.gui-seed/app [:#tables-view-plugin])
+        atm (get (c/config vp :user-data) :atom-expanded-items)]
+    (swap! atm (fn [inserted] (conj inserted (let [data-toolkit  (get-in (global-configuration) (lang/join-vec plugin-path [:data-toolkit]))
+                                                   title (get (:table-meta data-toolkit) :representation)]
+                                              ;;  (println "Repre " title)
+                                               (button-expand-child
+                                                title
+                                                :onClick (fn [e] (@gseed/jarman-views-service :set-view
+                                                                                              :view-id (str "auto-" title)
+                                                                                              :title title
+                                                                                              :scrollable? false
+                                                                                              :component-fn (fn [] (auto-builder--table-view plugin-path (global-configuration))))))))))
+    (.revalidate vp)))
 
 

@@ -428,17 +428,20 @@
                  vsize
                  min-height
                  ico
-                 ico-hover]
+                 ico-hover
+                 id]
           :or {background "#eee"
                border-color "#fff"
                border (compound-border (line-border :left 6 :color background))
                vsize 35
                min-height 200
                ico  (stool/image-scale icon/plus-64-png 25)
-               ico-hover (stool/image-scale icon/minus-grey-64-png 20)}}]
-    (let [inside-btns (if (nil? inside-btns) {} inside-btns)
+               ico-hover (stool/image-scale icon/minus-grey-64-png 20)
+               id :none}}]
+    (let [atom-inside-btns (atom nil)
+          inside-btns (if (nil? inside-btns) nil inside-btns)
           inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns))
-          ico (if-not (empty? inside-btns) (stool/image-scale icon/plus-64-png 25) nil)
+          ico (if-not (nil? inside-btns) (stool/image-scale icon/plus-64-png 25) nil)
           title (label
                  :text txt
                  :background (Color. 0 0 0 0))
@@ -455,15 +458,18 @@
                       :items [[title]
                               [icon]])]
       (do
+        (reset! atom-inside-btns inside-btns)
         (config! mig
+                 :id id
+                 :user-data {:atom-expanded-items atom-inside-btns}
                  :items [[expand-btn]]
                  :listen [:mouse-entered hand-hover-on
                           :mouse-clicked (fn [e]
-                                           (if-not (empty? inside-btns)
+                                           (if-not (nil? @atom-inside-btns)
                                              (if (= (count (seesaw.util/children mig)) 1)
                                                (do ;;  Add inside buttons to mig with expand button
                                                  (config! icon :icon ico-hover)
-                                                 (doall (map #(.add mig %) inside-btns))
+                                                 (doall (map #(.add mig %) @atom-inside-btns))
                                                  (.revalidate mig))
                                                (do ;;  Remove inside buttons form mig without expand button
                                                  (config! icon :icon ico)

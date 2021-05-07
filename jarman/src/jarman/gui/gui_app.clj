@@ -30,7 +30,7 @@
             [jarman.tools.lang :refer :all :as lang]
             [jarman.gui.gui-seed :refer :all]
             [jarman.gui.gui-config-generator :refer :all :as cg]
-            [jarman.logic.view :as view]
+            ;; [jarman.logic.view :as view]
             [jarman.gui.gui-docs :as docs]
             [jarman.gui.gui-seed :as gseed]
             ;; [jarman.logic.view :refer :all] 
@@ -853,12 +853,14 @@
    Needed:
       button-expand component is needed to corectly work
    "
-  (fn [& args] (mig-panel
-                :id :expand-menu-space
-                :background "#fff"
-                :border (line-border :left 4 :right 4 :color "#fff")
-                :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill]0px"]
-                :items (vec args))))
+  (fn [& args] (scrollbox (mig-panel
+                           :id :expand-menu-space
+                           :background "#fff"
+                           :border (line-border :left 4 :right 4 :color "#fff")
+                           :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill]0px"]
+                           :items (vec args))
+                          :args [:hscroll :never]
+                          )))
 
 (def right-part-of-jarman-as-space-for-views-service
   "Description: 
@@ -907,7 +909,7 @@
       (mig-panel
        :id :rebound-layer
        :constraints [""
-                     "0px[fill]0px[grow, fill]0px"
+                     "0px[shrink 0, fill]0px[grow, fill]0px"
                      "0px[grow, fill]0px"]
        :border (line-border :left margin-left :color bg-color)
        :items [;; [(label-fn :background "#eee" :size [50 :by 50])]
@@ -915,18 +917,8 @@
                                                  [(button-expand-child "DB Visualiser" :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view)))
                                                           ;;  (button-expand-child "Users table" :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
                                                   ])]
-                                 [(button-expand "Tables"
-                                                 (vec
-                                                  (doall (map (fn [controller]
-                                                                (let [title (str (name (get-in (:->tbl-meta (controller @view/views)) [:representation])))]
-                                                                  (button-expand-child
-                                                                   title
-                                                                   :onClick (fn [e] (@gseed/jarman-views-service :set-view
-                                                                                                           :view-id (str "auto-" title)
-                                                                                                           :title title
-                                                                                                           :scrollable? false
-                                                                                                           :component-fn (fn [] (view/auto-builder--table-view (controller @view/views))))))))
-                                                              (keys @view/views)))))]
+                                 [(button-expand "Tables" (button-expand-child "Tables list")
+                                                 :id :tables-view-plugin)]
                                  [(create-expand-btns--confgen)]
                                  [(button-expand "Debug items"
                                                  [(button-expand-child "Popup" :onClick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200])))
@@ -991,7 +983,7 @@
                                             (reset! popup-menager (create-popup-service atom-popup-hook))
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
-;; (@startup)
+(@startup)
 
 ;; (@gseed/jarman-views-service :get-all-view)
 

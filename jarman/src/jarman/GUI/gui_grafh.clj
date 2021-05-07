@@ -43,21 +43,43 @@
   (.insertEdge mygraph parent nil "Edge" v1 v2)
   (-> mygraph .getModel .endUpdate)
   
-  (config! test-frame :content (com.mxgraph.swing.mxGraphComponent. mygraph)))
+  (config! test-frame :content (border-panel :items [[(com.mxgraph.swing.mxGraphComponent. mygraph) :center]]))
+  (-> (doto test-frame (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))
 
 
-(let [mygraph (mxGraph.) 
-      parent (.getDefaultParent mygraph)
-      v1 (.insertVertex mygraph parent nil (label) 20 20 80 30)
-      v2 (.insertVertex mygraph parent nil "wassup!" 240 150 80 30)]
-  (-> mygraph .getModel .beginUpdate)
-  (.insertEdge mygraph parent nil "Edge" v1 v2 )
-  (-> mygraph .getModel .endUpdate)
-  (config! test-frame :content (border-panel :items [[(com.mxgraph.swing.mxGraphComponent. mygraph) :center]
-                                                     [(label :text "some-text") :north]])))
+
+(let [mylabel (label :text "some-text" :background "#222")
+      mylabel2 (label :text "some-text2" :background "#333")
+      some-panel (border-panel  :items [[mylabel :center]])
+      f-panel (flow-panel :items (list mylabel (label :border (empty-border :right 50)) mylabel2)) 
+      main-panel  (border-panel :items [;;[(com.mxgraph.swing.mxGraphComponent. mygraph) :center]
+                                                     [f-panel :center]
+                                                     [(label :text "click" :background "#444"
+                                                             :listen [:mouse-clicked
+                                                                      (fn [e] (let [mygraph (mxGraph.)
+                                                                                    parent (.getDefaultParent mygraph)
+                                                                                    loc1 (.getLocationOnScreen mylabel)
+                                                                                    loc2 (.getLocationOnScreen mylabel2)
+                                                                                    v1 (.insertVertex mygraph parent nil ""
+                                                                                                      (.getX loc1) (.getY loc1) 0 0)
+                                                                                    v2 (.insertVertex mygraph parent nil ""
+                                                                                                      (.getX loc2) (.getY loc2) 0 0)]
+                                                                                (-> mygraph .getModel .beginUpdate)
+                                                                                ;;(DefaultGraphCell. (label))
+                                                                                (.insertEdge mygraph parent nil "" v1 v2 )
+                                                                                (-> mygraph .getModel .endUpdate)
+                                                                                (config! f-panel :items
+                                                                                         (list mylabel
+                                                                                               mylabel2
+                                                                                          (com.mxgraph.swing.mxGraphComponent. mygraph)))
+                                                                                ))]) :south]])]
+  (config! test-frame :content main-panel)
+  (-> (doto test-frame (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))
 
 
-(-> (doto test-frame (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
+(println "sdf")
 
 	
 (.insertVertex mygraph parent nil "hello!" 20 20 80 30)
+
+(show-options (label))

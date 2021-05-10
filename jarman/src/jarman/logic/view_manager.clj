@@ -35,8 +35,19 @@
      :columns-meta ((comp :columns :prop) table-metadata)}))
 
 (defn sql-crud-toolkit-constructor [configuration toolkit-map]
-  (let [m (first (mt/getset! (:table-name configuration)))
+  (let [rule-react-on (fn [k f] (fn [m] (if (get configuration k) (into m (f m)) m)))
+        m (first (mt/getset! (:table-name configuration)))
         ;; relations (recur-find-path m)
+        override-fn! (fn [kdwd sql-fn]
+                       (let [override-action-expression (keyword (format "override-%s-expression" (name kdwd)))
+                             override-action (keyword (format "override-%s" (name kdwd)))]
+                        (fn [m] (if (and (some? (kdwd configuration)) (not= (kdwd configuration) :none))
+                                 {override-action-expression (fn [e] (sql-fn ((kdwd configuration) e)))
+                                  override-action (fn [e] (db/exec (sql-fn ((kdwd configuration) e))))}
+                                 {}))))
+        rule-insert! (rule-react-on :insert (override-fn! :insert insert!))
+        rule-update! (rule-react-on :update (override-fn! :update update!))
+        rule-delete! (rule-react-on :insert (override-fn! :insert delete!))
         id_column (t-f-tf (:table-name configuration) :id)
         table-name ((comp :field :table :prop) m)
         columns (map :field ((comp :columns :prop) m))
@@ -46,15 +57,34 @@
         select-expression (fn [& {:as args}]
                             (apply (partial select-builder (:table-name configuration))
                                    (mapcat vec (into (:query configuration) args))))]
-    {:update-expression update-expression
-     :insert-expression insert-expression
-     :delete-expression delete-expression
-     :select-expression select-expression
-     :update (fn [e] (db/exec (update-expression e)))
-     :insert (fn [e] (db/exec (insert-expression e)))
-     :delete (fn [e] (db/exec (delete-expression e)))
-     :select (fn [ ] (db/query (select-expression)))
-     :model-id id_column}))
+    (-> {:update-expression update-expression
+         :insert-expression insert-expression
+         :delete-expression delete-expression
+         :select-expression select-expression
+         :update (fn [e] (db/exec (update-expression e)))
+         :insert (fn [e] (db/exec (insert-expression e)))
+         :delete (fn [e] (db/exec (delete-expression e)))
+         :select (fn [ ] (db/query (select-expression)))
+         :model-id id_column}
+        rule-insert!
+        rule-update!
+        rule-delete!
+        )))
+
+;; (let [configuration {:table-name :sealn
+;;                      :name "Pushing seals"
+;;                      :tables [:seal]
+;;                      :view [:seal.seal_number
+;;                             :seal.to_date]
+;;                      :override-model [{:start-value :text-input} {:end-value :text-input}]
+;;                      :insert (fn [m] {:table-name :seal
+;;                                      :column-list [:seal.seal_number :seal.to_date]
+;;                                      :values (mapv #(vector % (:to-date m)) (range (:start-value m) (+ (:end-value m) 1)))}) 
+;;                      :update (fn [m] {:table-name :seal
+;;                                      :set m}) ;;:none
+;;                      :delete :none
+;;                      :query {:column (as-is :seal.id :seal.seal_number :seal.to_date)}}]
+;;   (keys (sql-crud-toolkit-constructor configuration {})))
 
 (defn export-toolkit-constructor [configuration toolkit-map]
   (if-let [select-expression (:select-expression toolkit-map)]
@@ -114,3 +144,13 @@
 (defn as-is [& column-list]
   (map #(if (keyword? %) {% %} %) column-list))
 
+(defview-debug permission
+  (plug/jarman-table
+   :name "Table"
+   :place nil
+   :tables [:permission]
+   :view   [:permission.permission_name]
+   :query   {:column (as-is :permission.id :permission.permission_name :permission.configuration)}))
+
+
+(insert! )

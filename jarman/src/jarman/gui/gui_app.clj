@@ -33,6 +33,8 @@
             ;; [jarman.logic.view :as view]
             [jarman.gui.gui-docs :as docs]
             [jarman.gui.gui-seed :as gseed]
+            [jarman.plugin.table :as gtable]
+            [jarman.logic.view-manager :as vmg]
             ;; [jarman.logic.view :refer :all] 
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
             ))

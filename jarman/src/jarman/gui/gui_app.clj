@@ -311,30 +311,28 @@
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
 
 
-(def switch-column-to-editing
-  (fn [work-mode local-changes path-to-value event column column-editor-id]
-    (config! (select (to-root event) [(convert-str-to-hashkey column-editor-id)])
-             ;; Right space for column parameters
-             :items [[(mig-panel ;; Editable parameters list
-                       :constraints ["wrap 1" "20px[250:,fill]5px" "0px[fill]0px"]
-                       :items (join-mig-items
-                               (filter
-                                #(not (nil? %))
-                                (map
-                                 (fn [column-parameter]
-                                   (let [key-param (first column-parameter)
-                                         path-to-value (lang/join-vec path-to-value [key-param])]
-                                     (cond
-                                       (= work-mode :dev-mode)
-                                       (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter))) :vtop 10)
-                                       (= work-mode :admin-mode)
-                                       (cond ;; For admin-mode. Enable and disble components
-                                         (lang/in? [:representation :description] key-param)
-                                         (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter))) :vtop 10)
-                                         (lang/in? [:private? :editable?] key-param)
-                                         (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter)) :enabled? false) :vtop 10))
-                                       :else nil))) ;; Parameter value
-                                 column))))]])))
+(defn switch-column-to-editing
+  [work-mode local-changes path-to-value column]
+  (mig-panel ;; Editable parameters list
+   :constraints ["wrap 1" "20px[250:,fill]5px" "0px[fill]0px"]
+   :items (join-mig-items
+           (filter
+            #(not (nil? %))
+            (map
+             (fn [column-parameter]
+               (let [key-param (first column-parameter)
+                     path-to-value (lang/join-vec path-to-value [key-param])]
+                 (cond
+                   (= work-mode :dev-mode)
+                   (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter))) :vtop 10)
+                   (= work-mode :admin-mode)
+                   (cond ;; For admin-mode. Enable and disble components
+                     (lang/in? [:representation :description] key-param)
+                     (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter))) :vtop 10)
+                     (lang/in? [:private? :editable?] key-param)
+                     (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter)) :enabled? false) :vtop 10))
+                   :else nil))) ;; Parameter value
+             column)))))
 
 ;; (@startup)
 
@@ -353,10 +351,11 @@
              :items
              (join-mig-items
               (map (fn [column index]
-                     (let [path-to-value (join-vec path-to-value [index])]
+                     (let [path-to-value (join-vec path-to-value [index])
+                           meta-panel (switch-column-to-editing work-mode local-changes path-to-value column)]
                        (table-editor--component--column-picker-btn
                         (get-in column [:representation])
-                        (fn [event] (switch-column-to-editing work-mode local-changes path-to-value event column column-editor-id)))))
+                        (fn [e] (config! (select (to-root @app) [(convert-str-to-hashkey column-editor-id)]) :items (gtool/join-mig-items meta-panel))))))
                    columns (range (count columns)))
               (table-editor--element--btn-add-column))))
 
@@ -468,8 +467,9 @@
   "Description:
      Create view for table editor. Marge all component to one big view.
    "
-  [work-mode tables-configurations table-id local-changes invoker-id]
-  (let [table          (get-table-configuration-from-list-by-table-id (tables-configurations) table-id)
+  [view-id work-mode tables-configurations table-id invoker-id]
+  (let [local-changes  (atom nil)
+        table          (get-table-configuration-from-list-by-table-id (tables-configurations) table-id)
         col-path-to-value [:prop :columns]
         tab-path-to-value [:prop :table]
         columns        (get-in table col-path-to-value) ;; Get columns list
@@ -513,21 +513,21 @@
                                            :items elems
                                            :border (empty-border :thickness 0)))
                     :else (label :text "Table not found inside metadata :c"))]
+
+    (@gtool/changes-service :add-controller :view-id view-id :local-changes local-changes)
     component))
 
 (defn add-to-view-service--table-editor
   ([work-mode tables-configurations table-id]
-   (let [local-changes (atom {})
-         table          (get-table-configuration-from-list-by-table-id (tables-configurations) table-id)
+   (let [table          (get-table-configuration-from-list-by-table-id (tables-configurations) table-id)
          view-id        (keyword (get table :table))  ;; Get name of table and create keyword to check tabs bar (opens views)
          invoker-id     (@gseed/jarman-views-service :get-my-view-id)]
      (do
-       (@gtool/changes-service :add-controller :view-id view-id :local-changes local-changes)
        (@gseed/jarman-views-service :set-view 
                               :view-id view-id 
                               :title (str "Edit: " (get-in table [:prop :table :representation])) 
                               :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.")
-                              :component-fn (fn [] (create-view--table-editor work-mode tables-configurations table-id local-changes invoker-id))
+                              :component-fn (fn [] (create-view--table-editor view-id work-mode tables-configurations table-id invoker-id))
                               :scrollable? false)))))
 
 
@@ -984,7 +984,7 @@
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
 (@startup)
-
+;; (mmeta/getset)
 ;; (@gseed/jarman-views-service :get-all-view)
 
 ;; (config! (to-frame @app) :size [1000 :by 800])

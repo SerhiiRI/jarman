@@ -1,7 +1,6 @@
 (ns jarman.logic.view
   (:refer-clojure :exclude [update])
   (:require
-   
    ;; ;; Clojure toolkit 
    ;; [clojure.data :as data]
    ;; [clojure.string :as string]
@@ -28,8 +27,7 @@
    ;; [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    ;; [jarman.logic.metadata :as mt]
    [jarman.logic.view-manager :include-macros true :refer :all]
-   [jarman.plugin.table :as plug]
-   )
+   [jarman.plugin.table :as plug])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
@@ -169,11 +167,20 @@
 
 (defview seal
   (plug/jarman-table
-   :name nil
-   :place nil
+   :name "Pushing seals"
    :tables [:seal]
-   :view [:seal.seal_number
-          :seal.to_date]
+   :view [:seal.seal_number :seal.to_date]
+   :override-model [{:start-value :text-input} {:end-value :text-input}]
+   :insert (fn [m] {:table-name :seal
+                   :column-list [:seal.seal_number :seal.to_date]
+                   :values (mapv #(vector % (:to-date m)) (range (:start-value m) (+ (:end-value m) 1)))}) 
+   :update :none
+   :delete :none
+   :query {:column (as-is :seal.id :seal.seal_number :seal.to_date)})
+  (plug/jarman-table
+   :name "Editing per one"
+   :tables [:seal]
+   :view [:seal.seal_number :seal.to_date]
    :query {:column (as-is :seal.id :seal.seal_number :seal.to_date)}))
 
 (defview service_contract

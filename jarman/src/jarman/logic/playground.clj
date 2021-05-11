@@ -12,27 +12,32 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
-(def available-scheme ["service_contract"
-                       "seal"
-                       "repair_contract"
-                       "point_of_sale_group_links"
-                       "point_of_sale_group"
-                       "cache_register"
-                       "point_of_sale"
-                       "enterpreneur"
-                       "user"
-                       "permission"
-                       "documents"
-                       "metadata"])
+;; (def available-scheme ["service_contract"
+;;                        "service_contract"
+;;                        "seal"
+;;                        "repair_contract"
+;;                        "point_of_sale_group_links"
+;;                        "point_of_sale_group"
+;;                        "cache_register"
+;;                        "point_of_sale"
+;;                        "enterpreneur"
+;;                        "user"
+;;                        "permission"
+;;                        "documents"
+;;                        "metadata"])
 
 
 (def documents
   (create-table :documents
                 :columns [{:table [:varchar-100 :default :null]}
                           {:name [:varchar-200 :default :null]}
-
                           {:document [:blob :default :null]}
                           {:prop [:text :nnull :default "\"{}\""]}]))
+
+(def view
+  (create-table :view
+                :columns [{:table-name [:varchar-100 :default :null]}
+                          {:view [:text :nnull :default "\"{}\""]}]))
 
 (def metadata
   (create-table :metadata
@@ -43,8 +48,6 @@
   (create-table :permission
                 :columns [{:permission_name [:varchar-20 :default :null]}
                           {:configuration [:tinytext :nnull :default "\"{}\""]}]))
-
-
 
 (def user
   (create-table :user
@@ -108,31 +111,46 @@
 (def seal
   (create-table :seal
                 :columns [{:seal_number [:varchar-100 :default :null]}
-                          {:to_date [:date :default :null]}]))
+                          {:datetime_of_use [:datetime :default :null]}
+                          {:datetime_of_remove [:datetime :default :null]}]))
 
 (def service_contract
   (create-table :service_contract
-                :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
-                          {:register_contract_date [:date :default :null]}
-                          {:contract_term_date [:date :default :null]}
-                          {:money_per_month [:int-11 :default :null]}]
-                :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]))
+                :columns [{:id_enterpreneur     [:bigint-20 :unsigned :default :null]}
+                          {:contract_start_term [:date :default :null]}
+                          {:contract_end_term   [:date :default :null]}
+                          {:money_per_month     [:float-2 :nnull :default 0]}]
+                :foreign-keys [{:id_enterpreneur :enterpreneur} {:delete :cascade :update :cascade}]))
+
+(def service_contract_month
+  (create-table :service_contract_month
+                :columns [{:id_service_contract [:bigint-20 :unsigned :default :null]}
+                          {:service_month_date  [:date :default :null]}
+                          {:money_per_month     [:float-2 :nnull :default 0]}]
+                :foreign-keys [{:id_service_contract :service_contract} {:delete :cascade :update :cascade}]))
+
+;; (db/exec (drop-table :seal))
+;; (db/exec (drop-table :service_contract))
+;; (db/exec (drop-table :service_contract_month))
+;; (db/exec (drop-table :repair_contract))
+
+;; (db/query (show-tables))
 
 (def repair_contract
   (create-table :repair_contract
-                :columns [{:id_cache_register [:bigint-20 :unsigned :default :null]}
-                          {:id_point_of_sale [:bigint-20 :unsigned :default :null]}
-                          {:creation_contract_date [:date :default :null]}
-                          {:last_change_contract_date [:date :default :null]}
-                          {:contract_terms_date [:date :default :null]}
-                          {:cache_register_register_date [:date :default :null]}
-                          {:remove_security_seal_date [:datetime :default :null]}
-                          {:cause_of_removing_seal [:mediumtext :default :null]}
-                          {:technical_problem [:mediumtext :default :null]}
-                          {:active_seal [:mediumtext :default :null]}]
-                :foreign-keys [[{:id_cache_register :cache_register} {:delete :cascade :update :cascade}]
-                               [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]]))
+                :columns [{:id_cache_register[:bigint-20 :unsigned :default :null]}
+                          {:id_old_seal      [:bigint-20 :unsigned :default :null]}
+                          {:id_new_seal      [:bigint-20 :unsigned :default :null]}
+                          {:repair_date    [:date :default :null]}
 
+                          {:cause_of_removing_seal [:mediumtext :default :null]} ;; combo 3-5 items
+                          {:tech_problem_description [:mediumtext :default :null]} ;; big dialog to selection technical cause
+                          {:tech_problem_type [:varchar-120 :default :null]} ;; combo <10 shorttext items
+                          
+                          {:cache_register_register_date [:date :default :null]}]
+                :foreign-keys [[{:id_cache_register :cache_register} {:delete :cascade :update :cascade}]
+                               [{:id_old_seal :seal} {:delete :null :update :null}]
+                               [{:id_new_seal :seal} {:delete :null :update :null}]]))
 
 (defmacro create-tabels [& tables]
   `(do ~@(for [t tables]
@@ -146,7 +164,8 @@
 (defn create-scheme-one [scheme]
   (eval `(db/exec ~(symbol (string/join "/" ["jarman.schema-builder" (symbol scheme)])))))
 (defn create-scheme []
-  (create-tabels metadata
+  (create-tabels view
+                 metadata
                  documents
                  permission
                  user
@@ -155,18 +174,20 @@
                  cache_register
                  point_of_sale_group
                  point_of_sale_group_links
-                 repair_contract
                  seal
-                 service_contract))
+                 repair_contract
+                 service_contract
+                 service_contract_month))
 
 
 
 (defn delete-scheme-one [scheme]
   (eval `(db/exec (drop-table ~(keyword scheme)))))
 (defn delete-scheme []
-  (delete-tabels service_contract
-                 seal
+  (delete-tabels service_contract_month
+                 service_contract
                  repair_contract
+                 seal
                  point_of_sale_group_links
                  point_of_sale_group
                  cache_register
@@ -175,13 +196,15 @@
                  user
                  permission
                  documents
-                 metadata))
+                 metadata
+                 view))
 
 
 (defn regenerate-scheme []
   (delete-scheme)
   (create-scheme)
-  (metadata/do-create-meta))
+  (metadata/do-create-meta)
+  (metadata/do-create-references))
 
 (defn regenerate-metadata []
   (do (metadata/do-clear-meta)

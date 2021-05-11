@@ -19,6 +19,9 @@
             [jarman.logic.system-data-logistics :as logic]
             [jarman.gui.gui-components :as components]
             [jarman.logic.connection :as c]
+            [jarman.plugin.table :as ptab]
+            [jarman.logic.view-manager :as pvm]
+            ;; [jarman.logic.view :as view]
             ;; [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]
             ))
 ;;;;;;;;;;;;;;;;;;;;;;;;

@@ -15,20 +15,25 @@
 ;; Properties `prop` data
 ;;   {:id 1
 ;;    :table "cache_register"
-;;    :prop {:table {:representatoin "user"
+;;    :prop {:table {:field t-name
+;;                   :representatoin "user"
+;;                   :description nil
 ;;                   :is-system? false
 ;;                   :is-linker? false 
 ;;                   :allow-modifing? true
 ;;                   :allow-deleting? true
 ;;                   :allow-linking?  true}
 ;;           :columns [{:field "id_point_of_sale"
-;;                      :representation "id_point_of_sale"
-;;                      :description nil
-;;                      :component-type "l"
-;;                      :column-type "bigint(20) unsigned" 
+;;                      :field-qualified :cache_register.id_point_of_sale
+;;                      :representation "Cache register"
+;;                      :description "This table used for some bla-bla"
+;;                      :component-type ["l"]
+;;                      :default-value nil
+;;                      :column-type [:bigint-20-unsigned]
 ;;                      :private? false
 ;;                      :editable? false}
 ;;                     {:field "name"
+;;                      :field-qualified ...
 ;;                      :representation "name" ...}...]
 ;;
 ;;    Deserialized `prop`(look above) contain
@@ -52,7 +57,7 @@
 ;;    :column-type - database type of column.
 ;;    :private? - true if column must be hided for user UI. 
 ;;    :editable? - true if column editable
-;;    :component-type - influed by column-type key, contain one of symbol ("d" "t" "dt" "n" "b" "a"
+;;    :component-type - influed by column-type key, contain one of symbol ("d" "t" "dt" "n" "b" "a" "f" "l"
 ;;    "i" nil), which describe some hint to representation information by UI:
 ;;          "d" - date
 ;;          "t" - time
@@ -61,6 +66,8 @@
 ;;          "b" - mean boolean type of data
 ;;          "a" - big text block
 ;;          "i" - short text input
+;;          "l" - linking table
+;;          "f" - floated point number
 ;;          nil - no hint, but not must be viewed, only not specified.
 ;;
 ;;  UI FAQ
@@ -87,6 +94,27 @@
 ;;;;;;;;;;;;;;;;;;;;;;
 
 (def ^{:dynamic true :private true} *not-allowed-to-edition-tables* ["user" "permission"])
+
+(def ^:private column-type-data "d")
+(def ^:private column-type-time "t")
+(def ^:private column-type-datatime "dt")
+(def ^:private column-type-linking "l")
+(def ^:private column-type-number "n")
+(def ^:private column-type-boolean "b")
+(def ^:private column-type-textarea "a")
+(def ^:private column-type-floated "f")
+(def ^:private column-type-input "i")
+(def ^:private column-type-nil nil)
+(def ^:dynamic *meta-column-type-list* [column-type-data
+                                        column-type-time
+                                        column-type-datatime
+                                        column-type-linking
+                                        column-type-number
+                                        column-type-boolean
+                                        column-type-textarea
+                                        column-type-floated
+                                        column-type-input
+                                        column-type-nil])
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; RULE FILTRATOR ;;;
@@ -182,28 +210,28 @@
         cfield (:field column-field-spec)
         in?   (fn [col x] (if (string? col) (= x col) (some #(= % x) col)))]
     (if (not-empty ctype)
-      (if (not-empty (allowed-rules *id-collumn-rules* [cfield])) ["l"] ;; l - mean linking is linking column 
+      (if (not-empty (allowed-rules *id-collumn-rules* [cfield])) [column-type-linking] ;; l - mean linking is linking column 
           (condp in? ctype
-            "date"        ["d" "dt" "i"] ;; datetime
-            "time"        ["t" "i"] ;; only time
-            "datetime"    ["dt" "d" "i"] ;; datatime
+            "date"        [column-type-data column-type-datatime column-type-input] ;; datetime
+            "time"        [column-type-time column-type-input] ;; only time
+            "datetime"    [column-type-datatime column-type-data column-type-input] ;; datatime
             ["smallint"
              "mediumint"
              "int"
              "integer"
-             "bigint"
-             "double"
+             "bigint"]    [column-type-number column-type-input] ;; n - mean simple number input
+            ["double"
              "float"
-             "real"]       ["n" "i"] ;; n - mean simple number input
+             "real"]      [column-type-floated column-type-input] ;; f - mean floated point number
             ["tinyint"
              "bool"
-             "boolean"]    ["n" "i" "b"] ;; b - mean boolean
+             "boolean"]   [column-type-number column-type-input column-type-boolean] ;; b - mean boolean
             ["tinytext"
              "text"
              "mediumtext"
              "longtext"
-             "json"]       ["a"] ;; a - mean area, text area
-            "varchar"      ["i"] ;; i - mean simple text input
+             "json"]      [column-type-textarea] ;; a - mean area, text area
+            "varchar"     [column-type-input] ;; i - mean simple text input
             nil)))))
 
 ;; `TODO` edd field to doc
@@ -270,7 +298,7 @@
   Example
     (create-on-delete-on-update-action \" ON DELETE CASCADE ON UPDATE CASCADE\")
      ;; => {:delete :cascade :update :cascade}
-    (create-on-delete-on-update-action \"ON DELETEdasf SET NULL\")
+    (create-on-delete-on-update-action \"ON DELETE SET NULL\")
      ;; => nil"
   [line]
   (let [action-to (fn [x] (case x "DELETE" :delete "UPDATE" :update))
@@ -327,6 +355,7 @@
          :representation tfield
          :description nil
          :component-type (get-component-group-by-type column-field-spec)
+         :default-value nil
          :column-type ttype
          :private? false
          :editable? true}
@@ -386,11 +415,11 @@
       (update table :set (serialize (dissoc m :id)) :where [:= :id (:id m)])
       (insert table :values (vals (serialize m))))))
 
-(defn show-tables []
-  (not-allowed-rules ["metatable" "meta*"] (map (comp second first) (db/query "SHOW TABLES"))))
+(defn show-tables-not-meta []
+  (not-allowed-rules ["view" "metatable" "meta*"] (map (comp second first) (db/query "SHOW TABLES"))))
 
 (defn do-create-meta []
-  (for [table (show-tables)]
+  (for [table (show-tables-not-meta)]
     (let [meta (db/query (select :metadata :where [:= :metadata.table table]))]
       (if (empty? meta)
         (db/exec (update-sql-by-id-template "metadata" (get-meta table)))))))
@@ -398,7 +427,6 @@
 (defn do-clear-meta [& body]
   {:pre [(every? string? body)]}
   (db/exec (delete :metadata)))
-
 
 (defn update-meta [metadata]
   (db/exec (update-sql-by-id-template "metadata" metadata)))
@@ -564,18 +592,22 @@
    (inpattern? [true false] m [:prop :table :allow-deleting?])
    (inpattern? [true false] m [:prop :table :allow-linking?])))
 
+
+
 (defn- verify-column-metadata [p m]
   (do-and
    (isset? m [:field] (conj p :field))
+   (isset? m [:field-qualified] (conj p :field-qualified))
    (isset? m [:representation] (conj p :representation))
    (isset? m [:column-type] (conj p :column-type))
    (isset? m [:component-type] (conj p :component-type))
+   (isset? m [:default-value] (conj p :default-value))
    (isset? m [:private?] (conj p :private?))
    (isset? m [:editable?] (conj p :editable?))
    (repattern? #"^[a-z_]{3,}$" m [:field] (conj p :field))
    (repattern? #"^[\w\d\s]+$" m [:representation] (conj p :representation))
     ;; (inpattern? ["d" "t" "dt" "l" "n" "b" "a" "i" nil] m [:component-type] (conj p :component-type))
-   (fpattern? #(every? (fn [cols] (in? ["d" "t" "dt" "l" "n" "b" "a" "f" "i"] cols)) %) "component-type not in allowed [\"d\" \"t\" \"dt\" \"l\" \"n\" \"b\" \"a\" \"i\" \"f\" nil]" m [:component-type] (conj p :component-type))
+   (fpattern? #(every? (fn [cols] (in? *meta-column-type-list* cols)) %) (format "component-type not in allowed %s" *meta-column-type-list*) m [:component-type] (conj p :component-type))
    (inpattern? [true false] m [:private?] (conj p :private?))
    (inpattern? [true false] m [:editable?] (conj p :editable?))
    (fpattern? #(or (string? %) (nil? %)) "string? || nil?" m [:description] (conj p :description))))
@@ -1146,7 +1178,6 @@
 ;; (getset :user)
 
 ;; (update-meta {:id 188, :table "user", :prop {:table {:field "user", :representation "Користувач", :is-system? false, :is-linker? false, :description nil, :allow-modifing? true, :allow-deleting? true, :allow-linking? true}, :columns [{:field :login, :field-qualified :user.login, :representation "login", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :password, :field-qualified :user.password, :representation "password", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :first_name, :field-qualified :user.first_name, :representation "first_name", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :last_name, :field-qualified :user.last_name, :representation "last_name", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:description nil, :private? false, :editable? true, :field :id_permission, :column-type [:bigint-120-unsigned :nnull], :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}], :component-type ["l"], :representation "id_permission", :field-qualified :user.id_permission, :key-table "permission"}]}})
-
 
 (defn restore-backup-metadata
   "Description

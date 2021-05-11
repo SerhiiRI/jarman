@@ -20,6 +20,28 @@
                 :columns [{:table [:varchar-100 :default :null]}
                           {:prop [:text :default :null]}]))
 
+(def user
+  (create-table :user
+                :columns [{:login [:varchar-100 :nnull]}
+                          {:password [:varchar-100 :nnull]}
+                          {:first_name [:varchar-100 :nnull]}
+                          {:last_name [:varchar-100 :nnull]}
+                          {:id_permission [:bigint-120-unsigned :nnull]}]
+                :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}]))
+
+(def permission
+  (create-table :permission
+                :columns [{:permission_name [:varchar-20 :default :null]}
+                          {:configuration [:tinytext :nnull :default "\"{}\""]}]))
+
+(def documents
+  (create-table :documents
+                :columns [{:table [:varchar-100 :default :null]}
+                          {:name [:varchar-200 :default :null]}
+
+                          {:document [:blob :default :null]}
+                          {:prop [:text :nnull :default "\"{}\""]}]))
+
 (def available-scheme
   ["documents" "permission" "user" "enterpreneur" "point_of_sale" "cache_register" "point_of_sale_group" "point_of_sale_group_links" "repair_contract" "seal" "service_contract"]
   ;; ["service_contract" "seal" "repair_contract" "point_of_sale_group_links" "point_of_sale_group" "cache_register" "point_of_sale" "enterpreneur" "user" "permission" "documents" "metadata"]

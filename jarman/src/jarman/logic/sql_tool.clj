@@ -1,6 +1,7 @@
 (ns jarman.logic.sql-tool
   (:gen-class)
   (:refer-clojure :exclude [update])
+  (:import [java.time Period LocalDate])
   (:require
    ;; standart lib
    [clojure.string :as string]))
@@ -14,7 +15,7 @@
 (def ^{:dynamic true :private true} *accepted-ctable-rules*      [:columns :foreign-keys :table-config])
 (def ^{:dynamic true :private true} *accepted-select-rules*      [:top :count :column :inner-join :right-join :left-join :outer-left-join :outer-right-join :where :order :limit])
 (def ^{:dynamic true :private true} *accepted-update-rules*      [:update-table :set :where])
-(def ^{:dynamic true :private true} *accepted-insert-rules*      [:values :set])
+(def ^{:dynamic true :private true} *accepted-insert-rules*      [:column-list :values :set])
 (def ^{:dynamic true :private true} *accepted-delete-rules*      [:from :where])
 
 (def ^{:dynamic true :private true} *data-format* "DB date format" "yyyy-MM-dd HH:mm:ss")
@@ -37,6 +38,25 @@
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Date function ;;;
 ;;;;;;;;;;;;;;;;;;;;;
+
+(defn- is-yyyy-mm-dd? [s]
+  (some? (re-matches #"\d{4}-\d{1,2}[-]\d{1,2}" (string/trim s))))
+(defn count-month-between
+  "Description
+    return a mounth count between start end date.
+
+  Warning!
+    function supply only date in YYYY-MM?-DD? notation
+
+  Example
+    (count-month-between \"2017-08-31\" \"2018-11-30\") ;; => 15
+    (count-month-between \"2019-08-31\" \"2018-11-30\") ;; => -9"
+  [start-date end-date]
+  {:pre [(is-yyyy-mm-dd? start-date) (is-yyyy-mm-dd? start-date)]}
+  (-> (Period/between
+       (-> (LocalDate/parse (string/trim start-date)) (.withDayOfMonth 1))
+       (-> (LocalDate/parse (string/trim   end-date)) (.withDayOfMonth 1)))
+      .toTotalMonths))
 
 (defn date
   "Remember that simple (date) ruturn current
@@ -427,8 +447,6 @@
         (vector? where-block) (str s " WHERE " (where-procedure-parser-v where-block))
         :else s))
 
-
-
 ;; (let [d '(or (= :f1 1)
 ;;             (>= :f1 "bliat")
 ;;             (and (> :f2 2)
@@ -606,6 +624,19 @@
 ;;         (or (= :suka "one")
 ;;            (in :one [1 2 3 (+ 1 2)])))))
 
+;;;;;;;;;;;;;;;;;;;
+;;; column-list ;;; 
+;;;;;;;;;;;;;;;;;;;
+
+(defn column-list-string [current-string m table-name]
+  (if (and (sequential? m) (every? (some-fn keyword? string?) m))
+      (str current-string
+           (format
+            " (%s)" (string/join ", " (map name m))))
+      current-string))
+
+(defn empty-insert-update-table-string [current-string m table-name]
+  (str (string/trim current-string) (format " `%s`" (name table-name))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; set preprocessor ;;;
@@ -613,7 +644,8 @@
 
 (defn set-string [current-string update-map tabel-name]
   (let [pair-group (fn [[col-name value]] (str (make-dot-column! col-name) "=" (where-procedure-parser-v value)))]
-    (str current-string " " (format "`%s`" (name tabel-name)) (str " SET " (string/join ", " (map pair-group update-map))))))
+    (str current-string ;; " " (format "`%s`" (name tabel-name))
+         (str " SET " (string/join ", " (map pair-group update-map))))))
 
 ;; (defn set-string [current-string update-map tabel-name]
 ;;   (let [pair-group (fn [[col-name value]] (str (format "%s" (name col-name)) "=" (where-procedure-parser-v value)))]
@@ -655,7 +687,7 @@
         into-sql-values (fn [some-list] (brackets (string/join ", " (wrapp-escape some-list))))
         into-sql-map    (fn [some-list] (brackets (string/join ", " (vals (wrapp-escape some-list)))))
         pair-group      (fn [[col-name value]] (str (format "%s"(name col-name)) "=" (where-procedure-parser-v value)))]
-    (str current-string " " (format "%s" (name table-name))
+    (str current-string ;; (format "%s" (name table-name))
           (cond (map? values)
                 (str " SET " (string/join ", " (map pair-group values)))
                 (and (seqable? values) (map? (first values)))
@@ -715,7 +747,7 @@
     :nnul => NOT NULL
     ....
     for more, see the code `condp` block"
-  [k] (if (string? k) k
+  [k] (if (or (string? k) (number? k)) k
           (let [[sql-type n s & _] (string/split (string/lower-case (name k)) #"-")
                 is? (fn [col x] (if (string? col) (= x col) (some #(= % x) col)))
                 charchain-types (fn [tt nn] (if-not nn (string/upper-case tt) (format "%s(%s)" (string/upper-case tt) nn)))
@@ -803,7 +835,10 @@
   (str current-string (format " `%s` (" table-name)
         (string/join ", " [(create-column {:id [:bigint-20-unsigned :nnull :auto]}) 
                            (let [cls column-spec]
-                             (cond (string? cls) cls 
+                             (cond (string? cls) cls
+                                   (int? cls) cls
+                                   (double? cls) cls
+                                   (float? cls) cls
                                    (map? cls) (create-column cls)
                                    (vector? cls) (string/join ", " (map #(create-column %) cls))
                                    :else nil)) 
@@ -959,14 +994,16 @@
 ;;; pipeline helpers ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn delete-empty-table-pipeline-applier [key-pipeline]
-  (println key-pipeline)
-  (if (some #(= :from (first %1)) key-pipeline)
-    key-pipeline (vec (concat [[:from 'from-string]] key-pipeline))))
-
 (defn create-rule-pipeline [keys accepted-lexical-rule]
   (let [key-in? (fn [k col] (when (some #(= k %) col) (symbol (str (symbol k) "-string"))))]
     (reduce #(if-let [k (key-in? %2 keys)] (conj %1 [%2 k]) %1) [] accepted-lexical-rule)))
+
+(defn delete-empty-table-pipeline-applier [key-pipeline]
+  (if (some #(= :from (first %1)) key-pipeline)
+    key-pipeline (vec (concat [[:from 'from-string]] key-pipeline))))
+
+(defn insert-update-empty-table-pipeline-applier [key-pipeline]
+  (vec (concat [[:-update-insert-empty-table 'empty-insert-update-table-string]] key-pipeline)))
 
 (defn select-empty-table-pipeline-applier [key-pipeline]
   (if (some #(or (= :count (first %1)) (= :column (first %1))) key-pipeline)
@@ -1008,6 +1045,9 @@
 (defn values-spec-doc []
   "    :values - if using map, effect equeal to :set spec. but also you can add multiply values in vector
       not specifing column (vector (vector (<col-val>)+)+)")
+(defn column-list-spec-doc []
+  "    :column-list - is just sequence of keyword or string which specify a column you want insert data to
+        for example [:name :user.lastname \"age\"]., pattern (sequable (<keyword|[\\w_.]+>)+)")
 (defn *-join-spec-doc []
   "    :*-join - has one of possible ways of usage:
         Table name and specify id_<key> on which table will be link.
@@ -1210,12 +1250,16 @@
     (insert :user :set {:id 1, :str1_c \"vasia\", :str2_c \"123\", :num_c 20})
     (insert :user :values {:id 1, :str1_c \"vasia\", :str2_c \"123\", :num_c 20})
     (insert :user :values [[1 \"vasia\" \"123\" 20] [2 \"vasia\" \"123\" 20]])
+    (insert :user 
+            :column-list [:id \"first_name\" :user.last_name \"age\"]
+            :values [[1 \"vasia\" \"123\" 20] [2 \"vasia\" \"123\" 20]])
 
   Spec-params
   %s"
           *accepted-insert-rules*
           (string/join "\n" [(set-spec-doc)
-                             (values-spec-doc)])))
+                             (values-spec-doc)
+                             (column-list-spec-doc)])))
 
 (defn- delete-doc []
   (format
@@ -1360,9 +1404,13 @@
                   ~@(for [[~'k ~'F] list-of-rules#]
                       `(~(symbol (str "jarman.logic.sql-tool" "/" ~'F)) ~~'(k args) (name ~~'table-name)))))))))
 
-(define-sql-operation insert "INSERT INTO" create-rule-pipeline)
+
+
+(define-sql-operation insert "INSERT INTO" (comp insert-update-empty-table-pipeline-applier
+                                              create-rule-pipeline))
 (define-sql-operation delete "DELETE FROM" (comp delete-empty-table-pipeline-applier create-rule-pipeline))
-(define-sql-operation update create-rule-pipeline)
+(define-sql-operation update (comp insert-update-empty-table-pipeline-applier
+                                create-rule-pipeline))
 (define-sql-operation select (comp select-table-count-pipeline-applier
                                 select-table-top-n-pipeline-applier
                                 select-empty-table-pipeline-applier
@@ -1395,10 +1443,12 @@
 
 
 
-(define-sql-operation! insert! "INSERT INTO" create-rule-pipeline)
+(define-sql-operation! insert! "INSERT INTO" (comp insert-update-empty-table-pipeline-applier
+                                                create-rule-pipeline))
 (define-sql-operation! delete! "DELETE FROM" (comp delete-empty-table-pipeline-applier
                                                 create-rule-pipeline))
-(define-sql-operation! update! create-rule-pipeline)
+(define-sql-operation! update! (comp insert-update-empty-table-pipeline-applier
+                                  create-rule-pipeline))
 (define-sql-operation! select! (comp select-table-count-pipeline-applier
                                   select-table-top-n-pipeline-applier
                                   select-empty-table-pipeline-applier
@@ -1411,14 +1461,14 @@
 (defmacro build-partial [part-elem]
   `(fn [m#] (if ~part-elem (into m# {~(keyword (name part-elem)) ~part-elem}) m#)))
 
-(define-sql-operation!
-  select!
-  "SELECT!"
-  (comp
-    select-table-count-pipeline-applier
-    select-table-top-n-pipeline-applier
-    select-empty-table-pipeline-applier
-    create-rule-pipeline))
+;; (define-sql-operation!
+;;   select!
+;;   "SELECT!"
+;;   (comp
+;;     select-table-count-pipeline-applier
+;;     select-table-top-n-pipeline-applier
+;;     select-empty-table-pipeline-applier
+;;     create-rule-pipeline))
 
 
 (defn select-builder [table-name & {:keys [top limit count column order inner-join right-join left-join outer-left-join outer-right-join where]}]
@@ -1526,6 +1576,9 @@
 
 (defn show-databases []
   "SHOW DATABASES")
+
+(defn show-tables []
+  "SHOW TABLES")
 
 (defn show-table-columns [value]
   {:pre [(some? value)]}

@@ -121,24 +121,27 @@
     (input-text :placeholder \"Login\" :style [:halign :center])
  "
   ([& {:keys [v
-                 placeholder
-                 border
-                 font-size
-                 border-color-focus
-                 border-color-unfocus
-                 args]
+              placeholder
+              border
+              font-size
+              border-color-focus
+              border-color-unfocus
+              char-limit
+              args]
           :or   {v ""
                  placeholder ""
                  font-size 14
                  border-color-focus   (get-color :decorate :focus-gained)
                  border-color-unfocus (get-color :decorate :focus-lost)
                  border [10 10 5 5 2]
+                 char-limit 0
                  args []}}]
     (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
           fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))
           newBorder (fn [underline-color]
                       (compound-border (empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
-                                       (line-border :bottom (nth border 4) :color underline-color)))]
+                                       (line-border :bottom (nth border 4) :color underline-color)))
+          last-v (atom "")]
       (apply text 
              :text (if (empty? v) placeholder (if (string? v) v (str v)))
              :font (getFont font-size :name "Monospaced")
@@ -152,8 +155,14 @@
                       :focus-lost   (fn [e]
                                       (config! e :border (newBorder border-color-unfocus))
                                       (cond (= (value e) "") (config! e :text placeholder))
-                                      (config! e :user-data (fn-assoc e :edit? false)))]
+                                      (config! e :user-data (fn-assoc e :edit? false)))
+                      :caret-update (fn [e] 
+                                      (let [new-v (c/value (c/to-widget e))]
+                                        (if (and (> (count new-v) char-limit) (< 0 char-limit))
+                                          (invoke-later (config! e :text @last-v))
+                                          (reset! last-v new-v))))]
              args))))
+
 
 
 ;; (show-events (text))
@@ -188,16 +197,19 @@
               val
               border
               border-color-focus
-              border-color-unfocus]
+              border-color-unfocus
+              char-limit]
        :or {store-id nil
             local-changes (atom {})
             val ""
             border [10 10 5 5 2]
             border-color-focus   (get-color :decorate :focus-gained)
-            border-color-unfocus (get-color :decorate :focus-lost)}}]
+            border-color-unfocus (get-color :decorate :focus-lost)
+            char-limit 0}}]
    (let [newBorder (fn [underline-color]
                      (compound-border (empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
-                                      (line-border :bottom (nth border 4) :color underline-color)))]
+                                      (line-border :bottom (nth border 4) :color underline-color)))
+         last-v (atom "")]
      (let [text-area (to-widget (javax.swing.JTextArea.))]
        (if-not (empty? val) (swap! local-changes (fn [storage] (assoc storage store-id val))))
        (config!
@@ -212,22 +224,26 @@
                                  (config! e :border (newBorder border-color-unfocus)))
                  :caret-update (fn [e]
                                  (let [new-v (c/value (c/to-widget e))]
+                                   
+                                   (if (and (> (count new-v) char-limit) (< 0 char-limit))
+                                     (invoke-later (config! e :text @last-v))
+                                     (reset! last-v new-v))
                                    (cond
-                                     (and (not (nil? store-id))
-                                          (not (= val new-v)))
+                                     (and (not (nil? store-id)) (not (= val new-v)))
                                      (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
                                      :else (reset! local-changes (dissoc @local-changes store-id)))))])
        (scrollbox text-area :minimum-size [50 :by 100])))))
 
 
+
 (defn input-text-with-atom
   [& {:keys [store-id local-changes val editable? enabled? store-orginal onClick border-color-focus border-color-unfocus debug]
       :or {local-changes (atom {})
+           store-id nil
            val ""
            editable? true
            enabled? true
            store-orginal false
-           store-id nil
            border-color-focus   (get-color :decorate :focus-gained)
            border-color-unfocus (get-color :decorate :focus-lost)
            onClick (fn [e])
@@ -259,6 +275,11 @@
 
 
 (defn select-box
+  "Description
+      Set model and you can add extending parameter.
+   Example:
+      (select-box [one two tree])
+   "
   ([model
     & {:keys [store-id local-changes selected-item editable? enabled?]
        :or   {local-changes (atom {})
@@ -537,59 +558,132 @@
 
 
 
-(def input-number
+(def input-float
   "Description:
-    Text component converted to automatic double number validator. Return only correct value... Probably always... 
+    Text component converted to automatic double number validator. Return only correct value.
+    Implemented local-changes.
  Example:
     ((def input-number :style [:halign :center])
  "
-  (fn [& {:keys [style display]
+  (fn [& {:keys [style display val char-limit local-changes store-id]
           :or   {style []
-                 display nil}}]
+                 display nil
+                 val ""
+                 char-limit 0
+                 local-changes (atom {})
+                 store-id nil}}]
     (let [last-v (atom "")]
       (apply text
+             :text val
              :background "#fff"
              :listen [:caret-update (fn [e]
                                       (.repaint (to-root (to-widget e)))
-                                      (if (empty? (value e))
-                                        (do ;; Set "" if :text is empty
-                                          (config! e :text "")
-                                          (reset! last-v ""))
-                                        (do ;; if :text not empty 
-                                          (let [v (re-matches #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$" (value e)) ;; Get only numbers vec or return nil
-                                                v (if-not (nil? v) (first v) nil)]
-                                            (if (nil? v)
-                                              (do ;; if regex return nil then in :text is some text so change :text to ""
-                                                (if-not (and (= "-" (str (first (value e)))) (= 1 (count (value e))))
-                                                  (invoke-later (config! e :text @last-v))))
-                                              (let [check-v (clojure.string/split v #"\.")] ;; split value by dot to check if double
-                                                (if (= (count check-v) 2) ;; if double
-                                                  (if (empty? (first check-v))
-                                                    (do ;; cat first empty value and return number 0.x
-                                                      (invoke-later (config! e :text (read-string (str 0 (second check-v))))))
-                                                    (do ;; remember last correct value
-                                                      (reset! last-v (read-string v))))
-                                                  (if (> (count (first check-v)) 1) ;; if double
-                                                    (let [check-first-char (re-matches #"^[+-]?[1-9][0-9]*$" (first check-v))] ;; cut 0 on front
-                                                      (if (and (nil? check-first-char) (not (= "-" (str (first (value e))))))
-                                                        (do
-                                                          (reset! last-v (clojure.string/join "" (clojure.string/split (first check-v) #"0"))) ;; remember last correct value
-                                                          (invoke-later (config! e :text @last-v)))
-                                                        (do ;; clear space
-                                                          (reset! last-v (read-string v))))) ;; remember last correct value
-                                                          
-                                                    (do ;; if value is integer
-                                                      (reset! last-v (read-string v)))))))))) ;; remember last correct value if integer and when remove last char
-                                                      
+                                      (if (and (< char-limit (count (value e))) (> char-limit 0))
+                                        (do
+                                          (invoke-later (config! e :text @last-v)))
+                                        (do
+                                          (if (empty? (value e))
+                                            (do ;; Set "" if :text is empty
+                                              (config! e :text "")
+                                              (reset! last-v ""))
+                                            (do ;; if :text not empty 
+                                              (let [v (re-matches #"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$" (value e)) ;; Get only numbers vec or return nil
+                                                    v (if-not (nil? v) (first v) nil)]
+                                                (if (nil? v)
+                                                  (do ;; if regex return nil then in :text is some text so change :text to ""
+                                                    (if-not (and (= "-" (str (first (value e)))) (= 1 (count (value e))))
+                                                      (invoke-later (config! e :text @last-v))))
+                                                  (let [check-v (clojure.string/split v #"\.")] ;; split value by dot to check if double
+                                                    (if (= (count check-v) 2) ;; if double
+                                                      (if (empty? (first check-v))
+                                                        (do ;; cat first empty value and return number 0.x
+                                                          (invoke-later (config! e :text (read-string (str 0 (second check-v))))))
+                                                        (do ;; remember last correct value
+                                                          (reset! last-v (read-string v))))
+                                                      (if (> (count (first check-v)) 1) ;; if double
+                                                        (let [check-first-char (re-matches #"^[+-]?[1-9][0-9]*$" (first check-v))] ;; cut 0 on front
+                                                          (if (and (nil? check-first-char) (not (= "-" (str (first (value e))))))
+                                                            (do
+                                                              (reset! last-v (clojure.string/join "" (clojure.string/split (first check-v) #"0"))) ;; remember last correct value
+                                                              (invoke-later (config! e :text @last-v)))
+                                                            (do ;; clear space
+                                                              (reset! last-v (read-string v))))) ;; remember last correct value
+
+                                                        (do ;; if value is integer
+                                                          (reset! last-v (read-string v)))))))))))) ;; remember last correct value if integer and when remove last char
+
+                                      (let [new-v @last-v] ;; local-changes
+                                        (cond
+                                          (and (not (nil? store-id))
+                                               (not (= val new-v)))
+                                          (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
+                                          :else (reset! local-changes (dissoc @local-changes store-id))))
+                                      
                                       (if display (config! display :text @last-v)))]
              style))))
 
-(def view (fn [] (let [lbl (label)]
-                   (mig-panel :constraints ["" "fill, grow" ""] :border (line-border :thickness 1 :color "#000") :size [200 :by 30] 
-                              :items [[(input-number :display lbl)]
-                                      [lbl]]))))
 
-;; Show example
+
+(def input-int
+  "Description:
+    Text component converted to automatic int number validator. Return only correct value.
+    Implemented local-changes.
+ Example:
+    ((def input-number :style [:halign :center])
+ "
+  (fn [& {:keys [style display val char-limit local-changes store-id]
+          :or   {style []
+                 display nil
+                 val "0"
+                 char-limit 0
+                 local-changes (atom {})
+                 store-id nil}}]
+    (let [last-v (atom 0)]
+      (apply text
+             :text (if (nil? val) "0" val)
+             :background "#fff"
+             :listen [:caret-update (fn [e]
+                                      (if-not (nil? (to-root (to-widget e))) (.repaint (to-root (to-widget e))))
+                                      (if (and (< char-limit (count (value e))) (> char-limit 0))
+                                        (do
+                                          (invoke-later (config! e :text @last-v)))
+                                        (do
+                                          (if (empty? (value e))
+                                            (do ;; Set "" if :text is empty
+                                              (config! e :text "")
+                                              (reset! last-v ""))
+                                            (do ;; if :text not empty 
+                                              (let [v (re-matches #"^[+-]?[1-9][0-9]*$" (value e))] ;; cut 0 on front
+                                                (println v)
+                                                (cond
+                                                  (and (= "0" (str (first (value e)))) (= 1 (count (value e))))
+                                                  (do
+                                                    (reset! last-v 0))
+                                                  (and (nil? v) (= "-" (str (first (value e)))) (> 2 (count (value e))))
+                                                  (do
+                                                    (reset! last-v (clojure.string/join "" (clojure.string/split (value e) #"0"))) ;; remember last correct value
+                                                    (invoke-later (config! e :text @last-v)))
+                                                  (not (nil? v))
+                                                  (do ;; clear space
+                                                    (reset! last-v (read-string v)))
+                                                  :else (invoke-later (config! e :text @last-v))))))))
+                                        ;; remember last correct value if integer and when remove last char
+
+                                      (let [new-v @last-v] ;; local-changes
+                                        (cond
+                                          (and (not (nil? store-id))
+                                               (not (= val new-v)))
+                                          (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
+                                          :else (reset! local-changes (dissoc @local-changes store-id)))))]
+             style))))
+
+
+;; (def view (fn [] (let [lbl (label)]
+;;                    (mig-panel :constraints ["" "fill, grow" ""] :border (line-border :thickness 1 :color "#000") :size [200 :by 30] 
+;;                               :items [[(input-float :display lbl)]
+;;                                       [lbl]]))))
+
+;; ;; Show example
 ;; (let [my-frame (-> (doto (seesaw.core/frame
 ;;                           :title "test"
 ;;                           :size [0 :by 0]

@@ -117,23 +117,12 @@
                                                                (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified
                                                                                                                       :local-changes complete
                                                                                                                       :set-date (if (empty? v) nil v))))))
-                                                         (lang/in? (get meta :component-type) "i")
-                                                         (do ;; Add input-text with label
-                                                           (if (empty? model)
-                                                             (do ;;Create insert input
-                                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified
-                                                                                                                     :local-changes complete
-                                                                                                                     :editable? editable?)))
-                                                             (do ;; Create update input
-                                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified
-                                                                                                                     :local-changes complete
-                                                                                                                     :editable? editable?
-                                                                                                                     :val v)))))
+
                                                          (lang/in? (get meta :component-type) "l")
                                                          (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
-                                                           (let [key-table (doto (keyword (get meta :key-table)) (println))
-                                                                 connected-table-conf (doto (get-in global-configuration [key-table :plug/jarman-table :configuration]) (println))
-                                                                 connected-table-data (doto (get-in global-configuration [key-table :plug/jarman-table :data-toolkit]) (println))
+                                                           (let [key-table  (keyword (get meta :key-table))
+                                                                 connected-table-conf  (get-in global-configuration [key-table :plug/jarman-table :configuration])
+                                                                 connected-table-data  (get-in global-configuration [key-table :plug/jarman-table :data-toolkit])
                                                                  selected-representation (fn [dialog-model-view returned-from-dialog]
                                                                                            (->> (get dialog-model-view :view)
                                                                                                 (map #(get-in returned-from-dialog [%]))
@@ -156,7 +145,29 @@
                                                              (do
                                                                (gcomp/inpose-label title (gcomp/input-text-area :store-id field-qualified
                                                                                                                 :local-changes complete
-                                                                                                                :val v))))))))
+                                                                                                                :val v)))))
+                                                         (lang/in? (get meta :component-type) "n")
+                                                         (do
+                                                           (if (empty? model)
+                                                             (do
+                                                               (gcomp/inpose-label title (gcomp/input-int :store-id field-qualified
+                                                                                                          :local-changes complete)))
+                                                             (do
+                                                               (gcomp/inpose-label title (gcomp/input-int :store-id field-qualified
+                                                                                                          :local-changes complete
+                                                                                                          :val v)))))
+                                                         (lang/in? (get meta :component-type) "i")
+                                                         (do ;; Add input-text with label
+                                                           (if (empty? model)
+                                                             (do ;;Create insert input
+                                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified
+                                                                                                                     :local-changes complete
+                                                                                                                     :editable? editable?)))
+                                                             (do ;; Create update input
+                                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified
+                                                                                                                     :local-changes complete
+                                                                                                                     :editable? editable?
+                                                                                                                     :val v))))))))
                                                    metadata))
                       [(vgap 20)]
                       [(button-template inser-or-update (fn [e]

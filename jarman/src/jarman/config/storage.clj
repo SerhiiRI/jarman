@@ -104,4 +104,9 @@
 
 ;; (temporary-list)
 ;; (temporary-put "temp.txt" "kill")
-;; (temporary-dir)
+;; (temporary-append "temp.txt" "suka")
+;; (temporary-get "temp.txt")
+;; (temporary-get "alalal")
+;; (temporary-clean)
+;; (temporary-rename "temp.txt" "alalal")
+;; (temporary-dir-path)

@@ -3,7 +3,22 @@
         seesaw.border
         seesaw.dev
         seesaw.mig)
-  (:require [jarman.gui.gui-login :as lgn]))
+  (:import
+   (javax.swing 
+    InputMap
+    JScrollPane
+    JPanel
+    JComponent
+    KeyStroke
+    Action
+    AbstractAction)
+   (java.awt.event ActionEvent
+                         ActionListener
+                         InputEvent
+                         KeyEvent
+                         ActionListener))
+ ;; (:require [jarman.gui.gui-login :as lgn])
+  )
 
 
 ;; Debug for own KeyEventDispacher
@@ -106,7 +121,7 @@
 
 
 ;; Create new own KeyEventDispacher object using own class. If one was added before then first delete him.
-(def ked (SupervisiorKeyDispacher 2))
+;(def ked (SupervisiorKeyDispacher 2))
 (def ked (KeyDispacher {:18 (fn [] (println "You press ALT"))}))
 
 
@@ -120,51 +135,42 @@
   (.removeKeyEventDispatcher ked))
 
 
+;; (def panel
+;;      (doto
+;;          (proxy [JComponent] []
+;;            (paint [g] nil))
+;;      ;;  (.setPreferredSize (new Dimension 800 800))
+;;        (.. (getInputMap) (put (KeyStroke/getKeyStroke (KeyEvent/VK_F)(InputEvent/CTRL_DOWN_MASK)) "action"))
+;;        (.. (getInputMap) (put (KeyStroke/getKeyStroke "F2") "action"))
+;;        (.. (getInputMap) (put (KeyStroke/getKeyStroke \a) "action"))
+;;        (.. (getActionMap) (put "action" myAction))))
+
+;;(.dispose (to-frame e))
+
+
+(defn get-key-panel [keystr action some-panel]
+  (doto some-panel        
+    (.. (getInputMap) (put (KeyStroke/getKeyStroke keystr) "action"))
+    (.. (getActionMap) (put "action" (proxy [AbstractAction ActionListener] []
+                                       (actionPerformed [e] (do (println "act") (action e))))))))
 
 
 
 
-(import '(javax.swing 
-                      JFrame
-                      JPanel
-                      InputMap
-                      JComponent
-                      KeyStroke
-                      Action
-                      AbstractAction)
-        '(java.awt.event ActionEvent
-                         ActionListener
-                         InputEvent
-                         KeyEvent
-                         ActionListener)
-        '(java.awt Graphics Dimension Color)
-        '(java.awt.image BufferedImage))
-
-(def myAction
-     (proxy [AbstractAction ActionListener] []
-       (actionPerformed [e] (println "Action performed!"))))
-
-(def panel
-     (doto
-         (proxy [JComponent] []
-           (paint [g] nil))
-       
-     ;;  (.setPreferredSize (new Dimension 800 800))
-       (.. (getInputMap) (put (KeyStroke/getKeyStroke (KeyEvent/VK_F)(InputEvent/CTRL_DOWN_MASK)) "action"))
-       (.. (getInputMap) (put (KeyStroke/getKeyStroke "F2") "action"))
-       (.. (getInputMap) (put (KeyStroke/getKeyStroke \a) "action"))
-       (.. (getActionMap) (put "action" myAction))))
 
 
-(do 
-  (doto
-      (seesaw.core/frame
-       :resizable? false)
-    (.setMinimumSize (new Dimension 600 600))
-    (.add (.add panel (lgn/info-panel)))
-    (.pack)
-    (.setVisible true)))
+(do
+  ;;(.add panel (mig-panel))
+  (let [panel (get-key-panel \q (fn [jpan] (.dispose (to-frame jpan))) (mig-panel))]
+    (println (type panel))
+    (.add panel (seesaw.mig/mig-panel
+                                     :constraints ["wrap 1" "0px[grow, fill]0px" "5px[grow, fill]0px"]
+                                     :items [[(label :text "Hey")]]))
+    (doto
+        (seesaw.core/frame
+         :resizable? true)
+      (.setPreferredSize (new Dimension 800 800))
+      (.add panel)
+      (.pack)
+      (.setVisible true))))
 
-(println "heyyyy")
-
-(type (mig-panel))

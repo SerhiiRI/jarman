@@ -153,4 +153,4 @@
    :query   {:column (as-is :permission.id :permission.permission_name :permission.configuration)}))
 
 
-(insert! )
+

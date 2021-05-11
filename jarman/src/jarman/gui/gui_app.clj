@@ -316,12 +316,24 @@
 
 (defn switch-column-to-editing
   [work-mode local-changes path-to-value column]
-  (let [param-to-edit (fn [param enabled] (gcomp/inpose-label (lang/convert-key-to-title (str param))
-                                                 (gcomp/input-text-with-atom
-                                                  :local-changes local-changes
-                                                  :store-id (lang/join-vec path-to-value [param])
-                                                  :val (str (get column param))
-                                                  :enabled? enabled) :vtop 10))]
+  (let [param-to-edit (fn [param enabled]
+                        (cond
+                          (in? [true false] (get column param))
+                          (do
+                            (gcomp/input-checkbox
+                             :txt (lang/convert-key-to-title (str param))
+                             :local-changes local-changes
+                             :store-id (lang/join-vec column [param])
+                             :val (get column param)
+                             :enabled? enabled))
+                          :else
+                          (gcomp/inpose-label (lang/convert-key-to-title (str param))
+                                              (gcomp/input-text-with-atom
+                                               :local-changes local-changes
+                                               :store-id (lang/join-vec path-to-value [param])
+                                               :val (str (get column param))
+                                               :enabled? enabled)
+                                              :vtop 10)))]
     (mig-panel ;; Editable parameters list
      :constraints ["wrap 1" "20px[250:,fill]5px" "0px[fill]0px"]
      :items (join-mig-items
@@ -333,18 +345,20 @@
                  (fn [column-parameter]
                    (let [key-param (first column-parameter)
                          path-to-value (lang/join-vec path-to-value [key-param])]
-                     (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter))) :vtop 10))) ;; Parameter value
+                     (param-to-edit key-param true))) ;; Parameter value
                  column)
                 (= work-mode "admin")
                 (list
                  (param-to-edit :representation true)
                  (param-to-edit :description true)
+                 (param-to-edit :default-value true)
                  (param-to-edit :private? false)
                  (param-to-edit :editable? false))
                 (= work-mode "user")
                 (list
                  (param-to-edit :representation false)
                  (param-to-edit :description false)
+                 (param-to-edit :default-value false)
                  (param-to-edit :private? false)
                  (param-to-edit :editable? false))))))))
 
@@ -484,10 +498,10 @@
                                                                                                  :vtop 10)))
                                                            meta-params [:representation :description :field :is-system?
                                                                         :is-linker? :allow-linking? :allow-modifing? :allow-deleting?]]
-                                                       (println "Tab " table-property)
                                                        (cond
                                                          (= work-mode "developer")
-                                                         (map #(param-to-edit % true) meta-params)
+                                                         (concat (map #(param-to-edit % true) meta-params)
+                                                                 [(param-to-edit :ref true)])
                                                          (= work-mode "admin")
                                                          (conj (map #(param-to-edit % false) (drop 2 meta-params))
                                                                (param-to-edit (first  meta-params) true)

@@ -1,6 +1,5 @@
 package jarman.test;
 
-
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -194,7 +193,7 @@ public class Chooser extends JPanel{
 
         public TitlePanel(){
             super(new java.awt.BorderLayout());
-            this.setBackground(new java.awt.Color(190, 200, 200));
+            this.setBackground(new java.awt.Color(221, 221, 221));
             initTitlePanel();
         }
         private void initTitlePanel(){
@@ -404,13 +403,13 @@ public class Chooser extends JPanel{
         protected void paintComponent(Graphics g) {
             //set curr select day's background
             if(day == calendar.get(Calendar.DAY_OF_MONTH) && month == calendar.get(Calendar.MONTH)){
-                g.setColor(new java.awt.Color(0xBB, 0xBF, 0xDA));
+                g.setColor(new java.awt.Color(221, 221, 221));
                 g.fillRect(0, 0, getWidth(), getHeight());
             }
             //set current day's border
             if(year == now.get(Calendar.YEAR) && month == now.get(Calendar.MONTH) && day == now.get(Calendar.DAY_OF_MONTH)){
                 Graphics2D gd = (Graphics2D) g;
-                gd.setColor(new java.awt.Color(0x55, 0x55, 0x88));
+                gd.setColor(new java.awt.Color(221, 221, 221));
                 Polygon p = new Polygon();
                 p.addPoint(0, 0);
                 p.addPoint(getWidth() - 1, 0);

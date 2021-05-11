@@ -135,7 +135,7 @@
                  border-color-unfocus (get-color :decorate :focus-lost)
                  border [10 10 5 5 2]
                  char-limit 0
-                 args []}}
+                 args []}}]
     (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
           fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))
           newBorder (fn [underline-color]
@@ -161,7 +161,7 @@
                                         (if (and (> (count new-v) char-limit) (< 0 char-limit))
                                           (invoke-later (config! e :text @last-v))
                                           (reset! last-v new-v))))]
-             args))]))
+             args))))
 
 
 

@@ -196,7 +196,7 @@
                    (confgen--element--header-file (get-in map-part [:name])) ;; Header of section/config file
 
                    (gcomp/auto-scrollbox (mig-panel
-                                          :constraints ["wrap 1" "0px[fill, grow]0px" "0px[grow, fill]0px"]
+                                          :constraints ["wrap 1" "0px[fill, grow]0px" "20px[grow, fill]20px"]
                                           :items (gtool/join-mig-items
                                                   (let [body (map
                                                               (fn [param]

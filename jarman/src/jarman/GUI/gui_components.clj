@@ -165,6 +165,50 @@
 
 
 
+(defn input-checkbox
+  [& {:keys [txt
+             val
+             font-size
+             enabled?
+             local-changes
+             store-id
+             args]
+      :or   {txt ""
+             selected? false
+             font-size 14
+             enabled? true
+             local-changes (atom {})
+             store-id :none
+             args []}}]
+  (apply checkbox
+         :text txt
+         :font (getFont font-size :name "Monospaced")
+         :selected? val
+         :enabled? enabled?
+         :listen [:item-state-changed (fn [e]
+                                        (let [new-v (c/config e :selected?)]
+                                          (cond
+                                            (and (not (nil? store-id))
+                                                 (not (= val new-v)))
+                                            (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
+                                            :else (reset! local-changes (dissoc @local-changes store-id)))))]
+         args))
+
+
+;; (def view (fn [] (let [lbl (label)]
+;;                    (mig-panel :constraints ["" "fill, grow" ""] :border (line-border :thickness 1 :color "#000") :size [200 :by 30]
+;;                               :items [[(input-checkbox)]]))))
+
+;; ;; Show example
+;; (let [my-frame (-> (doto (seesaw.core/frame
+;;                           :title "test"
+;;                           :size [0 :by 0]
+;;                           :content (view))
+;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
+;;   (seesaw.core/config! my-frame :size [800 :by 600]))
+
+
+
 ;; (show-events (text))
 
 ;; (show-options (text))

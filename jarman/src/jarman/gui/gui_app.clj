@@ -467,12 +467,13 @@
                                                      (let [param-to-edit (fn [param enabled]
                                                                            (cond
                                                                              (in? [true false] (get table-property param))
-                                                                             (gcomp/input-checkbox
-                                                                              :txt (lang/convert-key-to-title (str param))
-                                                                              :local-changes local-changes
-                                                                              :store-id (lang/join-vec tab-path-to-value [param])
-                                                                              :val (get table-property param)
-                                                                              :enabled? enabled)
+                                                                             (do
+                                                                               (gcomp/input-checkbox
+                                                                                :txt (lang/convert-key-to-title (str param))
+                                                                                :local-changes local-changes
+                                                                                :store-id (lang/join-vec tab-path-to-value [param])
+                                                                                :val (get table-property param)
+                                                                                :enabled? enabled))
                                                                              :else
                                                                              (gcomp/inpose-label (lang/convert-key-to-title (str param))
                                                                                                  (gcomp/input-text-with-atom
@@ -480,46 +481,20 @@
                                                                                                   :store-id (lang/join-vec tab-path-to-value [param])
                                                                                                   :val (str (get table-property param))
                                                                                                   :enabled? enabled)
-                                                                                                 :vtop 10)))]
+                                                                                                 :vtop 10)))
+                                                           meta-params [:representation :description :field :is-system?
+                                                                        :is-linker? :allow-linking? :allow-modifing? :allow-deleting?]]
                                                        (println "Tab " table-property)
                                                        (cond
                                                          (= work-mode "developer")
-                                                         (list 
-                                                          (param-to-edit :representation true)
-                                                          (param-to-edit :description true)
-                                                          (param-to-edit :field true)
-                                                          (param-to-edit :is-system? true)
-                                                          (param-to-edit :is-linker? true)
-                                                          (param-to-edit :allow-linking? true)
-                                                          (param-to-edit :allow-modifing? true)
-                                                          (param-to-edit :allow-deleting? true)
-                                                          )
+                                                         (map #(param-to-edit % true) meta-params)
                                                          (= work-mode "admin")
-                                                         (list 
-                                                          (param-to-edit :representation true)
-                                                          (param-to-edit :description true)
-                                                          (param-to-edit :field false)
-                                                          (param-to-edit :is-system? false)
-                                                          (param-to-edit :is-linker? false)
-                                                          (param-to-edit :allow-linking? false)
-                                                          (param-to-edit :allow-modifing? false)
-                                                          (param-to-edit :allow-deleting? false)
-                                                          )
+                                                         (conj (map #(param-to-edit % false) (drop 2 meta-params))
+                                                               (param-to-edit (first  meta-params) true)
+                                                               (param-to-edit (second meta-params) true))
                                                          :else
-                                                         (list 
-                                                          (param-to-edit :representation false)
-                                                          (param-to-edit :description false)
-                                                          (param-to-edit :field false)
-                                                          (param-to-edit :is-system? false)
-                                                          (param-to-edit :is-linker? false)
-                                                          (param-to-edit :allow-linking? false)
-                                                          (param-to-edit :allow-modifing? false)
-                                                          (param-to-edit :allow-deleting? false)
-                                                          ))
+                                                         (map #(param-to-edit % false) meta-params))
                                                        )
-                                                    ;;  (let [table-params-comps (for [index (range table-property-count)]
-                                                    ;;                             (table-editor--element--table-parameter-value work-mode local-changes table-property tab-path-to-value index txtsize))]
-                                                    ;;    (filter-nil table-params-comps))
                                                      ))]))
                                     (gcomp/hr 15);; Columns properties
                                     (table-editor--element--header "Column configuration")

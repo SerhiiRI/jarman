@@ -135,7 +135,7 @@
                  border-color-unfocus (get-color :decorate :focus-lost)
                  border [10 10 5 5 2]
                  char-limit 0
-                 args []}}
+                 args []}}]
     (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
           fn-assoc        (fn [e key v] (assoc-in (config e :user-data) [key] v))
           newBorder (fn [underline-color]
@@ -161,7 +161,7 @@
                                         (if (and (> (count new-v) char-limit) (< 0 char-limit))
                                           (invoke-later (config! e :text @last-v))
                                           (reset! last-v new-v))))]
-             args))]))
+             args))))
 
 
 
@@ -426,23 +426,22 @@
                                                   (do
                                                     (config! e :user-data (fn-assoc e :value ""))
                                                     (invoke-later (config! e :text ""))
-                                                    (reset! allow-clean false))
-                                                  :else (println @allow-clean))))]
+                                                    (reset! allow-clean false)))))]
              style))))
 
 
 
-(def view (fn [] (let [lbl (label)]
-                   (mig-panel :constraints ["" "fill, grow" ""] :border (line-border :thickness 1 :color "#000") :size [200 :by 30]
-                              :items [[(input-password :placeholder "password")]]))))
+;; (def view (fn [] (let [lbl (label)]
+;;                    (mig-panel :constraints ["" "fill, grow" ""] :border (line-border :thickness 1 :color "#000") :size [200 :by 30]
+;;                               :items [[(input-password :placeholder "password")]]))))
 
-;; Show example
-(let [my-frame (-> (doto (seesaw.core/frame
-                          :title "test"
-                          :size [0 :by 0]
-                          :content (view))
-                     (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
-  (seesaw.core/config! my-frame :size [800 :by 600]))
+;; ;; Show example
+;; (let [my-frame (-> (doto (seesaw.core/frame
+;;                           :title "test"
+;;                           :size [0 :by 0]
+;;                           :content (view))
+;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
+;;   (seesaw.core/config! my-frame :size [800 :by 600]))
 
 
 ;; ┌────────────────────┐

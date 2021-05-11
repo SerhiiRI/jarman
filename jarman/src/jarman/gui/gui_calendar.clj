@@ -52,11 +52,6 @@
 ;;                                             (line-border :bottom 2 :color "#444444")))))
 
 
-
-(get-clock-combo)
-(show-options (flow-panel))
-
-
 (defn get-calendar
   "Set textfield, get datepicker
 
@@ -66,9 +61,7 @@
   (Chooser/get_calendar textf))
 
 
-
 (show-options (text))
-
 
 
 (defn get-clock-combo []
@@ -90,6 +83,8 @@
     (config! w :content pnl)
     ;;(selection! combo "C") ;;  <--- boom ---
     (show! w)))
+
+(get-clock-combo)
 
 (defn calendar-panel
   [& {:keys [set-date

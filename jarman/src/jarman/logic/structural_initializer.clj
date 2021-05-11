@@ -10,7 +10,7 @@
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]))
 
-(def *system-tables* ["documents" "permission" "user" "metadata"])
+(def *system-tables* ["documents" "permission" "user" "metadata" "view"])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SYSTEM TABLES SCHEMA ;;;
@@ -38,6 +38,12 @@
                           {:id_permission [:bigint-120-unsigned :nnull]}]
                 :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}]))
 
+(def view-cols [:table-name :view])
+(def view
+  (create-table :view
+                :columns [{:table-name [:varchar-100 :default :null]}
+                          {:view [:text :nnull :default "\"{}\""]}]))
+
 (def documents-cols [:table :name :document :prop])
 (def documents
   (create-table :documents
@@ -58,7 +64,8 @@
   (verify-table-columns :user user-cols)
   (verify-table-columns :permission permission-cols)
   (verify-table-columns :documents documents-cols)
-  (verify-table-columns :metadata metadata-cols))
+  (verify-table-columns :metadata metadata-cols)
+  (verify-table-columns :view view-cols))
 
 (defn test-permission []
   (letfn [(on-pred-permission [permission_name pred]
@@ -79,10 +86,10 @@
 (defn test-metadata []
   (if-let [tables-list (not-empty (mapv (comp second first) (db/query (show-tables))))]
     (let [sql-test (eduction
-                    (comp (remove (fn [table] (in? ["metadata" "permission"] table)))
+                    (comp (remove (fn [table] (in? ["metadata" "permission" "view"] table)))
                        (map (fn [table] [:= :metadata.table table])))
                     tables-list)]
-      (= (count (remove (fn [table] (in? ["metadata" "permission"] table)) tables-list))
+      (= (count (remove (fn [table] (in? ["metadata" "permission" "view"] table)) tables-list))
          (count (db/query (select :metadata
                                   :column [:id :metadata.table]
                                   :where (or-v sql-test))))))))
@@ -109,33 +116,34 @@
 
 (defn fill-user []
   (if-let [perm (first (db/query (select :permission :column [:id] :where [:= :permission_name "admin"])))]
-    (if-not (empty? (db/query (select :user :where (=-v :login "dev"))))
+    (if (empty? (db/query (select :user :where (=-v :login "admin"))))
       (db/exec
-       (insert :permission
+       (insert :user
                :column-list [:login :password :first_name :last_name :id_permission]
-               :values [["adm" "adm" "adm" "adm" (:id perm)]]))))
+               :values [["admin" "admin" "admin" "admin" (:id perm)]]))))
   (if-let [perm (first (db/query (select :permission :column [:id] :where [:= :permission_name "developer"])))]
-    (if-not (empty? (db/query (select :user :where (=-v :login "dev"))))
+    (if (empty? (db/query (select :user :where (=-v :login "dev"))))
       (db/exec
-       (insert :permission
+       (insert :user
                :column-list [:login :password :first_name :last_name :id_permission]
                :values [["dev" "dev" "dev" "dev" (:id perm)]]))))
   (if-let [perm (first (db/query (select :permission :column [:id] :where [:= :permission_name "user"])))]
-    (if-not (empty? (db/query (select :user :where (=-v :login "dev"))))
+    (if (empty? (db/query (select :user :where (=-v :login "user"))))
       (db/exec
-       (insert :permission
+       (insert :user
                :column-list [:login :password :first_name :last_name :id_permission]
                :values [["user" "user" "user" "user" (:id perm)]])))))
 
 (defn fill-metadata []
-  (metadata/do-create-meta)
-  (metadata/do-create-references))
+  (doall (metadata/do-create-meta))
+  (doall (metadata/do-create-references)))
 
 (defn hard-reload-struct []
   ;; for make it uncoment section belove
   ;; map db/exec
   [(drop-table :user) user
    (drop-table :permission) permission
+   (drop-table :view) view
    (drop-table :metadata) metadata
    (drop-table :documents) documents])
 
@@ -198,12 +206,27 @@
       true {:valid? false :output "Documents table not compatible with Jarman" :table :documents})
     (do (db/exec documents) true)))
 
+(defn procedure-test-view [tables-list]
+  (if (verify-table-exists :view tables-list)
+    (if (verify-table-columns :view view-cols)
+      true {:valid? false :output "View table not compatible with Jarman" :table :view})
+    (do (db/exec view) true)))
+
+(defn procedure-create-all-structure []
+  (db/exec permission) (fill-permission) 
+  (db/exec user)       (fill-user)
+  (db/exec metadata)   (fill-metadata) 
+  (db/exec documents)
+  (db/exec view))
+
 (defn procedure-delete-all-structure []
   (db/exec (drop-table :user))
   (db/exec (drop-table :permission))
   (db/exec (drop-table :metadata))
-  (db/exec (drop-table :documents)))
+  (db/exec (drop-table :documents))
+  (db/exec (drop-table :view)))
 
+;; (procedure-test-all)
 (defn procedure-test-all []
   ;; if some tables exist?
   (if-let [tables-list (not-empty (mapv (comp second first) (db/query (show-tables))))]
@@ -212,6 +235,10 @@
      [(procedure-test-permission tables-list)
       (procedure-test-user tables-list)
       (procedure-test-metadata tables-list)
-      (procedure-test-documents tables-list)])))
+      (procedure-test-documents tables-list)
+      (procedure-test-view tables-list)])
+    ;; create whole jarman infrastructure
+    (procedure-create-all-structure)))
+
 
 

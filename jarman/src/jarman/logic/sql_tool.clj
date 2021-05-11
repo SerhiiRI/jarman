@@ -1,6 +1,7 @@
 (ns jarman.logic.sql-tool
   (:gen-class)
   (:refer-clojure :exclude [update])
+  (:import [java.time Period LocalDate])
   (:require
    ;; standart lib
    [clojure.string :as string]))
@@ -37,6 +38,25 @@
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Date function ;;;
 ;;;;;;;;;;;;;;;;;;;;;
+
+(defn- is-yyyy-mm-dd? [s]
+  (some? (re-matches #"\d{4}-\d{1,2}[-]\d{1,2}" (string/trim s))))
+(defn count-month-between
+  "Description
+    return a mounth count between start end date.
+
+  Warning!
+    function supply only date in YYYY-MM?-DD? notation
+
+  Example
+    (count-month-between \"2017-08-31\" \"2018-11-30\") ;; => 15
+    (count-month-between \"2019-08-31\" \"2018-11-30\") ;; => -9"
+  [start-date end-date]
+  {:pre [(is-yyyy-mm-dd? start-date) (is-yyyy-mm-dd? start-date)]}
+  (-> (Period/between
+       (-> (LocalDate/parse (string/trim start-date)) (.withDayOfMonth 1))
+       (-> (LocalDate/parse (string/trim   end-date)) (.withDayOfMonth 1)))
+      .toTotalMonths))
 
 (defn date
   "Remember that simple (date) ruturn current
@@ -727,7 +747,7 @@
     :nnul => NOT NULL
     ....
     for more, see the code `condp` block"
-  [k] (if (string? k) k
+  [k] (if (or (string? k) (number? k)) k
           (let [[sql-type n s & _] (string/split (string/lower-case (name k)) #"-")
                 is? (fn [col x] (if (string? col) (= x col) (some #(= % x) col)))
                 charchain-types (fn [tt nn] (if-not nn (string/upper-case tt) (format "%s(%s)" (string/upper-case tt) nn)))
@@ -815,7 +835,10 @@
   (str current-string (format " `%s` (" table-name)
         (string/join ", " [(create-column {:id [:bigint-20-unsigned :nnull :auto]}) 
                            (let [cls column-spec]
-                             (cond (string? cls) cls 
+                             (cond (string? cls) cls
+                                   (int? cls) cls
+                                   (double? cls) cls
+                                   (float? cls) cls
                                    (map? cls) (create-column cls)
                                    (vector? cls) (string/join ", " (map #(create-column %) cls))
                                    :else nil)) 
@@ -1380,6 +1403,8 @@
         `(eval (-> ~~operation-string
                   ~@(for [[~'k ~'F] list-of-rules#]
                       `(~(symbol (str "jarman.logic.sql-tool" "/" ~'F)) ~~'(k args) (name ~~'table-name)))))))))
+
+
 
 (define-sql-operation insert "INSERT INTO" (comp insert-update-empty-table-pipeline-applier
                                               create-rule-pipeline))

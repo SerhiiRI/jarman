@@ -11,7 +11,7 @@
             [jarman.gui.gui-components :refer :all :as gcomp]))
 
 (import 'jarman.test.Chooser)
-
+(import 'jarman.test.DropDown)
 
 (defn date
   "Remember that simple (date) ruturn current
@@ -52,6 +52,11 @@
 ;;                                             (line-border :bottom 2 :color "#444444")))))
 
 
+
+(get-clock-combo)
+(show-options (flow-panel))
+
+
 (defn get-calendar
   "Set textfield, get datepicker
 
@@ -59,6 +64,32 @@
       (Chooser/get_calendar Textfield) :=> obj..text_field... "
   [textf]
   (Chooser/get_calendar textf))
+
+
+
+(show-options (text))
+
+
+
+(defn get-clock-combo []
+  (let [w (frame :title "Combobox Test" :width 360 :height 300)
+        combo-h (DropDown/getBar (into-array (map (fn [x] (let [time (str x)]
+               (if (= (count time) 1) (str "0" time) time)))  (take 23 (iterate inc 0)))))
+        combo-min (DropDown/getBar (into-array (map (fn [x] (let [time (str x)]
+               (if (= (count time) 1) (str "0" time) time)))  (take 60 (iterate inc 0)))))
+        pnl (mig-panel
+             :constraints ["wrap 2" "0px[grow, center]0px" "10px[top]10px"]
+             :items [[(vertical-panel
+                       :items (list (flow-panel
+                                     :align :right
+                                     :items (list (label :text "hours: " :halign :left :foreground "#676d71") combo-h))
+                                    (flow-panel
+                                     :align :right
+                                     :items (list (label :text "min: " :halign :left :foreground "#676d71") combo-min))))]
+                     [(get-calendar (text :columns 19 ))]])]
+    (config! w :content pnl)
+    ;;(selection! combo "C") ;;  <--- boom ---
+    (show! w)))
 
 (defn calendar-panel
   [& {:keys [set-date

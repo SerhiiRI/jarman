@@ -16,16 +16,18 @@
 ;; How to use it?
 ;;
 ;; (if-let [login-fn (login
-;;                    {:dbtype "mysql",
-;;                     :host "trashpanda-team.ddns.net",
-;;                     :port 3306,
-;;                     :dbname "jarman",
-;;                     :user "jarman",
-;;                     :password "dupa"})]
+;;                    ;; {:dbtype "mysql",
+;;                    ;;  :host "trashpanda-team.ddns.net",
+;;                    ;;  :port 3306,
+;;                    ;;  :dbname "jarman",
+;;                    ;;  :user "jarman",
+;;                    ;;  :password "dupa"}
+;;                    (c/connection-get)
+;;                    )]
 ;;   ;; function login retunr function to
 ;;   ;; make login to user
 ;;   (if (fn? login-fn)
-;;     (if-let [u (login-fn "wry" "141")]
+;;     (if-let [u (login-fn "user" "user")]
 ;;       u
 ;;       "USER NOT FOUND")
 ;;     (case login-fn
@@ -54,7 +56,8 @@
       :user-not-found
       (session/user-set u))))
 
-;; (login-user "jewel" "331")
+;; (login-user "user" "user")
+;; (session/user-get)
 
 (defn login [connection]
   (if (c/connection-validate connection)

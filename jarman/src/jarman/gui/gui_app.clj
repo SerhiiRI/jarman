@@ -316,26 +316,37 @@
 
 (defn switch-column-to-editing
   [work-mode local-changes path-to-value column]
-  (mig-panel ;; Editable parameters list
-   :constraints ["wrap 1" "20px[250:,fill]5px" "0px[fill]0px"]
-   :items (join-mig-items
-           (filter
-            #(not (nil? %))
-            (map
-             (fn [column-parameter]
-               (let [key-param (first column-parameter)
-                     path-to-value (lang/join-vec path-to-value [key-param])]
-                 (cond
-                   (= work-mode "developer")
-                   (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter))) :vtop 10)
-                   (= work-mode "admin")
-                   (cond ;; For admin-mode. Enable and disble components
-                     (lang/in? [:representation :description] key-param)
-                     (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter))) :vtop 10)
-                     (lang/in? [:private? :editable?] key-param)
-                     (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter)) :enabled? false) :vtop 10))
-                   :else nil))) ;; Parameter value
-             column)))))
+  (let [param-to-edit (fn [param enabled] (gcomp/inpose-label (lang/convert-key-to-title (str param))
+                                                 (gcomp/input-text-with-atom
+                                                  :local-changes local-changes
+                                                  :store-id (lang/join-vec path-to-value [param])
+                                                  :val (str (get column param))
+                                                  :enabled? enabled) :vtop 10))]
+    (mig-panel ;; Editable parameters list
+     :constraints ["wrap 1" "20px[250:,fill]5px" "0px[fill]0px"]
+     :items (join-mig-items
+             (filter
+              #(not (nil? %))
+              (cond
+                (= work-mode "developer")
+                (map
+                 (fn [column-parameter]
+                   (let [key-param (first column-parameter)
+                         path-to-value (lang/join-vec path-to-value [key-param])]
+                     (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter))) :vtop 10))) ;; Parameter value
+                 column)
+                (= work-mode "admin")
+                (list
+                 (param-to-edit :representation true)
+                 (param-to-edit :description true)
+                 (param-to-edit :private? false)
+                 (param-to-edit :editable? false))
+                (= work-mode "user")
+                (list
+                 (param-to-edit :representation false)
+                 (param-to-edit :description false)
+                 (param-to-edit :private? false)
+                 (param-to-edit :editable? false))))))))
 
 ;; (@startup)
 
@@ -419,50 +430,7 @@
                                                                                   :size [400 300]))))
 
 
-
-(def table-editor--element--checkbox
-  (fn [enable local-changes path-to-value value txt]
-    (checkbox
-     :text txt
-     :selected? value
-     :enabled? enable
-     :listen [:state-changed (fn [event] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path-to-value :old-value value :new-value (config event :selected?)))])))
-
-
 ;; (show-events (checkbox))
-
-
-(def table-editor--element--table-parameter-value
-  (fn [work-mode local-changes table-property tab-path-to-value index txtsize]
-    (let [param-name  (first  (nth (vec table-property) index))
-          param-value (second (nth (vec table-property) index))
-          path-to-value (join-vec tab-path-to-value [(keyword param-name)])
-          simple-label (fn [] (label :size txtsize :text (str param-name ": " param-value)))
-          component (cond
-                      (= work-mode "developer")
-                      (cond
-                        (or (string?  param-value)
-                            (lang/in? [:representation :description] param-name)) (gcomp/inpose-label
-                                                                                   (lang/convert-key-to-title (str param-name))
-                                                                                   (gcomp/input-text-with-atom :local-changes local-changes
-                                                                                                               :store-id path-to-value
-                                                                                                               :val param-value)
-                                                                                   :vtop 10
-                                                                                   :id :text)
-                        (boolean? param-value) (table-editor--element--checkbox (= work-mode "developer") local-changes path-to-value param-value (lang/convert-key-to-title param-name)))
-                      (= work-mode "admin")
-                      (cond ;; For admin-mode. Enable and disble components
-                        (or (string?  param-value)
-                            (lang/in? [:representation :description] param-name)) (gcomp/inpose-label (lang/convert-key-to-title (str param-name))
-                                                                                                      (gcomp/input-text-with-atom :local-changes local-changes
-                                                                                                                                  :store-id path-to-value
-                                                                                                                                  :val param-value
-                                                                                                                                  :enabled? (lang/in? [:representation :description] param-name))
-                                                                                                      :vtop 10
-                                                                                                      :id :text)
-                        (boolean? param-value) (table-editor--element--checkbox (= work-mode "developer") local-changes path-to-value param-value (lang/convert-key-to-title param-name))))]
-      component)))
-
 
 
 
@@ -495,10 +463,64 @@
                                                txtsize [150 :by 25]]
                                            [(mig-panel
                                              :constraints ["wrap 3" "2%[30%, fill]0px" "0px[grow, fill]0px"]
-                                             :items (gtool/join-mig-items
-                                                     (let [table-params-comps (for [index (range table-property-count)]
-                                                                                (table-editor--element--table-parameter-value work-mode local-changes table-property tab-path-to-value index txtsize))]
-                                                       (filter-nil table-params-comps))))]))
+                                             :items (gtool/join-mig-items ;;here
+                                                     (let [param-to-edit (fn [param enabled]
+                                                                           (cond
+                                                                             (in? [true false] (get table-property param))
+                                                                             (gcomp/input-checkbox
+                                                                              :txt (lang/convert-key-to-title (str param))
+                                                                              :local-changes local-changes
+                                                                              :store-id (lang/join-vec tab-path-to-value [param])
+                                                                              :val (get table-property param)
+                                                                              :enabled? enabled)
+                                                                             :else
+                                                                             (gcomp/inpose-label (lang/convert-key-to-title (str param))
+                                                                                                 (gcomp/input-text-with-atom
+                                                                                                  :local-changes local-changes
+                                                                                                  :store-id (lang/join-vec tab-path-to-value [param])
+                                                                                                  :val (str (get table-property param))
+                                                                                                  :enabled? enabled)
+                                                                                                 :vtop 10)))]
+                                                       (println "Tab " table-property)
+                                                       (cond
+                                                         (= work-mode "developer")
+                                                         (list 
+                                                          (param-to-edit :representation true)
+                                                          (param-to-edit :description true)
+                                                          (param-to-edit :field true)
+                                                          (param-to-edit :is-system? true)
+                                                          (param-to-edit :is-linker? true)
+                                                          (param-to-edit :allow-linking? true)
+                                                          (param-to-edit :allow-modifing? true)
+                                                          (param-to-edit :allow-deleting? true)
+                                                          )
+                                                         (= work-mode "admin")
+                                                         (list 
+                                                          (param-to-edit :representation true)
+                                                          (param-to-edit :description true)
+                                                          (param-to-edit :field false)
+                                                          (param-to-edit :is-system? false)
+                                                          (param-to-edit :is-linker? false)
+                                                          (param-to-edit :allow-linking? false)
+                                                          (param-to-edit :allow-modifing? false)
+                                                          (param-to-edit :allow-deleting? false)
+                                                          )
+                                                         :else
+                                                         (list 
+                                                          (param-to-edit :representation false)
+                                                          (param-to-edit :description false)
+                                                          (param-to-edit :field false)
+                                                          (param-to-edit :is-system? false)
+                                                          (param-to-edit :is-linker? false)
+                                                          (param-to-edit :allow-linking? false)
+                                                          (param-to-edit :allow-modifing? false)
+                                                          (param-to-edit :allow-deleting? false)
+                                                          ))
+                                                       )
+                                                    ;;  (let [table-params-comps (for [index (range table-property-count)]
+                                                    ;;                             (table-editor--element--table-parameter-value work-mode local-changes table-property tab-path-to-value index txtsize))]
+                                                    ;;    (filter-nil table-params-comps))
+                                                     ))]))
                                     (gcomp/hr 15);; Columns properties
                                     (table-editor--element--header "Column configuration")
                                     (gcomp/hr 15)
@@ -521,7 +543,7 @@
     component))
 
 (defn add-to-view-service--table-editor
-  ([work-mode tables-configurations table-id]
+  ([tables-configurations table-id]
    (let [table          (get-table-configuration-from-list-by-table-id (tables-configurations) table-id)
          view-id        (keyword (get table :table))  ;; Get name of table and create keyword to check tabs bar (opens views)
          invoker-id     (@gseed/jarman-views-service :get-my-view-id)]
@@ -530,7 +552,7 @@
                               :view-id view-id 
                               :title (str "Edit: " (get-in table [:prop :table :representation])) 
                               :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.")
-                              :component-fn (fn [] (create-view--table-editor view-id work-mode tables-configurations table-id invoker-id))
+                              :component-fn (fn [] (create-view--table-editor view-id (session/user-get-permission) tables-configurations table-id invoker-id))
                               :scrollable? false)))))
 
 
@@ -590,7 +612,7 @@
        :border (line-border :thickness 1 :color border-c)
        :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
        :items [[(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
-                                                                   (add-to-view-service--table-editor (session/user-permission) mmeta/getset table-id))))]
+                                                                   (add-to-view-service--table-editor mmeta/getset table-id))))]
                [(btn "Delete table" icon/basket-blue1-64-png (fn [e]))]
                [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]]))))
 
@@ -640,7 +662,7 @@
                                                                    (new Integer 999) ;; z-index
                                                                    ))
                                                            (= (.getClickCount e) 2) ;; Open table editor by duble click
-                                                           (add-to-view-service--table-editor (session/user-permission) mmeta/getset table-id))))
+                                                           (add-to-view-service--table-editor mmeta/getset table-id))))
                                   :mouse-dragged (fn [e]
                                                    (do
                                                      (if (= @last-x 0) (reset! last-x (.getX e)))

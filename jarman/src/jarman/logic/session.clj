@@ -26,7 +26,11 @@
 (defn user-set [m] (if (and (map? m) (test-user m)) (do (reset! user m) m) nil))
 (defn user-get [] @user)
 
-(defn user-get [k]
-      (cond 
-        (keyword? k) (get user k)
-        (vector?  k) (get-in user k)))
+(defn user-get-permission 
+  [] (if-not (nil? @user) (get @user :permission_name) "user"))
+
+(defn user-get-login
+  [] (if-not (nil? @user) (get @user :login) "user"))
+
+(defn user-set-permission 
+  [permission] (swap! user (fn [storage] (assoc-in storage [:permission_name] permission))))

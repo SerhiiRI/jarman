@@ -35,6 +35,7 @@
             [jarman.gui.gui-seed :as gseed]
             [jarman.plugin.table :as gtable]
             [jarman.logic.view-manager :as vmg]
+            [jarman.logic.session :as session]
             ;; [jarman.logic.view :refer :all] 
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
             ))
@@ -325,9 +326,9 @@
                (let [key-param (first column-parameter)
                      path-to-value (lang/join-vec path-to-value [key-param])]
                  (cond
-                   (= work-mode :dev-mode)
+                   (= work-mode "developer")
                    (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter))) :vtop 10)
-                   (= work-mode :admin-mode)
+                   (= work-mode "admin")
                    (cond ;; For admin-mode. Enable and disble components
                      (lang/in? [:representation :description] key-param)
                      (gcomp/inpose-label (lang/convert-key-to-title (str key-param)) (gcomp/input-text-with-atom :local-changes local-changes :store-id path-to-value :val (str (second column-parameter))) :vtop 10)
@@ -438,7 +439,7 @@
           path-to-value (join-vec tab-path-to-value [(keyword param-name)])
           simple-label (fn [] (label :size txtsize :text (str param-name ": " param-value)))
           component (cond
-                      (= work-mode :dev-mode)
+                      (= work-mode "developer")
                       (cond
                         (or (string?  param-value)
                             (lang/in? [:representation :description] param-name)) (gcomp/inpose-label
@@ -448,8 +449,8 @@
                                                                                                                :val param-value)
                                                                                    :vtop 10
                                                                                    :id :text)
-                        (boolean? param-value) (table-editor--element--checkbox (= work-mode :dev-mode) local-changes path-to-value param-value (lang/convert-key-to-title param-name)))
-                      (= work-mode :admin-mode)
+                        (boolean? param-value) (table-editor--element--checkbox (= work-mode "developer") local-changes path-to-value param-value (lang/convert-key-to-title param-name)))
+                      (= work-mode "admin")
                       (cond ;; For admin-mode. Enable and disble components
                         (or (string?  param-value)
                             (lang/in? [:representation :description] param-name)) (gcomp/inpose-label (lang/convert-key-to-title (str param-name))
@@ -459,7 +460,7 @@
                                                                                                                                   :enabled? (lang/in? [:representation :description] param-name))
                                                                                                       :vtop 10
                                                                                                       :id :text)
-                        (boolean? param-value) (table-editor--element--checkbox (= work-mode :dev-mode) local-changes path-to-value param-value (lang/convert-key-to-title param-name))))]
+                        (boolean? param-value) (table-editor--element--checkbox (= work-mode "developer") local-changes path-to-value param-value (lang/convert-key-to-title param-name))))]
       component)))
 
 
@@ -481,7 +482,7 @@
                         [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "10px[fill]10px"] ;; menu bar for editor
                                      :items (join-mig-items
                                              [(table-editor--element--header-view (str "Edit table: \"" (get-in table [:prop :table :representation]) "\""))]
-                                             (cond (in? [:dev-mode :admin-mode] @work-mode)
+                                             (cond (in? ["developer" "admin"] work-mode)
                                                    (list [(table-editor--element--btn-save local-changes table invoker-id)]
                                                          [(table-editor--element--btn-show-changes local-changes table)])
                                                    :else [])))]]
@@ -496,7 +497,7 @@
                                              :constraints ["wrap 3" "2%[30%, fill]0px" "0px[grow, fill]0px"]
                                              :items (gtool/join-mig-items
                                                      (let [table-params-comps (for [index (range table-property-count)]
-                                                                                (table-editor--element--table-parameter-value @work-mode local-changes table-property tab-path-to-value index txtsize))]
+                                                                                (table-editor--element--table-parameter-value work-mode local-changes table-property tab-path-to-value index txtsize))]
                                                        (filter-nil table-params-comps))))]))
                                     (gcomp/hr 15);; Columns properties
                                     (table-editor--element--header "Column configuration")
@@ -504,7 +505,7 @@
                                     (let [column-editor-id "table-editor--component--space-for-column-editor"]
                                       (mig-panel ;; Left and Right functional space
                                        :constraints ["wrap 2" "0px[fill]0px" "0px[grow, fill]0px"]
-                                       :items [[(table-editor--component--column-picker @work-mode local-changes column-editor-id columns col-path-to-value)] ;; Left part for columns to choose for doing changes.
+                                       :items [[(table-editor--component--column-picker work-mode local-changes column-editor-id columns col-path-to-value)] ;; Left part for columns to choose for doing changes.
                                                [(table-editor--component--space-for-column-editor column-editor-id)] ;; Space for components. Using to editing columns.
                                                ])))))]])
         component (cond
@@ -589,7 +590,7 @@
        :border (line-border :thickness 1 :color border-c)
        :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
        :items [[(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
-                                                                   (add-to-view-service--table-editor work-mode mmeta/getset table-id))))]
+                                                                   (add-to-view-service--table-editor (session/user-permission) mmeta/getset table-id))))]
                [(btn "Delete table" icon/basket-blue1-64-png (fn [e]))]
                [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]]))))
 
@@ -639,7 +640,7 @@
                                                                    (new Integer 999) ;; z-index
                                                                    ))
                                                            (= (.getClickCount e) 2) ;; Open table editor by duble click
-                                                           (add-to-view-service--table-editor work-mode mmeta/getset table-id))))
+                                                           (add-to-view-service--table-editor (session/user-permission) mmeta/getset table-id))))
                                   :mouse-dragged (fn [e]
                                                    (do
                                                      (if (= @last-x 0) (reset! last-x (.getX e)))
@@ -955,17 +956,20 @@
                              (jarmanapp :margin-left img-scale)
                              (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser" {:onclick (fn [e] (@gseed/jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view))})
                              (slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Message Store" {:onclick (fn [e] (@alert-manager :show))})
-                             (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 2 img-scale "Restart" {:onclick (fn [e] (@startup))})
-                             (slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 3 img-scale "Change work mode" {:onclick (fn [e]
-                                                                                                                                           (cond (= @work-mode :user-mode)  (reset! work-mode :admin-mode)
-                                                                                                                                                 (= @work-mode :admin-mode) (reset! work-mode :dev-mode)
-                                                                                                                                                 (= @work-mode :dev-mode)   (reset! work-mode :user-mode))
-                                                                                                                                           (@alert-manager :set {:header "Work mode" :body (str "Switched to: " (symbol @work-mode))} (message alert-manager) 5))})
-                             (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 4 img-scale "Docs Templates" {:onclick (fn [e] (@gseed/jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts alert-manager))))})
-                             (slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 5 img-scale "Reload active view" {:onclick (fn [e] ((@gseed/jarman-views-service :reload)))})
+                             (slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 2 img-scale "Change work mode" {:onclick (fn [e]
+                                                                                                                                           (cond (= "user"      (session/user-get-permission)) (session/user-set-permission "admin")
+                                                                                                                                                 (= "admin"     (session/user-get-permission)) (session/user-set-permission "developer")
+                                                                                                                                                 (= "developer" (session/user-get-permission)) (session/user-set-permission "user"))
+                                                                                                                                           (@alert-manager :set {:header "Work mode" :body (str "Switched to: " (session/user-get-permission))} (message alert-manager) 5)
+                                                                                                                                           (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission))))})
+                             (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 3 img-scale "Docs Templates" {:onclick (fn [e] (@gseed/jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts alert-manager))))})
+                             (slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 4 img-scale "Reload active view" {:onclick (fn [e] ((@gseed/jarman-views-service :reload)))})
+                             (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 5 img-scale "Restart" {:onclick (fn [e] (@startup))})
+
                              @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook))
       (if-not (nil? @relative)(.setLocation (to-frame @app) (first @relative) (second @relative))))
+      (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))
       ))
 
 ;; (@startup)

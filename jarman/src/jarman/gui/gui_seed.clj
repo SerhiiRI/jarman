@@ -18,7 +18,6 @@
 ;;  (get-color :jarman :bar)
 
 (def jarman-views-service (atom nil))
-(def work-mode (atom :admin-mode)) ;; user-mode, admin-mode, dev-mode
 
 (import javax.swing.JLayeredPane)
 ;; (import javax.swing.JLabel)
@@ -102,6 +101,10 @@
           (-> (doto jframe (.setLocationRelativeTo nil) pack! show!))
           (config! jframe  :icon (stool/image-scale icon/calendar1-64-png 100) :size [(first size) :by (second size)]))
         ))))
+
+(defn extend-frame-title 
+  [title]
+  (config! (to-frame @app) :title (str "Mr. Jarman" title)))
 
 ;; (@jarman.gui.gui-app/startup)
 

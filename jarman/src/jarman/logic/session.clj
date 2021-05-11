@@ -10,7 +10,7 @@
 (s/def ::str-without-space (s/and ::ne-string #(not (string/includes? % " "))))
 (s/def :user/id (every-pred number? pos-int?))
 (s/def :user/login ::str-without-space)
-(s/def :user/configuration map?) 
+(s/def :user/configuration map?)
 
 (s/def ::user
   (s/keys :req-un [:user/id
@@ -21,4 +21,7 @@
 (defn user-set [m]
   (if (map? m) (do (swap! user m) m) nil))
 
-
+(defn user-get [k]
+      (cond 
+        (keyword? k) (get user k)
+        (vector?  k) (get-in user k)))

@@ -26,7 +26,3 @@
 (defn user-set [m] (if (and (map? m) (test-user m)) (do (reset! user m) m) nil))
 (defn user-get [] @user)
 
-(defn user-get [k]
-      (cond 
-        (keyword? k) (get user k)
-        (vector?  k) (get-in user k)))

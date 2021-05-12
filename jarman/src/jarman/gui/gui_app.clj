@@ -931,8 +931,7 @@
                                                  [(button-expand-child "DB Visualiser" :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view)))
                                                           ;;  (button-expand-child "Users table" :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
                                                   ])]
-                                 [(button-expand "Tables" (button-expand-child "Tables list")
-                                                 :id :tables-view-plugin)]
+                                 [(button-expand "Tables" [] :id :tables-view-plugin :expand :yes)]
                                  [(create-expand-btns--confgen)]
                                  [(button-expand "Debug items"
                                                  [(button-expand-child "Popup" :onClick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200])))

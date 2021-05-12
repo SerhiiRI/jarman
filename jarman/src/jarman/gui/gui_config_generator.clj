@@ -97,12 +97,13 @@
 (def confgen--element--textarea
   (fn [param]
     (if-not (nil? (param [:doc]))
-      (textarea (str (param [:doc])) :font (gtool/getFont 12)) ())))
+      (gcomp/textarea (str (param [:doc])) :font (gtool/getFont 12)) ())))
+
 
 (def confgen--element--textarea-doc
   (fn [param]
     (if-not (nil? (param :doc))
-      (textarea (str (param :doc)) :font (gtool/getFont 14)) ())))
+      (gcomp/textarea (str (param :doc)) :font (gtool/getFont 14)) ())))
 
 (def confgen--element--margin-top-if-doc-exist
   (fn [type? param] (if (and (type? :block) (not (nil? (param :doc))))

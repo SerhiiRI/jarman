@@ -206,7 +206,7 @@ public class DateTime extends JPanel{
         });
         showComponent.addFocusListener(new FocusListener() {
             public void focusLost(FocusEvent e) {
-                hidePanel();
+                // hidePanel(); TODO: problem? when panel losed focus becuse mouse click was on combobox then all panel will be hide
             }
             public void focusGained(FocusEvent e) { }
         });

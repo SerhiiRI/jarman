@@ -20,7 +20,8 @@
    [jarman.tools.swing :as stool]
    [jarman.gui.gui-components :refer :all :as gcomp]
    [jarman.gui.gui-calendar :as calendar]
-   [jarman.logic.metadata :as mt])
+   [jarman.logic.metadata :as mt]
+   [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
@@ -59,21 +60,26 @@
   (let [view (:view configuration) tables (:tables configuration)]
     (if (and view tables)
       (let [model-columns (gui-table-model-columns tables view)
-            table-model   (gui-table-model model-columns (:select toolkit-map))]
+            table-model (gui-table-model model-columns (:select toolkit-map))]
         {:table-model table-model
          :table (gui-table table-model)}))))
 
 (defn construct-dialog [table-fn selected frame]
-  (let [dialog (seesaw.core/custom-dialog :modal? true :width 400 :height 500 :title "Select component")
+  (let [dialog (seesaw.core/custom-dialog :modal? true :width 800 :height 400 :title "Select component")
         table (table-fn (fn [model] (seesaw.core/return-from-dialog dialog model)))
-        dialog (seesaw.core/config!
-                dialog
-                :content (seesaw.mig/mig-panel
-                          :constraints ["wrap 1" "0px[grow, fill]0px" "5px[grow, fill]0px"]
-                          :items [[table]]))]
+        key-p (seesaw.mig/mig-panel
+               :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px"]
+               :items [[(seesaw.core/label
+                         :icon (stool/image-scale ico/left-blue-64-png 30)
+                         :listen [:mouse-entered (fn [e] (gtool/hand-hover-on e))
+                                  :mouse-exited (fn [e] (gtool/hand-hover-off e))
+                                  :mouse-clicked (fn [e] (.dispose (seesaw.core/to-frame e)))])]
+                       [table]])
+        key-p (key-tut/get-key-panel \q (fn [jpan] (.dispose (seesaw.core/to-frame jpan))) key-p)]
+    (seesaw.core/config! dialog :content key-p)
+    (.setUndecorated dialog true)
     (.setLocationRelativeTo dialog frame)
     (seesaw.core/show! dialog)))
-
 
 (def build-input-form
   (fn [data-toolkit
@@ -134,7 +140,9 @@
                                                              (if-not (nil? (get model field-qualified)) (swap! complete (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
                                                              (gcomp/inpose-label title (gcomp/input-text-with-atom :local-changes complete :editable? false :val v
                                                                                                                    :onClick (fn [e]
-                                                                                                                              (let [selected (construct-dialog (get (create-table connected-table-conf connected-table-data) :table) field-qualified (c/to-frame e))]
+                                                                                                                              (let [selected (construct-dialog (get (create-table connected-table-conf connected-table-data) :table) field-qualified (c/to-frame e))
+;;(some-dialog (c/to-frame e) )                                                                                                                                    
+                                                                                                                                    ]
                                                                                                                                 (if-not (nil? (get selected (get connected-table-data :model-id)))
                                                                                                                                   (do (c/config! e :text (selected-representation connected-table-conf selected))
                                                                                                                                       (swap! complete (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))))))))))

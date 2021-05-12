@@ -12,11 +12,12 @@
     KeyStroke
     Action
     AbstractAction)
+   (java.awt Dimension)
    (java.awt.event ActionEvent
-                         ActionListener
-                         InputEvent
-                         KeyEvent
-                         ActionListener))
+                   ActionListener
+                   InputEvent
+                   KeyEvent
+                   ActionListener))
  ;; (:require [jarman.gui.gui-login :as lgn])
   )
 

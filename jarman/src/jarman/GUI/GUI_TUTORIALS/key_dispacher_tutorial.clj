@@ -102,37 +102,37 @@
 
 
 
-;; New jframe
-(do (doto (seesaw.core/frame
-           :title "title"
-           :undecorated? false
-           :minimum-size [600 :by 400]
-           :content (mig-panel
-                     :bounds [0 0 500 300]
-                     :constraints ["wrap 1" "[grow, center]" "[grow, center]"]
-                     :border (empty-border :thickness 10)
-                     :items [[(label :text "Tabelki" :focusable? true :listen [:focus-gained (fn [e] (config! e :background "#9a9"))
-                                                                               :focus-lost (fn [e] (config! e :background "#aaa"))])]
-                             [(button :text "1")]
-                             [(button :text "2")]
-                             [(button :text "3" ;;:listen [:key-pressed (fn [e] (println (.getKeyChar e)))]
-                                      )]]))
-      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
+;; ;; New jframe
+;; (do (doto (seesaw.core/frame
+;;            :title "title"
+;;            :undecorated? false
+;;            :minimum-size [600 :by 400]
+;;            :content (mig-panel
+;;                      :bounds [0 0 500 300]
+;;                      :constraints ["wrap 1" "[grow, center]" "[grow, center]"]
+;;                      :border (empty-border :thickness 10)
+;;                      :items [[(label :text "Tabelki" :focusable? true :listen [:focus-gained (fn [e] (config! e :background "#9a9"))
+;;                                                                                :focus-lost (fn [e] (config! e :background "#aaa"))])]
+;;                              [(button :text "1")]
+;;                              [(button :text "2")]
+;;                              [(button :text "3" ;;:listen [:key-pressed (fn [e] (println (.getKeyChar e)))]
+;;                                       )]]))
+;;       (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
 
 
-;; Create new own KeyEventDispacher object using own class. If one was added before then first delete him.
-;(def ked (SupervisiorKeyDispacher 2))
-(def ked (KeyDispacher {:18 (fn [] (println "You press ALT"))}))
+;; ;; Create new own KeyEventDispacher object using own class. If one was added before then first delete him.
+;; ;(def ked (SupervisiorKeyDispacher 2))
+;; (def ked (KeyDispacher {:18 (fn [] (println "You press ALT"))}))
 
 
-;; Add own dispacher as next dispacher object. Can be added few and more KeyEventDispachers.
-(doto (java.awt.KeyboardFocusManager/getCurrentKeyboardFocusManager)
-  (.addKeyEventDispatcher ked))
+;; ;; Add own dispacher as next dispacher object. Can be added few and more KeyEventDispachers.
+;; (doto (java.awt.KeyboardFocusManager/getCurrentKeyboardFocusManager)
+;;   (.addKeyEventDispatcher ked))
 
 
-;; Remove added dispacher. Need object of added dispacher.
-(doto (java.awt.KeyboardFocusManager/getCurrentKeyboardFocusManager)
-  (.removeKeyEventDispatcher ked))
+;; ;; Remove added dispacher. Need object of added dispacher.
+;; (doto (java.awt.KeyboardFocusManager/getCurrentKeyboardFocusManager)
+;;   (.removeKeyEventDispatcher ked))
 
 
 ;; (def panel
@@ -159,18 +159,18 @@
 
 
 
-(do
-  ;;(.add panel (mig-panel))
-  (let [panel (get-key-panel \q (fn [jpan] (.dispose (to-frame jpan))) (mig-panel))]
-    (println (type panel))
-    (.add panel (seesaw.mig/mig-panel
-                                     :constraints ["wrap 1" "0px[grow, fill]0px" "5px[grow, fill]0px"]
-                                     :items [[(label :text "Hey")]]))
-    (doto
-        (seesaw.core/frame
-         :resizable? true)
-      (.setPreferredSize (new Dimension 800 800))
-      (.add panel)
-      (.pack)
-      (.setVisible true))))
+;; (do
+;;   ;;(.add panel (mig-panel))
+;;   (let [panel (get-key-panel \q (fn [jpan] (.dispose (to-frame jpan))) (mig-panel))]
+;;     (println (type panel))
+;;     (.add panel (seesaw.mig/mig-panel
+;;                                      :constraints ["wrap 1" "0px[grow, fill]0px" "5px[grow, fill]0px"]
+;;                                      :items [[(label :text "Hey")]]))
+;;     (doto
+;;         (seesaw.core/frame
+;;          :resizable? true)
+;;       (.setPreferredSize (new java.awt.Dimension 800 800))
+;;       (.add panel)
+;;       (.pack)
+;;       (.setVisible true))))
 

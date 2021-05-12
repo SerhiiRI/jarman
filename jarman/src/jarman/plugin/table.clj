@@ -111,8 +111,10 @@
                                                          (do
                                                            (if (empty? model)
                                                              (do ;;Create calendar input
-                                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified
-                                                                                                                      :local-changes complete)))
+                                                               (c/label :text title)
+                                                              ;;  (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified
+                                                              ;;                                                         :local-changes complete))
+                                                               )
                                                              (do ;; Create update calenda input
                                                                (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified
                                                                                                                       :local-changes complete

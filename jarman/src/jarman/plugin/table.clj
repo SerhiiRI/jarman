@@ -96,6 +96,7 @@
                start-focus nil
                export-comp nil
                alerts nil}}]
+    ;; (println "Meta" (:columns-meta data-toolkit))
     (let [complete (atom {})
           metadata (:columns-meta data-toolkit)
           inser-or-update (if (empty? model) "Insert new data" "Update record")
@@ -115,16 +116,18 @@
                                                        (cond
                                                          (lang/in? (get meta :component-type) "d")
                                                          (do
+                                                           (println "Data")
                                                            (if (empty? model)
                                                              (do ;;Create calendar input
                                                                (c/label :text title)
-                                                              ;;  (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified
-                                                              ;;                                                         :local-changes complete))
+                                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified
+                                                                                                                      :local-changes complete))
                                                                )
                                                              (do ;; Create update calenda input
                                                                (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified
                                                                                                                       :local-changes complete
-                                                                                                                      :set-date (if (empty? v) nil v))))))
+                                                                                                                      :set-date (if (empty? v) nil v)))
+                                                               )))
 
                                                          (lang/in? (get meta :component-type) "l")
                                                          (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
@@ -168,6 +171,7 @@
                                                                                                           :val v)))))
                                                          (lang/in? (get meta :component-type) "i")
                                                          (do ;; Add input-text with label
+                                                           (println "Input")
                                                            (if (empty? model)
                                                              (do ;;Create insert input
                                                                (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified
@@ -196,6 +200,7 @@
                       [more-comps]
                       [(if (nil? export-comp) (c/label) (export-comp (get model (:model-id data-toolkit))))])
           builded (c/config! panel :items (gtool/join-mig-items components))]
+      ;; (println "Build prepare components")
       (if-not (nil? start-focus) (reset! start-focus (last (u/children (first components)))))
       builded)))
 
@@ -270,7 +275,10 @@
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
           table              (fn [] ((get (create-table configuration data-toolkit) :table) (fn [model] (expand-update-form model back-to-insert)))) ;; TODO: set try
           x nil ;;------------ Finish
-          view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])] [(c/vertical-panel :items [(table)])]])]
+          view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])] [(try 
+                                                                                                                (c/vertical-panel :items [(table)])
+                                                                                                                (catch Exception e (c/label :text (str "Problem with table model: " (.getMessage e)))))]])
+          ]
       view-layout)))
 
 ;; (let [my-frame (-> (doto (c/frame
@@ -299,3 +307,30 @@
     (.revalidate vp)))
 
 
+;; [{:description nil, 
+;;   :private? false, 
+;;   :default-value nil, 
+;;   :editable? true, 
+;;   :field :seal_number, 
+;;   :column-type [:varchar-100 :default :null], 
+;;   :component-type [i], 
+;;   :representation seal_number, 
+;;   :field-qualified :seal.seal_number} 
+;;  {:description nil, 
+;;   :private? false, 
+;;   :default-value nil, 
+;;   :editable? true, 
+;;   :field :datetime_of_use, 
+;;   :column-type [:datetime :default :null], 
+;;   :component-type [dt d i], 
+;;   :representation datetime_of_use, 
+;;   :field-qualified :seal.datetime_of_use} 
+;;  {:description nil, 
+;;   :private? false, 
+;;   :default-value nil, 
+;;   :editable? true, 
+;;   :field :datetime_of_remove, 
+;;   :column-type [:datetime :default :null], 
+;;   :component-type [dt d i], 
+;;   :representation datetime_of_remove, 
+;;   :field-qualified :seal.datetime_of_remove}]

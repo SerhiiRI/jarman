@@ -153,8 +153,3 @@
    :query   {:column (as-is :permission.id :permission.permission_name :permission.configuration)}))
 
 
-<<<<<<< HEAD
-
-=======
-;; (insert! )
->>>>>>> 69a7a2730826b3ae83036aea725015af29869f91

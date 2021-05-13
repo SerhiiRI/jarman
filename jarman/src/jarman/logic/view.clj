@@ -38,7 +38,7 @@
 (defview permission
   (plug/jarman-table
    :name "Table"
-   :place nil
+   :place [:expand-menu-space]
    :tables [:permission]
    :view   [:permission.permission_name]
    :query   {:column (as-is :permission.id :permission.permission_name :permission.configuration)}))

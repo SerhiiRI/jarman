@@ -114,3 +114,7 @@
  (-> (doto (frame-calendar) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
 
 
+
+;; [(text :listen [:focus-lost (fn [e] (invoke-later (let [new-focus-obj (.getFocusOwner (java.awt.KeyboardFocusManager/getCurrentKeyboardFocusManager))]
+;;                                                     (if (= :mymig (config (.getParent new-focus-obj) :id)) (println "MyMig") (println (to-root new-focus-obj))))))])]
+;; [(text :text "Dupa")]

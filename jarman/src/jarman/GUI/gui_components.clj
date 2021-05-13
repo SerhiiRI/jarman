@@ -511,7 +511,7 @@
       "
   (fn [txt inside-btns
        & {:keys [background
-                 border-color
+                 expand
                  border
                  vsize
                  min-height
@@ -519,7 +519,7 @@
                  ico-hover
                  id]
           :or {background "#eee"
-               border-color "#fff"
+               expand :auto
                border (compound-border (line-border :left 6 :color background))
                vsize 35
                min-height 200
@@ -529,7 +529,7 @@
     (let [atom-inside-btns (atom nil)
           inside-btns (if (nil? inside-btns) nil inside-btns)
           inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns))
-          ico (if-not (nil? inside-btns) (stool/image-scale icon/plus-64-png 25) nil)
+          ico (if (or (= :always expand) (not (nil? inside-btns))) (stool/image-scale icon/plus-64-png 25) nil)
           title (label
                  :text txt
                  :background (Color. 0 0 0 0))
@@ -558,11 +558,13 @@
                                                (do ;;  Add inside buttons to mig with expand button
                                                  (config! icon :icon ico-hover)
                                                  (doall (map #(.add mig %) @atom-inside-btns))
-                                                 (.revalidate mig))
+                                                 (.revalidate mig)
+                                                 (.repaint mig))
                                                (do ;;  Remove inside buttons form mig without expand button
                                                  (config! icon :icon ico)
                                                  (doall (map #(.remove mig %) (reverse (drop 1 (range (count (children mig)))))))
-                                                 (.revalidate mig)))))])))))
+                                                 (.revalidate mig)
+                                                 (.repaint mig)))))])))))
                                            
                                                  
 

@@ -406,7 +406,7 @@
    "
   [local-changes table invoker-id]
   (table-editor--component--bar-btn :edit-view-save-btn (get-lang-btns :save) icon/agree-grey-64-png icon/agree-blue-64-png
-                                    (fn [e] 
+                                    (fn [e]
                                       (let [new-table-meta (atom table)]
                                         (doall
                                          (map
@@ -424,8 +424,7 @@
                                         (println "reload invoker" invoker-id)
                                         (if-not (nil? invoker-id) ((@gseed/jarman-views-service :reload) invoker-id))
                                         ((@gseed/jarman-views-service :reload))
-                                        (@alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)
-                                        ))))
+                                        (@alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)))))
 
 
 (defn table-editor--element--btn-show-changes
@@ -507,9 +506,7 @@
                                                                (param-to-edit (first  meta-params) true)
                                                                (param-to-edit (second meta-params) true))
                                                          :else
-                                                         (map #(param-to-edit % false) meta-params))
-                                                       )
-                                                     ))]))
+                                                         (map #(param-to-edit % false) meta-params)))))]))
                                     (gcomp/hr 15);; Columns properties
                                     (table-editor--element--header "Column configuration")
                                     (gcomp/hr 15)
@@ -537,12 +534,12 @@
          view-id        (keyword (get table :table))  ;; Get name of table and create keyword to check tabs bar (opens views)
          invoker-id     (@gseed/jarman-views-service :get-my-view-id)]
      (do
-       (@gseed/jarman-views-service :set-view 
-                              :view-id view-id 
-                              :title (str "Edit: " (get-in table [:prop :table :representation])) 
-                              :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.")
-                              :component-fn (fn [] (create-view--table-editor view-id (session/user-get-permission) tables-configurations table-id invoker-id))
-                              :scrollable? false)))))
+       (@gseed/jarman-views-service :set-view
+                                    :view-id view-id
+                                    :title (str "Edit: " (get-in table [:prop :table :representation]))
+                                    :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.")
+                                    :component-fn (fn [] (create-view--table-editor view-id (session/user-get-permission) tables-configurations table-id invoker-id))
+                                    :scrollable? false)))))
 
 
 ;; ┌─────────┐
@@ -697,7 +694,7 @@
                                                                                      (and (get-in data [:prop :table :is-linker?]) (contains? col :key-table))
                                                                                      (do ;; Get represetation of linked table
                                                                                        (let [search (filter (fn [table-meta] (= (get-in table-meta [:table]) (get col :key-table))) (mmeta/getset))]
-                                                                                        (get-in (first search) [:prop :table :representation])))
+                                                                                         (get-in (first search) [:prop :table :representation])))
                                                                                      :else (get col :representation))
                                                                    :width w :height row-h
                                                                    :type (cond
@@ -726,24 +723,24 @@
   "Description:
        Menu to control tables view (functionality for db-view)"
   [] (let [btn (fn [txt ico onClick & args] (let
-                                          [border-c "#bbb"]
-                                           (label
-                                            :font (getFont 13)
-                                            :text txt
-                                            :icon (stool/image-scale ico 30)
-                                            :background "#fff"
-                                            :foreground "#000"
-                                            :border (compound-border (empty-border :left 15 :right 15 :top 5 :bottom 5) (line-border :thickness 1 :color border-c))
-                                            :listen [:mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
-                                                     :mouse-exited  (fn [e] (config! e :background "#fff" :foreground "#000"))
-                                                     :mouse-clicked onClick])))]
+                                             [border-c "#bbb"]
+                                              (label
+                                               :font (getFont 13)
+                                               :text txt
+                                               :icon (stool/image-scale ico 30)
+                                               :background "#fff"
+                                               :foreground "#000"
+                                               :border (compound-border (empty-border :left 15 :right 15 :top 5 :bottom 5) (line-border :thickness 1 :color border-c))
+                                               :listen [:mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
+                                                        :mouse-exited  (fn [e] (config! e :background "#fff" :foreground "#000"))
+                                                        :mouse-clicked onClick])))]
        (mig-panel
         :id :db-viewer--component--menu-bar
         :background (new Color 0 0 0 0)
         :constraints ["" "5px[fill]0px" "5px[fill]5px"]
         :items [[(btn "Show all relation" icon/refresh-connection-blue-64-png (fn [e]))]
                 [(btn "Save view" icon/agree-grey-64-png (fn [e]))]
-                [(btn "Reset view" icon/arrow-blue-left-64-png (fn [e] ))]
+                [(btn "Reset view" icon/arrow-blue-left-64-png (fn [e]))]
                 [(btn "Reloade view" icon/refresh-blue-64-png (fn [e] ((@gseed/jarman-views-service :reload))))]])))
 
 ;; ((@gseed/jarman-views-service :reload))
@@ -763,21 +760,21 @@
                    (.add JLP (db-viewer--component--table (get-in tab-data [:prop :bounds] [0 0 100 100]) tab-data) (new Integer 5)))
                  (calculate-bounds (mmeta/getset) 20 5)))
      (.add rootJLP (vertical-panel :items [JLP]
-                               :id :JLP-DB-Visualizer
-                               :border nil
-                               :bounds [0 0 10000 10000]
-                               :listen [:mouse-released (fn [e] (config! e :cursor :default))
-                                        :mouse-pressed (fn [e]
-                                                         (config! e :cursor :move)
-                                                         (let [x (.getX (config e :bounds))
-                                                               y (.getY (config e :bounds))]
-                                                           (reset! JLP-bounds {:x (.getX e) :y (.getY e) :x-x (- (.getX e) x) :y-y (- (.getY e) y)})))
-                                        :mouse-dragged (fn [e]
+                                   :id :JLP-DB-Visualizer
+                                   :border nil
+                                   :bounds [0 0 10000 10000]
+                                   :listen [:mouse-released (fn [e] (config! e :cursor :default))
+                                            :mouse-pressed (fn [e]
+                                                             (config! e :cursor :move)
+                                                             (let [x (.getX (config e :bounds))
+                                                                   y (.getY (config e :bounds))]
+                                                               (reset! JLP-bounds {:x (.getX e) :y (.getY e) :x-x (- (.getX e) x) :y-y (- (.getY e) y)})))
+                                            :mouse-dragged (fn [e]
                                                         ;;  (println "Drag JLP: " (.getX e) (.getY e))
-                                                         (let [new-x (- (.getX e) (get @JLP-bounds :x-x))
-                                                               new-y (- (.getY e) (get @JLP-bounds :y-y))]
-                                                           (config! e :bounds [new-x new-y 10000 10000] ;; TODO: need to change width and height on dynamic 
-                                                                    )))]) 
+                                                             (let [new-x (- (.getX e) (get @JLP-bounds :x-x))
+                                                                   new-y (- (.getY e) (get @JLP-bounds :y-y))]
+                                                               (config! e :bounds [new-x new-y 10000 10000] ;; TODO: need to change width and height on dynamic 
+                                                                        )))])
            (new Integer 1))
     ;;  (.setMaximumSize JLP (java.awt.Dimension. 300 300))
     ;;  (.setSize JLP (java.awt.Dimension. 300 300))
@@ -873,8 +870,7 @@
                            :border (line-border :left 4 :right 4 :color "#fff")
                            :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill]0px"]
                            :items (vec args))
-                          :args [:hscroll :never]
-                          )))
+                          :args [:hscroll :never])))
 
 (def right-part-of-jarman-as-space-for-views-service
   "Description: 
@@ -912,6 +908,56 @@
 ;; (@gseed/jarman-views-service :reload :view-id (keyword "DB Visualiser"))
 ;; (@gseed/jarman-views-service :get-all-view)
 
+(defn create-period--period-list
+  []
+  (mig-panel
+   :constraints ["wrap 1" "0px[170:, fill]0px" "0px[fill]0px[grow,fill]0px[fill]0px"]
+   :background "#fff"
+   :border (line-border :right 1 :color "#ccc")
+   :items (gtool/join-mig-items
+           (gcomp/button-return "<< Companys" (fn [e]))
+           (gcomp/scrollbox
+            (mig-panel
+             :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
+             :background "#fff"
+             
+             :items (gtool/join-mig-items
+                     (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))
+                     (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))
+                     (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))
+                     (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))
+                     (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))
+                     (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))))
+            :args [:hscroll :never])
+           (gcomp/button-export "Export document" (fn [e]))))) 
+
+(defn create-period--period-form
+  []
+  (mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill][100, shrink 0, fill][grow, fill]0px"]
+             :items [[(gcomp/header-basic "Okresy" :args [:halign :center])]
+                     [(gcomp/scrollbox
+                       (mig-panel :constraints ["wrap 4" "10px[fill][fill]50px[fill][fill]10px" "10px[fill]10px"]
+                                  :items [[(label :text "Organization:")]
+                                          [(label :text "Frank & Franky Co." :border (line-border :bottom 1 :color "#494949"))]
+                                          [(label :text "Time:")]
+                                          [(label :text "12/03/2021 - 11/03/2022"  :border (line-border :bottom 1 :color "#494949"))]
+                                          [(label :text "Customer:")]
+                                          [(label :text "Franklyn Badabumc" :border (line-border :bottom 1 :color "#494949"))]
+                                          [(label :text "Full amount:")]
+                                          [(label :text "7000,-" :border (line-border :bottom 1 :color "#494949"))]
+                                          [(label :text "Service:")]
+                                          [(label :text "Mr. Jarman" :border (line-border :bottom 1 :color "#494949"))]])
+                       :args [:vscroll :never])]
+                     [(scrollable (seesaw.swingx/table-x :model [:columns ["Servise month" "Amount" "Payment status"] :rows [["03/2021" "2500,-" "FV: 042/03/2021"] 
+                                                                                                                             ["04/2021" "2000,-" "FV: 042/04/2021"]
+                                                                                                                             ["05/2021" "2500,-" "Expected payment"]]]))]]))
+(defn create-period-view
+  []
+  (mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"]
+             :items [[(create-period--period-list)]
+                     [(create-period--period-form)]]))
+
+
 (def jarmanapp
   "Description:
       Main space for app inside JLayeredPane. There is menu with expand btns and space for tables with tab btns.
@@ -932,6 +978,7 @@
                                                           ;;  (button-expand-child "Users table" :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
                                                   ])]
                                  [(button-expand "Tables" [] :id :tables-view-plugin :expand :yes)]
+                                 [(button-expand "Okresy" [(button-expand-child "Okresy" :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "okresy" :title "Okresy" :component-fn create-period-view)))])]
                                  [(create-expand-btns--confgen)]
                                  [(button-expand "Debug items"
                                                  [(button-expand-child "Popup" :onClick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200])))
@@ -978,9 +1025,8 @@
 
                              @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook))
-      (if-not (nil? @relative)(.setLocation (to-frame @app) (first @relative) (second @relative))))
-      (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))
-      ))
+      (if-not (nil? @relative) (.setLocation (to-frame @app) (first @relative) (second @relative))))
+    (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))))
 
 ;; (@startup)
 

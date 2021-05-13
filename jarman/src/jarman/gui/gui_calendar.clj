@@ -102,17 +102,17 @@
                                                  (if-not (nil? store-id) 
                                                    (swap! local-changes (fn [storage] (assoc storage (keyword store-id) (value (to-widget e)))))))]])))
 
-(defn- frame-calendar []
-  (frame :title "Jarman"
-         :undecorated? false
-         :resizable? false
-         :minimum-size [400 :by 400]
-         :content (mig-panel
-                   :constraints ["wrap 1" "100px[grow, center]100px" "30px[]30px"]
-                   :items [[(get-date-time (text :columns 19 :text nil))]
-                           [(get-bar (into-array (list "a" "b" "c")))]])))
+;; (defn- frame-calendar []
+;;   (frame :title "Jarman"
+;;          :undecorated? false
+;;          :resizable? false
+;;          :minimum-size [400 :by 400]
+;;          :content (mig-panel
+;;                    :constraints ["wrap 1" "100px[grow, center]100px" "30px[]30px"]
+;;                    :items [[(get-date-time (text :columns 19 :text nil))]
+;;                            [(get-bar (into-array (list "a" "b" "c")))]])))
 
- (-> (doto (frame-calendar) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
+;;  (-> (doto (frame-calendar) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
 
 
 

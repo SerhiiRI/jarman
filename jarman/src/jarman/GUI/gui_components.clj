@@ -14,7 +14,7 @@
             [jarman.gui.gui-tools :refer :all :as gtool])
   (:import (java.awt Color)))
 
-
+(jarman.config.config-manager/swapp)
 
 ;; ┌────────────────────┐
 ;; │                    │
@@ -72,6 +72,27 @@
     (.setPreferredSize (.getHorizontalScrollBar scr) (java.awt.Dimension. 0 hbar-size))
     scr))
 
+(defn header-basic
+  [title
+   & {:keys [foreground
+             background
+             border
+             font
+             args]
+      :or {foreground (gtool/get-color :foreground :dark-header)
+           background (gtool/get-color :background :dark-header)
+           border     (line-border :thickness 10 :color (gtool/get-color :background :dark-header))
+           font (gtool/getFont 16)
+           args []}}]
+  (apply label
+         :text title
+         :font font
+         :foreground foreground
+         :background background
+         :border border
+         args))
+
+
 (defmacro textarea
   "Description
      TextArea with word wrap
@@ -79,39 +100,65 @@
   [text & args] `(label :text `~(htmling ~text) ~@args))
 
 
-(def button-basic
+(defn button-basic
   "Description:
       Simple button with default style.
    Example:
       (simple-button \"Simple button\" (fn [e]) :style [:background \"#fff\"])
    "
-  (fn [txt func & {:keys [args
-                          vtop
-                          vbot
-                          hl
-                          hr]
-                   :or   {args []
-                          vtop 10
-                          vbot 10
-                          hl 10
-                          hr 10}}]
-    (let [newBorder (fn [underline-color]
-                      (compound-border (empty-border :bottom vbot :top vtop :left hl :right hr)
-                                       (line-border :bottom 2 :color underline-color)))]
-      (apply label
+  [txt func & {:keys [args
+                      vtop
+                      vbot
+                      hl
+                      hr
+                      mouse-in
+                      mouse-out
+                      focus-color
+                      unfocus-color]
+               :or   {args []
+                      vtop 10
+                      vbot 10
+                      hl 10
+                      hr 10
+                      mouse-in  (get-color :background :button_hover_light)
+                      mouse-out (get-color :background :button_main)
+                      focus-color (get-color :decorate :focus-gained)
+                      unfocus-color (get-color :decorate :focus-lost)}}]
+  (let [newBorder (fn [underline-color]
+                    (compound-border (empty-border :bottom vbot :top vtop :left hl :right hr)
+                                     (line-border :bottom 2 :color underline-color)))]
+    (apply label
            :text txt
            :focusable? true
            :halign :center
            :listen [:mouse-clicked func
-                    :mouse-entered (fn [e] (hand-hover-on e) (button-hover e))
-                    :mouse-exited  (fn [e] (button-hover e (get-color :background :button_main)))
-                    :focus-gained  (fn [e] (config! e :border (newBorder (get-color :decorate :focus-gained))))
-                    :focus-lost    (fn [e] (config! e :border (newBorder (get-color :decorate :focus-lost))))
-                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (func e)))]
-                    
-           :background (get-color :background :button_main)
-           :border (newBorder (get-color :decorate :focus-lost))
-           args))))
+                    :mouse-entered (fn [e] (config! e :background mouse-in) (hand-hover-on e))
+                    :mouse-exited  (fn [e] (config! e :background mouse-out))
+                    :focus-gained  (fn [e] (config! e :border (newBorder focus-color)))
+                    :focus-lost    (fn [e] (config! e :border (newBorder unfocus-color)))
+                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) func))]
+           :background mouse-out
+           :border (newBorder unfocus-color)
+           args)))
+
+
+(defn button-export
+  [txt func]
+  (button-basic txt func
+                :mouse-in (get-comp :button-export :mouse-in)
+                :mouse-out (get-comp :button-export :mouse-out)
+                :unfocus-color (get-comp :button-export :unfocus-color)
+                ))
+
+
+
+(defn button-return
+  [txt func]
+  (button-basic txt func
+                :mouse-in (get-comp :button-return :mouse-in)
+                :mouse-out (get-comp :button-return :mouse-out)
+                :unfocus-color (get-comp :button-return :unfocus-color)
+                :args [:foreground (get-comp :button-return :foreground)]))
 
 
 (defn input-text

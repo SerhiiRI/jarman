@@ -102,6 +102,7 @@
                                                  (if-not (nil? store-id) 
                                                    (swap! local-changes (fn [storage] (assoc storage (keyword store-id) (value (to-widget e)))))))]])))
 
+
 ;; (defn- frame-calendar []
 ;;   (frame :title "Jarman"
 ;;          :undecorated? false

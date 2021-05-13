@@ -109,8 +109,7 @@
          :minimum-size [400 :by 400]
          :content (mig-panel
                    :constraints ["wrap 1" "100px[grow, center]100px" "30px[]30px"]
-                   :items [[(get-date-time (text :columns 19 :text nil))]
-                           [(get-bar (into-array (list "a" "b" "c")))]])))
+                   :items [[(get-date-time (text :columns 19 :text nil))]])))
 
  (-> (doto (frame-calendar) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
 

@@ -206,7 +206,7 @@ public class DateTime extends JPanel{
         });
         showComponent.addFocusListener(new FocusListener() {
             public void focusLost(FocusEvent e) {
-                hidePanel();
+		// hidePanel();
             }
             public void focusGained(FocusEvent e) { }
         });

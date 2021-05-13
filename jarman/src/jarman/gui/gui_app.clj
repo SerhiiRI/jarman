@@ -1,6 +1,3 @@
-;; 
-;; Compilation: dev_tool.clj -> metadata.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
-;; 
 (ns jarman.gui.gui-app
   (:use seesaw.core
         seesaw.border
@@ -907,30 +904,6 @@
 
 ;; (@gseed/jarman-views-service :reload :view-id (keyword "DB Visualiser"))
 ;; (@gseed/jarman-views-service :get-all-view)
-
-(defn create-period--period-list
-  []
-  (mig-panel
-   :constraints ["wrap 1" "0px[170:, fill]0px" "0px[fill]0px[grow,fill]0px[fill]0px"]
-   :background "#fff"
-   :border (line-border :right 1 :color "#ccc")
-   :items (gtool/join-mig-items
-           (gcomp/button-return "<< Companys" (fn [e]))
-           (gcomp/scrollbox
-            (mig-panel
-             :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
-             :background "#fff"
-             
-             :items (gtool/join-mig-items
-                     (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))
-                     (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))
-                     (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))
-                     (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))
-                     (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))
-                     (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))))
-            :args [:hscroll :never])
-           (gcomp/button-export "Export document" (fn [e]))))) 
-
 (defn create-period--period-form
   []
   (mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill][100, shrink 0, fill][grow, fill]0px"]
@@ -948,14 +921,68 @@
                                           [(label :text "Service:")]
                                           [(label :text "Mr. Jarman" :border (line-border :bottom 1 :color "#494949"))]])
                        :args [:vscroll :never])]
-                     [(scrollable (seesaw.swingx/table-x :model [:columns ["Servise month" "Amount" "Payment status"] :rows [["03/2021" "2500,-" "FV: 042/03/2021"] 
+                     [(scrollable (seesaw.swingx/table-x :model [:columns ["Servise month" "Amount" "Payment status"] :rows [["03/2021" "2500,-" "FV: 042/03/2021"]
                                                                                                                              ["04/2021" "2000,-" "FV: 042/04/2021"]
                                                                                                                              ["05/2021" "2500,-" "Expected payment"]]]))]]))
+
+(defn get-period-list
+  [company-id]
+  (cond
+    (= company-id 1) {}))
+
+(defn create-period--period-list
+  [list-space view-space return-fn company-id]
+  (let [period-list (get-period-list company-id)]
+    (gtool/join-mig-items
+     (gcomp/button-return "<< Companys" (fn [e] (invoke-later (config! list-space :items (gtool/join-mig-items (return-fn list-space view-space return-fn))))))
+     (gcomp/scrollbox
+      (mig-panel
+       :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
+       :background "#fff"
+
+       :items (gtool/join-mig-items
+               (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e] (config! view-space :items (gtool/join-mig-items (create-period--period-form)))))
+               (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))
+               (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))
+               (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))
+               (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))
+               (gcomp/button-basic "01/01/2021 - 31/12/2021" (fn [e]))))
+      :args [:hscroll :never])
+     (gcomp/button-export "Export document" (fn [e]))))) 
+
+
+(defn get-company-list
+  [] [{:name "Trashpanda-Team" :id 1} {:name "Frank & Franky" :id 3}])
+
+(defn create-period--period-companys-list
+  [list-space view-space return-fn] ;; [{:name "Frank & Franky" :id 3}]
+  (let 
+   [model (get-company-list)]
+    (gcomp/scrollbox
+    (mig-panel
+     :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
+     :background "#fff"
+     :items (gtool/join-mig-items
+             (map (fn [company]
+                    (gcomp/button-basic (str (get company :name))
+                                        (fn [e] (invoke-later (config! list-space :items (gtool/join-mig-items (create-period--period-list list-space view-space return-fn (get company :id))))))))
+                  model)))
+    :args [:hscroll :never])))
+
 (defn create-period-view
   []
-  (mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"]
-             :items [[(create-period--period-list)]
-                     [(create-period--period-form)]]))
+  (let [list-space (mig-panel
+                    :constraints ["wrap 1" "0px[170:, fill]0px" "0px[fill]0px[grow,fill]0px[fill]0px"]
+                    :background "#fff"
+                    :border (line-border :right 1 :color "#ccc")
+                    :items [[(label)]])
+        view-space (mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
+                              :items [[(label)]])
+        list-space (config! list-space :items (gtool/join-mig-items
+                                               (create-period--period-companys-list list-space view-space create-period--period-companys-list)))]
+    (mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"]
+               :items [[list-space]
+                       [view-space]])))
 
 
 (def jarmanapp

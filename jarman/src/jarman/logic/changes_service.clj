@@ -31,11 +31,11 @@
 
 (def set-change-to-view-atom
   (fn [local-changes path new-value]
-    (swap! local-changes (fn [changes] (merge changes {(convert-mappath-to-key path) [path new-value]})))))
+    (swap! local-changes (fn [changes] (merge changes {path new-value})))))
 
 (def remove-change-from-view-atom
   (fn [local-changes path]
-    (swap! local-changes (fn [changes] (dissoc changes (convert-mappath-to-key path))))))
+    (swap! local-changes (fn [changes] (dissoc changes path)))))
 
 (def track-changes-used-components
   (fn [local-changes path-to-value event-src component-key value]
@@ -51,7 +51,7 @@
       ;; if something was change
       (not (= orginal new-value)) (set-change-to-view-atom local-changes path-to-value new-value)
       ;; if back to orginal value
-      (not (nil? (get-in @local-changes [(convert-mappath-to-key path-to-value)]))) (remove-change-from-view-atom local-changes path-to-value))))
+      (not (nil? (get-in @local-changes [path-to-value]))) (remove-change-from-view-atom local-changes path-to-value))))
 
 (defn new-changes-service
   []

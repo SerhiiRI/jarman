@@ -16,12 +16,11 @@
 
 
 
-;; ┌────────────────────┐
+;; ┌────────────────────�
 ;; │                    │
 ;; │ Basic components   │
 ;; │                    │________________________________________
-;; └────────────────────┘                                       V
-
+;; └────────────────────�                                     
 
 (defn hr 
   ([line-size] (label :border (empty-border :top line-size)))
@@ -57,7 +56,6 @@
    & {:keys [args 
              hbar-size
              vbar-size]
-             
       :or {args []
            hbar-size 12
            vbar-size 12}}]
@@ -108,7 +106,6 @@
                     :focus-gained  (fn [e] (config! e :border (newBorder (get-color :decorate :focus-gained))))
                     :focus-lost    (fn [e] (config! e :border (newBorder (get-color :decorate :focus-lost))))
                     :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (func e)))]
-                    
            :background (get-color :background :button_main)
            :border (newBorder (get-color :decorate :focus-lost))
            args))))
@@ -118,8 +115,7 @@
   "Description:
     Text component converted to text component with placeholder. Placehlder will be default value.
  Example:
-    (input-text :placeholder \"Login\" :style [:halign :center])
- "
+    (input-text :placeholder \"Login\" :style [:halign :center])"
   ([& {:keys [v
               placeholder
               border
@@ -164,16 +160,17 @@
              args))))
 
 
-
 (defn input-checkbox
-  [& {:keys [txt
+  [& {:keys [
+             txt
              val
              font-size
              enabled?
              local-changes
              store-id
              args]
-      :or   {txt ""
+      :or   {
+             txt ""
              selected? false
              font-size 14
              enabled? true
@@ -230,13 +227,11 @@
                 :items [(c/label :text (if (string? title) title ""))
                         component]))
 
-
 (defn input-text-area
   "Description:
     Text component converted to text component with placeholder. Placehlder will be default value.
  Example:
-    (input-text :placeholder \"Login\" :style [:halign :center])
- "
+    (input-text :placeholder \"Login\" :style [:halign :center])"
   ([& {:keys [store-id
               local-changes
               val
@@ -269,7 +264,6 @@
                                  (config! e :border (newBorder border-color-unfocus)))
                  :caret-update (fn [e]
                                  (let [new-v (c/value (c/to-widget e))]
-                                   
                                    (if (and (> (count new-v) char-limit) (< 0 char-limit))
                                      (invoke-later (config! e :text @last-v))
                                      (reset! last-v new-v))
@@ -278,8 +272,6 @@
                                      (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
                                      :else (reset! local-changes (dissoc @local-changes store-id)))))])
        (scrollbox text-area :minimum-size [50 :by 100])))))
-
-
 
 (defn input-text-with-atom
   [& {:keys [store-id local-changes val editable? enabled? store-orginal onClick border-color-focus border-color-unfocus debug]
@@ -315,16 +307,58 @@
                                        (not store-orginal) (reset! local-changes (dissoc @local-changes store-id)))))
                    :focus-gained (fn [e] (c/config! e :border ((get-user-data e :border-fn) border-color-focus)))
                    :focus-lost   (fn [e] (c/config! e :border ((get-user-data e :border-fn) border-color-unfocus)))]]))
-                   
 
-
+;;     :icon (stool/image-scale icon/left-blue-64-png 34)
+;;  :icon (stool/image-scale icon/right-blue-64-png 26)
+(defn multi-panel
+  "Description:
+    get vector of panels and return mig-panel in which these panels are replaced on click of arrow
+   Example:
+    (multi-panel [some-panel-1 some-panel-2 some-panel-3] title 0)"
+  [panels title num ]
+  (let [btn-back (button-basic "Back"
+                          (fn [e]
+                            (if (= num 0)
+                              (config!
+                               (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e)))
+                               :items [[(multi-panel panels title num)]])
+                              (config!
+                               (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e)))
+                               :items [[(multi-panel panels title (- num 1))]])))
+                          :style [:background "#fff"])
+        btn-next (button-basic "Next"
+                          (fn [e] (if (=  num (- (count panels) 1))
+                                                       (config! (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :items [[(multi-panel panels title num)]])
+                                                       (config! (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :items [[(multi-panel panels title (+ num 1))]])))
+                          
+                          :style [:background "#fff"])]
+    (config! btn-back
+             
+             :visible? (if (= num 0) false true))
+    ;; (config! btn-next
+    ;;          :visible? (if (= num (- (count panels) 1)) false true))
+    (if (= num (- (count panels) 1))
+      (config! btn-next :text "Save" :listen [:mouse-clicked (fn [e] (println "ff"))]))
+    (mig-panel
+     :constraints ["wrap 2" "0px[left]0px" "0px[]0px"]
+     :preferred-size [910 :by 380]
+     :background "#ddd"
+     :items [[(label :border (empty-border :right 18))]
+             [btn-back
+              "align r, split 2"]
+             ;;[(label)]
+             [btn-next
+              "align r"]
+                        [(label :text title
+                     :foreground "#256599"
+                     :border (empty-border :left 10)) "span 2"]
+             [(nth panels num) "span 2"]])))
 
 (defn select-box
   "Description
       Set model and you can add extending parameter.
    Example:
-      (select-box [one two tree])
-   "
+      (select-box [one two tree])"
   ([model
     & {:keys [store-id local-changes selected-item editable? enabled?]
        :or   {local-changes (atom {})
@@ -343,8 +377,9 @@
                                               (let [new-v (c/config e :selected-item)]
                                                 ;; (println "new value" new-v)
                                                 (cond
-                                                  (and (not (nil? store-id))
-                                                       (not (= selected-item new-v)))
+                                                  (and
+                                                   (not (nil? store-id))
+                                                   (not (= selected-item new-v)))
                                                   (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
                                                   :else (reset! local-changes (dissoc @local-changes store-id)))))])))
  
@@ -409,14 +444,11 @@
     (c/config! form-space :items (join-mig-items hide-show comps))))
 
 
-
-
 (def input-password
   "Description:
     Text component converted to password input component, placeholder is default value.
  Example:
-    ((def input-password :placeholder \"Password\" :style [:halign :center])
- "
+    ((def input-password :placeholder \"Password\" :style [:halign :center])"
   (fn [& {:keys [placeholder
                  border
                  font-size
@@ -493,7 +525,7 @@
 ;; │                    │
 ;; │ Expand buttons     │
 ;; │                    │________________________________________
-;; └────────────────────┘                                       V
+;; └────────────────────┘                                       
 
 (def button-expand
   "Description:
@@ -565,9 +597,6 @@
                                                  (doall (map #(.remove mig %) (reverse (drop 1 (range (count (children mig)))))))
                                                  (.revalidate mig)
                                                  (.repaint mig)))))])))))
-                                           
-                                                 
-
 
 (def button-expand-child
   "Description
@@ -623,8 +652,6 @@
                       egg2]))))
 
 (def view (fn [](egg)))
-
-
 
 
 (def input-float
@@ -711,8 +738,6 @@
 
                                       (if display (config! display :text @last-v)))]
              style))))
-
-
 
 (def input-int
   "Description:

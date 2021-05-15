@@ -55,8 +55,6 @@
 (def light-grey-color "#82959f")
 (def blue-green-color "#2c7375")
 (def light-blue-color "#96c1ea")
-;;(def red-color "#e51a4c")
-;;(def red-color "#f88158")
 (def red-color "#f01159")
 (def back-color "#c5d3dd")
 (def my-style {[:.css1] {:foreground blue-green-color}})
@@ -451,8 +449,7 @@
                                                                                                  (if (instance? clojure.lang.PersistentArrayMap data-log)
                                                                                                    (do (.revalidate my-panel)
                                                                                                        (.dispose (to-frame e))
-                                                                                                       (@app/startup))))
-                                                                                               )
+                                                                                                       (@app/startup)))))
                                                                               :mouse-exited  (fn [e] (do
                                                                                                        (config! icon-conf :visible? false)
                                                                                                        (config! icon-info :visible? false)

@@ -10,6 +10,7 @@
   (:import (javax.swing JLayeredPane JLabel JTable JComboBox DefaultCellEditor JCheckBox)
            (javax.swing.table TableCellRenderer TableColumn)
            (java.awt.event MouseEvent)
+           (jarman.test DateTime)
            (java.awt Color Component))
   (:require [clojure.string :as string]
             ;; resource 
@@ -40,15 +41,11 @@
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
             ))
 
-
-
-
 ;; ┌────────────────────────────┐
 ;; │                            │
 ;; │ JLayeredPane Popup Service │
 ;; │                            │
 ;; └────────────────────────────┘
-
 
 (def popup-menager (atom nil))
 
@@ -101,14 +98,11 @@
 
 (def atom-popup-hook (atom (label :visible? false)))
 
-
 ;; ┌──────────────┐
 ;; │              │
 ;; │ Dialog popup │
 ;; │              │
 ;; └──────────────┘
-
-
 
 (def create-dialog--answer-btn
   (fn [txt func]
@@ -261,36 +255,38 @@
                                      (vec (concat bounds (reverse (first tabs))))))
          calculated-bounds tables)))
 
-
-
-
 ;; ┌──────────────┐
 ;; │              │
 ;; │ Table editor │
 ;; │              │
 ;; └──────────────┘
 
+
 (defn table-editor--element--header
   "Create header GUI component in editor for separate section"
-  [name] (label :text name :font (getFont 14 :bold) :border (line-border :bottom 2 :color (get-color :background :header))))
+  [name] (label :text name :font (getFont 14 :bold)
+                :foreground dark-grey-color
+                :border (line-border :bottom 2 :color (get-color :background :header))))
 
 (defn table-editor--component--column-picker-btn
   "Description:
      Select button who table-editor--component--column-picker, can work with another same buttons"
-  [txt func] (let [color (get-color :group-buttons :background)
+  [txt func] (let [color "#eee";; (get-color :group-buttons :background)
                    color-hover (get-color :group-buttons :background-hover)
                    color-clicked (get-color :group-buttons :clicked)
                    bg-btn (atom color)
                    id-btn :table-editor--component--column-picker-btn]
                (mig-panel
-                :constraints ["" "15px[100, fill]15px" "10px[fill]10px"]
-                :border (line-border :left 0 :right 0 :top 1 :bottom 1 :color (get-color :border :gray))
+                :constraints ["" "15px[100, fill]15px" "5px[fill]5px"]
+                :border (line-border :left 0 :right 0 :top 1 :bottom 1 :color "#eee";;(get-color :border "#fff")
+                                     );;heyyy grey
                 :id id-btn
                 :background color
                 :user-data bg-btn
                 :listen [:mouse-entered (fn [e] (config! e :cursor :hand :background color-hover))
                          :mouse-exited  (fn [e] (config! e :background @bg-btn))
-                         :mouse-clicked  (fn [e] (cond
+                         :mouse-clicked  (fn [e] (println "color picker")
+                                           (cond
                                                    (= @bg-btn color)
                                                    (do ;; reset bg and atom inside all buttons in parent if id is ok
                                                      (doall (map (fn [b] (cond (= (config b :id) id-btn)
@@ -302,7 +298,7 @@
                                                 ;; update atom with color
                                                      (config! e :background @bg-btn)
                                                      (func e))))]
-                :items [[(label :text txt)]])))
+                :items [[(label :text txt :font (getFont 12))]])))
 
 (def table-editor--element--header-view
   (fn [value]
@@ -312,7 +308,6 @@
           :editable? false
           :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
-
 
 (defn switch-column-to-editing
   [work-mode local-changes path-to-value column]
@@ -333,7 +328,7 @@
                                                :store-id (lang/join-vec path-to-value [param])
                                                :val (str (get column param))
                                                :enabled? enabled)
-                                              :vtop 10)))]
+                                               :vtop 10)))]
     (mig-panel ;; Editable parameters list
      :constraints ["wrap 1" "20px[250:,fill]5px" "0px[fill]0px"]
      :items (join-mig-items
@@ -362,22 +357,120 @@
                  (param-to-edit :private? false)
                  (param-to-edit :editable? false))))))))
 
-;; (@startup)
 
-(def table-editor--element--btn-add-column
-  (fn [] (mig-panel ;; Button for add column to table
-          :constraints ["" "0px[grow, center]0px" "5px[fill]5px"]
-          :items [[(label :icon (stool/image-scale icon/plus-128-png 15))]]
-          :border (compound-border (empty-border :left 15 :right 15 :top 5 :bottom 8))
-          :listen [:mouse-clicked (fn [e] (println "Add column"))
-                   :mouse-entered (fn [e] (config! e :cursor :hand))])))
+(def dark-grey-color "#676d71")
+(def blue-color "#256599")
+(def light-grey-color "#82959f")
+(def blue-green-color "#2c7375")
+(def light-blue-color "#96c1ea")
+(def red-color "#f01159")
+(def back-color "#c5d3dd")
 
+(show-events (combobox))
+
+(show-options (combobox))
+
+(defn panel-for-input
+  [name description comp-key]
+  (let [check (checkbox :text name :background "#ddd")
+        sel-comp-type (DateTime/getBar (into-array ["date" "time" "date-time"
+                                                    "simple-number" "float-number"
+                                                    "boolean" "linking-table"
+                                                    "big-text" "short-text"]))
+        sel-col-type (DateTime/getBar (into-array [""] ))
+        model-sel (.getModel sel-col-type)]
+    (mig-panel
+     :constraints ["wrap 1" "0px[grow, left]0px" "0px[]px"]
+     ;;:preferred-size [900 :by 400]
+     :background "#e4e4e4"
+     :items [[(mig-panel
+               :constraints ["wrap 1" "20px[250:, fill, grow, left]0px" "10px[]10px"]
+               :background "#e4e4e4"
+               :items [[(label :text description
+                               :foreground dark-grey-color
+                             ;;  :font (getFont 14)
+                               :halign :left)]
+                       [(cond 
+                          (= comp-key :check) check
+                          (= comp-key :select-comp-type) sel-comp-type
+                          (= comp-key :select-col-type) sel-col-type
+                          :else
+                          (gcomp/input-text :placeholder name
+                                            :style [:halign :left]))]])]])))
+
+;;  heyyyy
+;;  btn-expand
+;; (create-fields user-original [{:field "suka_name", :representation "SUKA", :description nil,
+;;                                :component-type "i", :column-type "varchar(100)", :private? false, :editable? true}])
+;; {:field "id_point_of_sale"
+;;                      :field-qualified :cache_register.id_point_of_sale
+;;                      :representation "Cache register"
+;;                      :description "This table used for some bla-bla"
+;;                      :component-type ["l"]
+;;                      :default-value nil
+;;                      :column-type [:bigint-20-unsigned]
+;;                      :private? false
+;;                      :editable? false}
+(type (label))
+;; => seesaw.core.proxy$javax.swing.JLabel$Tag$fd407141
+(type (text))
+;; => seesaw.core.proxy$javax.swing.JTextField$Tag$fd407141
+
+(defn table-editor--element--btn-add-column
+  [func]
+  (mig-panel ;; Button for add column to table
+   :constraints ["wrap 1" "0px[grow, fill, center]0px" "0px[fill]0px"]
+   :items [[(flow-panel :items (list;; (label :icon (stool/image-scale icon/plus-128-png 13))
+                                     (label :text "   add" :font (getFont 12))
+                                     )
+                        :align :left
+                        :listen [:mouse-clicked (fn [e] (do (func e)))
+                                 :mouse-entered (fn [e] (config! e :cursor :hand))])]]))
+
+
+(defn- get-component-add-column [data]
+  (condp = data
+    "date" ["a" "b" "c"]
+    "time" ["a"]
+    "date-time" ["s" "c" "r"]
+    "simple-number" ["c" "r"]
+    "float-number" ["k" "r" "l" "p"]
+    "boolean" ["q" "r"]
+    "linking-table" ["w" "w"]
+    "big-text" ["c" "r"]
+    "short-text" ["c" "r"]
+    ["default"]))
+
+(defn add-column-panel []
+  (let [inp-name (panel-for-input "Field" "database column name" :field)
+        inp-repr (panel-for-input "Representation" "name for end-user, by default = field" :field)
+        inp-descr (panel-for-input "Description" "some description information, used for UI" :field)
+        inp-selct (panel-for-input "Component type" "database type of column" :select-comp-type)
+        selct-comp (second (.getComponents (first (.getComponents inp-selct)))) 
+        inp-db (panel-for-input "Column type" "type of data to db" :select-col-type)
+        selct-col (second (.getComponents (first (.getComponents inp-db))))
+        inp-pr (panel-for-input "Private?" "true if column must be hided for user" :check)
+        inp-ed (panel-for-input "Editable?" "symbol for representation information by UI" :check)
+        main-panel (mig-panel :constraints ["wrap 1" "0px[100:,fill]0px" "0px[fill]0px"])]
+    (println (second (.getComponents (first (.getComponents inp-name)))))
+    (config! selct-comp
+             :listen [:action-performed (fn [e]
+                                          (.removeAllItems selct-col)
+                                          (doall (map (fn [x] (.addItem selct-col x))
+                                                      (get-component-add-column (.toString (.getSelectedItem selct-comp))))))])
+    (config! main-panel :items [[(gcomp/multi-panel [(vertical-panel :items (list inp-name inp-repr inp-descr))
+                                                     (vertical-panel :items (list inp-selct inp-db))
+                                                     (vertical-panel :items (list inp-pr inp-ed))]
+                                                    "" 0)]])))
+
+;; heyyyy
 (defn table-editor--component--column-picker
   "Create left table editor view to select column which will be editing on right table editor view"
   [work-mode local-changes column-editor-id columns path-to-value]
   (mig-panel :constraints ["wrap 1" "0px[100:,fill]0px" "0px[fill]0px"]
              :items
              (join-mig-items
+              (label :text "Columns" :border (empty-border :top 5 :bottom 5) :foreground blue-color)
               (map (fn [column index]
                      (let [path-to-value (join-vec path-to-value [index])
                            meta-panel (switch-column-to-editing work-mode local-changes path-to-value column)]
@@ -385,14 +478,17 @@
                         (get-in column [:representation])
                         (fn [e] (config! (select (to-root @app) [(convert-str-to-hashkey column-editor-id)]) :items (gtool/join-mig-items meta-panel))))))
                    columns (range (count columns)))
-              (table-editor--element--btn-add-column))))
+              (label :text "Actions" :border (empty-border :top 5 :bottom 5)  :foreground blue-color)
+              (table-editor--element--btn-add-column (fn [e] (config! (select (to-root @app) [(convert-str-to-hashkey column-editor-id)]) :items (gtool/join-mig-items (add-column-panel))))))
+))
 
 (defn table-editor--component--space-for-column-editor
   "Create right table editor view to editing selected column in left table editor view"
   [column-editor-id] (mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
                                 :id (keyword column-editor-id)
                                 :items [[(label)]]
-                                :border (line-border :left 4 :color (get-color :border :dark-gray))))
+                               ;; :border (line-border :left 4 :color (get-color :border :dark-gray))
+                                ))
 
 (def get-table-configuration-from-list-by-table-id
   (fn [tables-configurations table-id]
@@ -424,8 +520,7 @@
                                         (println "reload invoker" invoker-id)
                                         (if-not (nil? invoker-id) ((@gseed/jarman-views-service :reload) invoker-id))
                                         ((@gseed/jarman-views-service :reload))
-                                        (@alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)
-                                        ))))
+                                        (@alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)))))
 
 
 (defn table-editor--element--btn-show-changes
@@ -507,8 +602,7 @@
                                                                (param-to-edit (first  meta-params) true)
                                                                (param-to-edit (second meta-params) true))
                                                          :else
-                                                         (map #(param-to-edit % false) meta-params))
-                                                       )
+                                                         (map #(param-to-edit % false) meta-params)))
                                                      ))]))
                                     (gcomp/hr 15);; Columns properties
                                     (table-editor--element--header "Column configuration")
@@ -851,7 +945,6 @@
                                                         (catch Exception e (do
                                                                              (@alert-manager :set {:header "Warning!" :body (gtool/get-lang-alerts :configuration-corrupted)} (message alert-manager) 5)))))))
               restore-button))))))
-
 
 ;; ┌──────────────────────────┐
 ;; │                          │

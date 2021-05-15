@@ -140,7 +140,8 @@
 
 (def auto-builder--table-view
   (fn [controller]
-    (let [ico-open (jarman.tools.swing/image-scale jarman.resource-lib.icon-library/plus-64-png 28)
+    (let [
+          ico-open (jarman.tools.swing/image-scale jarman.resource-lib.icon-library/plus-64-png 28)
           ico-close (jarman.tools.swing/image-scale jarman.resource-lib.icon-library/minus-grey-64-png 28)
           form-panel (seesaw.mig/mig-panel
                       :constraints ["wrap 1" "0px[300:, grow, fill]0px" "15px[fill]0px"]

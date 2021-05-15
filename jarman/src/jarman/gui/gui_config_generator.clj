@@ -14,7 +14,6 @@
             [jarman.gui.gui-components :as gcomp]
             [jarman.tools.swing :as stool]
             [jarman.gui.gui-components :refer :all :as gcomp]
-
             ;; deverloper tools 
             [jarman.tools.lang :refer :all :as lang]))
 

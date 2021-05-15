@@ -421,7 +421,7 @@
                                         (println "reload invoker" invoker-id)
                                         (if-not (nil? invoker-id) ((@gseed/jarman-views-service :reload) invoker-id))
                                         ((@gseed/jarman-views-service :reload))
-                                        (@alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)))))
+                                        (@gseed/alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} (message gseed/alert-manager) 5)))))
 
 
 (defn table-editor--element--btn-show-changes
@@ -778,14 +778,15 @@
    "
   (fn [] (button-expand
           (gtool/get-lang-btns :settings)
-          (let [config-file-list-as-keyword (map #(first %) (cm/get-in-segment []))
+          (let [current-theme (str (first (cm/get-in-value [:themes :theme_config.edn :selected-theme])) ".edn")
+                config-file-list-as-keyword (map #(first %) (cm/get-in-segment []))
                 config-file-list-as-keyword-to-display (filter #(let [map-part (cm/get-in-segment (if (vector? %) % [%]))]
                                                                   (and (= :file (get map-part :type))
                                                                        (= :edit (get map-part :display))))
                                                                config-file-list-as-keyword)
                 restore-button (button-expand-child (get-lang-btns :restore-last-configuration)
                                                     :onClick (fn [e] (do
-                                                                       (if-not (nil? (cm/restore-config)) (@alert-manager :set {:header "Success!" :body (get-lang-alerts :restore-configuration-ok)} (message alert-manager) 5)))))]
+                                                                       (if-not (nil? (cm/restore-config)) (@gseed/alert-manager :set {:header "Success!" :body (get-lang-alerts :restore-configuration-ok)} (message gseed/alert-manager) 5)))))]
             (reverse
              (conj
               (map (fn [p]
@@ -798,7 +799,7 @@
                                                               :view-id view-id
                                                               :title title
                                                               :scrollable? false
-                                                              :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)))))))))
+                                                              :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message gseed/alert-manager) 5)))))))))
                    config-file-list-as-keyword-to-display)
 
               (let [path [:themes :theme_config.edn]
@@ -811,8 +812,8 @@
                                                        :title title
                                                        :scrollable? false
                                                        :component-fn (fn [] (cg/create-view--confgen path
-                                                                                                     :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5))))))))
-              (let [path [:themes :current-theme]
+                                                                                                     :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message gseed/alert-manager) 5))))))))
+              (let [path [:themes (keyword current-theme)] 
                     title (get (cm/get-in-segment path) :name)
                     view-id :current-theme]
                 (button-expand-child title :onClick (fn [e]
@@ -822,11 +823,12 @@
                                                          :view-id view-id
                                                          :title title
                                                          :scrollable? false
-                                                         :component-fn (fn [] (cg/create-view--confgen path
-                                                                                                       :message-ok (fn [txt] (@alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (message alert-manager) 5)))))
+                                                         :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (str (gtool/get-lang-alerts :changes-saved) "\n" txt)} (message gseed/alert-manager) 5)))))
                                                         (catch Exception e (do
-                                                                             (@alert-manager :set {:header "Warning!" :body (gtool/get-lang-alerts :configuration-corrupted)} (message alert-manager) 5)))))))
-              restore-button))))))
+                                                                             (@gseed/alert-manager :set {:header "Warning!" :body (str (gtool/get-lang-alerts :configuration-corrupted) "Exception: " e)} (message gseed/alert-manager) 5))))
+                                                      )))
+              ;; restore-button
+              ))))))
 
 
 ;; ┌──────────────────────────┐
@@ -885,11 +887,11 @@
                [views-space]]))))
 
 ;; (@gseed/jarman-views-service :reload :view-id (keyword "DB Visualiser"))
-;; (@gseed/jarman-views-service :get-all-view)
+;; (@gseed/jarman-views-service :get-all-view) 
 (defn create-period--period-form
   []
   (mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill][100, shrink 0, fill][grow, fill]0px"]
-             :items [[(gcomp/header-basic "Okresy" :args [:halign :center])]
+             :items [[(gcomp/header-basic "Okresy" :underline-size 1 :background "#ccc" :border-color "#ccc")]
                      [(gcomp/scrollbox
                        (mig-panel :constraints ["wrap 4" "10px[fill][fill]50px[fill][fill]10px" "10px[fill]10px"]
                                   :items [[(label :text "Organization:")]
@@ -992,7 +994,7 @@
                                  [(button-expand "Debug items"
                                                  [(button-expand-child "Popup" :onClick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200])))
                                                   (button-expand-child "Dialog" :onClick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100])))))
-                                                  (button-expand-child "alert" :onClick (fn [e] (@alert-manager :set {:header "Witaj<br>World" :body "Alllle<br>Luja"} (message alert-manager) 5)))])])]
+                                                  (button-expand-child "alert" :onClick (fn [e] (@gseed/alert-manager :set {:header "Witaj<br>World" :body "Alllle<br>Luja"} (message gseed/alert-manager) 5)))])])]
                [(right-part-of-jarman-as-space-for-views-service []
                                                                  [])]]))))
 
@@ -1016,20 +1018,22 @@
         (println "last pos" [(.x (.getLocationOnScreen (seesaw.core/to-frame @app))) (.y (.getLocationOnScreen (seesaw.core/to-frame @app)))])
         (reset! relative [(.x (.getLocationOnScreen (seesaw.core/to-frame @app))) (.y (.getLocationOnScreen (seesaw.core/to-frame @app)))])
         (.dispose (seesaw.core/to-frame @app))
-        (catch Exception e (println "Exception: " (.getMessage e))))
+        (catch Exception e (println "Last pos is nil")))
       (gseed/build :items (let [img-scale 35]
                             (list
                              (jarmanapp :margin-left img-scale)
                              (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser" {:onclick (fn [e] (@gseed/jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view))})
-                             (slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Message Store" {:onclick (fn [e] (@alert-manager :show))})
+                             (slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Message Store" {:onclick (fn [e] (@gseed/alert-manager :show))})
                              (slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 2 img-scale "Change work mode" {:onclick (fn [e]
                                                                                                                                            (cond (= "user"      (session/user-get-permission)) (session/user-set-permission "admin")
                                                                                                                                                  (= "admin"     (session/user-get-permission)) (session/user-set-permission "developer")
                                                                                                                                                  (= "developer" (session/user-get-permission)) (session/user-set-permission "user"))
-                                                                                                                                           (@alert-manager :set {:header "Work mode" :body (str "Switched to: " (session/user-get-permission))} (message alert-manager) 5)
+                                                                                                                                           (@gseed/alert-manager :set {:header "Work mode" :body (str "Switched to: " (session/user-get-permission))} (message gseed/alert-manager) 5)
                                                                                                                                            (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission))))})
-                             (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 3 img-scale "Docs Templates" {:onclick (fn [e] (@gseed/jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts alert-manager))))})
-                             (slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 4 img-scale "Reload active view" {:onclick (fn [e] ((@gseed/jarman-views-service :reload)))})
+                             (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 3 img-scale "Docs Templates" {:onclick (fn [e] (@gseed/jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts gseed/alert-manager))))})
+                             (slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 4 img-scale "Reload active view" {:onclick (fn [e] (try
+                                                                                                                                                          ((@gseed/jarman-views-service :reload))
+                                                                                                                                                          (catch Exception e (str "Can not reload. Storage is empty."))))})
                              (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 5 img-scale "Restart" {:onclick (fn [e] (@startup))})
 
                              @atom-popup-hook)))

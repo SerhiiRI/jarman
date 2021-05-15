@@ -23,7 +23,7 @@
 ;; └────────────────────┘                                       V
 
 
-(defn hr 
+(defn hr
   ([line-size] (label :border (empty-border :top line-size)))
   ([line-size line-color] (label :border (line-border :top line-size :color line-color))))
 
@@ -31,11 +31,13 @@
   [component & args]
   (let [scr (apply scrollable component :border nil args)
         scr (config! scr :listen [:property-change
-                                  (fn [e] (invoke-later (let [get-root (fn [e] (.getParent (.getParent (.getParent (.getSource e)))))
-                                                              vbar 40
-                                                              w (- (.getWidth (get-root e)) vbar)
-                                                              h (+ 50 vbar (.getHeight (config e :preferred-size)))]
-                                                          (config! component :size [w :by h]))))])]
+                                  (fn [e] (invoke-later (try
+                                                          (let [get-root (fn [e] (.getParent (.getParent (.getParent (.getSource e)))))
+                                                                vbar 40
+                                                                w (- (.getWidth (get-root e)) vbar)
+                                                                h (+ 50 vbar (.getHeight (config e :preferred-size)))]
+                                                            (config! component :size [w :by h]))
+                                                          (catch Exception e (str "Auto scroll cannot get parent")))))])]
 
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. 12 0))
@@ -53,15 +55,15 @@
 ;;     scr))
 
 (defn scrollbox
-  [component 
-   & {:keys [args 
+  [component
+   & {:keys [args
              hbar-size
              vbar-size]
-             
+
       :or {args []
            hbar-size 12
            vbar-size 12}}]
-           
+
   (let [scr (apply scrollable component :border nil args)]  ;; speed up scrolling
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setBorder scr nil)
@@ -159,7 +161,7 @@
                 :mouse-in (get-comp :button-export :mouse-in)
                 :mouse-out (get-comp :button-export :mouse-out)
                 :unfocus-color (get-comp :button-export :unfocus-color)))
-                
+
 
 
 
@@ -203,32 +205,32 @@
            border [10 10 5 5 2]
            char-limit 0
            args []}}]
-   (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
-         fn-assoc        (fn [e key val] (assoc-in (config e :user-data) [key] val))
-         newBorder (fn [underline-color]
-                     (compound-border (empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
-                                      (line-border :bottom (nth border 4) :color underline-color)))
-         last-v (atom "")]
-     (apply text
-            :text (if (empty? val) placeholder (if (string? val) val (str val)))
-            :font (getFont font-size :name "Monospaced")
-            :background (get-color :background :input)
-            :border (newBorder border-color-unfocus)
-            :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
-            :listen [:focus-gained (fn [e]
-                                     (config! e :border (newBorder border-color-focus))
-                                     (cond (= (value e) placeholder) (config! e :text ""))
-                                     (config! e :user-data (fn-assoc e :edit? true)))
-                     :focus-lost   (fn [e]
-                                     (config! e :border (newBorder border-color-unfocus))
-                                     (cond (= (value e) "") (config! e :text placeholder))
-                                     (config! e :user-data (fn-assoc e :edit? false)))
-                     :caret-update (fn [e]
-                                     (let [new-v (c/value (c/to-widget e))]
-                                       (if (and (> (count new-v) char-limit) (< 0 char-limit))
-                                         (invoke-later (config! e :text @last-v))
-                                         (reset! last-v new-v))))]
-            args)))
+  (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
+        fn-assoc        (fn [e key val] (assoc-in (config e :user-data) [key] val))
+        newBorder (fn [underline-color]
+                    (compound-border (empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
+                                     (line-border :bottom (nth border 4) :color underline-color)))
+        last-v (atom "")]
+    (apply text
+           :text (if (empty? val) placeholder (if (string? val) val (str val)))
+           :font (getFont font-size :name "Monospaced")
+           :background (get-color :background :input)
+           :border (newBorder border-color-unfocus)
+           :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
+           :listen [:focus-gained (fn [e]
+                                    (config! e :border (newBorder border-color-focus))
+                                    (cond (= (value e) placeholder) (config! e :text ""))
+                                    (config! e :user-data (fn-assoc e :edit? true)))
+                    :focus-lost   (fn [e]
+                                    (config! e :border (newBorder border-color-unfocus))
+                                    (cond (= (value e) "") (config! e :text placeholder))
+                                    (config! e :user-data (fn-assoc e :edit? false)))
+                    :caret-update (fn [e]
+                                    (let [new-v (c/value (c/to-widget e))]
+                                      (if (and (> (count new-v) char-limit) (< 0 char-limit))
+                                        (invoke-later (config! e :text @last-v))
+                                        (reset! last-v new-v))))]
+           args)))
 
 
 
@@ -287,7 +289,7 @@
      component
    "
   [title component
-   & {:keys [vtop 
+   & {:keys [vtop
              id]
       :or {vtop 0
            id nil}}]
@@ -336,7 +338,7 @@
                                  (config! e :border (newBorder border-color-unfocus)))
                  :caret-update (fn [e]
                                  (let [new-v (c/value (c/to-widget e))]
-                                   
+
                                    (if (and (> (count new-v) char-limit) (< 0 char-limit))
                                      (invoke-later (config! e :text @last-v))
                                      (reset! last-v new-v))
@@ -382,7 +384,7 @@
                                        (not store-orginal) (reset! local-changes (dissoc @local-changes store-id)))))
                    :focus-gained (fn [e] (c/config! e :border ((get-user-data e :border-fn) border-color-focus)))
                    :focus-lost   (fn [e] (c/config! e :border ((get-user-data e :border-fn) border-color-unfocus)))]]))
-                   
+
 
 
 
@@ -399,10 +401,10 @@
       (select-box [one two tree])
    "
   ([model
-    & {:keys [store-id 
-              local-changes 
-              selected-item 
-              editable? 
+    & {:keys [store-id
+              local-changes
+              selected-item
+              editable?
               enabled?
               always-set-changes]
        :or   {local-changes (atom {})
@@ -411,7 +413,7 @@
               enabled? true
               store-id nil
               always-set-changes true}}]
-   (if (and (= always-set-changes true) (not (empty? selected-item))) 
+   (if (and (= always-set-changes true) (not (empty? selected-item)))
      (do
        (swap! local-changes (fn [storage] (assoc storage store-id selected-item)))))
    (c/combobox :model (let [combo-model (if (empty? selected-item) (cons selected-item model) (lang/join-vec [selected-item] (filter #(not= selected-item %) model)))]
@@ -433,7 +435,7 @@
                                                   (= always-set-changes false)
                                                   (do
                                                     (reset! local-changes (dissoc @local-changes store-id))))))])))
- 
+
 
 (defn expand-form-panel
   "Description:
@@ -651,8 +653,8 @@
                                                  (doall (map #(.remove mig %) (reverse (drop 1 (range (count (children mig)))))))
                                                  (.revalidate mig)
                                                  (.repaint mig)))))])))))
-                                           
-                                                 
+
+
 
 
 (def button-expand-child
@@ -683,9 +685,9 @@
 ;; └────────────────────┘                                       V
 
 ;; BUTTON EXPAND
-(def view (fn [](button-expand "Expand"
-                          (button-expand-child "Expanded")
-                          (button-expand-child "Don't touch me." :onClick (fn [e] (config! (to-widget e) :text "FAQ 🖕( ͡° ᴗ ͡°)🖕" :font (getFont 14 :name "calibri")))))))
+(def view (fn [] (button-expand "Expand"
+                                (button-expand-child "Expanded")
+                                (button-expand-child "Don't touch me." :onClick (fn [e] (config! (to-widget e) :text "FAQ 🖕( ͡° ᴗ ͡°)🖕" :font (getFont 14 :name "calibri")))))))
 
 (def label-img
   (fn [file-path w h]
@@ -708,7 +710,7 @@
                                                                               :text (value (label-img "egg.gif" 150 130))))))
                       egg2]))))
 
-(def view (fn [](egg)))
+(def view (fn [] (egg)))
 
 
 
@@ -877,7 +879,7 @@
                                         (cond
                                           (and (not (nil? store-id))
                                                (not (= (str val) (str new-v))))
-                                          (do 
+                                          (do
                                             (swap! local-changes (fn [storage] (assoc storage store-id new-v))))
                                           :else (reset! local-changes (dissoc @local-changes store-id)))))]
              style))))
@@ -913,16 +915,16 @@
            buttons []}}]
   (let [btn (fn [txt ico onClick & args]
               (let [border-c "#bbb"]
-                    (label
-                     :font (getFont 13)
-                     :text txt
-                     :icon (stool/image-scale ico 30)
-                     :background "#fff"
-                     :foreground "#000"
-                     :border (compound-border (empty-border :left 15 :right 15 :top 5 :bottom 5) (line-border :thickness 1 :color border-c))
-                     :listen [:mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
-                              :mouse-exited  (fn [e] (config! e :background "#fff" :foreground "#000"))
-                              :mouse-clicked onClick])))]
+                (label
+                 :font (getFont 13)
+                 :text txt
+                 :icon (stool/image-scale ico 30)
+                 :background "#fff"
+                 :foreground "#000"
+                 :border (compound-border (empty-border :left 15 :right 15 :top 5 :bottom 5) (line-border :thickness 1 :color border-c))
+                 :listen [:mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
+                          :mouse-exited  (fn [e] (config! e :background "#fff" :foreground "#000"))
+                          :mouse-clicked onClick])))]
     (mig-panel
      :id id
      :background (new Color 0 0 0 0)

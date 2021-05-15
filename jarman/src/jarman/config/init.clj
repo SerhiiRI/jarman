@@ -17,7 +17,7 @@
 (def ^:dynamic *config-root* env/jarman-standart-config)
 (def ^:dynamic *config-themes* "themes")
 (def ^:dynamic *config-language* "language.edn")
-(def ^:dynamic *config-files* [[:init.edn] [:resource.edn] [:database.edn] [(keyword *config-themes*) :theme_config.edn]])
+(def ^:dynamic *config-files* [[:init.edn] [:resource.edn] [:database.edn] [(keyword *config-themes*) :theme_config.edn] [(keyword *config-themes*) :jarman_light.edn]])
 ;; (def ^:dynamic *config-on-valid* (conj ))
 
 

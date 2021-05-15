@@ -248,7 +248,7 @@
       (slider-ico-btn (stool/image-scale icon/user-64x64-2-png 50) 0 50 'Klienci' {:onclick (fn [e] (alert 'Clicked'))})
    "
   (fn [ico order size txt extends]
-    (let [bg-color "#ddd"
+    (let [bg-color "#eee"
           color-hover-margin "#bbb"
           bg-color-hover "#d9ecff"
           bg-color-hover "#fafafa"
@@ -267,7 +267,7 @@
                :items (join-mig-items icon))]
       (config! mig :listen [:mouse-entered (fn [e] (config! e
                                                             :cursor :hand
-                                                            :border  (line-border :bottom 3 :color "#999")
+                                                            ;; :border  (line-border :bottom 3 :color "#999")
                                                             :background bg-color-hover
                                                             ;; :bounds [0 y (+ (.getWidth (config title :preferred-size)) size 100) size]
                                                             :bounds [0 y (+ (.getWidth (select (.getParent mig) [:#expand-menu-space])) size) size])
@@ -276,7 +276,7 @@
                                              (.revalidate mig))
                             :mouse-exited  (fn [e] (config! e
                                                             :bounds [0 y size size]
-                                                            :border  (line-border :bottom 2 :color "#eee")
+                                                            ;; :border  (line-border :bottom 2 :color "#eee")
                                                             :background bg-color)
                                              (.remove mig 1)
                                              (.revalidate mig))

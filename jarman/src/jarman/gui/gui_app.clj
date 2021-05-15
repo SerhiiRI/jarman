@@ -716,29 +716,6 @@
 ;; (println MouseEvent/BUTTON3)
 ;; (@startup)
 
-(defn db-viewer--component--menu-bar
-  "Description:
-       Menu to control tables view (functionality for db-view)"
-  [] (let [btn (fn [txt ico onClick & args] (let
-                                             [border-c "#bbb"]
-                                              (label
-                                               :font (getFont 13)
-                                               :text txt
-                                               :icon (stool/image-scale ico 30)
-                                               :background "#fff"
-                                               :foreground "#000"
-                                               :border (compound-border (empty-border :left 15 :right 15 :top 5 :bottom 5) (line-border :thickness 1 :color border-c))
-                                               :listen [:mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
-                                                        :mouse-exited  (fn [e] (config! e :background "#fff" :foreground "#000"))
-                                                        :mouse-clicked onClick])))]
-       (mig-panel
-        :id :db-viewer--component--menu-bar
-        :background (new Color 0 0 0 0)
-        :constraints ["" "5px[fill]0px" "5px[fill]5px"]
-        :items [[(btn "Show all relation" icon/refresh-connection-blue-64-png (fn [e]))]
-                [(btn "Save view" icon/agree-grey-64-png (fn [e]))]
-                [(btn "Reset view" icon/arrow-blue-left-64-png (fn [e]))]
-                [(btn "Reloade view" icon/refresh-blue-64-png (fn [e] ((@gseed/jarman-views-service :reload))))]])))
 
 ;; ((@gseed/jarman-views-service :reload))
 
@@ -778,7 +755,12 @@
      (mig-panel
       :border nil
       :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px[grow, fill]0px"]
-      :items [[(db-viewer--component--menu-bar)]
+      :items [[(gcomp/menu-bar
+                :id :db-viewer--component--menu-bar
+                :buttons [["Show all relation" icon/refresh-connection-blue-64-png (fn [e])]
+                          ["Save view" icon/agree-grey-64-png (fn [e])]
+                          ["Reset view" icon/arrow-blue-left-64-png (fn [e])]
+                          ["Reloade view" icon/refresh-blue-64-png (fn [e] ((@gseed/jarman-views-service :reload)))]])]
               [rootJLP]]))))
 
 
@@ -991,7 +973,7 @@
    "
   (fn [& {:keys [margin-left]
           :or {margin-left 0}}]
-    (let [bg-color "#ddd"
+    (let [bg-color "#eee"
           vhr-color "#999"]
       (mig-panel
        :id :rebound-layer
@@ -1035,7 +1017,7 @@
         (reset! relative [(.x (.getLocationOnScreen (seesaw.core/to-frame @app))) (.y (.getLocationOnScreen (seesaw.core/to-frame @app)))])
         (.dispose (seesaw.core/to-frame @app))
         (catch Exception e (println "Exception: " (.getMessage e))))
-      (gseed/build :items (let [img-scale 40]
+      (gseed/build :items (let [img-scale 35]
                             (list
                              (jarmanapp :margin-left img-scale)
                              (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser" {:onclick (fn [e] (@gseed/jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view))})

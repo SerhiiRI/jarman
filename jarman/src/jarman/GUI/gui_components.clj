@@ -848,3 +848,36 @@
 ;;                           :content (view))
 ;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
 ;;   (seesaw.core/config! my-frame :size [800 :by 600]))
+
+
+
+
+(defn menu-bar
+  "Description:
+       
+   Example:
+      (menu-bar :buttons [[\"title1\" icon1 fn1] [\"title2\" icon2 fn2]])
+      (menu-bar :id :my-id :buttons [[\"title1\" icon1 fn1] [\"title2\" icon2 fn2]])
+   "
+  [& {:keys [id
+             buttons]
+      :or {id :none
+           buttons []}}]
+  (let [btn (fn [txt ico onClick & args]
+              (let
+               [border-c "#bbb"]
+                (label
+                 :font (getFont 13)
+                 :text txt
+                 :icon (stool/image-scale ico 30)
+                 :background "#fff"
+                 :foreground "#000"
+                 :border (compound-border (empty-border :left 15 :right 15 :top 5 :bottom 5) (line-border :thickness 1 :color border-c))
+                 :listen [:mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
+                          :mouse-exited  (fn [e] (config! e :background "#fff" :foreground "#000"))
+                          :mouse-clicked onClick])))]
+    (mig-panel
+     :id id
+     :background (new Color 0 0 0 0)
+     :constraints ["" "5px[fill]0px" "5px[fill]5px"]
+     :items (if (empty? buttons) [[(label)]] (gtool/join-mig-items (map #(btn (first %) (second %) (last %)) buttons))))))

@@ -81,7 +81,7 @@
       :or {editable? false
            enabled? true
            set-date (date)}}]
-  (get-calendar (gcomp/input-text :v set-date :args [:enabled? enabled? :editable? editable?])))
+  (get-calendar (gcomp/input-text :val set-date :args [:enabled? enabled? :editable? editable?])))
 
 (defn calendar-with-atom
   [& {:keys [local-changes
@@ -95,7 +95,7 @@
            editable? false
            enabled? true}}]
   (get-calendar (gcomp/input-text
-                 :v set-date
+                 :val set-date
                  :args [:enabled? enabled?
                         :editable? editable?
                         :listen [:caret-update (fn [e]

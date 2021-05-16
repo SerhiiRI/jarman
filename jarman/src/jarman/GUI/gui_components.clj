@@ -37,7 +37,7 @@
 (def red-color "#f01159")
 (def back-color "#c5d3dd")
 
-(defn hr 
+(defn rgap
   ([line-size] (label :border (empty-border :top line-size)))
   ([line-size line-color] (label :border (line-border :top line-size :color line-color))))
 
@@ -45,11 +45,13 @@
   [component & args]
   (let [scr (apply scrollable component :border nil args)
         scr (config! scr :listen [:property-change
-                                  (fn [e] (invoke-later (let [get-root (fn [e] (.getParent (.getParent (.getParent (.getSource e)))))
-                                                              vbar 40
-                                                              w (- (.getWidth (get-root e)) vbar)
-                                                              h (+ 50 vbar (.getHeight (config e :preferred-size)))]
-                                                          (config! component :size [w :by h]))))])]
+                                  (fn [e] (invoke-later (try
+                                                          (let [get-root (fn [e] (.getParent (.getParent (.getParent (.getSource e)))))
+                                                                vbar 40
+                                                                w (- (.getWidth (get-root e)) vbar)
+                                                                h (+ 50 vbar (.getHeight (config e :preferred-size)))]
+                                                            (config! component :size [w :by h]))
+                                                          (catch Exception e (str "Auto scroll cannot get parent")))))])]
 
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. 12 0))
@@ -66,15 +68,69 @@
 ;;    (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. 12 0)) 
 ;;     scr))
 
+
+(defn vmig
+  [& {:keys [items
+             wrap
+             lgap
+             rgap
+             tgap
+             bgap
+             vrules
+             hrules
+             args]
+      :or {items [[(label)]]
+           wrap 1
+           lgap 0
+           rgap 0
+           tgap 0
+           bgap 0
+           vrules "[grow, fill]"
+           hrules "[grow, fill]"
+           args []}}]
+  (apply mig-panel
+         :constraints [(str "wrap " wrap) (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
+         :items items
+         args))
+
+(defn hmig
+  [& {:keys [items
+             wrap
+             lgap
+             rgap
+             tgap
+             bgap
+             vrules
+             hrules
+             args]
+      :or {items [[(label)]]
+           wrap ""
+           lgap 0
+           rgap 0
+           tgap 0
+           bgap 0
+           vrules "[grow, fill]"
+           hrules "[grow, fill]"
+           args []}}]
+  (apply mig-panel
+         :constraints [wrap (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
+         :items items
+         args))
+
+
 (defn scrollbox
-  [component 
-   & {:keys [args 
+  [component
+   & {:keys [args
              hbar-size
              vbar-size]
+<<<<<<< HEAD
+=======
+
+>>>>>>> 07cc44744997adf8f3beb9111d5fd7bb342bdfc2
       :or {args []
            hbar-size 12
            vbar-size 12}}]
-           
+
   (let [scr (apply scrollable component :border nil args)]  ;; speed up scrolling
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setBorder scr nil)
@@ -89,22 +145,33 @@
   [title
    & {:keys [foreground
              background
+             border-size
+             border-color
              border
+             underline-color
+             underline-size
+             font-size
+             font-style
              font
              args]
-      :or {foreground (gtool/get-color :foreground :dark-header)
-           background (gtool/get-color :background :dark-header)
-           border     (line-border :thickness 10 :color (gtool/get-color :background :dark-header))
-           font (gtool/getFont 16)
+      :or {foreground (gtool/get-comp :header-basic :foreground)
+           background (gtool/get-comp :header-basic :background)
+           border-color (gtool/get-comp :header-basic :border-color)
+           border-size (gtool/get-comp :header-basic :border-size)
+           underline-color (gtool/get-comp :header-basic :underline-color)
+           underline-size (gtool/get-comp :header-basic :underline-size)
+           border (fn [size color usize ucolor] (compound-border  (line-border :thickness size :color color) (line-border :bottom usize :color ucolor)))
+           font-size (gtool/get-comp :header-basic :font-size)
+           font-style (keyword (first (gtool/get-comp :header-basic :font-style)))
+           font (fn [size style] (gtool/getFont size style))
            args []}}]
   (apply label
          :text title
-         :font font
+         :font (font font-size font-style)
          :foreground foreground
          :background background
-         :border border
+         :border (border border-size border-color underline-size underline-color)
          args))
-
 
 (defmacro textarea
   "Description
@@ -112,62 +179,84 @@
    "
   [text & args] `(label :text `~(htmling ~text) ~@args))
 
-
 (defn button-basic
   "Description:
       Simple button with default style.
    Example:
       (simple-button \"Simple button\" (fn [e]) :style [:background \"#fff\"])
    "
-  [txt func & {:keys [args
-                      vtop
-                      vbot
-                      hl
-                      hr
-                      mouse-in
-                      mouse-out
-                      focus-color
-                      unfocus-color]
-               :or   {args []
-                      vtop 10
-                      vbot 10
-                      hl 10
-                      hr 10
-                      mouse-in  (get-color :background :button_hover_light)
-                      mouse-out (get-color :background :button_main)
-                      focus-color (get-color :decorate :focus-gained)
-                      unfocus-color (get-color :decorate :focus-lost)}}]
+  [txt & {:keys [onClick
+                 args
+                 tgap
+                 bgap
+                 lgap
+                 rgap
+                 halign
+                 mouse-in
+                 underline-size
+                 mouse-out
+                 focus-color
+                 unfocus-color]
+          :or   {onClick (fn [e])
+                 args []
+                 tgap 10
+                 bgap 10
+                 lgap 10
+                 rgap 10
+                 underline-size 2
+                 halign :center
+                 mouse-in  (get-color :background :button_hover_light)
+                 mouse-out (get-color :background :button_main)
+                 focus-color (get-color :decorate :focus-gained)
+                 unfocus-color (get-color :decorate :focus-lost)}}]
   (let [newBorder (fn [underline-color]
-                    (compound-border (empty-border :bottom vbot :top vtop :left hl :right hr)
-                                     (line-border :bottom 2 :color underline-color)))]
+                    (compound-border (empty-border :bottom bgap :top tgap :left lgap :right rgap)
+                                     (line-border :bottom underline-size :color underline-color)))]
     (apply label
            :text txt
            :focusable? true
-           :halign :center
-           :listen [:mouse-clicked func
+           :halign halign
+           :listen [:mouse-clicked onClick
                     :mouse-entered (fn [e] (config! e :background mouse-in) (hand-hover-on e))
                     :mouse-exited  (fn [e] (config! e :background mouse-out))
                     :focus-gained  (fn [e] (config! e :border (newBorder focus-color)))
                     :focus-lost    (fn [e] (config! e :border (newBorder unfocus-color)))
-                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) func))]
+                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) onClick))]
            :background mouse-out
            :border (newBorder unfocus-color)
            args)))
 
 
+(defn button-slim
+  [text
+   & {:keys [onClick args]
+      :or {onClick (fn [e])
+           args []}}]
+  (button-basic
+   text
+   :onClick onClick
+   :tgap 5
+   :bgap 4
+   :underline-size 1
+   :halign :left
+   :args args))
+
+
 (defn button-export
-  [txt func]
-  (button-basic txt func
+  [txt onClick]
+  (button-basic txt 
+                :onClick onClick
                 :mouse-in (get-comp :button-export :mouse-in)
                 :mouse-out (get-comp :button-export :mouse-out)
-                :unfocus-color (get-comp :button-export :unfocus-color)
-                ))
+                :unfocus-color (get-comp :button-export :unfocus-color)))
+
 
 
 
 (defn button-return
   [txt func]
-  (button-basic txt func
+  (button-basic txt 
+                :onClick func
                 :mouse-in (get-comp :button-return :mouse-in)
                 :mouse-out (get-comp :button-return :mouse-out)
                 :unfocus-color (get-comp :button-return :unfocus-color)
@@ -178,6 +267,7 @@
 (defn input-text
   "Description:
     Text component converted to text component with placeholder. Placehlder will be default value.
+<<<<<<< HEAD
  Example:
     (input-text :placeholder \"Login\" :style [:halign :center])"
   ([& {:keys [v
@@ -222,6 +312,62 @@
                                           (invoke-later (config! e :text @last-v))
                                           (reset! last-v new-v))))]
              args))))
+=======
+   Params:
+    val
+    placeholder
+    border
+    font-size
+    border-color-focus
+    border-color-unfocus
+    char-limit
+    args
+   Example:
+    (input-text :placeholder \"Login\" :style [:halign :center])
+ "
+  [& {:keys [val
+             placeholder
+             border
+             font-size
+             border-color-focus
+             border-color-unfocus
+             char-limit
+             args]
+      :or {val ""
+           placeholder ""
+           font-size 14
+           border-color-focus   (get-color :decorate :focus-gained)
+           border-color-unfocus (get-color :decorate :focus-lost)
+           border [10 10 5 5 2]
+           char-limit 0
+           args []}}]
+  (let [fn-get-data     (fn [e key] (get-in (config e :user-data) [key]))
+        fn-assoc        (fn [e key val] (assoc-in (config e :user-data) [key] val))
+        newBorder (fn [underline-color]
+                    (compound-border (empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
+                                     (line-border :bottom (nth border 4) :color underline-color)))
+        last-v (atom "")]
+    (apply text
+           :text (if (empty? val) placeholder (if (string? val) val (str val)))
+           :font (getFont font-size :name "Monospaced")
+           :background (get-color :background :input)
+           :border (newBorder border-color-unfocus)
+           :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
+           :listen [:focus-gained (fn [e]
+                                    (config! e :border (newBorder border-color-focus))
+                                    (cond (= (value e) placeholder) (config! e :text ""))
+                                    (config! e :user-data (fn-assoc e :edit? true)))
+                    :focus-lost   (fn [e]
+                                    (config! e :border (newBorder border-color-unfocus))
+                                    (cond (= (value e) "") (config! e :text placeholder))
+                                    (config! e :user-data (fn-assoc e :edit? false)))
+                    :caret-update (fn [e]
+                                    (let [new-v (c/value (c/to-widget e))]
+                                      (if (and (> (count new-v) char-limit) (< 0 char-limit))
+                                        (invoke-later (config! e :text @last-v))
+                                        (reset! last-v new-v))))]
+           args)))
+>>>>>>> 07cc44744997adf8f3beb9111d5fd7bb342bdfc2
 
 (defn input-checkbox
   [& {:keys [
@@ -280,16 +426,21 @@
      component
    "
   [title component
-   & {:keys [vtop 
+   & {:keys [tgap
              id]
-      :or {vtop 0
+      :or {tgap 0
            id nil}}]
   (c/grid-panel :columns 1
                 :id id
+<<<<<<< HEAD
                 :border (empty-border :top vtop)
                 :items [(c/label
                          :foreground blue-color
                          :text (if (string? title) title ""))
+=======
+                :border (empty-border :top tgap)
+                :items [(c/label :text (if (string? title) title ""))
+>>>>>>> 07cc44744997adf8f3beb9111d5fd7bb342bdfc2
                         component]))
 
 (defn input-text-area
@@ -329,6 +480,10 @@
                                  (config! e :border (newBorder border-color-unfocus)))
                  :caret-update (fn [e]
                                  (let [new-v (c/value (c/to-widget e))]
+<<<<<<< HEAD
+=======
+
+>>>>>>> 07cc44744997adf8f3beb9111d5fd7bb342bdfc2
                                    (if (and (> (count new-v) char-limit) (< 0 char-limit))
                                      (invoke-later (config! e :text @last-v))
                                      (reset! last-v new-v))
@@ -372,22 +527,40 @@
                                        (not store-orginal) (reset! local-changes (dissoc @local-changes store-id)))))
                    :focus-gained (fn [e] (c/config! e :border ((get-user-data e :border-fn) border-color-focus)))
                    :focus-lost   (fn [e] (c/config! e :border ((get-user-data e :border-fn) border-color-unfocus)))]]))
+<<<<<<< HEAD
+=======
+
+>>>>>>> 07cc44744997adf8f3beb9111d5fd7bb342bdfc2
 
 
 
 (defn select-box
   "Description
       Set model and you can add extending parameter.
+   Params:
+      store-id 
+      local-changes
+      selected-item
+      editable? 
+      enabled?
    Example:
       (select-box [one two tree])"
   ([model
-    & {:keys [store-id local-changes selected-item editable? enabled?]
+    & {:keys [store-id
+              local-changes
+              selected-item
+              editable?
+              enabled?
+              always-set-changes]
        :or   {local-changes (atom {})
               selected-item ""
               editable? true
               enabled? true
-              store-id nil}}]
-   (if-not (empty? selected-item) (swap! local-changes (fn [storage] (assoc storage store-id selected-item))))
+              store-id nil
+              always-set-changes true}}]
+   (if (and (= always-set-changes true) (not (empty? selected-item)))
+     (do
+       (swap! local-changes (fn [storage] (assoc storage store-id selected-item)))))
    (c/combobox :model (let [combo-model (if (empty? selected-item) (cons selected-item model) (lang/join-vec [selected-item] (filter #(not= selected-item %) model)))]
                         combo-model)
                :font (getFont 14)
@@ -398,12 +571,25 @@
                                               (let [new-v (c/config e :selected-item)]
                                                 ;; (println "new value" new-v)
                                                 (cond
+<<<<<<< HEAD
                                                   (and
                                                    (not (nil? store-id))
                                                    (not (= selected-item new-v)))
                                                   (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
                                                   :else (reset! local-changes (dissoc @local-changes store-id)))))])))
  
+=======
+                                                  (and (not (nil? store-id))
+                                                       (or
+                                                        (= always-set-changes true)
+                                                        (not (= selected-item new-v))))
+                                                  (do
+                                                    (swap! local-changes (fn [storage] (assoc storage store-id new-v))))
+                                                  (= always-set-changes false)
+                                                  (do
+                                                    (reset! local-changes (dissoc @local-changes store-id))))))])))
+
+>>>>>>> 07cc44744997adf8f3beb9111d5fd7bb342bdfc2
 
 (defn expand-form-panel
   "Description:
@@ -415,6 +601,11 @@
    & {:keys [min-w
              w
              max-w
+             lgap
+             rgap
+             tgap
+             bgap
+             vrules
              icon-open
              icon-hide
              text-open
@@ -424,6 +615,11 @@
       :or {min-w 250
            w 250
            max-w 250
+           lgap 0
+           rgap 0
+           tgap 0
+           bgap 0
+           vrules "[fill]"
            ico-open nil
            icon-hide nil
            text-open "<<"
@@ -431,8 +627,8 @@
            focus-color (get-color :decorate :focus-gained-dark)
            unfocus-color "#fff"}}]
   (let [hidden-comp (atom nil)
-        hsize (if (< max-w w) (str "0px[" min-w ":" w ":" w ", grow, fill]10px") (str "0px[" min-w ":" w ":" max-w ", grow,fill]10px"))
-        form-space-open ["wrap 1" hsize "0px[fill]0px"]
+        hsize (if (< max-w w) (str lgap "px[" min-w ":" w ":" w ", grow, fill]" rgap "px") (str lgap "px[" min-w ":" w ":" max-w ", grow,fill]" rgap "px"))
+        form-space-open ["wrap 1" hsize (str tgap "px[fill]0px" vrules bgap "px")]
         form-space-hide ["" "0px[grow, fill]0px" "0px[grow, fill]0px"]
         form-space (smig/mig-panel :constraints form-space-open)
         onClick (fn [e]
@@ -557,7 +753,7 @@
    Example:
       (button-expand 'Button name' (Element or Component))
       (button-expand 'Profile' (button 'Do something'))
-      (button-expand 'Settings' (button 'Do something') (button 'Do something else'))
+      (button-expand 'Settings' (list (button 'Do something') (button 'Do something else')))
    Needed:
       Import jarman.dev-tools
       Function need stool/image-scale function for scalling icon
@@ -618,6 +814,12 @@
                                                  (doall (map #(.remove mig %) (reverse (drop 1 (range (count (children mig)))))))
                                                  (.revalidate mig)
                                                  (.repaint mig)))))])))))
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> 07cc44744997adf8f3beb9111d5fd7bb342bdfc2
 
 (def button-expand-child
   "Description
@@ -639,7 +841,6 @@
 
 
 
-
 ;; ┌────────────────────┐
 ;; │                    │
 ;; │ Examples           │
@@ -647,9 +848,9 @@
 ;; └────────────────────┘                                       
 
 ;; BUTTON EXPAND
-(def view (fn [](button-expand "Expand"
-                          (button-expand-child "Expanded")
-                          (button-expand-child "Don't touch me." :onClick (fn [e] (config! (to-widget e) :text "FAQ 🖕( ͡° ᴗ ͡°)🖕" :font (getFont 14 :name "calibri")))))))
+(def view (fn [] (button-expand "Expand"
+                                (button-expand-child "Expanded")
+                                (button-expand-child "Don't touch me." :onClick (fn [e] (config! (to-widget e) :text "FAQ 🖕( ͡° ᴗ ͡°)🖕" :font (getFont 14 :name "calibri")))))))
 
 (def label-img
   (fn [file-path w h]
@@ -672,7 +873,7 @@
                                                                               :text (value (label-img "egg.gif" 150 130))))))
                       egg2]))))
 
-(def view (fn [](egg)))
+(def view (fn [] (egg)))
 
 (def input-float
   "Description:
@@ -752,7 +953,7 @@
                                       (let [new-v @last-v] ;; local-changes
                                         (cond
                                           (and (not (nil? store-id))
-                                               (not (= val new-v)))
+                                               (not (= (str val) (str new-v))))
                                           (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
                                           :else (reset! local-changes (dissoc @local-changes store-id))))
 
@@ -763,11 +964,21 @@
   "Description:
     Text component converted to automatic int number validator. Return only correct value.
     Implemented local-changes.
+ Params:
+    style
+    display
+    val
+    font-size
+    border-color-focus
+    border-color-unfocus
+    border
+    char-limit
+    local-changes
+    store-id
  Example:
     ((def input-number :style [:halign :center])
  "
   (fn [& {:keys [style
-                 display
                  val
                  font-size
                  border-color-focus
@@ -777,7 +988,6 @@
                  local-changes
                  store-id]
           :or   {style []
-                 display nil
                  val "0"
                  font-size 14
                  border-color-focus   (get-color :decorate :focus-gained)
@@ -792,7 +1002,7 @@
           last-v (atom 0)]
       (apply text
              :text (if (nil? val) "0" val)
-             :font (getFont font-size :name "Monospaced")
+             :font (getFont font-size :name (gtool/get-font :regular))
              :background (get-color :background :input)
              :border (newBorder border-color-unfocus)
              :listen [:focus-gained (fn [e] (config! e :border (newBorder border-color-focus)))
@@ -809,7 +1019,6 @@
                                               (reset! last-v ""))
                                             (do ;; if :text not empty 
                                               (let [v (re-matches #"^[+-]?[1-9][0-9]*$" (value e))] ;; cut 0 on front
-                                                (println v)
                                                 (cond
                                                   (and (= "0" (str (first (value e)))) (= 1 (count (value e))))
                                                   (do
@@ -826,10 +1035,15 @@
                                       (let [new-v @last-v] ;; local-changes
                                         (cond
                                           (and (not (nil? store-id))
-                                               (not (= val new-v)))
-                                          (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
+                                               (not (= (str val) (str new-v))))
+                                          (do
+                                            (swap! local-changes (fn [storage] (assoc storage store-id new-v))))
                                           :else (reset! local-changes (dissoc @local-changes store-id)))))]
              style))))
+<<<<<<< HEAD
+=======
+;; (@jarman.gui.gui-app/startup)
+>>>>>>> 07cc44744997adf8f3beb9111d5fd7bb342bdfc2
 
 ;; (def view (fn [] (let [lbl (label)]
 ;;                    (mig-panel :constraints ["" "fill, grow" ""] :border (line-border :thickness 1 :color "#000") :size [200 :by 30] 
@@ -855,8 +1069,7 @@
       :or {id :none
            buttons []}}]
   (let [btn (fn [txt ico onClick & args]
-              (let
-               [border-c "#bbb"]
+              (let [border-c "#bbb"]
                 (label
                  :font (getFont 13)
                  :text txt
@@ -873,6 +1086,7 @@
      :constraints ["" "5px[fill]0px" "5px[fill]5px"]
      :items (if (empty? buttons) [[(label)]] (gtool/join-mig-items (map #(btn (first %) (second %) (last %)) buttons))))))
 
+<<<<<<< HEAD
 
 
 (defn- validate-fields [cmpts-atom num]
@@ -958,3 +1172,33 @@
              [(nth panels num) "span 2"]])))
 
 
+=======
+(defn menu-bar-right
+  "Description:
+       
+   Example:
+      (menu-bar :buttons [[\"title1\" icon1 fn1] [\"title2\" icon2 fn2]])
+      (menu-bar :id :my-id :buttons [[\"title1\" icon1 fn1] [\"title2\" icon2 fn2]])
+   "
+  [& {:keys [id
+             buttons]
+      :or {id :none
+           buttons []}}]
+  (let [btn (fn [txt ico onClick & args]
+              (let [border-c "#bbb"]
+                (label
+                 :font (getFont 13)
+                 :text txt
+                 :icon (stool/image-scale ico 30)
+                 :background "#fff"
+                 :foreground "#000"
+                 :border (compound-border (empty-border :left 15 :right 15 :top 5 :bottom 5) (line-border :thickness 1 :color border-c))
+                 :listen [:mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
+                          :mouse-exited  (fn [e] (config! e :background "#fff" :foreground "#000"))
+                          :mouse-clicked onClick])))]
+    (mig-panel
+     :id id
+     :background (new Color 0 0 0 0)
+     :constraints ["" "5px[grow, fill]0px[fill]5px" "5px[fill]5px"]
+     :items (if (empty? buttons) [[(label)]] (gtool/join-mig-items (label) (map #(btn (first %) (second %) (last %)) buttons))))))
+>>>>>>> 07cc44744997adf8f3beb9111d5fd7bb342bdfc2

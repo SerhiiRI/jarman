@@ -199,30 +199,31 @@
                                                                       :val (if (nil? model) "" (get model :documents.prop))))
                     (gcomp/inpose-label "Choose file with template" input-chooser)
                     (gcomp/hr 10)
-                    (gcomp/button-basic insert-or-update (fn [e]
+                    (gcomp/button-basic insert-or-update
+                                        :onClick (fn [e]
                                                           ;;  (println "atom" @complete)
-                                                           (if (nil? model)
-                                                             (if (and (not (nil? (get @complete :documents.table)))
-                                                                      (not (empty? (c/config input-text :text))))
-                                                               (let [insert-meta {:table    (get @complete :documents.table)
-                                                                                  :name     (get @complete :documents.name)
-                                                                                  :document (c/config input-text :text)
-                                                                                  :prop     (symbol (get @complete :documents.prop))}]
-                                                                 (println "to save" insert-meta)
-                                                                 (dm/insert-document insert-meta)
+                                                   (if (nil? model)
+                                                     (if (and (not (nil? (get @complete :documents.table)))
+                                                              (not (empty? (c/config input-text :text))))
+                                                       (let [insert-meta {:table    (get @complete :documents.table)
+                                                                          :name     (get @complete :documents.name)
+                                                                          :document (c/config input-text :text)
+                                                                          :prop     (symbol (get @complete :documents.prop))}]
+                                                         (println "to save" insert-meta)
+                                                         (dm/insert-document insert-meta)
                                                                 ;;  (if-not (nil? alerts) (@jarman.gui.gui-seed/alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :insert-new-record)} (@jarman.gui.gui-seed/alert-manager :message jarman.gui.gui-seed/alert-manager) 5))
-                                                                 ((@jarman.gui.gui-seed/jarman-views-service :reload))
-                                                                 ))
+                                                         ((@jarman.gui.gui-seed/jarman-views-service :reload))))
 
-                                                             (if (not (nil? (get @complete :documents.table)))
-                                                               (let [insert-meta {:id       (get model (:->model->id controller))
-                                                                                  :table    (get @complete :documents.table)
-                                                                                  :name     (get @complete :documents.name)
-                                                                                  :prop     (symbol (get @complete :documents.prop))}]
-                                                                 (dm/insert-document insert-meta)
-                                                                 (println "to save" insert-meta)
-                                                                 ((@jarman.gui.gui-seed/jarman-views-service :reload)))))))
-                    (if (nil? model) (c/label) (gcomp/button-basic delete (fn [e]
+                                                     (if (not (nil? (get @complete :documents.table)))
+                                                       (let [insert-meta {:id       (get model (:->model->id controller))
+                                                                          :table    (get @complete :documents.table)
+                                                                          :name     (get @complete :documents.name)
+                                                                          :prop     (symbol (get @complete :documents.prop))}]
+                                                         (dm/insert-document insert-meta)
+                                                         (println "to save" insert-meta)
+                                                         ((@jarman.gui.gui-seed/jarman-views-service :reload)))))))
+                    (if (nil? model) (c/label) (gcomp/button-basic delete 
+                                                                   :onClick (fn [e]
                                                                             ;; (println "Delete row: " (get model (:->model->id controller)))
                                                                             (println "Delete " model)
                                                                             (dm/delete-document {:id (get model (:->model->id controller))})
@@ -248,7 +249,7 @@
           update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form controller model start-focus (return))] :w 300))
           x nil ;;------------ Build
           expand-insert-form (gcomp/scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)] :w 300) :hscroll :never)
-          back-to-insert     (fn [] (gcomp/button-basic "<< Return to Insert Form" (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
+          back-to-insert     (fn [] (gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
           table              (fn [] ((:->table controller) (fn [model] (expand-update-form model back-to-insert))))
           x nil ;;------------ Finish

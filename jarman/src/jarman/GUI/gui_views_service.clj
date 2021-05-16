@@ -3,10 +3,12 @@
         seesaw.mig
         seesaw.dev
         seesaw.border)
-  (:require [jarman.resource-lib.icon-library :as icon]
-            [seesaw.util :as u]
-            [jarman.tools.swing :as stool]
-            [jarman.gui.gui-components :refer :all :as gcomp]))
+  (:require
+   [seesaw.core :as c]
+   [jarman.resource-lib.icon-library :as icon]
+   [seesaw.util :as u]
+   [jarman.tools.swing :as stool]
+   [jarman.gui.gui-components :refer :all :as gcomp]))
 
 ;; ┌───────────────────────────┐
 ;; │                           │
@@ -37,26 +39,26 @@
                 :border (empty-border :left 5 :right 5)
                 :size [hsize :by vsize]
                 :listen [:mouse-clicked onclick
-                         :mouse-entered (fn [e] (config! e :cursor :hand))])
+                         :mouse-entered (fn [e] (c/config! e :cursor :hand))])
                (label ;; close icon
                 :icon (jarman.tools.swing/image-scale icon/x-grey2-64-png 15)
                 :halign :center
                 :border (line-border :right 2 :color border)
                 :size [vsize :by vsize]
-                :listen [:mouse-entered (fn [e] (config! e
+                :listen [:mouse-entered (fn [e] (c/config! e
                                                          :cursor :hand
                                                          :icon (jarman.tools.swing/image-scale icon/x-blue1-64-png 15)))
-                         :mouse-exited  (fn [e] (config! e
+                         :mouse-exited  (fn [e] (c/config! e
                                                          :icon (jarman.tools.swing/image-scale icon/x-grey2-64-png 15)))
                          :mouse-clicked onclose])]
-       :listen [:mouse-entered (fn [e] (config! e :cursor :hand))]))))
+       :listen [:mouse-entered (fn [e] (c/config! e :cursor :hand))]))))
 
 (def recolor-tab
   (fn [tab color]
-    (let [title (first  (config tab :items))
-          close (second (config tab :items))]
-      (config! title :background color)
-      (config! close :background color))))
+    (let [title (first  (c/config tab :items))
+          close (second (c/config tab :items))]
+      (c/config! title :background color)
+      (c/config! close :background color))))
 
 (def deactive-all-tabs
   (fn [service-data]
@@ -71,20 +73,20 @@
       ;; (println "view-data in set view " view-data)
       (if (nil? view-data)
         (do
-          (config! (service-data :view-space) :items [[(label)]])
-          (config! (service-data :view-space) :user-data :none))
+          (c/config! (service-data :view-space) :items [[(label)]])
+          (c/config! (service-data :view-space) :user-data :none))
         (do
           (let [component (get view-data :component)
                 height    (get view-data :pref-height)
                 scrollable? (get view-data :scrollable?)
                 scrollable? false]
             ;; (println "component to set " component)
-            ;; (config! (service-data :view-space) :items (if scrollable? [[(gcomp/scrollbox component)]] [[component]]))
-            (config! (service-data :view-space) :items [[component]])
-            ;; (if scrollable? (config! component :size [300 :by height]) (config! component :preferred-size [(.getWidth (config (service-data :view-space) :size))
+            ;; (c/config! (service-data :view-space) :items (if scrollable? [[(gcomp/scrollbox component)]] [[component]]))
+            (c/config! (service-data :view-space) :items [[component]])
+            ;; (if scrollable? (c/config! component :size [300 :by height]) (c/config! component :preferred-size [(.getWidth (c/config (service-data :view-space) :size))
             ;;                                                                                                :by
-            ;;                                                                                                (.getHeight (config (service-data :view-space) :size))]))
-            (config! (service-data :view-space) :user-data view-id)))))))
+            ;;                                                                                                (.getHeight (c/config (service-data :view-space) :size))]))
+            (c/config! (service-data :view-space) :user-data view-id)))))))
 
 
 (def switch-tab
@@ -101,7 +103,7 @@
   (fn [service-data]
     (let [tabs (u/children (service-data :bar-space))
           active-color (seesaw.color/color (service-data :active-color))
-          tabs (filter #(= active-color (config (first (config % :items)) :background)) tabs)]
+          tabs (filter #(= active-color (c/config (first (c/config % :items)) :background)) tabs)]
       (if-not (empty? tabs) (first tabs)))))
 
 (def close-tab
@@ -109,15 +111,15 @@
     (fn [e]
       (let [tab (.getParent (to-widget e))
             active-tab (whos-active? service-data)
-            active-id (if-not (nil? active-tab) (get (config active-tab :user-data) :view-id))
-            active? (= active-id (get (config tab :user-data) :view-id))
+            active-id (if-not (nil? active-tab) (get (c/config active-tab :user-data) :view-id))
+            active? (= active-id (get (c/config tab :user-data) :view-id))
             close-view (fn [e]
                          (reset! (service-data :views-storage) (dissoc @(service-data :views-storage) view-id)) ;; Remove view from views-storage
                          (.remove (service-data :bar-space) tab) ;; Remove tab from tab-space
                          (cond active? ;; If view is active then swith on another and set color for active tab
                                (let [tabs (u/children (service-data :bar-space))
                                      tab (if-not (empty? tabs) (first tabs))
-                                     view-id (if-not (nil? tab) (get (config tab :user-data) :view-id))]
+                                     view-id (if-not (nil? tab) (get (c/config tab :user-data) :view-id))]
                                  (if-not (nil? tab)
                                    (do
                                      (recolor-tab tab (service-data :active-color))
@@ -138,7 +140,7 @@
         (let [view {view-id (get @(service-data :views-storage) view-id)}
               tabs (u/children (service-data :bar-space))
               tab (if (empty? tabs) nil (first (filter (fn [tab]
-                                                         (= (get (config tab :user-data) :view-id) view-id))
+                                                         (= (get (c/config tab :user-data) :view-id) view-id))
                                                        tabs)))]
           (if-not (nil? tab) ;; Switch to exist tab and view
             (do
@@ -152,11 +154,11 @@
                              :view-id view-id
                              :title title
                              :scrollable? scrollable?
-                             :pref-height (.getHeight (config component :preferred-size))}}
+                             :pref-height (.getHeight (c/config component :preferred-size))}}
               tmp-store (atom [])]
           ;; (println "View id: " view-id)
           (swap! (service-data :views-storage) (fn [storage] (merge storage view)))
-          (config! (service-data :view-space) :user-data view-id)
+          (c/config! (service-data :view-space) :user-data view-id)
           (let [view-id (first (first view))
                 button-title  (get (second (first view)) :title)
                 tab-button (create--tab-button view-id button-title tab-tip "#eee" [100 25]
@@ -179,13 +181,13 @@
   (fn [service-data]
     (fn [& viewid]
       (println "Reload views id" viewid)
-      (let [view-id (if (empty? viewid) (config (service-data :view-space) :user-data) (first viewid))
+      (let [view-id (if (empty? viewid) (c/config (service-data :view-space) :user-data) (first viewid))
             reload-fn  (get-in @(service-data :views-storage) [view-id :component-fn])
             new-comp (reload-fn)]
-        (swap! (service-data :views-storage) (fn [old-stuff] (assoc-in old-stuff [view-id :pref-height] (.getHeight (config new-comp :preferred-size)))))
+        (swap! (service-data :views-storage) (fn [old-stuff] (assoc-in old-stuff [view-id :pref-height] (.getHeight (c/config new-comp :preferred-size)))))
         (swap! (service-data :views-storage) (fn [old-stuff] (assoc-in old-stuff [view-id :component] new-comp)))
-        ;; (println "Reload view " view-id " in space " (config (service-data :view-space) :user-data))
-        (if (= (config (service-data :view-space) :user-data) view-id)
+        ;; (println "Reload view " view-id " in space " (c/config (service-data :view-space) :user-data))
+        (if (= (c/config (service-data :view-space) :user-data) view-id)
           (do
             ;; (println "View" {view-id (get @(service-data :views-storage) view-id)})
             (set-component-to-view-space service-data view-id)))))))
@@ -250,7 +252,7 @@
         (= action :get-view)        ((get-view atom--views-storage) view-id)
         (= action :get-component)   (get-in @atom--views-storage [view-id :component])
         (= action :exist?)          ((exist atom--views-storage) view-id)
-        (= action :get-my-view-id)  (doto (config (service-data :view-space) :user-data) (println))
+        (= action :get-my-view-id)  (doto (c/config (service-data :view-space) :user-data) (println))
         (= action :get-all-view)    @atom--views-storage
         (= action :get-all-view-ids)    (map #(first %) @atom--views-storage)
         (= action :get-view-sapce)  view-space

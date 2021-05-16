@@ -36,7 +36,7 @@
        "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'",
        :type :param,
        :display :edit,
-       :component :text,
+       :component :textnumber,
        :value "3306"},
       :dbname
       {:name "Database name",
@@ -81,7 +81,7 @@
        "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'",
        :type :param,
        :display :edit,
-       :component :text,
+       :component :textnumber,
        :value 3307},
       :dbname
       {:name "Database name",
@@ -126,7 +126,7 @@
        "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'",
        :type :param,
        :display :edit,
-       :component :text,
+       :component :textnumber,
        :value 3333},
       :dbname
       {:name "Database name",
@@ -171,7 +171,7 @@
        "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'",
        :type :param,
        :display :edit,
-       :component :text,
+       :component :textnumber,
        :value 33},
       :dbname
       {:name "Database name",

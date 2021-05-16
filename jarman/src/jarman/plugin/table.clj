@@ -92,7 +92,7 @@
                  alerts]
           :or {model []
                more-comps [(c/label)]
-               button-template (fn [title f] (gcomp/button-basic title f))
+               button-template (fn [title f] (gcomp/button-basic title :onClick f))
                start-focus nil
                export-comp nil
                alerts nil}}]
@@ -239,12 +239,12 @@
                                                                  [(gcomp/hr 10)]
                                                                  (map (fn [doc-model]
                                                                         [(gcomp/button-basic (get doc-model :name)
-                                                                                             (fn [e]
+                                                                                             :onClick (fn [e]
                                                                                               ;; do
-                                                                                               (try
-                                                                                                 ((doc/prepare-export-file (:->table-name controller) doc-model) id (c/config input-text :text))
-                                                                                                 (@jarman.gui.gui-seed/alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :export-doc-ok)} (@jarman.gui.gui-seed/alert-manager :message jarman.gui.gui-seed/alert-manager) 7)
-                                                                                                 (catch Exception e (@jarman.gui.gui-seed/alert-manager :set {:header (gtool/get-lang-alerts :faild) :body (gtool/get-lang-alerts :export-doc-faild)} (@jarman.gui.gui-seed/alert-manager :message jarman.gui.gui-seed/alert-manager) 7))))
+                                                                                                        (try
+                                                                                                          ((doc/prepare-export-file (:->table-name controller) doc-model) id (c/config input-text :text))
+                                                                                                          (@jarman.gui.gui-seed/alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :export-doc-ok)} (@jarman.gui.gui-seed/alert-manager :message jarman.gui.gui-seed/alert-manager) 7)
+                                                                                                          (catch Exception e (@jarman.gui.gui-seed/alert-manager :set {:header (gtool/get-lang-alerts :faild) :body (gtool/get-lang-alerts :export-doc-faild)} (@jarman.gui.gui-seed/alert-manager :message jarman.gui.gui-seed/alert-manager) 7))))
                                                                                              :args [:halign :left])])
                                                                       (:->documents controller))
                                                                  [(gcomp/hr 10)]
@@ -271,7 +271,7 @@
           update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit global-configuration :model model :export-comp expand-export :more-comps [(return)])]))
           x nil ;;------------ Build
           expand-insert-form (gcomp/scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never)
-          back-to-insert     (fn [] (gcomp/button-basic "<< Return to Insert Form" (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
+          back-to-insert     (fn [] (gcomp/button-basic :onClick "<< Return to Insert Form" (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
           table              (fn [] ((get (create-table configuration data-toolkit) :table) (fn [model] (expand-update-form model back-to-insert)))) ;; TODO: set try
           x nil ;;------------ Finish

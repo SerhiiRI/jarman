@@ -23,7 +23,7 @@
 ;; └────────────────────┘                                       V
 
 
-(defn hr
+(defn rgap
   ([line-size] (label :border (empty-border :top line-size)))
   ([line-size line-color] (label :border (line-border :top line-size :color line-color))))
 
@@ -53,6 +53,56 @@
 ;; ;;    for hide scroll    
 ;;    (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. 12 0)) 
 ;;     scr))
+
+
+(defn vmig
+  [& {:keys [items
+             wrap
+             lgap
+             rgap
+             tgap
+             bgap
+             vrules
+             hrules
+             args]
+      :or {items [[(label)]]
+           wrap 1
+           lgap 0
+           rgap 0
+           tgap 0
+           bgap 0
+           vrules "[grow, fill]"
+           hrules "[grow, fill]"
+           args []}}]
+  (apply mig-panel
+         :constraints [(str "wrap " wrap) (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
+         :items items
+         args))
+
+(defn hmig
+  [& {:keys [items
+             wrap
+             lgap
+             rgap
+             tgap
+             bgap
+             vrules
+             hrules
+             args]
+      :or {items [[(label)]]
+           wrap ""
+           lgap 0
+           rgap 0
+           tgap 0
+           bgap 0
+           vrules "[grow, fill]"
+           hrules "[grow, fill]"
+           args []}}]
+  (apply mig-panel
+         :constraints [wrap (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
+         :items items
+         args))
+
 
 (defn scrollbox
   [component
@@ -112,52 +162,73 @@
    "
   [text & args] `(label :text `~(htmling ~text) ~@args))
 
-
 (defn button-basic
   "Description:
       Simple button with default style.
    Example:
       (simple-button \"Simple button\" (fn [e]) :style [:background \"#fff\"])
    "
-  [txt func & {:keys [args
-                      vtop
-                      vbot
-                      hl
-                      hr
-                      mouse-in
-                      mouse-out
-                      focus-color
-                      unfocus-color]
-               :or   {args []
-                      vtop 10
-                      vbot 10
-                      hl 10
-                      hr 10
-                      mouse-in  (get-color :background :button_hover_light)
-                      mouse-out (get-color :background :button_main)
-                      focus-color (get-color :decorate :focus-gained)
-                      unfocus-color (get-color :decorate :focus-lost)}}]
+  [txt & {:keys [onClick
+                 args
+                 tgap
+                 bgap
+                 lgap
+                 rgap
+                 halign
+                 mouse-in
+                 underline-size
+                 mouse-out
+                 focus-color
+                 unfocus-color]
+          :or   {onClick (fn [e])
+                 args []
+                 tgap 10
+                 bgap 10
+                 lgap 10
+                 rgap 10
+                 underline-size 2
+                 halign :center
+                 mouse-in  (get-color :background :button_hover_light)
+                 mouse-out (get-color :background :button_main)
+                 focus-color (get-color :decorate :focus-gained)
+                 unfocus-color (get-color :decorate :focus-lost)}}]
   (let [newBorder (fn [underline-color]
-                    (compound-border (empty-border :bottom vbot :top vtop :left hl :right hr)
-                                     (line-border :bottom 2 :color underline-color)))]
+                    (compound-border (empty-border :bottom bgap :top tgap :left lgap :right rgap)
+                                     (line-border :bottom underline-size :color underline-color)))]
     (apply label
            :text txt
            :focusable? true
-           :halign :center
-           :listen [:mouse-clicked func
+           :halign halign
+           :listen [:mouse-clicked onClick
                     :mouse-entered (fn [e] (config! e :background mouse-in) (hand-hover-on e))
                     :mouse-exited  (fn [e] (config! e :background mouse-out))
                     :focus-gained  (fn [e] (config! e :border (newBorder focus-color)))
                     :focus-lost    (fn [e] (config! e :border (newBorder unfocus-color)))
-                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) func))]
+                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) onClick))]
            :background mouse-out
            :border (newBorder unfocus-color)
            args)))
 
 
+(defn button-slim
+  [text
+   & {:keys [onClick args]
+      :or {onClick (fn [e])
+           args []}}]
+  (button-basic
+   text
+   :onClick onClick
+   :tgap 5
+   :bgap 4
+   :underline-size 1
+   :halign :left
+   :args args))
+
+
 (defn button-export
-  [txt func]
-  (button-basic txt func
+  [txt onClick]
+  (button-basic txt 
+                :onClick onClick
                 :mouse-in (get-comp :button-export :mouse-in)
                 :mouse-out (get-comp :button-export :mouse-out)
                 :unfocus-color (get-comp :button-export :unfocus-color)))
@@ -167,7 +238,8 @@
 
 (defn button-return
   [txt func]
-  (button-basic txt func
+  (button-basic txt 
+                :onClick func
                 :mouse-in (get-comp :button-return :mouse-in)
                 :mouse-out (get-comp :button-return :mouse-out)
                 :unfocus-color (get-comp :button-return :unfocus-color)
@@ -289,13 +361,13 @@
      component
    "
   [title component
-   & {:keys [vtop
+   & {:keys [tgap
              id]
-      :or {vtop 0
+      :or {tgap 0
            id nil}}]
   (c/grid-panel :columns 1
                 :id id
-                :border (empty-border :top vtop)
+                :border (empty-border :top tgap)
                 :items [(c/label :text (if (string? title) title ""))
                         component]))
 
@@ -447,6 +519,11 @@
    & {:keys [min-w
              w
              max-w
+             lgap
+             rgap
+             tgap
+             bgap
+             vrules
              icon-open
              icon-hide
              text-open
@@ -456,6 +533,11 @@
       :or {min-w 250
            w 250
            max-w 250
+           lgap 0
+           rgap 0
+           tgap 0
+           bgap 0
+           vrules "[fill]"
            ico-open nil
            icon-hide nil
            text-open "<<"
@@ -463,8 +545,8 @@
            focus-color (get-color :decorate :focus-gained-dark)
            unfocus-color "#fff"}}]
   (let [hidden-comp (atom nil)
-        hsize (if (< max-w w) (str "0px[" min-w ":" w ":" w ", grow, fill]10px") (str "0px[" min-w ":" w ":" max-w ", grow,fill]10px"))
-        form-space-open ["wrap 1" hsize "0px[fill]0px"]
+        hsize (if (< max-w w) (str lgap "px[" min-w ":" w ":" w ", grow, fill]" rgap "px") (str lgap "px[" min-w ":" w ":" max-w ", grow,fill]" rgap "px"))
+        form-space-open ["wrap 1" hsize (str tgap "px[fill]0px" vrules bgap "px")]
         form-space-hide ["" "0px[grow, fill]0px" "0px[grow, fill]0px"]
         form-space (smig/mig-panel :constraints form-space-open)
         onClick (fn [e]
@@ -674,7 +756,6 @@
                     :mouse-entered (fn [e] (config! e  :background "#d9ecff"))
                     :mouse-exited  (fn [e] (config! e  :background "#fff"))]
            args)))
-
 
 
 
@@ -930,3 +1011,32 @@
      :background (new Color 0 0 0 0)
      :constraints ["" "5px[fill]0px" "5px[fill]5px"]
      :items (if (empty? buttons) [[(label)]] (gtool/join-mig-items (map #(btn (first %) (second %) (last %)) buttons))))))
+
+(defn menu-bar-right
+  "Description:
+       
+   Example:
+      (menu-bar :buttons [[\"title1\" icon1 fn1] [\"title2\" icon2 fn2]])
+      (menu-bar :id :my-id :buttons [[\"title1\" icon1 fn1] [\"title2\" icon2 fn2]])
+   "
+  [& {:keys [id
+             buttons]
+      :or {id :none
+           buttons []}}]
+  (let [btn (fn [txt ico onClick & args]
+              (let [border-c "#bbb"]
+                (label
+                 :font (getFont 13)
+                 :text txt
+                 :icon (stool/image-scale ico 30)
+                 :background "#fff"
+                 :foreground "#000"
+                 :border (compound-border (empty-border :left 15 :right 15 :top 5 :bottom 5) (line-border :thickness 1 :color border-c))
+                 :listen [:mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
+                          :mouse-exited  (fn [e] (config! e :background "#fff" :foreground "#000"))
+                          :mouse-clicked onClick])))]
+    (mig-panel
+     :id id
+     :background (new Color 0 0 0 0)
+     :constraints ["" "5px[grow, fill]0px[fill]5px" "5px[fill]5px"]
+     :items (if (empty? buttons) [[(label)]] (gtool/join-mig-items (label) (map #(btn (first %) (second %) (last %)) buttons))))))

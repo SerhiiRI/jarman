@@ -718,7 +718,7 @@
                           export-comp]
                    :or {model []
                         more-comps [(c/label)]
-                        button-template (fn [title f] (gcomp/button-basic title f))
+                        button-template (fn [title f] (gcomp/button-basic title :onClick f))
                         start-focus nil
                         export-comp nil}}]
     (let [complete (atom {})
@@ -867,9 +867,9 @@
                                                     ;;                                                                                               "\nTemplate: " (str (c/text template))))))]
 
                                                                 [(gcomp/hr 10)]
-                                                                [(gcomp/button-basic "Service raport" (fn [e]) :args [:halign :left])]
-                                                                [(gcomp/button-basic "Clients list"   (fn [e]) :args [:halign :left])]
-                                                                [(gcomp/button-basic "Invoice print"  (fn [e]) :args [:halign :left])]
+                                                                [(gcomp/button-basic "Service raport" :onClick (fn [e]) :args [:halign :left])]
+                                                                [(gcomp/button-basic "Clients list"   :onClick (fn [e]) :args [:halign :left])]
+                                                                [(gcomp/button-basic "Invoice print"  :onClick (fn [e]) :args [:halign :left])]
                                                                 [(gcomp/hr 10)]
                                                                 [(gcomp/hr 2 "#95dec9")]])
                                   :background "#95dec9"
@@ -900,7 +900,7 @@
           update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form controller :model model :export-comp expand-export :more-comps [(return)])]))
           x nil ;;------------ Build
           expand-insert-form (gcomp/scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never)
-          back-to-insert     (fn [] (gcomp/button-basic "<< Return to Insert Form" (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
+          back-to-insert     (fn [] (gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
           table              (fn [] ((:->table controller) (fn [model] (expand-update-form model back-to-insert))))
           x nil ;;------------ Finish

@@ -210,24 +210,25 @@
                                                     body))))
                    (mig-panel
                     :constraints ["" "0px[grow,fill]0px[fill]0px" "0px[grow,fill]0px"]
-                    :items [[(gcomp/button-basic "Save changes" (fn [e] ;; save changes configuration
-                                                                  (doall (map #(prn (first %) (str (second %)))  @local-changes))
-                                                                  (doall (map #(cm/assoc-in-value (first %) (second %))  @local-changes))
-                                                                  (let [validate (cm/store-and-back)]
-                                                                    (println validate)
-                                                                    (cm/swapp)
-                                                                    (if (get validate :valid?)
-                                                                      (do ;; message box if saved successfull
-                                                                        (try
-                                                                          ((@gseed/jarman-views-service :reload))
-                                                                          (if-not (nil? message-ok) (message-ok (str @local-changes)))
-                                                                          (catch Exception e (println (str "Message ok error: " (.getMessage e))))))
-                                                                      (do ;; message box if saved faild
-                                                                        (try
-                                                                          (if-not (nil? message-faild) (message-faild (str (get validate :output))))
-                                                                          (catch Exception e (println (str "Message faild error: " (.getMessage e))))))))
-                                                                  ))]
-                            [(gcomp/button-basic "" (fn [e] (println (str "\nConfiguration changes: " @local-changes))) :args [:icon (stool/image-scale icon/loupe-blue-64-png 25)])]]))))))))
+                    :items [[(gcomp/button-basic "Save changes"
+                                                 :onClick (fn [e] ;; save changes configuration
+                                                            (doall (map #(prn (first %) (str (second %)))  @local-changes))
+                                                            (doall (map #(cm/assoc-in-value (first %) (second %))  @local-changes))
+                                                            (let [validate (cm/store-and-back)]
+                                                              (println validate)
+                                                              (cm/swapp)
+                                                              (if (get validate :valid?)
+                                                                (do ;; message box if saved successfull
+                                                                  (try
+                                                                    ((@gseed/jarman-views-service :reload))
+                                                                    (if-not (nil? message-ok) (message-ok (str @local-changes)))
+                                                                    (catch Exception e (println (str "Message ok error: " (.getMessage e))))))
+                                                                (do ;; message box if saved faild
+                                                                  (try
+                                                                    (if-not (nil? message-faild) (message-faild (str (get validate :output))))
+                                                                    (catch Exception e (println (str "Message faild error: " (.getMessage e))))))))))]
+                            [(gcomp/button-basic "" 
+                                                 :onClick (fn [e] (println (str "\nConfiguration changes: " @local-changes))) :args [:icon (stool/image-scale icon/loupe-blue-64-png 25)])]]))))))))
 ;; (@jarman.gui.gui-app/startup)
 ;; (cm/restore-config)
 ;; (cm/get-in-value [:themes :jarman_light.edn :components :message-box :border-size])

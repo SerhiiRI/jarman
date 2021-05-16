@@ -9,18 +9,33 @@
             [seesaw.border :as sborder]
             [seesaw.util :as u]
             [seesaw.mig :as smig]
+            [jarman.gui.gui-config-generator :refer :all :as cg]
+            [jarman.gui.gui-seed :as gseed]
             [jarman.tools.swing :as stool]
             [jarman.tools.lang :as lang]
+            [jarman.logic.metadata :as mmeta]
+            [jarman.gui.gui-alerts-service :refer :all]
+            [jarman.gui.gui-seed :refer :all]
+            ;; [jarman.gui.gui-alerts-service :as alert]
             [jarman.gui.gui-tools :refer :all :as gtool])
   (:import (java.awt Color)))
 
-
+(jarman.config.config-manager/swapp)
 
 ;; ┌────────────────────�
 ;; │                    │
 ;; │ Basic components   │
 ;; │                    │________________________________________
 ;; └────────────────────�                                     
+
+(def dark-grey-color "#676d71")
+(def blue-color "#256599")
+(def light-light-grey-color "#e1e1e1")
+(def light-grey-color "#82959f")
+(def blue-green-color "#2c7375")
+(def light-blue-color "#96c1ea")
+(def red-color "#f01159")
+(def back-color "#c5d3dd")
 
 (defn hr 
   ([line-size] (label :border (empty-border :top line-size)))
@@ -70,6 +85,27 @@
     (.setPreferredSize (.getHorizontalScrollBar scr) (java.awt.Dimension. 0 hbar-size))
     scr))
 
+(defn header-basic
+  [title
+   & {:keys [foreground
+             background
+             border
+             font
+             args]
+      :or {foreground (gtool/get-color :foreground :dark-header)
+           background (gtool/get-color :background :dark-header)
+           border     (line-border :thickness 10 :color (gtool/get-color :background :dark-header))
+           font (gtool/getFont 16)
+           args []}}]
+  (apply label
+         :text title
+         :font font
+         :foreground foreground
+         :background background
+         :border border
+         args))
+
+
 (defmacro textarea
   "Description
      TextArea with word wrap
@@ -77,38 +113,66 @@
   [text & args] `(label :text `~(htmling ~text) ~@args))
 
 
-(def button-basic
+(defn button-basic
   "Description:
       Simple button with default style.
    Example:
       (simple-button \"Simple button\" (fn [e]) :style [:background \"#fff\"])
    "
-  (fn [txt func & {:keys [args
-                          vtop
-                          vbot
-                          hl
-                          hr]
-                   :or   {args []
-                          vtop 10
-                          vbot 10
-                          hl 10
-                          hr 10}}]
-    (let [newBorder (fn [underline-color]
-                      (compound-border (empty-border :bottom vbot :top vtop :left hl :right hr)
-                                       (line-border :bottom 2 :color underline-color)))]
-      (apply label
+  [txt func & {:keys [args
+                      vtop
+                      vbot
+                      hl
+                      hr
+                      mouse-in
+                      mouse-out
+                      focus-color
+                      unfocus-color]
+               :or   {args []
+                      vtop 10
+                      vbot 10
+                      hl 10
+                      hr 10
+                      mouse-in  (get-color :background :button_hover_light)
+                      mouse-out (get-color :background :button_main)
+                      focus-color (get-color :decorate :focus-gained)
+                      unfocus-color (get-color :decorate :focus-lost)}}]
+  (let [newBorder (fn [underline-color]
+                    (compound-border (empty-border :bottom vbot :top vtop :left hl :right hr)
+                                     (line-border :bottom 2 :color underline-color)))]
+    (apply label
            :text txt
            :focusable? true
            :halign :center
            :listen [:mouse-clicked func
-                    :mouse-entered (fn [e] (hand-hover-on e) (button-hover e))
-                    :mouse-exited  (fn [e] (button-hover e (get-color :background :button_main)))
-                    :focus-gained  (fn [e] (config! e :border (newBorder (get-color :decorate :focus-gained))))
-                    :focus-lost    (fn [e] (config! e :border (newBorder (get-color :decorate :focus-lost))))
-                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (func e)))]
-           :background (get-color :background :button_main)
-           :border (newBorder (get-color :decorate :focus-lost))
-           args))))
+                    :mouse-entered (fn [e] (config! e :background mouse-in) (hand-hover-on e))
+                    :mouse-exited  (fn [e] (config! e :background mouse-out))
+                    :focus-gained  (fn [e] (config! e :border (newBorder focus-color)))
+                    :focus-lost    (fn [e] (config! e :border (newBorder unfocus-color)))
+                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) func))]
+           :background mouse-out
+           :border (newBorder unfocus-color)
+           args)))
+
+
+(defn button-export
+  [txt func]
+  (button-basic txt func
+                :mouse-in (get-comp :button-export :mouse-in)
+                :mouse-out (get-comp :button-export :mouse-out)
+                :unfocus-color (get-comp :button-export :unfocus-color)
+                ))
+
+
+
+(defn button-return
+  [txt func]
+  (button-basic txt func
+                :mouse-in (get-comp :button-return :mouse-in)
+                :mouse-out (get-comp :button-return :mouse-out)
+                :unfocus-color (get-comp :button-return :unfocus-color)
+                :args [:foreground (get-comp :button-return :foreground)]))
+
 
 
 (defn input-text
@@ -158,7 +222,6 @@
                                           (invoke-later (config! e :text @last-v))
                                           (reset! last-v new-v))))]
              args))))
-
 
 (defn input-checkbox
   [& {:keys [
@@ -224,7 +287,9 @@
   (c/grid-panel :columns 1
                 :id id
                 :border (empty-border :top vtop)
-                :items [(c/label :text (if (string? title) title ""))
+                :items [(c/label
+                         :foreground blue-color
+                         :text (if (string? title) title ""))
                         component]))
 
 (defn input-text-area
@@ -308,51 +373,7 @@
                    :focus-gained (fn [e] (c/config! e :border ((get-user-data e :border-fn) border-color-focus)))
                    :focus-lost   (fn [e] (c/config! e :border ((get-user-data e :border-fn) border-color-unfocus)))]]))
 
-;;     :icon (stool/image-scale icon/left-blue-64-png 34)
-;;  :icon (stool/image-scale icon/right-blue-64-png 26)
-(defn multi-panel
-  "Description:
-    get vector of panels and return mig-panel in which these panels are replaced on click of arrow
-   Example:
-    (multi-panel [some-panel-1 some-panel-2 some-panel-3] title 0)"
-  [panels title num ]
-  (let [btn-back (button-basic "Back"
-                          (fn [e]
-                            (if (= num 0)
-                              (config!
-                               (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e)))
-                               :items [[(multi-panel panels title num)]])
-                              (config!
-                               (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e)))
-                               :items [[(multi-panel panels title (- num 1))]])))
-                          :style [:background "#fff"])
-        btn-next (button-basic "Next"
-                          (fn [e] (if (=  num (- (count panels) 1))
-                                                       (config! (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :items [[(multi-panel panels title num)]])
-                                                       (config! (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :items [[(multi-panel panels title (+ num 1))]])))
-                          
-                          :style [:background "#fff"])]
-    (config! btn-back
-             
-             :visible? (if (= num 0) false true))
-    ;; (config! btn-next
-    ;;          :visible? (if (= num (- (count panels) 1)) false true))
-    (if (= num (- (count panels) 1))
-      (config! btn-next :text "Save" :listen [:mouse-clicked (fn [e] (println "ff"))]))
-    (mig-panel
-     :constraints ["wrap 2" "0px[left]0px" "0px[]0px"]
-     :preferred-size [910 :by 380]
-     :background "#ddd"
-     :items [[(label :border (empty-border :right 18))]
-             [btn-back
-              "align r, split 2"]
-             ;;[(label)]
-             [btn-next
-              "align r"]
-                        [(label :text title
-                     :foreground "#256599"
-                     :border (empty-border :left 10)) "span 2"]
-             [(nth panels num) "span 2"]])))
+
 
 (defn select-box
   "Description
@@ -623,7 +644,7 @@
 ;; │                    │
 ;; │ Examples           │
 ;; │                    │________________________________________
-;; └────────────────────┘                                       V
+;; └────────────────────┘                                       
 
 ;; BUTTON EXPAND
 (def view (fn [](button-expand "Expand"
@@ -652,7 +673,6 @@
                       egg2]))))
 
 (def view (fn [](egg)))
-
 
 (def input-float
   "Description:
@@ -803,7 +823,6 @@
                                                     (reset! last-v (read-string v)))
                                                   :else (invoke-later (config! e :text @last-v))))))))
                                         ;; remember last correct value if integer and when remove last char
-
                                       (let [new-v @last-v] ;; local-changes
                                         (cond
                                           (and (not (nil? store-id))
@@ -811,7 +830,6 @@
                                           (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
                                           :else (reset! local-changes (dissoc @local-changes store-id)))))]
              style))))
-
 
 ;; (def view (fn [] (let [lbl (label)]
 ;;                    (mig-panel :constraints ["" "fill, grow" ""] :border (line-border :thickness 1 :color "#000") :size [200 :by 30] 
@@ -826,3 +844,117 @@
 ;;                           :content (view))
 ;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
 ;;   (seesaw.core/config! my-frame :size [800 :by 600]))
+(defn menu-bar
+  "Description:
+   Example:
+      (menu-bar :buttons [[\"title1\" icon1  fn1] [\"title2\" icon2  fn2]])
+      (menu-bar :id :my-id :buttons [[\"title1\"  icon1 fn1] [\"title2\" icon2  fn2]])
+   "
+  [& {:keys [id
+             buttons]
+      :or {id :none
+           buttons []}}]
+  (let [btn (fn [txt ico onClick & args]
+              (let
+               [border-c "#bbb"]
+                (label
+                 :font (getFont 13)
+                 :text txt
+                 :icon (stool/image-scale ico 27)
+                 :background "#fff"
+                 :foreground "#000"
+                 :border (compound-border (empty-border :left 15 :right 15 :top 5 :bottom 5) (line-border :thickness 1 :color border-c))
+                 :listen [:mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
+                          :mouse-exited  (fn [e] (config! e :background "#fff" :foreground "#000"))
+                          :mouse-clicked onClick])))]
+    (mig-panel
+     :id id
+     :background (new Color 0 0 0 0)
+     :constraints ["" "5px[fill]0px" "5px[fill]5px"]
+     :items (if (empty? buttons) [[(label)]] (gtool/join-mig-items (map #(btn (first %) (second %) (last %)) buttons))))))
+
+
+
+(defn- validate-fields [cmpts-atom num]
+  (println @cmpts-atom)
+  (condp = num
+    0 (let [f-inp (:field @cmpts-atom)
+            r-inp (:representation @cmpts-atom)
+            d-inp (:description @cmpts-atom)]
+        (if (or (= f-inp "") (= f-inp "field") (= f-inp nil) (< (count f-inp) 4)
+                (= r-inp "") (= r-inp "representation") (= r-inp nil) (< (count f-inp) 4)
+                (= d-inp "") (= d-inp "description") (= d-inp nil) (< (count f-inp) 4)
+                ) false true))
+    1 (let [cmp-inp (:component-type @cmpts-atom)
+            col-inp (:column-type @cmpts-atom)]
+        (if (or (= cmp-inp nil) 
+                (= col-inp nil) 
+                ) false true))
+    2 (let [p-inp (:private? @cmpts-atom)
+            e-inp (:editable? @cmpts-atom)]
+        (if (or (= p-inp nil) 
+                (= e-inp nil) 
+                ) false true))
+    true))
+
+(defn multi-panel
+  "Description:
+    get vector of panels and return mig-panel in which these panels are replaced on click of arrow
+   Example:
+    (multi-panel [some-panel-1 some-panel-2 some-panel-3] title 0)"
+  [panels cmpts-atom table-name title num]
+  (let [btn-panel (menu-bar
+                   :id :db-viewer--component--menu-bar
+                   :buttons [["Back"
+                              icon/left-blue-64-png
+                              (fn [e]
+                                (if (= num 0)
+                                  (config!
+                                   (.getParent (.getParent (seesaw.core/to-widget e)))
+                                   :items [[(multi-panel panels cmpts-atom table-name title num)]])
+                                  (config!
+                                   (.getParent (.getParent (seesaw.core/to-widget e)))
+                                   :items [[(multi-panel panels cmpts-atom table-name title (- num 1))]])))]
+                             ["Next"
+                               icon/right-blue-64-png 
+                              (fn [e] (if (validate-fields cmpts-atom num)
+                                        (if
+                                            (=  num (- (count panels) 1))
+                                          (config! (.getParent
+                                                    (.getParent (seesaw.core/to-widget e))) :items [[(multi-panel panels cmpts-atom table-name
+                                                                                                                  title num)]])
+                                          (config! (.getParent (.getParent (seesaw.core/to-widget e))) :items [[(multi-panel panels cmpts-atom table-name
+                                                                                                                             title (+ num 1))]]))
+                                        (@alert-manager :set {:header "Error messege"
+                                                              :body "All fields must be entered and must be longer than 3 chars"}
+                                         (message alert-manager) 5)))]])
+        btn-back (first (.getComponents btn-panel))
+        btn-next (second (.getComponents btn-panel))]
+    (config! btn-next :border (compound-border (empty-border :left 0 :right 5 :top 3 :bottom 3) (line-border :thickness 1 :color "#bbb")))
+    (config! btn-back
+             :border (compound-border (empty-border :left 0 :right 5 :top 3 :bottom 3) (line-border :thickness 1 :color "#bbb"))
+             :visible? (if (= num 0) false true))
+    (if (= num (- (count panels) 1))
+      (config! btn-next :text "Save" :listen [:mouse-clicked (fn [e]
+                                                               (swap! cmpts-atom  assoc :field-qualified (str (:field @cmpts-atom) "." table-name))
+                                                               (swap! cmpts-atom  assoc :default-value :null)
+                                                               (if (:valid? (mmeta/validate-one-column
+                                                                             @cmpts-atom))
+                                                                 (@alert-manager :set {:header "Success"
+                                                                                       :body "Column is saved"}
+                                                                  (message alert-manager) 5)
+                                                                 (@alert-manager :set {:header "Error messege"
+                                                                                       :body "All fields must be entered and must be longer than 3 chars"}
+                                                                  (message alert-manager) 5)))]))
+    (mig-panel
+     :constraints ["wrap 2" "0px[left]0px" "0px[]0px"]
+     :preferred-size [910 :by 360]
+     :background light-light-grey-color
+     :items [[(label :border (empty-border :right 18))]
+             [btn-panel "align r"]
+             [(label :text title
+                     :foreground "#256599"
+                     :border (empty-border :left 10)) "span 2"]
+             [(nth panels num) "span 2"]])))
+
+

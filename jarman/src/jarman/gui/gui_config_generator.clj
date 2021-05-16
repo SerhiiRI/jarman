@@ -23,14 +23,6 @@
 ;; │                         │
 ;; └─────────────────────────┘
 
-
-(def confgen--element--header-file
-  (fn [title] (mig-panel
-               :constraints ["" "0px[grow, center]0px" "0px[]0px"]
-               :items [[(label :text title :font (gtool/getFont 16) :foreground (gtool/get-color :foreground :dark-header))]]
-               :background (gtool/get-color :background :dark-header)
-               :border (line-border :thickness 10 :color (gtool/get-color :background :dark-header)))))
-
 (def confgen--element--header-block
   (fn [title] (label :text title :font (gtool/getFont 16 :bold)
                      :border (compound-border  (line-border :bottom 2 :color (gtool/get-color :decorate :underline)) (empty-border :bottom 5)))))
@@ -193,7 +185,7 @@
           ;;  :border (line-border :thickness 2 :color "#f00")
 
            :items (gtool/join-mig-items
-                   (confgen--element--header-file (get-in map-part [:name])) ;; Header of section/config file
+                   (gcomp/header-basic (get-in map-part [:name])) ;; Header of section/config file
 
                    (gcomp/auto-scrollbox (mig-panel
                                           :constraints ["wrap 1" "0px[fill, grow]0px" "20px[grow, fill]20px"]

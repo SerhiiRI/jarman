@@ -26,8 +26,9 @@
                                               :button_selected {:type :param :display :edit :component :textcolor :value "#ccc"}
                                               :button_main {:type :param :display :edit :component :textcolor :value "#fff"}
                                               :header {:type :param :display :edit :component :textcolor :value "#ccc"}
-                                              :light-mute {:type :param :display :edit :component :textcolor :value "#ddd"}
-                                              }}
+                                              :gray {:type :param :display :edit :component :textcolor :value "#ccc"}
+                                              :dark-gray {:type :param :display :edit :component :textcolor :value "#666"}
+                                              :light-mute {:type :param :display :edit :component :textcolor :value "#ddd"}}}
                          :group-buttons {:type :block
                                          :display :edit
                                          :value {:background {:type :param :display :edit :component :textcolor :value "#fff"}
@@ -69,7 +70,21 @@
                                             :type :block
                                             :display :edit
                                             :value {:border-color {:type :param :display :edit :component :textcolor :value "#96c1ea"}
-                                                    :border-size  {:doc "Bordet size top, bottom, left and right." :type :param :display :edit :component :textlist :value [1 1 1 1]}}}}}
+                                                    :border-size  {:doc "Bordet size top, bottom, left and right." :type :param :display :edit :component :textlist :value [1 1 1 1]}}}
+                              :button-export {:name "Export button"
+                                              :type :block
+                                              :display :edit
+                                              :value {:mouse-in  {:type :param :display :edit :component :textcolor :value "#5ee6bf"}
+                                                      :mouse-out {:type :param :display :edit :component :textcolor :value "#95dec9"}
+                                                      :unfocus-color {:type :param :display :edit :component :textcolor :value "#95dec9"}
+                                                      }}
+                              :button-return {:name "Return button"
+                                              :type :block
+                                              :display :edit
+                                              :value {:mouse-in  {:type :param :display :edit :component :textcolor :value "#666"}
+                                                      :mouse-out {:type :param :display :edit :component :textcolor :value "#494949"}
+                                                      :unfocus-color {:type :param :display :edit :component :textcolor :value "#494949"}
+                                                      :foreground {:type :param :display :edit :component :textcolor :value "#fff"}}}}}
          :font {:doc "Konfiguracja głównego okna HRTime"
                 :type :block
                 :display :edit

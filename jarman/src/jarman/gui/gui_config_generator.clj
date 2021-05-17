@@ -1,11 +1,12 @@
 (ns jarman.gui.gui-config-generator
-  (:use seesaw.core
-        seesaw.util
-        seesaw.border
-        seesaw.dev
+  (:use seesaw.dev
         seesaw.mig
         seesaw.color)
   (:require [clojure.string :as string]
+            [seesaw.core   :as c]
+            [seesaw.border :as b]
+            [seesaw.util   :as u]
+            [seesaw.mig    :as smig]
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
             ;; logics
@@ -13,15 +14,10 @@
             [jarman.gui.gui-tools :as gtool]
             [jarman.gui.gui-components :as gcomp]
             [jarman.tools.swing :as stool]
-<<<<<<< HEAD
-            [jarman.gui.gui-components :refer :all :as gcomp]
-=======
-            [jarman.gui.gui-components :as gcomp]
             [jarman.gui.gui-seed :as gseed]
 
->>>>>>> 07cc44744997adf8f3beb9111d5fd7bb342bdfc2
             ;; deverloper tools 
-            [jarman.tools.lang :refer :all :as lang]))
+            [jarman.tools.lang :as lang]))
 
 ;; ┌─────────────────────────┐
 ;; │                         │
@@ -32,16 +28,16 @@
 (def confgen--element--header-block
   (fn [title] 
     (gcomp/header-basic title)
-    (label :text title :font (gtool/getFont 16 :bold)
-                     :border (compound-border  (line-border :bottom 2 :color (gtool/get-color :decorate :underline)) (empty-border :bottom 5)))))
+    (c/label :text title :font (gtool/getFont 16 :bold)
+                     :border (b/compound-border  (b/line-border :bottom 2 :color (gtool/get-color :decorate :underline)) (b/empty-border :bottom 5)))))
 
 (def confgen--element--header-parameter
   (fn [title]
-    (label :text title :font (gtool/getFont 14 :bold))))
+    (c/label :text title :font (gtool/getFont 14 :bold))))
 
 (def confgen--element--combobox
   (fn [local-changes path model]
-    (mig-panel
+    (smig/mig-panel
      :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
      :items [[(gcomp/select-box model
                                 :always-set-changes false
@@ -52,7 +48,7 @@
 
 (def confgen--gui-interface--input
   (fn [local-changes path value]
-    (mig-panel
+    (smig/mig-panel
      :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
      :items [[(gcomp/input-text-with-atom
                :val value
@@ -63,7 +59,7 @@
 
 (def confgen--gui-interface--input-number
   (fn [local-changes path value]
-    (mig-panel
+    (smig/mig-panel
      :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
      :items [[(gcomp/input-int
                :val value
@@ -76,25 +72,25 @@
   (fn [local-changes path value]
     (let [v (string/join ", " value)]
       ;; (println "Textlist path: " path)
-      (mig-panel
+      (smig/mig-panel
        :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
-       :items [[(text :text v :font (gtool/getFont 14)
+       :items [[(c/text :text v :font (gtool/getFont 14)
                       :background (gtool/get-color :background :input)
-                      :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
-                                               (line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline)))
-                      :listen [:caret-update (fn [event] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value value :new-value (clojure.string/split (config event :text) #"\s*,\s*")))])]]))))
+                      :border (b/compound-border (b/empty-border :left 10 :right 10 :top 5 :bottom 5)
+                                               (b/line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline)))
+                      :listen [:caret-update (fn [event] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value value :new-value (clojure.string/split (c/config event :text) #"\s*,\s*")))])]]))))
 
 
 (def confgen--gui-interface--input-textcolor
   (fn [local-changes path value]
-    (mig-panel
+    (smig/mig-panel
      :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
-     :items [[(text :text value :font (gtool/getFont 14)
+     :items [[(c/text :text value :font (gtool/getFont 14)
                     :background value :foreground "#444"
-                    :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
-                                             (line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline)))
+                    :border (b/compound-border (b/empty-border :left 10 :right 10 :top 5 :bottom 5)
+                                             (b/line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline)))
                     :listen [:caret-update (fn [event]
-                                             (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value value :new-value (config event :text))
+                                             (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value value :new-value (c/config event :text))
                                              (gtool/colorizator-text-component event))])]])))
 
 
@@ -116,7 +112,7 @@
 
 (def confgen--element--margin-top-if-doc-exist
   (fn [type? param] (if (and (type? :block) (not (nil? (param :doc))))
-                      (label :border (empty-border :top 10)) ())))
+                      (c/label :border (b/empty-border :top 10)) ())))
 
 (def confgen--gui-interface--checkbox-as-droplist
   (fn [param local-changes start-key]
@@ -142,7 +138,7 @@
 (def confgen--recursive--next-configuration-in-map
   (fn [param confgen--component--tree local-changes start-key]
     (map (fn [next-param]
-           (confgen--component--tree local-changes (join-vec start-key (list (first next-param)))))
+           (confgen--component--tree local-changes (lang/join-vec start-key (list (first next-param)))))
          (param :value))))
 
 (def confgen--element--gui-interfaces
@@ -165,9 +161,9 @@
           name (if (nil? (param :name)) (lang/convert-key-to-title (last start-key)) (str (param :name)))]
       (if (= (param :display) :edit)
         (do
-          (mig-panel
+          (smig/mig-panel
            :constraints ["wrap 1" "20px[]50px" "5px[]0px"]
-           :border (cond (type? :block) (empty-border :bottom 10)
+           :border (cond (type? :block) (b/empty-border :bottom 10)
                          :else nil)
            :items (gtool/join-mig-items
                    (confgen--choose--header type? name)
@@ -188,8 +184,8 @@
    "
   (fn [start-key
        & {:keys [message-ok message-faild]
-          :or {message-ok (fn [txt] (alert txt))
-               message-faild (fn [txt] (alert txt))}}]
+          :or {message-ok (fn [txt] (c/alert txt))
+               message-faild (fn [txt] (c/alert txt))}}]
     (let [map-part (cm/get-in-segment start-key)
           local-changes (atom {})]
       (if (= (get-in map-part [:display]) :edit)
@@ -197,22 +193,22 @@
           (@gtool/changes-service :add-controller
                                   :view-id (last start-key)
                                   :local-changes local-changes)
-          (mig-panel
-           :border (line-border :bottom 50 :color (gtool/get-color :background :main))
+          (smig/mig-panel
+           :border (b/line-border :bottom 50 :color (gtool/get-color :background :main))
            :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px[grow, fill]0px[]0px"]
            :border nil
-          ;;  :border (line-border :thickness 2 :color "#f00")
+          ;;  :border (b/line-border :thickness 2 :color "#f00")
            :items (gtool/join-mig-items
                    (gcomp/header-basic (get-in map-part [:name])) ;; Header of section/config file
-                   (gcomp/auto-scrollbox (mig-panel
+                   (gcomp/auto-scrollbox (smig/mig-panel
                                           :constraints ["wrap 1" "0px[fill, grow]0px" "20px[grow, fill]20px"]
                                           :items (gtool/join-mig-items
                                                   (let [body (map
                                                               (fn [param]
-                                                                (confgen--component--tree local-changes (join-vec start-key (list (first param)))))
+                                                                (confgen--component--tree local-changes (lang/join-vec start-key (list (first param)))))
                                                               (get-in map-part [:value]))]
                                                     body))))
-                   (mig-panel
+                   (smig/mig-panel
                     :constraints ["" "0px[grow,fill]0px[fill]0px" "0px[grow,fill]0px"]
                     :items [[(gcomp/button-basic "Save changes"
                                                  :onClick (fn [e] ;; save changes configuration

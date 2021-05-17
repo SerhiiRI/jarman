@@ -9,9 +9,9 @@
   (:require [jarman.resource-lib.icon-library :as icon]
             [jarman.tools.swing :as stool]
             [clojure.string :as string]
-            [jarman.config.config-manager :refer :all :as conf-man]
-            [jarman.tools.lang :refer :all]
-            [jarman.logic.changes-service :refer :all :as cs]
+            [jarman.config.config-manager :as cm]
+            [jarman.tools.lang :as lang]
+            [jarman.logic.changes-service :as cs]
             ;; [jarman.config.init :as init]
             ))
 
@@ -77,7 +77,7 @@
      (join-mig (list (label) (list (label) (label)))) => [[(label)] [(label)] [(label)]]
    "
   (fn [& args]
-    (join-vec (map #(vector %) (flatten args)))))
+    (lang/join-vec (map #(vector %) (flatten args)))))
 
 (defn middle-bounds
   "Description:
@@ -145,22 +145,22 @@
 
 
 (defn theme-map [default & args]
-  (conf-man/get-in-value (vec (concat [:themes :current-theme] args)) default))
+  (cm/get-in-value (vec (concat [:themes :current-theme] args)) default))
 (defn lang-configuration-struct-map [default & args]
-  (conf-man/get-in-segment (vec (concat [] args)) default))
+  (cm/get-in-segment (vec (concat [] args)) default))
 ;; (defn lang-standart-struct-map [default & args]
 ;;   (get-in @init/language (vec (concat [] args)) default))
-(conf-man/get-in-lang [:ui :buttons])
+(cm/get-in-lang [:ui :buttons])
 
 
-(def using-lang (conf-man/get-in-value [:init.edn :lang]))
+(def using-lang (cm/get-in-value [:init.edn :lang]))
 (def get-color (partial theme-map "#000" :color))
 (def get-comp (partial theme-map "#000" :components))
 (def get-frame (partial theme-map 1000 :frame))
 (def get-font (partial theme-map "Ubuntu" :font))
-(def get-lang (fn [& path] (get-in-lang (join-vec [:ui] path))))
-(def get-lang-btns (fn [& path] (get-in-lang (join-vec [:ui :buttons] path))))
-(def get-lang-alerts (fn [& path] (get-in-lang (join-vec [:ui :alerts] path))))
+(def get-lang (fn [& path] (cm/get-in-lang (lang/join-vec [:ui] path))))
+(def get-lang-btns (fn [& path] (cm/get-in-lang (lang/join-vec [:ui :buttons] path))))
+(def get-lang-alerts (fn [& path] (cm/get-in-lang (lang/join-vec [:ui :alerts] path))))
 
 
 ;; ############# COMPONENTS TODO: need move to gui_components.clj

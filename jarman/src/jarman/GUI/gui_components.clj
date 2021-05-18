@@ -165,16 +165,14 @@
 
 (defmacro textarea
   "Description
-     TextArea with word wrap
-   "
+     TextArea with word wrap"
   [txt & args] `(c/label :text `~(gtool/htmling ~txt) ~@args))
 
 (defn button-basic
   "Description:
       Simple button with default style.
    Example:
-      (simple-button \"Simple button\" (fn [e]) :style [:background \"#fff\"])
-   "
+      (simple-button \"Simple button\" (fn [e]) :style [:background \"#fff\"])"
   [txt & {:keys [onClick
                  args
                  tgap
@@ -240,9 +238,6 @@
                 :mouse-out (gtool/get-comp :button-export :mouse-out)
                 :unfocus-color (gtool/get-comp :button-export :unfocus-color)))
 
-
-
-
 (defn button-return
   [txt func]
   (button-basic txt 
@@ -251,8 +246,6 @@
                 :mouse-out (gtool/get-comp :button-return :mouse-out)
                 :unfocus-color (gtool/get-comp :button-return :unfocus-color)
                 :args [:foreground (gtool/get-comp :button-return :foreground)]))
-
-
 
 (defn input-text
   "Description:
@@ -267,8 +260,7 @@
     char-limit
     args
    Example:
-    (input-text :placeholder \"Login\" :style [:halign :center])
- "
+    (input-text :placeholder \"Login\" :style [:halign :center])"
   [& {:keys [val
              placeholder
              border
@@ -313,8 +305,7 @@
            args)))
 
 (defn input-checkbox
-  [& {:keys [
-             txt
+  [& {:keys [txt
              val
              font-size
              enabled?
@@ -370,13 +361,16 @@
    "
   [title component
    & {:keys [tgap
+             font-color
              id]
       :or {tgap 0
-           id nil}}]
+           font-color "#000"
+           id nil}}] 
   (c/grid-panel :columns 1
                 :id id
                 :border (b/empty-border :top tgap)
-                :items [(c/label :text (if (string? title) title ""))
+                :items [(c/label :text (if (string? title) title "")
+                                 :foreground font-color )
                         component]))
 
 (defn input-text-area
@@ -1002,7 +996,6 @@
 
 
 (defn- validate-fields [cmpts-atom num]
-  (println @cmpts-atom)
   (condp = num
     0 (let [f-inp (:field @cmpts-atom)
             r-inp (:representation @cmpts-atom)
@@ -1051,8 +1044,8 @@
                                                                                                                     title num)]])
                                           (c/config! (.getParent (.getParent (seesaw.core/to-widget e))) :items [[(multi-panel panels cmpts-atom table-name
                                                                                                                                title (+ num 1))]]))
-                                        (@gseed/alert-manager :set {:header (gtool/get-lang-alerts :changes-saved-faild)
-                                                                    :body (gtool/get-lang-alerts :column-saved-failed-message)}
+                                        (@gseed/alert-manager :set {:header "Error"
+                                                                    :body "All fields must be entered and must be longer than 3 chars"}
                                                               (@gseed/alert-manager :message gseed/alert-manager) 5)))]])
         btn-back (first (.getComponents btn-panel))
         btn-next (second (.getComponents btn-panel))]
@@ -1062,16 +1055,19 @@
              :visible? (if (= num 0) false true))
     (if (= num (- (count panels) 1))
       (c/config! btn-next :text "Save" :listen [:mouse-clicked (fn [e]
-                                                               (swap! cmpts-atom  assoc :field-qualified (str (:field @cmpts-atom) "." table-name))
-                                                               (swap! cmpts-atom  assoc :default-value :null)
-                                                               (if (:valid? (mmeta/validate-one-column
-                                                                             @cmpts-atom))
-                                                                 (@gseed/alert-manager :set {:header (gtool/get-lang-alerts :changes-saved)
-                                                                                             :body (gtool/get-lang-alerts :column-saved-message)}
-                                                                                       (@gseed/alert-manager :message gseed/alert-manager) 5)
-                                                                 (@gseed/alert-manager :set {:header (gtool/get-lang-alerts :changes-saved-faild)
-                                                                                             :body (gtool/get-lang-alerts :column-saved-failed-message)}
-                                                                                       (@gseed/alert-manager :message gseed/alert-manager) 5)))]))
+                                                                 (println @cmpts-atom)
+                                                                 (swap! cmpts-atom  assoc :field-qualified (str (:field @cmpts-atom) "." table-name))
+                                                                 (println (:output (mmeta/validate-one-column
+                                                                                       @cmpts-atom)))
+                                                                 (if (:valid? (mmeta/validate-one-column
+                                                                               @cmpts-atom))
+                                                                 (@gseed/alert-manager :set {:header "Success"
+                                                                                             :body "Column was added"}
+                                                                  (@gseed/alert-manager :message gseed/alert-manager) 5)
+                                                                 (@gseed/alert-manager :set {:header "Error"
+                                                                                             :body "All fields must be entered and must be longer than 3 chars"}
+                                                                  (@gseed/alert-manager :message gseed/alert-manager) 5)
+                                                                 ))]))
     (mig-panel
      :constraints ["wrap 2" "0px[left]0px" "0px[]0px"]
      :preferred-size [910 :by 360]
@@ -1085,12 +1081,10 @@
 
 
 (defn menu-bar-right
-  "Description:
-       
+  "Description:    
    Example:
       (menu-bar :buttons [[\"title1\" icon1 fn1] [\"title2\" icon2 fn2]])
-      (menu-bar :id :my-id :buttons [[\"title1\" icon1 fn1] [\"title2\" icon2 fn2]])
-   "
+      (menu-bar :id :my-id :buttons [[\"title1\" icon1 fn1] [\"title2\" icon2 fn2]])"
   [& {:keys [id
              buttons]
       :or {id :none

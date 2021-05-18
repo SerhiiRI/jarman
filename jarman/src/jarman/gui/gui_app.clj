@@ -312,18 +312,17 @@
 
 (defn switch-column-to-editing
   [work-mode local-changes path-to-value column]
-  (let [
-        param-to-edit (fn [param enabled]
+  (let [param-to-edit (fn [param enabled]
                         (cond
                           (in? [true false] (get column param))
                           (do
                             (config!
                              (gcomp/input-checkbox
-                                     :txt (lang/convert-key-to-title (str param))
-                                     :local-changes local-changes
-                                     :store-id (lang/join-vec column [param])
-                                     :val (get column param)
-                                     :enabled? enabled)
+                              :txt (lang/convert-key-to-title (str param))
+                              :local-changes local-changes
+                              :store-id (lang/join-vec column [param])
+                              :val (get column param)
+                              :enabled? enabled)
                              :background gcomp/light-light-grey-color))
                           :else
                           (config! (gcomp/inpose-label (lang/convert-key-to-title (str param))
@@ -332,6 +331,7 @@
                                                         :store-id (lang/join-vec path-to-value [param])
                                                         :val (str (get column param))
                                                         :enabled? enabled)
+                                                       :font-color dark-grey-color
                                                        :vtop 10)
                                    :background gcomp/light-light-grey-color)))]
     (mig-panel ;; Editable parameters list
@@ -385,11 +385,10 @@
                                                     "simple-number" "float-number"
                                                     "boolean" "linking-table"
                                                     "big-text" "short-text"]))
-        sel-col-type (DateTime/getBar (into-array [""]))
+        sel-col-type (DateTime/getBar (into-array [" "]))
         model-sel (.getModel sel-col-type)]
     (config! check  :listen [:action-performed (fn [e]
-                                                 (swap! cmpts-atom assoc (keyword name) (.isSelected check))
-                                                 (println @cmpts-atom))])
+                                                 (swap! cmpts-atom assoc (keyword name) (.isSelected check)))])
     (mig-panel
      :constraints ["wrap 1" "0px[grow, left]0px" "0px[]px"]
      ;;:preferred-size [900 :by 400]
@@ -421,11 +420,12 @@
                         :listen [:mouse-clicked (fn [e] (do (func e)))
                                  :mouse-entered (fn [e] (config! e :cursor :hand))])]]))
 
-(defn add-column-panel [table-name]
+(defn- add-column-panel [table-name]
   (let [cmpts-atom (atom {:editable? false :private? false})
         inp-name (panel-for-input "field" "database column name" :field cmpts-atom)
         inp-repr (panel-for-input "representation" "name for end-user, by default = field" :field cmpts-atom)
         inp-descr (panel-for-input "description" "some description information, used for UI" :field cmpts-atom)
+        inp-def (panel-for-input "default-value" "default value" :field cmpts-atom)
         inp-selct (panel-for-input "component-type" "database type of column" :select-comp-type cmpts-atom)
         inp-db (panel-for-input "column-type" "type of data to db" :select-col-type cmpts-atom)
         inp-pr (panel-for-input "private?" "true if column must be hided for user" :check cmpts-atom)
@@ -444,34 +444,58 @@
     (config! selct-col :listen [:action-performed (fn [e]
                                                     (swap! cmpts-atom assoc :column-type (.toString (.getSelectedItem selct-col))))])
     (config! main-panel :items [[(label :text "Adding column" :font (getFont 14 :bold) :foreground blue-color)]
-                                [(gcomp/multi-panel [(vertical-panel :items (list inp-name inp-repr inp-descr))
+                                [(gcomp/multi-panel [(vertical-panel :items (list inp-name inp-repr inp-descr inp-def))
                                                      (vertical-panel :items (list inp-selct inp-db))
                                                      (vertical-panel :items (list inp-pr inp-ed))]
                                                     cmpts-atom
                                                     table-name
                                                     "" 0)]])))
+(defn delete-column [column l-delete]
+  (config! l-delete 
+           :listen [:mouse-entered (fn [e] (config! e :cursor :hand))
+                    :mouse-clicked (fn [e] (create-dialog-yesno "Delete"
+                                                                (str
+                                                                 "Delete column "
+                                                                 (name (:field column))
+                                                                 "?")
+                                                                [180 140]))]
+           :visible? true))
+
 ;;heyyy
 (defn table-editor--component--column-picker
   "Create left table editor view to select column which will be editing on right table editor view"
   [work-mode local-changes column-editor-id columns path-to-value table-name]
-  (mig-panel :constraints ["wrap 1" "0px[100:, fill]0px" "0px[fill]0px"]
-             :items
-             (join-mig-items
-              (label :text "Columns" :border (empty-border :top 5 :bottom 5) :foreground blue-color)
-              (map (fn [column index]
-                     (let [path-to-value (join-vec path-to-value [index])
-                           meta-panel (mig-panel
-                                       :constraints ["wrap 1" "grow, fill" ""]
-                                       :items [[(label :text (name (:field column))
-                                                       :border (empty-border :bottom 5)
-                                                       :font (getFont 14 :bold) :foreground blue-color)]
-                                               [(config! (switch-column-to-editing work-mode local-changes path-to-value column))]])]
-                       (table-editor--component--column-picker-btn
-                        (get-in column [:representation])
-                        (fn [e] (config! (select (to-root @app) [(convert-str-to-hashkey column-editor-id)]) :items (gtool/join-mig-items meta-panel))))))
-                   columns (range (count columns)))
-              (label :text "Actions" :border (empty-border :top 5 :bottom 5)  :foreground blue-color)
-              (table-editor--element--btn-add-column (fn [e] (config! (select (to-root @app) [(convert-str-to-hashkey column-editor-id)]) :items (gtool/join-mig-items (add-column-panel table-name))))))))
+  (let [l-delete (label :text "delete" :visible? false
+                        :font (getFont 12)
+                        :border (empty-border :left 15))]
+    (mig-panel :constraints ["wrap 1" "0px[100:, fill]0px" "0px[fill]0px"]
+               :items
+               (join-mig-items
+                (label :text "Columns" :border (empty-border :top 5 :bottom 5) :foreground blue-color)
+                (map (fn [column index]
+                       (let [path-to-value (join-vec path-to-value [index])
+                             meta-panel (mig-panel
+                                         :constraints ["wrap 1" "grow, fill" ""]
+                                         :items [[(label :text (name (:field column))
+                                                         :border (empty-border :bottom 5)
+                                                         :font (getFont 14 :bold) :foreground blue-color)]
+                                                 [(config! (switch-column-to-editing work-mode local-changes path-to-value column))]])]
+                         (table-editor--component--column-picker-btn
+                          (get-in column [:representation])
+                          (fn [e]
+                            (config! l-delete 
+                                     :listen [:mouse-entered (fn [e] (config! e :cursor :hand))
+                                              :mouse-clicked (fn [e] (delete-column column l-delete))]
+                                     :visible? true)
+                            (config! (select (to-root @app) [(convert-str-to-hashkey column-editor-id)])
+                                     :items (gtool/join-mig-items meta-panel))))))
+                     columns (range (count columns)))
+                (label :text "Actions" :border (empty-border :top 5 :bottom 5)  :foreground blue-color)
+                (table-editor--element--btn-add-column (fn [e]                                              
+                                                         (config! l-delete :visible? false)
+                                                         (config! (select (to-root @app) [(convert-str-to-hashkey column-editor-id)])
+                                                                  :items (gtool/join-mig-items (add-column-panel table-name)))))
+                l-delete))))
 
 (defn table-editor--component--space-for-column-editor
   "Create right table editor view to editing selected column in left table editor view"
@@ -489,8 +513,7 @@
 
 (defn table-editor--element--btn-save
   "Description:
-     Invoker-id is a parent whos invoke editor. I mean DB Visualizer.
-   "
+     Invoker-id is a parent whos invoke editor. I mean DB Visualizer."
   [local-changes table invoker-id]
   (table-editor--component--bar-btn :edit-view-save-btn (get-lang-btns :save) icon/agree-grey-64-png icon/agree-blue-64-png
                                     (fn [e]
@@ -573,14 +596,15 @@
                                                                                          :enabled? enabled)))
                                                                              :else
                                                                              (config!
-                                                                              (gcomp/inpose-label (lang/convert-key-to-title (str param))
-                                                                                                         (gcomp/input-text-with-atom
-                                                                                                          :local-changes local-changes
-                                                                                                          :store-id (lang/join-vec tab-path-to-value [param])
-                                                                                                          
-                                                                                                          :val (str (get table-property param))
-                                                                                                          :enabled? enabled)
-                                                                                                         :vtop 10))))
+                                                                              (gcomp/inpose-label
+                                                                               (lang/convert-key-to-title (str param))
+                                                                                                  (gcomp/input-text-with-atom
+                                                                                                   :local-changes local-changes
+                                                                                                   :store-id (lang/join-vec tab-path-to-value [param])
+                                                                                                   :val (str (get table-property param))
+                                                                                                   :enabled? enabled)
+                                                                                                  :vtop 10
+                                                                                                  :font-color gcomp/blue-color))))
                                                            meta-params [:representation :description :field :is-system?
                                                                         :is-linker? :allow-linking? :allow-modifing? :allow-deleting?]]
                                                        (cond
@@ -701,20 +725,30 @@
                                                         (= (get data :type) "header") (- (get data :height) 2)
                                                         :else                         (- (get data :height) 0))]
                          :icon (cond
-                                 (= (get data :type) "connection") (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (get data :height)) 1))
-                                 (= (get data :type) "key") (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (get data :height)) 1)) ;;(stool/image-scale icon/key-blue-64-png (/ (get data :height) 1))
+                                 (= (get data :type) "connection")
+                                 (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (get data :height)) 1))
+                                 (= (get data :type) "key")
+                                 (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (get data :height)) 1)) ;;(stool/image-scale icon/key-blue-64-png (/ (get data :height) 1))
                                  :else nil)
                          :background (cond
-                                       (= (get data :type) "header")     "#666"
-                                       (= (get data :type) "key")        "#ace8a7" ;;"#f7d67c"
-                                       (= (get data :type) "connection") "#ace8a7"
+                                       (= (get data :type) "header")     gcomp/light-light-grey-color ;;"#666"
+                                       (= (get data :type) "key")        "#e2fbde";;"#e4f8e1" ;;"#ace8a7" ;;"#f7d67c"
+                                       (= (get data :type) "connection") "#e2fbde";;"#ace8a7"
+                                       :else "#fff")
+                         :font (cond
+                                       (= (get data :type) "header")     (getFont 12 :bold)
+                                       (= (get data :type) "key")        (getFont 12)
+                                       (= (get data :type) "connection") (getFont 12)
                                        :else "#fff")
                          :foreground (cond
-                                       (= (get data :type) "header") "#fff"
-                                       :else "#000")
+                                       (= (get data :type) "header") gcomp/blue-color ;;"#fff"
+                                       :else "#000"
+                                       )
                          :border (cond
                                    (= (get data :type) "header") (compound-border (empty-border :thickness 4))
-                                   :else                         (compound-border (empty-border :thickness 4) (line-border :top 1 :color (get data :border-c))))
+                                   :else                         (compound-border (empty-border :thickness 4)
+                                                                                  ;;(line-border :top 1 :color (get data :border-c))
+                                                                                  ))
                          :listen [:mouse-entered (fn [e] (do
                                                            (cond
                                                              (= (get data :type) "header") (config! e :cursor :move))))

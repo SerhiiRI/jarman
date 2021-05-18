@@ -26,6 +26,7 @@
    ;; [jarman.config.environment :as env]
    ;; [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    ;; [jarman.logic.metadata :as mt]
+   [jarman.gui.gui-app :as gapp]
    [jarman.logic.view-manager :include-macros true :refer :all]
    [jarman.plugin.table :as plug])
   (:import (java.util Date)

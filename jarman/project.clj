@@ -21,13 +21,19 @@
                  [me.raynes/fs "1.4.6"]
                  [mysql/mysql-connector-java "5.1.6"]
                  [instaparse "1.4.10"]]
-  :main ^:skip-aot jarman.core
+  ;;:main ^:skip-aot jarman.core
+  :main jarman.core
+  :aot [jarman.core]
   :repl-options {:init-ns hrtime.core}
   :target-path "target/%s"
   :aliases  {"jarman" ["run" "-m" "jarman.jarman-cli"]}
   :profiles {;; :uberjar {:aot :all}
              ;;:dev {;; :dependencies [[autodoc "1.1.2"]]
              ;;      :plugins [[funcool/codeina "0.4.0" :exclusions [org.clojure/clojure]]]}
+             :user
+             {:plugins [[lein-launch4j "0.1.2"]]
+              :launch4j-install-dir ""
+              :launch4j-config-file "resources/config.xml"}
              :lets-scheme {:aot [jarman.schema-builder
                                  jarman.sql-tool]
                            :main jarman.schema-builder
@@ -37,6 +43,7 @@
             :reader :clojure}
   ;; :plugins [[funcool/codeina "0.5.0"]]
   :jar-name "jarman.jar"
+  ;;:uberjar {:aot :all}
   :uberjar-name "jarman-standalone.jar"
   :java-source-paths ["src/java"]
   :javac-options     ["-Xlint:unchecked"])

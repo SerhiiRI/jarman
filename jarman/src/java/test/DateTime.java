@@ -587,18 +587,18 @@ public class DateTime extends JPanel{
     }
 
 
-    public static void main(final String[] args) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        JTextField t = new JTextField(19);
-        panel.add(get_calendar(t));
+    // public static void main(final String[] args) {
+    //     JPanel panel = new JPanel(new GridBagLayout());
+    //     JTextField t = new JTextField(19);
+    //     panel.add(get_calendar(t));
         
-        final JFrame frame = new JFrame("MainComboBoxUI");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.getContentPane().add(panel);
-        frame.pack();
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-    }
+    //     final JFrame frame = new JFrame("MainComboBoxUI");
+    //     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    //     frame.getContentPane().add(panel);
+    //     frame.pack();
+    //     frame.setLocationRelativeTo(null);
+    //     frame.setVisible(true);
+    // }
 }
 
 

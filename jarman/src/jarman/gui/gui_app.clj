@@ -44,8 +44,6 @@
 ;; │                            │
 ;; └────────────────────────────┘
 
-
-
 (def popup-menager (atom nil))
 
 (defn ontop-panel
@@ -152,13 +150,11 @@
          :parent (getParent @atom-popup-hook))
         pack! show!)))
 
-
 ;; ┌───────────────┐
 ;; │               │
 ;; │ Popup service │
 ;; │               │
 ;; └───────────────┘
-
 
 (defn create-popup-service
   [atom-popup-hook]
@@ -199,15 +195,9 @@
 
 ;; (new-layered-id-for-tables-visualizer)
 ;; (new-test-for-tabs)
-
 ;; (new-layered-id-for-tables-visualizer)
 ;; @views
-
 ;; ================================================VVVVVVVVVV Table in database view
-
-
-
-
 ;; ┌─────────────────────────────┐
 ;; │                             │
 ;; │ Resize components functions │
@@ -259,7 +249,6 @@
 ;; │ Table editor │
 ;; │              │
 ;; └──────────────┘
-
 
 (defn table-editor--element--header
   "Create header GUI component in editor for separate section"
@@ -481,7 +470,7 @@
                                                          :font (getFont 14 :bold) :foreground blue-color)]
                                                  [(config! (switch-column-to-editing work-mode local-changes path-to-value column))]])]
                          (table-editor--component--column-picker-btn
-                          (get-in column [:representation])
+                         (get-in column [:representation])
                           (fn [e]
                             (config! l-delete 
                                      :listen [:mouse-entered (fn [e] (config! e :cursor :hand))
@@ -920,7 +909,6 @@
                                                               :scrollable? false
                                                               :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (@gseed/alert-manager :message @gseed/alert-manager) 5)))))))))
                    config-file-list-as-keyword-to-display)
-
               (let [path [:themes :theme_config.edn]
                     title (get (cm/get-in-segment path) :name)
                     view-id :theme_config.edn]
@@ -1185,8 +1173,13 @@
                                             (reset! popup-menager (create-popup-service atom-popup-hook))
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
+
+;;(@startup)
+
+
+
 ;; (@gseed/alert-manager :set {:header "Hello World" :body "Some body once told me..."} (@gseed/alert-manager :message gseed/alert-manager) 5)
-(@startup)
+
 ;; (mmeta/getset)
 ;; (@gseed/jarman-views-service :get-all-view)
 

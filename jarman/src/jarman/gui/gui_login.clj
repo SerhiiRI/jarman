@@ -535,7 +535,7 @@
                                        :mouse-exited (fn [e] (tool/hand-hover-off e))
                                        :mouse-clicked (fn [e] (config! (to-frame e) :content (login-panel)))]
                               :border (empty-border :right 220)) "align l, split 2"]
-                      [(label :icon (stool/image-scale "resources/imgs/trashpanda2-stars-blue-1024.png" 47))]
+                      [(label :icon (stool/image-scale "icons/imgs/trashpanda2-stars-blue-1024.png" 47))]
                       [(let [mig (mig-panel
                                   :constraints ["wrap 1" "100px[:600, grow, center]100px" "20px[]20px"]
                                   :items [[(label :text (tool/htmling "<h2>About</h2>")
@@ -567,7 +567,9 @@
                                          :style [:halign :left])]
     (mig-panel
      :constraints ["wrap 1" "[center]" "20px[]0px"]
-     :items [[(label :icon (stool/image-scale "resources/imgs/jarman-text.png" 6))]
+     :items [[(label :icon ;;(stool/image-scale icon/user-blue1-64-png 40)
+                      (stool/image-scale "icons/imgs/jarman-text.png" 6)
+                     )]
              [(mig-panel
                :constraints ["wrap 2" "10px[fill]10px[200:, fill]" "0px[]20px"]
                :items [[(label :icon (stool/image-scale icon/user-blue1-64-png 40))]
@@ -593,14 +595,16 @@
          :undecorated? false
          :resizable? false
          :minimum-size [800 :by 600]
-         :icon (stool/image-scale icon/calendar1-64-png 100)
+         :icon (stool/image-scale
+                icon/calendar1-64-png) 
          :content (login-panel)))
 
 (defn- frame-error []
   (frame :title "Jarman-error"
          :undecorated? false
          :resizable? false
-         :icon (stool/image-scale icon/calendar1-64-png 100)
+         :icon (stool/image-scale
+                icon/calendar1-64-png)
          :minimum-size [600 :by 600]))
 
 (defn start []
@@ -610,77 +614,8 @@
       (-> (doto (frame-error) (.setLocationRelativeTo nil)(apply-stylesheet my-style))
           (config! :content (error-panel res-validation)) seesaw.core/pack! seesaw.core/show!))))
 
+
 (start)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; multi-panel for replace some panels ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def red-panel
-  (fn []
-    (mig-panel
-     :constraints ["" "[grow, fill]" ""]
-     :items [[(label :text "red"
-                     :border (color-border red-color)
-                     :background red-color )]])))
-
-(def green-panel
-  (fn []
-    (mig-panel
-     :constraints ["" "[grow, fill]" ""]
-     :items [[(label :text "green"
-                     :border (color-border blue-green-color)
-                     :background blue-green-color)]])))
-
-(def blue-panel
-  (fn []
-    (mig-panel
-     :constraints ["" "[grow, fill]" ""]
-     :items [[(label :text "blue"
-                     :border (color-border blue-color)
-                     :background blue-color)]])))
-
-(defn multi-panel
-  "Description:
-    get vector of panels and return mig-panel in which these panels are replaced on click of arrow
-   Example:
-    (multi-panel [some-panel-1 some-panel-2 some-panel-3])"
-  [panels title num]
-  (mig-panel
-   :constraints ["wrap 3" "[fill][grow, fill, center][fill]" "[fill][grow, fill][fill]15px"] 
-   :items [[(label :text title
-                   :foreground "#256599"
-                   :border (empty-border :left 10)
-                   :font {:size 16 font "Arial" :style :bold}) "span 3"]
-           [((nth panels num)) "span 3"]
-           [(label :icon (stool/image-scale icon/a-up-grey-64-png 50) ;;left-blue-64-png
-                   :visible? (if (= num 0) false true)
-                   :listen [:mouse-entered (fn [e] (tool/hand-hover-on e))
-                            :mouse-exited (fn [e] (tool/hand-hover-off e))
-                            :mouse-clicked (fn [e]
-                                             (if (= num 0)
-                                               (config! (to-frame e) :content (multi-panel panels title num))
-                                               (config! (to-frame e) :content (multi-panel panels title (- num 1)))))])
-            "align l"]
-           [(label :text "")]
-           [(label :icon (stool/image-scale icon/arrow-blue-grey-left-64-png 36) ;;right-blue-64-png
-                   :visible? (if (= num (- (count panels) 1)) false true)
-                   :listen [:mouse-clicked (fn [e] (if (=  num (- (count panels) 1))
-                                                     (config! (to-frame e) :content (multi-panel panels title num))
-                                                     (config! (to-frame e) :content (multi-panel panels title (+ num 1)))))])
-            "align r"]]))
-
-
-;; (defn- test-frame []
-;;   (frame :title "Jarman"
-;;          :undecorated? false
-;;          :content (multi-panel [red-panel green-panel blue-panel] "Some panel" 0)
-;;          :resizable? true
-;;          :minimum-size [800 :by 600]))
-
-;; (-> (doto (test-frame) (.setLocationRelativeTo nil) ) seesaw.core/pack! seesaw.core/show!)
-
-
-
 
 
 

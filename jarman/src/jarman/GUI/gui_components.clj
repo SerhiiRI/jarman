@@ -764,7 +764,7 @@
 
 (def label-img
   (fn [file-path w h]
-    (let [img (clojure.java.io/file (str "resources/imgs/" file-path))
+    (let [img (clojure.java.io/file (str "icons/imgs/" file-path))
           gif (c/label :text (str "<html> <img width=\"" w "\" height=\"" h "\" src=\"file:" img "\">"))]
       gif)))
 

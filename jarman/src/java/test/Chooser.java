@@ -530,14 +530,14 @@ public class Chooser extends JPanel{
         return textf;
     }
 
-    public static void main(String[] args) throws ParseException {
-        JFrame f = new JFrame();
-        JPanel p = new JPanel();
-        JTextField t = new JTextField(20);
-        t.setText("2020-102");
-        p.add(get_calendar(t));
-        f.add(p);
-        f.setSize(400, 400);
-        f.setVisible(true);
-    }
+    // public static void main(String[] args) throws ParseException {
+    //     JFrame f = new JFrame();
+    //     JPanel p = new JPanel();
+    //     JTextField t = new JTextField(20);
+    //     t.setText("2020-102");
+    //     p.add(get_calendar(t));
+    //     f.add(p);
+    //     f.setSize(400, 400);
+    //     f.setVisible(true);
+    // }
 }

@@ -38,6 +38,7 @@
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
             ))
 
+
 ;; ┌────────────────────────────┐
 ;; │                            │
 ;; │ JLayeredPane Popup Service │
@@ -46,7 +47,7 @@
 
 
 
-(def popup-menager (atom nil))
+       (def popup-menager (atom nil))
 
 (defn ontop-panel
   [popup-menager storage-id z-index & {:keys [size title body] :or {size [600 400] title "Popup" body (label)}}]

@@ -160,6 +160,18 @@
   (if (or (lang/in? (seq "1234567890-=_") (first (.getName file-name))) (not (some #(= \. %) (seq (.getName file-name))))) nil
           (let [frmt (last (clojure.string/split (str file-name) #"\."))]
             (lang/in? *acceptable-font-file-format* frmt))))
+;; => Syntax error compiling at (src/jarman/tools/swing.clj:160:11).
+;;    No such namespace: lang
+
+;; => Syntax error compiling at (src/jarman/tools/swing.clj:160:11).
+;;    No such namespace: lang
+
+;; => Syntax error compiling at (src/jarman/tools/swing.clj:160:11).
+;;    No such namespace: lang
+
+;; => Syntax error compiling at (src/jarman/tools/swing.clj:160:11).
+;;    No such namespace: lang
+
 
 
 (defn- get-font-data []

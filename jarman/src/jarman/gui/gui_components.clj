@@ -288,7 +288,7 @@
            :font (gtool/getFont font-size :name "Monospaced")
            :background (gtool/get-color :background :input)
            :border (newBorder border-color-unfocus)
-           :user-data {:placeholder placeholder :c/value "" :edit? false :type :input :border-fn newBorder}
+           :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
            :listen [:focus-gained (fn [e]
                                     (c/config! e :border (newBorder border-color-focus))
                                     (cond (= (c/value e) placeholder) (c/config! e :text ""))
@@ -604,10 +604,10 @@
              :font (gtool/getFont font-size :name "Monospaced")
              :background (gtool/get-color :background :input)
              :border (newBorder border-color-unfocus)
-             :user-data {:placeholder placeholder :c/value "" :edit? false :type :password}
+             :user-data {:placeholder placeholder :value "" :edit? false :type :password}
              :listen [:focus-gained (fn [e]
                                       (c/config! e :border (newBorder border-color-focus))
-                                      (cond (= (fn-get-data e :c/value) "")    (c/config! e :text ""))
+                                      (cond (= (fn-get-data e :value) "")    (c/config! e :text ""))
                                       (c/config! e :user-data (fn-assoc e :edit? true)))
                       :focus-lost   (fn [e]
                                       (c/config! e :border (newBorder border-color-unfocus))
@@ -620,27 +620,27 @@
                                                   (let [added-chars (clojure.string/replace (c/value e) #"\*+" "")]
                                                     (cond (> (count added-chars) 0)
                                                           (do
-                                                            (c/config! e :user-data (fn-assoc e :c/value (str (fn-get-data e :c/value) added-chars)))
+                                                            (c/config! e :user-data (fn-assoc e :value (str (fn-get-data e :value) added-chars)))
                                                             (c/invoke-later (c/config! e :text (fn-hide-chars e))))
-                                                          (< (fn-letter-count e) (count (fn-get-data e :c/value)))
+                                                          (< (fn-letter-count e) (count (fn-get-data e :value)))
                                                           (do
-                                                            (c/config! e :user-data (fn-assoc e :c/value (subs (fn-get-data e :c/value) 0 (fn-letter-count e))))
+                                                            (c/config! e :user-data (fn-assoc e :value (subs (fn-get-data e :value) 0 (fn-letter-count e))))
                                                             (if (= 1 (count (c/value e))) (reset! allow-clean true))
                                                             (c/invoke-later (c/config! e :text (fn-hide-chars e))))))
 
                                                   (and (= true @allow-clean)
                                                        (= 0 (count (c/value e))))
                                                   (do
-                                                    (c/config! e :user-data (fn-assoc e :c/value ""))
+                                                    (c/config! e :user-data (fn-assoc e :value ""))
                                                     (c/invoke-later (c/config! e :text ""))
                                                     (reset! allow-clean false)))))]
              style))))
 
-
+;; (def pass (input-password :placeholder "password"))
 
 ;; (def view (fn [] (let [lbl (c/label)]
 ;;                    (mig-panel :constraints ["" "fill, grow" ""] :border (b/line-border :thickness 1 :color "#000") :size [200 :by 30]
-;;                               :items [[(input-password :placeholder "password")]]))))
+;;                               :items [[pass]]))))
 
 ;; ;; Show example
 ;; (let [my-frame (-> (doto (seesaw.core/frame
@@ -650,6 +650,7 @@
 ;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
 ;;   (seesaw.core/config! my-frame :size [800 :by 600]))
 
+;; (println (c/config pass :user-data))
 
 ;; ┌────────────────────┐
 ;; │                    │

@@ -359,6 +359,8 @@
 
 (defn test-key-login [key-title login pass]
   (let [data (key-title (c/datalist-mapper (c/datalist-get)))]
+    (println login)
+    (println pass)
     (if-let [login-fn (logic/login
                        {:dbtype (:dbtype data)
                         :host (:host data)
@@ -378,12 +380,15 @@
           :not-valid-connection
           "not valid connection")))))
 
+(start)
 
 (defn some-error-v [error]
   (vertical-panel
    :background "#fff"
    :items (list (label :text error :font (myFont 13) :foreground red-color
                        :border (empty-border :top 5 :left 5 :bottom 5)))))
+
+
 
 
 (defn label-to-config [dbname title key-title login pass] 
@@ -444,8 +449,9 @@
                                                                      :border (line-border :bottom 4
                                                                                           :color red-color)
                                                                      :listen [:mouse-clicked (fn [e]
-                                                                                               (let [data-log (test-key-login key-title (text login)
-                                                                                                                                (get (config pass :user-data) :value))]
+                                                                                               (let [data-log (test-key-login key-title
+                                                                                                                              (text login)
+                                                                                                                              (get (config pass :user-data) :value))]
                                                                                                  (if (instance? clojure.lang.PersistentArrayMap data-log)
                                                                                                    (do (.revalidate my-panel)
                                                                                                        (.dispose (to-frame e))
@@ -616,6 +622,7 @@
 
 
 (start)
+
 
 
 

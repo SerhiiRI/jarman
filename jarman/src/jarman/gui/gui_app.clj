@@ -1,9 +1,4 @@
 (ns jarman.gui.gui-app
-  (:use seesaw.core
-        seesaw.border
-        seesaw.dev
-        seesaw.mig
-        seesaw.swingx)
   (:import (javax.swing JLayeredPane JLabel JTable JComboBox DefaultCellEditor JCheckBox)
            (javax.swing.table TableCellRenderer TableColumn)
            (java.awt.event MouseEvent)
@@ -45,13 +40,10 @@
 ;; │                            │
 ;; └────────────────────────────┘
 
-<<<<<<< HEAD
+
+
 (def popup-menager (atom nil))
-=======
 
-
-       (def popup-menager (atom nil))
->>>>>>> 3e92456e39bc89fcffb135ce012658a9272e72ba
 
 (defn ontop-panel
   [popup-menager storage-id z-index & {:keys [size title body] :or {size [600 400] title "Popup" body (label)}}]

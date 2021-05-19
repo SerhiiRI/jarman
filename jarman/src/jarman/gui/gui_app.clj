@@ -1,4 +1,10 @@
 (ns jarman.gui.gui-app
+  (:use seesaw.core
+        seesaw.border
+        seesaw.dev
+        seesaw.style
+        seesaw.mig
+        seesaw.font)
   (:import (javax.swing JLayeredPane JLabel JTable JComboBox DefaultCellEditor JCheckBox)
            (javax.swing.table TableCellRenderer TableColumn)
            (java.awt.event MouseEvent)
@@ -39,7 +45,6 @@
 ;; │ JLayeredPane Popup Service │
 ;; │                            │
 ;; └────────────────────────────┘
-
 
 
 (def popup-menager (atom nil))
@@ -987,7 +992,7 @@
        :background "#fff"
        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[28, shrink 0]0px[grow, fill]0px"]
        :background "#eee"
-       :border (line-border :left 1 :color "#999")
+      ;; :border (line-border :left 1 :color "#999")
        :items [[(scrollbox tabs-space :hbar-size 3 :args [:vscroll :never])]
                [views-space]]))))
 
@@ -1114,7 +1119,7 @@
                                                                  [])]]))))
 
 ;; (jarman.logic.metadata/getset)
-;; (@startup)
+;;(@startup)
 
 ;; ┌─────────────┐
 ;; │             │
@@ -1152,10 +1157,10 @@
 
                              @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook))
-      (if-not (nil? @relative) (.setLocation (to-frame @app) (first @relative) (second @relative))))
+      (if-not (nil? @relative) (.setLocation (seesaw.core/to-frame @app) (first @relative) (second @relative))))
     (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))))
 
-;; (@startup)
+(@startup)
 
 (reset! startup
         (fn []

@@ -380,7 +380,7 @@
           :not-valid-connection
           "not valid connection")))))
 
-(start)
+
 
 (defn some-error-v [error]
   (vertical-panel
@@ -389,6 +389,7 @@
                        :border (empty-border :top 5 :left 5 :bottom 5)))))
 
 
+(show-events (border-panel))
 
 
 (defn label-to-config [dbname title key-title login pass] 
@@ -404,7 +405,8 @@
         icon-info (label :icon (stool/image-scale icon/I-grey-64-png 36)
                           :visible? true
                           :border (empty-border :right 5)
-                          :listen [:mouse-entered (fn [e] (do (tool/hand-hover-on e) (config! e :visible? true)))
+                          :listen [
+                                   :mouse-entered (fn [e] (do (tool/hand-hover-on e) (config! e :visible? true)))
                                    :mouse-exited (fn [e] (do (tool/hand-hover-off e) (config! e :visible? false)))
                                    :mouse-clicked (fn [e] (do (tool/hand-hover-off e) (config! (to-frame e) :content (info-panel))))])
         icon-conf
@@ -412,12 +414,16 @@
                :halign :right
                :visible? false
                :border (empty-border :right 5 )
-               :listen [:mouse-entered (fn [e] (do (tool/hand-hover-on e) (config! e :visible? true)))
+               :listen [
+                        :mouse-entered (fn [e] (do (tool/hand-hover-on e) (config! e :visible? true)))
                         :mouse-exited (fn [e] (do (tool/hand-hover-off e) (config! e :visible? false)))
                         :mouse-clicked (fn [e] (do (tool/hand-hover-off e) (config! (to-frame e)
                                                                                :content (config-generator-panel key-title))))])
         icons-pan (flow-panel :items (list icon-conf) :background "#fff" :align :right)
         my-panel (border-panel
+                  :listen [:focus-gained (fn [e] (config! e :border (line-border :bottom 4 :color light-blue-color)))
+                           :focus-lost   (fn [e] (config! e :border (line-border :bottom 4 :color light-grey-color)))]
+                  :focusable? true
                   :border (line-border :bottom 4 :color light-grey-color)
                   :maximum-size  [120 :by 120]
                   :preferred-size  [120 :by 120]
@@ -426,47 +432,49 @@
         (config! my-panel  :items  [[v-pane :north]
                                     [icons-pan :south]]))
     (.repaint my-panel)
-    (config! my-panel :listen [:mouse-entered (fn [e] (do 
-                                                        (config! e :border (line-border :bottom 4 :color light-blue-color))
-                                                        (config! icon-conf :visible? true)))
-                               :mouse-exited  (fn [e] (do (config! e :border (line-border :bottom 4 :color light-grey-color))
-                                                          (config! icon-conf :visible? false)))
-                               :mouse-clicked (fn [e] (let [data-log (test-key-login key-title (text login)
-                                                                                             (get (config pass :user-data) :value))]
-                                                        (if (instance? clojure.lang.PersistentArrayMap data-log)
-                                                          (do (.revalidate my-panel)
-                                                              (.dispose (to-frame e))
-                                                              (@app/startup))
-                                                          (do
-                                                            (config! dbn :foreground red-color)
-                                                            (println (name data-log))
-                                                            (config! err-l ;; (some-error-v (name data-log))
-                                                                  :text (name data-log)
-                                                                  :font (myFont 11) :foreground red-color
-                                                                  :border (empty-border :top 5 :left 5 :bottom 5))
-                                                            (.add icons-pan icon-info)
-                                                            (config! my-panel 
-                                                                     :border (line-border :bottom 4
-                                                                                          :color red-color)
-                                                                     :listen [:mouse-clicked (fn [e]
-                                                                                               (let [data-log (test-key-login key-title
-                                                                                                                              (text login)
-                                                                                                                              (get (config pass :user-data) :value))]
-                                                                                                 (if (instance? clojure.lang.PersistentArrayMap data-log)
-                                                                                                   (do (.revalidate my-panel)
-                                                                                                       (.dispose (to-frame e))
-                                                                                                       (@app/startup)))))
-                                                                              :mouse-exited  (fn [e] (do
-                                                                                                       (config! icon-conf :visible? false)
-                                                                                                       (config! icon-info :visible? false)
-                                                                                                       (config! e :border (line-border :bottom 4 :color red-color))))
-                                                                              :mouse-entered  (fn [e] (do (config! icon-conf :visible? true)
-                                                                                                          (config! icon-info :visible? true)
-                                                                                                        (config! e :border (line-border :bottom 4 :color red-color))))])
-                                                            (.revalidate my-panel)))))])
+    (let [onClick (fn [e] (let [data-log (test-key-login key-title (text login)
+                                                         (get (config pass :user-data) :value))]
+                            (if (instance? clojure.lang.PersistentArrayMap data-log)
+                              (do (.revalidate my-panel)
+                                  (.dispose (to-frame e))
+                                  (@app/startup))
+                              (do
+                                (config! dbn :foreground red-color)
+                                (println (name data-log))
+                                (config! err-l ;; (some-error-v (name data-log))
+                                         :text (name data-log)
+                                         :font (myFont 11) :foreground red-color
+                                         :border (empty-border :top 5 :left 5 :bottom 5))
+                                (.add icons-pan icon-info)
+                                (config! my-panel
+                                         :border (line-border :bottom 4
+                                                              :color red-color)
+                                         :listen [:mouse-clicked (fn [e]
+                                                                   (let [data-log (test-key-login key-title (text login)
+                                                                                                  (get (config pass :user-data) :value))]
+                                                                     (if (instance? clojure.lang.PersistentArrayMap data-log)
+                                                                       (do (.revalidate my-panel)
+                                                                           (.dispose (to-frame e))
+                                                                           (@app/startup)))))
+                                                  :mouse-exited  (fn [e] (do
+                                                                           (config! icon-conf :visible? false)
+                                                                           (config! icon-info :visible? false)
+                                                                           (config! e :border (line-border :bottom 4 :color red-color))))
+                                                  :mouse-entered  (fn [e] (do (config! icon-conf :visible? true)
+                                                                              (config! icon-info :visible? true)
+                                                                              (config! e :border (line-border :bottom 4 :color red-color))))])
+                                (.revalidate my-panel)))))]
+      (config! my-panel :listen [:mouse-entered (fn [e] (do
+                                                          (config! e :border (line-border :bottom 4 :color light-blue-color))
+                                                          (config! icon-conf :visible? true)))
+                                 :mouse-exited  (fn [e] (do (config! e :border (line-border :bottom 4 :color light-grey-color))
+                                                            (config! icon-conf :visible? false)))
+                                 :mouse-clicked (fn [e] (onClick e))
+                                
+                                 :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))]))
     my-panel))
 
-
+(start)
 
 (defn configurations-panel [login pass]
   (let [mig (mig-panel

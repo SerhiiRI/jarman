@@ -474,7 +474,7 @@
                                  :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))]))
     my-panel))
 
-(start)
+;; (start)
 
 (defn configurations-panel [login pass]
   (let [mig (mig-panel
@@ -630,7 +630,3 @@
 
 
 (start)
-
-
-
-

@@ -62,11 +62,12 @@
    "
   (fn [items]
     (let [JLP (new JLayeredPane)
-          layer (atom 0)]
+          layer (atom 10)]
       (do
-        (doseq [i items] (do
+        (doseq [i items] (let [itm (if (vector? i) (first i) i)
+                               idx (if (vector? i) (second i) (+ 1 @layer))]
                            (swap! layer inc)
-                           (.add JLP i (new Integer @layer))))
+                           (.add JLP itm (new Integer idx))))
         JLP))))
 
 

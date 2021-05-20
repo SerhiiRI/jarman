@@ -6,14 +6,16 @@
         seesaw.border
         seesaw.dev
         seesaw.mig)
-  (:require [jarman.resource-lib.icon-library :as icon]
-            [jarman.tools.swing :as stool]
-            [clojure.string :as string]
-            [jarman.config.config-manager :as cm]
-            [jarman.tools.lang :as lang]
-            [jarman.logic.changes-service :as cs]
+  (:require
+   [seesaw.core :as c]
+   [jarman.resource-lib.icon-library :as icon]
+   [jarman.tools.swing :as stool]
+   [clojure.string :as string]
+   [jarman.config.config-manager :as cm]
+   [jarman.tools.lang :as lang]
+   [jarman.logic.changes-service :as cs]
             ;; [jarman.config.init :as init]
-            ))
+   ))
 
 (import javax.swing.JLayeredPane)
 (import java.awt.Color)
@@ -245,14 +247,18 @@
       but on hover it will be wide and text will be inserted.
    Example:
       (function icon size header map-with-other-params)
-      (slider-ico-btn (stool/image-scale icon/user-64x64-2-png 50) 0 50 'Klienci' {:onclick (fn [e] (alert 'Clicked'))})
+      (slider-ico-btn (stool/image-scale icon/user-64x64-2-png 50) 0 50 'Klienci' :onclick (fn [e] (alert 'Clicked')))
    "
-  (fn [ico order size txt extends]
+  (fn [ico order size txt 
+       & {:keys [onClick
+                 top-offset]
+          :or {onClick (fn [e])
+               top-offset 0}}]
     (let [bg-color "#eee"
           color-hover-margin "#bbb"
           bg-color-hover "#d9ecff"
           bg-color-hover "#fafafa"
-          y (if (> (* size order) 0) (- (+ (* 2 order) (* size order)) (* 2 (* 1 order))) (* size order))
+          y (if (> (* size order) 0) (+ top-offset (- (+ (* 2 order) (* size order)) (* 2 (* 1 order)))) (+ top-offset (* size order)))
           icon (label :halign :center
                       :icon ico
                       :size [size :by size])
@@ -263,24 +269,31 @@
                :constraints ["" (str "0px[" size "]15px[grow, fill]0px") (str "0px[" size "]0px")]
                :bounds [0 y size size]
                :background bg-color
+               :focusable? true
                :border  (line-border :bottom 2 :color "#eee")
                :items (join-mig-items icon))]
-      (config! mig :listen [:mouse-entered (fn [e] (config! e
-                                                            :cursor :hand
+      (let [onEnter (fn [e] (config! e
+                                     :cursor :hand
                                                             ;; :border  (line-border :bottom 3 :color "#999")
-                                                            :background bg-color-hover
+                                     :background bg-color-hover
                                                             ;; :bounds [0 y (+ (.getWidth (config title :preferred-size)) size 100) size]
-                                                            :bounds [0 y (+ (.getWidth (select (.getParent mig) [:#expand-menu-space])) size) size])
+                                     :bounds [0 y (+ (.getWidth (select (.getParent mig) [:#expand-menu-space])) size) size])
                                              ;; (println (config title :preferred-size))
-                                             (.add mig title)
-                                             (.revalidate mig))
-                            :mouse-exited  (fn [e] (config! e
-                                                            :bounds [0 y size size]
+                      (.add mig title)
+                      (.revalidate mig))
+            onExit (fn [e] (config! e
+                                    :bounds [0 y size size]
                                                             ;; :border  (line-border :bottom 2 :color "#eee")
-                                                            :background bg-color)
-                                             (.remove mig 1)
-                                             (.revalidate mig))
-                            :mouse-clicked (if (= (contains? extends :onclick) true) (get extends :onclick) (fn [e]))])
+                                    :background bg-color)
+                     (.remove mig 1)
+                     (.revalidate mig))]
+        (config! mig :listen [:mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
+                              :mouse-exited  (fn [e] (.requestFocus (c/to-frame e)))
+                              :focus-gained  (fn [e] (onEnter e))
+                              :focus-lost    (fn [e] (onExit e))
+                              :mouse-clicked (fn [e] (println "onClick")(onClick e))
+                              :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))
+                              ]))
       mig)))
 
 

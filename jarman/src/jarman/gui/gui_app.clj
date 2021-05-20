@@ -1138,29 +1138,44 @@
         (reset! relative [(.x (.getLocationOnScreen (seesaw.core/to-frame @app))) (.y (.getLocationOnScreen (seesaw.core/to-frame @app)))])
         (.dispose (seesaw.core/to-frame @app))
         (catch Exception e (println "Last pos is nil")))
-      (gseed/build :items (let [img-scale 35]
+      (gseed/build :items (let [img-scale 35
+                                top-offset 2]
                             (list
-                             (jarmanapp :margin-left img-scale)
-                             (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser" {:onclick (fn [e] (@gseed/jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view))})
-                             (slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Message Store" {:onclick (fn [e] (@gseed/alert-manager :show))})
-                             (slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 2 img-scale "Change work mode" {:onclick (fn [e]
-                                                                                                                                           (cond (= "user"      (session/user-get-permission)) (session/user-set-permission "admin")
-                                                                                                                                                 (= "admin"     (session/user-get-permission)) (session/user-set-permission "developer")
-                                                                                                                                                 (= "developer" (session/user-get-permission)) (session/user-set-permission "user"))
-                                                                                                                                           (@gseed/alert-manager :set {:header "Work mode" :body (str "Switched to: " (session/user-get-permission))} (@gseed/alert-manager :message gseed/alert-manager) 5)
-                                                                                                                                           (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission))))})
-                             (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 3 img-scale "Docs Templates" {:onclick (fn [e] (@gseed/jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts gseed/alert-manager))))})
-                             (slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 4 img-scale "Reload active view" {:onclick (fn [e] (try
-                                                                                                                                                          ((@gseed/jarman-views-service :reload))
-                                                                                                                                                          (catch Exception e (str "Can not reload. Storage is empty."))))})
-                             (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 5 img-scale "Restart" {:onclick (fn [e] (@startup))})
+                             [(jarmanapp :margin-left img-scale) 0]
+                             (slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser" 
+                                             :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view))
+                                             :top-offset top-offset)
+                             (slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Message Store" 
+                                             :onClick (fn [e] (@gseed/alert-manager :show))
+                                             :top-offset top-offset)
+                             (slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 2 img-scale "Change work mode"
+                                             :onClick (fn [e]
+                                                        (cond (= "user"      (session/user-get-permission)) (session/user-set-permission "admin")
+                                                              (= "admin"     (session/user-get-permission)) (session/user-set-permission "developer")
+                                                              (= "developer" (session/user-get-permission)) (session/user-set-permission "user"))
+                                                        (@gseed/alert-manager :set {:header "Work mode" :body (str "Switched to: " (session/user-get-permission))} (@gseed/alert-manager :message gseed/alert-manager) 5)
+                                                        (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission))))
+                                             :top-offset top-offset)
+                             (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 3 img-scale "Docs Templates" 
+                                             :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts gseed/alert-manager))))
+                                             :top-offset top-offset)
+                             (slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 4 img-scale "Reload active view"
+                                             :onClick (fn [e] (try
+                                                                ((@gseed/jarman-views-service :reload))
+                                                                (catch Exception e (str "Can not reload. Storage is empty."))))
+                                             :top-offset top-offset)
+                             (slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 5 img-scale "Restart"
+                                             :onClick (fn [e] (do
+                                                                (println "restart")
+                                                                (@startup)))
+                                             :top-offset top-offset)
 
+                             (gcomp/fake-focus :vgap top-offset :hgap img-scale)
                              @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook))
       (if-not (nil? @relative) (.setLocation (seesaw.core/to-frame @app) (first @relative) (second @relative))))
     (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))))
 
-(@startup)
 
 (reset! startup
         (fn []
@@ -1178,8 +1193,7 @@
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
 
-;;(@startup)
-
+;; (@startup)
 
 
 ;; (@gseed/alert-manager :set {:header "Hello World" :body "Some body once told me..."} (@gseed/alert-manager :message gseed/alert-manager) 5)

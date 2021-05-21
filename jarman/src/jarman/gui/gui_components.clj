@@ -200,7 +200,7 @@
                  mouse-out
                  focus-color
                  unfocus-color]
-          :or   {onClick (fn [e])
+          :or   {onClick (fn [e] (println "Click"))
                  args []
                  tgap 10
                  bgap 10
@@ -219,12 +219,12 @@
            :text txt
            :focusable? true
            :halign halign
-           :listen [:mouse-clicked onClick
-                    :mouse-entered (fn [e] (c/config! e :background mouse-in) (gtool/hand-hover-on e))
-                    :mouse-exited  (fn [e] (c/config! e :background mouse-out))
-                    :focus-gained  (fn [e] (c/config! e :border (newBorder focus-color)))
-                    :focus-lost    (fn [e] (c/config! e :border (newBorder unfocus-color)))
-                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) onClick))]
+           :listen [:mouse-clicked (fn [e] (do (onClick e) (gseed/switch-focus)))
+                    :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
+                    :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
+                    :focus-gained  (fn [e] (c/config! e :border (newBorder focus-color)   :background mouse-in  :cursor :hand))
+                    :focus-lost    (fn [e] (c/config! e :border (newBorder unfocus-color) :background mouse-out))
+                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gseed/switch-focus))))]
            :background mouse-out
            :border (newBorder unfocus-color)
            args)))
@@ -522,11 +522,14 @@
 (defn expand-form-panel
   "Description:
      Create panel who can hide inside components. 
+     Inside :user-data is function to hide/show panel ((get (config e :user-data) :hide-show))
    Example:
      (expand-form-panel parent (component or components))
+      
    "
   [view-layout comps
-   & {:keys [min-w
+   & {:keys [args 
+             min-w
              w
              max-w
              lgap
@@ -540,7 +543,8 @@
              text-hide
              focus-color
              unfocus-color]
-      :or {min-w 250
+      :or {args []
+           min-w 250
            w 250
            max-w 250
            lgap 0
@@ -558,7 +562,7 @@
         hsize (if (< max-w w) (str lgap "px[" min-w ":" w ":" w ", grow, fill]" rgap "px") (str lgap "px[" min-w ":" w ":" max-w ", grow,fill]" rgap "px"))
         form-space-open ["wrap 1" hsize (str tgap "px[fill]0px" vrules bgap "px")]
         form-space-hide ["" "0px[grow, fill]0px" "0px[grow, fill]0px"]
-        form-space (smig/mig-panel :constraints form-space-open)
+        form-space (apply smig/mig-panel :constraints form-space-open args)
         onClick (fn [e]
                   (let [inside (u/children form-space)]
                     (if (nil? @hidden-comp)
@@ -586,6 +590,7 @@
                                     :mouse-entered gtool/hand-hover-on
                                     :mouse-clicked onClick
                                     :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))])]
+    (c/config! form-space :user-data {:hide-show (fn [](onClick hide-show))})
     (c/config! form-space :items (gtool/join-mig-items hide-show comps))))
 
 
@@ -721,6 +726,8 @@
                         (do ;;  Add inside buttons to mig with expand button
                           (c/config! icon :icon ico-hover)
                           (doall (map #(.add mig %) @atom-inside-btns))
+                          (gseed/set-focus (first @atom-inside-btns))
+                          (gseed/switch-focus)
                           (.revalidate mig)
                           (.repaint mig))
                         (do ;;  Remove inside buttons form mig without expand button
@@ -765,12 +772,12 @@
            :size [200 :by 25]
            :focusable? true
            :border (b/empty-border :left 10)
-           :listen [:mouse-clicked onClick
+           :listen [:mouse-clicked (fn [e] (do (onClick e) (gseed/switch-focus)))
                     :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
                     :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
                     :focus-gained  (fn [e] (c/config! e :background (gtool/get-comp :button-expand-child :background-hover)))
                     :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand-child :background)))
-                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))]
+                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gseed/switch-focus))))]
            args)))
 
 

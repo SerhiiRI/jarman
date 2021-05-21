@@ -18,6 +18,17 @@
 ;;  (get-color :jarman :bar)
 
 (def jarman-views-service (atom nil))
+(def jarman-focus-now (atom nil))
+
+(defn set-focus
+  [object] (reset! jarman-focus-now object))
+(defn rm-focus
+  [] (reset! jarman-focus-now nil))
+(defn set-focus-if-nil
+  [object] (if (nil? @jarman-focus-now) (reset! jarman-focus-now object)))
+(defn switch-focus
+  [] (if-not (nil? @jarman-focus-now) (do (.requestFocus @jarman-focus-now)
+                                          (reset! jarman-focus-now nil))))
 
 (import javax.swing.JLayeredPane)
 ;; (import javax.swing.JLabel)

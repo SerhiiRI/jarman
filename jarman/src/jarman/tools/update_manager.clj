@@ -7,8 +7,8 @@
    [miner.ftp :as ftp]
    [me.raynes.fs :as gfs]
    ;; local functionality
-   [jarman.tools.dev-tools :as dv]
    [jarman.tools.config-manager :as cm]
+   [jarman.tools.lang :as lang]
    [jarman.tools.fs :as fs]))
 
 ;;; Package standart
@@ -68,7 +68,7 @@
 
 (defn is-url-allowed? [repo-string]
   (let [[url protocol domain end] (re-matches #"(\w*://)([\w-_.]+)([:\w\W]*)" repo-string)]
-    (not (some #(dv/in? blocked-repo-list %) [url domain]))))
+    (not (some #(lang/in? blocked-repo-list %) [url domain]))))
 
 (defn is-url-repository? [url-string]
   (if (try (io/input-stream url-string)
@@ -91,6 +91,8 @@
   (ftp/with-ftp [client repo-url]
     (ftp/client-cd client "jarman")
     (ftp/client-all-names client)))
+
+(ftp-list-files "ftp://jarman:dupa@192.168.1.69")
 
 (defn ftp-put-file [ftp-repo-url repo-path file-path]
   (ftp/with-ftp [client ftp-repo-url]
@@ -151,7 +153,7 @@
 (defn max-version [package-list]
   (let [current-package (PandaPackage. nil *program-name* *program-vers* nil nil)
         upgrade-package (reduce (fn [acc package] (if (and (version-comparator #'<= (:version acc) (:version package))
-                                           (dv/in? *program-attr* (:artifacts package))) package acc))
+                                           (lang/in? *program-attr* (:artifacts package))) package acc))
                                 current-package package-list)]
     (if (not= current-package upgrade-package) upgrade-package)))
 
@@ -164,6 +166,7 @@
 
 (defn preproces-from-path[repository]
   (map #(apply ->PandaPackage (conj (re-matches #"(\w+)-(\w+\.\w+\.\w+)[-.]{0,1}(.+)" (.getName %)) (str %))) (path-list-files repository)))
+
 
 (defn get-all-packages [repositories]
   (letfn [(get-pkg [url] (let [ftp?  (every-pred is-url? is-url-allowed? is-url-repository?)
@@ -192,10 +195,10 @@
       (do (println (format "[!] Create folder %s" unzip-folder))
           (fs/create-dir unzip-folder)
           (println (format "[!] Unpack to folder %s" unzip-folder))
-          (dv/unzip (:file package) unzip-folder)
+          (fs/unzip (:file package) unzip-folder)
           (println (format "[!] Merge configurations in %s" unzip-config-folder))
-          (fs/config-copy-dir "config" unzip-config-folder)
-          (println "[!] Copy transation folder to cenral program")
+          ;; (fs/config-copy-dir "config" unzip-config-folder)
+          ;; (println "[!] Copy transation folder to cenral program")
           (fs/copy-dir-replace unzip-folder ".")
           (println (format "[!] Delete update-package %s" (:file package)) )
           (gfs/delete (:file package))

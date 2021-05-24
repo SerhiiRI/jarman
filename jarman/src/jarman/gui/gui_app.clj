@@ -1197,7 +1197,7 @@
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
 
-(@startup)
+;; (@startup)
 
 
 ;; (@gseed/alert-manager :set {:header "Hello World" :body "Some body once told me..."} (@gseed/alert-manager :message gseed/alert-manager) 5)
@@ -1248,3 +1248,93 @@
 ;; (example-text-password-button)
 
 
+
+
+
+
+
+
+
+;; (def create-dialog--answer-chooser
+;;   (fn [txt func]
+;;     (vertical-panel
+;;      :background (get-color :background :button_main)
+;;      :focusable? true
+;;      :listen [:focus-gained (fn [e] (hand-hover-on e) (config! e :background light-light-grey-color))
+;;               :focus-lost   (fn [e] (config! e :background (get-color :background :button_main)))
+;;               :mouse-clicked func
+;;               :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) func))]
+;;      :items (list (label
+;;                    :text (first txt)
+;;                    :halign :left
+;;                    :font (getFont 14 :bold)
+;;                    :foreground gcomp/blue-color
+;;                    :border (compound-border (empty-border :left 20 :right 20 :bottom 0 :top 5)))
+;;                   (label
+;;                    :text (second txt)
+;;                    :halign :left
+;;                    :font (getFont 14)
+;;                    :border (compound-border (empty-border :left 30 :right 20 :bottom 5 :top 0)))))))
+
+;; (def create-dialog-repair-chooser
+;;   (fn [invoker data title size]
+;;     (let [dialog
+;;           (custom-dialog
+;;            :title title
+;;            :modal? true
+;;            :resizable? false
+;;            ;;:parent (getParent @atom-popup-hook   )
+;;            :parent (getParent (to-widget invoker))
+;;            :content (mig-panel
+;;                      :background "#fff"
+;;                      :size [(first size) :by (second size)]
+;;                      :constraints ["" "0px[fill, grow]0px" "0px[grow, top]0px"]
+;;                      :items (join-mig-items
+;;                              (let [scr (scrollable
+;;                                         (mig-panel
+;;                                          :background "#fff"
+;;                                          :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
+;;                                          :items (join-mig-items
+;;                                                  (seesaw.core/label
+;;                                                   :border (empty-border :top 5)
+;;                                                   :icon (stool/image-scale icon/left-blue-64-png 30)
+;;                                                   :listen [:mouse-entered (fn [e] (gtool/hand-hover-on e))
+;;                                                            :mouse-exited (fn [e] (gtool/hand-hover-off e))
+;;                                                            :mouse-clicked (fn [e] (.dispose (seesaw.core/to-frame e)))])
+;;                                                  (textarea title :halign :center :font (getFont 14 :bold)
+;;                                                            :foreground gcomp/blue-green-color
+;;                                                            :border (empty-border :thickness 12))
+;;                                                  (mig-panel
+;;                                                   :background "#fff"
+;;                                                   :constraints ["wrap 1" "0px[:300, fill, grow]0px" "0px[]0px"]
+;;                                                   :items (join-mig-items
+;;                                                           (map (fn [x] (create-dialog--answer-chooser
+;;                                                                         x
+;;                                                                         (fn [e] (return-from-dialog e x)))) data))))) :hscroll :never :border nil)]
+;;                                (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
+;;                                (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr))))]
+;;       (.setUndecorated dialog true)
+;;       ;;(.setLocationRelativeTo (getParent (to-widget invoker)) ) 
+;;       (-> dialog  pack! show!))))
+
+;; ;;heyy
+;; (do (doto (seesaw.core/frame
+;;            :title "title"
+;;            :undecorated? false
+;;            :minimum-size [1000 :by 600]
+;;            :content
+;;            (seesaw.mig/mig-panel
+;;             :constraints ["wrap 1" "10px[fill, grow]10px" "10px[top]10px"]
+;;             :items [[(label :text "heyy open modal window"
+;;                             :listen [:mouse-entered (fn [e] (config! e :cursor :hand))
+;;                                      :mouse-clicked (fn [e] (create-dialog-repair-chooser
+;;                                                              e
+;;                                                              [["Some-error" (gtool/htmling "<p align= \"justify\">Another error,heyy hhh this is some error about our life  Established fact that a reader will be distracthhhj jhjke</p>")]
+;;                                                               ["heyy error" (gtool/htmling "<p align= \"justify\">Heyey,Established fact that a reader will be distracthhhj jhjke</p>")]
+;;                                                               ["Smth" (gtool/htmling "<p align= \"justify\">Must because you must be stronger like a river  heyy heyy heyy jjjdjdjd you importanti do somkm,hj jhjke)</p>")]
+;;                                                               ["rd"  (gtool/htmling "<p align= \"justify\">Hree Established fact that a reader will be distracthhhj jhjke</p>")]
+;;                                                               ["tut" (gtool/htmling "<p align= \"justify\">10- erro. Established fact that a reader will be distracthhhj jhjke</p>")]
+;;                                                               ["cosmos" (gtool/htmling "<p align= \"justify\">Errors, fact that a reader will be distracthhhj jhjke</p>")]]
+;;                                                              "Choose reason for repair"
+;;                                                              [400 300]))])]]))
+;;       (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))

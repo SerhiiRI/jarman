@@ -83,9 +83,7 @@
 ;; => (-1 2 3 4)
 
 
-;; PARTIAL
-(def add10 (partial + 10))
-(add10 100)
+
 
 ;; EVERY-PRED
 ;; Coś jak walidacja, dopóki wartości zwracają true będzie sprawdzany kolejny
@@ -215,10 +213,10 @@
   [exp]
   (let [[start_v exp] ((juxt first #(drop 1 %)) `(~@exp))
         exp (partition 2 exp)]
-    (reduce (fn [acc x] 
+    (reduce (fn [acc x]
               (let [[fun val] x]
                 ;; (println fun acc val) ;; debug
-                `(~fun ~acc ~val))) 
+                `(~fun ~acc ~val)))
             start_v exp)))
 
 (infix (1 + 3 - 1 * 2)) ;; => 6
@@ -228,3 +226,72 @@
 
 
 
+
+;; PARTIAL
+;;
+(def add10 (partial + 10))
+(add10 100)
+
+(defn testuj
+  [& coll-pred]
+  (let [test-obj (last coll-pred)
+        coll-pred (butlast coll-pred)]
+    ((apply every-pred coll-pred) test-obj)))
+
+(def testfname (every-pred string? #(> (count %) 2) #(re-matches #"[a-zA-Z]+" %)))
+(def testlname (every-pred string? #(> (count %) 3) #(re-matches #"[a-zA-Z]+" %)))
+(def testlnameA (every-pred string? #(> (count %) 3) #(re-matches #"^A[a-zA-Z]+" %)))
+(testfname "Aleks")
+(testlname "Dupa")
+(testlnameA "ADupa")
+
+(def testfname (partial testuj string? #(> (count %) 2) #(re-matches #"[a-zA-Z]+" %)))
+(def testlname (partial testfname #(> (count %) 3)))
+(def testlnameA (partial testlname #(re-matches #"^A[a-zA-Z]+" %)))
+(testfname "Aleks")
+(testlname "Dupa")
+(testlnameA "ADupa")
+
+(defn tagger
+  [l m r]
+  (format "%s%s%s" l m r))
+
+(defn create-html-atribut-tag
+  [atr tag val]
+  (tagger (str "<" tag " " atr ">") val (str "</" tag ">")))
+(create-atribut-tag "id=dupa" "div"  "dupa")
+
+(defn create-lisp-lipstractor
+  [_ fun val]
+  (tagger (str "(" fun) val (str ")")))
+
+(def create-lisp-tag
+  (partial create-lisp-lipstractor nil))
+
+(def create-html-tag
+  (partial create-html-atribut-tag ""))
+
+(def create-tag
+  (partial create-lisp-tag))
+
+(def create-atribut-tag
+  (partial create-lisp-lipstractor))
+
+(reduce (fn [acc fun]
+          (fun acc))
+        "Hello"
+        [(partial create-tag "h1") (partial create-atribut-tag "id=pepe" "div") (partial create-tag "section")])
+;; => "(section(div(h1Hello)))"
+
+
+
+
+;; Y combinator
+(((fn [f] (f f))
+  (fn [f]
+    (fn [s n]
+      (if (not (empty? n))
+        ((f f) (+ s (first n))
+               (rest n))
+        s)))) 
+ 0 [1 2 3 4 5 6])

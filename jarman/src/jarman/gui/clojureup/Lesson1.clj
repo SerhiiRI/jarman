@@ -83,6 +83,10 @@
 ;; => (-1 2 3 4)
 
 
+;; PARTIAL
+(def add10 (partial + 10))
+(add10 100)
+
 ;; EVERY-PRED
 ;; Coś jak walidacja, dopóki wartości zwracają true będzie sprawdzany kolejny
 ;; warunek. Jeśli któryś warunek zwróci false, sprawdzanie się zatrzyma, a
@@ -130,8 +134,75 @@
     (second)
     (map [1 2 3]))
 
+;; ->> reduce map
 (->> [1 2 3 4]
      (reduce (fn [acc add] (into acc {add add})) {})
      (map #(vec (list (keyword (str (first %))) (second %))))
      (into (sorted-map)))
+
+
+;; partial map
+(def just_even (partial
+                (fn [pre & num]
+                  (filter
+                   #(not (nil? %))
+                   (map #(if (zero? (mod % pre)) %) num)))
+                2))
+(just_even 4 5 6) ;; => (4 6)
+
+
+;; comp partial filter map
+(def just_even_nil
+  (partial
+   (fn [pre & num] (map #(if (zero? (mod % pre)) %) num))
+   2))
+
+(defn drop_nil [coll] (filter #(not (nil? %)) coll))
+
+((comp
+  drop_nil
+  just_even_nil)
+ 4 5 6) ;; => (4 6)
+
+
+;; comp filter some
+(defn drop_nil_str [coll] (filter #(and (not (nil? %)) (not (string? %))) coll))
+(defn have_num? [coll] (if (some number? coll) coll))
+
+(defn only_num
+  [coll]
+  ((comp
+    drop_nil_str
+    have_num?) coll))
+(only_num [1 nil 2 3 nil "four"])
+
+
+;; comp partial every-pred filter
+(def less? (partial > 5))
+(defn only_less_5?
+  [coll]
+  ((every-pred (fn [coll] (some number? coll))
+               (fn [coll]
+                 (empty?
+                  ((comp
+                    (fn [coll] (filter #(false? %) coll))
+                    (fn [coll] (map #(less? %) coll)))
+                   coll))))
+   coll))
+(only_less_5? [1 2 3 5 6 7]) ;; => false
+(only_less_5? [1 2 3]) ;; => true
+
+
+;; mapcat partial ; on map data type
+(def fup (partial + 10))
+
+(defn first_up 
+  [coll]
+  (let [k (first (map key coll))
+        v (fup (k coll))]
+    (assoc coll k v)))
+
+(mapcat first_up [{:a 1 :b 2} {:c 3 :d 4 :e 5}])
+;; => ([:a 11] [:b 2] [:c 13] [:d 4] [:e 5])
+
 

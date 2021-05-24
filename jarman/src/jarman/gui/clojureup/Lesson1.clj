@@ -196,7 +196,7 @@
 ;; mapcat partial ; on map data type
 (def fup (partial + 10))
 
-(defn first_up 
+(defn first_up
   [coll]
   (let [k (first (map key coll))
         v (fup (k coll))]
@@ -204,5 +204,27 @@
 
 (mapcat first_up [{:a 1 :b 2} {:c 3 :d 4 :e 5}])
 ;; => ([:a 11] [:b 2] [:c 13] [:d 4] [:e 5])
+
+
+;; MACRO
+;; ========================================
+;;                  INFIX
+;; ========================================
+
+(defmacro infix
+  [exp]
+  (let [[start_v exp] ((juxt first #(drop 1 %)) `(~@exp))
+        exp (partition 2 exp)]
+    (reduce (fn [acc x] 
+              (let [[fun val] x]
+                ;; (println fun acc val) ;; debug
+                `(~fun ~acc ~val))) 
+            start_v exp)))
+
+(infix (1 + 3 - 1 * 2)) ;; => 6
+
+
+
+
 
 

@@ -36,6 +36,21 @@
   ([line-size] (c/label :border (b/empty-border :top line-size)))
   ([line-size line-color] (c/label :border (b/line-border :top line-size :color line-color))))
 
+(defn fake-focus
+  [& {:keys [args
+             vgap
+             hgap]
+      :or {args []
+           vgap 0
+           hgap 0}}]
+  (apply 
+   c/label 
+   :focusable? true
+   :border (b/line-border :left hgap :top vgap)
+   :listen [:focus-gained (fn [e] (c/config! e :border (b/line-border :left hgap :top vgap :color (gtool/get-comp :fake-focus :background-focus))))
+            :focus-lost   (fn [e] (c/config! e :border (b/line-border :left hgap :top vgap :color (gtool/get-comp :fake-focus :background-unfocus))))]
+   args))
+
 (defn auto-scrollbox
   [component & args]
   (let [scr (apply c/scrollable component :border nil args)
@@ -185,7 +200,7 @@
                  mouse-out
                  focus-color
                  unfocus-color]
-          :or   {onClick (fn [e])
+          :or   {onClick (fn [e] (println "Click"))
                  args []
                  tgap 10
                  bgap 10
@@ -204,12 +219,12 @@
            :text txt
            :focusable? true
            :halign halign
-           :listen [:mouse-clicked onClick
-                    :mouse-entered (fn [e] (c/config! e :background mouse-in) (gtool/hand-hover-on e))
-                    :mouse-exited  (fn [e] (c/config! e :background mouse-out))
-                    :focus-gained  (fn [e] (c/config! e :border (newBorder focus-color)))
-                    :focus-lost    (fn [e] (c/config! e :border (newBorder unfocus-color)))
-                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) onClick))]
+           :listen [:mouse-clicked (fn [e] (do (onClick e) (gseed/switch-focus)))
+                    :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
+                    :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
+                    :focus-gained  (fn [e] (c/config! e :border (newBorder focus-color)   :background mouse-in  :cursor :hand))
+                    :focus-lost    (fn [e] (c/config! e :border (newBorder unfocus-color) :background mouse-out))
+                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gseed/switch-focus))))]
            :background mouse-out
            :border (newBorder unfocus-color)
            args)))
@@ -507,11 +522,14 @@
 (defn expand-form-panel
   "Description:
      Create panel who can hide inside components. 
+     Inside :user-data is function to hide/show panel ((get (config e :user-data) :hide-show))
    Example:
      (expand-form-panel parent (component or components))
+      
    "
   [view-layout comps
-   & {:keys [min-w
+   & {:keys [args 
+             min-w
              w
              max-w
              lgap
@@ -525,7 +543,8 @@
              text-hide
              focus-color
              unfocus-color]
-      :or {min-w 250
+      :or {args []
+           min-w 250
            w 250
            max-w 250
            lgap 0
@@ -543,7 +562,7 @@
         hsize (if (< max-w w) (str lgap "px[" min-w ":" w ":" w ", grow, fill]" rgap "px") (str lgap "px[" min-w ":" w ":" max-w ", grow,fill]" rgap "px"))
         form-space-open ["wrap 1" hsize (str tgap "px[fill]0px" vrules bgap "px")]
         form-space-hide ["" "0px[grow, fill]0px" "0px[grow, fill]0px"]
-        form-space (smig/mig-panel :constraints form-space-open)
+        form-space (apply smig/mig-panel :constraints form-space-open args)
         onClick (fn [e]
                   (let [inside (u/children form-space)]
                     (if (nil? @hidden-comp)
@@ -571,6 +590,7 @@
                                     :mouse-entered gtool/hand-hover-on
                                     :mouse-clicked onClick
                                     :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))])]
+    (c/config! form-space :user-data {:hide-show (fn [](onClick hide-show))})
     (c/config! form-space :items (gtool/join-mig-items hide-show comps))))
 
 
@@ -673,17 +693,15 @@
       Function need stool/image-scale function for scalling icon
       "
   (fn [txt inside-btns
-       & {:keys [background
-                 expand
+       & {:keys [expand
                  border
                  vsize
                  min-height
                  ico
                  ico-hover
                  id]
-          :or {background "#eee"
-               expand :auto
-               border (b/compound-border (b/line-border :left 6 :color background))
+          :or {expand :auto
+               border (b/compound-border (b/empty-border :left 6))
                vsize 35
                min-height 200
                ico  (stool/image-scale icon/plus-64-png 25)
@@ -702,32 +720,40 @@
                 :background (Color. 0 0 0 0)
                 :icon ico)
           mig (mig-panel :constraints ["wrap 1" (str "0px[" min-height ":, grow, fill]0px") "0px[fill]0px"])
+          onClick (fn [e]
+                    (if-not (nil? @atom-inside-btns)
+                      (if (= (count (u/children mig)) 1)
+                        (do ;;  Add inside buttons to mig with expand button
+                          (c/config! icon :icon ico-hover)
+                          (doall (map #(.add mig %) @atom-inside-btns))
+                          (gseed/set-focus (first @atom-inside-btns))
+                          (gseed/switch-focus)
+                          (.revalidate mig)
+                          (.repaint mig))
+                        (do ;;  Remove inside buttons form mig without expand button
+                          (c/config! icon :icon ico)
+                          (doall (map #(.remove mig %) (reverse (drop 1 (range (count (u/children mig)))))))
+                          (.revalidate mig)
+                          (.repaint mig)))))
           expand-btn (mig-panel
                       :constraints ["" (str "10px[grow, fill]0px[" vsize "]0px") "0px[fill]0px"]
-                      :background background
+                      :background (gtool/get-comp :button-expand :background)
+                      :focusable? true
                       :border border
                       :items [[title]
-                              [icon]])]
+                              [icon]]
+                      :listen [:mouse-entered gtool/hand-hover-on
+                               :mouse-clicked (fn [e] (onClick e))
+                               :focus-gained  (fn [e] (c/config! e :background (gtool/get-comp :button-expand :background-hover)))
+                               :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand :background)))
+                               :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))])]
       (do
         (reset! atom-inside-btns inside-btns)
         (c/config! mig
-                 :id id
-                 :user-data {:atom-expanded-items atom-inside-btns}
-                 :items [[expand-btn]]
-                 :listen [:mouse-entered gtool/hand-hover-on
-                          :mouse-clicked (fn [e]
-                                           (if-not (nil? @atom-inside-btns)
-                                             (if (= (count (u/children mig)) 1)
-                                               (do ;;  Add inside buttons to mig with expand button
-                                                 (c/config! icon :icon ico-hover)
-                                                 (doall (map #(.add mig %) @atom-inside-btns))
-                                                 (.revalidate mig)
-                                                 (.repaint mig))
-                                               (do ;;  Remove inside buttons form mig without expand button
-                                                 (c/config! icon :icon ico)
-                                                 (doall (map #(.remove mig %) (reverse (drop 1 (range (count (u/children mig)))))))
-                                                 (.revalidate mig)
-                                                 (.repaint mig)))))])))))
+                   :id id
+                  ;;  :focusable? true
+                   :user-data {:atom-expanded-items atom-inside-btns}
+                   :items [[expand-btn]])))))
 
 
 
@@ -744,10 +770,14 @@
            :text (str title)
            :background "#fff"
            :size [200 :by 25]
+           :focusable? true
            :border (b/empty-border :left 10)
-           :listen [:mouse-clicked onClick
-                    :mouse-entered (fn [e] (c/config! e  :background "#d9ecff"))
-                    :mouse-exited  (fn [e] (c/config! e  :background "#fff"))]
+           :listen [:mouse-clicked (fn [e] (do (onClick e) (gseed/switch-focus)))
+                    :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
+                    :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
+                    :focus-gained  (fn [e] (c/config! e :background (gtool/get-comp :button-expand-child :background-hover)))
+                    :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand-child :background)))
+                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gseed/switch-focus))))]
            args)))
 
 

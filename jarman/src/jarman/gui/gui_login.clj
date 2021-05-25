@@ -472,6 +472,7 @@
     my-panel))
 
 
+
 (defn configurations-panel [login pass]
   (let [mig (mig-panel
                      :constraints ["wrap 4" "20px[ left]20px" "20px[]20px"])
@@ -625,7 +626,3 @@
           (config! :content (error-panel res-validation)) seesaw.core/pack! seesaw.core/show!))))
 
 (start)
-
-
-
-

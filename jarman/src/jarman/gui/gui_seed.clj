@@ -18,6 +18,17 @@
 ;;  (get-color :jarman :bar)
 
 (def jarman-views-service (atom nil))
+(def jarman-focus-now (atom nil))
+
+(defn set-focus
+  [object] (reset! jarman-focus-now object))
+(defn rm-focus
+  [] (reset! jarman-focus-now nil))
+(defn set-focus-if-nil
+  [object] (if (nil? @jarman-focus-now) (reset! jarman-focus-now object)))
+(defn switch-focus
+  [] (if-not (nil? @jarman-focus-now) (do (.requestFocus @jarman-focus-now)
+                                          (reset! jarman-focus-now nil))))
 
 (import javax.swing.JLayeredPane)
 ;; (import javax.swing.JLabel)
@@ -62,11 +73,12 @@
    "
   (fn [items]
     (let [JLP (new JLayeredPane)
-          layer (atom 0)]
+          layer (atom 10)]
       (do
-        (doseq [i items] (do
+        (doseq [i items] (let [itm (if (vector? i) (first i) i)
+                               idx (if (vector? i) (second i) (+ 1 @layer))]
                            (swap! layer inc)
-                           (.add JLP i (new Integer @layer))))
+                           (.add JLP itm (new Integer idx))))
         JLP))))
 
 

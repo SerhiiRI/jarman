@@ -24,6 +24,7 @@
             ;; [jarman.logic.view :as view]
             ;; [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]
             ))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; validation login ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -33,6 +34,7 @@
                                                  :a "Because your program has trouble"}
                                                 {:q "What it problem mean"
                                                  :a "Read the fucking descriptin"}]}})
+
 (def validate3 {:validate? true})
 (def validate4 {:validate? true})
 
@@ -60,19 +62,17 @@
 (def my-style {[:.css1] {:foreground blue-green-color}})
 
 (defn color-border [color]
-  (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
-                   (line-border :bottom 2 :color color)))
+  (tool/my-border [color 2] [10 10 5 5]))
+
 (defn myFont [size]
   {:size size :font "Arial" :style :bold})
 
-(def ^:private emp-border (empty-border :left 10 :right 10 :top 5 :bottom 5))
-
-
+(def ^:private emp-border
+  (tool/my-border [10 10 5 5]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; some-components ;;; 
 ;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (declare asks-panel)
 (declare info-panel)
@@ -626,3 +626,4 @@
           (config! :content (error-panel res-validation)) seesaw.core/pack! seesaw.core/show!))))
 
 (start)
+

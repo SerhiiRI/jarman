@@ -25,7 +25,6 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
-
 (defn get-view-column-meta [table-list column-list]
   (->> table-list
        (mapcat (fn [t] (vec ((comp :columns :prop) (first (mt/getset! t))))))
@@ -65,10 +64,12 @@
          :table (gui-table table-model)}))))
 
 (defn construct-dialog [table-fn selected frame]
-  (let [dialog (seesaw.core/custom-dialog :modal? true :width 800 :height 400 :title "Select component")
+  (let [dialog (seesaw.core/custom-dialog :modal? true :width 800 :height 400
+                                          :title "Select component")
         table (table-fn (fn [model] (seesaw.core/return-from-dialog dialog model)))
         key-p (seesaw.mig/mig-panel
-               :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px"]
+               :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]0px"]
+               :border (sborder/line-border :color "#888" :bottom 1 :top 1 :left 1 :right 1)
                :items [[(seesaw.core/label
                          :icon (stool/image-scale ico/left-blue-64-png 30)
                          :listen [:mouse-entered (fn [e] (gtool/hand-hover-on e))
@@ -80,8 +81,6 @@
     (.setUndecorated dialog true)
     (.setLocationRelativeTo dialog frame)
     (seesaw.core/show! dialog)))
-
-
 
 (def build-input-form
   (fn [data-toolkit
@@ -123,13 +122,11 @@
                                                              (do ;;Create calendar input
                                                                (c/label :text title)
                                                                (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified
-                                                                                                                      :local-changes complete))
-                                                               )
+                                                                                                                      :local-changes complete)))
                                                              (do ;; Create update calenda input
                                                                (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified
                                                                                                                       :local-changes complete
-                                                                                                                      :set-date (if (empty? v) nil v)))
-                                                               )))
+                                                                                                                      :set-date (if (empty? v) nil v))))))
 
                                                          (lang/in? (get meta :component-type) "l")
                                                          (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
@@ -192,12 +189,10 @@
                                                               (println "Expression insert" ((:insert data-toolkit) (merge {(keyword (str (get (:table-meta data-toolkit) :field) ".id")) nil} (first (merge model @complete))))))
                                                             (do
                                                               (println "Expression update" ((:update data-toolkit) (merge model @complete)))))
-                                                          ((@gseed/jarman-views-service :reload))
-                                                          ))]
+                                                          ((@gseed/jarman-views-service :reload))))]
                       (if (empty? model) [] [(button-template delete (fn [e]
                                                                        (println "Expression delete" ((:delete data-toolkit) {(keyword (str (get (:table-meta data-toolkit) :field) ".id")) (get model (keyword (str (get (:table-meta data-toolkit) :field) ".id")))}))
-                                                                       ((@gseed/jarman-views-service :reload))
-                                                                       ))])
+                                                                       ((@gseed/jarman-views-service :reload))))])
                       [(vgap 10)]
                       [more-comps]
                       [(if (nil? export-comp) (c/label) (export-comp (get model (:model-id data-toolkit))))])
@@ -279,8 +274,7 @@
           x nil ;;------------ Finish
           view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])] [(try 
                                                                                                                 (c/vertical-panel :items [(table)])
-                                                                                                                (catch Exception e (c/label :text (str "Problem with table model: " (.getMessage e)))))]])
-          ]
+                                                                                                                (catch Exception e (c/label :text (str "Problem with table model: " (.getMessage e)))))]])]
       view-layout)))
 
 ;; (let [my-frame (-> (doto (c/frame

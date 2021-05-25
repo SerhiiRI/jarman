@@ -126,7 +126,6 @@
          :items items
          args))
 
-
 (defn scrollbox
   [component
    & {:keys [args
@@ -917,8 +916,7 @@
     local-changes
     store-id
  Example:
-    ((def input-number :style [:halign :center])
- "
+    ((def input-number :style [:halign :center])"
   (fn [& {:keys [style
                  val
                  font-size
@@ -996,12 +994,12 @@
 ;;                           :content (view))
 ;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
 ;;   (seesaw.core/config! my-frame :size [800 :by 600]))
+
 (defn menu-bar
   "Description:
    Example:
       (menu-bar :buttons [[\"title1\" icon1  fn1] [\"title2\" icon2  fn2]])
-      (menu-bar :id :my-id :buttons [[\"title1\"  icon1 fn1] [\"title2\" icon2  fn2]])
-   "
+      (menu-bar :id :my-id :buttons [[\"title1\"  icon1 fn1] [\"title2\" icon2  fn2]])"
   [& {:keys [id
              buttons]
       :or {id :none
@@ -1021,9 +1019,8 @@
     (mig-panel
      :id id
      :background (new Color 0 0 0 0)
-     :constraints ["" "5px[fill]0px" "5px[fill]5px"]
+     :constraints ["" "10px[fill]0px" "5px[fill]5px"]
      :items (if (empty? buttons) [[(c/label)]] (gtool/join-mig-items (map #(btn (first %) (second %) (last %)) buttons))))))
-
 
 
 (defn- validate-fields [cmpts-atom num]
@@ -1066,10 +1063,10 @@
                                    (.getParent (.getParent (seesaw.core/to-widget e)))
                                    :items [[(multi-panel panels cmpts-atom table-name title (- num 1))]])))]
                              ["Next"
-                               icon/right-blue-64-png 
+                              icon/right-blue-64-png 
                               (fn [e] (if (validate-fields cmpts-atom num)
                                         (if
-                                         (=  num (- (count panels) 1))
+                                            (=  num (- (count panels) 1))
                                           (c/config! (.getParent
                                                       (.getParent (seesaw.core/to-widget e))) :items [[(multi-panel panels cmpts-atom table-name
                                                                                                                     title num)]])
@@ -1077,10 +1074,12 @@
                                                                                                                                title (+ num 1))]]))
                                         (@gseed/alert-manager :set {:header "Error"
                                                                     :body "All fields must be entered and must be longer than 3 chars"}
-                                                              (@gseed/alert-manager :message gseed/alert-manager) 5)))]])
+                                         (@gseed/alert-manager :message gseed/alert-manager) 5)))]])
         btn-back (first (.getComponents btn-panel))
         btn-next (second (.getComponents btn-panel))]
-    (c/config! btn-next :border (b/compound-border (b/empty-border :left 0 :right 5 :top 3 :bottom 3) (b/line-border :thickness 1 :color "#bbb")))
+   ;; (c/config! btn-panel :bounds [0 0 0 0])
+    (c/config! btn-next
+               :border (b/compound-border (b/empty-border :left 0 :right 5 :top 3 :bottom 3) (b/line-border :thickness 1 :color "#bbb")))
     (c/config! btn-back
              :border (b/compound-border (b/empty-border :left 0 :right 5 :top 3 :bottom 3) (b/line-border :thickness 1 :color "#bbb"))
              :visible? (if (= num 0) false true))
@@ -1097,8 +1096,7 @@
                                                                   (@gseed/alert-manager :message gseed/alert-manager) 5)
                                                                  (@gseed/alert-manager :set {:header "Error"
                                                                                              :body "All fields must be entered and must be longer than 3 chars"}
-                                                                  (@gseed/alert-manager :message gseed/alert-manager) 5)
-                                                                 ))]))
+                                                                  (@gseed/alert-manager :message gseed/alert-manager) 5)))]))
     (mig-panel
      :constraints ["wrap 2" "0px[left]0px" "0px[]0px"]
      :preferred-size [910 :by 360]

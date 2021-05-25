@@ -41,13 +41,11 @@
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
             ))
 
-
 ;; ┌────────────────────────────┐
 ;; │                            │
 ;; │ JLayeredPane Popup Service │
 ;; │                            │
 ;; └────────────────────────────┘
-
 
 (def popup-menager (atom nil))
 
@@ -139,6 +137,7 @@
         pack! show!)))
 
 
+
 (def create-dialog--answer-chooser
   (fn [txt func]
     (vertical-panel
@@ -160,6 +159,7 @@
                    :font (getFont 14)
                    :border (compound-border (empty-border :left 30 :right 20 :bottom 5 :top 0)))))))
 
+
 (def create-dialog-repair-chooser
   (fn [invoker data title size]
     (let [dialog
@@ -167,8 +167,7 @@
            :title title
            :modal? true
            :resizable? false
-           ;;:parent (getParent @atom-popup-hook   )
-           :parent (getParent invoker)
+           :size [(first size) :by (second size)] ;; here you need to set window size for calculating middle 
            :content (mig-panel
                      :background "#fff"
                      :size [(first size) :by (second size)]
@@ -194,23 +193,22 @@
                                                   :items (join-mig-items
                                                           (map (fn [x] (create-dialog--answer-chooser
                                                                         x
-                                                                        (fn [e] (return-from-dialog e x)))) data)
-                                                          )))) :hscroll :never :border nil)]
+                                                                        (fn [e] (return-from-dialog e x)))) data))))) :hscroll :never :border nil)]
                                (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
-                               (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr))))]
+                               (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr))
+                     ))]
       (.setUndecorated dialog true)
-      
-      ;;(.setLocationRelativeTo (getParent (to-widget invoker)) ) 
-      (-> dialog  pack! show!))))
+      (doto dialog (.setLocationRelativeTo (to-root invoker)) pack! show!) ;; here should be relative to root of invoker
+      )))
 
-;;start julka dialog
+;; start julka dialog
 ;; (do (doto (seesaw.core/frame
 ;;            :title "title"
 ;;            :undecorated? false
 ;;            :minimum-size [1000 :by 600]
 ;;            :content 
-;;            (seesaw.core/border-panel
-;;           ;;  :constraints ["wrap 1" "10px[fill, grow]10px" "10px[top]10px"]
+;;            (seesaw.mig/mig-panel
+;;             :constraints ["wrap 1" "10px[fill, grow]10px" "10px[top]10px"]
 ;;             :items [[(label :text "heyy open modal window"
 ;;                             :listen [:mouse-entered (fn [e] (config! e :cursor :hand))
 ;;                                      :mouse-clicked (fn [e] (create-dialog-repair-chooser
@@ -223,7 +221,7 @@
 ;;                                                               ["tut" (gtool/htmling "<p align= \"justify\">10- erro. Established fact that a reader will be distracthhhj jhjke</p>")]
 ;;                                                               ["cosmos" (gtool/htmling "<p align= \"justify\">Errors, fact that a reader will be distracthhhj jhjke</p>")]]
 ;;                                                              "Choose reason for repair"
-;;                                                              [400 300]))])] "center"]))
+;;                                                              [400 300]))])]]))
 ;;       (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
 
 (def create-dialog-ok
@@ -392,6 +390,8 @@
           :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
 
+
+;; heyyy
 (defn switch-column-to-editing
   [work-mode local-changes path-to-value column]
   (let [param-to-edit (fn [param enabled]
@@ -437,14 +437,16 @@
                  (param-to-edit :description true)
                  (param-to-edit :default-value true)
                  (param-to-edit :private? false)
-                 (param-to-edit :editable? false))
+                 (param-to-edit :editable? false)
+                 (delete-column column))
                 (= work-mode "user")
                 (list
                  (param-to-edit :representation false)
                  (param-to-edit :description false)
                  (param-to-edit :default-value false)
                  (param-to-edit :private? false)
-                 (param-to-edit :editable? false))))))))
+                 (param-to-edit :editable? false)
+                 (delete-column column))))))))
 
 (defn- get-component-add-column [data]
   (condp = data
@@ -531,56 +533,54 @@
                                                     cmpts-atom
                                                     table-name
                                                     "" 0)]])))
-(defn delete-column [column l-delete]
-  (config! l-delete
-           :listen [:mouse-entered (fn [e] (config! e :cursor :hand))
-                    :mouse-clicked (fn [e]
-                                     (create-dialog-repair-chooser
-                                                             ["yes" "no"]
-                                                             "Delete"
-                                                             (str
-                                                              "Delete column "
-                                                              "?")
-                                                             [180 140]))]
-           :visible? true))
 
-
-
+(defn delete-column [column]
+  (let [btns (config!
+              (gcomp/menu-bar
+               :id :db-viewer--component--menu-bar
+               :buttons [["Delete"
+                          icon/basket-blue1-64-png 
+                          (fn [e]
+                            (create-dialog-yesno
+                             "Delete"
+                             (str
+                              "Delete column"
+                              (name (:field column))
+                              "?")
+                             [180 140]))]])
+              :border (empty-border :left -10 :top 15))]
+    (config! (first (.getComponents btns))
+             :border (compound-border
+                      (empty-border :left 5 :right 10 :top 5 :bottom 5)
+                      (line-border :thickness 1 :color "#bbb")))
+    btns))
+(@startup)
 ;;heyyy
 (defn table-editor--component--column-picker
   "Create left table editor view to select column which will be editing on right table editor view"
   [work-mode local-changes column-editor-id columns path-to-value table-name]
-  (let [l-delete (label :text "delete" :visible? false
-                        :font (getFont 12)
-                        :border (empty-border :left 15))]
-    (mig-panel :constraints ["wrap 1" "0px[100:, fill]0px" "0px[fill]0px"]
-               :items
-               (join-mig-items
-                (label :text "Columns" :border (empty-border :top 5 :bottom 5) :foreground blue-color)
-                (map (fn [column index]
-                       (let [path-to-value (join-vec path-to-value [index])
-                             meta-panel (mig-panel
-                                         :constraints ["wrap 1" "grow, fill" ""]
-                                         :items [[(label :text (name (:field column))
-                                                         :border (empty-border :bottom 5)
-                                                         :font (getFont 14 :bold) :foreground blue-color)]
-                                                 [(config! (switch-column-to-editing work-mode local-changes path-to-value column))]])]
-                         (table-editor--component--column-picker-btn
-                          (get-in column [:representation])
-                          (fn [e]
-                            (config! l-delete
-                                     :listen [:mouse-entered (fn [e] (config! e :cursor :hand))
-                                              :mouse-clicked (fn [e] (delete-column column l-delete))]
-                                     :visible? true)
-                            (config! (select (to-root @app) [(convert-str-to-hashkey column-editor-id)])
-                                     :items (gtool/join-mig-items meta-panel))))))
-                     columns (range (count columns)))
-                (label :text "Actions" :border (empty-border :top 5 :bottom 5)  :foreground blue-color)
-                (table-editor--element--btn-add-column (fn [e]
-                                                         (config! l-delete :visible? false)
-                                                         (config! (select (to-root @app) [(convert-str-to-hashkey column-editor-id)])
-                                                                  :items (gtool/join-mig-items (add-column-panel table-name)))))
-                l-delete))))
+  (mig-panel :constraints ["wrap 1" "0px[100:, fill]0px" "0px[fill]0px"]
+             :items
+             (join-mig-items
+              (label :text "Columns" :border (empty-border :top 5 :bottom 5) :foreground blue-color)
+              (map (fn [column index]
+                     (let [path-to-value (join-vec path-to-value [index])
+                           meta-panel (mig-panel
+                                       :constraints ["wrap 1" "grow, fill" ""]
+                                       :items [[(label :text (name (:field column))
+                                                       :border (empty-border :bottom 5)
+                                                       :font (getFont 14 :bold) :foreground blue-color)]
+                                               [(config! (switch-column-to-editing work-mode local-changes path-to-value column))]])]
+                       (table-editor--component--column-picker-btn
+                        (get-in column [:representation])
+                        (fn [e]
+                          (config! (select (to-root @app) [(convert-str-to-hashkey column-editor-id)])
+                                   :items (gtool/join-mig-items meta-panel))))))
+                   columns (range (count columns)))
+              (label :text "Actions" :border (empty-border :top 5 :bottom 5) :foreground blue-color)
+              (table-editor--element--btn-add-column (fn [e]
+                                                       (config! (select (to-root @app) [(convert-str-to-hashkey column-editor-id)])
+                                                                :items (gtool/join-mig-items (add-column-panel table-name))))))))
 
 (defn table-editor--component--space-for-column-editor
   "Create right table editor view to editing selected column in left table editor view"
@@ -965,8 +965,6 @@
 
 ;; (println MouseEvent/BUTTON3)
 ;; (@startup)
-
-
 ;; ((@gseed/jarman-views-service :reload))
 
 
@@ -1106,12 +1104,11 @@
       Vertical layout for tabs and table on right part of app. 
       Tabs are inside horizontal panel on top.
    Example: 
-      tabs  -> mig vector with elements    -> [(tab1) (tab2) (tab3)]
+      tabs  -> mig vector with elements -> [(tab1) (tab2) (tab3)]
       array -> table like rows and columns -> [(table)]  
       (right-part-of-jarman-as-space-for-views-service [(tab-btn 'Tab 1' true) (tab-btn 'Tab 2' false)] [(label-fn :text 'GRID')])
    Needed:
-      tab-btn component is needed to corectly work
-   "
+      tab-btn component is needed to corectly work"
   (fn [tabs array]
     (let [bg-color "#fff"
           tabs-space (mig-panel
@@ -1336,7 +1333,7 @@
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
 
-
+(@startup)
 
 
 ;; (@gseed/alert-manager :set {:header "Hello World" :body "Some body once told me..."} (@gseed/alert-manager :message gseed/alert-manager) 5)

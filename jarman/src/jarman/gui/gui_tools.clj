@@ -22,7 +22,6 @@
 (import java.awt.MouseInfo)
 (import java.awt.event.MouseListener)
 
-
 ;; ┌─────────────────────────┐
 ;; │                         │
 ;; │ Global services         │
@@ -30,7 +29,6 @@
 ;; └─────────────────────────┘
 
 (def changes-service (atom (cs/new-changes-service)))
-
 
 ;; ┌─────────────────────────┐
 ;; │                         │
@@ -56,11 +54,8 @@
                                                                                                                 (if (= (get m :style) :bold) (merge m {:style #{:bold :italic}}) (merge m {:style :italic}))
                                                                                                                 (conj m {}))))))))
 
-
-
 ;; (seesaw.font/font-families)
 ;; (label-fn :text "txt")
-
 ;; Function for label with pre font
 (def label-fn (fn [& params] (apply label :font (getFont) params)))
 
@@ -154,7 +149,6 @@
 ;;   (get-in @init/language (vec (concat [] args)) default))
 (cm/get-in-lang [:ui :buttons])
 
-
 (def using-lang (cm/get-in-value [:init.edn :lang]))
 (def get-color (partial theme-map "#000" :color))
 (def get-comp (partial theme-map "#000" :components))
@@ -163,7 +157,6 @@
 (def get-lang (fn [& path] (cm/get-in-lang (lang/join-vec [:ui] path))))
 (def get-lang-btns (fn [& path] (cm/get-in-lang (lang/join-vec [:ui :buttons] path))))
 (def get-lang-alerts (fn [& path] (cm/get-in-lang (lang/join-vec [:ui :alerts] path))))
-
 
 ;; ############# COMPONENTS TODO: need move to gui_components.clj
 
@@ -200,8 +193,7 @@
       (build-ico icon/alert-64-png)
    Needed:
       Import jarman.dev-tools
-      Function need stool/image-scale function for scalling icon
-   "
+      Function need stool/image-scale function for scalling icon"
   [ic] (label-fn :icon (stool/image-scale ic 28)
                  :background (new Color 0 0 0 0)
                  :border (empty-border :left 3 :right 3)))
@@ -335,6 +327,55 @@
                                                     (apply str "0x" (map first (partition 2 clr)))))]
                              (if (< hex 1365) "#FFF" "#000")))
       (config! target :background "#FFF" :foreground "#000"))))
+
+
+
+(defmacro my-border
+  "Description:
+      Create border for gui component, empty-border like margin in css.
+   Example:
+     (my-border [\"#222\" 4] [10 20 30 30])
+      ;; => #object[javax.swing.border.CompoundBorder....
+            (#function[seesaw.border/compound-border]
+            (#function[seesaw.border/line-border] :bottom 4 :color \"#222\")
+            (#function[seesaw.border/empty-border]
+            :top 10
+            :right 20
+            :bottom 30
+            :left 40))
+      (my-border [10 20])
+      ;; => #object[javax.swing.border.CompoundBorder....
+            (#function[seesaw.border/compound-border]
+            (#function[seesaw.border/empty-border]
+            :top 10
+            :right 20
+            :bottom 0
+            :left 0))"
+  [& args]
+  (let [l (into
+           (map
+            (fn [x]
+              (if (some string? x)
+                (let [[x1 x2] x]
+                  (into
+                   (if (int? x1)
+                     (list :bottom x1 :color x2)
+                     (list :bottom x2 :color x1))
+                   (list line-border)))
+                (let [a x
+                      am (count a)
+                      prm [:top :right :bottom :left]]
+                  (into
+                   (mapcat list prm
+                           (condp = am
+                             1 (repeat 4 a) 
+                             4 a
+                             (into a (repeat (- 4 (count a)) 0))))
+                   (list empty-border))))) args)
+           (list compound-border))]
+    `~l))
+
+
 
 
 

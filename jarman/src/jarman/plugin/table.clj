@@ -81,6 +81,8 @@
     (.setLocationRelativeTo dialog frame)
     (seesaw.core/show! dialog)))
 
+
+
 (def build-input-form
   (fn [data-toolkit
        global-configuration

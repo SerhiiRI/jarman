@@ -11,7 +11,8 @@
             [jarman.tools.lang :as lang]
             [jarman.logic.metadata :as mmeta]
             [jarman.gui.gui-alerts-service :as gas]
-            [jarman.gui.gui-tools :as gtool])
+            [jarman.gui.gui-tools :as gtool]
+            [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
   (:import (java.awt Color)))
 
 (jarman.config.config-manager/swapp)
@@ -46,7 +47,6 @@
                                                                 h (+ 50 vbar (.getHeight (c/config e :preferred-size)))]
                                                             (c/config! component :size [w :by h]))
                                                           (catch Exception e (str "Auto scroll cannot get parent")))))])]
-
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. 12 0))
     (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
@@ -1107,3 +1107,12 @@
      :background (new Color 0 0 0 0)
      :constraints ["" "5px[grow, fill]0px[fill]5px" "5px[fill]5px"]
      :items (if (empty? buttons) [[(c/label)]] (gtool/join-mig-items (c/label) (map #(btn (first %) (second %) (last %)) buttons))))))
+
+
+
+
+
+
+
+
+

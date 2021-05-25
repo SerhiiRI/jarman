@@ -9,7 +9,8 @@
            (javax.swing.table TableCellRenderer TableColumn)
            (java.awt.event MouseEvent)
            (jarman.test DateTime)
-           (java.awt Color Component))
+           (java.awt Color Component)
+           (java.awt Dimension))
   (:require [clojure.string :as string]
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
@@ -35,6 +36,7 @@
             [jarman.plugin.table :as gtable]
             [jarman.logic.view-manager :as vmg]
             [jarman.logic.session :as session]
+            [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut]
             ;; [jarman.logic.view :refer :all] 
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
             ))
@@ -48,7 +50,6 @@
 
 
 (def popup-menager (atom nil))
-
 
 (defn ontop-panel
   [popup-menager storage-id z-index & {:keys [size title body] :or {size [600 400] title "Popup" body (label)}}]
@@ -65,7 +66,7 @@
      :visible? true
      :items (join-mig-items (mig-panel
                              :constraints ["" "10px[grow]0px[30, center]0px" "5px[]5px"]
-                             :background "#eee"
+                             :background "#ddd" ;;"#eee"
                              :items (join-mig-items
                                      (label :text title)
                                      (label :icon (stool/image-scale icon/up-grey1-64-png 25)
@@ -136,6 +137,94 @@
                                                                            (create-dialog--answer-btn (get-lang-btns :no)  (fn [e] (return-from-dialog e "no")))))))))
          :parent (getParent @atom-popup-hook))
         pack! show!)))
+
+
+(def create-dialog--answer-chooser
+  (fn [txt func]
+    (vertical-panel
+     :background (get-color :background :button_main)
+     :focusable? true
+     :listen [:focus-gained (fn [e] (hand-hover-on e) (config! e :background light-light-grey-color))
+              :focus-lost   (fn [e] (config! e :background (get-color :background :button_main)) )
+              :mouse-clicked func
+              :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) func))]
+     :items (list (label
+                   :text (first txt)
+                   :halign :left
+                   :font (getFont 14 :bold)
+                   :foreground gcomp/blue-color
+                   :border (compound-border (empty-border :left 20 :right 20 :bottom 0 :top 5)))
+                  (label
+                   :text (second txt)
+                   :halign :left
+                   :font (getFont 14)
+                   :border (compound-border (empty-border :left 30 :right 20 :bottom 5 :top 0)))))))
+
+(def create-dialog-repair-chooser
+  (fn [invoker data title size]
+    (let [dialog
+          (custom-dialog
+           :title title
+           :modal? true
+           :resizable? false
+           ;;:parent (getParent @atom-popup-hook   )
+           :parent (getParent invoker)
+           :content (mig-panel
+                     :background "#fff"
+                     :size [(first size) :by (second size)]
+                     :constraints ["" "0px[fill, grow]0px" "0px[grow, top]0px"]
+                     :items (join-mig-items
+                             (let [scr (scrollable
+                                        (mig-panel
+                                         :background "#fff"
+                                         :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
+                                         :items (join-mig-items
+                                                 (seesaw.core/label
+                                                  :border (empty-border :top 5)
+                                                  :icon (stool/image-scale icon/left-blue-64-png 30)
+                                                  :listen [:mouse-entered (fn [e] (gtool/hand-hover-on e))
+                                                           :mouse-exited (fn [e] (gtool/hand-hover-off e))
+                                                           :mouse-clicked (fn [e] (.dispose (seesaw.core/to-frame e)))])
+                                                 (textarea title :halign :center :font (getFont 14 :bold)
+                                                           :foreground gcomp/blue-green-color
+                                                           :border (empty-border :thickness 12))
+                                                 (mig-panel
+                                                  :background "#fff"
+                                                  :constraints ["wrap 1" "0px[:300, fill, grow]0px" "0px[]0px"]
+                                                  :items (join-mig-items
+                                                          (map (fn [x] (create-dialog--answer-chooser
+                                                                        x
+                                                                        (fn [e] (return-from-dialog e x)))) data)
+                                                          )))) :hscroll :never :border nil)]
+                               (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
+                               (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr))))]
+      (.setUndecorated dialog true)
+      
+      ;;(.setLocationRelativeTo (getParent (to-widget invoker)) ) 
+      (-> dialog  pack! show!))))
+
+;;start julka dialog
+;; (do (doto (seesaw.core/frame
+;;            :title "title"
+;;            :undecorated? false
+;;            :minimum-size [1000 :by 600]
+;;            :content 
+;;            (seesaw.core/border-panel
+;;           ;;  :constraints ["wrap 1" "10px[fill, grow]10px" "10px[top]10px"]
+;;             :items [[(label :text "heyy open modal window"
+;;                             :listen [:mouse-entered (fn [e] (config! e :cursor :hand))
+;;                                      :mouse-clicked (fn [e] (create-dialog-repair-chooser
+;;                                                              e
+;;                                                              [
+;;                                                               ["Some-error" (gtool/htmling "<p align= \"justify\">Another error,heyy hhh this is some error about our life  Established fact that a reader will be distracthhhj jhjke</p>")]
+;;                                                               ["heyy error" (gtool/htmling "<p align= \"justify\">Heyey,Established fact that a reader will be distracthhhj jhjke</p>")]
+;;                                                               ["Smth" (gtool/htmling "<p align= \"justify\">Must because you must be stronger like a river  heyy heyy heyy jjjdjdjd you importanti do somkm,hj jhjke)</p>")]
+;;                                                               ["rd"  (gtool/htmling "<p align= \"justify\">Hree Established fact that a reader will be distracthhhj jhjke</p>")]
+;;                                                               ["tut" (gtool/htmling "<p align= \"justify\">10- erro. Established fact that a reader will be distracthhhj jhjke</p>")]
+;;                                                               ["cosmos" (gtool/htmling "<p align= \"justify\">Errors, fact that a reader will be distracthhhj jhjke</p>")]]
+;;                                                              "Choose reason for repair"
+;;                                                              [400 300]))])] "center"]))
+;;       (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
 
 (def create-dialog-ok
   (fn [title ask size]
@@ -252,7 +341,7 @@
 ;; │              │
 ;; │ Table editor │
 ;; │              │
-;; └──────────────┘
+;; └──────────────┘  
 
 (defn table-editor--element--header
   "Create header GUI component in editor for separate section"
@@ -357,7 +446,6 @@
                  (param-to-edit :private? false)
                  (param-to-edit :editable? false))))))))
 
-
 (defn- get-component-add-column [data]
   (condp = data
     "date" ["a" "b" "c"]
@@ -446,13 +534,17 @@
 (defn delete-column [column l-delete]
   (config! l-delete 
            :listen [:mouse-entered (fn [e] (config! e :cursor :hand))
-                    :mouse-clicked (fn [e] (create-dialog-yesno "Delete"
-                                                                (str
-                                                                 "Delete column "
-                                                                 (name (:field column))
-                                                                 "?")
-                                                                [180 140]))]
+                    :mouse-clicked (fn [e]
+                                     (create-dialog-repair-chooser
+                                                             ["yes" "no"]
+                                                             "Delete"
+                                                             (str
+                                                              "Delete column "
+                                                              "?")
+                                                             [180 140]))]
            :visible? true))
+
+
 
 ;;heyyy
 (defn table-editor--component--column-picker
@@ -531,19 +623,66 @@
 
 
 (defn table-editor--element--btn-show-changes
-  [local-changes table] (table-editor--component--bar-btn :edit-view-back-btn (get-lang-btns :show-changes) icon/refresh-grey-64-png icon/refresh-blue-64-png
-                                                          (fn [e] (@popup-menager :new-message
-                                                                                  :title "Changes list"
-                                                                                  :body (textarea (let [changes (atom "")]
-                                                                                                    (doall
-                                                                                                     (map
-                                                                                                      (fn [change]
-                                                                                                        (let [path (first change)
-                                                                                                              valu (second change)]
-                                                                                                          (swap! changes (fn [txt] (str txt "<br/>" path " \"" (get-in table path) "\" -> \"" valu "\"")))))
-                                                                                                      @local-changes))
-                                                                                                    @changes))
-                                                                                  :size [400 300]))))
+  [local-changes table]
+  (table-editor--component--bar-btn :edit-view-back-btn (get-lang-btns :show-changes)
+                                    icon/refresh-grey-64-png icon/refresh-blue-64-png
+                                    (fn [e] (@popup-menager
+                                             :new-message
+                                             :title (str "Changes list in " (get-in table [:prop :table :representation]))
+                                             :body
+                                             (let [bpnl (mig-panel
+                                                         :constraints ["wrap 1" "20px[]0px" "5px[top]0px"]
+                                                         :background "#fff"
+                                                         :preferred-size [400 :by 300]) 
+                                                   scr (scrollable bpnl
+                                                                   :hscroll :never)
+                                                   path-groups (group-by second (map (fn [x] (conj (subvec (first x) 1) (second x))) @local-changes))]
+                                               (println @local-changes)
+                                               (println path-groups)
+                                               (doall
+                                                (map
+                                                 (fn [[group-name paths]]
+                                                   (.add bpnl 
+                                                         (label
+                                                          :foreground gcomp/blue-color
+                                                          :text
+                                                          (str
+                                                           (name (get-in table
+                                                                         [:prop :columns group-name :field])))))
+                                                   (doall (map
+                                                      (fn [path]
+                                                        (.add
+                                                         bpnl
+                                                         (horizontal-panel
+                                                          :background "#fff"
+                                                          :items (list
+                                                                  (label
+                                                                   :border (empty-border :left 10)
+                                                                   :background "#fff"
+                                                                   :font (getFont 12)
+                                                                   :text (str
+                                                                          (name (last (butlast path)))
+                                                                          ": "))
+                                                                  (label
+                                                                   :background gcomp/light-light-grey-color
+                                                                   :font (getFont 12)
+                                                                   :text (get-in table (flatten [:prop (vec (butlast path))])))
+                                                                  (label
+                                                                   :background "#fff"
+                                                                   :font (getFont 12)
+                                                                   :text " to ")
+                                                                  (label
+                                                                   :background gcomp/light-light-grey-color
+                                                                   :font (getFont 12)
+                                                                   :text (last path))))))
+                                                      paths))) path-groups))
+                                               (.repaint bpnl)
+                                               (.setUnitIncrement (.getVerticalScrollBar scr) 20)
+                                               (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. 0 0))
+                                               (.setBorder scr nil)
+                                               scr)
+                                             :size [400 300]))))
+
 
 (defn create-view--table-editor
   "Description:
@@ -1160,7 +1299,7 @@
       (if-not (nil? @relative) (.setLocation (seesaw.core/to-frame @app) (first @relative) (second @relative))))
     (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))))
 
-(@startup)
+
 
 (reset! startup
         (fn []
@@ -1178,7 +1317,8 @@
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
 
-;;(@startup)
+
+(@startup)
 
 
 

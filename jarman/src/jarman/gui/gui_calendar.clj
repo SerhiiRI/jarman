@@ -69,10 +69,6 @@
   [arrstr]
   (DateTime/getBar arrstr))
 
-
-
-
-
 (defn calendar-panel
   [& {:keys [set-date
              editable?

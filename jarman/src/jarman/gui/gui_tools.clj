@@ -287,9 +287,7 @@
 
 (def table-editor--component--bar-btn
   "Description:
-     Interactive button for table editor.
-   "
-
+     Interactive button for table editor."
   (fn [id title ico ico-hover onclick]
     (let [bg        "#ddd"
           bg-hover  "#d9ecff"

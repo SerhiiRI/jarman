@@ -36,6 +36,14 @@
 ;;   (println "(Path to plugin)>" (str plugin-path)))
 
 ;;; gui declarations ;;;
+(defview repair_reasons
+  (plug/jarman-table
+   :name "Repair reasons"
+   :place nil
+   :tables [:repair_reasons]
+   :view   [:repair_reasons.reason]
+   :query  {:column (as-is :repair_reasons.id :repair_reasons.reason)}))
+
 (defview permission
   (plug/jarman-table
    :name "Table"

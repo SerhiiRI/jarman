@@ -73,6 +73,7 @@
 ;;; some-components ;;; 
 ;;;;;;;;;;;;;;;;;;;;;;;
 
+
 (declare asks-panel)
 (declare info-panel)
 (declare login-panel)
@@ -381,15 +382,11 @@
           "not valid connection")))))
 
 
-
 (defn some-error-v [error]
   (vertical-panel
    :background "#fff"
    :items (list (label :text error :font (myFont 13) :foreground red-color
                        :border (empty-border :top 5 :left 5 :bottom 5)))))
-
-
-(show-events (border-panel))
 
 
 (defn label-to-config [dbname title key-title login pass] 
@@ -474,7 +471,6 @@
                                  :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))]))
     my-panel))
 
-(start)
 
 (defn configurations-panel [login pass]
   (let [mig (mig-panel
@@ -535,6 +531,7 @@
             :foreground blue-green-color
             :font (myFont 14)) mig]))
 
+
 (defn info-panel []
   (let [info some-text
         faq [{:q "Why i can not get connection with server?"
@@ -582,8 +579,7 @@
     (mig-panel
      :constraints ["wrap 1" "[center]" "20px[]0px"]
      :items [[(label :icon ;;(stool/image-scale icon/user-blue1-64-png 40)
-                      (stool/image-scale "icons/imgs/jarman-text.png" 6)
-                     )]
+                      (stool/image-scale "icons/imgs/jarman-text.png" 6))]
              [(mig-panel
                :constraints ["wrap 2" "10px[fill]10px[200:, fill]" "0px[]20px"]
                :items [[(label :icon (stool/image-scale icon/user-blue1-64-png 40))]
@@ -592,7 +588,7 @@
                        [fpass]])]
              [(configurations-panel flogin fpass)]
              [(label :text "" :border
-                     (empty-border :top 20 :left 860 )) "split 2"]
+                     (empty-border :top 20 :left 860)) "split 2"]
              [(mig-panel
                :constraints ["" "[grow, fill]" ""]
                :items [[(label :icon (stool/image-scale icon/refresh-connection-grey1-64-png 40)
@@ -627,7 +623,6 @@
       (-> (doto (frame-login) (.setLocationRelativeTo nil) (apply-stylesheet my-style)) seesaw.core/pack! seesaw.core/show!)
       (-> (doto (frame-error) (.setLocationRelativeTo nil)(apply-stylesheet my-style))
           (config! :content (error-panel res-validation)) seesaw.core/pack! seesaw.core/show!))))
-
 
 (start)
 

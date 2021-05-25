@@ -8,6 +8,7 @@
    [jarman.logic.metadata :as metadata]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
+   [jarman.logic.structural-initializer :as sinit]
    [jarman.tools.lang :refer :all])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
@@ -25,7 +26,6 @@
 ;;                        "permission"
 ;;                        "documents"
 ;;                        "metadata"])
-
 
 (def documents
   (create-table :documents
@@ -136,21 +136,27 @@
 
 ;; (db/query (show-tables))
 
+(def repair_reasons
+  (create-table
+   :repair_reasons
+   :columns [{:reason [:varchar-120 :default :null]}]))
+
 (def repair_contract
   (create-table :repair_contract
                 :columns [{:id_cache_register[:bigint-20 :unsigned :default :null]}
                           {:id_old_seal      [:bigint-20 :unsigned :default :null]}
                           {:id_new_seal      [:bigint-20 :unsigned :default :null]}
+                          {:id_repair_reasons[:bigint-20 :unsigned :default :null]}
                           {:repair_date    [:date :default :null]}
-
+                          
                           {:cause_of_removing_seal [:mediumtext :default :null]} ;; combo 3-5 items
                           {:tech_problem_description [:mediumtext :default :null]} ;; big dialog to selection technical cause
                           {:tech_problem_type [:varchar-120 :default :null]} ;; combo <10 shorttext items
-                          
                           {:cache_register_register_date [:date :default :null]}]
                 :foreign-keys [[{:id_cache_register :cache_register} {:delete :cascade :update :cascade}]
                                [{:id_old_seal :seal} {:delete :null :update :null}]
-                               [{:id_new_seal :seal} {:delete :null :update :null}]]))
+                               [{:id_new_seal :seal} {:delete :null :update :null}]
+                               [{:id_repair_reasons :repair_reasons} {:delete :null :update :null}]]))
 
 (defmacro create-tabels [& tables]
   `(do ~@(for [t tables]
@@ -159,6 +165,9 @@
   `(do ~@(for [t tables]
            `(db/exec (drop-table (keyword '~t))))))
 
+;; (db/exec (drop-table :repair_contract))
+;; (db/exec repair_contract)
+;; (db/query (show_tables))
 ;; (db/exec point_of_sale_group_links)
 
 (defn create-scheme-one [scheme]
@@ -175,6 +184,7 @@
                  point_of_sale_group
                  point_of_sale_group_links
                  seal
+                 repair_reasons
                  repair_contract
                  service_contract
                  service_contract_month))
@@ -187,6 +197,7 @@
   (delete-tabels service_contract_month
                  service_contract
                  repair_contract
+                 repair_reasons
                  seal
                  point_of_sale_group_links
                  point_of_sale_group
@@ -199,10 +210,10 @@
                  metadata
                  view))
 
-
 (defn regenerate-scheme []
   (delete-scheme)
   (create-scheme)
+  (sinit/procedure-test-all)
   (metadata/do-create-meta)
   (metadata/do-create-references))
 

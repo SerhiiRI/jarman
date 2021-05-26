@@ -27,6 +27,8 @@
    ;; [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    ;; [jarman.logic.metadata :as mt]
    [jarman.gui.gui-app :as gapp]
+   [jarman.tools.lang :as l]
+   [seesaw.core :as c]
    [jarman.logic.view-manager :include-macros true :refer :all]
    [jarman.plugin.table :as plug])
   (:import (java.util Date)
@@ -47,7 +49,7 @@
 (defview permission
   (plug/jarman-table
    :name "Table"
-   :place [:expand-menu-space]
+   :plug-place [:expand-menu-space]
    :tables [:permission]
    :view   [:permission.permission_name]
    :query   {:column (as-is :permission.id :permission.permission_name :permission.configuration)}))
@@ -63,7 +65,10 @@
 (defview user
   (plug/jarman-table
    :name nil
-   :place nil
+   :plug-place [:#tables-view-plugin]
+   :override-model [{:override-by :column 
+                     :column :user.login 
+                     :fun (fn [coll] (c/label :text (l/rift (:val coll) "")))}]
    :tables [:user :permission]
    :view   [:user.first_name :user.last_name :user.login :permission.permission_name]
    :query  {:inner-join [:permission]

@@ -66,6 +66,11 @@
 (defn convert-mappath-to-key [path] (keyword (rm-colon (string/join "-" path))))
 (defn convert-str-to-hashkey [str] (keyword (string/join "" ["#" str])))
 (defn in-list? [coll key] (not (empty? (filter #(= key %) coll))))
+(defn rift 
+  "Return condition if true or return else
+   (rift (- 3 3) \"zero\") => zero
+   (rift (- 3 2) \"zero\") => 1"
+  [con els] (if con con els))
 
 (defmacro join
   "(filter-nil [nil 1 nil 3 4]) ;=> [1 3 4]"

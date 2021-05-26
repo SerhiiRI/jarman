@@ -390,6 +390,26 @@
           :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
 
+(defn delete-column [column]
+  (let [btns (config!
+              (gcomp/menu-bar
+               :id :db-viewer--component--menu-bar
+               :buttons [["Delete"
+                          icon/basket-blue1-64-png
+                          (fn [e]
+                            (create-dialog-yesno
+                             "Delete"
+                             (str
+                              "Delete column"
+                              (name (:field column))
+                              "?")
+                             [180 140]))]])
+              :border (empty-border :left -10 :top 15))]
+    (config! (first (.getComponents btns))
+             :border (compound-border
+                      (empty-border :left 5 :right 10 :top 5 :bottom 5)
+                      (line-border :thickness 1 :color "#bbb")))
+    btns))
 
 ;; heyyy
 (defn switch-column-to-editing
@@ -534,27 +554,8 @@
                                                     table-name
                                                     "" 0)]])))
 
-(defn delete-column [column]
-  (let [btns (config!
-              (gcomp/menu-bar
-               :id :db-viewer--component--menu-bar
-               :buttons [["Delete"
-                          icon/basket-blue1-64-png 
-                          (fn [e]
-                            (create-dialog-yesno
-                             "Delete"
-                             (str
-                              "Delete column"
-                              (name (:field column))
-                              "?")
-                             [180 140]))]])
-              :border (empty-border :left -10 :top 15))]
-    (config! (first (.getComponents btns))
-             :border (compound-border
-                      (empty-border :left 5 :right 10 :top 5 :bottom 5)
-                      (line-border :thickness 1 :color "#bbb")))
-    btns))
-(@startup)
+
+;; (@startup)
 ;;heyyy
 (defn table-editor--component--column-picker
   "Create left table editor view to select column which will be editing on right table editor view"
@@ -1153,7 +1154,10 @@
              :args [:vscroll :never])]
            [(vmig
              :vrules "[fill]0px[grow, fill]"
-             :items [[(gcomp/menu-bar-right :buttons [["Export" icon/excel-64-png (fn [e])]])]
+             :items [[(gcomp/menu-bar-right 
+                       :id :menu-for-period-table
+                       :buttons [[(gtool/get-lang-btns :save) icon/agree1-blue-64-png (fn [e])]
+                                 [(gtool/get-lang-btns :export) icon/excel-64-png (fn [e])]])]
                      [(scrollable (seesaw.swingx/table-x :model [:columns ["Servise month" "Amount" "Payment status"] :rows [["03/2021" "2500,-" "FV: 042/03/2021"]
                                                                                                                              ["04/2021" "2000,-" "FV: 042/04/2021"]
                                                                                                                              ["05/2021" "2500,-" "Expected payment"]]]))]])]]))
@@ -1166,9 +1170,12 @@
 (defn create-period--period-list
   [list-space view-space return-fn company-id]
   (let [;; period-list (get-period-list company-id)
-        return (gcomp/button-slim "<< Companys" :onClick (fn [e] (invoke-later (do 
-                                                                                 (config! list-space :items (gtool/join-mig-items (return-fn list-space view-space return-fn)))
-                                                                                 (gseed/switch-focus)))))
+        auto-menu-hide false
+        return (gcomp/button-slim (str "<< " (gtool/get-lang-btns :back))
+                                  :underline-size 1
+                                  :onClick (fn [e] (invoke-later (do
+                                                                   (config! list-space :items (gtool/join-mig-items (return-fn list-space view-space return-fn)))
+                                                                   (gseed/switch-focus)))))
         periods (expand-form-panel
                  list-space
                  [return
@@ -1177,14 +1184,16 @@
                     :items (gtool/join-mig-items
                             (gcomp/vmig
                              :items (gtool/join-mig-items
-                                     (gcomp/button-slim "01/01/2021 - 31/12/2021" :onClick (fn [e] 
-                                                                                             (config! view-space :items (gtool/join-mig-items (create-period--period-form)))
-                                                                                             ((get (config (select list-space [:#expand-panel]) :user-data) :hide-show))))
+                                     (gcomp/button-slim "01/01/2021 - 31/12/2021"
+                                                        :onClick (fn [e]
+                                                                   (config! view-space :items (gtool/join-mig-items (create-period--period-form)))
+                                                                   (if auto-menu-hide ((:hide-show (config (select list-space [:#expand-panel]) :user-data))))))
                                      (gcomp/button-slim "01/01/2021 - 31/12/2021" :onClick (fn [e]))
                                      (gcomp/button-slim "01/01/2021 - 31/12/2021" :onClick (fn [e]))
                                      (gcomp/button-slim "01/01/2021 - 31/12/2021" :onClick (fn [e]))
                                      (gcomp/button-slim "01/01/2021 - 31/12/2021" :onClick (fn [e])))))))]
-                 :args [:id :expand-panel])]
+                 :max-w 180
+                 :args [:id :expand-panel :background "#fff"])]
     (gseed/set-focus return)
     return
     periods
@@ -1194,7 +1203,7 @@
 
 (defn get-company-list
   [] [{:name "Trashpanda-Team" :id 1} {:name "Frank & Franky" :id 3}
-      {:name "Trashpanda-Team" :id 1} {:name "Frank & Franky" :id 3}
+      {:name "Trashpanda-Team" :id 1} {:name "Trashpandowe Zakłady Wyrobów Kodowych Team" :id 3}
       {:name "Trashpanda-Team" :id 1} {:name "Frank & Franky" :id 3}])
 
 (defn create-period--period-companys-list
@@ -1202,24 +1211,28 @@
   (gseed/rm-focus)
   (let
    [model (get-company-list)
-    buttons (map (fn [company]
-                   (let [btn (gcomp/button-slim (str (get company :name))
-                                                :onClick (fn [e] (invoke-later (do 
-                                                                                 (config! list-space :items (gtool/join-mig-items (create-period--period-list list-space view-space return-fn (get company :id))))
-                                                                                 (gseed/switch-focus)))))]
+    buttons (map (fn [enterpreneur]
+                   (let [name (:name enterpreneur)
+                         btn (gcomp/button-slim name
+                                                :onClick (fn [e] (invoke-later (do
+                                                                                 (config! list-space :items (gtool/join-mig-items (create-period--period-list list-space view-space return-fn (get enterpreneur :id))))
+                                                                                 (gseed/switch-focus))))
+                                                :args [:tip name])]
                      (gseed/set-focus-if-nil btn)
                      btn))
                  model)]
     (expand-form-panel
      list-space
      (gcomp/vmig :items (gtool/join-mig-items buttons))
+     :max-w 180
+     :args [:background "#fff"]
     ;;  (println  buttons)
      )))
 ;; (show-events (label))
 
 (defn create-period-view
   []
-  (let [list-space (gcomp/vmig)
+  (let [list-space (gcomp/vmig :args [:border (line-border :thickness 1 :color "#bbb")])
         view-space (gcomp/vmig)
         list-space (config! list-space :items (gtool/join-mig-items (create-period--period-companys-list list-space view-space create-period--period-companys-list)))]
     (gcomp/hmig
@@ -1333,144 +1346,4 @@
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
 
-(@startup)
-
-
-;; (@gseed/alert-manager :set {:header "Hello World" :body "Some body once told me..."} (@gseed/alert-manager :message gseed/alert-manager) 5)
-
-;; (mmeta/getset)
-;; (@gseed/jarman-views-service :get-all-view)
-
-;; (config! (to-frame @app) :size [1000 :by 800])
-
-
-;; ┌──────────────────────────────────────┐
-;; │                                      │
-;; │ Example of use for simple components │
-;; │                                      │
-;; └──────────────────────────────────────┘
-
-;; (def example-text-password-button
-;;   "Description
-;;       Create simple jframe with simple components
-;;    "
-;;   (fn []
-;;     (build
-;;      :undecorated? false
-;;      :size [400 400]
-;;      :items (list
-;;              (text
-;;               :class :input
-;;               :text "Just text input component"
-;;               :halign :center
-;;               :bounds [100 50 200 30])
-;;              (jarman.gui.gui-tools/text-input :placeholder "Login"
-;;                                                   :style [:class :input
-;;                                                           :halign :center
-;;                                                           :bounds [100 100 200 30]])
-;;              (jarman.gui.gui-tools/password-input :placeholder "Password component"
-;;                                                   :style [:class :input
-;;                                                           :halign :center
-;;                                                           :bounds [100 150 200 30]])
-;;              (jarman.gui.gui-tools/simple-button "Simple button" (fn [e] (println (map #(str "Value: " (if (map? (get-user-data %)) ;; if component have map inside :user-data
-;;                                                                                                          (if (= (get-user-data % :type) :password) ;; if component type inside :user-data is password
-;;                                                                                                            (get-user-data % :value) ;; return value from :user-data
-;;                                                                                                            (value %)) ;; else return value from component
-;;                                                                                                          (value %)))  ;; return value from component
-;;                                                                                        (select (to-root e) [:.input]) ;; Get all component with class "input"
-;;                                                                                        )))
-;;                                                  :style [:bounds [100 200 200 30]])))))
-
-;; (example-text-password-button)
-
-
-
-
-
-
-
-
-
-;; (def create-dialog--answer-chooser
-;;   (fn [txt func]
-;;     (vertical-panel
-;;      :background (get-color :background :button_main)
-;;      :focusable? true
-;;      :listen [:focus-gained (fn [e] (hand-hover-on e) (config! e :background light-light-grey-color))
-;;               :focus-lost   (fn [e] (config! e :background (get-color :background :button_main)))
-;;               :mouse-clicked func
-;;               :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) func))]
-;;      :items (list (label
-;;                    :text (first txt)
-;;                    :halign :left
-;;                    :font (getFont 14 :bold)
-;;                    :foreground gcomp/blue-color
-;;                    :border (compound-border (empty-border :left 20 :right 20 :bottom 0 :top 5)))
-;;                   (label
-;;                    :text (second txt)
-;;                    :halign :left
-;;                    :font (getFont 14)
-;;                    :border (compound-border (empty-border :left 30 :right 20 :bottom 5 :top 0)))))))
-
-;; (def create-dialog-repair-chooser
-;;   (fn [invoker data title size]
-;;     (let [dialog
-;;           (custom-dialog
-;;            :title title
-;;            :modal? true
-;;            :resizable? false
-;;            ;;:parent (getParent @atom-popup-hook   )
-;;            :parent (getParent (to-widget invoker))
-;;            :content (mig-panel
-;;                      :background "#fff"
-;;                      :size [(first size) :by (second size)]
-;;                      :constraints ["" "0px[fill, grow]0px" "0px[grow, top]0px"]
-;;                      :items (join-mig-items
-;;                              (let [scr (scrollable
-;;                                         (mig-panel
-;;                                          :background "#fff"
-;;                                          :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
-;;                                          :items (join-mig-items
-;;                                                  (seesaw.core/label
-;;                                                   :border (empty-border :top 5)
-;;                                                   :icon (stool/image-scale icon/left-blue-64-png 30)
-;;                                                   :listen [:mouse-entered (fn [e] (gtool/hand-hover-on e))
-;;                                                            :mouse-exited (fn [e] (gtool/hand-hover-off e))
-;;                                                            :mouse-clicked (fn [e] (.dispose (seesaw.core/to-frame e)))])
-;;                                                  (textarea title :halign :center :font (getFont 14 :bold)
-;;                                                            :foreground gcomp/blue-green-color
-;;                                                            :border (empty-border :thickness 12))
-;;                                                  (mig-panel
-;;                                                   :background "#fff"
-;;                                                   :constraints ["wrap 1" "0px[:300, fill, grow]0px" "0px[]0px"]
-;;                                                   :items (join-mig-items
-;;                                                           (map (fn [x] (create-dialog--answer-chooser
-;;                                                                         x
-;;                                                                         (fn [e] (return-from-dialog e x)))) data))))) :hscroll :never :border nil)]
-;;                                (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
-;;                                (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr))))]
-;;       (.setUndecorated dialog true)
-;;       ;;(.setLocationRelativeTo (getParent (to-widget invoker)) ) 
-;;       (-> dialog  pack! show!))))
-
-;; ;;heyy
-;; (do (doto (seesaw.core/frame
-;;            :title "title"
-;;            :undecorated? false
-;;            :minimum-size [1000 :by 600]
-;;            :content
-;;            (seesaw.mig/mig-panel
-;;             :constraints ["wrap 1" "10px[fill, grow]10px" "10px[top]10px"]
-;;             :items [[(label :text "heyy open modal window"
-;;                             :listen [:mouse-entered (fn [e] (config! e :cursor :hand))
-;;                                      :mouse-clicked (fn [e] (create-dialog-repair-chooser
-;;                                                              e
-;;                                                              [["Some-error" (gtool/htmling "<p align= \"justify\">Another error,heyy hhh this is some error about our life  Established fact that a reader will be distracthhhj jhjke</p>")]
-;;                                                               ["heyy error" (gtool/htmling "<p align= \"justify\">Heyey,Established fact that a reader will be distracthhhj jhjke</p>")]
-;;                                                               ["Smth" (gtool/htmling "<p align= \"justify\">Must because you must be stronger like a river  heyy heyy heyy jjjdjdjd you importanti do somkm,hj jhjke)</p>")]
-;;                                                               ["rd"  (gtool/htmling "<p align= \"justify\">Hree Established fact that a reader will be distracthhhj jhjke</p>")]
-;;                                                               ["tut" (gtool/htmling "<p align= \"justify\">10- erro. Established fact that a reader will be distracthhhj jhjke</p>")]
-;;                                                               ["cosmos" (gtool/htmling "<p align= \"justify\">Errors, fact that a reader will be distracthhhj jhjke</p>")]]
-;;                                                              "Choose reason for repair"
-;;                                                              [400 300]))])]]))
-;;       (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
+;; (@startup)

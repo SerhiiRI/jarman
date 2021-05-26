@@ -236,151 +236,151 @@
    :display :edit,
    :value
    {:message-box
-    {:name "Message Box"
-     :type :block
-     :display :edit
+    {:name "Message Box",
+     :type :block,
+     :display :edit,
      :value
      {:border-color
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#96c1ea"}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#96c1ea"},
       :border-size
-      {:doc "Bordet size top, bottom, left and right."
-       :type :param
-       :display :edit
-       :component :textlist
-       :value ["1" "1" "1" "1"]}}}
+      {:doc "Bordet size top, bottom, left and right.",
+       :type :param,
+       :display :edit,
+       :component :textlist,
+       :value ["1" "1" "1" "1"]}}},
     :fake-focus
-    {:name "Fake focus"
-     :type :block
-     :display :edit
+    {:name "Fake focus",
+     :type :block,
+     :display :edit,
      :value
      {:background
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#eee"}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#eee"},
       :background-hover
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#96c1ea"}}}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#96c1ea"}}},
     :button-expand
-    {:name "Expand button"
-     :type :block
-     :display :edit
+    {:name "Expand button",
+     :type :block,
+     :display :edit,
      :value
      {:background
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#eee"}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#eee"},
       :background-hover
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#96c1ea"}}}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#96c1ea"}}},
     :button-expand-child
-    {:name "Expand button"
-     :type :block
-     :display :edit
+    {:name "Expand button child",
+     :type :block,
+     :display :edit,
      :value
      {:background
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#fff"}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#fff"},
       :background-hover
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#96c1ea"}}}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#d9ecff"}}},
     :button-export
-    {:name "Export button"
-     :type :block
-     :display :edit
+    {:name "Export button",
+     :type :block,
+     :display :edit,
      :value
      {:mouse-in
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#5ee6bf"}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#5ee6bf"},
       :mouse-out
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#95dec9"}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#95dec9"},
       :unfocus-color
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#95dec9"}}}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#95dec9"}}},
     :button-return
-    {:name "Return button"
-     :type :block
-     :display :edit
+    {:name "Return button",
+     :type :block,
+     :display :edit,
      :value
      {:mouse-in
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#666"}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#666"},
       :mouse-out
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#494949"}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#494949"},
       :unfocus-color
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#494949"}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#494949"},
       :foreground
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#fff"}}}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#fff"}}},
     :header-basic
-    {:type :block
-     :display :edit
+    {:type :block,
+     :display :edit,
      :value
      {:foreground
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#2c7375"}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#2c7375"},
       :background
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#ccc"}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#ccc"},
       :border-color
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#ccc"}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#ccc"},
       :border-size
-      {:type :param
-       :display :edit
-       :component :textnumber
-       :value 10}
+      {:type :param,
+       :display :edit,
+       :component :textnumber,
+       :value 10},
       :underline-color
-      {:type :param
-       :display :edit
-       :component :textcolor
-       :value "#2c7375"}
+      {:type :param,
+       :display :edit,
+       :component :textcolor,
+       :value "#2c7375"},
       :underline-size
-      {:type :param, :display :edit, :component :textnumber, :value 1}
+      {:type :param, :display :edit, :component :textnumber, :value 1},
       :font-size
-      {:type :param
-       :display :edit
-       :component :textnumber
-       :value 16}
+      {:type :param,
+       :display :edit,
+       :component :textnumber,
+       :value 16},
       :font-style
-      {:type :param
-       :display :edit
-       :component :selectbox
+      {:type :param,
+       :display :edit,
+       :component :selectbox,
        :value ["bold" "italic" "plain"]}}}}},
   :font
   {:doc "Konfiguracja głównego okna HRTime",

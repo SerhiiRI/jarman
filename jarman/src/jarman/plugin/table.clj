@@ -107,81 +107,82 @@
                                 :border (sborder/empty-border :thickness 10)
                                 :items [[(c/label)]])
           components (concat
-                      (filter #(not (nil? %)) (map (fn [meta]
-                                                     (let [field-qualified (get meta :field-qualified)
-                                                           title (get meta :representation)
-                                                           editable? (get meta :editable?)
+                      (filter #(not (nil? %))
+                              (map (fn [meta]
+                                     (let [field-qualified (get meta :field-qualified)
+                                           title (get meta :representation)
+                                           editable? (get meta :editable?)
                                     ;; field (get meta :field)
-                                                           v (str (get-in model [(keyword field-qualified)]))
-                                                           v (if (empty? v) "" v)]
-                                                       (cond
-                                                         (lang/in? (get meta :component-type) "d")
-                                                         (do
-                                                           (println "Data")
-                                                           (if (empty? model)
-                                                             (do ;;Create calendar input
-                                                               (c/label :text title)
-                                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified
-                                                                                                                      :local-changes complete)))
-                                                             (do ;; Create update calenda input
-                                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified
-                                                                                                                      :local-changes complete
-                                                                                                                      :set-date (if (empty? v) nil v))))))
+                                           v (str (get-in model [(keyword field-qualified)]))
+                                           v (if (empty? v) "" v)]
+                                       (cond
+                                         (lang/in? (get meta :component-type) "d")
+                                         (do
+                                           (println "Data")
+                                           (if (empty? model)
+                                             (do ;;Create calendar input
+                                               (c/label :text title)
+                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified
+                                                                                                      :local-changes complete)))
+                                             (do ;; Create update calenda input
+                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified
+                                                                                                      :local-changes complete
+                                                                                                      :set-date (if (empty? v) nil v))))))
 
-                                                         (lang/in? (get meta :component-type) "l")
-                                                         (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
-                                                           (let [key-table  (keyword (get meta :key-table))
-                                                                 connected-table-conf  (get-in global-configuration [key-table :plug/jarman-table :configuration])
-                                                                 connected-table-data  (get-in global-configuration [key-table :plug/jarman-table :data-toolkit])
-                                                                 selected-representation (fn [dialog-model-view returned-from-dialog]
-                                                                                           (->> (get dialog-model-view :view)
-                                                                                                (map #(get-in returned-from-dialog [%]))
-                                                                                                (filter some?)
-                                                                                                (string/join ", ")))
-                                                                 v (selected-representation connected-table-conf model)]
-                                                             (if-not (nil? (get model field-qualified)) (swap! complete (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
-                                                             (gcomp/inpose-label title (gcomp/input-text-with-atom :local-changes complete :editable? false :val v
-                                                                                                                   :onClick (fn [e]
-                                                                                                                              (let [selected (construct-dialog (get (create-table connected-table-conf connected-table-data) :table) field-qualified (c/to-frame e))
+                                         (lang/in? (get meta :component-type) "l")
+                                         (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
+                                           (let [key-table  (keyword (get meta :key-table))
+                                                 connected-table-conf  (get-in global-configuration [key-table :plug/jarman-table :configuration])
+                                                 connected-table-data  (get-in global-configuration [key-table :plug/jarman-table :data-toolkit])
+                                                 selected-representation (fn [dialog-model-view returned-from-dialog]
+                                                                           (->> (get dialog-model-view :view)
+                                                                                (map #(get-in returned-from-dialog [%]))
+                                                                                (filter some?)
+                                                                                (string/join ", ")))
+                                                 v (selected-representation connected-table-conf model)]
+                                             (if-not (nil? (get model field-qualified)) (swap! complete (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
+                                             (gcomp/inpose-label title (gcomp/input-text-with-atom :local-changes complete :editable? false :val v
+                                                                                                   :onClick (fn [e]
+                                                                                                              (let [selected (construct-dialog (get (create-table connected-table-conf connected-table-data) :table) field-qualified (c/to-frame e))
 ;;(some-dialog (c/to-frame e) )                                                                                                                                    
-                                                                                                                                    ]
-                                                                                                                                (if-not (nil? (get selected (get connected-table-data :model-id)))
-                                                                                                                                  (do (c/config! e :text (selected-representation connected-table-conf selected))
-                                                                                                                                      (swap! complete (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))))))))))
-                                                         (lang/in? (get meta :component-type) "a")
-                                                         (do
-                                                           (if (empty? model)
-                                                             (do
-                                                               (gcomp/inpose-label title (gcomp/input-text-area :store-id field-qualified
-                                                                                                                :local-changes complete)))
-                                                             (do
-                                                               (gcomp/inpose-label title (gcomp/input-text-area :store-id field-qualified
-                                                                                                                :local-changes complete
-                                                                                                                :val v)))))
-                                                         (lang/in? (get meta :component-type) "n")
-                                                         (do
-                                                           (if (empty? model)
-                                                             (do
-                                                               (gcomp/inpose-label title (gcomp/input-int :store-id field-qualified
-                                                                                                          :local-changes complete)))
-                                                             (do
-                                                               (gcomp/inpose-label title (gcomp/input-int :store-id field-qualified
-                                                                                                          :local-changes complete
-                                                                                                          :val v)))))
-                                                         (lang/in? (get meta :component-type) "i")
-                                                         (do ;; Add input-text with label
-                                                           (println "Input")
-                                                           (if (empty? model)
-                                                             (do ;;Create insert input
-                                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified
-                                                                                                                     :local-changes complete
-                                                                                                                     :editable? editable?)))
-                                                             (do ;; Create update input
-                                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified
-                                                                                                                     :local-changes complete
-                                                                                                                     :editable? editable?
-                                                                                                                     :val v))))))))
-                                                   metadata))
+                                                                                                                    ]
+                                                                                                                (if-not (nil? (get selected (get connected-table-data :model-id)))
+                                                                                                                  (do (c/config! e :text (selected-representation connected-table-conf selected))
+                                                                                                                      (swap! complete (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))))))))))
+                                         (lang/in? (get meta :component-type) "a")
+                                         (do
+                                           (if (empty? model)
+                                             (do
+                                               (gcomp/inpose-label title (gcomp/input-text-area :store-id field-qualified
+                                                                                                :local-changes complete)))
+                                             (do
+                                               (gcomp/inpose-label title (gcomp/input-text-area :store-id field-qualified
+                                                                                                :local-changes complete
+                                                                                                :val v)))))
+                                         (lang/in? (get meta :component-type) "n")
+                                         (do
+                                           (if (empty? model)
+                                             (do
+                                               (gcomp/inpose-label title (gcomp/input-int :store-id field-qualified
+                                                                                          :local-changes complete)))
+                                             (do
+                                               (gcomp/inpose-label title (gcomp/input-int :store-id field-qualified
+                                                                                          :local-changes complete
+                                                                                          :val v)))))
+                                         (lang/in? (get meta :component-type) "i")
+                                         (do ;; Add input-text with label
+                                           (println "Input")
+                                           (if (empty? model)
+                                             (do ;;Create insert input
+                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified
+                                                                                                     :local-changes complete
+                                                                                                     :editable? editable?)))
+                                             (do ;; Create update input
+                                               (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified
+                                                                                                     :local-changes complete
+                                                                                                     :editable? editable?
+                                                                                                     :val v))))))))
+                                   metadata))
                       [(vgap 20)]
                       [(button-template inser-or-update (fn [e]
                                                           (if (empty? model)
@@ -268,7 +269,7 @@
           update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit global-configuration :model model :export-comp expand-export :more-comps [(return)])]))
           x nil ;;------------ Build
           expand-insert-form (gcomp/scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never)
-          back-to-insert     (fn [] (gcomp/button-basic :onClick "<< Return to Insert Form" (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
+          back-to-insert     (fn [] (gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
           table              (fn [] ((get (create-table configuration data-toolkit) :table) (fn [model] (expand-update-form model back-to-insert)))) ;; TODO: set try
           x nil ;;------------ Finish

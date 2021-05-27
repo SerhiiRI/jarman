@@ -66,8 +66,7 @@
   (plug/jarman-table
    :name nil
    :plug-place [:#tables-view-plugin]
-   :override-model [{:override-by :column 
-                     :column :user.login 
+   :override-model [{:column :user.login 
                      :fun (fn [coll] (c/label :text (l/rift (:val coll) "")))}]
    :tables [:user :permission]
    :view   [:user.first_name :user.last_name :user.login :permission.permission_name]

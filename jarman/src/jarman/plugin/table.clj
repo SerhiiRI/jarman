@@ -82,6 +82,27 @@
     (.setLocationRelativeTo dialog frame)
     (seesaw.core/show! dialog)))
 
+(defn d-component
+  [coll]
+  (let [default (gcomp/inpose-label (:title coll) (apply calendar/calendar-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:set-date (:val coll)] [])))]
+    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
+
+(defn a-component
+  [coll]
+  (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-text-area :store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll) (if (:val coll) [:val (:val coll)] [])))]
+    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
+
+(defn n-component
+  [coll]
+  (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-int :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:val (:val coll)] [])))]
+    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
+
+(defn i-component
+  [coll]
+  (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-text-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll) (if (:val coll) [:val (:val coll)] [])))]
+    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
+
+
 (def build-input-form
   (fn [data-toolkit
        configuration
@@ -112,26 +133,16 @@
                       (filter #(not (nil? %))
                               (map (fn [meta]
                                      (let [field-qualified (get meta :field-qualified)
-                                           title (get meta :representation)
-                                           editable? (get meta :editable?)
-                                    ;; field (get meta :field)
+                                           title (:representation meta)
+                                           editable? (:editable? meta)
+                                           comp-type (:component-type meta)
                                            v (str (get-in model [(keyword field-qualified)]))
-                                           v (if (empty? v) "" v)]
+                                           v (if (empty? v) "" v)
+                                           map-coll {:override override :title title :store-id field-qualified :local-changes local-changes :editable? editable?}]
                                        (cond
-                                         (lang/in? (get meta :component-type) "d")
-                                         (do
-                                           (println "Data")
-                                           (if (empty? model)
-                                             (do ;;Create calendar input
-                                               (c/label :text title)
-                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified
-                                                                                                      :local-changes local-changes)))
-                                             (do ;; Create update calenda input
-                                               (gcomp/inpose-label title (calendar/calendar-with-atom :store-id field-qualified
-                                                                                                      :local-changes local-changes
-                                                                                                      :set-date (if (empty? v) nil v))))))
-
-                                         (lang/in? (get meta :component-type) "l")
+                                         (lang/in? comp-type "d")
+                                         (if (empty? model) (d-component map-coll) (d-component (conj map-coll {:val (if (empty? v) nil v)})))
+                                         (lang/in? comp-type "l")
                                          (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
                                            (let [key-table  (keyword (get meta :key-table))
                                                  connected-table-conf  (get-in global-configuration [key-table :plug/jarman-table :configuration])
@@ -145,56 +156,16 @@
                                              (if-not (nil? (get model field-qualified)) (swap! local-changes (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
                                              (gcomp/inpose-label title (gcomp/input-text-with-atom :local-changes local-changes :editable? false :val v
                                                                                                    :onClick (fn [e]
-                                                                                                              (let [selected (construct-dialog (get (create-table connected-table-conf connected-table-data) :table) field-qualified (c/to-frame e))
-;;(some-dialog (c/to-frame e) )                                                                                                                                    
-                                                                                                                    ]
+                                                                                                              (let [selected (construct-dialog (get (create-table connected-table-conf connected-table-data) :table) field-qualified (c/to-frame e))]
                                                                                                                 (if-not (nil? (get selected (get connected-table-data :model-id)))
                                                                                                                   (do (c/config! e :text (selected-representation connected-table-conf selected))
                                                                                                                       (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))))))))))
-                                         (lang/in? (get meta :component-type) "a")
-                                         (do
-                                           (if (empty? model)
-                                             (do
-                                               (gcomp/inpose-label title (gcomp/input-text-area :store-id field-qualified
-                                                                                                :local-changes local-changes)))
-                                             (do
-                                               (gcomp/inpose-label title (gcomp/input-text-area :store-id field-qualified
-                                                                                                :local-changes local-changes
-                                                                                                :val v)))))
-                                         (lang/in? (get meta :component-type) "n")
-                                         (do
-                                           (if (empty? model)
-                                             (do
-                                               (gcomp/inpose-label title (gcomp/input-int :store-id field-qualified
-                                                                                          :local-changes local-changes)))
-                                             (do
-                                               (gcomp/inpose-label title (gcomp/input-int :store-id field-qualified
-                                                                                          :local-changes local-changes
-                                                                                          :val v)))))
-                                         (lang/in? (get meta :component-type) "i")
-                                         (do ;; Add input-text with label
-                                           (println "Input")
-                                           (if (empty? model)
-                                             (do ;;Create insert input
-                                               (if (= field-qualified (:column (first override)))
-                                                 ((:fun (first override)) {:title title
-                                                                           :store-id field-qualified
-                                                                           :local-changes local-changes
-                                                                           :editable? editable?})
-                                                 (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified
-                                                                                                       :local-changes local-changes
-                                                                                                       :editable? editable?))))
-                                             (do ;; Create update input
-                                               (if (= field-qualified (:column (first override)))
-                                                 ((:fun (first override)) {:title title 
-                                                                           :store-id field-qualified 
-                                                                           :local-changes local-changes 
-                                                                           :editable? editable? 
-                                                                           :val v})
-                                                 (gcomp/inpose-label title (gcomp/input-text-with-atom :store-id field-qualified
-                                                                                                       :local-changes local-changes
-                                                                                                       :editable? editable?
-                                                                                                       :val v)))))))))
+                                         (lang/in? comp-type "a") ;; Text area
+                                         (if (empty? model) (a-component map-coll) (a-component (conj map-coll {:val v})))
+                                         (lang/in? comp-type "n") ;; Numbers Int
+                                         (if (empty? model) (n-component map-coll) (n-component (conj map-coll {:val v})))
+                                         (lang/in? comp-type "i") ;; Basic Input
+                                         (if (empty? model) (i-component map-coll) (i-component (conj map-coll {:val v}))))))
                                    metadata))
                       [(vgap 20)]
                       [(button-template inser-or-update (fn [e]

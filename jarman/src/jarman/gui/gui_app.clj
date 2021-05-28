@@ -807,9 +807,9 @@
 (def db-view--apsolute-pop--rmb-table-actions
   "Description:
        Right Mouse Click Menu on table to control clicked table"
-  (fn [JLP atom--tables-configurations table-id x y]
+  (fn [JLP tables-configurations table-id x y]
     (let [border-c "#bbb"
-          selected-tab (filter (fn [tab-conf] (= (second (first tab-conf)) table-id)) @atom--tables-configurations)
+          selected-tab (filter (fn [tab-conf] (= (second (first tab-conf)) table-id)) tables-configurations)
           table-name (get (first selected-tab) :table)
           rm-menu (fn [e] (let [popup-menu (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e)))]
                             (.remove  JLP popup-menu)
@@ -839,7 +839,8 @@
        :background (new Color 0 0 0 0)
        :border (line-border :thickness 1 :color border-c)
        :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
-       :items [[(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
+       :items [;; Popup menu buttons
+               [(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
                                                                    (add-to-view-service--table-editor mmeta/getset table-id))))]
                [(btn "Delete table" icon/basket-blue1-64-png (fn [e]))]
                [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]]))))
@@ -853,61 +854,55 @@
   (if debug (println "--Column as row\n--Data: " data))
   (let [last-x (atom 0)
         last-y (atom 0)
-        component (label :text (str (get data :representation))
-                         :size [(get data :width) :by (cond
-                                                        (= (get data :type) "header") (- (get data :height) 2)
-                                                        :else                         (- (get data :height) 0))]
+        component (label :text (str (:representation data))
+                         :size [(:width data) :by (if (= (:type data) "header") 
+                                                    (- (:height data) 2)
+                                                    (- (:height data) 0))]
                          :icon (cond
-                                 (= (get data :type) "connection")
-                                 (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (get data :height)) 1))
-                                 (= (get data :type) "key")
-                                 (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (get data :height)) 1)) ;;(stool/image-scale icon/key-blue-64-png (/ (get data :height) 1))
+                                 (= (:type data) "connection")
+                                 (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (:height data)) 1))
+                                 (= (:type data) "key")
+                                 (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (:height data)) 1))
                                  :else nil)
                          :background (cond
-                                       (= (get data :type) "header")     gcomp/light-light-grey-color ;;"#666"
-                                       (= (get data :type) "key")        "#e2fbde";;"#e4f8e1" ;;"#ace8a7" ;;"#f7d67c"
-                                       (= (get data :type) "connection") "#e2fbde";;"#ace8a7"
+                                       (= (:type data) "header")     gcomp/light-light-grey-color
+                                       (= (:type data) "key")        "#e2fbde"
+                                       (= (:type data) "connection") "#e2fbde"
                                        :else "#fff")
                          :font (cond
-                                 (= (get data :type) "header")     (getFont 12 :bold)
-                                 (= (get data :type) "key")        (getFont 12)
-                                 (= (get data :type) "connection") (getFont 12)
+                                 (= (:type data) "header")     (gtool/getFont 12 :bold)
+                                 (= (:type data) "key")        (gtool/getFont 12)
+                                 (= (:type data) "connection") (gtool/getFont 12)
                                  :else "#fff")
                          :foreground (cond
-                                       (= (get data :type) "header") gcomp/blue-color ;;"#fff"
+                                       (= (get data :type) "header") gcomp/blue-color
                                        :else "#000")
                          :border (cond
                                    (= (get data :type) "header") (compound-border (empty-border :thickness 4))
-                                   :else                         (compound-border (empty-border :thickness 4)
-                                                                                  ;;(line-border :top 1 :color (get data :border-c))
-                                                                                  ))
-                         :listen [:mouse-entered (fn [e] (do
-                                                           (cond
-                                                             (= (get data :type) "header") (config! e :cursor :move))))
-                                  :mouse-clicked (fn [e]
-                                                   (let [table-id (get (config (getParent e) :user-data) :id)]
-                                                     (cond (= (.getButton e) MouseEvent/BUTTON3)
-                                                           (let [scrol (select (@gseed/jarman-views-service :get-component :view-id :Database) [:#JLP-DB-Visualizer])
-                                                                 JLP (first (seesaw.util/children (first (seesaw.util/children scrol))))]
-                                                             (.add JLP
-                                                                   (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
-                                                                    JLP
-                                                                    (mmeta/getset) ;; forward list of table configuration
-                                                                    table-id ;; Get table id
-                                                                    (- (+ (.getX e) (.getX (config (getParent e) :bounds))) 15) ;; calculate popup position
-                                                                    (- (+ (+ (.getY e) (.getY (config e :bounds))) (.getY (config (getParent e) :bounds))) 10))
-                                                                   (new Integer 999) ;; z-index
-                                                                   ))
-                                                           (= (.getClickCount e) 2) ;; Open table editor by duble click
-                                                           (add-to-view-service--table-editor mmeta/getset table-id))))
+                                   :else                         (compound-border (empty-border :thickness 4)))
+                         :listen [:mouse-entered (fn [e] (if (= (:type data) "header") (config! e :cursor :move)))
+                                  :mouse-clicked (fn [e] (invoke-later (let [table-id (:id (config (getParent e) :user-data))]
+                                                                         (cond (= (.getButton e) MouseEvent/BUTTON3)
+                                                                               (let [view-space (@gseed/jarman-views-service :get-view-sapce)
+                                                                                     scrol (select view-space [:#JLP-DB-Visualizer])
+                                                                                     JLP (getParent scrol)]
+                                                                                 (.add JLP
+                                                                                       (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
+                                                                                        JLP
+                                                                                        (mmeta/getset) ;; forward list of table configuration
+                                                                                        table-id ;; Get table id
+                                                                                        (-> (.getX e) (+ (.getX (config (getParent e) :bounds))) (- 15))
+                                                                                        (-> (.getY e) (+ (.getY (config e :bounds))) (+ (.getY (config (getParent e) :bounds))) (- 10)))
+                                                                                       (new Integer 999) ;; z-index
+                                                                                       ))
+                                                                               (= (.getClickCount e) 2) ;; Open table editor by duble click
+                                                                               (add-to-view-service--table-editor mmeta/getset table-id)))))
                                   :mouse-dragged (fn [e]
                                                    (do
                                                      (if (= @last-x 0) (reset! last-x (.getX e)))
                                                      (if (= @last-y 0) (reset! last-y (.getY e)))
                                                      (cond
                                                        (= (get data :type) "header") (let [bounds (config (getParent e) :bounds)
-                                                                                    ;; x (- (+ (.getX bounds) (.getX e)) (/ (.getWidth (getParent e)) 2))
-                                                                                    ;; y (- (+ (.getY bounds) (.getY e)) 15)
                                                                                            pre-x (- (+ (.getX bounds) (.getX e)) @last-x)
                                                                                            pre-y (- (+ (.getY bounds) (.getY e)) @last-y)
                                                                                            x (if (> pre-x 0) pre-x 0)
@@ -915,7 +910,6 @@
                                                                                            w (.getWidth  bounds)
                                                                                            h (.getHeight bounds)]
                                                                                        (do
-                                                                                  ;; (println [@last-x @last-y])
                                                                                          (config! (getParent e) :bounds [x y w h]))))))
                                   :mouse-released (fn [e] (do (reset! last-x 0)
                                                               (reset! last-y 0)))])]

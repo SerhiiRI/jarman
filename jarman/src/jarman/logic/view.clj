@@ -49,7 +49,7 @@
 (defview permission
   (plug/jarman-table
    :name "Table"
-   :plug-place [:expand-menu-space]
+   :plug-place [:#tables-view-plugin]
    :tables [:permission]
    :view   [:permission.permission_name]
    :query   {:column (as-is :permission.id :permission.permission_name :permission.configuration)}))
@@ -57,7 +57,7 @@
 (defview documents
   (plug/jarman-table
    :name nil
-   :place nil
+   :plug-place [:#tables-view-plugin]
    :tables [:documents]
    :view   [:documents.table :documents.name :documents.prop]
    :query  {:column (as-is :documents.id :documents.table :documents.name :documents.prop)}))

@@ -87,6 +87,7 @@
              bgap
              vrules
              hrules
+             debug
              args]
       :or {items [[(c/label)]]
            wrap 1
@@ -96,10 +97,12 @@
            bgap 0
            vrules "[grow, fill]"
            hrules "[grow, fill]"
+           debug [0 "#f00"]
            args []}}]
   (apply mig-panel
          :constraints [(str "wrap " wrap) (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
          :items items
+         :border (b/line-border :thickness (first debug) :color (second debug))
          args))
 
 (defn hmig
@@ -111,6 +114,7 @@
              bgap
              vrules
              hrules
+             debug
              args]
       :or {items [[(c/label)]]
            wrap ""
@@ -120,10 +124,12 @@
            bgap 0
            vrules "[grow, fill]"
            hrules "[grow, fill]"
+           debug [0 "#f00"]
            args []}}]
   (apply mig-panel
          :constraints [wrap (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
          :items items
+         :border (b/line-border :thickness (first debug) :color (second debug))
          args))
 
 (defn scrollbox
@@ -231,15 +237,18 @@
 
 (defn button-slim
   [txt
-   & {:keys [onClick args]
+   & {:keys [onClick 
+             underline-size
+             args]
       :or {onClick (fn [e])
+           underline-size 0
            args []}}]
   (button-basic
    txt
    :onClick onClick
    :tgap 5
-   :bgap 4
-   :underline-size 1
+   :bgap 5
+   :underline-size underline-size
    :halign :left
    :args args))
 
@@ -558,7 +567,10 @@
            focus-color (gtool/get-color :decorate :focus-gained-dark)
            unfocus-color "#fff"}}]
   (let [hidden-comp (atom nil)
-        hsize (if (< max-w w) (str lgap "px[" min-w ":" w ":" w ", grow, fill]" rgap "px") (str lgap "px[" min-w ":" w ":" max-w ", grow,fill]" rgap "px"))
+        min-w (if (< max-w min-w) max-w min-w)
+        w (if (< max-w w) max-w min-w)
+        hsize (str lgap "px[" min-w ":" w ":" max-w ", grow,fill]" rgap "px")
+        ;; hsize (if (< max-w w) (str lgap "px[" min-w ":" w ":" w ", grow, fill]" rgap "px") (str lgap "px[" min-w ":" w ":" max-w ", grow,fill]" rgap "px"))
         form-space-open ["wrap 1" hsize (str tgap "px[fill]0px" vrules bgap "px")]
         form-space-hide ["" "0px[grow, fill]0px" "0px[grow, fill]0px"]
         form-space (apply smig/mig-panel :constraints form-space-open args)

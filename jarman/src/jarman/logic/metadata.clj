@@ -95,16 +95,16 @@
 
 (def ^{:dynamic true :private true} *not-allowed-to-edition-tables* ["user" "permission"])
 
-(def ^:private column-type-data "d")
-(def ^:private column-type-time "t")
-(def ^:private column-type-datatime "dt")
-(def ^:private column-type-linking "l")
-(def ^:private column-type-number "n")
-(def ^:private column-type-boolean "b")
-(def ^:private column-type-textarea "a")
-(def ^:private column-type-floated "f")
-(def ^:private column-type-input "i")
-(def ^:private column-type-nil nil)
+(def column-type-data "d")
+(def column-type-time "t")
+(def column-type-datatime "dt")
+(def column-type-linking "l")
+(def column-type-number "n")
+(def column-type-boolean "b")
+(def column-type-textarea "a")
+(def column-type-floated "f")
+(def column-type-input "i")
+(def column-type-nil nil)
 (def ^:dynamic *meta-column-type-list* [column-type-data
                                         column-type-time
                                         column-type-datatime

@@ -85,6 +85,7 @@
     :remove "Usuń"
     :show-changes "Wyświetl zmiany"
     :export-to-excel "Exportuj do Excela"
+    :export "Exportuj"
     :connect "Połącz"
     :settings "Ustawienia"
     :save "Zapisz"
@@ -141,7 +142,10 @@
     :clean-filter "Wyczyćś filtr wyszukiwania.",
     :search "Szukaj po tabeli.",
     :user-trash-can "Odłącz użytkownika od karty.",
-    :excel "Zapisz widok do excela."}}},
+    :excel "Zapisz widok do excela."
+    :press-to-search "Wciśnij Ctrl + F by wyszukać rekord."
+    :related-popup-table "Wyszukaj w powiązanej tabeli"
+    }}},
  :en
  {:init.edn
   {:name "Initial configuration",
@@ -229,6 +233,7 @@
   :cancel "Cancel"
   :show-changes "Show changes"
   :export-to-excel "Export to Excel"
+  :export "Export"
   :connect "Connect"
   :settings "Settings"
   :save "Save"
@@ -289,5 +294,7 @@
   :clean-filter "Clear search filter."
   :search "Search in table."
   :user-trash-can "Disconnect user from card."
-  :excel "Save view to excel."}}
+  :excel "Save view to excel."
+  :press-to-search "Press Ctrl + F to search record."
+  :related-popup-table "Search inside related table"}}
   }}

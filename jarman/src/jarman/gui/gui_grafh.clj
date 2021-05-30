@@ -25,7 +25,6 @@
 (import '(com.mxgraph.view mxGraph))
 (import '(com.mxgraph.swing mxGraphComponent))
 
-
 (def test-frame 
   (frame :title "Jarman"
          :undecorated? false

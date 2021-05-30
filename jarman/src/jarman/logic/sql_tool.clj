@@ -187,59 +187,134 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Joining preprocessor ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(let [a (string/split (first (re-matches #"([\w\._]+(->)?)+" "suka->bliat->dupa->chuj")) #"->")]
+  (map #(vector %1 %2) a (drop 1 a)))
+(let [a (string/split (first (re-matches #"([\w\._]+(->)?)+" "suka->bliat->chuj")) #"->")]
+  (map #(vector %1 %2) a (drop 1 a)))
+
+(defn column-dot-resolver [table-column & {:keys [otherwise]}]
+  (let [table-column (name table-column)]
+    (if-let [[_ t c] (re-matches #"([\w_]+)\.([\w_]+)" table-column )]
+      (let [[_ alias_name] (re-matches #"id_([\w_]+)" c)]
+        [alias_name t c])
+      (cond
+        (fn? otherwise)
+        [nil table-column (otherwise (string/lower-case table-column))]
+
+        (keyword? otherwise)
+        [nil table-column (name otherwise)]
+
+        (string? otherwise)
+        [nil table-column otherwise]
+
+        :else
+        [nil table-column "id"]))))
 
 (defn join-keyword-string [main-table joining-table]
-  (let [[table join-column] (list (symbol joining-table)
-                                  (symbol (str "id_" (string/lower-case (symbol joining-table)))))]
-    (format "%s ON %s.id=%s.%s" table table main-table join-column)))
+  (letfn [(column-resolver [table-column & {:keys [k]}]
+            (if-let [[_ t c] (re-matches #"([\w_]+)\.([\w_]+)" (doto table-column println))]
+              (doto [t c] println)
+              [(name table-column) (str "id_" (string/lower-case (name joining-table)))]))]
+   (if (re-matches #"([\w\._]+->)+([\w\._]+)" (name joining-table))
+     (let [table-cols (string/split (name joining-table) #"->")]
+       (doall (map #(join-keyword-string %1 %2) table-cols (drop 1 table-cols))))
+     (let [[jalias jtable jcolumn] (column-dot-resolver joining-table)
+           [malias mtable mcolumn] (column-dot-resolver main-table :otherwise (str "id_" (string/lower-case (name joining-table))))]
+       (doto (if (and malias (not= jtable malias))
+          (format "%s %s ON %s.%s=%s.%s" jtable malias malias jcolumn mtable mcolumn)
+          (format "%s ON %s.%s=%s.%s" jtable jtable jcolumn mtable mcolumn))
+         println)))))
 
-(defn join-string-string [main-table joining-table]
-  (let [[table join-column] (list joining-table
-                                  (str "id_" (string/lower-case joining-table)))]
-    (format "%s ON %s.id=%s.%s" table table main-table join-column)))
-
-(defn join-map-keyword-string [main-table [k v]]
-  (let [[table join-column] (list (symbol k) (symbol v))]
-    (format "%s ON %s.id=%s.%s" table table main-table (name join-column))))
-
-(defn join-vector-keyword-string [main-table joining-table]
-  (let [[table join-column] (list (symbol joining-table)
-                                  (symbol (str "id_" (string/lower-case (symbol joining-table)))))]
-    (format "%s ON %s.id=%s.%s" table table main-table join-column)))
-
-(defn join-vector-string-string [main-table on-join-construction]
+(defn join-string-string [main-table on-join-construction]
   on-join-construction)
 
-(defn join-dot-map-string [main-table [k v]]
-  (if-let [[[t1 id1] [t2 id2]]
-           (and (some #(= \. %) (str k))
-                (some #(= \. %) (str v))
-                (list (string/split (str (symbol k)) #"\.")
-                      (string/split (str (symbol v)) #"\.")))]
-    (format "%s ON %s=%s" t1 (str (symbol k)) (str(symbol v)))))
+(defn join-map-keyword-string [main-table map-structure]
+  (let [[k v] (first map-structure)
+        [table join-column] (list (name k) (name v))
+        [_ alias_name] (re-matches #"id_([\w_]+)" join-column)]
+    (if (and alias_name (not= table alias_name))
+      (format "%s %s ON %s.id=%s.%s" table alias_name alias_name main-table (name join-column))
+      (format "%s ON %s.id=%s.%s" table table main-table (name join-column)))))
+
+;; (defn join-vector-keyword-string [main-table joining-table]
+;;   (let [[table join-column] (list (name joining-table)
+;;                                   (name (str "id_" (string/lower-case (name joining-table)))))]
+;;     (format "%s ON %s.id=%s.%s" table table main-table join-column)))
+
+;; (defn join-vector-string-string [main-table on-join-construction]
+;;   on-join-construction)
+
+(defn join-dot-map-string [main-table map-structure]
+  (for [[joining-table main-table] map-structure
+        :while (and (some #(= \. %) (name joining-table)) (some #(= \. %) (name main-table)))]
+   (let [[jalias jtable jcolumn] (column-dot-resolver joining-table)
+         [malias mtable mcolumn] (column-dot-resolver main-table :otherwise (str "id_" (string/lower-case (name joining-table))))]
+     (doto (if (and malias (not= jtable malias))
+             (format "%s %s ON %s.%s=%s.%s" jtable malias malias jcolumn mtable mcolumn)
+             (format "%s ON %s.%s=%s.%s" jtable jtable jcolumn mtable mcolumn))
+       println)))
+  ;; (if-let [[[t1 id1] [t2 id2]]
+  ;;          (and (some #(= \. %) (str k))
+  ;;             (some #(= \. %) (str v))
+  ;;             (list (string/split (str (symbol k)) #"\.")
+  ;;                   (string/split (str (symbol v)) #"\.")))]
+  ;;   (format "%s ON %s=%s" t1 (str (symbol k)) (str(symbol v))))
+  )
+
+
+;; (defn join-dot-map-string [main-table [k v]]
+;;   (if-let [[[t1 id1] [t2 id2]]
+;;            (and (some #(= \. %) (str k))
+;;                 (some #(= \. %) (str v))
+;;                 (list (string/split (str (symbol k)) #"\.")
+;;                       (string/split (str (symbol v)) #"\.")))]
+;;     (format "%s ON %s=%s" t1 (str (symbol k)) (str(symbol v)))))
 
 (defn get-function-by-join-type [join]
- (cond (keyword? join) join-keyword-string
-       (string? join) join-string-string
-       (map? join) (if-let [value-of-key (second (first join))]
-                     (when (keyword? value-of-key)
-                       (if (and (some #(= \. %1) (str value-of-key))
-                                (some #(= \. %1) (str (first (first join)))))
-                         join-dot-map-string
-                         join-map-keyword-string)))
-       (vector? join) (if-let [first-value (first join)]
-                        (cond (keyword? first-value) join-vector-keyword-string
-                              (string? first-value) join-vector-string-string))))
+  (cond
+    ;; Example rule
+    ;;  :some
+    ;;  :table1->table2
+    (keyword? join) join-keyword-string
+    ;; Example rule
+    ;;  "table ON table.a=table2.b"
+    (string? join) join-string-string
+    ;; Example rule
+    ;;  {:table :id_table_which_selecting}
+    ;;  {:table.id :selected_table.id_table}
+    (map? join) (if-let [value-of-key (second (first join))]
+                  (when (keyword? value-of-key)
+                    (if (and (some #(= \. %1) (str value-of-key))
+                           (some #(= \. %1) (str (first (first join)))))
+                      join-dot-map-string
+                      join-map-keyword-string)))
+       ;; (vector? join) (if-let [first-value (first join)]
+       ;;                  (cond (keyword? first-value) join-vector-keyword-string
+       ;;                        (string? first-value) join-vector-string-string))
+       ))
+
+(defn- rule-joiner [rule join-string-or-join-list]
+  (format "%s %s" rule
+          (if (sequential? join-string-or-join-list)
+            (string/join (str " " rule " ") join-string-or-join-list)
+            join-string-or-join-list)))
 
 (defmacro define-joinrule [rule-name]
   (let [rule-array (string/split (str rule-name) #"\-")  rule-lenght (- (count rule-array) 1)
         rule-keyword (keyword (string/join "-"(take rule-lenght rule-array)))
         rule-string (string/join " " (map string/upper-case (take rule-lenght rule-array)))]
     `(defn ~rule-name [~'current-string ~'joins-form ~'table-name]
-       (if-let [join-function# (get-function-by-join-type ~'joins-form)]
-         (if (and (seqable? ~'joins-form) (not (string? ~'joins-form)))
-           (str ~'current-string " " (string/join " " (map (fn [s#] (str ~rule-string " " (join-function# (name ~'table-name) s#))) ~'joins-form)))
-           (str ~'current-string " " ~rule-string " " (join-function# (name ~'table-name) ~'joins-form)))))))
+       (if (sequential? ~'joins-form)
+         (str
+          ~'current-string " "
+          (string/join " "
+           (for [form# ~'joins-form
+                 :let [join-function# (get-function-by-join-type form#)]
+                 :while (some? join-function#)]
+             (rule-joiner ~rule-string (join-function# (name ~'table-name) form#)))))
+         (if-let [join-function# (get-function-by-join-type ~'joins-form)]
+           (str ~'current-string " " (rule-joiner ~rule-string (join-function# (name ~'table-name) ~'joins-form)))
+           ~'current-string)))))
 
 (define-joinrule inner-join-string)
 (define-joinrule left-join-string)
@@ -1050,30 +1125,51 @@
         for example [:name :user.lastname \"age\"]., pattern (sequable (<keyword|[\\w_.]+>)+)")
 (defn *-join-spec-doc []
   "    :*-join - has one of possible ways of usage:
-        Table name and specify id_<key> on which table will be link.
-         Pattern: {(<table-name> <table-linking-key>)*}
-         Example: {:CREDENTIAL :is_user_metadata :METADATA :id_user_metadata}
-           ;;=> ... INNER JOIN CREDENTIAL ON CREDENTIAL.id=user-table.is_user_metadata INNER JOIN METADATA...
+        (inner-join-string \"\" :repair_contract.id_old_seal->seal \"repair_contract\")
+        (inner-join-string \"\" {:seal.id :repair_contract.id_old_seal} \"repair_contract\")
+        (inner-join-string \"\" {:seal :id_old_seal} \"repair_contract\")
+          ;; => \" INNER JOIN seal old_seal ON old_seal.id=repair_contract.id_old_seal\"
+       
+        (inner-join-string \"\" :repair_contract->seal \"repair_contract\")
+        (inner-join-string \"\" {:seal.id :repair_contract.id_seal} \"repair_contract\")
+        (inner-join-string \"\" {:seal :id_seal} \"repair_contract\")
+          ;; => \" INNER JOIN seal ON seal.id=repair_contract.id_seal\"
+       
+        (inner-join-string \"\" [:repair_contract.id_new_seal->seal.id
+                                 :repair_contract.id_old_seal->seal] \"repair_contract\")
+        (inner-join-string \"\" [{:seal.id :repair_contract.id_old_seal}
+                                 {:seal.id :repair_contract.id_new_seal}] \"repair_contract\")
+          ;; \" INNER JOIN seal old_seal ON old_seal.id=repair_contract.id_old_seal
+          ;;   INNER JOIN seal new_seal ON new_seal.id=repair_contract.id_new_seal\"
+       
+        (inner-join-string \"\" :one->two->three \"repair_contract\")
+          ;; => \" INNER JOIN two ON two.id=one.id_two INNER JOIN three ON three.id=two.id_three\""
+  ;; "    :*-join - has one of possible ways of usage:
+  ;;       Table name and specify id_<key> on which table will be link.
+  ;;        Pattern: {(<table-name> <table-linking-key>)*}
+  ;;        Example: {:CREDENTIAL :is_user_metadata :METADATA :id_user_metadata}
+  ;;          ;;=> ... INNER JOIN CREDENTIAL ON CREDENTIAL.id=user-table.is_user_metadata INNER JOIN METADATA...
 
-        Litteraly specify how table's linking beetwean each other. 
-         Pattern: {(:<table-will-joined>.<col_name> :<our-main-table>.<col_name>)*}
-         Example: {:A1.id_self :user.id_user_a1 :B1.id_self :USER.id_user_b2}
-           ;;=> ... RIGHT JOIN A1 ON A1.id_self=user.id_user_a1 RIGHT JOIN B1 ON B1.id_self=USER.id_user_b2
+  ;;       Litteraly specify how table's linking beetwean each other. 
+  ;;        Pattern: {(:<table-will-joined>.<col_name> :<our-main-table>.<col_name>)*}
+  ;;        Example: {:A1.id_self :user.id_user_a1 :B1.id_self :USER.id_user_b2}
+  ;;          ;;=> ... RIGHT JOIN A1 ON A1.id_self=user.id_user_a1 RIGHT JOIN B1 ON B1.id_self=USER.id_user_b2
 
-        Specify how table will link, by setting SQL join string's in vector list
-         Pattern: (vector \".*\"...)
-         Example: [\"suka ON suka.id=user.id_suka\" \"dupa ON dupa.id=er.id_dupara\"]
-           ;;=> ... LEFT JOIN suka ON suka.id=user.id_suka LEFT JOIN ....
+  ;;       Specify how table will link, by setting SQL join string's in vector list
+  ;;        Pattern: (vector \".*\"...)
+  ;;        Example: [\"suka ON suka.id=user.id_suka\" \"dupa ON dupa.id=er.id_dupara\"]
+  ;;          ;;=> ... LEFT JOIN suka ON suka.id=user.id_suka LEFT JOIN ....
 
-        Put in vector tables what you want to be linked with our main table 
-         Pattern: (vector <table-name>)
-         Example: [:suka :other]
-           ;;=> ... OUTER LEFT JOIN suka ON suka.id=user-table.id_suka OUTER LEFT ....
+  ;;       Put in vector tables what you want to be linked with our main table 
+  ;;        Pattern: (vector <table-name>)
+  ;;        Example: [:suka :other]
+  ;;          ;;=> ... OUTER LEFT JOIN suka ON suka.id=user-table.id_suka OUTER LEFT ....
 
-        Set table you want to be linked with main table.
-         Pattern: <table-name>
-         Example: :credential
-           ;;=> ... OUTER RIGHT JOIN credential ON credential.id=user-table.id_credential ....")
+  ;;       Set table you want to be linked with main table.
+  ;;        Pattern: <table-name>
+  ;;        Example: :credential
+  ;;          ;;=> ... OUTER RIGHT JOIN credential ON credential.id=user-table.id_credential ...."
+  )
 (defn- where-spec-doc []
   "    :where - is where block, which can be implemented with defferens pattern. 
 

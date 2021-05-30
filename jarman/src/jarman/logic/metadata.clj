@@ -15,7 +15,7 @@
 ;; Properties `prop` data
 ;;   {:id 1
 ;;    :table "cache_register"
-;;    :prop {:table {:field t-name
+;;    :prop {:table {:field :cache_register
 ;;                   :representatoin "user"
 ;;                   :description nil
 ;;                   :is-system? false
@@ -225,7 +225,7 @@
              "real"]      [column-type-floated column-type-input] ;; f - mean floated point number
             ["tinyint"
              "bool"
-             "boolean"]   [column-type-number column-type-input column-type-boolean] ;; b - mean boolean
+             "boolean"]   [column-type-boolean column-type-number column-type-input] ;; b - mean boolean
             ["tinytext"
              "text"
              "mediumtext"
@@ -317,12 +317,16 @@
       {column-name (vec (concat [{(keyword column-name) (keyword related-table)}] (create-on-delete-on-update-action actions)))}
       {column-name (vector {(keyword column-name) (keyword related-table)})})))
 
-(defn- get-meta-constrants [table]
-  (let [table (name table)]
-    (let [a (-> (db/query (format "show create table %s" table))
-                first seq second second (clojure.string/split #"\n"))]
-      (if-let [c (->> a (map string/trim) (filter #(string/starts-with? % "CONSTRAINT")) first)]
-        (parse-constrants c)))))
+;; (defn- get-meta-constrants [table]
+;;   (let [table (name table)]
+;;     (let [a (-> (db/query (format "show create table %s" table))
+;;                 first seq second second (clojure.string/split #"\n"))]
+;;       (if-let [c (->> a (map string/trim) (filter #(string/starts-with? % "CONSTRAINT")) first)]
+;;         (parse-constrants c)))))
+
+;; (first (getset! :repair_contract))
+;; (db/query (format "show create table %s" "repair_contract"))
+;; (println "CREATE TABLE `repair_contract` (\n  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,\n  `id_cache_register` bigint(20) unsigned DEFAULT NULL,\n  `id_old_seal` bigint(20) unsigned DEFAULT NULL,\n  `id_new_seal` bigint(20) unsigned DEFAULT NULL,\n  `repair_date` date DEFAULT NULL,\n  `cause_of_removing_seal` mediumtext DEFAULT NULL,\n  `tech_problem_description` mediumtext DEFAULT NULL,\n  `tech_problem_type` varchar(120) DEFAULT NULL,\n  `cache_register_register_date` date DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `repair_contract29594` (`id_cache_register`),\n  KEY `repair_contract29595` (`id_old_seal`),\n  KEY `repair_contract29596` (`id_new_seal`),\n  CONSTRAINT `repair_contract29594` FOREIGN KEY (`id_cache_register`) REFERENCES `cache_register` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,\n  CONSTRAINT `repair_contract29595` FOREIGN KEY (`id_old_seal`) REFERENCES `seal` (`id`) ON DELETE SET NULL ON UPDATE SET NULL,\n  CONSTRAINT `repair_contract29596` FOREIGN KEY (`id_new_seal`) REFERENCES `seal` (`id`) ON DELETE SET NULL ON UPDATE SET NULL\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
 
 (defn- get-meta-constrants [table]
   (let [table (name table)
@@ -345,10 +349,14 @@
 (defn- get-table-field-meta [table-name foreign-keys column-field-spec]
   (let [tfield (:field column-field-spec)
         ttype (create-column-type-meta column-field-spec)
-        set_key (fn [m] (if-let [[_ table] (re-matches #"id_(.*)" tfield)]
-                         (assoc m :key-table table) m))
-        set_foreign-keys (fn [m] (if-let [f-key (get foreign-keys tfield nil)]
-                                  (assoc m :foreign-keys f-key) m))
+        ;; set_key (fn [m] (if-let [[_ table] (re-matches #"id_(.*)" tfield)]
+        ;;                  (assoc m :key-table table) m))
+        set_key
+        (fn [m] (if-let [f-key (get foreign-keys tfield nil)]
+                 (assoc m :key-table (get (first f-key) (keyword tfield))) m))
+        set_foreign-keys
+        (fn [m] (if-let [f-key (get foreign-keys tfield nil)]
+                 (assoc m :foreign-keys f-key) m))
         in?   (fn [col x] (if (string? col) (= x col) (some #(= % x) col)))]
     (-> {:field (keyword tfield)
          :field-qualified (keyword (str (name table-name) "." (name tfield)))
@@ -459,7 +467,6 @@
           (let [tables (map name tables)]
             (vec (filter #(in? tables (:table %)) @--loaded-metadata)))))
 
-
 ;;; Make references 
 (defn- add-references-to-metadata [metadata front-reference back-reference]
   (-> (fn [current added]
@@ -472,6 +479,8 @@
       (deep-merge-with
        metadata
        {:prop {:table {:ref {:front-references front-reference :back-references back-reference}}}})))
+
+
 
 (defn- --recur-make-references [meta-list table-name & {:keys [back-ref]}]
   (if-let [index-metadata (find-column #(= ((comp :field :table :prop) (second %)) table-name) (deref meta-list))]
@@ -499,7 +508,6 @@
     @meta-list
     (doseq [[i metadata] @meta-list]
       (db/exec (update-sql-by-id-template "metadata" metadata)))))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; TABLE-MAP VALIDATOR ;;;
@@ -592,8 +600,6 @@
    (inpattern? [true false] m [:prop :table :allow-deleting?])
    (inpattern? [true false] m [:prop :table :allow-linking?])))
 
-
-
 (defn- verify-column-metadata [p m]
   (do-and
    (isset? m [:field] (conj p :field))
@@ -606,8 +612,8 @@
    (isset? m [:editable?] (conj p :editable?))
    (repattern? #"^[a-z_]{3,}$" m [:field] (conj p :field))
    (repattern? #"^[\w\d\s]+$" m [:representation] (conj p :representation))
-    ;; (inpattern? ["d" "t" "dt" "l" "n" "b" "a" "i" nil] m [:component-type] (conj p :component-type))
-   (fpattern? #(every? (fn [cols] (in? *meta-column-type-list* cols)) %) (format "component-type not in allowed %s" *meta-column-type-list*) m [:component-type] (conj p :component-type))
+   (fpattern? #(every? (fn [cols] (in? *meta-column-type-list* cols)) %)
+              (format "component-type not in allowed %s" *meta-column-type-list*) m [:component-type] (conj p :component-type))
    (inpattern? [true false] m [:private?] (conj p :private?))
    (inpattern? [true false] m [:editable?] (conj p :editable?))
    (fpattern? #(or (string? %) (nil? %)) "string? || nil?" m [:description] (conj p :description))))
@@ -1104,11 +1110,64 @@
 ;; ----- From meta
 ;; => "CREATE TABLE IF NOT EXISTS `point_of_sale_group_links` (`id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT, `id_point_of_sale_group` BIGINT(20) UNSIGNED DEFAULT NULL, `id_point_of_sale` BIGINT(20) UNSIGNED DEFAULT NULL, PRIMARY KEY (`id`), KEY `point_of_sale_group_links17799` (`id_point_of_sale_group`), CONSTRAINT `point_of_sale_group_links17799` FOREIGN KEY (`id_point_of_sale_group`) REFERENCES `point_of_sale_group` (`id`) ON DELETE CASCADE ON UPDATE CASCADE, KEY `point_of_sale_group_links17800` (`id_point_of_sale`), CONSTRAINT `point_of_sale_group_links17800` FOREIGN KEY (`id_point_of_sale`) REFERENCES `point_of_sale` (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"
 
-(defn recur-find-path [ml]
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; METABASED TOOLKIT ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; !!!- DEPRECATED NOT USED -!!!!
+;;; !!!- UNSTABLE -!!!
+
+(defn- --get-foreight-table-by-column [metadata-colum]
+  ((:field metadata-colum) (first (:foreign-keys metadata-colum))))
+
+(defn recur-find-front-path [ml]
   {:tbl ((comp :field :table :prop) ml)
    :ref (if ((comp :front-references :ref :table :prop) ml)
-          (mapv #(recur-find-path (first (getset! %)))
+          (mapv #(recur-find-front-path (first (getset! %)))
                 ((comp :front-references :ref :table :prop) ml)))})
+
+(defn recur-find-columns-path [ml & {:keys [table-name]}]
+  (into {(if table-name table-name (keyword ((comp :field :table :prop) ml))) ((comp :columns :prop) ml)}
+        (if ((comp :front-references :ref :table :prop) ml)
+          ;; reduce #(if (some? ) into) {}
+          (map #(recur-find-columns-path (first (getset! %)) :table-name ((comp :front-references :ref :table :prop) ml)) 
+               ((comp :front-references :ref :table :prop) ml)))))
+
+;; (recur-find-columns-path (first (getset! :repair_contract)))
+;; (defn make-column-list [table-name]
+;;   (if-let [table-meta (first (getset! table-name))]
+;;     (->> (recur-find-columns-path table-meta)
+;;          (map (fn [[table-name columns]]
+;;                 (println table-name)
+;;                 (doall (map (comp (partial println "\t") :field-qualified) columns)))))))
+
+;; (make-column-list :repair_contract)
+;; (quick-front-paths :repair_contract)
+(defn quick-front-paths [table-name]
+  (if-let [table-meta (first (getset! table-name))]
+    (recur-find-front-path table-meta)))
+
+;; (recur-find-columns-path (first (getset! :repair_contract)))
+;; (recur-find-columns-path (first (getset! :repair_contract)))
+;; (map :field-qualified ((comp :columns :prop)(first (getset! :repair_contract))))
+;; :cache_register->cache_register->point_of_sale->enterpreneur
+;; (clojure.pprint/pprint (first(getset! :user)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; METADATA RECUR ENGINE ;;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn --get-foreight-table-by-column [metadata-colum]
+  ((:field metadata-colum) (first (:foreign-keys metadata-colum))))
+(defn --do-table-frontend-recursion [table-meta on-recur-action & {:keys [back-ref column-ref]}]
+  (if table-meta
+    (let [front-refs (filter :foreign-keys ((comp :columns :prop) table-meta))]
+      (on-recur-action back-ref column-ref table-meta)
+      (if (not-empty front-refs)
+        (doseq [reference front-refs]
+          (--do-table-frontend-recursion
+           (first (getset! (--get-foreight-table-by-column reference)))
+           on-recur-action :back-ref table-meta :column-ref reference))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; METADATA BACKUP ;;;
@@ -1179,6 +1238,7 @@
 
 ;; (update-meta {:id 188, :table "user", :prop {:table {:field "user", :representation "Користувач", :is-system? false, :is-linker? false, :description nil, :allow-modifing? true, :allow-deleting? true, :allow-linking? true}, :columns [{:field :login, :field-qualified :user.login, :representation "login", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :password, :field-qualified :user.password, :representation "password", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :first_name, :field-qualified :user.first_name, :representation "first_name", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :last_name, :field-qualified :user.last_name, :representation "last_name", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:description nil, :private? false, :editable? true, :field :id_permission, :column-type [:bigint-120-unsigned :nnull], :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}], :component-type ["l"], :representation "id_permission", :field-qualified :user.id_permission, :key-table "permission"}]}})
 
+
 (defn restore-backup-metadata
   "Description
     Restore all backups from user-stored buffer
@@ -1195,4 +1255,5 @@
                 info           (:info backup-swapped)]
             (do-clear-meta)
             (map #(db/exec (update-sql-by-id-template "metadata" %)) metadata-list))))))
+
 

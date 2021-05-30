@@ -1321,7 +1321,8 @@
                              @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook))
       (if-not (nil? @relative) (.setLocation (seesaw.core/to-frame @app) (first @relative) (second @relative))))
-    (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))))
+    (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))
+    (vmg/do-view-load)))
 
 
 (reset! startup

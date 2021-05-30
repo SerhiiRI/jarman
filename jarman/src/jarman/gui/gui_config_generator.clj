@@ -170,8 +170,7 @@
                    (confgen--element--textarea-doc param)
                    (confgen--element--margin-top-if-doc-exist type? param)
                    (confgen--element--gui-interfaces comp? param confgen--component--tree local-changes start-key))))
-        (do
-          ())))))
+        ))))
 
 
 ;; (cm/get-in-segment [:themes])

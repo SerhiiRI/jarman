@@ -29,8 +29,8 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
-(defn quick-path [table]
-  (mt/recur-find-path (first (mt/getset! (keyword table)))))
+;; (defn quick-path [table]
+;;   (mt/recur-find-path (first (mt/getset! (keyword table)))))
 
 (defmacro ^:private make-name [entity suffix]
   `(symbol (str ~entity ~suffix)))

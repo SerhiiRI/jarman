@@ -25,26 +25,233 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
-(defn get-view-column-meta [table-list column-list]
-  (->> table-list
-       (mapcat (fn [t] (vec ((comp :columns :prop) (first (mt/getset! t))))))
-       (filter (fn [c] (in? column-list (keyword (:field-qualified c)))))))
 
-(defn- model-column [column]
-  (let [component-type (:component-type column)
-        on-boolean (fn [m] (if (in? component-type "b") (into m {:class java.lang.Boolean}) m))
-        on-number  (fn [m] (if (in? component-type "n") (into m {:class java.lang.Number})  m))]
-    (-> {:key (keyword (:field-qualified column)) :text (:representation column)}
-        on-number
-        on-boolean)))
 
-(defn gui-table-model-columns [table-list column-list]
-  (mapv model-column (get-view-column-meta table-list column-list)))
+;;; helper functions ;;;
+
+(defn- get-reference-col-table-alias [referenced-column] (second (re-matches #"id_(.+)" (name (:field referenced-column)))))
+(defn- get-reference-qualified-field [referenced-column table-meta]
+  (if-not referenced-column
+    (keyword ((comp :field :table :prop) table-meta))
+    (let [referenced-qualified-name (get-reference-col-table-alias referenced-column)]
+      (keyword referenced-qualified-name))))
+
+(defn keyword-column-formatter [referenced-column table-meta column]
+  (keyword (format "%s.%s" (name (get-reference-qualified-field referenced-column table-meta)) (name (:field column)))))
+
+;;; Applyer functions ;;;
+
+(defn add-to-m-boolean-column-type [m column] (if (in? (get column :component-type) mt/column-type-boolean) (into m {:class java.lang.Boolean}) m))
+(defn add-to-m-number-column-type  [m column] (if (in? (get column :component-type) mt/column-type-number)  (into m {:class java.lang.Number})  m))
+(defn add-to-m-class               [m column] (-> m (add-to-m-number-column-type  column) (add-to-m-boolean-column-type column)))
+(defn add-to-m-representation      [m referenced-column column]
+  (into m {:representation
+           (str (if-let [tmp (:representation referenced-column)] (str tmp " "))
+                (:representation column))}))
+(defn add-to-m-join-rules          [m table-meta referenced-column referenced-table]
+  (let [table-or-alias (get-reference-qualified-field referenced-column table-meta)]
+    (if-not (and referenced-table  referenced-column) m
+            (into m {:join-rule
+                     (if (= (keyword ((comp :field :table :prop) table-meta)) table-or-alias)
+                       (keyword (format "%s->%s" (name ((comp :field :table :prop) referenced-table)) (name table-or-alias)))
+                       (keyword (format "%s->%s.id" (name (:field-qualified referenced-column)) (name ((comp :field :table :prop) table-meta)))))}))))
+
+(defn jarman-table-k-v-formater
+  "Description
+    This is central logistics function which take
+     - table from which recursion is performed
+     - the column on which the linking is made
+     - and table on which refer linking colum 
+
+     referenced-table(table) -> referenced-column(column) -> table-meta(table)
+  
+  Example
+    In this example `:repair_contract` make recusion jump to `:seal`
+    through the `:id_new_seal` column in first table. Column have
+    meta description to which table they must be linked  
+      (jarman-table-k-v-formater
+       (first (getset! :repair_contract))
+       {:description nil,
+        :private? false,
+        :default-value nil,
+        :editable? true,
+        :field :id_new_seal,
+        :column-type [:bigint-20-unsigned :default :null],
+        :foreign-keys
+        [{:id_new_seal :seal} {:delete :null, :update :null}],
+        :component-type [\"l\"],
+        :representation \"Id new seal\",
+        :field-qualified :repair_contract.id_new_seal},
+       (first (getset! :seal)))
+          => [{:new_seal.seal_number {:representation \"Id new seal seal_number\"}}
+              {:new_seal.datetime_of_use {:representation \"Id new seal datetime_of_use\"}}
+              {:new_seal.datetime_of_remove {:representation \"Id new seal datetime_of_remove\"}}]"
+  [referenced-table referenced-column table-meta]
+  (mapv (fn [column]
+          {(keyword-column-formatter referenced-column table-meta column)
+           (-> {}
+               (add-to-m-number-column-type column)
+               (add-to-m-boolean-column-type column)
+               (add-to-m-representation referenced-column column))})
+        ((comp :columns :prop) table-meta)))
+
+;;; Meta logistic functions 
+
+(defn make-recur-meta [m-pipeline]
+  (fn recur-meta [table-list]
+    (if-let [table-meta (first (mt/getset! (first table-list)))]
+      (let [table-list-atom (atom table-list) result (atom {})]
+        (mt/--do-table-frontend-recursion
+         table-meta
+         (fn [referenced-table referenced-column table-meta]
+           (swap! result (fn [m] {:pre [(map? m)] :post [map?]} (into m (m-pipeline referenced-table referenced-column table-meta))))
+           (swap! table-list-atom #(filter (fn [t-name] (not= (keyword ((comp :field :table :prop) table-meta)) (keyword t-name))) %))))
+        (into @result (if (not-empty @table-list-atom)
+                        (recur-meta @table-list-atom)))))))
+
+(def take-column-for-recur-table (make-recur-meta jarman-table-k-v-formater))
+(let [table-list [:repair_contract :seal]]
+  (take-column-for-recur-table table-list))
+
+(defn jarman-table-columns-list
+  "Example
+    (jarman-table-columns-list [:repair_contract :seal]
+                            [:repair_contract.id_cache_register
+                            :repair_contract.id_old_seal
+                            :repair_contract.id_new_seal
+                            :repair_contract.repair_date
+                            :repair_contract.cause_of_removing_seal
+                            :repair_contract.tech_problem_description
+                            :repair_contract.tech_problem_type
+                            :repair_contract.cache_register_register_date
+                            :seal.seal_number
+                            :old_seal.seal_number
+                            :new_seal.seal_number
+                            :telefon.nubmer])
+    ;;=> {:repair_contract.id_cache_register {:representation \"id_cache_register\"}, :repair_contract.id_old_seal {:representation \"id_old_seal\"}, :repair_contract.id_new_seal {:representation \"id_new_seal\"}, :repair_contract.repair_date {:representation \"repair_date\"}, :repair_contract.cause_of_removing_seal {:representation \"cause_of_removing_seal\"}, :repair_contract.tech_problem_description {:representation \"tech_problem_description\"}, :repair_contract.tech_problem_type {:representation \"tech_problem_type\"}, :repair_contract.cache_register_register_date {:representation \"cache_register_register_date\"}, :old_seal.seal_number {:representation \"id_old_seal seal_number\"}, :new_seal.seal_number {:representation \"id_new_seal seal_number\"}}"
+  [table-list column-vector-list]
+  (->> (reduce (fn [map-acc [k v]]
+                 (if (contains? map-acc k)
+                   (assoc map-acc k v)
+                   map-acc))
+               (apply array-map (mapcat vector  column-vector-list (repeat nil)))
+               (take-column-for-recur-table table-list))
+       (sequence (comp (remove (fn [[k v]] (nil? v)))
+                    (mapcat identity)))
+       (apply array-map)))
+
+
+;;; ------------------------
+;;; for system requirements
+
+(defn conj-table-meta [referenced-table referenced-column table-meta]
+    [(-> {:field-refer (get-reference-qualified-field referenced-column table-meta)
+          :field-table (keyword ((comp :field :table :prop) table-meta))
+          :representatoin ((comp :representation :table :prop) table-meta)}
+         (add-to-m-join-rules table-meta referenced-column referenced-table))
+     (mapv (fn [column]
+             (-> {:field-column (keyword-column-formatter referenced-column table-meta column)}
+                 (add-to-m-representation referenced-column column)))
+           ((comp :columns :prop) table-meta))])
+
+(defn make-recur-meta-one-table [m-pipeline]
+  (fn [table-name]
+    (if-let [table-metadata (first (mt/getset! table-name))]
+      (let [result (atom [])]
+        (mt/--do-table-frontend-recursion
+         table-metadata
+         (fn [referenced-table referenced-column table-meta]
+           (swap! result (fn [m] (conj m (m-pipeline referenced-table referenced-column table-meta))))))
+        @result))))  
+(def take-meta-for-view (make-recur-meta-one-table conj-table-meta))
+
+(defn create-jarman-table-plugin [table-name]
+  (let [meta-table (first (mt/getset! :repair_contract))
+    name-of-table ((comp :representation :table :prop) meta-table)
+    full-meta-debug (take-meta-for-view table-name)
+    tables (vec (for [meta-debug full-meta-debug]
+                  (:field-refer (first meta-debug))))
+    joines (vec (for [meta-debug full-meta-debug
+                      :when (keyword? (:join-rule (first meta-debug)))]
+                  (:join-rule (first meta-debug))))
+    joines (vec (for [meta-debug full-meta-debug
+                      :when (keyword? (:join-rule (first meta-debug)))]
+                  (:join-rule (first meta-debug))))
+    columns (concat (list 'as-is) (mapcat identity (for [meta-debug full-meta-debug]
+                                                     (mapv :field-column (second meta-debug)))))]
+    (list 'defview (symbol table-name)
+          (list 'jarman-table
+                :name name-of-table
+                :tables tables
+                :view columns
+                :select (if (empty? joines)
+                          {:inner-join joines :columns columns}
+                          {:columns columns})))))
+
+;; (mapv create-jarman-table-plugin [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month])
+
+
+;;; ------------------------
+;;; for system requirements
+
+;;; WARNING
+;;; DEPRECATED
+;; (defn get-view-column-meta [table-list column-list]
+;;   (->> table-list
+;;        (mapcat (fn [t] (vec ((comp :columns :prop) (first (mt/getset! t))))))
+;;        (filter (fn [c] (in? column-list (keyword (:field-qualified c)))))))
+
+;;; WARNING
+;;; DEPRECATED
+;; (defn- model-column [col-representation column]
+;;   (let [component-type (:component-type column)
+;;         on-boolean (fn [m] (if (in? component-type "b") (into m {:class java.lang.Boolean}) m))
+;;         on-number  (fn [m] (if (in? component-type "n") (into m {:class java.lang.Number})  m))]
+;;     (-> {:key (keyword (:field-qualified column)) :text (:representation column)}
+;;         on-number
+;;         on-boolean)))
+
+;;; WARNING
+;;; DEPRECATED
+;; (defn- model-column [col-representation column]
+;;   (let [component-type (:component-type column)
+;;         on-boolean (fn [m] (if (in? component-type "b") (into m {:class java.lang.Boolean}) m))
+;;         on-number  (fn [m] (if (in? component-type "n") (into m {:class java.lang.Number})  m))]
+;;     (-> {:key (keyword (:field-qualified column)) :text (:representation column)}
+;;         on-number
+;;         on-boolean)))
+
+;;; WARNING
+;;; DEPRECATED
+;; (defn gui-table-model-columns [table-list column-list col-representation]
+;;   (mapv (partial model-column col-representation) (get-view-column-meta table-list column-list)))
+
+;; (let [on-text  (fn [m v] (into m {:text (:representation v)}))
+;;       on-class (fn [m v] (if (contains? v :class) (into m {:class (:class v)}) m))]
+;;   (map (fn [[k v]] (-> {:key k} (on-class v) (on-text v)))
+;;        (jarman-table-columns-list [:repair_contract :seal]
+;;                                   [:repair_contract.id_cache_register
+;;                                    :repair_contract.id_old_seal
+;;                                    :repair_contract.id_new_seal
+;;                                    :repair_contract.repair_date
+;;                                    :repair_contract.cause_of_removing_seal
+;;                                    :repair_contract.tech_problem_description
+;;                                    :repair_contract.tech_problem_type
+;;                                    :repair_contract.cache_register_register_date
+;;                                    :seal.seal_number
+;;                                    :old_seal.seal_number
+;;                                    :new_seal.seal_number
+;;                                    :telefon.nubmer])))
+
+
+(defn gui-table-model-columns [table-list table-column-list]
+  (let [on-text  (fn [m v] (into m {:text (:representation v)}))
+        on-class (fn [m v] (if (contains? v :class) (into m {:class (:class v)}) m))]
+    (mapv (fn [[k v]] (-> {:key k} (on-class v) (on-text v)))
+          (jarman-table-columns-list table-list table-column-list))))
 
 (defn gui-table-model [model-columns data-loader]
-  (fn []
-    [:columns model-columns
-     :rows (data-loader)]))
+  (fn [] [:columns model-columns :rows (data-loader)]))
 
 (defn gui-table [model]
   (fn [listener-fn]
@@ -271,27 +478,41 @@
 
 ;;; PLUGINS ;;;
 (defn jarman-table [plugin-path global-configuration]
-  (let [gett #(get-in (global-configuration) (lang/join-vec plugin-path %))
-        data-toolkit  (gett [:data-toolkit])
-        configuration (gett [:configuration])
-        title (:representation (:table-meta data-toolkit))
-        space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
-        atm (:atom-expanded-items (c/config space :user-data))]
-    (swap! atm (fn [inserted] 
-                 (conj inserted
-                       (button-expand-child
-                        title
-                        :onClick (fn [e] (@gseed/jarman-views-service
-                                          :set-view
-                                          :view-id (str "auto-" title)
-                                          :title title
-                                          :scrollable? false
-                                          :component-fn (fn [] (auto-builder--table-view 
-                                                                plugin-path 
-                                                                (global-configuration)
-                                                                data-toolkit
-                                                                configuration))))))))
-    (.revalidate space)))
+  ;; (let [gett #(get-in (global-configuration) (lang/join-vec plugin-path %))
+  ;;       data-toolkit  (gett [:data-toolkit])
+  ;;       configuration (gett [:configuration])
+  ;;       title (:representation (:table-meta data-toolkit))
+  ;;       space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
+  ;;       atm (:atom-expanded-items (c/config space :user-data))]
+  ;;   (swap! atm (fn [inserted] 
+  ;;                (conj inserted
+  ;;                      (button-expand-child
+  ;;                       title
+  ;;                       :onClick (fn [e] (@gseed/jarman-views-service
+  ;;                                         :set-view
+  ;;                                         :view-id (str "auto-" title)
+  ;;                                         :title title
+  ;;                                         :scrollable? false
+  ;;                                         :component-fn (fn [] (auto-builder--table-view 
+  ;;                                                               plugin-path 
+  ;;                                                               (global-configuration)
+  ;;                                                               data-toolkit
+  ;;                                                               configuration))))))))
+  ;;   (.revalidate space))
+  (let [vp (c/select @jarman.gui.gui-seed/app [:#tables-view-plugin])
+        atm (get (c/config vp :user-data) :atom-expanded-items)]
+    (swap! atm (fn [inserted] (conj inserted (let [data-toolkit  (get-in (global-configuration) (lang/join-vec plugin-path [:data-toolkit]))
+                                                   title (get (:table-meta data-toolkit) :representation)]
+                                              ;;  (println "Repre " title)
+                                               (button-expand-child
+                                                title
+                                                :onClick (fn [e] (@gseed/jarman-views-service :set-view
+                                                                                              :view-id (str "auto-" title)
+                                                                                              :title title
+                                                                                              :scrollable? false
+                                                                                              :component-fn (fn [] (auto-builder--table-view plugin-path (global-configuration))))))))))
+    (.revalidate vp)))
+  
 
 
 ;; [{:description nil, 

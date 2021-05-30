@@ -59,7 +59,6 @@
                    (concat %1 (r-unwrapper [] %2))) result example))
       (r-unwrapper [] vects))))
 
-
 (defn convert-key-to-title [key] (-> (string/replace (str key) #":" "") (string/replace  #"[-_]" " ") (string/replace  #"^." #(.toUpperCase %1))))
 (defn convert-txt-to-title [txt] (-> (string/replace (str txt) #":" "") (string/replace  #"[-_]" " ") (string/replace  #"^." #(.toUpperCase %1))))
 (defn convert-txt-to-UP [txt] (-> (string/replace (str txt) #":" "") (string/replace  #"[-_]" " ") (string/replace  #"." #(.toUpperCase %1))))
@@ -67,7 +66,6 @@
 (defn convert-mappath-to-key [path] (keyword (rm-colon (string/join "-" path))))
 (defn convert-str-to-hashkey [str] (keyword (string/join "" ["#" str])))
 (defn in-list? [coll key] (not (empty? (filter #(= key %) coll))))
-
 
 (defmacro join
   "(filter-nil [nil 1 nil 3 4]) ;=> [1 3 4]"
@@ -84,6 +82,8 @@
   [some-object]
   (->> some-object
        reflect :members (filter :return-type) (map :name) sort (map #(str "." %) ) distinct println))
+
+(def random-unique-id (fn [] (string/join "" [(java.time.LocalDateTime/now) (rand-int 10000)])))
 
 (defmacro blet
   "Description

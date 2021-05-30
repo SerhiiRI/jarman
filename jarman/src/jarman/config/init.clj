@@ -292,6 +292,7 @@
 (defn restore-backup-configuration
   "Description
     Restore all backups from user-stored buffer
+
   Example
     (restore-backup-configuration)
     (restore-backup-configuration default-backup-loader)"

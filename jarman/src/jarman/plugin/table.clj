@@ -53,7 +53,7 @@
       (c/config! TT :horizontal-scroll-enabled? true)
       (c/config! TT :show-grid? false)
       (c/config! TT :show-horizontal-lines? true)
-      (c/scrollable TT :hscroll :as-needed :vscroll :as-needed :border nil))))
+      (c/scrollable TT :hscroll :as-needed :vscroll :as-needed))))
 
 (defn create-table [configuration toolkit-map]
   (let [view (:view configuration) tables (:tables configuration)]
@@ -111,7 +111,7 @@
                                                      (let [field-qualified (get meta :field-qualified)
                                                            title (get meta :representation)
                                                            editable? (get meta :editable?)
-                                                           ;; field (get meta :field)
+                                    ;; field (get meta :field)
                                                            v (str (get-in model [(keyword field-qualified)]))
                                                            v (if (empty? v) "" v)]
                                                        (cond
@@ -271,7 +271,7 @@
           back-to-insert     (fn [] (gcomp/button-basic :onClick "<< Return to Insert Form" (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
           table              (fn [] ((get (create-table configuration data-toolkit) :table) (fn [model] (expand-update-form model back-to-insert)))) ;; TODO: set try
-          x nil ;; ------------ Finish
+          x nil ;;------------ Finish
           view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])] [(try 
                                                                                                                 (c/vertical-panel :items [(table)])
                                                                                                                 (catch Exception e (c/label :text (str "Problem with table model: " (.getMessage e)))))]])]

@@ -17,10 +17,7 @@
    ;; [jarman.config.storage :as storage]
    ;; [jarman.config.environment :as env]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
-   [jarman.logic.metadata :as mt]
-   ;;[jarman.gui.gui-app :as gapp]
- ;;  [jarman.logic.view-manager :include-macros true :refer :all]
-   [jarman.plugin.table :as plug])
+   [jarman.logic.metadata :as mt])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
@@ -71,7 +68,8 @@
          :model-id id_column}
         rule-insert!
         rule-update!
-        rule-delete!)))
+        rule-delete!
+        )))
 
 ;; (let [configuration {:table-name :sealn
 ;;                      :name "Pushing seals"
@@ -115,28 +113,12 @@
                           {:configuration plugin-configuration
                            :data-toolkit data-toolkit}))) nil)
 
-(defn get-parameters [data]
-  (loop [prm {}
-         l data
-         plugins []]
-    (if (not-empty l)
-      (cond
-        (keyword? (first l)) (recur (into prm {(first l) (second l)}) (drop 2 l) plugins)
-        (list? (first l)) (recur prm (drop 1 l) (conj plugins (first l)))
-        :else (recur prm (drop 1 l) plugins))
-      [(if-not (contains? prm :pkey) (assoc prm :pkey :user))
-       plugins])))
-
 (defmacro defview [table-model-name & body]
-  (let [[conf-prms fbody] (get-parameters body)
-        configurations
-        (reduce into {}
+  (let [configurations
+        (reduce into 
                 (for [form body]
                   (if (sequential? form)
-                     (let [s `(hash-map ~@(rest form)
-                                        :table-name ~(keyword table-model-name))
-                           s `(merge ~conf-prms ~s)]
-                      `{~(keyword (first form)) ~s}))))]
+                    `{~(keyword (first form)) (hash-map ~@(rest form) :table-name ~(keyword table-model-name))})))]
     `(do ~@(for [form body :let [f (first form)]]
              `(let [cfg# ~configurations
                     ktable# ~(keyword table-model-name)
@@ -150,115 +132,24 @@
                 (~f [ktable# kplugin#] ~'views-configuration+toolkit-get))) nil)))
 
 (defmacro defview-debug [table-model-name & body]
-  (let [[conf-prms fbody] (get-parameters body)
-        configurations
-        (reduce into
-                {}
-                (for [form fbody]
+  (let [configurations
+        (reduce into 
+                (for [form body]
                   (if (sequential? form)
-                    (let [s `(hash-map ~@(rest form)
-                                       :table-name ~(keyword table-model-name))
-                          s `(merge ~conf-prms ~s)]
+                    (let [s `(hash-map ~@(rest form) :table-name ~(keyword table-model-name))]
                       `{~(keyword (first form)) {:configuration ~s
                                                  :data-toolkit (data-toolkit-pipeline ~s)}}))))]
-    `~configurations))
-
-;; (defview-debug permission
-;;   :uuuuuuuu [:heyy :uuu]
-;;   (plug/jarman-table
-;;    :name "Table"
-;;    :place nil
-;;    :tables [:permission]
-;;    :view [:permission.permission_name]
-;;    :query {:column (as-is :permission.id :permission.permission_name :permission.configuration)}))
+    configurations))
 
 (defn as-is [& column-list]
   (map #(if (keyword? %) {% %} %) column-list))
 
-
-(defn- read-one
-  [r]
-  (try (read r)
-       (catch java.lang.RuntimeException e
-         (if (= "EOF while reading" (.getMessage e)) ::EOF
-             (throw e)))))
-
-(defn read-seq-from-file
-  "Reads a sequence of top-level objects in file at path."
-  [path]
-  (with-open [r (java.io.PushbackReader. (clojure.java.io/reader path))]
-    (binding [*read-eval* false]
-      (doall (take-while #(not= ::EOF %) (repeatedly #(read-one r)))))))
-
-(defn put-table-view-to-db [view-data]
-  (((fn [f] (f f))
-    (fn [f]
-      (fn [s data]
-        (if (not (empty? data))
-          ((f f)
-           (do
-             (let [table-name (str (second (first data)))
-                   table-data (str (first data))
-                   id-t (:id (first (db/query
-                                     (select :view :where [:= :view.table_name table-name]))))]   
-               (if-not (= s 0)
-                 (if (nil? id-t)
-                   (db/exec (insert :view :set {:table_name table-name, :view table-data}))
-                   (db/exec (update
-                             :view
-                             :where [:= :id id-t]
-                             :set {:view table-data})))))
-              (+ s 1))
-           (rest data))
-          )))) 0 view-data))
-
-(defn loader-from-db [db-connection]
-  (let [con (dissoc (db/connection-get)
-                    :dbtype :user :password
-                    :useUnicode :characterEncoding)
-        data (db/query (select {:table-name :view
-                                :column [:view]}))
-        sdata (apply str con (map (fn [x] (:view x)) data))]
-    (if-not (nil? data) (spit "src/jarman/logic/view.clj"
-                              sdata))))
-
-(defn loader-from-view-clj [db-connection]
-  (let [data 
-        (try
-          (read-seq-from-file  "src/jarman/logic/view.clj")
-             ;;  (read-str-all (slurp "src/jarman/logic/view.clj")) 
-          (catch Exception e (println (str "caught exception: file not find" (.toString e)))))
-        con (dissoc (db/connection-get)
-                    :dbtype :user :password
-                    :useUnicode :characterEncoding)]
-    (if-not (nil? data)
-      (if (= (first data) con) data))))
-
-(defn make-loader-chain
-  "resolving from one loaders, in ordering of argument.
-   if first is db-loader, then do first load forom db, if
-   db not load db, or do crash, use next in order loader"
-  [& loaders]
-  (let [data 
-        ((first loaders) (db/connection-get))]
-    (if (nil? data) (do ((second loaders) (db/connection-get))
-                        ((first loaders) (db/connection-get)))
-        (subvec (vec data) 1))))
-
-(def ^:dynamic *view-loader-chain-fn* 
-  (make-loader-chain loader-from-view-clj loader-from-db))
-
-(defn do-view-load
-  "using in self `*view-loader-chain-fn*`, swapp using
-  make-loader chain. deserialize view, and execute every
-  defview."
-  []
-  (let [data *view-loader-chain-fn*]
-    (if (nil? data)
-      "Error with file"
-      (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
-        (doall (map (fn [x] (eval x)) data))))))
-
-(do-view-load)
+(defview-debug permission
+  (plug/jarman-table
+   :name "Table"
+   :place nil
+   :tables [:permission]
+   :view   [:permission.permission_name]
+   :query   {:column (as-is :permission.id :permission.permission_name :permission.configuration)}))
 
 

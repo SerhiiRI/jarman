@@ -390,7 +390,26 @@
           :border (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
                                    (line-border :bottom 2 :color (get-color :decorate :gray-underline))))))
 
-
+(defn delete-column [column]
+  (let [btns (config!
+              (gcomp/menu-bar
+               :id :db-viewer--component--menu-bar
+               :buttons [["Delete"
+                          icon/basket-blue1-64-png 
+                          (fn [e]
+                            (create-dialog-yesno
+                             "Delete"
+                             (str
+                              "Delete column"
+                              (name (:field column))
+                              "?")
+                             [180 140]))]])
+              :border (empty-border :left -10 :top 15))]
+    (config! (first (.getComponents btns))
+             :border (compound-border
+                      (empty-border :left 5 :right 10 :top 5 :bottom 5)
+                      (line-border :thickness 1 :color "#bbb")))
+    btns))
 ;; heyyy
 (defn switch-column-to-editing
   [work-mode local-changes path-to-value column]
@@ -448,26 +467,50 @@
                  (param-to-edit :editable? false)
                  (delete-column column))))))))
 
+(def ^:private column-type-data "date")
+(def ^:private column-type-time "time")
+(def ^:private column-type-datatime "datetime")
+(def ^:private column-type-linking "linking")
+(def ^:private column-type-number "number")
+(def ^:private column-type-boolean "boolean")
+(def ^:private column-type-textarea "textarea")
+(def ^:private column-type-floated "float")
+(def ^:private column-type-input "input")
+
 (defn- get-component-add-column [data]
   (condp = data
-    "date" ["a" "b" "c"]
-    "time" ["a"]
-    "date-time" ["s" "c" "r"]
-    "simple-number" ["c" "r"]
-    "float-number" ["k" "r" "l" "p"]
-    "boolean" ["q" "r"]
-    "linking-table" ["w" "w"]
-    "big-text" ["c" "r"]
-    "short-text" ["c" "r"]
-    ["default"]))
+    "date" ["date"]
+    "time" ["time"]
+    "datetime" ["datetime"]
+    "number"  ["smallint"
+               "mediumint"
+               "int"
+               "integer"
+               "bigint"]
+    "float" ["double"
+             "float"
+             "real"]
+    "boolean" ["tinyint"
+               "bool"
+               "boolean"]
+    "linking" ["w" "w"]
+    "textarea" ["tinytext"
+                "text"
+                "mediumtext"
+                "longtext"
+                "json"]
+    "input" ["varchar"]
+    ["text"]))
+
+(get-component-add-column "datetime")
 
 (defn panel-for-input
   [name description comp-key cmpts-atom]
   (let [check (checkbox :text name :background gcomp/light-light-grey-color :font (getFont 12))
-        sel-comp-type (DateTime/getBar (into-array ["date" "time" "date-time"
-                                                    "simple-number" "float-number"
-                                                    "boolean" "linking-table"
-                                                    "big-text" "short-text"]))
+        sel-comp-type (DateTime/getBar (into-array ["date" "time" "datetime"
+                                                    "number" "float"
+                                                    "boolean" "linking"
+                                                    "textarea" "input"]))
         sel-col-type (DateTime/getBar (into-array [" "]))
         model-sel (.getModel sel-col-type)]
     (config! check  :listen [:action-performed (fn [e]
@@ -503,6 +546,8 @@
                         :listen [:mouse-clicked (fn [e] (do (func e)))
                                  :mouse-entered (fn [e] (config! e :cursor :hand))])]]))
 
+(show-options (combobox))
+
 (defn- add-column-panel [table-name]
   (let [cmpts-atom (atom {:editable? false :private? false})
         inp-name (panel-for-input "field" "database column name" :field cmpts-atom)
@@ -518,12 +563,9 @@
         main-panel (mig-panel :constraints ["wrap 1" "0px[100:,fill]0px" "0px[fill]10px"])]
     (config! selct-comp
              :listen [:action-performed (fn [e]
-                                          (swap! cmpts-atom assoc :component-type [(if (= (.toString (.getSelectedItem selct-comp))
-                                                                                          "date-time") "dt"
-                                                                                       (.toString (get (.toString (.getSelectedItem selct-comp)) 0)))])
-                                          (.removeAllItems selct-col)
-                                          (doall (map (fn [x] (.addItem selct-col x))
-                                                      (get-component-add-column (.toString (.getSelectedItem selct-comp))))))])
+                                          (swap! cmpts-atom assoc :component-type [(.getSelectedItem selct-comp)])
+                                          (config! selct-col :model (get-component-add-column (.getSelectedItem selct-comp)))
+                                          (.addItem selct-col "heyy"))])
     (config! selct-col :listen [:action-performed (fn [e]
                                                     (swap! cmpts-atom assoc :column-type (.toString (.getSelectedItem selct-col))))])
     (config! main-panel :items [[(label :text "Adding column" :font (getFont 14 :bold) :foreground blue-color)]
@@ -534,27 +576,6 @@
                                                     table-name
                                                     "" 0)]])))
 
-(defn delete-column [column]
-  (let [btns (config!
-              (gcomp/menu-bar
-               :id :db-viewer--component--menu-bar
-               :buttons [["Delete"
-                          icon/basket-blue1-64-png 
-                          (fn [e]
-                            (create-dialog-yesno
-                             "Delete"
-                             (str
-                              "Delete column"
-                              (name (:field column))
-                              "?")
-                             [180 140]))]])
-              :border (empty-border :left -10 :top 15))]
-    (config! (first (.getComponents btns))
-             :border (compound-border
-                      (empty-border :left 5 :right 10 :top 5 :bottom 5)
-                      (line-border :thickness 1 :color "#bbb")))
-    btns))
-(@startup)
 ;;heyyy
 (defn table-editor--component--column-picker
   "Create left table editor view to select column which will be editing on right table editor view"
@@ -621,7 +642,6 @@
                                         ((@gseed/jarman-views-service :reload))
                                         (@gseed/alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} (@gseed/alert-manager :message gseed/alert-manager) 5)))))
 
-
 (defn table-editor--element--btn-show-changes
   [local-changes table]
   (table-editor--component--bar-btn :edit-view-back-btn (get-lang-btns :show-changes)
@@ -683,11 +703,9 @@
                                                scr)
                                              :size [400 300]))))
 
-
 (defn create-view--table-editor
   "Description:
-     Create view for table editor. Marge all component to one big view.
-   "
+     Create view for table editor. Marge all component to one big view."
   [view-id work-mode tables-configurations table-id invoker-id]
   (let [local-changes  (atom nil)
         table          (get-table-configuration-from-list-by-table-id (tables-configurations) table-id)
@@ -1314,7 +1332,8 @@
                              @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook))
       (if-not (nil? @relative) (.setLocation (seesaw.core/to-frame @app) (first @relative) (second @relative))))
-    (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))))
+    (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))
+    (vmg/do-view-load)))
 
 
 (reset! startup
@@ -1331,7 +1350,6 @@
                                     :else (do
                                             (reset! popup-menager (create-popup-service atom-popup-hook))
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
-
 
 (@startup)
 

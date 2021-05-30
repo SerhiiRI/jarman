@@ -133,7 +133,6 @@
 ;; (db/exec (drop-table :service_contract))
 ;; (db/exec (drop-table :service_contract_month))
 ;; (db/exec (drop-table :repair_contract))
-
 ;; (db/query (show-tables))
 
 (def repair_reasons
@@ -148,7 +147,6 @@
                           {:id_new_seal      [:bigint-20 :unsigned :default :null]}
                           {:id_repair_reasons[:bigint-20 :unsigned :default :null]}
                           {:repair_date    [:date :default :null]}
-                          
                           {:cause_of_removing_seal [:mediumtext :default :null]} ;; combo 3-5 items
                           {:tech_problem_description [:mediumtext :default :null]} ;; big dialog to selection technical cause
                           {:tech_problem_type [:varchar-120 :default :null]} ;; combo <10 shorttext items
@@ -188,7 +186,6 @@
                  repair_contract
                  service_contract
                  service_contract_month))
-
 
 
 (defn delete-scheme-one [scheme]

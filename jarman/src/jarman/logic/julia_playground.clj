@@ -35,8 +35,7 @@
                                        :where [:= :login "user"]
                                         :column [:id]})))]
   (db/exec (delete :user
-                   :where [:= :id (:id id_user)]
-                   )))
+                   :where [:= :id (:id id_user)])))
 
 (db/query (select :user))
 

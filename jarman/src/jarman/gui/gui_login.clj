@@ -21,6 +21,7 @@
             [jarman.logic.connection :as c]
             [jarman.plugin.table :as ptab]
             [jarman.logic.view-manager :as pvm]
+            [jarman.logic.view-manager :as vmg]
             ;; [jarman.logic.view :as view]
             ;; [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]
             ))
@@ -73,7 +74,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; some-components ;;; 
 ;;;;;;;;;;;;;;;;;;;;;;;
-
 (declare asks-panel)
 (declare info-panel)
 (declare login-panel)
@@ -348,6 +348,7 @@
 (defn get-values [some-key]
   (string/split (string/replace (name some-key) #"\_" ".") #"\--" ))
 
+
 (defn test-key-connection [key-title]
   (let [data (key-title (c/datalist-mapper (c/datalist-get)))]
     (c/test-connection {:dbtype (:dbtype data)
@@ -356,7 +357,6 @@
                         :dbname (:dbname data)
                         :user (:user data)
                         :password (:password data)})))
-
 
 (defn test-key-login [key-title login pass]
   (let [data (key-title (c/datalist-mapper (c/datalist-get)))]
@@ -434,7 +434,8 @@
                             (if (instance? clojure.lang.PersistentArrayMap data-log)
                               (do (.revalidate my-panel)
                                   (.dispose (to-frame e))
-                                  (@app/startup))
+                                 ;;(@app/startup)
+                                  (vmg/start-view))
                               (do
                                 (config! dbn :foreground red-color)
                                 (println (name data-log))
@@ -452,7 +453,10 @@
                                                                      (if (instance? clojure.lang.PersistentArrayMap data-log)
                                                                        (do (.revalidate my-panel)
                                                                            (.dispose (to-frame e))
-                                                                           (@app/startup)))))
+                                                                          
+                                                                           ;;(@app/startup)
+                                                                           (vmg/start-view)
+                                                                           ))))
                                                   :mouse-exited  (fn [e] (do
                                                                            (config! icon-conf :visible? false)
                                                                            (config! icon-info :visible? false)
@@ -470,7 +474,6 @@
                                 
                                  :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))]))
     my-panel))
-
 
 
 (defn configurations-panel [login pass]
@@ -600,7 +603,6 @@
 ;;;;;;;;;;;;;;
 ;;; frames ;;;
 ;;;;;;;;;;;;;;
-
 (defn- frame-login []
   (frame :title "Jarman-login"
          :undecorated? false
@@ -626,4 +628,5 @@
           (config! :content (error-panel res-validation)) seesaw.core/pack! seesaw.core/show!))))
 
 (start)
+
 

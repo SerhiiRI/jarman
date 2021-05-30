@@ -6,20 +6,21 @@
         seesaw.border
         seesaw.dev
         seesaw.mig)
-  (:require [jarman.resource-lib.icon-library :as icon]
-            [jarman.tools.swing :as stool]
-            [clojure.string :as string]
-            [jarman.config.config-manager :refer :all :as conf-man]
-            [jarman.tools.lang :refer :all]
-            [jarman.logic.changes-service :refer :all :as cs]
+  (:require
+   [seesaw.core :as c]
+   [jarman.resource-lib.icon-library :as icon]
+   [jarman.tools.swing :as stool]
+   [clojure.string :as string]
+   [jarman.config.config-manager :as cm]
+   [jarman.tools.lang :as lang]
+   [jarman.logic.changes-service :as cs]
             ;; [jarman.config.init :as init]
-            ))
+   ))
 
 (import javax.swing.JLayeredPane)
 (import java.awt.Color)
 (import java.awt.MouseInfo)
 (import java.awt.event.MouseListener)
-
 
 ;; ┌─────────────────────────┐
 ;; │                         │
@@ -28,7 +29,6 @@
 ;; └─────────────────────────┘
 
 (def changes-service (atom (cs/new-changes-service)))
-
 
 ;; ┌─────────────────────────┐
 ;; │                         │
@@ -54,11 +54,8 @@
                                                                                                                 (if (= (get m :style) :bold) (merge m {:style #{:bold :italic}}) (merge m {:style :italic}))
                                                                                                                 (conj m {}))))))))
 
-
-
 ;; (seesaw.font/font-families)
 ;; (label-fn :text "txt")
-
 ;; Function for label with pre font
 (def label-fn (fn [& params] (apply label :font (getFont) params)))
 
@@ -77,7 +74,7 @@
      (join-mig (list (label) (list (label) (label)))) => [[(label)] [(label)] [(label)]]
    "
   (fn [& args]
-    (join-vec (map #(vector %) (flatten args)))))
+    (lang/join-vec (map #(vector %) (flatten args)))))
 
 (defn middle-bounds
   "Description:
@@ -145,23 +142,21 @@
 
 
 (defn theme-map [default & args]
-  (conf-man/get-in-value (vec (concat [:themes :current-theme] args)) default))
+  (cm/get-in-value (vec (concat [:themes :current-theme] args)) default))
 (defn lang-configuration-struct-map [default & args]
-  (conf-man/get-in-segment (vec (concat [] args)) default))
+  (cm/get-in-segment (vec (concat [] args)) default))
 ;; (defn lang-standart-struct-map [default & args]
 ;;   (get-in @init/language (vec (concat [] args)) default))
-(conf-man/get-in-lang [:ui :buttons])
+(cm/get-in-lang [:ui :buttons])
 
-
-(def using-lang (conf-man/get-in-value [:init.edn :lang]))
+(def using-lang (cm/get-in-value [:init.edn :lang]))
 (def get-color (partial theme-map "#000" :color))
 (def get-comp (partial theme-map "#000" :components))
 (def get-frame (partial theme-map 1000 :frame))
 (def get-font (partial theme-map "Ubuntu" :font))
-(def get-lang (fn [& path] (get-in-lang (join-vec [:ui] path))))
-(def get-lang-btns (fn [& path] (get-in-lang (join-vec [:ui :buttons] path))))
-(def get-lang-alerts (fn [& path] (get-in-lang (join-vec [:ui :alerts] path))))
-
+(def get-lang (fn [& path] (cm/get-in-lang (lang/join-vec [:ui] path))))
+(def get-lang-btns (fn [& path] (cm/get-in-lang (lang/join-vec [:ui :buttons] path))))
+(def get-lang-alerts (fn [& path] (cm/get-in-lang (lang/join-vec [:ui :alerts] path))))
 
 ;; ############# COMPONENTS TODO: need move to gui_components.clj
 
@@ -198,8 +193,7 @@
       (build-ico icon/alert-64-png)
    Needed:
       Import jarman.dev-tools
-      Function need stool/image-scale function for scalling icon
-   "
+      Function need stool/image-scale function for scalling icon"
   [ic] (label-fn :icon (stool/image-scale ic 28)
                  :background (new Color 0 0 0 0)
                  :border (empty-border :left 3 :right 3)))
@@ -245,14 +239,18 @@
       but on hover it will be wide and text will be inserted.
    Example:
       (function icon size header map-with-other-params)
-      (slider-ico-btn (stool/image-scale icon/user-64x64-2-png 50) 0 50 'Klienci' {:onclick (fn [e] (alert 'Clicked'))})
+      (slider-ico-btn (stool/image-scale icon/user-64x64-2-png 50) 0 50 'Klienci' :onclick (fn [e] (alert 'Clicked')))
    "
-  (fn [ico order size txt extends]
-    (let [bg-color "#ddd"
+  (fn [ico order size txt 
+       & {:keys [onClick
+                 top-offset]
+          :or {onClick (fn [e])
+               top-offset 0}}]
+    (let [bg-color "#eee"
           color-hover-margin "#bbb"
           bg-color-hover "#d9ecff"
           bg-color-hover "#fafafa"
-          y (if (> (* size order) 0) (- (+ (* 2 order) (* size order)) (* 2 (* 1 order))) (* size order))
+          y (if (> (* size order) 0) (+ top-offset (- (+ (* 2 order) (* size order)) (* 2 (* 1 order)))) (+ top-offset (* size order)))
           icon (label :halign :center
                       :icon ico
                       :size [size :by size])
@@ -263,33 +261,38 @@
                :constraints ["" (str "0px[" size "]15px[grow, fill]0px") (str "0px[" size "]0px")]
                :bounds [0 y size size]
                :background bg-color
+               :focusable? true
                :border  (line-border :bottom 2 :color "#eee")
                :items (join-mig-items icon))]
-      (config! mig :listen [:mouse-entered (fn [e] (config! e
-                                                            :cursor :hand
-                                                            :border  (line-border :bottom 3 :color "#999")
-                                                            :background bg-color-hover
+      (let [onEnter (fn [e] (config! e
+                                     :cursor :hand
+                                                            ;; :border  (line-border :bottom 3 :color "#999")
+                                     :background bg-color-hover
                                                             ;; :bounds [0 y (+ (.getWidth (config title :preferred-size)) size 100) size]
-                                                            :bounds [0 y (+ (.getWidth (select (.getParent mig) [:#expand-menu-space])) size) size])
+                                     :bounds [0 y (+ (.getWidth (select (.getParent mig) [:#expand-menu-space])) size) size])
                                              ;; (println (config title :preferred-size))
-                                             (.add mig title)
-                                             (.revalidate mig))
-                            :mouse-exited  (fn [e] (config! e
-                                                            :bounds [0 y size size]
-                                                            :border  (line-border :bottom 2 :color "#eee")
-                                                            :background bg-color)
-                                             (.remove mig 1)
-                                             (.revalidate mig))
-                            :mouse-clicked (if (= (contains? extends :onclick) true) (get extends :onclick) (fn [e]))])
+                      (.add mig title)
+                      (.revalidate mig))
+            onExit (fn [e] (config! e
+                                    :bounds [0 y size size]
+                                                            ;; :border  (line-border :bottom 2 :color "#eee")
+                                    :background bg-color)
+                     (.remove mig 1)
+                     (.revalidate mig))]
+        (config! mig :listen [:mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
+                              :mouse-exited  (fn [e] (.requestFocus (c/to-frame e)))
+                              :focus-gained  (fn [e] (onEnter e))
+                              :focus-lost    (fn [e] (onExit e))
+                              :mouse-clicked (fn [e] (println "onClick")(onClick e))
+                              :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))
+                              ]))
       mig)))
 
 
 
 (def table-editor--component--bar-btn
   "Description:
-     Interactive button for table editor.
-   "
-
+     Interactive button for table editor."
   (fn [id title ico ico-hover onclick]
     (let [bg        "#ddd"
           bg-hover  "#d9ecff"
@@ -324,6 +327,55 @@
                                                     (apply str "0x" (map first (partition 2 clr)))))]
                              (if (< hex 1365) "#FFF" "#000")))
       (config! target :background "#FFF" :foreground "#000"))))
+
+
+
+(defmacro my-border
+  "Description:
+      Create border for gui component, empty-border like margin in css.
+   Example:
+     (my-border [\"#222\" 4] [10 20 30 30])
+      ;; => #object[javax.swing.border.CompoundBorder....
+            (#function[seesaw.border/compound-border]
+            (#function[seesaw.border/line-border] :bottom 4 :color \"#222\")
+            (#function[seesaw.border/empty-border]
+            :top 10
+            :right 20
+            :bottom 30
+            :left 40))
+      (my-border [10 20])
+      ;; => #object[javax.swing.border.CompoundBorder....
+            (#function[seesaw.border/compound-border]
+            (#function[seesaw.border/empty-border]
+            :top 10
+            :right 20
+            :bottom 0
+            :left 0))"
+  [& args]
+  (let [l (into
+           (map
+            (fn [x]
+              (if (some string? x)
+                (let [[x1 x2] x]
+                  (into
+                   (if (int? x1)
+                     (list :bottom x1 :color x2)
+                     (list :bottom x2 :color x1))
+                   (list line-border)))
+                (let [a x
+                      am (count a)
+                      prm [:top :right :bottom :left]]
+                  (into
+                   (mapcat list prm
+                           (condp = am
+                             1 (repeat 4 a) 
+                             4 a
+                             (into a (repeat (- 4 (count a)) 0))))
+                   (list empty-border))))) args)
+           (list compound-border))]
+    `~l))
+
+
 
 
 

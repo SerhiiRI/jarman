@@ -8,11 +8,9 @@
   (:import (javax.swing JLayeredPane  JLabel JTable JTextField JComboBox DefaultCellEditor JCheckBox BoxLayout JPanel AbstractCellEditor)
            (javax.swing.table TableCellRenderer TableColumn TableCellEditor DefaultTableModel)
            (java.awt Color Component BorderLayout)
-           (java.awt.event MouseAdapter)
-           )
+           (java.awt.event MouseAdapter))
   (:require [jarman.tools.lang :refer :all]
             [jarman.gui.swing.table :as stable]))
-
 
 
 (def color-label
@@ -30,12 +28,12 @@
     (let []
       (doto (proxy [MouseAdapter] []
               (mouseClicked [^MouseAdapter e]
-                            (println)
-                            (println "----------------------")
-                            (println "VP"   (config vp :id))
+                (println)
+                (println "----------------------")
+                (println "VP"   (config vp :id))
                 (config! txt :text "Dupa")
-                            (.grabFocus txt)
-                            (.requestFocus txt true)
+                (.grabFocus txt)
+                (.requestFocus txt true)
                 (.repaint (.getTableHeader table))
                 (.repaint txt)))))))
 
@@ -63,10 +61,9 @@
     (let []
       (doto (proxy [JTextField TableCellRenderer] []
               (^Component getTableCellRendererComponent [^JTable table ^Object value ^Boolean isSelected ^Boolean hasFocus, ^Integer row, ^Integer column]
-                                                        
-                                                        this))
-        (.setOpaque true)
-        ))))
+
+                this))
+        (.setOpaque true)))))
 
 
 (def header-with-filter-input-editor
@@ -74,10 +71,9 @@
     (let []
       (doto (proxy [JTextField TableCellEditor] []
               (^Component getTableCellRendererComponent [^JTable table ^Object value ^Boolean isSelected ^Boolean hasFocus, ^Integer row, ^Integer column]
-                                                        
-                                                        this))
-        (.setOpaque true)
-        ))))
+
+                this))
+        (.setOpaque true)))))
 
 ;; (* (.getColumnCount @tb) (.getRowCount @tb))
 
@@ -94,8 +90,7 @@
                 (.setEditor this (.getEditor this))
                 ;; (if (= hasFocus true) (do (println "Combo focus")))
                 (.getModel table)
-                this)
-              )
+                this))
         (.setOpaque true)))))
 
 (def input-txt
@@ -155,9 +150,11 @@
                   (vec (map (fn [x] (nth (seed-row) 2)) (range 10)))
                   (vec (map (fn [x] (last (seed-row))) (range 10))))))
 
-(def tb (atom (score/table-x :model (stable/table-model
+(def tb (atom (table-x :model (stable/table-model
                                :columns (cols)
                                :rows (rows)))))
+
+
 
 (def mount-table
   (fn [table &
@@ -208,7 +205,7 @@
         ;;                                                          (.setRowFilter sorter (javax.swing.RowFilter/andFilter filters)))))])])))
         ;;                     col-names (range col-c)))]
         [(do
-          ;;  (.setDefaultRenderer (.getTableHeader table) (header-with-filter-input))
+           (.setDefaultRenderer (.getTableHeader table) (header-with-filter-input))
            (.setAutoResizeMode table JTable/AUTO_RESIZE_ALL_COLUMNS)
            (.setDefaultRenderer table Color (color-label))
            (.setDefaultRenderer table JComboBox (drop-list))
@@ -217,7 +214,7 @@
            (.setCellEditor (.getColumn (.getColumnModel table) 0) (input-txt))
            (.setCellEditor (.getColumn (.getColumnModel (.getTableHeader table)) 0) (input-txt))
           ;;  (-> table .getTableHeader .getColumnModel (.getColumn 0) (.setCellEditor (input-txt)))
-           ;;  (doall
+          ;;   (doall
           ;;   (map (fn [idx]
           ;;          (.setCellEditor (.getColumn (.getColumnModel (.getTableHeader table)) idx) (DefaultCellEditor. (header-with-filter-input-editor)
           ;;                                                                   ;;  (doto (JComboBox.) (.addItem "tak") (.addItem "nie"))

@@ -3,7 +3,23 @@
         seesaw.border
         seesaw.dev
         seesaw.mig)
-  (:require [jarman.gui.gui-login :as lgn]))
+  (:import
+   (javax.swing 
+    InputMap
+    JScrollPane
+    JPanel
+    JComponent
+    KeyStroke
+    Action
+    AbstractAction)
+   (java.awt Dimension)
+   (java.awt.event ActionEvent
+                   ActionListener
+                   InputEvent
+                   KeyEvent
+                   ActionListener))
+ ;; (:require [jarman.gui.gui-login :as lgn])
+  )
 
 
 ;; Debug for own KeyEventDispacher
@@ -87,84 +103,75 @@
 
 
 
-;; New jframe
-(do (doto (seesaw.core/frame
-           :title "title"
-           :undecorated? false
-           :minimum-size [600 :by 400]
-           :content (mig-panel
-                     :bounds [0 0 500 300]
-                     :constraints ["wrap 1" "[grow, center]" "[grow, center]"]
-                     :border (empty-border :thickness 10)
-                     :items [[(label :text "Tabelki" :focusable? true :listen [:focus-gained (fn [e] (config! e :background "#9a9"))
-                                                                               :focus-lost (fn [e] (config! e :background "#aaa"))])]
-                             [(button :text "1")]
-                             [(button :text "2")]
-                             [(button :text "3" ;;:listen [:key-pressed (fn [e] (println (.getKeyChar e)))]
-                                      )]]))
-      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
+;; ;; New jframe
+;; (do (doto (seesaw.core/frame
+;;            :title "title"
+;;            :undecorated? false
+;;            :minimum-size [600 :by 400]
+;;            :content (mig-panel
+;;                      :bounds [0 0 500 300]
+;;                      :constraints ["wrap 1" "[grow, center]" "[grow, center]"]
+;;                      :border (empty-border :thickness 10)
+;;                      :items [[(label :text "Tabelki" :focusable? true :listen [:focus-gained (fn [e] (config! e :background "#9a9"))
+;;                                                                                :focus-lost (fn [e] (config! e :background "#aaa"))])]
+;;                              [(button :text "1")]
+;;                              [(button :text "2")]
+;;                              [(button :text "3" ;;:listen [:key-pressed (fn [e] (println (.getKeyChar e)))]
+;;                                       )]]))
+;;       (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
 
 
-;; Create new own KeyEventDispacher object using own class. If one was added before then first delete him.
-(def ked (SupervisiorKeyDispacher 2))
-(def ked (KeyDispacher {:18 (fn [] (println "You press ALT"))}))
+;; ;; Create new own KeyEventDispacher object using own class. If one was added before then first delete him.
+;; ;(def ked (SupervisiorKeyDispacher 2))
+;; (def ked (KeyDispacher {:18 (fn [] (println "You press ALT"))}))
 
 
-;; Add own dispacher as next dispacher object. Can be added few and more KeyEventDispachers.
-(doto (java.awt.KeyboardFocusManager/getCurrentKeyboardFocusManager)
-  (.addKeyEventDispatcher ked))
+;; ;; Add own dispacher as next dispacher object. Can be added few and more KeyEventDispachers.
+;; (doto (java.awt.KeyboardFocusManager/getCurrentKeyboardFocusManager)
+;;   (.addKeyEventDispatcher ked))
 
 
-;; Remove added dispacher. Need object of added dispacher.
-(doto (java.awt.KeyboardFocusManager/getCurrentKeyboardFocusManager)
-  (.removeKeyEventDispatcher ked))
+;; ;; Remove added dispacher. Need object of added dispacher.
+;; (doto (java.awt.KeyboardFocusManager/getCurrentKeyboardFocusManager)
+;;   (.removeKeyEventDispatcher ked))
+
+
+;; (def panel
+;;      (doto
+;;          (proxy [JComponent] []
+;;            (paint [g] nil))
+;;      ;;  (.setPreferredSize (new Dimension 800 800))
+;;        (.. (getInputMap) (put (KeyStroke/getKeyStroke (KeyEvent/VK_F)(InputEvent/CTRL_DOWN_MASK)) "action"))
+;;        (.. (getInputMap) (put (KeyStroke/getKeyStroke "F2") "action"))
+;;        (.. (getInputMap) (put (KeyStroke/getKeyStroke \a) "action"))
+;;        (.. (getActionMap) (put "action" myAction))))
+
+;;(.dispose (to-frame e))
+
+
+(defn get-key-panel [keystr action some-panel]
+  (doto some-panel        
+    (.. (getInputMap) (put (KeyStroke/getKeyStroke keystr) "action"))
+    (.. (getActionMap) (put "action" (proxy [AbstractAction ActionListener] []
+                                       (actionPerformed [e] (do (println "act") (action e))))))))
 
 
 
 
 
 
-(import '(javax.swing 
-                      JFrame
-                      JPanel
-                      InputMap
-                      JComponent
-                      KeyStroke
-                      Action
-                      AbstractAction)
-        '(java.awt.event ActionEvent
-                         ActionListener
-                         InputEvent
-                         KeyEvent
-                         ActionListener)
-        '(java.awt Graphics Dimension Color)
-        '(java.awt.image BufferedImage))
+;; (do
+;;   ;;(.add panel (mig-panel))
+;;   (let [panel (get-key-panel \q (fn [jpan] (.dispose (to-frame jpan))) (mig-panel))]
+;;     (println (type panel))
+;;     (.add panel (seesaw.mig/mig-panel
+;;                                      :constraints ["wrap 1" "0px[grow, fill]0px" "5px[grow, fill]0px"]
+;;                                      :items [[(label :text "Hey")]]))
+;;     (doto
+;;         (seesaw.core/frame
+;;          :resizable? true)
+;;       (.setPreferredSize (new java.awt.Dimension 800 800))
+;;       (.add panel)
+;;       (.pack)
+;;       (.setVisible true))))
 
-(def myAction
-     (proxy [AbstractAction ActionListener] []
-       (actionPerformed [e] (println "Action performed!"))))
-
-(def panel
-     (doto
-         (proxy [JComponent] []
-           (paint [g] nil))
-       
-     ;;  (.setPreferredSize (new Dimension 800 800))
-       (.. (getInputMap) (put (KeyStroke/getKeyStroke (KeyEvent/VK_F)(InputEvent/CTRL_DOWN_MASK)) "action"))
-       (.. (getInputMap) (put (KeyStroke/getKeyStroke "F2") "action"))
-       (.. (getInputMap) (put (KeyStroke/getKeyStroke \a) "action"))
-       (.. (getActionMap) (put "action" myAction))))
-
-
-(do 
-  (doto
-      (seesaw.core/frame
-       :resizable? false)
-    (.setMinimumSize (new Dimension 600 600))
-    (.add (.add panel (lgn/info-panel)))
-    (.pack)
-    (.setVisible true)))
-
-(println "heyyyy")
-
-(type (mig-panel))

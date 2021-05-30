@@ -92,11 +92,31 @@
   :document "templates\\dovidka.odt"
   :prop {:dark "rose"}})
 
+
+
+(merge-doc (clojure.java.io/file temp-directory "dovidka.odt")
+           (clojure.java.io/file env/user-home "dovidka.odt")
+           ;; columns
+           ["developers.Name", "developers.Mail", "developers.LastName"]
+           ;; data
+           {"project" {"Name" "XDocReport"},
+            "developers"
+            [{"Name" "ZERR",
+              "Mail" "angelo.zerr@gmail.com",
+              "LastName" "Angelo"},
+             {"Name" "Leclercq",
+              "Mail" "pascal.leclercq@gmail.com",
+              "LastName" "Pascal"}]})
+
+
 (defn convert-file [file-name values-map export-directory]
   (merge-doc
    (clojure.java.io/file temp-directory file-name)
    (clojure.java.io/file export-directory file-name)
    values-map))
+
+
+
 
 (let [find-doc (filter (fn [d] (= "julka-test" (:name d))) (doc/select-documents))]
   (if-not (= nil find-doc)

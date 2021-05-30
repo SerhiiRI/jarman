@@ -115,7 +115,7 @@
           layered-pane (@alerts-controller :get-space)
           close [(build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png layered-pane 23 (fn [e] (view-selected-message header body layered-pane)))
                  (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered-pane 23 (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (@alerts-controller :rm-obj to-del))))]
-          [t b l r] (gtool/get-comp :message-box :border-size)]
+          [t b l r] (map #(Integer/parseInt %) (gtool/get-comp :message-box :border-size))]
       (mig-panel
        :id :alert-box
        :constraints ["wrap 1" "0px[fill, grow]0px" "0px[20]0px[30]0px[20]0px"]
@@ -131,7 +131,8 @@
                [(flow-panel
                  :align :right
                  :background (new Color 0 0 0 1)
-                 :items (if (= (contains? data :btns) true) (concat close (get data :btns)) close))]]))))
+                 :items (if (= (contains? data :btns) true) (concat close (get data :btns)) close))]]
+       :listen [:mouse-entered (fn [e])]))))
 
 
 

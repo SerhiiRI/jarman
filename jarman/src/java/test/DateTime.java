@@ -1,5 +1,12 @@
 package jarman.test;
 
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import javax.swing.plaf.basic.BasicArrowButton;
+import javax.swing.plaf.basic.BasicComboBoxUI;
+import javax.swing.plaf.basic.BasicComboPopup;
+import javax.swing.plaf.basic.ComboPopup;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -19,14 +26,11 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.text.ParseException;
-import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -38,10 +42,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
-public class Chooser extends JPanel{
-
+public class DateTime extends JPanel{
     private static final long serialVersionUID = -5384012731547358720L;
-
+    public static JComboBox hbox;
+    public static JComboBox mbox;
     private Calendar calendar;
     private Calendar now = Calendar.getInstance();
     private JPanel calendarPanel;
@@ -52,7 +56,6 @@ public class Chooser extends JPanel{
     private TitlePanel titlePanel;
     private BodyPanel bodyPanel;
     private FooterPanel footerPanel;
-
     private JComponent showDate;
     private boolean isShow = false;
     private static final String DEFAULTFORMAT = "yyyy-MM-dd";
@@ -61,7 +64,7 @@ public class Chooser extends JPanel{
     private static int defaultStartDAY = 0;//0 is from Sun, 1 is from Mon, 2 is from Tue
     private static Color hoverColor = Color.BLUE; // hover color
 
-    private Chooser(String format, int startDAY){
+    private DateTime(String format, int startDAY){
         if(startDAY > -1 && startDAY < 7) defaultStartDAY = startDAY;
         int dayIndex = defaultStartDAY;
         for(int i=0; i<7; i++){
@@ -76,26 +79,82 @@ public class Chooser extends JPanel{
         try {
             date = new SimpleDateFormat(DEFAULTFORMAT).parse(format);
         }
+
         catch (NullPointerException | ParseException e) {
             date = new java.util.Date();
         }
-
         sdf.format(new java.util.Date());
         calendar = Calendar.getInstance();
         calendar.setTime(date);
         initCalendarPanel();
     }
 
-    private static Chooser getInstance(String format) {
-        return new Chooser(format , defaultStartDAY);
+    public static class MyComboBoxUI extends BasicComboBoxUI {
+        @Override
+        protected JButton createArrowButton() {
+            //Feel free to play with the colors:
+            final Color background = (new java.awt.Color(221, 221, 221));     //Default is UIManager.getColor("ComboBox.buttonBackground").
+            final Color pressedButtonBorderColor = (new java.awt.Color(221, 221, 221)); //Default is UIManager.getColor("ComboBox.buttonShadow"). The color of the border of the button, while it is pressed.
+            final Color triangle = Color.darkGray;               //Default is UIManager.getColor("ComboBox.buttonDarkShadow"). The color of the triangle.
+            final Color highlight = background;               //Default is UIManager.getColor("ComboBox.buttonHighlight"). Another color to show the button as highlighted.
+            final JButton button = new BasicArrowButton(BasicArrowButton.SOUTH, background, pressedButtonBorderColor, triangle, highlight);
+            button.setName("ComboBox.arrowButton"); //Mandatory, as per BasicComboBoxUI#createArrowButton().
+            return button;
+        }
+    }
+
+    public static JComboBox getBar(String[] data) {
+        final JComboBox<String> combo = new JComboBox<>(data);
+        UIManager.put("ScrollBar.width", new Integer(0));
+        combo.setUI(new DateTime.MyComboBoxUI() {
+            @Override
+            protected ComboPopup createPopup() {
+                BasicComboPopup basicComboPopup = new BasicComboPopup(comboBox);
+                basicComboPopup.setBorder(new LineBorder(new java.awt.Color(0xAA, 0xAA, 0xAA)));
+                return basicComboPopup;
+            }
+        });
+        combo.setBackground(Color.white);
+        combo.setBorder(new LineBorder(new java.awt.Color(0xAA, 0xAA, 0xAA)));
+        return combo;
+    }
+
+    private static DateTime getInstance(String format) {
+        return new DateTime(format , defaultStartDAY);
+    }
+
+    private String[] getArrayData(Integer num){
+        ArrayList<String> data = new ArrayList<String>();
+        for(int i = 0; i <= num; i++){
+            data.add(String.format("%02d", i));
+        }
+        return data.toArray(new String [data.size()]);
     }
 
     private void initCalendarPanel(){
-        calendarPanel = new JPanel(new java.awt.BorderLayout());
-        calendarPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0xAA, 0xAA, 0xAA)));
-        calendarPanel.add(titlePanel = new TitlePanel(), java.awt.BorderLayout.NORTH);
-        calendarPanel.add(bodyPanel = new BodyPanel(), java.awt.BorderLayout.CENTER);
-        calendarPanel.add(footerPanel = new FooterPanel(),java.awt.BorderLayout.SOUTH);
+        calendarPanel = new JPanel(new BorderLayout());
+        calendarPanel.setBorder(BorderFactory.createLineBorder(new Color(0xAA, 0xAA, 0xAA)));
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        JPanel fpanel = new JPanel();
+        fpanel.setLayout(new BoxLayout(fpanel, BoxLayout.X_AXIS));
+        JLabel hlabel = new JLabel(" hours  ");
+        JLabel mlabel = new JLabel("  min  ");
+        SimpleDateFormat hform = new SimpleDateFormat("HH");
+        SimpleDateFormat wform = new SimpleDateFormat("mm");
+        Date date = new Date();
+        hbox = getBar(getArrayData(23));
+        mbox = getBar(getArrayData(59));
+        hbox.setSelectedIndex(Integer.parseInt(hform.format(date)));
+        mbox.setSelectedIndex(Integer.parseInt(wform.format(date)));
+        fpanel.add(hlabel);
+        fpanel.add(hbox);
+        fpanel.add(mlabel);
+        fpanel.add(mbox);
+        mainPanel.add(titlePanel = new TitlePanel(), BorderLayout.NORTH);
+        mainPanel.add(bodyPanel = new BodyPanel(), BorderLayout.CENTER);
+        mainPanel.add(footerPanel = new FooterPanel(), BorderLayout.SOUTH);
+        calendarPanel.add(fpanel, BorderLayout.NORTH);
+        calendarPanel.add(mainPanel, BorderLayout.CENTER);
         this.addAncestorListener(new AncestorListener() {
             public void ancestorAdded(AncestorEvent event) { }
             public void ancestorRemoved(AncestorEvent event) {hidePanel();}
@@ -105,6 +164,7 @@ public class Chooser extends JPanel{
             }
         });
     }
+
     public void register(final JComponent showComponent) {
         this.showDate = showComponent;
         showComponent.setRequestFocusEnabled(true);
@@ -146,7 +206,9 @@ public class Chooser extends JPanel{
         });
         showComponent.addFocusListener(new FocusListener() {
             public void focusLost(FocusEvent e) {
-                hidePanel();
+
+                // hidePanel(); TODO: problem? when panel losed focus becuse mouse click was on combobox then all panel will be hide
+
             }
             public void focusGained(FocusEvent e) { }
         });
@@ -178,7 +240,8 @@ public class Chooser extends JPanel{
     // change text or label's content.
     private void commit() {
         if (showDate instanceof JTextField) {
-            ((JTextField) showDate).setText(sdf.format(calendar.getTime()));
+            ((JTextField) showDate).setText(sdf.format(calendar.getTime()) + " " + hbox.getSelectedItem().toString()
+            + ":" + mbox.getSelectedItem().toString());
         }else if (showDate instanceof JLabel) {
             ((JLabel) showDate).setText(sdf.format(calendar.getTime()));
         }
@@ -196,6 +259,7 @@ public class Chooser extends JPanel{
             this.setBackground(new java.awt.Color(221, 221, 221));
             initTitlePanel();
         }
+        
         private void initTitlePanel(){
             preYear = new JLabel("<<", JLabel.CENTER);
             preMonth = new JLabel("<", JLabel.CENTER);
@@ -266,9 +330,7 @@ public class Chooser extends JPanel{
     }
     // body panel, include week labels and day labels.
     private class BodyPanel extends JPanel {
-
         private static final long serialVersionUID = 5677718768457235447L;
-
         public BodyPanel(){
             super(new GridLayout(7, 7));
             this.setPreferredSize(new java.awt.Dimension(210, 140));
@@ -304,10 +366,8 @@ public class Chooser extends JPanel{
     }
 
     private class FooterPanel extends JPanel {
-
         private static final long serialVersionUID = 8135037333899746736L;
         private JLabel dateLabel;
-
         public FooterPanel(){
             super(new BorderLayout());
             initFooterPanel();
@@ -315,13 +375,11 @@ public class Chooser extends JPanel{
         private void initFooterPanel(){
             dateLabel = new JLabel("Today is : "+sdf.format(new java.util.Date()));
             dateLabel.addMouseListener(new MouseListener() {
-
                 @Override
                 public void mouseReleased(MouseEvent e) {}
                 @Override
                 public void mousePressed(MouseEvent e) {
                     calendar.setTime(new Date());
-
                     refresh();
                     commit();
                 }
@@ -350,10 +408,8 @@ public class Chooser extends JPanel{
     }
 
     private class WeekLabel extends JLabel {
-
         private static final long serialVersionUID = -8053965084432740110L;
         private String name;
-
         public WeekLabel(int index, String name){
             super(name, JLabel.CENTER);
             this.name = name;
@@ -364,23 +420,19 @@ public class Chooser extends JPanel{
     }
 
     private class DayLabel extends JLabel implements java.util.Comparator<DayLabel>, java.awt.event.MouseListener, java.awt.event.MouseMotionListener {
-
         private static final long serialVersionUID = -6002103678554799020L;
         private boolean isSelected;
         private int year, month, day;
-
         public DayLabel(Calendar cal){
             super(""+cal.get(Calendar.DAY_OF_MONTH), JLabel.CENTER);
             this.year = cal.get(Calendar.YEAR);
             this.month = cal.get(Calendar.MONTH);
             this.day = cal.get(Calendar.DAY_OF_MONTH);
-
             this.setFont(font);
             this.addMouseListener(this);
             this.addMouseMotionListener(this);
             if(month == calendar.get(Calendar.MONTH)) this.setForeground(java.awt.Color.BLACK);
             else this.setForeground(java.awt.Color.LIGHT_GRAY);
-
         }
         public boolean getIsSelected() {
             return isSelected;
@@ -443,7 +495,6 @@ public class Chooser extends JPanel{
         public void mouseMoved(MouseEvent e) { }
         @Override
         public void mouseClicked(MouseEvent e) { }
-
         @Override
         public void mousePressed(MouseEvent e) {
             isSelected = true;
@@ -481,11 +532,9 @@ public class Chooser extends JPanel{
 
     private class LabelManager {
         private List<DayLabel> list;
-
         public LabelManager(){
-            list = new ArrayList<Chooser.DayLabel>();
+            list = new ArrayList<DateTime.DayLabel>();
         }
-
         public List<DayLabel> getLabels(){
             return list;
         }
@@ -525,19 +574,36 @@ public class Chooser extends JPanel{
 
     public static JTextField get_calendar (JTextField textf){
         Calendar calendar = null;
-        Chooser ser = Chooser.getInstance(textf.getText());
+        DateTime ser = DateTime.getInstance(textf.getText());
         ser.register(textf);
+
+//        JPanel panel = new JPanel(new GridBagLayout());
+//
+//        panel.add(textf);
+//        panel.add(hbox);
+//        panel.add(mbox);
+        //return panel;
         return textf;
     }
 
-    // public static void main(String[] args) throws ParseException {
-    //     JFrame f = new JFrame();
-    //     JPanel p = new JPanel();
-    //     JTextField t = new JTextField(20);
-    //     t.setText("2020-102");
-    //     p.add(get_calendar(t));
-    //     f.add(p);
-    //     f.setSize(400, 400);
-    //     f.setVisible(true);
+
+    // public static void main(final String[] args) {
+    //     JPanel panel = new JPanel(new GridBagLayout());
+    //     JTextField t = new JTextField(19);
+    //     panel.add(get_calendar(t));
+        
+    //     final JFrame frame = new JFrame("MainComboBoxUI");
+    //     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    //     frame.getContentPane().add(panel);
+    //     frame.pack();
+    //     frame.setLocationRelativeTo(null);
+    //     frame.setVisible(true);
     // }
 }
+
+
+
+
+
+
+

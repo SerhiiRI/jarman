@@ -85,6 +85,7 @@
     :remove "Usuń"
     :show-changes "Wyświetl zmiany"
     :export-to-excel "Exportuj do Excela"
+    :export "Exportuj"
     :connect "Połącz"
     :settings "Ustawienia"
     :save "Zapisz"
@@ -104,7 +105,10 @@
     :save-and-reload "Zapisz i przeładuj"},
    :alerts
    {:success "Sukces!"
-    :changes-saved "Zapisano zmiany!"
+    :changes-saved "Zapisano zmiany"
+    :changes-saved-failed "Zapisanie zmian nie powiodło się"
+    :column-saved-message "Zapisano zmiany w kolumnach."
+    :column-save-failed-message "Wszystkie pola muszą być wypełnione i posiadać co najmniej 3 znaki."
     :save-changes? "Czy chcesz zapisać zmiany?"
     :changes-saved-but-need-reload
     "Zapisano zmiany! Będą one widoczne po restarcie aplikacji."
@@ -138,7 +142,10 @@
     :clean-filter "Wyczyćś filtr wyszukiwania.",
     :search "Szukaj po tabeli.",
     :user-trash-can "Odłącz użytkownika od karty.",
-    :excel "Zapisz widok do excela."}}},
+    :excel "Zapisz widok do excela."
+    :press-to-search "Wciśnij Ctrl + F by wyszukać rekord."
+    :related-popup-table "Wyszukaj w powiązanej tabeli"
+    }}},
  :en
  {:init.edn
   {:name "Initial configuration",
@@ -226,6 +233,7 @@
   :cancel "Cancel"
   :show-changes "Show changes"
   :export-to-excel "Export to Excel"
+  :export "Export"
   :connect "Connect"
   :settings "Settings"
   :save "Save"
@@ -243,10 +251,13 @@
   :test-connection "Test connection"
   :save-and-reload "Save and reload"}
  :alerts
- {
-  :success "Success!"
+ {:success "Success!"
   :faild "! Faild !"
   :changes-saved "Saved changes!"
+  :changes-saved-failed "Can not saving changes."
+  :column-saved-message "Saved changes in columns."
+  :column-save-failed "Can not save the column parameters."
+  :column-save-failed-message "All fields must be entered and must be longer than 3 chars."
   :save-changes? "Do you want to save changes?"
   :changes-saved-but-need-reload "Saved changes! Application needs reload."
   :delete-element? "Are you sure you want to remove item?"
@@ -283,5 +294,7 @@
   :clean-filter "Clear search filter."
   :search "Search in table."
   :user-trash-can "Disconnect user from card."
-  :excel "Save view to excel."}}
+  :excel "Save view to excel."
+  :press-to-search "Press Ctrl + F to search record."
+  :related-popup-table "Search inside related table"}}
   }}

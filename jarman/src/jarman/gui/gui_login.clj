@@ -24,6 +24,7 @@
             ;; [jarman.logic.view :as view]
             ;; [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]
             ))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; validation login ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -33,6 +34,7 @@
                                                  :a "Because your program has trouble"}
                                                 {:q "What it problem mean"
                                                  :a "Read the fucking descriptin"}]}})
+
 (def validate3 {:validate? true})
 (def validate4 {:validate? true})
 
@@ -55,21 +57,18 @@
 (def light-grey-color "#82959f")
 (def blue-green-color "#2c7375")
 (def light-blue-color "#96c1ea")
-;;(def red-color "#e51a4c")
-;;(def red-color "#f88158")
 (def red-color "#f01159")
 (def back-color "#c5d3dd")
 (def my-style {[:.css1] {:foreground blue-green-color}})
 
 (defn color-border [color]
-  (compound-border (empty-border :left 10 :right 10 :top 5 :bottom 5)
-                   (line-border :bottom 2 :color color)))
+  (tool/my-border [color 2] [10 10 5 5]))
+
 (defn myFont [size]
   {:size size :font "Arial" :style :bold})
 
-(def ^:private emp-border (empty-border :left 10 :right 10 :top 5 :bottom 5))
-
-
+(def ^:private emp-border
+  (tool/my-border [10 10 5 5]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; some-components ;;; 
@@ -361,6 +360,8 @@
 
 (defn test-key-login [key-title login pass]
   (let [data (key-title (c/datalist-mapper (c/datalist-get)))]
+    (println login)
+    (println pass)
     (if-let [login-fn (logic/login
                        {:dbtype (:dbtype data)
                         :host (:host data)
@@ -401,7 +402,8 @@
         icon-info (label :icon (stool/image-scale icon/I-grey-64-png 36)
                           :visible? true
                           :border (empty-border :right 5)
-                          :listen [:mouse-entered (fn [e] (do (tool/hand-hover-on e) (config! e :visible? true)))
+                          :listen [
+                                   :mouse-entered (fn [e] (do (tool/hand-hover-on e) (config! e :visible? true)))
                                    :mouse-exited (fn [e] (do (tool/hand-hover-off e) (config! e :visible? false)))
                                    :mouse-clicked (fn [e] (do (tool/hand-hover-off e) (config! (to-frame e) :content (info-panel))))])
         icon-conf
@@ -409,12 +411,16 @@
                :halign :right
                :visible? false
                :border (empty-border :right 5 )
-               :listen [:mouse-entered (fn [e] (do (tool/hand-hover-on e) (config! e :visible? true)))
+               :listen [
+                        :mouse-entered (fn [e] (do (tool/hand-hover-on e) (config! e :visible? true)))
                         :mouse-exited (fn [e] (do (tool/hand-hover-off e) (config! e :visible? false)))
                         :mouse-clicked (fn [e] (do (tool/hand-hover-off e) (config! (to-frame e)
                                                                                :content (config-generator-panel key-title))))])
         icons-pan (flow-panel :items (list icon-conf) :background "#fff" :align :right)
         my-panel (border-panel
+                  :listen [:focus-gained (fn [e] (config! e :border (line-border :bottom 4 :color light-blue-color)))
+                           :focus-lost   (fn [e] (config! e :border (line-border :bottom 4 :color light-grey-color)))]
+                  :focusable? true
                   :border (line-border :bottom 4 :color light-grey-color)
                   :maximum-size  [120 :by 120]
                   :preferred-size  [120 :by 120]
@@ -423,44 +429,46 @@
         (config! my-panel  :items  [[v-pane :north]
                                     [icons-pan :south]]))
     (.repaint my-panel)
-    (config! my-panel :listen [:mouse-entered (fn [e] (do 
-                                                        (config! e :border (line-border :bottom 4 :color light-blue-color))
-                                                        (config! icon-conf :visible? true)))
-                               :mouse-exited  (fn [e] (do (config! e :border (line-border :bottom 4 :color light-grey-color))
-                                                          (config! icon-conf :visible? false)))
-                               :mouse-clicked (fn [e] (let [data-log (test-key-login key-title (text login)
-                                                                                             (get (config pass :user-data) :value))]
-                                                        (if (instance? clojure.lang.PersistentArrayMap data-log)
-                                                          (do (.revalidate my-panel)
-                                                              (.dispose (to-frame e))
-                                                              (@app/startup))
-                                                          (do
-                                                            (config! dbn :foreground red-color)
-                                                            (println (name data-log))
-                                                            (config! err-l ;; (some-error-v (name data-log))
-                                                                  :text (name data-log)
-                                                                  :font (myFont 11) :foreground red-color
-                                                                  :border (empty-border :top 5 :left 5 :bottom 5))
-                                                            (.add icons-pan icon-info)
-                                                            (config! my-panel 
-                                                                     :border (line-border :bottom 4
-                                                                                          :color red-color)
-                                                                     :listen [:mouse-clicked (fn [e]
-                                                                                               (let [data-log (test-key-login key-title (text login)
-                                                                                                                                (get (config pass :user-data) :value))]
-                                                                                                 (if (instance? clojure.lang.PersistentArrayMap data-log)
-                                                                                                   (do (.revalidate my-panel)
-                                                                                                       (.dispose (to-frame e))
-                                                                                                       (@app/startup))))
-                                                                                               )
-                                                                              :mouse-exited  (fn [e] (do
-                                                                                                       (config! icon-conf :visible? false)
-                                                                                                       (config! icon-info :visible? false)
-                                                                                                       (config! e :border (line-border :bottom 4 :color red-color))))
-                                                                              :mouse-entered  (fn [e] (do (config! icon-conf :visible? true)
-                                                                                                          (config! icon-info :visible? true)
-                                                                                                        (config! e :border (line-border :bottom 4 :color red-color))))])
-                                                            (.revalidate my-panel)))))])
+    (let [onClick (fn [e] (let [data-log (test-key-login key-title (text login)
+                                                         (get (config pass :user-data) :value))]
+                            (if (instance? clojure.lang.PersistentArrayMap data-log)
+                              (do (.revalidate my-panel)
+                                  (.dispose (to-frame e))
+                                  (@app/startup))
+                              (do
+                                (config! dbn :foreground red-color)
+                                (println (name data-log))
+                                (config! err-l ;; (some-error-v (name data-log))
+                                         :text (name data-log)
+                                         :font (myFont 11) :foreground red-color
+                                         :border (empty-border :top 5 :left 5 :bottom 5))
+                                (.add icons-pan icon-info)
+                                (config! my-panel
+                                         :border (line-border :bottom 4
+                                                              :color red-color)
+                                         :listen [:mouse-clicked (fn [e]
+                                                                   (let [data-log (test-key-login key-title (text login)
+                                                                                                  (get (config pass :user-data) :value))]
+                                                                     (if (instance? clojure.lang.PersistentArrayMap data-log)
+                                                                       (do (.revalidate my-panel)
+                                                                           (.dispose (to-frame e))
+                                                                           (@app/startup)))))
+                                                  :mouse-exited  (fn [e] (do
+                                                                           (config! icon-conf :visible? false)
+                                                                           (config! icon-info :visible? false)
+                                                                           (config! e :border (line-border :bottom 4 :color red-color))))
+                                                  :mouse-entered  (fn [e] (do (config! icon-conf :visible? true)
+                                                                              (config! icon-info :visible? true)
+                                                                              (config! e :border (line-border :bottom 4 :color red-color))))])
+                                (.revalidate my-panel)))))]
+      (config! my-panel :listen [:mouse-entered (fn [e] (do
+                                                          (config! e :border (line-border :bottom 4 :color light-blue-color))
+                                                          (config! icon-conf :visible? true)))
+                                 :mouse-exited  (fn [e] (do (config! e :border (line-border :bottom 4 :color light-grey-color))
+                                                            (config! icon-conf :visible? false)))
+                                 :mouse-clicked (fn [e] (onClick e))
+                                
+                                 :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))]))
     my-panel))
 
 
@@ -524,6 +532,7 @@
             :foreground blue-green-color
             :font (myFont 14)) mig]))
 
+
 (defn info-panel []
   (let [info some-text
         faq [{:q "Why i can not get connection with server?"
@@ -538,7 +547,7 @@
                                        :mouse-exited (fn [e] (tool/hand-hover-off e))
                                        :mouse-clicked (fn [e] (config! (to-frame e) :content (login-panel)))]
                               :border (empty-border :right 220)) "align l, split 2"]
-                      [(label :icon (stool/image-scale "resources/imgs/trashpanda2-stars-blue-1024.png" 47))]
+                      [(label :icon (stool/image-scale "icons/imgs/trashpanda2-stars-blue-1024.png" 47))]
                       [(let [mig (mig-panel
                                   :constraints ["wrap 1" "100px[:600, grow, center]100px" "20px[]20px"]
                                   :items [[(label :text (tool/htmling "<h2>About</h2>")
@@ -570,7 +579,8 @@
                                          :style [:halign :left])]
     (mig-panel
      :constraints ["wrap 1" "[center]" "20px[]0px"]
-     :items [[(label :icon (stool/image-scale "resources/imgs/jarman-text.png" 6))]
+     :items [[(label :icon ;;(stool/image-scale icon/user-blue1-64-png 40)
+                      (stool/image-scale "icons/imgs/jarman-text.png" 6))]
              [(mig-panel
                :constraints ["wrap 2" "10px[fill]10px[200:, fill]" "0px[]20px"]
                :items [[(label :icon (stool/image-scale icon/user-blue1-64-png 40))]
@@ -579,7 +589,7 @@
                        [fpass]])]
              [(configurations-panel flogin fpass)]
              [(label :text "" :border
-                     (empty-border :top 20 :left 860 )) "split 2"]
+                     (empty-border :top 20 :left 860)) "split 2"]
              [(mig-panel
                :constraints ["" "[grow, fill]" ""]
                :items [[(label :icon (stool/image-scale icon/refresh-connection-grey1-64-png 40)
@@ -596,14 +606,16 @@
          :undecorated? false
          :resizable? false
          :minimum-size [800 :by 600]
-         :icon (stool/image-scale icon/calendar1-64-png 100)
+         :icon (stool/image-scale
+                icon/calendar1-64-png) 
          :content (login-panel)))
 
 (defn- frame-error []
   (frame :title "Jarman-error"
          :undecorated? false
          :resizable? false
-         :icon (stool/image-scale icon/calendar1-64-png 100)
+         :icon (stool/image-scale
+                icon/calendar1-64-png)
          :minimum-size [600 :by 600]))
 
 (defn start []
@@ -614,76 +626,4 @@
           (config! :content (error-panel res-validation)) seesaw.core/pack! seesaw.core/show!))))
 
 (start)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; multi-panel for replace some panels ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def red-panel
-  (fn []
-    (mig-panel
-     :constraints ["" "[grow, fill]" ""]
-     :items [[(label :text "red"
-                     :border (color-border red-color)
-                     :background red-color )]])))
-
-(def green-panel
-  (fn []
-    (mig-panel
-     :constraints ["" "[grow, fill]" ""]
-     :items [[(label :text "green"
-                     :border (color-border blue-green-color)
-                     :background blue-green-color)]])))
-
-(def blue-panel
-  (fn []
-    (mig-panel
-     :constraints ["" "[grow, fill]" ""]
-     :items [[(label :text "blue"
-                     :border (color-border blue-color)
-                     :background blue-color)]])))
-
-(defn multi-panel
-  "Description:
-    get vector of panels and return mig-panel in which these panels are replaced on click of arrow
-   Example:
-    (multi-panel [some-panel-1 some-panel-2 some-panel-3])"
-  [panels title num]
-  (mig-panel
-   :constraints ["wrap 3" "[fill][grow, fill, center][fill]" "[fill][grow, fill][fill]15px"] 
-   :items [[(label :text title
-                   :foreground "#256599"
-                   :border (empty-border :left 10)
-                   :font {:size 16 font "Arial" :style :bold}) "span 3"]
-           [((nth panels num)) "span 3"]
-           [(label :icon (stool/image-scale icon/a-up-grey-64-png 50) ;;left-blue-64-png
-                   :visible? (if (= num 0) false true)
-                   :listen [:mouse-entered (fn [e] (tool/hand-hover-on e))
-                            :mouse-exited (fn [e] (tool/hand-hover-off e))
-                            :mouse-clicked (fn [e]
-                                             (if (= num 0)
-                                               (config! (to-frame e) :content (multi-panel panels title num))
-                                               (config! (to-frame e) :content (multi-panel panels title (- num 1)))))])
-            "align l"]
-           [(label :text "")]
-           [(label :icon (stool/image-scale icon/arrow-blue-grey-left-64-png 36) ;;right-blue-64-png
-                   :visible? (if (= num (- (count panels) 1)) false true)
-                   :listen [:mouse-clicked (fn [e] (if (=  num (- (count panels) 1))
-                                                     (config! (to-frame e) :content (multi-panel panels title num))
-                                                     (config! (to-frame e) :content (multi-panel panels title (+ num 1)))))])
-            "align r"]]))
-
-
-;; (defn- test-frame []
-;;   (frame :title "Jarman"
-;;          :undecorated? false
-;;          :content (multi-panel [red-panel green-panel blue-panel] "Some panel" 0)
-;;          :resizable? true
-;;          :minimum-size [800 :by 600]))
-
-;; (-> (doto (test-frame) (.setLocationRelativeTo nil) ) seesaw.core/pack! seesaw.core/show!)
-
-
-
-
-
 

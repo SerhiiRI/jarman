@@ -22,10 +22,8 @@
             ;; [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]
             ))
 
-
 (import '(com.mxgraph.view mxGraph))
 (import '(com.mxgraph.swing mxGraphComponent))
-
 
 (def test-frame 
   (frame :title "Jarman"
@@ -38,14 +36,11 @@
       parent (.getDefaultParent mygraph)
       v1 (.insertVertex mygraph parent nil "hello!" 20 20 80 30)
       v2 (.insertVertex mygraph parent nil "wassup!" 240 150 80 30)]
-
   (-> mygraph .getModel .beginUpdate)
   (.insertEdge mygraph parent nil "Edge" v1 v2)
   (-> mygraph .getModel .endUpdate)
-  
   (config! test-frame :content (border-panel :items [[(com.mxgraph.swing.mxGraphComponent. mygraph) :center]]))
   (-> (doto test-frame (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))
-
 
 
 (let [mylabel (label :text "some-text" :background "#222")
@@ -76,10 +71,3 @@
   (config! test-frame :content main-panel)
   (-> (doto test-frame (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))
 
-
-(println "sdf")
-
-	
-(.insertVertex mygraph parent nil "hello!" 20 20 80 30)
-
-(show-options (label))

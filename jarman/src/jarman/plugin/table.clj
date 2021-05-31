@@ -484,10 +484,9 @@
         data-toolkit  (gett [:data-toolkit])
         configuration (gett [:configuration])
         title (:representation (:table-meta data-toolkit))
-        space (seesaw.core/select @jarman.gui.gui-seed/app (:plug-place configuration))
-        atm (:atom-expanded-items (seesaw.core/config space :user-data))
-        ]
-    (swap! atm (fn [inserted] 
+        space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
+        atm (:atom-expanded-items (c/config space :user-data))]
+    (swap! atm (fn [inserted]
                  (conj inserted
                        (button-expand-child
                         title
@@ -496,28 +495,11 @@
                                           :view-id (str "auto-" title)
                                           :title title
                                           :scrollable? false
-                                          :component-fn (fn [] (auto-builder--table-view 
-                                                                plugin-path 
+                                          :component-fn (fn [] (auto-builder--table-view
+                                                                plugin-path
                                                                 (global-configuration)
                                                                 data-toolkit
                                                                 configuration))))))))
-    (.revalidate space)
-    )
-  ;; (let [vp (c/select @jarman.gui.gui-seed/app [:#tables-view-plugin])
-  ;;       atm (get (c/config vp :user-data) :atom-expanded-items)]
-  ;;   (swap! atm (fn [inserted] (conj inserted (let [data-toolkit  (get-in (global-configuration) (lang/join-vec plugin-path [:data-toolkit]))
-  ;;                                                  title (get (:table-meta data-toolkit) :representation)]
-  ;;                                              ;;  (println "Repre " title)
-  ;;                                              (button-expand-child
-  ;;                                               title
-  ;;                                               :onClick (fn [e] (@gseed/jarman-views-service :set-view
-  ;;                                                                 :view-id (str "auto-" title)
-  ;;                                                                 :title title
-  ;;                                                                 :scrollable? false
-  ;;                                                                 :component-fn (fn [] (auto-builder--table-view plugin-path (global-configuration))))))))))
-  ;;   (.revalidate vp))
-  )
+    (.revalidate space)))
   
-
-
 

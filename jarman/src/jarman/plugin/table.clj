@@ -262,7 +262,7 @@
       (c/config! TT :horizontal-scroll-enabled? true)
       (c/config! TT :show-grid? false)
       (c/config! TT :show-horizontal-lines? true)
-      (c/scrollable TT :hscroll :as-needed :vscroll :as-needed))))
+      (c/scrollable TT :hscroll :as-needed :vscroll :as-needed :border nil))))
 
 (defn create-table [configuration toolkit-map]
   (let [view (:view configuration) tables (:tables configuration)]

@@ -538,12 +538,10 @@
         main-panel (mig-panel :constraints ["wrap 1" "0px[100:,fill]0px" "0px[fill]10px"])]
     (config! selct-comp
              :listen [:action-performed (fn [e]
-                                          (swap! cmpts-atom assoc :component-type [(if (= (.toString (.getSelectedItem selct-comp))
-                                                                                          "date-time") "dt"
-                                                                                       (.toString (get (.toString (.getSelectedItem selct-comp)) 0)))])
-                                          (.removeAllItems selct-col)
-                                          (doall (map (fn [x] (.addItem selct-col x))
-                                                      (get-component-add-column (.toString (.getSelectedItem selct-comp))))))])
+                                          (swap! cmpts-atom assoc :component-type [(.getSelectedItem selct-comp)])
+                                          (config! selct-col :model (get-component-add-column (.getSelectedItem selct-comp)))
+                                          ;;(.addItem selct-col "heyy")
+                                          )])
     (config! selct-col :listen [:action-performed (fn [e]
                                                     (swap! cmpts-atom assoc :column-type (.toString (.getSelectedItem selct-col))))])
     (config! main-panel :items [[(label :text "Adding column" :font (getFont 14 :bold) :foreground blue-color)]
@@ -1342,3 +1340,6 @@
 
 
 ;; (@startup)
+
+
+

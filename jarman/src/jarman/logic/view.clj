@@ -5,8 +5,7 @@
  (plug/jarman-table
   :name
   "Table"
-  :plug-place
-  [:expand-menu-space]
+  :plug-place [:#tables-view-plugin]
   :tables
   [:permission]
   :pkey
@@ -27,8 +26,7 @@
  (plug/jarman-table
   :name
   nil
-  :place
-  nil
+  :plug-place [:#tables-view-plugin]
   :tables
   [:documents]
   :view
@@ -48,8 +46,7 @@
  (plug/jarman-table
   :name
   nil
-  :plug-place
-  [:#tables-view-plugin]
+  :plug-place [:#tables-view-plugin]
   :override-model
   [{:column :user.login,
     :fun (fn [coll] (c/label :text (l/rift (:val coll) "")))}]
@@ -80,8 +77,7 @@
  (plug/jarman-table
   :name
   nil
-  :place
-  nil
+  :plug-place [:#tables-view-plugin]
   :tables
   [:enterpreneur]
   :view
@@ -113,8 +109,7 @@
  (plug/jarman-table
   :name
   nil
-  :place
-  nil
+  :plug-place [:#tables-view-plugin]
   :tables
   [:point_of_sale :enterpreneur]
   :view
@@ -140,8 +135,7 @@
  (plug/jarman-table
   :name
   nil
-  :place
-  nil
+  :plug-place [:#tables-view-plugin]
   :tables
   [:cache_register :point_of_sale]
   :view
@@ -184,8 +178,7 @@
   :name
   nil
   :place
-  nil
-  :tables
+  :plug-place [:#tables-view-plugin]
   [:point_of_sale_group]
   :view
   [:point_of_sale_group.group_name :point_of_sale_group.information]
@@ -201,8 +194,7 @@
  (plug/jarman-table
   :name
   nil
-  :place
-  nil
+  :plug-place [:#tables-view-plugin]
   :tables
   [:point_of_sale_group_links :point_of_sale_group :point_of_sale]
   :view

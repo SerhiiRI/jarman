@@ -478,67 +478,25 @@
 
 ;;; PLUGINS ;;;
 (defn jarman-table [plugin-path global-configuration]
-  ;; (let [gett #(get-in (global-configuration) (lang/join-vec plugin-path %))
-  ;;       data-toolkit  (gett [:data-toolkit])
-  ;;       configuration (gett [:configuration])
-  ;;       title (:representation (:table-meta data-toolkit))
-  ;;       space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
-  ;;       atm (:atom-expanded-items (c/config space :user-data))]
-  ;;   (swap! atm (fn [inserted] 
-  ;;                (conj inserted
-  ;;                      (button-expand-child
-  ;;                       title
-  ;;                       :onClick (fn [e] (@gseed/jarman-views-service
-  ;;                                         :set-view
-  ;;                                         :view-id (str "auto-" title)
-  ;;                                         :title title
-  ;;                                         :scrollable? false
-  ;;                                         :component-fn (fn [] (auto-builder--table-view 
-  ;;                                                               plugin-path 
-  ;;                                                               (global-configuration)
-  ;;                                                               data-toolkit
-  ;;                                                               configuration))))))))
-  ;;   (.revalidate space))
-  (let [vp (c/select @jarman.gui.gui-seed/app [:#tables-view-plugin])
-        atm (get (c/config vp :user-data) :atom-expanded-items)]
-    (swap! atm (fn [inserted] (conj inserted (let [data-toolkit  (get-in (global-configuration) (lang/join-vec plugin-path [:data-toolkit]))
-                                                   title (get (:table-meta data-toolkit) :representation)]
-                                              ;;  (println "Repre " title)
-                                               (button-expand-child
-                                                title
-                                                :onClick (fn [e] (@gseed/jarman-views-service :set-view
-                                                                                              :view-id (str "auto-" title)
-                                                                                              :title title
-                                                                                              :scrollable? false
-                                                                                              :component-fn (fn [] (auto-builder--table-view plugin-path (global-configuration))))))))))
-    (.revalidate vp)))
+  (let [gett #(get-in (global-configuration) (lang/join-vec plugin-path %))
+        data-toolkit  (gett [:data-toolkit])
+        configuration (gett [:configuration])
+        title (:representation (:table-meta data-toolkit))
+        space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
+        atm (:atom-expanded-items (c/config space :user-data))]
+    (swap! atm (fn [inserted]
+                 (conj inserted
+                       (button-expand-child
+                        title
+                        :onClick (fn [e] (@gseed/jarman-views-service
+                                          :set-view
+                                          :view-id (str "auto-" title)
+                                          :title title
+                                          :scrollable? false
+                                          :component-fn (fn [] (auto-builder--table-view
+                                                                plugin-path
+                                                                (global-configuration)
+                                                                data-toolkit
+                                                                configuration))))))))
+    (.revalidate space)))
   
-
-
-;; [{:description nil, 
-;;   :private? false, 
-;;   :default-value nil, 
-;;   :editable? true, 
-;;   :field :seal_number, 
-;;   :column-type [:varchar-100 :default :null], 
-;;   :component-type [i], 
-;;   :representation seal_number, 
-;;   :field-qualified :seal.seal_number} 
-;;  {:description nil, 
-;;   :private? false, 
-;;   :default-value nil, 
-;;   :editable? true, 
-;;   :field :datetime_of_use, 
-;;   :column-type [:datetime :default :null], 
-;;   :component-type [dt d i], 
-;;   :representation datetime_of_use, 
-;;   :field-qualified :seal.datetime_of_use} 
-;;  {:description nil, 
-;;   :private? false, 
-;;   :default-value nil, 
-;;   :editable? true, 
-;;   :field :datetime_of_remove, 
-;;   :column-type [:datetime :default :null], 
-;;   :component-type [dt d i], 
-;;   :representation datetime_of_remove, 
-;;   :field-qualified :seal.datetime_of_remove}]

@@ -1,91 +1,47 @@
 {:host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman"}
 
 (defview
- permission
- (plug/jarman-table
-  :name
-  "Table"
-  :plug-place
-  [:expand-menu-space]
-  :tables
-  [:permission]
-  :pkey
-  [:user :admin :dev]
-  :view
-  [:permission.permission_name]
-  :query
-  {:column
-   (as-is
-    :permission.id
-    :permission.permission_name
-    :permission.configuration)}))
+  permission
+  :pkey [:user :admin]
+  (plug/jarman-table
+   :name
+   "repair_contract"
+   :plug-place
+   [:#tables-view-plugin]
+   :tables
+   [:permission]
+   :view
+   [:permission.permission_name :permission.configuration]
+   :query
+   {:columns
+    (as-is :permission.id :permission.permission_name :permission.configuration)}))
 
-(defview
- documents
- :pkey
- [:user :admin :dev]
- (plug/jarman-table
-  :name
-  nil
-  :place
-  nil
-  :tables
-  [:documents]
-  :view
-  [:documents.table :documents.name :documents.prop]
-  :query
-  {:column
-   (as-is
-    :documents.id
-    :documents.table
-    :documents.name
-    :documents.prop)}))
-
-(defview
- user
- :pkey
- [:user :admin :dev]
- (plug/jarman-table
-  :name
-  nil
-  :plug-place
-  [:#tables-view-plugin]
-  :override-model
-  [{:column :user.login,
-    :fun (fn [coll] (c/label :text (l/rift (:val coll) "")))}]
-  :tables
-  [:user :permission]
-  :view
-  [:user.first_name
-   :user.last_name
-   :user.login
-   :permission.permission_name]
-  :query
-  {:inner-join [:permission],
-   :column
-   (as-is
-    :user.id
-    :user.login
-    :user.password
-    :user.first_name
-    :user.last_name
-    :permission.permission_name
-    :permission.configuration
-    :user.id_permission)}))
+(defview user
+  :pkey [:user :admin :dev]
+  (plug/jarman-table
+   :name nil
+   :pkey [:user :admin :dev]
+   :plug-place [:#tables-view-plugin]
+   :override-model [{:column :user.login 
+                     :fun (fn [coll] (c/label :text (rift (:val coll) "")))}]
+   :tables [:user :permission]
+   :view   [:user.first_name :user.last_name :user.login :permission.permission_name]
+   :query  {:inner-join [:permission]
+            :column (as-is :user.id :user.login :user.password :user.first_name :user.last_name :permission.permission_name :permission.configuration :user.id_permission)}))
 
 (defview
  enterpreneur
- :pkey
- [:user :admin :dev]
  (plug/jarman-table
   :name
-  nil
-  :place
-  nil
+  "enterpreneur"
+  :plug-place
+  [:#tables-view-plugin]
+  :pkey [:user :dev]
   :tables
   [:enterpreneur]
   :view
-  [:enterpreneur.ssreou
+  (as-is
+   :enterpreneur.ssreou
    :enterpreneur.ownership_form
    :enterpreneur.vat_certificate
    :enterpreneur.individual_tax_number
@@ -93,9 +49,9 @@
    :enterpreneur.accountant
    :enterpreneur.legal_address
    :enterpreneur.physical_address
-   :enterpreneur.contacts_information]
+   :enterpreneur.contacts_information)
   :query
-  {:column
+  {:columns
    (as-is
     :enterpreneur.id
     :enterpreneur.ssreou
@@ -112,85 +68,135 @@
  point_of_sale
  (plug/jarman-table
   :name
-  nil
-  :place
-  nil
+  "point_of_sale"
+  :plug-place
+  [:#tables-view-plugin]
   :tables
   [:point_of_sale :enterpreneur]
   :view
-  [:point_of_sale.name
+  (as-is
+   :point_of_sale.id_enterpreneur
+   :point_of_sale.name
    :point_of_sale.physical_address
    :point_of_sale.telefons
    :enterpreneur.ssreou
-   :enterpreneur.ownership_form]
+   :enterpreneur.ownership_form
+   :enterpreneur.vat_certificate
+   :enterpreneur.individual_tax_number
+   :enterpreneur.director
+   :enterpreneur.accountant
+   :enterpreneur.legal_address
+   :enterpreneur.physical_address
+   :enterpreneur.contacts_information)
   :query
-  {:inner-join [:enterpreneur],
-   :column
+  {:inner-join [:point_of_sale->enterpreneur],
+   :columns
    (as-is
     :point_of_sale.id
+    :point_of_sale.id_enterpreneur
     :point_of_sale.name
     :point_of_sale.physical_address
     :point_of_sale.telefons
     :enterpreneur.id
     :enterpreneur.ssreou
-    :enterpreneur.ownership_form)}))
+    :enterpreneur.ownership_form
+    :enterpreneur.vat_certificate
+    :enterpreneur.individual_tax_number
+    :enterpreneur.director
+    :enterpreneur.accountant
+    :enterpreneur.legal_address
+    :enterpreneur.physical_address
+    :enterpreneur.contacts_information)}))
 
 (defview
  cache_register
  (plug/jarman-table
   :name
-  nil
-  :place
-  nil
+  "cache_register"
+  :plug-place
+  [:#tables-view-plugin]
   :tables
-  [:cache_register :point_of_sale]
+  [:cache_register :point_of_sale :enterpreneur]
   :view
-  [:cache_register.is_working
+  (as-is
+   :cache_register.id_point_of_sale
+   :cache_register.name
+   :cache_register.serial_number
+   :cache_register.fiscal_number
+   :cache_register.manufacture_date
+   :cache_register.first_registration_date
+   :cache_register.is_working
+   :cache_register.version
+   :cache_register.dev_id
+   :cache_register.producer
+   :cache_register.modem
+   :cache_register.modem_model
    :cache_register.modem_serial_number
    :cache_register.modem_phone_number
-   :cache_register.producer
-   :cache_register.first_registration_date
-   :cache_register.modem_model
-   :cache_register.name
-   :cache_register.fiscal_number
-   :cache_register.dev_id
-   :cache_register.manufacture_date
-   :cache_register.modem
-   :cache_register.version
-   :cache_register.serial_number]
+   :point_of_sale.id_enterpreneur
+   :point_of_sale.name
+   :point_of_sale.physical_address
+   :point_of_sale.telefons
+   :enterpreneur.ssreou
+   :enterpreneur.ownership_form
+   :enterpreneur.vat_certificate
+   :enterpreneur.individual_tax_number
+   :enterpreneur.director
+   :enterpreneur.accountant
+   :enterpreneur.legal_address
+   :enterpreneur.physical_address
+   :enterpreneur.contacts_information)
   :query
-  {:inner-join [:point_of_sale],
-   :column
+  {:inner-join
+   [:cache_register->point_of_sale :point_of_sale->enterpreneur],
+   :columns
    (as-is
     :cache_register.id
+    :cache_register.id_point_of_sale
+    :cache_register.name
+    :cache_register.serial_number
+    :cache_register.fiscal_number
+    :cache_register.manufacture_date
+    :cache_register.first_registration_date
     :cache_register.is_working
+    :cache_register.version
+    :cache_register.dev_id
+    :cache_register.producer
+    :cache_register.modem
+    :cache_register.modem_model
     :cache_register.modem_serial_number
     :cache_register.modem_phone_number
-    :cache_register.producer
-    :cache_register.first_registration_date
-    :cache_register.modem_model
-    :cache_register.name
-    :cache_register.fiscal_number
-    :cache_register.dev_id
-    :cache_register.manufacture_date
-    :cache_register.modem
-    :cache_register.version
-    :cache_register.serial_number
-    :cache_register.id_point_of_sale)}))
+    :point_of_sale.id
+    :point_of_sale.id_enterpreneur
+    :point_of_sale.name
+    :point_of_sale.physical_address
+    :point_of_sale.telefons
+    :enterpreneur.id
+    :enterpreneur.ssreou
+    :enterpreneur.ownership_form
+    :enterpreneur.vat_certificate
+    :enterpreneur.individual_tax_number
+    :enterpreneur.director
+    :enterpreneur.accountant
+    :enterpreneur.legal_address
+    :enterpreneur.physical_address
+    :enterpreneur.contacts_information)}))
 
 (defview
  point_of_sale_group
  (plug/jarman-table
   :name
-  nil
-  :place
-  nil
+  "point_of_sale_group"
+  :plug-place
+  [:#tables-view-plugin]
   :tables
   [:point_of_sale_group]
   :view
-  [:point_of_sale_group.group_name :point_of_sale_group.information]
+  (as-is
+   :point_of_sale_group.group_name
+   :point_of_sale_group.information)
   :query
-  {:column
+  {:columns
    (as-is
     :point_of_sale_group.id
     :point_of_sale_group.group_name
@@ -200,148 +206,215 @@
  point_of_sale_group_links
  (plug/jarman-table
   :name
-  nil
-  :place
-  nil
+  "point_of_sale_group_links"
+  :plug-place
+  [:#tables-view-plugin]
   :tables
-  [:point_of_sale_group_links :point_of_sale_group :point_of_sale]
+  [:point_of_sale_group_links
+   :point_of_sale_group
+   :point_of_sale
+   :enterpreneur]
   :view
-  [:point_of_sale.name
-   :point_of_sale.physical_address
+  (as-is
+   :point_of_sale_group_links.id
+   :point_of_sale_group_links.id_point_of_sale_group
+   :point_of_sale_group_links.id_point_of_sale
    :point_of_sale_group.group_name
-   :point_of_sale_group.information]
+   :point_of_sale_group.information
+   :point_of_sale.id_enterpreneur
+   :point_of_sale.name
+   :point_of_sale.physical_address
+   :point_of_sale.telefons
+   :enterpreneur.id
+   :enterpreneur.ssreou
+   :enterpreneur.ownership_form
+   :enterpreneur.vat_certificate
+   :enterpreneur.individual_tax_number
+   :enterpreneur.director
+   :enterpreneur.accountant
+   :enterpreneur.legal_address
+   :enterpreneur.physical_address
+   :enterpreneur.contacts_information)
   :query
-  {:inner-join [:point_of_sale :point_of_sale_group],
-   :column
+  {:inner-join
+   [:point_of_sale_group_links->point_of_sale_group
+    :point_of_sale_group_links->point_of_sale
+    :point_of_sale->enterpreneur],
+   :columns
    (as-is
     :point_of_sale_group_links.id
     :point_of_sale_group_links.id_point_of_sale_group
     :point_of_sale_group_links.id_point_of_sale
+    :point_of_sale_group.group_name
+    :point_of_sale_group.information
+    :point_of_sale.id_enterpreneur
     :point_of_sale.name
     :point_of_sale.physical_address
-    :point_of_sale_group.group_name
-    :point_of_sale_group.information)}))
-
-(defview
- seal
- (plug/jarman-table
-  :name
-  "Pushing seals"
-  :tables
-  [:seal]
-  :view
-  [:seal.seal_number :seal.to_date]
-  :override-model
-  [{:start-value :text-input} {:end-value :text-input}]
-  :insert
-  (fn
-   [m]
-   {:table-name :seal,
-    :column-list [:seal.seal_number :seal.to_date],
-    :values
-    (mapv
-     (fn* [p1__16635#] (vector p1__16635# (:to-date m)))
-     (range (:start-value m) (+ (:end-value m) 1)))})
-  :update
-  :none
-  :delete
-  :none
-  :query
-  {:column (as-is :seal.id :seal.seal_number :seal.to_date)})
- (plug/jarman-table
-  :name
-  "Editing per one"
-  :tables
-  [:seal]
-  :view
-  [:seal.seal_number :seal.to_date]
-  :query
-  {:column (as-is :seal.id :seal.seal_number :seal.to_date)}))
+    :point_of_sale.telefons
+    :enterpreneur.id
+    :enterpreneur.ssreou
+    :enterpreneur.ownership_form
+    :enterpreneur.vat_certificate
+    :enterpreneur.individual_tax_number
+    :enterpreneur.director
+    :enterpreneur.accountant
+    :enterpreneur.legal_address
+    :enterpreneur.physical_address
+    :enterpreneur.contacts_information)}))
 
 (defview
  service_contract
  (plug/jarman-table
   :name
-  nil
-  :place
-  nil
+  "service_contract"
+  :plug-place
+  [:#tables-view-plugin]
   :tables
-  [:service_contract :point_of_sale]
+  [:service_contract :enterpreneur]
   :view
-  [:service_contract.register_contract_date
-   :service_contract.contract_term_date
+  (as-is
+   :service_contract.id_enterpreneur
+   :service_contract.contract_start_term
+   :service_contract.contract_end_term
    :service_contract.money_per_month
-   :point_of_sale.name
-   :point_of_sale.physical_address]
+   :enterpreneur.ssreou
+   :enterpreneur.ownership_form
+   :enterpreneur.vat_certificate
+   :enterpreneur.individual_tax_number
+   :enterpreneur.director
+   :enterpreneur.accountant
+   :enterpreneur.legal_address
+   :enterpreneur.physical_address
+   :enterpreneur.contacts_information)
   :query
-  {:inner-join [:point_of_sale],
-   :column
+  {:inner-join [:service_contract->enterpreneur],
+   :columns
    (as-is
     :service_contract.id
-    :service_contract.id_point_of_sale
-    :service_contract.register_contract_date
-    :service_contract.contract_term_date
+    :service_contract.id_enterpreneur
+    :service_contract.contract_start_term
+    :service_contract.contract_end_term
     :service_contract.money_per_month
-    :point_of_sale.name
-    :point_of_sale.physical_address)}))
-
-(defview
- repair_reasons
- :pkey
- [:user :admin :dev]
- (plug/jarman-table
-  :name
-  "Repair reasons"
-  :place
-  nil
-  :tables
-  [:repair_reasons]
-  :view
-  [:repair_reasons.reason]
-  :query
-  {:column (as-is :repair_reasons.id :repair_reasons.reason)}))
+    :enterpreneur.id
+    :enterpreneur.ssreou
+    :enterpreneur.ownership_form
+    :enterpreneur.vat_certificate
+    :enterpreneur.individual_tax_number
+    :enterpreneur.director
+    :enterpreneur.accountant
+    :enterpreneur.legal_address
+    :enterpreneur.physical_address
+    :enterpreneur.contacts_information)}))
 
 (defview
  repair_contract
  (plug/jarman-table
   :name
-  nil
-  :place
-  nil
+  "repair_contract"
+  :plug-place
+  [:#tables-view-plugin]
   :tables
-  [:repair_contract :cache_register :point_of_sale]
+  [:repair_contract
+   :cache_register
+   :point_of_sale
+   :enterpreneur
+   :old_seal
+   :new_seal]
   :view
-  [:cache_register.modem_serial_number
-   :cache_register.modem_phone_number
+  (as-is
+   :repair_contract.id_cache_register
+   :repair_contract.id_old_seal
+   :repair_contract.id_new_seal
+   :repair_contract.repair_date
+   :repair_contract.cause_of_removing_seal
+   :repair_contract.tech_problem_description
+   :repair_contract.tech_problem_type
+   :repair_contract.cache_register_register_date
+   :cache_register.id_point_of_sale
+   :cache_register.name
+   :cache_register.serial_number
+   :cache_register.fiscal_number
+   :cache_register.manufacture_date
+   :cache_register.first_registration_date
+   :cache_register.is_working
+   :cache_register.version
+   :cache_register.dev_id
    :cache_register.producer
+   :cache_register.modem
+   :cache_register.modem_model
+   :cache_register.modem_serial_number
+   :cache_register.modem_phone_number
+   :point_of_sale.id_enterpreneur
    :point_of_sale.name
    :point_of_sale.physical_address
-   :repair_contract.creation_contract_date
-   :repair_contract.last_change_contract_date
-   :repair_contract.contract_terms_date
-   :repair_contract.cache_register_register_date
-   :repair_contract.remove_security_seal_date
-   :repair_contract.cause_of_removing_seal
-   :repair_contract.technical_problem
-   :repair_contract.active_seal]
+   :point_of_sale.telefons
+   :enterpreneur.ssreou
+   :enterpreneur.ownership_form
+   :enterpreneur.vat_certificate
+   :enterpreneur.individual_tax_number
+   :enterpreneur.director
+   :enterpreneur.accountant
+   :enterpreneur.legal_address
+   :enterpreneur.physical_address
+   :enterpreneur.contacts_information
+   :old_seal.seal_number
+   :old_seal.datetime_of_use
+   :old_seal.datetime_of_remove
+   :new_seal.seal_number
+   :new_seal.datetime_of_use
+   :new_seal.datetime_of_remove)
   :query
-  {:inner-join [:point_of_sale :cache_register],
-   :column
+  {:inner-join
+   [:repair_contract->cache_register
+    :cache_register->point_of_sale
+    :point_of_sale->enterpreneur
+    :repair_contract.id_old_seal->seal.id
+    :repair_contract.id_new_seal->seal.id],
+   :columns
    (as-is
-    :cache_register.modem_serial_number
-    :cache_register.modem_phone_number
-    :cache_register.producer
-    :point_of_sale.name
-    :point_of_sale.physical_address
     :repair_contract.id
     :repair_contract.id_cache_register
-    :repair_contract.id_point_of_sale
-    :repair_contract.creation_contract_date
-    :repair_contract.last_change_contract_date
-    :repair_contract.contract_terms_date
-    :repair_contract.cache_register_register_date
-    :repair_contract.remove_security_seal_date
+    :repair_contract.id_old_seal
+    :repair_contract.id_new_seal
+    :repair_contract.repair_date
     :repair_contract.cause_of_removing_seal
-    :repair_contract.technical_problem
-    :repair_contract.active_seal)}))
+    :repair_contract.tech_problem_description
+    :repair_contract.tech_problem_type
+    :repair_contract.cache_register_register_date
+    :cache_register.id_point_of_sale
+    :cache_register.name
+    :cache_register.serial_number
+    :cache_register.fiscal_number
+    :cache_register.manufacture_date
+    :cache_register.first_registration_date
+    :cache_register.is_working
+    :cache_register.version
+    :cache_register.dev_id
+    :cache_register.producer
+    :cache_register.modem
+    :cache_register.modem_model
+    :cache_register.modem_serial_number
+    :cache_register.modem_phone_number
+    :point_of_sale.id_enterpreneur
+    :point_of_sale.name
+    :point_of_sale.physical_address
+    :point_of_sale.telefons
+    :enterpreneur.ssreou
+    :enterpreneur.ownership_form
+    :enterpreneur.vat_certificate
+    :enterpreneur.individual_tax_number
+    :enterpreneur.director
+    :enterpreneur.accountant
+    :enterpreneur.legal_address
+    :enterpreneur.physical_address
+    :enterpreneur.contacts_information
+    :old_seal.seal_number
+    :old_seal.datetime_of_use
+    :old_seal.datetime_of_remove
+    :new_seal.seal_number
+    :new_seal.datetime_of_use
+    :new_seal.datetime_of_remove)}))
+
+
+
 

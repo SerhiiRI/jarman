@@ -25,8 +25,6 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
-
-
 ;;; helper functions ;;;
 
 (defn- get-reference-col-table-alias [referenced-column] (second (re-matches #"id_(.+)" (name (:field referenced-column)))))
@@ -166,7 +164,7 @@
 (def take-meta-for-view (make-recur-meta-one-table conj-table-meta))
 
 (defn create-jarman-table-plugin [table-name]
-  (let [meta-table (first (mt/getset! :repair_contract))
+  (let [meta-table (first (mt/getset! table-name))
     name-of-table ((comp :representation :table :prop) meta-table)
     full-meta-debug (take-meta-for-view table-name)
     tables (vec (for [meta-debug full-meta-debug]
@@ -177,17 +175,21 @@
     joines (vec (for [meta-debug full-meta-debug
                       :when (keyword? (:join-rule (first meta-debug)))]
                   (:join-rule (first meta-debug))))
-    columns (concat (list 'as-is) (mapcat identity (for [meta-debug full-meta-debug]
+        columns (concat (list 'as-is) (list (read-string (format "%s.id" table-name)))
+                        (mapcat identity (for [meta-debug full-meta-debug]
                                                      (mapv :field-column (second meta-debug)))))]
     (list 'defview (symbol table-name)
           (list 'jarman-table
                 :name name-of-table
+                :plug-place [:#tables-view-plugin]
                 :tables tables
                 :view columns
-                :select (if (empty? joines)
+                :query (if-not (empty? joines)
                           {:inner-join joines :columns columns}
                           {:columns columns})))))
 
+
+;;(create-jarman-table-plugin :permission)
 ;; (mapv create-jarman-table-plugin [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month])
 
 
@@ -478,67 +480,44 @@
 
 ;;; PLUGINS ;;;
 (defn jarman-table [plugin-path global-configuration]
-  ;; (let [gett #(get-in (global-configuration) (lang/join-vec plugin-path %))
-  ;;       data-toolkit  (gett [:data-toolkit])
-  ;;       configuration (gett [:configuration])
-  ;;       title (:representation (:table-meta data-toolkit))
-  ;;       space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
-  ;;       atm (:atom-expanded-items (c/config space :user-data))]
-  ;;   (swap! atm (fn [inserted] 
-  ;;                (conj inserted
-  ;;                      (button-expand-child
-  ;;                       title
-  ;;                       :onClick (fn [e] (@gseed/jarman-views-service
-  ;;                                         :set-view
-  ;;                                         :view-id (str "auto-" title)
-  ;;                                         :title title
-  ;;                                         :scrollable? false
-  ;;                                         :component-fn (fn [] (auto-builder--table-view 
-  ;;                                                               plugin-path 
-  ;;                                                               (global-configuration)
-  ;;                                                               data-toolkit
-  ;;                                                               configuration))))))))
-  ;;   (.revalidate space))
-  (let [vp (c/select @jarman.gui.gui-seed/app [:#tables-view-plugin])
-        atm (get (c/config vp :user-data) :atom-expanded-items)]
-    (swap! atm (fn [inserted] (conj inserted (let [data-toolkit  (get-in (global-configuration) (lang/join-vec plugin-path [:data-toolkit]))
-                                                   title (get (:table-meta data-toolkit) :representation)]
-                                              ;;  (println "Repre " title)
-                                               (button-expand-child
-                                                title
-                                                :onClick (fn [e] (@gseed/jarman-views-service :set-view
-                                                                                              :view-id (str "auto-" title)
-                                                                                              :title title
-                                                                                              :scrollable? false
-                                                                                              :component-fn (fn [] (auto-builder--table-view plugin-path (global-configuration))))))))))
-    (.revalidate vp)))
+  (let [gett #(get-in (global-configuration) (lang/join-vec plugin-path %))
+        data-toolkit  (gett [:data-toolkit])
+        configuration (gett [:configuration])
+        title (:representation (:table-meta data-toolkit))
+        space (seesaw.core/select @jarman.gui.gui-seed/app (:plug-place configuration))
+        atm (:atom-expanded-items (seesaw.core/config space :user-data))
+        ]
+    (swap! atm (fn [inserted] 
+                 (conj inserted
+                       (button-expand-child
+                        title
+                        :onClick (fn [e] (@gseed/jarman-views-service
+                                          :set-view
+                                          :view-id (str "auto-" title)
+                                          :title title
+                                          :scrollable? false
+                                          :component-fn (fn [] (auto-builder--table-view 
+                                                                plugin-path 
+                                                                (global-configuration)
+                                                                data-toolkit
+                                                                configuration))))))))
+    (.revalidate space)
+    )
+  ;; (let [vp (c/select @jarman.gui.gui-seed/app [:#tables-view-plugin])
+  ;;       atm (get (c/config vp :user-data) :atom-expanded-items)]
+  ;;   (swap! atm (fn [inserted] (conj inserted (let [data-toolkit  (get-in (global-configuration) (lang/join-vec plugin-path [:data-toolkit]))
+  ;;                                                  title (get (:table-meta data-toolkit) :representation)]
+  ;;                                              ;;  (println "Repre " title)
+  ;;                                              (button-expand-child
+  ;;                                               title
+  ;;                                               :onClick (fn [e] (@gseed/jarman-views-service :set-view
+  ;;                                                                 :view-id (str "auto-" title)
+  ;;                                                                 :title title
+  ;;                                                                 :scrollable? false
+  ;;                                                                 :component-fn (fn [] (auto-builder--table-view plugin-path (global-configuration))))))))))
+  ;;   (.revalidate vp))
+  )
   
 
 
-;; [{:description nil, 
-;;   :private? false, 
-;;   :default-value nil, 
-;;   :editable? true, 
-;;   :field :seal_number, 
-;;   :column-type [:varchar-100 :default :null], 
-;;   :component-type [i], 
-;;   :representation seal_number, 
-;;   :field-qualified :seal.seal_number} 
-;;  {:description nil, 
-;;   :private? false, 
-;;   :default-value nil, 
-;;   :editable? true, 
-;;   :field :datetime_of_use, 
-;;   :column-type [:datetime :default :null], 
-;;   :component-type [dt d i], 
-;;   :representation datetime_of_use, 
-;;   :field-qualified :seal.datetime_of_use} 
-;;  {:description nil, 
-;;   :private? false, 
-;;   :default-value nil, 
-;;   :editable? true, 
-;;   :field :datetime_of_remove, 
-;;   :column-type [:datetime :default :null], 
-;;   :component-type [dt d i], 
-;;   :representation datetime_of_remove, 
-;;   :field-qualified :seal.datetime_of_remove}]
+

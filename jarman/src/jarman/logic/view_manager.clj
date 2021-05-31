@@ -10,7 +10,7 @@
    ;; ;; Jarman toolkit
    [jarman.logic.document-manager :as doc]
    [jarman.logic.connection :as db]
-   [jarman.tools.lang :refer :all :as lang]
+   [jarman.tools.lang :include-macros true :refer :all]
    ;; [jarman.gui.gui-tools :refer :all :as gtool]
    ;; [jarman.resource-lib.icon-library :as ico]
    ;; [jarman.tools.swing :as stool]
@@ -104,7 +104,8 @@
         metadata-toolkit (rule-react-on metadata-toolkit-constructor :table-name)
         export-sql-toolkit (rule-react-on export-toolkit-constructor :query)
         document-toolkit (rule-react-on document-toolkit-constructor :table-name)]
-    (-> {} sql-crud-toolkit metadata-toolkit export-sql-toolkit document-toolkit)))
+    (-> {} sql-crud-toolkit metadata-toolkit
+        export-sql-toolkit document-toolkit)))
 
 (def ^:private views-configuration+toolkit (atom {}))
 (defn views-configuration+toolkit-get []
@@ -127,8 +128,6 @@
         :else (recur prm (drop 1 l) plugins))
       [(if-not (contains? prm :pkey) (assoc prm :pkey :user))
        plugins])))
-
-(get-parameters [ (list "ss")])
 
 (defmacro defview-debug [table-model-name & body]
   (let [[conf-prms fbody] (get-parameters body)
@@ -154,7 +153,6 @@
                           s `(merge ~conf-prms ~s)]
                       `{~(keyword (first form)) ~s}))))]
     `(do ~@(for [form fbody :let [f (first form)]]
-             
              `(let [cfg# ~configurations
                     ktable# ~(keyword table-model-name)
                     kplugin# ~(keyword f)
@@ -164,10 +162,7 @@
                                                  kplugin#
                                                  plugin-configuration#
                                                  plugin-data-toolkit#)
-                (~f [ktable# kplugin#] ~'views-configuration+toolkit-get)
-                )
-             )
-
+                (~f [ktable# kplugin#] ~'views-configuration+toolkit-get)))
          nil)))
 
 
@@ -250,16 +245,17 @@
 
 ;;(put-table-view-to-db (loader-from-view-clj (db/connection-get)))
 
+(defn load-data [data loaders]
+  (if (nil? data)
+    (load-data ((first loaders) (db/connection-get)) (rest loaders))
+    data))
+
 (defn make-loader-chain
   "resolving from one loaders, in ordering of argument.
    if first is db-loader, then do first load forom db, if
    db not load db, or do crash, use next in order loader"
   [& loaders]
-  (let [data 
-        ((first loaders) (db/connection-get))]
-    (if (nil? data) (do ((second loaders) (db/connection-get))
-                        ((first loaders) (db/connection-get)))
-        (subvec (vec data) 1))))
+  (subvec (vec (load-data nil loaders)) 1))
 
 (def ^:dynamic *view-loader-chain-fn* 
   (make-loader-chain loader-from-view-clj loader-from-db))
@@ -274,10 +270,4 @@
       "Error with file"
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (map (fn [x] (eval x)) data))))))
-
-
-
-(do-view-load)
-
-
 

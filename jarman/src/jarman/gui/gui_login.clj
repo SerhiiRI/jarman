@@ -7,8 +7,10 @@
         seesaw.font)
   (:import (java.awt BorderLayout Dimension ComponentOrientation)
            (java.text SimpleDateFormat)
+           (java.text SimpleDateFormat)
            (javax.swing JScrollPane)
-           (java.awt Dimension))
+           (java.awt Dimension)
+           (jarman.test CustomScrollBar))
   (:require [clojure.string :as string]
             [jarman.gui.gui-tools :as tool]
             [jarman.config.config-manager :as conf]
@@ -627,3 +629,25 @@
 
 (start)
 
+
+
+
+(defn- test-frame []
+  (frame :title "Jarman-test"
+         :undecorated? false
+         :resizable? false
+         :minimum-size [800 :by 600]
+         :icon (stool/image-scale
+                icon/calendar1-64-png) 
+         :content
+         (components/min-scrollbox
+          (mig-panel
+           :constraints ["wrap 1" "0px[grow, fill]0px" "5px[grow, fill]0px"]
+           :items [[(label :text "red")]
+                   [(label :text "jjj"
+                           :minimum-size [1000 :by 1000]
+                           :background "#888888")]
+                   [(label :text "hhhhhheeeeeeeyyyyyy")]]))))
+
+(-> (doto (test-frame) (.setLocationRelativeTo nil))
+    seesaw.core/pack! seesaw.core/show!)

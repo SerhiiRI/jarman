@@ -4,8 +4,7 @@
    seesaw.mig
    seesaw.style
    seesaw.border
-   seesaw.dev)
-  )
+   seesaw.dev))
 
 ;; ****************************
 ;; *

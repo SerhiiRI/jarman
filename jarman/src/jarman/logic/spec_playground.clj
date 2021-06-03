@@ -1,4 +1,4 @@
-+(ns playground
+(ns playground
   (:require [clojure.spec.alpha :as s]))
 
 (s/def :some-test/string string?)
@@ -12,8 +12,7 @@
                                "sdfsdfsdf"])
 
 (s/explain :some-test/url-list ["https://sgfdgdfgdsg"
-                                66
-                               "sdfsdfsdf"])
+                                ])
 
 (s/explain :some-test/url "sfs")
 (s/explain :some-test/url "sfszfgsgsgg")

@@ -1,45 +1,73 @@
 {:host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman"}
 
 (defview
-  permission
-  :pkey [:user :admin]
-  (plug/jarman-table
-   :name
-   "repair_contract"
-   :plug-place
-   [:#tables-view-plugin]
-   :tables
-   [:permission]
-   :view
-   [:permission.permission_name :permission.configuration]
-   :query
-   {:columns
-    (as-is :permission.id :permission.permission_name :permission.configuration)}))
+ permission
+ :pkey
+ [:user :admin]
+ (jarman-table
+  :name
+  "repair_contract"
+  :plug-place
+  [:#tables-view-plugin]
+  :pkey [:user]
+  :tables
+  [:permission]
+  :model
+  [:permission.permission_name :permission.configuration]
+  :query
+  {:columns
+   (as-is
+    :permission.id
+    :permission.permission_name
+    :permission.configuration)}))
 
-(defview user
-  :pkey [:user :admin :dev]
-  (plug/jarman-table
-   :name nil
-   :pkey [:user :admin :dev]
-   :plug-place [:#tables-view-plugin]
-   :override-model [{:column :user.login 
-                     :fun (fn [coll] (c/label :text (rift (:val coll) "")))}]
-   :tables [:user :permission]
-   :view   [:user.first_name :user.last_name :user.login :permission.permission_name]
-   :query  {:inner-join [:permission]
-            :column (as-is :user.id :user.login :user.password :user.first_name :user.last_name :permission.permission_name :permission.configuration :user.id_permission)}))
+(defview
+ user
+ :pkey
+ [:user :admin :dev]
+ (jarman-table
+  :name
+  "user"
+  :pkey
+  [:user :admin :dev]
+  :plug-place
+  [:#tables-view-plugin]
+  :override-model
+  [{:column :user.login,
+    :fun
+    (fn* [p1__11770#] ((c/label :text (rift (:val p1__11770#) ""))))}]
+  :tables
+  [:user :permission]
+  :model
+  [:user.first_name
+   :user.last_name
+   :user.login
+   :permission.permission_name]
+  :query
+  {:inner-join [:permission],
+   :column
+   (as-is
+    :user.id
+    :user.login
+    :user.password
+    :user.first_name
+    :user.last_name
+    :permission.permission_name
+    :permission.configuration
+    :user.id_permission)}))
 
 (defview
  enterpreneur
- (plug/jarman-table
+ (jarman-table
   :name
   "enterpreneur"
   :plug-place
   [:#tables-view-plugin]
-  :pkey [:user :dev]
+  :pkey
+  [:user :dev]
   :tables
   [:enterpreneur]
-  :view
+  :model
   (as-is
    :enterpreneur.ssreou
    :enterpreneur.ownership_form
@@ -66,14 +94,14 @@
 
 (defview
  point_of_sale
- (plug/jarman-table
+ (jarman-table
   :name
   "point_of_sale"
   :plug-place
   [:#tables-view-plugin]
   :tables
   [:point_of_sale :enterpreneur]
-  :view
+  :model
   (as-is
    :point_of_sale.id_enterpreneur
    :point_of_sale.name
@@ -110,14 +138,14 @@
 
 (defview
  cache_register
- (plug/jarman-table
+ (jarman-table
   :name
   "cache_register"
   :plug-place
   [:#tables-view-plugin]
   :tables
   [:cache_register :point_of_sale :enterpreneur]
-  :view
+  :model
   (as-is
    :cache_register.id_point_of_sale
    :cache_register.name
@@ -184,14 +212,14 @@
 
 (defview
  point_of_sale_group
- (plug/jarman-table
+ (jarman-table
   :name
   "point_of_sale_group"
   :plug-place
   [:#tables-view-plugin]
   :tables
   [:point_of_sale_group]
-  :view
+  :model
   (as-is
    :point_of_sale_group.group_name
    :point_of_sale_group.information)
@@ -204,7 +232,7 @@
 
 (defview
  point_of_sale_group_links
- (plug/jarman-table
+ (jarman-table
   :name
   "point_of_sale_group_links"
   :plug-place
@@ -214,7 +242,7 @@
    :point_of_sale_group
    :point_of_sale
    :enterpreneur]
-  :view
+  :model
   (as-is
    :point_of_sale_group_links.id
    :point_of_sale_group_links.id_point_of_sale_group
@@ -264,14 +292,14 @@
 
 (defview
  service_contract
- (plug/jarman-table
+ (jarman-table
   :name
   "service_contract"
   :plug-place
   [:#tables-view-plugin]
   :tables
   [:service_contract :enterpreneur]
-  :view
+  :model
   (as-is
    :service_contract.id_enterpreneur
    :service_contract.contract_start_term
@@ -308,7 +336,7 @@
 
 (defview
  repair_contract
- (plug/jarman-table
+ (jarman-table
   :name
   "repair_contract"
   :plug-place
@@ -320,7 +348,7 @@
    :enterpreneur
    :old_seal
    :new_seal]
-  :view
+  :model
   (as-is
    :repair_contract.id_cache_register
    :repair_contract.id_old_seal
@@ -414,7 +442,4 @@
     :new_seal.seal_number
     :new_seal.datetime_of_use
     :new_seal.datetime_of_remove)}))
-
-
-
 

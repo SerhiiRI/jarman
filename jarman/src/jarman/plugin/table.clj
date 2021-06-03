@@ -3,6 +3,7 @@
    ;; Clojure toolkit 
    [clojure.data :as data]
    [clojure.string :as string]
+   [clojure.spec.alpha :as s]
    [seesaw.util :as u]
    ;; Seesaw components
    [seesaw.core :as c]
@@ -26,7 +27,6 @@
            (java.text SimpleDateFormat)))
 
 ;;; helper functions ;;;
-
 (defn- get-reference-col-table-alias [referenced-column] (second (re-matches #"id_(.+)" (name (:field referenced-column)))))
 (defn- get-reference-qualified-field [referenced-column table-meta]
   (if-not referenced-column
@@ -183,7 +183,7 @@
                 :name name-of-table
                 :plug-place [:#tables-view-plugin]
                 :tables tables
-                :view columns
+                :model columns
                 :query (if-not (empty? joines)
                           {:inner-join joines :columns columns}
                           {:columns columns})))))
@@ -265,7 +265,7 @@
       (c/scrollable TT :hscroll :as-needed :vscroll :as-needed :border nil))))
 
 (defn create-table [configuration toolkit-map]
-  (let [view (:view configuration) tables (:tables configuration)]
+  (let [view (:model configuration) tables (:tables configuration)]
     (if (and view tables)
       (let [model-columns (gui-table-model-columns tables view)
             table-model (gui-table-model model-columns (:select toolkit-map))]
@@ -357,7 +357,7 @@
                                                  connected-table-conf  (get-in global-configuration [key-table :plug/jarman-table :configuration])
                                                  connected-table-data  (get-in global-configuration [key-table :plug/jarman-table :data-toolkit])
                                                  selected-representation (fn [dialog-model-view returned-from-dialog]
-                                                                           (->> (get dialog-model-view :view)
+                                                                           (->> (get dialog-model-view :model)
                                                                                 (map #(get-in returned-from-dialog [%]))
                                                                                 (filter some?)
                                                                                 (string/join ", ")))
@@ -478,28 +478,69 @@
 ;;                      (.setLocationRelativeTo nil) c/pack! c/show!))]
 ;;   (c/config! my-frame :size [300 :by 800]))
 
-;;; PLUGINS ;;;
-(defn jarman-table [plugin-path global-configuration]
+;;;;;;;;;;;;;;;;;;;;
+;;;SPEC FOR KEYS ;;;
+;;;;;;;;;;;;;;;;;;;;
+;; main spec
+(s/def :global-plugin/vector vector?) 
+(s/def :global-plugin/keyword keyword?)
+(s/def :global-plugin/string string?)
+
+;; spec for permission
+(s/def :global-plugin/pkey (s/and :global-plugin/vector (s/coll-of :global-plugin/keyword)))
+;;(s/valid? :global-plugin/pkey [:user :admin]) ;;=> true
+
+(s/def :global-plugin/name :global-plugin/string)
+(s/def :global-plugin/plug-place :global-plugin/vector)
+
+(defn test-keys-jtable [conf spec-map]
+  (let [get-key (fn [arg] (first (first arg)))
+        get-spec (fn [arg] (second (first arg)))]
+    ((fn next [sm resault]
+       (println resault)
+       (if (or (= resault false)(empty? sm))                   
+         resault
+         (next (lang/map-rest sm)
+               (if (s/valid? (get-spec sm)
+                             ((get-key sm) conf))
+                 true
+                 (do (s/explain (get-spec sm)
+                                ((get-key sm) conf))
+                     false)))))
+     spec-map true)))
+
+;; (test-keys-jtable
+;;  {:pkey [:user], :plug-place [:#tables-view-plugin], :name :kk, :tables [:permission], :query {:columns ({:permission.id :permission.id} {:permission.permission_name :permission.permission_name} {:permission.configuration :permission.configuration})}, :table-name :permission, :view [:permission.permission_name :permission.configuration]}
+;;  {:pkey :global-plugin/pkey, :name :global-plugin/name, :plug-place :global-plugin/plug-place})
+
+
+;;;PLUGINS ;;;        
+(defn jarman-table-component [plugin-path global-configuration spec-map]
   (let [gett #(get-in (global-configuration) (lang/join-vec plugin-path %))
         data-toolkit  (gett [:data-toolkit])
         configuration (gett [:configuration])
         title (:representation (:table-meta data-toolkit))
         space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
         atm (:atom-expanded-items (c/config space :user-data))]
-    (swap! atm (fn [inserted]
-                 (conj inserted
-                       (button-expand-child
-                        title
-                        :onClick (fn [e] (@gseed/jarman-views-service
-                                          :set-view
-                                          :view-id (str "auto-" title)
-                                          :title title
-                                          :scrollable? false
-                                          :component-fn (fn [] (auto-builder--table-view
-                                                                plugin-path
-                                                                (global-configuration)
-                                                                data-toolkit
-                                                                configuration))))))))
+    (if (false? (test-keys-jtable configuration spec-map))
+      (println "Error in spec")
+      (swap! atm (fn [inserted]
+                   (conj inserted
+                         (button-expand-child
+                          title
+                          :onClick (fn [e] (@gseed/jarman-views-service
+                                            :set-view
+                                            :view-id (str "auto-" title)
+                                            :title title
+                                            :scrollable? false
+                                            :component-fn (fn [] (auto-builder--table-view
+                                                                  plugin-path
+                                                                  (global-configuration)
+                                                                  data-toolkit
+                                                                  configuration)))))))))
     (.revalidate space)))
+
+
   
+
 

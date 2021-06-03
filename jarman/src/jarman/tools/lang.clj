@@ -17,12 +17,22 @@
 (ns jarman.tools.lang
   (:use clojure.reflect seesaw.core)
   (:require [clojure.string :as string]
+            [clojure.pprint :as pprint]
             [clojure.java.io :as io]))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; helper function ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
+(defn pp-str
+  "Example:
+   [{:a \"yellow\", :b \"pink\"} {:a \"yellow\", :b \"pink\"} {:a \"yellow\", :b \"pink\"} {:a \"green\", :b \"red\"}]
+   ;; => [{:a \"yellow\", :b \"pink\"}
+          {:a \"yellow\", :b \"pink\"}
+          {:a \"yellow\", :b \"pink\"}
+          {:a \"green\", :b \"red\"}]"
+  [some-form]
+  (with-out-str (pprint/pprint some-form)))
 
 (defn in?
   "(in? [1 2 3 4 5 6] 1)

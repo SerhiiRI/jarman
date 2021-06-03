@@ -1338,8 +1338,8 @@
                                             (reset! popup-menager (create-popup-service atom-popup-hook))
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
+(@startup)
 
-;; (@startup)
 
 
 

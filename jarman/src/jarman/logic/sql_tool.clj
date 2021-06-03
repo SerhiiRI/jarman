@@ -1311,7 +1311,6 @@
                  (where-spec-doc)])))
 
 
-
 (defn- update-doc []
   (format "Description
     SSQL experssion function `update` using for generation SQL UPDATE strings. 
@@ -1536,8 +1535,6 @@
            ((ns-resolve 'jarman.logic.sql-tool rule-fn#) sql-string# (rule-key# ~'args) ~'table-name))
          (string/upper-case operation#)
          list-of-rules#)))))
-
-
 
 (define-sql-operation! insert! "INSERT INTO" (comp insert-update-empty-table-pipeline-applier
                                                 create-rule-pipeline))

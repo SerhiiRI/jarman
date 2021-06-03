@@ -18,6 +18,7 @@
    ;; [jarman.gui.gui-calendar :as calendar]
    ;; [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
+   [jarman.plugin.jspl :refer :all :as jspl]
    [jarman.plugin.table :as plug]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    [jarman.logic.metadata :as mt])
@@ -71,8 +72,7 @@
          :model-id id_column}
         rule-insert!
         rule-update!
-        rule-delete!
-        )))
+        rule-delete!)))
 
 ;; (let [configuration {:table-name :sealn
 ;;                      :name "Pushing seals"
@@ -126,7 +126,7 @@
         (keyword? (first l)) (recur (into prm {(first l) (second l)}) (drop 2 l) plugins)
         (list? (first l)) (recur prm (drop 1 l) (conj plugins (first l)))
         :else (recur prm (drop 1 l) plugins))
-      [(if-not (contains? prm :pkey) (assoc prm :pkey :user))
+      [(if-not (contains? prm :pkey) (assoc prm :pkey [:user]))
        plugins])))
 
 (defmacro defview-debug [table-model-name & body]
@@ -164,8 +164,6 @@
                                                  plugin-data-toolkit#)
                 (~f [ktable# kplugin#] ~'views-configuration+toolkit-get)))
          nil)))
-
-
 
 (defn as-is [& column-list]
   (map #(if (keyword? %) {% %} %) column-list))
@@ -213,9 +211,6 @@
               (+ s 1))
            (rest data))
           )))) 0 view-data))
-
-(defn pp-str [x]
-  (with-out-str (clojure.pprint/pprint x)))
 
 (defn loader-from-db [db-connection]
   (let [con (dissoc (db/connection-get)
@@ -271,3 +266,31 @@
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (map (fn [x] (eval x)) data))))))
 
+
+
+;; (defview
+;;   permission
+;;   :pkey
+;;   [:user :admin]
+;;   (jarman-table
+;;    :name
+;;    [:ke]
+;;    :pkey
+;;    "smt"
+;;    :plug-place
+;;    [:#tables-view-plugin]
+;;    :tables
+;;    [:permission]
+;;    :modal
+;;    [:permission.permission_name :permission.configuration]
+;;    :query
+;;    {:columns
+;;     (as-is
+;;      :permission.id
+;;      :permission.permission_name
+;;      :permission.configuration)}))
+;;view
+
+;;plug-place
+
+;;name

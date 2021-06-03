@@ -31,6 +31,7 @@
 (def user-home (System/getProperty "user.home"))
 (def user-dir (System/getProperty "user.dir"))
 
+
 ;;; JARMAN 
 (def jarman-home (-> (clojure.java.io/file ".") .getAbsoluteFile .getParentFile .getAbsolutePath))
 (def jarman-standart-config (clojure.string/join file-separator ["." "config"]))

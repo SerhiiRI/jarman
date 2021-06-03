@@ -187,7 +187,7 @@
                                (assoc-in  [:value :password :value] password)))  
   (if (:valid? (conf/store)) "yes"))
 
- ;;(store)
+;; (store)
 ;; (swapp)
 
 (defn delete-map [key-title]

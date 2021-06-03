@@ -147,10 +147,12 @@
           :field-table (keyword ((comp :field :table :prop) table-meta))
           :representatoin ((comp :representation :table :prop) table-meta)}
          (add-to-m-join-rules table-meta referenced-column referenced-table))
-     (mapv (fn [column]
-             (-> {:field-column (keyword-column-formatter referenced-column table-meta column)}
-                 (add-to-m-representation referenced-column column)))
-           ((comp :columns :prop) table-meta))])
+     (conj (mapv (fn [column]
+              (-> {:field-column (keyword-column-formatter referenced-column table-meta column)}
+                  (add-to-m-representation referenced-column column)))
+                 (cons {:description nil, :field :id, :column-type [:varchar-100 :nnull], :component-type ["n"], :representation "_", :field-qualified (keyword (format "%s.id" ((comp :field :table :prop) table-meta)))}
+                       ((comp :columns :prop) table-meta))))])
+
 
 (defn make-recur-meta-one-table [m-pipeline]
   (fn [table-name]
@@ -163,33 +165,34 @@
         @result))))  
 (def take-meta-for-view (make-recur-meta-one-table conj-table-meta))
 
+
 (defn create-jarman-table-plugin [table-name]
   (let [meta-table (first (mt/getset! table-name))
     name-of-table ((comp :representation :table :prop) meta-table)
     full-meta-debug (take-meta-for-view table-name)
-    tables (vec (for [meta-debug full-meta-debug]
-                  (:field-refer (first meta-debug))))
-    joines (vec (for [meta-debug full-meta-debug
-                      :when (keyword? (:join-rule (first meta-debug)))]
-                  (:join-rule (first meta-debug))))
-    joines (vec (for [meta-debug full-meta-debug
-                      :when (keyword? (:join-rule (first meta-debug)))]
-                  (:join-rule (first meta-debug))))
-        columns (concat (list 'as-is) (list (read-string (format "%s.id" table-name)))
+        tables (vec (for [meta-debug full-meta-debug]
+                      (:field-refer (first meta-debug))))
+        joines (vec (for [meta-debug full-meta-debug
+                          :when (keyword? (:join-rule (first meta-debug)))]
+                      (:join-rule (first meta-debug))))
+        columns (concat (list 'as-is) ;; (list (read-string (format "%s.id" table-name)))
                         (mapcat identity (for [meta-debug full-meta-debug]
-                                                     (mapv :field-column (second meta-debug)))))]
+                                           (mapv :field-column (second meta-debug)))))
+        models (vec (concat ;; (list (read-string (format "%s.id" table-name)))
+                            (mapcat identity (for [meta-debug full-meta-debug]
+                                               (mapv :field-column (second meta-debug))))))]
     (list 'defview (symbol table-name)
           (list 'jarman-table
                 :name name-of-table
                 :plug-place [:#tables-view-plugin]
                 :tables tables
-                :model columns
+                :model models
                 :query (if-not (empty? joines)
                           {:inner-join joines :columns columns}
                           {:columns columns})))))
 
 
-;;(create-jarman-table-plugin :permission)
+;; (create-jarman-table-plugin :repair_contract)
 ;; (mapv create-jarman-table-plugin [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month])
 
 

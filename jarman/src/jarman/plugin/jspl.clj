@@ -4,10 +4,10 @@
   (:require [jarman.plugin.table :as jarman-table-plugin]
             [jarman.gui.gui-tools :as tool]
             [jarman.config.environment :as env]
-            [jarman.tools.lang :refer :all :as lang]))
+            [jarman.tools.lang :refer :all]))
 
 
-(def str-space (fn [num] (apply str (take num (repeat " ")))))
+(def ^:private str-space (fn [num] (apply str (take num (repeat " ")))))
 
 (defn- flatt-offset-vec
   "Description:
@@ -41,10 +41,11 @@
                            [4 (clojure.string/split (pp-str exmp) #"\r\n")]]))))
 
 (defn generate-plugin-doc
-  "Description:
+  "Description
     This function generate doc for some plugin. Get title as description
     and map of configurations, return doc-strinf for function
-   Example:
+  
+   Example
     [[:permission
      {:spec :global-plugin/permission
       :examples [:user :admin]
@@ -60,7 +61,7 @@
          (doall (map (fn [b] (generate-key-section 4 b)) body))))
 
 (defn get-spec-from-map
-  "Example:
+  "Example
     [[:permission
      {:spec :global-plugin/permission
       :examples [:user :admin]
@@ -102,19 +103,9 @@
     :examples [:permission]
     :doc ""}]
   [:model
-   {:spec nil
-    :examples
-    [:permission.permission_name :permission.configuration]
-    :doc ""}]
+   {:spec nil, :examples [:permission.permission_name :permission.configuration], :doc ""}]
   [:query
-   {:spec nil
-    :examples
-    {:columns
-     (as-is
-      :permission.id
-      :permission.permission_name
-      :permission.configuration)}
-    :doc ""}]) 
+   {:spec nil, :examples {:columns (as-is :permission.id :permission.permission_name :permission.configuration)}, :doc ""}]) 
 
 
 

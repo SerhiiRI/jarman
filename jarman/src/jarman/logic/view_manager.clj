@@ -74,25 +74,26 @@
         rule-update!
         rule-delete!)))
 
-;; (let [configuration {:table-name :sealn
-;;                      :name "Pushing seals"
-;;                      :tables [:seal]
-;;                      :view [:seal.seal_number
-;;                             :seal.to_date]
-;;                      :override-model [{:start-value :text-input} {:end-value :text-input}]
-;;                      :insert (fn [m] {:table-name :seal
-;;                                      :column-list [:seal.seal_number :seal.to_date]
-;;                                      :values (mapv #(vector % (:to-date m)) (range (:start-value m) (+ (:end-value m) 1)))}) 
-;;                      :update (fn [m] {:table-name :seal
-;;                                      :set m}) ;;:none
-;;                      :delete :none
-;;                      :query {:column (as-is :seal.id :seal.seal_number :seal.to_date)}}]
-;;   (keys (sql-crud-toolkit-constructor configuration {})))
+
+#_(let [configuration {:table-name :sealn
+                     :name "Pushing seals"
+                     :tables [:seal]
+                     :view [:seal.seal_number
+                            :seal.to_date]
+                     :override-model [{:start-value :text-input} {:end-value :text-input}]
+                     :insert (fn [m] {:table-name :seal
+                                     :column-list [:seal.seal_number :seal.to_date]
+                                     :values (mapv #(vector % (:to-date m)) (range (:start-value m) (+ (:end-value m) 1)))}) 
+                     :update (fn [m] {:table-name :seal
+                                     :set m}) ;;:none
+                     :delete :none
+                     :query {:column (as-is :seal.id :seal.seal_number :seal.to_date)}}]
+  (keys (sql-crud-toolkit-constructor configuration {})))
 
 (defn export-toolkit-constructor [configuration toolkit-map]
   (if-let [select-expression (:select-expression toolkit-map)]
     {:export-select-expression (fn [] (select-expression :column nil :inner-join nil :where nil))
-     :export-select (fn [] (db/query (select-expression :column nil :inner-join nil :where nil))) }))
+     :export-select (fn [] (db/query (select-expression :column nil :inner-join nil :where nil)))}))
 
 (defn document-toolkit-constructor [configuration toolkit-map]
   (let [table-name (:table-name configuration)]

@@ -46,7 +46,7 @@
 ;; │ JLayeredPane Popup Service │
 ;; │                            │
 ;; └────────────────────────────┘
-
+ 
 (def popup-menager (atom nil))
 
 (defn ontop-panel
@@ -1339,7 +1339,7 @@
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
 (@startup)
-
+ 
 
 
 

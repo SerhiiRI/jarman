@@ -516,7 +516,6 @@
   (let [get-key (fn [arg] (first (first arg)))
         get-spec (fn [arg] (second (first arg)))]
     ((fn next [sm resault]
-       (println resault)
        (if (or (= resault false)(empty? sm))                   
          resault
          (next (lang/map-rest sm)

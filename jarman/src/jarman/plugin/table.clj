@@ -295,26 +295,41 @@
     (seesaw.core/show! dialog)))
 
 (defn d-component
+  "Set default component to form or override it"
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply calendar/calendar-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:set-date (:val coll)] [])))]
-    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
+    (try
+      (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
+      (catch Exception e (do (println "Can not override d-component:" (:title coll)) default)))
+    default))
 
 (defn a-component
+  "Set default component to form or override it"
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-text-area :store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll) (if (:val coll) [:val (:val coll)] [])))]
-    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
+    (try
+      (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
+      (catch Exception e (do (println "Can not override a-component:" (:title coll)) default)))
+    default))
 
 (defn n-component
+  "Set default component to form or override it"
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-int :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:val (:val coll)] [])))]
-    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
+    (try
+      (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
+      (catch Exception e (do (println "Can not override n-component:" (:title coll)) default)))
+    default))
 
 (defn i-component
+  "Set default component to form or override it"
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-text-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll) (if (:val coll) [:val (:val coll)] [])))]
-    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
-
-
+    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll))
+      (try
+        ((:fun (first (:override coll))) coll)
+        (catch Exception e (do (println "Can not override i-component:" (:title coll)) default)))
+      default)))
 (def build-input-form
   (fn [data-toolkit
        configuration

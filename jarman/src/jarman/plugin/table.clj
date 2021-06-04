@@ -295,41 +295,24 @@
     (seesaw.core/show! dialog)))
 
 (defn d-component
-  "Set default component to form or override it"
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply calendar/calendar-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:set-date (:val coll)] [])))]
-    (try 
-      (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
-      (catch Exception e (do (println "Can not override d-component:" (:title coll)) default)))
-    default))
+    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
 
 (defn a-component
-  "Set default component to form or override it"
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-text-area :store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll) (if (:val coll) [:val (:val coll)] [])))]
-    (try 
-      (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
-      (catch Exception e (do (println "Can not override a-component:" (:title coll)) default)))
-    default))
+    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
 
 (defn n-component
-  "Set default component to form or override it"
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-int :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:val (:val coll)] [])))]
-    (try
-      (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
-      (catch Exception e (do (println "Can not override n-component:" (:title coll)) default)))
-    default))
+    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
 
 (defn i-component
-  "Set default component to form or override it"
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-text-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll) (if (:val coll) [:val (:val coll)] [])))]
-    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) 
-      (try
-        ((:fun (first (:override coll))) coll)
-        (catch Exception e (do (println "Can not override i-component:" (:title coll)) default))) 
-      default)))
+    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
 
 
 (def build-input-form
@@ -480,7 +463,8 @@
           table         (fn [] (second (u/children view-layout)))
           header        (fn [] (c/label :text (get (:table-meta data-toolkit) :representation) :halign :center :border (sborder/empty-border :top 10)))
           update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration :model model :export-comp expand-export :more-comps [(return)])]))
-          expand-insert-form (gcomp/scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) ;;:hscroll :never
+          x nil ;;------------ Build
+          expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) ;;:hscroll :never
                                                   )
           back-to-insert     (fn [] (gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
@@ -546,7 +530,7 @@
       (println "Error in spec")
       (swap! atm (fn [inserted]
                    (conj inserted
-                         (gcomp/button-expand-child
+                         (button-expand-child
                           title
                           :onClick (fn [e] (@gseed/jarman-views-service
                                             :set-view

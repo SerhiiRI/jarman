@@ -10,15 +10,21 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
+
+
+;; ┌──────────────────────┐
+;; │                      │
+;; │ Zarządzanie tabelami │
+;; │                      │
+;; └──────────────────────┘
+
 (db/query (select {:table-name :user
                    :where [:and
-                           [:= :login "aleks"]
+                           [:= :login "aleks"]]
                         ;;    [:= :password "1234"]
-                           ]
-                   :inner-join {:permission :id_permission}
+                           
+                   :inner-join {:permission :id_permission}}))
                 ;;    :column [:login :password {:permission_name :pn}] ;; here i can chage :permission_name to :pn, some like alias
-                   }))
-
 
 (db/exec (insert :user :set 
                  {
@@ -26,21 +32,17 @@
                   :password "1234"
                   :first_name "Aleks"
                   :last_name "S"
-                  :id_permission 1
-                 }))
+                  :id_permission 1}))
 
 (db/exec (update :user
                  :where [:= :login "aleks"]
                  :set {:password "qwerty"}))
-
 
 (let [id (get (first (db/query (select {:table-name :user
                                         :where [:= :login "aleks"]
                                         :column [:id]}))) :id)]
   (db/exec (delete :user
                    :where [:= :id id])))
-
-
 
 (db/exec (create-table
           :pepe
@@ -61,5 +63,63 @@
           :pepe))
 
 (db/query (show-tables))
+
+
+;; ┌─────────────────────────┐
+;; │                         │
+;; │ Tymczasowa dokumentacja │
+;; │                         │
+;; └─────────────────────────┘
+
+;;
+;; ## Regeneracja bzay ##
+;;
+;; W pliku 'playground.clj' jest kilka zebranych funkcji, które to umożliwią
+;; a zgrupowano je do funkcji (tylko jej nie wywołuj!)
+;;
+;; (defn regenerate-scheme []
+;;   (sinit/procedure-test-all)
+;;   (delete-scheme)
+;;   (create-scheme)
+;;   (metadata/do-create-meta)
+;;   (metadata/do-create-references))
+;;
+;; (delete-scheme) usuwa zawartość bazy
+;; (sinit/procedure-test-all) generuje podstawowe tabele dla aplikacji jarman
+;; (create-scheme) generuje tabele pozostałe
+;; (metadata/do-create-meta) generuje meta informacje
+;; (metadata/do-create-references)) uzupełnia powiązania między tabelami
+;;
+;; structure_initializer.clj odpowiada za wygenerowanie podstawowych tabel
+;; dla jarmana funkcją (sinit/procedure-test-all)
+
+
+
+;; ## Dodanie tabeli ##
+;; W pliku 'playground.clj' można dodać nową tabelę, a jej schemat wygląda tak:
+;;
+;; (def user
+;;   (create-table :user
+;;                 :columns [{:login [:varchar-100 :nnull]}
+;;                           {:password [:varchar-100 :nnull]}
+;;                           {:first_name [:varchar-100 :nnull]}
+;;                           {:last_name [:varchar-100 :nnull]}
+;;                           {:id_permission [:bigint-20-unsigned :nnull]}]
+;;                 :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}]))
+;;
+;; Pamiętaj aby dodaną tabelę dodać do create-scheme i delete-scheme zachowując 
+;; odpowiednią kolejność referencji
+
+
+
+;; ## Dane testowe ##
+;; By stworzyć dane testowe wzorój się na poniższych funkcjach zaczynających się na fill-...
+
+
+
+;; ## Usuwanie tabeli ##
+;; Czyli usunięcie schematu bazy funkcją (delete-scheme) z 'playground.clj'
+;; Następnie wymazanie powiązanych z nią kodów z 'playground.clj'
+;; Regeneracja bazy ta jak opisano to wyżej 
 
 

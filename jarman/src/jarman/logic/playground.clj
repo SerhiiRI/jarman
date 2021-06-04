@@ -55,7 +55,7 @@
                           {:password [:varchar-100 :nnull]}
                           {:first_name [:varchar-100 :nnull]}
                           {:last_name [:varchar-100 :nnull]}
-                          {:id_permission [:bigint-120-unsigned :nnull]}]
+                          {:id_permission [:bigint-20-unsigned :nnull]}]
                 :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}]))
 
 (def enterpreneur
@@ -167,6 +167,7 @@
                                [{:id_repair_nature_of_problem :repair_nature_of_problem}
                                 {:delete :null :update :null}]]))
 
+
 (defmacro create-tabels [& tables]
   `(do ~@(for [t tables]
            `(db/exec ~t))))
@@ -227,6 +228,8 @@
   (create-scheme)
   (metadata/do-create-meta)
   (metadata/do-create-references))
+
+
 
 (defn regenerate-metadata []
   (do (metadata/do-clear-meta)
@@ -549,11 +552,11 @@
    [point_of_sale_group 10]
    [point_of_sale_group_links 10]
    [seal 50]
-   [service_contract 10]
-   [service_contract_mounth 20]
-   [repair_reasons 10]
-   [repair_technical_issue 10]
-   [repair_nature_of_problem 10]
-   [repair_contract 15]))
+   [service_contract 50]
+   [service_contract_mounth 50]
+   [repair_reasons 50]
+   [repair_technical_issue 50]
+   [repair_nature_of_problem 40]
+   [repair_contract 40]))
 
 

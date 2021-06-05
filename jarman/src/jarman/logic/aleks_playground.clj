@@ -72,7 +72,17 @@
 ;; └─────────────────────────┘
 
 ;;
-;; ## Regeneracja bzay ##
+;; ## Regeneracja bazy ##
+;;
+;; First create DB with terminal if not exist:
+;; $ mariadb -u root -p
+;; >show database;
+;; >SELECT User FROM mysql.user;
+;; >create database jarman;
+;; >GRANT USAGE ON jarman.* TO 'root'@'%' IDENTIFIED BY 'mypassword';
+;; >GRANT ALL privileges ON `jarman`.* TO 'root'@'%';
+;; >FLUSH PRIVILEGES;
+;; >show grants for root@'%';
 ;;
 ;; W pliku 'playground.clj' jest kilka zebranych funkcji, które to umożliwią
 ;; a zgrupowano je do funkcji (tylko jej nie wywołuj!)

@@ -71,18 +71,64 @@
                    (concat %1 (r-unwrapper [] %2))) result example))
       (r-unwrapper [] vects))))
 
-(defn convert-key-to-title [key] (-> (string/replace (str key) #":" "") (string/replace  #"[-_]" " ") (string/replace  #"^." #(.toUpperCase %1))))
-(defn convert-txt-to-title [txt] (-> (string/replace (str txt) #":" "") (string/replace  #"[-_]" " ") (string/replace  #"^." #(.toUpperCase %1))))
-(defn convert-txt-to-UP [txt] (-> (string/replace (str txt) #":" "") (string/replace  #"[-_]" " ") (string/replace  #"." #(.toUpperCase %1))))
-(defn rm-colon [txt] (-> (string/replace (str txt) #":" "")))
-(defn convert-mappath-to-key [path] (keyword (rm-colon (string/join "-" path))))
-(defn convert-str-to-hashkey [str] (keyword (string/join "" ["#" str])))
-(defn in-list? [coll key] (not (empty? (filter #(= key %) coll))))
-(defn rift 
-  "Return condition if true or return else
-   (rift (- 3 3) \"zero\") => zero
-   (rift (- 3 2) \"zero\") => 1"
-  [con els] (if con con els))
+(defn convert-key-to-title 
+  "Description:
+      Set :key and get title Key. Fn removing symbols [ - _ . ]. First char will be upper.
+   Example:
+      (convert-key-to-title :my-title) => \"My title\"
+      (convert-key-to-title :my_title) => \"My title\"
+      (convert-key-to-title :my.title) => \"My title\""
+  [key] (-> (string/replace (str key) #":" "") (string/replace  #"[-_.]" " ") (string/replace  #"^." #(.toUpperCase %1))))
+
+(defn convert-txt-to-title 
+  "Description:
+      Set some string and get like a title. Fn removing symbols [ - _ . ]. First char will be upper.
+   Example:
+      (convert-txt-to-title \"my title\") => \"My title\"
+      (convert-txt-to-title \"my-title\") => \"My title\"
+      (convert-txt-to-title \"my.title\") => \"My title\""
+  [txt] (-> (string/replace (str txt) #":" "") (string/replace  #"[-_.]" " ") (string/replace  #"^." #(.toUpperCase %1))))
+
+(defn convert-txt-to-UP 
+  "Description:
+      Set some string and get with upper chars.
+   Example:
+      (convert-txt-to-UP \"my title\") => \"MY TITLE\"
+      (convert-txt-to-UP \"my-title\") => \"MY-TITLE\""
+  [txt] (-> (string/replace (str txt) #":" "") (string/replace  #"." #(.toUpperCase %1))))
+
+(defn convert-mappath-to-key 
+  "Description:
+      Set some :key coll and get one marge key.
+   Example:
+      (convert-mappath-to-key [:path :to :my :conf]) => :path-to-my-conf"
+  [path] (keyword (string/join "-" (vec (map #(name %) path)))))
+
+(defn convert-to-hashkey 
+  "Description:
+      Set some :key coll and get one marge key.
+   Example:
+      (convert-to-hashkey \"my-id\") => :#my-id
+      (convert-to-hashkey :my-id)    => :#my-id"
+  [x] (cond (string? x)  (keyword (str "#" x))
+            (keyword? x) (keyword (str "#" (name x)))))
+
+(defn rift
+  "Description:
+      Return condition result if true or return else value if condition return false, nil, 0, empty
+   Example:
+   (rift (- 3 3) \"zero\") => \"zero\"
+   (rift []   \"zero\")    => \"zero\"
+   (rift \"\" \"zero\")    => \"zero\"
+   (rift nil  \"zero\")    => \"zero\"
+   (rift [1]  \"zero\")    => 1
+   (rift (- 3 2) \"zero\") => 1
+   (rift \"A\"   \"zero\") => \"A\""
+  [con els]
+  (cond (and (number? con) (not (zero? con)))   con
+        (and (sequential? con) (not-empty con)) con
+        (and (string? con) (not-empty con))     con
+        :else els))
 
 
 (defmacro join

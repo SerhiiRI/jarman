@@ -13,7 +13,8 @@
             [jarman.gui.gui-alerts-service :as gas]
             [jarman.gui.gui-tools :as gtool]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
-  (:import (java.awt Color)))
+  (:import (java.awt Color)
+           (jarman.test CustomScrollBar)))
 
 (jarman.config.config-manager/swapp)
 
@@ -149,6 +150,25 @@
     (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
     (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. vbar-size 0))
     (.setPreferredSize (.getHorizontalScrollBar scr) (java.awt.Dimension. 0 hbar-size))
+    scr))
+
+(defn min-scrollbox
+  [component
+   & args]
+  (let [scr (CustomScrollBar/myScrollPane component)
+        get-key (fn [x] (first (first x)))
+        get-val (fn [x] (second (first x)))]  ;; speed up scrolling
+    (if-not (nil? args)
+       ((fn next [sm]
+          (if (empty? sm)                   
+            nil
+            (do 
+              (c/config! (c/label) (get-key sm) (get-val sm))
+              (next (lang/map-rest sm)))))
+        args))
+    (.setBorder scr nil)
+    (.setUnitIncrement (.getVerticalScrollBar scr) 20)
+    (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
     scr))
 
 (defn header-basic
@@ -441,6 +461,17 @@
                                      (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
                                      :else (reset! local-changes (dissoc @local-changes store-id)))))])
        (scrollbox text-area :minimum-size [50 :by 100])))))
+
+(defn input-text-area-label
+  [& {:keys [title
+             store-id
+             local-changes
+             val] 
+      :or {title "None"
+           store-id :none
+           local-changes (atom {})
+           val ""}}]
+  (inpose-label title (input-text-area :store-id store-id :local-changes local-changes :val val)))
 
 (defn input-text-with-atom
   [& {:keys [store-id local-changes val editable? enabled? store-orginal onClick border-color-focus border-color-unfocus debug]

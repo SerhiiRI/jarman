@@ -241,27 +241,45 @@
     (.setLocationRelativeTo dialog frame)
     (seesaw.core/show! dialog)))
 
+
 (defn- d-component
+  "Set default component to form or override it"
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply calendar/calendar-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:set-date (:val coll)] [])))]
-    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
+    (try
+      (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
+      (catch Exception e (do (println "Can not override d-component:" (:title coll)) default)))
+    default))
+
 
 (defn- a-component
+  "Set default component to form or override it"
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-text-area :store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll) (if (:val coll) [:val (:val coll)] [])))]
-    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
+    (try
+      (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
+      (catch Exception e (do (println "Can not override a-component:" (:title coll)) default)))
+    default))
+
 
 (defn- n-component
+  "Set default component to form or override it"
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-int :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:val (:val coll)] [])))]
-    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
+    (try
+      (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
+      (catch Exception e (do (println "Can not override n-component:" (:title coll)) default)))
+    default))
 
 (defn- i-component
+  "Set default component to form or override it"
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-text-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll) (if (:val coll) [:val (:val coll)] [])))]
-    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
-
-
+    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll))
+      (try
+        ((:fun (first (:override coll))) coll)
+        (catch Exception e (do (println "Can not override i-component:" (:title coll)) default)))
+      default)))
 (def build-input-form
   (fn [data-toolkit
        configuration
@@ -411,7 +429,8 @@
           header        (fn [] (c/label :text (get (:table-meta data-toolkit) :representation) :halign :center :border (sborder/empty-border :top 10)))
           update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration :model model :export-comp expand-export :more-comps [(return)])]))
           x nil ;;------------ Build
-          expand-insert-form (gcomp/scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never)
+          expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) ;;:hscroll :never
+                                                  )
           back-to-insert     (fn [] (gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
           table              (fn [] ((get (create-table configuration data-toolkit) :table) (fn [model] (expand-update-form model back-to-insert)))) ;; TODO: set try
@@ -447,7 +466,6 @@
   (let [get-key (fn [arg] (first (first arg)))
         get-spec (fn [arg] (second (first arg)))]
     ((fn next [sm resault]
-       (println resault)
        (if (or (= resault false)(empty? sm))                   
          resault
          (next (lang/map-rest sm)

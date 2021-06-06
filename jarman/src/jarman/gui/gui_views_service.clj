@@ -22,8 +22,7 @@
       If height in size will be different than 25, you probably should change it in mig-app-right-f. 
    Needed:
       Import jarman.dev-tools
-      Function need stool/image-scale function for scalling icon
-   "
+      Function need stool/image-scale function for scalling icon"
   (fn [view-id title tab-tip bg-color size onclose onclick]
     (let [border "#fff"
           hsize (first size)

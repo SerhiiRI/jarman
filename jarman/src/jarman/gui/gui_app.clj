@@ -27,7 +27,7 @@
             [jarman.config.spec :as sspec]
             [jarman.config.init :as iinit]
             [jarman.logic.metadata :as mmeta]
-            [jarman.tools.lang :refer :all :as lang]
+            [jarman.tools.lang :as lang]
             [jarman.gui.gui-seed :refer :all]
             [jarman.gui.gui-config-generator :refer :all :as cg]
             ;; [jarman.logic.view :as view]
@@ -46,7 +46,7 @@
 ;; │ JLayeredPane Popup Service │
 ;; │                            │
 ;; └────────────────────────────┘
-
+ 
 (def popup-menager (atom nil))
 
 (defn ontop-panel
@@ -253,7 +253,7 @@
         z-index (atom 1000)
         JLP (getParent @atom-popup-hook)]
     (fn [action & {:keys [title, body, size] :or {title "Popup" body (label :text "Popup") size [600 400]}}]
-      (let [unique-id (keyword (random-unique-id))
+      (let [unique-id (keyword (lang/random-unique-id))
             template (fn [component] ;; Set to main JLayeredPane new popup panel
                        (do (swap! atom-popup-storage (fn [popups] (merge popups {unique-id component}))) ;; add new component to list with auto id
                            (swap! z-index inc)
@@ -416,7 +416,7 @@
   [work-mode local-changes path-to-value column]
   (let [param-to-edit (fn [param enabled]
                         (cond
-                          (in? [true false] (get column param))
+                          (lang/in? [true false] (get column param))
                           (do
                             (config!
                              (gcomp/input-checkbox
@@ -563,7 +563,7 @@
              (join-mig-items
               (label :text "Columns" :border (empty-border :top 5 :bottom 5) :foreground blue-color)
               (map (fn [column index]
-                     (let [path-to-value (join-vec path-to-value [index])
+                     (let [path-to-value (lang/join-vec path-to-value [index])
                            meta-panel (mig-panel
                                        :constraints ["wrap 1" "grow, fill" ""]
                                        :items [[(label :text (name (:field column))
@@ -573,12 +573,12 @@
                        (table-editor--component--column-picker-btn
                         (get-in column [:representation])
                         (fn [e]
-                          (config! (select (to-root @app) [(convert-str-to-hashkey column-editor-id)])
+                          (config! (select (to-root @app) [(lang/convert-to-hashkey column-editor-id)])
                                    :items (gtool/join-mig-items meta-panel))))))
                    columns (range (count columns)))
               (label :text "Actions" :border (empty-border :top 5 :bottom 5) :foreground blue-color)
               (table-editor--element--btn-add-column (fn [e]
-                                                       (config! (select (to-root @app) [(convert-str-to-hashkey column-editor-id)])
+                                                       (config! (select (to-root @app) [(lang/convert-to-hashkey column-editor-id)])
                                                                 :items (gtool/join-mig-items (add-column-panel table-name))))))))
 
 (defn table-editor--component--space-for-column-editor
@@ -695,12 +695,12 @@
         tab-path-to-value [:prop :table]
         columns        (get-in table col-path-to-value) ;; Get columns list
         table-property (get-in table tab-path-to-value) ;; Get table property
-        elems          (join-vec
+        elems          (lang/join-vec
                     ;; Table info
                         [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "10px[fill]10px"] ;; menu bar for editor
                                      :items (join-mig-items
                                              [(table-editor--element--header-view (str "Edit table: \"" table-name "\""))]
-                                             (cond (in? ["developer" "admin"] work-mode)
+                                             (cond (lang/in? ["developer" "admin"] work-mode)
                                                    (list [(table-editor--element--btn-save local-changes table invoker-id)]
                                                          [(table-editor--element--btn-show-changes local-changes table)])
                                                    :else [])))]]
@@ -717,7 +717,7 @@
                                              :items (gtool/join-mig-items ;;here
                                                      (let [param-to-edit (fn [param enabled]
                                                                            (cond
-                                                                             (in? [true false] (get table-property param))
+                                                                             (lang/in? [true false] (get table-property param))
                                                                              (do
                                                                                (config! (gcomp/input-checkbox
                                                                                          :txt (lang/convert-key-to-title (str param))
@@ -1338,8 +1338,8 @@
                                             (reset! popup-menager (create-popup-service atom-popup-hook))
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
-(@startup)
-
+;; (@startup)
+ 
 
 
 

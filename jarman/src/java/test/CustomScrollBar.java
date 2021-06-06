@@ -1,3 +1,4 @@
+package jarman.test;
 
 import java.awt.Color;
 import java.awt.Container;
@@ -18,7 +19,6 @@ import javax.swing.WindowConstants;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
 public class CustomScrollBar {
-
     public static void main(String[] args) {
         JTextArea cmp = new JTextArea();
         String str = "a";
@@ -28,12 +28,12 @@ public class CustomScrollBar {
         cmp.setBackground(Color.decode("#eeeeee"));
         JFrame f = new JFrame();
         f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        f.getContentPane().add(my_scroll_pane(cmp));
+        f.getContentPane().add(myScrollPane(cmp));
         f.setSize(320, 240);
         f.setVisible(true);
     }
 
-    public static JScrollPane my_scroll_pane(JComponent cmp) {
+    public static JScrollPane myScrollPane(JComponent cmp) {
         JScrollPane scrollPane = new JScrollPane(cmp);
         scrollPane.setComponentZOrder(scrollPane.getVerticalScrollBar(), 0);
         scrollPane.setComponentZOrder(scrollPane.getViewport(), 1);
@@ -104,19 +104,19 @@ public class CustomScrollBar {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
             Color color = null;
-            JScrollBar sb = (JScrollBar) c;
+            JScrollBar sb = (JScrollBar) c ;
             if (!sb.isEnabled() || r.width > r.height) {
                 return;
             } else if (isDragging) {
-                color = (Color.decode("#bbbbbb"));
+                color = (Color.decode("#cccccc"));
             } else if (isThumbRollover()) {
-                color = Color.LIGHT_GRAY;
+                color = (Color.decode("#cdcdcd"));
             } else {
-                color = (Color.decode("#bbbbbb"));
+                color = (Color.decode("#cccccc"));
             }
             g2.setPaint(color);
             g2.fillRoundRect(r.x, r.y, r.width, r.height, 0, 0);
-            g2.setPaint(Color.decode("#bbbbbb"));
+            g2.setPaint(Color.decode("#cccccc"));
             g2.drawRoundRect(r.x, r.y, r.width, r.height, 0, 0);
             g2.dispose();
         }

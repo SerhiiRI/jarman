@@ -462,6 +462,17 @@
                                      :else (reset! local-changes (dissoc @local-changes store-id)))))])
        (scrollbox text-area :minimum-size [50 :by 100])))))
 
+(defn input-text-area-label
+  [& {:keys [title
+             store-id
+             local-changes
+             val] 
+      :or {title "None"
+           store-id :none
+           local-changes (atom {})
+           val ""}}]
+  (inpose-label title (input-text-area :store-id store-id :local-changes local-changes :val val)))
+
 (defn input-text-with-atom
   [& {:keys [store-id local-changes val editable? enabled? store-orginal onClick border-color-focus border-color-unfocus debug]
       :or {local-changes (atom {})

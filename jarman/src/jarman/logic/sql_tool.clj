@@ -1545,11 +1545,9 @@
 (define-sql-operation! select! (comp select-table-count-pipeline-applier
                                   select-table-top-n-pipeline-applier
                                   select-empty-table-pipeline-applier
-                                  create-rule-pipeline )) 
-(define-sql-operation! create-table! "CREATE TABLE IF NOT EXISTS" (comp empty-engine-pipeline-applier
-                                                                     create-rule-pipeline))
-(define-sql-operation! alter-table! "ALTER TABLE" (comp get-first-macro-from-pipeline
-                                                     create-rule-pipeline))
+                                  create-rule-pipeline)) 
+(define-sql-operation! create-table! "CREATE TABLE IF NOT EXISTS" (comp empty-engine-pipeline-applier create-rule-pipeline))
+(define-sql-operation! alter-table! "ALTER TABLE" (comp get-first-macro-from-pipeline create-rule-pipeline))
 
 (defmacro build-partial [part-elem]
   `(fn [m#] (if ~part-elem (into m# {~(keyword (name part-elem)) ~part-elem}) m#)))
@@ -1563,10 +1561,10 @@
 ;;     select-empty-table-pipeline-applier
 ;;     create-rule-pipeline))
 
-
-(defn select-builder [table-name & {:keys [top limit count column order inner-join right-join left-join outer-left-join outer-right-join where]}]
+(defn select-builder [{:keys [table-name top limit count column order inner-join right-join left-join outer-left-join outer-right-join where]}]
   ;; (println [:top top] [:limit limit] [:count count] [:column column] [:order order] [:inner-join inner-join] [:right-join right-join] [:left-join left-join] [:outer-left-join outer-left-join] [:outer-right-join outer-right-join] [:where where])
-  (let [if-top (build-partial top)
+  (let [if-table-name (build-partial table-name)
+        if-top (build-partial top)
         if-limit (build-partial limit)
         if-count (build-partial count)
         if-column (build-partial column)
@@ -1577,7 +1575,8 @@
         if-outer-left-join (build-partial outer-left-join)
         if-outer-right-join (build-partial outer-right-join)
         if-where (build-partial where)]
-    (-> {:table-name table-name}
+    (-> {}
+        if-table-name
         if-top 
         if-limit 
         if-count 

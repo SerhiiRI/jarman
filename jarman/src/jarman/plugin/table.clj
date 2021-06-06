@@ -139,10 +139,11 @@
        (apply array-map)))
 
 
-;;; ------------------------
-;;; for system requirements
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; METADATA TABLE MODEL CREATOR ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn conj-table-meta [referenced-table referenced-column table-meta]
+(defn- conj-table-meta [referenced-table referenced-column table-meta]
     [(-> {:field-refer (get-reference-qualified-field referenced-column table-meta)
           :field-table (keyword ((comp :field :table :prop) table-meta))
           :representatoin ((comp :representation :table :prop) table-meta)}
@@ -154,7 +155,7 @@
                        ((comp :columns :prop) table-meta))))])
 
 
-(defn make-recur-meta-one-table [m-pipeline]
+(defn- make-recur-meta-one-table [m-pipeline]
   (fn [table-name]
     (if-let [table-metadata (first (mt/getset! table-name))]
       (let [result (atom [])]
@@ -163,10 +164,10 @@
          (fn [referenced-table referenced-column table-meta]
            (swap! result (fn [m] (conj m (m-pipeline referenced-table referenced-column table-meta))))))
         @result))))  
-(def take-meta-for-view (make-recur-meta-one-table conj-table-meta))
+(def ^:private take-meta-for-view (make-recur-meta-one-table conj-table-meta))
 
 
-(defn create-jarman-table-plugin [table-name]
+(defn- create-jarman-table-plugin [table-name]
   (let [meta-table (first (mt/getset! table-name))
     name-of-table ((comp :representation :table :prop) meta-table)
     full-meta-debug (take-meta-for-view table-name)
@@ -189,76 +190,22 @@
                 :model models
                 :query (if-not (empty? joines)
                           {:inner-join joines :columns columns}
-                          {:columns columns})))))
-
+                          {:column columns})))))
 
 ;; (create-jarman-table-plugin :repair_contract)
 ;; (mapv create-jarman-table-plugin [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month])
 
-
-;;; ------------------------
-;;; for system requirements
-
-;;; WARNING
-;;; DEPRECATED
-;; (defn get-view-column-meta [table-list column-list]
-;;   (->> table-list
-;;        (mapcat (fn [t] (vec ((comp :columns :prop) (first (mt/getset! t))))))
-;;        (filter (fn [c] (in? column-list (keyword (:field-qualified c)))))))
-
-;;; WARNING
-;;; DEPRECATED
-;; (defn- model-column [col-representation column]
-;;   (let [component-type (:component-type column)
-;;         on-boolean (fn [m] (if (in? component-type "b") (into m {:class java.lang.Boolean}) m))
-;;         on-number  (fn [m] (if (in? component-type "n") (into m {:class java.lang.Number})  m))]
-;;     (-> {:key (keyword (:field-qualified column)) :text (:representation column)}
-;;         on-number
-;;         on-boolean)))
-
-;;; WARNING
-;;; DEPRECATED
-;; (defn- model-column [col-representation column]
-;;   (let [component-type (:component-type column)
-;;         on-boolean (fn [m] (if (in? component-type "b") (into m {:class java.lang.Boolean}) m))
-;;         on-number  (fn [m] (if (in? component-type "n") (into m {:class java.lang.Number})  m))]
-;;     (-> {:key (keyword (:field-qualified column)) :text (:representation column)}
-;;         on-number
-;;         on-boolean)))
-
-;;; WARNING
-;;; DEPRECATED
-;; (defn gui-table-model-columns [table-list column-list col-representation]
-;;   (mapv (partial model-column col-representation) (get-view-column-meta table-list column-list)))
-
-;; (let [on-text  (fn [m v] (into m {:text (:representation v)}))
-;;       on-class (fn [m v] (if (contains? v :class) (into m {:class (:class v)}) m))]
-;;   (map (fn [[k v]] (-> {:key k} (on-class v) (on-text v)))
-;;        (jarman-table-columns-list [:repair_contract :seal]
-;;                                   [:repair_contract.id_cache_register
-;;                                    :repair_contract.id_old_seal
-;;                                    :repair_contract.id_new_seal
-;;                                    :repair_contract.repair_date
-;;                                    :repair_contract.cause_of_removing_seal
-;;                                    :repair_contract.tech_problem_description
-;;                                    :repair_contract.tech_problem_type
-;;                                    :repair_contract.cache_register_register_date
-;;                                    :seal.seal_number
-;;                                    :old_seal.seal_number
-;;                                    :new_seal.seal_number
-;;                                    :telefon.nubmer])))
-
-
-(defn gui-table-model-columns [table-list table-column-list]
-  (let [on-text  (fn [m v] (into m {:text (:representation v)}))
+(defn- gui-table-model-columns [table-list table-column-list]
+  (let
+      [on-text  (fn [m v] (into m {:text (:representation v)}))
         on-class (fn [m v] (if (contains? v :class) (into m {:class (:class v)}) m))]
     (mapv (fn [[k v]] (-> {:key k} (on-class v) (on-text v)))
           (jarman-table-columns-list table-list table-column-list))))
 
-(defn gui-table-model [model-columns data-loader]
+(defn- gui-table-model [model-columns data-loader]
   (fn [] [:columns model-columns :rows (data-loader)]))
 
-(defn gui-table [model]
+(defn- gui-table [model]
   (fn [listener-fn]
     (let [TT (swingx/table-x :model (model))]
       (c/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (c/selection TT)))))
@@ -267,7 +214,7 @@
       (c/config! TT :show-horizontal-lines? true)
       (c/scrollable TT :hscroll :as-needed :vscroll :as-needed :border nil))))
 
-(defn create-table [configuration toolkit-map]
+(defn- create-table [configuration toolkit-map]
   (let [view (:model configuration) tables (:tables configuration)]
     (if (and view tables)
       (let [model-columns (gui-table-model-columns tables view)
@@ -275,7 +222,7 @@
         {:table-model table-model
          :table (gui-table table-model)}))))
 
-(defn construct-dialog [table-fn selected frame]
+(defn- construct-dialog [table-fn selected frame]
   (let [dialog (seesaw.core/custom-dialog :modal? true :width 600 :height 400 :title "Select component")
         table (table-fn (fn [model] (seesaw.core/return-from-dialog dialog model)))
         key-p (seesaw.mig/mig-panel
@@ -294,22 +241,22 @@
     (.setLocationRelativeTo dialog frame)
     (seesaw.core/show! dialog)))
 
-(defn d-component
+(defn- d-component
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply calendar/calendar-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:set-date (:val coll)] [])))]
     (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
 
-(defn a-component
+(defn- a-component
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-text-area :store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll) (if (:val coll) [:val (:val coll)] [])))]
     (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
 
-(defn n-component
+(defn- n-component
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-int :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:val (:val coll)] [])))]
     (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
 
-(defn i-component
+(defn- i-component
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-text-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll) (if (:val coll) [:val (:val coll)] [])))]
     (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll) default)))
@@ -488,7 +435,7 @@
 (s/def :global-plugin/vector vector?) 
 (s/def :global-plugin/keyword keyword?)
 (s/def :global-plugin/string string?)
-
+ 
 ;; spec for permission
 (s/def :global-plugin/pkey (s/and :global-plugin/vector (s/coll-of :global-plugin/keyword)))
 ;;(s/valid? :global-plugin/pkey [:user :admin]) ;;=> true

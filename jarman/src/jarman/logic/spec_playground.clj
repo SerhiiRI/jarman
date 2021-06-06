@@ -20,8 +20,7 @@
 (s/explain :some-test/url "sfszfgsgsgg")
 
 (s/def :some-test/kwd keyword?)
-(s/def :some-test/kwd-or-url (s/or :my-kwd (s/or :kwd-url
-                                                 
+(s/def :some-test/kwd-or-url (s/or :my-kwd (s/or :kwd-url                                                 
                                                  #(and keyword?
                                                        (= (apply str (take 4 (name %)))  "http"))
                                                  :simple keyword?)
@@ -82,3 +81,19 @@
 ;;                               ))
 
 (s/conform :test-user/string '(select user))
+
+
+(s/def :some-block/login :some-test/string)
+(s/def :some-block/password :some-test/long-string)
+(s/def :some-block/telephone (s/and :some-test/string
+                                    #(= \+ (first (take 1 %)))))
+
+(s/def :some-block/user
+  (s/keys :req-un [:some-block/login
+                   :some-block/password]
+          :opt-un [:some-block/telephone]))
+
+(s/explain :some-block/user {:login "Julka"
+                             :password "headsfacsxaa"
+                             ;;:telephone "+2"
+                             :heyy "s"})

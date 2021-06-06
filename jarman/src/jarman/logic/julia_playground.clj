@@ -69,3 +69,33 @@
 (db/exec (create-table
          :repair_reasons
          :columns [{:reason [:varchar-120 :default :null]}]))
+
+
+(def fill-hierarchy (-> (make-hierarchy)
+                        (derive :input.radio ::checkable)
+                        (derive :input.checkbox ::checkable)))
+(defn- fill-dispatch [node value]
+  (if-let [type (and (= :input (:tag node))
+                     (-> node :attrs :type))]
+    [(keyword (str "input." type)) (class value)]
+    [(:tag node) (class value)]))
+(defmulti fill
+  #'fill-dispatch
+  :default nil
+  :hierarchy #'fill-hierarchy)
+(defmethod fill nil
+  [node value]
+  (if (= :input (:tag node))
+    (do
+      (alter-var-root #'fill-hierarchy
+                      derive (first (fill-dispatch node value)) :input)
+
+      
+      ;; (fill {:tag :div} "hello")
+      ;; ;; => {:tag :div, :content ["hello"]}
+      
+      ;; (fill {:tag :input} "hello")
+      ;; ;; => {:tag :input, :attrs {:value "hello"}}
+      
+      ;; (fill {:span :input} "hello")
+      

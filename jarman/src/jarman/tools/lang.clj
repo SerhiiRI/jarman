@@ -14,6 +14,7 @@
 ;;; ** head/tail destruction for maps
 ;;; ** cond-contain test if key in map
 ;;; ** get-key-paths-recur with key-paths implementation
+;;; * as-debug->> 
 (ns jarman.tools.lang
   (:use clojure.reflect seesaw.core)
   (:require [clojure.string :as string]
@@ -24,6 +25,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; helper function ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn pp-str
   "Example:
    [{:a \"yellow\", :b \"pink\"} {:a \"yellow\", :b \"pink\"} {:a \"yellow\", :b \"pink\"} {:a \"green\", :b \"red\"}]
@@ -82,6 +84,7 @@
    (rift (- 3 2) \"zero\") => 1"
   [con els] (if con con els))
 
+
 (defmacro join
   "(filter-nil [nil 1 nil 3 4]) ;=> [1 3 4]"
   [delimiter col]
@@ -98,7 +101,14 @@
   (->> some-object
        reflect :members (filter :return-type) (map :name) sort (map #(str "." %) ) distinct println))
 
-(def random-unique-id (fn [] (string/join "" [(java.time.LocalDateTime/now) (rand-int 10000)])))
+(defn random-unique-id
+  "Description
+    Generate unique id from current timestamp,
+    also add random int to end
+  Example
+    (random-unique-id)
+    ;; => 2021-06-06T02:18:32.1718666878"
+  [] (string/join "" [(java.time.LocalDateTime/now) (rand-int 10000)]))
 
 (defmacro blet
   "Description
@@ -144,40 +154,56 @@
 ;;; where macro ;;;
 ;;;;;;;;;;;;;;;;;;;
 
-(def ^:private recursive-linier-terms
+(def recursive-linier-terms
   [{:term 'reduce :arg 2}
    {:term 'map :arg 1}
    {:term 'filter :arg 1}
    {:term 'if :arg 2}
    {:term 'do :arg 1}
+   {:term 'apply :arg 1}
    {:term '|> :arg 1}
    {:term 'doto :arg 1}
-   {:term 'ift :arg 1}
-   {:term 'ifn :arg 1}
-   {:term 'ifp :arg 2}
+   {:term 'if1 :arg 2}
+   {:term 'if2 :arg 3}
    {:term 'iff1 :arg 2}
    {:term 'iff2 :arg 3}
    {:term 'otherwise :arg 1}])
 
-(defmacro action-linier-preprocess [symbol args]
-  (condp = symbol
-    'map `(map ~@args)
-    'reduce `(reduce ~@args)
-    'filter `(filter ~@args)
-    'do `(~@args)
-    '|> `(~@args)
-    'doto `(doto ~(last args) ~(first args))
-    'otherwise `(if ~(second args) ~(second args) ~(first args) )
-    'ift `(if ~(last args) ~(first args) ~(last args))
-    'ifn `(if ~(last args) ~(last args) ~(first args))
-    'ifp `(if (~(first args) ~(last args)) ~(last args) ~(second args))
-    'iff1 `(if (~(first args) ~(last args)) ~(last args) (~(second args) ~(last args)))
-    'iff2 `(if (~(first args) ~(last args)) (~(second args) ~(last args)) (~(nth args 2 #'identity) ~(last args)))
+(defmacro action-linier-preprocess
+  "Description
+    Make some pipeline managment to control over instruction
+  
+  Example 
+    (action-linier-preprocess reduce [1 2 3] (+ 0));; => 6
+    (action-linier-preprocess map [1 2 3] (inc));; => (2 3 4)
+    (action-linier-preprocess filter [1 2 3] (number?));; => (1 2 3)
+    (action-linier-preprocess do [1 2 3] (count));; => 3
+    (action-linier-preprocess |> [1 2 3] (count));; => 3
+    (action-linier-preprocess doto [1 2 3] (println));; => 3
+    (action-linier-preprocess apply [1 2 3] (+));; => 6
+    (action-linier-preprocess otherwise nil (2));; => 2
+    (action-linier-preprocess iff1 1 (number? inc));; => 2
+    (action-linier-preprocess iff2 -2 (pos? inc));; => -2"
+  [action var-value pipe-declaration]
+  {:pre [(symbol? action) (sequential? pipe-declaration)]}
+  (condp = action
+    'map `(map ~@pipe-declaration ~var-value)
+    'reduce `(reduce ~@pipe-declaration ~var-value)
+    'filter `(filter ~@pipe-declaration ~var-value)
+    'do `(~@pipe-declaration ~var-value)
+    'apply `(apply ~@pipe-declaration ~var-value)
+    '|> `(~@pipe-declaration ~var-value)
+    'doto `(doto ~var-value ~(first pipe-declaration))
+    'otherwise `(if ~var-value ~var-value ~(first pipe-declaration))
+    'if1 `(if (~(first pipe-declaration) ~var-value) ~(second pipe-declaration) nil)
+    'if2 `(if (~(first pipe-declaration) ~var-value) ~(second pipe-declaration) ~(nth pipe-declaration 2 nil))
+    'iff1 `(if (~(first pipe-declaration) ~var-value) (~(second pipe-declaration) ~var-value) ~var-value)
+    'iff2 `(if (~(first pipe-declaration) ~var-value) (~(second pipe-declaration) ~var-value) (~(nth pipe-declaration 2 'identity) ~var-value))
     'nil))
 
 (defmacro recursive-linier-preprocessor
-  ([v] v)
-  ([v body]
+  ([name v] v)
+  ([name v body]
    (if (empty? body) v
        (if (= 1 (count body)) `(~@body)
            (let [{term :term offs :arg :as whole} (first (filter #(= (first body) (:term %)) recursive-linier-terms))]
@@ -185,34 +211,36 @@
                (throw (Exception. (str "Term '" (first body) "' not understandable ")))
                (let [term-args (take offs (rest body))
                      body (drop (inc offs) body)]
-                 (if (empty? body) `(action-linier-preprocess ~term (~@term-args ~v))
-                     `(let [temporary# (action-linier-preprocess ~term (~@term-args ~v))]
-                        (recursive-linier-preprocessor temporary# ~body))))))))))
+                 (if (empty? body) `(action-linier-preprocess ~term ~v (~@term-args))
+                     `(let [~name (action-linier-preprocess ~term ~v (~@term-args))]
+                        (recursive-linier-preprocessor ~name ~name ~body))))))))))
 
 (defmacro where-binding-form [binding-form]
-  `[~(first binding-form) (recursive-linier-preprocessor ~(first (rest binding-form)) ~(rest (rest binding-form)))])
+  `[~(first binding-form)
+    (let [~(first binding-form) ~(second binding-form)]
+      (recursive-linier-preprocessor ~(first binding-form) ~(first (rest binding-form)) ~(rest (rest binding-form))))])
 
 (defmacro where
   "Description
     Let on steroids
 
-  Example 
-   (where ((temp 10 do string? otherwise \"10\") ;; \"10\"
-           (temp nil ifn 4) ;; 4
-           (temp nil ift 4) ;; nil
-           (temp nil ifp nil? 4) ;; nil
-           (temp 3 iff1 nil? inc) ;; 3
-           (temp 3 iff2 odd? inc dec) ;; 4
-           (temp 3 ifp odd?4 ) ;; 3
-           (temp 3 do inc do inc) ;; 5
-           (temp 3 |> inc |> inc) ;; 5
-           (temp 4)
-           (temp (range 10) map #(- % 5) filter #(< 0 %) do count ifn 0) ;; 4
-           (temp [1 2 3 4] filter odd?) ;; => (1 3)
-           (temp [1 2 3 4] map odd?) ;; (true false true false)
-           (temp [1 2 3 4] reduce + 0) ;; 10
-           (temp 4 doto println))
-          temp)"
+  Example
+    (where
+     ((temp 10 do string? otherwise \"10\") ;; \\\"10\\\"
+      (temp 3 iff1 number? inc) ;; 4
+      (temp 3 iff2 neg? inc dec) ;; 2
+      (temp 3 if1 number? \"3\") ;; \"3\"
+      (temp nil if2 number? \"3\" 3) ;; 3
+      (temp 0 if2 zero? (+ 1 temp) temp) ;; 1
+      (temp 3 do inc do inc do inc) ;; 6
+      (temp 3 |> inc |> inc) ;; 5
+      (temp 0 do inc if2 #(< 0 %) \"EMPTY\" \"NOT EMPTY\") ;; \"EMPTY\"
+      (temp (range 10) map #(- % 5) filter #(< 0 %) do count if2 zero? \"EMPTY\" temp) ;; 4
+      (temp [1 2 3 4] filter odd?) ;; => (1 3)
+      (temp [1 2 3 4] map odd?) ;; (true false true false)
+      (temp [1 2 3 4] reduce + 0) ;; 10
+      (temp 4 doto println))
+     temp)"
   [binding & body]
   (let [let-binding-forms (reduce (fn [acc bnd] (concat acc (macroexpand-1 `(where-binding-form ~bnd)))) [] binding)]
     `(let [~@let-binding-forms]
@@ -225,7 +253,22 @@
   Example
     (wlet (+ a b) ((a 1) (b 2)) ;; => 3
     (wlet (+ a b) (- a b) ((a 1) (b 2))) ;; => -1
-  
+
+    (wlet (+ temp 2) ;; 6
+     ((temp 10 do string? otherwise \"10\") ;; \\\"10\\\"
+      (temp 3 iff1 number? inc) ;; 4
+      (temp 3 iff2 neg? inc dec) ;; 2
+      (temp 3 if1 number? \"3\") ;; \"3\"
+      (temp nil if2 number? \"3\" 3) ;; 3
+      (temp 0 if2 zero? (+ 1 temp) temp) ;; 1
+      (temp 3 do inc do inc do inc) ;; 6
+      (temp 3 |> inc |> inc) ;; 5
+      (temp 0 do inc if2 #(< 0 %) \"EMPTY\" \"NOT EMPTY\") ;; \"EMPTY\"
+      (temp (range 10) map #(- % 5) filter #(< 0 %) do count if2 zero? \"EMPTY\" temp) ;; 4
+      (temp [1 2 3 4] filter odd?) ;; => (1 3)
+      (temp [1 2 3 4] map odd?) ;; (true false true false)
+      (temp [1 2 3 4] reduce + 0) ;; 10
+      (temp 4 doto println))) 
   Spec
     (wlet <calcaulation>+ <binding-spec>{1})"
   [& arguments]
@@ -420,5 +463,56 @@
       (if (every? map? maps)
         (apply merge-with m maps)
         (apply f maps))) maps))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; `as-debug->>` threading macro ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn ^:private sexpression-walk-and-replace
+  "Example
+    (sexpression-walk-and-replace '! 'DUPA '(let [a 2] (:pets (+ a !))))
+     ;; => (let [a 2] (:pets (+ a DUPA)))
+    (sexpression-walk-and-replace '! 'DUPA nil)
+     ;; => nil
+    (sexpression-walk-and-replace '! 'DUPA \"dsa\")
+     ;; => \"dsa\""
+  [what on-what l]
+  (if (sequential? l)
+    ((cond (vector? l) vec :else seq)
+     (concat (list (sexpression-walk-and-replace what on-what (first l)))
+             (if (> (count (rest l)) 0)
+               (sexpression-walk-and-replace what on-what (rest l)))))
+    (if (= l what) on-what l)))
+
+(defmacro as-debug->>
+  "Description
+    do the same what to do `as->>` but make debug
+    macros unwrapp for clear reading what to do
+  
+  Example
+    For this test data:
+    (def owners [{:owner \"Jimmy\"
+                  :pets (ref [{:name \"Rex\"
+                               :type :dog}
+                              {:name \"Sniffles\"
+                               :type :hamster}])} 
+                 {:owner \"Jacky\" 
+                  :pets (ref [{:name \"Spot\" 
+                               :type :mink}
+                              {:name \"Puff\" 
+                              :type :magic-dragon}])}])
+   Make macro expand: 
+     (as-debug->> owners ! (nth ! 0) (:pets !) (deref !) (! 1) (! :type))
+   And you take unbloated expression without let...
+     ;;=> (((deref (:pets (nth owners 0))) 1) :type)
+     ;;=> :hamster"
+  ([var-replace-to alias-name & wrapp-functor-list]
+   (reduce (fn [acc sexp]
+             `~(sexpression-walk-and-replace alias-name acc sexp))
+           var-replace-to
+           wrapp-functor-list)))
+
+
 
 

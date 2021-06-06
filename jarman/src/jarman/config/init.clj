@@ -45,13 +45,12 @@
     (filepath-to-keypath \".\\config\\themes\\theme_config.edn\")
       ;; => [:themes :theme_config.edn]"
   [path]
-  (where
+  (wlet s-parts
    ((s-parts (string/split path #"\\|/")
              iff2 #(= (first %) ".") rest identity
              iff2 #(= (first %) (.getName (clojure.java.io/file *config-root*))) rest identity
              map keyword
-             do vec))
-   s-parts))
+             do vec))))
 
 (defn- <path|file>-list
   "Example
@@ -72,7 +71,7 @@
   ([config-root key-paths]
    (for [key-path key-paths
          :let [file-path (apply (partial clojure.java.io/file config-root) (map name key-path))]]
-      [key-path file-path])))
+     [key-path file-path])))
 
 (defn load-config-file [path]
   (let [EM (fn [s] (spec/error-block s))]
@@ -228,7 +227,7 @@
   "Example
     (backup-swapp-configuration (<path|file>-list *config-root*))"
   [PF-list]
-  (where
+  (wlet cfg
    ((merge-config-strategy #(last %&))
     (configuration-merger #(apply (partial deep-merge-with merge-config-strategy) %))
     (DM (fn [d v] {d (spec/directory-block (name d) v)}))
@@ -237,8 +236,7 @@
      (configuration-merger
       (for [[P F :as PF] PF-list :let [L (count PF)]]
         (cond (= L 1) (load-config-file F)
-              (> L 1) (reduce #(DM %2 %1) (FM (last P) (load-config-file F)) (butlast P)))))))
-   cfg))
+              (> L 1) (reduce #(DM %2 %1) (FM (last P) (load-config-file F)) (butlast P)))))))))
 
 (defn- backup-information []
   {:date (.format (java.text.SimpleDateFormat. backup-file-date-format) (java.util.Date.))
@@ -399,7 +397,7 @@
   (where
    ((IS-ERROR? (fn [languages] (= :error (:type languages))))
     (lang-file (clojure.java.io/file *config-root* *config-language*))
-    (original (load-config-file lang-file) do {:type :error} doto println ifp IS-ERROR? {})
+    (original (load-config-file lang-file) do {:type :error} doto println iff1 IS-ERROR? {})
     (en-key-path-to-text (key-strings-path @configuration))
     (fill-text (fn [CFG] (config-lang-merge CFG en-key-path-to-text))))
    (-> original

@@ -108,30 +108,48 @@
     (-> {} sql-crud-toolkit metadata-toolkit
         export-sql-toolkit document-toolkit)))
 
+(defn rand-str [len]
+  (apply str (take len (repeatedly #(char (+ (rand 26) 65))))))
+
+;;(rand-str 4)
+;;(def num (atom :first-plug))
 (def ^:private views-configuration+toolkit (atom {}))
 (defn views-configuration+toolkit-get []
   @views-configuration+toolkit)
 (defn views-configuration+toolkit-set [keyword-table-name plugin-name plugin-configuration data-toolkit]
   {:pre [(keyword? keyword-table-name)]}
   (swap! views-configuration+toolkit
-         (fn [m] (assoc-in m [keyword-table-name plugin-name]
-                          {:configuration plugin-configuration
-                           :data-toolkit data-toolkit}))) nil)
+         (fn [m]
+           (assoc-in m [keyword-table-name (:name plugin-configuration) plugin-name]
+                     {:configuration plugin-configuration
+                      :data-toolkit data-toolkit}))) nil)
 
-(defn get-parameters [data]
-  (loop [prm {}
-         l data
+;;(views-configuration+toolkit-get)
+
+(defn sort-parameters-plugins
+  "Description
+    this func get list of data with different types,
+    sort these and return vector in which first value is
+    hashmap with parameters and second value are functions 
+  Example
+    (sort-parameters-plugins '(1 2 :a 1 (1 2 3) :b 2))
+     ;;=> [{:a 1, :b 2, :permission [:user]} [(1 2 3)]]"
+  [defview-body]
+  (loop [parameters {}
+         l defview-body
          plugins []]
     (if (not-empty l)
       (cond
-        (keyword? (first l)) (recur (into prm {(first l) (second l)}) (drop 2 l) plugins)
-        (list? (first l)) (recur prm (drop 1 l) (conj plugins (first l)))
-        :else (recur prm (drop 1 l) plugins))
-      [(if-not (contains? prm :pkey) (assoc prm :pkey [:user]))
+        (keyword? (first l)) (recur (into parameters {(first l) (second l)}) (drop 2 l) plugins)
+        (list? (first l)) (recur parameters (drop 1 l) (conj plugins (first l)))
+        :else (recur parameters (drop 1 l) plugins))
+      [(if-not (contains? parameters :permission) (assoc parameters :permission [:user]))
        plugins])))
 
+
+
 (defmacro defview-debug [table-model-name & body]
-  (let [[conf-prms fbody] (get-parameters body)
+  (let [[conf-prms fbody] (sort-parameters-plugins body)
         configurations
         (reduce into {}
                 (for [form fbody]
@@ -143,8 +161,9 @@
                                                  :data-toolkit (data-toolkit-pipeline ~s)}}))))]
     `~configurations))
 
+
 (defmacro defview [table-model-name & body]
-  (let [[conf-prms fbody] (get-parameters body)
+  (let [[conf-prms fbody] (sort-parameters-plugins body)
         configurations
         (reduce into {}
                 (for [form fbody]
@@ -158,25 +177,23 @@
                     ktable# ~(keyword table-model-name)
                     kplugin# ~(keyword f)
                     plugin-configuration# (get cfg# kplugin#)
-                    plugin-data-toolkit#  (data-toolkit-pipeline (get cfg# kplugin#))]
+                    kname-plugin# (:name plugin-configuration#)
+                    plugin-data-toolkit# `(fun-toolkit-name
+                                           cfg#
+                                           ~(data-toolkit-pipeline (get cfg# kplugin#)))]
                 (views-configuration+toolkit-set ktable#
                                                  kplugin#
                                                  plugin-configuration#
                                                  plugin-data-toolkit#)
-                (~f [ktable# kplugin#] ~'views-configuration+toolkit-get)))
+                (~f [ktable# kname-plugin# kplugin#] ~'views-configuration+toolkit-get)))
          nil)))
 
 (defn as-is [& column-list]
   (map #(if (keyword? %) {% %} %) column-list))
 
-;; (defview-debug permission
-;;   (plug/jarman-table
-;;    :name "Table"
-;;    :place nil
-;;    :tables [:permission]
-;;    :view   [:permission.permission_name]
-;;    :query   {:column (as-is :permission.id :permission.permission_name :permission.configuration)}))
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; READ AND WRITE VIEW.CLJ ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- read-one
   [r]
   (try (read r)
@@ -267,31 +284,27 @@
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (map (fn [x] (eval x)) data))))))
 
+(defview
+  permission
+  (jarman-table
+   :name
+   "permission"
+   :plug-place
+   [:#tables-view-plugin]
+   :tables
+   [:permission]
+   :model
+   [:permission.id
+    :permission.permission_name
+    :permission.configuration]
+   :query
+   {:columns
+    (as-is
+     :permission.id
+     :permission.permission_name
+     :permission.configuration)}))
 
 
-;; (defview
-;;   permission
-;;   :pkey
-;;   [:user :admin]
-;;   (jarman-table
-;;    :name
-;;    [:ke]
-;;    :pkey
-;;    "smt"
-;;    :plug-place
-;;    [:#tables-view-plugin]
-;;    :tables
-;;    [:permission]
-;;    :modal
-;;    [:permission.permission_name :permission.configuration]
-;;    :query
-;;    {:columns
-;;     (as-is
-;;      :permission.id
-;;      :permission.permission_name
-;;      :permission.configuration)}))
-;;view
 
-;;plug-place
 
-;;name
+

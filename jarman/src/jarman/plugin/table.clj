@@ -22,6 +22,7 @@
    [jarman.gui.gui-components :refer :all :as gcomp]
    [jarman.gui.gui-calendar :as calendar]
    [jarman.logic.metadata :as mt]
+   [jarman.plugin.spec :as spec]
    [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
@@ -482,40 +483,10 @@
 ;;                      (.setLocationRelativeTo nil) c/pack! c/show!))]
 ;;   (c/config! my-frame :size [300 :by 800]))
 
-;;;;;;;;;;;;;;;;;;;;
-;;;SPEC FOR KEYS ;;;
-;;;;;;;;;;;;;;;;;;;;
-;; main spec
-(s/def :global-plugin/vector vector?) 
-(s/def :global-plugin/keyword keyword?)
-(s/def :global-plugin/string string?)
 
-;; spec for permission
-(s/def :global-plugin/pkey (s/and :global-plugin/vector (s/coll-of :global-plugin/keyword)))
-;;(s/valid? :global-plugin/pkey [:user :admin]) ;;=> true
 
-(s/def :global-plugin/name :global-plugin/string)
-(s/def :global-plugin/plug-place :global-plugin/vector)
-
-(defn test-keys-jtable [conf spec-map]
-  (let [get-key (fn [arg] (first (first arg)))
-        get-spec (fn [arg] (second (first arg)))]
-    ((fn next [sm resault]
-       (if (or (= resault false)(empty? sm))                   
-         resault
-         (next (lang/map-rest sm)
-               (if (s/valid? (get-spec sm)
-                             ((get-key sm) conf))
-                 true
-                 (do (s/explain (get-spec sm)
-                                ((get-key sm) conf))
-                     false)))))
-     spec-map true)))
-
-;; (test-keys-jtable
-;;  {:pkey [:user], :plug-place [:#tables-view-plugin], :name :kk, :tables [:permission], :query {:columns ({:permission.id :permission.id} {:permission.permission_name :permission.permission_name} {:permission.configuration :permission.configuration})}, :table-name :permission, :view [:permission.permission_name :permission.configuration]}
-;;  {:pkey :global-plugin/pkey, :name :global-plugin/name, :plug-place :global-plugin/plug-place})
-
+(defn jarman-table-toolkit-pipeline [configuration datatoolkit]
+  datatoolkit)
 
 ;;;PLUGINS ;;;        
 (defn jarman-table-component [plugin-path global-configuration spec-map]
@@ -525,7 +496,7 @@
         title (:representation (:table-meta data-toolkit))
         space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
         atm (:atom-expanded-items (c/config space :user-data))]
-    (if (false? (test-keys-jtable configuration spec-map))
+    (if (false? (spec/test-keys-jtable configuration spec-map))
       (println "Error in spec")
       (swap! atm (fn [inserted]
                    (conj inserted

@@ -12,6 +12,7 @@
             [jarman.tools.swing :as stool]
             [jarman.config.config-manager :refer :all]
             [jarman.gui.gui-tools :as gtool]
+            [jarman.tools.lang :as l]
             [clojure.string :as string]))
 
 
@@ -110,17 +111,21 @@
   (fn [data]
     (let [font-c "#000"
           bg-c "#fff"
-          header (if (= (contains? data :header) true) (get data :header) "Information")
-          body   (if (= (contains? data :body) true) (get data :body) "Template of information...")
+          header (l/rift (:header data) "Information")
+         ;;  header (if (= (contains? data :header) true) (:header data) "Information")
+          body   (l/rift (:body data) "Template of information...")
+         ;;  body   (if (= (contains? data :body) true) (:body data) "Template of information...")
           layered-pane (@alerts-controller :get-space)
-          close [(build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png layered-pane 23 (fn [e] (view-selected-message header body layered-pane)))
-                 (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered-pane 23 (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (@alerts-controller :rm-obj to-del))))]
-          [t b l r] (map #(Integer/parseInt %) (gtool/get-comp :message-box :border-size))]
+          close [(build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png layered-pane 23 
+                                       (fn [e] (view-selected-message header body layered-pane)))
+                 (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered-pane 23 
+                                       (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (@alerts-controller :rm-obj to-del))))]
+          [t b l r] (map #(Integer/parseInt %) (l/rift (gtool/get-comp :message-box :border-size) [1 1 1 1]))]
       (mig-panel
        :id :alert-box
        :constraints ["wrap 1" "0px[fill, grow]0px" "0px[20]0px[30]0px[20]0px"]
        :background bg-c
-       :border (line-border :top t :bottom b :left l :right r :color (gtool/get-comp :message-box :border-color))
+       :border (line-border :top t :bottom b :left l :right r :color (l/rift (gtool/get-comp :message-box :border-color) "#fff"))
        :bounds [680 480 300 75]
        :items [[(flow-panel
                  :align :left
@@ -166,7 +171,7 @@
                                     ;;  Remove alerts
                                     (doall (map (fn [item] (if (identical? (config item :id) :alert-box) (.remove @layered-pane item))) (seesaw.util/children @layered-pane)))
                                     ;; Add alerts
-                                    (doall (map (fn [item] (if (= (get item :visible) true) (.add @layered-pane (get item :component) (new Integer 15)))) @alerts-storage))
+                                    (doall (map (fn [item] (if (= (:visible item) true) (.add @layered-pane (:component item) (new Integer 15)))) @alerts-storage))
                                     ;;  Rebounds message space
                                     (alerts-rebounds-f @layered-pane)
                                     ;;  Repainting app
@@ -177,7 +182,7 @@
                                                                              (identical? (config i :id) id-to-remove))
                                                                        (.remove @layered-pane i))) (seesaw.util/children @layered-pane)))
                                                  ;; Add alerts
-                                                 (doall (map (fn [item] (if (= (get item :visible) true) (.add @layered-pane (get item :component) (new Integer 15)))) @alerts-storage))
+                                                 (doall (map (fn [item] (if (= (:visible item) true) (.add @layered-pane (:component item) (new Integer 15)))) @alerts-storage))
                                                  ;;  Rebounds message space
                                                  (alerts-rebounds-f @layered-pane)
                                                  ;;  Repainting app

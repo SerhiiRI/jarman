@@ -236,73 +236,73 @@
 
 
 (defn config-generator-fields [key-title]
-  (let [data (key-title (c/datalist-get))
-        dbtype-inp (text :text "mysql" :font (tool/getFont 14)
-                         :editable? false
-                         :background "#fff"
-                         :columns 20
-                         :border (color-border light-grey-color))
-        host-inp (confgen-input (:value (:host (:value data))))
-        port-inp (confgen-input (:value (:port (:value data))))
-        dbname-inp (confgen-input (:value (:dbname (:value data))))
-        user-inp (confgen-input (:value (:user (:value data))))
-        password-inp (confgen-input (:value (:password (:value data))))
-        err-lbl (label :text "" :foreground blue-green-color :font (myFont 14))
-        btn-del (label :text "Delete" :background "#fff"
-                       :class :css1
-                       :border (empty-border :top 10 :right 10 :left 10 :bottom 10)
-                       :listen [:mouse-entered (fn [e] (config! e :background back-color :cursor :hand))
-                                :mouse-exited  (fn [e] (config! e :background "#fff"))
-                                :mouse-clicked (fn [e] (if (= "yes" (delete-map key-title))
-                                                         (config! (to-frame e) :content (login-panel))))])
-        btn-conn (label :text "Connect" :background "#fff"
-                       :class :css1
-                       :border (empty-border :top 10 :right 10 :left 10 :bottom 10)
-                       :listen [:mouse-entered (fn [e] (config! e :background back-color :cursor :hand))
-                                :mouse-exited  (fn [e] (config! e :background "#fff"))
-                                :mouse-clicked (fn [e] (if (= nil (c/test-connection {:dbtype (text dbtype-inp)
-                                                                                      :host (text host-inp)
-                                                                                      :port (text port-inp)
-                                                                                      :dbname (text dbname-inp)
-                                                                                      :user (text user-inp)
-                                                                                      :password (text password-inp)}))
-                                                         (config! err-lbl :text "ERROR!! PLEASE RECONNECT" :foreground red-color)
-                                                         (config! err-lbl :text "SUCCESS" :foreground blue-green-color)
-                                                         ))])
-        btn-ent (label :text "Eddit" :background "#fff"
-                       :class :css1
-                       :halign :center
-                       :border (empty-border :top 10 :right 10 :left 10 :bottom 10)
-                       :listen [:mouse-entered (fn [e] (config! e :background back-color :cursor :hand))
-                                :mouse-exited  (fn [e] (config! e :background "#fff"))
-                                :mouse-clicked (fn [e] (if (= (validate-fields dbtype-inp host-inp port-inp
-                                                                               dbname-inp user-inp password-inp key-title) "yes")
-                                                         (config! (to-frame e)
-                                                                :content (login-panel))))])
-        mig-for-btn (mig-panel :constraints ["" "0px[:33%, grow, fill]5px[:33%, grow, fill]0px" ""]
-                                          :items [])
-        mig (mig-panel
-             :constraints ["wrap 1" "25%[grow, fill, center]25%" "20px[]20px"]
+  (if (nil? (c/datalist-get))
+    (do (println "[ Warning ] (c/datalist-get) return nil in gui_login/config-generator-fields.") (label))
+    (let [data (key-title (c/datalist-get))
+          dbtype-inp (text :text "mysql" :font (tool/getFont 14)
+                           :editable? false
+                           :background "#fff"
+                           :columns 20
+                           :border (color-border light-grey-color))
+          host-inp (confgen-input (:value (:host (:value data))))
+          port-inp (confgen-input (:value (:port (:value data))))
+          dbname-inp (confgen-input (:value (:dbname (:value data))))
+          user-inp (confgen-input (:value (:user (:value data))))
+          password-inp (confgen-input (:value (:password (:value data))))
+          err-lbl (label :text "" :foreground blue-green-color :font (myFont 14))
+          btn-del (label :text "Delete" :background "#fff"
+                         :class :css1
+                         :border (empty-border :top 10 :right 10 :left 10 :bottom 10)
+                         :listen [:mouse-entered (fn [e] (config! e :background back-color :cursor :hand))
+                                  :mouse-exited  (fn [e] (config! e :background "#fff"))
+                                  :mouse-clicked (fn [e] (if (= "yes" (delete-map key-title))
+                                                           (config! (to-frame e) :content (login-panel))))])
+          btn-conn (label :text "Connect" :background "#fff"
+                          :class :css1
+                          :border (empty-border :top 10 :right 10 :left 10 :bottom 10)
+                          :listen [:mouse-entered (fn [e] (config! e :background back-color :cursor :hand))
+                                   :mouse-exited  (fn [e] (config! e :background "#fff"))
+                                   :mouse-clicked (fn [e] (if (= nil (c/test-connection {:dbtype (text dbtype-inp)
+                                                                                         :host (text host-inp)
+                                                                                         :port (text port-inp)
+                                                                                         :dbname (text dbname-inp)
+                                                                                         :user (text user-inp)
+                                                                                         :password (text password-inp)}))
+                                                            (config! err-lbl :text "ERROR!! PLEASE RECONNECT" :foreground red-color)
+                                                            (config! err-lbl :text "SUCCESS" :foreground blue-green-color)))])
+          btn-ent (label :text "Eddit" :background "#fff"
+                         :class :css1
+                         :halign :center
+                         :border (empty-border :top 10 :right 10 :left 10 :bottom 10)
+                         :listen [:mouse-entered (fn [e] (config! e :background back-color :cursor :hand))
+                                  :mouse-exited  (fn [e] (config! e :background "#fff"))
+                                  :mouse-clicked (fn [e] (if (= (validate-fields dbtype-inp host-inp port-inp
+                                                                                 dbname-inp user-inp password-inp key-title) "yes")
+                                                           (config! (to-frame e)
+                                                                    :content (login-panel))))])
+          mig-for-btn (mig-panel :constraints ["" "0px[:33%, grow, fill]5px[:33%, grow, fill]0px" ""]
+                                 :items [])
+          mig (mig-panel
+               :constraints ["wrap 1" "25%[grow, fill, center]25%" "20px[]20px"]
             ;; :background "#666"
-             :items [[(confgen-header "Data configuration")]
+               :items [[(confgen-header "Data configuration")]
                     ;; [(grid-panel :columns 1 :items [(confgen-title (:name (:dbtype (:value template-map)))) dbtype-inp])]
-                     [(grid-panel :columns 1 :items [(confgen-title (:name (:host (:value template-map)))) host-inp])]
-                     [(grid-panel :columns 1 :items [(confgen-title (:name (:port (:value template-map)))) port-inp])]
-                     [(grid-panel :columns 1 :items [(confgen-title (:name (:dbname (:value template-map)))) dbname-inp])]
-                     [(grid-panel :columns 1 :items [(confgen-title (:name (:user (:value template-map)))) user-inp])]
-                     [(grid-panel :columns 1 :items [(confgen-title (:name (:password (:value template-map)))) password-inp])]
-                     [mig-for-btn]])]
-    (if (= key-title :empty)
-      (do (config! btn-ent :text "Create")
-          (.add mig-for-btn btn-conn)
-          (.add mig-for-btn btn-ent)
-          (.add mig-for-btn err-lbl)))
-    (do 
-      (.add mig-for-btn btn-ent)
-      (.add mig-for-btn btn-conn)
-      (.add mig-for-btn btn-del)
-      (.add mig err-lbl)
-      ) mig))
+                       [(grid-panel :columns 1 :items [(confgen-title (:name (:host (:value template-map)))) host-inp])]
+                       [(grid-panel :columns 1 :items [(confgen-title (:name (:port (:value template-map)))) port-inp])]
+                       [(grid-panel :columns 1 :items [(confgen-title (:name (:dbname (:value template-map)))) dbname-inp])]
+                       [(grid-panel :columns 1 :items [(confgen-title (:name (:user (:value template-map)))) user-inp])]
+                       [(grid-panel :columns 1 :items [(confgen-title (:name (:password (:value template-map)))) password-inp])]
+                       [mig-for-btn]])]
+      (if (= key-title :empty)
+        (do (config! btn-ent :text "Create")
+            (.add mig-for-btn btn-conn)
+            (.add mig-for-btn btn-ent)
+            (.add mig-for-btn err-lbl)))
+      (do
+        (.add mig-for-btn btn-ent)
+        (.add mig-for-btn btn-conn)
+        (.add mig-for-btn btn-del)
+        (.add mig err-lbl)) mig)))
 
 (defn config-generator-panel [key-title]
   (let [info some-text

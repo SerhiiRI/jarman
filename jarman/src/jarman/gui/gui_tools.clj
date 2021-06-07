@@ -142,7 +142,7 @@
 
 
 (defn theme-map [default & args]
-  (cm/get-in-value (vec (concat [:themes :current-theme] args)) default))
+  (cm/get-in-value (vec (concat [:themes :current-theme] args)) (doto default (println "[ Warning ] Can not find parameter in theme. Used default value."))))
 (defn lang-configuration-struct-map [default & args]
   (cm/get-in-segment (vec (concat [] args)) default))
 ;; (defn lang-standart-struct-map [default & args]
@@ -150,8 +150,8 @@
 (cm/get-in-lang [:ui :buttons])
 
 (def using-lang (cm/get-in-value [:init.edn :lang]))
-(def get-color (partial theme-map "#000" :color))
-(def get-comp (partial theme-map "#000" :components))
+(def get-color (partial theme-map "#fff" :color))
+(def get-comp (partial theme-map "#fff" :components))
 (def get-frame (partial theme-map 1000 :frame))
 (def get-font (partial theme-map "Ubuntu" :font))
 (def get-lang (fn [& path] (cm/get-in-lang (lang/join-vec [:ui] path))))

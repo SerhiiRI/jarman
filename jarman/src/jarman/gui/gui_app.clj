@@ -365,7 +365,7 @@
                 :user-data bg-btn
                 :listen [:mouse-entered (fn [e] (config! e :cursor :hand :background color-hover))
                          :mouse-exited  (fn [e] (config! e :background @bg-btn))
-                         :mouse-clicked  (fn [e] (println "color picker")
+                         :mouse-clicked  (fn [e] ;;(println "column picker")
                                            (cond
                                              (= @bg-btn color)
                                              (do ;; reset bg and atom inside all buttons in parent if id is ok
@@ -1341,5 +1341,4 @@
 
 ;; (@startup)
  
-
 

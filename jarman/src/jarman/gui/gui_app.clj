@@ -31,9 +31,10 @@
             [jarman.gui.gui-seed :refer :all]
             [jarman.gui.gui-config-generator :refer :all :as cg]
             ;; [jarman.logic.view :as view]
-            [jarman.gui.gui-docs :as docs]
+            ;; [jarman.gui.gui-docs :as docs]
             [jarman.gui.gui-seed :as gseed]
             [jarman.plugin.table :as gtable]
+            [jarman.plugin.plugin :as plug]
             [jarman.logic.view-manager :as vmg]
             [jarman.logic.session :as session]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut]
@@ -364,7 +365,7 @@
                 :user-data bg-btn
                 :listen [:mouse-entered (fn [e] (config! e :cursor :hand :background color-hover))
                          :mouse-exited  (fn [e] (config! e :background @bg-btn))
-                         :mouse-clicked  (fn [e] (println "color picker")
+                         :mouse-clicked  (fn [e] ;;(println "column picker")
                                            (cond
                                              (= @bg-btn color)
                                              (do ;; reset bg and atom inside all buttons in parent if id is ok
@@ -1301,12 +1302,11 @@
                                                         (@gseed/alert-manager :set {:header "Work mode" :body (str "Switched to: " (session/user-get-permission))} (@gseed/alert-manager :message gseed/alert-manager) 5)
                                                         (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission))))
                                              :top-offset top-offset)
-                             (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 3 img-scale "Docs Templates"
-                                             :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn
-                                                              (fn [])
-                                                               ;; (fn [] (docs/auto-builder--table-view nil :alerts gseed/alert-manager)                                                              ;;)
-                                                               ))
-                                             :top-offset top-offset)
+
+                            ;;  (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 3 img-scale "Docs Templates"
+                            ;;                  :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts gseed/alert-manager))))
+                            ;;                  :top-offset top-offset)
+
                              (slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 4 img-scale "Reload active view"
                                              :onClick (fn [e] (try
                                                                 ((@gseed/jarman-views-service :reload))
@@ -1344,5 +1344,4 @@
 
 (@startup)
  
-
 

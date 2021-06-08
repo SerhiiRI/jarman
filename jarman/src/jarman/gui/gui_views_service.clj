@@ -147,28 +147,31 @@
               (recolor-tab tab (service-data :active-color))
               (set-component-to-view-space service-data view-id))))
 
-        (let [component (component-fn) ;; Add new view to views-storage and switch to new view
-              view {view-id {:component-fn component-fn
-                             :component component
-                             :view-id view-id
-                             :title title
-                             :scrollable? scrollable?
-                             :pref-height (.getHeight (c/config component :preferred-size))}}
-              tmp-store (atom [])]
+        
+        (if (nil? (component-fn))
+          (do (println "[ Warning ] gui-view-service/set--view: Fn building view return nil.") (label))
+          (let [component (component-fn)  ;; Add new view to views-storage and switch to new view
+                view {view-id {:component-fn component-fn
+                               :component component
+                               :view-id view-id
+                               :title title
+                               :scrollable? scrollable?
+                               :pref-height (.getHeight (c/config component :preferred-size))}}
+                tmp-store (atom [])]
           ;; (println "View id: " view-id)
-          (swap! (service-data :views-storage) (fn [storage] (merge storage view)))
-          (c/config! (service-data :view-space) :user-data view-id)
-          (let [view-id (first (first view))
-                button-title  (get (second (first view)) :title)
-                tab-button (create--tab-button view-id button-title tab-tip "#eee" [100 25]
-                                               (close-tab service-data view-id)
-                                               (switch-tab service-data view-id))]
-            (deactive-all-tabs service-data)
-            (reset! tmp-store (cons tab-button (u/children (service-data :bar-space))))
-            (doall (map #(.add (service-data :bar-space) %) @tmp-store))
-            (set-component-to-view-space service-data view-id))
+            (swap! (service-data :views-storage) (fn [storage] (merge storage view)))
+            (c/config! (service-data :view-space) :user-data view-id)
+            (let [view-id (first (first view))
+                  button-title  (get (second (first view)) :title)
+                  tab-button (create--tab-button view-id button-title tab-tip "#eee" [100 25]
+                                                 (close-tab service-data view-id)
+                                                 (switch-tab service-data view-id))]
+              (deactive-all-tabs service-data)
+              (reset! tmp-store (cons tab-button (u/children (service-data :bar-space))))
+              (doall (map #(.add (service-data :bar-space) %) @tmp-store))
+              (set-component-to-view-space service-data view-id))
           ;; (println "Set and switch: " view-id)
-          (switch-tab service-data view-id))))))
+            (switch-tab service-data view-id)))))))
  
 ;; (cons 1 (list 2 3 4))
 

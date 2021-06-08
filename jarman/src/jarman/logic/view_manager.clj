@@ -12,7 +12,8 @@
    [jarman.plugin.jspl :refer :all :as jspl]
    [jarman.plugin.table :as plug]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
-   [jarman.logic.metadata :as mt])
+   [jarman.logic.metadata :as mt]
+   [jarman.plugin.data-toolkit :as dtool])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
@@ -23,6 +24,7 @@
           {}
           toolkit-list))
 
+
 (defn rand-str [len]
   (apply str (take len (repeatedly #(char (+ (rand 26) 65))))))
 
@@ -31,7 +33,7 @@
 (def ^:private views-configuration+toolkit (atom {}))
 (defn views-configuration+toolkit-get []
   @views-configuration+toolkit)
-(defn views-configuration+toolkit-set [keyword-table-name plugin-name plugin-configuration toolkit]
+(defn views-configuration+toolkit-set [keyword-table-name plugin-name plugin-configuration data-toolkit]
   {:pre [(keyword? keyword-table-name)]}
   (swap! views-configuration+toolkit
          (fn [m]
@@ -71,7 +73,7 @@
                                        :table-name ~(keyword table-model-name))
                           s `(merge ~conf-prms ~s)]
                       `{~(keyword (first form)) {:configuration ~s
-                                                 :data-toolkit (data-toolkit-pipeline ~s)}}))))]
+                                                 :data-toolkit (dtool/data-toolkit-pipeline ~s)}}))))]
     `~configurations))
 
 (defmacro defview [table-model-name & body]
@@ -90,7 +92,12 @@
                     kplugin# ~(keyword f)
                     plugin-configuration# (get cfg# kplugin#)
                     kname-plugin# (:name plugin-configuration#) 
-                    plugin-data-toolkit#  (toolkit-pipeline-reducer (get cfg# kplugin#) [data-toolkit-pipeline fun-toolkit-name])]
+                    plugin-data-toolkit#  (toolkit-pipeline-reducer (get cfg# kplugin#)
+                                                                    dtool/data-toolkit-pipeline
+                                                                    ~(symbol (str "jspl/"
+                                                                                  f "-toolkit-pipeline"))
+                                                                    ;;fun-toolkit-name
+                                                                    )]
                 (views-configuration+toolkit-set ktable#
                                                  kplugin#
                                                  plugin-configuration#
@@ -194,25 +201,25 @@
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (map (fn [x] (eval x)) data))))))
 
-(defview
-  permission
-  (jarman-table
-   :name
-   "permission"
-   :plug-place
-   [:#tables-view-plugin]
-   :tables
-   [:permission]
-   :model
-   [:permission.id
-    :permission.permission_name
-    :permission.configuration]
-   :query
-   {:columns
-    (as-is
-     :permission.id
-     :permission.permission_name
-     :permission.configuration)}))
+;; (defview
+;;   permission
+;;   (jarman-table
+;;    :name
+;;    "permission"
+;;    :plug-place
+;;    [:#tables-view-plugin]
+;;    :tables
+;;    [:permission]
+;;    :model
+;;    [:permission.id
+;;     :permission.permission_name
+;;     :permission.configuration]
+;;    :query
+;;    {:columns
+;;     (as-is
+;;      :permission.id
+;;      :permission.permission_name
+;;      :permission.configuration)}))
 
 
 

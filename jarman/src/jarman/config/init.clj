@@ -127,7 +127,7 @@
 
 (defn load-current-theme [M]
   (where
-   ((CURRENT-THEME (GETV M [:themes :theme_config.edn :selected-theme]) iff1 nil? first otherwise "jarman_light")
+   ((CURRENT-THEME (GETV M [:themes :theme_config.edn :selected-theme]) if2 nil? "jarman_light" (first CURRENT-THEME))
     (FILE-LINK CURRENT-THEME do (partial format "%s.edn" ) do #(clojure.java.io/file *config-root* *config-themes* %)))
    (assoc-in M [:themes :value :current-theme] (load-config-file FILE-LINK))))
 

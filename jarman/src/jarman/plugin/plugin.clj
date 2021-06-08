@@ -1,6 +1,7 @@
 (ns jarman.plugin.plugin
   (:require [jarman.config.environment :as env]
-            [jarman.tools.lang :refer :all]))
+            [jarman.tools.lang :refer :all]
+            [clojure.spec.alpha :as s]))
 
 ;;; TODO there must be specs
 
@@ -79,7 +80,7 @@
         func-t (symbol (str plugin-name "-" "toolkit-pipeline"))]    
     `(do        
        (defn ~plugin-name 
-         ~(plug/generate-plugin-doc title body)
+         ~(generate-plugin-doc title body)
          [~'plugin-path ~'global-configuration]
          (~func-component
           ~'plugin-path ~'global-configuration 

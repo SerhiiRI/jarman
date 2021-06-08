@@ -193,8 +193,8 @@
                           {:inner-join joines :columns columns}
                           {:column columns})))))
 
-;; (create-jarman-table-plugin :repair_contract)
-;; (mapv create-jarman-table-plugin [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month])
+;; (create-jarman-table-plugin :seal)
+ (mapv create-jarman-table-plugin [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month])
 
 (defn- gui-table-model-columns [table-list table-column-list]
   (let
@@ -447,8 +447,6 @@
 ;;                           :content vp)
 ;;                      (.setLocationRelativeTo nil) c/pack! c/show!))]
 ;;   (c/config! my-frame :size [300 :by 800]))
-
-
 
 (defn jarman-table-toolkit-pipeline [configuration datatoolkit]
   datatoolkit)

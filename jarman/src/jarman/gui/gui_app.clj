@@ -1302,7 +1302,10 @@
                                                         (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission))))
                                              :top-offset top-offset)
                              (slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 3 img-scale "Docs Templates"
-                                             :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts gseed/alert-manager))))
+                                             :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn
+                                                              (fn [])
+                                                               ;; (fn [] (docs/auto-builder--table-view nil :alerts gseed/alert-manager)                                                              ;;)
+                                                               ))
                                              :top-offset top-offset)
                              (slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 4 img-scale "Reload active view"
                                              :onClick (fn [e] (try
@@ -1338,7 +1341,8 @@
                                             (reset! popup-menager (create-popup-service atom-popup-hook))
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
-;; (@startup)
+
+(@startup)
  
 
 

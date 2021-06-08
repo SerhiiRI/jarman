@@ -15,7 +15,7 @@
     :permission.permission_name
     :permission.configuration]
    :query
-   {:columns
+   {:column
     (as-is
      :permission.id
      :permission.permission_name
@@ -52,60 +52,6 @@
      :permission.id
      :permission.permission_name
      :permission.configuration)}))
-
-;; Overriding and component custom adding
-;; (defview
-;;   user
-;;   (jarman-table
-;;    :name
-;;    "user"
-;;    :plug-place [:#tables-view-plugin]
-;;    :tables [:user :permission]
-;;    :view-columns [:user.login
-;;                   :user.first_name
-;;                   :user.last_name
-;;                   :permission.permission_name]
-;;    :model [{:model-reprs "Login"
-;;             :model-param :user.login
-;;             :bind-args {:title :title
-;;                         :store-id :store-id
-;;                         :local-changes :local-changes
-;;                         :val :val}
-;;             :model-comp gcomp/input-text-area-label}
-;;            :user.password
-;;            :user.first_name
-;;            :user.last_name
-;;            :user.id_permission
-;;            {:model-reprs "Start user"
-;;             :model-param :user-start
-;;             :model-comp gcomp/input-int}
-;;            {:model-reprs "End user"
-;;             :model-param :user-end
-;;             :model-comp gcomp/input-int}]
-;;    :query {:inner-join [:user->permission]
-;;            :columns
-;;            (as-is
-;;             :user.id
-;;             :user.login
-;;             :user.password
-;;             :user.first_name
-;;             :user.last_name
-;;             :user.id_permission
-;;             :permission.id
-;;             :permission.permission_name
-;;             :permission.configuration)}
-;;    :actions {:add-multiply-users-insert
-;;              (fn [state]
-;;                (let [{{user-start :user-start user-end :user-end} :model} state]
-;;                  {:table-name :user :set (map #(hash-map :user.login      (str "user" %)
-;;                                                          :user.password   "1234"
-;;                                                          :user.last_name  (str "user" %)
-;;                                                          :user.first_name (str "user" %)
-;;                                                          :user.id_permission 2)
-;;                                               (range user-start user-end))}))}
-;;    :buttons [{:action :add-multiply-users-insert
-;;               :text "Auto generate users"}]))
-
 (defview
   enterpreneur
   (jarman-table
@@ -127,7 +73,7 @@
     :enterpreneur.physical_address
     :enterpreneur.contacts_information]
    :query
-   {:columns
+   {:column
     (as-is
      :enterpreneur.id
      :enterpreneur.ssreou
@@ -272,7 +218,7 @@
     :point_of_sale_group.group_name
     :point_of_sale_group.information]
    :query
-   {:columns
+   {:column
     (as-is
      :point_of_sale_group.id
      :point_of_sale_group.group_name
@@ -354,7 +300,7 @@
     :seal.datetime_of_use
     :seal.datetime_of_remove]
    :query
-   {:columns
+   {:column
     (as-is
      :seal.id
      :seal.seal_number
@@ -595,4 +541,56 @@
      :enterpreneur.physical_address
      :enterpreneur.contacts_information)}))
 
+;; Overriding and component custom adding
+;; (defview
+;;   user
+;;   (jarman-table
+;;    :name
+;;    "user"
+;;    :plug-place [:#tables-view-plugin]
+;;    :tables [:user :permission]
+;;    :view-columns [:user.login
+;;                   :user.first_name
+;;                   :user.last_name
+;;                   :permission.permission_name]
+;;    :model [{:model-reprs "Login"
+;;             :model-param :user.login
+;;             :bind-args {:title :title
+;;                         :store-id :store-id
+;;                         :local-changes :local-changes
+;;                         :val :val}
+;;             :model-comp gcomp/input-text-area-label}
+;;            :user.password
+;;            :user.first_name
+;;            :user.last_name
+;;            :user.id_permission
+;;            {:model-reprs "Start user"
+;;             :model-param :user-start
+;;             :model-comp gcomp/input-int}
+;;            {:model-reprs "End user"
+;;             :model-param :user-end
+;;             :model-comp gcomp/input-int}]
+;;    :query {:inner-join [:user->permission]
+;;            :columns
+;;            (as-is
+;;             :user.id
+;;             :user.login
+;;             :user.password
+;;             :user.first_name
+;;             :user.last_name
+;;             :user.id_permission
+;;             :permission.id
+;;             :permission.permission_name
+;;             :permission.configuration)}
+;;    :actions {:add-multiply-users-insert
+;;              (fn [state]
+;;                (let [{{user-start :user-start user-end :user-end} :model} state]
+;;                  {:table-name :user :set (map #(hash-map :user.login      (str "user" %)
+;;                                                          :user.password   "1234"
+;;                                                          :user.last_name  (str "user" %)
+;;                                                          :user.first_name (str "user" %)
+;;                                                          :user.id_permission 2)
+;;                                               (range user-start user-end))}))}
+;;    :buttons [{:action :add-multiply-users-insert
+;;               :text "Auto generate users"}]))
 

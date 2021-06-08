@@ -5,6 +5,8 @@
    [clojure.string :as string]
    [clojure.spec.alpha :as s]
    [seesaw.util :as u]
+   ;; Dev tools
+   [jarman.logic.session :as session]
    ;; Seesaw components
    [seesaw.core :as c]
    [seesaw.border :as sborder]
@@ -14,7 +16,7 @@
    [seesaw.chooser :as chooser]
    ;; Jarman toolkit
    [jarman.logic.document-manager :as doc]
-   [jarman.tools.lang :refer :all :as lang]
+   [jarman.tools.lang :refer :all :as l]
    [jarman.gui.gui-tools :refer :all :as gtool]
    [jarman.gui.gui-seed :as gseed]
    [jarman.resource-lib.icon-library :as ico]
@@ -248,7 +250,7 @@
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply calendar/calendar-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:set-date (:val coll)] [])))]
     (try
-      (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
+      (if (l/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
       (catch Exception e (do (println "Can not override d-component:" (:title coll)) default)))
     default))
 
@@ -258,7 +260,7 @@
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-text-area :store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll) (if (:val coll) [:val (:val coll)] [])))]
     (try
-      (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
+      (if (l/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
       (catch Exception e (do (println "Can not override a-component:" (:title coll)) default)))
     default))
 
@@ -268,7 +270,7 @@
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-int :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:val (:val coll)] [])))]
     (try
-      (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
+      (if (l/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
       (catch Exception e (do (println "Can not override n-component:" (:title coll)) default)))
     default))
 
@@ -276,7 +278,7 @@
   "Set default component to form or override it"
   [coll]
   (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-text-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll) (if (:val coll) [:val (:val coll)] [])))]
-    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll))
+    (if (l/in? (map #(:column %) (:override coll)) (:store-id coll))
       (try
         ((:fun (first (:override coll))) coll)
         (catch Exception e (do (println "Can not override i-component:" (:title coll)) default)))
@@ -318,9 +320,9 @@
                                            v (if (empty? v) "" v)
                                            map-coll {:override override :title title :store-id field-qualified :local-changes local-changes :editable? editable?}]
                                        (cond
-                                         (lang/in? comp-type "d")
+                                         (l/in? comp-type "d")
                                          (if (empty? model) (d-component map-coll) (d-component (conj map-coll {:val (if (empty? v) nil v)})))
-                                         (lang/in? comp-type "l")
+                                         (l/in? comp-type "l")
                                          (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
                                            (let [key-table  (keyword (get meta :key-table))
                                                  connected-table-conf  (get-in global-configuration [key-table :plug/jarman-table :configuration])
@@ -338,11 +340,11 @@
                                                                                                                 (if-not (nil? (get selected (get connected-table-data :model-id)))
                                                                                                                   (do (c/config! e :text (selected-representation connected-table-conf selected))
                                                                                                                       (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))))))))))
-                                         (lang/in? comp-type "a") ;; Text area
+                                         (l/in? comp-type "a") ;; Text area
                                          (if (empty? model) (a-component map-coll) (a-component (conj map-coll {:val v})))
-                                         (lang/in? comp-type "n") ;; Numbers Int
+                                         (l/in? comp-type "n") ;; Numbers Int
                                          (if (empty? model) (n-component map-coll) (n-component (conj map-coll {:val v})))
-                                         (lang/in? comp-type "i") ;; Basic Input
+                                         (l/in? comp-type "i") ;; Basic Input
                                          (if (empty? model) (i-component map-coll) (i-component (conj map-coll {:val v}))))))
                                    metadata))
                       [(vgap 20)]
@@ -412,34 +414,77 @@
                                    :background "#95dec9"
                                    :border (sborder/compound-border (sborder/empty-border :left 10 :right 10)))]])))
 
+;;########################################
+;; ### Defview configuration for user ###
+;;########################################
+;; {:plug-place [:#tables-view-plugin], ;; Space in jarman were can be inject plugin's view invoker
+;;  :buttons [{:action :add-multiply-users-insert, 
+;;             :text "Auto generate users"}], ;; Add custom buttons
+;;  :permission [:user], ;; Who have access and who can display plugin
+;;  :view-columns [:user.login 
+;;                 :user.first_name 
+;;                 :user.last_name 
+;;                 :permission.permission_name], ;; Avaliable column to view in table
+;;  :name user, 
+;;  :tables [:user :permission], 
+;;  :actions {:add-multiply-users-insert #function[jarman.logic.view-manager/eval29892/fn--29893]}, 
+;;  :query {:inner-join [:user->permission]
+;;          :columns ({:user.id :user.id} 
+;;                    {:user.login :user.login} 
+;;                    {:user.password :user.password} 
+;;                    {:user.first_name :user.first_name} 
+;;                    {:user.last_name :user.last_name} 
+;;                    {:user.id_permission :user.id_permission} 
+;;                    {:permission.id :permission.id} 
+;;                    {:permission.permission_name :permission.permission_name} 
+;;                    {:permission.configuration :permission.configuration})}, 
+;;  :table-name :user, 
+;;  :model [{:model-reprs Login, 
+;;           :model-param :user.login, 
+;;           :bind-args {:title :title, :store-id :store-id, :local-changes :local-changes, :val :val}, 
+;;           :model-comp 'gcomp/input-text-area-label} ;; Overriding component syntax
+;;          :user.password 
+;;          :user.first_name 
+;;          :user.last_name 
+;;          :user.id_permission 
+;;          {:model-reprs Start user, 
+;;           :model-param :user-start, 
+;;           :model-comp 'gcomp/input-int} ;; Add custom component syntax
+;;          {:model-reprs End user, 
+;;           :model-param :user-end, 
+;;           :model-comp 'gcomp/input-int}]} ;; Add custom component syntax
 
 (def auto-builder--table-view
-  (fn [plugin-path 
-       global-configuration 
-       data-toolkit 
+  (fn [plugin-path
+       global-configuration
+       data-toolkit
        configuration
        & {:keys [start-focus
                  alerts]
           :or {start-focus nil
                alerts nil}}]
-    (let [x nil ;;------------ Prepare components
-          expand-export (fn [id] (export-print-doc (get-in global-configuration plugin-path) id alerts))
-          insert-form   (fn [] (build-input-form data-toolkit configuration global-configuration :start-focus start-focus :alerts alerts))
-          view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
-          table         (fn [] (second (u/children view-layout)))
-          header        (fn [] (c/label :text (get (:table-meta data-toolkit) :representation) :halign :center :border (sborder/empty-border :top 10)))
-          update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration :model model :export-comp expand-export :more-comps [(return)])]))
-          x nil ;;------------ Build
-          expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) ;;:hscroll :never
-                                                  )
-          back-to-insert     (fn [] (gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
-          expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
-          table              (fn [] ((get (create-table configuration data-toolkit) :table) (fn [model] (expand-update-form model back-to-insert)))) ;; TODO: set try
-          x nil ;;------------ Finish
-          view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])] [(try 
-                                                                                                                (c/vertical-panel :items [(table)])
-                                                                                                                (catch Exception e (c/label :text (str "Problem with table model: " (.getMessage e)))))]])]
-      view-layout)))
+    (println "Plugin config: " configuration)
+    ;; (let [x nil ;;------------ Prepare components
+    ;;       expand-export (fn [id] (export-print-doc (get-in global-configuration plugin-path) id alerts))
+    ;;       insert-form   (fn [] (build-input-form data-toolkit configuration global-configuration :start-focus start-focus :alerts alerts))
+    ;;       view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
+    ;;       table         (fn [] (second (u/children view-layout)))
+    ;;       header        (fn [] (c/label :text (get (:table-meta data-toolkit) :representation) :halign :center :border (sborder/empty-border :top 10)))
+    ;;       update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration :model model :export-comp expand-export :more-comps [(return)])]))
+    ;;       x nil ;;------------ Build
+    ;;       expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) ;;:hscroll :never
+    ;;                                               )
+    ;;       back-to-insert     (fn [] (gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
+    ;;       expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
+    ;;       table              (fn [] ((get (create-table configuration data-toolkit) :table) (fn [model] (expand-update-form model back-to-insert)))) ;; TODO: set try
+    ;;       x nil ;;------------ Finish
+    ;;       view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])] [(try 
+    ;;                                                                                                             (c/vertical-panel :items [(table)])
+    ;;                                                                                                             (catch Exception e (c/label :text (str "Problem with table model: " (.getMessage e)))))]])]
+    ;;   view-layout)
+    (c/label :text "Testing mode")
+    ))
+
 
 ;; (let [my-frame (-> (doto (c/frame
 ;;                           :title "test"
@@ -452,32 +497,35 @@
   datatoolkit)
 
 ;;;PLUGINS ;;;        
-(defn jarman-table-component [plugin-path global-configuration spec-map]
-  (let [gett #(get-in (global-configuration) (lang/join-vec plugin-path %))
-        data-toolkit  (gett [:data-toolkit])
-        configuration (gett [:configuration])
-        title (:representation (:table-meta data-toolkit))
-        space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
-        atm (:atom-expanded-items (c/config space :user-data))]
-    (if (false? (spec/test-keys-jtable configuration spec-map))
-      (println "Error in spec")
-      (swap! atm (fn [inserted]
-                   (conj inserted
-                         (button-expand-child
-                          title
-                          :onClick (fn [e] (@gseed/jarman-views-service
-                                            :set-view
-                                            :view-id (str "auto-" title)
-                                            :title title
-                                            :scrollable? false
-                                            :component-fn (fn [] (auto-builder--table-view
-                                                                  plugin-path
-                                                                  (global-configuration)
-                                                                  data-toolkit
-                                                                  configuration)))))))))
-    (.revalidate space)))
-
+(defn jarman-table-component [plugins-paths global-configuration spec-map]
+  (let [plugins-paths (if (vector? (first plugins-paths)) plugins-paths [plugins-paths])]
+    (doall
+     (->> plugins-paths
+          (map (fn [plugin-path]
+                 (let [get-from-global #(->> % (l/join-vec plugin-path) (get-in (global-configuration)))
+                       data-toolkit  (get-from-global [:data-toolkit])
+                       configuration (get-from-global [:configuration])
+                       title (get-in data-toolkit [:table-meta :representation])
+                       space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
+                       atm (:atom-expanded-items (c/config space :user-data))]
+                   (if (false? (spec/test-keys-jtable configuration spec-map))
+                     (println "[ Warning ] plugin/table: Error in spec")
+                     (if (l/in? (:permission configuration) (keyword (session/user-get-permission)))
+                       (swap! atm (fn [inserted]
+                                    (conj inserted
+                                          (gcomp/button-expand-child
+                                           title
+                                           :onClick (fn [e] (@gseed/jarman-views-service
+                                                             :set-view
+                                                             :view-id (str "auto-" title)
+                                                             :title title
+                                                             :scrollable? false
+                                                             :component-fn (fn [] (auto-builder--table-view
+                                                                                   plugin-path
+                                                                                   (global-configuration)
+                                                                                   data-toolkit
+                                                                                   configuration))))))))))
+                   (.revalidate space))))))))
 
   
-
 

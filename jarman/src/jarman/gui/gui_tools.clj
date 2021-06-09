@@ -142,7 +142,7 @@
 
 
 (defn theme-map [default & args]
-  (cm/get-in-value (vec (concat [:themes :current-theme] args)) (doto default (println "[ Warning ] Can not find parameter in theme. Used default value."))))
+  (cm/get-in-value (vec (concat [:themes :current-theme] args)) default))
 (defn lang-configuration-struct-map [default & args]
   (cm/get-in-segment (vec (concat [] args)) default))
 ;; (defn lang-standart-struct-map [default & args]

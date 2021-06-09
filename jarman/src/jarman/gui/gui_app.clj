@@ -47,7 +47,7 @@
 ;; │ JLayeredPane Popup Service │
 ;; │                            │
 ;; └────────────────────────────┘
- 
+
 (def popup-menager (atom nil))
 
 (defn ontop-panel
@@ -145,7 +145,7 @@
      :background (get-color :background :button_main)
      :focusable? true
      :listen [:focus-gained (fn [e] (hand-hover-on e) (config! e :background light-light-grey-color))
-              :focus-lost   (fn [e] (config! e :background (get-color :background :button_main)) )
+              :focus-lost   (fn [e] (config! e :background (get-color :background :button_main)))
               :mouse-clicked func
               :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) func))]
      :items (list (label
@@ -196,8 +196,7 @@
                                                                         x
                                                                         (fn [e] (return-from-dialog e x)))) data))))) :hscroll :never :border nil)]
                                (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
-                               (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr))
-                     ))]
+                               (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr))))]
       (.setUndecorated dialog true)
       (doto dialog (.setLocationRelativeTo (to-root invoker)) pack! show!) ;; here should be relative to root of invoker
       )))
@@ -633,7 +632,7 @@
                                              (let [bpnl (mig-panel
                                                          :constraints ["wrap 1" "20px[]0px" "5px[top]0px"]
                                                          :background "#fff"
-                                                         :preferred-size [400 :by 300]) 
+                                                         :preferred-size [400 :by 300])
                                                    scr (scrollable bpnl
                                                                    :hscroll :never)
                                                    path-groups (group-by second (map (fn [x] (conj (subvec (first x) 1) (second x))) @local-changes))]
@@ -642,7 +641,7 @@
                                                (doall
                                                 (map
                                                  (fn [[group-name paths]]
-                                                   (.add bpnl 
+                                                   (.add bpnl
                                                          (label
                                                           :foreground gcomp/blue-color
                                                           :text
@@ -650,32 +649,32 @@
                                                            (name (get-in table
                                                                          [:prop :columns group-name :field])))))
                                                    (doall (map
-                                                      (fn [path]
-                                                        (.add
-                                                         bpnl
-                                                         (horizontal-panel
-                                                          :background "#fff"
-                                                          :items (list
-                                                                  (label
-                                                                   :border (empty-border :left 10)
-                                                                   :background "#fff"
-                                                                   :font (getFont 12)
-                                                                   :text (str
-                                                                          (name (last (butlast path)))
-                                                                          ": "))
-                                                                  (label
-                                                                   :background gcomp/light-light-grey-color
-                                                                   :font (getFont 12)
-                                                                   :text (get-in table (flatten [:prop (vec (butlast path))])))
-                                                                  (label
-                                                                   :background "#fff"
-                                                                   :font (getFont 12)
-                                                                   :text " to ")
-                                                                  (label
-                                                                   :background gcomp/light-light-grey-color
-                                                                   :font (getFont 12)
-                                                                   :text (last path))))))
-                                                      paths))) path-groups))
+                                                           (fn [path]
+                                                             (.add
+                                                              bpnl
+                                                              (horizontal-panel
+                                                               :background "#fff"
+                                                               :items (list
+                                                                       (label
+                                                                        :border (empty-border :left 10)
+                                                                        :background "#fff"
+                                                                        :font (getFont 12)
+                                                                        :text (str
+                                                                               (name (last (butlast path)))
+                                                                               ": "))
+                                                                       (label
+                                                                        :background gcomp/light-light-grey-color
+                                                                        :font (getFont 12)
+                                                                        :text (get-in table (flatten [:prop (vec (butlast path))])))
+                                                                       (label
+                                                                        :background "#fff"
+                                                                        :font (getFont 12)
+                                                                        :text " to ")
+                                                                       (label
+                                                                        :background gcomp/light-light-grey-color
+                                                                        :font (getFont 12)
+                                                                        :text (last path))))))
+                                                           paths))) path-groups))
                                                (.repaint bpnl)
                                                (.setUnitIncrement (.getVerticalScrollBar scr) 20)
                                                (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. 0 0))
@@ -854,7 +853,7 @@
   (let [last-x (atom 0)
         last-y (atom 0)
         component (label :text (str (:representation data))
-                         :size [(:width data) :by (if (= (:type data) "header") 
+                         :size [(:width data) :by (if (= (:type data) "header")
                                                     (- (:height data) 2)
                                                     (- (:height data) 0))]
                          :icon (cond
@@ -1014,62 +1013,68 @@
 
 
 (def create-expand-btns--confgen
-  "Discription
+  "Discription:
      Return expand button with config generator GUI
      Complete component
    "
-  (fn [] (button-expand
-          (gtool/get-lang-btns :settings)
-          (let [current-theme (str (first (cm/get-in-value [:themes :theme_config.edn :selected-theme])) ".edn")
-                config-file-list-as-keyword (map #(first %) (cm/get-in-segment []))
-                config-file-list-as-keyword-to-display (filter #(let [map-part (cm/get-in-segment (if (vector? %) % [%]))]
-                                                                  (and (= :file (get map-part :type))
-                                                                       (= :edit (get map-part :display))))
-                                                               config-file-list-as-keyword)
-                restore-button (button-expand-child (get-lang-btns :restore-last-configuration)
-                                                    :onClick (fn [e] (do
-                                                                       (if-not (nil? (cm/restore-config)) (@gseed/alert-manager :set {:header "Success!" :body (get-lang-alerts :restore-configuration-ok)} (@gseed/alert-manager :message gseed/alert-manager) 5)))))]
-            (reverse
-             (conj
-              (map (fn [p]
-                     (let [path (if (vector? p) p [p])
-                           title (get (cm/get-in-segment path) :name)
-                           view-id (last path)]
-                       (button-expand-child title :onClick (fn [e]
-                                                             (@gseed/jarman-views-service
-                                                              :set-view
-                                                              :view-id view-id
-                                                              :title title
-                                                              :scrollable? false
-                                                              :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (@gseed/alert-manager :message @gseed/alert-manager) 5)))))))))
-                   config-file-list-as-keyword-to-display)
-              (let [path [:themes :theme_config.edn]
-                    title (get (cm/get-in-segment path) :name)
-                    view-id :theme_config.edn]
-                (button-expand-child title :onClick (fn [e]
-                                                      (@gseed/jarman-views-service
-                                                       :set-view
-                                                       :view-id view-id
-                                                       :title title
-                                                       :scrollable? false
-                                                       :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} ((@gseed/alert-manager :message) @gseed/alert-manager) 5))))))))
-              (let [path [:themes (keyword current-theme)]
-                    title (if (nil? (get (cm/get-in-segment path) :name)) "NIL" (get (cm/get-in-segment path) :name))
-                    view-id :current-theme]
-                (button-expand-child title :onClick (fn [e]
-                                                      (@gseed/jarman-views-service
-                                                       :set-view
-                                                       :view-id view-id
-                                                       :title title
-                                                       :scrollable? false
-                                                       :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (str (gtool/get-lang-alerts :changes-saved))} (@gseed/alert-manager :message gseed/alert-manager) 5)))))
+  (fn [] (if (= false (:valid? (cm/get-in-segment []))) 
+           (do (println "[ Warning ] Can not loading configs: " (:output (cm/get-in-segment [])))
+               [(button-expand "Settings Error" []
+                               :ico (stool/image-scale icon/alert-64-png 25)
+                               :ico-hover (stool/image-scale icon/alert-64-png 25)
+                               :onClick (fn [e] (@gseed/alert-manager :set {:header "Settings Error" :body (str "Valid output: " (:output (cm/get-in-segment [])))} (@gseed/alert-manager :message gseed/alert-manager) 5)))]) 
+           [(button-expand
+             (gtool/get-lang-btns :settings)
+             (let [current-theme (str (first (cm/get-in-value [:themes :theme_config.edn :selected-theme])) ".edn")
+                   config-file-list-as-keyword (map #(first %) (cm/get-in-segment []))
+                   config-file-list-as-keyword-to-display (filter #(let [map-part (cm/get-in-segment (if (vector? %) % [%]))]
+                                                                     (and (= :file (get map-part :type))
+                                                                          (= :edit (get map-part :display))))
+                                                                  config-file-list-as-keyword)
+                   restore-button (button-expand-child (get-lang-btns :restore-last-configuration)
+                                                       :onClick (fn [e] (do
+                                                                          (if-not (nil? (cm/restore-config)) (@gseed/alert-manager :set {:header "Success!" :body (get-lang-alerts :restore-configuration-ok)} (@gseed/alert-manager :message gseed/alert-manager) 5)))))]
+               (reverse
+                (conj
+                 (map (fn [p]
+                        (let [path (if (vector? p) p [p])
+                              title (get (cm/get-in-segment path) :name)
+                              view-id (last path)]
+                          (button-expand-child title :onClick (fn [e]
+                                                                (@gseed/jarman-views-service
+                                                                 :set-view
+                                                                 :view-id view-id
+                                                                 :title title
+                                                                 :scrollable? false
+                                                                 :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (@gseed/alert-manager :message @gseed/alert-manager) 5)))))))))
+                      config-file-list-as-keyword-to-display)
+                 (let [path [:themes :theme_config.edn]
+                       title (get (cm/get-in-segment path) :name)
+                       view-id :theme_config.edn]
+                   (button-expand-child title :onClick (fn [e]
+                                                         (@gseed/jarman-views-service
+                                                          :set-view
+                                                          :view-id view-id
+                                                          :title title
+                                                          :scrollable? false
+                                                          :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} ((@gseed/alert-manager :message) @gseed/alert-manager) 5))))))))
+                 (let [path [:themes (keyword current-theme)]
+                       title (if (nil? (get (cm/get-in-segment path) :name)) "NIL" (get (cm/get-in-segment path) :name))
+                       view-id :current-theme]
+                   (button-expand-child title :onClick (fn [e]
+                                                         (@gseed/jarman-views-service
+                                                          :set-view
+                                                          :view-id view-id
+                                                          :title title
+                                                          :scrollable? false
+                                                          :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (str (gtool/get-lang-alerts :changes-saved))} (@gseed/alert-manager :message gseed/alert-manager) 5)))))
                                                       ;; (try
 
                                                       ;;   (catch Exception e (do
                                                       ;;                        (@gseed/alert-manager :set {:header "Warning!" :body (str (gtool/get-lang-alerts :configuration-corrupted) "Exception: " e)} (@gseed/alert-manager :message gseed/alert-manager) 5))))
-                                                      )))
+                                                         )))
               ;; restore-button
-              ))))))
+                 ))))])))
 
 ;; ┌──────────────────────────┐
 ;; │                          │
@@ -1147,7 +1152,7 @@
              :args [:vscroll :never])]
            [(vmig
              :vrules "[fill]0px[grow, fill]"
-             :items [[(gcomp/menu-bar-right 
+             :items [[(gcomp/menu-bar-right
                        :id :menu-for-period-table
                        :buttons [[(gtool/get-lang-btns :save) icon/agree1-blue-64-png (fn [e])]
                                  [(gtool/get-lang-btns :export) icon/excel-64-png (fn [e])]])]
@@ -1189,8 +1194,7 @@
                  :args [:id :expand-panel :background "#fff"])]
     (gseed/set-focus return)
     return
-    periods
-    ))
+    periods))
 
 ;; (@startup)
 
@@ -1256,7 +1260,7 @@
                                                   ])]
                                  [(button-expand "Tables" [] :id :tables-view-plugin :expand :yes)]
                                  [(button-expand "Okresy" [(button-expand-child "Okresy" :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "okresy" :title "Okresy" :component-fn create-period-view)))])]
-                                 [(create-expand-btns--confgen)]
+                                 (create-expand-btns--confgen)
                                  [(button-expand "Debug items"
                                                  [(button-expand-child "Popup" :onClick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200])))
                                                   (button-expand-child "Dialog" :onClick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100])))))
@@ -1343,5 +1347,3 @@
 
 
 (@startup)
- 
-

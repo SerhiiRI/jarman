@@ -1,6 +1,3 @@
-;; 
-;; Compilation: dev_tool.clj -> metadata.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
-;; 
 (ns jarman.gui.gui-alerts-service
   (:import (java.awt Color))
   (:use seesaw.core
@@ -120,7 +117,10 @@
                                        (fn [e] (view-selected-message header body layered-pane)))
                  (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered-pane 23 
                                        (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (@alerts-controller :rm-obj to-del))))]
-          [t b l r] (map #(Integer/parseInt %) (l/rift (gtool/get-comp :message-box :border-size) [1 1 1 1]))]
+          [t b l r] (try
+                      (map #(Integer/parseInt %) (l/rift (gtool/get-comp :message-box :border-size)))
+                      (catch Exception e [1 1 1 1]))]
+      
       (mig-panel
        :id :alert-box
        :constraints ["wrap 1" "0px[fill, grow]0px" "0px[20]0px[30]0px[20]0px"]
@@ -137,7 +137,8 @@
                  :align :right
                  :background (new Color 0 0 0 1)
                  :items (if (= (contains? data :btns) true) (concat close (get data :btns)) close))]]
-       :listen [:mouse-entered (fn [e])]))))
+       :listen [:mouse-entered (fn [e])]))
+       ))
 
 
 

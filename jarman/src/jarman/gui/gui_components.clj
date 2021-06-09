@@ -741,18 +741,20 @@
                  min-height
                  ico
                  ico-hover
-                 id]
+                 id
+                 onClick]
           :or {expand :auto
                border (b/compound-border (b/empty-border :left 6))
                vsize 35
                min-height 200
                ico  (stool/image-scale icon/plus-64-png 25)
                ico-hover (stool/image-scale icon/minus-grey-64-png 20)
-               id :none}}]
+               id :none
+               onClick nil}}]
     (let [atom-inside-btns (atom nil)
           inside-btns (if (nil? inside-btns) nil inside-btns)
           inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns))
-          ico (if (or (= :always expand) (not (nil? inside-btns))) (stool/image-scale icon/plus-64-png 25) nil)
+          ico (if (or (= :always expand) (not (nil? inside-btns))) ico nil)
           title (c/label
                  :text txt
                  :background (Color. 0 0 0 0))
@@ -762,40 +764,39 @@
                 :background (Color. 0 0 0 0)
                 :icon ico)
           mig (mig-panel :constraints ["wrap 1" (str "0px[" min-height ":, grow, fill]0px") "0px[fill]0px"])
-          onClick (fn [e]
-                    (if-not (nil? @atom-inside-btns)
-                      (if (= (count (u/children mig)) 1)
-                        (do ;;  Add inside buttons to mig with expand button
-                          (c/config! icon :icon ico-hover)
-                          (doall (map #(.add mig %) @atom-inside-btns))
-                          (gseed/set-focus (first @atom-inside-btns))
-                          (gseed/switch-focus)
-                          (.revalidate mig)
-                          (.repaint mig))
-                        (do ;;  Remove inside buttons form mig without expand button
-                          (c/config! icon :icon ico)
-                          (doall (map #(.remove mig %) (reverse (drop 1 (range (count (u/children mig)))))))
-                          (.revalidate mig)
-                          (.repaint mig)))))
-          expand-btn (mig-panel
-                      :constraints ["" (str "10px[grow, fill]0px[" vsize "]0px") "0px[fill]0px"]
-                      :background (gtool/get-comp :button-expand :background)
-                      :focusable? true
-                      :border border
-                      :items [[title]
-                              [icon]]
-                      :listen [:mouse-entered gtool/hand-hover-on
-                               :mouse-clicked (fn [e] (onClick e))
-                               :focus-gained  (fn [e] (c/config! e :background (gtool/get-comp :button-expand :background-hover)))
-                               :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand :background)))
-                               :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))])]
-      (do
-        (reset! atom-inside-btns inside-btns)
-        (c/config! mig
-                   :id id
-                  ;;  :focusable? true
-                   :user-data {:atom-expanded-items atom-inside-btns}
-                   :items [[expand-btn]])))))
+          expand-btn (fn [func]
+                       (mig-panel
+                        :constraints ["" (str "10px[grow, fill]0px[" vsize "]0px") "0px[fill]0px"]
+                        :background (gtool/get-comp :button-expand :background)
+                        :focusable? true
+                        :border border
+                        :items [[title]
+                                [icon]]
+                        :listen [:mouse-entered gtool/hand-hover-on
+                                 :mouse-clicked (fn [e] (func e))
+                                 :focus-gained  (fn [e] (c/config! e :background (gtool/get-comp :button-expand :background-hover)))
+                                 :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand :background)))
+                                 :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (func e)))]))] 
+     (if (nil? onClick)
+       (let [onClick (fn [e]
+                       (if-not (nil? @atom-inside-btns)
+                         (if (= (count (u/children mig)) 1)
+                           (do ;;  Add inside buttons to mig with expand button
+                             (c/config! icon :icon ico-hover)
+                             (doall (map #(.add mig %) @atom-inside-btns))
+                             (gseed/set-focus (first @atom-inside-btns))
+                             (gseed/switch-focus)
+                             (.revalidate mig)
+                             (.repaint mig))
+                           (do ;;  Remove inside buttons form mig without expand button
+                             (c/config! icon :icon ico)
+                             (doall (map #(.remove mig %) (reverse (drop 1 (range (count (u/children mig)))))))
+                             (.revalidate mig)
+                             (.repaint mig)))))]
+         (do
+           (reset! atom-inside-btns inside-btns)
+           (c/config! mig :id id :user-data {:atom-expanded-items atom-inside-btns} :items [[(expand-btn onClick)]])))
+       (c/config! mig :id id :items [[(expand-btn onClick)]])))))
 
 
 

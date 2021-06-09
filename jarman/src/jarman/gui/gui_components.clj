@@ -273,13 +273,13 @@
    :args args))
 
 
-(defn button-export
-  [txt onClick]
-  (button-basic txt 
-                :onClick onClick
-                :mouse-in (gtool/get-comp :button-export :mouse-in)
-                :mouse-out (gtool/get-comp :button-export :mouse-out)
-                :unfocus-color (gtool/get-comp :button-export :unfocus-color)))
+;; (defn button-export
+;;   [txt onClick]
+;;   (button-basic txt 
+;;                 :onClick onClick
+;;                 :mouse-in (gtool/get-comp :button-export :mouse-in)
+;;                 :mouse-out (gtool/get-comp :button-export :mouse-out)
+;;                 :unfocus-color (gtool/get-comp :button-export :unfocus-color)))
 
 (defn button-return
   [txt func]

@@ -128,6 +128,7 @@
   (cond (and (number? con) (not (zero? con)))   con
         (and (sequential? con) (not-empty con)) con
         (and (string? con) (not-empty con))     con
+        (and (map? con)    (not-empty con))     con
         :else els))
 
 

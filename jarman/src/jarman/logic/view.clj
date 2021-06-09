@@ -555,17 +555,17 @@
                         :store-id :store-id
                         :local-changes :local-changes
                         :val :val}
-            :model-comp 'gcomp/input-text-area-label}
+            :model-comp 'jarman.gui.gui-components/input-text-with-atom}
            :user.password
            :user.first_name
            :user.last_name
            :user.id_permission
            {:model-reprs "Start user"
             :model-param :user-start
-            :model-comp 'gcomp/input-int}
+            :model-comp 'jarman.gui.gui-components/input-int}
            {:model-reprs "End user"
             :model-param :user-end
-            :model-comp 'gcomp/input-int}]
+            :model-comp 'jarman.gui.gui-components/input-int}]
    :query {:inner-join [:user->permission]
            :columns
            (as-is

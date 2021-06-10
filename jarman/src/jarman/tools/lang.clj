@@ -265,7 +265,7 @@
 (defmacro where-binding-form [binding-form]
   `[~(first binding-form)
     (let [~(first binding-form) ~(second binding-form)]
-      (recursive-linier-preprocessor ~(first binding-form) ~(first (rest binding-form)) ~(rest (rest binding-form))))])
+      (recursive-linier-preprocessor ~(first binding-form) ~(first binding-form)  ~(rest (rest binding-form))))])
 
 (defmacro where
   "Description

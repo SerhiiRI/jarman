@@ -140,23 +140,22 @@
                 outlist (if selected (filter (fn [i] (identical? (config i :id) id)) (seesaw.util/children (.getParent selected))) nil)]
             (if outlist outlist nil)))
 
+(def current-theme (fn [] (keyword (str (first (cm/get-in-value [:themes :theme_config.edn :selected-theme])) ".edn"))))
+(defn theme-map [default & coll]
+  (cm/get-in-value (into [:themes (current-theme)] (vec coll)) default))
 
-(defn theme-map [default & args]
-  (cm/get-in-value (vec (concat [:themes :current-theme] args)) default))
-(defn lang-configuration-struct-map [default & args]
-  (cm/get-in-segment (vec (concat [] args)) default))
-;; (defn lang-standart-struct-map [default & args]
-;;   (get-in @init/language (vec (concat [] args)) default))
-(cm/get-in-lang [:ui :buttons])
-
-(def using-lang (cm/get-in-value [:init.edn :lang]))
+(def using-lang (fn [] (->> (cm/get-in-value [:init.edn :lang])
+                            (#(if (nil? %) "en" %))
+                            (#(if (string? %) [%] %))
+                            (first)
+                            (keyword))))
 (def get-color (partial theme-map "#fff" :color))
 (def get-comp (partial theme-map "#fff" :components))
 (def get-frame (partial theme-map 1000 :frame))
 (def get-font (partial theme-map "Ubuntu" :font))
-(def get-lang (fn [& path] (cm/get-in-lang (lang/join-vec [:ui] path))))
-(def get-lang-btns (fn [& path] (cm/get-in-lang (lang/join-vec [:ui :buttons] path))))
-(def get-lang-alerts (fn [& path] (cm/get-in-lang (lang/join-vec [:ui :alerts] path))))
+(def get-lang (fn [& path] (cm/get-in-lang (lang/join-vec [(using-lang):ui] path))))
+(def get-lang-btns (fn [& path] (cm/get-in-lang (lang/join-vec [(using-lang) :ui :buttons] path))))
+(def get-lang-alerts (fn [& path] (cm/get-in-lang (lang/join-vec [(using-lang) :ui :alerts] path))))
 
 ;; ############# COMPONENTS TODO: need move to gui_components.clj
 

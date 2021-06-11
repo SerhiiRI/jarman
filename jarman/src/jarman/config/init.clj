@@ -156,7 +156,7 @@
                (> L 1) (reduce #(DM %2 %1) (FM (last P) (load-config-file F) ) (butlast P))))))
      (with-theme-cfg (load-current-theme cfg) otherwise with-theme-cfg)
      ;; End-stage validators
-     (validated-config cfg do spec/valid-segment if2 :valid? cfg validated-config))
+     (validated-config cfg do spec/valid-segment if2 :valid? with-theme-cfg validated-config))
     (reset! configuration validated-config)
     nil)))
 

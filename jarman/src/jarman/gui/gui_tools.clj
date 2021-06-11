@@ -140,9 +140,9 @@
                 outlist (if selected (filter (fn [i] (identical? (config i :id) id)) (seesaw.util/children (.getParent selected))) nil)]
             (if outlist outlist nil)))
 
-(def current-theme (fn [] (keyword (str (first (cm/get-in-value [:themes :theme_config.edn :selected-theme])) ".edn"))))
+;; (def current-theme (fn [] (keyword (str (first (cm/get-in-value [:themes :theme_config.edn :selected-theme])) ".edn"))))
 (defn theme-map [default & coll]
-  (cm/get-in-value (into [:themes (current-theme)] (vec coll)) default))
+  (cm/get-in-value (into [:themes :current-theme] (vec coll)) default))
 
 (def using-lang (fn [] (->> (cm/get-in-value [:init.edn :lang])
                             (#(if (nil? %) "en" %))

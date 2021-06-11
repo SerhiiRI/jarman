@@ -537,8 +537,7 @@
 ;;      :enterpreneur.contacts_information)}))
 
 ;; Overriding and component custom adding
-(defview
-  user
+(defview user
   (jarman-table
    :name
    "user-override"
@@ -584,8 +583,7 @@
                                           :user.last_name  (str "user" %)
                                           :user.first_name (str "user" %)
                                           :user.id_permission 2)
-                               (range user-start (+ 1 user-end)))))
-               )}
+                               (range user-start (+ 1 user-end))))))}
    :buttons [{:action :add-multiply-users-insert
               :title "Auto generate users"}]))
 

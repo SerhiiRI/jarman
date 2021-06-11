@@ -293,6 +293,7 @@
     `(let [~@let-binding-forms]
        ~@body)))
 
+
 (defmacro wlet
   "Description
     Is where with binding block on end of expresion

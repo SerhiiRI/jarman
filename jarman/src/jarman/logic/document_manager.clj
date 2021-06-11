@@ -40,8 +40,6 @@
    (db/exec (delete :documents
                     :where [:= :id (:id document-map)]))))
 
-
-
 (defn- -update-document-jdbc [document-map]
  (let [^java.sql.Connection
        connection (clojure.java.jdbc/get-connection (db/connection-get))

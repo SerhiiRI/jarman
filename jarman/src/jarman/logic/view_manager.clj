@@ -201,6 +201,7 @@
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (map (fn [x] (eval x)) data))))))
 
+;; (do-view-load)
 ;; (defview
 ;;   permission
 ;;   (jarman-table

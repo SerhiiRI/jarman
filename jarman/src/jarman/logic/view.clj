@@ -4,22 +4,21 @@
 (defview
   permission
   (jarman-table
-   :name
-   "permission"
-   :plug-place
-   [:#tables-view-plugin]
-   :tables
-   [:permission]
-   :model
-   [:permission.id
-    :permission.permission_name
-    :permission.configuration]
-   :query
-   {:column
-    (as-is
-     :permission.id
-     :permission.permission_name
-     :permission.configuration)}))
+   :name "permission"
+   :plug-place [:#tables-view-plugin]
+   :tables [:permission]
+   :view-columns [:permission.permission_name
+                  :permission.configuration]
+   :model [:permission.id
+           {:model-reprs "Permision name"
+            :model-param :permission.permission_name
+            :model-comp 'jarman.gui.gui-components/input-text-with-atom}
+           :permission.configuration]
+   :query {:column
+           (as-is
+            :permission.id
+            :permission.permission_name
+            :permission.configuration)}))
 ;; (defview
 ;;   user
 ;;   (jarman-table
@@ -551,10 +550,7 @@
                   :permission.permission_name]
    :model [{:model-reprs "Login"
             :model-param :user.login
-            :bind-args {:title :title
-                        :store-id :store-id
-                        :local-changes :local-changes
-                        :val :val}
+            :bind-args {:title :title}
             :model-comp 'jarman.gui.gui-components/input-text-with-atom}
            :user.password
            :user.first_name

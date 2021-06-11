@@ -49,7 +49,8 @@
    ((s-parts (string/split path #"\\|/")
              iff2 #(= (first %) ".") rest identity
              iff2 #(= (first %) (.getName (clojure.java.io/file *config-root*))) rest identity
-             map keyword do vec))))
+             map keyword
+             do vec))))
 
 (defn- <path|file>-list
   "Example
@@ -154,10 +155,12 @@
              :let [L (count PF)]]
          (cond (= L 1) (load-config-file F)
                (> L 1) (reduce #(DM %2 %1) (FM (last P) (load-config-file F) ) (butlast P))))))
-     (with-theme-cfg (load-current-theme cfg) otherwise with-theme-cfg)
+     (cfg (load-current-theme cfg) otherwise cfg)
      ;; End-stage validators
-     (validated-config cfg do spec/valid-segment if2 :valid? cfg validated-config))
-    (reset! configuration validated-config)
+     (cfg (spec/valid-segment cfg) 
+          do (fn [result] (if (:valid? result) cfg result))
+          otherwise nil))
+    (reset! configuration cfg)
     nil)))
 
 (defn swapp-language []

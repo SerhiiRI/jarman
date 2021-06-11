@@ -51,9 +51,9 @@
     (smig/mig-panel
      :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
      :items [[(gcomp/input-text-with-atom
-               :val value
-               :store-id path
-               :local-changes local-changes
+               {:val value
+                :store-id path
+                :local-changes local-changes}
                )]])))
 
 
@@ -62,9 +62,9 @@
     (smig/mig-panel
      :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
      :items [[(gcomp/input-int
-               :val value
-               :store-id path
-               :local-changes local-changes
+               {:val value
+                :store-id path
+                :local-changes local-changes}
                )]])))
 
 

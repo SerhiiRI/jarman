@@ -429,10 +429,10 @@
                           :else
                           (config! (gcomp/inpose-label (lang/convert-key-to-title (str param))
                                                        (gcomp/input-text-with-atom
-                                                        :local-changes local-changes
-                                                        :store-id (lang/join-vec path-to-value [param])
-                                                        :val (str (get column param))
-                                                        :enabled? enabled)
+                                                        {:local-changes local-changes
+                                                         :store-id (lang/join-vec path-to-value [param])
+                                                         :val (str (get column param))
+                                                         :enabled? enabled})
                                                        :font-color dark-grey-color
                                                        :vtop 10)
                                    :background gcomp/light-light-grey-color)))]
@@ -730,10 +730,10 @@
                                                                               (gcomp/inpose-label
                                                                                (lang/convert-key-to-title (str param))
                                                                                (gcomp/input-text-with-atom
-                                                                                :local-changes local-changes
-                                                                                :store-id (lang/join-vec tab-path-to-value [param])
-                                                                                :val (str (get table-property param))
-                                                                                :enabled? enabled)
+                                                                                {:local-changes local-changes
+                                                                                 :store-id (lang/join-vec tab-path-to-value [param])
+                                                                                 :val (str (get table-property param))
+                                                                                 :enabled? enabled})
                                                                                :vtop 10
                                                                                :font-color gcomp/blue-color))))
                                                            meta-params [:representation :description :field :is-system?
@@ -1284,7 +1284,7 @@
     (let [relative (atom nil)]
       (cm/swapp)
       (try
-        (println "last pos" [(.x (.getLocationOnScreen (seesaw.core/to-frame @app))) (.y (.getLocationOnScreen (seesaw.core/to-frame @app)))])
+        ;; (println "last pos" [(.x (.getLocationOnScreen (seesaw.core/to-frame @app))) (.y (.getLocationOnScreen (seesaw.core/to-frame @app)))])
         (reset! relative [(.x (.getLocationOnScreen (seesaw.core/to-frame @app))) (.y (.getLocationOnScreen (seesaw.core/to-frame @app)))])
         (.dispose (seesaw.core/to-frame @app))
         (catch Exception e (println "Last pos is nil")))
@@ -1347,3 +1347,5 @@
 
 
 (@startup)
+
+

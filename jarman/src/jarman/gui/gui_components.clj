@@ -421,46 +421,46 @@
     Text component converted to c/text component with placeholder. Placehlder will be default value.
  Example:
     (input-text :placeholder \"Login\" :style [:halign :center])"
-  ([& {:keys [store-id
-              local-changes
-              val
-              border
-              border-color-focus
-              border-color-unfocus
-              char-limit]
-       :or {store-id nil
-            local-changes (atom {})
-            val ""
-            border [10 10 5 5 2]
-            border-color-focus   (gtool/get-color :decorate :focus-gained)
-            border-color-unfocus (gtool/get-color :decorate :focus-lost)
-            char-limit 0}}]
-   (let [newBorder (fn [underline-color]
-                     (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
-                                      (b/line-border :bottom (nth border 4) :color underline-color)))
-         last-v (atom "")]
-     (let [text-area (c/to-widget (javax.swing.JTextArea.))]
-       (if-not (empty? val) (swap! local-changes (fn [storage] (assoc storage store-id val))))
-       (c/config!
-        text-area
-        :text (if (empty? val) "" (str val))
-        :minimum-size [50 :by 100]
-        :border (newBorder border-color-unfocus)
-        :user-data {:border-fn newBorder}
-        :listen [:focus-gained (fn [e]
-                                 (c/config! e :border (newBorder border-color-focus)))
-                 :focus-lost   (fn [e]
-                                 (c/config! e :border (newBorder border-color-unfocus)))
-                 :caret-update (fn [e]
-                                 (let [new-v (c/value (c/to-widget e))]
-                                   (if (and (> (count new-v) char-limit) (< 0 char-limit))
-                                     (c/invoke-later (c/config! e :text @last-v))
-                                     (reset! last-v new-v))
-                                   (cond
-                                     (and (not (nil? store-id)) (not (= val new-v)))
-                                     (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
-                                     :else (reset! local-changes (dissoc @local-changes store-id)))))])
-       (scrollbox text-area :minimum-size [50 :by 100])))))
+  [{:keys [store-id
+           local-changes
+           val
+           border
+           border-color-focus
+           border-color-unfocus
+           char-limit]
+    :or {store-id nil
+         local-changes (atom {})
+         val ""
+         border [10 10 5 5 2]
+         border-color-focus   (gtool/get-color :decorate :focus-gained)
+         border-color-unfocus (gtool/get-color :decorate :focus-lost)
+         char-limit 0}}]
+  (let [newBorder (fn [underline-color]
+                    (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
+                                       (b/line-border :bottom (nth border 4) :color underline-color)))
+        last-v (atom "")]
+    (let [text-area (c/to-widget (javax.swing.JTextArea.))]
+      (if-not (empty? val) (swap! local-changes (fn [storage] (assoc storage store-id val))))
+      (c/config!
+       text-area
+       :text (if (empty? val) "" (str val))
+       :minimum-size [50 :by 100]
+       :border (newBorder border-color-unfocus)
+       :user-data {:border-fn newBorder}
+       :listen [:focus-gained (fn [e]
+                                (c/config! e :border (newBorder border-color-focus)))
+                :focus-lost   (fn [e]
+                                (c/config! e :border (newBorder border-color-unfocus)))
+                :caret-update (fn [e]
+                                (let [new-v (c/value (c/to-widget e))]
+                                  (if (and (> (count new-v) char-limit) (< 0 char-limit))
+                                    (c/invoke-later (c/config! e :text @last-v))
+                                    (reset! last-v new-v))
+                                  (cond
+                                    (and (not (nil? store-id)) (not (= val new-v)))
+                                    (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
+                                    :else (reset! local-changes (dissoc @local-changes store-id)))))])
+      (scrollbox text-area :minimum-size [50 :by 100]))))
 
 (defn input-text-area-label
   [& {:keys [title
@@ -471,20 +471,20 @@
            store-id :none
            local-changes (atom {})
            val ""}}]
-  (inpose-label title (input-text-area :store-id store-id :local-changes local-changes :val val)))
+  (inpose-label title (input-text-area {:store-id store-id :local-changes local-changes :val val})))
 
 (defn input-text-with-atom
-  [& {:keys [store-id local-changes val editable? enabled? store-orginal onClick border-color-focus border-color-unfocus debug]
-      :or {local-changes (atom {})
-           store-id nil
-           val ""
-           editable? true
-           enabled? true
-           store-orginal false
-           border-color-focus   (gtool/get-color :decorate :focus-gained)
-           border-color-unfocus (gtool/get-color :decorate :focus-lost)
-           onClick (fn [e])
-           debug false}}]
+  [{:keys [store-id local-changes val editable? enabled? store-orginal onClick border-color-focus border-color-unfocus debug]
+    :or {local-changes (atom {})
+         store-id nil
+         val ""
+         editable? true
+         enabled? true
+         store-orginal false
+         border-color-focus   (gtool/get-color :decorate :focus-gained)
+         border-color-unfocus (gtool/get-color :decorate :focus-lost)
+         onClick (fn [e])
+         debug false}}]
   (if-not (empty? (str val)) (swap! local-changes (fn [storage] (assoc storage store-id val))))
   (input-text
    :args [:editable? editable?
@@ -961,24 +961,24 @@
     store-id
  Example:
     ((def input-number :style [:halign :center])"
-  (fn [& {:keys [style
-                 val
-                 font-size
-                 border-color-focus
-                 border-color-unfocus
-                 border
-                 char-limit
-                 local-changes
-                 store-id]
-          :or   {style []
-                 val "0"
-                 font-size 14
-                 border-color-focus   (gtool/get-color :decorate :focus-gained)
-                 border-color-unfocus (gtool/get-color :decorate :focus-lost)
-                 border [10 10 5 5 2]
-                 char-limit 0
-                 local-changes (atom {})
-                 store-id nil}}]
+  (fn [{:keys [style
+               val
+               font-size
+               border-color-focus
+               border-color-unfocus
+               border
+               char-limit
+               local-changes
+               store-id]
+        :or   {style []
+               val "0"
+               font-size 14
+               border-color-focus   (gtool/get-color :decorate :focus-gained)
+               border-color-unfocus (gtool/get-color :decorate :focus-lost)
+               border [10 10 5 5 2]
+               char-limit 0
+               local-changes (atom {})
+               store-id nil}}]
     (let [newBorder (fn [underline-color]
                       (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
                                        (b/line-border :bottom (nth border 4) :color underline-color)))

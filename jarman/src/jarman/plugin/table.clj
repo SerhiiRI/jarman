@@ -218,7 +218,7 @@
       (c/scrollable TT :hscroll :as-needed :vscroll :as-needed :border nil))))
 
 (defn- create-table [configuration toolkit-map]
-  (let [view (:model configuration) tables (:tables configuration)]
+  (let [view (:view-columns configuration) tables (:tables configuration)]
     (if (and view tables)
       (let [model-columns (gui-table-model-columns tables view)
             table-model (gui-table-model model-columns (:select toolkit-map))]
@@ -254,18 +254,18 @@
 (defn- a-component
   "Set default component to form or override it"
   [coll]
-  (gcomp/inpose-label (:title coll) (apply gcomp/input-text-area :store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll) (if (:val coll) [:val (:val coll)] []))))
+  (gcomp/inpose-label (:title coll) (gcomp/input-text-area (into {:store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll)} (if (:val coll) {:val (:val coll)}{})))))
 
 
 (defn- n-component
   "Set default component to form or override it"
   [coll]
-  (gcomp/inpose-label (:title coll) (apply gcomp/input-int :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:val (:val coll)] []))))
+  (gcomp/inpose-label (:title coll) (gcomp/input-int (into {:store-id (:store-id coll) :local-changes (:local-changes coll)} (if (:val coll) {:val (:val coll)} {})))))
 
 (defn- i-component
   "Set default component to form or override it"
   [coll]
-  (gcomp/inpose-label (:title coll) (apply gcomp/input-text-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll) (if (:val coll) [:val (:val coll)] []))))
+  (gcomp/inpose-label (:title coll) (gcomp/input-text-with-atom (into {:store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll)} (if (:val coll) {:val (:val coll)} {})))))
 
 
 
@@ -308,31 +308,50 @@
 
 ;; ((resolve 'gcomp/input-int))
 
+(defn get-missed-props
+  "Description
+   Return not binded map, just cut this what exist.
+   (get-missed-key {:a a} {:a a :b c :d e}) => {:b c, :d e}
+   "
+  [binded-map orgin-map]
+  (->> (map #(first %) orgin-map)
+       (filter (fn [orgin-key] (not (l/in? (map #(first %) binded-map) orgin-key))))
+       (into {} (map #(into {% (% orgin-map)})))))
+
+(defn merge-binded-props
+  "Description
+     Get map where are binded keys, get properties for component and create new map with properties.
+   Example:
+     (merge-binded-props {:title \"mytitle\" :value \"pepe\"} {:title :custom-key}) => {:custom-key \"mytitle\" :value \"pepe\"}
+   "
+  [props-map binded-list]
+  (let [binded (doall
+                (into {} (map #(let [orginal-key (first %)
+                                     binded-key  (second %)]
+                                 {binded-key (orginal-key props-map)})
+                              binded-list)))]
+    (into binded (get-missed-props binded props-map))))
+
 (defn convert-map-to-component 
   "Description
      Convert to component manual by map with overriding
    "
-  [global-configuration local-changes meta-data model m]
+  [local-changes meta-data model m]
   (let [k               (:model-param m)
         meta            (k meta-data)]
-    (println "M" m)
+    ;; (println "M" model)
     (let [comp-fn (:model-comp m)
           comp-fn (resolve (symbol comp-fn))
           title   (l/rift (:model-reprs m) "")
-          store-id (:model-param m)
-          binded   (l/rift (:bind-args m) [])
-          val ""]
-      ;; (println comp-fn)
-      (gcomp/inpose-label title (comp-fn)))
-    ;; TODO: Bainding parameters for custom component
-      ;; (c/label)
-
-      ;; (let [editable?       (:editable?       meta)
-      ;;       key-table       (:key-table       meta)
-      ;;       val             (l/rift (str (k model)) "")
-      ;;       map-coll {:title title :store-id field-qualified :local-changes local-changes :editable? editable? :val val}]
-      ;;   )
+          qualified (:model-param m)
+          val     (if (empty? model) "" (qualified model))
+          binded  (l/rift (:bind-args m) {})
+          props {:title title :store-id qualified :local-changes local-changes :val val}
+          props (if (empty? binded) props (merge-binded-props props binded))]
+      ;; (println "Props: " props)
+      (gcomp/inpose-label title (comp-fn props)))
     ))
+
 
 (defn convert-key-to-component 
   "Description
@@ -346,17 +365,17 @@
         comp-type       (:component-type  meta)
         key-table       (:key-table       meta)
         val             (l/rift (str (k model)) "")
-        map-coll {:title title :store-id field-qualified :local-changes local-changes :editable? editable? :val val}]
+        props {:title title :store-id field-qualified :local-changes local-changes :editable? editable? :val val}]
     ;; (println k meta comp-type)
     (cond
       (l/in? comp-type "d")
-      (if (empty? model) (d-component map-coll) (d-component (conj map-coll {:val (if (empty? val) nil val)})))
+      (if (empty? model) (d-component props) (d-component (into props {:val (if (empty? val) nil val)})))
       (l/in? comp-type "a") ;; Text area
-      (if (empty? model) (a-component map-coll) (a-component (conj map-coll {:val val})))
+      (if (empty? model) (a-component props) (a-component (into props {:val val})))
       (l/in? comp-type "n") ;; Numbers Int
-      (if (empty? model) (n-component map-coll) (n-component (conj map-coll {:val val})))
+      (if (empty? model) (n-component props) (n-component (into props {:val val})))
       (l/in? comp-type "i") ;; Basic Input
-      (if (empty? model) (i-component map-coll) (i-component (conj map-coll {:val val})))
+      (if (empty? model) (i-component props) (i-component (into props {:val val})))
       (and (l/in? comp-type "l") (not (nil? key-table))) ;; TODO: Popup table do not working
       (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
         (let [key-table               (keyword key-table)
@@ -370,15 +389,15 @@
                                              (string/join ", ")))
               val (selected-representation connected-table-conf k)]
           ;; (if-not (nil? (get model field-qualified)) (swap! local-changes (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
-          (gcomp/inpose-label title (gcomp/input-text-with-atom :local-changes local-changes
-                                                                :editable? false
-                                                                :val val
-                                                                :onClick (fn [e]
-                                                                           (let [selected (construct-dialog (:table (create-table connected-table-conf connected-table-data)) field-qualified (c/to-frame e))]
-                                                                             (if-not (nil? (get selected (:model-id connected-table-data)))
-                                                                               (do (c/config! e :text (selected-representation connected-table-conf selected))
+          (gcomp/inpose-label title (gcomp/input-text-with-atom {:local-changes local-changes
+                                                                 :editable? false
+                                                                 :val val
+                                                                 :onClick (fn [e]
+                                                                            (let [selected (construct-dialog (:table (create-table connected-table-conf connected-table-data)) field-qualified (c/to-frame e))]
+                                                                              (if-not (nil? (get selected (:model-id connected-table-data)))
+                                                                                (do (c/config! e :text (selected-representation connected-table-conf selected))
                                                                                   ;;  (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))
-                                                                                   )))))))))))
+                                                                                    ))))})))))))
 
 
 (defn convert-model-to-components-list 
@@ -388,7 +407,7 @@
   [global-configuration local-changes meta-data model coll]
   (doall (->> coll
               (map #(cond
-                      (map? %)     (convert-map-to-component global-configuration local-changes meta-data model %)
+                      (map? %)     (convert-map-to-component local-changes meta-data model %)
                       (keyword? %) (convert-key-to-component global-configuration local-changes meta-data model %)))
               (filter #(not (nil? %))))))
 
@@ -562,6 +581,7 @@
 
 ;;;PLUGINS ;;;        
 (defn jarman-table-component [plugin-path global-configuration spec-map]
+  ;; (println "Loading table plugin")
   (let [get-from-global #(->> % (l/join-vec plugin-path) (get-in (global-configuration)))
         data-toolkit  (get-from-global [:data-toolkit])
         configuration (get-from-global [:configuration])

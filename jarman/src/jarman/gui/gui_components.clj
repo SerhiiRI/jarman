@@ -534,11 +534,12 @@
               enabled? true
               store-id nil
               always-set-changes true}}]
-   (if (and (= always-set-changes true) (not (empty? selected-item)))
+   
+   (let [combo-model (if (empty? selected-item) (cons selected-item model) (lang/join-vec [selected-item] (filter #(not= selected-item %) model)))]
+    (if (and (= always-set-changes true) (not (empty? selected-item)))
      (do
-       (swap! local-changes (fn [storage] (assoc storage store-id selected-item)))))
-   (c/combobox :model (let [combo-model (if (empty? selected-item) (cons selected-item model) (lang/join-vec [selected-item] (filter #(not= selected-item %) model)))]
-                        combo-model)
+       (swap! local-changes (fn [storage] (assoc storage store-id combo-model)))))
+   (c/combobox :model combo-model
                :font (gtool/getFont 14)
                :enabled? enabled?
                :editable? editable?
@@ -550,12 +551,13 @@
                                                   (and (not (nil? store-id))
                                                        (or
                                                         (= always-set-changes true)
-                                                        (not (= selected-item new-v))))
+                                                        (not (= (first @local-changes) new-v))))
                                                   (do
-                                                    (swap! local-changes (fn [storage] (assoc storage store-id new-v))))
+                                                    (let [new-model (into [new-v] (filter #(not (= new-v %)) model))]
+                                                      (swap! local-changes (fn [storage] (assoc storage store-id new-model)))))
                                                   (= always-set-changes false)
                                                   (do
-                                                    (reset! local-changes (dissoc @local-changes store-id))))))])))
+                                                    (reset! local-changes (dissoc @local-changes store-id))))))]))))
 
 
 (defn expand-form-panel

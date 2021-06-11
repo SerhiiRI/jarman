@@ -399,7 +399,6 @@
                                                                                   ;;  (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))
                                                                                     ))))})))))))
 
-
 (defn convert-model-to-components-list 
   "Description
      Switch fn to convert by map or keyword
@@ -412,10 +411,21 @@
               (filter #(not (nil? %))))))
 
 (defn convert-metadata-vec-to-map
-  "Description;
+  "Description:
      Convert [{:x a :field-qualified b}{:d w :field-qualified f}] => {:b {:x a :field-qualified b} :f {:d w :field-qualified f}}
    "
   [coll]  (into {} (doall (map (fn [m] {(keyword (:field-qualified m)) m}) coll))))
+
+(defn generate-custom-buttons
+  "Description:
+     Get buttons and actions from defview and create clickable button.
+   "
+  [local-changes configuration]
+  (let [button-fn (fn [title action]
+                    [(gcomp/hr 10)
+                     (gcomp/button-basic title :onClick (fn [e] (action local-changes)))])]
+    (doall (->> (:buttons configuration)
+                (map #(button-fn (:title %) ((:action %) (:actions configuration))))))))
 
 (def build-input-form
   "Description:
@@ -432,28 +442,16 @@
                                 :items [[(c/label)]])
           components (join-mig-items
                       components
+                      (generate-custom-buttons local-changes configuration)
                       (if (empty? model)
-                        [(gcomp/hr 10) (button-insert data-toolkit local-changes) more-comps]
-                        [(gcomp/hr 10) (button-update data-toolkit local-changes) (button-delete data-toolkit) more-comps (button-export data-toolkit)]))
+                        (if-not  (= false (:insert-button configuration)) [(gcomp/hr 10) (button-insert data-toolkit local-changes) more-comps] [more-comps])
+                        [(if-not (= false (:update-button configuration))[(gcomp/hr 10) (button-update data-toolkit local-changes)] []) 
+                         (if-not (= false (:delete-button configuration))[(button-delete data-toolkit)] [])
+                          more-comps 
+                         (button-export data-toolkit)])
+                      )
           builded (c/config! panel :items (gtool/join-mig-items components))]
       builded)))
-
-;; [{:description nil, 
-;;   :private? false, 
-;;   :default-value nil, 
-;;   :editable? true, 
-;;   :field :login, 
-;;   :column-type [:varchar-100 :nnull], 
-;;   :component-type [i], 
-;;   :representation login, 
-;;   :field-qualified :user.login}
-;;  {:description nil, :private? false, :default-value nil, :editable? true, :field :password, :column-type [:varchar-100 :nnull], :component-type [i], :representation password, :field-qualified :user.password} {:description nil, :private? false, :default-value nil, :editable? true, :field :first_name, :column-type [:varchar-100 :nnull], :component-type [i], :representation first_name, :field-qualified :user.first_name} {:description nil, :private? false, :default-value nil, :editable? true, :field :last_name, :column-type [:varchar-100 :nnull], :component-type [i], :representation last_name, :field-qualified :user.last_name} {:description nil, :private? false, :default-value nil, :editable? true, :field :id_permission, :column-type [:bigint-120-unsigned :nnull], :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}], :component-type [l], :representation id_permission, :field-qualified :user.id_permission, :key-table :permission}]
-
-
-;; {:permision {:jarman-table {:configuration {}
-;;                             :data-toolkit  {}}}
-;;  :user      {:jarman-table {:configuration {}
-;;                             :data-toolkit  {}}}}
 
 ;;  (run user-view)
 (defn export-print-doc
@@ -498,47 +496,6 @@
                                    :background "#95dec9"
                                    :border (sborder/compound-border (sborder/empty-border :left 10 :right 10)))]])))
 
-;;########################################
-;; ### Defview configuration for user ###
-;;########################################
-;; {:plug-place [:#tables-view-plugin], ;; Space in jarman were can be inject plugin's view invoker
-;;  :buttons [{:action :add-multiply-users-insert, 
-;;             :text "Auto generate users"}], ;; Add custom buttons
-;;  :permission [:user], ;; Who have access and who can display plugin
-;;  :view-columns [:user.login 
-;;                 :user.first_name 
-;;                 :user.last_name 
-;;                 :permission.permission_name], ;; Avaliable column to view in table
-;;  :name user, 
-;;  :tables [:user :permission], 
-;;  :actions {:add-multiply-users-insert #function[jarman.logic.view-manager/eval29892/fn--29893]}, 
-;;  :query {:inner-join [:user->permission]
-;;          :columns ({:user.id :user.id} 
-;;                    {:user.login :user.login} 
-;;                    {:user.password :user.password} 
-;;                    {:user.first_name :user.first_name} 
-;;                    {:user.last_name :user.last_name} 
-;;                    {:user.id_permission :user.id_permission} 
-;;                    {:permission.id :permission.id} 
-;;                    {:permission.permission_name :permission.permission_name} 
-;;                    {:permission.configuration :permission.configuration})}, 
-;;  :table-name :user, 
-;;  :model [{:model-reprs Login, 
-;;           :model-param :user.login, 
-;;           :bind-args {:title :title, :store-id :store-id, :local-changes :local-changes, :val :val}, 
-;;           :model-comp 'gcomp/input-text-area-label} ;; Overriding component syntax
-;;          :user.password 
-;;          :user.first_name 
-;;          :user.last_name 
-;;          :user.id_permission 
-;;          {:model-reprs Start user, 
-;;           :model-param :user-start, 
-;;           :model-comp 'gcomp/input-int} ;; Add custom component syntax
-;;          {:model-reprs End user, 
-;;           :model-param :user-end, 
-;;           :model-comp 'gcomp/input-int}]} ;; Add custom component syntax
-
-
 (def auto-builder--table-view
   "Description
      Prepare and merge complete big parts
@@ -568,14 +525,6 @@
     ;; (c/label :text "Testing mode")
     ))
 
-
-;; (let [my-frame (-> (doto (c/frame
-;;                           :title "test"
-;;                           :size [300 :by 800]
-;;                           :content vp)
-;;                      (.setLocationRelativeTo nil) c/pack! c/show!))]
-;;   (c/config! my-frame :size [300 :by 800]))
-
 (defn jarman-table-toolkit-pipeline [configuration datatoolkit]
   datatoolkit)
 
@@ -585,7 +534,8 @@
   (let [get-from-global #(->> % (l/join-vec plugin-path) (get-in (global-configuration)))
         data-toolkit  (get-from-global [:data-toolkit])
         configuration (get-from-global [:configuration])
-        title (get-in data-toolkit [:table-meta :representation])
+        ;; title (get-in data-toolkit [:table-meta :representation])
+        title (:name configuration)
         space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
         atm (:atom-expanded-items (c/config space :user-data))]
     (if (false? (spec/test-keys-jtable configuration spec-map))

@@ -541,9 +541,11 @@
   user
   (jarman-table
    :name
-   "user"
+   "user-override"
    :plug-place [:#tables-view-plugin]
    :tables [:user :permission]
+   :insert-button true
+   :delete-button false
    :view-columns [:user.login
                   :user.first_name
                   :user.last_name
@@ -576,13 +578,14 @@
             :permission.configuration)}
    :actions {:add-multiply-users-insert
              (fn [state]
-               (let [{{user-start :user-start user-end :user-end} :model} state]
-                 {:table-name :user :set (map #(hash-map :user.login      (str "user" %)
-                                                         :user.password   "1234"
-                                                         :user.last_name  (str "user" %)
-                                                         :user.first_name (str "user" %)
-                                                         :user.id_permission 2)
-                                              (range user-start user-end))}))}
+               (let [{user-start :user-start user-end :user-end} @state]
+                 (println (map #(hash-map :user.login      (str "user" %)
+                                          :user.password   "1234"
+                                          :user.last_name  (str "user" %)
+                                          :user.first_name (str "user" %)
+                                          :user.id_permission 2)
+                               (range user-start (+ 1 user-end)))))
+               )}
    :buttons [{:action :add-multiply-users-insert
-              :text "Auto generate users"}]))
+              :title "Auto generate users"}]))
 

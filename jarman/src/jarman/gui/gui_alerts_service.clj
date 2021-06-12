@@ -9,7 +9,7 @@
             [jarman.tools.swing :as stool]
             [jarman.config.config-manager :refer :all]
             [jarman.gui.gui-tools :as gtool]
-            [jarman.tools.lang :as l]
+            [jarman.tools.lang :refer :all]
             [clojure.string :as string]))
 
 
@@ -108,9 +108,9 @@
   (fn [data]
     (let [font-c "#000"
           bg-c "#fff"
-          header (l/rift (:header data) "Information")
+          header (rift (:header data) "Information")
          ;;  header (if (= (contains? data :header) true) (:header data) "Information")
-          body   (l/rift (:body data) "Template of information...")
+          body   (rift (:body data) "Template of information...")
          ;;  body   (if (= (contains? data :body) true) (:body data) "Template of information...")
           layered-pane (@alerts-controller :get-space)
           close [(build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png layered-pane 23 
@@ -118,14 +118,14 @@
                  (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered-pane 23 
                                        (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (@alerts-controller :rm-obj to-del))))]
           [t b l r] (try
-                      (map #(Integer/parseInt %) (l/rift (gtool/get-comp :message-box :border-size)))
+                      (map #(Integer/parseInt %) (rift (gtool/get-comp :message-box :border-size)))
                       (catch Exception e [1 1 1 1]))]
       
       (mig-panel
        :id :alert-box
        :constraints ["wrap 1" "0px[fill, grow]0px" "0px[20]0px[30]0px[20]0px"]
        :background bg-c
-       :border (line-border :top t :bottom b :left l :right r :color (l/rift (gtool/get-comp :message-box :border-color) "#fff"))
+       :border (line-border :top t :bottom b :left l :right r :color (rift (gtool/get-comp :message-box :border-color) "#fff"))
        :bounds [680 480 300 75]
        :items [[(flow-panel
                  :align :left

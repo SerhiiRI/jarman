@@ -12,9 +12,7 @@
    [jarman.tools.swing :as stool]
    [clojure.string :as string]
    [jarman.config.config-manager :as cm]
-   [jarman.tools.lang :as lang]
-   [jarman.logic.changes-service :as cs]
-            ;; [jarman.config.init :as init]
+   [jarman.tools.lang :refer :all]
    ))
 
 (import javax.swing.JLayeredPane)
@@ -22,13 +20,6 @@
 (import java.awt.MouseInfo)
 (import java.awt.event.MouseListener)
 
-;; ┌─────────────────────────┐
-;; │                         │
-;; │ Global services         │
-;; │                         │
-;; └─────────────────────────┘
-
-(def changes-service (atom (cs/new-changes-service)))
 
 ;; ┌─────────────────────────┐
 ;; │                         │
@@ -74,7 +65,7 @@
      (join-mig (list (label) (list (label) (label)))) => [[(label)] [(label)] [(label)]]
    "
   (fn [& args]
-    (lang/join-vec (map #(vector %) (flatten args)))))
+    (join-vec (map #(vector %) (flatten args)))))
 
 (defn middle-bounds
   "Description:
@@ -153,9 +144,44 @@
 (def get-comp (partial theme-map "#fff" :components))
 (def get-frame (partial theme-map 1000 :frame))
 (def get-font (partial theme-map "Ubuntu" :font))
-(def get-lang (fn [& path] (cm/get-in-lang (lang/join-vec [(using-lang) :ui] path))))
-(def get-lang-btns (fn [& path] (cm/get-in-lang (lang/join-vec [(using-lang) :ui :buttons] path))))
-(def get-lang-alerts (fn [& path] (cm/get-in-lang (lang/join-vec [(using-lang) :ui :alerts] path))))
+(def get-lang (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui] path))))
+(def get-lang-btns (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :buttons] path))))
+(def get-lang-alerts (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :alerts] path))))
+
+
+(defn convert-key-to-title
+  "Description:
+      Set :key and get title Key. Fn removing symbols [ - _ . ]. First char will be upper.
+   Example:
+      (convert-key-to-title :my-title) => \"My title\"
+      (convert-key-to-title :my_title) => \"My title\"
+      (convert-key-to-title :my.title) => \"My title\""
+  [key] (-> (string/replace (str key) #":" "") (string/replace  #"[-_.]" " ") (string/replace  #"^." #(.toUpperCase %1))))
+
+(defn convert-txt-to-title
+  "Description:
+      Set some string and get like a title. Fn removing symbols [ - _ . ]. First char will be upper.
+   Example:
+      (convert-txt-to-title \"my title\") => \"My title\"
+      (convert-txt-to-title \"my-title\") => \"My title\"
+      (convert-txt-to-title \"my.title\") => \"My title\""
+  [txt] (-> (string/replace (str txt) #":" "") (string/replace  #"[-_.]" " ") (string/replace  #"^." #(.toUpperCase %1))))
+
+(defn convert-txt-to-UP
+  "Description:
+      Set some string and get with upper chars.
+   Example:
+      (convert-txt-to-UP \"my title\") => \"MY TITLE\"
+      (convert-txt-to-UP \"my-title\") => \"MY-TITLE\""
+  [txt] (-> (string/replace (str txt) #":" "") (string/replace  #"." #(.toUpperCase %1))))
+
+(defn convert-mappath-to-key
+  "Description:
+      Set some :key coll and get one marge key.
+   Example:
+      (convert-mappath-to-key [:path :to :my :conf]) => :path-to-my-conf"
+  [path] (keyword (string/join "-" (vec (map #(name %) path)))))
+
 
 ;; ############# COMPONENTS TODO: need move to gui_components.clj
 

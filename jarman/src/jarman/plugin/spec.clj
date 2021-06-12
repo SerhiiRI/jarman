@@ -30,3 +30,5 @@
       resault
       (do (s/explain :global-plugin/block-table conf)
           resault))))
+
+;; TODO: Add spec for model, etc

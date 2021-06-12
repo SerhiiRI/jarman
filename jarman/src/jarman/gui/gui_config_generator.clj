@@ -17,7 +17,7 @@
             [jarman.gui.gui-seed :as gseed]
 
             ;; deverloper tools 
-            [jarman.tools.lang :as l]))
+            [jarman.tools.lang :refer :all]))
 
 ;; ┌─────────────────────────┐
 ;; │                         │
@@ -78,7 +78,7 @@
                       :background (gtool/get-color :background :input)
                       :border (b/compound-border (b/empty-border :left 10 :right 10 :top 5 :bottom 5)
                                                (b/line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline)))
-                      :listen [:caret-update (fn [event] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value value :new-value (clojure.string/split (c/config event :text) #"\s*,\s*")))])]]))))
+                      :listen [:caret-update (fn [event] (@gseed/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value value :new-value (clojure.string/split (c/config event :text) #"\s*,\s*")))])]]))))
 
 
 (def confgen--gui-interface--input-textcolor
@@ -90,7 +90,7 @@
                     :border (b/compound-border (b/empty-border :left 10 :right 10 :top 5 :bottom 5)
                                              (b/line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline)))
                     :listen [:caret-update (fn [event]
-                                             (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value value :new-value (c/config event :text))
+                                             (@gseed/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value value :new-value (c/config event :text))
                                              (gtool/colorizator-text-component event))])]])))
 
 
@@ -138,7 +138,7 @@
 (def confgen--recursive--next-configuration-in-map
   (fn [param confgen--component--tree local-changes start-key]
     (map (fn [next-param]
-           (confgen--component--tree local-changes (l/join-vec start-key (list (first next-param)))))
+           (confgen--component--tree local-changes (join-vec start-key (list (first next-param)))))
          (param :value))))
 
 (def confgen--element--gui-interfaces
@@ -158,8 +158,8 @@
     (let [param (fn [key] (key (cm/get-in-segment start-key)))
           type? (fn [key] (= (param :type) key))
           comp? (fn [key] (= (param :component) key))
-          name (if (nil? (param :name)) (l/convert-key-to-title (last start-key)) (str (param :name)))]
-      (if (= (param :display) :edit)
+          name (if (nil? (param :name)) (gtool/convert-key-to-title (last start-key)) (str (param :name)))]
+      (if (or (nil? (param :display)) (= (param :display) :edit))
         (do
           (smig/mig-panel
            :constraints ["wrap 1" "20px[]50px" "5px[]0px"]
@@ -192,10 +192,9 @@
                message-faild (fn [txt] (c/alert txt))}}]
     (let [map-part (cm/get-in-segment start-key)
           local-changes (atom {})]
-      ;; TODO: Need to add segment validation, there was wrong in keyword and then generator crasing
       (if (= :edit (:display map-part))
         (do
-          (@gtool/changes-service :add-controller
+          (@gseed/changes-service :add-controller
                                   :view-id (last start-key)
                                   :local-changes local-changes)
           (let [configurator (smig/mig-panel
@@ -210,7 +209,7 @@
                                         :constraints ["wrap 1" "0px[fill, grow]0px" "20px[grow, fill]20px"]
                                         :items (gtool/join-mig-items
                                                 (let [body (map
-                                                            #(let [path (l/join-vec start-key [(first %)])
+                                                            #(let [path (join-vec start-key [(first %)])
                                                                    comp (confgen--component--tree local-changes path)]
                                                               ;;  (if (nil? comp)
                                                               ;;    (c/label :text (doto (str "Can not loading " path) println))

@@ -153,7 +153,7 @@
 (def get-comp (partial theme-map "#fff" :components))
 (def get-frame (partial theme-map 1000 :frame))
 (def get-font (partial theme-map "Ubuntu" :font))
-(def get-lang (fn [& path] (cm/get-in-lang (lang/join-vec [(using-lang):ui] path))))
+(def get-lang (fn [& path] (cm/get-in-lang (lang/join-vec [(using-lang) :ui] path))))
 (def get-lang-btns (fn [& path] (cm/get-in-lang (lang/join-vec [(using-lang) :ui :buttons] path))))
 (def get-lang-alerts (fn [& path] (cm/get-in-lang (lang/join-vec [(using-lang) :ui :alerts] path))))
 
@@ -240,7 +240,7 @@
       (function icon size header map-with-other-params)
       (slider-ico-btn (stool/image-scale icon/user-64x64-2-png 50) 0 50 'Klienci' :onclick (fn [e] (alert 'Clicked')))
    "
-  (fn [ico order size txt 
+  (fn [ico order size txt
        & {:keys [onClick
                  top-offset]
           :or {onClick (fn [e])
@@ -282,9 +282,8 @@
                               :mouse-exited  (fn [e] (.requestFocus (c/to-frame e)))
                               :focus-gained  (fn [e] (onEnter e))
                               :focus-lost    (fn [e] (onExit e))
-                              :mouse-clicked (fn [e] (println "onClick")(onClick e))
-                              :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))
-                              ]))
+                              :mouse-clicked (fn [e] (println "onClick") (onClick e))
+                              :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))]))
       mig)))
 
 
@@ -367,7 +366,7 @@
                   (into
                    (mapcat list prm
                            (condp = am
-                             1 (repeat 4 a) 
+                             1 (repeat 4 a)
                              4 a
                              (into a (repeat (- 4 (count a)) 0))))
                    (list empty-border))))) args)

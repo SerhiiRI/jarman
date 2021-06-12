@@ -528,7 +528,6 @@
 (defn jarman-table-toolkit-pipeline [configuration datatoolkit]
   datatoolkit)
 
-global-configuration [plugin-path] = (hashmap defviewDataTollkit + jarman-table-toolkit-pipeline)
 
 ;;;PLUGINS ;;;        
 (defn jarman-table-component [plugin-path global-configuration spec-map]

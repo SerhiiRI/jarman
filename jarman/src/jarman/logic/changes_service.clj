@@ -2,7 +2,8 @@
   (:use seesaw.core
         seesaw.dev)
   (:require
-   [jarman.tools.lang :refer :all :as lang]))
+   [jarman.tools.lang :refer :all]
+   [jarman.gui.gui-tools :as gtool]))
 
 ;; ┌────────────────────┐
 ;; │                    │
@@ -43,7 +44,7 @@
       ;; if something was change
       (not (= (config event-src component-key) value)) (set-change-to-view-atom local-changes path-to-value (config event-src component-key))
       ;; if back to orginal value
-      (not (nil? (get-in @local-changes [(convert-mappath-to-key path-to-value)]))) (remove-change-from-view-atom local-changes path-to-value))))
+      (not (nil? (get-in @local-changes [(gtool/convert-mappath-to-key path-to-value)]))) (remove-change-from-view-atom local-changes path-to-value))))
 
 (def track-changes
   (fn [local-changes path-to-value orginal new-value]

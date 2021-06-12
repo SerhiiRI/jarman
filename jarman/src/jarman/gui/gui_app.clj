@@ -27,7 +27,7 @@
             [jarman.config.spec :as sspec]
             [jarman.config.init :as iinit]
             [jarman.logic.metadata :as mmeta]
-            [jarman.tools.lang :as lang]
+            [jarman.tools.lang :as l]
             [jarman.gui.gui-seed :refer :all]
             [jarman.gui.gui-config-generator :refer :all :as cg]
             ;; [jarman.logic.view :as view]
@@ -253,7 +253,7 @@
         z-index (atom 1000)
         JLP (getParent @atom-popup-hook)]
     (fn [action & {:keys [title, body, size] :or {title "Popup" body (label :text "Popup") size [600 400]}}]
-      (let [unique-id (keyword (lang/random-unique-id))
+      (let [unique-id (keyword (l/random-unique-id))
             template (fn [component] ;; Set to main JLayeredPane new popup panel
                        (do (swap! atom-popup-storage (fn [popups] (merge popups {unique-id component}))) ;; add new component to list with auto id
                            (swap! z-index inc)
@@ -416,21 +416,21 @@
   [work-mode local-changes path-to-value column]
   (let [param-to-edit (fn [param enabled]
                         (cond
-                          (lang/in? [true false] (get column param))
+                          (l/in? [true false] (get column param))
                           (do
                             (config!
                              (gcomp/input-checkbox
-                              :txt (lang/convert-key-to-title (str param))
+                              :txt (l/convert-key-to-title (str param))
                               :local-changes local-changes
-                              :store-id (lang/join-vec column [param])
+                              :store-id (l/join-vec column [param])
                               :val (get column param)
                               :enabled? enabled)
                              :background gcomp/light-light-grey-color))
                           :else
-                          (config! (gcomp/inpose-label (lang/convert-key-to-title (str param))
+                          (config! (gcomp/inpose-label (l/convert-key-to-title (str param))
                                                        (gcomp/input-text-with-atom
                                                         {:local-changes local-changes
-                                                         :store-id (lang/join-vec path-to-value [param])
+                                                         :store-id (l/join-vec path-to-value [param])
                                                          :val (str (get column param))
                                                          :enabled? enabled})
                                                        :font-color dark-grey-color
@@ -448,7 +448,7 @@
                 (map
                  (fn [column-parameter]
                    (let [key-param (first column-parameter)
-                         path-to-value (lang/join-vec path-to-value [key-param])]
+                         path-to-value (l/join-vec path-to-value [key-param])]
                      (param-to-edit key-param true))) ;; Parameter value
                  column)
                 (= work-mode "admin")
@@ -563,7 +563,7 @@
              (join-mig-items
               (label :text "Columns" :border (empty-border :top 5 :bottom 5) :foreground blue-color)
               (map (fn [column index]
-                     (let [path-to-value (lang/join-vec path-to-value [index])
+                     (let [path-to-value (l/join-vec path-to-value [index])
                            meta-panel (mig-panel
                                        :constraints ["wrap 1" "grow, fill" ""]
                                        :items [[(label :text (name (:field column))
@@ -573,12 +573,12 @@
                        (table-editor--component--column-picker-btn
                         (get-in column [:representation])
                         (fn [e]
-                          (config! (select (to-root @app) [(lang/convert-to-hashkey column-editor-id)])
+                          (config! (select (to-root @app) [(l/convert-to-hashkey column-editor-id)])
                                    :items (gtool/join-mig-items meta-panel))))))
                    columns (range (count columns)))
               (label :text "Actions" :border (empty-border :top 5 :bottom 5) :foreground blue-color)
               (table-editor--element--btn-add-column (fn [e]
-                                                       (config! (select (to-root @app) [(lang/convert-to-hashkey column-editor-id)])
+                                                       (config! (select (to-root @app) [(l/convert-to-hashkey column-editor-id)])
                                                                 :items (gtool/join-mig-items (add-column-panel table-name))))))))
 
 (defn table-editor--component--space-for-column-editor
@@ -695,12 +695,12 @@
         tab-path-to-value [:prop :table]
         columns        (get-in table col-path-to-value) ;; Get columns list
         table-property (get-in table tab-path-to-value) ;; Get table property
-        elems          (lang/join-vec
+        elems          (l/join-vec
                     ;; Table info
                         [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "10px[fill]10px"] ;; menu bar for editor
                                      :items (join-mig-items
                                              [(table-editor--element--header-view (str "Edit table: \"" table-name "\""))]
-                                             (cond (lang/in? ["developer" "admin"] work-mode)
+                                             (cond (l/in? ["developer" "admin"] work-mode)
                                                    (list [(table-editor--element--btn-save local-changes table invoker-id)]
                                                          [(table-editor--element--btn-show-changes local-changes table)])
                                                    :else [])))]]
@@ -717,21 +717,21 @@
                                              :items (gtool/join-mig-items ;;here
                                                      (let [param-to-edit (fn [param enabled]
                                                                            (cond
-                                                                             (lang/in? [true false] (get table-property param))
+                                                                             (l/in? [true false] (get table-property param))
                                                                              (do
                                                                                (config! (gcomp/input-checkbox
-                                                                                         :txt (lang/convert-key-to-title (str param))
+                                                                                         :txt (l/convert-key-to-title (str param))
                                                                                          :local-changes local-changes
-                                                                                         :store-id (lang/join-vec tab-path-to-value [param])
+                                                                                         :store-id (l/join-vec tab-path-to-value [param])
                                                                                          :val (get table-property param)
                                                                                          :enabled? enabled)))
                                                                              :else
                                                                              (config!
                                                                               (gcomp/inpose-label
-                                                                               (lang/convert-key-to-title (str param))
+                                                                               (l/convert-key-to-title (str param))
                                                                                (gcomp/input-text-with-atom
                                                                                 {:local-changes local-changes
-                                                                                 :store-id (lang/join-vec tab-path-to-value [param])
+                                                                                 :store-id (l/join-vec tab-path-to-value [param])
                                                                                  :val (str (get table-property param))
                                                                                  :enabled? enabled})
                                                                                :vtop 10
@@ -1048,8 +1048,8 @@
                                                                  :scrollable? false
                                                                  :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (@gseed/alert-manager :message @gseed/alert-manager) 5)))))))))
                       config-file-list-as-keyword-to-display)
-                 (let [path [:themes :theme_config.edn]
-                       title (get (cm/get-in-segment path) :name)
+                 (let [path [:themes :theme_config.edn] ;; Selected theme
+                       title (:name (cm/get-in-segment path))
                        view-id :theme_config.edn]
                    (button-expand-child title :onClick (fn [e]
                                                          (@gseed/jarman-views-service
@@ -1058,8 +1058,8 @@
                                                           :title title
                                                           :scrollable? false
                                                           :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} ((@gseed/alert-manager :message) @gseed/alert-manager) 5))))))))
-                 (let [path [:themes (keyword current-theme)]
-                       title (if (nil? (get (cm/get-in-segment path) :name)) "NIL" (get (cm/get-in-segment path) :name))
+                 (let [path [:themes :current-theme] ;; Themes config
+                       title (l/rift (:name (cm/get-in-segment path)) "NIL")
                        view-id :current-theme]
                    (button-expand-child title :onClick (fn [e]
                                                          (@gseed/jarman-views-service
@@ -1067,12 +1067,7 @@
                                                           :view-id view-id
                                                           :title title
                                                           :scrollable? false
-                                                          :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (str (gtool/get-lang-alerts :changes-saved))} (@gseed/alert-manager :message gseed/alert-manager) 5)))))
-                                                      ;; (try
-
-                                                      ;;   (catch Exception e (do
-                                                      ;;                        (@gseed/alert-manager :set {:header "Warning!" :body (str (gtool/get-lang-alerts :configuration-corrupted) "Exception: " e)} (@gseed/alert-manager :message gseed/alert-manager) 5))))
-                                                         )))
+                                                          :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (str (gtool/get-lang-alerts :changes-saved))} (@gseed/alert-manager :message gseed/alert-manager) 5))))))))
               ;; restore-button
                  ))))])))
 

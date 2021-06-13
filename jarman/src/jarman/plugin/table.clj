@@ -57,7 +57,7 @@
                        (keyword (format "%s->%s" (name ((comp :field :table :prop) referenced-table)) (name table-or-alias)))
                        (keyword (format "%s->%s.id" (name (:field-qualified referenced-column)) (name ((comp :field :table :prop) table-meta)))))}))))
 
-(defn jarman-table-k-v-formater
+(defn table-k-v-formater
   "Description
     This is central logistics function which take
      - table from which recursion is performed
@@ -70,7 +70,7 @@
     In this example `:repair_contract` make recusion jump to `:seal`
     through the `:id_new_seal` column in first table. Column have
     meta description to which table they must be linked  
-      (jarman-table-k-v-formater
+      (table-k-v-formater
        (first (getset! :repair_contract))
        {:description nil,
         :private? false,
@@ -110,13 +110,13 @@
         (into @result (if (not-empty @table-list-atom)
                         (recur-meta @table-list-atom)))))))
 
-(def take-column-for-recur-table (make-recur-meta jarman-table-k-v-formater))
-(let [table-list [:repair_contract :seal]]
-  (take-column-for-recur-table table-list))
+(def take-column-for-recur-table (make-recur-meta table-k-v-formater))
+;; (let [table-list [:repair_contract :seal]]
+;;   (take-column-for-recur-table table-list))
 
-(defn jarman-table-columns-list
+(defn table-columns-list
   "Example
-    (jarman-table-columns-list [:repair_contract :seal]
+    (table-columns-list [:repair_contract :seal]
                             [:repair_contract.id_cache_register
                             :repair_contract.id_old_seal
                             :repair_contract.id_new_seal
@@ -170,8 +170,9 @@
 (def ^:private take-meta-for-view (make-recur-meta-one-table conj-table-meta))
 
 
-(defn- create-jarman-table-plugin [table-name]
+(defn- create-table-plugin [table-name]
   (let [meta-table (first (mt/getset! table-name))
+        view-columns (mapv :field-qualified ((comp :columns :prop) meta-table))
         name-of-table ((comp :representation :table :prop) meta-table)
         full-meta-debug (take-meta-for-view table-name)
         tables (vec (for [meta-debug full-meta-debug]
@@ -186,24 +187,28 @@
                      (mapcat identity (for [meta-debug full-meta-debug]
                                         (mapv :field-column (second meta-debug))))))]
     (list 'defview (symbol table-name)
-          (list 'jarman-table
+          (list 'table
                 :name name-of-table
                 :plug-place [:#tables-view-plugin]
                 :tables tables
-                :model models
+                :view-columns view-columns
+                :model view-columns
+                :actions []
+                :buttons []
                 :query (if-not (empty? joines)
                          {:inner-join joines :columns columns}
                          {:column columns})))))
 
-;; (create-jarman-table-plugin :repair_contract)
-;; (mapv create-jarman-table-plugin [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month])
+
+;; (create-table-plugin :repair_contract)
+;; (mapv create-table-plugin [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month])
 
 (defn- gui-table-model-columns [table-list table-column-list]
   (let
    [on-text  (fn [m v] (into m {:text (:representation v)}))
     on-class (fn [m v] (if (contains? v :class) (into m {:class (:class v)}) m))]
     (mapv (fn [[k v]] (-> {:key k} (on-class v) (on-text v)))
-          (jarman-table-columns-list table-list table-column-list))))
+          (table-columns-list table-list table-column-list))))
 
 (defn- gui-table-model [model-columns data-loader]
   (fn [] [:columns model-columns :rows (data-loader)]))
@@ -340,16 +345,20 @@
   (let [k               (:model-param m)
         meta            (k meta-data)]
     ;; (println "M" model)
+    ;; (println "map component\n" k "\n" m "\n" model "\n" meta)
     (let [comp-fn (:model-comp m)
-          ;; comp-fn (resolve (symbol comp-fn))
+          comp-fn (resolve (symbol comp-fn))
           title   (rift (:model-reprs m) "")
           qualified (:model-param m)
           val     (if (empty? model) "" (qualified model))
           binded  (rift (:bind-args m) {})
           props {:title title :store-id qualified :local-changes local-changes :val val}
-          props (if (empty? binded) props (merge-binded-props props binded))]
+          props (if (empty? binded) props (merge-binded-props props binded))
+          pre-comp (rift (comp-fn props) (c/label "Can not invoke component from defview."))
+          comp (gcomp/inpose-label title pre-comp)]
       ;; (println "Props: " props)
-      (gcomp/inpose-label title (comp-fn props)))
+      ;; (println "\nComplete-----------")
+      comp)
     ))
 
 
@@ -358,6 +367,7 @@
      Convert to component automaticly by keyword
    "
   [global-configuration local-changes meta-data model k]
+  ;; (println "key component\n" k "\n" model "\n" meta "\n" (:component-type  meta) "\n-----------")
   (let [meta            (k meta-data)
         field-qualified (:field-qualified meta)
         title           (:representation  meta)
@@ -365,48 +375,53 @@
         comp-type       (:component-type  meta)
         key-table       (:key-table       meta)
         val             (rift (str (k model)) "")
-        props {:title title :store-id field-qualified :local-changes local-changes :editable? editable? :val val}]
-    ;; (println k meta comp-type)
-    (cond
-      ;; (def column-type-data "d")
-      ;; (def column-type-time "t")
-      ;; (def column-type-datatime "dt")
-      ;; (def column-type-linking "l")
-      ;; (def column-type-number "n")
-      ;; (def column-type-boolean "b")
-      ;; (def column-type-textarea "a")
-      ;; (def column-type-floated "f")
-      ;; (def column-type-input "i")
-      (in? comp-type mt/column-type-data)
-      (if (empty? model) (d-component props) (d-component (into props {:val (if (empty? val) nil val)})))
-      (in? comp-type mt/column-type-textarea) ;; Text area
-      (if (empty? model) (a-component props) (a-component (into props {:val val})))
-      (in? comp-type mt/column-type-number) ;; Numbers Int
-      (if (empty? model) (n-component props) (n-component (into props {:val val})))
-      (in? comp-type mt/column-type-input) ;; Basic Input
-      (if (empty? model) (i-component props) (i-component (into props {:val val})))
-      (and (in? comp-type mt/column-type-linking) (not (nil? key-table))) ;; TODO: Popup table do not working
-      (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
-        (let [key-table               (keyword key-table)
-              connected-table-conf    (get-in global-configuration [key-table :plug/jarman-table :config])
-              connected-table-data    (get-in global-configuration [key-table :plug/jarman-table :toolkit])
-              selected-representation (fn [dialog-model-view
-                                           returned-from-dialog]
-                                        (->> (:model dialog-model-view)
-                                             (map #(get-in returned-from-dialog [%]))
-                                             (filter some?)
-                                             (string/join ", ")))
-              val (selected-representation connected-table-conf k)]
-          ;; (if-not (nil? (get model field-qualified)) (swap! local-changes (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
-          (gcomp/inpose-label title (gcomp/input-text-with-atom {:local-changes local-changes
-                                                                 :editable? false
-                                                                 :val val
-                                                                 :onClick (fn [e]
-                                                                            (let [selected (construct-dialog (:table (create-table connected-table-conf connected-table-data)) field-qualified (c/to-frame e))]
-                                                                              (if-not (nil? (get selected (:model-id connected-table-data)))
-                                                                                (do (c/config! e :text (selected-representation connected-table-conf selected))
-                                                                                  ;;  (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))
-                                                                                    ))))})))))))
+        props {:title title :store-id field-qualified :local-changes local-changes :editable? editable? :val val}
+        comp (cond
+            ;; (def column-type-data "d")
+            ;; (def column-type-time "t")
+            ;; (def column-type-datatime "dt")
+            ;; (def column-type-linking "l")
+            ;; (def column-type-number "n")
+            ;; (def column-type-boolean "b")
+            ;; (def column-type-textarea "a")
+            ;; (def column-type-floated "f")
+            ;; (def column-type-input "i")
+            (in? comp-type mt/column-type-data)
+            (if (empty? model) (d-component props) (d-component (into props {:val (if (empty? val) nil val)})))
+            (in? comp-type mt/column-type-textarea) ;; Text area
+            (if (empty? model) (a-component props) (a-component (into props {:val val})))
+            (in? comp-type mt/column-type-number) ;; Numbers Int
+            (if (empty? model) (n-component props) (n-component (into props {:val val})))
+            (in? comp-type mt/column-type-input) ;; Basic Input
+            (if (empty? model) (i-component props) (i-component (into props {:val val})))
+            (and (in? comp-type mt/column-type-linking) (not (nil? key-table))) ;; TODO: Popup table do not working
+            (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
+              (let [key-table               (keyword key-table)
+                    connected-table-conf    (get-in global-configuration [key-table :plug/table :config])
+                    connected-table-data    (get-in global-configuration [key-table :plug/table :toolkit])
+                    selected-representation (fn [dialog-model-view
+                                                returned-from-dialog]
+                                              (->> (:model dialog-model-view)
+                                                   (map #(get-in returned-from-dialog [%]))
+                                                   (filter some?)
+                                                   (string/join ", ")))
+                    val (selected-representation connected-table-conf k)]
+                ;; (if-not (nil? (get model field-qualified)) (swap! local-changes (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
+                (gcomp/inpose-label title (gcomp/input-text-with-atom {:local-changes local-changes
+                                                                       :editable? false
+                                                                       :val val
+                                                                       :onClick (fn [e]
+                                                                                  (let [selected (construct-dialog (:table (create-table connected-table-conf connected-table-data)) field-qualified (c/to-frame e))]
+                                                                                    (if-not (nil? (get selected (:model-id connected-table-data)))
+                                                                                      (do (c/config! e :text (selected-representation connected-table-conf selected))
+                                                                                          ;;  (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))
+                                                                                          ))))})))))]
+    
+    
+    ;; (println "\nComplete-----------")
+    comp))
+
+
 (defn convert-model-to-components-list 
   "Description
      Switch fn to convert by map or keyword
@@ -535,12 +550,12 @@
     ;; (c/label :text "Testing mode")
     ))
 
-(defn jarman-table-toolkit-pipeline [configuration datatoolkit]
+(defn table-toolkit-pipeline [configuration datatoolkit]
   datatoolkit)
 
 
 ;;;PLUGINS ;;;        
-(defn jarman-table-component [plugin-path global-configuration spec-map]
+(defn table-component [plugin-path global-configuration spec-map]
   ;; (println "Loading table plugin")
   (let [get-from-global #(->> % (join-vec plugin-path) (get-in (global-configuration)))
         data-toolkit  (get-from-global [:toolkit])

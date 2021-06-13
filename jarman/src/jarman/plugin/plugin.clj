@@ -73,7 +73,7 @@
 (defmacro defplugin
   [plugin-name title & body]
   (let [create-name-func (fn [fname] (symbol
-                                      (str "jarman-table-plugin/" plugin-name "-" fname)))
+                                     (str "jarman-table-plugin/" plugin-name "-" fname)))
         func-component (create-name-func "component")
         func-tool (symbol (str plugin-name "-toolkit-pipeline"))
         func-toolkit (symbol (str "jarman-table-plugin/" func-tool))

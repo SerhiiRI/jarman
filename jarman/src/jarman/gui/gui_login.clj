@@ -175,11 +175,11 @@
     (conf/assoc-in-value [:database.edn :datalist key-title :password] password))
   (if (:valid? (conf/store)) "yes"))
 
-(defn keys-generator [dbname title]
-  (keyword (string/replace (str dbname "--" title) #"\." "_")))
+(defn keys-generator [dbname title port]
+  (keyword (string/replace (str dbname "--" title "--" port) #"\." "_")))
 
 (defn create-map [dbtype host port dbname user password]
-  (conf/assoc-in-segment [:database.edn :datalist (keys-generator dbname host)]
+  (conf/assoc-in-segment [:database.edn :datalist (keys-generator dbname host port)]
                     (-> template-map
                                (assoc-in  [:value :dbtype :value] dbtype)
                                (assoc-in  [:value :host :value] host)
@@ -191,6 +191,7 @@
 
 ;; (store)
 ;; (swapp)
+
 
 (defn delete-map [key-title]
   (conf/update-in-value [:database.edn :datalist] (fn [x] (dissoc x key-title)))
@@ -476,11 +477,8 @@
 
 
 (defn configurations-panel [login pass]
-  (let [mig (mig-panel
-                     :constraints ["wrap 4" "20px[ left]20px" "20px[]20px"])
-        scr
-        (scrollable mig  :hscroll :never                            
-                    :preferred-size  [600 :by 220])] 
+  (let [mig (mig-panel :constraints ["wrap 4" "20px[ left]20px" "20px[]20px"])
+        scr (scrollable mig :hscroll :never :preferred-size  [600 :by 220])] 
     (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setBorder scr nil)
@@ -632,22 +630,22 @@
 
 
 
-(defn- test-frame []
-  (frame :title "Jarman-test"
-         :undecorated? false
-         :resizable? false
-         :minimum-size [800 :by 600]
-         :icon (stool/image-scale
-                icon/calendar1-64-png) 
-         :content
-         (components/min-scrollbox
-          (mig-panel
-           :constraints ["wrap 1" "0px[grow, fill]0px" "5px[grow, fill]0px"]
-           :items [[(label :text "red")]
-                   [(label :text "jjj"
-                           :minimum-size [1000 :by 1000]
-                           :background "#888888")]
-                   [(label :text "hhhhhheeeeeeeyyyyyy")]]))))
+;; (defn- test-frame []
+;;   (frame :title "Jarman-test"
+;;          :undecorated? false
+;;          :resizable? false
+;;          :minimum-size [800 :by 600]
+;;          :icon (stool/image-scale
+;;                 icon/calendar1-64-png) 
+;;          :content
+;;          (components/min-scrollbox
+;;           (mig-panel
+;;            :constraints ["wrap 1" "0px[grow, fill]0px" "5px[grow, fill]0px"]
+;;            :items [[(label :text "red")]
+;;                    [(label :text "jjj"
+;;                            :minimum-size [1000 :by 1000]
+;;                            :background "#888888")]
+;;                    [(label :text "hhhhhheeeeeeeyyyyyy")]]))))
 
-(-> (doto (test-frame) (.setLocationRelativeTo nil))
-    seesaw.core/pack! seesaw.core/show!)
+;; (-> (doto (test-frame) (.setLocationRelativeTo nil))
+;;     seesaw.core/pack! seesaw.core/show!)

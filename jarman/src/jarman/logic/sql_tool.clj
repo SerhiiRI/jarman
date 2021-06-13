@@ -182,8 +182,6 @@
   :table.value => ('table' 'value')"
   [k] (string/split (str (symbol k)) #"\."))
 
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Joining preprocessor ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1527,13 +1525,17 @@
       ~((resolve (symbol (str "jarman.logic.sql-tool" "/" (if (= \! (last (name operation-name))) (apply str (butlast (name operation-name))) (name operation-name))  "-doc"))))
       [~'table-name & {:as ~'args}]
       (let [~'args (if (map? ~'table-name) (dissoc ~'table-name :table-name) ~'args) 
-            ~'table-name (if (map? ~'table-name) (:table-name ~'table-name) ~'table-name)
-            operation# (if (= \! (last ~(name operation-name))) (apply str (butlast ~(name operation-name))) ~(name operation-name))
-            list-of-rules# (~pipeline-function (keys ~'args) (jarman.logic.sql-tool/find-rule operation#))]
+            ~'table-name (name (if (map? ~'table-name) (:table-name ~'table-name) ~'table-name))
+            operation# ;; ~(name operation-name)
+            (if (= \! (last ~(name operation-name))) (apply str (butlast ~(name operation-name))) ~(name operation-name))
+            list-of-rules# (~pipeline-function (keys ~'args) (jarman.logic.sql-tool/find-rule operation#))
+            oper-string-start# (if (= operation# (.toLowerCase ~operation-string))
+                                 operation#
+                                 ~operation-string)]
         (reduce
          (fn [sql-string# [rule-key# rule-fn#]]
            ((ns-resolve 'jarman.logic.sql-tool rule-fn#) sql-string# (rule-key# ~'args) ~'table-name))
-         (string/upper-case operation#)
+         (string/upper-case oper-string-start#)
          list-of-rules#)))))
 
 (define-sql-operation! insert! "INSERT INTO" (comp insert-update-empty-table-pipeline-applier
@@ -1547,6 +1549,7 @@
                                   select-empty-table-pipeline-applier
                                   create-rule-pipeline)) 
 (define-sql-operation! create-table! "CREATE TABLE IF NOT EXISTS" (comp empty-engine-pipeline-applier create-rule-pipeline))
+
 (define-sql-operation! alter-table! "ALTER TABLE" (comp get-first-macro-from-pipeline create-rule-pipeline))
 
 (defmacro build-partial [part-elem]

@@ -28,10 +28,10 @@
    {:examples [:permission]
     :doc ""}]
   [:model
-   {:examples [:permission.permission_name :permission.configuration], :doc ""}]
+   {:examples [:permission.permission_name :permission.configuration], 
+    :doc ""}] ;; TODO: Add doc and bind spec
   [:query
    {:examples {:columns (as-is :permission.id :permission.permission_name :permission.configuration)}, :doc ""}])
-
 
 
 

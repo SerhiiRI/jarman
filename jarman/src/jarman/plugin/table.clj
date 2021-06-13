@@ -16,7 +16,7 @@
    [seesaw.chooser :as chooser]
    ;; Jarman toolkit
    [jarman.logic.document-manager :as doc]
-   [jarman.tools.lang :refer :all :as l]
+   [jarman.tools.lang :refer :all]
    [jarman.gui.gui-tools :refer :all :as gtool]
    [jarman.gui.gui-seed :as gseed]
    [jarman.resource-lib.icon-library :as ico]
@@ -315,7 +315,7 @@
    "
   [binded-map orgin-map]
   (->> (map #(first %) orgin-map)
-       (filter (fn [orgin-key] (not (l/in? (map #(first %) binded-map) orgin-key))))
+       (filter (fn [orgin-key] (not (in? (map #(first %) binded-map) orgin-key))))
        (into {} (map #(into {% (% orgin-map)})))))
 
 (defn merge-binded-props
@@ -341,11 +341,11 @@
         meta            (k meta-data)]
     ;; (println "M" model)
     (let [comp-fn (:model-comp m)
-          comp-fn (resolve (symbol comp-fn))
-          title   (l/rift (:model-reprs m) "")
+          ;; comp-fn (resolve (symbol comp-fn))
+          title   (rift (:model-reprs m) "")
           qualified (:model-param m)
           val     (if (empty? model) "" (qualified model))
-          binded  (l/rift (:bind-args m) {})
+          binded  (rift (:bind-args m) {})
           props {:title title :store-id qualified :local-changes local-changes :val val}
           props (if (empty? binded) props (merge-binded-props props binded))]
       ;; (println "Props: " props)
@@ -364,19 +364,28 @@
         editable?       (:editable?       meta)
         comp-type       (:component-type  meta)
         key-table       (:key-table       meta)
-        val             (l/rift (str (k model)) "")
+        val             (rift (str (k model)) "")
         props {:title title :store-id field-qualified :local-changes local-changes :editable? editable? :val val}]
     ;; (println k meta comp-type)
     (cond
-      (l/in? comp-type "d")
+      ;; (def column-type-data "d")
+      ;; (def column-type-time "t")
+      ;; (def column-type-datatime "dt")
+      ;; (def column-type-linking "l")
+      ;; (def column-type-number "n")
+      ;; (def column-type-boolean "b")
+      ;; (def column-type-textarea "a")
+      ;; (def column-type-floated "f")
+      ;; (def column-type-input "i")
+      (in? comp-type mt/column-type-data)
       (if (empty? model) (d-component props) (d-component (into props {:val (if (empty? val) nil val)})))
-      (l/in? comp-type "a") ;; Text area
+      (in? comp-type mt/column-type-textarea) ;; Text area
       (if (empty? model) (a-component props) (a-component (into props {:val val})))
-      (l/in? comp-type "n") ;; Numbers Int
+      (in? comp-type mt/column-type-number) ;; Numbers Int
       (if (empty? model) (n-component props) (n-component (into props {:val val})))
-      (l/in? comp-type "i") ;; Basic Input
+      (in? comp-type mt/column-type-input) ;; Basic Input
       (if (empty? model) (i-component props) (i-component (into props {:val val})))
-      (and (l/in? comp-type "l") (not (nil? key-table))) ;; TODO: Popup table do not working
+      (and (in? comp-type mt/column-type-linking) (not (nil? key-table))) ;; TODO: Popup table do not working
       (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
         (let [key-table               (keyword key-table)
               connected-table-conf    (get-in global-configuration [key-table :plug/jarman-table :config])
@@ -398,7 +407,6 @@
                                                                                 (do (c/config! e :text (selected-representation connected-table-conf selected))
                                                                                   ;;  (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))
                                                                                     ))))})))))))
-
 (defn convert-model-to-components-list 
   "Description
      Switch fn to convert by map or keyword
@@ -426,6 +434,8 @@
                      (gcomp/button-basic title :onClick (fn [e] (action local-changes)))])]
     (doall (->> (:buttons configuration)
                 (map #(button-fn (:title %) ((:action %) (:actions configuration))))))))
+
+;; TODO: Spec dla meta-data
 
 (def build-input-form
   "Description:
@@ -515,7 +525,7 @@
                                                   )
           back-to-insert     (fn [] [(gcomp/hr 2) (gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]])))])
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
-          table              (fn [] ((get (create-table configuration data-toolkit) :table) (fn [model] (expand-update-form model back-to-insert)))) ;; TODO: set try
+          table              (fn [] ((get (create-table configuration data-toolkit) :table) (fn [model] (expand-update-form model back-to-insert))))
           x nil ;;------------ Finish
           view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])]
                                                             [(try
@@ -528,6 +538,7 @@
 (defn jarman-table-toolkit-pipeline [configuration datatoolkit]
   datatoolkit)
 
+
 ;;;PLUGINS ;;;        
 (defn jarman-table-component [plugin-path global-configuration spec-map]
   ;; (println "Loading table plugin")
@@ -538,9 +549,10 @@
         title (:name configuration)
         space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
         atm (:atom-expanded-items (c/config space :user-data))]
+    ;; (println "Allow Permission: " (session/allow-permission? (:permission configuration)))
     (if (false? (spec/test-keys-jtable configuration spec-map))
       (println "[ Warning ] plugin/table: Error in spec")
-      (if (l/in? (:permission configuration) (keyword (session/user-get-permission)))
+      (if (session/allow-permission? (:permission configuration))
         (swap! atm (fn [inserted]
                      (conj inserted
                            (gcomp/button-expand-child

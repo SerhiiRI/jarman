@@ -12,7 +12,7 @@
    :model [:permission.id
            {:model-reprs "Permision name"
             :model-param :permission.permission_name
-            :model-comp 'jarman.gui.gui-components/input-text-with-atom}
+            :model-comp jarman.gui.gui-components/input-text-with-atom}
            :permission.configuration]
    :query {:column
            (as-is
@@ -552,17 +552,17 @@
    :model [{:model-reprs "Login"
             :model-param :user.login
             :bind-args {:title :title}
-            :model-comp 'jarman.gui.gui-components/input-text-with-atom}
+            :model-comp jarman.gui.gui-components/input-text-with-atom}
            :user.password
            :user.first_name
            :user.last_name
            :user.id_permission
            {:model-reprs "Start user"
             :model-param :user-start
-            :model-comp 'jarman.gui.gui-components/input-int}
+            :model-comp jarman.gui.gui-components/input-int}
            {:model-reprs "End user"
             :model-param :user-end
-            :model-comp 'jarman.gui.gui-components/input-int}]
+            :model-comp jarman.gui.gui-components/input-int}]
    :query {:inner-join [:user->permission]
            :columns
            (as-is

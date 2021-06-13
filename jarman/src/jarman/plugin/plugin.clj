@@ -71,16 +71,17 @@
                       {(first b) (:spec (second b))}))))
 
 (defmacro defplugin
-  [plugin-name title & body]
+  [plugin-name ns description & body]
   (let [create-name-func (fn [fname] (symbol
-                                     (str "jarman-table-plugin/" plugin-name "-" fname)))
+                                     (str ns "/" plugin-name "-" fname)))
         func-component (create-name-func "component")
         func-tool (symbol (str plugin-name "-toolkit-pipeline"))
-        func-toolkit (symbol (str "jarman-table-plugin/" func-tool))
+        func-toolkit (symbol (str ns "/"
+                                  func-tool))
         func-t (symbol (str plugin-name "-" "toolkit-pipeline"))]    
     `(do        
        (defn ~plugin-name 
-         ~(generate-plugin-doc title body)
+         ~(generate-plugin-doc description body)
          [~'plugin-path ~'global-configuration]
          (~func-component
           ~'plugin-path ~'global-configuration 

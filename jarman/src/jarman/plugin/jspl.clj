@@ -2,14 +2,13 @@
 ;;; This is proxy file to pinning all plugins to view.clj render
 (ns jarman.plugin.jspl
   (:require
-   [jarman.plugin.table :refer [table-component table-toolkit-pipeline]]
+   [jarman.plugin.table]
    [jarman.gui.gui-tools :as tool]
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]
    [jarman.plugin.plugin :refer :all]))
 
-
-(defplugin table
+(defplugin table jarman.plugin.table
   "Plugin for generate table-data-manager"
   [:permission
    {:spec :global-plugin/permission

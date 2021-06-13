@@ -41,7 +41,6 @@
   (keyword (format "%s.%s" (name (get-reference-qualified-field referenced-column table-meta)) (name (:field column)))))
 
 ;;; Applyer functions ;;;
-
 (defn add-to-m-boolean-column-type [m column] (if (in? (get column :component-type) mt/column-type-boolean) (into m {:class java.lang.Boolean}) m))
 (defn add-to-m-number-column-type  [m column] (if (in? (get column :component-type) mt/column-type-number)  (into m {:class java.lang.Number})  m))
 (defn add-to-m-class               [m column] (-> m (add-to-m-number-column-type  column) (add-to-m-boolean-column-type column)))
@@ -97,7 +96,6 @@
         ((comp :columns :prop) table-meta)))
 
 ;;; Meta logistic functions 
-
 (defn make-recur-meta [m-pipeline]
   (fn recur-meta [table-list]
     (if-let [table-meta (first (mt/getset! (first table-list)))]
@@ -202,7 +200,7 @@
                          {:column columns})))))
 
 
-;; (create-table-plugin :repair_contract)
+;;(create-table-plugin :enterpreneur)
 ;; (mapv create-table-plugin [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month])
 
 (defn- gui-table-model-columns [table-list table-column-list]

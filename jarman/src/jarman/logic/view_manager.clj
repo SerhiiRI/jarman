@@ -181,9 +181,15 @@
 ;;;  `:permission`
 ;;;  `:id`
 ;;; ---------------------------------------
-;;; 
-;; (global-view-configs-clean)
-;;; (get-in (global-view-configs-get) [:permission :table])
+;;;
+
+(comment
+  (do-view-load)
+  (global-view-configs-clean)
+  (global-view-configs-get)
+  ((get-in (global-view-configs-get) [:permission :table :p-1 :toolkit :select-expression])))
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPERS `defview` ;;; 
@@ -240,9 +246,9 @@
       (if (= (first data) con) data))))
 ;;(put-table-view-to-db (loader-from-view-clj (db/connection-get)))
 
-(defn- load-data [data loaders]
+(defn- load-data-recur [data loaders]
   (if (nil? data)
-    (load-data ((first loaders) (db/connection-get)) (rest loaders))
+    (load-data-recur ((first loaders) (db/connection-get)) (rest loaders))
     data))
 
 (defn make-loader-chain
@@ -250,7 +256,7 @@
    if first is db-loader, then do first load forom db, if
    db not load db, or do crash, use next in order loader"
   [& loaders]
-  (subvec (vec (load-data nil loaders)) 1))
+  (fn [] (subvec (vec (load-data-recur nil loaders)) 1)))
 
 (def ^:dynamic *view-loader-chain-fn*
   "Main function "
@@ -261,7 +267,7 @@
   make-loader chain. deserialize view, and execute every
   defview."
   []
-  (let [data *view-loader-chain-fn*]
+  (let [data (*view-loader-chain-fn*)]
     (if (nil? data)
       "Error with file"
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 

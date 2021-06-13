@@ -1542,9 +1542,9 @@
                                                 create-rule-pipeline))
 (define-sql-operation! delete! "DELETE FROM" (comp delete-empty-table-pipeline-applier
                                                 create-rule-pipeline))
-(define-sql-operation! update! (comp insert-update-empty-table-pipeline-applier
+(define-sql-operation! update! "UPDATE" (comp insert-update-empty-table-pipeline-applier
                                   create-rule-pipeline))
-(define-sql-operation! select! (comp select-table-count-pipeline-applier
+(define-sql-operation! select! "SELECT" (comp select-table-count-pipeline-applier
                                   select-table-top-n-pipeline-applier
                                   select-empty-table-pipeline-applier
                                   create-rule-pipeline)) 

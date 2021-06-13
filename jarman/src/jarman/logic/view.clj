@@ -1,7 +1,5 @@
 {:host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman"}
 
-{:host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman"}
-
 (defview permission
   (table
    :name "permission"

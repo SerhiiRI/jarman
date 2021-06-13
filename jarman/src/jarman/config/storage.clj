@@ -82,6 +82,8 @@
 (defstore document-templates (io/file env/user-home ".jarman" "documents"))
 (defstore user-config (io/file env/user-home ".jarman" "config"))
 (defstore user-metadata (io/file env/user-home  ".jarman" "metadata"))
+(defstore db-managment (io/file env/user-dir "src" "jarman"
+                                "managment" "db.clj"))
 
 ;; (user-put "some.edn" "temporary")
 ;; (user-rename "chuj.ds" "some.edn")

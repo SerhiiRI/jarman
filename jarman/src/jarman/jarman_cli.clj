@@ -33,7 +33,9 @@
    [nil "--view-scheme SCHEME"
     :parse-fn #(str %)
     :validate [#(scheme-in? %) "Scheme not found"]]
-  
+   ["-p" "--path PATH" "Path to file db.clj"
+    :parse-fn #(str %)
+    :validate [#(file-exists? %) "File not found"]]
    ;; [nil "--dummy-data TABLE" "Generate dummy data for table, use <all> for all"
    ;;  :parse-fn #(str %)
    ;;  :validate [#(or (= % "all") (table-in? %)) "Table not found"]]
@@ -78,6 +80,7 @@
         (= k1 :reset-db)     (reset-db cli-opt)
         (= k1 :reset-meta)   (reset-meta cli-opt)
         (= k1 :view-scheme)  (cli-scheme-view  cli-opt)
+        (= k1 :path)         (path-to-db cli-opt)
 ;;        (= k1 :print)        (print-table cli-opt)
        ;; (= k1 :help)         (print-helpr cli-opt)
        ;; (= k1 :list-schemas) (print-lschm cli-opt)
@@ -88,8 +91,6 @@
       ;;  (= k1 :dummy-data)   (println "[!] Excuse me, functionality not implemented")
        ;; :else (print-helpr cli-opt)
         ))))
-
-
 
 (defn exit [status msg]
   (println msg)
@@ -127,7 +128,10 @@
 
 (scheme-in? "documents")
 
+(-main "data" "--path" "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db.clj")
+
 (-main "data" "--reset-meta" "user")
 
 (table-in? "user")
 
+(file-exists? "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db.clj")

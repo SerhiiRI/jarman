@@ -15,16 +15,30 @@
            (java.text SimpleDateFormat)))
 
 (def all-tables nil)
+(def path-to-db-clj nil)
+
+(defn get-options-cli [cli-opt-map]
+  (first (keys (:options cli-opt-map))))
+
+(defn get-value-cli [cli-opt-map]
+  (first (vals (:options cli-opt-map))))
+
+(defn path-to-db [cli-opt-map]
+  (def path-to-db-clj (get-value-cli cli-opt-map))
+  (println "you add path successfully"))
+
+path-to-db-clj
+(.exists (clojure.java.io/file "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db.clj"))
 
 (defn get-tables []
   (try
     (binding [*ns* (find-ns 'jarman.managment.db-managment)]  
-    (load-file (storage/db-managment-dir-path)))
+      (load-file path-to-db-clj
+       ;; "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db.clj"
+                 ))
     (catch java.io.FileNotFoundException e
       (println (str "[e] File not found" (.toString e)))))
   all-tables)
-
-
 
 (defn create-scheme []
   (for [t (get-tables)]
@@ -34,9 +48,14 @@
   (for [t (reverse (get-tables))]
     (db/exec (drop-table (:table-name t)))))
 
+;;;SOME PREDICATS ;;;
+(def file-exists?
+  (fn [file-path]
+    (do (println file-path)
+        (binding [*ns* (find-ns 'jarman.managment.db-managment)]  
+          (.exists (clojure.java.io/file file-path))))))
 (defn get-one-scheme [table-name]
   (first (filter (fn [x] (= (:table-name x) (keyword table-name))) (get-tables))))
-
 (defn -entity-in? [entity-list]
   (fn [t] (if (nil? (some #(= (string/lower-case t) (string/lower-case %)) entity-list)) false true)))
 
@@ -44,7 +63,6 @@
                   (let [resault (if (nil? (some (fn [x] (= (:table-name x) (keyword table-name))) (get-tables)))
                                   false true)]
                     resault)))
-
 ;;(def meta-in?   (-entity-in? (map :table (jdbc/query sql-connection (select :METADATA :column ["`table`"])))))
 (def table-in?  (-entity-in? (let [entity-list (db/query (show-tables))]
                                (if (not-empty entity-list) (map (comp second first) entity-list)))))
@@ -92,7 +110,6 @@
             (println (format "[i] Meta  %s cleared successfuly" (name scm))))
         (do (delete-one-table scm)
             (println (format "[i] Table %s deleted successufuly" (name scm)))))
-     
       (if (= opt :delete-meta)
         (do (metadata/do-clear-meta)
             (println "[!] Metadata was clear"))
@@ -101,7 +118,6 @@
 
 (defn reset-one-db [scm]
   (do (delete-one-table scm)
-      
       (create-one-table scm)
       (metadata/delete-one-meta scm)
       (metadata/create-one-meta scm)
@@ -117,8 +133,6 @@
       (println "hey3")
       (metadata/do-create-references)
       (println "[i] DB was reset")))
-
-(reset-all-db)
 
 (defn reset-db [cli-opt-m]
   (let [scm (get-in cli-opt-m [:options :print] nil)]
@@ -159,6 +173,8 @@
 ;;(delete-one-table "user")
 
 (get-tables)
+
+(db/connection-get)
 
 (db/query (show-tables))
 

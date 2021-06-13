@@ -57,7 +57,7 @@
                        (keyword (format "%s->%s" (name ((comp :field :table :prop) referenced-table)) (name table-or-alias)))
                        (keyword (format "%s->%s.id" (name (:field-qualified referenced-column)) (name ((comp :field :table :prop) table-meta)))))}))))
 
-(defn jarman-table-k-v-formater
+(defn table-k-v-formater
   "Description
     This is central logistics function which take
      - table from which recursion is performed
@@ -70,7 +70,7 @@
     In this example `:repair_contract` make recusion jump to `:seal`
     through the `:id_new_seal` column in first table. Column have
     meta description to which table they must be linked  
-      (jarman-table-k-v-formater
+      (table-k-v-formater
        (first (getset! :repair_contract))
        {:description nil,
         :private? false,
@@ -110,13 +110,13 @@
         (into @result (if (not-empty @table-list-atom)
                         (recur-meta @table-list-atom)))))))
 
-(def take-column-for-recur-table (make-recur-meta jarman-table-k-v-formater))
-(let [table-list [:repair_contract :seal]]
-  (take-column-for-recur-table table-list))
+(def take-column-for-recur-table (make-recur-meta table-k-v-formater))
+;; (let [table-list [:repair_contract :seal]]
+;;   (take-column-for-recur-table table-list))
 
-(defn jarman-table-columns-list
+(defn table-columns-list
   "Example
-    (jarman-table-columns-list [:repair_contract :seal]
+    (table-columns-list [:repair_contract :seal]
                             [:repair_contract.id_cache_register
                             :repair_contract.id_old_seal
                             :repair_contract.id_new_seal
@@ -170,8 +170,9 @@
 (def ^:private take-meta-for-view (make-recur-meta-one-table conj-table-meta))
 
 
-(defn- create-jarman-table-plugin [table-name]
+(defn- create-table-plugin [table-name]
   (let [meta-table (first (mt/getset! table-name))
+        view-columns (mapv :field-qualified ((comp :columns :prop) meta-table))
         name-of-table ((comp :representation :table :prop) meta-table)
         full-meta-debug (take-meta-for-view table-name)
         tables (vec (for [meta-debug full-meta-debug]
@@ -186,24 +187,28 @@
                      (mapcat identity (for [meta-debug full-meta-debug]
                                         (mapv :field-column (second meta-debug))))))]
     (list 'defview (symbol table-name)
-          (list 'jarman-table
+          (list 'table
                 :name name-of-table
                 :plug-place [:#tables-view-plugin]
                 :tables tables
-                :model models
+                :view-columns view-columns
+                :model view-columns
+                :actions []
+                :buttons []
                 :query (if-not (empty? joines)
                          {:inner-join joines :columns columns}
                          {:column columns})))))
 
-;; (create-jarman-table-plugin :repair_contract)
-;; (mapv create-jarman-table-plugin [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month])
+
+;; (create-table-plugin :repair_contract)
+;; (mapv create-table-plugin [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month])
 
 (defn- gui-table-model-columns [table-list table-column-list]
   (let
    [on-text  (fn [m v] (into m {:text (:representation v)}))
     on-class (fn [m v] (if (contains? v :class) (into m {:class (:class v)}) m))]
     (mapv (fn [[k v]] (-> {:key k} (on-class v) (on-text v)))
-          (jarman-table-columns-list table-list table-column-list))))
+          (table-columns-list table-list table-column-list))))
 
 (defn- gui-table-model [model-columns data-loader]
   (fn [] [:columns model-columns :rows (data-loader)]))
@@ -388,8 +393,8 @@
       (and (in? comp-type mt/column-type-linking) (not (nil? key-table))) ;; TODO: Popup table do not working
       (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
         (let [key-table               (keyword key-table)
-              connected-table-conf    (get-in global-configuration [key-table :plug/jarman-table :config])
-              connected-table-data    (get-in global-configuration [key-table :plug/jarman-table :toolkit])
+              connected-table-conf    (get-in global-configuration [key-table :plug/table :config])
+              connected-table-data    (get-in global-configuration [key-table :plug/table :toolkit])
               selected-representation (fn [dialog-model-view
                                            returned-from-dialog]
                                         (->> (:model dialog-model-view)
@@ -535,14 +540,14 @@
     ;; (c/label :text "Testing mode")
     ))
 
-(defn jarman-table-toolkit-pipeline [configuration datatoolkit]
+(defn table-toolkit-pipeline [configuration datatoolkit]
   datatoolkit)
 
 
 ;;;PLUGINS ;;;        
-(defn jarman-table-component [plugin-path global-configuration spec-map]
+(defn table-component [plugin-path global-configuration spec-map]
   ;; (println "Loading table plugin")
-  (let [get-from-global #(->> % (l/join-vec plugin-path) (get-in (global-configuration)))
+  (let [get-from-global #(->> % (join-vec plugin-path) (get-in (global-configuration)))
         data-toolkit  (get-from-global [:toolkit])
         configuration (get-from-global [:config])
         ;; title (get-in data-toolkit [:table-meta :representation])

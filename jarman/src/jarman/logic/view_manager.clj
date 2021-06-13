@@ -100,9 +100,9 @@
      'permission
      '(:--another :--param
        :permission [:admin :user]
-       (jarman-table
+       (table
         :name \"first Permission\")
-       (jarman-table
+       (table
         :id :UUUUUUUUUUUUUU
         :permission [:user]
         :name \"second Permission\")))
@@ -112,15 +112,15 @@
       :name \"first Permission\",
       :id :plugin-24793,
       :table-name :permission,
-      :plugin-name jarman-table,
-      :plugin-config-path [:permission :jarman-table :plugin-24793]}
+      :plugin-name table,
+      :plugin-config-path [:permission :table :plugin-24793]}
      {:--another :--param,
       :permission [:user],
       :name \"second Permission\",
       :id :UUUUUUUUUUUUUU,
       :table-name :permission,
-      :plugin-name jarman-table,
-      :plugin-config-path [:permission :jarman-table :UUUUUUUUUUUUUU]}]"
+      :plugin-name table,
+      :plugin-config-path [:permission :table :UUUUUUUUUUUUUU]}]"
   [table-name body]
   (let [add-id         (key-setter :id         #(keyword (gensym "plugin-")))
         add-table-name (key-setter :table-name (keyword table-name))
@@ -141,22 +141,6 @@
                         add-plugin-name
                         add-full-path-cfg)])) [] plugin-list))))
 
-;; -----------------------
-;; For Julia with big love
-;;              @Serhii
-;; -----------------------
-;; (defview-prepare-config
-;;   'permission
-;;   '(:--another :--param
-;;     :permission [:admin :user]
-;;     (jarman-table
-;;      :name "first Permission")
-;;     (jarman-table
-;;      :name "thirtd Permission")
-;;     (jarman-table
-;;      :permission [:user]
-;;      :name "second Permission")))
-
 (defmacro defview [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
    `(do
@@ -172,7 +156,7 @@
 ;;; TEST DEFVIEW SEGMENT
 ;; (defview permission
 ;;   :permission [:user :admin]
-;;   (jarman-table
+;;   (table
 ;;    :id :first-table
 ;;    :name "FIRST"
 ;;    :plug-place [:#tables-view-plugin]
@@ -182,24 +166,7 @@
 ;;    :model [:permission.id
 ;;            {:model-reprs "First"
 ;;             :model-param :permission.permission_name
-;;             :model-comp 'jarman.gui.gui-components/input-text-with-atom}
-;;            :permission.configuration]
-;;    :query {:column
-;;            (as-is
-;;             :permission.id
-;;             :permission.permission_name
-;;             :permission.configuration)})
-;;   (jarman-table
-;;    :permission "----------------"
-;;    :name "SECOND"
-;;    :plug-place [:#tables-view-plugin]
-;;    :tables [:permission]
-;;    :view-columns [:permission.permission_name
-;;                   :permission.configuration]
-;;    :model [:permission.id
-;;            {:model-reprs "Second"
-;;             :model-param :permission.permission_name
-;;             :model-comp 'jarman.gui.gui-components/input-text-with-atom}
+;;             :model-comp jarman.gui.gui-components/input-text-with-atom}
 ;;            :permission.configuration]
 ;;    :query {:column
 ;;            (as-is
@@ -216,8 +183,7 @@
 ;;; ---------------------------------------
 ;;; 
 ;;; (global-view-configs-clean)
-;;; (get-in (global-view-configs-get) [:permission :jarman-table])
-
+;;; (get-in (global-view-configs-get) [:permission :table])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPERS `defview` ;;; 
@@ -301,26 +267,7 @@
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (map (fn [x] (eval x)) data))))))
 
-;; (do-view-load)
-;; (defview
-;;   permission
-;;   (jarman-table
-;;    :name
-;;    "permission"
-;;    :plug-place
-;;    [:#tables-view-plugin]
-;;    :tables
-;;    [:permission]
-;;    :model
-;;    [:permission.id
-;;     :permission.permission_name
-;;     :permission.configuration]
-;;    :query
-;;    {:columns
-;;     (as-is
-;;      :permission.id
-;;      :permission.permission_name
-;;      :permission.configuration)}))
+
 
 
 

@@ -195,7 +195,7 @@
                          {:inner-join joines :columns columns}
                          {:column columns})))))
 
-;; (create-jarman-table-plugin :seal)
+;; (create-jarman-table-plugin :repair_contract)
 ;; (mapv create-jarman-table-plugin [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month])
 
 (defn- gui-table-model-columns [table-list table-column-list]
@@ -379,8 +379,8 @@
       (and (l/in? comp-type "l") (not (nil? key-table))) ;; TODO: Popup table do not working
       (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
         (let [key-table               (keyword key-table)
-              connected-table-conf    (get-in global-configuration [key-table :plug/jarman-table :configuration])
-              connected-table-data    (get-in global-configuration [key-table :plug/jarman-table :data-toolkit])
+              connected-table-conf    (get-in global-configuration [key-table :plug/jarman-table :config])
+              connected-table-data    (get-in global-configuration [key-table :plug/jarman-table :toolkit])
               selected-representation (fn [dialog-model-view
                                            returned-from-dialog]
                                         (->> (:model dialog-model-view)
@@ -528,14 +528,12 @@
 (defn jarman-table-toolkit-pipeline [configuration datatoolkit]
   datatoolkit)
 
-global-configuration [plugin-path] = (hashmap defviewDataTollkit + jarman-table-toolkit-pipeline)
-
 ;;;PLUGINS ;;;        
 (defn jarman-table-component [plugin-path global-configuration spec-map]
   ;; (println "Loading table plugin")
   (let [get-from-global #(->> % (l/join-vec plugin-path) (get-in (global-configuration)))
-        data-toolkit  (get-from-global [:data-toolkit])
-        configuration (get-from-global [:configuration])
+        data-toolkit  (get-from-global [:toolkit])
+        configuration (get-from-global [:config])
         ;; title (get-in data-toolkit [:table-meta :representation])
         title (:name configuration)
         space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))

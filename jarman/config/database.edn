@@ -145,4 +145,49 @@
        :type :param,
        :display :edit,
        :component :text,
+       :value "1234"}}}
+    :jarman-test--trashpanda-team_ddns_net--3307
+    {:name "Raspberry",
+     :type :block,
+     :display :edit,
+     :value
+     {:dbtype
+      {:name "Typ poе┌д┘czenia",
+       :type :param,
+       :display :none,
+       :component :text,
+       :value "mysql"},
+      :host
+      {:name "Database host",
+       :doc
+       "Enter jarman SQL database server. It may be IP adress, or domain name, where your server in. Not to set port in this input.",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "trashpanda-team.ddns.net"},
+      :port
+      {:name "Port",
+       :doc
+       "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'",
+       :type :param,
+       :display :edit,
+       :component :textnumber,
+       :value 3307},
+      :dbname
+      {:name "Database name",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "jarman-test"},
+      :user
+      {:name "User login",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "root"},
+      :password
+      {:name "User password",
+       :type :param,
+       :display :edit,
+       :component :text,
        :value "1234"}}}}}}}

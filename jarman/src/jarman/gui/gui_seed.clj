@@ -12,6 +12,7 @@
             ;; deverloper tools 
             [jarman.tools.swing :as stool]
             [jarman.tools.lang :refer :all]
+            [jarman.logic.changes-service :as cs]
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
             ))
 
@@ -19,6 +20,7 @@
 
 (def jarman-views-service (atom nil))
 (def jarman-focus-now (atom nil))
+(def changes-service (atom (cs/new-changes-service)))
 
 (defn set-focus
   [object] (reset! jarman-focus-now object))

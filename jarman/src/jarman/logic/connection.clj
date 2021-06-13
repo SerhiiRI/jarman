@@ -1,11 +1,11 @@
 (ns jarman.logic.connection
   (:refer-clojure :exclude [update])
   (:require
-   ;; clojure 
+   ;; clojure
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]
    [clojure.spec.alpha :as s]
-   ;; jarmans 
+   ;; jarmans
    [jarman.tools.lang :refer :all]
    [jarman.config.config-manager :as c])
   (:import (java.util Date)
@@ -63,7 +63,7 @@
                    :connection/user
                    :connection/password]))
 
-(def ^:private connection (ref nil))
+(def ^:dynamic *connection* (ref nil))
 
 (defn connection-validate
   "Description
@@ -94,7 +94,20 @@
     If validation return `false`, then connection variable not
     totaly set"
   [connection-map]
-  (dosync (ref-set connection (merge connection-map {:useUnicode true :characterEncoding "UTF-8"}))))
+  (dosync (ref-set *connection* (merge connection-map {:useUnicode true :characterEncoding "UTF-8"}))))
+
+(defn connection-wrapp
+  "Description
+    Wrapp connection like 
+     {:dbtype \"mysql\",
+      :host \"127.0.0.1\",
+      :port 3306,
+      :dbname \"jarman\",
+      :user \"root\",
+      :password \"1234\"}
+    into additional parameters"
+  [connection-map]
+  (merge connection-map {:useUnicode true :characterEncoding "UTF-8"}))
 
 (defn connection-get
   "Description
@@ -107,7 +120,10 @@
       :dbname \"jarman\",
       :user \"root\",
       :password \"1234\"}"
-  [] (deref connection))
+  [] (deref *connection*))
+
+(defn connection-config-get-all []
+  (c/get-in-value [:database.edn :datalist]))
 
 ;;; FOR DEBUG CONNECTION
 (connection-set
@@ -140,8 +156,14 @@
 ;;; Mapper/Converter ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn datalist-get []
-  (c/get-in-value [:database.edn :datalist]))
+(defn datalist-get [& [datalist-key]]
+  (-> (if datalist-key
+        (conj [:database.edn :datalist] datalist-key)
+        [:database.edn :datalist])
+   c/get-in-value))
+
+(defn datalist-in? [datalist-key]
+  (in? (keys (c/get-in-value [:database.edn :datalist])) datalist-key))
 
 (defn datalist-params-mapper [param-segment]
   (->> (seq param-segment)
@@ -163,6 +185,13 @@
         (key-paths
          mapped-datalist))))
 
+(defn datalist-resolve [datalist-key]
+  (second
+   (if (datalist-in? datalist-key)
+     ["CHANGED" (datalist-params-mapper (datalist-get datalist-key))]
+     ["ORIGINAL" (connection-get)])))
+
+
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; JDBC WRAPPERS ;;; 
 ;;;;;;;;;;;;;;;;;;;;;
@@ -182,12 +211,30 @@
          (catch Exception e#
            (~f-exception (format "Undefinied problem: %s" (ex-message e#)))))))
 
+;;; simple query depend on `*connection*`
 (defn exec [s]
-  (jdbc/execute! @connection s))
+  (jdbc/execute! @*connection* s))
 (defn query [s]
-  (jdbc/query @connection s))
+  (jdbc/query @*connection* s))
 (defn exec! [s]
-  (sqlerr (jdbc/execute! @connection s)))
+  (sqlerr (jdbc/execute! @*connection* s)))
 (defn query! [s]
-  (sqlerr (jdbc/query @connection s)))
+  (sqlerr (jdbc/query @*connection* s)))
+
+;;; with datalist-key 
+(defn exec-b [datalist-key s]
+  (binding [*connection* (ref (datalist-resolve datalist-key))]
+    (eval (jdbc/execute! @*connection* s))))
+(defn query-b [datalist-key s]
+  (binding [*connection* (ref (datalist-resolve datalist-key))]
+    (eval (jdbc/query @*connection* s))))
+(defn exec-b! [datalist-key s]
+  (sqlerr (binding [*connection* (ref (datalist-resolve datalist-key))]
+            (eval (jdbc/execute! @*connection* s)))))
+(defn query-b! [datalist-key s]
+  (sqlerr (binding [*connection* (ref (datalist-resolve datalist-key))]
+            (eval (jdbc/query @*connection* s)))))
+
+;; (query "SELECT * FROM user")
+;; (query-b :jarman--localhost--3306 "SELECT * FROM user")
 

@@ -79,6 +79,7 @@
    {rule-expression query-lambda-expression
     rule-name       query-lambda}))
 
+
 (def ^:private sql-make-insert-wrapper (partial sql-make-wrapper-for insert!))
 (def ^:private sql-make-delete-wrapper (partial sql-make-wrapper-for delete!))
 (def ^:private sql-make-update-wrapper (partial sql-make-wrapper-for update!))
@@ -121,6 +122,35 @@
 (def ^:private supply-update (partial response-f-on-suffix :update sql-make-delete-wrapper))
 (def ^:private supply-delete (partial response-f-on-suffix :delete sql-make-update-wrapper))
 
+(defn- supply-sql-action-constructor [configuration toolkit-map]
+  (if-let [actions  (:action configuration)]
+   (reduce
+    (fn [m-acc [k v]]
+      (-> m-acc
+          (supply-insert k v)
+          (supply-update k v)
+          (supply-delete k v)
+          (supply-select k v)))
+    toolkit-map
+    actions)
+   toolkit-map))
+
+;; => (:jarman--localhost--3306 :jarman--trashpanda-team_ddns_net--3306 :jarman--trashpanda-team_ddns_net--3307)
+;; (let [cfg {;; :jdbc-connection :jarman--localhost--3306
+;;            :table-name "permission"
+;;            :tables [:permission]
+;;            :action {:my-another-select
+;;                     (fn [_]
+;;                       {:table-name "user"
+;;                        :column [:login :password :id_permission]})}
+;;            :query
+;;            {:column
+;;             (jarman.logic.view-manager/as-is
+;;              :permission.id
+;;              :permission.permission_name
+;;              :permission.configuration)}}]
+;;   (jarman.logic.view-manager/defview-debug-toolkit cfg))
+
 (defn- sql-crud-toolkit-constructor
   "Description
     Generate datatoolkit for sql expression
@@ -128,11 +158,7 @@
   Example
     (sql-crud-toolkit-constructor
        {:table-name :repair_contract 
-        :name \"repair_contract\"
-        :plug-place [:#tables-view-plugin]
-        :tables [:repair_contract]
-        :user-all-select {:table-name \"user\"}
-        :model [:repair_contract.id]
+        ...
         :query {}} {})
     ;;=> 
       {:model-id :repair_contract.id,
@@ -147,7 +173,9 @@
        :user-all-select-expression (fn [..] ...),
        :select (fn [..] ...)}"
   [configuration toolkit-map]
-  (where ((table-metadata configuration do :table-name do mt/getset! do first)
+  (where ((query-fn (if (:jdbc-connection configuration) (partial db/query-b (:jdbc-connection configuration)) db/query))
+          (exec-fn  (if (:jdbc-connection configuration) (partial db/exec-b (:jdbc-connection configuration)) db/exec))
+          (table-metadata configuration do :table-name do mt/getset! do first)
           (id_column (t-f-tf (:table-name configuration) :id))
           (table-name ((comp :field :table :prop) table-metadata))
           (columns ((comp :columns :prop) table-metadata) map :field) 
@@ -162,26 +190,15 @@
                                    (into (:query configuration)
                                          {:table-name (:table-name configuration)}))
                                  args)))))
-         (where
-          ((standart-crud-m
-            {:update-expression update-expression
-             :insert-expression insert-expression
-             :delete-expression delete-expression
-             :select-expression select-expression
-             :update (fn [e] (db/exec (update-expression e)))
-             :insert (fn [e] (db/exec (insert-expression e)))
-             :delete (fn [e] (db/exec (delete-expression e)))
-             :select (fn [ ] (db/query (select-expression)))
-             :model-id id_column}))
-          (reduce
-           (fn [m-acc [k v]]
-             (-> m-acc
-                 (supply-insert k v)
-                 (supply-update k v)
-                 (supply-delete k v)
-                 (supply-select k v)))
-           standart-crud-m
-           configuration))))
+         {:update-expression update-expression
+          :insert-expression insert-expression
+          :delete-expression delete-expression
+          :select-expression select-expression
+          :update (fn [e] (exec-fn (update-expression e)))
+          :insert (fn [e] (exec-fn (insert-expression e)))
+          :delete (fn [e] (exec-fn (delete-expression e)))
+          :select (fn [ ] (query-fn (select-expression)))
+          :model-id id_column}))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -212,12 +229,16 @@
 
 (defn data-toolkit-pipeline [configuration other-toolkit-map]
   (let [rule-react-on (fn [f & ks] (fn [m] (if (every? (fn [k] (some? (k configuration))) ks) (into m (f configuration m)) m)))
-        sql-crud-toolkit (rule-react-on sql-crud-toolkit-constructor :query)
-        metadata-toolkit (rule-react-on metadata-toolkit-constructor :table-name)
-        export-sql-toolkit (rule-react-on export-toolkit-constructor :query)
-        document-toolkit (rule-react-on document-toolkit-constructor :table-name)]
+        sql-crud-toolkit   (rule-react-on sql-crud-toolkit-constructor :query :table-name)
+        metadata-toolkit   (rule-react-on metadata-toolkit-constructor :table-name)
+        supply-sql-toolkit (rule-react-on supply-sql-action-constructor :table-name)
+        ;; export-sql-toolkit (rule-react-on export-toolkit-constructor :query)
+        ;; document-toolkit (rule-react-on document-toolkit-constructor :table-name)
+        ]
     (-> other-toolkit-map
         sql-crud-toolkit
+        supply-sql-toolkit
         metadata-toolkit
-        export-sql-toolkit
-        document-toolkit)))
+        ;; export-sql-toolkit
+        ;; document-toolkit
+        )))

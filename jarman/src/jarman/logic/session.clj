@@ -27,10 +27,13 @@
 (defn user-get [] @user)
 
 (defn user-get-permission 
-  [] (if-not (nil? @user) (get @user :permission_name) "user"))
+  [] (if-not (nil? @user) (:permission_name @user) "user"))
 
 (defn user-get-login
-  [] (if-not (nil? @user) (get @user :login) "user"))
+  [] (if-not (nil? @user) (:login @user) "user"))
 
 (defn user-set-permission 
   [permission] (swap! user (fn [storage] (assoc-in storage [:permission_name] permission))))
+
+(defn allow-permission?
+  [coll] (in? coll (keyword (user-get-permission))))

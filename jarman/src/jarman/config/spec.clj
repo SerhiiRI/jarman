@@ -16,17 +16,17 @@
 ;;  SEGMENT SPEC :block/block -- (See `block-segment`)
 ;;   :name    :block/name 
 ;;   :doc     :block/doc
-;;   :type    :block/type -- (See `segment-type`) REQUIRED 
+;;   :type    :block/type    -- (See `segment-type`) REQUIRED 
 ;;   :display :block/display -- (See `segment-display`)
-;;   :value   :block/value -- REQUIRED 
+;;   :value   :block/value   -- REQUIRED 
 ;;
-;;  PARAMETER SPEC :block/param -- (See `param-segment`)
+;;  PARAMETER SPEC :block/param  -- (See `param-segment`)
 ;;   :name      :block/name
 ;;   :doc       :block/doc
-;;   :type      :block/type -- (See `segment-type`) REQUIRED
-;;   :display   :block/display -- (See `segment-display`)
+;;   :type      :block/type      -- (See `segment-type`) REQUIRED
+;;   :display   :block/display   -- (See `segment-display`)
 ;;   :component :block/component -- (See `parameter-components`) REQUIRED
-;;   :value     :block/value -- REQUIRED
+;;   :value     :block/value     -- REQUIRED
 ;;
 ;;  ERROR SPEC :block/error -- (See `error-segment`)
 ;;   :log   :block/log  -- REQUIRED
@@ -38,48 +38,55 @@
 ;; (do
 ;;   (println "----") 
 ;;   (map #(println (format "(def %s :%s)" (name %) (name %))) '(:listurl :texturl :textlist :listbox :selectbox :text :textcolor :textnumber :checkbox)))
-(def $block :block)
-(def $file :file)
+(def $block      :block)
+(def $file       :file)
 (def $stylesheet :stylesheet)
-(def $directory :directory)
-(def $param :param)
-(def $error :error)
-(def $block :block)
-(def $file :file)
-(def $directory :directory)
-(def $param :param)
-(def $error :error)
-(def $none :none)
-(def $edit :edit)
-(def $noedit :noedit)
+(def $directory  :directory)
+(def $param      :param)
+(def $error      :error)
+(def $block      :block)
+(def $file       :file)
+(def $directory  :directory)
+(def $param      :param)
+(def $error      :error)
+(def $none       :none)
+(def $edit       :edit)
+(def $noedit     :noedit)
 
 ;;; component spec key
-(def $listurl :listurl)
-(def $texturl :texturl)
-(def $textlist :textlist)
+(def $listurl    :listurl)
+(def $texturl    :texturl)
+(def $textlist   :textlist)
 (def $numberlist :numberlist)
-(def $listbox :listbox)
-(def $selectbox :selectbox)
-(def $text :text)
-(def $textcolor :textcolor)
+(def $listbox    :listbox)
+(def $selectbox  :selectbox)
+(def $text       :text)
+(def $textcolor  :textcolor)
 (def $textnumber :textnumber)
-(def $checkbox :checkbox)
+(def $checkbox   :checkbox)
 
-(def block-segment [$block $file $directory])
-(def code-segment [$stylesheet])
-(def param-segment [$param])
-(def error-segment [$error])
-(def segment-type [$block $file $directory $param $error $stylesheet])
+(def block-segment   [$block $file $directory])
+(def code-segment    [$stylesheet])
+(def param-segment   [$param])
+(def error-segment   [$error])
+(def segment-type    [$block $file $directory $param $error $stylesheet])
 (def segment-display [$none $edit $noedit])
+
 ;;; component types
-(def component-n-url [$listurl])
-(def component-url [$texturl])
+(def component-n-url      [$listurl])
+(def component-url        [$texturl])
 (def component-n-text-num [$textlist $listbox $selectbox $numberlist])
-(def component-text [$text])
-(def component-color [$textcolor])
-(def component-number [$textnumber])
-(def component-checkbox [$checkbox])
-(def parameter-components (flatten [component-n-url component-url component-n-text-num component-text component-number component-checkbox component-color]))
+(def component-text       [$text])
+(def component-color      [$textcolor])
+(def component-number     [$textnumber])
+(def component-checkbox   [$checkbox])
+(def parameter-components (flatten [component-n-url
+                                    component-url
+                                    component-n-text-num
+                                    component-text
+                                    component-number
+                                    component-checkbox
+                                    component-color]))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; Quick template ;;;
@@ -186,7 +193,6 @@
 (s/def :param/component/color ::rgb-color)
 (s/def :param/component/urlist ::url-list)
 (s/def :param/component/list (s/and vector? (s/or :textlist (s/coll-of ::ne-string) :numberlist (s/coll-of number?))))
-
 
 ;; (let [
 ;;       ;; m {:type :param :display :edit :component :textnumber :value 123}

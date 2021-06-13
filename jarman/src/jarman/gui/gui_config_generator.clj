@@ -17,7 +17,7 @@
             [jarman.gui.gui-seed :as gseed]
 
             ;; deverloper tools 
-            [jarman.tools.lang :as lang]))
+            [jarman.tools.lang :refer :all]))
 
 ;; ┌─────────────────────────┐
 ;; │                         │
@@ -51,9 +51,9 @@
     (smig/mig-panel
      :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
      :items [[(gcomp/input-text-with-atom
-               :val value
-               :store-id path
-               :local-changes local-changes
+               {:val value
+                :store-id path
+                :local-changes local-changes}
                )]])))
 
 
@@ -62,9 +62,9 @@
     (smig/mig-panel
      :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
      :items [[(gcomp/input-int
-               :val value
-               :store-id path
-               :local-changes local-changes
+               {:val value
+                :store-id path
+                :local-changes local-changes}
                )]])))
 
 
@@ -78,7 +78,7 @@
                       :background (gtool/get-color :background :input)
                       :border (b/compound-border (b/empty-border :left 10 :right 10 :top 5 :bottom 5)
                                                (b/line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline)))
-                      :listen [:caret-update (fn [event] (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value value :new-value (clojure.string/split (c/config event :text) #"\s*,\s*")))])]]))))
+                      :listen [:caret-update (fn [event] (@gseed/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value value :new-value (clojure.string/split (c/config event :text) #"\s*,\s*")))])]]))))
 
 
 (def confgen--gui-interface--input-textcolor
@@ -90,7 +90,7 @@
                     :border (b/compound-border (b/empty-border :left 10 :right 10 :top 5 :bottom 5)
                                              (b/line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline)))
                     :listen [:caret-update (fn [event]
-                                             (@gtool/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value value :new-value (c/config event :text))
+                                             (@gseed/changes-service :truck-changes :local-changes local-changes :path-to-value path :old-value value :new-value (c/config event :text))
                                              (gtool/colorizator-text-component event))])]])))
 
 
@@ -138,16 +138,16 @@
 (def confgen--recursive--next-configuration-in-map
   (fn [param confgen--component--tree local-changes start-key]
     (map (fn [next-param]
-           (confgen--component--tree local-changes (lang/join-vec start-key (list (first next-param)))))
+           (confgen--component--tree local-changes (join-vec start-key (list (first next-param)))))
          (param :value))))
 
 (def confgen--element--gui-interfaces
   (fn [comp? param confgen--component--tree local-changes start-key]
     (cond (comp? :selectbox) (confgen--gui-interface--droplist param local-changes start-key)
           (comp? :checkbox)  (confgen--gui-interface--checkbox-as-droplist param local-changes start-key)
-          (comp? :text) (confgen--gui-interface--input local-changes start-key (str (param :value)))
-          (comp? :textnumber) (confgen--gui-interface--input-number local-changes start-key (str (param :value)))
-          (comp? :textlist) (confgen--gui-interface--input-textlist local-changes start-key (param :value))
+          (comp? :text)      (confgen--gui-interface--input local-changes start-key (str (param :value)))
+          (comp? :textnumber)(confgen--gui-interface--input-number local-changes start-key (str (param :value)))
+          (comp? :textlist)  (confgen--gui-interface--input-textlist local-changes start-key (param :value))
           (comp? :textcolor) (confgen--gui-interface--input-textcolor local-changes start-key (param :value))
           (map? (param :value)) (confgen--recursive--next-configuration-in-map param confgen--component--tree local-changes start-key)
           :else (confgen--element--textarea param))))
@@ -155,21 +155,26 @@
 
 (def confgen--component--tree
   (fn [local-changes start-key]
-    (let [param (fn [key] (get (cm/get-in-segment start-key) key))
+    (let [param (fn [key] (key (cm/get-in-segment start-key)))
           type? (fn [key] (= (param :type) key))
           comp? (fn [key] (= (param :component) key))
-          name (if (nil? (param :name)) (lang/convert-key-to-title (last start-key)) (str (param :name)))]
-      (if (= (param :display) :edit)
+          name (if (nil? (param :name)) (gtool/convert-key-to-title (last start-key)) (str (param :name)))]
+      (if (or (nil? (param :display)) (= (param :display) :edit))
         (do
           (smig/mig-panel
            :constraints ["wrap 1" "20px[]50px" "5px[]0px"]
            :border (cond (type? :block) (b/empty-border :bottom 10)
                          :else nil)
            :items (gtool/join-mig-items
-                   (confgen--choose--header type? name)
-                   (confgen--element--textarea-doc param)
-                   (confgen--element--margin-top-if-doc-exist type? param)
-                   (confgen--element--gui-interfaces comp? param confgen--component--tree local-changes start-key))))
+                   (let [a (confgen--choose--header type? name)
+                         x (if (nil? a) (println "confgen--choose--header  return nil"))
+                         b (confgen--element--textarea-doc param)
+                         x (if (nil? b) (println "confgen--element--textarea-doc  return nil"))
+                         c (confgen--element--margin-top-if-doc-exist type? param)
+                         x (if (nil? c) (println "confgen--element--margin-top-if-doc-exist  return nil"))
+                         d (confgen--element--gui-interfaces comp? param confgen--component--tree local-changes start-key)
+                         x (if (nil? d) (println "confgen--element--gui-interfaces return nil"))]
+                     [a b c d]))))
         ))))
 
 
@@ -187,47 +192,54 @@
                message-faild (fn [txt] (c/alert txt))}}]
     (let [map-part (cm/get-in-segment start-key)
           local-changes (atom {})]
-      (if (= (get-in map-part [:display]) :edit)
+      (if (= :edit (:display map-part))
         (do
-          (@gtool/changes-service :add-controller
+          (@gseed/changes-service :add-controller
                                   :view-id (last start-key)
                                   :local-changes local-changes)
-          (smig/mig-panel
-           :border (b/line-border :bottom 50 :color (gtool/get-color :background :main))
-           :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px[grow, fill]0px[]0px"]
-           :border nil
-          ;;  :border (b/line-border :thickness 2 :color "#f00")
-           :items (gtool/join-mig-items
-                   (gcomp/header-basic (get-in map-part [:name])) ;; Header of section/config file
-                   (gcomp/auto-scrollbox (smig/mig-panel
-                                          :constraints ["wrap 1" "0px[fill, grow]0px" "20px[grow, fill]20px"]
-                                          :items (gtool/join-mig-items
-                                                  (let [body (map
-                                                              (fn [param]
-                                                                (confgen--component--tree local-changes (lang/join-vec start-key (list (first param)))))
-                                                              (get-in map-part [:value]))]
-                                                    body))))
-                   (smig/mig-panel
-                    :constraints ["" "0px[grow,fill]0px[fill]0px" "0px[grow,fill]0px"]
-                    :items [[(gcomp/button-basic "Save changes"
-                                                 :onClick (fn [e] ;; save changes configuration
-                                                            (doall (map #(prn (first %) (str (second %)))  @local-changes))
-                                                            (doall (map #(cm/assoc-in-value (first %) (second %))  @local-changes))
-                                                            (let [validate (cm/store-and-back)]
-                                                              (println validate)
-                                                              (cm/swapp)
-                                                              (if (get validate :valid?)
-                                                                (do ;; message box if saved successfull
-                                                                  (try
-                                                                    ((@gseed/jarman-views-service :reload))
-                                                                    (if-not (nil? message-ok) (message-ok (str @local-changes)))
-                                                                    (catch Exception e (println (str "Message ok error: " (.getMessage e))))))
-                                                                (do ;; message box if saved faild
-                                                                  (try
-                                                                    (if-not (nil? message-faild) (message-faild (str (get validate :output))))
-                                                                    (catch Exception e (println (str "Message faild error: " (.getMessage e))))))))))]
-                            [(gcomp/button-basic "" 
-                                                 :onClick (fn [e] (println (str "\nConfiguration changes: " @local-changes))) :args [:icon (stool/image-scale icon/loupe-blue-64-png 25)])]]))))))))
+          (let [configurator (smig/mig-panel
+                              :border (b/line-border :bottom 50 :color (gtool/get-color :background :main))
+                              :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px[grow, fill]0px[]0px"]
+                              :border nil
+                              :items (gtool/join-mig-items
+                                      (gcomp/header-basic (:name map-part)) ;; Header of section/config file
+                                      ;; (c/label :text (doto "Header complete" println))
+                                      (gcomp/auto-scrollbox
+                                       (smig/mig-panel
+                                        :constraints ["wrap 1" "0px[fill, grow]0px" "20px[grow, fill]20px"]
+                                        :items (gtool/join-mig-items
+                                                (let [body (map
+                                                            #(let [path (join-vec start-key [(first %)])
+                                                                   comp (confgen--component--tree local-changes path)]
+                                                              ;;  (if (nil? comp)
+                                                              ;;    (c/label :text (doto (str "Can not loading " path) println))
+                                                              ;;    comp)
+                                                               comp)
+                                                            (:value map-part))]
+                                                  body))))
+                                      (smig/mig-panel
+                                       :constraints ["" "0px[grow,fill]0px[fill]0px" "0px[grow,fill]0px"]
+                                       :items [[(gcomp/button-basic (gtool/get-lang-btns :save)
+                                                                    :onClick (fn [e] ;; save changes configuration
+                                                                               (doall (map #(prn (first %) (str (second %)))  @local-changes))
+                                                                               (doall (map #(cm/assoc-in-value (first %) (second %))  @local-changes))
+                                                                               (let [validate (cm/store-and-back)] ;; TODO: Can not saving chages
+                                                                                 (println validate)
+                                                                                 (cm/swapp)
+                                                                                 (if (get validate :valid?)
+                                                                                   (do ;; message box if saved successfull
+                                                                                     (try
+                                                                                       ((@gseed/jarman-views-service :reload))
+                                                                                       (if-not (nil? message-ok) (message-ok (str @local-changes)))
+                                                                                       (catch Exception e (println (str "Message ok error: " (.getMessage e))))))
+                                                                                   (do ;; message box if saved faild
+                                                                                     (try
+                                                                                       (if-not (nil? message-faild) (message-faild (str (get validate :output))))
+                                                                                       (catch Exception e (println (str "Message faild error: " (.getMessage e))))))))))]
+                                               [(gcomp/button-basic ""
+                                                                    :onClick (fn [e] (println (str "\nConfiguration changes: " @local-changes))) :args [:icon (stool/image-scale icon/loupe-blue-64-png 25)])]])))]
+            ;; (println "Config complete")
+            (if (nil? configurator) (c/label :text "NIL") configurator)))))))
 ;; (@jarman.gui.gui-app/startup)
 ;; (cm/restore-config)
 ;; (cm/get-in-value [:themes :jarman_light.edn :components :message-box :border-size])

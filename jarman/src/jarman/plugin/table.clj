@@ -5,6 +5,8 @@
    [clojure.string :as string]
    [clojure.spec.alpha :as s]
    [seesaw.util :as u]
+   ;; Dev tools
+   [jarman.logic.session :as session]
    ;; Seesaw components
    [seesaw.core :as c]
    [seesaw.border :as sborder]
@@ -14,7 +16,7 @@
    [seesaw.chooser :as chooser]
    ;; Jarman toolkit
    [jarman.logic.document-manager :as doc]
-   [jarman.tools.lang :refer :all :as lang]
+   [jarman.tools.lang :refer :all]
    [jarman.gui.gui-tools :refer :all :as gtool]
    [jarman.gui.gui-seed :as gseed]
    [jarman.resource-lib.icon-library :as ico]
@@ -136,7 +138,7 @@
                (apply array-map (mapcat vector  column-vector-list (repeat nil)))
                (take-column-for-recur-table table-list))
        (sequence (comp (remove (fn [[k v]] (nil? v)))
-                    (mapcat identity)))
+                       (mapcat identity)))
        (apply array-map)))
 
 
@@ -145,15 +147,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- conj-table-meta [referenced-table referenced-column table-meta]
-    [(-> {:field-refer (get-reference-qualified-field referenced-column table-meta)
-          :field-table (keyword ((comp :field :table :prop) table-meta))
-          :representatoin ((comp :representation :table :prop) table-meta)}
-         (add-to-m-join-rules table-meta referenced-column referenced-table))
-     (conj (mapv (fn [column]
-              (-> {:field-column (keyword-column-formatter referenced-column table-meta column)}
-                  (add-to-m-representation referenced-column column)))
-                 (cons {:description nil, :field :id, :column-type [:varchar-100 :nnull], :component-type ["n"], :representation "_", :field-qualified (keyword (format "%s.id" ((comp :field :table :prop) table-meta)))}
-                       ((comp :columns :prop) table-meta))))])
+  [(-> {:field-refer (get-reference-qualified-field referenced-column table-meta)
+        :field-table (keyword ((comp :field :table :prop) table-meta))
+        :representatoin ((comp :representation :table :prop) table-meta)}
+       (add-to-m-join-rules table-meta referenced-column referenced-table))
+   (conj (mapv (fn [column]
+                 (-> {:field-column (keyword-column-formatter referenced-column table-meta column)}
+                     (add-to-m-representation referenced-column column)))
+               (cons {:description nil, :field :id, :column-type [:varchar-100 :nnull], :component-type ["n"], :representation "_", :field-qualified (keyword (format "%s.id" ((comp :field :table :prop) table-meta)))}
+                     ((comp :columns :prop) table-meta))))])
 
 
 (defn- make-recur-meta-one-table [m-pipeline]
@@ -164,14 +166,14 @@
          table-metadata
          (fn [referenced-table referenced-column table-meta]
            (swap! result (fn [m] (conj m (m-pipeline referenced-table referenced-column table-meta))))))
-        @result))))  
+        @result))))
 (def ^:private take-meta-for-view (make-recur-meta-one-table conj-table-meta))
 
 
 (defn- create-jarman-table-plugin [table-name]
   (let [meta-table (first (mt/getset! table-name))
-    name-of-table ((comp :representation :table :prop) meta-table)
-    full-meta-debug (take-meta-for-view table-name)
+        name-of-table ((comp :representation :table :prop) meta-table)
+        full-meta-debug (take-meta-for-view table-name)
         tables (vec (for [meta-debug full-meta-debug]
                       (:field-refer (first meta-debug))))
         joines (vec (for [meta-debug full-meta-debug
@@ -181,8 +183,8 @@
                         (mapcat identity (for [meta-debug full-meta-debug]
                                            (mapv :field-column (second meta-debug)))))
         models (vec (concat ;; (list (read-string (format "%s.id" table-name)))
-                            (mapcat identity (for [meta-debug full-meta-debug]
-                                               (mapv :field-column (second meta-debug))))))]
+                     (mapcat identity (for [meta-debug full-meta-debug]
+                                        (mapv :field-column (second meta-debug))))))]
     (list 'defview (symbol table-name)
           (list 'jarman-table
                 :name name-of-table
@@ -190,16 +192,16 @@
                 :tables tables
                 :model models
                 :query (if-not (empty? joines)
-                          {:inner-join joines :columns columns}
-                          {:column columns})))))
+                         {:inner-join joines :columns columns}
+                         {:column columns})))))
 
-;; (create-jarman-table-plugin :seal)
- (mapv create-jarman-table-plugin [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month])
+;; (create-jarman-table-plugin :repair_contract)
+;; (mapv create-jarman-table-plugin [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month])
 
 (defn- gui-table-model-columns [table-list table-column-list]
   (let
-      [on-text  (fn [m v] (into m {:text (:representation v)}))
-        on-class (fn [m v] (if (contains? v :class) (into m {:class (:class v)}) m))]
+   [on-text  (fn [m v] (into m {:text (:representation v)}))
+    on-class (fn [m v] (if (contains? v :class) (into m {:class (:class v)}) m))]
     (mapv (fn [[k v]] (-> {:key k} (on-class v) (on-text v)))
           (jarman-table-columns-list table-list table-column-list))))
 
@@ -216,7 +218,7 @@
       (c/scrollable TT :hscroll :as-needed :vscroll :as-needed :border nil))))
 
 (defn- create-table [configuration toolkit-map]
-  (let [view (:model configuration) tables (:tables configuration)]
+  (let [view (:view-columns configuration) tables (:tables configuration)]
     (if (and view tables)
       (let [model-columns (gui-table-model-columns tables view)
             table-model (gui-table-model model-columns (:select toolkit-map))]
@@ -246,128 +248,220 @@
 (defn- d-component
   "Set default component to form or override it"
   [coll]
-  (let [default (gcomp/inpose-label (:title coll) (apply calendar/calendar-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:set-date (:val coll)] [])))]
-    (try
-      (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
-      (catch Exception e (do (println "Can not override d-component:" (:title coll)) default)))
-    default))
+  (gcomp/inpose-label (:title coll) (apply calendar/calendar-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:set-date (:val coll)] []))))
 
 
 (defn- a-component
   "Set default component to form or override it"
   [coll]
-  (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-text-area :store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll) (if (:val coll) [:val (:val coll)] [])))]
-    (try
-      (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
-      (catch Exception e (do (println "Can not override a-component:" (:title coll)) default)))
-    default))
+  (gcomp/inpose-label (:title coll) (gcomp/input-text-area (into {:store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll)} (if (:val coll) {:val (:val coll)}{})))))
 
 
 (defn- n-component
   "Set default component to form or override it"
   [coll]
-  (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-int :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:val (:val coll)] [])))]
-    (try
-      (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll)) ((:fun (first (:override coll))) coll))
-      (catch Exception e (do (println "Can not override n-component:" (:title coll)) default)))
-    default))
+  (gcomp/inpose-label (:title coll) (gcomp/input-int (into {:store-id (:store-id coll) :local-changes (:local-changes coll)} (if (:val coll) {:val (:val coll)} {})))))
 
 (defn- i-component
   "Set default component to form or override it"
   [coll]
-  (let [default (gcomp/inpose-label (:title coll) (apply gcomp/input-text-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll) (if (:val coll) [:val (:val coll)] [])))]
-    (if (lang/in? (map #(:column %) (:override coll)) (:store-id coll))
-      (try
-        ((:fun (first (:override coll))) coll)
-        (catch Exception e (do (println "Can not override i-component:" (:title coll)) default)))
-      default)))
+  (gcomp/inpose-label (:title coll) (gcomp/input-text-with-atom (into {:store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll)} (if (:val coll) {:val (:val coll)} {})))))
+
+
+
+(defn button-insert
+  [data-toolkit local-changes]
+  [(gcomp/hr 2)
+   (gcomp/button-basic
+    "Insert new data"
+    :onClick (fn [e] (println "Insert but Locla changes: " @local-changes)
+      ;;  (println "Expression insert" ((:insert data-toolkit) (merge {(keyword (str (get (:table-meta data-toolkit) :field) ".id")) nil} (first (merge model @local-changes)))))
+              ;;  ((@gseed/jarman-views-service :reload))
+               ))])
+
+(defn button-update
+  [data-toolkit local-changes]
+  [(gcomp/hr 2)
+   (gcomp/button-basic
+    "Update row"
+    :onClick (fn [e] (println "Update")
+      ;;  (println "Expression update" ((:update data-toolkit) (merge model @local-changes))))
+              ;;  ((@gseed/jarman-views-service :reload))
+               ))])
+
+(defn button-delete
+  [data-toolkit]
+  [(gcomp/hr 2)
+   (gcomp/button-basic
+    "Delete row"
+    :onClick (fn [e] (println "Delete")
+      ;;  (println "Expression delete" ((:delete data-toolkit) {(keyword (str (get (:table-meta data-toolkit) :field) ".id")) (get model (keyword (str (get (:table-meta data-toolkit) :field) ".id")))}))
+              ;;  ((@gseed/jarman-views-service :reload))
+               ))])
+
+(defn button-export
+  [data-toolkit]
+  [(gcomp/hr 2)
+   (gcomp/button-basic
+    "Export"
+    :onClick (fn [e] (println "Export")))])
+
+;; ((resolve 'gcomp/input-int))
+
+(defn get-missed-props
+  "Description
+   Return not binded map, just cut this what exist.
+   (get-missed-key {:a a} {:a a :b c :d e}) => {:b c, :d e}
+   "
+  [binded-map orgin-map]
+  (->> (map #(first %) orgin-map)
+       (filter (fn [orgin-key] (not (in? (map #(first %) binded-map) orgin-key))))
+       (into {} (map #(into {% (% orgin-map)})))))
+
+(defn merge-binded-props
+  "Description
+     Get map where are binded keys, get properties for component and create new map with properties.
+   Example:
+     (merge-binded-props {:title \"mytitle\" :value \"pepe\"} {:title :custom-key}) => {:custom-key \"mytitle\" :value \"pepe\"}
+   "
+  [props-map binded-list]
+  (let [binded (doall
+                (into {} (map #(let [orginal-key (first %)
+                                     binded-key  (second %)]
+                                 {binded-key (orginal-key props-map)})
+                              binded-list)))]
+    (into binded (get-missed-props binded props-map))))
+
+(defn convert-map-to-component 
+  "Description
+     Convert to component manual by map with overriding
+   "
+  [local-changes meta-data model m]
+  (let [k               (:model-param m)
+        meta            (k meta-data)]
+    ;; (println "M" model)
+    (let [comp-fn (:model-comp m)
+          ;; comp-fn (resolve (symbol comp-fn))
+          title   (rift (:model-reprs m) "")
+          qualified (:model-param m)
+          val     (if (empty? model) "" (qualified model))
+          binded  (rift (:bind-args m) {})
+          props {:title title :store-id qualified :local-changes local-changes :val val}
+          props (if (empty? binded) props (merge-binded-props props binded))]
+      ;; (println "Props: " props)
+      (gcomp/inpose-label title (comp-fn props)))
+    ))
+
+
+(defn convert-key-to-component 
+  "Description
+     Convert to component automaticly by keyword
+   "
+  [global-configuration local-changes meta-data model k]
+  (let [meta            (k meta-data)
+        field-qualified (:field-qualified meta)
+        title           (:representation  meta)
+        editable?       (:editable?       meta)
+        comp-type       (:component-type  meta)
+        key-table       (:key-table       meta)
+        val             (rift (str (k model)) "")
+        props {:title title :store-id field-qualified :local-changes local-changes :editable? editable? :val val}]
+    ;; (println k meta comp-type)
+    (cond
+      ;; (def column-type-data "d")
+      ;; (def column-type-time "t")
+      ;; (def column-type-datatime "dt")
+      ;; (def column-type-linking "l")
+      ;; (def column-type-number "n")
+      ;; (def column-type-boolean "b")
+      ;; (def column-type-textarea "a")
+      ;; (def column-type-floated "f")
+      ;; (def column-type-input "i")
+      (in? comp-type mt/column-type-data)
+      (if (empty? model) (d-component props) (d-component (into props {:val (if (empty? val) nil val)})))
+      (in? comp-type mt/column-type-textarea) ;; Text area
+      (if (empty? model) (a-component props) (a-component (into props {:val val})))
+      (in? comp-type mt/column-type-number) ;; Numbers Int
+      (if (empty? model) (n-component props) (n-component (into props {:val val})))
+      (in? comp-type mt/column-type-input) ;; Basic Input
+      (if (empty? model) (i-component props) (i-component (into props {:val val})))
+      (and (in? comp-type mt/column-type-linking) (not (nil? key-table))) ;; TODO: Popup table do not working
+      (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
+        (let [key-table               (keyword key-table)
+              connected-table-conf    (get-in global-configuration [key-table :plug/jarman-table :config])
+              connected-table-data    (get-in global-configuration [key-table :plug/jarman-table :toolkit])
+              selected-representation (fn [dialog-model-view
+                                           returned-from-dialog]
+                                        (->> (:model dialog-model-view)
+                                             (map #(get-in returned-from-dialog [%]))
+                                             (filter some?)
+                                             (string/join ", ")))
+              val (selected-representation connected-table-conf k)]
+          ;; (if-not (nil? (get model field-qualified)) (swap! local-changes (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
+          (gcomp/inpose-label title (gcomp/input-text-with-atom {:local-changes local-changes
+                                                                 :editable? false
+                                                                 :val val
+                                                                 :onClick (fn [e]
+                                                                            (let [selected (construct-dialog (:table (create-table connected-table-conf connected-table-data)) field-qualified (c/to-frame e))]
+                                                                              (if-not (nil? (get selected (:model-id connected-table-data)))
+                                                                                (do (c/config! e :text (selected-representation connected-table-conf selected))
+                                                                                  ;;  (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))
+                                                                                    ))))})))))))
+(defn convert-model-to-components-list 
+  "Description
+     Switch fn to convert by map or keyword
+   "
+  [global-configuration local-changes meta-data model coll]
+  (doall (->> coll
+              (map #(cond
+                      (map? %)     (convert-map-to-component local-changes meta-data model %)
+                      (keyword? %) (convert-key-to-component global-configuration local-changes meta-data model %)))
+              (filter #(not (nil? %))))))
+
+(defn convert-metadata-vec-to-map
+  "Description:
+     Convert [{:x a :field-qualified b}{:d w :field-qualified f}] => {:b {:x a :field-qualified b} :f {:d w :field-qualified f}}
+   "
+  [coll]  (into {} (doall (map (fn [m] {(keyword (:field-qualified m)) m}) coll))))
+
+(defn generate-custom-buttons
+  "Description:
+     Get buttons and actions from defview and create clickable button.
+   "
+  [local-changes configuration]
+  (let [button-fn (fn [title action]
+                    [(gcomp/hr 10)
+                     (gcomp/button-basic title :onClick (fn [e] (action local-changes)))])]
+    (doall (->> (:buttons configuration)
+                (map #(button-fn (:title %) ((:action %) (:actions configuration))))))))
+
+;; TODO: Spec dla meta-data
+
 (def build-input-form
-  (fn [data-toolkit
-       configuration
-       global-configuration
-       & {:keys [model
-                 more-comps
-                 button-template
-                 start-focus
-                 export-comp
-                 alerts]
-          :or {model []
-               more-comps [(c/label)]
-               button-template (fn [title f] (gcomp/button-basic title :onClick f))
-               start-focus nil
-               export-comp nil
-               alerts nil}}]
-    ;; (println "Meta" (:columns-meta data-toolkit))
+  "Description:
+     Marge all components to one form
+   "
+  (fn [data-toolkit configuration global-configuration
+       & {:keys [model more-comps alerts]
+          :or {model [] more-comps [] alerts nil}}]
     (let [local-changes (atom {})
-          override (:override-model configuration)
-          metadata (:columns-meta data-toolkit)
-          inser-or-update (if (empty? model) "Insert new data" "Update record")
-          delete "Remove selected record"
-          vgap (fn [size] (c/label :border (sborder/empty-border :top size)))
+          meta-data (convert-metadata-vec-to-map (:columns-meta data-toolkit))
+          components (convert-model-to-components-list global-configuration local-changes meta-data model (:model configuration))
           panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
                                 :border (sborder/empty-border :thickness 10)
                                 :items [[(c/label)]])
-          components (concat
-                      (filter #(not (nil? %))
-                              (map (fn [meta]
-                                     (let [field-qualified (get meta :field-qualified)
-                                           title (:representation meta)
-                                           editable? (:editable? meta)
-                                           comp-type (:component-type meta)
-                                           v (str (get-in model [(keyword field-qualified)]))
-                                           v (if (empty? v) "" v)
-                                           map-coll {:override override :title title :store-id field-qualified :local-changes local-changes :editable? editable?}]
-                                       (cond
-                                         (lang/in? comp-type "d")
-                                         (if (empty? model) (d-component map-coll) (d-component (conj map-coll {:val (if (empty? v) nil v)})))
-                                         (lang/in? comp-type "l")
-                                         (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
-                                           (let [key-table  (keyword (get meta :key-table))
-                                                 connected-table-conf  (get-in global-configuration [key-table :plug/jarman-table :configuration])
-                                                 connected-table-data  (get-in global-configuration [key-table :plug/jarman-table :data-toolkit])
-                                                 selected-representation (fn [dialog-model-view returned-from-dialog]
-                                                                           (->> (get dialog-model-view :model)
-                                                                                (map #(get-in returned-from-dialog [%]))
-                                                                                (filter some?)
-                                                                                (string/join ", ")))
-                                                 v (selected-representation connected-table-conf model)]
-                                             (if-not (nil? (get model field-qualified)) (swap! local-changes (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
-                                             (gcomp/inpose-label title (gcomp/input-text-with-atom :local-changes local-changes :editable? false :val v
-                                                                                                   :onClick (fn [e]
-                                                                                                              (let [selected (construct-dialog (get (create-table connected-table-conf connected-table-data) :table) field-qualified (c/to-frame e))]
-                                                                                                                (if-not (nil? (get selected (get connected-table-data :model-id)))
-                                                                                                                  (do (c/config! e :text (selected-representation connected-table-conf selected))
-                                                                                                                      (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))))))))))
-                                         (lang/in? comp-type "a") ;; Text area
-                                         (if (empty? model) (a-component map-coll) (a-component (conj map-coll {:val v})))
-                                         (lang/in? comp-type "n") ;; Numbers Int
-                                         (if (empty? model) (n-component map-coll) (n-component (conj map-coll {:val v})))
-                                         (lang/in? comp-type "i") ;; Basic Input
-                                         (if (empty? model) (i-component map-coll) (i-component (conj map-coll {:val v}))))))
-                                   metadata))
-                      [(vgap 20)]
-                      [(button-template inser-or-update (fn [e]
-                                                          (if (empty? model)
-                                                            (do
-                                                              (println "Expression insert" ((:insert data-toolkit) (merge {(keyword (str (get (:table-meta data-toolkit) :field) ".id")) nil} (first (merge model @local-changes))))))
-                                                            (do
-                                                              (println "Expression update" ((:update data-toolkit) (merge model @local-changes)))))
-                                                          ((@gseed/jarman-views-service :reload))))]
-                      (if (empty? model) [] [(button-template delete (fn [e]
-                                                                       (println "Expression delete" ((:delete data-toolkit) {(keyword (str (get (:table-meta data-toolkit) :field) ".id")) (get model (keyword (str (get (:table-meta data-toolkit) :field) ".id")))}))
-                                                                       ((@gseed/jarman-views-service :reload))))])
-                      [(vgap 10)]
-                      [more-comps]
-                      [(if (nil? export-comp) (c/label) (export-comp (get model (:model-id data-toolkit))))])
+          components (join-mig-items
+                      components
+                      (generate-custom-buttons local-changes configuration)
+                      (if (empty? model)
+                        (if-not  (= false (:insert-button configuration)) [(gcomp/hr 10) (button-insert data-toolkit local-changes) more-comps] [more-comps])
+                        [(if-not (= false (:update-button configuration))[(gcomp/hr 10) (button-update data-toolkit local-changes)] []) 
+                         (if-not (= false (:delete-button configuration))[(button-delete data-toolkit)] [])
+                          more-comps 
+                         (button-export data-toolkit)])
+                      )
           builded (c/config! panel :items (gtool/join-mig-items components))]
-      ;; (println "Build prepare components")
-      (if-not (nil? start-focus) (reset! start-focus (last (u/children (first components)))))
       builded)))
-
-;; {:permision {:jarman-table {:configuration {}
-;;                             :data-toolkit  {}}}
-;;  :user      {:jarman-table {:configuration {}
-;;                             :data-toolkit  {}}}}
 
 ;;  (run user-view)
 (defn export-print-doc
@@ -412,72 +506,68 @@
                                    :background "#95dec9"
                                    :border (sborder/compound-border (sborder/empty-border :left 10 :right 10)))]])))
 
-
 (def auto-builder--table-view
-  (fn [plugin-path 
-       global-configuration 
-       data-toolkit 
-       configuration
-       & {:keys [start-focus
-                 alerts]
-          :or {start-focus nil
-               alerts nil}}]
+  "Description
+     Prepare and merge complete big parts
+   "
+  (fn [plugin-path
+       global-configuration
+       data-toolkit
+       configuration]
     (let [x nil ;;------------ Prepare components
-          expand-export (fn [id] (export-print-doc (get-in global-configuration plugin-path) id alerts))
-          insert-form   (fn [] (build-input-form data-toolkit configuration global-configuration :start-focus start-focus :alerts alerts))
+          insert-form   (fn [] (build-input-form data-toolkit configuration global-configuration))
           view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
           table         (fn [] (second (u/children view-layout)))
           header        (fn [] (c/label :text (get (:table-meta data-toolkit) :representation) :halign :center :border (sborder/empty-border :top 10)))
-          update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration :model model :export-comp expand-export :more-comps [(return)])]))
+          update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration :model model :more-comps [(return)])]))
           x nil ;;------------ Build
           expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) ;;:hscroll :never
                                                   )
-          back-to-insert     (fn [] (gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]]))))
+          back-to-insert     (fn [] [(gcomp/hr 2) (gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]])))])
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
-          table              (fn [] ((get (create-table configuration data-toolkit) :table) (fn [model] (expand-update-form model back-to-insert)))) ;; TODO: set try
+          table              (fn [] ((get (create-table configuration data-toolkit) :table) (fn [model] (expand-update-form model back-to-insert))))
           x nil ;;------------ Finish
-          view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])] [(try 
-                                                                                                                (c/vertical-panel :items [(table)])
-                                                                                                                (catch Exception e (c/label :text (str "Problem with table model: " (.getMessage e)))))]])]
-      view-layout)))
-
-;; (let [my-frame (-> (doto (c/frame
-;;                           :title "test"
-;;                           :size [300 :by 800]
-;;                           :content vp)
-;;                      (.setLocationRelativeTo nil) c/pack! c/show!))]
-;;   (c/config! my-frame :size [300 :by 800]))
+          view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])]
+                                                            [(try
+                                                               (c/vertical-panel :items [(table)])
+                                                               (catch Exception e (c/label :text (str "Problem with table model: " (.getMessage e)))))]])]
+      view-layout)
+    ;; (c/label :text "Testing mode")
+    ))
 
 (defn jarman-table-toolkit-pipeline [configuration datatoolkit]
   datatoolkit)
 
+
 ;;;PLUGINS ;;;        
 (defn jarman-table-component [plugin-path global-configuration spec-map]
-  (let [gett #(get-in (global-configuration) (lang/join-vec plugin-path %))
-        data-toolkit  (gett [:data-toolkit])
-        configuration (gett [:configuration])
-        title (:representation (:table-meta data-toolkit))
+  ;; (println "Loading table plugin")
+  (let [get-from-global #(->> % (l/join-vec plugin-path) (get-in (global-configuration)))
+        data-toolkit  (get-from-global [:toolkit])
+        configuration (get-from-global [:config])
+        ;; title (get-in data-toolkit [:table-meta :representation])
+        title (:name configuration)
         space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
         atm (:atom-expanded-items (c/config space :user-data))]
+    ;; (println "Allow Permission: " (session/allow-permission? (:permission configuration)))
     (if (false? (spec/test-keys-jtable configuration spec-map))
-      (println "Error in spec")
-      (swap! atm (fn [inserted]
-                   (conj inserted
-                         (button-expand-child
-                          title
-                          :onClick (fn [e] (@gseed/jarman-views-service
-                                            :set-view
-                                            :view-id (str "auto-" title)
-                                            :title title
-                                            :scrollable? false
-                                            :component-fn (fn [] (auto-builder--table-view
-                                                                  plugin-path
-                                                                  (global-configuration)
-                                                                  data-toolkit
-                                                                  configuration)))))))))
+      (println "[ Warning ] plugin/table: Error in spec")
+      (if (session/allow-permission? (:permission configuration))
+        (swap! atm (fn [inserted]
+                     (conj inserted
+                           (gcomp/button-expand-child
+                            title
+                            :onClick (fn [e] (@gseed/jarman-views-service
+                                              :set-view
+                                              :view-id (str "auto-" title)
+                                              :title title
+                                              :scrollable? false
+                                              :component-fn (fn [] (auto-builder--table-view
+                                                                    plugin-path
+                                                                    (global-configuration)
+                                                                    data-toolkit
+                                                                    configuration))))))))))
     (.revalidate space)))
 
-
-  
 
 

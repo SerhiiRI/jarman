@@ -432,11 +432,11 @@
   :ui
   {:doc "Specjalny przycisk ala Exportuj i t.d.",
    :type :block,
-   :dispaly :edit,
+   :display :edit,
    :value
    {:special-button
     {:type :block,
-     :dispaly :edit,
+     :display :edit,
      :value
      {:background
       {:type :param,

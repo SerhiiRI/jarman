@@ -273,13 +273,13 @@
    :args args))
 
 
-(defn button-export
-  [txt onClick]
-  (button-basic txt 
-                :onClick onClick
-                :mouse-in (gtool/get-comp :button-export :mouse-in)
-                :mouse-out (gtool/get-comp :button-export :mouse-out)
-                :unfocus-color (gtool/get-comp :button-export :unfocus-color)))
+;; (defn button-export
+;;   [txt onClick]
+;;   (button-basic txt 
+;;                 :onClick onClick
+;;                 :mouse-in (gtool/get-comp :button-export :mouse-in)
+;;                 :mouse-out (gtool/get-comp :button-export :mouse-out)
+;;                 :unfocus-color (gtool/get-comp :button-export :unfocus-color)))
 
 (defn button-return
   [txt func]
@@ -421,46 +421,46 @@
     Text component converted to c/text component with placeholder. Placehlder will be default value.
  Example:
     (input-text :placeholder \"Login\" :style [:halign :center])"
-  ([& {:keys [store-id
-              local-changes
-              val
-              border
-              border-color-focus
-              border-color-unfocus
-              char-limit]
-       :or {store-id nil
-            local-changes (atom {})
-            val ""
-            border [10 10 5 5 2]
-            border-color-focus   (gtool/get-color :decorate :focus-gained)
-            border-color-unfocus (gtool/get-color :decorate :focus-lost)
-            char-limit 0}}]
-   (let [newBorder (fn [underline-color]
-                     (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
-                                      (b/line-border :bottom (nth border 4) :color underline-color)))
-         last-v (atom "")]
-     (let [text-area (c/to-widget (javax.swing.JTextArea.))]
-       (if-not (empty? val) (swap! local-changes (fn [storage] (assoc storage store-id val))))
-       (c/config!
-        text-area
-        :text (if (empty? val) "" (str val))
-        :minimum-size [50 :by 100]
-        :border (newBorder border-color-unfocus)
-        :user-data {:border-fn newBorder}
-        :listen [:focus-gained (fn [e]
-                                 (c/config! e :border (newBorder border-color-focus)))
-                 :focus-lost   (fn [e]
-                                 (c/config! e :border (newBorder border-color-unfocus)))
-                 :caret-update (fn [e]
-                                 (let [new-v (c/value (c/to-widget e))]
-                                   (if (and (> (count new-v) char-limit) (< 0 char-limit))
-                                     (c/invoke-later (c/config! e :text @last-v))
-                                     (reset! last-v new-v))
-                                   (cond
-                                     (and (not (nil? store-id)) (not (= val new-v)))
-                                     (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
-                                     :else (reset! local-changes (dissoc @local-changes store-id)))))])
-       (scrollbox text-area :minimum-size [50 :by 100])))))
+  [{:keys [store-id
+           local-changes
+           val
+           border
+           border-color-focus
+           border-color-unfocus
+           char-limit]
+    :or {store-id nil
+         local-changes (atom {})
+         val ""
+         border [10 10 5 5 2]
+         border-color-focus   (gtool/get-color :decorate :focus-gained)
+         border-color-unfocus (gtool/get-color :decorate :focus-lost)
+         char-limit 0}}]
+  (let [newBorder (fn [underline-color]
+                    (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
+                                       (b/line-border :bottom (nth border 4) :color underline-color)))
+        last-v (atom "")]
+    (let [text-area (c/to-widget (javax.swing.JTextArea.))]
+      (if-not (empty? val) (swap! local-changes (fn [storage] (assoc storage store-id val))))
+      (c/config!
+       text-area
+       :text (if (empty? val) "" (str val))
+       :minimum-size [50 :by 100]
+       :border (newBorder border-color-unfocus)
+       :user-data {:border-fn newBorder}
+       :listen [:focus-gained (fn [e]
+                                (c/config! e :border (newBorder border-color-focus)))
+                :focus-lost   (fn [e]
+                                (c/config! e :border (newBorder border-color-unfocus)))
+                :caret-update (fn [e]
+                                (let [new-v (c/value (c/to-widget e))]
+                                  (if (and (> (count new-v) char-limit) (< 0 char-limit))
+                                    (c/invoke-later (c/config! e :text @last-v))
+                                    (reset! last-v new-v))
+                                  (cond
+                                    (and (not (nil? store-id)) (not (= val new-v)))
+                                    (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
+                                    :else (reset! local-changes (dissoc @local-changes store-id)))))])
+      (scrollbox text-area :minimum-size [50 :by 100]))))
 
 (defn input-text-area-label
   [& {:keys [title
@@ -471,20 +471,20 @@
            store-id :none
            local-changes (atom {})
            val ""}}]
-  (inpose-label title (input-text-area :store-id store-id :local-changes local-changes :val val)))
+  (inpose-label title (input-text-area {:store-id store-id :local-changes local-changes :val val})))
 
 (defn input-text-with-atom
-  [& {:keys [store-id local-changes val editable? enabled? store-orginal onClick border-color-focus border-color-unfocus debug]
-      :or {local-changes (atom {})
-           store-id nil
-           val ""
-           editable? true
-           enabled? true
-           store-orginal false
-           border-color-focus   (gtool/get-color :decorate :focus-gained)
-           border-color-unfocus (gtool/get-color :decorate :focus-lost)
-           onClick (fn [e])
-           debug false}}]
+  [{:keys [store-id local-changes val editable? enabled? store-orginal onClick border-color-focus border-color-unfocus debug]
+    :or {local-changes (atom {})
+         store-id nil
+         val ""
+         editable? true
+         enabled? true
+         store-orginal false
+         border-color-focus   (gtool/get-color :decorate :focus-gained)
+         border-color-unfocus (gtool/get-color :decorate :focus-lost)
+         onClick (fn [e])
+         debug false}}]
   (if-not (empty? (str val)) (swap! local-changes (fn [storage] (assoc storage store-id val))))
   (input-text
    :args [:editable? editable?
@@ -534,11 +534,12 @@
               enabled? true
               store-id nil
               always-set-changes true}}]
-   (if (and (= always-set-changes true) (not (empty? selected-item)))
+   
+   (let [combo-model (if (empty? selected-item) (cons selected-item model) (lang/join-vec [selected-item] (filter #(not= selected-item %) model)))]
+    (if (and (= always-set-changes true) (not (empty? selected-item)))
      (do
-       (swap! local-changes (fn [storage] (assoc storage store-id selected-item)))))
-   (c/combobox :model (let [combo-model (if (empty? selected-item) (cons selected-item model) (lang/join-vec [selected-item] (filter #(not= selected-item %) model)))]
-                        combo-model)
+       (swap! local-changes (fn [storage] (assoc storage store-id combo-model)))))
+   (c/combobox :model combo-model
                :font (gtool/getFont 14)
                :enabled? enabled?
                :editable? editable?
@@ -550,12 +551,13 @@
                                                   (and (not (nil? store-id))
                                                        (or
                                                         (= always-set-changes true)
-                                                        (not (= selected-item new-v))))
+                                                        (not (= (first @local-changes) new-v))))
                                                   (do
-                                                    (swap! local-changes (fn [storage] (assoc storage store-id new-v))))
+                                                    (let [new-model (into [new-v] (filter #(not (= new-v %)) model))]
+                                                      (swap! local-changes (fn [storage] (assoc storage store-id new-model)))))
                                                   (= always-set-changes false)
                                                   (do
-                                                    (reset! local-changes (dissoc @local-changes store-id))))))])))
+                                                    (reset! local-changes (dissoc @local-changes store-id))))))]))))
 
 
 (defn expand-form-panel
@@ -741,18 +743,20 @@
                  min-height
                  ico
                  ico-hover
-                 id]
+                 id
+                 onClick]
           :or {expand :auto
                border (b/compound-border (b/empty-border :left 6))
                vsize 35
                min-height 200
                ico  (stool/image-scale icon/plus-64-png 25)
                ico-hover (stool/image-scale icon/minus-grey-64-png 20)
-               id :none}}]
+               id :none
+               onClick nil}}]
     (let [atom-inside-btns (atom nil)
           inside-btns (if (nil? inside-btns) nil inside-btns)
           inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns))
-          ico (if (or (= :always expand) (not (nil? inside-btns))) (stool/image-scale icon/plus-64-png 25) nil)
+          ico (if (or (= :always expand) (not (nil? inside-btns))) ico nil)
           title (c/label
                  :text txt
                  :background (Color. 0 0 0 0))
@@ -762,40 +766,39 @@
                 :background (Color. 0 0 0 0)
                 :icon ico)
           mig (mig-panel :constraints ["wrap 1" (str "0px[" min-height ":, grow, fill]0px") "0px[fill]0px"])
-          onClick (fn [e]
-                    (if-not (nil? @atom-inside-btns)
-                      (if (= (count (u/children mig)) 1)
-                        (do ;;  Add inside buttons to mig with expand button
-                          (c/config! icon :icon ico-hover)
-                          (doall (map #(.add mig %) @atom-inside-btns))
-                          (gseed/set-focus (first @atom-inside-btns))
-                          (gseed/switch-focus)
-                          (.revalidate mig)
-                          (.repaint mig))
-                        (do ;;  Remove inside buttons form mig without expand button
-                          (c/config! icon :icon ico)
-                          (doall (map #(.remove mig %) (reverse (drop 1 (range (count (u/children mig)))))))
-                          (.revalidate mig)
-                          (.repaint mig)))))
-          expand-btn (mig-panel
-                      :constraints ["" (str "10px[grow, fill]0px[" vsize "]0px") "0px[fill]0px"]
-                      :background (gtool/get-comp :button-expand :background)
-                      :focusable? true
-                      :border border
-                      :items [[title]
-                              [icon]]
-                      :listen [:mouse-entered gtool/hand-hover-on
-                               :mouse-clicked (fn [e] (onClick e))
-                               :focus-gained  (fn [e] (c/config! e :background (gtool/get-comp :button-expand :background-hover)))
-                               :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand :background)))
-                               :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))])]
-      (do
-        (reset! atom-inside-btns inside-btns)
-        (c/config! mig
-                   :id id
-                  ;;  :focusable? true
-                   :user-data {:atom-expanded-items atom-inside-btns}
-                   :items [[expand-btn]])))))
+          expand-btn (fn [func]
+                       (mig-panel
+                        :constraints ["" (str "10px[grow, fill]0px[" vsize "]0px") "0px[fill]0px"]
+                        :background (gtool/get-comp :button-expand :background)
+                        :focusable? true
+                        :border border
+                        :items [[title]
+                                [icon]]
+                        :listen [:mouse-entered gtool/hand-hover-on
+                                 :mouse-clicked (fn [e] (func e))
+                                 :focus-gained  (fn [e] (c/config! e :background (gtool/get-comp :button-expand :background-hover)))
+                                 :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand :background)))
+                                 :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (func e)))]))] 
+     (if (nil? onClick)
+       (let [onClick (fn [e]
+                       (if-not (nil? @atom-inside-btns)
+                         (if (= (count (u/children mig)) 1)
+                           (do ;;  Add inside buttons to mig with expand button
+                             (c/config! icon :icon ico-hover)
+                             (doall (map #(.add mig %) @atom-inside-btns))
+                             (gseed/set-focus (first @atom-inside-btns))
+                             (gseed/switch-focus)
+                             (.revalidate mig)
+                             (.repaint mig))
+                           (do ;;  Remove inside buttons form mig without expand button
+                             (c/config! icon :icon ico)
+                             (doall (map #(.remove mig %) (reverse (drop 1 (range (count (u/children mig)))))))
+                             (.revalidate mig)
+                             (.repaint mig)))))]
+         (do
+           (reset! atom-inside-btns inside-btns)
+           (c/config! mig :id id :user-data {:atom-expanded-items atom-inside-btns} :items [[(expand-btn onClick)]])))
+       (c/config! mig :id id :items [[(expand-btn onClick)]])))))
 
 
 
@@ -960,24 +963,24 @@
     store-id
  Example:
     ((def input-number :style [:halign :center])"
-  (fn [& {:keys [style
-                 val
-                 font-size
-                 border-color-focus
-                 border-color-unfocus
-                 border
-                 char-limit
-                 local-changes
-                 store-id]
-          :or   {style []
-                 val "0"
-                 font-size 14
-                 border-color-focus   (gtool/get-color :decorate :focus-gained)
-                 border-color-unfocus (gtool/get-color :decorate :focus-lost)
-                 border [10 10 5 5 2]
-                 char-limit 0
-                 local-changes (atom {})
-                 store-id nil}}]
+  (fn [{:keys [style
+               val
+               font-size
+               border-color-focus
+               border-color-unfocus
+               border
+               char-limit
+               local-changes
+               store-id]
+        :or   {style []
+               val "0"
+               font-size 14
+               border-color-focus   (gtool/get-color :decorate :focus-gained)
+               border-color-unfocus (gtool/get-color :decorate :focus-lost)
+               border [10 10 5 5 2]
+               char-limit 0
+               local-changes (atom {})
+               store-id nil}}]
     (let [newBorder (fn [underline-color]
                       (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
                                        (b/line-border :bottom (nth border 4) :color underline-color)))

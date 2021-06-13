@@ -5,12 +5,11 @@
 (defview permission
   (table
    :name "permission"
-   :plug-place [:#tables-view-plugin]
+   :plug-place [:#tables-view-plugin] ;; KEYPATH TO KEYWORD 
    :tables [:permission]
    :view-columns [:permission.permission_name
                   :permission.configuration]
-   :model [:permission.id
-           {:model-reprs "Permision name"
+   :model [{:model-reprs "Permision name"
             :model-param :permission.permission_name
             :model-comp jarman.gui.gui-components/input-text-with-atom}
            :permission.configuration]
@@ -23,8 +22,7 @@
 ;; Overriding and component custom adding
 (defview user
   (table
-   :name
-   "user-override"
+   :name "user-override"
    :plug-place [:#tables-view-plugin]
    :tables [:user :permission]
    :insert-button true

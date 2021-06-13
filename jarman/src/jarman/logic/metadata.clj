@@ -427,11 +427,19 @@
 (defn show-tables-not-meta []
   (not-allowed-rules ["view" "metatable" "meta*"] (map (comp second first) (db/query "SHOW TABLES"))))
 
+(defn create-one-meta [table-name]
+  (let [meta (db/query (select :metadata :where [:= :metadata.table table-name]))]
+    (if (empty? meta)
+      (db/exec (update-sql-by-id-template "metadata" (get-meta table-name))))))
+
 (defn do-create-meta []
   (for [table (show-tables-not-meta)]
-    (let [meta (db/query (select :metadata :where [:= :metadata.table table]))]
-      (if (empty? meta)
-        (db/exec (update-sql-by-id-template "metadata" (get-meta table)))))))
+    (create-one-meta table)))
+
+(defn delete-one-meta [table-name]
+  {:pre [(string? table-name)]}
+   (db/exec (delete :metadata
+                    :where [:= :metadata.table table-name])))
 
 (defn do-clear-meta [& body]
   {:pre [(every? string? body)]}

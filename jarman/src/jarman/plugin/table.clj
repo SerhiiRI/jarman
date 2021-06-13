@@ -345,16 +345,20 @@
   (let [k               (:model-param m)
         meta            (k meta-data)]
     ;; (println "M" model)
+    ;; (println "map component\n" k "\n" m "\n" model "\n" meta)
     (let [comp-fn (:model-comp m)
-          ;; comp-fn (resolve (symbol comp-fn))
+          comp-fn (resolve (symbol comp-fn))
           title   (rift (:model-reprs m) "")
           qualified (:model-param m)
           val     (if (empty? model) "" (qualified model))
           binded  (rift (:bind-args m) {})
           props {:title title :store-id qualified :local-changes local-changes :val val}
-          props (if (empty? binded) props (merge-binded-props props binded))]
+          props (if (empty? binded) props (merge-binded-props props binded))
+          pre-comp (rift (comp-fn props) (c/label "Can not invoke component from defview."))
+          comp (gcomp/inpose-label title pre-comp)]
       ;; (println "Props: " props)
-      (gcomp/inpose-label title (comp-fn props)))
+      ;; (println "\nComplete-----------")
+      comp)
     ))
 
 
@@ -363,6 +367,7 @@
      Convert to component automaticly by keyword
    "
   [global-configuration local-changes meta-data model k]
+  ;; (println "key component\n" k "\n" model "\n" meta "\n" (:component-type  meta) "\n-----------")
   (let [meta            (k meta-data)
         field-qualified (:field-qualified meta)
         title           (:representation  meta)
@@ -370,48 +375,53 @@
         comp-type       (:component-type  meta)
         key-table       (:key-table       meta)
         val             (rift (str (k model)) "")
-        props {:title title :store-id field-qualified :local-changes local-changes :editable? editable? :val val}]
-    ;; (println k meta comp-type)
-    (cond
-      ;; (def column-type-data "d")
-      ;; (def column-type-time "t")
-      ;; (def column-type-datatime "dt")
-      ;; (def column-type-linking "l")
-      ;; (def column-type-number "n")
-      ;; (def column-type-boolean "b")
-      ;; (def column-type-textarea "a")
-      ;; (def column-type-floated "f")
-      ;; (def column-type-input "i")
-      (in? comp-type mt/column-type-data)
-      (if (empty? model) (d-component props) (d-component (into props {:val (if (empty? val) nil val)})))
-      (in? comp-type mt/column-type-textarea) ;; Text area
-      (if (empty? model) (a-component props) (a-component (into props {:val val})))
-      (in? comp-type mt/column-type-number) ;; Numbers Int
-      (if (empty? model) (n-component props) (n-component (into props {:val val})))
-      (in? comp-type mt/column-type-input) ;; Basic Input
-      (if (empty? model) (i-component props) (i-component (into props {:val val})))
-      (and (in? comp-type mt/column-type-linking) (not (nil? key-table))) ;; TODO: Popup table do not working
-      (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
-        (let [key-table               (keyword key-table)
-              connected-table-conf    (get-in global-configuration [key-table :plug/table :config])
-              connected-table-data    (get-in global-configuration [key-table :plug/table :toolkit])
-              selected-representation (fn [dialog-model-view
-                                           returned-from-dialog]
-                                        (->> (:model dialog-model-view)
-                                             (map #(get-in returned-from-dialog [%]))
-                                             (filter some?)
-                                             (string/join ", ")))
-              val (selected-representation connected-table-conf k)]
-          ;; (if-not (nil? (get model field-qualified)) (swap! local-changes (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
-          (gcomp/inpose-label title (gcomp/input-text-with-atom {:local-changes local-changes
-                                                                 :editable? false
-                                                                 :val val
-                                                                 :onClick (fn [e]
-                                                                            (let [selected (construct-dialog (:table (create-table connected-table-conf connected-table-data)) field-qualified (c/to-frame e))]
-                                                                              (if-not (nil? (get selected (:model-id connected-table-data)))
-                                                                                (do (c/config! e :text (selected-representation connected-table-conf selected))
-                                                                                  ;;  (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))
-                                                                                    ))))})))))))
+        props {:title title :store-id field-qualified :local-changes local-changes :editable? editable? :val val}
+        comp (cond
+            ;; (def column-type-data "d")
+            ;; (def column-type-time "t")
+            ;; (def column-type-datatime "dt")
+            ;; (def column-type-linking "l")
+            ;; (def column-type-number "n")
+            ;; (def column-type-boolean "b")
+            ;; (def column-type-textarea "a")
+            ;; (def column-type-floated "f")
+            ;; (def column-type-input "i")
+            (in? comp-type mt/column-type-data)
+            (if (empty? model) (d-component props) (d-component (into props {:val (if (empty? val) nil val)})))
+            (in? comp-type mt/column-type-textarea) ;; Text area
+            (if (empty? model) (a-component props) (a-component (into props {:val val})))
+            (in? comp-type mt/column-type-number) ;; Numbers Int
+            (if (empty? model) (n-component props) (n-component (into props {:val val})))
+            (in? comp-type mt/column-type-input) ;; Basic Input
+            (if (empty? model) (i-component props) (i-component (into props {:val val})))
+            (and (in? comp-type mt/column-type-linking) (not (nil? key-table))) ;; TODO: Popup table do not working
+            (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
+              (let [key-table               (keyword key-table)
+                    connected-table-conf    (get-in global-configuration [key-table :plug/table :config])
+                    connected-table-data    (get-in global-configuration [key-table :plug/table :toolkit])
+                    selected-representation (fn [dialog-model-view
+                                                returned-from-dialog]
+                                              (->> (:model dialog-model-view)
+                                                   (map #(get-in returned-from-dialog [%]))
+                                                   (filter some?)
+                                                   (string/join ", ")))
+                    val (selected-representation connected-table-conf k)]
+                ;; (if-not (nil? (get model field-qualified)) (swap! local-changes (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
+                (gcomp/inpose-label title (gcomp/input-text-with-atom {:local-changes local-changes
+                                                                       :editable? false
+                                                                       :val val
+                                                                       :onClick (fn [e]
+                                                                                  (let [selected (construct-dialog (:table (create-table connected-table-conf connected-table-data)) field-qualified (c/to-frame e))]
+                                                                                    (if-not (nil? (get selected (:model-id connected-table-data)))
+                                                                                      (do (c/config! e :text (selected-representation connected-table-conf selected))
+                                                                                          ;;  (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))
+                                                                                          ))))})))))]
+    
+    
+    ;; (println "\nComplete-----------")
+    comp))
+
+
 (defn convert-model-to-components-list 
   "Description
      Switch fn to convert by map or keyword

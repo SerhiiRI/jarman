@@ -111,19 +111,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; READ AND WRITE VIEW.CLJ ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- read-one
-  [r]
-  (try (read r)
-       (catch java.lang.RuntimeException e
-         (if (= "EOF while reading" (.getMessage e)) ::EOF
-             (throw e)))))
-
-(defn read-seq-from-file
-  "Reads a sequence of top-level objects in file at path."
-  [path]
-  (with-open [r (java.io.PushbackReader. (clojure.java.io/reader path))]
-    (binding [*read-eval* false]
-      (doall (take-while #(not= ::EOF %) (repeatedly #(read-one r)))))))
 
 (defn put-table-view-to-db [view-data]
   (((fn [f] (f f))
@@ -157,7 +144,7 @@
         path  "src/jarman/logic/view.clj"]
     (if-not (nil? data) (do (spit path
                                   "")
-                            (for [s sdata]
+                            (for [s data]
                               (with-open [W (io/writer (io/file path) :append true)]
                                 (.write W (pp-str s))
                                 (.write W env/line-separator)))))))

@@ -196,6 +196,20 @@
        (cond
          ~@cond-list))))
 
+(defn- read-one
+  [r]
+  (try (read r)
+       (catch java.lang.RuntimeException e
+         (if (= "EOF while reading" (.getMessage e)) ::EOF
+             (throw e)))))
+
+(defn read-seq-from-file
+  "Reads a sequence of top-level objects in file at path."
+  [path]
+  (with-open [r (java.io.PushbackReader. (clojure.java.io/reader path))]
+    (binding [*read-eval* false]
+      (doall (take-while #(not= ::EOF %) (repeatedly #(read-one r)))))))
+
 ;;;;;;;;;;;;;;;;;;;
 ;;; where macro ;;;
 ;;;;;;;;;;;;;;;;;;;

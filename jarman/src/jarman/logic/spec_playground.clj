@@ -80,7 +80,7 @@
 ;; (s/def :test-user/testu (s/or :some-test/string
 ;;                               ))
 
-(s/conform :test-user/string '(select user))
+
 
 
 (s/def :some-block/login :some-test/string)
@@ -97,3 +97,41 @@
                              :password "headsfacsxaa"
                              ;;:telephone "+2"
                              :heyy "s"})
+
+
+
+;;;Anfnnf
+;;;Asdf ADF
+;;;"A12"
+
+
+
+(s/def :my-spec/name (fn [a] (re-matches #"[A-Z][a-z]+" a)))
+
+(s/def :my-spec/name-last-name (fn [a] (re-matches #"[A-Z][a-z]+ [A-Z][a-z]+" a)))
+
+(s/def :my-spec/age (fn [a] (re-matches #"\w[\d]+" a)))
+
+
+
+(s/def :my-spec/all (s/or :name :my-spec/name
+                          :string string?
+                          :name-last-name :my-spec/name-last-name
+                          :age :my-spec/age))
+
+(defn chooser-print [data]
+  (println (second data) "/"
+           (condp = (first data)
+                :name "You entered name"
+                :name-last-name "You entered name and last name"
+                :age "You entered age")))
+
+(s/conform :my-spec/name "Ahhh")
+
+
+
+(chooser-print (s/conform :my-spec/all "Asss Fsdc"))
+
+(s/conform (s/and (s/or :select       :sql-form/select
+                          :create-table :sql-form/create-table)
+                    (s/conformer second)) sql)

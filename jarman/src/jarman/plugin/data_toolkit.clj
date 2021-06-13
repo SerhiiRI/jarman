@@ -135,21 +135,26 @@
     actions)
    toolkit-map))
 
+
 ;; => (:jarman--localhost--3306 :jarman--trashpanda-team_ddns_net--3306 :jarman--trashpanda-team_ddns_net--3307)
 ;; (let [cfg {;; :jdbc-connection :jarman--localhost--3306
-;;            :table-name "permission"
+;;            :name "permission"
+;;            :table-name :permission
+;;            :plug-place [:#tables-view-plugin] ;; KEYPATH TO KEYWORD 
 ;;            :tables [:permission]
-;;            :action {:my-another-select
-;;                     (fn [_]
-;;                       {:table-name "user"
-;;                        :column [:login :password :id_permission]})}
-;;            :query
-;;            {:column
-;;             (jarman.logic.view-manager/as-is
-;;              :permission.id
-;;              :permission.permission_name
-;;              :permission.configuration)}}]
-;;   (jarman.logic.view-manager/defview-debug-toolkit cfg))
+;;            :view-columns [:permission.permission_name
+;;                           :permission.configuration]
+;;            :model [{:model-reprs "Permision name"
+;;                     :model-param :permission.permission_name
+;;                     :model-comp jarman.gui.gui-components/input-text-with-atom}
+;;                    :permission.configuration]
+;;            :query {:column
+;;                    (jarman.logic.view-manager/as-is
+;;                     :permission.id
+;;                     :permission.permission_name
+;;                     :permission.configuration)}}]
+;;   ((:select (jarman.logic.view-manager/defview-debug-toolkit cfg))))
+
 
 (defn- sql-crud-toolkit-constructor
   "Description

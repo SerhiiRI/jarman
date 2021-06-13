@@ -182,7 +182,7 @@
 ;;;  `:id`
 ;;; ---------------------------------------
 ;;; 
-;;; (global-view-configs-clean)
+;; (global-view-configs-clean)
 ;;; (get-in (global-view-configs-get) [:permission :table])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -266,8 +266,5 @@
       "Error with file"
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (map (fn [x] (eval x)) data))))))
-
-
-
 
 

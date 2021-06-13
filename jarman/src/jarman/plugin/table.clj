@@ -542,7 +542,7 @@
 ;;;PLUGINS ;;;        
 (defn jarman-table-component [plugin-path global-configuration spec-map]
   ;; (println "Loading table plugin")
-  (let [get-from-global #(->> % (l/join-vec plugin-path) (get-in (global-configuration)))
+  (let [get-from-global #(->> % (join-vec plugin-path) (get-in (global-configuration)))
         data-toolkit  (get-from-global [:toolkit])
         configuration (get-from-global [:config])
         ;; title (get-in data-toolkit [:table-meta :representation])

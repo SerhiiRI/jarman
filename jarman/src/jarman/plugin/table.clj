@@ -193,6 +193,8 @@
                 :tables tables
                 :view-columns view-columns
                 :model view-columns
+                :insert-button true
+                :delete-button true
                 :actions []
                 :buttons []
                 :query (if-not (empty? joines)
@@ -250,6 +252,17 @@
     (seesaw.core/show! dialog)))
 
 
+(defn- make-component [component]
+  (fn [{title :title store-id :store-id
+     editable? :editable?
+       local-changes :local-changes value :val}]
+    (gcomp/inpose-label title
+                        (component
+                         :store-id store-id
+                         :local-changes local-changes
+                         :editable? editable?
+                         (if value [:set-date value] [])))))
+
 (defn- d-component
   "Set default component to form or override it"
   [coll]
@@ -257,7 +270,6 @@
 
 
 (defn- a-component
-  "Set default component to form or override it"
   [coll]
   (gcomp/inpose-label (:title coll) (gcomp/input-text-area (into {:store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll)} (if (:val coll) {:val (:val coll)}{})))))
 
@@ -265,7 +277,7 @@
 (defn- n-component
   "Set default component to form or override it"
   [coll]
-  (gcomp/inpose-label (:title coll) (gcomp/input-int (into {:store-id (:store-id coll) :local-changes (:local-changes coll)} (if (:val coll) {:val (:val coll)} {})))))
+  '(gcomp/inpose-label (:title coll) (gcomp/input-int(into {:store-id (:store-id coll) :local-changes (:local-changes coll)} (if (:val coll) {:val (:val coll)} {})))))
 
 (defn- i-component
   "Set default component to form or override it"

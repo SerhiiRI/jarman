@@ -101,6 +101,21 @@
     (map? con)        (if (empty? con) els con)
     :else con))
 
+(defn left-merge
+  "Description
+     Merge for map.
+     Merge from right map to left map only by keys in left map.
+     If key is not inside right map then use left map value.
+   "
+  [map-coll-orgin map-col-to-join]
+  ((fn l-merge [coll-keys coll-orgin]
+    (if (empty? coll-keys)
+      coll-orgin
+      (->> (first coll-keys)
+           ((fn [key] (assoc coll-orgin key (rift (key map-col-to-join) (key coll-orgin)))))
+           (l-merge (drop 1 coll-keys)))))
+   (keys map-coll-orgin) map-coll-orgin))
+
 (defmacro join
   "(filter-nil [nil 1 nil 3 4]) ;=> [1 3 4]"
   [delimiter col]

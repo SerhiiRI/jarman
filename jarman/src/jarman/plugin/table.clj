@@ -282,47 +282,45 @@
 ;; │                   │
 ;; └───────────────────┘
 
-(defn button-insert
-  [data-toolkit local-changes table-model]
+(defn default-buttons
+  "Description:
+     Create default buttons as insert, update, delete row.
+     type - :insert, :update, :delete
+   "
+  [data-toolkit local-changes table-model type]
   [(gcomp/hr 2)
    (gcomp/button-basic
-    "Insert new data"
-    :onClick (fn [e] (println "Insert but Locla changes: " @local-changes)
-               (println "\nInsert Exp: \n" ((:insert-expression data-toolkit)
+    (type {:insert "Insert new data" :update "Update row" :delete "Delete row" :export "Documents export"})
+    :onClick (fn [e] 
+              ;;  (println "Insert but Locla changes: " @local-changes)
+               (cond
+                 (= type :insert)
+                 (println "\nRun Insert\n" ((:insert data-toolkit)
                                             (merge {(keyword (str (:field (:table-meta data-toolkit)) ".id")) nil}
                                                    (first (merge table-model @local-changes)))) "\n")
-               ;;  (println "Expression insert" ((:insert data-toolkit) (merge {(keyword (str (get (:table-meta data-toolkit) :field) ".id")) nil} (first (merge table-model @local-changes)))))
-               ;;  ((@gseed/jarman-views-service :reload))
-               ))])
+                 (= type :update) ;; TODO: Turn on update fn after added empty key map template, without throw exception, too may value in query, get permission_name
+                 (do (println "\nUpdate Exp: \n" ((:update-expression data-toolkit)
+                                                  (left-merge table-model @local-changes)) "\n")
+                    ;;  (println "\nRun Update: \n" ((:update data-toolkit)
+                    ;;                               (left-merge table-model @local-changes)) "\n")
+                     )
+                 (= type :delete)
+                 (println "\nRun Delete: \n" ((:delete data-toolkit)
+                                              {(keyword (str (:field (:table-meta data-toolkit)) ".id"))
+                                               (get table-model (keyword (str (:field (:table-meta data-toolkit)) ".id")))}) "\n"))
+               ((@gseed/jarman-views-service :reload))))])
 
-(defn button-update
-  [data-toolkit local-changes]
-  [(gcomp/hr 2)
-   (gcomp/button-basic
-    "Update row"
-    :onClick (fn [e] (println "Update")
-      ;;  (println "Expression update" ((:update data-toolkit) (merge table-model @local-changes))))
-              ;;  ((@gseed/jarman-views-service :reload))
-               ))])
-
-(defn button-delete
+(defn- export-button
+  "Description:
+     Create default buttons as insert, update, delete row.
+     type - :insert, :update, :delete
+   "
   [data-toolkit]
   [(gcomp/hr 2)
    (gcomp/button-basic
-    "Delete row"
-    :onClick (fn [e] (println "Delete")
-      ;;  (println "Expression delete" ((:delete data-toolkit) {(keyword (str (get (:table-meta data-toolkit) :field) ".id")) (get table-model (keyword (str (get (:table-meta data-toolkit) :field) ".id")))}))
-              ;;  ((@gseed/jarman-views-service :reload))
-               ))])
+    "Document export"
+    :onClick (fn [e] (println "\nExport will be soon.\n")))])
 
-(defn button-export
-  [data-toolkit]
-  [(gcomp/hr 2)
-   (gcomp/button-basic
-    "Export"
-    :onClick (fn [e] (println "Export")))])
-
-;; ((resolve 'gcomp/input-int))
 
 (defn get-missed-props
   "Description
@@ -461,7 +459,7 @@
   [local-changes configuration]
   (let [button-fn (fn [title action]
                     ;; (println "\nTitle " title "\nAction: "  action)
-                    (if (fn? action)
+                    (if (fn? action) ;; TODO: action is an text not fn
                       [(gcomp/hr 10)
                        (gcomp/button-basic title :onClick (fn [e] (action {:user-start 0 :user-end 1})))]))]
     (doall (->> (:buttons configuration)
@@ -541,13 +539,16 @@
                                 :items [[(c/label)]])
           components (join-mig-items
                       components
+                      (gcomp/hr 10)
                       (generate-custom-buttons local-changes configuration)
+                      (gcomp/hr 5)
                       (if (empty? table-model)
-                        (if-not  (= false (:insert-button configuration)) [(gcomp/hr 10) (button-insert data-toolkit local-changes table-model) more-comps] [more-comps])
-                        [(if-not (= false (:update-button configuration)) [(gcomp/hr 10) (button-update data-toolkit local-changes)] [])
-                         (if-not (= false (:delete-button configuration)) [(button-delete data-toolkit)] [])
-                         more-comps
-                         (button-export data-toolkit)]))
+                        (if-not  (= false (:insert-button configuration)) (default-buttons data-toolkit local-changes table-model :insert) [])
+                        [(if-not (= false (:update-button configuration)) (default-buttons data-toolkit local-changes table-model :update) [])
+                         (if-not (= false (:delete-button configuration)) (default-buttons data-toolkit local-changes table-model :delete) [])
+                         (export-button data-toolkit)])
+                      (gcomp/hr 5)
+                      [more-comps])
           builded (c/config! panel :items (gtool/join-mig-items components))]
       builded)))
 

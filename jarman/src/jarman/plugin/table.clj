@@ -170,7 +170,7 @@
 
 (defn- create-table-plugin [table-name]
   (let [meta-table (first (mt/getset! table-name))
-        view-columns (mapv :field-qualified ((comp :columns :prop) meta-table))
+        table-model (mapv :field-qualified ((comp :columns :prop) meta-table))
         name-of-table ((comp :representation :table :prop) meta-table)
         full-meta-debug (take-meta-for-view table-name)
         tables (vec (for [meta-debug full-meta-debug]
@@ -189,8 +189,8 @@
                 :name name-of-table
                 :plug-place [:#tables-view-plugin]
                 :tables tables
-                :view-columns view-columns
-                :model view-columns
+                :view-columns table-model
+                :model table-model
                 :insert-button true
                 :delete-button true
                 :actions []
@@ -213,9 +213,9 @@
 (defn- gui-table-model [model-columns data-loader]
   (fn [] [:columns model-columns :rows (data-loader)]))
 
-(defn- gui-table [model]
+(defn- gui-table [table-model]
   (fn [listener-fn]
-    (let [TT (swingx/table-x :model (model))]
+    (let [TT (swingx/table-x :model (table-model))]
       (c/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (c/selection TT)))))
       (c/config! TT :horizontal-scroll-enabled? true)
       (c/config! TT :show-grid? false)
@@ -283,13 +283,16 @@
 ;; └───────────────────┘
 
 (defn button-insert
-  [data-toolkit local-changes]
+  [data-toolkit local-changes table-model]
   [(gcomp/hr 2)
    (gcomp/button-basic
     "Insert new data"
     :onClick (fn [e] (println "Insert but Locla changes: " @local-changes)
-      ;;  (println "Expression insert" ((:insert data-toolkit) (merge {(keyword (str (get (:table-meta data-toolkit) :field) ".id")) nil} (first (merge model @local-changes)))))
-              ;;  ((@gseed/jarman-views-service :reload))
+               (println "\nInsert Exp: \n" ((:insert-expression data-toolkit)
+                                            (merge {(keyword (str (:field (:table-meta data-toolkit)) ".id")) nil}
+                                                   (first (merge table-model @local-changes)))) "\n")
+               ;;  (println "Expression insert" ((:insert data-toolkit) (merge {(keyword (str (get (:table-meta data-toolkit) :field) ".id")) nil} (first (merge table-model @local-changes)))))
+               ;;  ((@gseed/jarman-views-service :reload))
                ))])
 
 (defn button-update
@@ -298,7 +301,7 @@
    (gcomp/button-basic
     "Update row"
     :onClick (fn [e] (println "Update")
-      ;;  (println "Expression update" ((:update data-toolkit) (merge model @local-changes))))
+      ;;  (println "Expression update" ((:update data-toolkit) (merge table-model @local-changes))))
               ;;  ((@gseed/jarman-views-service :reload))
                ))])
 
@@ -308,7 +311,7 @@
    (gcomp/button-basic
     "Delete row"
     :onClick (fn [e] (println "Delete")
-      ;;  (println "Expression delete" ((:delete data-toolkit) {(keyword (str (get (:table-meta data-toolkit) :field) ".id")) (get model (keyword (str (get (:table-meta data-toolkit) :field) ".id")))}))
+      ;;  (println "Expression delete" ((:delete data-toolkit) {(keyword (str (get (:table-meta data-toolkit) :field) ".id")) (get table-model (keyword (str (get (:table-meta data-toolkit) :field) ".id")))}))
               ;;  ((@gseed/jarman-views-service :reload))
                ))])
 
@@ -368,9 +371,9 @@
         choosed-first (first choosed-coll)]
     choosed-first))
 
-(defn- choose-component-fn [comps]
+(defn- choose-component-fn 
   "Invoke fn with components list into some var and using this var as fn.
-   Var FN - Choose component send to fn types list and props map."
+   Var FN - Choose component send to fn types list and props map."[comps]
   (fn [type-coll props-coll]
     (let [props-coll (into props-coll (if (:val props-coll) {:val (:val props-coll)} {}))
           selected-comp-fn  (get-first-available-comp type-coll comps)]
@@ -391,16 +394,16 @@
   "Description
      Convert to component manual by map with overriding
    "
-  [local-changes meta-data model m]
-  (let [k               (:model-param m)
-        meta            (k meta-data)]
-    ;; (println "M" model)
-    ;; (println "map component\n" k "\n" m "\n" model "\n" meta)
+  [local-changes meta-data model-defview m]
+  (let [k    (:model-param m)
+        meta (k meta-data)]
+    ;; (println "M" model-defview)
+    ;; (println "map component\n" k "\n" m "\n" model-defview "\n" meta)
     (let [comp-fn (:model-comp m)
           comp-fn (resolve (symbol comp-fn))
           title   (rift (:model-reprs m) "")
           qualified (:model-param m)
-          val     (if (empty? model) "" (qualified model))
+          val     (if (empty? model-defview) "" (qualified model-defview))
           binded  (rift (:bind-args m) {})
           props {:title title :store-id qualified :local-changes local-changes :val val}
           props (if (empty? binded) props (merge-binded-props props binded))
@@ -416,15 +419,14 @@
      Convert to component automaticly by keyword.
      k is an key from model in defview.
    "
-  [global-configuration local-changes meta-data table-model k]
-  ;; (println "key component\n" k "\n" table-model "\n" meta "\n" (:component-type  meta) "\n-----------")
-  (let [meta            (k meta-data)
+  [global-configuration local-changes meta-data table-model key]
+  (let [meta            (key meta-data)
         field-qualified (:field-qualified meta)
         title           (:representation  meta)
         editable?       (:editable?       meta)
         comp-type       (:component-type  meta)
         key-table       (->> (rift (:key-table meta) nil) (#(if (keyword? %) % (keyword %))))
-        val             (rift (str (k table-model)) "")
+        val             (rift (str (key table-model)) "")
         props {:title title :store-id field-qualified  :field-qualified field-qualified  :local-changes local-changes  :editable? editable?  :val val}
         comp  (if (in? comp-type mt/column-type-linking) ;; If linker add more keys to props map
                 (choose-component comp-type (into props {:key-table key-table :table-model table-model :global-configuration global-configuration}))
@@ -437,12 +439,14 @@
   "Description
      Switch fn to convert by map or keyword
    "
-  [global-configuration local-changes meta-data model coll]
-  (doall (->> coll
+  [global-configuration local-changes meta-data table-model model-defview]
+  ;; (println (format "\nmeta-data %s\ntable-model %s\nmodel-defview %s\n" meta-data table-model model-defview))
+  (doall (->> model-defview
               (map #(cond
-                      (map? %)     (convert-map-to-component local-changes meta-data model %)
-                      (keyword? %) (convert-key-to-component global-configuration local-changes meta-data model %)))
+                      (map? %)     (convert-map-to-component local-changes meta-data table-model %)
+                      (keyword? %) (convert-key-to-component global-configuration local-changes meta-data table-model %)))
               (filter #(not (nil? %))))))
+
 
 (defn convert-metadata-vec-to-map
   "Description:
@@ -456,46 +460,20 @@
    "
   [local-changes configuration]
   (let [button-fn (fn [title action]
-                    [(gcomp/hr 10)
-                     (gcomp/button-basic title :onClick (fn [e] (action local-changes)))])]
+                    ;; (println "\nTitle " title "\nAction: "  action)
+                    (if (fn? action)
+                      [(gcomp/hr 10)
+                       (gcomp/button-basic title :onClick (fn [e] (action {:user-start 0 :user-end 1})))]))]
     (doall (->> (:buttons configuration)
-                (map #(button-fn (:title %) ((:action %) (:actions configuration))))))))
+                (map #(button-fn (:title %) (get (:actions configuration) (:action %))))
+                (filter #(not (nil? %)))))))
 
 
-
-;; ┌──────────────┐
-;; │              │
-;; │ Form Builder │
-;; │              │
-;; └──────────────┘
-
-;; TODO: Spec dla meta-data
-
-(def build-input-form
-  "Description:
-     Marge all components to one form
-   "
-  (fn [data-toolkit configuration global-configuration
-       & {:keys [model more-comps alerts]
-          :or {model [] more-comps [] alerts nil}}]
-    (let [local-changes (atom {})
-          meta-data (convert-metadata-vec-to-map (:columns-meta data-toolkit))
-          components (convert-model-to-components-list global-configuration local-changes meta-data model (:model configuration))
-          panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
-                                :border (sborder/empty-border :thickness 10)
-                                :items [[(c/label)]])
-          components (join-mig-items
-                      components
-                      (generate-custom-buttons local-changes configuration)
-                      (if (empty? model)
-                        (if-not  (= false (:insert-button configuration)) [(gcomp/hr 10) (button-insert data-toolkit local-changes) more-comps] [more-comps])
-                        [(if-not (= false (:update-button configuration)) [(gcomp/hr 10) (button-update data-toolkit local-changes)] [])
-                         (if-not (= false (:delete-button configuration)) [(button-delete data-toolkit)] [])
-                         more-comps
-                         (button-export data-toolkit)]))
-          builded (c/config! panel :items (gtool/join-mig-items components))]
-      builded)))
-
+;; ┌───────────────┐
+;; │               │
+;; │ Docs exporter |
+;; │               │
+;; └───────────────┘
 ;;  (run user-view)
 (defn export-print-doc
   [controller id alerts]
@@ -539,12 +517,46 @@
                                    :background "#95dec9"
                                    :border (sborder/compound-border (sborder/empty-border :left 10 :right 10)))]])))
 
+
+;; ┌──────────────┐
+;; │              │
+;; │ Form Builder │
+;; │              │
+;; └──────────────┘
+
+;; TODO: Spec dla meta-data
+
+(def build-input-form
+  "Description:
+     Marge all components to one form
+   "
+  (fn [data-toolkit configuration global-configuration
+       & {:keys [table-model more-comps]
+          :or {table-model [] more-comps []}}]
+    (let [local-changes (atom {})
+          meta-data (convert-metadata-vec-to-map (:columns-meta data-toolkit))
+          components (convert-model-to-components-list global-configuration local-changes meta-data table-model (:model configuration))
+          panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
+                                :border (sborder/empty-border :thickness 10)
+                                :items [[(c/label)]])
+          components (join-mig-items
+                      components
+                      (generate-custom-buttons local-changes configuration)
+                      (if (empty? table-model)
+                        (if-not  (= false (:insert-button configuration)) [(gcomp/hr 10) (button-insert data-toolkit local-changes table-model) more-comps] [more-comps])
+                        [(if-not (= false (:update-button configuration)) [(gcomp/hr 10) (button-update data-toolkit local-changes)] [])
+                         (if-not (= false (:delete-button configuration)) [(button-delete data-toolkit)] [])
+                         more-comps
+                         (button-export data-toolkit)]))
+          builded (c/config! panel :items (gtool/join-mig-items components))]
+      builded)))
+
+
 (def auto-builder--table-view
   "Description
      Prepare and merge complete big parts
    "
-  (fn [plugin-path
-       global-configuration
+  (fn [global-configuration
        data-toolkit
        configuration]
     (let [x nil ;;------------ Prepare components
@@ -552,12 +564,12 @@
           view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
           table         (fn [] (second (u/children view-layout)))
           header        (fn [] (c/label :text (get (:table-meta data-toolkit) :representation) :halign :center :border (sborder/empty-border :top 10)))
-          update-form   (fn [model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration :model model :more-comps [(return)])]))
+          update-form   (fn [table-model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration :table-model table-model :more-comps [(return)])]))
           x nil ;;------------ Build
           expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) ;;:hscroll :never
                                                   )
           back-to-insert     (fn [] [(gcomp/hr 2) (gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]])))])
-          expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
+          expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/min-scrollbox (update-form model return))] [(table)]]))
           table              (fn [] ((:table (create-table configuration data-toolkit)) (fn [model] (expand-update-form model back-to-insert))))
           x nil ;;------------ Finish
           view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])]
@@ -592,14 +604,13 @@
                            (gcomp/button-expand-child
                             title
                             :onClick (fn [e]
-                                       (println "\nplugin-path\n" plugin-path)
+                                       (println "\nplugin-path\n" plugin-path title)
                                        (@gseed/jarman-views-service
                                         :set-view
                                         :view-id (str "auto-" title)
                                         :title title
                                         :scrollable? false
                                         :component-fn (fn [] (auto-builder--table-view
-                                                              plugin-path
                                                               (global-configuration)
                                                               data-toolkit
                                                               configuration))))))))))

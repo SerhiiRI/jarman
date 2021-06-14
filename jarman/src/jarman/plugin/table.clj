@@ -352,7 +352,7 @@
 ;; │                         │
 ;; └─────────────────────────┘
 
-(def form-components
+(def form-components ;; List of functions creating components 
   {mt/column-type-data     #(calendar/calendar-with-atom %)
    mt/column-type-input    #(gcomp/input-text-with-atom  %)
    mt/column-type-number   #(gcomp/input-int             %)
@@ -360,6 +360,8 @@
    mt/column-type-linking  #(input-related-popup-table   %)})
 
 (defn- get-first-available-comp
+  "Set types list, set components list and choose first if is inside. 
+   Can be more than one type and more than one component"
   [type-coll comps-coll]
   (let [type-coll     (if (keyword? type-coll) [type-coll] type-coll)
         choosed-coll  (doall (map #(get comps-coll %) type-coll))
@@ -367,6 +369,8 @@
     choosed-first))
 
 (defn- choose-component-fn [comps]
+  "Invoke fn with components list into some var and using this var as fn.
+   Var FN - Choose component send to fn types list and props map."
   (fn [type-coll props-coll]
     (let [props-coll (into props-coll (if (:val props-coll) {:val (:val props-coll)} {}))
           selected-comp-fn  (get-first-available-comp type-coll comps)]
@@ -374,7 +378,7 @@
         (println (format "Component %s not exist." type))
         (gcomp/inpose-label (:title props-coll) (selected-comp-fn props-coll))))))
 
-(def choose-component (choose-component-fn form-components))
+(def choose-component (choose-component-fn form-components)) ;; component chooser
 
 
 ;; ┌──────────────────────────┐
@@ -422,7 +426,7 @@
         key-table       (->> (rift (:key-table meta) nil) (#(if (keyword? %) % (keyword %))))
         val             (rift (str (k table-model)) "")
         props {:title title :store-id field-qualified  :field-qualified field-qualified  :local-changes local-changes  :editable? editable?  :val val}
-        comp  (if (in? comp-type mt/column-type-linking)
+        comp  (if (in? comp-type mt/column-type-linking) ;; If linker add more keys to props map
                 (choose-component comp-type (into props {:key-table key-table :table-model table-model :global-configuration global-configuration}))
                 (choose-component comp-type props))]
     ;; (println "\nComplete-----------")

@@ -65,7 +65,7 @@
    :plug-place [:#tables-view-plugin]
    :tables [:user :permission]
    :insert-button true
-   :delete-button false
+   :delete-button true
    :view-columns [:user.login
                   :user.first_name
                   :user.last_name
@@ -86,7 +86,15 @@
             :model-comp jarman.gui.gui-components/input-int}]
    :query {:inner-join [:user->permission]
            :column
-           [{:user.id :user.id} {:user.login :user.login} {:user.password :user.password} {:user.first_name :user.first_name} {:user.last_name :user.last_name} {:user.id_permission :user.id_permission} {:permission.id :permission.id} {:permission.permission_name :permission.permission_name} {:permission.configuration :permission.configuration}]           }
+           [{:user.id :user.id} 
+            {:user.login :user.login} 
+            {:user.password :user.password} 
+            {:user.first_name :user.first_name} 
+            {:user.last_name :user.last_name} 
+            {:user.id_permission :user.id_permission} 
+            {:permission.id :permission.id} 
+            {:permission.permission_name :permission.permission_name} 
+            {:permission.configuration :permission.configuration}]}
    :actions {:add-multiply-users-insert
              (fn [state]
                (let [{user-start :user-start user-end :user-end} @state]

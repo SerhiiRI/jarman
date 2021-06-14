@@ -250,7 +250,7 @@
     (seesaw.core/show! dialog)))
 
 
-(defn input-related-popup-table
+(defn input-related-popup-table ;; TODO: Auto choosing component inside popup window
   "Description:
      Component for dialog window with related table. Returning selected table model (row).
    "
@@ -295,19 +295,25 @@
               ;;  (println "Insert but Locla changes: " @local-changes)
                (cond
                  (= type :insert)
-                 (println "\nRun Insert\n" ((:insert data-toolkit)
-                                            (merge {(keyword (str (:field (:table-meta data-toolkit)) ".id")) nil}
-                                                   (first (merge table-model @local-changes)))) "\n")
+                 (println "\nRun Insert\n"
+                          ((:insert data-toolkit)
+                           (merge {(keyword (str (:field (:table-meta data-toolkit)) ".id")) nil}
+                                  (first (merge table-model @local-changes)))) "\n")
                  (= type :update) ;; TODO: Turn on update fn after added empty key map template, without throw exception, too may value in query, get permission_name
-                 (do (println "\nUpdate Exp: \n" ((:update-expression data-toolkit)
-                                                  (left-merge table-model @local-changes)) "\n")
-                    ;;  (println "\nRun Update: \n" ((:update data-toolkit)
-                    ;;                               (left-merge table-model @local-changes)) "\n")
-                     )
+                 (do
+                   (let [from-meta-data (vemap (map #(:field-qualified %) (:columns-meta data-toolkit)))
+                         update-list (cnmap (left-merge from-meta-data @local-changes))
+                         table-id (keyword (format "%s.id" (:field (:table-meta data-toolkit))))]
+                     (println "\nRun Update: \n"
+                              ((:update data-toolkit)
+                               (into {table-id (table-id table-model)} update-list))
+                              "\n")
+                     )) 
                  (= type :delete)
-                 (println "\nRun Delete: \n" ((:delete data-toolkit)
-                                              {(keyword (str (:field (:table-meta data-toolkit)) ".id"))
-                                               (get table-model (keyword (str (:field (:table-meta data-toolkit)) ".id")))}) "\n"))
+                 (println "\nRun Delete: \n"
+                          ((:delete data-toolkit)
+                           {(keyword (str (:field (:table-meta data-toolkit)) ".id"))
+                            (get table-model (keyword (str (:field (:table-meta data-toolkit)) ".id")))}) "\n"))
                ((@gseed/jarman-views-service :reload))))])
 
 (defn- export-button
@@ -323,9 +329,11 @@
 
 
 (defn get-missed-props
-  "Description
-   Return not binded map, just cut this what exist.
-   (get-missed-key {:a a} {:a a :b c :d e}) => {:b c, :d e}
+  "Description:
+     Return not binded map, just cut this what exist.
+   Example:
+     (get-missed-key {:a a} {:a a :b c :d e}) 
+       => {:b c, :d e}
    "
   [binded-map orgin-map]
   (->> (map #(first %) orgin-map)
@@ -333,10 +341,11 @@
        (into {} (map #(into {% (% orgin-map)})))))
 
 (defn merge-binded-props
-  "Description
+  "Description:
      Get map where are binded keys, get properties for component and create new map with properties.
    Example:
-     (merge-binded-props {:title \"mytitle\" :value \"pepe\"} {:title :custom-key}) => {:custom-key \"mytitle\" :value \"pepe\"}
+     (merge-binded-props {:title \"mytitle\" :value \"pepe\"} {:title :custom-key}) 
+       => {:custom-key \"mytitle\" :value \"pepe\"}
    "
   [props-map binded-list]
   (let [binded (doall
@@ -415,7 +424,7 @@
 (defn convert-key-to-component
   "Description
      Convert to component automaticly by keyword.
-     k is an key from model in defview.
+     key is an key from model in defview.
    "
   [global-configuration local-changes meta-data table-model key]
   (let [meta            (key meta-data)
@@ -461,7 +470,7 @@
                     ;; (println "\nTitle " title "\nAction: "  action)
                     (if (fn? action) ;; TODO: action is an text not fn
                       [(gcomp/hr 10)
-                       (gcomp/button-basic title :onClick (fn [e] (action {:user-start 0 :user-end 1})))]))]
+                       (gcomp/button-basic title :onClick (fn [e] (action local-changes)))]))]
     (doall (->> (:buttons configuration)
                 (map #(button-fn (:title %) (get (:actions configuration) (:action %))))
                 (filter #(not (nil? %)))))))
@@ -564,7 +573,7 @@
           insert-form   (fn [] (build-input-form data-toolkit configuration global-configuration))
           view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
           table         (fn [] (second (u/children view-layout)))
-          header        (fn [] (c/label :text (get (:table-meta data-toolkit) :representation) :halign :center :border (sborder/empty-border :top 10)))
+          header        (fn [] (c/label :text (:representation (:table-meta data-toolkit)) :halign :center :border (sborder/empty-border :top 10)))
           update-form   (fn [table-model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration :table-model table-model :more-comps [(return)])]))
           x nil ;;------------ Build
           expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) ;;:hscroll :never
@@ -596,7 +605,7 @@
         space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
         atm (:atom-expanded-items (c/config space :user-data))]
     ;; (println "Allow Permission: " (session/allow-permission? (:permission configuration)))
-
+    ;; TODO: Set invoker expand button if not exist add child invokers
     (if (false? (spec/test-keys-jtable configuration spec-map))
       (println "[ Warning ] plugin/table: Error in spec")
       (if (session/allow-permission? (:permission configuration))

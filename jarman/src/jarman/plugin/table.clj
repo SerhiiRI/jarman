@@ -230,9 +230,9 @@
         {:table-model table-model
          :table (gui-table table-model)}))))
 
-(defn- construct-dialog [table-fn selected frame]
+(defn- popup-table [table-fn selected frame]
   (let [dialog (seesaw.core/custom-dialog :modal? true :width 600 :height 400 :title "Select component")
-        table (table-fn (fn [model] (seesaw.core/return-from-dialog dialog model)))
+        table (table-fn (fn [table-model] (seesaw.core/return-from-dialog dialog table-model)))
         key-p (seesaw.mig/mig-panel
                :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px[grow, fill]0px"]
               ;;  :border (sborder/line-border :color "#888" :bottom 1 :top 1 :left 1 :right 1)
@@ -250,39 +250,37 @@
     (seesaw.core/show! dialog)))
 
 
-(defn- make-component [component]
-  (fn [{title :title store-id :store-id
-     editable? :editable?
-       local-changes :local-changes value :val}]
-    (gcomp/inpose-label title
-                        (component
-                         :store-id store-id
-                         :local-changes local-changes
-                         :editable? editable?
-                         (if value [:set-date value] [])))))
-
-(defn- d-component
-  "Set default component to form or override it"
-  [coll]
-  (gcomp/inpose-label (:title coll) (apply calendar/calendar-with-atom :store-id (:store-id coll) :local-changes (:local-changes coll) (if (:val coll) [:set-date (:val coll)] []))))
-
-
-(defn- a-component
-  [coll]
-  (gcomp/inpose-label (:title coll) (gcomp/input-text-area (into {:store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll)} (if (:val coll) {:val (:val coll)}{})))))
-
-
-(defn- n-component
-  "Set default component to form or override it"
-  [coll]
-  '(gcomp/inpose-label (:title coll) (gcomp/input-int(into {:store-id (:store-id coll) :local-changes (:local-changes coll)} (if (:val coll) {:val (:val coll)} {})))))
-
-(defn- i-component
-  "Set default component to form or override it"
-  [coll]
-  (gcomp/inpose-label (:title coll) (gcomp/input-text-with-atom (into {:store-id (:store-id coll) :local-changes (:local-changes coll) :editable? (:editable? coll)} (if (:val coll) {:val (:val coll)} {})))))
+(defn input-related-popup-table
+  "Description:
+     Component for dialog window with related table. Returning selected table model (row).
+   "
+  [{:keys [global-configuration local-changes field-qualified table-model key-table]}]
+  (let
+   [connected-table (last (first (get-in global-configuration [key-table :table]))) ;; TODO: Set dedicate path to related table form data-toolkit
+    ct-conf         (:config  connected-table)
+    ct-data         (:toolkit connected-table)
+    model-to-repre  (fn [view-columns table-model]
+                      (->> view-columns
+                           (map #(% table-model))
+                           (filter some?)
+                           (string/join ", ")))]
+    (if-not (nil? (field-qualified table-model)) (swap! local-changes (fn [storage] (assoc storage field-qualified (field-qualified table-model)))))
+    (gcomp/input-text-with-atom
+     {:local-changes local-changes
+      :editable? false
+      :val (model-to-repre (:view-columns ct-conf) table-model)
+      :onClick (fn [e]
+                 (let [selected-model (popup-table (:table (create-table ct-conf ct-data)) field-qualified (c/to-frame e))]
+                   (if-not (nil? (get selected-model (:model-id ct-data)))
+                     (do (c/config! e :text (model-to-repre (:view-columns ct-conf) selected-model))
+                         (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected-model (:model-id ct-data)))))))))})))
 
 
+;; ┌───────────────────┐
+;; │                   │
+;; │ Single Components │
+;; │                   │
+;; └───────────────────┘
 
 (defn button-insert
   [data-toolkit local-changes]
@@ -347,7 +345,45 @@
                               binded-list)))]
     (into binded (get-missed-props binded props-map))))
 
-(defn convert-map-to-component 
+
+;; ┌─────────────────────────┐
+;; │                         │
+;; │ Tabel Component Chooser │
+;; │                         │
+;; └─────────────────────────┘
+
+(def form-components
+  {mt/column-type-data     #(calendar/calendar-with-atom %)
+   mt/column-type-input    #(gcomp/input-text-with-atom  %)
+   mt/column-type-number   #(gcomp/input-int             %)
+   mt/column-type-textarea #(gcomp/input-text-area       %)
+   mt/column-type-linking  #(input-related-popup-table   %)})
+
+(defn- get-first-available-comp
+  [type-coll comps-coll]
+  (let [type-coll     (if (keyword? type-coll) [type-coll] type-coll)
+        choosed-coll  (doall (map #(get comps-coll %) type-coll))
+        choosed-first (first choosed-coll)]
+    choosed-first))
+
+(defn- choose-component-fn [comps]
+  (fn [type-coll props-coll]
+    (let [props-coll (into props-coll (if (:val props-coll) {:val (:val props-coll)} {}))
+          selected-comp-fn  (get-first-available-comp type-coll comps)]
+      (if (nil? selected-comp-fn)
+        (println (format "Component %s not exist." type))
+        (gcomp/inpose-label (:title props-coll) (selected-comp-fn props-coll))))))
+
+(def choose-component (choose-component-fn form-components))
+
+
+;; ┌──────────────────────────┐
+;; │                          │
+;; │ To Components Converters │
+;; │                          │
+;; └──────────────────────────┘
+
+(defn convert-map-to-component
   "Description
      Convert to component manual by map with overriding
    "
@@ -368,71 +404,32 @@
           comp (gcomp/inpose-label title pre-comp)]
       ;; (println "Props: " props)
       ;; (println "\nComplete-----------")
-      comp)
-    ))
+      comp)))
 
 
-(defn convert-key-to-component 
+(defn convert-key-to-component
   "Description
-     Convert to component automaticly by keyword
+     Convert to component automaticly by keyword.
+     k is an key from model in defview.
    "
-  [global-configuration local-changes meta-data model k]
-  ;; (println "key component\n" k "\n" model "\n" meta "\n" (:component-type  meta) "\n-----------")
+  [global-configuration local-changes meta-data table-model k]
+  ;; (println "key component\n" k "\n" table-model "\n" meta "\n" (:component-type  meta) "\n-----------")
   (let [meta            (k meta-data)
         field-qualified (:field-qualified meta)
         title           (:representation  meta)
         editable?       (:editable?       meta)
         comp-type       (:component-type  meta)
-        key-table       (:key-table       meta)
-        val             (rift (str (k model)) "")
-        props {:title title :store-id field-qualified :local-changes local-changes :editable? editable? :val val}
-        comp (cond
-            ;; (def column-type-data "d")
-            ;; (def column-type-time "t")
-            ;; (def column-type-datatime "dt")
-            ;; (def column-type-linking "l")
-            ;; (def column-type-number "n")
-            ;; (def column-type-boolean "b")
-            ;; (def column-type-textarea "a")
-            ;; (def column-type-floated "f")
-            ;; (def column-type-input "i")
-            (in? comp-type mt/column-type-data)
-            (if (empty? model) (d-component props) (d-component (into props {:val (if (empty? val) nil val)})))
-            (in? comp-type mt/column-type-textarea) ;; Text area
-            (if (empty? model) (a-component props) (a-component (into props {:val val})))
-            (in? comp-type mt/column-type-number) ;; Numbers Int
-            (if (empty? model) (n-component props) (n-component (into props {:val val})))
-            (in? comp-type mt/column-type-input) ;; Basic Input
-            (if (empty? model) (i-component props) (i-component (into props {:val val})))
-            (and (in? comp-type mt/column-type-linking) (not (nil? key-table))) ;; TODO: Popup table do not working
-            (do ;; Add label with enable false input-text. Can run micro window with table to choose some record and retunr id.
-              (let [key-table               (keyword key-table)
-                    connected-table-conf    (get-in global-configuration [key-table :plug/table :config])
-                    connected-table-data    (get-in global-configuration [key-table :plug/table :toolkit])
-                    selected-representation (fn [dialog-model-view
-                                                returned-from-dialog]
-                                              (->> (:model dialog-model-view)
-                                                   (map #(get-in returned-from-dialog [%]))
-                                                   (filter some?)
-                                                   (string/join ", ")))
-                    val (selected-representation connected-table-conf k)]
-                ;; (if-not (nil? (get model field-qualified)) (swap! local-changes (fn [storage] (assoc storage field-qualified (get-in model [field-qualified])))))
-                (gcomp/inpose-label title (gcomp/input-text-with-atom {:local-changes local-changes
-                                                                       :editable? false
-                                                                       :val val
-                                                                       :onClick (fn [e]
-                                                                                  (let [selected (construct-dialog (:table (create-table connected-table-conf connected-table-data)) field-qualified (c/to-frame e))]
-                                                                                    (if-not (nil? (get selected (:model-id connected-table-data)))
-                                                                                      (do (c/config! e :text (selected-representation connected-table-conf selected))
-                                                                                          ;;  (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected (get connected-table-data :model-id)))))
-                                                                                          ))))})))))]
-    
-    
+        key-table       (->> (rift (:key-table meta) nil) (#(if (keyword? %) % (keyword %))))
+        val             (rift (str (k table-model)) "")
+        props {:title title :store-id field-qualified  :field-qualified field-qualified  :local-changes local-changes  :editable? editable?  :val val}
+        comp  (if (in? comp-type mt/column-type-linking)
+                (choose-component comp-type (into props {:key-table key-table :table-model table-model :global-configuration global-configuration}))
+                (choose-component comp-type props))]
     ;; (println "\nComplete-----------")
     comp))
 
 
-(defn convert-model-to-components-list 
+(defn convert-model-to-components-list
   "Description
      Switch fn to convert by map or keyword
    "
@@ -460,6 +457,14 @@
     (doall (->> (:buttons configuration)
                 (map #(button-fn (:title %) ((:action %) (:actions configuration))))))))
 
+
+
+;; ┌──────────────┐
+;; │              │
+;; │ Form Builder │
+;; │              │
+;; └──────────────┘
+
 ;; TODO: Spec dla meta-data
 
 (def build-input-form
@@ -480,11 +485,10 @@
                       (generate-custom-buttons local-changes configuration)
                       (if (empty? model)
                         (if-not  (= false (:insert-button configuration)) [(gcomp/hr 10) (button-insert data-toolkit local-changes) more-comps] [more-comps])
-                        [(if-not (= false (:update-button configuration))[(gcomp/hr 10) (button-update data-toolkit local-changes)] []) 
-                         (if-not (= false (:delete-button configuration))[(button-delete data-toolkit)] [])
-                          more-comps 
-                         (button-export data-toolkit)])
-                      )
+                        [(if-not (= false (:update-button configuration)) [(gcomp/hr 10) (button-update data-toolkit local-changes)] [])
+                         (if-not (= false (:delete-button configuration)) [(button-delete data-toolkit)] [])
+                         more-comps
+                         (button-export data-toolkit)]))
           builded (c/config! panel :items (gtool/join-mig-items components))]
       builded)))
 
@@ -550,7 +554,7 @@
                                                   )
           back-to-insert     (fn [] [(gcomp/hr 2) (gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]])))])
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/scrollbox (update-form model return) :hscroll :never)] [(table)]]))
-          table              (fn [] ((get (create-table configuration data-toolkit) :table) (fn [model] (expand-update-form model back-to-insert))))
+          table              (fn [] ((:table (create-table configuration data-toolkit)) (fn [model] (expand-update-form model back-to-insert))))
           x nil ;;------------ Finish
           view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])]
                                                             [(try
@@ -575,6 +579,7 @@
         space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
         atm (:atom-expanded-items (c/config space :user-data))]
     ;; (println "Allow Permission: " (session/allow-permission? (:permission configuration)))
+
     (if (false? (spec/test-keys-jtable configuration spec-map))
       (println "[ Warning ] plugin/table: Error in spec")
       (if (session/allow-permission? (:permission configuration))
@@ -582,17 +587,114 @@
                      (conj inserted
                            (gcomp/button-expand-child
                             title
-                            :onClick (fn [e] (@gseed/jarman-views-service
-                                              :set-view
-                                              :view-id (str "auto-" title)
-                                              :title title
-                                              :scrollable? false
-                                              :component-fn (fn [] (auto-builder--table-view
-                                                                    plugin-path
-                                                                    (global-configuration)
-                                                                    data-toolkit
-                                                                    configuration))))))))))
+                            :onClick (fn [e]
+                                       (println "\nplugin-path\n" plugin-path)
+                                       (@gseed/jarman-views-service
+                                        :set-view
+                                        :view-id (str "auto-" title)
+                                        :title title
+                                        :scrollable? false
+                                        :component-fn (fn [] (auto-builder--table-view
+                                                              plugin-path
+                                                              (global-configuration)
+                                                              data-toolkit
+                                                              configuration))))))))))
     (.revalidate space)))
 
 
 
+;; DATA TOOLKIT
+;; {:model-id :user.id, 
+;;  :insert #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16726], 
+;;  :delete-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/delete-expression--16720], 
+;;  :select-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/select-expression--16723], 
+;;  :update #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16728], 
+;;  :delete #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16730], 
+;;  :update-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/update-expression--16716], 
+;;  :table-meta {:description nil, 
+;;               :ref {:front-references [:permission], 
+;;                     :back-references nil}, 
+;;               :allow-linking? true, 
+;;               :field user, 
+;;               :representation user, 
+;;               :is-linker? false, 
+;;               :allow-modifing? true, 
+;;               :allow-deleting? true, 
+;;               :is-system? false}, 
+;;  :insert-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/insert-expression--16718], 
+;;  :columns-meta [{:description nil, 
+;;                  :private? false, 
+;;                  :default-value nil, 
+;;                  :editable? true, 
+;;                  :field :login, 
+;;                  :column-type [:varchar-100 :nnull], 
+;;                  :component-type [:text], 
+;;                  :representation login, 
+;;                  :field-qualified :user.login} 
+;;                 {:description nil, :private? false, :default-value nil, :editable? true, :field :password, :column-type [:varchar-100 :nnull], :component-type [:text], :representation password, :field-qualified :user.password} 
+;;                 {:description nil, :private? false, :default-value nil, :editable? true, :field :first_name, :column-type [:varchar-100 :nnull], :component-type [:text], :representation first_name, :field-qualified :user.first_name} 
+;;                 {:description nil, :private? false, :default-value nil, :editable? true, :field :last_name, :column-type [:varchar-100 :nnull], :component-type [:text], :representation last_name, :field-qualified :user.last_name} 
+;;                 {:description nil, :private? false, :default-value nil, :editable? true, :field :id_permission, :column-type [:bigint-120-unsigned :nnull], :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}], :component-type [:link], :representation id_permission, :field-qualified :user.id_permission, :key-table :permission}], 
+;;  :select #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16732]}
+
+
+;; Configuration defview
+;; {:plug-place [:#tables-view-plugin], 
+;;  :buttons [{:action :add-multiply-users-insert, :title Auto generate users}], 
+;;  :permission [:user], 
+;;  :name user-override, :tables [:user :permission], 
+;;  :plugin-config-path [:user :table :plugin-19409], 
+;;  :actions {:add-multiply-users-insert (fn [state] (let [{user-start :user-start, user-end :user-end} (clojure.core/deref state)] (println (map (fn* [p1__19371#] (hash-map :user.login (str user p1__19371#) :user.password 1234 :user.last_name (str user p1__19371#) :user.first_name (str user p1__19371#) :user.id_permission 2)) (range user-start (+ 1 user-end))))))}, 
+;;  :insert-button true, 
+;;  :id :plugin-19409, 
+;;  :plugin-name table, 
+;;  :delete-button false, 
+;;  :query {:inner-join [:user->permission], :column [{:user.id :user.id} {:user.login :user.login} {:user.password :user.password} {:user.first_name :user.first_name} {:user.last_name :user.last_name} {:user.id_permission :user.id_permission} {:permission.id :permission.id} {:permission.permission_name :permission.permission_name} {:permission.configuration :permission.configuration}]}, 
+;;  :table-name :user, 
+;;  :view-columns [:user.login 
+;;                 :user.first_name 
+;;                 :user.last_name 
+;;                 :permission.permission_name], 
+;;  :model [{:model-reprs Login, :model-param :user.login, :bind-args {:title :title}, :model-comp jarman.gui.gui-components/input-text-with-atom} 
+;;          :user.password 
+;;          :user.first_name 
+;;          :user.last_name 
+;;          :user.id_permission 
+;;          {:model-reprs Start user, :model-param :user-start, :model-comp jarman.gui.gui-components/input-int} 
+;;          {:model-reprs End user, :model-param :user-end, :model-comp jarman.gui.gui-components/input-int}]}
+
+
+;; GLOBAL
+;;  {
+;;   :permission {:table {:p-1 {:config {:plug-place [:#tables-view-plugin], :permission [:user], :view-columns [:permission.permission_name :permission.configuration], :name permission, :tables [:permission], :plugin-config-path [:permission :table :p-1], :id :p-1, :plugin-name table, :query {:column [{:permission.id :permission.id} {:permission.permission_name :permission.permission_name} {:permission.configuration :permission.configuration}]}, :table-name :permission, :model [{:model-reprs Permision name, :model-param :permission.permission_name, :model-comp jarman.gui.gui-components/input-text-with-atom} :permission.configuration]}, :toolkit {:model-id :permission.id, :insert #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16726], :delete-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/delete-expression--16720], :select-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/select-expression--16723], :update #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16728], :delete #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16730], :update-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/update-expression--16716], :table-meta {:description nil, :ref {:front-references nil, :back-references nil}, :allow-linking? true, :field permission, :representation permission, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :is-system? false}, :insert-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/insert-expression--16718], :columns-meta [{:description nil, :private? false, :default-value nil, :editable? true, :field :permission_name, :column-type [:varchar-20 :default :null], :component-type [:text], :representation permission_name, :field-qualified :permission.permission_name} {:description nil, :private? false, :default-value nil, :editable? true, :field :configuration, :column-type [:tinytext :nnull :default '{}'], :component-type [:textarea], :representation configuration, :field-qualified :permission.configuration}], :select #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16732]}}}}, 
+;;   :enterpreneur {:table {:plugin-17192 
+;;                          {:config {:plug-place [:#tables-view-plugin], :buttons [], :permission [:user], :view-columns [:enterpreneur.ssreou :enterpreneur.ownership_form :enterpreneur.vat_certificate :enterpreneur.individual_tax_number :enterpreneur.director :enterpreneur.accountant :enterpreneur.legal_address :enterpreneur.physical_address :enterpreneur.contacts_information], :name enterpreneur, :tables [:enterpreneur], :plugin-config-path [:enterpreneur :table :plugin-17192], :actions [], :insert-button true, :id :plugin-17192, :plugin-name table, :delete-button true, :query {:column [{:enterpreneur.id :enterpreneur.id} {:enterpreneur.ssreou :enterpreneur.ssreou} {:enterpreneur.ownership_form :enterpreneur.ownership_form} {:enterpreneur.vat_certificate :enterpreneur.vat_certificate} {:enterpreneur.individual_tax_number :enterpreneur.individual_tax_number} {:enterpreneur.director :enterpreneur.director} {:enterpreneur.accountant :enterpreneur.accountant} {:enterpreneur.legal_address :enterpreneur.legal_address} {:enterpreneur.physical_address :enterpreneur.physical_address} {:enterpreneur.contacts_information :enterpreneur.contacts_information}]}, :table-name :enterpreneur, :model [:enterpreneur.ssreou :enterpreneur.ownership_form :enterpreneur.vat_certificate :enterpreneur.individual_tax_number :enterpreneur.director :enterpreneur.accountant :enterpreneur.legal_address :enterpreneur.physical_address :enterpreneur.contacts_information]}, 
+;;                           :toolkit {:model-id :enterpreneur.id, :insert #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16726], :delete-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/delete-expression--16720], :select-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/select-expression--16723], :update #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16728], :delete #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16730], :update-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/update-expression--16716], :table-meta {:description nil, :ref {:front-references nil, :back-references nil}, :allow-linking? true, :field enterpreneur, :representation enterpreneur, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :is-system? false}, :insert-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/insert-expression--16718], :columns-meta [{:description nil, :private? false, :default-value nil, :editable? true, :field :ssreou, :column-type [:tinytext :nnull], :component-type [:textarea], :representation ssreou, :field-qualified :enterpreneur.ssreou} {:description nil, :private? false, :default-value nil, :editable? true, :field :ownership_form, :column-type [:varchar-100 :default :null], :component-type [:text], :representation ownership_form, :field-qualified :enterpreneur.ownership_form} {:description nil, :private? false, :default-value nil, :editable? true, :field :vat_certificate, :column-type [:tinytext :default :null], :component-type [:textarea], :representation vat_certificate, :field-qualified :enterpreneur.vat_certificate} {:description nil, :private? false, :default-value nil, :editable? true, :field :individual_tax_number, :column-type [:varchar-100 :default :null], :component-type [:text], :representation individual_tax_number, :field-qualified :enterpreneur.individual_tax_number} {:description nil, :private? false, :default-value nil, :editable? true, :field :director, :column-type [:varchar-100 :default :null], :component-type [:text], :representation director, :field-qualified :enterpreneur.director} {:description nil, :private? false, :default-value nil, :editable? true, :field :accountant, :column-type [:varchar-100 :default :null], :component-type [:text], :representation accountant, :field-qualified :enterpreneur.accountant} {:description nil, :private? false, :default-value nil, :editable? true, :field :legal_address, :column-type [:varchar-100 :default :null], :component-type [:text], :representation legal_address, :field-qualified :enterpreneur.legal_address} {:description nil, :private? false, :default-value nil, :editable? true, :field :physical_address, :column-type [:varchar-100 :default :null], :component-type [:text], :representation physical_address, :field-qualified :enterpreneur.physical_address} {:description nil, :private? false, :default-value nil, :editable? true, :field :contacts_information, :column-type [:mediumtext :default :null], :component-type [:textarea], :representation contacts_information, :field-qualified :enterpreneur.contacts_information}], :select #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16732]}}, 
+;;                          :plugin-19246 {:config {:plug-place [:#tables-view-plugin], :buttons [], :permission [:user], :view-columns [:enterpreneur.ssreou :enterpreneur.ownership_form :enterpreneur.vat_certificate :enterpreneur.individual_tax_number :enterpreneur.director :enterpreneur.accountant :enterpreneur.legal_address :enterpreneur.physical_address :enterpreneur.contacts_information], :name enterpreneur, :tables [:enterpreneur], :plugin-config-path [:enterpreneur :table :plugin-19246], :actions [], :insert-button true, :id :plugin-19246, :plugin-name table, :delete-button true, :query {:column [{:enterpreneur.id :enterpreneur.id} {:enterpreneur.ssreou :enterpreneur.ssreou} {:enterpreneur.ownership_form :enterpreneur.ownership_form} {:enterpreneur.vat_certificate :enterpreneur.vat_certificate} {:enterpreneur.individual_tax_number :enterpreneur.individual_tax_number} {:enterpreneur.director :enterpreneur.director} {:enterpreneur.accountant :enterpreneur.accountant} {:enterpreneur.legal_address :enterpreneur.legal_address} {:enterpreneur.physical_address :enterpreneur.physical_address} {:enterpreneur.contacts_information :enterpreneur.contacts_information}]}, :table-name :enterpreneur, :model [:
+;; enterpreneur.ssreou :enterpreneur.ownership_form :enterpreneur.vat_certificate :enterpreneur.individual_tax_number :enterpreneur.director :enterpreneur.accountant :enterpreneur.legal_address :enterpreneur.physical_address :enterpreneur.contacts_information]}, :toolkit {:model-id :enterpreneur.id, :insert #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16726], :delete-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/delete-expression--16720], :select-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/select-expression--16723], :update #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16728], :delete #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16730], :update-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/update-expression--16716], :table-meta {:description nil, :ref {:front-references nil, :back-references nil}, :allow-linking? true, :field enterpreneur, :representation enterpreneur, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :is-system? false}, :insert-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/insert-expression--16718], :columns-meta [{:description nil, :private? false, :default-value nil, :editable? true, :field :ssreou, :column-type [:tinytext :nnull], :component-type [:textarea], :representation ssreou, :field-qualified :enterpreneur.ssreou} {:description nil, :private? false, :default-value nil, :editable? true, :field :ownership_form, :column-type [:varchar-100 :default :null], :component-type [:text], :representation ownership_form, :field-qualified :enterpreneur.ownership_form} {:description nil, :private? false, :default-value nil, :editable? true, :field :vat_certificate, :column-type [:tinytext :default :null], :component-type [:textarea], :representation vat_certificate, :field-qualified :enterpreneur.vat_certificate} {:description nil, :private? false, :default-value nil, :editable? true, :field :individual_tax_number, :column-type [:varchar-100 :default :null], :component-type [:text], :representation individual_tax_number, :field-qualified :enterpreneur.individual_tax_number} {:description nil, :private? false, :default-value nil, :editable? true, :field :director, :column-type [:varchar-100 :default :null], :component-type [:text], :representation director, :field-qualified :enterpreneur.director} {:description nil, :private? false, :default-value nil, :editable? true, :field :accountant, :column-type [:varchar-100 :default :null], :component-type [:text], :representation accountant, :field-qualified :enterpreneur.accountant} {:description nil, :private? false, :default-value nil, :editable? true, :field :legal_address, :column-type [:varchar-100 :default :null], :component-type [:text], :representation legal_address, :field-qualified :enterpreneur.legal_address} {:description nil, :private? false, :default-value nil, :editable? true, :field :physical_address, :column-type [:varchar-100 :default :null], :component-type [:text], :representation physical_address, :field-qualified :enterpreneur.physical_address} {:description nil, :private? false, :default-value nil, :editable? true, :field :contacts_information, :column-type [:mediumtext :default :null], :component-type [:textarea], :representation contacts_information, :field-qualified :enterpreneur.contacts_information}], :select #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16732]}}, 
+;;                          :plugin-19320 {:config {:plug-place [:#tables-view-plugin], :buttons [], :permission [:user], :view-columns [:enterpreneur.ssreou :enterpreneur.ownership_form :enterpreneur.vat_certificate :enterpreneur.individual_tax_number :enterpreneur.director :enterpreneur.accountant :enterpreneur.legal_address :enterpreneur.physical_address :enterpreneur.contacts_information], :name enterpreneur, :tables [:enterpreneur], :plugin-config-path [:enterpreneur :table :plugin-19320], :actions [], :insert-button true, :id :plugin-19320, :plugin-name table, :delete-button true, :query {:column [{:enterpreneur.id :enterpreneur.id} {:enterpreneur.ssreou :enterpreneur.ssreou} {:enterpreneur.ownership_form :enterpreneur.ownership_form} {:enterpreneur.vat_certificate :enterpreneur.vat_certificate} {:enterpreneur.individual_tax_number :enterpreneur.individual_tax_number} {:enterpreneur.director :enterpreneur.director} {:enterpreneur.accountant :enterpreneur.accountant} {:enterpreneur.legal_address :enterpreneur.legal_address} {:enterpreneur.physical_address :enterpreneur.physical_address} {:enterpreneur.contacts_information :enterpreneur.contacts_information}]}, :table-name :enterpreneur, :model [:enterpreneur.ssreou :enterpreneur.ownership_form :enterpreneur.vat_certificate :enterpreneur.individual_tax_number :enterpreneur.director :enterpreneur.accountant :enterpreneur.legal_address :enterpreneur.physical_address :enterpreneur.contacts_information]}, :toolkit {:model-id :enterpreneur.id, :insert #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16726], :delete-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/delete-expression--16720], :select-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/select-expression--16723], :update #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16728], :delete #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16730], :update-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/update-expression--16716], :table-meta {:description nil, :ref {:front-references nil, :back-references nil}, :allow-linking? true, :field enterpreneur, :representation enterpreneur, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :is-system? false}, :insert-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/insert-expression--16718], :columns-meta [{:description nil, :private? false, :default-value nil, :editable? true, :field :ssreou, :column-type [:tinytext :nnull], :component-type [:textarea], :representation ssreou, :field-qualified :enterpreneur.ssreou} {:description nil, :private? false, :default-value nil, :editable? true, :field :ownership_form, :column-type [:varchar-100 :default :null], :component-type [:text], :representation ownership_form, :field-qualified :enterpreneur.ownership_form} {:description nil, :private? false, :default-value nil, :editable? true, :field :vat_certificate, :column-type [:tinytext :default :null], :component-type [:textarea], :representation vat_certificate, :field-qualified :enterpreneur.vat_certificate} {:description nil, :private? false, :default-value nil, :editable? true, :field :individual_tax_number, :column-type [:varchar-100 :default :null], :component-type [:text], :representation individual_tax_number, :field-qualified :enterpreneur.individual_tax_number} {:description nil, :private? false, :default-value nil, :editable? true, :field :director, :column-type [:varchar-100 :default :null], :component-type [:text], :representation director, :field-qualified :enterpreneur.director} {:description nil, :private? false, :default-value nil, :editable? true, :field :accountant, :column-type [:varchar-100 :default :null], :component-type [:text], :representation accountant, :field-qualified :enterpreneur.accountant} {:description nil, :private? false, :default-value nil, :editable? true, :field :legal_address, :column-type [:varchar-100 :default :null], :component-type [:text], :representation legal_address, :field-qualified :enterpreneur.legal_address} {:description nil, :private? false, :default-value nil, :editable? true, :field :physical_address, :column-type [:varchar-100 :default :null], :component-type [:text], :representation physical_address, :field-qualified :enterpreneur.physical_address} {:description nil, :private? false, :default-value nil, :editable? true, :field :contacts_information, :column-type [:mediumtext :default :null], :component-type [:textarea], :representation contacts_information, :field-qualified :enterpreneur.contacts_information}], :s
+;; elect #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16732]}}, 
+;;                          :plugin-19390 {:config {:plug-place [:#tables-view-plugin], :buttons [], :permission [:user], :view-columns [:enterpreneur.ssreou :enterpreneur.ownership_form :enterpreneur.vat_certificate :enterpreneur.individual_tax_number :enterpreneur.director :enterpreneur.accountant :enterpreneur.legal_address :enterpreneur.physical_address :enterpreneur.contacts_information], :name enterpreneur, :tables [:enterpreneur], :plugin-config-path [:enterpreneur :table :plugin-19390], :actions [], :insert-button true, :id :plugin-19390, :plugin-name table, :delete-button true, :query {:column [{:enterpreneur.id :enterpreneur.id} {:enterpreneur.ssreou :enterpreneur.ssreou} {:enterpreneur.ownership_form :enterpreneur.ownership_form} {:enterpreneur.vat_certificate :enterpreneur.vat_certificate} {:enterpreneur.individual_tax_number :enterpreneur.individual_tax_number} {:enterpreneur.director :enterpreneur.director} {:enterpreneur.accountant :enterpreneur.accountant} {:enterpreneur.legal_address :enterpreneur.legal_address} {:enterpreneur.physical_address :enterpreneur.physical_address} {:enterpreneur.contacts_information :enterpreneur.contacts_information}]}, :table-name :enterpreneur, :model [:enterpreneur.ssreou :enterpreneur.ownership_form :enterpreneur.vat_certificate :enterpreneur.individual_tax_number :enterpreneur.director :enterpreneur.accountant :enterpreneur.legal_address :enterpreneur.physical_address :enterpreneur.contacts_information]}, :toolkit {:model-id :enterpreneur.id, :insert #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16726], :delete-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/delete-expression--16720], :select-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/select-expression--16723], :update #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16728], :delete #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16730], :update-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/update-expression--16716], :table-meta {:description nil, :ref {:front-references nil, :back-references nil}, :allow-linking? true, :field enterpreneur, :representation enterpreneur, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :is-system? false}, :insert-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/insert-expression--16718], :columns-meta [{:description nil, :private? false, :default-value nil, :editable? true, :field :ssreou, :column-type [:tinytext :nnull], :component-type [:textarea], :representation ssreou, :field-qualified :enterpreneur.ssreou} {:description nil, :private? false, :default-value nil, :editable? true, :field :ownership_form, :column-type [:varchar-100 :default :null], :component-type [:text], :representation ownership_form, :field-qualified :enterpreneur.ownership_form} {:description nil, :private? false, :default-value nil, :editable? true, :field :vat_certificate, :column-type [:tinytext :default :null], :component-type [:textarea], :representation vat_certificate, :field-qualified :enterpreneur.vat_certificate} {:description nil, :private? false, :default-value nil, :editable? true, :field :individual_tax_number, :column-type [:varchar-100 :default :null], :component-type [:text], :representation individual_tax_number, :field-qualified :enterpreneur.individual_tax_number} {:description nil, :private? false, :default-value nil, :editable? true, :field :director, :column-type [:varchar-100 :default :null], :component-type [:text], :representation director, :field-qualified :enterpreneur.director} {:description nil, :private? false, :default-value nil, :editable? true, :field :accountant, :column-type [:varchar-100 :default :null], :component-type [:text], :representation accountant, :field-qualified :enterpreneur.accountant} {:description nil, :private? false, :default-value nil, :editable? true, :field :legal_address, :column-type [:varchar-100 :default :null], :component-type [:text], :representation legal_address, :field-qualified :enterpreneur.legal_address} {:description nil, :private? false, :default-value nil, :editable? true, :field :physical_address, :column-type [:varchar-100 :default :null], :component-type [:text], :representation physical_address, :field-qualified :enterpreneur.physical_address} {:description nil, :private? false, :default-value nil, :editable? true, :field :contacts_information, :column-type [:mediumtext :default :null], :component-type [:textarea], :representation contacts_information, :field-qualified :enterpreneur.contacts_information}], :select #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16732]}}, 
+;;                          :plugin-19458 {:config {:plug-place [:#tables-view-plugin], :buttons [], :permission [:user], :view-columns [:enterpreneur.ssreou :enterpreneur.ownership_form :enterpreneur.vat_certificate :enterpreneur.individual_tax_number :enterpreneur.director :enterpreneur.accountant :enterpreneur.legal_address :enterpreneur.physical_address :enterpreneur.contacts_information], :name enterpreneur, :tables [:enterpreneur], :plugin-config-path [:enterpreneur :table :plugin-19458], :actions [], :insert-button true, :id :plugin-19458, :plugin-name table, :delete-button true, :query {:column [{:enterpreneur.id :enterpreneur.id} {:enterpreneur.ssreou :enterpreneur.ssreou} {:enterpreneur.ownership_form :enterpreneur.ownership_form} {:enterpreneur.vat_certificate :enterpreneur.vat_certificate} {:enterpreneur.individual_tax_number :enterpreneur.individual_tax_number} {:enterpreneur.director :enterpreneur.director} {:enterpreneur.accountant :enterpreneur.accountant} {:enterpreneur.legal_address :enterpreneur.legal_address} {:enterpreneur.physical_address :enterpreneur.physical_address} {:enterpreneur.contacts_information :enterpreneur.contacts_information}]}, :table-name :enterpreneur, :model [:enterpreneur.ssreou :enterpreneur.ownership_form :enterpreneur.vat_certificate :enterpreneur.individual_tax_number :enterpreneur.director :enterpreneur.accountant :enterpreneur.legal_address :enterpreneur.physical_address :enterpreneur.contacts_information]}, :toolkit {:model-id :enterpreneur.id, :insert #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16726], :delete-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/delete-expression--16720], :select-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/select-expression--16723], :update #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16728], :delete #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16730], :update-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/update-expression--16716], :table-meta {:description nil, :ref {:front-references nil, :back-references nil}, :allow-linking? true, :field enterpreneur, :representation enterpreneur, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :is-system? false}, :insert-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/insert-expression--16718], :columns-meta [{:description nil, :private? false, :default-value nil, :editable? true, :field :ssreou, :column-type [:tinytext :nnull], :component-type [:textarea], :representation ssreou, :field-qualified :enterpreneur.ssreou} {:description nil, :private? false, :default-value nil, :editable? true, :field :ownership_form, :column-type [:varchar-100 :default :null], :component-type [:text], :representation ownership_form, :field-qualified :enterpreneur.ownership_form} {:description nil, :private? false, :default-value nil, :editable? true, :field :vat_certificate, :column-type [:tinytext :default :null], :component-type [:textarea], :representation vat_certificate, :field-qualified :enterpreneur.vat_certificate} {:description nil, :private? false, :default-value nil, :editable? true, :field :individual_tax_number, :column-type [:varchar-100 :default :null], :component-type [:text], :representation individual_tax_number,
+;;  :field-qualified :enterpreneur.individual_tax_number} {:description nil, :private? false, :default-value nil, :editable? true, :field :director, :column-type [:varchar-100 :default :null], :component-type [:text], :representation director, :field-qualified :enterpreneur.director} {:description nil, :private? false, :default-value nil, :editable? true, :field :accountant, :column-type [:varchar-100 :default :null], :component-type [:text], :representation accountant, :field-qualified :enterpreneur.accountant} {:description nil, :private? false, :default-value nil, :editable? true, :field :legal_address, :column-type [:varchar-100 :default :null], :component-type [:text], :representation legal_address, :field-qualified :enterpreneur.legal_address} {:description nil, :private? false, :default-value nil, :editable? true, :field :physical_address, :column-type [:varchar-100 :default :null], :component-type [:text], :representation physical_address, :field-qualified :enterpreneur.physical_address} {:description nil, :private? false, :default-value nil, :editable? true, :field :contacts_information, :column-type [:mediumtext :default :null], :component-type [:textarea], :representation contacts_information, :field-qualified :enterpreneur.contacts_information}], :select #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16732]}}, 
+;;                          :plugin-19526 {:config {:plug-place [:#tables-view-plugin], :buttons [], :permission [:user], :view-columns [:enterpreneur.ssreou :enterpreneur.ownership_form :enterpreneur.vat_certificate :enterpreneur.individual_tax_number :enterpreneur.director :enterpreneur.accountant :enterpreneur.legal_address :enterpreneur.physical_address :enterpreneur.contacts_information], :name enterpreneur, :tables [:enterpreneur], :plugin-config-path [:enterpreneur :table :plugin-19526], :actions [], :insert-button true, :id :plugin-19526, :plugin-name table, :delete-button true, :query {:column [{:enterpreneur.id :enterpreneur.id} {:enterpreneur.ssreou :enterpreneur.ssreou} {:enterpreneur.ownership_form :enterpreneur.ownership_form} {:enterpreneur.vat_certificate :enterpreneur.vat_certificate} {:enterpreneur.individual_tax_number :enterpreneur.individual_tax_number} {:enterpreneur.director :enterpreneur.director} {:enterpreneur.accountant :enterpreneur.accountant} {:enterpreneur.legal_address :enterpreneur.legal_address} {:enterpreneur.physical_address :enterpreneur.physical_address} {:enterpreneur.contacts_information :enterpreneur.contacts_information}]}, :table-name :enterpreneur, :model [:enterpreneur.ssreou :enterpreneur.ownership_form :enterpreneur.vat_certificate :enterpreneur.individual_tax_number :enterpreneur.director :enterpreneur.accountant :enterpreneur.legal_address :enterpreneur.physical_address :enterpreneur.contacts_information]}, :toolkit {:model-id :enterpreneur.id, :insert #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16726], :delete-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/delete-expression--16720], :select-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/select-expression--16723], :update #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16728], :delete #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16730], :update-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/update-expression--16716], :table-meta {:description nil, :ref {:front-references nil, :back-references nil}, :allow-linking? true, :field enterpreneur, :representation enterpreneur, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :is-system? false}, :insert-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/insert-expression--16718], :columns-meta [{:description nil, :private? false, :default-value nil, :editable? true, :field :ssreou, :column-type [:tinytext :nnull], :component-type [:textarea], :representation ssreou, :field-qualified :enterpreneur.ssreou} {:description nil, :private? false, :default-value nil, :editable?
+;;  true, :field :ownership_form, :column-type [:varchar-100 :default :null], :component-type [:text], :representation ownership_form, :field-qualified :enterpreneur.ownership_form} {:description nil, :private? false, :default-value nil, :editable? true, :field :vat_certificate, :column-type [:tinytext :default :null], :component-type [:textarea], :representation vat_certificate, :field-qualified :enterpreneur.vat_certificate} {:description nil, :private? false, :default-value nil, :editable? true, :field :individual_tax_number, :column-type [:varchar-100 :default :null], :component-type [:text], :representation individual_tax_number, :field-qualified :enterpreneur.individual_tax_number} {:description nil, :private? false, :default-value nil, :editable? true, :field :director, :column-type [:varchar-100 :default :null], :component-type [:text], :representation director, :field-qualified :enterpreneur.director} {:description nil, :private? false, :default-value nil, :editable? true, :field :accountant, :column-type [:varchar-100 :default :null], :component-type [:text], :representation accountant, :field-qualified :enterpreneur.accountant} {:description nil, :private? false, :default-value nil, :editable? true, :field :legal_address, :column-type [:varchar-100 :default :null], :component-type [:text], :representation legal_address, :field-qualified :enterpreneur.legal_address} {:description nil, :private? false, :default-value nil, :editable? true, :field :physical_address, :column-type [:varchar-100 :default :null], :component-type [:text], :representation physical_address, :field-qualified :enterpreneur.physical_address} {:description nil, :private? false, :default-value nil, :editable? true, :field :contacts_information, :column-type [:mediumtext :default :null], :component-type [:textarea], :representation contacts_information, :field-qualified :enterpreneur.contacts_information}], :select #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16732]}}}}, 
+
+;;   :user {:table {:plugin-17211 
+;;                  {:config {:plug-place [:#tables-view-plugin], :buttons [{:action :add-multiply-users-insert, :title Auto generate users}], :permission [:user], :view-columns [:user.login :user.first_name :user.last_name :permission.permission_name], :name user-override, :tables [:user :permission], :plugin-config-path [:user :table :plugin-17211], :actions {:add-multiply-users-insert (fn [state] (let [{user-start :user-start, user-end :user-end} (clojure.core/deref state)] (println (map (fn* [p1__17173#] (hash-map :user.login (str user p1__17173#) :user.password 1234 :user.last_name (str user p1__17173#) :user.first_name (str user p1__17173#) :user.id_permission 2)) (range user-start (+ 1 user-end))))))}, :insert-button true, :id :plugin-17211, :plugin-name table, :delete-button false, :query {:inner-join [:user->permission], :column [{:user.id :user.id} {:user.login :user.login} {:user.password :user.password} {:user.first_name :user.first_name} {:user.last_name :user.last_name} {:user.id_permission :user.id_permission} {:permission.id :permission.id} {:permission.permission_name :permission.permission_name} {:permission.configuration :permission.configuration}]}, :table-name :user, :model [{:model-reprs Login, :model-param :user.login, :bind-args {:title :title}, :model-comp jarman.gui.gui-components/input-text-with-atom} :user.password :user.first_name :user.last_name :user.id_permission {:model-reprs Start user, :model-param :user-start, :model-comp jarman.gui.gui-components/input-int} {:model-reprs End user, :model-param :user-end, :model-comp jarman.gui.gui-components/input-int}]}, 
+;;                   :toolkit {:model-id :user.id, :insert #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16726], :delete-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/delete-expression--16720], :select-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/select-expression--16723], :update #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16728], :delete #function[jarman.plugin.data-
+;; toolkit/sql-crud-toolkit-constructor/fn--16730], :update-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/update-expression--16716], :table-meta {:description nil, :ref {:front-references [:permission], :back-references nil}, :allow-linking? true, :field user, :representation user, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :is-system? false}, :insert-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/insert-expression--16718], :columns-meta [{:description nil, :private? false, :default-value nil, :editable? true, :field :login, :column-type [:varchar-100 :nnull], :component-type [:text], :representation login, :field-qualified :user.login} {:description nil, :private? false, :default-value nil, :editable? true, :field :password, :column-type [:varchar-100 :nnull], :component-type [:text], :representation password, :field-qualified :user.password} {:description nil, :private? false, :default-value nil, :editable? true, :field :first_name, :column-type [:varchar-100 :nnull], :component-type [:text], :representation first_name, :field-qualified :user.first_name} {:description nil, :private? false, :default-value nil, :editable? true, :field :last_name, :column-type [:varchar-100 :nnull], :component-type [:text], :representation last_name, :field-qualified :user.last_name} {:description nil, :private? false, :default-value nil, :editable? true, :field :id_permission, :column-type [:bigint-120-unsigned :nnull], :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}], :component-type [:link], :representation id_permission, :field-qualified :user.id_permission, :key-table :permission}], :select #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16732]}}, 
+;;                  :plugin-19265 
+;;                  {:config {:plug-place [:#tables-view-plugin], :buttons [{:action :add-multiply-users-insert, :title Auto generate users}], :permission [:user], :view-columns [:user.login :user.first_name :user.last_name :permission.permission_name], :name user-override, :tables [:user :permission], :plugin-config-path [:user :table :plugin-19265], :actions {:add-multiply-users-insert (fn [state] (let [{user-start :user-start, user-end :user-end} (clojure.core/deref state)] (println (map (fn* [p1__19227#] (hash-map :user.login (str user p1__19227#) :user.password 1234 :user.last_name (str user p1__19227#) :user.first_name (str user p1__19227#) :user.id_permission 2)) (range user-start (+ 1 user-end))))))}, :insert-button true, :id :plugin-19265, :plugin-name table, :delete-button false, :query {:inner-join [:user->permission], :column [{:user.id :user.id} {:user.login :user.login} {:user.password :user.password} {:user.first_name :user.first_name} {:user.last_name :user.last_name} {:user.id_permission :user.id_permission} {:permission.id :permission.id} {:permission.permission_name :permission.permission_name} {:permission.configuration :permission.configuration}]}, :table-name :user, :model [{:model-reprs Login, :model-param :user.login, :bind-args {:title :title}, :model-comp jarman.gui.gui-components/input-text-with-atom} :user.password :user.first_name :user.last_name :user.id_permission {:model-reprs Start user, :model-param :user-start, :model-comp jarman.gui.gui-components/input-int} {:model-reprs End user, :model-param :user-end, :model-comp jarman.gui.gui-components/input-int}]}, :toolkit {:model-id :user.id, :insert #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16726], :delete-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/delete-expression--16720], :select-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/select-expression--16723], :update #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16728], :delete #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16730], :update-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/update-expression--16716], :table-meta {:description nil, :ref {:front-references [:permission], :back-references nil}, :allow-linking? true, :field user, :representation user, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :is-system? false}, :insert-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/insert-expression--16718], :columns-meta [{:description nil, :private? false, :default-value nil, :editable? true, :field :login, :column-type [:varchar-100 :nnull], :component-type [:text], :representation login, :field-qualified :user.login} {:description nil, :private? false, :default-value nil, :editable? true, :field :password, :column-type [:varchar-100 :nnull], :component-type [:text], :representation password, :field-qualified :user.password} {:description nil, :private? false, :default-value nil, :editable? true, :field :first_name, :column-type [:varchar-100 :nnull], :component-type [:text], :representation first_name, :field-qualified :user.first_name} {:description nil, :private? false, :default-value nil, :editable? true, :field :last_name, :column-type [:varchar-100 :nnull], :component-type [:text], :representation last_name, :field-qualified :user.last_name} {:description nil, :private? false, :default-value nil, :editable? true, :field :id_permission, :column-type [:bigint-120-unsigned :nnull], :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}], :component-type [:link], :representation id_permission, :field-qualified :user.id_permission, :key-table :permission}], :select #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16732]}}, 
+;;                  :plugin-19339 
+;;                  {:config {:plug-place [:#tables-view-plugin], :buttons [{:action :add-multiply-users-insert, :title Auto generate users}], :permission [:user], :view-columns [:user.login :user.first_name :user.last_name :permission.permission_name], :name user-override, :tables [:user :permission], :plugin-config-path [:user :table :plugin-19339], :actions {:add-multiply-users-insert (fn [state] (let [{user-start :user-start, user-end :user-end} (clojure.core/deref state)] (println (map (fn* [p1__19301#] (hash-map :user.login (str user p1__19301#) :user.password 1234 :user.last_name (str user p1__19301#) :user.first_name (str user p1__19301#) :user.id_permission 2)) (range user-start (+ 1 user-end))))))}, :insert-button true, :id :plugin-19339, :plugin-name table, :delete-button false, :query {:inner-join [:user->permission], :column [{:user.id :user.id} {:user.login :user.login} {:user.password :user.password} {:user.first_name :user.first_name} {:user.last_name :user.last_name} {:user.id_permission :user.id_permission} {:permission.id :permission.id} {:permission.permission_name :permission.permission_name} {:permission.configuration :permission.configuration}]}, :table-name :user, :model [{:model-reprs Login, :model-param :user.login, :bind-args {:title :title}, :model-comp jarman.gui.gui-components/input-text-with-atom} :user.password :user.first_name :user.last_name :user.id_permission {:model-reprs Start user, :model-param :user-start, :model-comp jarman.gui.gui-components/input-int} {:model-reprs End user, :model-param :user-end, :model-comp jarman.gui.gui-components/input-int}]}, :toolkit {:model-id :user.id, :insert #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16726], :delete-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/delete-expression--16720], :select-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/select-expression--16723], :update #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16728], :delete #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16730], :update-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/update-expression--16716], :table-meta {:description nil, :ref {:front-references [:permission], :back-references nil}, :allow-linking? true, :field user, :representation user, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :is-system? false}, :insert-expression #function[jarman.plugin.data-
+;; toolkit/sql-crud-toolkit-constructor/insert-expression--16718], :columns-meta [{:description nil, :private? false, :default-value nil, :editable? true, :field :login, :column-type [:varchar-100 :nnull], :component-type [:text], :representation login, :field-qualified :user.login} {:description nil, :private? false, :default-value nil, :editable? true, :field :password, :column-type [:varchar-100 :nnull], :component-type [:text], :representation password, :field-qualified :user.password} {:description nil, :private? false, :default-value nil, :editable? true, :field :first_name, :column-type [:varchar-100 :nnull], :component-type [:text], :representation first_name, :field-qualified :user.first_name} {:description nil, :private? false, :default-value nil, :editable? true, :field :last_name, :column-type [:varchar-100 :nnull], :component-type [:text], :representation last_name, :field-qualified :user.last_name} {:description nil, :private? false, :default-value nil, :editable? true, :field :id_permission, :column-type [:bigint-120-unsigned :nnull], :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}], :component-type [:link], :representation id_permission, :field-qualified :user.id_permission, :key-table :permission}], :select #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16732]}}, 
+;;                  :plugin-19409 {:config {:plug-place [:#tables-view-plugin], :buttons [{:action :add-multiply-users-insert, :title Auto generate users}], :permission [:user], :view-columns [:user.login :user.first_name :user.last_name :permission.permission_name], :name user-override, :tables [:user :permission], :plugin-config-path [:user :table :plugin-19409], :actions {:add-multiply-users-insert (fn [state] (let [{user-start :user-start, user-end :user-end} (clojure.core/deref state)] (println (map (fn* [p1__19371#] (hash-map :user.login (str user p1__19371#) :user.password 1234 :user.last_name (str user p1__19371#) :user.first_name (str user p1__19371#) :user.id_permission 2)) (range user-start (+ 1 user-end))))))}, :insert-button true, :id :plugin-19409, :plugin-name table, :delete-button false, :query {:inner-join [:user->permission], :column [{:user.id :user.id} {:user.login :user.login} {:user.password :user.password} {:user.first_name :user.first_name} {:user.last_name :user.last_name} {:user.id_permission :user.id_permission} {:permission.id :permission.id} {:permission.permission_name :permission.permission_name} {:permission.configuration :permission.configuration}]}, :table-name :user, :model [{:model-reprs Login, :model-param :user.login, :bind-args {:title :title}, :model-comp jarman.gui.gui-components/input-text-with-atom} :user.password :user.first_name :user.last_name :user.id_permission {:model-reprs Start user, :model-param :user-start, :model-comp jarman.gui.gui-components/input-int} {:model-reprs End user, :model-param :user-end, :model-comp jarman.gui.gui-components/input-int}]},
+;;                                 :toolkit {:model-id :user.id, :insert #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16726], :delete-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/delete-expression--16720], :select-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/select-expression--16723], :update #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16728], :delete #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16730], :update-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/update-expression--16716], :table-meta {:description nil, :ref {:front-references [:permission], :back-references nil}, :allow-linking? true, :field user, :representation user, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :is-system? false}, :insert-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/insert-expression--16718], :columns-meta [{:description nil, :private? false, :default-value nil, :editable? true, :field :login, :column-type [:varchar-100 :nnull], :component-type [:text], :representation login, :field-qualified :user.login} {:description nil, :private? false, :default-value nil, :editable? true, :field :password, :column-type [:varchar-100 :nnull], :component-type [:text], :representation password, :field-qualified :user.password} {:description nil, :private? false, :default-value nil, :editable? true, :field :first_name, :column-type [:varchar-100 :nnull], :component-type [:text], :representation first_name, :field-qualified :user.first_name} {:description nil, :private? false, :default-value nil, :editable? true, :field :last_name, :column-type [:varchar-100 :nnull], :component-type [:text], :representation last_name, :field-qualified :user.last_name} {:description nil, :private? false, :default-value nil, :editable? true, :field :id_permission, :column-type [:bigint-120-unsigned :nnull], :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}], :component-type [:link], :representation id_permission, :field-qualified :user.id_permission, :key-table :permission}], :select #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16732]}}, 
+;;                  :plugin-19477 
+;;                  {:config {:plug-place [:#tables-view-plugin], :buttons [{:action :add-multiply-users-insert, :title Auto generate users}]
+;;                            :permission [:user], :view-columns [:user.login :user.first_name :user.last_name :permission.permission_name], :name user-override, :tables [:user :permission], :plugin-config-path [:user :table :plugin-19477], :actions {:add-multiply-users-insert (fn [state] (let [{user-start :user-start, user-end :user-end} (clojure.core/deref state)] (println (map (fn* [p1__19439#] (hash-map :user.login (str user p1__19439#) :user.password 1234 :user.last_name (str user p1__19439#) :user.first_name (str user p1__19439#) :user.id_permission 2)) (range user-start (+ 1 user-end))))))}, :insert-button true, :id :plugin-19477, :plugin-name table, :delete-button false, :query {:inner-join [:user->permission], :column [{:user.id :user.id} {:user.login :user.login} {:user.password :user.pas
+;;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               sword} {:user.first_name :user.first_name} {:user.last_name :user.last_name} {:user.id_permission :user.id_permission} {:permission.id :permission.id} {:permission.permission_name :permission.permission_name} {:permission.configuration :permission.configuration}]}, :table-name :user, :model [{:model-reprs Login, :model-param :user.login, :bind-args {:title :title}, :model-comp jarman.gui.gui-components/input-text-with-atom} :user.password :user.first_name :user.last_name :user.id_permission {:model-reprs Start user, :model-param :user-start, :model-comp jarman.gui.gui-components/input-int} {:model-reprs End user, :model-param :user-end, :model-comp jarman.gui.gui-components/input-int}]}, 
+;;                   :toolkit {:model-id :user.id, :insert #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16726], :delete-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/delete-expression--16720], :select-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/select-expression--16723], :update #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16728], :delete #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16730], :update-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/update-expression--16716], :table-meta {:description nil, :ref {:front-references [:permission], :back-references nil}, :allow-linking? true, :field user, :representation user, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :is-system? false}, :insert-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/insert-expression--16718], :columns-meta [{:description nil, :private? false, :default-value nil, :editable? true, :field :login, :column-type [:varchar-100 :nnull], :component-type [:text], :representation login, :field-qualified :user.login} {:description nil, :private? false, :default-value nil, :editable? true, :field :password, :column-type [:varchar-100 :nnull], :component-type [:text], :representa
+;; tion password, :field-qualified :user.password} {:description nil, :private? false, :default-value nil, :editable? true, :field :first_name, :column-type [:varchar-100 :nnull], :component-type [:text], :representation first_name, :field-qualified :user.first_name} {:description nil, :private? false, :default-value nil, :editable? true, :field :last_name, :column-type [:varchar-100 :nnull], :component-type [:text], :representation last_name, :field-qualified :user.last_name} {:description nil, :private? false, :default-value nil, :editable? true, :field :id_permission, :column-type [:bigint-120-unsigned :nnull], :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}], :component-type [:link], :representation id_permission, :field-qualified :user.id_permission, :key-table :permission}], :select #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16732]}}, :plugin-19545 {:config {:plug-place [:#tables-view-plugin], :buttons [{:action :add-multiply-users-insert, :title Auto generate users}], :permission [:user], :view-columns [:user.login :user.first_name :user.last_name :permission.permission_name], :name user-override, :tables [:user :permission], :plugin-config-path [:user :table :plugin-19545], :actions {:add-multiply-users-insert (fn [state] (let [{user-start :user-start, user-end :user-end} (clojure.core/deref state)] (println (map (fn* [p1__19507#] (hash-map :user.login (str user p1__19507#) :user.password 1234 :user.last_name (str user p1__19507#) :user.first_name (str user p1__19507#) :user.id_permission 2)) (range user-start (+ 1 user-end))))))}, :insert-button true, :id :plugin-19545, :plugin-name table, :delete-button false, :query {:inner-join [:user->permission], :column [{:user.id :user.id} {:user.login :user.login} {:user.password :user.password} {:user.first_name :user.first_name} {:user.last_name :user.last_name} {:user.id_permission :user.id_permission} {:permission.id :permission.id} {:permission.permission_name :permission.permission_name} {:permission.configuration :permission.configuration}]}, :table-name :user, :model [{:model-reprs Login, :model-param :user.login, :bind-args {:title :title}, :model-comp jarman.gui.gui-components/input-text-with-atom} :user.password :user.first_name :user.last_name :user.id_permission {:model-reprs Start user, :model-param :user-start, :model-comp jarman.gui.gui-components/input-int} {:model-reprs End user, :model-param :user-end, :model-comp jarman.gui.gui-components/input-int}]}, :toolkit {:model-id :user.id, :insert #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16726], :delete-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/delete-expression--16720], :select-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/select-expression--16723], :update #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16728], :delete #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16730], :update-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/update-expression--16716], :table-meta {:description nil, :ref {:front-references [:permission], :back-references nil}, :allow-linking? true, :field user, :representation user, :is-linker? false, :allow-modifing? true, :allow-deleting? true, :is-system? false}, :insert-expression #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/insert-expression--16718], :columns-meta [{:description nil, :private? false, :default-value nil, :editable? true, :field :login, :column-type [:varchar-100 :nnull], :component-type [:text], :representation login, :field-qualified :user.login} {:description nil, :private? false, :default-value nil, :editable? true, :field :password, :column-type [:varchar-100 :nnull], :component-type [:text], :representation password, :field-qualified :user.password} {:description nil, :private? false, :default-value nil, :editable? true, :field :first_name, :column-type [:varchar-100 :nnull], :component-type [:text], :representation firs
+;; t_name, :field-qualified :user.first_name} {:description nil, :private? false, :default-value nil, :editable? true, :field :last_name, :column-type [:varchar-100 :nnull], :component-type [:text], :representation last_name, :field-qualified :user.last_name} {:description nil, :private? false, :default-value nil, :editable? true, :field :id_permission, :column-type [:bigint-120-unsigned :nnull], :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}], :component-type [:link], :representation id_permission, :field-qualified :user.id_permission, :key-table :permission}], :select #function[jarman.plugin.data-toolkit/sql-crud-toolkit-constructor/fn--16732]}}}}}

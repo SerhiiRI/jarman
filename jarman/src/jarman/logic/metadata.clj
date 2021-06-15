@@ -432,6 +432,9 @@
 (defn show-tables-not-meta []
   (not-allowed-rules ["view" "metatable" "meta*"] (map (comp second first) (db/query "SHOW TABLES"))))
 
+(defn update-meta [metadata]
+  (db/exec (update-sql-by-id-template "metadata" metadata)))
+
 (defn create-one-meta [table-name]
   (let [meta (db/query (select :metadata :where [:= :metadata.table table-name]))]
     (if (empty? meta)
@@ -440,6 +443,7 @@
 (defn do-create-meta []
   (for [table (show-tables-not-meta)]
     (create-one-meta table)))
+
 
 (defn delete-one-meta [table-name]
   {:pre [(string? table-name)]}
@@ -450,8 +454,7 @@
   {:pre [(every? string? body)]}
   (db/exec (delete :metadata)))
 
-(defn update-meta [metadata]
-  (db/exec (update-sql-by-id-template "metadata" metadata)))
+
 
 (def  ^:private --loaded-metadata (ref nil))
 (defn ^:private swapp-metadata [metadata-list]
@@ -1095,6 +1098,27 @@
      {:table-name (keyword (:table metadata))
       :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
       :foreign-keys fkeys-fields})))
+
+(defn create-all-table-by-meta [table-list]
+  (for [table table-list]
+    (let [mtable (first (getset table))]
+      (if-not (nil? mtable)
+        (create-table-by-meta mtable)))))
+
+;;;heyyy
+;; (first (getset "user"))
+
+;; (create-all-table-by-meta ["user" "permission"])
+
+;; (do-create-meta)
+;; (do-clear-meta)
+
+ ;; (let [meta (db/query (select :metadata :where [:= :metadata.table table-name]))]
+ ;;    (if (empty? meta)
+ ;;      (db/exec (update-sql-by-id-template "metadata" (get-meta table-name)))))
+
+;;(db/connection-get)
+
 
 
 ;;; TODO unit test

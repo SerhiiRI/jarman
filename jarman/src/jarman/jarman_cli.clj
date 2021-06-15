@@ -12,10 +12,17 @@
    [jarman.tools.lang :refer :all]))
 
 (def data-cli-options
-  [["-c" "--create SCHEME" "Create table from scheme, use <all> for all. Automatic generate meta for structure(--create-meta)"
+  [["-c" "--create-by-ssql SCHEME" "Create table from scheme, use <all> for all. Automatic generate meta for structure(--create-meta)"
     :parse-fn #(str %)
-    :validate [#(or (= % "all")(scheme-in? %)) "Scheme not found"]]
-   ["-d" "--delete TABLE" "Delete table by name, use <all> for all"
+    ;;:validate [#(or (= % "all")(scheme-in? %)) "Scheme not found"]
+    ]
+   ["-d" "--delete-by-ssql TABLE" "Delete table by name, use <all> for all"
+    :parse-fn #(str %)
+    :validate [#(or (= % "all")(table-in? %)) "Table not found"]]
+   [nil "--create-by-meta TABLE" "Delete table by name, use <all> for all"
+    :parse-fn #(str %)
+    :validate [#(or (= % "all")(table-in? %)) "Table not found"]]
+   [nil "--delete--by-meta TABLE" "Delete table by name, use <all> for all"
     :parse-fn #(str %)
     :validate [#(or (= % "all")(table-in? %)) "Table not found"]]
    [nil "--create-meta TABLE" "Delete table by name, use <all> for all"
@@ -35,7 +42,8 @@
     :validate [#(scheme-in? %) "Scheme not found"]]
    ["-p" "--path PATH" "Path to file db.clj"
     :parse-fn #(str %)
-    :validate [#(file-exists? %) "File not found"]]
+    :validate [#(file-exists? %) "File not found"]
+    ]
    ;; [nil "--dummy-data TABLE" "Generate dummy data for table, use <all> for all"
    ;;  :parse-fn #(str %)
    ;;  :validate [#(or (= % "all") (table-in? %)) "Table not found"]]
@@ -73,21 +81,20 @@
     (if-let [es (get cli-opt :errors)]
       (doall (for [e es] (println (format "[!] %s" e))))
       (cond
-        (= k1 :create)       (cli-create-table cli-opt)
-        (= k1 :delete)       (cli-delete-table cli-opt)
-        (= k1 :create-meta)  (cli-create-table cli-opt)
-        (= k1 :delete-meta)  (cli-delete-table cli-opt)
-        (= k1 :reset-db)     (reset-db cli-opt)
-        (= k1 :reset-meta)   (reset-meta cli-opt)
-        (= k1 :view-scheme)  (cli-scheme-view  cli-opt)
-        (= k1 :path)         (path-to-db cli-opt)
+        (= k1 :create-by-ssql)     (cli-create-table cli-opt)
+      ;;  (= k1 :delete-ssql)     (cli-delete-table cli-opt)
+        (= k1 :create-by-meta)  (cli-create-table cli-opt)
+     ;;   (= k1 :delete-by-meta)  (cli-delete-table cli-opt)
+        (= k1 :create-meta)     (cli-create-table cli-opt)
+      ;;  (= k1 :delete-meta)     (cli-delete-table cli-opt)
+       ;; (= k1 :reset-db)        (reset-db cli-opt)
+       ;; (= k1 :reset-meta)      (reset-meta cli-opt)
+       ;; (= k1 :view-scheme)     (cli-scheme-view  cli-opt)
+       ;; (= k1 :path)            (path-to-db cli-opt)
 ;;        (= k1 :print)        (print-table cli-opt)
        ;; (= k1 :help)         (print-helpr cli-opt)
        ;; (= k1 :list-schemas) (print-lschm cli-opt)
-       ;; (= k1 :list-tables)  (print-ltbls cli-opt)
-
-
-      
+       ;; (= k1 :list-tables)  (print-ltbls cli-opt)   
       ;;  (= k1 :dummy-data)   (println "[!] Excuse me, functionality not implemented")
        ;; :else (print-helpr cli-opt)
         ))))
@@ -125,12 +132,17 @@
           (println (usage)))))))
 
 
+(-main "data" 
+       "--create-by-ssql" "all"
+       "--path" "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db_ssql.clj")
 
-(scheme-in? "documents")
+(-main "data" 
+       "--create-meta" "user"
+       "--path" "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db_ssql.clj")
 
-(-main "data" "--path" "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db.clj")
+(table-in? "user")
 
-(-main "data" "--reset-meta" "user")
+(-main "data" "--create-by-ssql" "all")
 
 (table-in? "user")
 

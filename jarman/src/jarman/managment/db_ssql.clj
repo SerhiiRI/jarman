@@ -1,3 +1,11 @@
+(def db-connection
+  {:dbtype "mysql",
+   :host  "trashpanda-team.ddns.net",
+   :port 3307,
+   :dbname "jarman-test",
+   :user "root",
+   :password "1234"})
+
 (def all-tables
   [{:table-name :documents
     :columns [{:table [:varchar-100 :default :null]}

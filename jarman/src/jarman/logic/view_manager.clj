@@ -6,6 +6,7 @@
    [clojure.java.io :as io]
    [seesaw.core :as c]
    ;; ;; Jarman toolkit
+   [jarman.gui.gui-seed :as gseed]
    [jarman.logic.connection :as db]
    [jarman.tools.lang :include-macros true :refer :all]
    [jarman.config.environment :as env]
@@ -225,9 +226,9 @@
                     :useUnicode :characterEncoding)
         data (db/query (select! {:table-name :view
                                  :column    [:view]}))
-        sdata (concat [con] (map (fn [x] (read-string (:view x))) data))
+        sdata (if-not (empty? data)(concat [con] (map (fn [x] (read-string (:view x))) data)))
         path  "src/jarman/logic/view.clj"]
-    (if-not (nil? data) (do (spit path
+    (if-not (empty? data) (do (spit path
                                   "")
                             (for [s data]
                               (with-open [W (io/writer (io/file path) :append true)]
@@ -242,12 +243,13 @@
         con (dissoc (db/connection-get)
                     :dbtype :user :password
                     :useUnicode :characterEncoding)]
-    (if-not (nil? data)
+    (if-not (empty? data)
       (if (= (first data) con) data))))
+
 ;;(put-table-view-to-db (loader-from-view-clj (db/connection-get)))
 
 (defn- load-data-recur [data loaders]
-  (if (nil? data)
+  (if (empty? data)
     (load-data-recur ((first loaders) (db/connection-get)) (rest loaders))
     data))
 
@@ -256,8 +258,8 @@
    if first is db-loader, then do first load forom db, if
    db not load db, or do crash, use next in order loader"
   [& loaders]
-  (fn [] (subvec (vec (load-data-recur nil loaders)) 1)))
-
+  (fn [] (load-data-recur nil loaders)))
+ 
 (def ^:dynamic *view-loader-chain-fn*
   "Main function "
   (make-loader-chain loader-from-view-clj loader-from-db))
@@ -268,9 +270,12 @@
   defview."
   []
   (let [data (*view-loader-chain-fn*)]
-    (if (nil? data)
-      "Error with file"
+    (if (empty? data)
+      (@gseed/alert-manager :set {:header "Error"
+                                  :body "Problem with tables. Data not found in DB"}
+       (@gseed/alert-manager :message gseed/alert-manager) 5)
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
-        (doall (map (fn [x] (eval x)) data))))))
+        (doall (map (fn [x] (eval x)) (subvec (vec data) 1)))))))
+
 
 

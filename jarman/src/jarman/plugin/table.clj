@@ -224,6 +224,7 @@
 
 (defn- create-table [configuration toolkit-map]
   (let [view (:view-columns configuration) tables (:tables configuration)]
+    ;; (println "\nView table\n" view)
     (if (and view tables)
       (let [model-columns (gui-table-model-columns tables view)
             table-model (gui-table-model model-columns (:select toolkit-map))]
@@ -384,6 +385,7 @@
   (fn [type-coll props-coll]
     (let [props-coll (into props-coll (if (:val props-coll) {:val (:val props-coll)} {}))
           selected-comp-fn  (get-first-available-comp type-coll comps)]
+      ;; (println "\nColumn type\n" type-coll)
       (if (nil? selected-comp-fn)
         (println (format "Component %s not exist." type))
         (gcomp/inpose-label (:title props-coll) (selected-comp-fn props-coll))))))
@@ -427,6 +429,7 @@
      key is an key from model in defview.
    "
   [global-configuration local-changes meta-data table-model key]
+  
   (let [meta            (key meta-data)
         field-qualified (:field-qualified meta)
         title           (:representation  meta)
@@ -434,6 +437,7 @@
         comp-type       (:component-type  meta)
         key-table       (->> (rift (:key-table meta) nil) (#(if (keyword? %) % (keyword %))))
         val             (rift (str (key table-model)) "")
+        ;; x               (println "\nMeta data\n" meta-data "\nMeta\n" meta "\nComp type\n" comp-type "\nKey\n" key)
         props {:title title :store-id field-qualified  :field-qualified field-qualified  :local-changes local-changes  :editable? editable?  :val val}
         comp  (if (in? comp-type mt/column-type-linking) ;; If linker add more keys to props map
                 (choose-component comp-type (into props {:key-table key-table :table-model table-model :global-configuration global-configuration}))
@@ -540,8 +544,9 @@
   (fn [data-toolkit configuration global-configuration
        & {:keys [table-model more-comps]
           :or {table-model [] more-comps []}}]
+    ;; (println "\ndata-toolkit\n" data-toolkit "\nconfiguration\n" configuration)
     (let [local-changes (atom {})
-          meta-data (convert-metadata-vec-to-map (:columns-meta data-toolkit))
+          meta-data (rift (convert-metadata-vec-to-map (:columns-meta data-toolkit)) (do (println "[ Warning ] In data-toolkit missing :comumns-meta!") {}))
           components (convert-model-to-components-list global-configuration local-changes meta-data table-model (:model configuration))
           panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
                                 :border (sborder/empty-border :thickness 10)
@@ -573,11 +578,11 @@
           insert-form   (fn [] (build-input-form data-toolkit configuration global-configuration))
           view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
           table         (fn [] (second (u/children view-layout)))
-          header        (fn [] (c/label :text (:representation (:table-meta data-toolkit)) :halign :center :border (sborder/empty-border :top 10)))
+          header        (fn [] (c/label :text (:representation (rift (:table-meta data-toolkit) (do (println "[ Warning ] In data-toolkit missing :table-meta!") {}))) 
+                                        :halign :center :border (sborder/empty-border :top 10)))
           update-form   (fn [table-model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration :table-model table-model :more-comps [(return)])]))
           x nil ;;------------ Build
-          expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never
-                                                  )
+          expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never)
           back-to-insert     (fn [] [(gcomp/hr 2) (gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]])))])
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/min-scrollbox (update-form model return))] [(table)]]))
           table              (fn [] ((:table (create-table configuration data-toolkit)) (fn [model] (expand-update-form model back-to-insert))))

@@ -188,8 +188,8 @@
    "
   (fn [start-key
        & {:keys [message-ok message-faild]
-          :or {message-ok (fn [txt] (c/alert txt))
-               message-faild (fn [txt] (c/alert txt))}}]
+          :or {message-ok (fn [head body] (c/alert (str head ": " body)))
+               message-faild (fn [head body] (c/alert (str head ": " body)))}}]
     (let [map-part (cm/get-in-segment start-key)
           local-changes (atom {})]
       (if (= :edit (:display map-part))
@@ -221,21 +221,32 @@
                                        :constraints ["" "0px[grow,fill]0px[fill]0px" "0px[grow,fill]0px"]
                                        :items [[(gcomp/button-basic (gtool/get-lang-btns :save)
                                                                     :onClick (fn [e] ;; save changes configuration
-                                                                               (doall (map #(prn (first %) (str (second %)))  @local-changes))
-                                                                               (doall (map #(cm/assoc-in-value (first %) (second %))  @local-changes))
-                                                                               (let [validate (cm/store-and-back)] ;; TODO: Can not saving chages
-                                                                                 (println validate)
-                                                                                 (cm/swapp)
-                                                                                 (if (get validate :valid?)
-                                                                                   (do ;; message box if saved successfull
-                                                                                     (try
-                                                                                       ((@gseed/jarman-views-service :reload))
-                                                                                       (if-not (nil? message-ok) (message-ok (str @local-changes)))
-                                                                                       (catch Exception e (println (str "Message ok error: " (.getMessage e))))))
-                                                                                   (do ;; message box if saved faild
-                                                                                     (try
-                                                                                       (if-not (nil? message-faild) (message-faild (str (get validate :output))))
-                                                                                       (catch Exception e (println (str "Message faild error: " (.getMessage e))))))))))]
+                                                                               (if (empty? @local-changes)
+                                                                                 (message-ok ["No cheges" "No changes to saving."])
+                                                                                 (do
+                                                                                   (doall (map #(prn (first %) (str (second %)))  @local-changes))
+                                                                                   (doall (map #(cm/assoc-in-value (first %) (second %))  @local-changes)) 
+                                                                                  
+                                                                                   ;; TODO: Can not saving chages in theme, store-and-backup do not saving to file
+                                                                                  ;;  (cm/get-in-value [:themes :current-theme :color :jarman :bar])
+                                                                                  ;;  (cm/assoc-in-value [:themes :current-theme :color :jarman :bar] "#aaa")
+                                                                                  ;;  (cm/store-and-back)
+
+                                                                                   (let [validate (cm/store-and-back)] 
+                                                                                     (println validate)
+                                                                                     (cm/swapp)
+                                                                                     (if (get validate :valid?)
+                                                                                       (do ;; message box if saved successfull
+                                                                                         (try
+                                                                                           ((@gseed/jarman-views-service :reload))
+                                                                                           (if-not (nil? message-ok) (message-ok (gtool/get-lang-alerts :changes-saved)
+                                                                                                                                 (str @local-changes)))
+                                                                                           (catch Exception e (println (str "Message ok error: " (.getMessage e))))))
+                                                                                       (do ;; message box if saved faild
+                                                                                         (try
+                                                                                           (if-not (nil? message-faild) (message-faild (gtool/get-lang-alerts :changes-saved-failed) 
+                                                                                                                                       (str (:output validate))))
+                                                                                           (catch Exception e (println (str "Message faild error: " (.getMessage e))))))))))))]
                                                [(gcomp/button-basic ""
                                                                     :onClick (fn [e] (println (str "\nConfiguration changes: " @local-changes))) :args [:icon (stool/image-scale icon/loupe-blue-64-png 25)])]])))]
             ;; (println "Config complete")

@@ -101,6 +101,50 @@
     (map? con)        (if (empty? con) els con)
     :else con))
 
+(defn left-merge
+  "Description
+     Merge for map.
+     Merge from right map to left map only by keys in left map.
+     If key is not inside right map then use left map value.
+   Example:
+     (left-merge {:a \"a\" :b \"b\"} {:a \"1\" :c \"3\"}) => {:a \"1\", :b \"b\"}
+   "
+  [map-coll-orgin map-col-to-join]
+  ((fn l-merge [coll-keys coll-orgin]
+    (if (empty? coll-keys)
+      coll-orgin
+      (->> (first coll-keys)
+           ((fn [key] (assoc coll-orgin key (rift (key map-col-to-join) (key coll-orgin)))))
+           (l-merge (drop 1 coll-keys)))))
+   (keys map-coll-orgin) map-coll-orgin))
+
+(defn vemap
+  "Description:
+    vector empty map
+    Create from vector or list map with nil value.
+    If second arg will be somethin then it will be default value for keys.
+  Example:
+    (vemap [:a :b])
+      => {:a nil, :b nil}
+    (vemap [:a :b] \"nice\")
+      => {:a \"nice\", :b \"nice\"}
+  "
+  ([coll] (vemap coll nil))
+  ([coll val] (into {} (map (fn [k] {k val}) coll))))
+
+(defn cnmap
+  "Description:
+     cut nil map
+     Just cut parts with nil in value.
+   Example:
+     (cnmap {:a nil :b \"a\"})
+     ;; => {:b \"a\"}
+   "
+  [coll-map]
+  (into {} (filter #(not (nil? (second %))) coll-map)))
+
+
+
 (defmacro join
   "(filter-nil [nil 1 nil 3 4]) ;=> [1 3 4]"
   [delimiter col]

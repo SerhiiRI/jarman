@@ -80,16 +80,16 @@
   (get-calendar (gcomp/input-text :val set-date :args [:enabled? enabled? :editable? editable?])))
 
 (defn calendar-with-atom
-  [& {:keys [local-changes
-             store-id
-             set-date
-             editable?
-             enabled?]
-      :or {local-changes (atom {})
-           store-id nil
-           set-date nil
-           editable? false
-           enabled? true}}]
+  [{:keys [local-changes
+           store-id
+           set-date
+           editable?
+           enabled?]
+    :or {local-changes (atom {})
+         store-id nil
+         set-date nil
+         editable? false
+         enabled? true}}]
   (get-calendar (gcomp/input-text
                  :val set-date
                  :args [:enabled? enabled?

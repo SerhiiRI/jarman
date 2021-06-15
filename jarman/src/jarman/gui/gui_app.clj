@@ -1046,7 +1046,7 @@
                                                                  :view-id view-id
                                                                  :title title
                                                                  :scrollable? false
-                                                                 :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (@gseed/alert-manager :message @gseed/alert-manager) 5)))))))))
+                                                                 :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [head body] (@gseed/alert-manager :set {:header head :body body} (@gseed/alert-manager :message gseed/alert-manager) 5)))))))))
                       config-file-list-as-keyword-to-display)
                  (let [path [:themes :theme_config.edn] ;; Selected theme
                        title (:name (cm/get-in-segment path))
@@ -1057,7 +1057,7 @@
                                                           :view-id view-id
                                                           :title title
                                                           :scrollable? false
-                                                          :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} ((@gseed/alert-manager :message) @gseed/alert-manager) 5))))))))
+                                                          :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [head body] (@gseed/alert-manager :set {:header head :body body} ((@gseed/alert-manager :message) gseed/alert-manager) 5))))))))
                  (let [path [:themes :current-theme] ;; Themes config
                        title (rift (:name (cm/get-in-segment path)) "NIL")
                        view-id :current-theme]
@@ -1067,7 +1067,7 @@
                                                           :view-id view-id
                                                           :title title
                                                           :scrollable? false
-                                                          :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (str (gtool/get-lang-alerts :changes-saved))} (@gseed/alert-manager :message gseed/alert-manager) 5))))))))
+                                                          :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [head body] (@gseed/alert-manager :set {:header head :body body} (@gseed/alert-manager :message gseed/alert-manager) 5))))))))
               ;; restore-button
                  ))))])))
 

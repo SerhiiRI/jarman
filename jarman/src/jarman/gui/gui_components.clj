@@ -153,19 +153,25 @@
     scr))
 
 (defn min-scrollbox
+  "Description
+    this func get some pane (like mig-panel etc..)
+    return scrollable pane, args (some options to scroll-pane)
+   Example
+    (min-scrollbox (mig-panel ...) :hscroll :never)
+    ;; => #object[seesaw.core.proxy$javax.swing"
   [component
    & args]
   (let [scr (CustomScrollBar/myScrollPane component)
         get-key (fn [x] (first (first x)))
-        get-val (fn [x] (second (first x)))]  ;; speed up scrolling
+        get-val (fn [x] (second (first x)))] 
     (if-not (nil? args)
        ((fn next [sm]
           (if (empty? sm)                   
-            nil
+            scr
             (do 
-              (c/config! (c/label) (get-key sm) (get-val sm))
+              (c/config! scr (get-key sm) (get-val sm))
               (next (lang/map-rest sm)))))
-        args))
+        (apply hash-map args)))
     (.setBorder scr nil)
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setUnitIncrement (.getHorizontalScrollBar scr) 20)

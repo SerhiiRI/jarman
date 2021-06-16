@@ -60,7 +60,7 @@
     (mig-panel
      :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill, center]0px[fill, grow]0px"]
      :bounds (gtool/middle-bounds (first @atom-app-size) (second @atom-app-size) w h)
-     :border (line-border :thickness 2 :color (gtool/get-color :decorate :gray-underline))
+     :border (line-border :thickness 2 :color (gtool/get-color :decorate :gray-underline))1
      :background "#fff"
      :id storage-id
      :visible? true
@@ -617,8 +617,8 @@
                                          table @new-table-meta)
                                         (cm/swapp)
                                         (println "reload invoker" invoker-id)
-                                        (if-not (nil? invoker-id) ((@gseed/jarman-views-service :reload) invoker-id))
-                                        ((@gseed/jarman-views-service :reload))
+                                        (if-not (nil? invoker-id) (((state/state :jarman-views-service) :reload) invoker-id))
+                                        (((state/state :jarman-views-service) :reload))
                                         ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} 
                                           5)))))
 
@@ -774,14 +774,15 @@
   ([tables-configurations table-id]
    (let [table          (get-table-configuration-from-list-by-table-id (tables-configurations) table-id)
          view-id        (keyword (get table :table))  ;; Get name of table and create keyword to check tabs bar (opens views)
-         invoker-id     (@gseed/jarman-views-service :get-my-view-id)]
+         invoker-id     ((state/state :jarman-views-service) :get-my-view-id)]
      (do
-       (@gseed/jarman-views-service :set-view
-                                    :view-id view-id
-                                    :title (str "Edit: " (get-in table [:prop :table :representation]))
-                                    :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.")
-                                    :component-fn (fn [] (create-view--table-editor view-id (session/user-get-permission) tables-configurations table-id invoker-id))
-                                    :scrollable? false)))))
+       ((state/state :jarman-views-service)
+        :set-view
+        :view-id view-id
+        :title (str "Edit: " (get-in table [:prop :table :representation]))
+        :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.")
+        :component-fn (fn [] (create-view--table-editor view-id (session/user-get-permission) tables-configurations table-id invoker-id))
+        :scrollable? false)))))
 
 
 ;; ┌─────────┐
@@ -883,7 +884,7 @@
                          :listen [:mouse-entered (fn [e] (if (= (:type data) "header") (c/config! e :cursor :move)))
                                   :mouse-clicked (fn [e] (c/invoke-later (let [table-id (:id (c/config! (gtool/getParent e) :user-data))]
                                                                          (cond (= (.getButton e) MouseEvent/BUTTON3)
-                                                                               (let [view-space (@gseed/jarman-views-service :get-view-sapce)
+                                                                               (let [view-space ((state/state :jarman-views-service) :get-view-sapce)
                                                                                      scrol (c/select view-space [:#JLP-DB-Visualizer])
                                                                                      JLP (gtool/getParent scrol)]
                                                                                  (.add JLP
@@ -960,7 +961,7 @@
 
 ;; (println MouseEvent/BUTTON3)
 ;; (@startup)
-;; ((@gseed/jarman-views-service :reload))
+;; (((state/state :jarman-views-service) :reload))
 
 
 (defn create-view--db-view
@@ -1003,7 +1004,7 @@
                 :buttons [["Show all relation" icon/refresh-connection-blue-64-png (fn [e])]
                           ["Save view" icon/agree-grey-64-png (fn [e])]
                           ["Reset view" icon/arrow-blue-left-64-png (fn [e])]
-                          ["Reloade view" icon/refresh-blue-64-png (fn [e] ((@gseed/jarman-views-service :reload)))]])]
+                          ["Reloade view" icon/refresh-blue-64-png (fn [e] (((state/state :jarman-views-service) :reload)))]])]
               [rootJLP]]))))
 
 
@@ -1043,7 +1044,7 @@
                               title (get (cm/get-in-segment path) :name)
                               view-id (last path)]
                           (button-expand-child title :onClick (fn [e]
-                                                                (@gseed/jarman-views-service
+                                                                ((state/state :jarman-views-service)
                                                                  :set-view
                                                                  :view-id view-id
                                                                  :title title
@@ -1054,7 +1055,7 @@
                        title (:name (cm/get-in-segment path))
                        view-id :theme_config.edn]
                    (button-expand-child title :onClick (fn [e]
-                                                         (@gseed/jarman-views-service
+                                                         ((state/state :jarman-views-service)
                                                           :set-view
                                                           :view-id view-id
                                                           :title title
@@ -1064,7 +1065,7 @@
                        title (rift (:name (cm/get-in-segment path)) "NIL")
                        view-id :current-theme]
                    (button-expand-child title :onClick (fn [e]
-                                                         (@gseed/jarman-views-service
+                                                         ((state/state :jarman-views-service)
                                                           :set-view
                                                           :view-id view-id
                                                           :title title
@@ -1117,7 +1118,7 @@
                        :id :app-functional-space
                        :background (new Color 0 0 0 0)
                        :items (gtool/join-mig-items array))]
-      (reset! gseed/jarman-views-service (vs/new-views-service tabs-space views-space))
+      (state/set-state :jarman-views-service (vs/new-views-service tabs-space views-space))
       (mig-panel
        :id :operation-space
        :background "#fff"
@@ -1127,8 +1128,8 @@
        :items [[(gcomp/min-scrollbox tabs-space :vscroll :never)]
                [views-space]]))))
 
-;; (@gseed/jarman-views-service :reload :view-id (keyword "DB Visualiser"))
-;; (@gseed/jarman-views-service :get-all-view) 
+;; ((state/state :jarman-views-service) :reload :view-id (keyword "DB Visualiser"))
+;; ((state/state :jarman-views-service) :get-all-view) 
 (defn create-period--period-form
   []
   (vmig
@@ -1256,19 +1257,18 @@
                [(jarmanapp--main-tree  [(button-expand "Database"
                                                  [(button-expand-child "DB Visualiser" :onClick (fn [e] 
                                                                                                   (try 
-                                                                                                    (@gseed/jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view)
+                                                                                                    ((state/state :jarman-views-service) :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view)
                                                                                                     (catch Exception e ((state/state :alert-manager) :set {:header "Exception" :body (.getMessage e)} 5)))))
-                                                          ;;  (button-expand-child "Users table" :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
+                                                          ;;  (button-expand-child "Users table" :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
                                                   ])]
                                  [(button-expand "Tables" [] :id :tables-view-plugin :expand :yes)]
-                                 [(button-expand "Okresy" [(button-expand-child "Okresy" :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "okresy" :title "Okresy" :component-fn create-period-view)))])]
+                                 [(button-expand "Okresy" [(button-expand-child "Okresy" :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id "okresy" :title "Okresy" :component-fn create-period-view)))])]
                                  (create-expand-btns--confgen)
                                  [(button-expand "Debug items"
                                                  [(button-expand-child "Popup" :onClick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (c/label "Hello popup!") :size [400 200])))
                                                   (button-expand-child "Dialog" :onClick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100])))))
-                                                  (button-expand-child "Popup window" :onClick (fn [e] (gcomp/popup-window {})))
-                                                  (button-expand-child "alert" :onClick (fn [e] ((state/state :alert-manager) :set {:header "Hello World" :body "Some body once told me..."} 5)
-                                                                                          ))])])]
+                                                  (button-expand-child "Popup window" :onClick (fn [e] (gcomp/popup-window {:relative @app})))
+                                                  (button-expand-child "alert" :onClick (fn [e] ((state/state :alert-manager) :set {:header "Czym jest Lorem Ipsum?" :body "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle poligraficznym. Został po raz pierwszy użyty w XV w. przez nieznanego drukarza do wypełnienia tekstem próbnej książki. Pięć wieków później zaczął być używany przemyśle elektronicznym, pozostając praktycznie niezmienionym. Spopularyzował się w latach 60. XX w. wraz z publikacją arkuszy Letrasetu, zawierających fragmenty Lorem Ipsum, a ostatnio z zawierającym różne wersje Lorem Ipsum oprogramowaniem przeznaczonym do realizacji druków na komputerach osobistych, jak Aldus PageMaker"} 5)))])])]
                [(jarmanapp--main-view-space [] [])]]))))
 
 ;; (jarman.logic.metadata/getset)
@@ -1296,7 +1296,7 @@
                             (list
                              [(jarmanapp :margin-left img-scale) 0]
                              (gtool/slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser"
-                                             :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view))
+                                             :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view))
                                              :top-offset top-offset)
                              (gtool/slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Message Store"
                                              :onClick (fn [e] ((state/state :alert-manager) :show))
@@ -1311,12 +1311,12 @@
                                              :top-offset top-offset)
 
                             ;;  (gtool/slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 3 img-scale "Docs Templates"
-                            ;;                  :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts (state/state :alert-manager)))))
+                            ;;                  :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts (state/state :alert-manager)))))
                             ;;                  :top-offset top-offset)
 
                              (gtool/slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 4 img-scale "Reload active view"
                                              :onClick (fn [e] (try
-                                                                ((@gseed/jarman-views-service :reload))
+                                                                (((state/state :jarman-views-service) :reload))
                                                                 (catch Exception e (str "Can not reload. Storage is empty."))))
                                              :top-offset top-offset)
                              (gtool/slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 5 img-scale "Restart"

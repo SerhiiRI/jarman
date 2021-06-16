@@ -272,8 +272,7 @@
   []
   (let [data (*view-loader-chain-fn*)]
     (if (empty? data)
-      ((state/state :alert-manager) :set {:header "Error" :body "Problem with tables. Data not found in DB"}
-       ((state/state :alert-manager) :message (state/state :alert-manager)) 5)
+      ((state/state :alert-manager) :set {:header "Error" :body "Problem with tables. Data not found in DB"} 5)
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (map (fn [x] (eval x)) (subvec (vec data) 1)))))))
 

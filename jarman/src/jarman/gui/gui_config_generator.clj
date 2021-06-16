@@ -14,6 +14,7 @@
             [jarman.gui.gui-tools :as gtool]
             [jarman.gui.gui-components :as gcomp]
             [jarman.tools.swing :as stool]
+            [jarman.logic.state :as state]
             [jarman.gui.gui-seed :as gseed]
 
             ;; deverloper tools 
@@ -211,9 +212,6 @@
                                                 (let [body (map
                                                             #(let [path (join-vec start-key [(first %)])
                                                                    comp (confgen--component--tree local-changes path)]
-                                                              ;;  (if (nil? comp)
-                                                              ;;    (c/label :text (doto (str "Can not loading " path) println))
-                                                              ;;    comp)
                                                                comp)
                                                             (:value map-part))]
                                                   body))))
@@ -222,33 +220,40 @@
                                        :items [[(gcomp/button-basic (gtool/get-lang-btns :save)
                                                                     :onClick (fn [e] ;; save changes configuration
                                                                                (if (empty? @local-changes)
-                                                                                 (message-ok ["No cheges" "No changes to saving."])
+                                                                                 (do
+                                                                                   (println "No more changes.")
+                                                                                   (message-ok "No changes." "Local storage is empty. No changes to saving."))
                                                                                  (do
                                                                                    (doall (map #(prn (first %) (str (second %)))  @local-changes))
-                                                                                   (doall (map #(cm/assoc-in-value (first %) (second %))  @local-changes)) 
-                                                                                  
+                                                                                   (doall (map #(cm/assoc-in-value (first %) (second %))  @local-changes))
+
                                                                                    ;; TODO: Can not saving chages in theme, store-and-backup do not saving to file
                                                                                   ;;  (cm/get-in-value [:themes :current-theme :color :jarman :bar])
                                                                                   ;;  (cm/assoc-in-value [:themes :current-theme :color :jarman :bar] "#aaa")
                                                                                   ;;  (cm/store-and-back)
 
-                                                                                   (let [validate (cm/store-and-back)] 
+                                                                                   (let [validate (cm/store-and-back)]
                                                                                      (println validate)
                                                                                      (cm/swapp)
                                                                                      (if (get validate :valid?)
                                                                                        (do ;; message box if saved successfull
                                                                                          (try
-                                                                                           ((@gseed/jarman-views-service :reload))
+                                                                                           (((state/state :jarman-views-service) :reload))
                                                                                            (if-not (nil? message-ok) (message-ok (gtool/get-lang-alerts :changes-saved)
                                                                                                                                  (str @local-changes)))
                                                                                            (catch Exception e (println (str "Message ok error: " (.getMessage e))))))
                                                                                        (do ;; message box if saved faild
                                                                                          (try
-                                                                                           (if-not (nil? message-faild) (message-faild (gtool/get-lang-alerts :changes-saved-failed) 
+                                                                                           (if-not (nil? message-faild) (message-faild (gtool/get-lang-alerts :changes-saved-failed)
                                                                                                                                        (str (:output validate))))
-                                                                                           (catch Exception e (println (str "Message faild error: " (.getMessage e))))))))))))]
+                                                                                           (catch Exception e (println (str "Message faild error: " (.getMessage e)))))))))))
+                                                                    :flip-border true)]
                                                [(gcomp/button-basic ""
-                                                                    :onClick (fn [e] (println (str "\nConfiguration changes: " @local-changes))) :args [:icon (stool/image-scale icon/loupe-blue-64-png 25)])]])))]
+                                                                    :onClick (fn [e] (do
+                                                                                       (println "\nConfiguration changes\n" (str @local-changes))
+                                                                                       (message-ok "Configuration changes" (str @local-changes))))
+                                                                    :flip-border true
+                                                                    :args [:icon (stool/image-scale icon/loupe-blue-64-png 25)])]])))]
             ;; (println "Config complete")
             (if (nil? configurator) (c/label :text "NIL") configurator)))))))
 ;; (@jarman.gui.gui-app/startup)

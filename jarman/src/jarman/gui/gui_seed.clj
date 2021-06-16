@@ -19,7 +19,6 @@
 
 ;;  (get-color :jarman :bar)
 
-(state/set-state :jarman-views-service (atom nil))
 (def changes-service (atom (cs/new-changes-service)))
 
 (import javax.swing.JLayeredPane)
@@ -28,34 +27,16 @@
 ;; (import java.awt.Dimension)
 ;; (import java.awt.event.MouseEvent)
 
-(def atom-app-size (atom [1200 700]))
+(state/set-state :atom-app-size (atom [1200 700]))
 (def app (atom nil))
 
 (add-watch
- atom-app-size
+ (state/state :atom-app-size)
  :refresh
  (fn [key atom old-state new-state]
    (do
-     (config! (select @app [:#rebound-layer]) :bounds [0 0 (first @atom-app-size) (second @atom-app-size)])
+     (config! (select @app [:#rebound-layer]) :bounds [0 0 (first new-state) (second new-state)])
      (.repaint (to-frame @app)))))
-
-;; (def box
-;;   (fn [& {:keys [wrap items vlayout hlayout]
-;;           :or  {wrap 0
-;;                 items (list (label :text "Hello Boi!"))
-;;                 vlayout "center, grow"
-;;                 hlayout "center, grow"}}]
-;;     (let [wraper (if (= wrap 0) "" (string/join "" ["wrap" wrap]))
-;;           margin 0]
-;;       (vertical-panel
-;;        :id :rebound-layer
-;;        :items [(mig-panel
-;;                 ;; :background "#a23"
-;;                 ;; :size [(first @atom-app-size) :by (second @atom-app-size)]
-;;                 :constraints [wraper
-;;                               (str margin "px[:" (first @atom-app-size) "," hlayout "]" margin "px")
-;;                               (str margin "px[:" (second @atom-app-size) "," vlayout "]" margin "px")]
-;;                 :items (join-mig-items items))]))))
 
 
 (def base
@@ -81,7 +62,7 @@
                  undecorated?]
           :or  {title "Mr. Jarman"
                 items (label :text "Hello Boi!" :bounds [100 100 300 300])
-                size [(first @atom-app-size) (second @atom-app-size)]
+                size @(state/state :atom-app-size)
                 undecorated? false}}]
     (let [set-items (if-not (list? items) (list items) items)]
       (do
@@ -99,7 +80,7 @@
                                                 ;;  (println e)
                                                     (let [w (.getWidth (.getSize (.getContentPane (to-root e))))
                                                           h (.getHeight (.getSize (.getContentPane (to-root e))))]
-                                                      (reset! atom-app-size [w h]))
+                                                      (reset! (state/state :atom-app-size) [w h]))
                                                     (.revalidate (to-widget e)))])]
           (-> (doto jframe (.setLocationRelativeTo nil) pack! show!))
           (config! jframe  :icon (stool/image-scale icon/calendar1-64-png)

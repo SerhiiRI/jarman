@@ -19,7 +19,7 @@
 
 ;;  (get-color :jarman :bar)
 
-(def jarman-views-service (atom nil))
+(state/set-state :jarman-views-service (atom nil))
 (def changes-service (atom (cs/new-changes-service)))
 
 (import javax.swing.JLayeredPane)

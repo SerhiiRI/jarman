@@ -318,7 +318,7 @@
         ico-size 30
         btn-bg-c "#fff"
         btn-bg-c-hover "#ddd"
-        items  (map (fn [item] (history-alert (get item :data) layered-pane [w 30])) @alerts-storage)
+        items  (reverse (map (fn [item] (history-alert (get item :data) layered-pane [w 30])) @alerts-storage))
         container (mig-panel
                    :constraints ["wrap 1" "0px[grow, fill]0px[fill]0px" "0px[grow, top]0px[fill]0px"]
                    :id :all-alerts

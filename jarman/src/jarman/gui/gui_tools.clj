@@ -65,7 +65,10 @@
   "Description
      Build word wrap html
    "
-  (fn [body] (string/join "" ["<html><body style='width: 100%; overflow-wrap: break-word;'>" body "</body><html>"])))
+  (fn [body & args] 
+    (string/join ["<html><body style='width: 100%; overflow-wrap: break-word;'>" 
+                  (if (in? args :justify) (format "<p align= \"justify\">%s</p>" body) body) 
+                  "</body><html>"])))
 
 ;; (macroexpand-1 `(textarea "ala am kota" :border (line-border :thickness 1 :color "#a23")))
 

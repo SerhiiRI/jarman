@@ -6,11 +6,10 @@
             [seesaw.border :as b]
             [seesaw.util :as u]
             [seesaw.mig :as smig]
-            [jarman.gui.gui-seed :as gseed]
             [jarman.tools.swing :as stool]
+            [jarman.logic.state :as state]
             [jarman.tools.lang :as lang]
             [jarman.logic.metadata :as mmeta]
-            [jarman.gui.gui-alerts-service :as gas]
             [jarman.gui.gui-tools :as gtool]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
   (:import (java.awt Color)
@@ -68,15 +67,6 @@
     (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
     (.setPreferredSize (.getHorizontalScrollBar scr) (java.awt.Dimension. 0 12))
     scr))
-
-;; (defn scrollbox
-;;   [component & args]
-;;   (let [scr (apply scrollable component :border nil args)]  ;; speed up scrolling
-;;     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
-;;     (.setBorder scr nil)
-;; ;;    for hide scroll    
-;;    (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. 12 0)) 
-;;     scr))
 
 
 (defn vmig
@@ -209,6 +199,7 @@
          :border (border border-size border-color underline-size underline-color)
          args))
 
+
 (defmacro textarea
   "Description
      TextArea with word wrap"
@@ -250,12 +241,12 @@
            :text txt
            :focusable? true
            :halign halign
-           :listen [:mouse-clicked (fn [e] (do (onClick e) (gseed/switch-focus)))
+           :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
                     :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
                     :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
                     :focus-gained  (fn [e] (c/config! e :border (newBorder focus-color)   :background mouse-in  :cursor :hand))
                     :focus-lost    (fn [e] (c/config! e :border (newBorder unfocus-color) :background mouse-out))
-                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gseed/switch-focus))))]
+                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gtool/switch-focus))))]
            :background mouse-out
            :border (newBorder unfocus-color)
            args)))
@@ -792,8 +783,8 @@
                            (do ;;  Add inside buttons to mig with expand button
                              (c/config! icon :icon ico-hover)
                              (doall (map #(.add mig %) @atom-inside-btns))
-                             (gseed/set-focus (first @atom-inside-btns))
-                             (gseed/switch-focus)
+                             (gtool/set-focus (first @atom-inside-btns))
+                             (gtool/switch-focus)
                              (.revalidate mig)
                              (.repaint mig))
                            (do ;;  Remove inside buttons form mig without expand button
@@ -823,12 +814,12 @@
            :size [200 :by 25]
            :focusable? true
            :border (b/empty-border :left 10)
-           :listen [:mouse-clicked (fn [e] (do (onClick e) (gseed/switch-focus)))
+           :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
                     :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
                     :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
                     :focus-gained  (fn [e] (c/config! e :background (gtool/get-comp :button-expand-child :background-hover)))
                     :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand-child :background)))
-                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gseed/switch-focus))))]
+                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gtool/switch-focus))))]
            args)))
 
 
@@ -866,6 +857,16 @@
                       egg2]))))
 
 (def view (fn [] (egg)))
+
+
+
+
+;; ┌────────────────────┐
+;; │                    │
+;; │ Number  inputs     │
+;; │                    │________________________________________
+;; └────────────────────┘                                       
+
 
 (def input-float
   "Description:
@@ -1047,15 +1048,28 @@
 ;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
 ;;   (seesaw.core/config! my-frame :size [800 :by 600]))
 
+
+
+;; ┌────────────────────┐
+;; │                    │
+;; │ Other              │
+;; │                    │________________________________________
+;; └────────────────────┘                                       
+
+
 (defn menu-bar
   "Description:
+      Bar with buttons without background.
+      If you used :justify-end true then buttons will by justify to rigth.
    Example:
       (menu-bar :buttons [[\"title1\" icon1  fn1] [\"title2\" icon2  fn2]])
       (menu-bar :id :my-id :buttons [[\"title1\"  icon1 fn1] [\"title2\" icon2  fn2]])"
   [& {:keys [id
-             buttons]
+             buttons
+             justify-end]
       :or {id :none
-           buttons []}}]
+           buttons []
+           justify-end false}}]
   (let [btn (fn [txt ico onClick & args]
               (let [border-c "#bbb"]
                 (c/label
@@ -1071,8 +1085,14 @@
     (mig-panel
      :id id
      :background (new Color 0 0 0 0)
-     :constraints ["" "10px[fill]0px" "5px[fill]5px"]
-     :items (if (empty? buttons) [[(c/label)]] (gtool/join-mig-items (map #(btn (first %) (second %) (last %)) buttons))))))
+     :constraints (if justify-end
+                    ["" "5px[grow, fill]0px[fill]5px" "5px[fill]5px"]
+                    ["" "10px[fill]0px" "5px[fill]5px"])
+     :items (if (empty? buttons) [[(c/label)]]
+                (if justify-end
+                  (gtool/join-mig-items (c/label) (map #(btn (first %) (second %) (last %)) buttons))
+                  (gtool/join-mig-items (map #(btn (first %) (second %) (last %)) buttons)))))))
+
 
 
 (defn- validate-fields [cmpts-atom num]
@@ -1124,9 +1144,7 @@
                                                                                                                     title num)]])
                                           (c/config! (.getParent (.getParent (seesaw.core/to-widget e))) :items [[(multi-panel panels cmpts-atom table-name
                                                                                                                                title (+ num 1))]]))
-                                        (@gseed/alert-manager :set {:header "Error"
-                                                                    :body "All fields must be entered and must be longer than 3 chars"}
-                                         (@gseed/alert-manager :message gseed/alert-manager) 5)))]])
+                                        ((state/state :alert-manager) :set {:header "Error" :body "All fields must be entered and must be longer than 3 chars"} 5)))]])
         btn-back (first (.getComponents btn-panel))
         btn-next (second (.getComponents btn-panel))]
    ;; (c/config! btn-panel :bounds [0 0 0 0])
@@ -1143,12 +1161,8 @@
                                                                                        @cmpts-atom)))
                                                                  (if (:valid? (mmeta/validate-one-column
                                                                                @cmpts-atom))
-                                                                 (@gseed/alert-manager :set {:header "Success"
-                                                                                             :body "Column was added"}
-                                                                  (@gseed/alert-manager :message gseed/alert-manager) 5)
-                                                                 (@gseed/alert-manager :set {:header "Error"
-                                                                                             :body "All fields must be entered and must be longer than 3 chars"}
-                                                                  (@gseed/alert-manager :message gseed/alert-manager) 5)))]))
+                                                                   ((state/state :alert-manager) :set {:header "Success" :body "Column was added"} 5)
+                                                                   ((state/state :alert-manager) :set {:header "Error" :body "All fields must be entered and must be longer than 3 chars"} 5)))]))
     (mig-panel
      :constraints ["wrap 2" "0px[left]0px" "0px[]0px"]
      :preferred-size [910 :by 360]
@@ -1161,38 +1175,47 @@
              [(nth panels num) "span 2"]])))
 
 
-(defn menu-bar-right
-  "Description:    
-   Example:
-      (menu-bar :buttons [[\"title1\" icon1 fn1] [\"title2\" icon2 fn2]])
-      (menu-bar :id :my-id :buttons [[\"title1\" icon1 fn1] [\"title2\" icon2 fn2]])"
-  [& {:keys [id
-             buttons]
-      :or {id :none
-           buttons []}}]
-  (let [btn (fn [txt ico onClick & args]
-              (let [border-c "#bbb"]
-                (c/label
-                 :font (gtool/getFont 13)
-                 :text txt
-                 :icon (stool/image-scale ico 30)
-                 :background "#fff"
-                 :foreground "#000"
-                 :border (b/compound-border (b/empty-border :left 15 :right 15 :top 5 :bottom 5) (b/line-border :thickness 1 :color border-c))
-                 :listen [:mouse-entered (fn [e] (c/config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
-                          :mouse-exited  (fn [e] (c/config! e :background "#fff" :foreground "#000"))
-                          :mouse-clicked onClick])))]
-    (mig-panel
-     :id id
-     :background (new Color 0 0 0 0)
-     :constraints ["" "5px[grow, fill]0px[fill]5px" "5px[fill]5px"]
-     :items (if (empty? buttons) [[(c/label)]] (gtool/join-mig-items (c/label) (map #(btn (first %) (second %) (last %)) buttons))))))
+
+
+;; (defn popup-window
+;;   "Description:
+;;      Dialog window. Invoke passing component with view and window title.
+;;      (popup-window {})
+;;      (popup-window {:view (create-business-card) :window-title \"My card\"})
+;;    "
+;;   []
+;;   (fn [{:keys [view size window-title root]
+;;         :or {view (c/label :text "Popup window")
+;;              size [600 400]
+;;              window-title "Popup window"}}]
+;;     (let [dialog (seesaw.core/custom-dialog :modal? true
+;;                                             :width (first size)
+;;                                             :height (second size)
+;;                                             :title window-title)]
+;;       (seesaw.core/config! dialog :content view)
+;;     ;; (.setUndecorated dialog true)
+;;       (doto dialog (.setLocationRelativeTo root) c/show!))))
 
 
 
-
-
-
-
-
+(def popup-window 
+  "Description:
+     Dialog window. Invoke passing component with view and window title.
+     (popup-window {})
+     (popup-window {:view (create-business-card) :window-title \"My card\"})
+   "
+  (fn [{:keys [view size window-title invoker]
+        :or {view (c/label :text "Popup window")
+             size [600 400]
+             window-title "Popup window"}}]
+    (let [dialog
+          (c/custom-dialog
+           :title window-title
+           :modal? true
+           :resizable? true
+           :size [(first size) :by (second size)] ;; here you need to set window size for calculating middle 
+           :content view)]
+      ;; (.setUndecorated dialog true)
+      (doto dialog (.setLocationRelativeTo (c/to-root invoker)) c/pack! c/show!) ;; here should be relative to root of invoker
+      )))
 

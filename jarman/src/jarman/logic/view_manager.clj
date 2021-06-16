@@ -14,6 +14,7 @@
    [jarman.plugin.table :as plug]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    [jarman.logic.metadata :as mt]
+   [jarman.logic.state :as state]
    [jarman.plugin.data-toolkit :refer [data-toolkit-pipeline]])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
@@ -271,9 +272,8 @@
   []
   (let [data (*view-loader-chain-fn*)]
     (if (empty? data)
-      (@gseed/alert-manager :set {:header "Error"
-                                  :body "Problem with tables. Data not found in DB"}
-       (@gseed/alert-manager :message gseed/alert-manager) 5)
+      ((state/state :alert-manager) :set {:header "Error" :body "Problem with tables. Data not found in DB"}
+       ((state/state :alert-manager) :message (state/state :alert-manager)) 5)
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (map (fn [x] (eval x)) (subvec (vec data) 1)))))))
 

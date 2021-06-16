@@ -15,7 +15,7 @@
    [jarman.gui.gui-tools :refer :all :as gtool]
    [jarman.resource-lib.icon-library :as ico]
    [jarman.tools.swing :as stool]
-   [jarman.gui.gui-components :refer :all :as gcomp]
+   [jarman.gui.gui-components :as gcomp]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]

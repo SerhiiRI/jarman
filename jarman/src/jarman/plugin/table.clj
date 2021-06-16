@@ -21,6 +21,7 @@
    [jarman.gui.gui-seed :as gseed]
    [jarman.resource-lib.icon-library :as ico]
    [jarman.tools.swing :as stool]
+   [jarman.logic.state :as state]
    [jarman.gui.gui-components :refer :all :as gcomp]
    [jarman.gui.gui-calendar :as calendar]
    [jarman.logic.metadata :as mt]
@@ -519,8 +520,8 @@
                                                                                               ;; do
                                                                                                         (try
                                                                                                           ((doc/prepare-export-file (:->table-name controller) doc-model) id (c/config input-text :text))
-                                                                                                          (@jarman.gui.gui-seed/alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :export-doc-ok)} (@jarman.gui.gui-seed/alert-manager :message jarman.gui.gui-seed/alert-manager) 7)
-                                                                                                          (catch Exception e (@jarman.gui.gui-seed/alert-manager :set {:header (gtool/get-lang-alerts :faild) :body (gtool/get-lang-alerts :export-doc-faild)} (@jarman.gui.gui-seed/alert-manager :message jarman.gui.gui-seed/alert-manager) 7))))
+                                                                                                          ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :export-doc-ok)}  7)
+                                                                                                          (catch Exception e ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :faild) :body (gtool/get-lang-alerts :export-doc-faild)}  7))))
                                                                                              :args [:halign :left])])
                                                                       (:->documents controller))
                                                                  [(gcomp/hr 10)]

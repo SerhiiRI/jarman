@@ -1,21 +1,80 @@
 (ns jarman.gui.gui-alerts-service
   (:import (java.awt Color))
-  (:use seesaw.core
-        seesaw.border
-        seesaw.dev
+  (:use seesaw.dev
         seesaw.mig)
-  (:require [jarman.gui.gui-tools :refer :all]
+  (:require [seesaw.core :as c]
+            [seesaw.border :as b]
             [jarman.resource-lib.icon-library :as icon]
             [jarman.tools.swing :as stool]
             [jarman.config.config-manager :refer :all]
             [jarman.gui.gui-tools :as gtool]
+            [jarman.gui.gui-components :as gcomp]
+            [jarman.logic.state :as state]
             [jarman.tools.lang :refer :all]
             [clojure.string :as string]))
 
 
 ;; Defrecord for elements in alerts-storage
-;; [{:id 0 :data {:header "Some header" :body "Message" :btns [(btn1) (btn2)]} :component (label-fn :text \"Hello world! \") :timelife 3}]
+;; [{:id 0 :data {:header "Some header" :body "Message" :btns [(btn1) (btn2)]} :component (c/label :text \"Hello world! \") :timelife 3}]
 (defrecord Alert [id data component timelife visible])
+
+
+(defn build-ico
+  "Description:
+      Icon for message box. Create component with icon.
+   Example:
+      (build-ico icon/alert-64-png)
+   Needed:
+      Import jarman.dev-tools
+      Function need stool/image-scale function for scalling icon"
+  [ic] (c/label :icon (stool/image-scale ic 28)
+                :background (new Color 0 0 0 0)
+                :border (b/empty-border :left 3 :right 3)))
+
+(defn build-header
+  "Description:
+      Header text for message box. Create component with header text.
+   Example:
+      (build-header 'Information')
+   "
+  [txt] (c/label :text txt
+                 :font (gtool/getFont 14 :bold)
+                 :background (new Color 0 0 0 0)))
+
+(defn build-body
+  "Description:
+      Body text for message box. Create component with message.
+   Example:
+      (build-body 'My message')
+   "
+  [txt] (c/label :text txt
+                 :font (gtool/getFont 13)
+                 :background (new Color 0 0 0 0)
+                 :border (b/empty-border :left 5 :right 5 :bottom 2)))
+
+
+(defn build-bottom-ico-btn
+  "Description:
+      Icon btn for message box. Create component with icon btn on bottom.
+   Layered should be atom.
+   Example:
+      (build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png 23 (fn [e] (alert 'Wiadomosc')))
+   Needed:
+      Import jarman.dev-tools
+      Function need stool/image-scale function for scalling icon
+      Function need hand-hover-on function for hand mouse effect
+   "
+  [ic ic-h layered & args] (c/label :icon (stool/image-scale ic (if (> (count args) 0) (first args) 28))
+                                    :background (new Color 0 0 0 0)
+                                    :border (b/empty-border :left 3 :right 3)
+                                    :listen [:mouse-entered (fn [e] (do
+                                                                      (c/config! e :icon (stool/image-scale ic-h (if (> (count args) 0) (first args) 28)) :cursor :hand)
+                                                                      (.repaint @layered)))
+                                             :mouse-exited (fn [e] (do
+                                                                     (c/config! e :icon (stool/image-scale ic (if (> (count args) 0) (first args) 28)))
+                                                                     (.repaint @layered)))
+                                             :mouse-clicked (if (> (count args) 1) (second args) (fn [e]))]))
+
 
 (defn view-selected-message
   "Description:
@@ -27,69 +86,19 @@
       Function need stool/image-scale for scaling button icon
       Function need middle-bounds for auto calculating bound
    "
-  [header body layered-pane]
-  (let [bg-c "#fff"
-        header-fg-c "#fff"
-        header-bg-c "#333"
-        btn-bg-c header-bg-c
-        btn-fg-c header-fg-c
-      ;;   btn-bg-c-hover "#d9ecff"
-        btn-bg-c-hover "#444"
-        btn-fg-c-hover "#000"
-        frame-c "#000"
-        w 330
-        h 400
-        header-size 30
-        ico-size 30
-        box-border 2
-        padding 6
-        ico icon/x-grey2-64-png
-      ;;   ico-hover icon/x-blue1-64-png
-        bounds (middle-bounds (to-root @layered-pane) (+ w box-border box-border) (+ h box-border box-border))]
-    (.add @layered-pane (mig-panel
-                        :constraints ["wrap 1" (str "0px[" (str w) "]0px") (str "0px[" (str header-size) ", top]0px[" (str (- h header-size ico-size)) ", top]0px[" (str ico-size) ", top]0px")]
-                        :id :message-view-box
-                        :background (new Color 0 0 0 0)
-                        :bounds bounds
-                        :border (line-border :thickness box-border :color frame-c)
-                        :items [[(label-fn :text header
-                                           :size [w :by header-size]
-                                           :halign :center
-                                           :foreground header-fg-c
-                                           :background header-bg-c
-                                           :font (getFont 15 :bold))]
-                                [(scrollable (label-fn :text (htmling body)
-                                             ;;  :text (format "<html><body><p style=\"word-wrap: normal;\">%s</p></body><html>" body)
-                                                       :size [w :by (- h ico-size ico-size)]
-                                                       :font (getFont 13)
-                                                       :background bg-c
-                                                       :border (empty-border :thickness padding)
-                                                       :valign :top)
-                                             :hscroll :never
-                                             :border nil)]
-                                [(label-fn
-                                  :icon (stool/image-scale ico (- ico-size 5))
-                                  :size [w :by ico-size]
-                                  :foreground btn-fg-c
-                                  :background btn-bg-c
-                                  :text "Exit"
-                                  :font (getFont 14)
-                                  :halign :center
-                                  :listen [:mouse-entered (fn [e] (config! e 
-                                                                           ;; :icon (stool/image-scale ico-hover (- ico-size 5))
-                                                                           ;; :foreground btn-fg-c-hover 
-                                                                           :background btn-bg-c-hover 
-                                                                           :cursor :hand))
-                                           :mouse-exited  (fn [e] (config! e
-                                                                           ;; :icon (stool/image-scale ico (- ico-size 5))
-                                                                           ;; :foreground btn-fg-c
-                                                                           :background btn-bg-c))
-                                           :mouse-clicked (fn [e] (do
-                                                                    (.remove @layered-pane (select @layered-pane [:#message-view-box]))
-                                                                    (.repaint @layered-pane)))])]])
-          (new Integer 25))))
+  [header body invoker]
+  (println "\nheader" header "\nbody" body "\ninvoker" invoker)
+  (let [comp (mig-panel
+              :constraints ["wrap 1" "5px[grow, fill]5px" "5px[fill]5px"]
+              :id :message-view-box
+              :items [[(c/label :text header :font (gtool/getFont 16))]
+                      [(gcomp/hr 1 "#999")]
+                      [(gcomp/min-scrollbox (c/label :text (gtool/htmling body))
+                                            :hscroll :never)]])]
+    (gcomp/popup-window {:view comp :title "Info" :size [350 400] :invoker invoker})))
 
-(defn message
+
+(def message
   "Description:
       Template for messages. Using in Jlayered-pane.
       X icon remove and rebound displayed message.
@@ -104,41 +113,40 @@
       Function need build-bottom-ico-btn for functional icon buttons on bottom
       Function need view-selected-message for show whole message
    "
-  [alerts-controller]
   (fn [data]
+    (println "Invoked alert")
     (let [font-c "#000"
           bg-c "#fff"
           header (rift (:header data) "Information")
          ;;  header (if (= (contains? data :header) true) (:header data) "Information")
           body   (rift (:body data) "Template of information...")
          ;;  body   (if (= (contains? data :body) true) (:body data) "Template of information...")
-          layered-pane (@alerts-controller :get-space)
-          close [(build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png layered-pane 23 
+          layered-pane ((state/state :alert-manager) :get-space)
+          close [(build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png layered-pane 23
                                        (fn [e] (view-selected-message header body layered-pane)))
-                 (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered-pane 23 
-                                       (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] (@alerts-controller :rm-obj to-del))))]
+                 (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered-pane 23
+                                       (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] ((state/state :alert-manager) :rm-obj to-del))))]
           [t b l r] (try
                       (map #(Integer/parseInt %) (rift (gtool/get-comp :message-box :border-size)))
                       (catch Exception e [1 1 1 1]))]
-      
+
       (mig-panel
        :id :alert-box
        :constraints ["wrap 1" "0px[fill, grow]0px" "0px[20]0px[30]0px[20]0px"]
        :background bg-c
-       :border (line-border :top t :bottom b :left l :right r :color (rift (gtool/get-comp :message-box :border-color) "#fff"))
+       :border (b/line-border :top t :bottom b :left l :right r :color (rift (gtool/get-comp :message-box :border-color) "#fff"))
        :bounds [680 480 300 75]
-       :items [[(flow-panel
+       :items [[(c/flow-panel
                  :align :left
                  :background (new Color 0 0 0 0)
                  :items [(build-ico icon/alert-64-png)
-                         (build-header (str-cutter header))])]
-               [(build-body (str-cutter body))]
-               [(flow-panel
+                         (build-header (gtool/str-cutter header))])]
+               [(build-body (gtool/str-cutter body))]
+               [(c/flow-panel
                  :align :right
                  :background (new Color 0 0 0 1)
                  :items (if (= (contains? data :btns) true) (concat close (get data :btns)) close))]]
-       :listen [:mouse-entered (fn [e])]))
-       ))
+       :listen [:mouse-entered (fn [e])]))))
 
 
 
@@ -149,11 +157,11 @@
       Function need get-elements-in-layered-by-id function for get all same element (here message boxs)
       Function need getHeight function for quick getting height size
    "
-  (fn [e] (let [list-of-alerts (get-elements-in-layered-by-id e "alert-box")
-                bound-x (if list-of-alerts (- (getWidth (to-root (seesaw.core/to-widget e))) (getWidth (first list-of-alerts)) 20) 0)
+  (fn [e] (let [list-of-alerts (gtool/get-elements-in-layered-by-id e "alert-box")
+                bound-x (if list-of-alerts (- (.getWidth (c/to-root (seesaw.core/to-widget e))) (.getWidth (first list-of-alerts)) 20) 0)
                 height 120]
             (if list-of-alerts (doseq [[n elem] (map-indexed #(vector %1 %2) list-of-alerts)]
-                                 (config! elem :bounds [bound-x (- (- (getHeight (to-root (seesaw.core/to-widget e))) height) (* 80 n)) 300 75]))))))
+                                 (c/config! elem :bounds [bound-x (- (- (.getHeight (c/to-root (seesaw.core/to-widget e))) height) (* 80 n)) 300 75]))))))
 
 
 
@@ -170,7 +178,7 @@
    "
   ([layered-pane alerts-storage] (do
                                     ;;  Remove alerts
-                                    (doall (map (fn [item] (if (identical? (config item :id) :alert-box) (.remove @layered-pane item))) (seesaw.util/children @layered-pane)))
+                                    (doall (map (fn [item] (if (identical? (c/config item :id) :alert-box) (.remove @layered-pane item))) (seesaw.util/children @layered-pane)))
                                     ;; Add alerts
                                     (doall (map (fn [item] (if (= (:visible item) true) (.add @layered-pane (:component item) (new Integer 15)))) @alerts-storage))
                                     ;;  Rebounds message space
@@ -179,8 +187,8 @@
                                     (.repaint @layered-pane)))
   ([layered-pane alerts-storage id-to-remove] (do
                                                  ;;  Remove alerts
-                                                 (doall (map (fn [i] (if (or (identical? (config i :id) :alert-box)
-                                                                             (identical? (config i :id) id-to-remove))
+                                                 (doall (map (fn [i] (if (or (identical? (c/config i :id) :alert-box)
+                                                                             (identical? (c/config i :id) id-to-remove))
                                                                        (.remove @layered-pane i))) (seesaw.util/children @layered-pane)))
                                                  ;; Add alerts
                                                  (doall (map (fn [item] (if (= (:visible item) true) (.add @layered-pane (:component item) (new Integer 15)))) @alerts-storage))
@@ -246,7 +254,7 @@
        Add message to storage and return id of this alert. Message will be inactive automaticly after timeout (in sec).
    Example: 
        (addAlertTimeout {:header 'Hello' :body 'World!'} (some-widget) 3 storage) 
-       => in storage [... {:id 0 :data {:header 'Hello' :body 'World!'} :component (label-fn :text 'Hello World!') :timelife 3 storage}]
+       => in storage [... {:id 0 :data {:header 'Hello' :body 'World!'} :component (c/label :text 'Hello World!') :timelife 3 storage}]
    Needed:
       Function need addAlert and rmAlert functions to work.
    "
@@ -268,24 +276,24 @@
         h (last size)
         bg-c     "#fff"
         hover-c  "#d9ecff"
-        bord     (empty-border :left 5)
+        bord     (b/empty-border :left 5)
         header   (if (= (contains? data :header) true) (get data :header) "Information")
         body     (if (= (contains? data :body) true) (get data :body) "Template of information...")
-        label-fn (fn [text & font]
-                   (label-fn :size [w :by h] :background bg-c :border bord :text text)
-                   (label-fn :size [w :by h] :background bg-c :border bord :text text :font (first font)))]
-    (vertical-panel
+        label (fn [text & font]
+                   (c/label :size [w :by h] :background bg-c :border bord :text text)
+                   (c/label :size [w :by h] :background bg-c :border bord :text text :font (first font)))]
+    (c/vertical-panel
      :background (new Color 0 0 0 0)
-     :border (line-border :bottom 2 :color "#333")
-     :items [(label-fn header (getFont 14 :bold)) (label-fn body)]
+     :border (b/line-border :bottom 2 :color "#333")
+     :items [(c/label header (gtool/getFont 14 :bold)) (c/label body)]
      :listen [:mouse-entered (fn [e] (let [children (seesaw.util/children (seesaw.core/to-widget e))]
                                        (do
-                                         (config! e :cursor :hand)
-                                         (doall (map (fn [item] (config! item :background hover-c)) children)))))
+                                         (c/config! e :cursor :hand)
+                                         (doall (map (fn [item] (c/config! item :background hover-c)) children)))))
               :mouse-exited (fn [e] (let [children (seesaw.util/children (seesaw.core/to-widget e))]
                                       (do
-                                        (config! e :cursor :default)
-                                        (doall (map (fn [item] (config! item :background bg-c)) children)))))
+                                        (c/config! e :cursor :default)
+                                        (doall (map (fn [item] (c/config! item :background bg-c)) children)))))
               :mouse-clicked (fn [e] (view-selected-message header body layered-pane))])))
 
 (defn all-messages-window
@@ -310,62 +318,41 @@
         btn-bg-c "#fff"
         btn-bg-c-hover "#ddd"
         border 2
-        bounds (middle-bounds @layered-pane (+ w border border) (+ h border border))
+        bounds (gtool/middle-bounds @layered-pane (+ w border border) (+ h border border))
         items  (vec (map (fn [item] (history-alert (get item :data) layered-pane [w 30])) @alerts-storage))
         space-for-message (mig-panel
-                           :constraints ["wrap 1" "0px[fill, grow]0px" (str "0px[" (str header-size) "]0px[" (str (- h header-size ico-size)) "]0px[" (str ico-size) "]0px")]
+                           :constraints ["wrap 1" "0px[grow, fill]0px[fill]0px"]
                            :bounds bounds
-                           :border (line-border :thickness border :color frame-c)
+                           :border (b/line-border :thickness border :color frame-c)
                            :id :all-alerts
-                           :items [[(label-fn :text "Alerts history"
-                                           :size [w :by (- header-size 1)]
-                                           :background header-c
-                                           :foreground fg-c
-                                           :font (getFont 14)
-                                           :halign :center
-                                           :border (line-border :bottom 1 :color frame-c))]
-                                   [(scrollable
-                                     (vertical-panel
-                                      :items items
-                                      :background bg-c)
+                           :items [[(c/scrollable
+                                     (c/vertical-panel
+                                      :items items)
                                      :hscroll :never
                                      :border nil
-                                     :size [w :by (- h header-size ico-size)]
-                                     :listen [:mouse-motion (fn [e] (.repaint (select (to-root e) [:#all-alerts])))
-                                              :mouse-wheel-moved (fn [e] (.repaint (select (to-root e) [:#all-alerts])))])]
+                                    ;;  :size [w :by (- h header-size ico-size)]
+                                     :listen [:mouse-motion (fn [e] (.repaint (c/select (c/to-root e) [:#all-alerts])))
+                                              :mouse-wheel-moved (fn [e] (.repaint (c/select (c/to-root e) [:#all-alerts])))])]
                                    [(mig-panel
-                                     :constraints ["" "0px[]0px" (str "0px[" (str (- ico-size 1)) "]0px")]
+                                     :constraints ["" "0px[grow, fill]0px" (str "0px[" (str (- ico-size 1)) "]0px")]
                                      :background fg-c
-                                     :border (line-border :top 1 :color bg-c)
-                                     :items [[(label-fn
-                                               :text "Exit"
-                                               :icon (stool/image-scale icon/x-blue1-64-png (- ico-size 5))
-                                               :halign :center
-                                               :font (getFont 14)
-                                               :size [(/ w 2) :by ico-size]
-                                               :listen [:mouse-entered (fn [e] (config! e :background btn-bg-c-hover :cursor :hand))
-                                                        :mouse-exited (fn [e] (config! e :background btn-bg-c))
-                                                        :mouse-clicked (fn [e]
-                                                                                      ;;  refresh GUI with remove element with id :all-alerts
-                                                                         (refresh-alerts layered-pane alerts-storage :all-alerts))])]
-                                             [(label-fn
+                                     :border (b/line-border :top 1 :color bg-c)
+                                     :items [[(c/label
                                                :text "Clear all message"
                                                :icon (stool/image-scale icon/basket-blue1-64-png ico-size)
                                                ;; :icon (stool/image-scale icon/basket-blue1-64x64-png ico-size)
                                                :halign :center
-                                               :font (getFont 14)
+                                               :font (gtool/getFont 14)
                                                :size [(/ w 2) :by ico-size]
                                                :background btn-bg-c
-                                               :listen [:mouse-entered (fn [e] (config! e :background btn-bg-c-hover :cursor :hand))
-                                                        :mouse-exited (fn [e] (config! e :background btn-bg-c))
+                                               :listen [:mouse-entered (fn [e] (c/config! e :background btn-bg-c-hover :cursor :hand))
+                                                        :mouse-exited (fn [e] (c/config! e :background btn-bg-c))
                                                         :mouse-clicked (fn [e] (do
                                                                                               ;;  remove all history
                                                                                  (rmallAlert alerts-storage layered-pane)
                                                                                               ;;  refresh GUI with remove element with id :all-alertsts
-                                                                                 (refresh-alerts layered-pane alerts-storage :all-alerts)))])]])]])
-        ]
-      (.add @layered-pane space-for-message (new Integer 20))
-    ))
+                                                                                 (refresh-alerts layered-pane alerts-storage :all-alerts)))])]])]])]
+    (gcomp/popup-window {:view space-for-message :window-title "Alerts history" :size [350 400] :invoker layered-pane})))
 
 
 (defn message-server-creator
@@ -392,7 +379,7 @@
     (fn [action & param]
       (cond
         (= action :get-space)     layered-pane
-        (= action :set)           (let [[data func timelife] param] (addAlertTimeout data (func data) timelife alerts-storage layered-pane))
+        (= action :set)           (let [[data timelife] param] (addAlertTimeout data (message data) timelife alerts-storage layered-pane))
         (= action :message)       (let [[alerts-controller] param] (message alerts-controller))
         (= action :rm)            (let [[id] param] (rmAlert id alerts-storage layered-pane))
         (= action :rm-obj)        (let [[obj] param] (rmAlertObj obj alerts-storage layered-pane))
@@ -403,3 +390,4 @@
         (= action :show)          (do (refresh-alerts layered-pane alerts-storage :all-alerts) (all-messages-window layered-pane alerts-storage))
         (= action :hide)          (refresh-alerts layered-pane alerts-storage :all-alerts)))))
 
+(state/set-state :alert-manager nil)

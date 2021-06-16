@@ -7,10 +7,11 @@
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
             ;; logics
-            [jarman.gui.gui-tools :refer :all]
-            [jarman.gui.gui-alerts-service :refer :all]
+            [jarman.gui.gui-tools :as gtool]
+            [jarman.gui.gui-alerts-service :as gas]
             ;; deverloper tools 
             [jarman.tools.swing :as stool]
+            [jarman.logic.state :as state]
             [jarman.tools.lang :refer :all]
             [jarman.logic.changes-service :as cs]
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
@@ -19,18 +20,7 @@
 ;;  (get-color :jarman :bar)
 
 (def jarman-views-service (atom nil))
-(def jarman-focus-now (atom nil))
 (def changes-service (atom (cs/new-changes-service)))
-
-(defn set-focus
-  [object] (reset! jarman-focus-now object))
-(defn rm-focus
-  [] (reset! jarman-focus-now nil))
-(defn set-focus-if-nil
-  [object] (if (nil? @jarman-focus-now) (reset! jarman-focus-now object)))
-(defn switch-focus
-  [] (if-not (nil? @jarman-focus-now) (do (.requestFocus @jarman-focus-now)
-                                          (reset! jarman-focus-now nil))))
 
 (import javax.swing.JLayeredPane)
 ;; (import javax.swing.JLabel)
@@ -40,7 +30,6 @@
 
 (def atom-app-size (atom [1200 700]))
 (def app (atom nil))
-(def alert-manager (atom nil))
 
 (add-watch
  atom-app-size
@@ -97,7 +86,7 @@
     (let [set-items (if-not (list? items) (list items) items)]
       (do
         (reset! app (base set-items))
-        (reset! alert-manager (message-server-creator app))
+        (state/set-state :alert-manager (gas/message-server-creator app))
         (let [jframe (seesaw.core/frame
                       :title title
                       :resizable? true

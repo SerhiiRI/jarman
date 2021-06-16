@@ -86,16 +86,20 @@
       Function need stool/image-scale for scaling button icon
       Function need middle-bounds for auto calculating bound
    "
-  [header body invoker]
-  (println "\nheader" header "\nbody" body "\ninvoker" invoker)
+  [header body relative]
+;;   (println "\nheader" header "\nbody" body "\ninvoker" relative)
   (let [comp (mig-panel
-              :constraints ["wrap 1" "5px[grow, fill]5px" "5px[fill]5px"]
+              :constraints ["wrap 1" "10px[grow, fill]10px" "10px[fill]10px"]
               :id :message-view-box
-              :items [[(c/label :text header :font (gtool/getFont 16))]
-                      [(gcomp/hr 1 "#999")]
-                      [(gcomp/min-scrollbox (c/label :text (gtool/htmling body))
-                                            :hscroll :never)]])]
-    (gcomp/popup-window {:view comp :title "Info" :size [350 400] :invoker invoker})))
+              :items [[(c/label :text header 
+                                :font (gtool/getFont 18)
+                                :border (b/empty-border :left 5 :right 5))]
+                      [(gcomp/hr 1 "#999" [0 0 0 5])]
+                      [(c/label
+                        :text (gtool/htmling body :justify)
+                        :font (gtool/getFont 14)
+                        :border (b/empty-border :left 10 :right 10))]])]
+    (gcomp/popup-window {:view comp :window-title "Info" :size [400 350] :relative relative})))
 
 
 (def message
@@ -114,7 +118,7 @@
       Function need view-selected-message for show whole message
    "
   (fn [data]
-    (println "Invoked alert")
+   ;;  (println "Invoked alert")
     (let [font-c "#000"
           bg-c "#fff"
           header (rift (:header data) "Information")
@@ -123,7 +127,7 @@
          ;;  body   (if (= (contains? data :body) true) (:body data) "Template of information...")
           layered-pane ((state/state :alert-manager) :get-space)
           close [(build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png layered-pane 23
-                                       (fn [e] (view-selected-message header body layered-pane)))
+                                       (fn [e] (view-selected-message header body @layered-pane)))
                  (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered-pane 23
                                        (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] ((state/state :alert-manager) :rm-obj to-del))))]
           [t b l r] (try
@@ -279,22 +283,24 @@
         bord     (b/empty-border :left 5)
         header   (if (= (contains? data :header) true) (get data :header) "Information")
         body     (if (= (contains? data :body) true) (get data :body) "Template of information...")
-        label (fn [text & font]
-                   (c/label :size [w :by h] :background bg-c :border bord :text text)
-                   (c/label :size [w :by h] :background bg-c :border bord :text text :font (first font)))]
-    (c/vertical-panel
-     :background (new Color 0 0 0 0)
-     :border (b/line-border :bottom 2 :color "#333")
-     :items [(c/label header (gtool/getFont 14 :bold)) (c/label body)]
-     :listen [:mouse-entered (fn [e] (let [children (seesaw.util/children (seesaw.core/to-widget e))]
-                                       (do
-                                         (c/config! e :cursor :hand)
-                                         (doall (map (fn [item] (c/config! item :background hover-c)) children)))))
-              :mouse-exited (fn [e] (let [children (seesaw.util/children (seesaw.core/to-widget e))]
-                                      (do
-                                        (c/config! e :cursor :default)
-                                        (doall (map (fn [item] (c/config! item :background bg-c)) children)))))
-              :mouse-clicked (fn [e] (view-selected-message header body layered-pane))])))
+        comp-header (c/label :size [w :by h] :background (new Color 0 0 0 0) :border bord :text header :font (gtool/getFont 14 :bold))
+        comp-body   (c/label :size [w :by h] :background (new Color 0 0 0 0) :border bord :text body   :font (gtool/getFont 12))
+        comp        (mig-panel
+                     :focusable? true
+                     :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
+                     :background bg-c
+                     :border (b/line-border :bottom 2 :color "#333")
+                     :items [[comp-header] [comp-body]])
+        onClick     (fn [e] (view-selected-message header body @layered-pane))
+        comp        (c/config! comp
+                               :listen [:mouse-clicked (fn [e] (onClick e))
+                                        :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
+                                        :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
+                                        :focus-gained  (fn [e] (c/config! comp :background hover-c :cursor :hand))
+                                        :focus-lost    (fn [e] (c/config! comp :background bg-c))
+                                        :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))])]
+    comp))
+
 
 (defn all-messages-window
   "Description:
@@ -310,49 +316,28 @@
   (let [w     330
         h     400
         ico-size 30
-        header-size 40
-        fg-c  "#fff"
-        bg-c  "#333"
-        header-c  "#666"
-        frame-c "#000"
         btn-bg-c "#fff"
         btn-bg-c-hover "#ddd"
-        border 2
-        bounds (gtool/middle-bounds @layered-pane (+ w border border) (+ h border border))
-        items  (vec (map (fn [item] (history-alert (get item :data) layered-pane [w 30])) @alerts-storage))
-        space-for-message (mig-panel
-                           :constraints ["wrap 1" "0px[grow, fill]0px[fill]0px"]
-                           :bounds bounds
-                           :border (b/line-border :thickness border :color frame-c)
-                           :id :all-alerts
-                           :items [[(c/scrollable
-                                     (c/vertical-panel
-                                      :items items)
-                                     :hscroll :never
-                                     :border nil
-                                    ;;  :size [w :by (- h header-size ico-size)]
-                                     :listen [:mouse-motion (fn [e] (.repaint (c/select (c/to-root e) [:#all-alerts])))
-                                              :mouse-wheel-moved (fn [e] (.repaint (c/select (c/to-root e) [:#all-alerts])))])]
-                                   [(mig-panel
-                                     :constraints ["" "0px[grow, fill]0px" (str "0px[" (str (- ico-size 1)) "]0px")]
-                                     :background fg-c
-                                     :border (b/line-border :top 1 :color bg-c)
-                                     :items [[(c/label
-                                               :text "Clear all message"
-                                               :icon (stool/image-scale icon/basket-blue1-64-png ico-size)
-                                               ;; :icon (stool/image-scale icon/basket-blue1-64x64-png ico-size)
-                                               :halign :center
-                                               :font (gtool/getFont 14)
-                                               :size [(/ w 2) :by ico-size]
-                                               :background btn-bg-c
-                                               :listen [:mouse-entered (fn [e] (c/config! e :background btn-bg-c-hover :cursor :hand))
-                                                        :mouse-exited (fn [e] (c/config! e :background btn-bg-c))
-                                                        :mouse-clicked (fn [e] (do
-                                                                                              ;;  remove all history
-                                                                                 (rmallAlert alerts-storage layered-pane)
-                                                                                              ;;  refresh GUI with remove element with id :all-alertsts
-                                                                                 (refresh-alerts layered-pane alerts-storage :all-alerts)))])]])]])]
-    (gcomp/popup-window {:view space-for-message :window-title "Alerts history" :size [350 400] :invoker layered-pane})))
+        items  (map (fn [item] (history-alert (get item :data) layered-pane [w 30])) @alerts-storage)
+        container (mig-panel
+                   :constraints ["wrap 1" "0px[grow, fill]0px[fill]0px" "0px[grow, top]0px[fill]0px"]
+                   :id :all-alerts
+                   :items [[(gcomp/scrollbox
+                             (c/vertical-panel :items items)
+                             :args [:hscroll :never
+                                    :border nil
+                                    :listen [:mouse-motion (fn [e] (.repaint (c/select (c/to-root e) [:#all-alerts])))
+                                             :mouse-wheel-moved (fn [e] (.repaint (c/select (c/to-root e) [:#all-alerts])))]])]
+                           [(gcomp/button-basic
+                             "Clear all message"
+                             :font (gtool/getFont 14)
+                             :flip-border true
+                             :onClick (fn [e]
+                                        (rmallAlert alerts-storage layered-pane);;  remove all history
+                                        (refresh-alerts layered-pane alerts-storage :all-alerts);;  refresh GUI with remove element with id :all-alertsts
+                                        (.dispose (c/to-frame e)))
+                             :args [:icon (stool/image-scale icon/basket-blue1-64-png ico-size)])]])]
+    (gcomp/popup-window {:view container :window-title "Alerts history" :size [w h] :relative @layered-pane})))
 
 
 (defn message-server-creator

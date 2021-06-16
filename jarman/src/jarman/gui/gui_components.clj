@@ -34,7 +34,13 @@
 
 (defn hr
   ([line-size] (c/label :border (b/empty-border :top line-size)))
-  ([line-size line-color] (c/label :border (b/line-border :top line-size :color line-color))))
+  ([line-size line-color] (c/label :border (b/line-border :top line-size :color line-color)))
+  ([line-size line-color offset]
+   (let [[l t r b] offset]
+     (c/label :border (b/compound-border
+                       (b/line-border :top line-size :color line-color)
+                       (b/empty-border :left l :right r :top t :bottom b)))))
+  )
 
 (defn fake-focus
   [& {:keys [args
@@ -221,7 +227,9 @@
                  underline-size
                  mouse-out
                  focus-color
-                 unfocus-color]
+                 unfocus-color
+                 flip-border
+                 font]
           :or   {onClick (fn [e] (println "Click"))
                  args []
                  tgap 10
@@ -233,14 +241,17 @@
                  mouse-in  (gtool/get-color :background :button_hover_light)
                  mouse-out (gtool/get-color :background :button_main)
                  focus-color (gtool/get-color :decorate :focus-gained)
-                 unfocus-color (gtool/get-color :decorate :focus-lost)}}]
+                 unfocus-color (gtool/get-color :decorate :focus-lost)
+                 flip-border false
+                 font (gtool/getFont 12)}}]
   (let [newBorder (fn [underline-color]
                     (b/compound-border (b/empty-border :bottom bgap :top tgap :left lgap :right rgap)
-                                       (b/line-border :bottom underline-size :color underline-color)))]
+                                       (b/line-border (if flip-border :top :bottom) underline-size :color underline-color)))]
     (apply c/label
            :text txt
            :focusable? true
            :halign halign
+           :font font
            :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
                     :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
                     :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
@@ -410,6 +421,7 @@
                 :id id
                 :border (b/empty-border :top tgap)
                 :items [(c/label :text (if (string? title) title "")
+                                 :font (gtool/getFont 13)
                                  :foreground font-color )
                         component]))
 
@@ -1175,47 +1187,49 @@
              [(nth panels num) "span 2"]])))
 
 
-
-
-;; (defn popup-window
-;;   "Description:
-;;      Dialog window. Invoke passing component with view and window title.
-;;      (popup-window {})
-;;      (popup-window {:view (create-business-card) :window-title \"My card\"})
-;;    "
-;;   []
-;;   (fn [{:keys [view size window-title root]
-;;         :or {view (c/label :text "Popup window")
-;;              size [600 400]
-;;              window-title "Popup window"}}]
-;;     (let [dialog (seesaw.core/custom-dialog :modal? true
-;;                                             :width (first size)
-;;                                             :height (second size)
-;;                                             :title window-title)]
-;;       (seesaw.core/config! dialog :content view)
-;;     ;; (.setUndecorated dialog true)
-;;       (doto dialog (.setLocationRelativeTo root) c/show!))))
-
-
+(defn- calc-popup-center
+  [popup-size relative]
+  (let [relative-width-middle  (/ (.getWidth  relative) 2)
+        relative-height-middle (/ (.getHeight relative) 2)
+        popup-width-middle     (/ (first  popup-size) 2)
+        popup-height-middle    (/ (second popup-size) 2)
+        x-offset               (- relative-width-middle popup-width-middle)
+        y-offset               (- relative-height-middle popup-height-middle)
+        x (+ (.x (.getLocationOnScreen (seesaw.core/to-frame relative))) x-offset)
+        y (+ (.y (.getLocationOnScreen (seesaw.core/to-frame relative))) y-offset)]
+    [x y]))
 
 (def popup-window 
   "Description:
-     Dialog window. Invoke passing component with view and window title.
+     Dialog window. Invoke passing component with view, window title and prefer size.
+   Example:
      (popup-window {})
      (popup-window {:view (create-business-card) :window-title \"My card\"})
+     (popup-window {:view (create-business-card) :window-title \"My card\" :size [200 300]})
    "
-  (fn [{:keys [view size window-title invoker]
+  (fn [{:keys [view size window-title relative]
         :or {view (c/label :text "Popup window")
              size [600 400]
              window-title "Popup window"}}]
-    (let [dialog
-          (c/custom-dialog
-           :title window-title
-           :modal? true
-           :resizable? true
-           :size [(first size) :by (second size)] ;; here you need to set window size for calculating middle 
-           :content view)]
+    (let [relative (if (nil? relative) nil (calc-popup-center size (c/to-frame relative)))
+          template (mig-panel 
+                    :constraints ["" (format "0px[:%s:, grow, fill]0px" (first size)) (format "0px[:%s:, grow, fill]0px" (second size))]
+                    :items [[view]])
+          dialog (c/custom-dialog
+                  :title window-title
+                  :modal? true
+                  :resizable? true
+                  :content template
+                  ;; :listen [:component-resized (fn [e]
+                  ;;                              (.revalidate template) 
+                  ;;                               ;; (let [w (.getWidth (c/to-frame e))
+                  ;;                               ;;             h (.getWidth (c/to-frame e))])
+                  ;;                               )]
+                  )]
       ;; (.setUndecorated dialog true)
-      (doto dialog (.setLocationRelativeTo (c/to-root invoker)) c/pack! c/show!) ;; here should be relative to root of invoker
+      (if (nil? relative) 
+        (.setLocationRelativeTo dialog (c/to-root relative)) 
+        (.setLocation dialog (first relative) (second relative)))
+      (doto dialog c/pack! c/show!)
       )))
 

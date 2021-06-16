@@ -290,12 +290,13 @@
    "
   [controller id]
   (let [;;radio-group (c/button-group)
+        default-path (str jarman.config.environment/user-home "/Documents")
         panel-bg "#eee"
-        input-text (gcomp/input-text :args [:text (str jarman.config.environment/user-home "/Documents") :font (gtool/getFont  :name "Monospaced")])
+        input-text (gcomp/input-text :args [:text default-path :font (gtool/getFont  :name "Monospaced")])
         icon (gcomp/button-basic
               ""
-              :onClick [:mouse-clicked (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
-                                                (c/config! input-text :text new-path)))]
+              :onClick (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
+                                 (c/config! input-text :text (rift new-path default-path))))
               :args [:icon (jarman.tools.swing/image-scale ico/enter-64-png 30)])
         panel (smig/mig-panel
                :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[fill]0px"]
@@ -545,7 +546,7 @@
           :or {table-model [] more-comps []}}]
     ;; (println "\ndata-toolkit\n" data-toolkit "\nconfiguration\n" configuration)
     (let [local-changes (atom {})
-          meta-data (rift (convert-metadata-vec-to-map (:columns-meta data-toolkit)) (do (println "[ Warning ] In data-toolkit missing :comumns-meta!") {}))
+          meta-data (convert-metadata-vec-to-map (:columns-meta data-toolkit))
           components (convert-model-to-components-list global-configuration local-changes meta-data table-model (:model configuration))
           panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
                                 :border (sborder/empty-border :thickness 10)
@@ -577,7 +578,7 @@
           insert-form   (fn [] (build-input-form data-toolkit configuration global-configuration))
           view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
           table         (fn [] (second (u/children view-layout)))
-          header        (fn [] (c/label :text (:representation (rift (:table-meta data-toolkit) (do (println "[ Warning ] In data-toolkit missing :table-meta!") {}))) 
+          header        (fn [] (c/label :text (:representation (:table-meta data-toolkit)) 
                                         :halign :center :border (sborder/empty-border :top 10)))
           update-form   (fn [table-model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration :table-model table-model :more-comps [(return)])]))
           x nil ;;------------ Build
@@ -607,27 +608,29 @@
         ;; title (get-in data-toolkit [:table-meta :representation])
         title (:name configuration)
         space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
+        ;; x (println "\nplug-place"(:plug-place configuration) "\nspace"space)
         atm (:atom-expanded-items (c/config space :user-data))]
     ;; (println "Allow Permission: " (session/allow-permission? (:permission configuration)))
     ;; TODO: Set invoker expand button if not exist add child invokers
     (if (false? (spec/test-keys-jtable configuration spec-map))
       (println "[ Warning ] plugin/table: Error in spec")
       (if (session/allow-permission? (:permission configuration))
-        (swap! atm (fn [inserted]
-                     (conj inserted
-                           (gcomp/button-expand-child
-                            title
-                            :onClick (fn [e]
-                                       (println "\nplugin-path\n" plugin-path title)
-                                       ((state/state :jarman-views-service)
-                                        :set-view
-                                        :view-id (str "auto-" title)
-                                        :title title
-                                        :scrollable? false
-                                        :component-fn (fn [] (auto-builder--table-view
-                                                              (global-configuration)
-                                                              data-toolkit
-                                                              configuration))))))))))
+        (do
+          (swap! atm (fn [inserted]
+                       (conj inserted
+                             (gcomp/button-expand-child
+                              title
+                              :onClick (fn [e]
+                                        ;;  (println "\nplugin-path\n" plugin-path title)
+                                         ((state/state :jarman-views-service)
+                                          :set-view
+                                          :view-id (str "auto-" title)
+                                          :title title
+                                          :scrollable? false
+                                          :component-fn (fn [] (auto-builder--table-view
+                                                                (global-configuration)
+                                                                data-toolkit
+                                                                configuration)))))))))))
     (.revalidate space)))
 
 

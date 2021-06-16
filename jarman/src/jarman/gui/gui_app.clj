@@ -50,46 +50,53 @@
 ;; └────────────────────────────┘
 
 (def popup-menager (atom nil))
+;; (@popup-menager :new-test)
 
 (defn ontop-panel
-  [popup-menager storage-id z-index & {:keys [size title body] :or {size [600 400] title "Popup" body (c/label)}}]
+  [popup-menager storage-id & {:keys [size title body] :or {size [600 400] title "Popup" body (c/label)}}]
   (let [last-x (atom 0)
         last-y (atom 0)
         w (first size)
-        h (second size)]
+        h (second size)
+        title-bar (mig-panel
+                   :constraints ["" "10px[grow]0px[30, center]0px" "5px[]5px"]
+                   :background "#ddd" ;;"#eee"
+                   :items (gtool/join-mig-items
+                           (c/label :text title)
+                           (c/label :icon (stool/image-scale icon/up-grey1-64-png 25)
+                                    :listen [:mouse-clicked
+                                             (fn [e] (cond (> (.getHeight (gtool/getParent (gtool/getParent e))) 50)
+                                                           (c/config! (gtool/getParent (gtool/getParent e)) :bounds  [(.getX (gtool/getParent (gtool/getParent e)))
+                                                                                                                      (.getY (gtool/getParent (gtool/getParent e)))
+                                                                                                                      w 30])
+                                                           :else (c/config! (gtool/getParent (gtool/getParent e)) :bounds [(.getX (gtool/getParent (gtool/getParent e)))
+                                                                                                                           (.getY (gtool/getParent (gtool/getParent e)))
+                                                                                                                           w h])))
+                                             :mouse-entered (fn [e] (c/config! e :cursor :hand))])
+                           (c/label :icon (stool/image-scale icon/x-blue2-64-png 20)
+                                    :listen [:mouse-clicked (fn [e] ((@popup-menager :remove) storage-id))
+                                             :mouse-entered (fn [e] (c/config! e :cursor :hand))])))
+        content (mig-panel
+                 :constraints ["wrap 1" "0px[grow, center]0px" "0px[grow, center]0px"]
+                 :background "#fff"
+                 :items (gtool/join-mig-items body))
+        components (gtool/join-mig-items
+                    title-bar content)
+        main-bounds (gtool/middle-bounds (first @(state/state :atom-app-size)) (second @(state/state :atom-app-size)) w h)
+        main-border (line-border :thickness 2 :color (gtool/get-color :decorate :gray-underline))]
     (mig-panel
      :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill, center]0px[fill, grow]0px"]
-     :bounds (gtool/middle-bounds (first @atom-app-size) (second @atom-app-size) w h)
-     :border (line-border :thickness 2 :color (gtool/get-color :decorate :gray-underline))1
+     :bounds main-bounds
+     :border main-border
      :background "#fff"
      :id storage-id
      :visible? true
-     :items (gtool/join-mig-items (mig-panel
-                             :constraints ["" "10px[grow]0px[30, center]0px" "5px[]5px"]
-                             :background "#ddd" ;;"#eee"
-                             :items (gtool/join-mig-items
-                                     (c/label :text title)
-                                     (c/label :icon (stool/image-scale icon/up-grey1-64-png 25)
-                                            :listen [:mouse-clicked (fn [e] (cond (> (.getHeight (gtool/getParent (gtool/getParent e))) 50)
-                                                                                  (c/config! (gtool/getParent (gtool/getParent e)) :bounds  [(.getX (gtool/getParent (gtool/getParent e)))
-                                                                                                                               (.getY (gtool/getParent (gtool/getParent e)))
-                                                                                                                               w 30])
-                                                                                  :else (c/config! (gtool/getParent (gtool/getParent e)) :bounds [(.getX (gtool/getParent (gtool/getParent e)))
-                                                                                                                                    (.getY (gtool/getParent (gtool/getParent e)))
-                                                                                                                                    w h])))
-                                                     :mouse-entered (fn [e] (c/config! e :cursor :hand))])
-                                     (c/label :icon (stool/image-scale icon/x-blue2-64-png 20)
-                                            :listen [:mouse-clicked (fn [e] ((@popup-menager :remove) storage-id))
-                                                     :mouse-entered (fn [e] (c/config! e :cursor :hand))])))
-                            (mig-panel
-                             :constraints ["wrap 1" "0px[grow, center]0px" "0px[grow, center]0px"]
-                             :background "#fff"
-                             :items (gtool/join-mig-items body)))
+     :items components
      :listen [:mouse-clicked (fn [e] ((@popup-menager :move-to-top) storage-id))
               :mouse-dragged (fn [e] (do
-                                       (if (= @last-x 0) (reset! last-x (.getX e)))
-                                       (if (= @last-y 0) (reset! last-y (.getY e)))
-                                       (let [bounds (c/config! e :bounds)
+                                       (if (= @last-x 0) (reset! last-x (.getX e)) nil)
+                                       (if (= @last-y 0) (reset! last-y (.getY e)) nil)
+                                       (let [bounds (c/config e :bounds)
                                              pre-x (- (+ (.getX bounds) (.getX e)) @last-x)
                                              pre-y (- (+ (.getY bounds) (.getY e)) @last-y)
                                              x (if (> pre-x 0) pre-x 0)
@@ -266,24 +273,25 @@
                                      elems-count  (count elems-in-JLP)]
                                  (reset! atom-popup-storage (dissoc @atom-popup-storage id)) ;; Remove popup from storage
                                  (doall (map (fn [index] ;; remove popup from main JLayeredPane
-                                               (cond (= (c/config! (nth elems-in-JLP index) :id) id) (.remove JLP index)))
+                                               (cond (= (c/config (nth elems-in-JLP index) :id) id) (.remove JLP index)))
                                              (range elems-count)))
                                  (.repaint JLP)))  ;; Refresh GUI
           (= action :move-to-top) (fn [id] ;; Popup order, popup on top
                                     (let [elems-in-JLP (seesaw.util/children JLP)
                                           elems-count  (count elems-in-JLP)]
                                       (doall (map (fn [index] ;; Change popup order on JLayeredPane 
-                                                    (cond (= (c/config! (nth elems-in-JLP index) :id) id)
+                                                    (cond (= (c/config (nth elems-in-JLP index) :id) id)
                                                           (.setLayer JLP (nth elems-in-JLP index) @z-index 0)))
                                                   (range elems-count)))
                                       (.repaint JLP)) ;; Refresh GUI
                                     )
-          (= action :new-test)    (template (ontop-panel popup-menager unique-id z-index))
-          (= action :new-message) (template (ontop-panel popup-menager unique-id z-index :title title :body body :size size))
+          (= action :new-test)    (template (try (ontop-panel popup-menager unique-id)  (catch Exception e (println "\n"(.getMessage e)))))
+          (= action :new-message) (template (ontop-panel popup-menager unique-id :title title :body body :size size))
           (= action :show)        (println @atom-popup-storage)
           (= action :get-atom-storage) atom-popup-storage
           (= action :ok)          (create-dialog-ok title body size)
           (= action :yesno)       (create-dialog-yesno title body size))))))
+
 
 ;; (new-layered-id-for-tables-visualizer)
 ;; (new-test-for-tabs)
@@ -369,9 +377,9 @@
                                            (cond
                                              (= @bg-btn color)
                                              (do ;; reset bg and atom inside all buttons in parent if id is ok
-                                               (doall (map (fn [b] (cond (= (c/config! b :id) id-btn)
+                                               (doall (map (fn [b] (cond (= (c/config b :id) id-btn)
                                                                          (do (c/config! b :background color)
-                                                                             (reset! (c/config! b :user-data) color))))
+                                                                             (reset! (c/config b :user-data) color))))
                                                            (seesaw.util/children (.getParent (seesaw.core/to-widget e)))))
                                                 ;; reset atom with color
                                                (reset! bg-btn color-clicked)
@@ -826,8 +834,8 @@
                                               :mouse-entered (fn [e] (c/config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
                                               :mouse-exited  (fn [e] (do
                                                                        (c/config! e :background "#fff" :foreground "#000")
-                                                                       (let [bounds (c/config! (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :bounds)
-                                                                             mouse-y (+ (+ (.getY e) (.getY (c/config! e :bounds))) (.getY bounds))
+                                                                       (let [bounds (c/config (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :bounds)
+                                                                             mouse-y (+ (+ (.getY e) (.getY (c/config e :bounds))) (.getY bounds))
                                                                              mouse-x (.getX e)]
                                                                          (if (or (< mouse-x 5)
                                                                                  (> mouse-x (- (.getWidth bounds) 5))
@@ -882,7 +890,7 @@
                                    (= (get data :type) "header") (compound-border (empty-border :thickness 4))
                                    :else                         (compound-border (empty-border :thickness 4)))
                          :listen [:mouse-entered (fn [e] (if (= (:type data) "header") (c/config! e :cursor :move)))
-                                  :mouse-clicked (fn [e] (c/invoke-later (let [table-id (:id (c/config! (gtool/getParent e) :user-data))]
+                                  :mouse-clicked (fn [e] (c/invoke-later (let [table-id (:id (c/config (gtool/getParent e) :user-data))]
                                                                          (cond (= (.getButton e) MouseEvent/BUTTON3)
                                                                                (let [view-space ((state/state :jarman-views-service) :get-view-sapce)
                                                                                      scrol (c/select view-space [:#JLP-DB-Visualizer])
@@ -892,8 +900,8 @@
                                                                                         JLP
                                                                                         (mmeta/getset) ;; forward list of table configuration
                                                                                         table-id ;; Get table id
-                                                                                        (-> (.getX e) (+ (.getX (c/config! (gtool/getParent e) :bounds))) (- 15))
-                                                                                        (-> (.getY e) (+ (.getY (c/config! e :bounds))) (+ (.getY (c/config! (gtool/getParent e) :bounds))) (- 10)))
+                                                                                        (-> (.getX e) (+ (.getX (c/config (gtool/getParent e) :bounds))) (- 15))
+                                                                                        (-> (.getY e) (+ (.getY (c/config e :bounds))) (+ (.getY (c/config (gtool/getParent e) :bounds))) (- 10)))
                                                                                        (new Integer 999) ;; z-index
                                                                                        ))
                                                                                (= (.getClickCount e) 2) ;; Open table editor by duble click
@@ -903,7 +911,7 @@
                                                      (if (= @last-x 0) (reset! last-x (.getX e)))
                                                      (if (= @last-y 0) (reset! last-y (.getY e)))
                                                      (cond
-                                                       (= (get data :type) "header") (let [bounds (c/config! (gtool/getParent e) :bounds)
+                                                       (= (get data :type) "header") (let [bounds (c/config (gtool/getParent e) :bounds)
                                                                                            pre-x (- (+ (.getX bounds) (.getX e)) @last-x)
                                                                                            pre-y (- (+ (.getY bounds) (.getY e)) @last-y)
                                                                                            x (if (> pre-x 0) pre-x 0)
@@ -984,8 +992,8 @@
                                    :listen [:mouse-released (fn [e] (c/config! e :cursor :default))
                                             :mouse-pressed (fn [e]
                                                              (c/config! e :cursor :move)
-                                                             (let [x (.getX (c/config! e :bounds))
-                                                                   y (.getY (c/config! e :bounds))]
+                                                             (let [x (.getX (c/config e :bounds))
+                                                                   y (.getY (c/config e :bounds))]
                                                                (reset! JLP-bounds {:x (.getX e) :y (.getY e) :x-x (- (.getX e) x) :y-y (- (.getY e) y)})))
                                             :mouse-dragged (fn [e]
                                                         ;;  (println "Drag JLP: " (.getX e) (.getY e))
@@ -1184,7 +1192,7 @@
                                      (gcomp/button-slim "01/01/2021 - 31/12/2021"
                                                         :onClick (fn [e]
                                                                    (c/config! view-space :items (gtool/join-mig-items (create-period--period-form)))
-                                                                   (if auto-menu-hide ((:hide-show (c/config! (c/select list-space [:#expand-panel]) :user-data))))))
+                                                                   (if auto-menu-hide ((:hide-show (c/config (c/select list-space [:#expand-panel]) :user-data))))))
                                      (gcomp/button-slim "01/01/2021 - 31/12/2021" :onClick (fn [e]))
                                      (gcomp/button-slim "01/01/2021 - 31/12/2021" :onClick (fn [e]))
                                      (gcomp/button-slim "01/01/2021 - 31/12/2021" :onClick (fn [e]))
@@ -1228,7 +1236,7 @@
 
 (defn create-period-view
   []
-  (let [list-space (gcomp/vmig :args [:border (line-border :thickness 1 :color "#bbb")])
+  (let [list-space (gcomp/vmig :args [:border (line-border :left 1 :right 1 :color "#eee")])
         view-space (gcomp/vmig)
         list-space (c/config! list-space :items (gtool/join-mig-items (create-period--period-companys-list list-space view-space create-period--period-companys-list)))]
     (gcomp/hmig

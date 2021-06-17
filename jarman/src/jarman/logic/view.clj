@@ -111,6 +111,9 @@
   (table
    :name "Documnets import"
    :changes-button true
+   :insert-button false
+   :delete-button false
+   :update-button false
    :plug-place [:#tables-view-plugin]
    :tables [:documents]
    :view-columns [:documents.table

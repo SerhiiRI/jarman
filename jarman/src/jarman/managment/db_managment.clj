@@ -1,4 +1,4 @@
-(ns jarman.managment.db-managment
+ (ns jarman.managment.db-managment
   (:refer-clojure :exclude [update])
   (:require
    [clojure.data :as data]
@@ -16,6 +16,7 @@
 
 (def all-tables nil)
 (def db-connection nil)
+(def table-key nil)
 ;; "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db.clj"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -30,17 +31,28 @@
 (defn get-path-cli [cli-opt-map]
   (second (vals (:options cli-opt-map))))
 
-(defn path-to-db [cli-opt-map]
-  (def path-to-db-clj (get-value-cli cli-opt-map))
-  (println "you add path successfully"))
-
-(defn get-tables [path]
+(defn get-tables
+  "Description
+    - get path to file with db (db_meta or db_ssql)
+    - read and eval this file, so write data to variables
+    (def all-tables, def db-conecction, def table-key)"
+  [path]
   (try
     (binding [*ns* (find-ns 'jarman.managment.db-managment)]  
       (load-file path)
       (db/connection-set db-connection))
     (catch java.io.FileNotFoundException e
       (println (str "[e] File not found" (.toString e))))))
+
+(defn get-list-schemas
+  "Description
+    get list name of tables from db-file (db_meta.clj or db_ssql) "
+  [](map (fn [scheme] (table-key scheme)) all-tables))
+
+(defn get-list-tables
+  "Description
+    get list name of tables from db-jarman"
+  [] (map (comp second first)(db/query (show-tables))))
 
 (defn choose-option
   "Description
@@ -56,62 +68,79 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def file-exists?
   (fn [file-path]
-    (do 
-        (binding [*ns* (find-ns 'jarman.managment.db-managment)]  
+    (do (binding [*ns* (find-ns 'jarman.managment.db-managment)]  
           (.exists (clojure.java.io/file file-path))))))
 
-(defn get-one-scheme [table-name]
-  (first (filter (fn [x] (= (:table-name x) (keyword table-name)))
-                 all-tables)))
-
-(defn get-one-meta [table-name]
-  (first (filter (fn [x] (= (:table x) table-name))
+(defn get-one-scheme
+  [table-name]
+  (first (filter (fn [x] (= (table-key x)
+                            (if (= table-key :table)
+                              table-name
+                              (keyword table-name))))
                  all-tables)))
 
 (defn -entity-in? [entity-list]
   (fn [t] (if (nil? (some #(= (string/lower-case t) (string/lower-case %)) entity-list)) false true)))
 
-(def scheme-in? (fn [table-name]
-                  (let [resault
-                        (if (nil? (some
-                                   (fn [x] (= (:table-name x)
-                                              (keyword table-name)))
-                                  all-tables))
-                                  false true)] resault)))
+(def scheme-in?
+  "Description
+    check if table-scheme is in db"
+  (fn [table-name]
+    (let [resault (if (nil? (some (fn [x]
+                                    (= (table-key x)
+                                       (if (= table-key :table)
+                                         table-name
+                                         (keyword table-name)))) all-tables))
+                    false true)] resault)))
 
-;; (def meta-in?   (-entity-in?
-;;                  (map :table (db/query sql-connection (select :METADATA :column ["`table`"])))))
+(def table-in?
+  "Description
+    check if table is in DB-jarman"
+  (binding [*ns* (find-ns 'jarman.managment.db-managment)]  
+    (-entity-in? (get-list-tables))))
 
-(def table-in?  (binding [*ns* (find-ns 'jarman.managment.db-managment)]  
-                  (-entity-in? (let [entity-list (db/query (show-tables))]
-                               (println (map (comp second first) entity-list) )
-                               (if (not-empty entity-list) (map (comp second first) entity-list)))) ))
-
-
-;;(db/query (select :metadata :column [:table]))
-
-(table-in? "user")
+(defn valid-tables
+  "Description
+    check whether all tables were written in db"
+  []
+  (let [l-schemas (get-list-schemas)
+        l-tables (get-list-tables)
+        len (count l-schemas)]
+    (if (empty? l-schemas) (println "[!] Schemas for db in file (db_meta.clj or db_ssql.clj) is empty"))
+    (if (empty? l-tables) (println "[!] DB - jarman is empty"))
+    (if (= len (count (for [a l-schemas b l-tables 
+                            :when
+                            (= (name a) b)]
+                        a))) true false)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; FUNCTIONS FOR CREATE TABLES ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn create-scheme []
-  (if-not (empty?
-           (for [t all-tables]
-             (db/exec (create-table! t))))
-    (println "[!] Table structure created successfuly")))
+  (doall (for [t all-tables]
+           (db/exec (create-table! t)))))
 
 (defn create-one-table [scm]
   (let [scheme (get-one-scheme scm)]
     (if (empty? scheme) (println "[i] Scheme is not found")
-        (do
-          (db/exec (create-table! scheme))
-          (println (format "[i] Table by scheme %s created successfuly" (name scm)))))))
+        (do (db/exec (create-table! scheme))))))
 
-(defn write-meta-to-db []
+(defn create-one-table-by-meta [metadata]
+  (try (do (metadata/update-meta metadata)
+           (db/exec (metadata/create-table-by-meta metadata)))
+       (catch Exception e (println "[!] Problem with " (:table metadata)))))
+
+(defn create-all-by-meta []
   (sinit/procedure-test-all)
-  (for [metadata all-tables]
-    (metadata/update-meta metadata)))
+  (doall (for [metadata all-tables]
+           (create-one-table-by-meta metadata))))
+
+(defn messege-table [ch scm]
+  (if (valid-tables)
+        (if ch
+          (println (format "[i] Table %s created successfuly" (name scm)))
+          (println "[i] Table structure created successfuly"))
+          (println "[!] Table structure is not valid, check this")))
 
 (defn cli-create-table
   "Description
@@ -126,55 +155,80 @@
         scm (get-value-cli cli-opt-m)
         path (get-path-cli cli-opt-m)
         ch (choose-option scm)]
-    (get-tables path)
+    (if (nil? path)
+      (println "[!] You don't entered path to file with db")
+      (get-tables path))
     (condp = opt
-      :create-by-meta (do
-                        (write-meta-to-db)
-                        (if ch
-                           (metadata/create-table-by-meta (get-one-meta scm))
-                           (for [metadata all-tables]
-                             (metadata/create-table-by-meta metadata))))
+      :create-by-meta (if ch
+                        (if (scheme-in? scm)
+                          (do (sinit/procedure-test-all)
+                              (create-one-table-by-meta (get-one-scheme scm)))
+                          (println "[i] Scheme for table not found"))
+                        (create-all-by-meta))
       :create-by-ssql (if ch
                         (if (scheme-in? scm)
                           (create-one-table scm)
                           (println "[!] Scheme for table not found"))
                         (create-scheme))
       :create-meta (if ch
-                     (do
-                       (metadata/create-one-meta scm)
-                       (metadata/do-create-references)
-                       (println (format "[i] Meta for %s created successfuly" (name scm))))
-                     (do (metadata/do-create-meta)
-                         (metadata/do-create-references)
-                         (println "[!] Metadata created successfuly")))
-      (println "[!] You entered invalid operation (key)"))))
-
-
+                     (if (table-in? scm)
+                       (do (metadata/create-one-meta scm)
+                           (metadata/do-create-references)
+                           (println (format "[i] Meta for %s created successfuly" (name scm))))
+                       (println "[!] Table not found"))
+                      (do (metadata/do-create-meta)
+                           (metadata/do-create-references)
+                           (println "[!] Metadata created successfuly")))
+      (println "[!] You entered invalid operation (key)"))
+    (if-not (= opt :create-meta)
+      (messege-table ch scm))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; FUNCTIONS FOR DELETE TABLES ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn delete-scheme []
-  (for [t (reverse all-tables)]
-    (db/exec (drop-table (:table-name t)))))
+  (doall (for [t (reverse all-tables)]
+           (db/exec (drop-table (:table-name t)))))
+  (println "[i] Tables deleted successfuly"))
 
 (defn delete-one-table [scm]
-  (db/exec (drop-table (keyword scm))))
+  (try
+    (db/exec (drop-table (keyword scm)))
+    (println (format "[i] Table %s deleted successfuly" (name scm)))
+    (catch Exception e (println "Cannot delete or update a parent row: a foreign key constraint fails"))))
 
-(defn cli-delete-table [cli-opt-m]
-  (let [opt (first (keys (:options cli-opt-m)))
-        scm (first (vals (:options cli-opt-m)))]
-    (if (choose-option scm)
-      (if (= opt :delete-meta)
-        (do (metadata/delete-one-meta scm)
-            (println (format "[i] Meta  %s cleared successfuly" (name scm))))
-        (do (delete-one-table scm)
-            (println (format "[i] Table %s deleted successufuly" (name scm)))))
-      (if (= opt :delete-meta)
-        (do (metadata/do-clear-meta)
-            (println "[!] Metadata was clear"))
-        (do (delete-scheme)
-            (println "[i] Whole DB scheme was erased"))))))
+(defn cli-delete-table
+  "Description
+    this func get cli options map and
+    choose functions for delete tables"
+  [cli-opt-m]
+  (let [opt (get-options-cli cli-opt-m)
+        scm (get-value-cli cli-opt-m)
+        ch (choose-option scm)]
+    (condp = opt
+      :delete-table (if ch
+                        (delete-one-table scm)
+                        (delete-scheme))
+      :delete-meta (if ch
+                     (do (metadata/delete-one-meta scm)
+                         (println (format "[i] Meta for %s deleted successfuly" (name scm))))
+                      (do (metadata/do-clear-meta)
+                           (println "[!] Metadata deleted successfuly")))
+      (println "[!] You entered invalid operation (key)"))))
+
+;;;;;;;;;;;;;;;
+;;; SCRIPTS ;;;
+;;;;;;;;;;;;;;;
+(defn valid-all-tables
+  [cli-opt-m]
+  (let [opt (get-options-cli cli-opt-m)
+        path (get-path-cli cli-opt-m)]
+    (if (nil? path)
+      (println "[!] You don't entered path to file with db")
+      (get-tables path))
+    (if (valid-tables)
+      (println "[i] All structure of tables is good")
+      (println "[!] Problem with table structure, check-this"))))
 
 (defn reset-one-db [scm]
   (do (delete-one-table scm)
@@ -186,19 +240,25 @@
 (defn reset-all-db []
   (do (sinit/procedure-test-all)
       (delete-scheme)
-      (println "hey1")
+      (println "[i] DB was deleted")
       (create-scheme)
-      (println "hey2")
+      (println "[i] Tables from scheme created")
       (metadata/do-create-meta)
-      (println "hey3")
+      (println "[i] Created metadata")
       (metadata/do-create-references)
-      (println "[i] DB was reset")))
+      (println "[i] Created references")
+      (println "[i] DB was reset successufuly")))
 
 (defn reset-db [cli-opt-m]
-  (let [scm (get-in cli-opt-m [:options :print] nil)]
-    (if (choose-option scm)
-      (reset-one-db scm) 
-      (reset-all-db))))
+  (let [opt (get-options-cli cli-opt-m)
+        scm (get-value-cli cli-opt-m)
+        path (get-path-cli cli-opt-m)]
+    (if (nil? path)
+      (println "[!] You don't entered path to file with db")
+      (do (get-tables path)
+          (if (choose-option scm)
+            (reset-one-db scm) 
+            (reset-all-db))))))
 
 (defn reset-one-meta [scm]
   (do (metadata/delete-one-meta scm)
@@ -217,26 +277,72 @@
       (reset-one-meta scm) 
       (reset-all-meta))))
 
-(defn cli-scheme-view [cli-opt-m]
-  (let [scheme (get-in cli-opt-m [:options :view-scheme] nil)
-        data (get-one-scheme scheme)]
-    (if (empty? data)
-      (println "[!] (cli-scheme-view): internal error" )
+;;;;;;;;;;;;
+;;; VIEW ;;;
+;;;;;;;;;;;;
+(defn view-scheme
+  "Description
+    show all structure of tables of db file (db_meta.clj or db_ssql.clj)"
+  [cli-opt-m]
+  (let [path (get-path-cli cli-opt-m)
+        scm (get-value-cli cli-opt-m)
+        ch (choose-option scm)]
+    (if (nil? path)
+      (println "[!] You don't entered path to file with db")
+      (get-tables path))
+    (if ch
+      (if (scheme-in? scm)
+        (println (pp-str (get-one-scheme scm)))
+        (println "[!] Scheme not found in db"))
+      (println (if-not (nil? all-tables)
+                 (pp-str all-tables))))))
+
+(defn print-helpr
+  "Description
+    show info about keys"
+  [cli-opt-m]
+  (println (get cli-opt-m :summary "[!] Helper not implemented")))
+
+(defn print-list-tbls
+  "Description
+    show all tables from db jarman"
+  [cli-opt-m]
+  (println (format "Available tables:\n\n%s" (string/join ", \n" (map (comp second first seq)
+                                                                    (db/query (show-tables)))))))
+
+(defn print-list-schm
+  "Description
+    show all schemes from db file (db_meta.clj or db_ssql.clj)"
+  [cli-opt-m]
+  (let [path (get-path-cli cli-opt-m)
+        scm (get-value-cli cli-opt-m)]
+    (if (nil? path)
+      (println "[!] You don't entered path to file with db")
       (do
-        (println (string/join "/" ["jarman.schema-builder" (name scheme)]))
-        (println (pp-str data))))))
+        (get-tables path)
+         (println (format "Available schemas:\n\n%s" (string/join ",\n " (get-list-schemas))))))) )
 
-(defn view-tables []
-  (println all-tables))
+(defn print-table [cli-opt-m]
+  (let [table (get-value-cli cli-opt-m)]
+    (let [reslt (db/query (select table))]
+      (if (empty? reslt)
+        (println "[i] Table not contain data")
+        (if (nil? (get-in cli-opt-m [:options :csv-like] nil))
+          (map println reslt)
+          (do (println (string/join "," (map name (keys (first reslt)))))
+              (for [row (map vals reslt)]
+                (println (string/join "," row)))))))))
 
-;;(create-one-table "user")
-;;(delete-one-table "user")
+
+;;  {:dbtype "mysql",
+;;   :host  "trashpanda-team.ddns.net",
+;;   :port 3307,
+;;   :dbname "jarman-test",
+;;   :user "root",
+;;   :password "1234"})
 
 
 
-(db/connection-get)
-
-(db/query (show-tables))
 
 
 

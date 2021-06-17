@@ -441,8 +441,9 @@
       (db/exec (update-sql-by-id-template "metadata" (get-meta table-name))))))
 
 (defn do-create-meta []
-  (for [table (show-tables-not-meta)]
-    (create-one-meta table)))
+  (doall
+   (for [table (show-tables-not-meta)]
+          (create-one-meta table))))
 
 
 (defn delete-one-meta [table-name]
@@ -496,8 +497,6 @@
       (deep-merge-with
        metadata
        {:prop {:table {:ref {:front-references front-reference :back-references back-reference}}}})))
-
-
 
 (defn- --recur-make-references [meta-list table-name & {:keys [back-ref]}]
   (if-let [index-metadata (find-column #(= ((comp :field :table :prop) (second %)) table-name) (deref meta-list))]

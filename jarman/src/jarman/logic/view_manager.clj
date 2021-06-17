@@ -250,7 +250,7 @@
 ;;(put-table-view-to-db (loader-from-view-clj (db/connection-get)))
 
 (defn- load-data-recur [data loaders]
-  (if (empty? data)
+  (if (and (empty? data) (not (empty? loaders)))
     (load-data-recur ((first loaders) (db/connection-get)) (rest loaders))
     data))
 

@@ -351,7 +351,7 @@
    "
   [data-toolkit local-changes table-model type]
   (gcomp/button-basic
-   (type {:insert "Insert new data" :update "Update row" :delete "Delete row" :export "Documents export"})
+   (type {:insert "Insert new data" :update "Update row" :delete "Delete row" :export "Documents export" :changes "Changes list"})
    :font (getFont 13 :bold)
    :onClick (fn [e]
               ;;  (println "Insert but Locla changes: " @local-changes)
@@ -374,8 +374,12 @@
                 (println "\nRun Delete: \n"
                          ((:delete data-toolkit)
                           {(keyword (str (:field (:table-meta data-toolkit)) ".id"))
-                           (get table-model (keyword (str (:field (:table-meta data-toolkit)) ".id")))}) "\n"))
-              (((state/state :jarman-views-service) :reload)))))
+                           (get table-model (keyword (str (:field (:table-meta data-toolkit)) ".id")))}) "\n")
+                (= type :changes)
+                (do
+                  (println "\nLooks on chages: " @local-changes)
+                  (gcomp/popup-info-window "Changes" (str @local-changes) (state/state :app))))
+              (if-not (= type :changes)(((state/state :jarman-views-service) :reload))))))
 
 (defn get-missed-props
   "Description:
@@ -464,6 +468,8 @@
           binded  (rift (:bind-args m) {})
           props {:title title :store-id qualified :local-changes local-changes :val val}
           props (if (empty? binded) props (merge-binded-props props binded))
+          x     (if (nil? comp-fn) ((state/state :alert-manager) :set {:header (format "[ Warning %s ]" k) 
+                                                                       :body (format "Function fron defview looks like nil. Probably syntax error. Key %s" k)} 5))
           pre-comp (rift (comp-fn props) (c/label "Can not invoke component from defview."))
           comp (gcomp/inpose-label title pre-comp)]
       ;; (println "Props: " props)
@@ -556,6 +562,7 @@
                       (gcomp/hr 10)
                       (generate-custom-buttons local-changes configuration)
                       (gcomp/hr 5)
+                      (if (= true (:changes-button configuration)) (default-buttons data-toolkit local-changes table-model :changes) [])
                       (if (empty? table-model)
                         (if-not  (= false (:insert-button configuration)) (default-buttons data-toolkit local-changes table-model :insert) [])
                         [(if-not (= false (:update-button configuration)) (default-buttons data-toolkit local-changes table-model :update) [])
@@ -607,7 +614,7 @@
         configuration (get-from-global [:config])
         ;; title (get-in data-toolkit [:table-meta :representation])
         title (:name configuration)
-        space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
+        space (c/select (state/state :app) (:plug-place configuration))
         ;; x (println "\nplug-place"(:plug-place configuration) "\nspace"space)
         atm (:atom-expanded-items (c/config space :user-data))]
     ;; (println "Allow Permission: " (session/allow-permission? (:permission configuration)))

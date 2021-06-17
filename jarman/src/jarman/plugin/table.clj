@@ -21,6 +21,7 @@
    [jarman.gui.gui-seed :as gseed]
    [jarman.resource-lib.icon-library :as ico]
    [jarman.tools.swing :as stool]
+   [jarman.logic.state :as state]
    [jarman.gui.gui-components :refer :all :as gcomp]
    [jarman.gui.gui-calendar :as calendar]
    [jarman.logic.metadata :as mt]
@@ -224,6 +225,7 @@
 
 (defn- create-table [configuration toolkit-map]
   (let [view (:view-columns configuration) tables (:tables configuration)]
+    ;; (println "\nView table\n" view)
     (if (and view tables)
       (let [model-columns (gui-table-model-columns tables view)
             table-model (gui-table-model model-columns (:select toolkit-map))]
@@ -276,11 +278,71 @@
                          (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected-model (:model-id ct-data)))))))))})))
 
 
+;; ┌───────────────┐
+;; │               │
+;; │ Docs exporter |
+;; │               │
+;; └───────────────┘
+
+(defn- document-exporter
+  "Description:
+     Panel with input path and buttons for export.
+   "
+  [controller id]
+  (let [;;radio-group (c/button-group)
+        default-path (str jarman.config.environment/user-home "/Documents")
+        panel-bg "#eee"
+        input-text (gcomp/input-text :args [:text default-path :font (gtool/getFont  :name "Monospaced")])
+        icon (gcomp/button-basic
+              ""
+              :onClick (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
+                                 (c/config! input-text :text (rift new-path default-path))))
+              :args [:icon (jarman.tools.swing/image-scale ico/enter-64-png 30)])
+        panel (smig/mig-panel
+               :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[fill]0px"]
+               :items [[icon] [input-text]])]
+    (smig/mig-panel
+     :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px[grow]0px[fill]0px"]
+     :background panel-bg
+     :items (gtool/join-mig-items
+             [panel]
+             (rift (map (fn [doc-model]
+                          [(gcomp/button-basic
+                            (get doc-model :name)
+                            :onClick (fn [e]
+                                       (try
+                                         ((doc/prepare-export-file (:->table-name controller) doc-model) id (c/config input-text :text))
+                                         ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :export-doc-ok)}  7)
+                                         (catch Exception e ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :faild) :body (gtool/get-lang-alerts :export-doc-faild)}  7))))
+                            :args [:halign :left])])
+                        (:->documents controller))
+                   (c/label))
+             (gcomp/button-basic
+              "Export"
+              :flip-border true)))))
+
+(defn- export-button
+  "Description:
+     Export panel invoker. Invoke as popup window.
+   "
+  [data-toolkit configuration table-model]
+  (gcomp/button-basic
+   "Document export"
+   :font (getFont 13 :bold)
+   :onClick (fn [e] (gcomp/popup-window {:window-title "Documents export"
+                                         :view (let [table-id (keyword (format "%s.id" (:field (:table-meta data-toolkit))))]
+                                                 (document-exporter configuration (table-id table-model)))
+                                         :size [300 300]
+                                         :relative (c/to-widget e)}))))
+
+
+
 ;; ┌───────────────────┐
 ;; │                   │
 ;; │ Single Components │
 ;; │                   │
 ;; └───────────────────┘
+
 
 (defn default-buttons
   "Description:
@@ -288,45 +350,32 @@
      type - :insert, :update, :delete
    "
   [data-toolkit local-changes table-model type]
-  [(gcomp/hr 2)
-   (gcomp/button-basic
-    (type {:insert "Insert new data" :update "Update row" :delete "Delete row" :export "Documents export"})
-    :onClick (fn [e] 
+  (gcomp/button-basic
+   (type {:insert "Insert new data" :update "Update row" :delete "Delete row" :export "Documents export"})
+   :font (getFont 13 :bold)
+   :onClick (fn [e]
               ;;  (println "Insert but Locla changes: " @local-changes)
-               (cond
-                 (= type :insert)
-                 (println "\nRun Insert\n"
-                          ((:insert data-toolkit)
-                           (merge {(keyword (str (:field (:table-meta data-toolkit)) ".id")) nil}
-                                  (first (merge table-model @local-changes)))) "\n")
-                 (= type :update) ;; TODO: Turn on update fn after added empty key map template, without throw exception, too may value in query, get permission_name
-                 (do
-                   (let [from-meta-data (vemap (map #(:field-qualified %) (:columns-meta data-toolkit)))
-                         update-list (cnmap (left-merge from-meta-data @local-changes))
-                         table-id (keyword (format "%s.id" (:field (:table-meta data-toolkit))))]
-                     (println "\nRun Update: \n"
-                              ((:update data-toolkit)
-                               (into {table-id (table-id table-model)} update-list))
-                              "\n")
-                     )) 
-                 (= type :delete)
-                 (println "\nRun Delete: \n"
-                          ((:delete data-toolkit)
-                           {(keyword (str (:field (:table-meta data-toolkit)) ".id"))
-                            (get table-model (keyword (str (:field (:table-meta data-toolkit)) ".id")))}) "\n"))
-               ((@gseed/jarman-views-service :reload))))])
-
-(defn- export-button
-  "Description:
-     Create default buttons as insert, update, delete row.
-     type - :insert, :update, :delete
-   "
-  [data-toolkit]
-  [(gcomp/hr 2)
-   (gcomp/button-basic
-    "Document export"
-    :onClick (fn [e] (println "\nExport will be soon.\n")))])
-
+              (cond
+                (= type :insert)
+                (println "\nRun Insert\n"
+                         ((:insert data-toolkit)
+                          (merge {(keyword (str (:field (:table-meta data-toolkit)) ".id")) nil}
+                                 (first (merge table-model @local-changes)))) "\n")
+                (= type :update) ;; TODO: Turn on update fn after added empty key map template, without throw exception, too may value in query, get permission_name
+                (do
+                  (let [from-meta-data (vemap (map #(:field-qualified %) (:columns-meta data-toolkit)))
+                        update-list (cnmap (left-merge from-meta-data @local-changes))
+                        table-id (keyword (format "%s.id" (:field (:table-meta data-toolkit))))]
+                    (println "\nRun Update: \n"
+                             ((:update data-toolkit)
+                              (into {table-id (table-id table-model)} update-list))
+                             "\n")))
+                (= type :delete)
+                (println "\nRun Delete: \n"
+                         ((:delete data-toolkit)
+                          {(keyword (str (:field (:table-meta data-toolkit)) ".id"))
+                           (get table-model (keyword (str (:field (:table-meta data-toolkit)) ".id")))}) "\n"))
+              (((state/state :jarman-views-service) :reload)))))
 
 (defn get-missed-props
   "Description:
@@ -384,6 +433,7 @@
   (fn [type-coll props-coll]
     (let [props-coll (into props-coll (if (:val props-coll) {:val (:val props-coll)} {}))
           selected-comp-fn  (get-first-available-comp type-coll comps)]
+      ;; (println "\nColumn type\n" type-coll)
       (if (nil? selected-comp-fn)
         (println (format "Component %s not exist." type))
         (gcomp/inpose-label (:title props-coll) (selected-comp-fn props-coll))))))
@@ -427,6 +477,7 @@
      key is an key from model in defview.
    "
   [global-configuration local-changes meta-data table-model key]
+  
   (let [meta            (key meta-data)
         field-qualified (:field-qualified meta)
         title           (:representation  meta)
@@ -434,6 +485,7 @@
         comp-type       (:component-type  meta)
         key-table       (->> (rift (:key-table meta) nil) (#(if (keyword? %) % (keyword %))))
         val             (rift (str (key table-model)) "")
+        ;; x               (println "\nMeta data\n" meta-data "\nMeta\n" meta "\nComp type\n" comp-type "\nKey\n" key)
         props {:title title :store-id field-qualified  :field-qualified field-qualified  :local-changes local-changes  :editable? editable?  :val val}
         comp  (if (in? comp-type mt/column-type-linking) ;; If linker add more keys to props map
                 (choose-component comp-type (into props {:key-table key-table :table-model table-model :global-configuration global-configuration}))
@@ -476,54 +528,6 @@
                 (filter #(not (nil? %)))))))
 
 
-;; ┌───────────────┐
-;; │               │
-;; │ Docs exporter |
-;; │               │
-;; └───────────────┘
-;;  (run user-view)
-(defn export-print-doc
-  [controller id alerts]
-  (let [;;radio-group (c/button-group)
-        panel-bg "#eee"
-        expor-gb "#95dec9"
-        focus-gb "#5ee6bf"
-        input-text (gcomp/input-text :args [:text (str jarman.config.environment/user-home "\\Documents") :font (gtool/getFont  :name "Monospaced")])
-        icon (c/label :icon (jarman.tools.swing/image-scale ico/enter-64-png 30)
-                      :border (sborder/empty-border :thickness 8)
-                      :listen [:mouse-clicked (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
-                                                        (c/config! input-text :text new-path)))])
-        panel (smig/mig-panel
-               :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[fill]0px"]
-               :items [[icon] [input-text]])]
-    (smig/mig-panel
-     :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow]0px"]
-     :border (sborder/compound-border (sborder/empty-border :top 5)
-                                      (sborder/line-border :top 2 :color "#999")
-                                      (sborder/empty-border :top 50))
-     :items [[(gcomp/button-expand "Export by template" (smig/mig-panel
-                                                         :constraints ["wrap 1" "5px[grow, fill]5px" "0px[fill]0px"]
-                                                         :background panel-bg
-                                                         :items (gtool/join-mig-items
-                                                                 [(gcomp/hr 2 "#ccc")]
-                                                                 [(gcomp/hr 10)]
-                                                                 [panel]
-                                                                 [(gcomp/hr 10)]
-                                                                 (map (fn [doc-model]
-                                                                        [(gcomp/button-basic (get doc-model :name)
-                                                                                             :onClick (fn [e]
-                                                                                              ;; do
-                                                                                                        (try
-                                                                                                          ((doc/prepare-export-file (:->table-name controller) doc-model) id (c/config input-text :text))
-                                                                                                          (@jarman.gui.gui-seed/alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :export-doc-ok)} (@jarman.gui.gui-seed/alert-manager :message jarman.gui.gui-seed/alert-manager) 7)
-                                                                                                          (catch Exception e (@jarman.gui.gui-seed/alert-manager :set {:header (gtool/get-lang-alerts :faild) :body (gtool/get-lang-alerts :export-doc-faild)} (@jarman.gui.gui-seed/alert-manager :message jarman.gui.gui-seed/alert-manager) 7))))
-                                                                                             :args [:halign :left])])
-                                                                      (:->documents controller))
-                                                                 [(gcomp/hr 10)]
-                                                                 [(gcomp/hr 2 "#95dec9")]))
-                                   :background "#95dec9"
-                                   :border (sborder/compound-border (sborder/empty-border :left 10 :right 10)))]])))
-
 
 ;; ┌──────────────┐
 ;; │              │
@@ -540,6 +544,7 @@
   (fn [data-toolkit configuration global-configuration
        & {:keys [table-model more-comps]
           :or {table-model [] more-comps []}}]
+    ;; (println "\ndata-toolkit\n" data-toolkit "\nconfiguration\n" configuration)
     (let [local-changes (atom {})
           meta-data (convert-metadata-vec-to-map (:columns-meta data-toolkit))
           components (convert-model-to-components-list global-configuration local-changes meta-data table-model (:model configuration))
@@ -555,8 +560,8 @@
                         (if-not  (= false (:insert-button configuration)) (default-buttons data-toolkit local-changes table-model :insert) [])
                         [(if-not (= false (:update-button configuration)) (default-buttons data-toolkit local-changes table-model :update) [])
                          (if-not (= false (:delete-button configuration)) (default-buttons data-toolkit local-changes table-model :delete) [])
-                         (export-button data-toolkit)])
-                      (gcomp/hr 5)
+                         (gcomp/hr 10)
+                         (export-button data-toolkit configuration table-model)])
                       [more-comps])
           builded (c/config! panel :items (gtool/join-mig-items components))]
       builded)))
@@ -573,12 +578,12 @@
           insert-form   (fn [] (build-input-form data-toolkit configuration global-configuration))
           view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
           table         (fn [] (second (u/children view-layout)))
-          header        (fn [] (c/label :text (:representation (:table-meta data-toolkit)) :halign :center :border (sborder/empty-border :top 10)))
+          header        (fn [] (c/label :text (:representation (:table-meta data-toolkit)) 
+                                        :halign :center :border (sborder/empty-border :top 10)))
           update-form   (fn [table-model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration :table-model table-model :more-comps [(return)])]))
           x nil ;;------------ Build
-          expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never
-                                                  )
-          back-to-insert     (fn [] [(gcomp/hr 2) (gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]])))])
+          expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never)
+          back-to-insert     (fn [] [(gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]])))])
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/min-scrollbox (update-form model return))] [(table)]]))
           table              (fn [] ((:table (create-table configuration data-toolkit)) (fn [model] (expand-update-form model back-to-insert))))
           x nil ;;------------ Finish
@@ -603,27 +608,29 @@
         ;; title (get-in data-toolkit [:table-meta :representation])
         title (:name configuration)
         space (c/select @jarman.gui.gui-seed/app (:plug-place configuration))
+        ;; x (println "\nplug-place"(:plug-place configuration) "\nspace"space)
         atm (:atom-expanded-items (c/config space :user-data))]
     ;; (println "Allow Permission: " (session/allow-permission? (:permission configuration)))
     ;; TODO: Set invoker expand button if not exist add child invokers
     (if (false? (spec/test-keys-jtable configuration spec-map))
       (println "[ Warning ] plugin/table: Error in spec")
       (if (session/allow-permission? (:permission configuration))
-        (swap! atm (fn [inserted]
-                     (conj inserted
-                           (gcomp/button-expand-child
-                            title
-                            :onClick (fn [e]
-                                       (println "\nplugin-path\n" plugin-path title)
-                                       (@gseed/jarman-views-service
-                                        :set-view
-                                        :view-id (str "auto-" title)
-                                        :title title
-                                        :scrollable? false
-                                        :component-fn (fn [] (auto-builder--table-view
-                                                              (global-configuration)
-                                                              data-toolkit
-                                                              configuration))))))))))
+        (do
+          (swap! atm (fn [inserted]
+                       (conj inserted
+                             (gcomp/button-expand-child
+                              title
+                              :onClick (fn [e]
+                                        ;;  (println "\nplugin-path\n" plugin-path title)
+                                         ((state/state :jarman-views-service)
+                                          :set-view
+                                          :view-id (str "auto-" title)
+                                          :title title
+                                          :scrollable? false
+                                          :component-fn (fn [] (auto-builder--table-view
+                                                                (global-configuration)
+                                                                data-toolkit
+                                                                configuration)))))))))))
     (.revalidate space)))
 
 

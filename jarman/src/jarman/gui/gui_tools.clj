@@ -21,6 +21,17 @@
 (import java.awt.event.MouseListener)
 
 
+(def jarman-focus-now (atom nil))
+
+(defn set-focus
+  [object] (reset! jarman-focus-now object))
+(defn rm-focus
+  [] (reset! jarman-focus-now nil))
+(defn set-focus-if-nil
+  [object] (if (nil? @jarman-focus-now) (reset! jarman-focus-now object)))
+(defn switch-focus
+  [] (if-not (nil? @jarman-focus-now) (do (.requestFocus @jarman-focus-now)
+                                          (reset! jarman-focus-now nil))))
 ;; ┌─────────────────────────┐
 ;; │                         │
 ;; │ Quick gui functions     │
@@ -54,7 +65,10 @@
   "Description
      Build word wrap html
    "
-  (fn [body] (string/join "" ["<html><body style='width: 100%; overflow-wrap: break-word;'>" body "</body><html>"])))
+  (fn [body & args] 
+    (string/join ["<html><body style='width: 100%; overflow-wrap: break-word;'>" 
+                  (if (in? args :justify) (format "<p align= \"justify\">%s</p>" body) body) 
+                  "</body><html>"])))
 
 ;; (macroexpand-1 `(textarea "ala am kota" :border (line-border :thickness 1 :color "#a23")))
 
@@ -188,61 +202,6 @@
 (defn button-hover
   ([e] (config! e :background (get-color :background :button_hover_light)))
   ([e color] (config! e :background color)))
-
-(defn build-bottom-ico-btn
-  "Description:
-      Icon btn for message box. Create component with icon btn on bottom.
-   Layered should be atom.
-   Example:
-      (build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png 23 (fn [e] (alert 'Wiadomosc')))
-   Needed:
-      Import jarman.dev-tools
-      Function need stool/image-scale function for scalling icon
-      Function need hand-hover-on function for hand mouse effect
-   "
-  [ic ic-h layered & args] (label :icon (stool/image-scale ic (if (> (count args) 0) (first args) 28))
-                                  :background (new Color 0 0 0 0)
-                                  :border (empty-border :left 3 :right 3)
-                                  :listen [:mouse-entered (fn [e] (do
-                                                                    (config! e :icon (stool/image-scale ic-h (if (> (count args) 0) (first args) 28)) :cursor :hand)
-                                                                    (.repaint @layered)))
-                                           :mouse-exited (fn [e] (do
-                                                                   (config! e :icon (stool/image-scale ic (if (> (count args) 0) (first args) 28)))
-                                                                   (.repaint @layered)))
-                                           :mouse-clicked (if (> (count args) 1) (second args) (fn [e]))]))
-
-(defn build-ico
-  "Description:
-      Icon for message box. Create component with icon.
-   Example:
-      (build-ico icon/alert-64-png)
-   Needed:
-      Import jarman.dev-tools
-      Function need stool/image-scale function for scalling icon"
-  [ic] (label-fn :icon (stool/image-scale ic 28)
-                 :background (new Color 0 0 0 0)
-                 :border (empty-border :left 3 :right 3)))
-
-(defn build-header
-  "Description:
-      Header text for message box. Create component with header text.
-   Example:
-      (build-header 'Information')
-   "
-  [txt] (label-fn :text txt
-                  :font (getFont 14 :bold)
-                  :background (new Color 0 0 0 0)))
-
-(defn build-body
-  "Description:
-      Body text for message box. Create component with message.
-   Example:
-      (build-body 'My message')
-   "
-  [txt] (label-fn :text txt
-                  :font (getFont 13)
-                  :background (new Color 0 0 0 0)
-                  :border (empty-border :left 5 :right 5 :bottom 2)))
 
 
 (def template-resize

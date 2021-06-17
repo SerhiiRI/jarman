@@ -1,6 +1,5 @@
 (ns jarman.gui.gui-app
-  (:use seesaw.core
-        seesaw.border
+  (:use seesaw.border
         seesaw.dev
         seesaw.style
         seesaw.mig
@@ -11,7 +10,8 @@
            (jarman.test DateTime)
            (java.awt Color Component)
            (java.awt Dimension))
-  (:require [clojure.string :as string]
+  (:require [seesaw.core :as c]
+            [clojure.string :as string]
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
             [clojure.pprint :as pp]
@@ -32,6 +32,7 @@
             [jarman.gui.gui-config-generator :refer :all :as cg]
             ;; [jarman.logic.view :as view]
             ;; [jarman.gui.gui-docs :as docs]
+            [jarman.logic.state :as state]
             [jarman.gui.gui-seed :as gseed]
             [jarman.plugin.table :as gtable]
             [jarman.plugin.plugin :as plug]
@@ -49,55 +50,62 @@
 ;; └────────────────────────────┘
 
 (def popup-menager (atom nil))
+;; (@popup-menager :new-test)
 
 (defn ontop-panel
-  [popup-menager storage-id z-index & {:keys [size title body] :or {size [600 400] title "Popup" body (label)}}]
+  [popup-menager storage-id & {:keys [size title body] :or {size [600 400] title "Popup" body (c/label)}}]
   (let [last-x (atom 0)
         last-y (atom 0)
         w (first size)
-        h (second size)]
+        h (second size)
+        title-bar (mig-panel
+                   :constraints ["" "10px[grow]0px[30, center]0px" "5px[]5px"]
+                   :background "#ddd" ;;"#eee"
+                   :items (gtool/join-mig-items
+                           (c/label :text title)
+                           (c/label :icon (stool/image-scale icon/up-grey1-64-png 25)
+                                    :listen [:mouse-clicked
+                                             (fn [e] (cond (> (.getHeight (gtool/getParent (gtool/getParent e))) 50)
+                                                           (c/config! (gtool/getParent (gtool/getParent e)) :bounds  [(.getX (gtool/getParent (gtool/getParent e)))
+                                                                                                                      (.getY (gtool/getParent (gtool/getParent e)))
+                                                                                                                      w 30])
+                                                           :else (c/config! (gtool/getParent (gtool/getParent e)) :bounds [(.getX (gtool/getParent (gtool/getParent e)))
+                                                                                                                           (.getY (gtool/getParent (gtool/getParent e)))
+                                                                                                                           w h])))
+                                             :mouse-entered (fn [e] (c/config! e :cursor :hand))])
+                           (c/label :icon (stool/image-scale icon/x-blue2-64-png 20)
+                                    :listen [:mouse-clicked (fn [e] ((@popup-menager :remove) storage-id))
+                                             :mouse-entered (fn [e] (c/config! e :cursor :hand))])))
+        content (mig-panel
+                 :constraints ["wrap 1" "0px[grow, center]0px" "0px[grow, center]0px"]
+                 :background "#fff"
+                 :items (gtool/join-mig-items body))
+        components (gtool/join-mig-items
+                    title-bar content)
+        main-bounds (gtool/middle-bounds (first @(state/state :atom-app-size)) (second @(state/state :atom-app-size)) w h)
+        main-border (line-border :thickness 2 :color (gtool/get-color :decorate :gray-underline))]
     (mig-panel
      :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill, center]0px[fill, grow]0px"]
-     :bounds (gtool/middle-bounds (first @atom-app-size) (second @atom-app-size) w h)
-     :border (line-border :thickness 2 :color (gtool/get-color :decorate :gray-underline))
+     :bounds main-bounds
+     :border main-border
      :background "#fff"
      :id storage-id
      :visible? true
-     :items (gtool/join-mig-items (mig-panel
-                             :constraints ["" "10px[grow]0px[30, center]0px" "5px[]5px"]
-                             :background "#ddd" ;;"#eee"
-                             :items (gtool/join-mig-items
-                                     (label :text title)
-                                     (label :icon (stool/image-scale icon/up-grey1-64-png 25)
-                                            :listen [:mouse-clicked (fn [e] (cond (> (.getHeight (gtool/getParent (gtool/getParent e))) 50)
-                                                                                  (config! (gtool/getParent (gtool/getParent e)) :bounds  [(.getX (gtool/getParent (gtool/getParent e)))
-                                                                                                                               (.getY (gtool/getParent (gtool/getParent e)))
-                                                                                                                               w 30])
-                                                                                  :else (config! (gtool/getParent (gtool/getParent e)) :bounds [(.getX (gtool/getParent (gtool/getParent e)))
-                                                                                                                                    (.getY (gtool/getParent (gtool/getParent e)))
-                                                                                                                                    w h])))
-                                                     :mouse-entered (fn [e] (config! e :cursor :hand))])
-                                     (label :icon (stool/image-scale icon/x-blue2-64-png 20)
-                                            :listen [:mouse-clicked (fn [e] ((@popup-menager :remove) storage-id))
-                                                     :mouse-entered (fn [e] (config! e :cursor :hand))])))
-                            (mig-panel
-                             :constraints ["wrap 1" "0px[grow, center]0px" "0px[grow, center]0px"]
-                             :background "#fff"
-                             :items (gtool/join-mig-items body)))
+     :items components
      :listen [:mouse-clicked (fn [e] ((@popup-menager :move-to-top) storage-id))
               :mouse-dragged (fn [e] (do
-                                       (if (= @last-x 0) (reset! last-x (.getX e)))
-                                       (if (= @last-y 0) (reset! last-y (.getY e)))
-                                       (let [bounds (config e :bounds)
+                                       (if (= @last-x 0) (reset! last-x (.getX e)) nil)
+                                       (if (= @last-y 0) (reset! last-y (.getY e)) nil)
+                                       (let [bounds (c/config e :bounds)
                                              pre-x (- (+ (.getX bounds) (.getX e)) @last-x)
                                              pre-y (- (+ (.getY bounds) (.getY e)) @last-y)
                                              x (if (> pre-x 0) pre-x 0)
                                              y (if (> pre-y 0) pre-y 0)
                                              w (.getWidth  bounds)
                                              h (.getHeight bounds)]
-                                         (config! e :bounds [x y w h]))))])))
+                                         (c/config! e :bounds [x y w h]))))])))
 
-(def atom-popup-hook (atom (label :visible? false)))
+(def atom-popup-hook (atom (c/label :visible? false)))
 
 ;; ┌──────────────┐
 ;; │              │
@@ -107,7 +115,7 @@
 
 (def create-dialog--answer-btn
   (fn [txt func]
-    (label
+    (c/label
      :text txt
      :halign :center
      :listen [:mouse-clicked func
@@ -119,7 +127,7 @@
 
 (def create-dialog-yesno
   (fn [title ask size]
-    (-> (custom-dialog
+    (-> (c/custom-dialog
          :title title
          :modal? true
          :resizable? false
@@ -132,29 +140,29 @@
                             :items (gtool/join-mig-items (textarea ask :halign :center :font (gtool/getFont 14) :border (empty-border :thickness 12))
                                                    (mig-panel
                                                     :constraints ["" "10px[fill, grow]10px" "10px[]10px"]
-                                                    :items (gtool/join-mig-items (create-dialog--answer-btn (gtool/get-lang-btns :yes) (fn [e] (return-from-dialog e "yes")))
-                                                                           (create-dialog--answer-btn (gtool/get-lang-btns :no)  (fn [e] (return-from-dialog e "no")))))))))
+                                                    :items (gtool/join-mig-items (create-dialog--answer-btn (gtool/get-lang-btns :yes) (fn [e] (c/return-from-dialog e "yes")))
+                                                                           (create-dialog--answer-btn (gtool/get-lang-btns :no)  (fn [e] (c/return-from-dialog e "no")))))))))
          :parent (gtool/getParent @atom-popup-hook))
-        pack! show!)))
+        c/pack! c/show!)))
 
 
 
 (def create-dialog--answer-chooser
   (fn [txt func]
-    (vertical-panel
+    (c/vertical-panel
      :background (gtool/get-color :background :button_main)
      :focusable? true
-     :listen [:focus-gained (fn [e] (gtool/hand-hover-on e) (config! e :background light-light-grey-color))
-              :focus-lost   (fn [e] (config! e :background (gtool/get-color :background :button_main)))
+     :listen [:focus-gained (fn [e] (gtool/hand-hover-on e) (c/config! e :background light-light-grey-color))
+              :focus-lost   (fn [e] (c/config! e :background (gtool/get-color :background :button_main)))
               :mouse-clicked func
               :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) func))]
-     :items (list (label
+     :items (list (c/label
                    :text (first txt)
                    :halign :left
                    :font (gtool/getFont 14 :bold)
                    :foreground gcomp/blue-color
                    :border (compound-border (empty-border :left 20 :right 20 :bottom 0 :top 5)))
-                  (label
+                  (c/label
                    :text (second txt)
                    :halign :left
                    :font (gtool/getFont 14)
@@ -164,7 +172,7 @@
 (def create-dialog-repair-chooser
   (fn [invoker data title size]
     (let [dialog
-          (custom-dialog
+          (c/custom-dialog
            :title title
            :modal? true
            :resizable? false
@@ -174,7 +182,7 @@
                      :size [(first size) :by (second size)]
                      :constraints ["" "0px[fill, grow]0px" "0px[grow, top]0px"]
                      :items (gtool/join-mig-items
-                             (let [scr (scrollable
+                             (let [scr (c/scrollable
                                         (mig-panel
                                          :background "#fff"
                                          :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
@@ -194,11 +202,11 @@
                                                   :items (gtool/join-mig-items
                                                           (map (fn [x] (create-dialog--answer-chooser
                                                                         x
-                                                                        (fn [e] (return-from-dialog e x)))) data))))) :hscroll :never :border nil)]
+                                                                        (fn [e] (c/return-from-dialog e x)))) data))))) :hscroll :never :border nil)]
                                (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
                                (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr))))]
       (.setUndecorated dialog true)
-      (doto dialog (.setLocationRelativeTo (to-root invoker)) pack! show!) ;; here should be relative to root of invoker
+      (doto dialog (.setLocationRelativeTo (c/to-root invoker)) c/pack! c/show!) ;; here should be relative to root of invoker
       )))
 
 ;; start julka dialog
@@ -209,8 +217,8 @@
 ;;            :content 
 ;;            (seesaw.mig/mig-panel
 ;;             :constraints ["wrap 1" "10px[fill, grow]10px" "10px[top]10px"]
-;;             :items [[(label :text "heyy open modal window"
-;;                             :listen [:mouse-entered (fn [e] (config! e :cursor :hand))
+;;             :items [[(c/label :text "heyy open modal window"
+;;                             :listen [:mouse-entered (fn [e] (c/config! e :cursor :hand))
 ;;                                      :mouse-clicked (fn [e] (create-dialog-repair-chooser
 ;;                                                              e
 ;;                                                              [
@@ -222,11 +230,11 @@
 ;;                                                               ["cosmos" (gtool/htmling "<p align= \"justify\">Errors, fact that a reader will be distracthhhj jhjke</p>")]]
 ;;                                                              "Choose reason for repair"
 ;;                                                              [400 300]))])]]))
-;;       (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
+;;       (.setLocationRelativeTo nil) seesaw.core/c/pack! seesaw.core/c/show!))
 
 (def create-dialog-ok
   (fn [title ask size]
-    (-> (custom-dialog
+    (-> (c/custom-dialog
          :title title
          :modal? true
          :resizable? false
@@ -237,9 +245,9 @@
                            (mig-panel
                             :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
                             :items (gtool/join-mig-items (textarea ask :halign :center :font (gtool/getFont 14) :border (empty-border :thickness 12))
-                                                   (gtool/join-mig-items (create-dialog--answer-btn "OK" (fn [e] (return-from-dialog e "OK"))))))))
+                                                   (gtool/join-mig-items (create-dialog--answer-btn "OK" (fn [e] (c/return-from-dialog e "OK"))))))))
          :parent (gtool/getParent @atom-popup-hook))
-        pack! show!)))
+        c/pack! c/show!)))
 
 ;; ┌───────────────┐
 ;; │               │
@@ -252,7 +260,7 @@
   (let [atom-popup-storage (atom {})
         z-index (atom 1000)
         JLP (gtool/getParent @atom-popup-hook)]
-    (fn [action & {:keys [title, body, size] :or {title "Popup" body (label :text "Popup") size [600 400]}}]
+    (fn [action & {:keys [title, body, size] :or {title "Popup" body (c/label :text "Popup") size [600 400]}}]
       (let [unique-id (keyword (random-unique-id))
             template (fn [component] ;; Set to main JLayeredPane new popup panel
                        (do (swap! atom-popup-storage (fn [popups] (merge popups {unique-id component}))) ;; add new component to list with auto id
@@ -265,24 +273,25 @@
                                      elems-count  (count elems-in-JLP)]
                                  (reset! atom-popup-storage (dissoc @atom-popup-storage id)) ;; Remove popup from storage
                                  (doall (map (fn [index] ;; remove popup from main JLayeredPane
-                                               (cond (= (config (nth elems-in-JLP index) :id) id) (.remove JLP index)))
+                                               (cond (= (c/config (nth elems-in-JLP index) :id) id) (.remove JLP index)))
                                              (range elems-count)))
                                  (.repaint JLP)))  ;; Refresh GUI
           (= action :move-to-top) (fn [id] ;; Popup order, popup on top
                                     (let [elems-in-JLP (seesaw.util/children JLP)
                                           elems-count  (count elems-in-JLP)]
                                       (doall (map (fn [index] ;; Change popup order on JLayeredPane 
-                                                    (cond (= (config (nth elems-in-JLP index) :id) id)
+                                                    (cond (= (c/config (nth elems-in-JLP index) :id) id)
                                                           (.setLayer JLP (nth elems-in-JLP index) @z-index 0)))
                                                   (range elems-count)))
                                       (.repaint JLP)) ;; Refresh GUI
                                     )
-          (= action :new-test)    (template (ontop-panel popup-menager unique-id z-index))
-          (= action :new-message) (template (ontop-panel popup-menager unique-id z-index :title title :body body :size size))
+          (= action :new-test)    (template (try (ontop-panel popup-menager unique-id)  (catch Exception e (println "\n"(.getMessage e)))))
+          (= action :new-message) (template (ontop-panel popup-menager unique-id :title title :body body :size size))
           (= action :show)        (println @atom-popup-storage)
           (= action :get-atom-storage) atom-popup-storage
           (= action :ok)          (create-dialog-ok title body size)
           (= action :yesno)       (create-dialog-yesno title body size))))))
+
 
 ;; (new-layered-id-for-tables-visualizer)
 ;; (new-test-for-tabs)
@@ -343,13 +352,13 @@
 
 (defn table-editor--element--header
   "Create header GUI component in editor for separate section"
-  [name] (label :text name :font (gtool/getFont 14 :bold)
+  [name] (c/label :text name :font (gtool/getFont 14 :bold)
                 :foreground dark-grey-color
                 :border (line-border :bottom 2 :color (gtool/get-color :background :header))))
 
 (defn table-editor--component--column-picker-btn
   "Description:
-     Select button who table-editor--component--column-picker, can work with another same buttons"
+     c/select button who table-editor--component--column-picker, can work with another same buttons"
   [txt func] (let [color "#eee";; (gtool/get-color :group-buttons :background)
                    color-hover (gtool/get-color :group-buttons :background-hover)
                    color-clicked (gtool/get-color :group-buttons :clicked)
@@ -362,28 +371,28 @@
                 :id id-btn
                 :background color
                 :user-data bg-btn
-                :listen [:mouse-entered (fn [e] (config! e :cursor :hand :background color-hover))
-                         :mouse-exited  (fn [e] (config! e :background @bg-btn))
+                :listen [:mouse-entered (fn [e] (c/config! e :cursor :hand :background color-hover))
+                         :mouse-exited  (fn [e] (c/config! e :background @bg-btn))
                          :mouse-clicked  (fn [e] ;;(println "column picker")
                                            (cond
                                              (= @bg-btn color)
                                              (do ;; reset bg and atom inside all buttons in parent if id is ok
-                                               (doall (map (fn [b] (cond (= (config b :id) id-btn)
-                                                                         (do (config! b :background color)
-                                                                             (reset! (config b :user-data) color))))
+                                               (doall (map (fn [b] (cond (= (c/config b :id) id-btn)
+                                                                         (do (c/config! b :background color)
+                                                                             (reset! (c/config b :user-data) color))))
                                                            (seesaw.util/children (.getParent (seesaw.core/to-widget e)))))
                                                 ;; reset atom with color
                                                (reset! bg-btn color-clicked)
                                                 ;; update atom with color
-                                               (config! e :background @bg-btn)
+                                               (c/config! e :background @bg-btn)
                                                (func e))))]
-                :items [[(label :text txt
+                :items [[(c/label :text txt
                                 :maximum-size  [100 :by 100]
                                 :font (gtool/getFont 12))]])))
 
 (def table-editor--element--header-view
   (fn [value]
-    (text :text value
+    (c/text :text value
           :font (gtool/getFont 14)
           :background (gtool/get-color :background :input)
           :editable? false
@@ -391,7 +400,7 @@
                                    (line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline))))))
 
 (defn delete-column [column]
-  (let [btns (config!
+  (let [btns (c/config!
               (gcomp/menu-bar
                :id :db-viewer--component--menu-bar
                :buttons [["Delete"
@@ -405,7 +414,7 @@
                               "?")
                              [180 140]))]])
               :border (empty-border :left -10 :top 15))]
-    (config! (first (.getComponents btns))
+    (c/config! (first (.getComponents btns))
              :border (compound-border
                       (empty-border :left 5 :right 10 :top 5 :bottom 5)
                       (line-border :thickness 1 :color "#bbb")))
@@ -418,7 +427,7 @@
                         (cond
                           (in? [true false] (get column param))
                           (do
-                            (config!
+                            (c/config!
                              (gcomp/input-checkbox
                               :txt (gtool/convert-key-to-title (str param))
                               :local-changes local-changes
@@ -427,7 +436,7 @@
                               :enabled? enabled)
                              :background gcomp/light-light-grey-color))
                           :else
-                          (config! (gcomp/inpose-label (gtool/convert-key-to-title (str param))
+                          (c/config! (gcomp/inpose-label (gtool/convert-key-to-title (str param))
                                                        (gcomp/input-text-with-atom
                                                         {:local-changes local-changes
                                                          :store-id (join-vec path-to-value [param])
@@ -483,14 +492,14 @@
 
 (defn panel-for-input
   [name description comp-key cmpts-atom]
-  (let [check (checkbox :text name :background gcomp/light-light-grey-color :font (gtool/getFont 12))
+  (let [check (c/checkbox :text name :background gcomp/light-light-grey-color :font (gtool/getFont 12))
         sel-comp-type (DateTime/getBar (into-array ["date" "time" "date-time"
                                                     "simple-number" "float-number"
                                                     "boolean" "linking-table"
                                                     "big-text" "short-text"]))
         sel-col-type (DateTime/getBar (into-array [" "]))
         model-sel (.getModel sel-col-type)]
-    (config! check  :listen [:action-performed (fn [e]
+    (c/config! check  :listen [:action-performed (fn [e]
                                                  (swap! cmpts-atom assoc (keyword name) (.isSelected check)))])
     (mig-panel
      :constraints ["wrap 1" "0px[grow, left]0px" "0px[]px"]
@@ -499,7 +508,7 @@
      :items [[(mig-panel
                :constraints ["wrap 1" "20px[250:, fill, grow, left]0px" "10px[]10px"]
                :background gcomp/light-light-grey-color
-               :items [[(label :text description
+               :items [[(c/label :text description
                                :foreground dark-grey-color
                              ;;  :font (gtool/getFont 14)
                                :halign :left)]
@@ -508,20 +517,20 @@
                           (= comp-key :select-comp-type) sel-comp-type
                           (= comp-key :select-col-type) sel-col-type
                           :else
-                          (config! (gcomp/input-text :placeholder name
+                          (c/config! (gcomp/input-text :placeholder name
                                                      :style [:halign :left])
                                    :listen [:caret-update
-                                            (fn [e] (do (swap! cmpts-atom assoc (keyword name) (text e))))]))]])]])))
+                                            (fn [e] (do (swap! cmpts-atom assoc (keyword name) (c/text e))))]))]])]])))
 
 ;;  heyyyy
 (defn table-editor--element--btn-add-column
   [func]
   (mig-panel ;; Button for add column to table
    :constraints ["wrap 1" "10px[grow, fill, center]0px" "0px[fill]0px"]
-   :items [[(flow-panel :items (list (label :text "add" :font (gtool/getFont 12)))
+   :items [[(c/flow-panel :items (list (c/label :text "add" :font (gtool/getFont 12)))
                         :align :left
                         :listen [:mouse-clicked (fn [e] (do (func e)))
-                                 :mouse-entered (fn [e] (config! e :cursor :hand))])]]))
+                                 :mouse-entered (fn [e] (c/config! e :cursor :hand))])]]))
 
 (defn- add-column-panel [table-name]
   (let [cmpts-atom (atom {:editable? false :private? false})
@@ -536,18 +545,18 @@
         selct-comp (second (.getComponents (first (.getComponents inp-selct))))
         selct-col (second (.getComponents (first (.getComponents inp-db))))
         main-panel (mig-panel :constraints ["wrap 1" "0px[100:,fill]0px" "0px[fill]10px"])]
-    (config! selct-comp
+    (c/config! selct-comp
              :listen [:action-performed (fn [e]
                                           (swap! cmpts-atom assoc :component-type [(.getSelectedItem selct-comp)])
-                                          (config! selct-col :model (get-component-add-column (.getSelectedItem selct-comp)))
+                                          (c/config! selct-col :model (get-component-add-column (.getSelectedItem selct-comp)))
                                           ;;(.addItem selct-col "heyy")
                                           )])
-    (config! selct-col :listen [:action-performed (fn [e]
+    (c/config! selct-col :listen [:action-performed (fn [e]
                                                     (swap! cmpts-atom assoc :column-type (.toString (.getSelectedItem selct-col))))])
-    (config! main-panel :items [[(label :text "Adding column" :font (gtool/getFont 14 :bold) :foreground blue-color)]
-                                [(gcomp/multi-panel [(vertical-panel :items (list inp-name inp-repr inp-descr inp-def))
-                                                     (vertical-panel :items (list inp-selct inp-db))
-                                                     (vertical-panel :items (list inp-pr inp-ed))]
+    (c/config! main-panel :items [[(c/label :text "Adding column" :font (gtool/getFont 14 :bold) :foreground blue-color)]
+                                [(gcomp/multi-panel [(c/vertical-panel :items (list inp-name inp-repr inp-descr inp-def))
+                                                     (c/vertical-panel :items (list inp-selct inp-db))
+                                                     (c/vertical-panel :items (list inp-pr inp-ed))]
                                                     cmpts-atom
                                                     table-name
                                                     "" 0)]])))
@@ -556,36 +565,36 @@
 ;; (@startup)
 ;;heyyy
 (defn table-editor--component--column-picker
-  "Create left table editor view to select column which will be editing on right table editor view"
+  "Create left table editor view to c/select column which will be editing on right table editor view"
   [work-mode local-changes column-editor-id columns path-to-value table-name]
   (mig-panel :constraints ["wrap 1" "0px[100:, fill]0px" "0px[fill]0px"]
              :items
              (gtool/join-mig-items
-              (label :text "Columns" :border (empty-border :top 5 :bottom 5) :foreground blue-color)
+              (c/label :text "Columns" :border (empty-border :top 5 :bottom 5) :foreground blue-color)
               (map (fn [column index]
                      (let [path-to-value (join-vec path-to-value [index])
                            meta-panel (mig-panel
                                        :constraints ["wrap 1" "grow, fill" ""]
-                                       :items [[(label :text (name (:field column))
+                                       :items [[(c/label :text (name (:field column))
                                                        :border (empty-border :bottom 5)
                                                        :font (gtool/getFont 14 :bold) :foreground blue-color)]
-                                               [(config! (switch-column-to-editing work-mode local-changes path-to-value column))]])]
+                                               [(c/config! (switch-column-to-editing work-mode local-changes path-to-value column))]])]
                        (table-editor--component--column-picker-btn
                         (get-in column [:representation])
                         (fn [e]
-                          (config! (select (to-root @app) [(to-hashkey column-editor-id)])
+                          (c/config! (c/select (c/to-root @app) [(to-hashkey column-editor-id)])
                                    :items (gtool/join-mig-items meta-panel))))))
                    columns (range (count columns)))
-              (label :text "Actions" :border (empty-border :top 5 :bottom 5) :foreground blue-color)
+              (c/label :text "Actions" :border (empty-border :top 5 :bottom 5) :foreground blue-color)
               (table-editor--element--btn-add-column (fn [e]
-                                                       (config! (select (to-root @app) [(to-hashkey column-editor-id)])
+                                                       (c/config! (c/select (c/to-root @app) [(to-hashkey column-editor-id)])
                                                                 :items (gtool/join-mig-items (add-column-panel table-name))))))))
 
 (defn table-editor--component--space-for-column-editor
   "Create right table editor view to editing selected column in left table editor view"
   [column-editor-id] (mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
                                 :id (keyword column-editor-id)
-                               ;; :items [[(label)]]
+                               ;; :items [[(c/label)]]
                                ;; :border (line-border :left 4 :color (gtool/get-color :border :dark-gray))
                                 ))
 
@@ -616,9 +625,10 @@
                                          table @new-table-meta)
                                         (cm/swapp)
                                         (println "reload invoker" invoker-id)
-                                        (if-not (nil? invoker-id) ((@gseed/jarman-views-service :reload) invoker-id))
-                                        ((@gseed/jarman-views-service :reload))
-                                        (@gseed/alert-manager :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} (@gseed/alert-manager :message gseed/alert-manager) 5)))))
+                                        (if-not (nil? invoker-id) (((state/state :jarman-views-service) :reload) invoker-id))
+                                        (((state/state :jarman-views-service) :reload))
+                                        ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} 
+                                          5)))))
 
 
 (defn table-editor--element--btn-show-changes
@@ -633,7 +643,7 @@
                                                          :constraints ["wrap 1" "20px[]0px" "5px[top]0px"]
                                                          :background "#fff"
                                                          :preferred-size [400 :by 300])
-                                                   scr (scrollable bpnl
+                                                   scr (c/scrollable bpnl
                                                                    :hscroll :never)
                                                    path-groups (group-by second (map (fn [x] (conj (subvec (first x) 1) (second x))) @local-changes))]
                                                (println @local-changes)
@@ -642,7 +652,7 @@
                                                 (map
                                                  (fn [[group-name paths]]
                                                    (.add bpnl
-                                                         (label
+                                                         (c/label
                                                           :foreground gcomp/blue-color
                                                           :text
                                                           (str
@@ -652,25 +662,25 @@
                                                            (fn [path]
                                                              (.add
                                                               bpnl
-                                                              (horizontal-panel
+                                                              (c/horizontal-panel
                                                                :background "#fff"
                                                                :items (list
-                                                                       (label
+                                                                       (c/label
                                                                         :border (empty-border :left 10)
                                                                         :background "#fff"
                                                                         :font (gtool/getFont 12)
                                                                         :text (str
                                                                                (name (last (butlast path)))
                                                                                ": "))
-                                                                       (label
+                                                                       (c/label
                                                                         :background gcomp/light-light-grey-color
                                                                         :font (gtool/getFont 12)
                                                                         :text (get-in table (flatten [:prop (vec (butlast path))])))
-                                                                       (label
+                                                                       (c/label
                                                                         :background "#fff"
                                                                         :font (gtool/getFont 12)
                                                                         :text " to ")
-                                                                       (label
+                                                                       (c/label
                                                                         :background gcomp/light-light-grey-color
                                                                         :font (gtool/getFont 12)
                                                                         :text (last path))))))
@@ -704,7 +714,7 @@
                                                    (list [(table-editor--element--btn-save local-changes table invoker-id)]
                                                          [(table-editor--element--btn-show-changes local-changes table)])
                                                    :else [])))]]
-                        [[(scrollbox ;; Scroll section bottom title and button save/reload bar
+                        [[(gcomp/min-scrollbox ;; Scroll section bottom title and button save/reload bar
                            (mig-panel
                             :constraints ["wrap 1" "[grow, fill]" "[fill]"]
                             :items (gtool/join-mig-items  ;; Table properties 
@@ -719,14 +729,14 @@
                                                                            (cond
                                                                              (in? [true false] (get table-property param))
                                                                              (do
-                                                                               (config! (gcomp/input-checkbox
+                                                                               (c/config! (gcomp/input-checkbox
                                                                                          :txt (gtool/convert-key-to-title (str param))
                                                                                          :local-changes local-changes
                                                                                          :store-id (join-vec tab-path-to-value [param])
                                                                                          :val (get table-property param)
                                                                                          :enabled? enabled)))
                                                                              :else
-                                                                             (config!
+                                                                             (c/config!
                                                                               (gcomp/inpose-label
                                                                                (gtool/convert-key-to-title (str param))
                                                                                (gcomp/input-text-with-atom
@@ -764,7 +774,7 @@
                                           ;;  :border (line-border :thicness 1 :color "#f00")
                                            :items elems
                                            :border (empty-border :thickness 0)))
-                    :else (label :text "Table not found inside metadata :c"))]
+                    :else (c/label :text "Table not found inside metadata :c"))]
     (@gseed/changes-service :add-controller :view-id view-id :local-changes local-changes)
     component))
 
@@ -772,14 +782,15 @@
   ([tables-configurations table-id]
    (let [table          (get-table-configuration-from-list-by-table-id (tables-configurations) table-id)
          view-id        (keyword (get table :table))  ;; Get name of table and create keyword to check tabs bar (opens views)
-         invoker-id     (@gseed/jarman-views-service :get-my-view-id)]
+         invoker-id     ((state/state :jarman-views-service) :get-my-view-id)]
      (do
-       (@gseed/jarman-views-service :set-view
-                                    :view-id view-id
-                                    :title (str "Edit: " (get-in table [:prop :table :representation]))
-                                    :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.")
-                                    :component-fn (fn [] (create-view--table-editor view-id (session/user-get-permission) tables-configurations table-id invoker-id))
-                                    :scrollable? false)))))
+       ((state/state :jarman-views-service)
+        :set-view
+        :view-id view-id
+        :title (str "Edit: " (get-in table [:prop :table :representation]))
+        :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.")
+        :component-fn (fn [] (create-view--table-editor view-id (session/user-get-permission) tables-configurations table-id invoker-id))
+        :scrollable? false)))))
 
 
 ;; ┌─────────┐
@@ -812,7 +823,7 @@
           rm-menu (fn [e] (let [popup-menu (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e)))]
                             (.remove  JLP popup-menu)
                             (.repaint JLP)))
-          btn (fn [txt ico onclick] (label
+          btn (fn [txt ico onclick] (c/label
                                      :font (gtool/getFont 13)
                                      :text txt
                                      :icon (stool/image-scale ico 30)
@@ -820,11 +831,11 @@
                                      :foreground "#000"
                                      :border (compound-border (empty-border :left 10 :right 15) (line-border :bottom 1 :color border-c))
                                      :listen [:mouse-clicked onclick
-                                              :mouse-entered (fn [e] (config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
+                                              :mouse-entered (fn [e] (c/config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
                                               :mouse-exited  (fn [e] (do
-                                                                       (config! e :background "#fff" :foreground "#000")
-                                                                       (let [bounds (config (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :bounds)
-                                                                             mouse-y (+ (+ (.getY e) (.getY (config e :bounds))) (.getY bounds))
+                                                                       (c/config! e :background "#fff" :foreground "#000")
+                                                                       (let [bounds (c/config (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :bounds)
+                                                                             mouse-y (+ (+ (.getY e) (.getY (c/config e :bounds))) (.getY bounds))
                                                                              mouse-x (.getX e)]
                                                                          (if (or (< mouse-x 5)
                                                                                  (> mouse-x (- (.getWidth bounds) 5))
@@ -852,7 +863,7 @@
   (if debug (println "--Column as row\n--Data: " data))
   (let [last-x (atom 0)
         last-y (atom 0)
-        component (label :text (str (:representation data))
+        component (c/label :text (str (:representation data))
                          :size [(:width data) :by (if (= (:type data) "header")
                                                     (- (:height data) 2)
                                                     (- (:height data) 0))]
@@ -878,19 +889,19 @@
                          :border (cond
                                    (= (get data :type) "header") (compound-border (empty-border :thickness 4))
                                    :else                         (compound-border (empty-border :thickness 4)))
-                         :listen [:mouse-entered (fn [e] (if (= (:type data) "header") (config! e :cursor :move)))
-                                  :mouse-clicked (fn [e] (invoke-later (let [table-id (:id (config (gtool/getParent e) :user-data))]
+                         :listen [:mouse-entered (fn [e] (if (= (:type data) "header") (c/config! e :cursor :move)))
+                                  :mouse-clicked (fn [e] (c/invoke-later (let [table-id (:id (c/config (gtool/getParent e) :user-data))]
                                                                          (cond (= (.getButton e) MouseEvent/BUTTON3)
-                                                                               (let [view-space (@gseed/jarman-views-service :get-view-sapce)
-                                                                                     scrol (select view-space [:#JLP-DB-Visualizer])
+                                                                               (let [view-space ((state/state :jarman-views-service) :get-view-sapce)
+                                                                                     scrol (c/select view-space [:#JLP-DB-Visualizer])
                                                                                      JLP (gtool/getParent scrol)]
                                                                                  (.add JLP
                                                                                        (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
                                                                                         JLP
                                                                                         (mmeta/getset) ;; forward list of table configuration
                                                                                         table-id ;; Get table id
-                                                                                        (-> (.getX e) (+ (.getX (config (gtool/getParent e) :bounds))) (- 15))
-                                                                                        (-> (.getY e) (+ (.getY (config e :bounds))) (+ (.getY (config (gtool/getParent e) :bounds))) (- 10)))
+                                                                                        (-> (.getX e) (+ (.getX (c/config (gtool/getParent e) :bounds))) (- 15))
+                                                                                        (-> (.getY e) (+ (.getY (c/config e :bounds))) (+ (.getY (c/config (gtool/getParent e) :bounds))) (- 10)))
                                                                                        (new Integer 999) ;; z-index
                                                                                        ))
                                                                                (= (.getClickCount e) 2) ;; Open table editor by duble click
@@ -900,7 +911,7 @@
                                                      (if (= @last-x 0) (reset! last-x (.getX e)))
                                                      (if (= @last-y 0) (reset! last-y (.getY e)))
                                                      (cond
-                                                       (= (get data :type) "header") (let [bounds (config (gtool/getParent e) :bounds)
+                                                       (= (get data :type) "header") (let [bounds (c/config (gtool/getParent e) :bounds)
                                                                                            pre-x (- (+ (.getX bounds) (.getX e)) @last-x)
                                                                                            pre-y (- (+ (.getY bounds) (.getY e)) @last-y)
                                                                                            x (if (> pre-x 0) pre-x 0)
@@ -908,7 +919,7 @@
                                                                                            w (.getWidth  bounds)
                                                                                            h (.getHeight bounds)]
                                                                                        (do
-                                                                                         (config! (gtool/getParent e) :bounds [x y w h]))))))
+                                                                                         (c/config! (gtool/getParent e) :bounds [x y w h]))))))
                                   :mouse-released (fn [e] (do (reset! last-x 0)
                                                               (reset! last-y 0)))])]
     (if debug (println "--Column as row: OK"))
@@ -946,7 +957,7 @@
         camplete-table (conj col-in-rows (table-visualizer--element--col-as-row {:representation (get-in data [:prop :table :representation]) :width w :height row-h :type "header" :border-c border-c}))  ;; dodanie naglowka i finalizacja widoku tabeli
         h (* (count camplete-table) row-h)  ;; podliczenie wysokosci gotowej tabeli
         ]
-    (vertical-panel
+    (c/vertical-panel
      :id (get data :table)
      :user-data {:id (get data :id)}
      :tip "Double click to show relation. PPM to show more function."
@@ -958,7 +969,7 @@
 
 ;; (println MouseEvent/BUTTON3)
 ;; (@startup)
-;; ((@gseed/jarman-views-service :reload))
+;; (((state/state :jarman-views-service) :reload))
 
 
 (defn create-view--db-view
@@ -974,21 +985,21 @@
      (doall (map (fn [tab-data]
                    (.add JLP (db-viewer--component--table (get-in tab-data [:prop :bounds] [0 0 100 100]) tab-data) (new Integer 5)))
                  (calculate-bounds (mmeta/getset) 20 5)))
-     (.add rootJLP (vertical-panel :items [JLP]
+     (.add rootJLP (c/vertical-panel :items [JLP]
                                    :id :JLP-DB-Visualizer
                                    :border nil
                                    :bounds [0 0 10000 10000]
-                                   :listen [:mouse-released (fn [e] (config! e :cursor :default))
+                                   :listen [:mouse-released (fn [e] (c/config! e :cursor :default))
                                             :mouse-pressed (fn [e]
-                                                             (config! e :cursor :move)
-                                                             (let [x (.getX (config e :bounds))
-                                                                   y (.getY (config e :bounds))]
+                                                             (c/config! e :cursor :move)
+                                                             (let [x (.getX (c/config e :bounds))
+                                                                   y (.getY (c/config e :bounds))]
                                                                (reset! JLP-bounds {:x (.getX e) :y (.getY e) :x-x (- (.getX e) x) :y-y (- (.getY e) y)})))
                                             :mouse-dragged (fn [e]
                                                         ;;  (println "Drag JLP: " (.getX e) (.getY e))
                                                              (let [new-x (- (.getX e) (get @JLP-bounds :x-x))
                                                                    new-y (- (.getY e) (get @JLP-bounds :y-y))]
-                                                               (config! e :bounds [new-x new-y 10000 10000] ;; TODO: need to change width and height on dynamic 
+                                                               (c/config! e :bounds [new-x new-y 10000 10000] ;; TODO: need to change width and height on dynamic 
                                                                         )))])
            (new Integer 1))
     ;;  (.setMaximumSize JLP (java.awt.Dimension. 300 300))
@@ -1001,7 +1012,7 @@
                 :buttons [["Show all relation" icon/refresh-connection-blue-64-png (fn [e])]
                           ["Save view" icon/agree-grey-64-png (fn [e])]
                           ["Reset view" icon/arrow-blue-left-64-png (fn [e])]
-                          ["Reloade view" icon/refresh-blue-64-png (fn [e] ((@gseed/jarman-views-service :reload)))]])]
+                          ["Reloade view" icon/refresh-blue-64-png (fn [e] (((state/state :jarman-views-service) :reload)))]])]
               [rootJLP]]))))
 
 
@@ -1022,7 +1033,7 @@
                [(button-expand "Settings Error" []
                                :ico (stool/image-scale icon/alert-64-png 25)
                                :ico-hover (stool/image-scale icon/alert-64-png 25)
-                               :onClick (fn [e] (@gseed/alert-manager :set {:header "Settings Error" :body (str "Valid output: " (:output (cm/get-in-segment [])))} (@gseed/alert-manager :message gseed/alert-manager) 5)))]) 
+                               :onClick (fn [e] ((state/state :alert-manager) :set {:header "Settings Error" :body (str "Valid output: " (:output (cm/get-in-segment [])))} 5)))]) 
            [(button-expand
              (gtool/get-lang-btns :settings)
              (let [current-theme (str (first (cm/get-in-value [:themes :theme_config.edn :selected-theme])) ".edn")
@@ -1033,7 +1044,7 @@
                                                                   config-file-list-as-keyword)
                    restore-button (button-expand-child (gtool/get-lang-btns :restore-last-configuration)
                                                        :onClick (fn [e] (do
-                                                                          (if-not (nil? (cm/restore-config)) (@gseed/alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :restore-configuration-ok)} (@gseed/alert-manager :message gseed/alert-manager) 5)))))]
+                                                                          (if-not (nil? (cm/restore-config)) ((state/state :alert-manager) :set {:header "Success!" :body (gtool/get-lang-alerts :restore-configuration-ok)}  5)))))]
                (reverse
                 (conj
                  (map (fn [p]
@@ -1041,33 +1052,33 @@
                               title (get (cm/get-in-segment path) :name)
                               view-id (last path)]
                           (button-expand-child title :onClick (fn [e]
-                                                                (@gseed/jarman-views-service
+                                                                ((state/state :jarman-views-service)
                                                                  :set-view
                                                                  :view-id view-id
                                                                  :title title
                                                                  :scrollable? false
-                                                                 :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} (@gseed/alert-manager :message @gseed/alert-manager) 5)))))))))
+                                                                 :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [head body] ((state/state :alert-manager) :set {:header head :body body}  5)))))))))
                       config-file-list-as-keyword-to-display)
                  (let [path [:themes :theme_config.edn] ;; Selected theme
                        title (:name (cm/get-in-segment path))
                        view-id :theme_config.edn]
                    (button-expand-child title :onClick (fn [e]
-                                                         (@gseed/jarman-views-service
+                                                         ((state/state :jarman-views-service)
                                                           :set-view
                                                           :view-id view-id
                                                           :title title
                                                           :scrollable? false
-                                                          :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (gtool/get-lang-alerts :changes-saved)} ((@gseed/alert-manager :message) @gseed/alert-manager) 5))))))))
+                                                          :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [head body] ((state/state :alert-manager) :set {:header head :body body} (((state/state :alert-manager) :message) (state/state :alert-manager)) 5))))))))
                  (let [path [:themes :current-theme] ;; Themes config
                        title (rift (:name (cm/get-in-segment path)) "NIL")
                        view-id :current-theme]
                    (button-expand-child title :onClick (fn [e]
-                                                         (@gseed/jarman-views-service
+                                                         ((state/state :jarman-views-service)
                                                           :set-view
                                                           :view-id view-id
                                                           :title title
                                                           :scrollable? false
-                                                          :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [txt] (@gseed/alert-manager :set {:header "Success!" :body (str (gtool/get-lang-alerts :changes-saved))} (@gseed/alert-manager :message gseed/alert-manager) 5))))))))
+                                                          :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [head body] ((state/state :alert-manager) :set {:header head :body body}  5))))))))
               ;; restore-button
                  ))))])))
 
@@ -1077,30 +1088,30 @@
 ;; │                          │
 ;; └──────────────────────────┘
 
-(def mig-app-left-f
+(def jarmanapp--main-tree
   "Description:
       Vertical layout of elements, left part of app for functions
    Example:
-      (mig-app-left-f  [(button-expand 'Ukryte opcje 1' [(some-button)])] [(button-expand 'Ukryte opcje 2')])
+      (jarmanapp--main-tree  [(button-expand 'Ukryte opcje 1' [(some-button)])] [(button-expand 'Ukryte opcje 2')])
    Needed:
       button-expand component is needed to corectly work
    "
-  (fn [& args] (scrollbox (mig-panel
-                           :id :expand-menu-space
-                           :background "#fff"
-                           :border (line-border :left 4 :right 4 :color "#fff")
-                           :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill]0px"]
-                           :items (vec args))
-                          :args [:hscroll :never])))
+  (fn [& args] (gcomp/min-scrollbox (mig-panel
+                                     :id :expand-menu-space
+                                     :background "#fff"
+                                     :border (line-border :left 4 :right 4 :color "#fff")
+                                     :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill]0px"]
+                                     :items (vec args))
+                                    :hscroll :never)))
 
-(def right-part-of-jarman-as-space-for-views-service
+(def jarmanapp--main-view-space
   "Description: 
       Vertical layout for tabs and table on right part of app. 
       Tabs are inside horizontal panel on top.
    Example: 
       tabs  -> mig vector with elements -> [(tab1) (tab2) (tab3)]
       array -> table like rows and columns -> [(table)]  
-      (right-part-of-jarman-as-space-for-views-service [(tab-btn 'Tab 1' true) (tab-btn 'Tab 2' false)] [(label-fn :text 'GRID')])
+      (jarmanapp--main-view-space [(tab-btn 'Tab 1' true) (tab-btn 'Tab 2' false)] [(c/label-fn :text 'GRID')])
    Needed:
       tab-btn component is needed to corectly work"
   (fn [tabs array]
@@ -1115,43 +1126,44 @@
                        :id :app-functional-space
                        :background (new Color 0 0 0 0)
                        :items (gtool/join-mig-items array))]
-      (reset! gseed/jarman-views-service (vs/new-views-service tabs-space views-space))
+      (state/set-state :jarman-views-service (vs/new-views-service tabs-space views-space))
       (mig-panel
        :id :operation-space
        :background "#fff"
        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[28, shrink 0]0px[grow, fill]0px"]
        :background "#eee"
       ;; :border (line-border :left 1 :color "#999")
-       :items [[(scrollbox tabs-space :hbar-size 3 :args [:vscroll :never])]
+       :items [[(gcomp/min-scrollbox tabs-space :vscroll :never)]
                [views-space]]))))
 
-;; (@gseed/jarman-views-service :reload :view-id (keyword "DB Visualiser"))
-;; (@gseed/jarman-views-service :get-all-view) 
+;; ((state/state :jarman-views-service) :reload :view-id (keyword "DB Visualiser"))
+;; ((state/state :jarman-views-service) :get-all-view) 
 (defn create-period--period-form
   []
   (vmig
    :vrules "[fill][100, shrink 0, fill][grow, fill]"
    :items [[(gcomp/header-basic "Okresy")]
-           [(gcomp/scrollbox
+           [(gcomp/min-scrollbox
              (mig-panel :constraints ["wrap 4" "10px[fill][fill]50px[fill][fill]10px" "10px[fill]10px"]
-                        :items [[(label :text "Organization:")]
-                                [(label :text "Frank & Franky Co." :border (line-border :bottom 1 :color "#494949"))]
-                                [(label :text "Time:")]
-                                [(label :text "12/03/2021 - 11/03/2022"  :border (line-border :bottom 1 :color "#494949"))]
-                                [(label :text "Customer:")]
-                                [(label :text "Franklyn Badabumc" :border (line-border :bottom 1 :color "#494949"))]
-                                [(label :text "Full amount:")]
-                                [(label :text "7000,-" :border (line-border :bottom 1 :color "#494949"))]
-                                [(label :text "Service:")]
-                                [(label :text "Mr. Jarman" :border (line-border :bottom 1 :color "#494949"))]])
-             :args [:vscroll :never])]
+                        :items [[(c/label :text "Organization:")]
+                                [(c/label :text "Frank & Franky Co." :border (line-border :bottom 1 :color "#494949"))]
+                                [(c/label :text "Time:")]
+                                [(c/label :text "12/03/2021 - 11/03/2022"  :border (line-border :bottom 1 :color "#494949"))]
+                                [(c/label :text "Customer:")]
+                                [(c/label :text "Franklyn Badabumc" :border (line-border :bottom 1 :color "#494949"))]
+                                [(c/label :text "Full amount:")]
+                                [(c/label :text "7000,-" :border (line-border :bottom 1 :color "#494949"))]
+                                [(c/label :text "Service:")]
+                                [(c/label :text "Mr. Jarman" :border (line-border :bottom 1 :color "#494949"))]])
+             :vscroll :never)]
            [(vmig
              :vrules "[fill]0px[grow, fill]"
-             :items [[(gcomp/menu-bar-right
+             :items [[(gcomp/menu-bar
+                       :justify-end true
                        :id :menu-for-period-table
                        :buttons [[(gtool/get-lang-btns :save) icon/agree1-blue-64-png (fn [e])]
                                  [(gtool/get-lang-btns :export) icon/excel-64-png (fn [e])]])]
-                     [(scrollable (seesaw.swingx/table-x :model [:columns ["Servise month" "Amount" "Payment status"] :rows [["03/2021" "2500,-" "FV: 042/03/2021"]
+                     [(c/scrollable (seesaw.swingx/table-x :model [:columns ["Servise month" "Amount" "Payment status"] :rows [["03/2021" "2500,-" "FV: 042/03/2021"]
                                                                                                                              ["04/2021" "2000,-" "FV: 042/04/2021"]
                                                                                                                              ["05/2021" "2500,-" "Expected payment"]]]))]])]]))
 
@@ -1166,9 +1178,9 @@
         auto-menu-hide false
         return (gcomp/button-slim (str "<< " (gtool/get-lang-btns :back))
                                   :underline-size 1
-                                  :onClick (fn [e] (invoke-later (do
-                                                                   (config! list-space :items (gtool/join-mig-items (return-fn list-space view-space return-fn)))
-                                                                   (gseed/switch-focus)))))
+                                  :onClick (fn [e] (c/invoke-later (do
+                                                                   (c/config! list-space :items (gtool/join-mig-items (return-fn list-space view-space return-fn)))
+                                                                   (gtool/switch-focus)))))
         periods (expand-form-panel
                  list-space
                  [return
@@ -1179,15 +1191,15 @@
                              :items (gtool/join-mig-items
                                      (gcomp/button-slim "01/01/2021 - 31/12/2021"
                                                         :onClick (fn [e]
-                                                                   (config! view-space :items (gtool/join-mig-items (create-period--period-form)))
-                                                                   (if auto-menu-hide ((:hide-show (config (select list-space [:#expand-panel]) :user-data))))))
+                                                                   (c/config! view-space :items (gtool/join-mig-items (create-period--period-form)))
+                                                                   (if auto-menu-hide ((:hide-show (c/config (c/select list-space [:#expand-panel]) :user-data))))))
                                      (gcomp/button-slim "01/01/2021 - 31/12/2021" :onClick (fn [e]))
                                      (gcomp/button-slim "01/01/2021 - 31/12/2021" :onClick (fn [e]))
                                      (gcomp/button-slim "01/01/2021 - 31/12/2021" :onClick (fn [e]))
                                      (gcomp/button-slim "01/01/2021 - 31/12/2021" :onClick (fn [e])))))))]
                  :max-w 180
                  :args [:id :expand-panel :background "#fff"])]
-    (gseed/set-focus return)
+    (gtool/set-focus return)
     return
     periods))
 
@@ -1200,17 +1212,17 @@
 
 (defn create-period--period-companys-list
   [list-space view-space return-fn] ;; [{:name "Frank & Franky" :id 3}]
-  (gseed/rm-focus)
+  (gtool/rm-focus)
   (let
    [model (get-company-list)
     buttons (map (fn [enterpreneur]
                    (let [name (:name enterpreneur)
                          btn (gcomp/button-slim name
-                                                :onClick (fn [e] (invoke-later (do
-                                                                                 (config! list-space :items (gtool/join-mig-items (create-period--period-list list-space view-space return-fn (get enterpreneur :id))))
-                                                                                 (gseed/switch-focus))))
+                                                :onClick (fn [e] (c/invoke-later (do
+                                                                                 (c/config! list-space :items (gtool/join-mig-items (create-period--period-list list-space view-space return-fn (get enterpreneur :id))))
+                                                                                 (gtool/switch-focus))))
                                                 :args [:tip name])]
-                     (gseed/set-focus-if-nil btn)
+                     (gtool/set-focus-if-nil btn)
                      btn))
                  model)]
     (expand-form-panel
@@ -1220,18 +1232,19 @@
      :args [:background "#fff"]
     ;;  (println  buttons)
      )))
-;; (show-events (label))
+;; (show-events (c/label))
 
 (defn create-period-view
   []
-  (let [list-space (gcomp/vmig :args [:border (line-border :thickness 1 :color "#bbb")])
+  (let [list-space (gcomp/vmig :args [:border (line-border :left 1 :right 1 :color "#eee")])
         view-space (gcomp/vmig)
-        list-space (config! list-space :items (gtool/join-mig-items (create-period--period-companys-list list-space view-space create-period--period-companys-list)))]
+        list-space (c/config! list-space :items (gtool/join-mig-items (create-period--period-companys-list list-space view-space create-period--period-companys-list)))]
     (gcomp/hmig
      :hrules "[shrink 0, fill]0px[grow, fill]"
      :items [[list-space]
              [view-space]]
      :args [:background "#fff"])))
+
 
 
 (def jarmanapp
@@ -1248,20 +1261,23 @@
                      "0px[shrink 0, fill]0px[grow, fill]0px"
                      "0px[grow, fill]0px"]
        :border (line-border :left margin-left :color bg-color)
-       :items [;; [(label-fn :background "#eee" :size [50 :by 50])]
-               [(mig-app-left-f  [(button-expand "Database"
-                                                 [(button-expand-child "DB Visualiser" :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view)))
-                                                          ;;  (button-expand-child "Users table" :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
+       :items [;; [(c/label-fn :background "#eee" :size [50 :by 50])]
+               [(jarmanapp--main-tree  [(button-expand "Database"
+                                                 [(button-expand-child "DB Visualiser" :onClick (fn [e] 
+                                                                                                  (try 
+                                                                                                    ((state/state :jarman-views-service) :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view)
+                                                                                                    (catch Exception e ((state/state :alert-manager) :set {:header "Exception" :body (.getMessage e)} 5)))))
+                                                          ;;  (button-expand-child "Users table" :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
                                                   ])]
                                  [(button-expand "Tables" [] :id :tables-view-plugin :expand :yes)]
-                                 [(button-expand "Okresy" [(button-expand-child "Okresy" :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "okresy" :title "Okresy" :component-fn create-period-view)))])]
+                                 [(button-expand "Okresy" [(button-expand-child "Okresy" :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id "okresy" :title "Okresy" :component-fn create-period-view)))])]
                                  (create-expand-btns--confgen)
                                  [(button-expand "Debug items"
-                                                 [(button-expand-child "Popup" :onClick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (label "Hello popup!") :size [400 200])))
+                                                 [(button-expand-child "Popup" :onClick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (c/label "Hello popup!") :size [400 200])))
                                                   (button-expand-child "Dialog" :onClick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100])))))
-                                                  (button-expand-child "alert" :onClick (fn [e] (@gseed/alert-manager :set {:header "Hello World" :body "Some body once told me..."} (@gseed/alert-manager :message gseed/alert-manager) 5)))])])]
-               [(right-part-of-jarman-as-space-for-views-service []
-                                                                 [])]]))))
+                                                  (button-expand-child "Popup window" :onClick (fn [e] (gcomp/popup-window {:relative @app})))
+                                                  (button-expand-child "alert" :onClick (fn [e] ((state/state :alert-manager) :set {:header "Czym jest Lorem Ipsum?" :body "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle poligraficznym. Został po raz pierwszy użyty w XV w. przez nieznanego drukarza do wypełnienia tekstem próbnej książki. Pięć wieków później zaczął być używany przemyśle elektronicznym, pozostając praktycznie niezmienionym. Spopularyzował się w latach 60. XX w. wraz z publikacją arkuszy Letrasetu, zawierających fragmenty Lorem Ipsum, a ostatnio z zawierającym różne wersje Lorem Ipsum oprogramowaniem przeznaczonym do realizacji druków na komputerach osobistych, jak Aldus PageMaker"} 5)))])])]
+               [(jarmanapp--main-view-space [] [])]]))))
 
 ;; (jarman.logic.metadata/getset)
 ;;(@startup)
@@ -1288,32 +1304,32 @@
                             (list
                              [(jarmanapp :margin-left img-scale) 0]
                              (gtool/slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser"
-                                             :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view))
+                                             :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view))
                                              :top-offset top-offset)
                              (gtool/slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Message Store"
-                                             :onClick (fn [e] (@gseed/alert-manager :show))
+                                             :onClick (fn [e] ((state/state :alert-manager) :show))
                                              :top-offset top-offset)
                              (gtool/slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 2 img-scale "Change work mode"
                                              :onClick (fn [e]
                                                         (cond (= "user"      (session/user-get-permission)) (session/user-set-permission "admin")
                                                               (= "admin"     (session/user-get-permission)) (session/user-set-permission "developer")
                                                               (= "developer" (session/user-get-permission)) (session/user-set-permission "user"))
-                                                        (@gseed/alert-manager :set {:header "Work mode" :body (str "Switched to: " (session/user-get-permission))} (@gseed/alert-manager :message gseed/alert-manager) 5)
+                                                        ((state/state :alert-manager) :set {:header "Work mode" :body (str "Switched to: " (session/user-get-permission))}  5)
                                                         (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission))))
                                              :top-offset top-offset)
 
                             ;;  (gtool/slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 3 img-scale "Docs Templates"
-                            ;;                  :onClick (fn [e] (@gseed/jarman-views-service :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts gseed/alert-manager))))
+                            ;;                  :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts (state/state :alert-manager)))))
                             ;;                  :top-offset top-offset)
 
                              (gtool/slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 4 img-scale "Reload active view"
                                              :onClick (fn [e] (try
-                                                                ((@gseed/jarman-views-service :reload))
+                                                                (((state/state :jarman-views-service) :reload))
                                                                 (catch Exception e (str "Can not reload. Storage is empty."))))
                                              :top-offset top-offset)
                              (gtool/slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 5 img-scale "Restart"
                                              :onClick (fn [e] (do
-                                                                (println "restart")
+                                                                (println "App restart")
                                                                 (@startup)))
                                              :top-offset top-offset)
 

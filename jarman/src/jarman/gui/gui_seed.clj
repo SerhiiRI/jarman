@@ -7,10 +7,11 @@
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
             ;; logics
-            [jarman.gui.gui-tools :refer :all]
-            [jarman.gui.gui-alerts-service :refer :all]
+            [jarman.gui.gui-tools :as gtool]
+            [jarman.gui.gui-alerts-service :as gas]
             ;; deverloper tools 
             [jarman.tools.swing :as stool]
+            [jarman.logic.state :as state]
             [jarman.tools.lang :refer :all]
             [jarman.logic.changes-service :as cs]
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
@@ -18,19 +19,7 @@
 
 ;;  (get-color :jarman :bar)
 
-(def jarman-views-service (atom nil))
-(def jarman-focus-now (atom nil))
 (def changes-service (atom (cs/new-changes-service)))
-
-(defn set-focus
-  [object] (reset! jarman-focus-now object))
-(defn rm-focus
-  [] (reset! jarman-focus-now nil))
-(defn set-focus-if-nil
-  [object] (if (nil? @jarman-focus-now) (reset! jarman-focus-now object)))
-(defn switch-focus
-  [] (if-not (nil? @jarman-focus-now) (do (.requestFocus @jarman-focus-now)
-                                          (reset! jarman-focus-now nil))))
 
 (import javax.swing.JLayeredPane)
 ;; (import javax.swing.JLabel)
@@ -38,35 +27,16 @@
 ;; (import java.awt.Dimension)
 ;; (import java.awt.event.MouseEvent)
 
-(def atom-app-size (atom [1200 700]))
+(state/set-state :atom-app-size (atom [1200 700]))
 (def app (atom nil))
-(def alert-manager (atom nil))
 
 (add-watch
- atom-app-size
+ (state/state :atom-app-size)
  :refresh
  (fn [key atom old-state new-state]
    (do
-     (config! (select @app [:#rebound-layer]) :bounds [0 0 (first @atom-app-size) (second @atom-app-size)])
+     (config! (select @app [:#rebound-layer]) :bounds [0 0 (first new-state) (second new-state)])
      (.repaint (to-frame @app)))))
-
-;; (def box
-;;   (fn [& {:keys [wrap items vlayout hlayout]
-;;           :or  {wrap 0
-;;                 items (list (label :text "Hello Boi!"))
-;;                 vlayout "center, grow"
-;;                 hlayout "center, grow"}}]
-;;     (let [wraper (if (= wrap 0) "" (string/join "" ["wrap" wrap]))
-;;           margin 0]
-;;       (vertical-panel
-;;        :id :rebound-layer
-;;        :items [(mig-panel
-;;                 ;; :background "#a23"
-;;                 ;; :size [(first @atom-app-size) :by (second @atom-app-size)]
-;;                 :constraints [wraper
-;;                               (str margin "px[:" (first @atom-app-size) "," hlayout "]" margin "px")
-;;                               (str margin "px[:" (second @atom-app-size) "," vlayout "]" margin "px")]
-;;                 :items (join-mig-items items))]))))
 
 
 (def base
@@ -92,12 +62,12 @@
                  undecorated?]
           :or  {title "Mr. Jarman"
                 items (label :text "Hello Boi!" :bounds [100 100 300 300])
-                size [(first @atom-app-size) (second @atom-app-size)]
+                size @(state/state :atom-app-size)
                 undecorated? false}}]
     (let [set-items (if-not (list? items) (list items) items)]
       (do
         (reset! app (base set-items))
-        (reset! alert-manager (message-server-creator app))
+        (state/set-state :alert-manager (gas/message-server-creator app))
         (let [jframe (seesaw.core/frame
                       :title title
                       :resizable? true
@@ -110,7 +80,7 @@
                                                 ;;  (println e)
                                                     (let [w (.getWidth (.getSize (.getContentPane (to-root e))))
                                                           h (.getHeight (.getSize (.getContentPane (to-root e))))]
-                                                      (reset! atom-app-size [w h]))
+                                                      (reset! (state/state :atom-app-size) [w h]))
                                                     (.revalidate (to-widget e)))])]
           (-> (doto jframe (.setLocationRelativeTo nil) pack! show!))
           (config! jframe  :icon (stool/image-scale icon/calendar1-64-png)

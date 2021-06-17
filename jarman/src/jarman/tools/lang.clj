@@ -371,7 +371,7 @@
   (map-first {:a 1 :b 2}) => {:a 1}
   (map-first {})          => nil"
   [m]
-  `(if-let [mf# (first (seq ~m))]
+  `(if-let[mf# (first (seq ~m))]
      (into {} (list mf#))))
 
 (defmacro map-rest

@@ -6,6 +6,8 @@
    :user "root",
    :password "1234"})
 
+(def table-key :table-name)
+
 (def all-tables
   [{:table-name :documents
     :columns [{:table [:varchar-100 :default :null]}

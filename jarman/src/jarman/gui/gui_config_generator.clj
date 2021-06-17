@@ -251,7 +251,7 @@
                                                [(gcomp/button-basic ""
                                                                     :onClick (fn [e] (do
                                                                                        (println "\nConfiguration changes\n" (str @local-changes))
-                                                                                       (message-ok "Configuration changes" (str @local-changes))))
+                                                                                       (gcomp/popup-info-window "Configuration changes" (str @local-changes) (state/state :app))))
                                                                     :flip-border true
                                                                     :args [:icon (stool/image-scale icon/loupe-blue-64-png 25)])]])))]
             ;; (println "Config complete")

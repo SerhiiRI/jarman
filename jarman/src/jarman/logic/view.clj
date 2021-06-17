@@ -107,3 +107,21 @@
    :buttons [{:action :add-multiply-users-insert
               :title "Auto generate users"}]))
 
+(defview documents
+  (table
+   :name "Documnets import"
+   :changes-button true
+   :plug-place [:#tables-view-plugin]
+   :tables [:documents]
+   :view-columns [:documents.table
+                  :documents.name]
+   :model [:documents.id
+           {:model-reprs "Table"
+            :model-param :documents.table
+            :model-comp jarman.gui.gui-components/select-box-table-list}
+           :documents.name
+           :documents.prop]
+   :query {}
+   :actions {}
+   :buttons []))
+

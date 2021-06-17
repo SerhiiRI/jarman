@@ -64,42 +64,18 @@
       Function need stool/image-scale function for scalling icon
       Function need hand-hover-on function for hand mouse effect
    "
-  [ic ic-h layered & args] (c/label :icon (stool/image-scale ic (if (> (count args) 0) (first args) 28))
+  [ic ic-h layered-pane & args] (c/label :icon (stool/image-scale ic (if (> (count args) 0) (first args) 28))
                                     :background (new Color 0 0 0 0)
                                     :border (b/empty-border :left 3 :right 3)
                                     :listen [:mouse-entered (fn [e] (do
                                                                       (c/config! e :icon (stool/image-scale ic-h (if (> (count args) 0) (first args) 28)) :cursor :hand)
-                                                                      (.repaint @layered)))
+                                                                      (.repaint layered-pane)))
                                              :mouse-exited (fn [e] (do
                                                                      (c/config! e :icon (stool/image-scale ic (if (> (count args) 0) (first args) 28)))
-                                                                     (.repaint @layered)))
+                                                                     (.repaint layered-pane)))
                                              :mouse-clicked (if (> (count args) 1) (second args) (fn [e]))]))
 
 
-(defn view-selected-message
-  "Description:
-      Function for create window with clicked message.
-   Example:
-      (view-selected-message header body layered-pane)
-   Needed:
-      Import jarman.dev-tool
-      Function need stool/image-scale for scaling button icon
-      Function need middle-bounds for auto calculating bound
-   "
-  [header body relative]
-;;   (println "\nheader" header "\nbody" body "\ninvoker" relative)
-  (let [comp (mig-panel
-              :constraints ["wrap 1" "10px[grow, fill]10px" "10px[fill]10px"]
-              :id :message-view-box
-              :items [[(c/label :text header 
-                                :font (gtool/getFont 18)
-                                :border (b/empty-border :left 5 :right 5))]
-                      [(gcomp/hr 1 "#999" [0 0 0 5])]
-                      [(c/label
-                        :text (gtool/htmling body :justify)
-                        :font (gtool/getFont 14)
-                        :border (b/empty-border :left 10 :right 10))]])]
-    (gcomp/popup-window {:view comp :window-title "Info" :size [400 350] :relative relative})))
 
 
 (def message
@@ -127,7 +103,7 @@
          ;;  body   (if (= (contains? data :body) true) (:body data) "Template of information...")
           layered-pane ((state/state :alert-manager) :get-space)
           close [(build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png layered-pane 23
-                                       (fn [e] (view-selected-message header body @layered-pane)))
+                                       (fn [e] (gcomp/popup-info-window header body layered-pane)))
                  (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered-pane 23
                                        (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] ((state/state :alert-manager) :rm-obj to-del))))]
           [t b l r] (try
@@ -182,24 +158,24 @@
    "
   ([layered-pane alerts-storage] (do
                                     ;;  Remove alerts
-                                    (doall (map (fn [item] (if (identical? (c/config item :id) :alert-box) (.remove @layered-pane item))) (seesaw.util/children @layered-pane)))
+                                    (doall (map (fn [item] (if (identical? (c/config item :id) :alert-box) (.remove layered-pane item))) (seesaw.util/children layered-pane)))
                                     ;; Add alerts
-                                    (doall (map (fn [item] (if (= (:visible item) true) (.add @layered-pane (:component item) (new Integer 15)))) @alerts-storage))
+                                    (doall (map (fn [item] (if (= (:visible item) true) (.add layered-pane (:component item) (new Integer 15)))) @alerts-storage))
                                     ;;  Rebounds message space
-                                    (alerts-rebounds-f @layered-pane)
+                                    (alerts-rebounds-f layered-pane)
                                     ;;  Repainting app
-                                    (.repaint @layered-pane)))
+                                    (.repaint layered-pane)))
   ([layered-pane alerts-storage id-to-remove] (do
                                                  ;;  Remove alerts
                                                  (doall (map (fn [i] (if (or (identical? (c/config i :id) :alert-box)
                                                                              (identical? (c/config i :id) id-to-remove))
-                                                                       (.remove @layered-pane i))) (seesaw.util/children @layered-pane)))
+                                                                       (.remove layered-pane i))) (seesaw.util/children layered-pane)))
                                                  ;; Add alerts
-                                                 (doall (map (fn [item] (if (= (:visible item) true) (.add @layered-pane (:component item) (new Integer 15)))) @alerts-storage))
+                                                 (doall (map (fn [item] (if (= (:visible item) true) (.add layered-pane (:component item) (new Integer 15)))) @alerts-storage))
                                                  ;;  Rebounds message space
-                                                 (alerts-rebounds-f @layered-pane)
+                                                 (alerts-rebounds-f layered-pane)
                                                  ;;  Repainting app
-                                                 (.repaint @layered-pane))))
+                                                 (.repaint layered-pane))))
 
 (defn rmAlert
   "Description:
@@ -291,7 +267,7 @@
                      :background bg-c
                      :border (b/line-border :bottom 2 :color "#333")
                      :items [[comp-header] [comp-body]])
-        onClick     (fn [e] (view-selected-message header body @layered-pane))
+        onClick     (fn [e] (gcomp/popup-info-window header body layered-pane))
         comp        (c/config! comp
                                :listen [:mouse-clicked (fn [e] (onClick e))
                                         :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
@@ -337,7 +313,7 @@
                                         (refresh-alerts layered-pane alerts-storage :all-alerts);;  refresh GUI with remove element with id :all-alertsts
                                         (.dispose (c/to-frame e)))
                              :args [:icon (stool/image-scale icon/basket-blue1-64-png ico-size)])]])]
-    (gcomp/popup-window {:view container :window-title "Alerts history" :size [w h] :relative @layered-pane})))
+    (gcomp/popup-window {:view container :window-title "Alerts history" :size [w h] :relative layered-pane})))
 
 
 (defn message-server-creator
@@ -360,7 +336,7 @@
                (fn [key atom old-state new-state]
                  (cond
                    (> (count @alerts-storage) 0) (refresh-alerts layered-pane alerts-storage)
-                   :else (.repaint @layered-pane))))
+                   :else (.repaint layered-pane))))
     (fn [action & param]
       (cond
         (= action :get-space)     layered-pane

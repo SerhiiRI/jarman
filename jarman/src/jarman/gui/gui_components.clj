@@ -1236,13 +1236,9 @@
 
 (defn popup-info-window
   "Description:
-      Function for create window with clicked message.
+      Function for create window with some message.
    Example:
-      (view-selected-message header body layered-pane)
-   Needed:
-      Import jarman.dev-tool
-      Function need stool/image-scale for scaling button icon
-      Function need middle-bounds for auto calculating bound
+      (popup-info-window header body relative)
    "
   [header body relative]
 ;;   (println "\nheader" header "\nbody" body "\ninvoker" relative)
@@ -1263,6 +1259,9 @@
 
 
 (def select-box-table-list
+  "Description:
+     Combobox with all tables.
+   "
   (fn [{:keys [local-changes store-id val] 
         :or {local-changes (atom {})
              store-id :documents.table

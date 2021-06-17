@@ -8,7 +8,7 @@
             [seesaw.mig :as smig]
             [jarman.tools.swing :as stool]
             [jarman.logic.state :as state]
-            [jarman.tools.lang :as lang]
+            [jarman.tools.lang :refer :all]
             [jarman.logic.metadata :as mmeta]
             [jarman.gui.gui-tools :as gtool]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
@@ -166,7 +166,7 @@
             scr
             (do 
               (c/config! scr (get-key sm) (get-val sm))
-              (next (lang/map-rest sm)))))
+              (next (map-rest sm)))))
         (apply hash-map args)))
     (.setBorder scr nil)
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
@@ -544,7 +544,7 @@
               store-id nil
               always-set-changes true}}]
    
-   (let [combo-model (if (empty? selected-item) (cons selected-item model) (lang/join-vec [selected-item] (filter #(not= selected-item %) model)))]
+   (let [combo-model (if (empty? selected-item) (cons selected-item model) (join-vec [selected-item] (filter #(not= selected-item %) model)))]
     (if (and (= always-set-changes true) (not (empty? selected-item)))
      (do
        (swap! local-changes (fn [storage] (assoc storage store-id combo-model)))))
@@ -1233,3 +1233,42 @@
       (doto dialog c/pack! c/show!)
       )))
 
+
+(defn popup-info-window
+  "Description:
+      Function for create window with clicked message.
+   Example:
+      (view-selected-message header body layered-pane)
+   Needed:
+      Import jarman.dev-tool
+      Function need stool/image-scale for scaling button icon
+      Function need middle-bounds for auto calculating bound
+   "
+  [header body relative]
+;;   (println "\nheader" header "\nbody" body "\ninvoker" relative)
+  (let [comp (mig-panel
+              :constraints ["wrap 1" "10px[grow, fill]10px" "10px[fill]10px"]
+              :id :message-view-box
+              :items [[(c/label :text header
+                                :font (gtool/getFont 18)
+                                :border (b/empty-border :left 5 :right 5))]
+                      [(hr 1 "#999" [0 0 0 5])]
+                      [(c/label
+                        :text (gtool/htmling body :justify)
+                        :font (gtool/getFont 14)
+                        :border (b/empty-border :left 10 :right 10))]])]
+    (popup-window {:view comp :window-title "Info" :size [400 350] :relative relative})))
+
+
+
+
+(def select-box-table-list
+  (fn [{:keys [local-changes store-id val] 
+        :or {local-changes (atom {})
+             store-id :documents.table
+             val nil}}]
+    (println "\ntable-select-box" store-id val)
+    (select-box (vec (map #(get % :table) (mmeta/getset)))
+               :store-id store-id
+               :local-changes local-changes
+               :selected-item (rift val ""))))

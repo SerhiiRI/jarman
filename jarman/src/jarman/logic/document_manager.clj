@@ -137,6 +137,9 @@
       (-insert-document-jdbc document-map))
     (update-document document-map)))
 
+
+ (.exists (clojure.java.io/file "templates\\dovidka.odt"))
+
 (defn download-document [document-map]
   (if (some? (:id document-map))
     (-download-to-storaget-document-jdbc document-map)))
@@ -146,11 +149,16 @@
 ;; (storage/document-templates-clean)
 ;; (clojure.java.io/file (storage/document-templates-dir) "temp.odt")
 
-;;; TEST SEGMENT 
+;;; TEST SEGMENT
+
+;;(db/connection-get)
+
 ;; (insert-document
 ;;  {:table "-----", :name "also-test",
 ;;   :document "templates\\dovidka.odt"
 ;;   :prop {:suak [:bliat [:ello]]}})
+
+
 
 ;; (insert-document
 ;;  {:id 7, :table "-----", :name "also-test",

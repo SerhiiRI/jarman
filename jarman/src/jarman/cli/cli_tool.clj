@@ -1,5 +1,4 @@
-(ns jarman.cli-tool
-  (:gen-class)
+(ns jarman.cli.cli-tool
   (:refer-clojure :exclude [update])
   (:require
    ;; resource 
@@ -7,9 +6,12 @@
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]
    ;; logic
+   [jarman.logic.metadata :as metadata]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    [jarman.managment.db-managment :refer :all]
-   ;; developer tools 
+   ;; developer tools
+   [jarman.logic.structural-initializer :as sinit]
+   [jarman.logic.connection :as db]
    [jarman.tools.swing :as stool]   
    [jarman.tools.lang :refer :all]))
 
@@ -34,6 +36,13 @@
   [scm]
   (if (and (not= "all" scm) (some? scm))
     true false))
+
+(defn messege-table [ch scm]
+  (if (valid-tables)
+        (if ch
+          (println (format "[i] Table %s created successfuly" (name scm)))
+          (println "[i] Table structure created successfuly"))
+        (println "[!] Table structure is not valid, check this")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; CREATE and DELETE ;;;
@@ -124,6 +133,12 @@
           (if (choose-option scm)
             (reset-one-db scm) 
             (reset-all-db))))))
+
+(defn reset-meta [cli-opt-m]
+   (let [scm (get-in cli-opt-m [:options :print] nil)]
+    (if (choose-option scm)
+      (reset-one-meta scm) 
+      (reset-all-meta))))
 
 
 ;;;;;;;;;;;;

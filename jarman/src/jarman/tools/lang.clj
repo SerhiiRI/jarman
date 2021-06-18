@@ -21,7 +21,6 @@
             [clojure.pprint :as pprint]
             [clojure.java.io :as io]))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; helper function ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -61,7 +60,7 @@
   [& vecs]
   `(vec (concat ~@vecs)))
 
-(defn ^:private key-setter
+(defn key-setter
   "Description
 
     Test if some `parameter-k` key inside `m`

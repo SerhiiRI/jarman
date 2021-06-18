@@ -201,7 +201,7 @@
                          {:column columns})))))
 
 
-;;(create-table-plugin :enterpreneur)
+;; (create-table-plugin :cache_register)
 ;; (mapv create-table-plugin [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month])
 
 (defn- gui-table-model-columns [table-list table-column-list]
@@ -290,7 +290,7 @@
    "
   [controller id]
   (let [;;radio-group (c/button-group)
-        default-path (str jarman.config.environment/user-home "/Documents")
+        default-path (str jarman.config.environment/user-home "Documents")
         panel-bg "#eee"
         input-text (gcomp/input-text :args [:text default-path :font (gtool/getFont  :name "Monospaced")])
         icon (gcomp/button-basic
@@ -319,30 +319,28 @@
                    (c/label))
              (gcomp/button-basic
               "Export"
+              :onClick (fn [e] (println ""))
               :flip-border true)))))
 
 (defn- export-button
   "Description:
-     Export panel invoker. Invoke as popup window.
-   "
+     Export panel invoker. Invoke as popup window."
   [data-toolkit configuration table-model]
   (gcomp/button-basic
    "Document export"
    :font (getFont 13 :bold)
-   :onClick (fn [e] (gcomp/popup-window {:window-title "Documents export"
+   :onClick (fn [e]
+              (gcomp/popup-window {:window-title "Documents export"
                                          :view (let [table-id (keyword (format "%s.id" (:field (:table-meta data-toolkit))))]
                                                  (document-exporter configuration (table-id table-model)))
                                          :size [300 300]
                                          :relative (c/to-widget e)}))))
-
-
-
+;;(:model-id)
 ;; ┌───────────────────┐
 ;; │                   │
 ;; │ Single Components │
 ;; │                   │
 ;; └───────────────────┘
-
 
 (defn default-buttons
   "Description:
@@ -359,8 +357,10 @@
                 (= type :insert)
                 (println "\nRun Insert\n"
                          ((:insert data-toolkit)
-                          (merge {(keyword (str (:field (:table-meta data-toolkit)) ".id")) nil}
-                                 (first (merge table-model @local-changes)))) "\n")
+                          (select-keys
+                           (merge {(keyword (str (:field (:table-meta data-toolkit)) ".id")) nil}
+                                  (first (merge table-model @local-changes)))
+                           (:model-columns data-toolkit))) "\n")
                 (= type :update) ;; TODO: Turn on update fn after added empty key map template, without throw exception, too may value in query, get permission_name
                 (do
                   (let [from-meta-data (vemap (map #(:field-qualified %) (:columns-meta data-toolkit)))
@@ -404,7 +404,6 @@
                               binded-list)))]
     (into binded (get-missed-props binded props-map))))
 
-
 ;; ┌─────────────────────────┐
 ;; │                         │
 ;; │ Tabel Component Chooser │
@@ -439,7 +438,6 @@
         (gcomp/inpose-label (:title props-coll) (selected-comp-fn props-coll))))))
 
 (def choose-component (choose-component-fn form-components)) ;; component chooser
-
 
 ;; ┌──────────────────────────┐
 ;; │                          │
@@ -539,8 +537,7 @@
 
 (def build-input-form
   "Description:
-     Marge all components to one form
-   "
+     Marge all components to one form"
   (fn [data-toolkit configuration global-configuration
        & {:keys [table-model more-comps]
           :or {table-model [] more-comps []}}]
@@ -557,9 +554,12 @@
                       (generate-custom-buttons local-changes configuration)
                       (gcomp/hr 5)
                       (if (empty? table-model)
-                        (if-not  (= false (:insert-button configuration)) (default-buttons data-toolkit local-changes table-model :insert) [])
-                        [(if-not (= false (:update-button configuration)) (default-buttons data-toolkit local-changes table-model :update) [])
-                         (if-not (= false (:delete-button configuration)) (default-buttons data-toolkit local-changes table-model :delete) [])
+                        (if-not  (= false (:insert-button configuration))
+                          (default-buttons data-toolkit local-changes table-model :insert) [])
+                        [(if-not (= false (:update-button configuration))
+                           (default-buttons data-toolkit local-changes table-model :update) [])
+                         (if-not (= false (:delete-button configuration))
+                           (default-buttons data-toolkit local-changes table-model :delete) [])
                          (gcomp/hr 10)
                          (export-button data-toolkit configuration table-model)])
                       [more-comps])
@@ -597,7 +597,6 @@
 
 (defn table-toolkit-pipeline [configuration datatoolkit]
   datatoolkit)
-
 
 ;;;PLUGINS ;;;        
 (defn table-component [plugin-path global-configuration spec-map]

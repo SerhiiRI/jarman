@@ -228,7 +228,9 @@
     ;; (println "\nView table\n" view)
     (if (and view tables)
       (let [model-columns (gui-table-model-columns tables view)
-            table-model (gui-table-model model-columns (:select toolkit-map))]
+            table-model (gui-table-model model-columns (:select toolkit-map))
+            ;; x (println "\ntable-model " (table-model))
+            ]
         {:table-model table-model
          :table (gui-table table-model)}))))
 
@@ -288,30 +290,20 @@
   "Description:
      Panel with input path and buttons for export.
    "
-  [controller id]
-  (let [;;radio-group (c/button-group)
-        default-path (str jarman.config.environment/user-home "/Documents")
-        panel-bg "#eee"
-        input-text (gcomp/input-text :args [:text default-path :font (gtool/getFont  :name "Monospaced")])
-        icon (gcomp/button-basic
-              ""
-              :onClick (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
-                                 (c/config! input-text :text (rift new-path default-path))))
-              :args [:icon (jarman.tools.swing/image-scale ico/enter-64-png 30)])
-        panel (smig/mig-panel
-               :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[fill]0px"]
-               :items [[icon] [input-text]])]
+  [local-changes controller id]
+  (let [select-file (gcomp/input-file {:store-id :file-path :local-changes local-changes})
+        panel-bg "#eee"]
     (smig/mig-panel
      :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px[grow]0px[fill]0px"]
      :background panel-bg
      :items (gtool/join-mig-items
-             [panel]
+             [select-file]
              (rift (map (fn [doc-model]
                           [(gcomp/button-basic
                             (get doc-model :name)
                             :onClick (fn [e]
                                        (try
-                                         ((doc/prepare-export-file (:->table-name controller) doc-model) id (c/config input-text :text))
+                                         ((doc/prepare-export-file (:->table-name controller) doc-model) id (:file-path @local-changes))
                                          ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :export-doc-ok)}  7)
                                          (catch Exception e ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :faild) :body (gtool/get-lang-alerts :export-doc-faild)}  7))))
                             :args [:halign :left])])
@@ -319,19 +311,20 @@
                    (c/label))
              (gcomp/button-basic
               "Export"
+              :onClick (fn [e] (println "Path to file: " (rift (:file-path @local-changes) "No file selected")))
               :flip-border true)))))
 
 (defn- export-button
   "Description:
      Export panel invoker. Invoke as popup window.
    "
-  [data-toolkit configuration table-model]
+  [data-toolkit configuration local-changes table-model]
   (gcomp/button-basic
    "Document export"
    :font (getFont 13 :bold)
    :onClick (fn [e] (gcomp/popup-window {:window-title "Documents export"
                                          :view (let [table-id (keyword (format "%s.id" (:field (:table-meta data-toolkit))))]
-                                                 (document-exporter configuration (table-id table-model)))
+                                                 (document-exporter local-changes configuration (table-id table-model)))
                                          :size [300 300]
                                          :relative (c/to-widget e)}))))
 
@@ -534,6 +527,22 @@
                 (filter #(not (nil? %)))))))
 
 
+(defn- upload-doc ;; TODO: Move to defview when actions start working
+  [state]
+  (let [func (fn [state]
+               (let [insert-meta {:table (first (:documents.table @state))
+                                  :name (:documents.name @state)
+                                  :document (:documents.document @state)
+                                  :prop (:documents.prop @state)}]
+                 (println "to save" insert-meta)
+                 (jarman.logic.document-manager/insert-document insert-meta)
+                 (((jarman.logic.state/state :jarman-views-service) :reload))
+                 ))]
+    (gcomp/button-basic
+     "Upload doc"
+     :onClick (fn [e] (func state))
+     :args [:font (gtool/getFont :bold)])))
+
 
 ;; ┌──────────────┐
 ;; │              │
@@ -568,7 +577,9 @@
                         [(if-not (= false (:update-button configuration)) (default-buttons data-toolkit local-changes table-model :update) [])
                          (if-not (= false (:delete-button configuration)) (default-buttons data-toolkit local-changes table-model :delete) [])
                          (gcomp/hr 10)
-                         (export-button data-toolkit configuration table-model)])
+                         (export-button data-toolkit configuration local-changes table-model)])
+                      (do (println "Field" (:field (:table-meta data-toolkit))) [])
+                      (if (= "documents" (:field (:table-meta data-toolkit))) (upload-doc local-changes) [])
                       [more-comps])
           builded (c/config! panel :items (gtool/join-mig-items components))]
       builded)))
@@ -592,7 +603,7 @@
           expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never)
           back-to-insert     (fn [] [(gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]])))])
           expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/min-scrollbox (update-form model return))] [(table)]]))
-          table              (fn [] ((:table (create-table configuration data-toolkit)) (fn [model] (expand-update-form model back-to-insert))))
+          table              (fn [] ((:table (create-table configuration data-toolkit)) (fn [model] (if-not (= false (:update-mode configuration)) (expand-update-form model back-to-insert)))))
           x nil ;;------------ Finish
           view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])]
                                                             [(try
@@ -639,6 +650,7 @@
                                                                 data-toolkit
                                                                 configuration)))))))))))
     (.revalidate space)))
+
 
 
 

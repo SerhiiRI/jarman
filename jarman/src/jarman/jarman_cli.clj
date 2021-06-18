@@ -11,6 +11,7 @@
    [jarman.config.storage :as storage]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    [jarman.managment.db-managment :refer :all]
+   [jarman.cli.cli_tool :refer :all]
    ;; developer tools 
    [jarman.tools.swing :as stool]   
    [jarman.tools.lang :refer :all]))

@@ -344,8 +344,8 @@
    "
   [data-toolkit local-changes table-model type]
   (gcomp/button-basic
-   (type {:insert "Insert new data" :update "Update row" :delete "Delete row" :export "Documents export" :changes "Changes list"})
-   :font (getFont 13 :bold)
+   (type {:insert "Insert new data" :update "Update row" :delete "Delete row" :export "Documents export" :changes "Form state"})
+   :font (getFont 13)
    :onClick (fn [e]
               ;;  (println "Insert but Locla changes: " @local-changes)
               (cond
@@ -516,7 +516,7 @@
   "Description:
      Get buttons and actions from defview and create clickable button.
    "
-  [local-changes configuration]
+  [local-changes configuration form-model]
   (let [button-fn (fn [title action]
                     ;; (println "\nTitle " title "\nAction: "  action)
                     (if (fn? action) ;; TODO: action is an text not fn
@@ -527,8 +527,9 @@
                          (gcomp/button-basic title :onClick (fn [e] ((eval action) local-changes)))]
                         ;; (println "\nCustom btn fn: " (eval action)) []
                         )))]
+    (println @local-changes)
     (doall (->> (:buttons configuration)
-                (map #(button-fn (:title %) (get (:actions configuration) (:action %))))
+                (map (fn [btn-model] (if (= form-model (:form-model btn-model)) (button-fn (:title btn-model) (get (:actions configuration) (:action btn-model))) [])))
                 (filter #(not (nil? %)))))))
 
 
@@ -563,9 +564,10 @@
    "
   (fn [data-toolkit configuration global-configuration form-model
        & {:keys [table-model more-comps]
-          :or {table-model [] more-comps []}}]
+          :or {table-model {} more-comps []}}]
     ;; (println "\ndata-toolkit\n" data-toolkit "\nconfiguration\n" configuration)
-    (let [local-changes (atom {})
+    (let [table-id (keyword (format "%s.id" (:field (:table-meta data-toolkit))))
+          local-changes (atom {:selected-id (table-id table-model)})
           meta-data (convert-metadata-vec-to-map (:columns-meta data-toolkit))
           components (convert-model-to-components-list global-configuration local-changes meta-data table-model (form-model configuration))
           panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
@@ -574,7 +576,7 @@
           components (join-mig-items
                       components
                       (gcomp/hr 10)
-                      (generate-custom-buttons local-changes configuration)
+                      (generate-custom-buttons local-changes configuration form-model)
                       (gcomp/hr 5)
                       (if (= true (:changes-button configuration)) (default-buttons data-toolkit local-changes table-model :changes) [])
                       (if (empty? table-model)
@@ -582,8 +584,8 @@
                         [(if-not (= false (:update-button configuration)) (default-buttons data-toolkit local-changes table-model :update) [])
                          (if-not (= false (:delete-button configuration)) (default-buttons data-toolkit local-changes table-model :delete) [])
                          (gcomp/hr 10)
-                         (export-button data-toolkit configuration local-changes table-model)])
-                      (do (println "Field" (:field (:table-meta data-toolkit))) [])
+                         (if-not (= false (:export-button configuration)) (export-button data-toolkit configuration local-changes table-model) [])])
+                      ;; (do (println "Field" (:field (:table-meta data-toolkit))) [])
                       ;; (if (= "documents" (:field (:table-meta data-toolkit))) (upload-doc local-changes) [])
                       [more-comps])
           builded (c/config! panel :items (gtool/join-mig-items components))]
@@ -603,7 +605,9 @@
           table         (fn [] (second (u/children view-layout)))
           header        (fn [] (c/label :text (:representation (:table-meta data-toolkit)) 
                                         :halign :center :border (sborder/empty-border :top 10)))
-          update-form   (fn [table-model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration :model-update :table-model table-model :more-comps [(return)])]))
+          update-form   (fn [table-model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration 
+                                                                                                                  (doto (if (nil? (:model-update configuration)) :model-insert :model-update) println) 
+                                                                                                                  :table-model table-model :more-comps [(return)])]))
           x nil ;;------------ Build
           expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never)
           back-to-insert     (fn [] [(gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]])))])

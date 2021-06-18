@@ -8,7 +8,7 @@
    :tables [:permission]
    :view-columns [:permission.permission_name
                   :permission.configuration]
-   :model [{:model-reprs "Permision name"
+   :model-insert [{:model-reprs "Permision name"
             :model-param :permission.permission_name
             :model-comp jarman.gui.gui-components/input-text-with-atom}
            :permission.configuration]
@@ -120,7 +120,7 @@
    :enterpreneur.legal_address
    :enterpreneur.physical_address
    :enterpreneur.contacts_information]
-  :model
+  :model-insert
   [:enterpreneur.ssreou
    :enterpreneur.ownership_form
    :enterpreneur.vat_certificate
@@ -154,30 +154,30 @@
                   :user.first_name
                   :user.last_name
                   :permission.permission_name]
-   :model [{:model-reprs "Login"
-            :model-param :user.login
-            :bind-args {:title :title}
-            :model-comp jarman.gui.gui-components/input-text-with-atom}
-           :user.password
-           :user.first_name
-           :user.last_name
-           :user.id_permission
-           {:model-reprs "Start user"
-            :model-param :user-start
-            :model-comp jarman.gui.gui-components/input-int}
-           {:model-reprs "End user"
-            :model-param :user-end
-            :model-comp jarman.gui.gui-components/input-int}]
+   :model-insert [{:model-reprs "Login"
+                   :model-param :user.login
+                   :bind-args {:title :title}
+                   :model-comp jarman.gui.gui-components/input-text-with-atom}
+                  :user.password
+                  :user.first_name
+                  :user.last_name
+                  :user.id_permission
+                  {:model-reprs "Start user"
+                   :model-param :user-start
+                   :model-comp jarman.gui.gui-components/input-int}
+                  {:model-reprs "End user"
+                   :model-param :user-end
+                   :model-comp jarman.gui.gui-components/input-int}]
    :query {:inner-join [:user->permission]
            :column
-           [{:user.id :user.id} 
-            {:user.login :user.login} 
-            {:user.password :user.password} 
-            {:user.first_name :user.first_name} 
-            {:user.last_name :user.last_name} 
-            {:user.id_permission :user.id_permission} 
-            {:permission.id :permission.id} 
-            {:permission.permission_name :permission.permission_name} 
+           [{:user.id :user.id}
+            {:user.login :user.login}
+            {:user.password :user.password}
+            {:user.first_name :user.first_name}
+            {:user.last_name :user.last_name}
+            {:user.id_permission :user.id_permission}
+            {:permission.id :permission.id}
+            {:permission.permission_name :permission.permission_name}
             {:permission.configuration :permission.configuration}]}
    :actions {:add-multiply-users-insert
              (fn [state]
@@ -191,9 +191,66 @@
    :buttons [{:action :add-multiply-users-insert
               :title "Auto generate users"}]))
 
-(select-keys {:a 1 :b 2 :c 3} [:a :c])
+(defview documents
+  (table
+   :name "Documnets import"
+   :changes-button true
+   :insert-button false
+   :delete-button false
+   :update-button false
+   :export-button false
+   :plug-place [:#tables-view-plugin]
+   :tables [:documents]
+   :view-columns [:documents.table
+                  :documents.name
+                  :documents.prop]
+   :model-insert [:documents.id
+                  {:model-reprs "Table"
+                   :model-param :documents.table
+                   :model-comp jarman.gui.gui-components/select-box-table-list}
+                  :documents.name
+                  :documents.prop
+                  {:model-reprs "Path to file"
+                   :model-param :documents.document
+                   :model-comp jarman.gui.gui-components/input-file}]
+   :model-update [:documents.id
+                  {:model-reprs "Table"
+                   :model-param :documents.table
+                   :model-comp jarman.gui.gui-components/select-box-table-list}
+                  :documents.name
+                  :documents.prop
+                  ]
+   :query {:column
+           [{:documents.id :documents.id}
+            {:documents.table :documents.table}
+            {:documents.name :documents.name}
+            {:documents.prop :documents.prop}]}
+   :actions {:upload-docs-to-db (fn [state]
+                                  (let [insert-meta {:table    (first (:documents.table @state))
+                                                     :name     (:documents.name @state)
+                                                     :document (:documents.document @state)
+                                                     :prop     (:documents.prop @state)}]
+                                    (println "to save" insert-meta)
+                                    (jarman.logic.document-manager/insert-document insert-meta)
+                                    (((jarman.logic.state/state :jarman-views-service) :reload))))
+            ;;  :update-docs-in-db (fn [state]
+            ;;                       (println "\nState" @state)
+            ;;                       (let [insert-meta {:id       (:selected-id @state)
+            ;;                                          :table    (first (:documents.table @state))
+            ;;                                          :name     (:documents.name @state)
+            ;;                                         ;;  :document (:documents.document @state)
+            ;;                                         ;;  :prop     (:documents.prop @state)
+            ;;                                          }]
+            ;;                         (println "to save" insert-meta)
+            ;;                         (jarman.logic.document-manager/insert-document insert-meta)
+            ;;                         (((jarman.logic.state/state :jarman-views-service) :reload))))
+             }
+   :buttons [{:form-model :model-insert
+              :action :upload-docs-to-db
+              :title "Upload document"}
+            ;;  {:form-model :model-update
+            ;;   :action :update-docs-in-db
+            ;;   :title "Update document info"}
+             ]))
 
-(defmacro num-test [a]
-  (println (eval a)))
 
-(num-test (+ 2 1 ))

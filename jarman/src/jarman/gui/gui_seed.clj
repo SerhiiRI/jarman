@@ -28,15 +28,15 @@
 ;; (import java.awt.event.MouseEvent)
 
 (state/set-state :atom-app-size (atom [1200 700]))
-(def app (atom nil))
+(state/set-state :app nil)
 
 (add-watch
  (state/state :atom-app-size)
  :refresh
  (fn [key atom old-state new-state]
    (do
-     (config! (select @app [:#rebound-layer]) :bounds [0 0 (first new-state) (second new-state)])
-     (.repaint (to-frame @app)))))
+     (config! (select (state/state :app) [:#rebound-layer]) :bounds [0 0 (first new-state) (second new-state)])
+     (.repaint (to-frame (state/state :app))))))
 
 
 (def base
@@ -66,15 +66,15 @@
                 undecorated? false}}]
     (let [set-items (if-not (list? items) (list items) items)]
       (do
-        (reset! app (base set-items))
-        (state/set-state :alert-manager (gas/message-server-creator app))
+        (state/set-state :app (base set-items))
+        (state/set-state :alert-manager (gas/message-server-creator (state/state :app)))
         (let [jframe (seesaw.core/frame
                       :title title
                       :resizable? true
                       :undecorated? undecorated?
                       :size [(first size) :by (second size)]
                       :minimum-size [600 :by 400]
-                      :content @app
+                      :content (state/state :app)
                 ;;    :on-close :exit
                       :listen [:component-resized (fn [e]
                                                 ;;  (println e)
@@ -89,7 +89,7 @@
 
 (defn extend-frame-title 
   [title]
-  (config! (to-frame @app) :title (str "Mr. Jarman" title)))
+  (config! (to-frame (state/state :app)) :title (str "Mr. Jarman" title)))
 
 ;; (@jarman.gui.gui-app/startup)
 

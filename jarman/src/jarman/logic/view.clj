@@ -114,17 +114,26 @@
    :insert-button false
    :delete-button false
    :update-button false
+   :update-mode false
    :plug-place [:#tables-view-plugin]
    :tables [:documents]
    :view-columns [:documents.table
-                  :documents.name]
+                  :documents.name
+                  :documents.prop]
    :model [:documents.id
            {:model-reprs "Table"
             :model-param :documents.table
             :model-comp jarman.gui.gui-components/select-box-table-list}
            :documents.name
-           :documents.prop]
-   :query {}
+           :documents.prop
+           {:model-reprs "Path to file"
+            :model-param :documents.document
+            :model-comp jarman.gui.gui-components/input-file}]
+   :query {:column
+           [{:documents.id :documents.id}
+            {:documents.table :documents.table}
+            {:documents.name :documents.name}
+            {:documents.prop :documents.prop}]}
    :actions {}
    :buttons []))
 

@@ -495,7 +495,7 @@
          border-color-unfocus (gtool/get-color :decorate :focus-lost)
          onClick (fn [e])
          debug false}}]
-  (if-not (empty? (str val)) (swap! local-changes (fn [storage] (assoc storage store-id val))))
+  (swap! local-changes (fn [storage] (assoc storage store-id val)))
   (input-text
    :args [:editable? editable?
           :enabled? enabled?
@@ -508,13 +508,14 @@
                    :mouse-entered (if editable? (fn [e]) (fn [e]
                                                            (gtool/hand-hover-on e)
                                                            (c/config! e)))
-                   :caret-update (fn [e]
-                                   (let [new-v (c/value (c/to-widget e))]
-                                     (cond
-                                       (and (not (nil? store-id))
-                                            (not (= val new-v)))
-                                       (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
-                                       (not store-orginal) (reset! local-changes (dissoc @local-changes store-id)))))
+                   :caret-update (fn [e] (swap! local-changes (fn [storage] (assoc storage store-id val)))
+                                  ;;  (let [new-v (c/value (c/to-widget e))]
+                                  ;;    (cond
+                                  ;;      (and (not (nil? store-id))
+                                  ;;           (not (= val new-v)))
+                                  ;;      (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
+                                  ;;      (not store-orginal) (reset! local-changes (dissoc @local-changes store-id))))
+                                   )
                    :focus-gained (fn [e] (c/config! e :border ((gtool/get-user-data e :border-fn) border-color-focus)))
                    :focus-lost   (fn [e] (c/config! e :border ((gtool/get-user-data e :border-fn) border-color-unfocus)))]]))
 

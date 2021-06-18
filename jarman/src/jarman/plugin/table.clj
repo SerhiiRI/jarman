@@ -521,27 +521,32 @@
                     ;; (println "\nTitle " title "\nAction: "  action)
                     (if (fn? action) ;; TODO: action is an text not fn
                       [(gcomp/hr 10)
-                       (gcomp/button-basic title :onClick (fn [e] (action local-changes)))]))]
+                       (gcomp/button-basic title :onClick (fn [e] (action local-changes)))]
+                      (do 
+                        [(gcomp/hr 10)
+                         (gcomp/button-basic title :onClick (fn [e] ((eval action) local-changes)))]
+                        ;; (println "\nCustom btn fn: " (eval action)) []
+                        )))]
     (doall (->> (:buttons configuration)
                 (map #(button-fn (:title %) (get (:actions configuration) (:action %))))
                 (filter #(not (nil? %)))))))
 
 
-(defn- upload-doc ;; TODO: Move to defview when actions start working
-  [state]
-  (let [func (fn [state]
-               (let [insert-meta {:table (first (:documents.table @state))
-                                  :name (:documents.name @state)
-                                  :document (:documents.document @state)
-                                  :prop (:documents.prop @state)}]
-                 (println "to save" insert-meta)
-                 (jarman.logic.document-manager/insert-document insert-meta)
-                 (((jarman.logic.state/state :jarman-views-service) :reload))
-                 ))]
-    (gcomp/button-basic
-     "Upload doc"
-     :onClick (fn [e] (func state))
-     :args [:font (gtool/getFont :bold)])))
+;; (defn- upload-doc ;; TODO: Move to defview when actions start working
+;;   [state]
+;;   (let [func (fn [state]
+;;                (let [insert-meta {:table (first (:documents.table @state))
+;;                                   :name (:documents.name @state)
+;;                                   :document (:documents.document @state)
+;;                                   :prop (:documents.prop @state)}]
+;;                  (println "to save" insert-meta)
+;;                  (jarman.logic.document-manager/insert-document insert-meta)
+;;                  (((jarman.logic.state/state :jarman-views-service) :reload))
+;;                  ))]
+;;     (gcomp/button-basic
+;;      "Upload doc"
+;;      :onClick (fn [e] (func state))
+;;      :args [:font (gtool/getFont :bold)])))
 
 
 ;; ┌──────────────┐
@@ -556,13 +561,13 @@
   "Description:
      Marge all components to one form
    "
-  (fn [data-toolkit configuration global-configuration
+  (fn [data-toolkit configuration global-configuration form-model
        & {:keys [table-model more-comps]
           :or {table-model [] more-comps []}}]
     ;; (println "\ndata-toolkit\n" data-toolkit "\nconfiguration\n" configuration)
     (let [local-changes (atom {})
           meta-data (convert-metadata-vec-to-map (:columns-meta data-toolkit))
-          components (convert-model-to-components-list global-configuration local-changes meta-data table-model (:model configuration))
+          components (convert-model-to-components-list global-configuration local-changes meta-data table-model (form-model configuration))
           panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
                                 :border (sborder/empty-border :thickness 10)
                                 :items [[(c/label)]])
@@ -579,7 +584,7 @@
                          (gcomp/hr 10)
                          (export-button data-toolkit configuration local-changes table-model)])
                       (do (println "Field" (:field (:table-meta data-toolkit))) [])
-                      (if (= "documents" (:field (:table-meta data-toolkit))) (upload-doc local-changes) [])
+                      ;; (if (= "documents" (:field (:table-meta data-toolkit))) (upload-doc local-changes) [])
                       [more-comps])
           builded (c/config! panel :items (gtool/join-mig-items components))]
       builded)))
@@ -593,12 +598,12 @@
        data-toolkit
        configuration]
     (let [x nil ;;------------ Prepare components
-          insert-form   (fn [] (build-input-form data-toolkit configuration global-configuration))
+          insert-form   (fn [] (build-input-form data-toolkit configuration global-configuration :model-insert))
           view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
           table         (fn [] (second (u/children view-layout)))
           header        (fn [] (c/label :text (:representation (:table-meta data-toolkit)) 
                                         :halign :center :border (sborder/empty-border :top 10)))
-          update-form   (fn [table-model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration :table-model table-model :more-comps [(return)])]))
+          update-form   (fn [table-model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration :model-update :table-model table-model :more-comps [(return)])]))
           x nil ;;------------ Build
           expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never)
           back-to-insert     (fn [] [(gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]])))])

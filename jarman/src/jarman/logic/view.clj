@@ -114,26 +114,39 @@
    :insert-button false
    :delete-button false
    :update-button false
-   :update-mode false
    :plug-place [:#tables-view-plugin]
    :tables [:documents]
    :view-columns [:documents.table
                   :documents.name
                   :documents.prop]
-   :model [:documents.id
-           {:model-reprs "Table"
-            :model-param :documents.table
-            :model-comp jarman.gui.gui-components/select-box-table-list}
-           :documents.name
-           :documents.prop
-           {:model-reprs "Path to file"
-            :model-param :documents.document
-            :model-comp jarman.gui.gui-components/input-file}]
+   :model-insert [:documents.id
+                  {:model-reprs "Table"
+                   :model-param :documents.table
+                   :model-comp jarman.gui.gui-components/select-box-table-list}
+                  :documents.name
+                  :documents.prop
+                  {:model-reprs "Path to file"
+                   :model-param :documents.document
+                   :model-comp jarman.gui.gui-components/input-file}]
+   :model-update [:documents.id
+                  {:model-reprs "Table"
+                   :model-param :documents.table
+                   :model-comp jarman.gui.gui-components/select-box-table-list}
+                  :documents.name
+                  :documents.prop]
    :query {:column
            [{:documents.id :documents.id}
             {:documents.table :documents.table}
             {:documents.name :documents.name}
             {:documents.prop :documents.prop}]}
-   :actions {}
-   :buttons []))
+   :actions {:upload-docs-to-db (fn [state]
+                                  (let [insert-meta {:table    (first (:documents.table @state))
+                                                     :name     (:documents.name @state)
+                                                     :document (:documents.document @state)
+                                                     :prop     (:documents.prop @state)}]
+                                    (println "to save" insert-meta)
+                                    (jarman.logic.document-manager/insert-document insert-meta)
+                                    (((jarman.logic.state/state :jarman-views-service) :reload))))}
+   :buttons [{:action :upload-docs-to-db
+              :title "Upload document"}]))
 

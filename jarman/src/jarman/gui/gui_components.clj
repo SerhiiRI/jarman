@@ -11,6 +11,7 @@
             [jarman.tools.lang :refer :all]
             [jarman.logic.metadata :as mmeta]
             [jarman.gui.gui-tools :as gtool]
+            [seesaw.chooser :as chooser]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
   (:import (java.awt Color)
            (jarman.test CustomScrollBar)))
@@ -1068,6 +1069,28 @@
 ;; │                    │________________________________________
 ;; └────────────────────┘                                       
 
+(defn input-file
+  "Description:
+     File choser"
+  [{:keys [store-id local-changes val]
+    :or {store-id :input-file
+         local-changes (atom {})
+         val ""}}]
+  (let [default-path (str jarman.config.environment/user-home "/Documents")
+        input-text (input-text-with-atom 
+                    {:val (rift val default-path)
+                     :store-id store-id
+                     :local-changes local-changes
+                     :args [:font (gtool/getFont  :name "Monospaced")]})
+        icon (button-basic
+              ""
+              :onClick (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
+                                 (c/config! input-text :text (rift new-path default-path))))
+              :args [:icon (jarman.tools.swing/image-scale icon/enter-64-png 30)])
+        panel (smig/mig-panel
+               :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[fill]0px"]
+               :items [[icon] [input-text]])]
+    panel))
 
 (defn menu-bar
   "Description:

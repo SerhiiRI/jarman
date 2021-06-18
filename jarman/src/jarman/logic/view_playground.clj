@@ -67,10 +67,27 @@
                     :model-param :permission.permission_name
                     :model-comp jarman.gui.gui-components/input-text-with-atom}
                    :permission.configuration]
+           :action {:add-multiply-users-insert
+                    (fn [state]
+                      (let [{user-start :user-start user-end :user-end} @state]
+                        (println (map #(hash-map :user.login      (str "user" %)
+                                                 :user.password   "1234"
+                                                 :user.last_name  (str "user" %)
+                                                 :user.first_name (str "user" %)
+                                                 :user.id_permission 2)
+                                      (range user-start (+ 1 user-end))))))}
            :query {:column
                    (as-is
                     :permission.id
                     :permission.permission_name
                     :permission.configuration)}}]
-  ((:select (defview-debug-toolkit cfg))))
+  (defview-debug-toolkit cfg))
 
+(defview-prepare-config
+     'permission
+     '(:--another :--param
+       :permission [:admin :user]
+       (table
+        :id :UUUUUUUUUUUUUU
+        :permission [:user]
+        :actions {:fresh-code (fn [x] (+ 1 x))})))

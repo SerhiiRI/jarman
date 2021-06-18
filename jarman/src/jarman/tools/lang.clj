@@ -61,6 +61,30 @@
   [& vecs]
   `(vec (concat ~@vecs)))
 
+(defn ^:private key-setter
+  "Description
+
+    Test if some `parameter-k` key inside `m`
+    if not, then add by this key `parameter-default-v`
+
+    Param `parameter-default-v` may be value or 0-arg
+    function
+
+  Example
+    (let [t1 (key-setter :permission [:user])
+          t2 (key-setter :exist-key 'no)
+          t3 (key-setter :fn-value #(gensym))]
+       (-> {:exist-key 'yes} t1 t2 t3))
+     ;; => {:exist-key   yes
+            :permission  [:user]
+            :fn-value    G__24897}"
+  [parameter-k parameter-default-v]
+  (fn [m] (if (contains? m parameter-k) m
+           (assoc m parameter-k
+                  (if (fn? parameter-default-v)
+                    (parameter-default-v)
+                    parameter-default-v)))))
+
 (def all-vec-to-floor
   "(all-vec-to-floor ([:a] ([:d :x] [:e :y] ([:z])))) ;; => ([:a] [:d :x] [:e :y] [:z])"
   (fn [vects]

@@ -48,31 +48,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; CONFIG PROCESSOR ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn ^:private key-setter
-  "Description
-
-    Test if some `parameter-k` key inside `m`
-    if not, then add by this key `parameter-default-v`
-
-    Param `parameter-default-v` may be value or 0-arg
-    function
-
-  Example
-    (let [t1 (key-setter :permission [:user])
-          t2 (key-setter :exist-key 'no)
-          t3 (key-setter :fn-value #(gensym))]
-       (-> {:exist-key 'yes} t1 t2 t3))
-     ;; => {:exist-key   yes
-            :permission  [:user]
-            :fn-value    G__24897}"
-  [parameter-k parameter-default-v]
-  (fn [m] (if (contains? m parameter-k) m
-           (assoc m parameter-k
-                  (if (fn? parameter-default-v)
-                    (parameter-default-v)
-                    parameter-default-v)))))
-
 (defn- sort-parameters-plugins
   "Description
     this func get list of data with different types,
@@ -127,6 +102,7 @@
   (let [add-id         (key-setter :id         #(keyword (gensym "plugin-")))
         add-table-name (key-setter :table-name (keyword table-name))
         add-permission (key-setter :permission [:user])
+        eval-action    (fn [m] (update-in m [:actions] eval))
         k-table-name (keyword table-name)]
     (let [[global-cfg plugin-list] (sort-parameters-plugins body)]
       (reduce
@@ -138,6 +114,7 @@
                 add-plugin-name   (key-setter :plugin-name        (symbol plugin-name))
                 add-full-path-cfg (key-setter :plugin-config-path [k-table-name k-plugin-name k-plugin-id])
                 cfg (-> cfg
+                        eval-action
                         add-table-name
                         add-permission
                         add-plugin-name

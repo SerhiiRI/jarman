@@ -18,6 +18,90 @@
             {:permission.configuration :permission.configuration}]}))
 
 (defview
+ cache_register
+ (table
+  :name
+  "cache_register"
+  :plug-place
+  [:#tables-view-plugin]
+  :tables
+  [:cache_register :point_of_sale :enterpreneur]
+  :view-columns
+  [:cache_register.id_point_of_sale
+   :cache_register.name
+   :cache_register.serial_number
+   :cache_register.fiscal_number
+   :cache_register.manufacture_date
+   :cache_register.first_registration_date
+   :cache_register.is_working
+   :cache_register.version
+   :cache_register.dev_id
+   :cache_register.producer
+   :cache_register.modem
+   :cache_register.modem_model
+   :cache_register.modem_serial_number
+   :cache_register.modem_phone_number]
+  :model
+  [:cache_register.id_point_of_sale
+   :cache_register.name
+   :cache_register.serial_number
+   :cache_register.fiscal_number
+   :cache_register.manufacture_date
+   :cache_register.first_registration_date
+   :cache_register.is_working
+   :cache_register.version
+   :cache_register.dev_id
+   :cache_register.producer
+   :cache_register.modem
+   :cache_register.modem_model
+   :cache_register.modem_serial_number
+   :cache_register.modem_phone_number]
+  :insert-button
+  true
+  :delete-button
+  true
+  :actions
+  []
+  :buttons
+  []
+  :query
+  {:inner-join
+   [:cache_register->point_of_sale :point_of_sale->enterpreneur],
+   :columns
+   (as-is
+    :cache_register.id
+    :cache_register.id_point_of_sale
+    :cache_register.name
+    :cache_register.serial_number
+    :cache_register.fiscal_number
+    :cache_register.manufacture_date
+    :cache_register.first_registration_date
+    :cache_register.is_working
+    :cache_register.version
+    :cache_register.dev_id
+    :cache_register.producer
+    :cache_register.modem
+    :cache_register.modem_model
+    :cache_register.modem_serial_number
+    :cache_register.modem_phone_number
+    :point_of_sale.id
+    :point_of_sale.id_enterpreneur
+    :point_of_sale.name
+    :point_of_sale.physical_address
+    :point_of_sale.telefons
+    :enterpreneur.id
+    :enterpreneur.ssreou
+    :enterpreneur.ownership_form
+    :enterpreneur.vat_certificate
+    :enterpreneur.individual_tax_number
+    :enterpreneur.director
+    :enterpreneur.accountant
+    :enterpreneur.legal_address
+    :enterpreneur.physical_address
+    :enterpreneur.contacts_information)}))
+
+
+(defview
  enterpreneur
  (table
   :name
@@ -107,3 +191,9 @@
    :buttons [{:action :add-multiply-users-insert
               :title "Auto generate users"}]))
 
+(select-keys {:a 1 :b 2 :c 3} [:a :c])
+
+(defmacro num-test [a]
+  (println (eval a)))
+
+(num-test (+ 2 1 ))

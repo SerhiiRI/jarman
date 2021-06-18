@@ -167,6 +167,7 @@
         :query {}} {})
     ;;=> 
       {:model-id :repair_contract.id,
+       :model-columns [:user.id :user.login :user.password :user.first_name :user.last_name :user.id_permission]
        :insert (fn [..] ...),
        :delete-expression (fn [..] ...),
        :select-expression (fn [..] ...),
@@ -183,7 +184,8 @@
           (table-metadata configuration do :table-name do mt/getset! do first)
           (id_column (t-f-tf (:table-name configuration) :id))
           (table-name ((comp :field :table :prop) table-metadata))
-          (columns ((comp :columns :prop) table-metadata) map :field) 
+          (columns ((comp :columns :prop) table-metadata) map :field)
+          (model_column (vec (concat [id_column] (mapv :field-qualified ((comp :columns :prop) table-metadata)))))
           (update-expression (fn [entity] (if (id_column entity)  (update table-name :set entity :where (=-v id_column (id_column entity))))))
           (insert-expression (fn [entity] (if (nil? (id_column entity)) (insert table-name :set entity))))
           (delete-expression (fn [entity] (if (id_column entity) (delete table-name :where (=-v id_column (id_column entity))))))
@@ -203,8 +205,8 @@
           :insert (fn [e] (exec-fn (insert-expression e)))
           :delete (fn [e] (exec-fn (delete-expression e)))
           :select (fn [ ] (query-fn (select-expression)))
-          :model-id id_column}))
-
+          :model-id id_column
+          :model-columns model_column}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; METADATA TOOLKIT ;;;

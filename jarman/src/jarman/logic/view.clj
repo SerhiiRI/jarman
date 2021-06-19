@@ -15,6 +15,21 @@
    :query {:column
            [{:permission.id :permission.id}
             {:permission.permission_name :permission.permission_name}
+            {:permission.configuration :permission.configuration}]})
+  (table
+   :name "permission"
+   :id :p-1
+   :plug-place [:#tables-view-plugin] ;; KEYPATH TO KEYWORD 
+   :tables [:permission]
+   :view-columns [:permission.permission_name
+                  :permission.configuration]
+   :model-insert [{:model-reprs "Permision name"
+            :model-param :permission.permission_name
+            :model-comp jarman.gui.gui-components/input-text-with-atom}
+           :permission.configuration]
+   :query {:column
+           [{:permission.id :permission.id}
+            {:permission.permission_name :permission.permission_name}
             {:permission.configuration :permission.configuration}]}))
 
 (defview

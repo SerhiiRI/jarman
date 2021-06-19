@@ -233,24 +233,31 @@
                                     (println "to save" insert-meta)
                                     (jarman.logic.document-manager/insert-document insert-meta)
                                     (((jarman.logic.state/state :jarman-views-service) :reload))))
-            ;;  :update-docs-in-db (fn [state]
-            ;;                       (println "\nState" @state)
-            ;;                       (let [insert-meta {:id       (:selected-id @state)
-            ;;                                          :table    (first (:documents.table @state))
-            ;;                                          :name     (:documents.name @state)
-            ;;                                         ;;  :document (:documents.document @state)
-            ;;                                         ;;  :prop     (:documents.prop @state)
-            ;;                                          }]
-            ;;                         (println "to save" insert-meta)
-            ;;                         (jarman.logic.document-manager/insert-document insert-meta)
-            ;;                         (((jarman.logic.state/state :jarman-views-service) :reload))))
+             :update-docs-in-db (fn [state]
+                                  (println "\nState" @state)
+                                  (let [insert-meta {:id       (:selected-id @state)
+                                                     :table    (first (:documents.table @state))
+                                                     :name     (:documents.name @state)
+                                                     :prop     (:documents.prop @state)
+                                                     }]
+                                    (println "to save" insert-meta)
+                                    (jarman.logic.document-manager/insert-document insert-meta)
+                                    (((jarman.logic.state/state :jarman-views-service) :reload))))
+             :delete-doc-from-db (fn [state]
+                                  (let [insert-meta {:id (:selected-id @state)}]
+                                    (println "to delete" insert-meta)
+                                    (jarman.logic.document-manager/delete-document insert-meta)
+                                    (((jarman.logic.state/state :jarman-views-service) :reload))))
              }
    :buttons [{:form-model :model-insert
               :action :upload-docs-to-db
               :title "Upload document"}
-            ;;  {:form-model :model-update
-            ;;   :action :update-docs-in-db
-            ;;   :title "Update document info"}
+             {:form-model :model-update
+              :action :update-docs-in-db
+              :title "Update document info"}
+             {:form-model :model-update
+              :action :delete-doc-from-db
+              :title "Delete row"}
              ]))
 
 

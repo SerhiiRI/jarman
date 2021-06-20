@@ -11,7 +11,7 @@
   [:permission]
   :view-columns
   [:permission.permission_name :permission.configuration]
-  :model
+  :model-insert
   [:permission.permission_name :permission.configuration]
   :insert-button
   true
@@ -43,8 +43,8 @@
    :user.password
    :user.first_name
    :user.last_name
-   :user.id_permission]
-  :model
+   :permission.name]
+  :model-insert
   [:user.login
    :user.password
    :user.first_name
@@ -61,7 +61,7 @@
   :query
   {:table_name :user,
    :inner-join [:user->permission],
-   :columns
+   :column
    [:#as_is
     :user.id
     :user.login

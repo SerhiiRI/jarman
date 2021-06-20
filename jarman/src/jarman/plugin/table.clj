@@ -475,6 +475,7 @@
   [global-configuration local-changes meta-data table-model key]
   
   (let [meta            (key meta-data)
+        x (println "\nMetadata for key" meta)
         field-qualified (:field-qualified meta)
         title           (:representation  meta)
         editable?       (:editable?       meta)
@@ -643,6 +644,7 @@
         space (c/select (state/state :app) (:plug-place configuration))
         ;; x (println "\nplug-place"(:plug-place configuration) "\nspace"space)
         atm (:atom-expanded-items (c/config space :user-data))]
+    ;; (println "\nData toolkit" data-toolkit)
     ;; (println "Allow Permission: " (session/allow-permission? (:permission configuration)))
     ;; TODO: Set invoker expand button if not exist add child invokers
     (if (false? (spec/test-keys-jtable configuration spec-map))

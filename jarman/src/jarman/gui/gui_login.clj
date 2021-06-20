@@ -64,7 +64,11 @@
 (def my-style {[:.css1] {:foreground blue-green-color}})
 
 (defn color-border [color]
-  (tool/my-border [color 2] [10 10 5 5]))
+  (tool/my-border [color 2] [10 10 5 5])
+)
+;; (color-border "#222")
+
+
 
 (defn myFont [size]
   {:size size :font "Arial" :style :bold})
@@ -628,3 +632,11 @@
 (start)
 
 
+
+;; Start app window
+;; (-> (doto (seesaw.core/frame
+;;            :title "DEBUG WINDOW" :undecorated? false
+;;            :minimum-size [200 :by 200]
+;;            :size [200 :by 200]
+;;            :content (label :text "a" :border ((color-border "#222"))))
+;;       (.setLocationRelativeTo nil) pack! show!))

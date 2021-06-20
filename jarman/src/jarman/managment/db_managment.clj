@@ -46,8 +46,6 @@
     get list name of tables from db-jarman"
   [] (map (comp second first)(db/query (show-tables))))
 
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; FUNCTIONS FOR VALIDATE ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -120,15 +118,6 @@
   (doall (for [metadata all-tables]
            (create-one-table-by-meta metadata))))
 
-(defn messege-table [ch scm]
-  (if (valid-tables)
-        (if ch
-          (println (format "[i] Table %s created successfuly" (name scm)))
-          (println "[i] Table structure created successfuly"))
-        (println "[!] Table structure is not valid, check this")))
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; FUNCTIONS FOR DELETE TABLES ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -143,11 +132,9 @@
     (println (format "[i] Table %s deleted successfuly" (name scm)))
     (catch Exception e (println "Cannot delete or update a parent row: a foreign key constraint fails"))))
 
-
 ;;;;;;;;;;;;;;;
 ;;; SCRIPTS ;;;
 ;;;;;;;;;;;;;;;
-
 
 (defn reset-one-db [scm]
   (do (delete-one-table scm)
@@ -168,8 +155,6 @@
       (println "[i] Created references")
       (println "[i] DB was reset successufuly")))
 
-
-
 (defn reset-one-meta [scm]
   (do (metadata/delete-one-meta scm)
       (metadata/create-one-meta scm)
@@ -181,11 +166,7 @@
       (metadata/do-create-references)
       (println "[i] Metadata was reset")))
 
-(defn reset-meta [cli-opt-m]
-   (let [scm (get-in cli-opt-m [:options :print] nil)]
-    (if (choose-option scm)
-      (reset-one-meta scm) 
-      (reset-all-meta))))
+
 
 
 

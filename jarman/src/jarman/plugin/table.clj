@@ -517,18 +517,12 @@
   [local-changes configuration form-model]
   (let [button-fn (fn [title action]
                     ;; (println "\nTitle " title "\nAction: "  action)
-                    (if (fn? action) ;; TODO: action is an text not fn
-                      [(gcomp/hr 10)
-                       (gcomp/button-basic title :onClick (fn [e] (action local-changes)))]
-                      (do 
-                        [(gcomp/hr 10)
-                         (gcomp/button-basic title :onClick (fn [e] ((eval action) local-changes)))]
-                        ;; (println "\nCustom btn fn: " (eval action)) []
-                        )))]
-    (println @local-changes)
+                    (if (fn? action)
+                      [(gcomp/button-basic title :onClick (fn [e] (action local-changes)))]))]
+    ;; (println @local-changes)
     (doall (->> (:buttons configuration)
                 (map (fn [btn-model] (if (= form-model (:form-model btn-model)) (button-fn (:title btn-model) (get (:actions configuration) (:action btn-model))) [])))
-                (filter #(not (nil? %)))))))
+                (filter-nil)))))
 
 
 ;; (defn- upload-doc ;; TODO: Move to defview when actions start working

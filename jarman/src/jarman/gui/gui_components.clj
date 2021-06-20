@@ -496,6 +496,7 @@
          onClick (fn [e])
          debug false}}]
   (swap! local-changes (fn [storage] (assoc storage store-id val)))
+  
   (input-text
    :args [:editable? editable?
           :enabled? enabled?
@@ -508,7 +509,8 @@
                    :mouse-entered (if editable? (fn [e]) (fn [e]
                                                            (gtool/hand-hover-on e)
                                                            (c/config! e)))
-                   :caret-update (fn [e] (swap! local-changes (fn [storage] (assoc storage store-id val)))
+                   :caret-update (fn [e] (swap! local-changes (fn [storage] (assoc storage store-id (c/value (c/to-widget e)))))
+                                   ;; (println "\nnput Store ID" store-id val)
                                   ;;  (let [new-v (c/value (c/to-widget e))]
                                   ;;    (cond
                                   ;;      (and (not (nil? store-id))

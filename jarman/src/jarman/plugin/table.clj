@@ -191,7 +191,7 @@
                 :plug-place [:#tables-view-plugin]
                 :tables tables
                 :view-columns table-model
-                :model table-model
+                :model-insert table-model
                 :insert-button true
                 :delete-button true
                 :actions []

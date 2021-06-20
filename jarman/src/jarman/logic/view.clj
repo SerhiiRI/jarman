@@ -11,7 +11,7 @@
   [:permission]
   :view-columns
   [:permission.permission_name :permission.configuration]
-  :model
+  :model-insert
   [:permission.permission_name :permission.configuration]
   :insert-button
   true
@@ -29,8 +29,7 @@
     :permission.permission_name
     :permission.configuration]}))
 
-(defview
- user
+(defview user
  (table
   :name
   "user"
@@ -43,8 +42,8 @@
    :user.password
    :user.first_name
    :user.last_name
-   :user.id_permission]
-  :model
+   :permission.name]
+  :model-insert
   [:user.login
    :user.password
    :user.first_name

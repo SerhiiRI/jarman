@@ -25,13 +25,7 @@
 (def ^{:dynamic true} *debug*      "Enable debugging" true)
 (def ^{:dynamic true} *debug-to*   "Enable debugging" (first [:output :file]))
 (def ^{:dynamic true} *debug-file* "Enable debugging" "./sql.log.clj")
-(def ^{:dynamic true} *debug-full-descript*   "Enable debugging" false)
-(def ^{:dynamic true} *show-sql* "Make printing to all sql" true)
-
-(defn- doto-show-sql [sql]
-  (if *show-sql*
-    (println (format ";;=> %s" sql)))
-  sql)
+(def ^{:dynamic true} *debug-full-descript*   "Enable debugging" true)
 
 (defn- transform-namespace [symbol-op]
   (if (some #(= \/ %) (str symbol-op)) symbol-op
@@ -1303,8 +1297,6 @@
         (println (list operation args))
         (println ";;=> " generated-SQL)))))
 
-
-
 (defn- debug-ssql [operation accepted-rules list-of-rules args generated-SQL]
   (if *debug*
     (case *debug-to*
@@ -1371,13 +1363,14 @@
     (debug-ssql 'alter-table! *accepted-select-rules* list-of-rules args generated-sql)
     generated-sql))
 
-
 ;;;;;;;;;;;;;;;;;;;;
 ;;; TEST SEGMENT ;;;
 ;;;;;;;;;;;;;;;;;;;;
 
 (comment
- (binding [*debug-to* :file]
+  (;; binding [*debug-to* :file
+   ;;          *debug-full-descript* true]
+   do
    (select! {:table_name :user})
    (select! {:table_name :user :column [:#as_is :user.login :user.passoword]})
    (update! {:table_name :user :set {:id nil, :num_c 1, :str_c "slal"}})

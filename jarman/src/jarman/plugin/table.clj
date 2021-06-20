@@ -346,19 +346,18 @@
    :font (getFont 13)
    :onClick (fn [e]
               ;;  (println "Insert but Locla changes: " @local-changes)
+              (println "\nModel ID:" (first (:model-columns data-toolkit)))
               (cond
                 (= type :insert)
-                (println "\nRun Insert\n"
-                         ((:insert data-toolkit)
-                          (select-keys
-                           (merge {(keyword (str (:field (:table-meta data-toolkit)) ".id")) nil}
-                                  (first (merge table-model @local-changes)))
-                           (:model-columns data-toolkit))) "\n")
+                (let [from-meta-data (vemap (map #(:field-qualified %) (:columns-meta data-toolkit)))
+                      update-list (cnmap (left-merge from-meta-data @local-changes))]
+                  (println "\nRun Insert\n"
+                           ((:insert data-toolkit) update-list) "\n"))
                 (= type :update) ;; TODO: Turn on update fn after added empty key map template, without throw exception, too may value in query, get permission_name
                 (do
                   (let [from-meta-data (vemap (map #(:field-qualified %) (:columns-meta data-toolkit)))
                         update-list (cnmap (left-merge from-meta-data @local-changes))
-                        table-id (keyword (format "%s.id" (:field (:table-meta data-toolkit))))]
+                        table-id (first (:model-columns data-toolkit))]
                     (println "\nRun Update: \n"
                              ((:update data-toolkit)
                               (into {table-id (table-id table-model)} update-list))
@@ -366,8 +365,8 @@
                 (= type :delete)
                 (println "\nRun Delete: \n"
                          ((:delete data-toolkit)
-                          {(keyword (str (:field (:table-meta data-toolkit)) ".id"))
-                           (get table-model (keyword (str (:field (:table-meta data-toolkit)) ".id")))}) "\n")
+                          {(first (:model-columns data-toolkit))
+                           (get table-model (first (:model-columns data-toolkit)))}) "\n")
                 (= type :changes)
                 (do
                   (println "\nLooks on chages: " @local-changes)
@@ -600,14 +599,27 @@
           table         (fn [] (second (u/children view-layout)))
           header        (fn [] (c/label :text (:representation (:table-meta data-toolkit)) 
                                         :halign :center :border (sborder/empty-border :top 10)))
-          update-form   (fn [table-model return] (gcomp/expand-form-panel view-layout [(header) (build-input-form data-toolkit configuration global-configuration 
-                                                                                                                  (doto (if (nil? (:model-update configuration)) :model-insert :model-update) println) 
-                                                                                                                  :table-model table-model :more-comps [(return)])]))
+          update-form   (fn [table-model return] (gcomp/expand-form-panel
+                                                  view-layout
+                                                  [(header)
+                                                   (build-input-form
+                                                    data-toolkit
+                                                    configuration
+                                                    global-configuration 
+                                                    (doto (if (nil? (:model-update configuration))
+                                                            :model-insert
+                                                            :model-update)
+                                                      println) 
+                                                    :table-model table-model
+                                                    :more-comps [(return)])]))
           x nil ;;------------ Build
           expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never)
           back-to-insert     (fn [] [(gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]])))])
-          expand-update-form (fn [model return] (c/config! view-layout :items [[(gcomp/min-scrollbox (update-form model return))] [(table)]]))
-          table              (fn [] ((:table (create-table configuration data-toolkit)) (fn [model] (if-not (= false (:update-mode configuration)) (expand-update-form model back-to-insert)))))
+          expand-update-form (fn [model-table return] (c/config! view-layout :items [[(gcomp/min-scrollbox (update-form model-table return))] [(table)]]))
+          table              (fn [] ((:table (create-table configuration data-toolkit))
+                                     (fn [model-table]
+                                       (if-not (= false (:update-mode configuration))
+                                         (expand-update-form model-table back-to-insert)))))
           x nil ;;------------ Finish
           view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])]
                                                             [(try
@@ -622,7 +634,7 @@
 
 ;;;PLUGINS ;;;        
 (defn table-component [plugin-path global-configuration spec-map]
-  ;; (println "Loading table plugin")
+  (println "Loading table plugin")
   (let [get-from-global #(->> % (join-vec plugin-path) (get-in (global-configuration)))
         data-toolkit  (get-from-global [:toolkit])
         configuration (get-from-global [:config])
@@ -653,5 +665,6 @@
                                                                 data-toolkit
                                                                 configuration)))))))))))
     (.revalidate space)))
+
 
 

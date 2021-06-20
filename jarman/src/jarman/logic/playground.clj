@@ -3,8 +3,8 @@
    [clojure.data :as data]
    [clojure.string :as string]
    [jarman.logic.connection :as db]
-   [jarman.logic.sql-tool :refer [select! update! insert! alter-table! create-table! delete!]]
-   [jarman.logic.metadata :as metadata]
+   [jarman.logic.sql-tool :refer [select! update! insert! alter-table! create-table! delete! drop-table]]
+   [jarman.logic.metadata :as mt]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.logic.structural-initializer :as sinit]
@@ -210,14 +210,14 @@
   (sinit/procedure-test-all)
   (delete-scheme)
   (create-scheme)
-  (metadata/do-create-meta)
-  (metadata/do-create-references))
+  (mt/do-create-meta)
+  (mt/do-create-references))
 
 
 
 (defn regenerate-metadata []
-  (do (metadata/do-clear-meta)
-      (metadata/do-create-meta)))
+  (do (mt/do-clear-meta)
+      (mt/do-create-meta)))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; Data generator ;;;
@@ -248,7 +248,7 @@
 (defn generate-random-double [max-number max-precission]
   (fn [] (str (round-double (rand-int max-precission) (rand max-number)))))
 (defn select-id-from [table]
-  (select! table :column [:id]))
+  (select! {:table_name table :column [:id]}))
 (defn generate-random-sql-from-col [table]
   ;; [idX (db/query (select-id-from table))]
   (fn [] (rand-nth (map :id (db/query (select-id-from table))))))
@@ -310,7 +310,7 @@
 (def gtable (generate-random-from-list ["service_contract" "seal" "repair_contract" "point_of_sale_group_links" "point_of_sale_group" "cache_register" "point_of_sale" "enterpreneur" "user" "permission"]))
 (defn fill-documents [c]
   (def create-documents
-    (fn [] {:documents.table (gtable)
+    (fn [] {:table_name (gtable)
            :name (gsimplestring)
            :document nil
            :prop "{}"}))
@@ -467,7 +467,7 @@
   (doall
    (map
     sql-insert
-    (take c (repeatedly #(insert! :repair_contract :values (create-repair_contract)))))))
+    (take c (repeatedly #(insert! {:table_name :repair_contract :values (create-repair_contract)}))))))
 
 (defn- fn-fish []
   ;; (fill-permission)
@@ -523,8 +523,8 @@
 (defn regenerate-scheme-test []
   (delete-scheme)
   (create-scheme)
-  (metadata/do-clear-meta)
-  (metadata/do-create-meta)
+  (mt/do-clear-meta)
+  (mt/do-create-meta)
   (fish
    [user 30]
    [enterpreneur 30]

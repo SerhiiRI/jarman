@@ -4,8 +4,8 @@
    [clojure.data :as data]
    [clojure.string :as string]
    [jarman.logic.connection :as db]
-   [jarman.logic.sql-tool :refer [select! update! insert! alter-table! create-table! delete! drop-table]]
-   [jarman.logic.metadata :as metadata]
+   [jarman.logic.sql-tool :refer [select! update! insert! alter-table! create-table! delete! drop-table show-table-columns show-tables]]
+   [jarman.logic.metadata :as mt]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]))
@@ -69,7 +69,7 @@
 
 (defn test-permission []
   (letfn [(on-pred-permission [permission_name pred]
-            (if-let [permission-m (not-empty (db/query (select! :permission :where [:= :permission_name (name permission_name)])))]
+            (if-let [permission-m (not-empty (db/query (select! {:table_name :permission :where [:= :permission_name (name permission_name)]})))]
               (pred permission-m)))]
     (and (on-pred-permission :admin some?)
        (on-pred-permission :developer some?)
@@ -77,7 +77,7 @@
 
 (defn test-user []
   (letfn [(on-test-exist [permission_name pred]
-            (if-let [permission-m (not-empty (db/query (select! :user :where [:= :login (name permission_name)])))]
+            (if-let [permission-m (not-empty (db/query (select! {:table_name :user :where [:= :login (name permission_name)]})))]
               (pred permission-m)))]
     (and (on-test-exist :adm some?)
        (on-test-exist :dev some?)
@@ -87,12 +87,12 @@
   (if-let [tables-list (not-empty (mapv (comp second first) (db/query (show-tables))))]
     (let [sql-test (eduction
                     (comp (remove (fn [table] (in? ["metadata" "permission" "view"] table)))
-                       (map (fn [table] [:= :metadata.table table])))
+                       (map (fn [table] [:= :table_name table])))
                     tables-list)]
       (= (count (remove (fn [table] (in? ["metadata" "permission" "view"] table)) tables-list))
-         (count (db/query (select! :metadata
-                                  :column [:id :metadata.table]
-                                  :where (or-v sql-test))))))))
+         (count (db/query (select! {:table_name :metadata
+                                    :column [:id :table_name]
+                                    :where [:or sql-test]})))))))
 
 ;; (defn test-permission [permission_name pred]
 ;;   (if-let [permission-m (not-empty (db/query (select :permission :where [:= :permission_name (name permission_name)])))]
@@ -108,35 +108,35 @@
 (defn fill-permission []
   (db/exec (delete! {:table_name :permission}))
   (db/exec
-   (insert! :permission
-           :column-list [:permission_name :configuration]
-           :values [["admin" "{}"]
-                    ["user" "{}"]
-                    ["developer" "{}"]])))
+   (insert! {:table_name :permission
+             :column-list [:permission_name :configuration]
+             :values [["admin" "{}"]
+                      ["user" "{}"]
+                      ["developer" "{}"]]})))
 
 (defn fill-user []
   (if-let [perm (first (db/query (select! {:table_name :permission :column [:id] :where [:= :permission_name "admin"]})))]
-    (if (empty? (db/query (select! :user :where [:= :login "admin"])))
+    (if (empty? (db/query (select! {:table_name :user :where [:= :login "admin"]})))
       (db/exec
-       (insert! :user
-               :column-list [:login :password :first_name :last_name :id_permission]
-               :values [["admin" "admin" "admin" "admin" (:id perm)]]))))
-  (if-let [perm (first (db/query (select! :permission :column [:id] :where [:= :permission_name "developer"])))]
-    (if (empty? (db/query (select! :user :where [:= :login "dev"])))
+       (insert! {:table_name :user
+                 :column-list [:login :password :first_name :last_name :id_permission]
+                 :values [["admin" "admin" "admin" "admin" (:id perm)]]}))))
+  (if-let [perm (first (db/query (select! {:table_name :permission :column [:id] :where [:= :permission_name "developer"]})))]
+    (if (empty? (db/query (select! {:table_name :user :where [:= :login "dev"]})))
       (db/exec
-       (insert! :user
-               :column-list [:login :password :first_name :last_name :id_permission]
-               :values [["dev" "dev" "dev" "dev" (:id perm)]]))))
-  (if-let [perm (first (db/query (select! :permission :column [:id] :where [:= :permission_name "user"])))]
-    (if (empty? (db/query (select! :user :where [:= :login "user"])))
+       (insert! {:table_name :user
+                 :column-list [:login :password :first_name :last_name :id_permission]
+                 :values [["dev" "dev" "dev" "dev" (:id perm)]]}))))
+  (if-let [perm (first (db/query (select! {:table_name :permission :column [:id] :where [:= :permission_name "user"]})))]
+    (if (empty? (db/query (select! {:table_name :user :where [:= :login "user"]})))
       (db/exec
-       (insert! :user
-               :column-list [:login :password :first_name :last_name :id_permission]
-               :values [["user" "user" "user" "user" (:id perm)]])))))
+       (insert! {:table_name :user
+                 :column-list [:login :password :first_name :last_name :id_permission]
+                 :values [["user" "user" "user" "user" (:id perm)]]})))))
 
 (defn fill-metadata []
-  (doall (metadata/do-create-meta))
-  (doall (metadata/do-create-references)))
+  (doall (mt/do-create-meta))
+  (doall (mt/do-create-references)))
 
 (defn hard-reload-struct []
   ;; for make it uncoment section belove
@@ -196,7 +196,7 @@
 (defn procedure-test-metadata [tables-list]
   (if (verify-table-exists :metadata tables-list)
     (if (verify-table-columns :metadata metadata-cols)
-      (if-not (test-metadata) (do (metadata/do-create-meta) true) true)
+      (if-not (test-metadata) (do (mt/do-create-meta) true) true)
       {:valid? false :output "Metadata table not compatible with Jarman" :table :metadata})
     (do (db/exec metadata) (fill-metadata) true)))
 

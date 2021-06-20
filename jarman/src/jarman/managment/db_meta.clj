@@ -6,10 +6,8 @@
    :user "root",
    :password "1234"})
 
-(def table-key :table)
-
 (def all-tables [{:id 1,
-                  :table "documents",
+                  :table_name "documents",
                   :prop
                   {:table
                    {:description nil,
@@ -59,7 +57,7 @@
                      :representation "prop",
                      :field-qualified :documents.prop}]}}
                  {:id 2,
-                  :table "permission",
+                  :table_name "permission",
                   :prop
                   {:table
                    {:description nil,
@@ -91,7 +89,7 @@
                      :representation "configuration",
                      :field-qualified :permission.configuration}]}}
                  {:id 3,
-                  :table "user",
+                  :table_name "user",
                   :prop
                   {:table
                    {:description nil,
@@ -154,7 +152,7 @@
                      :field-qualified :user.id_permission,
                      :key-table :permission}]}}
                  {:id 4,
-                  :table "enterpreneur",
+                  :table_name "enterpreneur",
                   :prop
                   {:table
                    {:description nil,
@@ -249,7 +247,7 @@
                      :representation "contacts_information",
                      :field-qualified :enterpreneur.contacts_information}]}}
                  {:id 5,
-                  :table "point_of_sale",
+                  :table_name "point_of_sale",
                   :prop
                   {:table
                    {:description nil,
@@ -302,7 +300,7 @@
                      :representation "telefons",
                      :field-qualified :point_of_sale.telefons}]}}
                  {:id 6,
-                  :table "cache_register",
+                  :table_name "cache_register",
                   :prop
                   {:table
                    {:description nil,
@@ -446,7 +444,7 @@
                      :representation "modem_phone_number",
                      :field-qualified :cache_register.modem_phone_number}]}}
                  {:id 7,
-                  :table "point_of_sale_group",
+                  :table_name "point_of_sale_group",
                   :prop
                   {:table
                    {:description nil,
@@ -478,7 +476,7 @@
                      :representation "information",
                      :field-qualified :point_of_sale_group.information}]}}
                  {:id 8,
-                  :table "point_of_sale_group_links",
+                  :table_name "point_of_sale_group_links",
                   :prop
                   {:table
                    {:field "point_of_sale_group_links",
@@ -517,7 +515,7 @@
                      :field-qualified :point_of_sale_group_links.id_point_of_sale,
                      :key-table :point_of_sale}]}}
                  {:id 9,
-                  :table "seal",
+                  :table_name "seal",
                   :prop
                   {:table
                    {:description nil,
@@ -558,7 +556,7 @@
                      :representation "datetime_of_remove",
                      :field-qualified :seal.datetime_of_remove}]}}
                  {:id 10,
-                  :table "repair_reasons",
+                  :table_name "repair_reasons",
                   :prop
                   {:table
                    {:description nil,
@@ -581,7 +579,7 @@
                      :representation "description",
                      :field-qualified :repair_reasons.description}]}}
                  {:id 11,
-                  :table "repair_technical_issue",
+                  :table_name "repair_technical_issue",
                   :prop
                   {:table
                    {:description nil,
@@ -604,7 +602,7 @@
                      :representation "description",
                      :field-qualified :repair_technical_issue.description}]}}
                  {:id 12,
-                  :table "repair_nature_of_problem",
+                  :table_name "repair_nature_of_problem",
                   :prop
                   {:table
                    {:description nil,
@@ -627,7 +625,7 @@
                      :representation "description",
                      :field-qualified :repair_nature_of_problem.description}]}}
                  {:id 13,
-                  :table "repair_contract",
+                  :table_name "repair_contract",
                   :prop
                   {:table
                    {:description nil,
@@ -743,7 +741,7 @@
                      :representation "cache_register_register_date",
                      :field-qualified :repair_contract.cache_register_register_date}]}}
                  {:id 13,
-                  :table "service_contract",
+                  :table_name "service_contract",
                   :prop
                   {:table
                    {:description nil,
@@ -797,7 +795,7 @@
                      :representation "money_per_month",
                      :field-qualified :service_contract.money_per_month}]}}
                  {:id 14,
-                  :table "service_contract_month",
+                  :table_name "service_contract_month",
                   :prop
                   {:table
                    {:description nil,

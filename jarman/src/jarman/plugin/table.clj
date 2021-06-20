@@ -203,7 +203,12 @@
                           :column columns})))))
 
 ;; (create-table-plugin :user)
-;; (mapv create-table-plugin [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month])
+
+;; (mapv create-table-plugin
+;;       [;; :permission :user
+;;        :cache_register :documents :enterpreneur :point_of_sale :point_of_sale_group :point_of_sale_group_links :repair_contract :repair_nature_of_problem :repair_reasons :repair_technical_issue :seal :service_contract :service_contract_month]
+;;       ;; [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month]
+;;       )
 
 (defn- gui-table-model-columns [table-list table-column-list]
   (let

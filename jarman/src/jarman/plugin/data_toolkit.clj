@@ -135,7 +135,6 @@
     actions)
    toolkit-map))
 
-
 ;; => (:jarman--localhost--3306 :jarman--trashpanda-team_ddns_net--3306 :jarman--trashpanda-team_ddns_net--3307)
 ;; (let [cfg {;; :jdbc-connection :jarman--localhost--3306
 ;;            :name "permission"

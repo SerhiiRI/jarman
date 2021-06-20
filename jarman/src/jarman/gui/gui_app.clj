@@ -632,66 +632,76 @@
                                           5)))))
 
 
+;; path groups {:field [[:table :field documents]]
+;;              , 2 [[:columns 2 :default-value ] [:columns 2 :representation document] [:columns 2 :description ]]
+;;              , 1 [[:columns 1 :default-value ] [:columns 1 :representation name] [:columns 1 :description ]]
+;;              , 3 [[:columns 3 :default-value ] [:columns 3 :representation prop] [:columns 3 :description ]]
+;;              , 0 [[:columns 0 :default-value ] [:columns 0 :description ] [:columns 0 :representation table]]
+;;              , :representation [[:table :representation documents]]
+;;              , :description [[:table :description ]]}
+
 (defn table-editor--element--btn-show-changes
   [local-changes table]
-  (gtool/table-editor--component--bar-btn :edit-view-back-btn (gtool/get-lang-btns :show-changes)
-                                    icon/refresh-grey-64-png icon/refresh-blue-64-png
-                                    (fn [e] (@popup-menager
-                                             :new-message
-                                             :title (str "Changes list in " (get-in table [:prop :table :representation]))
-                                             :body
-                                             (let [bpnl (mig-panel
-                                                         :constraints ["wrap 1" "20px[]0px" "5px[top]0px"]
-                                                         :background "#fff"
-                                                         :preferred-size [400 :by 300])
-                                                   scr (c/scrollable bpnl
-                                                                   :hscroll :never)
-                                                   path-groups (group-by second (map (fn [x] (conj (subvec (first x) 1) (second x))) @local-changes))]
-                                               (println @local-changes)
-                                               (println path-groups)
-                                               (doall
-                                                (map
-                                                 (fn [[group-name paths]]
-                                                   (.add bpnl
-                                                         (c/label
-                                                          :foreground gcomp/blue-color
-                                                          :text
-                                                          (str
-                                                           (name (get-in table
-                                                                         [:prop :columns group-name :field])))))
-                                                   (doall (map
-                                                           (fn [path]
-                                                             (.add
-                                                              bpnl
-                                                              (c/horizontal-panel
-                                                               :background "#fff"
-                                                               :items (list
-                                                                       (c/label
-                                                                        :border (empty-border :left 10)
-                                                                        :background "#fff"
-                                                                        :font (gtool/getFont 12)
-                                                                        :text (str
-                                                                               (name (last (butlast path)))
-                                                                               ": "))
-                                                                       (c/label
-                                                                        :background gcomp/light-light-grey-color
-                                                                        :font (gtool/getFont 12)
-                                                                        :text (get-in table (flatten [:prop (vec (butlast path))])))
-                                                                       (c/label
-                                                                        :background "#fff"
-                                                                        :font (gtool/getFont 12)
-                                                                        :text " to ")
-                                                                       (c/label
-                                                                        :background gcomp/light-light-grey-color
-                                                                        :font (gtool/getFont 12)
-                                                                        :text (last path))))))
-                                                           paths))) path-groups))
-                                               (.repaint bpnl)
-                                               (.setUnitIncrement (.getVerticalScrollBar scr) 20)
-                                               (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. 0 0))
-                                               (.setBorder scr nil)
-                                               scr)
-                                             :size [400 300]))))
+  (gtool/table-editor--component--bar-btn
+   :edit-view-back-btn
+   (gtool/get-lang-btns :show-changes)
+   icon/refresh-grey-64-png
+   icon/refresh-blue-64-png
+   (fn [e] (gcomp/popup-window
+            {:window-title (gtool/get-lang-btns :show-changes)
+             :size [300 300]
+             :view (let [bpnl (mig-panel
+                               :constraints ["wrap 1" "20px[]0px" "5px[top]0px"]
+                               :background "#fff"
+                               :preferred-size [400 :by 300])
+                         scr (c/scrollable bpnl
+                                           :hscroll :never)
+                         path-groups (group-by second (map (fn [x] (conj (subvec (first x) 1) (second x))) @local-changes))]
+                     ;; (println @local-changes)
+                     ;; (println path-groups)
+                     (doall
+                      (map
+                       (fn [[group-name paths]]
+                         (.add bpnl
+                               (c/label
+                                :foreground gcomp/blue-color
+                                :text (str (name (rift (get-in table [:prop :columns group-name :field]) "")))))
+                         (doall (map
+                                 (fn [path]
+                                   (.add
+                                    bpnl
+                                    (c/horizontal-panel
+                                     :background "#fff"
+                                     :items (list
+                                             (c/label
+                                              :border (empty-border :left 10)
+                                              :background "#fff"
+                                              :font (gtool/getFont 12)
+                                              :text (str
+                                                     (name (last (butlast path)))
+                                                     ": "))
+                                             (c/label
+                                              :background "#ffb8bf"
+                                              :font (gtool/getFont 12)
+                                              :text (get-in table (flatten [:prop (vec (butlast path))])))
+                                             (c/label
+                                              :background "#fff"
+                                              :font (gtool/getFont 12)
+                                              :text " to ")
+                                             (c/label
+                                              :background "#d1ffd9"
+                                              :font (gtool/getFont 12)
+                                              :text (last path))))
+                                    )
+                                   )
+                                 paths))) path-groups))
+                     (.repaint bpnl)
+                     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
+                     (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. 0 0))
+                     (.setBorder scr nil)
+                     scr)
+             })
+     )))
 
 
 (defn create-view--table-editor
@@ -1357,7 +1367,6 @@
                                     :else (do
                                             (reset! popup-menager (create-popup-service atom-popup-hook))
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
-
 
 (@startup)
 

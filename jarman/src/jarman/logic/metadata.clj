@@ -77,11 +77,11 @@
 ;;        `TODO` for gui must be realized "type-converter" field rule, for example you can make string from data, but not in reverse direction.
 ;;        This library no detected column-type changes. 
 (ns jarman.logic.metadata
-  (:refer-clojure :exclude [update])
   (:require
    [clojure.data :as data]
    [clojure.string :as string]
-   [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
+   [jarman.logic.sql-tool :refer [select! update! insert! alter-table! create-table! delete!
+                                  show-table-columns ssql-type-parser]]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]
@@ -424,10 +424,10 @@
 
 (defn- ^clojure.lang.PersistentList update-sql-by-id-template
   [table m]
-  (letfn [(serialize [m] (clojure.core/update m :prop #(str %)))]
+  (letfn [(serialize [m] (update m :prop #(str %)))]
     (if (:id m)
-      (update table :set (serialize (dissoc m :id)) :where [:= :id (:id m)])
-      (insert table :values (vals (serialize m))))))
+      (update! {:table_name table :set (serialize (dissoc m :id))} :where [:= :id (:id m)])
+      (insert! {:table_name table :values (vals (serialize m))}))))
 
 (defn show-tables-not-meta []
   (not-allowed-rules ["view" "metatable" "meta*"] (map (comp second first) (db/query "SHOW TABLES"))))
@@ -436,7 +436,7 @@
   (db/exec (update-sql-by-id-template "metadata" metadata)))
 
 (defn create-one-meta [table-name]
-  (let [meta (db/query (select :metadata :where [:= :metadata.table table-name]))]
+  (let [meta (db/query (select! {:table_name :metadata :where [:= :metadata.table table-name]}))]
     (if (empty? meta)
       (db/exec (update-sql-by-id-template "metadata" (get-meta table-name))))))
 
@@ -445,15 +445,14 @@
    (for [table (show-tables-not-meta)]
           (create-one-meta table))))
 
-
 (defn delete-one-meta [table-name]
   {:pre [(string? table-name)]}
-   (db/exec (delete :metadata
-                    :where [:= :metadata.table table-name])))
+  (db/exec (delete! {:table_name :metadata
+                     :where [:= :metadata.table table-name]})))
 
 (defn do-clear-meta [& body]
   {:pre [(every? string? body)]}
-  (db/exec (delete :metadata)))
+  (db/exec (delete! {:table_name :metadata})))
 
 
 
@@ -471,9 +470,9 @@
         (mapv (fn [meta] (clojure.core/update meta :prop read-string))
               (db/query
                           (if (empty? tables)
-                            (select :metadata)
-                            (select :metadata
-                                    :where (or-v (mapv (fn [x] [:= :metadata.table (name x)]) tables))))))]
+                            (select! {:table_name :metadata})
+                            (select! {:table_name :metadata
+                                      :where [:= (mapv (fn [x] [:= :metadata.table (name x)]) tables)]}))))]
     (if (empty? tables)
       (do (swapp-metadata metadata) metadata)
       metadata)))
@@ -962,7 +961,7 @@
   (defn delete-fields [original fields]
     (vec (for [field fields]
            (fn [original changed]
-             (if (do-sql (alter-table (:table original) :drop-column (:field field)))
+             (if (do-sql (alter-table! {:table_name (:table original) :drop-column (:field field)}))
                (update-in original [:prop :columns] (fn [fx] (filter #(not= (:field %) (:field field)) fx)))
                original)))))
   ;; (apply-f-diff
@@ -976,7 +975,7 @@
   (defn create-fields [original fields]
     (for [field fields]
       (fn [original changed]
-        (if (do-sql (alter-table (:table original) :add-column {(:field field) [(:column-type field)]}))
+        (if (do-sql (alter-table! {:table_name (:table original) :add-column {(:field field) [(:column-type field)]}}))
           (clojure.core/update-in original [:prop :columns] (fn [all] (conj all field))) original))))
   ;; (apply-f-diff
   ;;  (create-fields user-original [{:field "suka_name", :representation "SUKA", :description nil,
@@ -1090,11 +1089,11 @@
         fkeys-fields (vec (eduction (filter :foreign-keys) (map :foreign-keys) idfl-fields))]
     ;; (println (format "--- Create Table %s ---" (:table metadata)))
     ;; (clojure.pprint/pprint
-    ;;  {:table-name (keyword (:table metadata))
+    ;;  {:table_name (keyword (:table metadata))
     ;;   :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
     ;;   :foreign-keys fkeys-fields})
-    (create-table
-     {:table-name (keyword (:table metadata))
+    (create-table!
+     {:table_name (keyword (:table metadata))
       :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
       :foreign-keys fkeys-fields})))
 
@@ -1167,7 +1166,7 @@
   (into {(if table-name table-name (keyword ((comp :field :table :prop) ml))) ((comp :columns :prop) ml)}
         (if ((comp :front-references :ref :table :prop) ml)
           ;; reduce #(if (some? ) into) {}
-          (map #(recur-find-columns-path (first (getset! %)) :table-name ((comp :front-references :ref :table :prop) ml)) 
+          (map #(recur-find-columns-path (first (getset! %)) :table_name ((comp :front-references :ref :table :prop) ml)) 
                ((comp :front-references :ref :table :prop) ml)))))
 
 ;; (recur-find-columns-path (first (getset! :repair_contract)))
@@ -1292,5 +1291,4 @@
                 info           (:info backup-swapped)]
             (do-clear-meta)
             (map #(db/exec (update-sql-by-id-template "metadata" %)) metadata-list))))))
-
 

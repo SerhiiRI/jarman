@@ -1,5 +1,4 @@
 (ns jarman.logic.document-manager
-  (:refer-clojure :exclude [update])
   (:import (java.sql PreparedStatement Connection Types)
            (java.io FileInputStream File IOException)
            (java.sql ResultSet SQLException))
@@ -18,27 +17,27 @@
    [jarman.gui.gui-components :as gcomp]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
-   [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
+   [jarman.logic.sql-tool :refer [select! update! insert! delete!]]
    [jarman.logic.metadata :as mt])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
 
 (defn select-documents []
-  (db/query (select :documents
-                    :column [:id {:documents.table :table} :name :prop])))
+  (db/query (select! {:table_name :documents
+                      :column [:id :table_name :name :prop]})))
 
 (defn update-document [document-map]
   (if (:id document-map)
     (let [m (update-in document-map [:prop] pr-str)]
-      (db/exec (update :documents
-                       :set m
-                       :where [:= :id (:id document-map)])))))
+      (db/exec (update! {:table_name :documents
+                         :set m
+                         :where [:= :id (:id document-map)]})))))
 
 (defn delete-document [document-map]
   (if (:id document-map)
-   (db/exec (delete :documents
-                    :where [:= :id (:id document-map)]))))
+    (db/exec (delete! {:table_name :documents
+                       :where [:= :id (:id document-map)]}))))
 
 (defn- -update-document-jdbc [document-map]
  (let [^java.sql.Connection
@@ -51,11 +50,11 @@
        statement
        (.prepareStatement
         connection
-        "UPDATE `documents` SET `table`=?, `name`=?, `document`=?, `prop`=? WHERE `id`=?")]
+        "UPDATE `documents` SET `table_name`=?, `name`=?, `document`=?, `prop`=? WHERE `id`=?")]
    (try (do
           (.executeUpdate
            (doto statement
-             (.setString 1 (:table document-map))
+             (.setString 1 (:table_name document-map))
              (.setString 2 (:name document-map))
              (.setBinaryStream 3 stream-f)
              (.setString 4 (pr-str (:prop document-map)))
@@ -80,7 +79,7 @@
           (.executeUpdate
            (doto statement
              (.setNull 1 java.sql.Types/BIGINT)
-             (.setString 2 (:table document-map))
+             (.setString 2 (:table_name document-map))
              (.setString 3 (:name document-map))
              (.setBinaryStream 4 stream-f)
              (.setString 5 (pr-str (:prop document-map))))))
@@ -95,7 +94,7 @@
        ^java.sql.PreparedStatement
        statement (.prepareStatement
                   connection
-                  "SELECT `id`, `table`, `name`, `document`, `prop` FROM documents WHERE `id` = ?")
+                  "SELECT `id`, `table_name`, `name`, `document`, `prop` FROM documents WHERE `id` = ?")
 
        ^java.sql.ResultSet
        res-set (.executeQuery (do (.setLong statement 1 (:id document-map)) statement))
@@ -104,7 +103,7 @@
        temporary-push
        (fn [i t n d p]
          (dosync (alter temporary-result
-                        #(conj % {:id i :table t :name n :document d :prop p}))))]
+                        #(conj % {:id i :table_name  t :name n :document d :prop p}))))]
    (try (while (.next res-set)
           (let [^java.lang.String
                 file-name (format "%s.odt" (string/trim (.getString res-set "name")))
@@ -174,8 +173,8 @@
 
 (defn select-documents-by-table [table]
   (map #(update-in % [:prop] read-string)
-       (db/query (select! :documents :column [:id :name :prop]
-                          :where [:= :documents.table (name table)]))))
+       (db/query (select! {:table_name :documents :column [:id :name :prop]
+                           :where [:= :documents.table (name table)]}))))
 
 ;; (select-documents-by-table :service_contract)
 
@@ -191,7 +190,7 @@
           )
         ;; (println "EXPORT DOCUMENT: ")
         (if-let [founded (first (db/query (select!
-                                           (merge {:table-name table}
+                                           (merge {:table_name table}
                                                   (:prop document-to-export)
                                                   {:where [:= id-table-field model-id]}))))]
           (merge-doc

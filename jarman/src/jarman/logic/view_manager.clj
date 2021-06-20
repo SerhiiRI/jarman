@@ -1,5 +1,4 @@
 (ns jarman.logic.view-manager
-  (:refer-clojure :exclude [update])
   (:require
    ;; Clojure toolkit 
    [clojure.string :as string]
@@ -13,6 +12,7 @@
    [jarman.plugin.jspl :refer :all :as jspl]
    [jarman.plugin.table :as plug]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
+   [jarman.logic.sql-tool :refer [select! update! insert!]]
    [jarman.logic.metadata :as mt]
    [jarman.logic.state :as state]
    [jarman.plugin.data-toolkit :refer [data-toolkit-pipeline]])
@@ -88,19 +88,19 @@
       :permission [:admin :user],
       :name \"first Permission\",
       :id :plugin-24793,
-      :table-name :permission,
+      :table_name :permission,
       :plugin-name table,
       :plugin-config-path [:permission :table :plugin-24793]}
      {:--another :--param,
       :permission [:user],
       :name \"second Permission\",
       :id :UUUUUUUUUUUUUU,
-      :table-name :permission,
+      :table_name :permission,
       :plugin-name table,
       :plugin-config-path [:permission :table :UUUUUUUUUUUUUU]}]"
   [table-name body]
   (let [add-id         (key-setter :id         #(keyword (gensym "plugin-")))
-        add-table-name (key-setter :table-name (keyword table-name))
+        add-table-name (key-setter :table_name (keyword table-name))
         add-permission (key-setter :permission [:user])
         eval-action    (fn [m] (update-in m [:actions] eval))
         k-table-name (keyword table-name)]
@@ -187,10 +187,10 @@
              (let [table-name (str (second (first data)))
                    table-data (str (first data))
                    id-t (:id (first (db/query
-                                     (select :view :where [:= :view.table_name table-name]))))]   
+                                     (select! {:table_name :view :where [:= :table_name table-name]}))))]   
                (if-not (= s 0)
                  (if (nil? id-t)
-                   (db/exec (insert :view :set {:table_name table-name, :view table-data}))
+                   (db/exec (insert! {:table_name :view :set {:table_name table-name, :view table-data}}))
                    (db/exec (update
                              :view
                              :where [:= :id id-t]
@@ -202,7 +202,7 @@
   (let [con (dissoc (db/connection-get)
                     :dbtype :user :password
                     :useUnicode :characterEncoding)
-        data (db/query (select! {:table-name :view
+        data (db/query (select! {:table_name :view
                                  :column    [:view]}))
         sdata (if-not (empty? data)(concat [con] (map (fn [x] (read-string (:view x))) data)))
         path  "src/jarman/logic/view.clj"]
@@ -252,6 +252,4 @@
       ((state/state :alert-manager) :set {:header "Error" :body "Problem with tables. Data not found in DB"} 5)
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (map (fn [x] (eval x)) (subvec (vec data) 1)))))))
-
-
 

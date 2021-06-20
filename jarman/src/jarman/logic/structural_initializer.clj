@@ -4,7 +4,7 @@
    [clojure.data :as data]
    [clojure.string :as string]
    [jarman.logic.connection :as db]
-   [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
+   [jarman.logic.sql-tool :refer [select! update! insert! alter-table! create-table! delete! drop-table]]
    [jarman.logic.metadata :as metadata]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
@@ -16,41 +16,41 @@
 ;;; SYSTEM TABLES SCHEMA ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def metadata-cols [:table :prop])
+(def metadata-cols [:table_name :prop])
 (def metadata
-  (create-table :metadata
-                :columns [{:table [:varchar-100 :default :null]}
-                          {:prop [:text :default :null]}]))
+  (create-table! {:table_name :metadata
+                  :columns [{:table_name [:varchar-100 :default :null]}
+                            {:prop [:text :default :null]}]}))
 
 (def permission-cols [:permission_name :configuration])
 (def permission
-  (create-table :permission
-                :columns [{:permission_name [:varchar-20 :default :null]}
-                          {:configuration [:tinytext :nnull :default "\"{}\""]}]))
+  (create-table! {:table_name :permission
+                  :columns [{:permission_name [:varchar-20 :default :null]}
+                            {:configuration [:tinytext :nnull :default "\"{}\""]}]}))
 
 (def user-cols [:login :password :first_name :last_name :id_permission])
 (def user
-  (create-table :user
-                :columns [{:login [:varchar-100 :nnull]}
-                          {:password [:varchar-100 :nnull]}
-                          {:first_name [:varchar-100 :nnull]}
-                          {:last_name [:varchar-100 :nnull]}
-                          {:id_permission [:bigint-120-unsigned :nnull]}]
-                :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}]))
+  (create-table! {:table_name :user
+                  :columns [{:login [:varchar-100 :nnull]}
+                            {:password [:varchar-100 :nnull]}
+                            {:first_name [:varchar-100 :nnull]}
+                            {:last_name [:varchar-100 :nnull]}
+                            {:id_permission [:bigint-120-unsigned :nnull]}]
+                  :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}]}))
 
-(def view-cols [:table-name :view])
+(def view-cols [:table_name :view])
 (def view
-  (create-table :view
-                :columns [{:table-name [:varchar-100 :default :null]}
-                          {:view [:text :nnull :default "\"{}\""]}]))
+  (create-table! {:table_name :view
+                  :columns [{:table_name [:varchar-100 :default :null]}
+                            {:view [:text :nnull :default "\"{}\""]}]}))
 
-(def documents-cols [:table :name :document :prop])
+(def documents-cols [:table_name :name :document :prop])
 (def documents
-  (create-table :documents
-                :columns [{:table [:varchar-100 :default :null]}
-                          {:name [:varchar-200 :default :null]}
-                          {:document [:blob :default :null]}
-                          {:prop [:text :nnull :default "\"{}\""]}]))
+  (create-table! {:table_name :documents
+                  :columns [{:table_name [:varchar-100 :default :null]}
+                            {:name [:varchar-200 :default :null]}
+                            {:document [:blob :default :null]}
+                            {:prop [:text :nnull :default "\"{}\""]}]}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; VALIDATOR MECHANISM ;;;
@@ -69,7 +69,7 @@
 
 (defn test-permission []
   (letfn [(on-pred-permission [permission_name pred]
-            (if-let [permission-m (not-empty (db/query (select :permission :where [:= :permission_name (name permission_name)])))]
+            (if-let [permission-m (not-empty (db/query (select! :permission :where [:= :permission_name (name permission_name)])))]
               (pred permission-m)))]
     (and (on-pred-permission :admin some?)
        (on-pred-permission :developer some?)
@@ -77,7 +77,7 @@
 
 (defn test-user []
   (letfn [(on-test-exist [permission_name pred]
-            (if-let [permission-m (not-empty (db/query (select :user :where [:= :login (name permission_name)])))]
+            (if-let [permission-m (not-empty (db/query (select! :user :where [:= :login (name permission_name)])))]
               (pred permission-m)))]
     (and (on-test-exist :adm some?)
        (on-test-exist :dev some?)
@@ -90,7 +90,7 @@
                        (map (fn [table] [:= :metadata.table table])))
                     tables-list)]
       (= (count (remove (fn [table] (in? ["metadata" "permission" "view"] table)) tables-list))
-         (count (db/query (select :metadata
+         (count (db/query (select! :metadata
                                   :column [:id :metadata.table]
                                   :where (or-v sql-test))))))))
 
@@ -106,31 +106,31 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn fill-permission []
-  (db/exec (delete :permission))
+  (db/exec (delete! {:table_name :permission}))
   (db/exec
-   (insert :permission
+   (insert! :permission
            :column-list [:permission_name :configuration]
            :values [["admin" "{}"]
                     ["user" "{}"]
                     ["developer" "{}"]])))
 
 (defn fill-user []
-  (if-let [perm (first (db/query (select :permission :column [:id] :where [:= :permission_name "admin"])))]
-    (if (empty? (db/query (select :user :where (=-v :login "admin"))))
+  (if-let [perm (first (db/query (select! {:table_name :permission :column [:id] :where [:= :permission_name "admin"]})))]
+    (if (empty? (db/query (select! :user :where [:= :login "admin"])))
       (db/exec
-       (insert :user
+       (insert! :user
                :column-list [:login :password :first_name :last_name :id_permission]
                :values [["admin" "admin" "admin" "admin" (:id perm)]]))))
-  (if-let [perm (first (db/query (select :permission :column [:id] :where [:= :permission_name "developer"])))]
-    (if (empty? (db/query (select :user :where (=-v :login "dev"))))
+  (if-let [perm (first (db/query (select! :permission :column [:id] :where [:= :permission_name "developer"])))]
+    (if (empty? (db/query (select! :user :where [:= :login "dev"])))
       (db/exec
-       (insert :user
+       (insert! :user
                :column-list [:login :password :first_name :last_name :id_permission]
                :values [["dev" "dev" "dev" "dev" (:id perm)]]))))
-  (if-let [perm (first (db/query (select :permission :column [:id] :where [:= :permission_name "user"])))]
-    (if (empty? (db/query (select :user :where (=-v :login "user"))))
+  (if-let [perm (first (db/query (select! :permission :column [:id] :where [:= :permission_name "user"])))]
+    (if (empty? (db/query (select! :user :where [:= :login "user"])))
       (db/exec
-       (insert :user
+       (insert! :user
                :column-list [:login :password :first_name :last_name :id_permission]
                :values [["user" "user" "user" "user" (:id perm)]])))))
 
@@ -152,7 +152,7 @@
 ;;;;;;;;;;;;;;;;
 
 ;; if table exists
-;;    |f> create-table
+;;    |f> create-table!
 ;;    |t> if table-columns is verified
 ;;           |f> raise error, that DB currently have
 ;;               user-bank and ask if user want to

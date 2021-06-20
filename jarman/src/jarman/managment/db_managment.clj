@@ -1,18 +1,19 @@
- (ns jarman.managment.db-managment
+(ns jarman.managment.db-managment
   (:refer-clojure :exclude [update])
   (:require
    [clojure.data :as data]
    [clojure.java.jdbc :as jdbc]   
    [clojure.string :as string]
-   [jarman.logic.connection :as db]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    [jarman.logic.metadata :as metadata]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.logic.structural-initializer :as sinit]
-   [jarman.tools.lang :refer :all])
+   [jarman.tools.lang :refer :all]
+   [jarman.logic.connection :as db])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
+
 
 (def all-tables nil)
 (def db-connection nil)
@@ -29,7 +30,7 @@
     (def all-tables, def db-conecction, def table-key)"
   [path]
   (try
-    (binding [*ns* (find-ns 'jarman.managment.db-managment)]  
+    (binding [*ns* (find-ns 'jarman.managment.db-managment)]
       (load-file path)
       (db/connection-set db-connection))
     (catch java.io.FileNotFoundException e
@@ -133,7 +134,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn delete-scheme []
   (doall (for [t (reverse all-tables)]
-           (db/exec (drop-table (:table-name t)))))
+           (db/exec (drop-table (:table_name t)))))
   (println "[i] Tables deleted successfuly"))
 
 (defn delete-one-table [scm]

@@ -12,7 +12,7 @@
 
 
 
-(db/query (select {:table-name :user 
+(db/query (select {:table_name :user 
                    :inner-join {:permission :id_permission}
                    :where [:or
                            [:= :login "admin"]
@@ -31,7 +31,7 @@
                  :set {:login "anna"}))
 
 
-(let [id_user (first (db/query (select {:table-name :user 
+(let [id_user (first (db/query (select {:table_name :user 
                                        :where [:= :login "user"]
                                         :column [:id]})))]
   (db/exec (delete :user

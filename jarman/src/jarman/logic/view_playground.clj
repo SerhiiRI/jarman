@@ -58,7 +58,7 @@
 ;; => (:jarman--localhost--3306 :jarman--trashpanda-team_ddns_net--3306 :jarman--trashpanda-team_ddns_net--3307)
 (let [cfg {;; :jdbc-connection :jarman--localhost--3306
            :name "permission"
-           :table-name :permission
+           :table_name :permission
            :plug-place [:#tables-view-plugin] ;; KEYPATH TO KEYWORD 
            :tables [:permission]
            :view-columns [:permission.permission_name

@@ -235,6 +235,3 @@
   (sqlerr (binding [*connection* (ref (datalist-resolve datalist-key))]
             (eval (jdbc/query @*connection* s)))))
 
-;; (query "SELECT * FROM user")
-;; (query-b :jarman--localhost--3306 "SELECT * FROM user")
-

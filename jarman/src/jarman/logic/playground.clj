@@ -1,10 +1,9 @@
 (ns jarman.logic.playground
-  (:refer-clojure :exclude [update])
   (:require
    [clojure.data :as data]
    [clojure.string :as string]
    [jarman.logic.connection :as db]
-   [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
+   [jarman.logic.sql-tool :refer [select! update! insert! alter-table! create-table! delete!]]
    [jarman.logic.metadata :as metadata]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
@@ -13,159 +12,146 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
-;; (def available-scheme ["service_contract"
-;;                        "service_contract"
-;;                        "seal"
-;;                        "repair_contract"
-;;                        "point_of_sale_group_links"
-;;                        "point_of_sale_group"
-;;                        "cache_register"
-;;                        "point_of_sale"
-;;                        "enterpreneur"
-;;                        "user"
-;;                        "permission"
-;;                        "documents"
-;;                        "metadata"])
 
 (def documents
-  (create-table :documents
-                :columns [{:table [:varchar-100 :default :null]}
-                          {:name [:varchar-200 :default :null]}
-                          {:document [:blob :default :null]}
-                          {:prop [:text :nnull :default "\"{}\""]}]))
+  (create-table! {:table_name :documents
+                  :columns [{:table_name [:varchar-100 :default :null]}
+                            {:name [:varchar-200 :default :null]}
+                            {:document [:blob :default :null]}
+                            {:prop [:text :nnull :default "\"{}\""]}]}))
 
 (def view
-  (create-table :view
-                :columns [{:table-name [:varchar-100 :default :null]}
-                          {:view [:text :nnull :default "\"{}\""]}]))
+  (create-table! {:table_name :view
+                  :columns [{:table_name [:varchar-100 :default :null]}
+                            {:view [:text :nnull :default "\"{}\""]}]}))
 
 (def metadata
-  (create-table :metadata
-                :columns [{:table [:varchar-100 :default :null]}
-                          {:prop [:text :default :null]}]))
+  (create-table! {:table_name :metadata
+                  :columns [{:table_name [:varchar-100 :default :null]}
+                            {:prop [:text :default :null]}]}))
 
 (def permission
-  (create-table :permission
-                :columns [{:permission_name [:varchar-20 :default :null]}
-                          {:configuration [:tinytext :nnull :default "\"{}\""]}]))
+  (create-table! {:table_name :permission
+                  :columns [{:permission_name [:varchar-20 :default :null]}
+                            {:configuration [:tinytext :nnull :default "\"{}\""]}]}))
 
 (def user
-  (create-table :user
-                :columns [{:login [:varchar-100 :nnull]}
-                          {:password [:varchar-100 :nnull]}
-                          {:first_name [:varchar-100 :nnull]}
-                          {:last_name [:varchar-100 :nnull]}
-                          {:id_permission [:bigint-20-unsigned :nnull]}]
-                :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}]))
+  (create-table! {:table_name :user
+                  :columns [{:login [:varchar-100 :nnull]}
+                            {:password [:varchar-100 :nnull]}
+                            {:first_name [:varchar-100 :nnull]}
+                            {:last_name [:varchar-100 :nnull]}
+                            {:id_permission [:bigint-20-unsigned :nnull]}]
+                  :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}]}))
 
 (def enterpreneur
-  (create-table :enterpreneur
-                :columns [{:ssreou [:tinytext :nnull]}
-                          {:ownership_form [:varchar-100 :default :null]}
-                          {:vat_certificate [:tinytext :default :null]}
-                          {:individual_tax_number [:varchar-100 :default :null]}
-                          {:director [:varchar-100 :default :null]}
-                          {:accountant [:varchar-100 :default :null]}
-                          {:legal_address [:varchar-100 :default :null]}
-                          {:physical_address [:varchar-100 :default :null]}
-                          {:contacts_information [:mediumtext :default :null]}]))
+  (create-table! {:table_name :enterpreneur
+                  :columns [{:ssreou [:tinytext :nnull]}
+                            {:ownership_form [:varchar-100 :default :null]}
+                            {:vat_certificate [:tinytext :default :null]}
+                            {:individual_tax_number [:varchar-100 :default :null]}
+                            {:director [:varchar-100 :default :null]}
+                            {:accountant [:varchar-100 :default :null]}
+                            {:legal_address [:varchar-100 :default :null]}
+                            {:physical_address [:varchar-100 :default :null]}
+                            {:contacts_information [:mediumtext :default :null]}]}))
 
 (def point_of_sale
-  (create-table :point_of_sale
-                :columns [{:id_enterpreneur [:bigint-20-unsigned :default :null]}
-                          {:name [:varchar-100 :default :null]}
-                          {:physical_address  [:varchar-100 :default :null]}
-                          {:telefons  [:varchar-100 :default :null]}]
-                :foreign-keys [{:id_enterpreneur :enterpreneur} {:update :cascade}]))
+  (create-table! {:table_name :point_of_sale
+                  :columns [{:id_enterpreneur [:bigint-20-unsigned :default :null]}
+                            {:name [:varchar-100 :default :null]}
+                            {:physical_address  [:varchar-100 :default :null]}
+                            {:telefons  [:varchar-100 :default :null]}]
+                  :foreign-keys [{:id_enterpreneur :enterpreneur} {:update :cascade}]}))
 
 (def cache_register
-  (create-table :cache_register
-                :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
-                          {:name [:varchar-100 :default :null]}
-                          {:serial_number [:varchar-100 :default :null]}
-                          {:fiscal_number [:varchar-100 :default :null]}
-                          {:manufacture_date [:date :default :null]}
-                          {:first_registration_date [:date :default :null]}
-                          {:is_working [:tinyint-1 :default :null]}
-                          {:version [:varchar-100 :default :null]}
-                          {:dev_id [:varchar-100 :default :null]}
-                          {:producer [:varchar-100 :default :null]}
-                          {:modem [:varchar-100 :default :null]}
-                          {:modem_model [:varchar-100 :default :null]}
-                          {:modem_serial_number [:varchar-100 :default :null]}
-                          {:modem_phone_number [:varchar-100 :default :null]}]
-                :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]))
+  (create-table! {:table_name :cache_register
+                  :columns [{:id_point_of_sale [:bigint-20 :unsigned :default :null]}
+                            {:name [:varchar-100 :default :null]}
+                            {:serial_number [:varchar-100 :default :null]}
+                            {:fiscal_number [:varchar-100 :default :null]}
+                            {:manufacture_date [:date :default :null]}
+                            {:first_registration_date [:date :default :null]}
+                            {:is_working [:tinyint-1 :default :null]}
+                            {:version [:varchar-100 :default :null]}
+                            {:dev_id [:varchar-100 :default :null]}
+                            {:producer [:varchar-100 :default :null]}
+                            {:modem [:varchar-100 :default :null]}
+                            {:modem_model [:varchar-100 :default :null]}
+                            {:modem_serial_number [:varchar-100 :default :null]}
+                            {:modem_phone_number [:varchar-100 :default :null]}]
+                  :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade :update :cascade}]}))
 
 (def point_of_sale_group
-  (create-table :point_of_sale_group
-                :columns [{:group_name [:varchar-100 :default :null]}
-                          {:information [:mediumtext :default :null]}]))
+  (create-table! {:table_name :point_of_sale_group
+                  :columns [{:group_name [:varchar-100 :default :null]}
+                            {:information [:mediumtext :default :null]}]}))
 
 (def point_of_sale_group_links
-  (create-table :point_of_sale_group_links
-                :columns [{:id_point_of_sale_group [:bigint-20-unsigned :default :null]}
-                          {:id_point_of_sale [:bigint-20-unsigned :default :null]}]
-                :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
-                               [{:id_point_of_sale :point_of_sale}]]))
+  (create-table! {:table_name :point_of_sale_group_links
+                  :columns [{:id_point_of_sale_group [:bigint-20-unsigned :default :null]}
+                            {:id_point_of_sale [:bigint-20-unsigned :default :null]}]
+                  :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
+                                 [{:id_point_of_sale :point_of_sale}]]}))
 
 (def seal
-  (create-table :seal
-                :columns [{:seal_number [:varchar-100 :default :null]}
-                          {:datetime_of_use [:datetime :default :null]}
-                          {:datetime_of_remove [:datetime :default :null]}]))
+  (create-table! {:table_name :seal
+                  :columns [{:seal_number [:varchar-100 :default :null]}
+                            {:datetime_of_use [:datetime :default :null]}
+                            {:datetime_of_remove [:datetime :default :null]}]}))
 
 (def service_contract
-  (create-table :service_contract
-                :columns [{:id_enterpreneur     [:bigint-20 :unsigned :default :null]}
-                          {:contract_start_term [:date :default :null]}
-                          {:contract_end_term   [:date :default :null]}
-                          {:money_per_month     [:float-2 :nnull :default 0]}]
-                :foreign-keys [{:id_enterpreneur :enterpreneur} {:delete :cascade :update :cascade}]))
+  (create-table! {:table_name :service_contract
+                  :columns [{:id_enterpreneur     [:bigint-20 :unsigned :default :null]}
+                            {:contract_start_term [:date :default :null]}
+                            {:contract_end_term   [:date :default :null]}
+                            {:money_per_month     [:float-2 :nnull :default 0]}]
+                  :foreign-keys [{:id_enterpreneur :enterpreneur} {:delete :cascade :update :cascade}]}))
 
 (def service_contract_month
-  (create-table :service_contract_month
-                :columns [{:id_service_contract [:bigint-20 :unsigned :default :null]}
-                          {:service_month_date  [:date :default :null]}
-                          {:money_per_month     [:float-2 :nnull :default 0]}]
-                :foreign-keys [{:id_service_contract :service_contract} {:delete :cascade :update :cascade}]))
+  (create-table! {:table_name :service_contract_month
+                  :columns [{:id_service_contract [:bigint-20 :unsigned :default :null]}
+                            {:service_month_date  [:date :default :null]}
+                            {:money_per_month     [:float-2 :nnull :default 0]}]
+                  :foreign-keys [{:id_service_contract :service_contract} {:delete :cascade :update :cascade}]}))
 
 ;; Pryczyna rozplombuwaninia
 (def repair_reasons
-  (create-table
-   :repair_reasons
-   :columns [{:description [:varchar-255 :default :null]}]))
+  (create-table!
+   {:table_name :repair_reasons
+    :columns [{:description [:varchar-255 :default :null]}]}))
 
 ;; Pryczyna nesprawnosci
 (def repair_technical_issue
-  (create-table
-   :repair_technical_issue
-   :columns [{:description [:varchar-255 :default :null]}]))
+  (create-table!
+   {:table_name :repair_technical_issue
+    :columns [{:description [:varchar-255 :default :null]}]}))
 
 ;; Charakter nesprawnostci
 (def repair_nature_of_problem
-  (create-table
-   :repair_nature_of_problem
-   :columns [{:description [:varchar-255 :default :null]}]))
+  (create-table!
+   {:table_name :repair_nature_of_problem
+    :columns [{:description [:varchar-255 :default :null]}]}))
 
 (def repair_contract
-  (create-table :repair_contract
-                :columns [{:id_cache_register[:bigint-20 :unsigned :default :null]}
-                          {:id_old_seal      [:bigint-20 :unsigned :default :null]}
-                          {:id_new_seal      [:bigint-20 :unsigned :default :null]}
-                          {:id_repair_reasons[:bigint-20 :unsigned :default :null]}
-                          {:id_repair_technical_issue[:bigint-20 :unsigned :default :null]}
-                          {:id_repair_nature_of_problem[:bigint-20 :unsigned :default :null]}
-                          {:repair_date    [:date :default :null]}
-                          {:cache_register_register_date [:date :default :null]}]
-                :foreign-keys [[{:id_cache_register :cache_register} {:delete :cascade :update :cascade}]
-                               [{:id_old_seal :seal} {:delete :null :update :null}]
-                               [{:id_new_seal :seal} {:delete :null :update :null}]
-                               [{:id_repair_reasons :repair_reasons}
-                                {:delete :null :update :null}]
-                               [{:id_repair_technical_issue :repair_technical_issue}
-                                {:delete :null :update :null}]
-                               [{:id_repair_nature_of_problem :repair_nature_of_problem}
-                                {:delete :null :update :null}]]))
+  (create-table! {:table_name :repair_contract
+                  :columns [{:id_cache_register[:bigint-20 :unsigned :default :null]}
+                            {:id_old_seal      [:bigint-20 :unsigned :default :null]}
+                            {:id_new_seal      [:bigint-20 :unsigned :default :null]}
+                            {:id_repair_reasons[:bigint-20 :unsigned :default :null]}
+                            {:id_repair_technical_issue[:bigint-20 :unsigned :default :null]}
+                            {:id_repair_nature_of_problem[:bigint-20 :unsigned :default :null]}
+                            {:repair_date    [:date :default :null]}
+                            {:cache_register_register_date [:date :default :null]}]
+                  :foreign-keys [[{:id_cache_register :cache_register} {:delete :cascade :update :cascade}]
+                                 [{:id_old_seal :seal} {:delete :null :update :null}]
+                                 [{:id_new_seal :seal} {:delete :null :update :null}]
+                                 [{:id_repair_reasons :repair_reasons}
+                                  {:delete :null :update :null}]
+                                 [{:id_repair_technical_issue :repair_technical_issue}
+                                  {:delete :null :update :null}]
+                                 [{:id_repair_nature_of_problem :repair_nature_of_problem}
+                                  {:delete :null :update :null}]]}))
 
 
 (defmacro create-tabels [& tables]
@@ -180,8 +166,6 @@
 ;; (db/query (show_tables))
 ;; (db/exec point_of_sale_group_links)
 
-(defn create-scheme-one [scheme]
-  (eval `(db/exec ~(symbol (string/join "/" ["jarman.schema-builder" (symbol scheme)])))))
 (defn create-scheme []
   (create-tabels view
                  metadata
@@ -243,8 +227,6 @@
 
 (def list-words ["medical" "marble" "nosy" "serious" "shaggy" "excellent" "unit" "faint" "shape" "stretch" "rings" "finish" "thoughtless" "male" "punish" "little" "smash" "earthquake" "dump" "club" "idea" "hold" "selfish" "forecast" "childlike" "approval" "two" "jolly" "wet" "periodic" "instrument" "system" "abundant" "drink" "minor" "fry" "shrink" "brothers" "spin" "elderly" "leap" "friction" "lip" "tempt" "solicit" "safe" "upset" "confiscate" "ashamed" "hysterical" "hate" "present" "create" "canvass" "cloudy" "yawn" "roll" "print" "marked" "coal" "sulky" "rainy" "zealous" "punishment" "boundary" "oranges" "vomit" "pricey" "productive" "mark" "zoom" "swim" "cover" "terminate" "praise" "gain" "mislead" "cry" "true" "red" "month" "box" "button" "begin" "right" "hush" "adorable" "redo" "wary" "selfish" "home" "consen" "common" "loud" "loving" "bawdy" "branch" "organize" "familiar" "be" "bed" "ladybug" "brash" "clumsy" "long" "tendency" "luxuriant" "tangy" "scattered" "sock" "approve" "cannon" "stoop" "entertaining" "shut" "roar" "bloody" "thirsty" "irritating" "canvass" "historical" "shock" "crowd" "foolish" "help" "dinosaurs" "juice" "loose" "cut" "wanting" "punish" "living" "cake" "soup" "high" "hiss" "brown" "abstracted" "extra-large" "grade" "statuesque" "basin" "malicious" "rabbits" "spend" "magnificent" "slim" "canvas" "bed" "obtainable" "church" "thundering" "overconfident" "oatmeal" "obedient" "uncovered" "enter" "high-pitched" "soft" "race" "descriptive" "ooze" "jewel" "hissing" "guitar" "table" "net" "hissing" "angle" "ill-treat" "shirt" "rhythm" "perpetual" "notice" "lumpy" "bushes" "harmony" "deserted" "swallow" "easy" "light" "join" "green" "foregoing" "convince" "fit" "direction" "hands" "pollution" "doctor" "lend" "snatch" "fresh" "disillusioned" "banana" "clammy" "elbow" "scream" "speed" "axiomatic" "strain" "sabotage" "wiggly" "whispering" "digest" "acid" "childlike" "ajar" "authority" "matter" "chair" "chew" "curly" "good" "scat" "vessel" "banana" "chubby" "challenge" "voracious" "trail" "brawny" "chew" "dark" "cheap" "private" "salvage" "kitten" "ignorant" "implode" "actually" "shaggy" "rustic" "front" "express" "courageous" "help" "park" "jumbled" "invite" "ocean" "preset" "answer" "twig" "scent" "repair" "tie" "birth" "level" "star" "grotesque" "tomatoes" "cart" "unbecoming" "vigorous" "liquid" "look" "grip" "behavior" "bread" "luxuriant" "sort" "brothers" "limping" "wren" "put" "shave" "process" "identify" "stare" "wry" "surprise" "wed" "callous" "rain" "broken" "paper" "kitty" "extend" "fish" "jump" "early" "thoughtful" "tenuous" "bag" "originate" "buy" "gaze" "acoustic" "rhetorical" "relation" "bang" "apples" "encircle" "scattered" "moo" "happy" "misuse" "toes" "next" "flop" "kettle" "awful" "consecrat" "determine" "condemned" "frighten" "induce" "fish" "waggish" "team" "uppity" "initiate" "word" "venomous" "translate" "hallowed" "unsightly" "bear" "can" "count" "pan" "spin" "fascinated" "squirrel" "sling" "make" "cut" "climb" "ring" "zippy" "late" "irritating" "rise" "bitter" "yellow" "salute" "sable" "lunch" "disturb" "yellow" "voyage" "tooth" "cost" "bewildered" "dog" "scabble" "lace" "legs" "able" "fill" "advice" "greet" "year" "hope" "crooked" "send" "stray" "scald" "wry" "print" "sail" "tiger" "half" "kittens" "open" "join" "crack" "aquatic" "rake" "hallowed" "female" "melodic" "alcoholic" "beam" "fan" "brass" "fabulous" "smell" "juice" "destroy" "balance" "frantic" "half" "record" "creepy" "stop" "shaky" "jolly" "market" "driving" "salt" "testy" "periodic" "box" "determine" "confuse" "behavior" "thumb" "spray"])
 
-
-
 (defn generate-random-string-upper [len]
   (fn [] (apply str (take len (repeatedly #(char (+ (rand 26) 65)))))))
 (defn generate-random-string-lower [len]
@@ -266,7 +248,7 @@
 (defn generate-random-double [max-number max-precission]
   (fn [] (str (round-double (rand-int max-precission) (rand max-number)))))
 (defn select-id-from [table]
-  (select table :column [:id]))
+  (select! table :column [:id]))
 (defn generate-random-sql-from-col [table]
   ;; [idX (db/query (select-id-from table))]
   (fn [] (rand-nth (map :id (db/query (select-id-from table))))))
@@ -286,10 +268,10 @@
                 :configuration "{}"}))
   (doall
    (map sql-insert
-        [(insert :permission :values (create-permission "admin"))
-         (insert :permission :values (create-permission "user"))
-         (insert :permission :values (create-permission "employer"))
-         (insert :permission :values (create-permission "szprot"))])))
+        [(insert! {:table_name :permission :values (create-permission "admin")})
+         (insert! {:table_name :permission :values (create-permission "user")})
+         (insert! {:table_name :permission :values (create-permission "employer")})
+         (insert! {:table_name :permission :values (create-permission "szprot")})])))
 
 (defn fill-user [c]
   (def create-user 
@@ -301,7 +283,7 @@
   (doall
    (map
     sql-insert
-    (take c (repeatedly #(insert :user :values (create-user)))))))
+    (take c (repeatedly #(insert! {:table_name :user :values (create-user)}))))))
 
 
 (def gsimplestring (generate-random-string-lower 10))
@@ -322,7 +304,7 @@
   (doall
    (map
     sql-insert
-    (take c (repeatedly #(insert :enterpreneur :values (create-enterpreneur)))))))
+    (take c (repeatedly #(insert! {:table_name :enterpreneur :values (create-enterpreneur)}))))))
 
 
 (def gtable (generate-random-from-list ["service_contract" "seal" "repair_contract" "point_of_sale_group_links" "point_of_sale_group" "cache_register" "point_of_sale" "enterpreneur" "user" "permission"]))
@@ -335,7 +317,7 @@
   (doall
    (map
     sql-insert
-    (take c (repeatedly #(insert :documents :values (create-documents)))))))
+    (take c (repeatedly #(insert! {:table_name :documents :values (create-documents)}))))))
 
 
 (def gid_enterpreneur (generate-random-sql-from-col :enterpreneur))
@@ -349,7 +331,7 @@
   (doall
    (map
     sql-insert
-    (take c (repeatedly #(insert :point_of_sale :values (create-point_of_sale)))))))
+    (take c (repeatedly #(insert! {:table_name :point_of_sale :values (create-point_of_sale)}))))))
 
 
 (def gid_point_of_sale (generate-random-sql-from-col :point_of_sale))
@@ -374,7 +356,7 @@
   (doall
    (map
     sql-insert
-    (take c (repeatedly #(insert :cache_register :values (create-cache_register)))))))
+    (take c (repeatedly #(insert! {:table_name :cache_register :values (create-cache_register)}))))))
 
 
 (defn fill-point_of_sale_group [c]
@@ -385,7 +367,7 @@
   (doall
    (map
     sql-insert
-    (take c (repeatedly #(insert :point_of_sale_group :values (create-point_of_sale_group)))))))
+    (take c (repeatedly #(insert! {:table_name :point_of_sale_group :values (create-point_of_sale_group)}))))))
 
 
 (def gid_point_of_sale_group (generate-random-sql-from-col :point_of_sale_group))
@@ -398,7 +380,7 @@
   (doall
    (map
     sql-insert
-    (take c (repeatedly #(insert :point_of_sale_group_links :values (create-point_of_sale_group_links)))))))
+    (take c (repeatedly #(insert! {:table_name :point_of_sale_group_links :values (create-point_of_sale_group_links)}))))))
 
 (def gsealnumber (generate-random-string-from 10 "0123456789"))
 (defn fill-seal [c]
@@ -410,7 +392,7 @@
   (doall
    (map
     sql-insert
-    (take c (repeatedly #(insert :seal :values (create-seal)))))))
+    (take c (repeatedly #(insert! {:table_name :seal :values (create-seal)}))))))
 
 (def gpayment (fn [] (rand-int 100000)))
 (defn fill-service_contract [c]
@@ -423,7 +405,7 @@
   (doall
    (map
     sql-insert
-    (take c (repeatedly #(insert :service_contract :values (create-service_contract)))))))
+    (take c (repeatedly #(insert! {:table_name :service_contract :values (create-service_contract)}))))))
 
 (def gid_service_contract (generate-random-sql-from-col :service_contract))
 (defn fill-service_contract_mounth [c]
@@ -435,7 +417,7 @@
   (doall
    (map
     sql-insert
-    (take c (repeatedly #(insert :service_contract_month :values (create-service_contract_mounth)))))))
+    (take c (repeatedly #(insert! {:table_name :service_contract_month :values (create-service_contract_mounth)}))))))
 
 (defn fill-repair_reasons [c]
   (def create-repair_reasons
@@ -444,7 +426,7 @@
   (doall
    (map
     sql-insert
-    (take c (repeatedly #(insert :repair_reasons :values (create-repair_reasons)))))))
+    (take c (repeatedly #(insert! {:table_name :repair_reasons :values (create-repair_reasons)}))))))
 
 
 (defn fill-repair_technical_issue [c]
@@ -454,7 +436,7 @@
   (doall
    (map
     sql-insert
-    (take c (repeatedly #(insert :repair_technical_issue :values (create-repair_technical_issue)))))))
+    (take c (repeatedly #(insert! {:table_name :repair_technical_issue :values (create-repair_technical_issue)}))))))
 
 (defn fill-repair_nature_of_problem [c]
   (def create-repair_nature_of_problem
@@ -463,7 +445,7 @@
   (doall
    (map
     sql-insert
-    (take c (repeatedly #(insert :repair_nature_of_problem :values (create-repair_nature_of_problem)))))))
+    (take c (repeatedly #(insert! {:table_name :repair_nature_of_problem :values (create-repair_nature_of_problem)}))))))
 
 
 (def gid_repair_reasons (generate-random-sql-from-col :repair_reasons))
@@ -485,7 +467,7 @@
   (doall
    (map
     sql-insert
-    (take c (repeatedly #(insert :repair_contract :values (create-repair_contract)))))))
+    (take c (repeatedly #(insert! :repair_contract :values (create-repair_contract)))))))
 
 (defn- fn-fish []
   ;; (fill-permission)

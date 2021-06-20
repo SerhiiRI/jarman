@@ -290,7 +290,7 @@
              :border (line-border :thickness 1 :color c-border)
              :listen [:mouse-entered (fn [e] (config! e :background bg-hover :icon (stool/image-scale ico-hover 26) :cursor :hand))
                       :mouse-exited  (fn [e] (config! e :background bg :icon (stool/image-scale ico 26) :cursor :default))
-                      :mouse-clicked onclick]))))
+                      :mouse-clicked (fn [e] (onclick e))]))))
 
 
 (defn colorizator-text-component "Colorize component, by hexadecemal value" [target]
@@ -313,7 +313,7 @@
 
 
 
-(defmacro my-border
+(defn my-border
   "Description:
       Create border for gui component, empty-border like margin in css.
    Example:
@@ -356,7 +356,7 @@
                              (into a (repeat (- 4 (count a)) 0))))
                    (list empty-border))))) args)
            (list compound-border))]
-    `~l))
+    (eval l)))
 
 
 

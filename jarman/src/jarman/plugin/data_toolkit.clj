@@ -36,14 +36,14 @@
 (defn- sql-make-select-wrapper
   "Description
      Take keyword as idintificator and take lambda or keyword
-    for example {:table-name \"user\"} or #(:table-name (:t-name %))
+    for example {:table_name \"user\"} or #(:table_name (:t-name %))
     and wrapp into `select!` function which generate SQL syntax
      Function return two key first has name as `keyword-rule-name`
     which do jdbc request, second has name with `-expression` on
     end for debug aims and return only SQL syntax expression
   
   Example 
-    (sql-make-select-wrapper :some-test-select {:table-name \"user\"})
+    (sql-make-select-wrapper :some-test-select {:table_name \"user\"})
     ;;=> {:some-test-select (fn [e]...) :some-test-select-expression (fn [e] ...) "
   [keyword-rule-name query-settings]
   {:pre [(keyword? keyword-rule-name)]}
@@ -60,14 +60,14 @@
 (defn- sql-make-wrapper-for
   "Description
      Take keyword as idintificator and take lambda for example
-    #(:table-name (:t-name %)) and wrapp into `sql-operation`
+    #(:table_name (:t-name %)) and wrapp into `sql-operation`
     function which generate SQL syntax
      Function return two key first has name as `keyword-rule-name`
     which do jdbc request, second has name with `-expression` on
     end for debug aims and return only SQL syntax expression
   
   Example 
-    (sql-make-wrapper-for insert! :user-insert {:table-name \"user\"})
+    (sql-make-wrapper-for insert! :user-insert {:table_name \"user\"})
     ;;=> {:user-insert (fn [e]...) :user-insert-expression (fn [e] ...) "
   [sql-operation keyword-rule-name query-lambda]
   {:pre [(keyword? keyword-rule-name) (fn? query-lambda)]}
@@ -87,11 +87,11 @@
 (defn- response-f-on-suffix
   "Example
   
-  (where ((configuration {:test-m-select {:table-name \"user\"}
-                        :test-select (fn [{login :login}] {:table-name \"user\" :where [:= login :login]})
-                        :test-insert (fn [e] {:table-name \"user\" :values e})
-                        :test-update (fn [{login :login password :password :as e}] {:table-name \"user\" :set e :where [:= :login login]})
-                        :test-delete (fn [{login :login}] {:table-name \"user\" :where [:= :login login]})
+  (where ((configuration {:test-m-select {:table_name \"user\"}
+                        :test-select (fn [{login :login}] {:table_name \"user\" :where [:= login :login]})
+                        :test-insert (fn [e] {:table_name \"user\" :values e})
+                        :test-update (fn [{login :login password :password :as e}] {:table_name \"user\" :set e :where [:= :login login]})
+                        :test-delete (fn [{login :login}] {:table_name \"user\" :where [:= :login login]})
                         :must-not-reaction-on-this-key nil})
         (toolkit (reduce
                   (fn [m-acc [k v]]
@@ -139,7 +139,7 @@
 ;; => (:jarman--localhost--3306 :jarman--trashpanda-team_ddns_net--3306 :jarman--trashpanda-team_ddns_net--3307)
 ;; (let [cfg {;; :jdbc-connection :jarman--localhost--3306
 ;;            :name "permission"
-;;            :table-name :permission
+;;            :table_name :permission
 ;;            :plug-place [:#tables-view-plugin] ;; KEYPATH TO KEYWORD 
 ;;            :tables [:permission]
 ;;            :view-columns [:permission.permission_name
@@ -162,7 +162,7 @@
   
   Example
     (sql-crud-toolkit-constructor
-       {:table-name :repair_contract 
+       {:table_name :repair_contract 
         ...
         :query {}} {})
     ;;=> 
@@ -181,21 +181,21 @@
   [configuration toolkit-map]
   (where ((query-fn (if (:jdbc-connection configuration) (partial db/query-b (:jdbc-connection configuration)) db/query))
           (exec-fn  (if (:jdbc-connection configuration) (partial db/exec-b (:jdbc-connection configuration)) db/exec))
-          (table-metadata configuration do :table-name do mt/getset! do first)
-          (id_column (t-f-tf (:table-name configuration) :id))
+          (table-metadata configuration do :table_name do mt/getset! do first)
+          (id_column (t-f-tf (:table_name configuration) :id))
           (table-name ((comp :field :table :prop) table-metadata))
           (columns ((comp :columns :prop) table-metadata) map :field)
           (model_column (vec (concat [id_column] (mapv :field-qualified ((comp :columns :prop) table-metadata)))))
-          (update-expression (fn [entity] (if (id_column entity)  (update table-name :set entity :where (=-v id_column (id_column entity))))))
-          (insert-expression (fn [entity] (if (nil? (id_column entity)) (insert table-name :set entity))))
-          (delete-expression (fn [entity] (if (id_column entity) (delete table-name :where (=-v id_column (id_column entity))))))
+          (update-expression (fn [entity] (if (id_column entity)  (update! {:table_name table-name :set entity :where [:= id_column (id_column entity)]}))))
+          (insert-expression (fn [entity] (if (nil? (id_column entity)) (insert! table-name :set entity))))
+          (delete-expression (fn [entity] (if (id_column entity) (delete! {:table_name table-name :where [:= id_column (id_column entity)]}))))
           (select-expression (fn [& {:as args}]
                                (select!
                                 (merge
-                                 (if (:table-name (:query configuration))
+                                 (if (:table_name (:query configuration))
                                    (:query configuration)
                                    (into (:query configuration)
-                                         {:table-name (:table-name configuration)}))
+                                         {:table_name (:table_name configuration)}))
                                  args)))))
          {:update-expression update-expression
           :insert-expression insert-expression
@@ -213,7 +213,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- metadata-toolkit-constructor [configuration toolkit-map]
-  (if-let [table-metadata (first (mt/getset! (:table-name configuration)))]
+  (if-let [table-metadata (first (mt/getset! (:table_name configuration)))]
     {:table-meta   ((comp :table :prop) table-metadata)
      :columns-meta ((comp :columns :prop) table-metadata)}))
 
@@ -227,7 +227,7 @@
      :export-select (fn [] (db/query (select-expression :column nil :inner-join nil :where nil)))}))
 
 (defn- document-toolkit-constructor [configuration toolkit-map]
-  (let [table-name (:table-name configuration)]
+  (let [table-name (:table_name configuration)]
     (doc/select-documents-by-table table-name)))
 
 ;;;;;;;;;;;;;;;;
@@ -236,11 +236,11 @@
 
 (defn data-toolkit-pipeline [configuration other-toolkit-map]
   (let [rule-react-on (fn [f & ks] (fn [m] (if (every? (fn [k] (some? (k configuration))) ks) (into m (f configuration m)) m)))
-        sql-crud-toolkit   (rule-react-on sql-crud-toolkit-constructor :query :table-name)
-        metadata-toolkit   (rule-react-on metadata-toolkit-constructor :table-name)
-        supply-sql-toolkit (rule-react-on supply-sql-action-constructor :table-name)
+        sql-crud-toolkit   (rule-react-on sql-crud-toolkit-constructor :query :table_name)
+        metadata-toolkit   (rule-react-on metadata-toolkit-constructor :table_name)
+        supply-sql-toolkit (rule-react-on supply-sql-action-constructor :table_name)
         ;; export-sql-toolkit (rule-react-on export-toolkit-constructor :query)
-        ;; document-toolkit (rule-react-on document-toolkit-constructor :table-name)
+        ;; document-toolkit (rule-react-on document-toolkit-constructor :table_name)
         ]
     (-> other-toolkit-map
         sql-crud-toolkit

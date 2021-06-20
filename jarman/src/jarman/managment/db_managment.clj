@@ -14,6 +14,7 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
+
 (def all-tables nil)
 (def db-connection nil)
 (def table-key :table_name)
@@ -29,7 +30,7 @@
     (def all-tables, def db-conecction, def table-key)"
   [path]
   (try
-    (binding [*ns* (find-ns 'jarman.managment.db-managment)]  
+    (binding [*ns* (find-ns 'jarman.managment.db-managment)]
       (load-file path)
       (db/connection-set db-connection))
     (catch java.io.FileNotFoundException e
@@ -152,7 +153,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn delete-scheme []
   (doall (for [t (reverse all-tables)]
-           (db/exec (drop-table (:table-name t)))))
+           (db/exec (drop-table (:table_name t)))))
   (println "[i] Tables deleted successfuly"))
 
 (defn delete-one-table [scm]

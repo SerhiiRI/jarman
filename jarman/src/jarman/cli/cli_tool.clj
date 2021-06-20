@@ -197,13 +197,13 @@
               (for [row (map vals reslt)]
                 (println (string/join "," row)))))))))
 
+(comment (db/connection-set {:dbtype "mysql",
+                             :host  "trashpanda-team.ddns.net",
+                             :port 3307,
+                             :dbname "jarman-test",
+                             :user "root",
+                             :password "1234"})))
 
-;;  {:dbtype "mysql",
-;;   :host  "trashpanda-team.ddns.net",
-;;   :port 3307,
-;;   :dbname "jarman-test",
-;;   :user "root",
-;;   :password "1234"})
 
 
 

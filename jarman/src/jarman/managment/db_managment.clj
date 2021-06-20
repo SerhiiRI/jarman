@@ -16,9 +16,9 @@
 
 (def all-tables nil)
 (def db-connection nil)
-(def table-key nil)
-;; "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db.clj"
+(def table-key :table_name)
 
+;; "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db.clj"
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPER FUNCTIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -53,7 +53,7 @@
     (do (binding [*ns* (find-ns 'jarman.managment.db-managment)]  
           (.exists (clojure.java.io/file file-path))))))
 
-(defn get-one-scheme
+(defn get-table-file-db
   [table-name]
   (first (filter (fn [x] (= (table-key x)
                             (if (= table-key :table)
@@ -64,7 +64,7 @@
 (defn -entity-in? [entity-list]
   (fn [t] (if (nil? (some #(= (string/lower-case t) (string/lower-case %)) entity-list)) false true)))
 
-(def scheme-in?
+(def table-in-file-db?
   "Description
     check if table-scheme is in db"
   (fn [table-name]
@@ -103,7 +103,7 @@
            (db/exec (create-table! t)))))
 
 (defn create-one-table [scm]
-  (let [scheme (get-one-scheme scm)]
+  (let [scheme (get-table-file-db scm)]
     (if (empty? scheme) (println "[i] Scheme is not found")
         (do (db/exec (create-table! scheme))))))
 
@@ -116,6 +116,36 @@
   (sinit/procedure-test-all)
   (doall (for [metadata all-tables]
            (create-one-table-by-meta metadata))))
+
+
+
+
+(defmulti generate-t (fn [params] (params :ch)))
+
+(defmethod generate-t "by_meta" [params]
+  (if (table-in-file-db? (params :t-name))
+    (do (sinit/procedure-test-all)
+        (create-one-table-by-meta (get-table-file-db (params :t-name))))
+    (println "[i] Scheme for table not found")))
+
+(defmethod generate-t "by_meta_all" [params]
+  (create-all-by-meta))
+(defmethod generate-t "by_ssql" [params] "hot")
+(defmethod generate-t "by_ssql_all" [params] "hot")
+(defmethod generate-t "meta" [params] "hot")
+(defmethod generate-t "meta_all" [params] "hot")
+
+(defn generate-table [choice table-name path]
+  ;;(get-tables path)
+  (generate-t {:ch choice :t-name table-name}))
+
+(defn generate-tables [choice path]
+  ;;(get-tables path)
+  (generate-t {:ch choice}))
+
+;;(generate-table "by_meta" "k")
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; FUNCTIONS FOR DELETE TABLES ;;;

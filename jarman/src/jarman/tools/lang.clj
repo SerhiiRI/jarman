@@ -61,7 +61,7 @@
   [& vecs]
   `(vec (concat ~@vecs)))
 
-(defn ^:private key-setter
+(defn key-setter
   "Description
 
     Test if some `parameter-k` key inside `m`

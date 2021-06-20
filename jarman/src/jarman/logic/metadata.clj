@@ -426,7 +426,7 @@
   [table m]
   (letfn [(serialize [m] (update m :prop #(str %)))]
     (if (:id m)
-      (update! {:table_name table :set (serialize (dissoc m :id))} :where [:= :id (:id m)])
+      (update! {:table_name table :set (serialize (dissoc m :id)) :where [:= :id (:id m)]})
       (insert! {:table_name table :values (vals (serialize m))}))))
 
 (defn show-tables-not-meta []
@@ -436,7 +436,7 @@
   (db/exec (update-sql-by-id-template "metadata" metadata)))
 
 (defn create-one-meta [table-name]
-  (let [meta (db/query (select! {:table_name :metadata :where [:= :metadata.table table-name]}))]
+  (let [meta (db/query (select! {:table_name :metadata :where [:= :table_name table-name]}))]
     (if (empty? meta)
       (db/exec (update-sql-by-id-template "metadata" (get-meta table-name))))))
 
@@ -448,7 +448,7 @@
 (defn delete-one-meta [table-name]
   {:pre [(string? table-name)]}
   (db/exec (delete! {:table_name :metadata
-                     :where [:= :metadata.table table-name]})))
+                     :where [:= :table_name table-name]})))
 
 (defn do-clear-meta [& body]
   {:pre [(every? string? body)]}
@@ -472,7 +472,7 @@
                           (if (empty? tables)
                             (select! {:table_name :metadata})
                             (select! {:table_name :metadata
-                                      :where [:= (mapv (fn [x] [:= :metadata.table (name x)]) tables)]}))))]
+                                      :where [:= (mapv (fn [x] [:= :table_name (name x)]) tables)]}))))]
     (if (empty? tables)
       (do (swapp-metadata metadata) metadata)
       metadata)))

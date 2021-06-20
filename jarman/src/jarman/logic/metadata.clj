@@ -482,7 +482,7 @@
     (swapp-metadata (getset)))
   (if-not tables @--loaded-metadata
           (let [tables (map name tables)]
-            (vec (filter #(in? tables (:table %)) @--loaded-metadata)))))
+            (vec (filter #(in? tables (:table_name %)) @--loaded-metadata)))))
 
 ;;; Make references 
 (defn- add-references-to-metadata [metadata front-reference back-reference]

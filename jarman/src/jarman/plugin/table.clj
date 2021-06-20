@@ -198,7 +198,7 @@
                 :buttons []
                 :query (if-not (empty? joines)
                          {:table_name (keyword name-of-table)
-                          :inner-join joines :columns columns}
+                          :inner-join joines :column columns}
                          {:table_name (keyword name-of-table)
                           :column columns})))))
 

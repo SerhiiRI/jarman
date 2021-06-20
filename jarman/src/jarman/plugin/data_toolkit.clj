@@ -155,7 +155,6 @@
 ;;                     :permission.configuration)}}]
 ;;   ((:select (jarman.logic.view-manager/defview-debug-toolkit cfg))))
 
-
 (defn- sql-crud-toolkit-constructor
   "Description
     Generate datatoolkit for sql expression
@@ -187,7 +186,7 @@
           (columns ((comp :columns :prop) table-metadata) map :field)
           (model_column (vec (concat [id_column] (mapv :field-qualified ((comp :columns :prop) table-metadata)))))
           (update-expression (fn [entity] (if (id_column entity)  (update! {:table_name table-name :set entity :where [:= id_column (id_column entity)]}))))
-          (insert-expression (fn [entity] (if (nil? (id_column entity)) (insert! table-name :set entity))))
+          (insert-expression (fn [entity] (if (nil? (id_column entity)) (insert! {:table_name table-name :set entity}))))
           (delete-expression (fn [entity] (if (id_column entity) (delete! {:table_name table-name :where [:= id_column (id_column entity)]}))))
           (select-expression (fn [& {:as args}]
                                (select!

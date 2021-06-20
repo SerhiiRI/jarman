@@ -61,7 +61,7 @@
   :query
   {:table_name :user,
    :inner-join [:user->permission],
-   :columns
+   :column
    [:#as_is
     :user.id
     :user.login

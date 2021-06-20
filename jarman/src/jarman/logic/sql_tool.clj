@@ -25,7 +25,7 @@
 (def ^{:dynamic true} *debug*      "Enable debugging" true)
 (def ^{:dynamic true} *debug-to*   "Enable debugging" (first [:output :file]))
 (def ^{:dynamic true} *debug-file* "Enable debugging" "./sql.log.clj")
-(def ^{:dynamic true} *debug-full-descript*   "Enable debugging" true)
+(def ^{:dynamic true} *debug-full-descript*   "Enable debugging" false)
 
 (defn- transform-namespace [symbol-op]
   (if (some #(= \/ %) (str symbol-op)) symbol-op

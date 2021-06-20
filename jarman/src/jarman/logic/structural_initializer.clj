@@ -5,7 +5,7 @@
    [clojure.string :as string]
    [jarman.logic.connection :as db]
    [jarman.logic.sql-tool :refer [select! update! insert! alter-table! create-table! delete! drop-table show-table-columns show-tables]]
-   [jarman.logic.metadata :as metadata]
+   [jarman.logic.metadata :as mt]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]))
@@ -69,7 +69,7 @@
 
 (defn test-permission []
   (letfn [(on-pred-permission [permission_name pred]
-            (if-let [permission-m (not-empty (db/query (select! :permission :where [:= :permission_name (name permission_name)])))]
+            (if-let [permission-m (not-empty (db/query (select! {:table_name :permission :where [:= :permission_name (name permission_name)]})))]
               (pred permission-m)))]
     (and (on-pred-permission :admin some?)
        (on-pred-permission :developer some?)
@@ -77,7 +77,7 @@
 
 (defn test-user []
   (letfn [(on-test-exist [permission_name pred]
-            (if-let [permission-m (not-empty (db/query (select! :user :where [:= :login (name permission_name)])))]
+            (if-let [permission-m (not-empty (db/query (select! {:table_name :user :where [:= :login (name permission_name)]})))]
               (pred permission-m)))]
     (and (on-test-exist :adm some?)
        (on-test-exist :dev some?)
@@ -135,8 +135,8 @@
                  :values [["user" "user" "user" "user" (:id perm)]]})))))
 
 (defn fill-metadata []
-  (doall (metadata/do-create-meta))
-  (doall (metadata/do-create-references)))
+  (doall (mt/do-create-meta))
+  (doall (mt/do-create-references)))
 
 (defn hard-reload-struct []
   ;; for make it uncoment section belove
@@ -196,7 +196,7 @@
 (defn procedure-test-metadata [tables-list]
   (if (verify-table-exists :metadata tables-list)
     (if (verify-table-columns :metadata metadata-cols)
-      (if-not (test-metadata) (do (metadata/do-create-meta) true) true)
+      (if-not (test-metadata) (do (mt/do-create-meta) true) true)
       {:valid? false :output "Metadata table not compatible with Jarman" :table :metadata})
     (do (db/exec metadata) (fill-metadata) true)))
 

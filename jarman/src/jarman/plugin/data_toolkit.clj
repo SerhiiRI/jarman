@@ -155,7 +155,6 @@
 ;;                     :permission.configuration)}}]
 ;;   ((:select (jarman.logic.view-manager/defview-debug-toolkit cfg))))
 
-
 (defn- sql-crud-toolkit-constructor
   "Description
     Generate datatoolkit for sql expression

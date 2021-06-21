@@ -32,9 +32,8 @@
 
    4. Сервісування даних.
 
-
 * Jarman 
-
+  
 ** Що таке джарман?
    
    Система для керування фірмовими даними та документообігом.
@@ -49,7 +48,7 @@
    - Розгортання структури для робочих станцій.
    - Інсталяція на ізольований сервер.
    - Підтримка резервних копій даних.
-   
+     
 ** Demo 
    
 * Логіка
@@ -90,7 +89,7 @@
   - курси.
   - аналітика.
 
-* Ситема послуг та ціни 
+* Ситема послуг
 
   |-------------------------------------------------------------+--------|
   | Послуга                                                     |      $ |
@@ -101,69 +100,3 @@
   | Кошт забезпечення інфраструктури                            |      2 |
   | Аналітика, Навчання                                         |   0.00 |
   | Розширення                                                  |   0.00 |
-
-* How contarct must be look like
-  - When subscribtions start workig?
-  - How much it cost?
-    
-    ~alias julka  == local serviser~
-
-    |---------------------------------------------+----------|
-    | expences trashpanda team                    | price($) |
-    |---------------------------------------------+----------|
-    | mainting trashpanda server infrustracture   | 30       |
-    | trashpanda team                             | 0        |
-    |---------------------------------------------+----------|
-    | stable service stuf                         | price($) |
-    |---------------------------------------------+----------|
-    | call to julka in problem                    | 5/day    |
-    | Mounthly supported data + raports           | -        |
-    | learning the systems                        | 10       |
-    | kanban board per client                     | 2        |
-    | wrting custom plugins                       | -        |
-    | ssh public ip + SSL                         | -        |
-    |---------------------------------------------+----------|
-    | related mounthly service stuf (0-n)         | price($) |
-    |---------------------------------------------+----------|
-    | sdd down and replace + recufnigurate system | -        |
-    | setup hole environment                      | 30       |
-    #+TBLFM: $2=(10+10)
-
-* Mounthly supporter with rapport
-  - Diagnoeses your data
-  - look on your logs
-  - raport abount backups and stored information from client
-
-* learning the systems
-  - Teaching course of using jarman and plugins.
-    
-* mainting trashpanda server infrustracture
-  - Payments for server/backup-server by trahspnda team side
-    - server
-    - expading server infrastcutre
-    - proprietary soft we using
-    - internet abonament payment
-    - electrisity usage payment
-    - maybe public addresses + SSL
-    - on handle crashes on server side
-
-* trashpanda team
-  - tips (currently not calculated)
-
-* Writing update for our systems
-  - donate for changing jarman update strutegy
-    
-* Writing custom plugins
-** With servicing
-   - modificate or create new plugins
-   - make plugin owned by you or make it public for other
-   - Make plugins allow only in 2+ mounth service
-   - service must be start for 3+ mounth.
-** Without servicing
-   - full price for all thing we can give to client
-   - long time to unsvering on problems
-   - no trello dashboard
-   - no ssh infracture 
-   - no backup 
-
-

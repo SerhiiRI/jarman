@@ -4,150 +4,147 @@
    [clojure.data :as data]
    [clojure.java.jdbc :as jdbc]   
    [clojure.string :as string]
-   [jarman.logic.connection :as db]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    [jarman.logic.metadata :as metadata]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.logic.structural-initializer :as sinit]
-   [jarman.tools.lang :refer :all])
+   [jarman.tools.lang :refer :all]
+   [jarman.logic.connection :as db])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
+
 (def all-tables nil)
 (def db-connection nil)
-;; "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db.clj"
+(def table-key :table_name)
 
+;; "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db.clj"
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPER FUNCTIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
-(defn get-options-cli [cli-opt-map]
-  (first (keys (:options cli-opt-map))))
-
-(defn get-value-cli [cli-opt-map]
-  (first (vals (:options cli-opt-map))))
-
-(defn get-path-cli [cli-opt-map]
-  (second (vals (:options cli-opt-map))))
-
-(defn path-to-db [cli-opt-map]
-  (def path-to-db-clj (get-value-cli cli-opt-map))
-  (println "you add path successfully"))
-
-(defn get-tables [path]
+(defn get-tables
+  "Description
+    - get path to file with db (db_meta or db_ssql)
+    - read and eval this file, so write data to variables
+    (def all-tables, def db-conecction, def table-key)"
+  [path]
   (try
-    (binding [*ns* (find-ns 'jarman.managment.db-managment)]  
+    (binding [*ns* (find-ns 'jarman.managment.db-managment)]
       (load-file path)
       (db/connection-set db-connection))
     (catch java.io.FileNotFoundException e
       (println (str "[e] File not found" (.toString e))))))
 
-(defn choose-option
+(defn get-list-schemas
   "Description
-    this func get option from cli options map,
-    - return false if you want add ALL tables
-    - return true if you want add one table"
-  [scm]
-  (if (and (not= "all" scm) (some? scm))
-    true false))
+    get list name of tables from db-file (db_meta.clj or db_ssql) "
+  [](map (fn [scheme] (table-key scheme)) all-tables))
+
+(defn get-list-tables
+  "Description
+    get list name of tables from db-jarman"
+  [] (map (comp second first)(db/query (show-tables))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; FUNCTIONS FOR VALIDATE ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def file-exists?
   (fn [file-path]
-    (do 
-        (binding [*ns* (find-ns 'jarman.managment.db-managment)]  
+    (do (binding [*ns* (find-ns 'jarman.managment.db-managment)]  
           (.exists (clojure.java.io/file file-path))))))
 
-(defn get-one-scheme [table-name]
-  (first (filter (fn [x] (= (:table-name x) (keyword table-name)))
-                 all-tables)))
-
-(defn get-one-meta [table-name]
-  (first (filter (fn [x] (= (:table x) table-name))
+(defn get-table-file-db
+  [table-name]
+  (first (filter (fn [x] (= (table-key x)
+                            (if (= table-key :table)
+                              table-name
+                              (keyword table-name))))
                  all-tables)))
 
 (defn -entity-in? [entity-list]
   (fn [t] (if (nil? (some #(= (string/lower-case t) (string/lower-case %)) entity-list)) false true)))
 
-(def scheme-in? (fn [table-name]
-                  (let [resault
-                        (if (nil? (some
-                                   (fn [x] (= (:table-name x)
-                                              (keyword table-name)))
-                                  all-tables))
-                                  false true)] resault)))
+(def table-in-file-db?
+  "Description
+    check if table-scheme is in db"
+  (fn [table-name]
+    (let [resault (if (nil? (some (fn [x]
+                                    (= (table-key x)
+                                       (if (= table-key :table)
+                                         table-name
+                                         (keyword table-name)))) all-tables))
+                    false true)] resault)))
 
-;; (def meta-in?   (-entity-in?
-;;                  (map :table (db/query sql-connection (select :METADATA :column ["`table`"])))))
+(def table-in?
+  "Description
+    check if table is in DB-jarman"
+  (binding [*ns* (find-ns 'jarman.managment.db-managment)]  
+    (-entity-in? (get-list-tables))))
 
-(def table-in?  (binding [*ns* (find-ns 'jarman.managment.db-managment)]  
-                  (-entity-in? (let [entity-list (db/query (show-tables))]
-                               (println (map (comp second first) entity-list) )
-                               (if (not-empty entity-list) (map (comp second first) entity-list)))) ))
-
-
-;;(db/query (select :metadata :column [:table]))
-
-(table-in? "user")
+(defn valid-tables
+  "Description
+    check whether all tables were written in db"
+  []
+  (let [l-schemas (get-list-schemas)
+        l-tables (get-list-tables)
+        len (count l-schemas)]
+    (if (empty? l-schemas) (println "[!] Schemas for db in file (db_meta.clj or db_ssql.clj) is empty"))
+    (if (empty? l-tables) (println "[!] DB - jarman is empty"))
+    (if (= len (count (for [a l-schemas b l-tables 
+                            :when
+                            (= (name a) b)]
+                        a))) true false)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; FUNCTIONS FOR CREATE TABLES ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn create-scheme []
-  (if-not (empty?
-           (for [t all-tables]
-             (db/exec (create-table! t))))
-    (println "[!] Table structure created successfuly")))
+  (doall (for [t all-tables]
+           (db/exec (create-table! t)))))
 
 (defn create-one-table [scm]
-  (let [scheme (get-one-scheme scm)]
+  (let [scheme (get-table-file-db scm)]
     (if (empty? scheme) (println "[i] Scheme is not found")
-        (do
-          (db/exec (create-table! scheme))
-          (println (format "[i] Table by scheme %s created successfuly" (name scm)))))))
+        (do (db/exec (create-table! scheme))))))
 
-(defn write-meta-to-db []
+(defn create-one-table-by-meta [metadata]
+  (try (do (metadata/update-meta metadata)
+           (db/exec (metadata/create-table-by-meta metadata)))
+       (catch Exception e (println "[!] Problem with " (:table metadata)))))
+
+(defn create-all-by-meta []
   (sinit/procedure-test-all)
-  (for [metadata all-tables]
-    (metadata/update-meta metadata)))
+  (doall (for [metadata all-tables]
+           (create-one-table-by-meta metadata))))
 
-(defn cli-create-table
-  "Description
-    this func get cli options map and
-    choose functions for create tables (create by ssql,
-    create by meta, or create just metadata
-    -> :create-by-meta -> create table from db_meta,clj
-    -> :create-ssql -> create table from db_ssql.clj
-    -> :create-meta -> create meta to table metadata"
-  [cli-opt-m]
-  (let [opt (get-options-cli cli-opt-m)
-        scm (get-value-cli cli-opt-m)
-        path (get-path-cli cli-opt-m)
-        ch (choose-option scm)]
-    (get-tables path)
-    (condp = opt
-      :create-by-meta (do
-                        (write-meta-to-db)
-                        (if ch
-                           (metadata/create-table-by-meta (get-one-meta scm))
-                           (for [metadata all-tables]
-                             (metadata/create-table-by-meta metadata))))
-      :create-by-ssql (if ch
-                        (if (scheme-in? scm)
-                          (create-one-table scm)
-                          (println "[!] Scheme for table not found"))
-                        (create-scheme))
-      :create-meta (if ch
-                     (do
-                       (metadata/create-one-meta scm)
-                       (metadata/do-create-references)
-                       (println (format "[i] Meta for %s created successfuly" (name scm))))
-                     (do (metadata/do-create-meta)
-                         (metadata/do-create-references)
-                         (println "[!] Metadata created successfuly")))
-      (println "[!] You entered invalid operation (key)"))))
+
+
+
+(defmulti generate-t (fn [params] (params :ch)))
+
+(defmethod generate-t "by_meta" [params]
+  (if (table-in-file-db? (params :t-name))
+    (do (sinit/procedure-test-all)
+        (create-one-table-by-meta (get-table-file-db (params :t-name))))
+    (println "[i] Scheme for table not found")))
+
+(defmethod generate-t "by_meta_all" [params]
+  (create-all-by-meta))
+(defmethod generate-t "by_ssql" [params] "hot")
+(defmethod generate-t "by_ssql_all" [params] "hot")
+(defmethod generate-t "meta" [params] "hot")
+(defmethod generate-t "meta_all" [params] "hot")
+
+(defn generate-table [choice table-name path]
+  ;;(get-tables path)
+  (generate-t {:ch choice :t-name table-name}))
+
+(defn generate-tables [choice path]
+  ;;(get-tables path)
+  (generate-t {:ch choice}))
+
+;;(generate-table "by_meta" "k")
 
 
 
@@ -155,26 +152,19 @@
 ;;; FUNCTIONS FOR DELETE TABLES ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn delete-scheme []
-  (for [t (reverse all-tables)]
-    (db/exec (drop-table (:table-name t)))))
+  (doall (for [t (reverse all-tables)]
+           (db/exec (drop-table (:table_name t)))))
+  (println "[i] Tables deleted successfuly"))
 
 (defn delete-one-table [scm]
-  (db/exec (drop-table (keyword scm))))
+  (try
+    (db/exec (drop-table (keyword scm)))
+    (println (format "[i] Table %s deleted successfuly" (name scm)))
+    (catch Exception e (println "Cannot delete or update a parent row: a foreign key constraint fails"))))
 
-(defn cli-delete-table [cli-opt-m]
-  (let [opt (first (keys (:options cli-opt-m)))
-        scm (first (vals (:options cli-opt-m)))]
-    (if (choose-option scm)
-      (if (= opt :delete-meta)
-        (do (metadata/delete-one-meta scm)
-            (println (format "[i] Meta  %s cleared successfuly" (name scm))))
-        (do (delete-one-table scm)
-            (println (format "[i] Table %s deleted successufuly" (name scm)))))
-      (if (= opt :delete-meta)
-        (do (metadata/do-clear-meta)
-            (println "[!] Metadata was clear"))
-        (do (delete-scheme)
-            (println "[i] Whole DB scheme was erased"))))))
+;;;;;;;;;;;;;;;
+;;; SCRIPTS ;;;
+;;;;;;;;;;;;;;;
 
 (defn reset-one-db [scm]
   (do (delete-one-table scm)
@@ -186,19 +176,14 @@
 (defn reset-all-db []
   (do (sinit/procedure-test-all)
       (delete-scheme)
-      (println "hey1")
+      (println "[i] DB was deleted")
       (create-scheme)
-      (println "hey2")
+      (println "[i] Tables from scheme created")
       (metadata/do-create-meta)
-      (println "hey3")
+      (println "[i] Created metadata")
       (metadata/do-create-references)
-      (println "[i] DB was reset")))
-
-(defn reset-db [cli-opt-m]
-  (let [scm (get-in cli-opt-m [:options :print] nil)]
-    (if (choose-option scm)
-      (reset-one-db scm) 
-      (reset-all-db))))
+      (println "[i] Created references")
+      (println "[i] DB was reset successufuly")))
 
 (defn reset-one-meta [scm]
   (do (metadata/delete-one-meta scm)
@@ -210,33 +195,6 @@
       (metadata/do-create-meta)
       (metadata/do-create-references)
       (println "[i] Metadata was reset")))
-
-(defn reset-meta [cli-opt-m]
-   (let [scm (get-in cli-opt-m [:options :print] nil)]
-    (if (choose-option scm)
-      (reset-one-meta scm) 
-      (reset-all-meta))))
-
-(defn cli-scheme-view [cli-opt-m]
-  (let [scheme (get-in cli-opt-m [:options :view-scheme] nil)
-        data (get-one-scheme scheme)]
-    (if (empty? data)
-      (println "[!] (cli-scheme-view): internal error" )
-      (do
-        (println (string/join "/" ["jarman.schema-builder" (name scheme)]))
-        (println (pp-str data))))))
-
-(defn view-tables []
-  (println all-tables))
-
-;;(create-one-table "user")
-;;(delete-one-table "user")
-
-
-
-(db/connection-get)
-
-(db/query (show-tables))
 
 
 

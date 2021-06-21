@@ -8,9 +8,10 @@
             [seesaw.mig :as smig]
             [jarman.tools.swing :as stool]
             [jarman.logic.state :as state]
-            [jarman.tools.lang :as lang]
+            [jarman.tools.lang :refer :all]
             [jarman.logic.metadata :as mmeta]
             [jarman.gui.gui-tools :as gtool]
+            [seesaw.chooser :as chooser]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
   (:import (java.awt Color)
            (jarman.test CustomScrollBar)))
@@ -166,7 +167,7 @@
             scr
             (do 
               (c/config! scr (get-key sm) (get-val sm))
-              (next (lang/map-rest sm)))))
+              (next (map-rest sm)))))
         (apply hash-map args)))
     (.setBorder scr nil)
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
@@ -494,7 +495,8 @@
          border-color-unfocus (gtool/get-color :decorate :focus-lost)
          onClick (fn [e])
          debug false}}]
-  (if-not (empty? (str val)) (swap! local-changes (fn [storage] (assoc storage store-id val))))
+  (swap! local-changes (fn [storage] (assoc storage store-id val)))
+  
   (input-text
    :args [:editable? editable?
           :enabled? enabled?
@@ -507,13 +509,15 @@
                    :mouse-entered (if editable? (fn [e]) (fn [e]
                                                            (gtool/hand-hover-on e)
                                                            (c/config! e)))
-                   :caret-update (fn [e]
-                                   (let [new-v (c/value (c/to-widget e))]
-                                     (cond
-                                       (and (not (nil? store-id))
-                                            (not (= val new-v)))
-                                       (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
-                                       (not store-orginal) (reset! local-changes (dissoc @local-changes store-id)))))
+                   :caret-update (fn [e] (swap! local-changes (fn [storage] (assoc storage store-id (c/value (c/to-widget e)))))
+                                   ;; (println "\nnput Store ID" store-id val)
+                                  ;;  (let [new-v (c/value (c/to-widget e))]
+                                  ;;    (cond
+                                  ;;      (and (not (nil? store-id))
+                                  ;;           (not (= val new-v)))
+                                  ;;      (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
+                                  ;;      (not store-orginal) (reset! local-changes (dissoc @local-changes store-id))))
+                                   )
                    :focus-gained (fn [e] (c/config! e :border ((gtool/get-user-data e :border-fn) border-color-focus)))
                    :focus-lost   (fn [e] (c/config! e :border ((gtool/get-user-data e :border-fn) border-color-unfocus)))]]))
 
@@ -544,7 +548,7 @@
               store-id nil
               always-set-changes true}}]
    
-   (let [combo-model (if (empty? selected-item) (cons selected-item model) (lang/join-vec [selected-item] (filter #(not= selected-item %) model)))]
+   (let [combo-model (if (empty? selected-item) (cons selected-item model) (join-vec [selected-item] (filter #(not= selected-item %) model)))]
     (if (and (= always-set-changes true) (not (empty? selected-item)))
      (do
        (swap! local-changes (fn [storage] (assoc storage store-id combo-model)))))
@@ -1068,6 +1072,28 @@
 ;; │                    │________________________________________
 ;; └────────────────────┘                                       
 
+(defn input-file
+  "Description:
+     File choser"
+  [{:keys [store-id local-changes val]
+    :or {store-id :input-file
+         local-changes (atom {})
+         val ""}}]
+  (let [default-path (str jarman.config.environment/user-home "/Documents")
+        input-text (input-text-with-atom 
+                    {:val (rift val default-path)
+                     :store-id store-id
+                     :local-changes local-changes
+                     :args [:font (gtool/getFont  :name "Monospaced")]})
+        icon (button-basic
+              ""
+              :onClick (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
+                                 (c/config! input-text :text (rift new-path default-path))))
+              :args [:icon (jarman.tools.swing/image-scale icon/enter-64-png 30)])
+        panel (smig/mig-panel
+               :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[fill]0px"]
+               :items [[icon] [input-text]])]
+    panel))
 
 (defn menu-bar
   "Description:
@@ -1233,3 +1259,41 @@
       (doto dialog c/pack! c/show!)
       )))
 
+
+(defn popup-info-window
+  "Description:
+      Function for create window with some message.
+   Example:
+      (popup-info-window header body relative)
+   "
+  [header body relative]
+;;   (println "\nheader" header "\nbody" body "\ninvoker" relative)
+  (let [comp (mig-panel
+              :constraints ["wrap 1" "10px[grow, fill]10px" "10px[fill]10px"]
+              :id :message-view-box
+              :items [[(c/label :text header
+                                :font (gtool/getFont 18)
+                                :border (b/empty-border :left 5 :right 5))]
+                      [(hr 1 "#999" [0 0 0 5])]
+                      [(c/label
+                        :text (gtool/htmling body :justify)
+                        :font (gtool/getFont 14)
+                        :border (b/empty-border :left 10 :right 10))]])]
+    (popup-window {:view comp :window-title "Info" :size [400 350] :relative relative})))
+
+
+
+
+(def select-box-table-list
+  "Description:
+     Combobox with all tables.
+   "
+  (fn [{:keys [local-changes store-id val] 
+        :or {local-changes (atom {})
+             store-id :documents.table
+             val nil}}]
+    (println "\ntable-select-box" store-id val)
+    (select-box (vec (map #(get % :table) (mmeta/getset)))
+               :store-id store-id
+               :local-changes local-changes
+               :selected-item (rift val ""))))

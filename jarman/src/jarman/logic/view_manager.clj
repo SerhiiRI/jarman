@@ -1,5 +1,4 @@
 (ns jarman.logic.view-manager
-  (:refer-clojure :exclude [update])
   (:require
    ;; Clojure toolkit 
    [clojure.string :as string]
@@ -13,6 +12,7 @@
    [jarman.plugin.jspl :refer :all :as jspl]
    [jarman.plugin.table :as plug]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
+   [jarman.logic.sql-tool :refer [select! update! insert!]]
    [jarman.logic.metadata :as mt]
    [jarman.logic.state :as state]
    [jarman.plugin.data-toolkit :refer [data-toolkit-pipeline]])
@@ -48,31 +48,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; CONFIG PROCESSOR ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn ^:private key-setter
-  "Description
-
-    Test if some `parameter-k` key inside `m`
-    if not, then add by this key `parameter-default-v`
-
-    Param `parameter-default-v` may be value or 0-arg
-    function
-
-  Example
-    (let [t1 (key-setter :permission [:user])
-          t2 (key-setter :exist-key 'no)
-          t3 (key-setter :fn-value #(gensym))]
-       (-> {:exist-key 'yes} t1 t2 t3))
-     ;; => {:exist-key   yes
-            :permission  [:user]
-            :fn-value    G__24897}"
-  [parameter-k parameter-default-v]
-  (fn [m] (if (contains? m parameter-k) m
-           (assoc m parameter-k
-                  (if (fn? parameter-default-v)
-                    (parameter-default-v)
-                    parameter-default-v)))))
-
 (defn- sort-parameters-plugins
   "Description
     this func get list of data with different types,
@@ -113,20 +88,21 @@
       :permission [:admin :user],
       :name \"first Permission\",
       :id :plugin-24793,
-      :table-name :permission,
+      :table_name :permission,
       :plugin-name table,
       :plugin-config-path [:permission :table :plugin-24793]}
      {:--another :--param,
       :permission [:user],
       :name \"second Permission\",
       :id :UUUUUUUUUUUUUU,
-      :table-name :permission,
+      :table_name :permission,
       :plugin-name table,
       :plugin-config-path [:permission :table :UUUUUUUUUUUUUU]}]"
   [table-name body]
   (let [add-id         (key-setter :id         #(keyword (gensym "plugin-")))
-        add-table-name (key-setter :table-name (keyword table-name))
+        add-table-name (key-setter :table_name (keyword table-name))
         add-permission (key-setter :permission [:user])
+        eval-action    (fn [m] (update-in m [:actions] eval))
         k-table-name (keyword table-name)]
     (let [[global-cfg plugin-list] (sort-parameters-plugins body)]
       (reduce
@@ -138,6 +114,7 @@
                 add-plugin-name   (key-setter :plugin-name        (symbol plugin-name))
                 add-full-path-cfg (key-setter :plugin-config-path [k-table-name k-plugin-name k-plugin-id])
                 cfg (-> cfg
+                        eval-action
                         add-table-name
                         add-permission
                         add-plugin-name
@@ -210,10 +187,10 @@
              (let [table-name (str (second (first data)))
                    table-data (str (first data))
                    id-t (:id (first (db/query
-                                     (select :view :where [:= :view.table_name table-name]))))]   
+                                     (select! {:table_name :view :where [:= :table_name table-name]}))))]   
                (if-not (= s 0)
                  (if (nil? id-t)
-                   (db/exec (insert :view :set {:table_name table-name, :view table-data}))
+                   (db/exec (insert! {:table_name :view :set {:table_name table-name, :view table-data}}))
                    (db/exec (update
                              :view
                              :where [:= :id id-t]
@@ -225,7 +202,7 @@
   (let [con (dissoc (db/connection-get)
                     :dbtype :user :password
                     :useUnicode :characterEncoding)
-        data (db/query (select! {:table-name :view
+        data (db/query (select! {:table_name :view
                                  :column    [:view]}))
         sdata (if-not (empty? data)(concat [con] (map (fn [x] (read-string (:view x))) data)))
         path  "src/jarman/logic/view.clj"]
@@ -250,7 +227,7 @@
 ;;(put-table-view-to-db (loader-from-view-clj (db/connection-get)))
 
 (defn- load-data-recur [data loaders]
-  (if (empty? data)
+  (if (and (empty? data) (not (empty? loaders)))
     (load-data-recur ((first loaders) (db/connection-get)) (rest loaders))
     data))
 
@@ -275,6 +252,4 @@
       ((state/state :alert-manager) :set {:header "Error" :body "Problem with tables. Data not found in DB"} 5)
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (map (fn [x] (eval x)) (subvec (vec data) 1)))))))
-
-
 

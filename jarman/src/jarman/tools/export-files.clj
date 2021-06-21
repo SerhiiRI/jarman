@@ -6,7 +6,6 @@
         seesaw.font
         seesaw.chooser
         clojure.walk)
- 
   (:require [clojure.string :as string]
             [jarman.tools.swing :as stool]
             [jarman.gui.gui-tools :refer :all]
@@ -17,14 +16,11 @@
             [clojure.java.io :as io]
             [jarman.logic.document-manager :as doc]
             [clojure.java.io :refer [file output-stream input-stream]])
-
   ;; (:import [org.odftoolkit.odfdom.doc OdfTextDocument]
   ;;          [org.odftoolkit.simple.common.navigation TextNavigation])
   )
 
 (def temp-directory (strg/document-templates-dir-path))
-
-
 ;; (defn read-data [file-path]
 ;;   (let [f (java.io.File. file-path)
 ;;         ary (byte-array (.length f))
@@ -42,7 +38,6 @@
 ;;    (str temp-directory "/" file-name)
 ;;    (str export-directory "/" file-name)
 ;;    values-map))
-
 
 ;; ;; (defn get-name-temp-files [path]
 ;; ;;   (println )
@@ -79,35 +74,49 @@
 
 (def emp-border (empty-border :bottom 10 :top 10 :left 20 :right 20))
 
-
-
-
-
-(map (fn [d] (:name d))(doc/select-documents))
+(map (fn [d] (:name d)) (doc/select-documents))
 ;; => ("also-test" "xwkgpuzzkl" "nrczxxzgua" "xjjsifqcvx" "mbbzxfvexc" "wcbixstpgy" "also-test" "anwcjsgamg" "piyybjswgw" "user exported action" "user exported action" "Export file" "user exported action" "user exported action" "Сука блять" "also-test" "also-test")
-
 
 (doc/insert-document
  {:id 17, :table "user", :name "julka-test",
   :document "templates\\dovidka.odt"
   :prop {:dark "rose"}})
 
+(do (merge-doc (clojure.java.io/file temp-directory "test.odt")
+               (clojure.java.io/file env/user-home "test.odt")
+               ;; columns
+               ["developers.Name", "developers.Mail", "developers.LastName"]
+               ;; data
+               {"project" {"Name" "XDocReport"},
+                "developers"
+                [{"Name" "ZERR",
+                  "Mail" "angelo.zerr@gmail.com",
+                  "LastName" "Angelo"},
+                 {"Name" "Leclercq",
+                  "Mail" "pascal.leclercq@gmail.com",
+                  "LastName" "Pascal"}]}))
 
-
-(merge-doc (clojure.java.io/file temp-directory "dovidka.odt")
-           (clojure.java.io/file env/user-home "dovidka.odt")
-           ;; columns
-           ["developers.Name", "developers.Mail", "developers.LastName"]
-           ;; data
-           {"project" {"Name" "XDocReport"},
-            "developers"
-            [{"Name" "ZERR",
-              "Mail" "angelo.zerr@gmail.com",
-              "LastName" "Angelo"},
-             {"Name" "Leclercq",
-              "Mail" "pascal.leclercq@gmail.com",
-              "LastName" "Pascal"}]})
-
+(do (merge-doc (clojure.java.io/file temp-directory "dogovir_2.odt")
+              (clojure.java.io/file env/user-home "dogovir_2.odt")
+              ;; columns
+              ["dogovir_ppo.cashe_register-name"
+               "dogovir_ppo.cashe_register-serial_number"
+               "dogovir_ppo.cashe_register-manufacture_date"
+               "dogovir_ppo.point_of_sale-name"]
+              ;; data
+              {"dogovir_ppo"
+               [{"cashe_register-name" "RE-sff33",
+                 "cashe_register-serial_number" "1837479",
+                 "cashe_register-manufacture_date" "09.12.2020"
+                 "point_of_sale-name" "Angelo"},
+                {"cashe_register-name" "Heyys",
+                 "cashe_register-serial_number" "000000",
+                 "cashe_register-manufacture_date" "07/11/2021"
+                 "point_of_sale-name" "Angelo"}
+                {"cashe_register-name" "MEss3",
+                 "cashe_register-serial_number" "111111",
+                 "cashe_register-manufacture_date" "10/12/2020"
+                 "point_of_sale-name" "Newmodem"}]}))
 
 (defn convert-file [file-name values-map export-directory]
   (merge-doc
@@ -115,25 +124,14 @@
    (clojure.java.io/file export-directory file-name)
    values-map))
 
-
-
-
-(let [find-doc (filter (fn [d] (= "julka-test" (:name d))) (doc/select-documents))]
+(let [find-doc (filter (fn [d] (= "dovidka" (:name d))) (doc/select-documents))]
   (if-not (= nil find-doc)
     (do (println "yes")
       (doc/download-document {:id (:id (first find-doc))})
       (convert-file
-       "julka-test.odt"
+       "dovidka.odt"
        (last data-templ) 
        env/user-home))))
-
-
-
-
-
-
-
-
 
 ;;; panel to frame
 

@@ -32,6 +32,7 @@
             [jarman.gui.gui-config-generator :refer :all :as cg]
             ;; [jarman.logic.view :as view]
             ;; [jarman.gui.gui-docs :as docs]
+
             [jarman.logic.state :as state]
             [jarman.gui.gui-seed :as gseed]
             [jarman.plugin.table :as gtable]
@@ -582,12 +583,12 @@
                        (table-editor--component--column-picker-btn
                         (get-in column [:representation])
                         (fn [e]
-                          (c/config! (c/select (c/to-root @app) [(to-hashkey column-editor-id)])
+                          (c/config! (c/select (c/to-root (state/state :app)) [(to-hashkey column-editor-id)])
                                    :items (gtool/join-mig-items meta-panel))))))
                    columns (range (count columns)))
               (c/label :text "Actions" :border (empty-border :top 5 :bottom 5) :foreground blue-color)
               (table-editor--element--btn-add-column (fn [e]
-                                                       (c/config! (c/select (c/to-root @app) [(to-hashkey column-editor-id)])
+                                                       (c/config! (c/select (c/to-root (state/state :app)) [(to-hashkey column-editor-id)])
                                                                 :items (gtool/join-mig-items (add-column-panel table-name))))))))
 
 (defn table-editor--component--space-for-column-editor
@@ -631,66 +632,76 @@
                                           5)))))
 
 
+;; path groups {:field [[:table :field documents]]
+;;              , 2 [[:columns 2 :default-value ] [:columns 2 :representation document] [:columns 2 :description ]]
+;;              , 1 [[:columns 1 :default-value ] [:columns 1 :representation name] [:columns 1 :description ]]
+;;              , 3 [[:columns 3 :default-value ] [:columns 3 :representation prop] [:columns 3 :description ]]
+;;              , 0 [[:columns 0 :default-value ] [:columns 0 :description ] [:columns 0 :representation table]]
+;;              , :representation [[:table :representation documents]]
+;;              , :description [[:table :description ]]}
+
 (defn table-editor--element--btn-show-changes
   [local-changes table]
-  (gtool/table-editor--component--bar-btn :edit-view-back-btn (gtool/get-lang-btns :show-changes)
-                                    icon/refresh-grey-64-png icon/refresh-blue-64-png
-                                    (fn [e] (@popup-menager
-                                             :new-message
-                                             :title (str "Changes list in " (get-in table [:prop :table :representation]))
-                                             :body
-                                             (let [bpnl (mig-panel
-                                                         :constraints ["wrap 1" "20px[]0px" "5px[top]0px"]
-                                                         :background "#fff"
-                                                         :preferred-size [400 :by 300])
-                                                   scr (c/scrollable bpnl
-                                                                   :hscroll :never)
-                                                   path-groups (group-by second (map (fn [x] (conj (subvec (first x) 1) (second x))) @local-changes))]
-                                               (println @local-changes)
-                                               (println path-groups)
-                                               (doall
-                                                (map
-                                                 (fn [[group-name paths]]
-                                                   (.add bpnl
-                                                         (c/label
-                                                          :foreground gcomp/blue-color
-                                                          :text
-                                                          (str
-                                                           (name (get-in table
-                                                                         [:prop :columns group-name :field])))))
-                                                   (doall (map
-                                                           (fn [path]
-                                                             (.add
-                                                              bpnl
-                                                              (c/horizontal-panel
-                                                               :background "#fff"
-                                                               :items (list
-                                                                       (c/label
-                                                                        :border (empty-border :left 10)
-                                                                        :background "#fff"
-                                                                        :font (gtool/getFont 12)
-                                                                        :text (str
-                                                                               (name (last (butlast path)))
-                                                                               ": "))
-                                                                       (c/label
-                                                                        :background gcomp/light-light-grey-color
-                                                                        :font (gtool/getFont 12)
-                                                                        :text (get-in table (flatten [:prop (vec (butlast path))])))
-                                                                       (c/label
-                                                                        :background "#fff"
-                                                                        :font (gtool/getFont 12)
-                                                                        :text " to ")
-                                                                       (c/label
-                                                                        :background gcomp/light-light-grey-color
-                                                                        :font (gtool/getFont 12)
-                                                                        :text (last path))))))
-                                                           paths))) path-groups))
-                                               (.repaint bpnl)
-                                               (.setUnitIncrement (.getVerticalScrollBar scr) 20)
-                                               (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. 0 0))
-                                               (.setBorder scr nil)
-                                               scr)
-                                             :size [400 300]))))
+  (gtool/table-editor--component--bar-btn
+   :edit-view-back-btn
+   (gtool/get-lang-btns :show-changes)
+   icon/refresh-grey-64-png
+   icon/refresh-blue-64-png
+   (fn [e] (gcomp/popup-window
+            {:window-title (gtool/get-lang-btns :show-changes)
+             :size [300 300]
+             :view (let [bpnl (mig-panel
+                               :constraints ["wrap 1" "20px[]0px" "5px[top]0px"]
+                               :background "#fff"
+                               :preferred-size [400 :by 300])
+                         scr (c/scrollable bpnl
+                                           :hscroll :never)
+                         path-groups (group-by second (map (fn [x] (conj (subvec (first x) 1) (second x))) @local-changes))]
+                     ;; (println @local-changes)
+                     ;; (println path-groups)
+                     (doall
+                      (map
+                       (fn [[group-name paths]]
+                         (.add bpnl
+                               (c/label
+                                :foreground gcomp/blue-color
+                                :text (str (name (rift (get-in table [:prop :columns group-name :field]) "")))))
+                         (doall (map
+                                 (fn [path]
+                                   (.add
+                                    bpnl
+                                    (c/horizontal-panel
+                                     :background "#fff"
+                                     :items (list
+                                             (c/label
+                                              :border (empty-border :left 10)
+                                              :background "#fff"
+                                              :font (gtool/getFont 12)
+                                              :text (str
+                                                     (name (last (butlast path)))
+                                                     ": "))
+                                             (c/label
+                                              :background "#ffb8bf"
+                                              :font (gtool/getFont 12)
+                                              :text (get-in table (flatten [:prop (vec (butlast path))])))
+                                             (c/label
+                                              :background "#fff"
+                                              :font (gtool/getFont 12)
+                                              :text " to ")
+                                             (c/label
+                                              :background "#d1ffd9"
+                                              :font (gtool/getFont 12)
+                                              :text (last path))))
+                                    )
+                                   )
+                                 paths))) path-groups))
+                     (.repaint bpnl)
+                     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
+                     (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. 0 0))
+                     (.setBorder scr nil)
+                     scr)
+             })
+     )))
 
 
 (defn create-view--table-editor
@@ -1275,8 +1286,9 @@
                                  [(button-expand "Debug items"
                                                  [(button-expand-child "Popup" :onClick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (c/label "Hello popup!") :size [400 200])))
                                                   (button-expand-child "Dialog" :onClick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100])))))
-                                                  (button-expand-child "Popup window" :onClick (fn [e] (gcomp/popup-window {:relative @app})))
-                                                  (button-expand-child "alert" :onClick (fn [e] ((state/state :alert-manager) :set {:header "Czym jest Lorem Ipsum?" :body "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle poligraficznym. Został po raz pierwszy użyty w XV w. przez nieznanego drukarza do wypełnienia tekstem próbnej książki. Pięć wieków później zaczął być używany przemyśle elektronicznym, pozostając praktycznie niezmienionym. Spopularyzował się w latach 60. XX w. wraz z publikacją arkuszy Letrasetu, zawierających fragmenty Lorem Ipsum, a ostatnio z zawierającym różne wersje Lorem Ipsum oprogramowaniem przeznaczonym do realizacji druków na komputerach osobistych, jak Aldus PageMaker"} 5)))])])]
+                                                  (button-expand-child "Popup window" :onClick (fn [e] (gcomp/popup-window {:relative (state/state :app)})))
+                                                  (button-expand-child "alert" :onClick (fn [e] ((state/state :alert-manager) :set {:header "Czym jest Lorem Ipsum?" :body "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle poligraficznym. Został po raz pierwszy użyty w XV w. przez nieznanego drukarza do wypełnienia tekstem próbnej książki. Pięć wieków później zaczął być używany przemyśle elektronicznym, pozostając praktycznie niezmienionym. Spopularyzował się w latach 60. XX w. wraz z publikacją arkuszy Letrasetu, zawierających fragmenty Lorem Ipsum, a ostatnio z zawierającym różne wersje Lorem Ipsum oprogramowaniem przeznaczonym do realizacji druków na komputerach osobistych, jak Aldus PageMaker"} 5)))
+                                                  (button-expand-child "Select table" :onClick (fn [e] (gcomp/popup-window {:view (gcomp/select-box-table-list {}) :relative (state/state :app) :size [250 40]})))])])]
                [(jarmanapp--main-view-space [] [])]]))))
 
 ;; (jarman.logic.metadata/getset)
@@ -1295,9 +1307,9 @@
     (let [relative (atom nil)]
       (cm/swapp)
       (try
-        ;; (println "last pos" [(.x (.getLocationOnScreen (seesaw.core/to-frame @app))) (.y (.getLocationOnScreen (seesaw.core/to-frame @app)))])
-        (reset! relative [(.x (.getLocationOnScreen (seesaw.core/to-frame @app))) (.y (.getLocationOnScreen (seesaw.core/to-frame @app)))])
-        (.dispose (seesaw.core/to-frame @app))
+        ;; (println "last pos" [(.x (.getLocationOnScreen (seesaw.core/to-frame (state/state :app)))) (.y (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))])
+        (reset! relative [(.x (.getLocationOnScreen (seesaw.core/to-frame (state/state :app)))) (.y (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))])
+        (.dispose (seesaw.core/to-frame (state/state :app)))
         (catch Exception e (println "Last pos is nil")))
       (gseed/build :items (let [img-scale 35
                                 top-offset 2]
@@ -1336,7 +1348,7 @@
                              (gcomp/fake-focus :vgap top-offset :hgap img-scale)
                              @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook))
-      (if-not (nil? @relative) (.setLocation (seesaw.core/to-frame @app) (first @relative) (second @relative))))
+      (if-not (nil? @relative) (.setLocation (seesaw.core/to-frame (state/state :app)) (first @relative) (second @relative))))
     (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))
     (vmg/do-view-load)))
 
@@ -1355,7 +1367,6 @@
                                     :else (do
                                             (reset! popup-menager (create-popup-service atom-popup-hook))
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
-
 
 (@startup)
 

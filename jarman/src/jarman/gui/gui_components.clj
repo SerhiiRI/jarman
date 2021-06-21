@@ -1297,3 +1297,25 @@
                :store-id store-id
                :local-changes local-changes
                :selected-item (rift val ""))))
+
+(defn code-area
+  "Description:
+    Some text area but with syntax styling.
+    To check avaliable languages eval (seesaw.dev/show-options (seesaw.rsyntax/text-area)).
+    Default language is Clojure.
+  Example:
+    (code-area {})
+    (code-area :syntax :css)
+  "
+  [{:keys [text
+           syntax
+           args]
+    :or {text ""
+         syntax :clojure
+         args []}}]
+  (apply
+   seesaw.rsyntax/text-area
+   :text text
+   :syntax syntax
+   args))
+

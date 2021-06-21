@@ -1,9 +1,11 @@
+
 (ns jarman.gui.gui-app
   (:use seesaw.border
         seesaw.dev
         seesaw.style
         seesaw.mig
-        seesaw.font)
+        seesaw.font
+        seesaw.rsyntax)
   (:import (javax.swing JLayeredPane JLabel JTable JComboBox DefaultCellEditor JCheckBox)
            (javax.swing.table TableCellRenderer TableColumn)
            (java.awt.event MouseEvent)
@@ -1288,7 +1290,27 @@
                                                   (button-expand-child "Dialog" :onClick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100])))))
                                                   (button-expand-child "Popup window" :onClick (fn [e] (gcomp/popup-window {:relative (state/state :app)})))
                                                   (button-expand-child "alert" :onClick (fn [e] ((state/state :alert-manager) :set {:header "Czym jest Lorem Ipsum?" :body "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle poligraficznym. Został po raz pierwszy użyty w XV w. przez nieznanego drukarza do wypełnienia tekstem próbnej książki. Pięć wieków później zaczął być używany przemyśle elektronicznym, pozostając praktycznie niezmienionym. Spopularyzował się w latach 60. XX w. wraz z publikacją arkuszy Letrasetu, zawierających fragmenty Lorem Ipsum, a ostatnio z zawierającym różne wersje Lorem Ipsum oprogramowaniem przeznaczonym do realizacji druków na komputerach osobistych, jak Aldus PageMaker"} 5)))
-                                                  (button-expand-child "Select table" :onClick (fn [e] (gcomp/popup-window {:view (gcomp/select-box-table-list {}) :relative (state/state :app) :size [250 40]})))])])]
+                                                  (button-expand-child "Select table" :onClick (fn [e] (gcomp/popup-window {:view (gcomp/select-box-table-list {}) :relative (state/state :app) :size [250 40]})))
+                                                  (button-expand-child
+                                                   "Text multiline"
+                                                   :onClick (fn [e]
+                                                              (gcomp/popup-window {:window-title "Text multiline"
+                                                                                   :relative (state/state :app)
+                                                                                   :size [250 250]
+                                                                                   :view (c/text
+                                                                                          :text "Some text"
+                                                                                          :size [300 :by 300]
+                                                                                          :editable? true
+                                                                                          :multi-line? true
+                                                                                          :wrap-lines? true)})))
+                                                  (button-expand-child
+                                                   "Rsyntax Text-area"
+                                                   :onClick (fn [e]
+                                                              (gcomp/popup-window {:window-title "Rsyntax text-area"
+                                                                                   :relative (state/state :app)
+                                                                                   :size [350 250]
+                                                                                   :view (gcomp/code-area
+                                                                                          {:text "(fn [x] (println \"Nice ass\" x)"})})))])])]
                [(jarmanapp--main-view-space [] [])]]))))
 
 ;; (jarman.logic.metadata/getset)
@@ -1329,11 +1351,6 @@
                                                         ((state/state :alert-manager) :set {:header "Work mode" :body (str "Switched to: " (session/user-get-permission))}  5)
                                                         (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission))))
                                              :top-offset top-offset)
-
-                            ;;  (gtool/slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 3 img-scale "Docs Templates"
-                            ;;                  :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts (state/state :alert-manager)))))
-                            ;;                  :top-offset top-offset)
-
                              (gtool/slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 4 img-scale "Reload active view"
                                              :onClick (fn [e] (try
                                                                 (((state/state :jarman-views-service) :reload))
@@ -1371,3 +1388,4 @@
 (@startup)
 
 
+;; (mmeta/getset)

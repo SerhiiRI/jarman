@@ -640,7 +640,7 @@
 
 ;;;PLUGINS ;;;        
 (defn table-component [plugin-path global-configuration spec-map]
-  (println "Loading table plugin")
+  ;; (println "Loading table plugin")
   (let [get-from-global #(->> % (join-vec plugin-path) (get-in (global-configuration)))
         data-toolkit  (get-from-global [:toolkit])
         configuration (get-from-global [:config])

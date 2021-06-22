@@ -111,6 +111,7 @@
  :opt-un
  [:jarman.plugin.spec/plug-place :jarman.plugin.table/view-columns])"
   [plugin-key-list]
+  
  (let [klist (vec (concat (plugin-system-requirements) plugin-key-list))
        gruoped-spec (group-by second
                               (map (fn [[k {[spec-k spec-req] :spec}]]
@@ -136,8 +137,11 @@
          [~'plugin-path ~'global-configuration]
          ;;; body
          (~func-component
-          ~'plugin-path ~'global-configuration 
-          (generate-dynamic-spec ~body)))
-       (def ~func-t ~func-toolkit))))
+          ~'plugin-path ~'global-configuration
+          (generate-dynamic-spec [~@body])))
+       (def ~func-t ~func-toolkit)))) 
+
+
+
 
 

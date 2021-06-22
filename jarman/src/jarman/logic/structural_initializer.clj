@@ -55,7 +55,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; VALIDATOR MECHANISM ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (defn verify-table-columns [table table-columns]
   (if-let [column-list (not-empty (map :field (db/query (show-table-columns table))))]
     (reduce #(and %1 (in? column-list %2)) true (mapv name table-columns))))
@@ -86,13 +85,13 @@
 (defn test-metadata []
   (if-let [tables-list (not-empty (mapv (comp second first) (db/query (show-tables))))]
     (let [sql-test (eduction
-                    (comp (remove (fn [table] (in? ["metadata" "permission" "view"] table)))
+                    (comp (remove (fn [table] (in? ["metadata" "view"] table)))
                        (map (fn [table] [:= :table_name table])))
                     tables-list)]
-      (= (count (remove (fn [table] (in? ["metadata" "permission" "view"] table)) tables-list))
+      (= (count (remove (fn [table] (in? ["metadata" "view"] table)) tables-list))
          (count (db/query (select! {:table_name :metadata
                                     :column [:id :table_name]
-                                    :where [:or sql-test]})))))))
+                                    :where (concat [:or] sql-test)})))))))
 
 ;; (defn test-permission [permission_name pred]
 ;;   (if-let [permission-m (not-empty (db/query (select :permission :where [:= :permission_name (name permission_name)])))]

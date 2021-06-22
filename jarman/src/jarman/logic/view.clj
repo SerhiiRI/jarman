@@ -1,23 +1,23 @@
 {:host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman"}
 
 (defview permission
- (table
-  :name "permission"
-  :plug-place [:#tables-view-plugin]
-  :tables [:permission]
-  :view-columns [:permission.permission_name :permission.configuration]
-  :model-insert [:permission.permission_name :permission.configuration]
-  :insert-button true
-  :delete-button true
-  :actions []
-  :buttons []
-  :query
-  {:table_name :permission,
-   :column
-   [:#as_is
-    :permission.id
-    :permission.permission_name
-    :permission.configuration]}))
+  (table
+   :name "permission"
+   :plug-place [:#tables-view-plugin]
+   :tables [:permission]
+   :view-columns [:permission.permission_name :permission.configuration]
+   :model-insert [:permission.permission_name :permission.configuration]
+   :insert-button true
+   :delete-button true
+   :actions []
+   :buttons []
+   :query
+   {:table_name :permission,
+    :column
+    [:#as_is
+     :permission.id
+     :permission.permission_name
+     :permission.configuration]}))
 
 (defview user
  (table
@@ -198,8 +198,7 @@
                                    (let [insert-meta {:id (:selected-id @state)}]
                                      (println "to delete" insert-meta)
                                      (jarman.logic.document-manager/delete-document insert-meta)
-                                     (((jarman.logic.state/state :jarman-views-service) :reload))))
-             }
+                                     (((jarman.logic.state/state :jarman-views-service) :reload))))}
    :buttons [{:form-model :model-insert
               :action :upload-docs-to-db
               :title "Upload document"}

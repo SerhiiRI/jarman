@@ -70,26 +70,49 @@
                     (if-not (nil? (:spec (second b)))
                       {(first b) (:spec (second b))}))))
 
+(defn plugin-system-requirements []
+  (list
+   [:name
+    {:spec [:jarman.plugin.spec/name :req-un],
+     :examples "Table editor",
+     :doc "It's plugin-view name, which use as component label text"}]
+   [:permission
+    {:spec [:jarman.plugin.spec/permission :req-un]
+     :examples "[:user :admin]"
+     :doc "Key to select of possible permissions, put this key in vec 
+           (if you don't enter this key, you will have global key
+            from defview, in another way you will have [:user])"}]
+   [:plug-place
+    {:spec [:jarman.plugin.spec/plug-place :opt-un]
+     :examples [:#tables-view-plugin]
+     :doc "This key indicates place for component"}]))
+
+(defn generate-dynamic-spec [plugin-key-list]
+ (let [klist (vec (concat (plugin-system-requirements) plugin-key-list))
+       gruoped-spec (group-by second
+                              (map (fn [[k {[spec-k spec-req] :spec}]]
+                                     [spec-k spec-req]) klist))]
+   (list 's/key
+         :req-un (mapv first (:req-un gruoped-spec))
+         :opt-un (mapv first (:opt-un gruoped-spec)))))
+
 (defmacro defplugin
   [plugin-name ns description & body]
-  (let [create-name-func (fn [fname] (symbol
-                                     (str ns "/" plugin-name "-" fname)))
+  (let [create-name-func (fn [fname] (symbol (str ns "/" plugin-name "-" fname)))
         func-component (create-name-func "component")
         func-tool (symbol (str plugin-name "-toolkit-pipeline"))
-        func-toolkit (symbol (str ns "/"
-                                  func-tool))
-        func-t (symbol (str plugin-name "-" "toolkit-pipeline"))]    
+        func-toolkit (symbol (str ns "/" func-tool))
+        func-t (symbol (str plugin-name "-toolkit-pipeline"))]    
     `(do        
-       (defn ~plugin-name 
+       (defn ~plugin-name
+         ;;; documentations
          ~(generate-plugin-doc description body)
+         ;;; argumnets
          [~'plugin-path ~'global-configuration]
+         ;;; body
          (~func-component
           ~'plugin-path ~'global-configuration 
-          `(s/keys :req-un
-                  [:global-plugin/permission
-                   :global-plugin/name
-                   :global-plugin/plug-place]
-                )))
+          (generate-dynamic-spec ~body)))
        (def ~func-t ~func-toolkit))))
 
 

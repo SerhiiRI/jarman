@@ -635,10 +635,48 @@
     ;; (c/label :text "Testing mode")
     ))
 
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; SPEC AND DECLARATION ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(s/def :jarman.plugin.table/keyword-list (s/and sequential? #(every? keyword? %)))
+;; (s/valid? :jarman.plugin.table/keyword-list [:suka :bliat :dsaf])
+;; (s/valid? :jarman.plugin.table/keyword-list [:suka :bliat 32])
+;; (s/valid? :jarman.plugin.table/keyword-list 3)
+(s/def :jarman.plugin.table/tables :jarman.plugin.table/keyword-list)
+(s/def :jarman.plugin.table/view-columns :jarman.plugin.table/keyword-list)
+(s/def :jarman.plugin.table/model-insert :jarman.plugin.table/keyword-list)
+(s/def :jarman.plugin.table/insert-button boolean?)
+(s/def :jarman.plugin.table/delete-button boolean?)
+(s/def :jarman.plugin.table/actions map?)
+;;; button list
+(s/def :jarman.plugin.table/form-model #{:model-insert :model-update :model-delete :model-select})
+(s/def :jarman.plugin.table/action keyword?)
+(s/def :jarman.plugin.table/title string?)
+(s/def :jarman.plugin.table/one-button
+  (s/keys :req-un [:jarman.plugin.table/form-model
+                   :jarman.plugin.table/action
+                   :jarman.plugin.table/title]))
+(s/def :jarman.plugin.table/buttons (s/coll-of :jarman.plugin.table/one-button))
+;; (s/valid? :jarman.plugin.table/buttons
+;;           [{:form-model :model-insert, :action :upload-docs-to-db, :title "Upload document"}
+;;            {:form-model :model-update, :action :update-docs-in-db, :title "Update document info"}
+;;            {:form-model :model-update, :action :delete-doc-from-db, :title "Delete row"}])
+(s/def :jarman.plugin.table/query map?)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; EXTERNAL INTERFAISE ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; pipeline 
 (defn table-toolkit-pipeline [configuration datatoolkit]
   datatoolkit)
 
-;;;PLUGINS ;;;        
+;;; component
 (defn table-component [plugin-path global-configuration spec-map]
   ;; (println "Loading table plugin")
   (let [get-from-global #(->> % (join-vec plugin-path) (get-in (global-configuration)))
@@ -672,6 +710,4 @@
                                                                 data-toolkit
                                                                 configuration)))))))))))
     (.revalidate space)))
-
-
 

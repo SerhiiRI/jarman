@@ -2,6 +2,7 @@
 ;;; This is proxy file to pinning all plugins to view.clj render
 (ns jarman.plugin.jspl
   (:require
+   [clojure.spec.alpha :as s]
    [jarman.plugin.table]
    [jarman.gui.gui-tools :as tool]
    [jarman.config.environment :as env]
@@ -9,38 +10,39 @@
    [jarman.plugin.plugin :refer :all]))
 
 (defplugin table jarman.plugin.table
-  "Plugin for generate table-data-manager"
-  [:permission
-   {:spec :global-plugin/permission
-    :examples [:user :admin]
-    :doc "Key to select of possible permissions, put this key in vec (if you don't enter this key, you will have global key from defview, in another way you will have [:user])"}]
-  [:name
-   {:spec :global-plugin/name
-    :examples "repair_contract"
-    :doc "Name of table"}]
-  [:plug-place
-   {:spec :global-plugin/plug-place
-    :examples [:#tables-view-plugin]
-    :doc "This key indicates place for component"}]
+  "Plugin allow to editing One table from database"
   [:tables
-   {:examples [:permission]
-    :doc ""}]
-  [:model
-   {:examples [:permission.permission_name :permission.configuration], 
-    :doc ""}] ;; TODO: Add doc and bind spec
+   {:spec [:jarman.plugin.table/tables :req-un],
+    :doc "list of used tables"
+    :examples "[:permission]"}]
+  [:view-columns
+   {:spec [:jarman.plugin.table/view-columns :req-un],
+    :doc "Columns which must be represented in table on right side"
+    :examples "[:permission.permission_name :permission.configuration]"}]
+  [:model-insert
+   {:spec [:jarman.plugin.table/model-insert :req-un],
+    :doc "Columns which represent model keys"
+    :examples "[:permission.permission_name :permission.configuration]"}]
+  [:insert-button
+   {:spec [:jarman.plugin.table/insert-button :opt-un],
+    :doc "Controll over insert view buttons"
+    :examples "true"}]
+  [:delete-button
+   {:spec [:jarman.plugin.table/delete-button :opt-un],
+    :doc "Controll over delete view buttons"
+    :examples "true"}]
+  [:actions
+   {:spec [:jarman.plugin.jspl/actions :req-un],
+    :doc "Realise additional logic to standart CRUD operation
+          \"{:some-action-keys (fn [state]...)
+          :some-another.... }\""}]
+  [:buttons
+   {:spec [:jarman.plugin.jspl/buttons :opt-un],
+    :examples "[{:form-model :model-insert, :action :upload-docs-to-db, :title \"Upload document\"}
+               {:form-model :model-update...}...]"
+    :doc "is vector of optional buttons which do some logic, discribed in `:action`"}]
   [:query
-   {:examples {:columns (as-is :permission.id :permission.permission_name :permission.configuration)}, :doc ""}])
-
-
-
-
-
-
-
-
-
-
-
-
-
+   {:spec [:jarman.plugin.jspl/query :req-un],
+    :examples "{:table_name :permission, :column [:#as_is ...]...}",
+    :doc "SQL syntax for `select!` query"}])
 

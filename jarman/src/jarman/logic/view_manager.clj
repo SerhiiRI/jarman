@@ -11,7 +11,6 @@
    [jarman.config.environment :as env]
    [jarman.plugin.jspl :refer :all :as jspl]
    [jarman.plugin.table :as plug]
-   [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    [jarman.logic.sql-tool :refer [select! update! insert!]]
    [jarman.logic.metadata :as mt]
    [jarman.logic.state :as state]

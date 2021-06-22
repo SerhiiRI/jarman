@@ -1,4 +1,4 @@
-(ns jarman.gui.gui-components
+ (ns jarman.gui.gui-components
   (:use seesaw.dev
         seesaw.mig)
   (:require [jarman.resource-lib.icon-library :as icon]
@@ -6,6 +6,7 @@
             [seesaw.border :as b]
             [seesaw.util :as u]
             [seesaw.mig :as smig]
+            [seesaw.rsyntax]
             [jarman.tools.swing :as stool]
             [jarman.logic.state :as state]
             [jarman.tools.lang :refer :all]

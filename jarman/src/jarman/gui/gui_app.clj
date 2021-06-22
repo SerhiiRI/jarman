@@ -1,4 +1,3 @@
-
 (ns jarman.gui.gui-app
   (:use seesaw.border
         seesaw.dev

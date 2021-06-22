@@ -87,7 +87,30 @@
      :examples [:#tables-view-plugin]
      :doc "This key indicates place for component"}]))
 
-(defn generate-dynamic-spec [plugin-key-list]
+(defn generate-dynamic-spec
+  "Take `defplugin` body, get and process :spec key in key
+ and generate full map spec body `s/key`. All specs grouping
+ by `:req-un` and `:opt-un`. 
+
+ Warning! also function add to `plugin-key-list` 
+ `plugin-system-requirements` list of specs
+
+(generate-dynamic-spec
+ (list 
+  [:tables
+   {:spec [:jarman.plugin.table/tables :req-un]}]
+  [:view-columns
+   {:spec [:jarman.plugin.table/view-columns :opt-un]}]))
+
+;; => 
+(s/key
+ :req-un
+ [:jarman.plugin.spec/name
+  :jarman.plugin.spec/permission
+  :jarman.plugin.table/tables]
+ :opt-un
+ [:jarman.plugin.spec/plug-place :jarman.plugin.table/view-columns])"
+  [plugin-key-list]
  (let [klist (vec (concat (plugin-system-requirements) plugin-key-list))
        gruoped-spec (group-by second
                               (map (fn [[k {[spec-k spec-req] :spec}]]
@@ -95,6 +118,8 @@
    (list 's/key
          :req-un (mapv first (:req-un gruoped-spec))
          :opt-un (mapv first (:opt-un gruoped-spec)))))
+
+
 
 (defmacro defplugin
   [plugin-name ns description & body]

@@ -1,4 +1,9 @@
 (ns jarman.plugin.dialog
+  (:use seesaw.border
+        seesaw.dev
+        seesaw.mig
+        seesaw.font
+        seesaw.rsyntax)
   (:require
    ;; Clojure toolkit 
    [clojure.data :as data]
@@ -15,6 +20,8 @@
    [seesaw.swingx :as swingx]
    [seesaw.chooser :as chooser]
    ;; Jarman toolkit
+   [jarman.logic.sql-tool :refer :all]
+   [jarman.logic.connection :as db]
    [jarman.logic.document-manager :as doc]
    [jarman.tools.lang :refer :all]
    [jarman.gui.gui-tools :refer :all :as gtool]
@@ -128,3 +135,82 @@
     (.revalidate space)))
 
 
+;; ┌───────────────────────────────┐
+;; │                               │
+;; │ Dialog window for big strings |
+;; │                               │
+;; └───────────────────────────────┘
+
+(defn create-dialog--answer-chooser
+  "Descrition
+    create one label for dialog-window with big string and function, which returned on action"
+  [txt func]
+  (c/vertical-panel
+   :background (gtool/get-color :background :button_main)
+   :focusable? true
+   :listen [:focus-gained   (fn [e] (gtool/hand-hover-on e) (c/config! e :background light-light-grey-color))
+            :focus-lost     (fn [e] (c/config! e :background (gtool/get-color :background :button_main)))
+            :mouse-entered  (fn [e] (gtool/hand-hover-on e) (c/config! e :background light-light-grey-color))
+            :mouse-exited   (fn [e] (c/config! e :background (gtool/get-color :background :button_main)))
+            :mouse-clicked   func
+            :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) func))]
+   :items (list (c/label
+                 :text txt
+                 :halign :left
+                 :font (gtool/getFont 14)
+                 :foreground gcomp/blue-green-color
+                 :border (compound-border (empty-border :left 20 :right 20 :bottom 10 :top 10))))))
+
+(defn create-dialog-repair-chooser
+  "Description
+    this func create dialog-window whith big strings, which gets from db,
+    by table-name and name of column. The first label with data will be
+    the data-string that the user choose last. For this we use last-id."
+  [table-name column last-id]
+  (let [data (db/query (select! {:table_name (keyword table-name)
+                                 :column [:#as_is (keyword column) :id]}))
+        data (sort-by (fn [data-map] (= (:id data-map) last-id)) data)        
+        last-data ((keyword column) (last data))]
+    (mig-panel
+     :background "#fff"
+     :constraints ["" "0px[fill, grow]0px" "0px[grow, top]0px"]
+     :items (gtool/join-mig-items
+             (min-scrollbox
+              (mig-panel
+               :background "#fff"
+               :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
+               :items (gtool/join-mig-items
+                       (mig-panel
+                        :background "#fff"
+                        :constraints ["wrap 1" "0px[:300, fill, grow]0px" "0px[]0px"]
+                        :items
+                        (gtool/join-mig-items
+                         (create-dialog--answer-chooser last-data
+                                                        (fn [e] (c/return-from-dialog e last-data)))
+                         (map (fn [data-map]
+                                (if-not (= last-id (:id data-map))
+                                  (create-dialog--answer-chooser ((keyword column) data-map)
+                                                                 ;;; TO DO swap id to atom
+                                                                 (fn [e] (c/return-from-dialog e (:id data-map))))))
+                              (butlast data))))))
+              :hscroll :never :border nil)))))
+
+;; ;;start julka dialog
+;; (do (doto (seesaw.core/frame
+;;            :title "title"
+;;            :undecorated? false
+;;            :minimum-size [1000 :by 600]
+;;            :content
+;;            (seesaw.mig/mig-panel
+;;             :constraints ["wrap 1" "10px[fill, grow]10px" "10px[top]10px"]
+;;             :items [[(c/label :text "heyy open modal window"
+;;                             :listen [:mouse-entered (fn [e] (c/config! e :cursor :hand))
+;;                                      :mouse-clicked (fn [e]
+;;                                                       (gcomp/popup-window {:window-title "Choose reason for repair"
+;;                                                                            :view
+;;                                                                            (create-dialog-repair-chooser
+;;                                                                             :repair_reasons
+;;                                                                             :description 4)
+;;                                                                            :size [400 300]
+;;                                                                            :relative (c/to-widget e)}))])]]))
+;;       (.setLocationRelativeTo nil) c/pack! c/show!))

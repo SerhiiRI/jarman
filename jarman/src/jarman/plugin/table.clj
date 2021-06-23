@@ -286,6 +286,8 @@
                          (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected-model (:model-id ct-data)))))))))})))
 
 
+
+
 ;; ┌───────────────┐
 ;; │               │
 ;; │ Docs exporter |
@@ -554,7 +556,6 @@
 ;; └──────────────┘
 
 ;; TODO: Spec dla meta-data
-
 (def build-input-form
   "Description:
      Marge all components to one form
@@ -594,8 +595,7 @@
 
 (def auto-builder--table-view
   "Description
-     Prepare and merge complete big parts
-   "
+     Prepare and merge complete big parts"
   (fn [global-configuration
        data-toolkit
        configuration]
@@ -638,7 +638,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SPEC AND DECLARATION ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (s/def :jarman.plugin.table/keyword-list (s/and sequential? #(every? keyword? %)))
 ;; (s/valid? :jarman.plugin.table/keyword-list [:suka :bliat :dsaf])
 ;; (s/valid? :jarman.plugin.table/keyword-list [:suka :bliat 32])
@@ -664,18 +663,15 @@
 ;;            {:form-model :model-update, :action :delete-doc-from-db, :title "Delete row"}])
 (s/def :jarman.plugin.table/query map?)
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; EXTERNAL INTERFAISE ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 ;;; pipeline 
 (defn table-toolkit-pipeline [configuration datatoolkit]
   datatoolkit)
 
 ;;; component
-(defn table-component [plugin-path global-configuration spec-map]
-  ;; (println "Loading table plugin")
+(defn table-component [plugin-path global-configuration]
   (let [get-from-global #(->> % (join-vec plugin-path) (get-in (global-configuration)))
         data-toolkit  (get-from-global [:toolkit])
         configuration (get-from-global [:config])
@@ -687,24 +683,23 @@
     ;; (println "\nData toolkit" data-toolkit)
     ;; (println "Allow Permission: " (session/allow-permission? (:permission configuration)))
     ;; TODO: Set invoker expand button if not exist add child invokers
-    (if (false? (spec/test-keys-jtable configuration spec-map))
-      (println "[ Warning ] plugin/table: Error in spec")
+    (if (s/valid? :jarman.plugin.spec/table  configuration)
       (if (session/allow-permission? (:permission configuration))
-        (do
-          (swap! atm (fn [inserted]
-                       (conj inserted
-                             (gcomp/button-expand-child
-                              title
-                              :onClick (fn [e]
-                                        ;;  (println "\nplugin-path\n" plugin-path title)
-                                         ((state/state :jarman-views-service)
-                                          :set-view
-                                          :view-id (str "auto-" title)
-                                          :title title
-                                          :scrollable? false
-                                          :component-fn (fn [] (auto-builder--table-view
-                                                                (global-configuration)
-                                                                data-toolkit
-                                                                configuration)))))))))))
+        (do (swap! atm (fn [inserted]
+                         (conj inserted
+                               (gcomp/button-expand-child
+                                title
+                                :onClick (fn [e] ((state/state :jarman-views-service)
+                                                  :set-view
+                                                  :view-id (str "auto-" title)
+                                                  :title title
+                                                  :scrollable? false
+                                                  :component-fn (fn [] (auto-builder--table-view
+                                                                        (global-configuration)
+                                                                        data-toolkit
+                                                                        configuration))))))))))
+      ((state/state :alert-manager) :set {:header "Error"
+                                          :body (str (name (:table_name configuration)) "  "
+                                                     (s/explain-str :jarman.plugin.spec/table configuration))} 5))
     (.revalidate space)))
 

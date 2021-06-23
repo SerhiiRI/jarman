@@ -116,9 +116,10 @@
        gruoped-spec (group-by second
                               (map (fn [[k {[spec-k spec-req] :spec}]]
                                      [spec-k spec-req]) klist))]
-   (list 's/key
-         :req-un (mapv first (:req-un gruoped-spec))
-         :opt-un (mapv first (:opt-un gruoped-spec)))))
+   `(s/def ~(keyword "jarman.plugin.spec" "table") 
+      (s/keys
+       :req-un ~(mapv first (:req-un gruoped-spec))
+       :opt-un ~(mapv first (:opt-un gruoped-spec))))))
 
 
 
@@ -129,7 +130,8 @@
         func-tool (symbol (str plugin-name "-toolkit-pipeline"))
         func-toolkit (symbol (str ns "/" func-tool))
         func-t (symbol (str plugin-name "-toolkit-pipeline"))]    
-    `(do        
+    `(do
+       ~(generate-dynamic-spec body)
        (defn ~plugin-name
          ;;; documentations
          ~(generate-plugin-doc description body)
@@ -137,8 +139,7 @@
          [~'plugin-path ~'global-configuration]
          ;;; body
          (~func-component
-          ~'plugin-path ~'global-configuration
-          (generate-dynamic-spec [~@body])))
+          ~'plugin-path ~'global-configuration))
        (def ~func-t ~func-toolkit)))) 
 
 

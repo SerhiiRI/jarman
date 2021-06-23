@@ -1,9 +1,9 @@
 ;; Description
 ;;   In this file realized cli-toolkit 
 ;; Location
-;;   -- top -- 
-;;   -- center -- 
-;;   -- bottom --
+;;   -- top -- parse-options for data managment (like create-table, delete, reset db etc)
+;;   -- center -- parse-options for structure of project (refresh-icons, refresh fonts etc) 
+;;   -- bottom -- in comment you will find eampls for using keys in cli
 
 
 (ns jarman.cli.jarman-cli
@@ -63,7 +63,6 @@
    ["-h" "--help"
     :parse-fn #(str %)]])
 
-;;to add swap file-db
 (defn data-cli [& args]
   (let [cli-opt (parse-opts args data-cli-options)
         opts (get cli-opt :options)
@@ -89,9 +88,9 @@
         ;;  (= k1 :dummy-data)   (println "")
         :else (cli/print-helpr cli-opt)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Project structure manger ;;; 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Project structure manager ;;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def structure-cli-options
   [[nil "--refresh-icons" "Regenerate icon assets library"]
    [nil "--refresh-fonts" "Regenerate font assets library"]

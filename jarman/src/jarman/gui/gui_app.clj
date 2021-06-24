@@ -1,3 +1,4 @@
+
 (ns jarman.gui.gui-app
   (:use seesaw.border
         seesaw.dev
@@ -319,6 +320,7 @@
                :id :db-viewer--component--menu-bar
                :buttons [["Delete"
                           icon/basket-blue1-64-png
+                          ""
                           (fn [e]
                             (create-dialog-yesno
                              "Delete"
@@ -933,10 +935,10 @@
       :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px[grow, fill]0px"]
       :items [[(gcomp/menu-bar
                 :id :db-viewer--component--menu-bar
-                :buttons [["Show all relation" icon/refresh-connection-blue-64-png (fn [e])]
-                          ["Save view" icon/agree-grey-64-png (fn [e])]
-                          ["Reset view" icon/arrow-blue-left-64-png (fn [e])]
-                          ["Reloade view" icon/refresh-blue-64-png (fn [e] (((state/state :jarman-views-service) :reload)))]])]
+                :buttons [["Show all relation" icon/refresh-connection-blue-64-png "" (fn [e])]
+                          ["Save view" icon/agree-grey-64-png "" (fn [e])]
+                          ["Reset view" icon/arrow-blue-left-64-png "" (fn [e])]
+                          ["Reloade view" icon/refresh-blue-64-png "" (fn [e] (((state/state :jarman-views-service) :reload)))]])]
               [rootJLP]]))))
 
 
@@ -1085,8 +1087,8 @@
              :items [[(gcomp/menu-bar
                        :justify-end true
                        :id :menu-for-period-table
-                       :buttons [[(gtool/get-lang-btns :save) icon/agree1-blue-64-png (fn [e])]
-                                 [(gtool/get-lang-btns :export) icon/excel-64-png (fn [e])]])]
+                       :buttons [[(gtool/get-lang-btns :save) icon/agree1-blue-64-png "" (fn [e])]
+                                 [(gtool/get-lang-btns :export) icon/excel-64-png "" (fn [e])]])]
                      [(c/scrollable (seesaw.swingx/table-x :model [:columns ["Servise month" "Amount" "Payment status"] :rows [["03/2021" "2500,-" "FV: 042/03/2021"]
                                                                                                                              ["04/2021" "2000,-" "FV: 042/04/2021"]
                                                                                                                              ["05/2021" "2500,-" "Expected payment"]]]))]])]]))
@@ -1221,7 +1223,15 @@
                                                                                    :relative (state/state :app)
                                                                                    :size [350 250]
                                                                                    :view (gcomp/code-area
-                                                                                          {:text "(fn [x] (println \"Nice ass\" x)"})})))])])]
+                                                                                          {:text "(fn [x] (println \"Nice ass\" x)"})})))
+                                                  (button-expand-child
+                                                   "Rsyntax code editor"
+                                                   :onClick (fn [e]
+                                                              (gcomp/popup-window {:window-title "Code editor"
+                                                                                   :relative (state/state :app)
+                                                                                   :size [450 350]
+                                                                                   :view (gcomp/code-editor
+                                                                                          {:val "(fn [x] (println \"Nice ass\" x)"})})))])])]
                [(jarmanapp--main-view-space [] [])]]))))
 
 ;; (jarman.logic.metadata/getset)
@@ -1262,6 +1272,9 @@
                                                         ((state/state :alert-manager) :set {:header "Work mode" :body (str "Switched to: " (session/user-get-permission))}  5)
                                                         (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission))))
                                              :top-offset top-offset)
+                             (gtool/slider-ico-btn (stool/image-scale icon/enter-64-png img-scale) 3 img-scale "Close app"
+                                                   :onClick (fn [e] (.dispose (c/to-frame e)))
+                                                   :top-offset top-offset)
                              (gtool/slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 4 img-scale "Reload active view"
                                              :onClick (fn [e] (try
                                                                 (((state/state :jarman-views-service) :reload))

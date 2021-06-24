@@ -1358,11 +1358,13 @@
   [{:keys [local-changes
            store-id
            val
-           font-size]
+           font-size
+           save-fn]
     :or {local-changes (atom {})
          store-id :code-tester
          val ""
-         font-size 14}}]
+         font-size 14
+         save-fn (fn [state] (println "Additional save"))}}]
   (let [f-size (atom font-size)
         info-label (c/label)
         code (code-area {:args [:font (gtool/getFont @f-size)]
@@ -1399,7 +1401,7 @@
                                     ["" icon/agree-blue-64-png "Save" (fn [e]
                                                                         (c/config! info-label :text "Saved")
                                                                         ((:saved-content (c/config code :user-data)))
-                                                                        )]
+                                                                        (save-fn {:state local-changes :label info-label :code code}))]
                                     ["" icon/enter-64-png "Leave" (fn [e] (.dispose (c/to-frame e)))]])]
                         [code]
                         [info-label]])]

@@ -286,6 +286,8 @@
                          (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected-model (:model-id ct-data)))))))))})))
 
 
+
+
 ;; ┌───────────────┐
 ;; │               │
 ;; │ Docs exporter |
@@ -554,7 +556,6 @@
 ;; └──────────────┘
 
 ;; TODO: Spec dla meta-data
-
 (def build-input-form
   "Description:
      Marge all components to one form
@@ -594,8 +595,7 @@
 
 (def auto-builder--table-view
   "Description
-     Prepare and merge complete big parts
-   "
+     Prepare and merge complete big parts"
   (fn [global-configuration
        data-toolkit
        configuration]
@@ -635,12 +635,43 @@
     ;; (c/label :text "Testing mode")
     ))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; SPEC AND DECLARATION ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(s/def :jarman.plugin.table/keyword-list (s/and sequential? #(every? keyword? %)))
+;; (s/valid? :jarman.plugin.table/keyword-list [:suka :bliat :dsaf])
+;; (s/valid? :jarman.plugin.table/keyword-list [:suka :bliat 32])
+;; (s/valid? :jarman.plugin.table/keyword-list 3)
+(s/def :jarman.plugin.table/tables :jarman.plugin.table/keyword-list)
+(s/def :jarman.plugin.table/view-columns :jarman.plugin.table/keyword-list)
+(s/def :jarman.plugin.table/model-insert :jarman.plugin.table/keyword-list)
+(s/def :jarman.plugin.table/insert-button boolean?)
+(s/def :jarman.plugin.table/delete-button boolean?)
+(s/def :jarman.plugin.table/actions map?)
+;;; button list
+(s/def :jarman.plugin.table/form-model #{:model-insert :model-update :model-delete :model-select})
+(s/def :jarman.plugin.table/action keyword?)
+(s/def :jarman.plugin.table/title string?)
+(s/def :jarman.plugin.table/one-button
+  (s/keys :req-un [:jarman.plugin.table/form-model
+                   :jarman.plugin.table/action
+                   :jarman.plugin.table/title]))
+(s/def :jarman.plugin.table/buttons (s/coll-of :jarman.plugin.table/one-button))
+;; (s/valid? :jarman.plugin.table/buttons
+;;           [{:form-model :model-insert, :action :upload-docs-to-db, :title "Upload document"}
+;;            {:form-model :model-update, :action :update-docs-in-db, :title "Update document info"}
+;;            {:form-model :model-update, :action :delete-doc-from-db, :title "Delete row"}])
+(s/def :jarman.plugin.table/query map?)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; EXTERNAL INTERFAISE ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; pipeline 
 (defn table-toolkit-pipeline [configuration datatoolkit]
   datatoolkit)
 
-;;;PLUGINS ;;;        
-(defn table-component [plugin-path global-configuration spec-map]
-  (println "Loading table plugin")
+;;; component
+(defn table-component [plugin-path global-configuration]
   (let [get-from-global #(->> % (join-vec plugin-path) (get-in (global-configuration)))
         data-toolkit  (get-from-global [:toolkit])
         configuration (get-from-global [:config])
@@ -652,26 +683,23 @@
     ;; (println "\nData toolkit" data-toolkit)
     ;; (println "Allow Permission: " (session/allow-permission? (:permission configuration)))
     ;; TODO: Set invoker expand button if not exist add child invokers
-    (if (false? (spec/test-keys-jtable configuration spec-map))
-      (println "[ Warning ] plugin/table: Error in spec")
+    (if (s/valid? :jarman.plugin.spec/table  configuration)
       (if (session/allow-permission? (:permission configuration))
-        (do
-          (swap! atm (fn [inserted]
-                       (conj inserted
-                             (gcomp/button-expand-child
-                              title
-                              :onClick (fn [e]
-                                        ;;  (println "\nplugin-path\n" plugin-path title)
-                                         ((state/state :jarman-views-service)
-                                          :set-view
-                                          :view-id (str "auto-" title)
-                                          :title title
-                                          :scrollable? false
-                                          :component-fn (fn [] (auto-builder--table-view
-                                                                (global-configuration)
-                                                                data-toolkit
-                                                                configuration)))))))))))
+        (do (swap! atm (fn [inserted]
+                         (conj inserted
+                               (gcomp/button-expand-child
+                                title
+                                :onClick (fn [e] ((state/state :jarman-views-service)
+                                                  :set-view
+                                                  :view-id (str "auto-" title)
+                                                  :title title
+                                                  :scrollable? false
+                                                  :component-fn (fn [] (auto-builder--table-view
+                                                                        (global-configuration)
+                                                                        data-toolkit
+                                                                        configuration))))))))))
+      ((state/state :alert-manager) :set {:header "Error"
+                                          :body (str (name (:table_name configuration)) "  "
+                                                     (s/explain-str :jarman.plugin.spec/table configuration))} 5))
     (.revalidate space)))
-
-
 

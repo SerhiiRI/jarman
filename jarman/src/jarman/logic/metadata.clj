@@ -435,15 +435,15 @@
 (defn update-meta [metadata]
   (db/exec (update-sql-by-id-template "metadata" metadata)))
 
-(defn create-one-meta [table-name]
+(defn create-one-meta [metadata table-name]
   (let [meta (db/query (select! {:table_name :metadata :where [:= :table_name table-name]}))]
     (if (empty? meta)
-      (db/exec (update-sql-by-id-template "metadata" (get-meta table-name))))))
+      (db/exec (update-sql-by-id-template "metadata" metadata)))))
 
 (defn do-create-meta []
   (doall
    (for [table (show-tables-not-meta)]
-          (create-one-meta table))))
+     (create-one-meta (get-meta table) table))))
 
 (defn delete-one-meta [table-name]
   {:pre [(string? table-name)]}
@@ -453,8 +453,6 @@
 (defn do-clear-meta [& body]
   {:pre [(every? string? body)]}
   (db/exec (delete! {:table_name :metadata})))
-
-
 
 (def  ^:private --loaded-metadata (ref nil))
 (defn ^:private swapp-metadata [metadata-list]
@@ -1093,7 +1091,7 @@
     ;;   :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
     ;;   :foreign-keys fkeys-fields})
     (create-table!
-     {:table_name (keyword (:table metadata))
+     {:table_name (keyword (:table_name metadata))
       :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
       :foreign-keys fkeys-fields})))
 

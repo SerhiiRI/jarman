@@ -1,23 +1,23 @@
 {:host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman"}
 
 (defview permission
- (table
-  :name "permission"
-  :plug-place [:#tables-view-plugin]
-  :tables [:permission]
-  :view-columns [:permission.permission_name :permission.configuration]
-  :model-insert [:permission.permission_name :permission.configuration]
-  :insert-button true
-  :delete-button true
-  :actions []
-  :buttons []
-  :query
-  {:table_name :permission,
-   :column
-   [:#as_is
-    :permission.id
-    :permission.permission_name
-    :permission.configuration]}))
+  (table
+   :name "permission"
+   :plug-place [:#tables-view-plugin]
+   :tables [:permission]
+   :view-columns [:permission.permission_name :permission.configuration]
+   :model-insert [:permission.permission_name :permission.configuration]
+   :insert-button true
+   :delete-button true
+   :actions []
+   :buttons []
+   :query
+   {:table_name :permission,
+    :column
+    [:#as_is
+     :permission.id
+     :permission.permission_name
+     :permission.configuration]}))
 
 (defview user
  (table
@@ -138,11 +138,14 @@
      :enterpreneur.legal_address
      :enterpreneur.physical_address
      :enterpreneur.contacts_information]}))
-(defview
-  documents
+(defview documents
   (table
-   :name
-   "documents"
+   :name "Documnets import"
+   :changes-button true
+   :insert-button false
+   :delete-button false
+   :update-button false
+   :export-button false
    :plug-place
    [:#tables-view-plugin]
    :tables
@@ -152,28 +155,61 @@
     :documents.name
     :documents.document
     :documents.prop]
-   :model-insert
-   [:documents.table_name
-    :documents.name
-    :documents.document
-    :documents.prop]
-   :insert-button
-   true
-   :delete-button
-   true
-   :actions
-   []
-   :buttons
-   []
-   :query
-   {:table_name :documents,
-    :column
-    [:#as_is
-     :documents.id
-     :documents.table_name
-     :documents.name
-     :documents.document
-     :documents.prop]}))
+   :model-insert [:documents.id
+                  {:model-reprs "Table"
+                   :model-param :documents.table_name
+                   :model-comp jarman.gui.gui-components/select-box-table-list}
+                  :documents.name
+                  :documents.prop
+                  {:model-reprs "Path to file"
+                   :model-param :documents.document
+                   :model-comp jarman.gui.gui-components/input-file}]
+   :model-update [:documents.id
+                  {:model-reprs "Table"
+                   :model-param :documents.table_name
+                   :model-comp jarman.gui.gui-components/select-box-table-list}
+                  :documents.name
+                  :documents.prop
+                  ]
+   :query {:column
+           [{:documents.id :documents.id}
+            {:documents.table_name  :documents.table_name}
+            {:documents.name :documents.name}
+            {:documents.prop :documents.prop}]}
+   :actions {:upload-docs-to-db (fn [state]
+                                  (let [insert-meta {:table    (first (:documents.table_name @state))
+                                                     :name     (:documents.name @state)
+                                                     :document (:documents.document @state)
+                                                     :prop     (:documents.prop @state)}]
+                                    (println "to save" insert-meta)
+                                    (jarman.logic.document-manager/insert-document insert-meta)
+                                    (((jarman.logic.state/state :jarman-views-service) :reload))))
+             :update-docs-in-db (fn [state]
+                                  (println "\nState" @state)
+                                  (let [insert-meta {:id       (:selected-id @state)
+                                                     :table    (first (:documents.table_name @state))
+                                                     :name     (:documents.name @state)
+                                                     :prop     (:documents.prop @state)
+                                                     }]
+                                    (println "to save" insert-meta)
+                                    (jarman.logic.document-manager/insert-document insert-meta)
+                                    (((jarman.logic.state/state :jarman-views-service) :reload))))
+             :delete-doc-from-db (fn [state]
+                                   (let [insert-meta {:id (:selected-id @state)}]
+                                     (println "to delete" insert-meta)
+                                     (jarman.logic.document-manager/delete-document insert-meta)
+                                     (((jarman.logic.state/state :jarman-views-service) :reload))))}
+   :buttons [{:form-model :model-insert
+              :action :upload-docs-to-db
+              :title "Upload document"}
+             {:form-model :model-update
+              :action :update-docs-in-db
+              :title "Update document info"}
+             {:form-model :model-update
+              :action :delete-doc-from-db
+              :title "Delete row"}
+             ]))
+
 (defview
   enterpreneur
   (table

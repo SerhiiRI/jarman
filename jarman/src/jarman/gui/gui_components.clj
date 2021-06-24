@@ -1,4 +1,4 @@
-(ns jarman.gui.gui-components
+ (ns jarman.gui.gui-components
   (:use seesaw.dev
         seesaw.mig)
   (:require [jarman.resource-lib.icon-library :as icon]
@@ -6,6 +6,7 @@
             [seesaw.border :as b]
             [seesaw.util :as u]
             [seesaw.mig :as smig]
+            [seesaw.rsyntax]
             [jarman.tools.swing :as stool]
             [jarman.logic.state :as state]
             [jarman.tools.lang :refer :all]
@@ -1297,3 +1298,25 @@
                :store-id store-id
                :local-changes local-changes
                :selected-item (rift val ""))))
+
+(defn code-area
+  "Description:
+    Some text area but with syntax styling.
+    To check avaliable languages eval (seesaw.dev/show-options (seesaw.rsyntax/text-area)).
+    Default language is Clojure.
+  Example:
+    (code-area {})
+    (code-area :syntax :css)
+  "
+  [{:keys [text
+           syntax
+           args]
+    :or {text ""
+         syntax :clojure
+         args []}}]
+  (apply
+   seesaw.rsyntax/text-area
+   :text text
+   :syntax syntax
+   args))
+

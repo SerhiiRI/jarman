@@ -11,7 +11,6 @@
    [jarman.config.environment :as env]
    [jarman.plugin.jspl :refer :all :as jspl]
    [jarman.plugin.table :as plug]
-   [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    [jarman.logic.sql-tool :refer [select! update! insert!]]
    [jarman.logic.metadata :as mt]
    [jarman.logic.state :as state]
@@ -134,24 +133,23 @@
 
 ;;; TEST DEFVIEW SEGMENT
 ;; (defview permission
-;;   :permission [:user :admin]
 ;;   (table
-;;    :id :first-table
-;;    :name "FIRST"
+;;    :name "permission"
 ;;    :plug-place [:#tables-view-plugin]
 ;;    :tables [:permission]
-;;    :view-columns [:permission.permission_name
-;;                   :permission.configuration]
-;;    :model [:permission.id
-;;            {:model-reprs "First"
-;;             :model-param :permission.permission_name
-;;             :model-comp jarman.gui.gui-components/input-text-with-atom}
-;;            :permission.configuration]
-;;    :query {:column
-;;            (as-is
-;;             :permission.id
-;;             :permission.permission_name
-;;             :permission.configuration)}))
+;;    :view-columns [:permission.permission_name :permission.configuration]
+;;    :model-insert [:permission.permission_name :permission.configuration]
+;;    :insert-button true
+;;    :delete-button true
+;;    :actions []
+;;    :buttons []
+;;    :query
+;;    {:table_name :permission,
+;;     :column
+;;     [:#as_is
+;;      :permission.id
+;;      :permission.permission_name
+;;      :permission.configuration]}))
 
 ;;; ---------------------------------------
 ;;; Eval this function and take a look what

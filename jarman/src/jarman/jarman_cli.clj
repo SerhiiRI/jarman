@@ -1,3 +1,11 @@
+;; Description
+;;   In this file realized cli-toolkit 
+;; Location
+;;   -- top -- parse-options for data managment (like create-table, delete, reset db etc)
+;;   -- center -- parse-options for structure of project (refresh-icons, refresh fonts etc) 
+;;   -- bottom -- in comment you will find eampls for using keys in cli
+
+
 (ns jarman.cli.jarman-cli
   (:gen-class)
   (:refer-clojure :exclude [update])
@@ -17,38 +25,38 @@
    [jarman.tools.lang :refer :all]))
 
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;;; Database manager  ;;; 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Database manager ;;; 
+;;;;;;;;;;;;;;;;;;;;;;;;
 (def data-cli-options
-  [[nil "--create-by-ssql SCHEME" "Create table from scheme (db_ssql.clj), use <all> for all. Automatic generate meta for structure(--create-meta)"
+  [[nil "--create-meta TABLE" "Create meta to table metadata by name, use <all> for all"
     :parse-fn #(str %)]
-   [nil "--create-meta TABLE" "Create meta to table metadata by name, use <all> for all"
-    :parse-fn #(str %)]
-   [nil "--create-by-meta TABLE" "Create table by name from metadata (db_meta.clj), use <all> for all"
+   [nil "--create-table TABLE" "Create table by name from metadata (db_meta.clj), use <all> for all"
     :parse-fn #(str %)]   
    ["-d" "--delete-table TABLE" "Delete table by name, use <all> for all"
     :parse-fn #(str %)
-    :validate [#(or (= % "all")(dbmang/table-in? %)) "Table not found"]]
+    :validate [#(or (= % "all")(dbmang/table-in-jarman-db? %)) "Table not found"]]
    [nil "--delete-meta TABLE" "Delete table in metadata, use <all> for all"
     :parse-fn #(str %)
-    :validate [#(or (= % "all")(dbmang/table-in? %)) "Table not found"]]
+    :validate [#(or (= % "all")(dbmang/table-in-jarman-db? %)) "Table not found"]]
+   [nil "--swap-tables" "Download tables from file db (db_meta.clj), enter this key with PATH"
+    :parse-fn #(str %)]
    [nil "--reset-db TABLE" "Delete scheme, create new tables and generate metadata"
     :parse-fn #(str %)]
    [nil "--reset-meta TABLE" "Delete and create new meta information about table"
     :parse-fn #(str %)]
-   [nil "--view-scheme SCHEME"
+   [nil "--view-table TABLE"
     :parse-fn #(str %)]
    ["-p" "--path PATH" "Add path to file db, use this key with --create-... alse use this key for view"
     :parse-fn #(str %)
     :validate [#(dbmang/file-exists? %) "File not found"]]
-   [nil "--list-tables" "List of available tables in jarman db"
+   [nil  "--list-tables-file" "List of available tables in file db"
     :parse-fn #(str %)]
-   [nil  "--list-schemas" "List of available schemas in file db"
+   [nil "--list-tables-jarman" "List of available tables in jarman db"
     :parse-fn #(str %)]
    [nil "--print-table TABLE" "Print table"
     :parse-fn #(str %)
-    :validate [#(dbmang/table-in? %) "Table not found"]]
+    :validate [#(dbmang/table-in-jarman-db? %) "Table not found"]]
    [nil "--valid-tables" "Validate table's struture"
     :parse-fn #(str %)]
    [nil "--csv-like" "combine with --print key"]
@@ -64,25 +72,25 @@
     (if-let [es (get cli-opt :errors)]
       (doall (for [e es] (println (format "[!] %s" e))))
       (cond
-        (= k1 :create-by-ssql)  (cli/cli-create-table cli-opt)
-        (= k1 :create-by-meta)  (cli/cli-create-table cli-opt)
-        (= k1 :create-meta)     (cli/cli-create-table cli-opt)
-        (= k1 :delete-table)    (cli/cli-delete-table cli-opt)
-        (= k1 :delete-meta)     (cli/cli-delete-table cli-opt)
-        (= k1 :reset-db)        (cli/reset-db cli-opt)
-        (= k1 :reset-meta)      (cli/reset-meta cli-opt)
-        (= k1 :view-scheme)     (cli/view-scheme cli-opt)
-        (= k1 :help)            (cli/print-helpr cli-opt)
-        (= k1 :list-tables)     (cli/print-list-tbls cli-opt)
-        (= k1 :list-schemas)    (cli/print-list-schm cli-opt)
-        (= k1 :print-table)     (cli/print-table cli-opt)
-        (= k1 :valid-tables)    (cli/valid-all-tables cli-opt)
+        (= k1 :create-table)      (cli/cli-create-table cli-opt)
+        (= k1 :create-meta)       (cli/cli-create-table cli-opt)
+        (= k1 :delete-table)      (cli/cli-delete-table cli-opt)
+        (= k1 :delete-meta)       (cli/cli-delete-table cli-opt)
+        (= k1 :swap-tables)       (cli/swap-tables cli-opt)
+        (= k1 :reset-db)          (cli/reset-db cli-opt)
+        (= k1 :reset-meta)        (cli/reset-meta cli-opt)
+        (= k1 :view-table)        (cli/view-all-tables cli-opt)
+        (= k1 :help)              (cli/print-helpr cli-opt)
+        (= k1 :list-tables-file)  (cli/print-list-tbls-file cli-opt)
+        (= k1 :list-tables-jarman)(cli/print-list-tbls-jarman cli-opt)
+        (= k1 :print-table)       (cli/print-table cli-opt)
+        (= k1 :valid-tables)      (dbmang/valid-tables)
         ;;  (= k1 :dummy-data)   (println "")
         :else (cli/print-helpr cli-opt)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Project structure manger ;;; 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Project structure manager ;;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def structure-cli-options
   [[nil "--refresh-icons" "Regenerate icon assets library"]
    [nil "--refresh-fonts" "Regenerate font assets library"]
@@ -139,11 +147,14 @@
 
 (comment
  (-main "data" 
-        "--create-by-ssql" "all"
-        "--path" "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db_ssql.clj")
+        "--create-table" "all"
+        "--path" "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db_meta.clj")
+ (-main "data" 
+        "--create-table" "user"
+        "--path" "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db_meta.clj")
  (-main "data" 
         "--create-meta" "all"
-        "--path" "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db_ssql.clj")
+        "--path" "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db_meta.clj")
  (-main "data" 
         "--delete-table" "user")
  (-main "data" 
@@ -152,11 +163,12 @@
         "--delete-meta" "user")
  (-main "data" 
         "--reset-db" "all")
- (-main "data" "--list-tables"
+ (-main "data" "--list-tables-file"
         "--path" "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db_meta.clj")
+ (-main "data" "--list-tables-jarman")
  (-main "data" "--print-table" "user" "--csv-like")
- (-main "data" "--print-table" "user" )
- (-main "data" "--valid-tables" "--path" "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db_ssql.clj")
- (-main "data" "--view-scheme" "user"  "--path" "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db_ssql.clj"))
+ (-main "data" "--print-table" "user")
+ (-main "data" "--valid-tables" "--path" "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db_meta.clj")
+ (-main "data" "--view-table" "user"  "--path" "e:\\repo\\jarman-test\\jarman\\jarman\\src\\jarman\\managment\\db_meta.clj"))
 
 

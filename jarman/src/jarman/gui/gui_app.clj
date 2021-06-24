@@ -4,7 +4,8 @@
         seesaw.dev
         seesaw.style
         seesaw.mig
-        seesaw.font)
+        seesaw.font
+        seesaw.rsyntax)
   (:import (javax.swing JLayeredPane JLabel JTable JComboBox DefaultCellEditor JCheckBox)
            (javax.swing.table TableCellRenderer TableColumn)
            (java.awt.event MouseEvent)
@@ -33,7 +34,6 @@
             [jarman.gui.gui-config-generator :refer :all :as cg]
             ;; [jarman.logic.view :as view]
             ;; [jarman.gui.gui-docs :as docs]
-
             [jarman.logic.state :as state]
             [jarman.gui.gui-seed :as gseed]
             [jarman.plugin.table :as gtable]
@@ -147,92 +147,6 @@
          :parent (gtool/getParent @atom-popup-hook))
         c/pack! c/show!)))
 
-
-
-(def create-dialog--answer-chooser
-  (fn [txt func]
-    (c/vertical-panel
-     :background (gtool/get-color :background :button_main)
-     :focusable? true
-     :listen [:focus-gained (fn [e] (gtool/hand-hover-on e) (c/config! e :background light-light-grey-color))
-              :focus-lost   (fn [e] (c/config! e :background (gtool/get-color :background :button_main)))
-              :mouse-clicked func
-              :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) func))]
-     :items (list (c/label
-                   :text (first txt)
-                   :halign :left
-                   :font (gtool/getFont 14 :bold)
-                   :foreground gcomp/blue-color
-                   :border (compound-border (empty-border :left 20 :right 20 :bottom 0 :top 5)))
-                  (c/label
-                   :text (second txt)
-                   :halign :left
-                   :font (gtool/getFont 14)
-                   :border (compound-border (empty-border :left 30 :right 20 :bottom 5 :top 0)))))))
-
-
-(def create-dialog-repair-chooser
-  (fn [invoker data title size]
-    (let [dialog
-          (c/custom-dialog
-           :title title
-           :modal? true
-           :resizable? false
-           :size [(first size) :by (second size)] ;; here you need to set window size for calculating middle 
-           :content (mig-panel
-                     :background "#fff"
-                     :size [(first size) :by (second size)]
-                     :constraints ["" "0px[fill, grow]0px" "0px[grow, top]0px"]
-                     :items (gtool/join-mig-items
-                             (let [scr (c/scrollable
-                                        (mig-panel
-                                         :background "#fff"
-                                         :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
-                                         :items (gtool/join-mig-items
-                                                 (seesaw.core/label
-                                                  :border (empty-border :top 5)
-                                                  :icon (stool/image-scale icon/left-blue-64-png 30)
-                                                  :listen [:mouse-entered (fn [e] (gtool/hand-hover-on e))
-                                                           :mouse-exited (fn [e] (gtool/hand-hover-off e))
-                                                           :mouse-clicked (fn [e] (.dispose (seesaw.core/to-frame e)))])
-                                                 (textarea title :halign :center :font (gtool/getFont 14 :bold)
-                                                           :foreground gcomp/blue-green-color
-                                                           :border (empty-border :thickness 12))
-                                                 (mig-panel
-                                                  :background "#fff"
-                                                  :constraints ["wrap 1" "0px[:300, fill, grow]0px" "0px[]0px"]
-                                                  :items (gtool/join-mig-items
-                                                          (map (fn [x] (create-dialog--answer-chooser
-                                                                        x
-                                                                        (fn [e] (c/return-from-dialog e x)))) data))))) :hscroll :never :border nil)]
-                               (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
-                               (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr))))]
-      (.setUndecorated dialog true)
-      (doto dialog (.setLocationRelativeTo (c/to-root invoker)) c/pack! c/show!) ;; here should be relative to root of invoker
-      )))
-
-;; start julka dialog
-;; (do (doto (seesaw.core/frame
-;;            :title "title"
-;;            :undecorated? false
-;;            :minimum-size [1000 :by 600]
-;;            :content 
-;;            (seesaw.mig/mig-panel
-;;             :constraints ["wrap 1" "10px[fill, grow]10px" "10px[top]10px"]
-;;             :items [[(c/label :text "heyy open modal window"
-;;                             :listen [:mouse-entered (fn [e] (c/config! e :cursor :hand))
-;;                                      :mouse-clicked (fn [e] (create-dialog-repair-chooser
-;;                                                              e
-;;                                                              [
-;;                                                               ["Some-error" (gtool/htmling "<p align= \"justify\">Another error,heyy hhh this is some error about our life  Established fact that a reader will be distracthhhj jhjke</p>")]
-;;                                                               ["heyy error" (gtool/htmling "<p align= \"justify\">Heyey,Established fact that a reader will be distracthhhj jhjke</p>")]
-;;                                                               ["Smth" (gtool/htmling "<p align= \"justify\">Must because you must be stronger like a river  heyy heyy heyy jjjdjdjd you importanti do somkm,hj jhjke)</p>")]
-;;                                                               ["rd"  (gtool/htmling "<p align= \"justify\">Hree Established fact that a reader will be distracthhhj jhjke</p>")]
-;;                                                               ["tut" (gtool/htmling "<p align= \"justify\">10- erro. Established fact that a reader will be distracthhhj jhjke</p>")]
-;;                                                               ["cosmos" (gtool/htmling "<p align= \"justify\">Errors, fact that a reader will be distracthhhj jhjke</p>")]]
-;;                                                              "Choose reason for repair"
-;;                                                              [400 300]))])]]))
-;;       (.setLocationRelativeTo nil) seesaw.core/c/pack! seesaw.core/c/show!))
 
 (def create-dialog-ok
   (fn [title ask size]
@@ -1291,12 +1205,25 @@
                                                   (button-expand-child "alert" :onClick (fn [e] ((state/state :alert-manager) :set {:header "Czym jest Lorem Ipsum?" :body "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle poligraficznym. Został po raz pierwszy użyty w XV w. przez nieznanego drukarza do wypełnienia tekstem próbnej książki. Pięć wieków później zaczął być używany przemyśle elektronicznym, pozostając praktycznie niezmienionym. Spopularyzował się w latach 60. XX w. wraz z publikacją arkuszy Letrasetu, zawierających fragmenty Lorem Ipsum, a ostatnio z zawierającym różne wersje Lorem Ipsum oprogramowaniem przeznaczonym do realizacji druków na komputerach osobistych, jak Aldus PageMaker"} 5)))
                                                   (button-expand-child "Select table" :onClick (fn [e] (gcomp/popup-window {:view (gcomp/select-box-table-list {}) :relative (state/state :app) :size [250 40]})))
                                                   (button-expand-child
-                                                   "Syntax text-area"
+                                                   "Text multiline"
                                                    :onClick (fn [e]
-                                                              (gcomp/popup-window
-                                                               {:relative (state/state :app)
-                                                                :size [250 250]
-                                                                :view (c/label :text "Test")})))])])]
+                                                              (gcomp/popup-window {:window-title "Text multiline"
+                                                                                   :relative (state/state :app)
+                                                                                   :size [250 250]
+                                                                                   :view (c/text
+                                                                                          :text "Some text"
+                                                                                          :size [300 :by 300]
+                                                                                          :editable? true
+                                                                                          :multi-line? true
+                                                                                          :wrap-lines? true)})))
+                                                  (button-expand-child
+                                                   "Rsyntax Text-area"
+                                                   :onClick (fn [e]
+                                                              (gcomp/popup-window {:window-title "Rsyntax text-area"
+                                                                                   :relative (state/state :app)
+                                                                                   :size [350 250]
+                                                                                   :view (gcomp/code-area
+                                                                                          {:text "(fn [x] (println \"Nice ass\" x)"})})))])])]
                [(jarmanapp--main-view-space [] [])]]))))
 
 ;; (jarman.logic.metadata/getset)
@@ -1337,11 +1264,6 @@
                                                         ((state/state :alert-manager) :set {:header "Work mode" :body (str "Switched to: " (session/user-get-permission))}  5)
                                                         (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission))))
                                              :top-offset top-offset)
-
-                            ;;  (gtool/slider-ico-btn (stool/image-scale icon/pen-64-png img-scale) 3 img-scale "Docs Templates"
-                            ;;                  :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id :docstemplates :title "Docs Templates" :scrollable? false :component-fn (fn [] (docs/auto-builder--table-view nil :alerts (state/state :alert-manager)))))
-                            ;;                  :top-offset top-offset)
-
                              (gtool/slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 4 img-scale "Reload active view"
                                              :onClick (fn [e] (try
                                                                 (((state/state :jarman-views-service) :reload))
@@ -1377,5 +1299,4 @@
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
 (@startup)
-
 

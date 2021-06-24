@@ -1,11 +1,9 @@
-
 (ns jarman.gui.gui-app
   (:use seesaw.border
         seesaw.dev
         seesaw.style
         seesaw.mig
-        seesaw.font
-        seesaw.rsyntax)
+        seesaw.font)
   (:import (javax.swing JLayeredPane JLabel JTable JComboBox DefaultCellEditor JCheckBox)
            (javax.swing.table TableCellRenderer TableColumn)
            (java.awt.event MouseEvent)
@@ -1299,4 +1297,3 @@
                                             (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
 
 (@startup)
-

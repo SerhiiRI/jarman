@@ -1,4 +1,4 @@
- (ns jarman.gui.gui-components
+(ns jarman.gui.gui-components
   (:use seesaw.dev
         seesaw.mig)
   (:require [jarman.resource-lib.icon-library :as icon]
@@ -10,7 +10,7 @@
             [jarman.tools.swing :as stool]
             [jarman.logic.state :as state]
             [jarman.tools.lang :refer :all]
-            [jarman.logic.metadata :as mmeta]
+            [jarman.logic.metadata :as mt]
             [jarman.gui.gui-tools :as gtool]
             [seesaw.chooser :as chooser]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
@@ -1196,9 +1196,9 @@
       (c/config! btn-next :text "Save" :listen [:mouse-clicked (fn [e]
                                                                  (println @cmpts-atom)
                                                                  (swap! cmpts-atom  assoc :field-qualified (str (:field @cmpts-atom) "." table-name))
-                                                                 (println (:output (mmeta/validate-one-column
+                                                                 (println (:output (mt/validate-one-column
                                                                                        @cmpts-atom)))
-                                                                 (if (:valid? (mmeta/validate-one-column
+                                                                 (if (:valid? (mt/validate-one-column
                                                                                @cmpts-atom))
                                                                    ((state/state :alert-manager) :set {:header "Success" :body "Column was added"} 5)
                                                                    ((state/state :alert-manager) :set {:header "Error" :body "All fields must be entered and must be longer than 3 chars"} 5)))]))
@@ -1294,10 +1294,11 @@
              store-id :documents.table
              val nil}}]
     (println "\ntable-select-box" store-id val)
-    (select-box (vec (map #(get % :table) (mmeta/getset)))
+    (select-box (vec (map #(get % :table_name) (jarman.logic.metadata/getset)))
                :store-id store-id
                :local-changes local-changes
                :selected-item (rift val ""))))
+
 
 (defn code-area
   "Description:
@@ -1319,4 +1320,3 @@
    :text text
    :syntax syntax
    args))
-

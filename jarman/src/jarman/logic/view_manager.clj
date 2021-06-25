@@ -22,7 +22,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPER FUNCTION ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
-
 (defn- toolkit-pipeline [configuration & toolkit-list]
   (reduce (fn [acc-toolkit toolkit-pipeline]
             (toolkit-pipeline configuration acc-toolkit)) {} toolkit-list))
@@ -128,8 +127,25 @@
             (global-view-configs-set (:plugin-config-path cfg) cfg toolkit)
             `(~(:plugin-name cfg) ~(:plugin-config-path cfg) ~'global-view-configs-get))) nil)))
 
+;; (defmacro defview-debug [table-name & body]
+;;   (let [cfg-list (defview-prepare-config table-name body)]
+;;    `(do
+;;       ~@(for [cfg cfg-list]
+;;           (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" (str (:plugin-name cfg))))
+;;                  toolkit (toolkit-pipeline cfg data-toolkit-pipeline plugin-toolkit-pipeline)]
+;;             {:cfg cfg :toolkit `~toolkit})))))
+
+(defmacro defview-debug [table-name & body]
+  (let [cfg-list (defview-prepare-config table-name body)]
+   `(do
+      ~@(for [cfg cfg-list]
+          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" (str (:plugin-name cfg))))]
+            {:cfg cfg :toolkit `(toolkit-pipeline ~cfg ~data-toolkit-pipeline ~plugin-toolkit-pipeline)})))))
+
 (defn defview-debug-toolkit [cfg & plugin-toolkit-pipeline-list]
   (apply (partial toolkit-pipeline cfg data-toolkit-pipeline) plugin-toolkit-pipeline-list))
+
+
 
 ;;; TEST DEFVIEW SEGMENT
 ;; (defview permission
@@ -166,8 +182,6 @@
   (global-view-configs-get)
   ((get-in (global-view-configs-get) [:permission :table :p-1 :toolkit :select-expression])))
 
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPERS `defview` ;;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -196,22 +210,21 @@
               (+ s 1))
            (rest data)))))) 0 view-data))
 
-(defn loader-from-db [db-connection]
+(defn loader-from-db []
   (let [con (dissoc (db/connection-get)
                     :dbtype :user :password
                     :useUnicode :characterEncoding)
-        data (db/query (select! {:table_name :view
-                                 :column    [:view]}))
+        data (db/query (select! {:table_name :view}))
         sdata (if-not (empty? data)(concat [con] (map (fn [x] (read-string (:view x))) data)))
         path  "src/jarman/logic/view.clj"]
     (if-not (empty? data) (do (spit path
                                   "")
-                            (for [s data]
+                            (for [s sdata]
                               (with-open [W (io/writer (io/file path) :append true)]
                                 (.write W (pp-str s))
                                 (.write W env/line-separator)))))))
 
-(defn loader-from-view-clj [db-connection]
+(defn loader-from-view-clj []
   (let [data 
         (try
           (read-seq-from-file  "src/jarman/logic/view.clj")
@@ -222,11 +235,11 @@
     (if-not (empty? data)
       (if (= (first data) con) data))))
 
-;;(put-table-view-to-db (loader-from-view-clj (db/connection-get)))
+;; (put-table-view-to-db (loader-from-view-clj (db/connection-get)))
 
 (defn- load-data-recur [data loaders]
   (if (and (empty? data) (not (empty? loaders)))
-    (load-data-recur ((first loaders) (db/connection-get)) (rest loaders))
+    (load-data-recur ((first loaders)) (rest loaders))
     data))
 
 (defn make-loader-chain
@@ -250,4 +263,38 @@
       ((state/state :alert-manager) :set {:header "Error" :body "Problem with tables. Data not found in DB"} 5)
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (map (fn [x] (eval x)) (subvec (vec data) 1)))))))
+
+
+(defn- metadata-get [table]
+  (first (jarman.logic.metadata/getset! table)))
+
+(defn- metadata-set [metadata]
+  (jarman.logic.metadata/update-meta metadata))
+
+(defn- view-get
+  "Description
+    get view from db by table-name
+  Example
+    (view-get \"user\")
+    {:id 2, :table_name \"user\", :view   \"(defview user (table :name \"user\"......))})"
+  [table-name]
+  (first (db/query
+          (select! {:table_name :view :where [:= :table_name table-name]}))))
+
+(defn- view-set
+  "Description
+    get view-map, write to db, rewrite file view.clj
+  Example
+    (view-set {:id 2, :table_name \"user\", :view \"(defview user (table :name \"user\"......))} )"
+  [view]
+  (let [table-name (:table_name view)
+        table-view (:view view)
+        id-t       (:id (first (db/query (select! {:table_name :view :where [:= :table_name table-name]}))))]   
+    (if (nil? id-t)
+      (db/exec (insert! {:table_name :view :set {:table_name table-name, :view table-view}}))
+      (db/exec (update! {:table_name :view :set {:view table-view} :where [:= :id id-t]})))
+    (loader-from-db)))
+
+
+
 

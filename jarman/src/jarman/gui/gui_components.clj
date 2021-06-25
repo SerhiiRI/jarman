@@ -1,4 +1,4 @@
- (ns jarman.gui.gui-components
+(ns jarman.gui.gui-components
   (:use seesaw.dev
         seesaw.mig)
   (:require [jarman.resource-lib.icon-library :as icon]
@@ -10,7 +10,7 @@
             [jarman.tools.swing :as stool]
             [jarman.logic.state :as state]
             [jarman.tools.lang :refer :all]
-            [jarman.logic.metadata :as mmeta]
+            [jarman.logic.metadata :as mt]
             [jarman.gui.gui-tools :as gtool]
             [seesaw.chooser :as chooser]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
@@ -78,6 +78,11 @@
 
 
 (defn vmig
+  "Description:
+     Use vmig for quick vertical layout or container.
+   Example:
+    (vmig :items [[component]])
+  "
   [& {:keys [items
              wrap
              lgap
@@ -1109,18 +1114,25 @@
       :or {id :none
            buttons []
            justify-end false}}]
-  (let [btn (fn [txt ico onClick & args]
-              (let [border-c "#bbb"]
+  (let [btn (fn [txt ico tip onClick & args]
+              (let [border-c "#bbb"
+                    bg "#fff"
+                    bg-hover "#d9ecff"]
                 (c/label
                  :font (gtool/getFont 13)
                  :text txt
+                 :tip tip
                  :icon (stool/image-scale ico 27)
-                 :background "#fff"
+                 :background bg
                  :foreground "#000"
+                 :focusable? true
                  :border (b/compound-border (b/empty-border :left 15 :right 15 :top 5 :bottom 5) (b/line-border :thickness 1 :color border-c))
-                 :listen [:mouse-entered (fn [e] (c/config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
-                          :mouse-exited  (fn [e] (c/config! e :background "#fff" :foreground "#000"))
-                          :mouse-clicked onClick])))]
+                 :listen [:mouse-entered (fn [e] (c/config! e :background bg-hover :foreground "#000" :cursor :hand))
+                          :mouse-exited  (fn [e] (c/config! e :background bg :foreground "#000"))
+                          :mouse-clicked onClick
+                          :focus-gained  (fn [e] (c/config! e :background bg-hover  :cursor :hand))
+                          :focus-lost    (fn [e] (c/config! e :background bg))
+                          :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))])))]
     (mig-panel
      :id id
      :background (new Color 0 0 0 0)
@@ -1129,8 +1141,8 @@
                     ["" "10px[fill]0px" "5px[fill]5px"])
      :items (if (empty? buttons) [[(c/label)]]
                 (if justify-end
-                  (gtool/join-mig-items (c/label) (map #(btn (first %) (second %) (last %)) buttons))
-                  (gtool/join-mig-items (map #(btn (first %) (second %) (last %)) buttons)))))))
+                  (gtool/join-mig-items (c/label) (map #(btn (first %) (second %) (nth % 2) (last %)) buttons))
+                  (gtool/join-mig-items (map #(btn (first %) (second %) (nth % 2) (last %)) buttons)))))))
 
 
 
@@ -1196,9 +1208,9 @@
       (c/config! btn-next :text "Save" :listen [:mouse-clicked (fn [e]
                                                                  (println @cmpts-atom)
                                                                  (swap! cmpts-atom  assoc :field-qualified (str (:field @cmpts-atom) "." table-name))
-                                                                 (println (:output (mmeta/validate-one-column
+                                                                 (println (:output (mt/validate-one-column
                                                                                        @cmpts-atom)))
-                                                                 (if (:valid? (mmeta/validate-one-column
+                                                                 (if (:valid? (mt/validate-one-column
                                                                                @cmpts-atom))
                                                                    ((state/state :alert-manager) :set {:header "Success" :body "Column was added"} 5)
                                                                    ((state/state :alert-manager) :set {:header "Error" :body "All fields must be entered and must be longer than 3 chars"} 5)))]))
@@ -1294,10 +1306,11 @@
              store-id :documents.table
              val nil}}]
     (println "\ntable-select-box" store-id val)
-    (select-box (vec (map #(get % :table) (mmeta/getset)))
+    (select-box (vec (map #(get % :table_name) (jarman.logic.metadata/getset)))
                :store-id store-id
                :local-changes local-changes
                :selected-item (rift val ""))))
+
 
 (defn code-area
   "Description:
@@ -1308,15 +1321,93 @@
     (code-area {})
     (code-area :syntax :css)
   "
-  [{:keys [text
+  [{:keys [val
+           store-id
+           local-changes
            syntax
+           label
            args]
-    :or {text ""
+    :or {val ""
+         store-id :code
+         local-changes (atom {})
          syntax :clojure
+         label nil
          args []}}]
-  (apply
-   seesaw.rsyntax/text-area
-   :text text
-   :syntax syntax
-   args))
+  (swap! local-changes (fn [state] (assoc state store-id val)))
+  (let [content (atom val)]
+    (apply
+          seesaw.rsyntax/text-area
+          :text val
+          :syntax syntax
+          :user-data {:saved-content (fn [] (reset! content (second (first @local-changes))))}
+          :listen [:caret-update (fn [e]
+                                   (swap! local-changes (fn [state] (assoc state store-id (c/config (c/to-widget e) :text))))
+                                   (if-not (nil? label)
+                                           (if (= (c/config (c/to-widget e) :text) @content)
+                                             (c/config! label :text "")
+                                             (c/config! label :text "Unsaved file..."))))]
+          args)))
+
+
+(defn code-editor
+  "Description:
+     Simple code editor using syntax.
+   Example:
+     (code-editor {})
+  "
+  [{:keys [local-changes
+           store-id
+           val
+           font-size
+           save-fn]
+    :or {local-changes (atom {})
+         store-id :code-tester
+         val ""
+         font-size 14
+         save-fn (fn [state] (println "Additional save"))}}]
+  (let [f-size (atom font-size)
+        info-label (c/label)
+        code (code-area {:args [:font (gtool/getFont @f-size)]
+                         :label info-label
+                         :local-changes local-changes
+                         :store-id store-id
+                         :val val}) 
+        editor (vmig
+                :vrules "[fill]0px[grow, fill]0px[fill]"
+                :items [[(menu-bar
+                          :justify-end true
+                          :buttons [[""
+                                     icon/up-blue2-64-png
+                                     "Increase font"
+                                     (fn [e]
+                                       (c/config!
+                                        code
+                                        :font (gtool/getFont
+                                               (do (reset! f-size (+ 2 @f-size))
+                                                   @f-size))))]
+                                    [""
+                                     icon/down-blue2-64-png
+                                     "Decrease font"
+                                     (fn [e]
+                                       (c/config!
+                                        code
+                                        :font (gtool/getFont
+                                               (do (reset! f-size (- @f-size 2))
+                                                   @f-size))))]
+                                    ["" icon/loupe-blue-64-png "Show changes" (fn [e] (popup-info-window
+                                                                                       "Changes"
+                                                                                       (second (first @local-changes))
+                                                                                       (c/to-frame e)))]
+                                    ["" icon/agree-blue-64-png "Save" (fn [e]
+                                                                        (c/config! info-label :text "Saved")
+                                                                        ((:saved-content (c/config code :user-data)))
+                                                                        (save-fn {:state local-changes :label info-label :code code}))]
+                                    ["" icon/enter-64-png "Leave" (fn [e] (.dispose (c/to-frame e)))]])]
+                        [code]
+                        [info-label]])]
+    (gtool/set-focus code)
+    
+    editor))
+
+;;(popup-window {:view (code-editor {})})
 

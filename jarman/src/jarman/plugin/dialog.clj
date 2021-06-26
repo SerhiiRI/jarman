@@ -196,8 +196,8 @@
                               (butlast data))))))
               :hscroll :never :border nil)))))
 
-;;start julka dialog
 
+;;start julka dialog
 (do (doto (seesaw.core/frame
            :title "title"
            :undecorated? false

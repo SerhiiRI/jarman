@@ -9,12 +9,12 @@
    [jarman.logic.connection :as db]
    [jarman.tools.lang :include-macros true :refer :all]
    [jarman.config.environment :as env]
-   [jarman.plugin.jspl :refer :all :as jspl]
-   [jarman.plugin.table :as plug]
+   [jarman.plugin.jspl :as jspl]
    [jarman.logic.sql-tool :refer [select! update! insert!]]
    [jarman.logic.metadata :as mt]
    [jarman.logic.state :as state]
-   [jarman.plugin.data-toolkit :refer [data-toolkit-pipeline]])
+   ;; [jarman.plugin.data-toolkit :refer [data-toolkit-pipeline]]
+   )
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
@@ -22,9 +22,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPER FUNCTION ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
-(defn- toolkit-pipeline [configuration & toolkit-list]
-  (reduce (fn [acc-toolkit toolkit-pipeline]
-            (toolkit-pipeline configuration acc-toolkit)) {} toolkit-list))
+;; (defn toolkit-pipeline [configuration & toolkit-list]
+;;   (reduce (fn [acc-toolkit toolkit-pipeline]
+;;             (toolkit-pipeline configuration acc-toolkit)) {} toolkit-list))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -120,35 +120,46 @@
 
 (defmacro defview [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
-   `(do
-      ~@(for [cfg cfg-list]
-          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" (str (:plugin-name cfg))))
-                toolkit (toolkit-pipeline cfg data-toolkit-pipeline plugin-toolkit-pipeline)]
-            (global-view-configs-set (:plugin-config-path cfg) cfg toolkit)
-            `(~(:plugin-name cfg) ~(:plugin-config-path cfg) ~'global-view-configs-get))) nil)))
+    `(do
+       ~@(for [cfg cfg-list]
+           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" (str (:plugin-name cfg)))))
+                 toolkit (plugin-toolkit-pipeline cfg)]
+             (global-view-configs-set (:plugin-config-path cfg) cfg toolkit)
+             `(~(:plugin-name cfg) ~(:plugin-config-path cfg) ~'global-view-configs-get))) nil)))
 
-;; (defmacro defview-debug [table-name & body]
-;;   (let [cfg-list (defview-prepare-config table-name body)]
-;;    `(do
-;;       ~@(for [cfg cfg-list]
-;;           (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" (str (:plugin-name cfg))))
-;;                  toolkit (toolkit-pipeline cfg data-toolkit-pipeline plugin-toolkit-pipeline)]
-;;             {:cfg cfg :toolkit `~toolkit})))))
+(defmacro defview-no-eval [table-name & body]
+  (let [cfg-list (defview-prepare-config table-name body)]
+    `(do
+       (global-view-configs-clean)
+       (println "------(DEFVIEW DEBUG)------")
+       ~@(for [cfg cfg-list]
+           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" (str (:plugin-name cfg)))))]
+             (global-view-configs-set (:plugin-config-path cfg) cfg (plugin-toolkit-pipeline cfg))
+             `(println ~(:plugin-config-path cfg))))
+       true)))
 
 (defmacro defview-debug [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
-   `(do
+   `(list
       ~@(for [cfg cfg-list]
           (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" (str (:plugin-name cfg))))]
-            {:cfg cfg :toolkit `(toolkit-pipeline ~cfg ~data-toolkit-pipeline ~plugin-toolkit-pipeline)})))))
+            {:cfg cfg :toolkit `(~plugin-toolkit-pipeline ~cfg)})))))
 
-(defn defview-debug-toolkit [cfg & plugin-toolkit-pipeline-list]
-  (apply (partial toolkit-pipeline cfg data-toolkit-pipeline) plugin-toolkit-pipeline-list))
-
-
+(defmacro defview-debug-map [table-name & body]
+  (let [cfg-list (defview-prepare-config table-name body)]
+    `(do
+      ~(reduce
+        (fn [m-acc cfg]
+          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" (str (:plugin-name cfg))))]
+            `(assoc-in ~m-acc [~@(:plugin-config-path cfg)] {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)})))
+         {} cfg-list))))
 
 ;;; TEST DEFVIEW SEGMENT
-;; (defview permission
+;; defview                --  push data to global map and eval component 
+;; defview-no-eval        --  push data to global map, but not eval component
+;; defview-debug          --  print list of final configuration and toolkit map for every plugin
+;; defview-debug-map      --  just return structure like global-map, to programmer can overview structure only
+;; (defview-debug permission
 ;;   (table
 ;;    :name "permission"
 ;;    :plug-place [:#tables-view-plugin]
@@ -165,7 +176,11 @@
 ;;     [:#as_is
 ;;      :permission.id
 ;;      :permission.permission_name
-;;      :permission.configuration]}))
+;;      :permission.configuration]})
+;;   (dialog-table
+;;    :id :my-custom-dialog
+;;    :name "My dialog box"
+;;    :permission [:user]))
 
 ;;; ---------------------------------------
 ;;; Eval this function and take a look what
@@ -180,7 +195,9 @@
   (do-view-load)
   (global-view-configs-clean)
   (global-view-configs-get)
-  ((get-in (global-view-configs-get) [:permission :table :p-1 :toolkit :select-expression])))
+  ((get-in (global-view-configs-get) [:permission]))
+  ((get-in (global-view-configs-get) [:permission :dialog-table :my-custom-dialog :toolkit :dialog])))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPERS `defview` ;;; 
@@ -215,14 +232,14 @@
                     :dbtype :user :password
                     :useUnicode :characterEncoding)
         data (db/query (select! {:table_name :view}))
-        sdata (if-not (empty? data)(concat [con] (map (fn [x] (read-string (:view x))) data)))
+        sdata (if-not (empty? data)(concat [con req] (map (fn [x] (read-string (:view x))) data)))
         path  "src/jarman/logic/view.clj"]
     (if-not (empty? data) (do (spit path
                                   "")
-                            (for [s sdata]
-                              (with-open [W (io/writer (io/file path) :append true)]
-                                (.write W (pp-str s))
-                                (.write W env/line-separator)))))))
+                              (for [s sdata]
+                                (with-open [W (io/writer (io/file path) :append true)]
+                                  (.write W (pp-str s))
+                                  (.write W env/line-separator)))))))
 
 (defn loader-from-view-clj []
   (let [data 
@@ -247,7 +264,9 @@
    if first is db-loader, then do first load forom db, if
    db not load db, or do crash, use next in order loader"
   [& loaders]
-  (fn [] (load-data-recur nil loaders)))
+  (fn []
+    ;; (global-view-configs-clean)
+    (load-data-recur nil loaders)))
  
 (def ^:dynamic *view-loader-chain-fn*
   "Main function "

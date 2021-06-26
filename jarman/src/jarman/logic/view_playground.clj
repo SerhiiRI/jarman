@@ -91,3 +91,12 @@
         :id :UUUUUUUUUUUUUU
         :permission [:user]
         :actions {:fresh-code (fn [x] (+ 1 x))})))
+
+(comment
+  (do-view-load)
+  (global-view-configs-clean)
+  (global-view-configs-get)
+  (get-in (global-view-configs-get) [:permission :dialog-table :test-dialog-table]))
+
+
+

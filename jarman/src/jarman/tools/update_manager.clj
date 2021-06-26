@@ -8,7 +8,7 @@
    [me.raynes.fs :as gfs]
    ;; local functionality
    [jarman.tools.config-manager :as cm]
-   [jarman.tools.lang :as lang]
+   [jarman.tools.lang :refer [in?]]
    [jarman.tools.fs :as fs]))
 
 ;;; Package standart
@@ -50,11 +50,15 @@
 
 ;; Struktura danych opisująca jeden package
 (defrecord PandaPackage [file name version artifacts uri])
-(def ^:dynamic *repositories* (cm/getset "repository.edn" [:repositories] ["ftp://jarman:bliatdoit@192.168.1.69"]))
+(def ^:dynamic *repositories* ["ftp://jarman:dupa@trashpanda-team.ddns.net"
+                               "/home/serhii/programs/jarman/jarman/test-repository"])
 (def ^:dynamic *program-name* "jarman")
 (def ^:dynamic *program-attr* ["zip" "windows.zip"])
 (def ^:dynamic *program-vers* `~(-> "project.clj" slurp read-string (nth 2)))
 (def blocked-repo-list ["www.google.com"])
+
+(defn filter-program-name [package-list]
+  (filter #(= *program-name* (:name %)) package-list))
 
 (defn is-url? [repo-string]
   (some? (re-matches #"^(http|https|ftp).+" repo-string)))
@@ -64,7 +68,7 @@
 
 (defn is-url-allowed? [repo-string]
   (let [[url protocol domain end] (re-matches #"(\w*://)([\w-_.]+)([:\w\W]*)" repo-string)]
-    (not (some #(lang/in? blocked-repo-list %) [url domain]))))
+    (not (some #(in? blocked-repo-list %) [url domain]))))
 
 (defn is-url-repository? [url-string]
   (if (try (io/input-stream url-string)
@@ -75,7 +79,6 @@
               out (io/output-stream file)]
     (io/copy in out)))
 
-
 ;; (copy "https://file-examples.com/wp-content/uploads/2017/02/file_example_CSV_5000.csv" "suka.csv")
 ;; (copy "suka.csv" "src/sukabliat.bliat")
 
@@ -83,29 +86,36 @@
 ;;; FTP file manager ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn ftp-list-files [repo-url]
+(defn ftp-list-files
+  "Description
+    Show all files on remote FTP Server 
+  Example 
+    (ftp-list-files \"ftp://jarman:dupa@trashpanda-team.ddns.net\")
+      ;; =>  [\"hrtime-1.0.1.zip\" \"hrtime-1.0.2.zip\" \"hrtime-1.0.3.zip\" \"jarman.txt\"]"
+  [repo-url]
   (ftp/with-ftp [client repo-url]
     (ftp/client-cd client "jarman")
     (ftp/client-all-names client)))
 
-(ftp-list-files "ftp://jarman:dupa@192.168.1.69")
-(ftp-list-files "ftp://jarman:dupa@trashpanda-team.ddns.net")
+(comment
+  (ftp-list-files "ftp://jarman:dupa@192.168.1.69")
+  (ftp-list-files "ftp://jarman:dupa@trashpanda-team.ddns.net"))
 
 (defn ftp-put-file [ftp-repo-url repo-path file-path]
   (ftp/with-ftp [client ftp-repo-url]
     (ftp/client-cd client repo-path)))
 
 (defn ftp-get-file
-  ;; ([file-url]
-  ;;  (if-let [[url repo-url path-to-file] (re-matches #"(ftp://.+)/.+/{1}(.+)" file-url)]
-  ;;    (ftp-get-file repo-url path-to-file)))
-  ;; ([repo-url file-name]
-  ;;  (ftp/with-ftp [client repo-url]
-  ;;    (ftp/client-cd client "jarman")
-  ;;    (let [in (ftp/client-get-stream client file-name)
-  ;;              out (io/output-stream file-name)]
-  ;;          (io/copy in out) file-name)
-  ;;    ))
+  #_([file-url]
+   (if-let [[url repo-url path-to-file] (re-matches #"(ftp://.+)/.+/{1}(.+)" file-url)]
+     (ftp-get-file repo-url path-to-file)))
+  #_([repo-url file-name]
+   (ftp/with-ftp [client repo-url]
+     (ftp/client-cd client "jarman")
+     (let [in (ftp/client-get-stream client file-name)
+               out (io/output-stream file-name)]
+           (io/copy in out) file-name)
+     ))
   ([file-url]
    (if-let [[url repo-url path-to-file] (re-matches #"(ftp://.+)/.+/{1}(.+)" file-url)]
      (do (copy url path-to-file)
@@ -114,10 +124,22 @@
    (do (copy (string/join "/" [repo-url "jarman" file-name]) file-name))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; PATH file manager ;;;
+;;; path file manager ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn path-list-files [repo-path]
+(defn path-list-files
+  "Description 
+    List all file on selected Local repository folder
+
+  Example
+    (path-list-files \"/home/serhii/programs/jarman/jarman/test-repository\")
+    ;;=> 
+      (#object[java.io.File 0x231b8775 \"/home/.../jarman/jarman-0.0.4-windows.zip\"]
+       #object[java.io.File 0x25388763 \"/home/.../jarman/scritp.sh\"]
+       #object[java.io.File 0x53363372 \"/home/.../jarman/jarman-0.0.1.zip\"]
+       #object[java.io.File 0x1a24fdad \"/home/.../jarman/jarman-0.0.3-windows.zip\"]
+       #object[java.io.File 0x65fbf1b3 \"/home/.../jarman/jarman-0.0.2.zip\"])"
+  [repo-path]
   (let [path (io/file repo-path "jarman")]
     (if-not (.exists path) []
             (filter #(.isFile %) (.listFiles path)))))
@@ -147,34 +169,116 @@
                      (or (= 1 (count xs)) (not= (first xs) (first ys))) (cmpr (first xs) (first ys))
                      :else ((f f) cmpr (rest xs) (rest ys)))))) comparator-f (parse-int v1) (parse-int v2))))
 
-(defn max-version [package-list]
+(defn- max-version [package-list]
   (let [current-package (PandaPackage. nil *program-name* *program-vers* nil nil)
-        upgrade-package (reduce (fn [acc package] (if (and (version-comparator #'<= (:version acc) (:version package))
-                                           (lang/in? *program-attr* (:artifacts package))) package acc))
-                                current-package package-list)]
+        upgrade-package
+        (reduce (fn [acc package]
+                  (if (and (= (:name acc) (:name package))
+                         (version-comparator #'<= (:version acc) (:version package))
+                         (in? *program-attr* (:artifacts package))) package acc))
+                current-package package-list)]
     (if (not= current-package upgrade-package) upgrade-package)))
 
-(defn preproces-from-url [repository]
-  (reduce #(if(re-matches #"(\w+)-(\w+\.\w+\.\w+)[-.]{0,1}(.+)" %2)
-             (conj %1 (apply ->PandaPackage (conj (re-matches #"(\w+)-(\w+\.\w+\.\w+)[-.]{0,1}(.+)" %2)
-                                                  (string/join "/" [(first *repositories*) "jarman" %2])))))
-          []
-          (ftp-list-files repository)))
+(defn- match-package
+  "Description
+    Maching packge by name 
+    Package standart
+     jarman-0.1.12-windows.zip
+     `jarman` - program name. (Declare in `*program-name*`)
+          - simple name of program/plugin, or other things you need would be.
+     `0.1.12` - version of program, geted from project.clj file. (Declare in `*program-vers*`)
+          - using x.x.x pattern convinience. It mostly tip, not a rule, as rule. 
+                  | | +- hotfix
+                  | +--- feature
+                  +----- functionality update
+     `windows.zip` - program attribute. (Declare in `*program-attr*`).
+     Attribute rule:
+          - split with dot (.) symbol
+          - thats all
+  
+     For geting three part use this regular expression formula
+       #\"(\\w+)-(\\w+\\.\\w+\\.\\w+)[-.]{0,1}(.+)\"
+         ----- ---------------(. or -)  ----------
+           |          |                  +--- attributes
+           |          +---------------------- x.x.x version
+           +--------------------------------- program name
+  
 
-(defn preproces-from-path[repository]
-  (map #(apply ->PandaPackage (conj (re-matches #"(\w+)-(\w+\.\w+\.\w+)[-.]{0,1}(.+)" (.getName %)) (str %))) (path-list-files repository)))
+  Example
+    (match-package \"jarman-1.0.2.zip\")
+     ;; => {:file \"jarman-1.0.2.zip\", :name \"jarman\", :version \"1.0.2\", :artifacts \"zip\"}
+    (match-package \"jarman-1.0.2-windows.zip\")
+     ;; => {:file \"jarman-1.0.2-windows.zip\", :name \"jarman\", :version \"1.0.2\", :artifacts \"windows.zip\"}
+    (match-package \"jarman-1.0.2.windows.zip\")
+     ;; => {:file \"jarman-1.0.2-windows.zip\", :name \"jarman\", :version \"1.0.2\", :artifacts \"windows.zip\"}"
+  [package-name]
+  (if-let [[file name version artifacts] (re-matches #"(\w+)-(\w+\.\w+\.\w+)[-\.]{0,1}(.+)" package-name)]
+    {:file file
+     :name name
+     :version version
+     :artifacts artifacts}))
+
+(defn preproces-from-ftp
+  "Description
+    Return list of panda packages on ftp `repository` param
+  Example
+    (preproces-from-url \"ftp://jarman:dupa@trashpanda-team.ddns.net\")
+      [#PandaPackage
+       {:file \"hrtime-1.0.1.zip\",
+        :name \"hrtime\",
+        :version \"1.0.1\",
+        :artifacts \"zip\",
+        :uri
+        \"ftp://jarman:dupa@trashpanda-team.ddns.net/jarman/hrtime-1.0.1.zip\"} ...]"
+  [repository]
+  (reduce #(if-let [m (match-package %2)]
+             (conj %1 (map->PandaPackage 
+                       (into m {:uri (string/join "/" [repository "jarman" %2])})))
+             %1)
+          [] (ftp-list-files repository)))
+
+(defn preproces-from-path
+  "Description
+    Return list of panda packages on local folder `repository` param
+  Example
+    (preproces-from-path \"/home/serhii/programs/jarman/jarman/test-repository\")
+     ;;=>
+       [{:file \"jarman-0.0.4-windows.zip\",
+         :name \"jarman\",
+         :version \"0.0.4\",
+         :artifacts \"windows.zip\",
+         :uri \"/home.../jarman-0.0.4-windows.zip\"} ...]"
+  [repository]
+  (reduce #(let []
+          (if-let [m (match-package (.getName %2))]
+            (conj %1 (map->PandaPackage 
+                      (into m {:uri (.getAbsolutePath %2)})))
+            %1))
+        [] (path-list-files repository)))
 
 
-(defn get-all-packages [repositories]
-  (letfn [(get-pkg [url] (let [ftp?  (every-pred is-url? is-url-allowed? is-url-repository?)
-                               path? (every-pred is-path?)] 
-                           (cond
-                               (ftp? url)  (preproces-from-url  url)
-                               (path? url) (preproces-from-path url)
-                               :else nil)))]
-    (mapcat get-pkg repositories)))
+(defn get-all-packages
+  "Description
+    Get list of all packages from all repositories  
+  Example
+    (get-all-packages *repositories*)
+      ;;=> [#PandaPackage{..}, #PandaPackage {
+  See
+    `*repositories*` - list of all repositories"
+  [repositories]
+  (mapcat
+   (fn [url]
+     (let [ftp?  (every-pred is-url? is-url-allowed? is-url-repository?)
+           path? (every-pred is-path?)] 
+       (cond
+         (ftp? url)  (preproces-from-url  url)
+         (path? url) (preproces-from-path url)
+         :else nil))) repositories))
 
-(defn download-package [^PandaPackage package]
+(defn download-package
+  "Description
+    Downloand package from local or remote ftp repositories"
+  [^PandaPackage package]
   (let [ftp? (every-pred is-url? is-url-allowed? is-url-repository?)
         path? (every-pred is-path?)] 
    (cond
@@ -182,8 +286,21 @@
      (path? (:uri package)) (path-get-file (:uri package))
      :else nil)))
 
+#_(let [ftp_package (map->PandaPackage
+                   {:file "hrtime-1.0.3.zip",
+                    :name "hrtime",
+                    :version "1.0.3",
+                    :artifacts "zip",
+                    :uri "ftp://jarman:dupa@trashpanda-team.ddns.net/jarman/hrtime-1.0.3.zip"})
 
-;; (fs/config-copy-dir "config" "transact/config")
+      local_package (map->PandaPackage
+                     {:file "jarman-0.0.3-windows.zip",
+                      :name "jarman",
+                      :version "0.0.3",
+                      :artifacts "windows.zip",
+                      :uri "/home/serhii/programs/jarman/jarman/test-repository/jarman/jarman-0.0.3-windows.zip"})]
+  (download-package ftp_package))
+
 (defn update-project [^PandaPackage package]
   (let [unzip-folder (str (gensym "transact"))
         unzip-config-folder (string/join java.io.File/separator [unzip-folder "config"])]
@@ -202,10 +319,22 @@
           (println (format "[!] Delete temporary folder %s" unzip-config-folder) )
           (gfs/delete-dir unzip-folder)))
       ;; (catch java.io.IOException e)
-      ))
+    ))
 
+;;;;;;;;;;;;;;;;;;;;;;
+;;; user functions ;;;
+;;;;;;;;;;;;;;;;;;;;;;
 
-;; (update-project (max-version (get-all-packages *repositories*)))
+(defn show-list-of-all-packages []
+  (get-all-packages *repositories*))
+
+(defn check-package-for-update []
+  (max-version (get-all-packages *repositories*)))
+
+(def --test-- (get-all-packages *repositories*))
+(max-version --test--) 
+
+(update-project (max-version (get-all-packages *repositories*)))
 
 ;; (unzp "ftp://jarman:bliatdoit@192.168.1.69//jarman/jarman-1.0.4.zip" "kupa.zip")
 ;; (unzip "tst/kupa.zip" "tst/kkk")

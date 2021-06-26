@@ -98,7 +98,7 @@
                [cfg (add-id (merge global-cfg (apply hash-map plugin-cfg)))
                 k-plugin-id       (:id cfg)
                 k-plugin-name     (keyword plugin-name)
-                add-plugin-name   (key-setter :plugin-name        (symbol plugin-name))
+                add-plugin-name   (key-setter :plugin-name        (str plugin-name))
                 add-full-path-cfg (key-setter :plugin-config-path [k-table-name k-plugin-name k-plugin-id])
                 cfg (-> cfg
                         eval-action
@@ -111,10 +111,12 @@
   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
        ~@(for [cfg cfg-list]
-           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" (str (:plugin-name cfg)))))
+           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" (:plugin-name cfg))))
+                 plugin-component `~(symbol (format "jspl/%s" (:plugin-name cfg)))
                  toolkit (plugin-toolkit-pipeline cfg)]
              (global-view-configs-set (:plugin-config-path cfg) cfg toolkit)
-             `(~(:plugin-name cfg) ~(:plugin-config-path cfg) ~'global-view-configs-get))) nil)))
+             `(~plugin-component ~(:plugin-config-path cfg) ~'global-view-configs-get)
+             )) nil)))
 
 (defmacro defview-no-eval [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
@@ -122,24 +124,25 @@
        (global-view-configs-clean)
        (println "------(DEFVIEW DEBUG)------")
        ~@(for [cfg cfg-list]
-           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" (str (:plugin-name cfg)))))]
+           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" (:plugin-name cfg))))]
              (global-view-configs-set (:plugin-config-path cfg) cfg (plugin-toolkit-pipeline cfg))
              `(println ~(:plugin-config-path cfg))))
        true)))
 
 (defmacro defview-debug [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
-   `(list
+    `(list
       ~@(for [cfg cfg-list]
-          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" (str (:plugin-name cfg))))]
-            {:cfg cfg :toolkit `(~plugin-toolkit-pipeline ~cfg)})))))
+          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" (:plugin-name cfg)))]
+            `{:cfg ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)})
+          ))))
 
 (defmacro defview-debug-map [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
       ~(reduce
         (fn [m-acc cfg]
-          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" (str (:plugin-name cfg))))]
+          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" (:plugin-name cfg)))]
             `(assoc-in ~m-acc [~@(:plugin-config-path cfg)] {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)})))
          {} cfg-list))))
 
@@ -220,9 +223,9 @@
   (let [con (dissoc (db/connection-get)
                     :dbtype :user :password
                     :useUnicode :characterEncoding)
-        req (list 'in-ns (quote (quote jarman.logic.view-manager)))
+        ;; req (list 'in-ns (quote (quote jarman.logic.view-manager)))
         data (db/query (select! {:table_name :view}))
-        sdata (if-not (empty? data)(concat [con req] (map (fn [x] (read-string (:view x))) data)))
+        sdata (if-not (empty? data)(concat [con ] (map (fn [x] (read-string (:view x))) data)))
         path  "src/jarman/logic/view.clj"]
     (if-not (empty? data) (do (spit path
                                   "")
@@ -271,7 +274,7 @@
     (if (empty? data)
       ((state/state :alert-manager) :set {:header "Error" :body "Problem with tables. Data not found in DB"} 5)
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
-        (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))))
+        (doall (map (fn [x] (eval x)) (subvec (vec data) 1)))))))
 
 
 (defn- metadata-get [table]

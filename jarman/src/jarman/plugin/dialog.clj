@@ -191,11 +191,13 @@
                                 (if-not (= last-id (:id data-map))
                                   (create-dialog--answer-chooser ((keyword column) data-map)
                                                                  ;;; TO DO swap id to atom
-                                                                 (fn [e] (c/return-from-dialog e (:id data-map))))))
+                                                                (fn [e] (c/return-from-dialog e (:id data-map)))
+                                                                 )))
                               (butlast data))))))
               :hscroll :never :border nil)))))
 
-;; ;;start julka dialog
+
+;;start julka dialog
 (do (doto (seesaw.core/frame
            :title "title"
            :undecorated? false
@@ -206,11 +208,12 @@
             :items [[(c/label :text "heyy open modal window"
                             :listen [:mouse-entered (fn [e] (c/config! e :cursor :hand))
                                      :mouse-clicked (fn [e]
-                                                      (gcomp/popup-window {:window-title "Choose reason for repair"
-                                                                           :view
-                                                                           (create-dialog-repair-chooser
-                                                                            :repair_reasons
-                                                                            :description 4)
-                                                                           :size [400 300]
-                                                                           :relative (c/to-widget e)}))])]]))
+                                                      (c/alert (str "resault"
+                                                                    (gcomp/popup-window {:window-title "Choose reason for repair"
+                                                                                         :view
+                                                                                         (create-dialog-repair-chooser
+                                                                                          :repair_reasons
+                                                                                          :description 4)
+                                                                                         :size [400 300]
+                                                                                         :relative (c/to-widget e)}))))])]]))
       (.setLocationRelativeTo nil) c/pack! c/show!))

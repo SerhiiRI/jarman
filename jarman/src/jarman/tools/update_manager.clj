@@ -311,14 +311,13 @@
           (println (format "[!] Unpack to folder %s" unzip-folder))
           (fs/unzip (:file package) unzip-folder)
           (println (format "[!] Merge configurations in %s" unzip-config-folder))
-          ;; (fs/config-copy-dir "config" unzip-config-folder)
-          ;; (println "[!] Copy transation folder to cenral program")
           (fs/copy-dir-replace unzip-folder ".")
           (println (format "[!] Delete update-package %s" (:file package)) )
           (gfs/delete (:file package))
           (println (format "[!] Delete temporary folder %s" unzip-config-folder) )
-          (gfs/delete-dir unzip-folder)))
-      ;; (catch java.io.IOException e)
+          (gfs/delete-dir unzip-folder)
+          (println (format "[!] Finished update") )))
+    ;; (catch java.io.IOException e)
     ))
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -331,12 +330,12 @@
 (defn check-package-for-update []
   (max-version (get-all-packages *repositories*)))
 
-(def --test-- (get-all-packages *repositories*))
-(max-version --test--) 
+(comment
+  (def --tmp-package-list-- (get-all-packages *repositories*))
+  (max-version --tmp-package-list--)
+  (update-project (max-version --tmp-package-list--))
+  (update-project (max-version (get-all-packages *repositories*)))
+  ;; unzip test
+  (unzip "ftp://jarman:bliatdoit@192.168.1.69//jarman/jarman-1.0.4.zip" "kupa.zip")
+  (unzip "tst/kupa.zip" "tst/kkk"))
 
-(update-project (max-version (get-all-packages *repositories*)))
-
-;; (unzp "ftp://jarman:bliatdoit@192.168.1.69//jarman/jarman-1.0.4.zip" "kupa.zip")
-;; (unzip "tst/kupa.zip" "tst/kkk")
-
-;; (copy-dir)

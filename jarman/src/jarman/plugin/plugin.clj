@@ -110,28 +110,27 @@
   :jarman.plugin.table/tables]
  :opt-un
  [:jarman.plugin.spec/plug-place :jarman.plugin.table/view-columns])"
-  [plugin-key-list]
-  
+  [plugin-name plugin-key-list]
  (let [klist (vec (concat (plugin-system-requirements) plugin-key-list))
        gruoped-spec (group-by second
                               (map (fn [[k {[spec-k spec-req] :spec}]]
                                      [spec-k spec-req]) klist))]
-   `(s/def ~(keyword "jarman.plugin.spec" "table") 
+   `(s/def ~(keyword "jarman.plugin.spec" plugin-name) 
       (s/keys
        :req-un ~(mapv first (:req-un gruoped-spec))
        :opt-un ~(mapv first (:opt-un gruoped-spec))))))
-
-
 
 (defmacro defplugin
   [plugin-name ns description & body]
   (let [create-name-func (fn [fname] (symbol (str ns "/" plugin-name "-" fname)))
         func-component (create-name-func "component")
-        func-tool (symbol (str plugin-name "-toolkit-pipeline"))
-        func-toolkit (symbol (str ns "/" func-tool))
-        func-t (symbol (str plugin-name "-toolkit-pipeline"))]    
+        ;; for `table` plugin
+        ;; inside-plugin-pipeline         -> `jarman.plugin.table/table-toolkit-pipeline`
+        ;; proxyed-inside-plugin-pipeline -> `table-toolkit-pipeline`
+        inside-plugin-pipeline  (symbol (str ns "/" (str plugin-name "-toolkit-pipeline")))
+        proxyed-inside-toolkit-pipeline (symbol (str plugin-name "-toolkit-pipeline"))]    
     `(do
-       ~(generate-dynamic-spec body)
+       ~(generate-dynamic-spec (str plugin-name) body)
        (defn ~plugin-name
          ;;; documentations
          ~(generate-plugin-doc description body)
@@ -140,9 +139,7 @@
          ;;; body
          (~func-component
           ~'plugin-path ~'global-configuration))
-       (def ~func-t ~func-toolkit)))) 
-
-
+       (def ~proxyed-inside-toolkit-pipeline ~inside-plugin-pipeline))))
 
 
 

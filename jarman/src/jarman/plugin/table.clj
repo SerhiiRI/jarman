@@ -26,7 +26,8 @@
    [jarman.gui.gui-calendar :as calendar]
    [jarman.logic.metadata :as mt]
    [jarman.plugin.spec :as spec]
-   [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
+   [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut]
+   [jarman.plugin.data-toolkit :as query-toolkit])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
@@ -666,9 +667,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; EXTERNAL INTERFAISE ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; pipeline 
-(defn table-toolkit-pipeline [configuration datatoolkit]
-  datatoolkit)
+
+(defn table-toolkit-pipeline [configuration]
+ (query-toolkit/data-toolkit-pipeline configuration {}))
 
 ;;; component
 (defn table-component [plugin-path global-configuration]

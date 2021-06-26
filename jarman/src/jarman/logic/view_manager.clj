@@ -255,7 +255,7 @@
    db not load db, or do crash, use next in order loader"
   [& loaders]
   (fn []
-    ;; (global-view-configs-clean)
+    (global-view-configs-clean)
     (load-data-recur nil loaders)))
  
 (def ^:dynamic *view-loader-chain-fn*
@@ -271,7 +271,7 @@
     (if (empty? data)
       ((state/state :alert-manager) :set {:header "Error" :body "Problem with tables. Data not found in DB"} 5)
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
-        (doall (map (fn [x] (eval x)) (subvec (vec data) 1)))))))
+        (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))))
 
 
 (defn- metadata-get [table]

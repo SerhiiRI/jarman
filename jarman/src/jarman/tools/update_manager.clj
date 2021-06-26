@@ -57,11 +57,7 @@
 (def blocked-repo-list ["www.google.com"])
 
 (defn is-url? [repo-string]
-  (let [web-ref (apply str (take 4 (string/trim repo-string)))]
-    (and (not-empty web-ref)
-         (or (= web-ref "http")
-             (= web-ref "www.")
-             (= web-ref "ftp:")))))
+  (some? (re-matches #"^(http|https|ftp).+" repo-string)))
 
 (defn is-path? [repo-string]
   (.exists (io/file repo-string)))
@@ -93,6 +89,7 @@
     (ftp/client-all-names client)))
 
 (ftp-list-files "ftp://jarman:dupa@192.168.1.69")
+(ftp-list-files "ftp://jarman:dupa@trashpanda-team.ddns.net")
 
 (defn ftp-put-file [ftp-repo-url repo-path file-path]
   (ftp/with-ftp [client ftp-repo-url]

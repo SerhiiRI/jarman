@@ -223,9 +223,9 @@
   (let [con (dissoc (db/connection-get)
                     :dbtype :user :password
                     :useUnicode :characterEncoding)
-        ;; req (list 'in-ns (quote (quote jarman.logic.view-manager)))
+        req (list 'in-ns (quote (quote jarman.logic.view-manager)))
         data (db/query (select! {:table_name :view}))
-        sdata (if-not (empty? data)(concat [con ] (map (fn [x] (read-string (:view x))) data)))
+        sdata (if-not (empty? data)(concat [con req] (map (fn [x] (read-string (:view x))) data)))
         path  "src/jarman/logic/view.clj"]
     (if-not (empty? data) (do (spit path
                                   "")
@@ -274,7 +274,7 @@
     (if (empty? data)
       ((state/state :alert-manager) :set {:header "Error" :body "Problem with tables. Data not found in DB"} 5)
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
-        (doall (map (fn [x] (eval x)) (subvec (vec data) 1)))))))
+        (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))))
 
 
 (defn- metadata-get [table]
@@ -306,7 +306,5 @@
       (db/exec (insert! {:table_name :view :set {:table_name table-name, :view table-view}}))
       (db/exec (update! {:table_name :view :set {:view table-view} :where [:= :id id-t]})))
     (loader-from-db)))
-
-
 
 

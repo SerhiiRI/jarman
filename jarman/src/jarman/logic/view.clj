@@ -1,5 +1,7 @@
 {:host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman"}
 
+(in-ns 'jarman.logic.view-manager)
+
 (defview permission
   (table
    :name "permission"

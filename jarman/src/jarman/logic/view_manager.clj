@@ -12,20 +12,9 @@
    [jarman.plugin.jspl :as jspl]
    [jarman.logic.sql-tool :refer [select! update! insert!]]
    [jarman.logic.metadata :as mt]
-   [jarman.logic.state :as state]
-   ;; [jarman.plugin.data-toolkit :refer [data-toolkit-pipeline]]
-   )
+   [jarman.logic.state :as state])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;
-;;; HELPER FUNCTION ;;;
-;;;;;;;;;;;;;;;;;;;;;;;
-;; (defn toolkit-pipeline [configuration & toolkit-list]
-;;   (reduce (fn [acc-toolkit toolkit-pipeline]
-;;             (toolkit-pipeline configuration acc-toolkit)) {} toolkit-list))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GLOBAL DEFVIEW MAP ;;;
@@ -159,28 +148,28 @@
 ;; defview-no-eval        --  push data to global map, but not eval component
 ;; defview-debug          --  print list of final configuration and toolkit map for every plugin
 ;; defview-debug-map      --  just return structure like global-map, to programmer can overview structure only
-;; (defview-debug permission
-;;   (table
-;;    :name "permission"
-;;    :plug-place [:#tables-view-plugin]
-;;    :tables [:permission]
-;;    :view-columns [:permission.permission_name :permission.configuration]
-;;    :model-insert [:permission.permission_name :permission.configuration]
-;;    :insert-button true
-;;    :delete-button true
-;;    :actions []
-;;    :buttons []
-;;    :query
-;;    {:table_name :permission,
-;;     :column
-;;     [:#as_is
-;;      :permission.id
-;;      :permission.permission_name
-;;      :permission.configuration]})
-;;   (dialog-table
-;;    :id :my-custom-dialog
-;;    :name "My dialog box"
-;;    :permission [:user]))
+#_(defview-debug permission
+    (table
+     :name "permission"
+     :plug-place [:#tables-view-plugin]
+     :tables [:permission]
+     :view-columns [:permission.permission_name :permission.configuration]
+     :model-insert [:permission.permission_name :permission.configuration]
+     :insert-button true
+     :delete-button true
+     :actions []
+     :buttons []
+     :query
+     {:table_name :permission,
+      :column
+      [:#as_is
+       :permission.id
+       :permission.permission_name
+       :permission.configuration]})
+    (dialog-table
+     :id :my-custom-dialog
+     :name "My dialog box"
+     :permission [:user]))
 
 ;;; ---------------------------------------
 ;;; Eval this function and take a look what
@@ -231,6 +220,7 @@
   (let [con (dissoc (db/connection-get)
                     :dbtype :user :password
                     :useUnicode :characterEncoding)
+        req (list 'in-ns (quote (quote jarman.logic.view-manager)))
         data (db/query (select! {:table_name :view}))
         sdata (if-not (empty? data)(concat [con req] (map (fn [x] (read-string (:view x))) data)))
         path  "src/jarman/logic/view.clj"]

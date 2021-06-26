@@ -1,4 +1,4 @@
-(defproject jarman "1.0.0"
+(defproject jarman "0.0.1"
   :description "Jarman"
   :license {:name "EPL-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
@@ -24,29 +24,51 @@
   ;;:main ^:skip-aot jarman.core
   :main jarman.core
   :aot [jarman.core]
-  :repl-options {:init-ns hrtime.core}
+  :repl-options {:init-ns jarman.core}
   :target-path "target/%s"
   :aliases  {"jarman" ["run" "-m" "jarman.jarman-cli"]}
-  :profiles {;; :uberjar {:aot :all}
-             ;;:dev {;; :dependencies [[autodoc "1.1.2"]]
-             ;;      :plugins [[funcool/codeina "0.4.0" :exclusions [org.clojure/clojure]]]}
-             :user
-             {:plugins [[lein-launch4j "0.1.2"]]
-              :launch4j-install-dir ""
-              :launch4j-config-file "resources/config.xml"}
-             :lets-scheme {:aot [jarman.schema-builder
-                                 jarman.sql-tool]
-                           :main jarman.schema-builder
-                           :jar-name "lets-scheme-lib.jar"
-                           :uberjar-name "lets-scheme.jar"}}
-  :codeina {:sources ["src"]
-            :reader :clojure}
-  ;; :plugins [[funcool/codeina "0.5.0"]]
   :jar-name "jarman.jar"
   ;;:uberjar {:aot :all}
   :uberjar-name "jarman-standalone.jar"
   :java-source-paths ["src/java"]
-  :javac-options     ["-Xlint:unchecked"])
+  :javac-options     ["-Xlint:unchecked"]
+  :profiles {:user
+             {:plugins [[lein-launch4j "0.1.2"]]
+              :launch4j-install-dir ""
+              :launch4j-config-file "resources/config.xml"}
+
+             :lets-scheme
+             {:aot [jarman.schema-builder
+                    jarman.sql-tool]
+              :main jarman.schema-builder
+              :jar-name "lets-scheme-lib.jar"
+              :uberjar-name "lets-scheme.jar"}
+             
+             ;; :cider
+             ;; {:dependencies [[cider/cider-nrepl "0.26.0"]]
+             ;;  :repl-options {:nrepl-middleware
+             ;;                 [cider.nrepl/wrap-apropos
+             ;;                  cider.nrepl/wrap-classpath
+             ;;                  cider.nrepl/wrap-clojuredocs
+             ;;                  cider.nrepl/wrap-complete
+             ;;                  cider.nrepl/wrap-debug
+             ;;                  cider.nrepl/wrap-format
+             ;;                  cider.nrepl/wrap-info
+             ;;                  cider.nrepl/wrap-inspect
+             ;;                  cider.nrepl/wrap-macroexpand
+             ;;                  cider.nrepl/wrap-ns
+             ;;                  cider.nrepl/wrap-spec
+             ;;                  cider.nrepl/wrap-profile
+             ;;                  cider.nrepl/wrap-refresh
+             ;;                  cider.nrepl/wrap-resource
+             ;;                  cider.nrepl/wrap-stacktrace
+             ;;                  cider.nrepl/wrap-test
+             ;;                  cider.nrepl/wrap-trace
+             ;;                  cider.nrepl/wrap-out
+             ;;                  cider.nrepl/wrap-undef
+             ;;                  cider.nrepl/wrap-version
+             ;;                  cider.nrepl/wrap-xref]}}
+             })
 
 
 

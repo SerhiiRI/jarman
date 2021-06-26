@@ -460,17 +460,16 @@
 
 (defn getset
   "get metadate deserialized information for specified tables.
-        
   Example 
     (getset \"user\") ;=> [{:id 1 :table...}...]"
   [& tables]
   (let [metadata
         (mapv (fn [meta] (clojure.core/update meta :prop read-string))
               (db/query
-                          (if (empty? tables)
-                            (select! {:table_name :metadata})
-                            (select! {:table_name :metadata
-                                      :where [:= (mapv (fn [x] [:= :table_name (name x)]) tables)]}))))]
+               (if (empty? tables)
+                 (select! {:table_name :metadata})
+                 (select! {:table_name :metadata
+                           :where [:= (mapv (fn [x] [:= :table_name (name x)]) tables)]}))))]
     (if (empty? tables)
       (do (swapp-metadata metadata) metadata)
       metadata)))

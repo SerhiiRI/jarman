@@ -294,7 +294,7 @@
      (let [ftp?  (every-pred is-url? is-url-allowed? is-url-repository?)
            path? (every-pred is-path?)] 
        (cond
-         (ftp? url)  (preproces-from-url  url)
+         (ftp? url)  (preproces-from-ftp  url)
          (path? url) (preproces-from-path url)
          :else nil))) repositories))
 

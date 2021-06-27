@@ -48,7 +48,6 @@
         ;; (.setLocationRelativeTo dialog frame)
         (seesaw.core/show! dialog))))
 
-
 (defn dialog-test-toolkit-pipeline [configuration]
   {:dialog dialog})
 

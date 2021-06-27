@@ -188,10 +188,11 @@
       [:#as_is
        :permission.id
        :permission.permission_name
-       :permission.configuration]})))
+       :permission.configuration]}))
+  )
 
 ;;; ---------------------------------------
-;;; Eval this function and take a look what
+;;; eval this function and take a look what
 ;;; you get in that configuration
 ;;; ---------------------------------------
 

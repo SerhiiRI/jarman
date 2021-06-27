@@ -8,6 +8,17 @@
               out (io/output-stream file)]
     (io/copy in out)))
 
+(defn is-edn?
+  "test if file have .edn extention"
+  [path]
+  (let [f (if-not (string? path) path (clojure.java.io/file path))]
+    (if (and (.isFile f) (.exists f))
+      (= (rafs/extension path) ".edn"))))
+
+
+(defn create-dir [dir]
+  (rafs/mkdirs dir))
+
 (defn unzip [file dir]
   (let [saveDir (java.io.File. dir)]
     (with-open [stream (java.util.zip.ZipInputStream. (io/input-stream file))]

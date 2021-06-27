@@ -18,12 +18,11 @@
             [clojure.java.jdbc :as jdbc]
             [jarman.tools.swing :as stool]
             [jarman.gui.gui-app :as app]
-            [jarman.logic.system-data-logistics :as logic]
+            [jarman.logic.system-login :as system-login]
             [jarman.gui.gui-components :as components]
             [jarman.logic.connection :as c]
             [jarman.plugin.table :as ptab]
             [jarman.logic.view-manager :as pvm]
-            ;; [jarman.logic.view :as view]
             ;; [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]
             ))
 
@@ -369,7 +368,7 @@
   (let [data (key-title (c/datalist-mapper (c/datalist-get)))]
     (println login)
     (println pass)
-    (if-let [login-fn (logic/login
+    (if-let [login-fn (system-login/login
                        {:dbtype (:dbtype data)
                         :host (:host data)
                         :port (:port data)

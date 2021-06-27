@@ -20,7 +20,7 @@
      :permission.id
      :permission.permission_name
      :permission.configuration]})
-  (dialog-table
+  (dialog-test
    :id :my-custom-dialog
    :name "My dialog box"
    :permission [:user]))

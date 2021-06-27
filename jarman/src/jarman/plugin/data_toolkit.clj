@@ -10,7 +10,7 @@
    [jarman.logic.connection :as db]
    [jarman.tools.lang :include-macros true :refer :all]
    [jarman.config.environment :as env]
-   [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
+   [jarman.logic.sql-tool :refer [select! update! delete! insert!]]
    [jarman.logic.metadata :as mt])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))

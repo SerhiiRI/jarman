@@ -4,17 +4,15 @@
    [clojure.string :as string]
    [clojure.java.io :as io]
    [seesaw.core :as c]
-   ;; ;; Jarman toolkit
-   [jarman.gui.gui-seed :as gseed]
-   [jarman.logic.connection :as db]
+   ;; Jarman toolkit
    [jarman.tools.lang :include-macros true :refer :all]
    [jarman.config.environment :as env]
    [jarman.plugin.jspl :as jspl]
+   ;; --- 
+   [jarman.logic.connection :as db]
    [jarman.logic.sql-tool :refer [select! update! insert!]]
    [jarman.logic.metadata :as mt]
-   [jarman.logic.state :as state])
-  (:import (java.util Date)
-           (java.text SimpleDateFormat)))
+   [jarman.logic.state :as state]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GLOBAL DEFVIEW MAP ;;;
@@ -151,44 +149,61 @@
 ;; defview-no-eval        --  push data to global map, but not eval component
 ;; defview-debug          --  print list of final configuration and toolkit map for every plugin
 ;; defview-debug-map      --  just return structure like global-map, to programmer can overview structure only
-#_(defview-debug permission
-    (table
-     :name "permission"
-     :plug-place [:#tables-view-plugin]
+(comment
+  (defview-no-eval permission
+   (table
+    :name "permission"
+    :plug-place [:#tables-view-plugin]
+    :tables [:permission]
+    :view-columns [:permission.permission_name :permission.configuration]
+    :model-insert [:permission.permission_name :permission.configuration]
+    :insert-button true
+    :delete-button true
+    :actions []
+    :buttons []
+    :query
+    {:table_name :permission,
+     :column
+     [:#as_is
+      :permission.id
+      :permission.permission_name
+      :permission.configuration]})
+    (dialog-test
+     :id :my-custom-dialog
+     :name "My dialog box"
+     :permission [:user])
+    (dialog-bigstring
+     :id :my-custom-dialog
+     :name "My Bigstring box"
+     :permission [:user])
+    (dialog-table
+     :id :my-custom-dialog
+     :name "My table dialog"
+     :permission [:user]
      :tables [:permission]
-     :view-columns [:permission.permission_name :permission.configuration]
-     :model-insert [:permission.permission_name :permission.configuration]
-     :insert-button true
-     :delete-button true
-     :actions []
-     :buttons []
+     :view-columns [:permission.permission_name]
      :query
      {:table_name :permission,
       :column
       [:#as_is
        :permission.id
        :permission.permission_name
-       :permission.configuration]})
-    (dialog-table
-     :id :my-custom-dialog
-     :name "My dialog box"
-     :permission [:user]))
+       :permission.configuration]})))
 
 ;;; ---------------------------------------
 ;;; Eval this function and take a look what
 ;;; you get in that configuration
-;;;  See on:
-;;;  `:permission`
-;;;  `:id`
 ;;; ---------------------------------------
-;;;
 
 (comment
   (do-view-load)
   (global-view-configs-clean)
   (global-view-configs-get)
   ((get-in (global-view-configs-get) [:permission]))
-  ((get-in (global-view-configs-get) [:permission :dialog-table :my-custom-dialog :toolkit :dialog])))
+  ((get-in (global-view-configs-get) [:permission :dialog-test :my-custom-dialog :toolkit :dialog]))
+  ((get-in (global-view-configs-get) [:permission :dialog-bigstring :my-custom-dialog :toolkit :dialog]))
+  ((get-in (global-view-configs-get) [:permission :dialog-table :my-custom-dialog :toolkit :dialog]))
+  )
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;

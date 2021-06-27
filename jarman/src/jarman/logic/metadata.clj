@@ -80,12 +80,13 @@
   (:require
    [clojure.data :as data]
    [clojure.string :as string]
-   [jarman.logic.sql-tool :refer [select! update! insert! alter-table! create-table! delete!
-                                  show-table-columns ssql-type-parser]]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]
-   [jarman.logic.connection :as db])
+   [jarman.logic.connection :as db]
+   [jarman.logic.sql-tool :refer [select! update! insert!
+                                  alter-table! create-table! delete!
+                                  show-table-columns ssql-type-parser]])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 

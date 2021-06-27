@@ -9,13 +9,3 @@
 (s/def :jarman.plugin.spec/plug-place :jarman.plugin.spec/keyword-list)
 (s/def :jarman.plugin.spec/name       string?)
 
-;;; DEPRECATED --  @julia must look
-;; (defn test-keys-jtable [conf spec-map]
-;;   (s/def :global-plugin/block-table
-;;     (eval spec-map))
-;;   (let [resault (s/valid? :global-plugin/block-table conf)]
-;;     (if resault
-;;       resault
-;;       (do (s/explain :global-plugin/block-table conf)
-;;           resault))))
-

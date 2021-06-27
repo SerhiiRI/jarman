@@ -182,7 +182,8 @@
   "Print methods for object/class, in argument"
   [some-object]
   (->> some-object
-       reflect :members (filter :return-type) (map :name) sort (map #(str "." %) ) distinct println))
+       reflect :members (filter :return-type) (map :name) sort (map #(str "." %))
+       distinct (map symbol)))
 
 (defn random-unique-id
   "Description

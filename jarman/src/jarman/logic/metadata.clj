@@ -52,23 +52,15 @@
 ;;
 ;;   Short meta description for columns
 ;;    :field - database column name.
+;;    :field-qualified - table-dot-field notation.
 ;;    :representation - name for end-user. By default equal to :field. 
 ;;    :description - some description information, used for UI.
 ;;    :column-type - database type of column.
 ;;    :private? - true if column must be hided for user UI. 
 ;;    :editable? - true if column editable
-;;    :component-type - influed by column-type key, contain one of symbol ("d" "t" "dt" "n" "b" "a" "f" "l"
-;;    "i" nil), which describe some hint to representation information by UI:
-;;          "d" - date
-;;          "t" - time
-;;          "dt" - date and time
-;;          "n" - simple number
-;;          "b" - mean boolean type of data
-;;          "a" - big text block
-;;          "i" - short text input
-;;          "l" - linking table
-;;          "f" - floated point number
-;;          nil - no hint, but not must be viewed, only not specified.
+;;    :component-type - influed by column-type key, contain list of keys
+;;      , which describe some hint to representation information by UI. 
+;;      All of this types place in variable `*meta-column-type-list*`
 ;;
 ;;  UI FAQ
 ;;    1. I want change column-type (not component-type)?
@@ -96,17 +88,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;
 
 (def ^{:dynamic true :private true} *not-allowed-to-edition-tables* ["user" "permission"])
-(def column-type-data :data)
-(def column-type-time :time)
-(def column-type-datatime :datatime)
-(def column-type-linking :link)
-(def column-type-number :number)
-(def column-type-boolean :boolean)
-(def column-type-textarea :textarea)
-(def column-type-floated :float)
-(def column-type-input :text)
-(def column-type-dialog-table :dialog-table)
-(def column-type-dialog-bigstring :dialog-bigstring)
+(def column-type-data       :data)
+(def column-type-time       :time)
+(def column-type-datatime   :datatime)
+(def column-type-linking    :link)
+(def column-type-number     :number)
+(def column-type-boolean    :boolean)
+(def column-type-textarea   :textarea)
+(def column-type-floated    :float)
+(def column-type-input      :text)
+(def column-type-blob       :blob)
+(def column-type-filepath   :filepath)
+(def column-type-url        :url)
+(def column-type-dialog-table       :dialog-table)
+(def column-type-dialog-bigstring   :dialog-bigstring)
 (def column-type-dialog-shortstring :dialog-shortstring)
 (def column-type-nil nil)
 (def ^:dynamic *meta-column-type-list* [column-type-data
@@ -118,6 +113,9 @@
                                         column-type-textarea
                                         column-type-floated
                                         column-type-input
+                                        column-type-blob
+                                        column-type-filepath
+                                        column-type-url
                                         column-type-dialog-table 
                                         column-type-dialog-bigstring
                                         column-type-dialog-shortstring

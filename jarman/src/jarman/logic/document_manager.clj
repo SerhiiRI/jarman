@@ -6,6 +6,8 @@
    ;; Clojure toolkit 
    [clojure.data :as data]
    [clojure.string :as string]
+   [clojure.java.io :as io]
+   [clojure.java.jdbc :as jdbc]
    [kaleidocs.merge :refer [merge-doc]]
    ;; Jarman toolkit
    [jarman.logic.connection :as db]
@@ -21,7 +23,6 @@
    [jarman.logic.metadata :as mt])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
-
 
 (defn select-documents []
   (db/query (select! {:table_name :documents
@@ -136,8 +137,7 @@
       (-insert-document-jdbc document-map))
     (update-document document-map)))
 
-
- (.exists (clojure.java.io/file "templates\\dovidka.odt"))
+;; (.exists (clojure.java.io/file "templates\\dovidka.odt"))
 
 (defn download-document [document-map]
   (if (some? (:id document-map))
@@ -176,8 +176,6 @@
        (db/query (select! {:table_name :documents :column [:id :name :prop]
                            :where [:= :documents.table (name table)]}))))
 
-;; (select-documents-by-table :service_contract)
-
 (defn prepare-export-file [table document-to-export]
   (let [file-name (format "%s.odt" (name (:name document-to-export)))
         path-to-template (clojure.java.io/file (storage/document-templates-dir) file-name)
@@ -200,3 +198,181 @@
           (println "this string shouldn't ever be printed, fatal error")))
       (fn [& body]
         (println "Exporter property is not map-type")))))
+
+
+
+(defn update-blob!
+  "Description
+    Upload some blob content to the database  
+  
+  Warning!
+    not add :id into `column-list`
+  
+  Example
+    (update-blob! {:table_name :documents
+                   :column-list [[:table_name :string] [:name :string] [:document :blob] [:prop :string]]
+                   :values {:id 18,
+                            :table_name \"some-table\"
+                            :name \"Export month operations\"
+                            :document \"./tmp2.txt\"
+                            :prop (pr-str {})}})"
+  [{table_name :table_name col-list :column-list m :values}]
+ (let [^java.sql.Connection
+       connection (clojure.java.jdbc/get-connection (db/connection-get))
+
+       col-list (doall (map (fn [[col-name col-type]] [col-name col-type (if (= :blob col-type) (FileInputStream. (File. (col-name m))))]) col-list))
+
+       ^java.sql.PreparedStatement
+       statement
+       (.prepareStatement
+        connection
+        (update! {:table_name table_name
+                  :set (reduce (fn [acc [col-name col-type]]
+                                 (into acc {col-name :?})) {} col-list)
+                  :where [:= :id (:id m)]}))]
+   (try (do
+          (doall
+           (map-indexed
+            (fn [i [col-name col-type maybe-stream]]
+              (let [i (inc i)]
+                (case col-type
+                  nil       (.setNull statement i java.sql.Types/BIGINT)
+                  :null     (.setNull statement i java.sql.Types/BIGINT)
+                  :string   (.setString statement i (col-name m))
+                  :blob     (.setBinaryStream statement i maybe-stream)
+                  :bool     (.setBoolean statement i (col-name m))
+                  :int      (.setInt statement i (col-name m))
+                  :double   (.setDouble statement i (col-name m))
+                  :long     (.setLong statement i (col-name m))
+                  :float    (.setFloat statement i (col-name m))
+                  :date     (.setDate statement i (col-name m))
+                  :datetime (.setTimestamp statement i (col-name m))
+                  (.setNull statement i java.sql.Types/BIGINT)))) col-list))
+          (.executeUpdate statement))
+        (finally
+          (.close connection)
+          (doall (map (fn [[col-name col-type maybe-stream]]
+                        (if (and (some? maybe-stream) (instance? java.io.FileInputStream maybe-stream))
+                          (.close maybe-stream))) col-list))))))
+
+(defn insert-blob!
+  "Description
+    insert some query with blob into the database
+  
+  Example
+    (insert-blob! {:table_name :documents
+                   :column-list [[:id :null] [:table_name :string] [:name :string] [:document :blob] [:prop :string]]
+                   :values {:id 1,
+                            :table_name \"some-table\"
+                            :name \"Export month operations\"
+                            :document \"./tmp.txt\"
+                            :prop (pr-str {})}})"
+  [{table_name :table_name col-list :column-list m :values}]
+  (let [^java.sql.Connection
+        connection (clojure.java.jdbc/get-connection (db/connection-get))
+
+        col-list (doall (map (fn [[col-name col-type]] [col-name col-type (if (= :blob col-type) (FileInputStream. (File. (col-name m))))]) col-list))
+
+        ^java.sql.PreparedStatement
+        statement
+        (.prepareStatement
+         connection
+         (insert! {:table_name table_name
+                   :column-list (mapv first col-list)
+                   :values (vec (take (count col-list) (repeat :?)))}))]
+    (try (do
+           (doall
+            (map-indexed
+             (fn [i [col-name col-type maybe-stream]]
+               (let [i (inc i)]
+                 (case col-type
+                   nil       (.setNull statement i java.sql.Types/BIGINT)
+                   :null     (.setNull statement i java.sql.Types/BIGINT)
+                   :string   (.setString statement i (col-name m))
+                   :blob     (.setBinaryStream statement i maybe-stream)
+                   :bool     (.setBoolean statement i (col-name m))
+                   :int      (.setInt statement i (col-name m))
+                   :double   (.setDouble statement i (col-name m))
+                   :long     (.setLong statement i (col-name m))
+                   :float    (.setFloat statement i (col-name m))
+                   :date     (.setDate statement i (col-name m))
+                   :datetime (.setTimestamp statement i (col-name m))
+                   (.setNull statement i java.sql.Types/BIGINT)))) col-list))
+           (.executeUpdate statement))
+         (finally
+           (.close connection)
+           (doall (map (fn [[col-name col-type maybe-stream]]
+                         (if (and (some? maybe-stream) (instance? java.io.FileInputStream maybe-stream))
+                           (.close maybe-stream))) col-list))))))
+
+;; (select-blob! {:table_name :documents
+;;                :column [:id :table_name :name :document :prop]
+;;                :where [:= :id 1]})
+
+;; "SELECT `id`, `table_name`, `name`, `document`, `prop` FROM documents WHERE `id` = ?"
+
+;; (defn- select-blob! [query-map]
+;;  (let [^java.sql.Connection
+;;        connection (clojure.java.jdbc/get-connection (db/connection-get))
+
+;;        ^java.sql.PreparedStatement
+;;        statement (.prepareStatement connection
+;;                   (select! query-map))
+
+;;        ^java.sql.ResultSet
+;;        res-set (.executeQuery (do (.setLong statement 1 (:id document-map)) statement))
+       
+;;        temporary-result (ref [])
+;;        temporary-push
+;;        (fn [i t n d p]
+;;          (dosync (alter temporary-result #(conj % {:id i :table_name  t :name n :document d :prop p}))))]
+;;    (try (while (.next res-set)
+;;           (let [^java.lang.String
+;;                 file-name (format "%s.odt" (string/trim (.getString res-set "name")))
+;;                 ^java.io.File
+;;                 file (clojure.java.io/file (storage/document-templates-dir) file-name)
+;;                 ^java.io.FileInputStream
+;;                 fileStream (java.io.FileOutputStream. file)
+;;                 ^java.io.InputStream
+;;                 input (.getBinaryStream res-set "document")
+;;                 buffer (byte-array 1024)]
+;;             (while (> (.read input buffer) 0)
+;;               (.write fileStream buffer))
+;;             (.close input)
+;;             (temporary-push
+;;              (.getLong res-set "id")
+;;              (.getString res-set "table")
+;;              (.getString res-set "name")
+;;              (.getAbsolutePath file)
+;;              (read-string (.getString res-set "prop")))))
+;;         (catch SQLException e (println e))
+;;         (catch IOException e (println e))
+;;         (finally (try (.close res-set)
+;;                       (catch SQLException e (println e))))) @temporary-result))
+
+
+(comment
+  ;; query all
+  (select-documents)
+  ;; or
+  (take-last 10 (db/query (select! {:table_name :documents
+                                    :column [:id :table_name :name :prop]})))
+  ;; delete by id
+  (db/exec (delete! {:table_name :documents
+                     :where [:= :id 17]}))
+  ;; update 
+  (update-blob! {:table_name :documents
+                :column-list [[:table_name :string] [:name :string] [:document :blob] [:prop :string]]
+                :values {:id 18,
+                         :table_name "some-table"
+                         :name "Export month operations"
+                         :document "./tmp2.txt"
+                         :prop (pr-str {})}})
+  ;; delete
+  (insert-blob! {:table_name :documents
+                 :column-list [[:id :null] [:table_name :string] [:name :string] [:document :blob] [:prop :string]]
+                 :values {:id 1,
+                          :table_name "some-table"
+                          :name "Export month operations"
+                          :document "./tmp.txt"
+                          :prop (pr-str {})}}))

@@ -1,4 +1,4 @@
-(ns jarman.logic.system-data-logistics
+(ns jarman.logic.system-login
   (:refer-clojure :exclude [update])
   (:require
    [clojure.string :as string]
@@ -6,7 +6,7 @@
    [jarman.tools.lang :refer :all]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
-   [jarman.logic.sql-tool :as ssql :include-macros true :refer :all]
+   [jarman.logic.sql-tool :refer [select!]]
    [jarman.logic.connection :as c]
    [jarman.logic.session :as session])
   (:import (java.util Date)
@@ -39,17 +39,17 @@
 (defn login-user [user-login user-password]
   (let [u (->>
            (c/query
-            (select :user
-                    :column [{:user.id :id}
-                             :login
-                             :last_name
-                             :first_name
-                             :permission_name
-                             :configuration]
-                    :inner-join [:permission]
-                    :where [:and
-                            [:= :login user-login]
-                            [:= :password user-password]]))
+            (select! {:table_name :user
+                      :column [{:user.id :id}
+                               :login
+                               :last_name
+                               :first_name
+                               :permission_name
+                               :configuration]
+                      :inner-join [:permission]
+                      :where [:and
+                              [:= :login user-login]
+                              [:= :password user-password]]}))
          (map #(update-in % [:configuration] read-string))
          first)]
     (if (nil? u)

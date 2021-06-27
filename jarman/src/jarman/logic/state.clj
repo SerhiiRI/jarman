@@ -55,26 +55,28 @@
   ([key] (get @atom-state key)))
 
 
-;; (set-state {:a "a" :b "b"})
-;; ;; => ({:a "a"} {:a "a", :b "b"})
+(comment
+  (set-state {:a "a" :b "b"})
+  ;; => ({:a "a"} {:a "a", :b "b"})
 
-;; (set-state :c "c")
-;; ;; => {:a "a", :b "b", :c "c"}
+  (set-state :c "c")
+  ;; => {:a "a", :b "b", :c "c"}
 
-;; (state)
-;; ;; => {:a "a", :b "b", :c "c"}
+  (state)
+  ;; => {:a "a", :b "b", :c "c"}
 
-;; (check-state)
-;; ;; => (:a :b :c)
+  (check-state)
+  ;; => (:a :b :c)
 
-;; (check-state :a)
-;; ;; => true
+  (check-state :a)
+  ;; => true
 
-;; (state :a)
-;; ;; => "a"
+  (state :a)
+  ;; => "a"
 
-;; (rm-state :a)
-;; ;; => {:b "b", :c "c"}
+  (rm-state :a)
+  ;; => {:b "b", :c "c"}
 
-;; (clear-state)
-;; ;; => {}
+  (clear-state)
+  ;; => {}
+  )

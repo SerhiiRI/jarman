@@ -3,11 +3,15 @@
 (ns jarman.plugin.jspl
   (:require
    [clojure.spec.alpha :as s]
-   [jarman.plugin.table]
    [jarman.gui.gui-tools :as tool]
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]
-   [jarman.plugin.plugin :refer :all]))
+   [jarman.plugin.plugin :refer :all]
+   ;; plugins included in global scope
+   [jarman.plugin.table]
+   [jarman.plugin.dialog-table]
+   [jarman.plugin.dialog-test]
+   [jarman.plugin.dialog-bigstring]))
 
 (defplugin table jarman.plugin.table
   "Plugin allow to editing One table from database"
@@ -84,4 +88,28 @@
    {:spec [:jarman.plugin.jspl/query :req-un],
     :examples "{:table_name :permission, :column [:#as_is ...]...}",
     :doc "SQL syntax for `select!` query"}])
+
+
+(defplugin dialog-test jarman.plugin.dialog-test
+  "Plugin allow to editing One table from database")
+
+(defplugin dialog-table jarman.plugin.dialog-table
+  "Dialog table"
+  [:tables
+   {:spec [:jarman.plugin.table/tables :req-un],
+    :doc "list of used tables"
+    :examples "[:permission]"}]
+  [:view-columns
+   {:spec [:jarman.plugin.table/view-columns :req-un],
+    :doc "Columns which must be represented in table on right side"
+    :examples "[:permission.permission_name 
+                :permission.configuration]"}]
+  [:query
+   {:spec [:jarman.plugin.jspl/query :req-un],
+    :examples "{:table_name :permission, :column [:#as_is ...]...}",
+    :doc "SQL syntax for `select!` query"}])
+
+(defplugin dialog-bigstring jarman.plugin.dialog-bigstring
+  "Dialog bigstring")
+
 

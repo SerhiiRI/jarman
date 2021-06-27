@@ -15,7 +15,6 @@
             [clojure.java.jdbc :as jdbc]
             [jarman.tools.swing :as stool]
             [jarman.gui.gui-app :as app]
-            [jarman.logic.system-data-logistics :as logic]
             [jarman.gui.gui-components :as components]
             [jarman.logic.connection :as c]
             [kaleidocs.merge :refer [merge-doc]]

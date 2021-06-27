@@ -38,10 +38,7 @@
             [jarman.plugin.plugin :as plug]
             [jarman.logic.view-manager :as vmg]
             [jarman.logic.session :as session]
-            [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut]
-            ;; [jarman.logic.view :refer :all] 
-            ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
-            ))
+            [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut]))
 
 ;; ┌────────────────────────────┐
 ;; │                            │

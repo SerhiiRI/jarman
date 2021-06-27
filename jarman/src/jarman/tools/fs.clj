@@ -23,37 +23,16 @@
                 (io/copy stream saveFile)))
             (recur (.getNextEntry stream))))))))
 
-(defn is-edn?
+#_(defn is-edn?
   "test if file have .edn extention"
   [path]
   (let [f (if-not (string? path) path (clojure.java.io/file path))]
     (if (and (.isFile f) (.exists f))
       (= (rafs/extension path) ".edn"))))
 
-(defn config-copy
-  "Copy a file from 'from' to 'to'. Return 'to'."
-  [from to]
-  (when-not (rafs/exists? from)
-    (throw (IllegalArgumentException. (str from " not found"))))
-  (if (and (is-edn? from) (= (.getName (rafs/file from)) (.getName (rafs/file to))))
-    (if-let [cfg (cm/merge-configs from to)]
-      (spit to (prn-str cfg))
-      (clojure.java.io/copy (rafs/file from) (rafs/file to)))
-    (clojure.java.io/copy (rafs/file from) (rafs/file to))) to)
-
-(defn create-dir [dir]
-  (rafs/mkdirs dir))
-
-(defn config-copy+
-  "Copy src to dest, create directories if needed."
-  [src dest](rafs/mkdirs(rafs/parent dest))(config-copy src dest))
-
-;; defn config-copy-dir
-
-
 (defn copy-dir-replace
-  "Copy a directory from `from` to `to`. If `to` already exists,
-  recursively do `config-copy` from `from` to `to`"
+  "Copy a directory from 'from' to 'to'. If 'to' already exists, copy the directory
+   to a directory with the same name as 'from' within the 'to' directory."
   [from to]
   (when (rafs/exists? from)
     (if (rafs/file? to)
@@ -72,3 +51,4 @@
                    (rafs/copy+ (rafs/file root f) (dest (rafs/file root f)))))
                from))
         to))))
+

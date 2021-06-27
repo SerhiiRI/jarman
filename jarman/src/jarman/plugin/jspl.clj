@@ -9,7 +9,9 @@
    [jarman.plugin.plugin :refer :all]
    ;; plugins included in global scope
    [jarman.plugin.table]
-   [jarman.plugin.dialog-table]))
+   [jarman.plugin.dialog-table]
+   [jarman.plugin.dialog-test]
+   [jarman.plugin.dialog-bigstring]))
 
 (defplugin table jarman.plugin.table
   "Plugin allow to editing One table from database"
@@ -88,27 +90,26 @@
     :doc "SQL syntax for `select!` query"}])
 
 
+(defplugin dialog-test jarman.plugin.dialog-test
+  "Plugin allow to editing One table from database")
+
 (defplugin dialog-table jarman.plugin.dialog-table
-  "Plugin allow to editing One table from database"
-  ;; [:view-columns
-  ;;  {:spec [:jarman.plugin.table/view-columns :req-un],
-  ;;   :doc "Columns which must be represented in table on right side"
-  ;;   :examples "[:permission.permission_name 
-  ;;               :permission.configuration]"}]
-  ;; [:actions
-  ;;  {:spec [:jarman.plugin.jspl/actions :opt-un],
-  ;;   :doc "Realise additional logic to standart CRUD operation. Set key as id and some fn with state as arg.
-  ;;         \"{:some-action-keys (fn [state]...)
-  ;;         :some-another.... }\""}]
-  ;; [:query
-  ;;  {:spec [:jarman.plugin.jspl/query :opt-un],
-  ;;   :examples "{:table_name :permission, :column [:#as_is ...]...}",
-  ;;   :doc "SQL syntax for `select!` query"}]
-  )
+  "Dialog table"
+  [:tables
+   {:spec [:jarman.plugin.table/tables :req-un],
+    :doc "list of used tables"
+    :examples "[:permission]"}]
+  [:view-columns
+   {:spec [:jarman.plugin.table/view-columns :req-un],
+    :doc "Columns which must be represented in table on right side"
+    :examples "[:permission.permission_name 
+                :permission.configuration]"}]
+  [:query
+   {:spec [:jarman.plugin.jspl/query :req-un],
+    :examples "{:table_name :permission, :column [:#as_is ...]...}",
+    :doc "SQL syntax for `select!` query"}])
 
-
-
-
-
+(defplugin dialog-bigstring jarman.plugin.dialog-bigstring
+  "Dialog bigstring")
 
 

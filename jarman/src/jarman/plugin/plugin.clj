@@ -123,7 +123,7 @@
 (defmacro defplugin
   [plugin-name ns description & body]
   (let [create-name-func (fn [fname] (symbol (str ns "/" plugin-name "-" fname)))
-        func-component (create-name-func "component")
+        func-entrypoint (create-name-func "entry")
         ;; for `table` plugin
         ;; inside-plugin-pipeline         -> `jarman.plugin.table/table-toolkit-pipeline`
         ;; proxyed-inside-plugin-pipeline -> `table-toolkit-pipeline`
@@ -137,7 +137,7 @@
          ;;; argumnets
          [~'plugin-path ~'global-configuration]
          ;;; body
-         (~func-component
+         (~func-entrypoint
           ~'plugin-path ~'global-configuration))
        (def ~proxyed-inside-toolkit-pipeline ~inside-plugin-pipeline))))
 

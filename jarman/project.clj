@@ -41,12 +41,14 @@
               :launch4j-config-file "resources/config.xml"}
 
              :lets-scheme
-             {:aot [jarman.schema-builder
-                    jarman.sql-tool]
-              :main jarman.schema-builder
+             {:aot [jarman.jarman-cli
+                    jarman.cli.cli-tool
+                    jarman.logic.sql-tool
+                    jarman.managment.db-managment
+                    jarman.tools.ftp-toolbox]
+              :main jarman.jarman-cli
               :jar-name "lets-scheme-lib.jar"
               :uberjar-name "lets-scheme.jar"}
-             
              ;; :cider
              ;; {:dependencies [[cider/cider-nrepl "0.26.0"]]
              ;;  :repl-options {:nrepl-middleware

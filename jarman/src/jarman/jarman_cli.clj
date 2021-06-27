@@ -6,7 +6,7 @@
 ;;   -- bottom -- in comment you will find eampls for using keys in cli
 
 
-(ns jarman.cli.jarman-cli
+(ns jarman.jarman-cli
   (:gen-class)
   (:refer-clojure :exclude [update])
   (:require

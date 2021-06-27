@@ -1351,8 +1351,6 @@
           args)))
 
 
-;; (seesaw.dev/show-options (seesaw.rsyntax/text-area)
-                         )
 (defn code-editor
   "Description:
      Simple code editor using syntax.
@@ -1437,4 +1435,5 @@
                          (catch Exception e (c/config!
                                              (:label props)
                                              :text "Can not convert to map. Syntax error.")))
-                       )})}))
+                       )})})
+  (((state/state :jarman-views-service) :reload)))

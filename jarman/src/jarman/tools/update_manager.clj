@@ -57,9 +57,6 @@
 (def ^:dynamic *program-vers* `~(-> "project.clj" slurp read-string (nth 2)))
 (def blocked-repo-list ["www.google.com"])
 
-(defn filter-program-name [package-list]
-  (filter #(= *program-name* (:name %)) package-list))
-
 (defn is-url? [repo-string]
   (some? (re-matches #"^(http|https|ftp).+" repo-string)))
 
@@ -161,7 +158,30 @@
 ;;;  and logistic    ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn version-comparator [comparator-f v1 v2]
+(defn version-comparator
+  "Description
+    Compare two different version('v1', 'v2') in dot(.) separated
+    Notation. For comparison use 'comparator-f'.
+
+  How it do comparison?
+    Embaded Y-combinar do recursion from head to tail
+    and compare one-by-one number. if number not eq to
+    each other, then do comparison.
+    Step for example belove:
+     (version-comparator #'>= \"1.0.2\" \"1.0.1\")
+      1. (Y (1 0 2) (1 0 1))
+          => (not= 1 1)  --  if eq then go to next number
+      2. (Y (0 2) (0 1))
+          => (not= 0 0)  --  if eq then go to next number
+      3. (Y (2) (1))
+          => (not= 2 1)  --  if not eq, then do test func
+      4. (>= 2 1)
+          => true
+
+  Example
+    (version-comparator #'<= \"0.1.1\" \"0.1.0\") => false
+    (version-comparator #'>= \"1.0.2\" \"1.0.1\") => true"
+  [comparator-f v1 v2]
   (letfn [(parse-int [s] (map #(Integer. %) (re-seq  #"\d+" s)))]
     (((fn [f] (f f))
       (fn [f] (fn [cmpr xs ys]
@@ -169,7 +189,10 @@
                      (or (= 1 (count xs)) (not= (first xs) (first ys))) (cmpr (first xs) (first ys))
                      :else ((f f) cmpr (rest xs) (rest ys)))))) comparator-f (parse-int v1) (parse-int v2))))
 
-(defn- max-version [package-list]
+(defn- max-version
+  "Return max version package from `package-list`, if current
+  program version equal to package - return `nil`"
+  [package-list]
   (let [current-package (PandaPackage. nil *program-name* *program-vers* nil nil)
         upgrade-package
         (reduce (fn [acc package]
@@ -285,21 +308,6 @@
      (ftp?  (:uri package)) (ftp-get-file  (:uri package)) 
      (path? (:uri package)) (path-get-file (:uri package))
      :else nil)))
-
-#_(let [ftp_package (map->PandaPackage
-                   {:file "hrtime-1.0.3.zip",
-                    :name "hrtime",
-                    :version "1.0.3",
-                    :artifacts "zip",
-                    :uri "ftp://jarman:dupa@trashpanda-team.ddns.net/jarman/hrtime-1.0.3.zip"})
-
-      local_package (map->PandaPackage
-                     {:file "jarman-0.0.3-windows.zip",
-                      :name "jarman",
-                      :version "0.0.3",
-                      :artifacts "windows.zip",
-                      :uri "/home/serhii/programs/jarman/jarman/test-repository/jarman/jarman-0.0.3-windows.zip"})]
-  (download-package ftp_package))
 
 (defn update-project [^PandaPackage package]
   (let [unzip-folder (str (gensym "transact"))

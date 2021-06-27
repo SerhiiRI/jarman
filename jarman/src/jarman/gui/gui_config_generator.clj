@@ -174,8 +174,10 @@
                          c (confgen--element--margin-top-if-doc-exist type? param)
                          x (if (nil? c) (println "confgen--element--margin-top-if-doc-exist  return nil"))
                          d (confgen--element--gui-interfaces comp? param confgen--component--tree local-changes start-key)
-                         x (if (nil? d) (println "confgen--element--gui-interfaces return nil"))]
-                     [a b c d]))))
+                         x (if (nil? d) (println "confgen--element--gui-interfaces return nil"))
+                         comps (filter #(not (empty? %))[a b c d])]
+                     comps
+                     ))))
         ))))
 
 
@@ -190,72 +192,81 @@
   (fn [start-key
        & {:keys [message-ok message-faild]
           :or {message-ok (fn [head body] (c/alert (str head ": " body)))
-               message-faild (fn [head body] (c/alert (str head ": " body)))}}]
-    (let [map-part (cm/get-in-segment start-key)
-          local-changes (atom {})]
-      (if (= :edit (:display map-part))
-        (do
-          (@gseed/changes-service :add-controller
-                                  :view-id (last start-key)
-                                  :local-changes local-changes)
-          (let [configurator (smig/mig-panel
-                              :border (b/line-border :bottom 50 :color (gtool/get-color :background :main))
-                              :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px[grow, fill]0px[]0px"]
-                              :border nil
-                              :items (gtool/join-mig-items
-                                      (gcomp/header-basic (:name map-part)) ;; Header of section/config file
-                                      ;; (c/label :text (doto "Header complete" println))
-                                      (gcomp/auto-scrollbox
-                                       (smig/mig-panel
-                                        :constraints ["wrap 1" "0px[fill, grow]0px" "20px[grow, fill]20px"]
-                                        :items (gtool/join-mig-items
-                                                (let [body (map
-                                                            #(let [path (join-vec start-key [(first %)])
-                                                                   comp (confgen--component--tree local-changes path)]
-                                                               comp)
-                                                            (:value map-part))]
-                                                  body))))
-                                      (smig/mig-panel
-                                       :constraints ["" "0px[grow,fill]0px[fill]0px" "0px[grow,fill]0px"]
-                                       :items [[(gcomp/button-basic (gtool/get-lang-btns :save)
-                                                                    :onClick (fn [e] ;; save changes configuration
-                                                                               (if (empty? @local-changes)
-                                                                                 (do
-                                                                                   (println "No more changes.")
-                                                                                   (message-ok "No changes." "Local storage is empty. No changes to saving."))
-                                                                                 (do
-                                                                                   (doall (map #(prn (first %) (str (second %)))  @local-changes))
-                                                                                   (doall (map #(cm/assoc-in-value (first %) (second %))  @local-changes))
+               message-faild message-ok}}]
+    (try (let [map-part (cm/get-in-segment start-key)
+               local-changes (atom {})]
+           (if (= :edit (:display map-part))
+             (do
+               (@gseed/changes-service :add-controller
+                :view-id (last start-key)
+                :local-changes local-changes)
+               (let [configurator (smig/mig-panel
+                                   :border (b/line-border :bottom 50 :color (gtool/get-color :background :main))
+                                   :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px[grow, fill]0px[]0px"]
+                                   :border nil
+                                   :items (gtool/join-mig-items
+                                           (gcomp/header-basic (:name map-part)) ;; Header of section/config file
+                                           ;; (c/label :text (doto "Header complete" println))
+                                           (gcomp/auto-scrollbox
+                                            (try ;;Catch if map have syntax error and display text editor.
+                                              (smig/mig-panel
+                                              :constraints ["wrap 1" "0px[fill, grow]0px" "20px[grow, fill]20px"]
+                                              :items (gtool/join-mig-items
+                                                      (let [body (map
+                                                                  #(let [path (join-vec start-key [(first %)])
+                                                                         comp (confgen--component--tree local-changes path)]
+                                                                     comp)
+                                                                  (:value map-part))]
+                                                        body)))
+                                              (catch Exception e (do
+                                                                   (message-faild "Can not load config!" " Opening code editor. Configuration probably have some syntax error.")
+                                                                   (gcomp/popup-config-editor start-key map-part)))))
+                                           
+                                           (smig/mig-panel
+                                            :constraints ["" "0px[grow,fill]0px[fill]0px" "0px[grow,fill]0px"]
+                                            :items [[(gcomp/button-basic (gtool/get-lang-btns :save)
+                                                                         :onClick (fn [e] ;; save changes configuration
+                                                                                    (if (empty? @local-changes)
+                                                                                      (do
+                                                                                        (println "No more changes.")
+                                                                                        (message-ok "No changes." "Local storage is empty. No changes to saving."))
+                                                                                      (do
+                                                                                        (doall (map #(prn (first %) (str (second %)))  @local-changes))
+                                                                                        (doall (map #(cm/assoc-in-value (first %) (second %))  @local-changes))
 
-                                                                                   ;; TODO: Can not saving chages in theme, store-and-backup do not saving to file
-                                                                                  ;;  (cm/get-in-value [:themes :current-theme :color :jarman :bar])
-                                                                                  ;;  (cm/assoc-in-value [:themes :current-theme :color :jarman :bar] "#aaa")
-                                                                                  ;;  (cm/store-and-back)
+                                                                                        ;; TODO: Can not saving chages in theme, store-and-backup do not saving to file
+                                                                                        ;;  (cm/get-in-value [:themes :current-theme :color :jarman :bar])
+                                                                                        ;;  (cm/assoc-in-value [:themes :current-theme :color :jarman :bar] "#aaa")
+                                                                                        ;;  (cm/store-and-back)
 
-                                                                                   (let [validate (cm/store-and-back)]
-                                                                                     (println validate)
-                                                                                     (cm/swapp)
-                                                                                     (if (get validate :valid?)
-                                                                                       (do ;; message box if saved successfull
-                                                                                         (try
-                                                                                           (((state/state :jarman-views-service) :reload))
-                                                                                           (if-not (nil? message-ok) (message-ok (gtool/get-lang-alerts :changes-saved)
-                                                                                                                                 (str @local-changes)))
-                                                                                           (catch Exception e (println (str "Message ok error: " (.getMessage e))))))
-                                                                                       (do ;; message box if saved faild
-                                                                                         (try
-                                                                                           (if-not (nil? message-faild) (message-faild (gtool/get-lang-alerts :changes-saved-failed)
-                                                                                                                                       (str (:output validate))))
-                                                                                           (catch Exception e (println (str "Message faild error: " (.getMessage e)))))))))))
-                                                                    :flip-border true)]
-                                               [(gcomp/button-basic ""
-                                                                    :onClick (fn [e] (do
-                                                                                       (println "\nConfiguration changes\n" (str @local-changes))
-                                                                                       (gcomp/popup-info-window "Configuration changes" (str @local-changes) (state/state :app))))
-                                                                    :flip-border true
-                                                                    :args [:icon (stool/image-scale icon/loupe-blue-64-png 25)])]])))]
-            ;; (println "Config complete")
-            (if (nil? configurator) (c/label :text "NIL") configurator)))))))
+                                                                                        (let [validate (cm/store-and-back)]
+                                                                                          (println validate)
+                                                                                          (cm/swapp)
+                                                                                          (if (get validate :valid?)
+                                                                                            (do ;; message box if saved successfull
+                                                                                              (try
+                                                                                                (((state/state :jarman-views-service) :reload))
+                                                                                                (if-not (nil? message-ok) (message-ok (gtool/get-lang-alerts :changes-saved)
+                                                                                                                                      (str @local-changes)))
+                                                                                                (catch Exception e (println (str "Message ok error: " (.getMessage e))))))
+                                                                                            (do ;; message box if saved faild
+                                                                                              (try
+                                                                                                (if-not (nil? message-faild) (message-faild (gtool/get-lang-alerts :changes-saved-failed)
+                                                                                                                                            (str (:output validate))))
+                                                                                                (catch Exception e (println (str "Message faild error: " (.getMessage e)))))))))))
+                                                                         :flip-border true)]
+                                                    [(gcomp/button-basic ""
+                                                                         :onClick (fn [e] (do
+                                                                                            (println "\nConfiguration changes\n" (str @local-changes))
+                                                                                            (gcomp/popup-info-window "Configuration changes" (str @local-changes) (state/state :app))))
+                                                                         :flip-border true
+                                                                         :args [:icon (stool/image-scale icon/loupe-blue-64-png 25)])]
+                                                    [(gcomp/button-basic ""
+                                                                         :onClick (fn [e] (gcomp/popup-config-editor start-key map-part))
+                                                                         :flip-border true
+                                                                         :args [:icon (stool/image-scale icon/json1-64-png 25)])]])))]
+                 ;; (println "Config complete")
+                 (if (nil? configurator) (c/label :text "NIL") configurator))))))))
 ;; (@jarman.gui.gui-app/startup)
 ;; (cm/restore-config)
 ;; (cm/get-in-value [:themes :jarman_light.edn :components :message-box :border-size])
@@ -269,3 +280,4 @@
 ;;                           :content (gcomp/auto-scrollbox (create-view--confgen [:resource.edn])))
 ;;                      (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))]
 ;;   (seesaw.core/config! my-frame :size [800 :by 600]))
+;;(with-out-str (clojure.pprint/pprint {:a {:b "c"}}))

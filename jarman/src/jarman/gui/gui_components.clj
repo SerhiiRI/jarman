@@ -11,6 +11,7 @@
             [jarman.logic.state :as state]
             [jarman.tools.lang :refer :all]
             [jarman.logic.metadata :as mt]
+            [jarman.config.config-manager :as cm]
             [jarman.gui.gui-tools :as gtool]
             [seesaw.chooser :as chooser]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
@@ -1139,10 +1140,10 @@
      :constraints (if justify-end
                     ["" "5px[grow, fill]0px[fill]5px" "5px[fill]5px"]
                     ["" "10px[fill]0px" "5px[fill]5px"])
-     :items (if (empty? buttons) [[(c/label)]]
+     :items (if (empty? (filter-nil buttons)) [[(c/label)]]
                 (if justify-end
-                  (gtool/join-mig-items (c/label) (map #(btn (first %) (second %) (nth % 2) (last %)) buttons))
-                  (gtool/join-mig-items (map #(btn (first %) (second %) (nth % 2) (last %)) buttons)))))))
+                  (gtool/join-mig-items (c/label) (map #(btn (first %) (second %) (nth % 2) (last %)) (filter-nil buttons)))
+                  (gtool/join-mig-items (map #(btn (first %) (second %) (nth % 2) (last %)) (filter-nil buttons))))))))
 
 
 
@@ -1249,7 +1250,8 @@
   (fn [{:keys [view size window-title relative]
         :or {view (c/label :text "Popup window")
              size [600 400]
-             window-title "Popup window"}}]
+             window-title "Popup window"
+             relative (c/to-frame (state/state :app))}}]
     (let [relative (if (nil? relative) nil (calc-popup-center size (c/to-frame relative)))
           template (mig-panel 
                     :constraints ["" (format "0px[:%s:, grow, fill]0px" (first size)) (format "0px[:%s:, grow, fill]0px" (second size))]
@@ -1349,9 +1351,12 @@
           args)))
 
 
+;; (seesaw.dev/show-options (seesaw.rsyntax/text-area)
+                         )
 (defn code-editor
   "Description:
      Simple code editor using syntax.
+     When you send save-fn then inside is invoke (save-fn {:state local-changes :label info-label :code code})
    Example:
      (code-editor {})
   "
@@ -1359,15 +1364,18 @@
            store-id
            val
            font-size
-           save-fn]
+           save-fn
+           debug]
     :or {local-changes (atom {})
          store-id :code-tester
          val ""
          font-size 14
-         save-fn (fn [state] (println "Additional save"))}}]
+         save-fn (fn [state] (println "Additional save"))
+         debug false}}]
   (let [f-size (atom font-size)
         info-label (c/label)
-        code (code-area {:args [:font (gtool/getFont @f-size)]
+        code (code-area {:args [:font (gtool/getFont @f-size)
+                                :border (b/empty-border :thickness 10)]
                          :label info-label
                          :local-changes local-changes
                          :store-id store-id
@@ -1394,16 +1402,18 @@
                                         :font (gtool/getFont
                                                (do (reset! f-size (- @f-size 2))
                                                    @f-size))))]
-                                    ["" icon/loupe-blue-64-png "Show changes" (fn [e] (popup-info-window
-                                                                                       "Changes"
-                                                                                       (second (first @local-changes))
-                                                                                       (c/to-frame e)))]
+                                    (if debug
+                                      ["" icon/loupe-blue-64-png "Show changes" (fn [e] (popup-info-window
+                                                                                             "Changes"
+                                                                                             (second (first @local-changes))
+                                                                                             (c/to-frame e)))]
+                                      nil)
                                     ["" icon/agree-blue-64-png "Save" (fn [e]
                                                                         (c/config! info-label :text "Saved")
                                                                         ((:saved-content (c/config code :user-data)))
                                                                         (save-fn {:state local-changes :label info-label :code code}))]
                                     ["" icon/enter-64-png "Leave" (fn [e] (.dispose (c/to-frame e)))]])]
-                        [code]
+                        [(scrollbox code)]
                         [info-label]])]
     (gtool/set-focus code)
     
@@ -1411,3 +1421,20 @@
 
 ;;(popup-window {:view (code-editor {})})
 
+(defn popup-config-editor
+  [config-path config-part]
+  (popup-window
+   {:window-title "Configuration manual editor"
+    :view (code-editor
+           {:val (with-out-str (clojure.pprint/pprint config-part))
+            :save-fn (fn [props]
+                       (try
+                         (cm/assoc-in-segment config-path (read-string (c/config (:code props) :text)))
+                         (let [validate (cm/store-and-back)]
+                           (if (:valid? validate)
+                             (c/config! (:label props) :text "Saved!")
+                             (c/config! (:label props) :text "Validation faild. Can not save.")))
+                         (catch Exception e (c/config!
+                                             (:label props)
+                                             :text "Can not convert to map. Syntax error.")))
+                       )})}))

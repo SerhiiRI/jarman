@@ -292,7 +292,6 @@
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))))
 
-
 (defn- metadata-get [table]
   (first (jarman.logic.metadata/getset! table)))
 
@@ -307,7 +306,7 @@
     {:id 2, :table_name \"user\", :view   \"(defview user (table :name \"user\"......))})"
   [table-name]
   (first (db/query
-          (select! {:table_name :view :where [:= :table_name table-name]}))))
+          (select! {:table_name :view :where [:= :table_name (name table-name)]}))))
 
 (defn- view-set
   "Description

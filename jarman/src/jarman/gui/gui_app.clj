@@ -955,7 +955,10 @@
                [(button-expand "Settings Error" []
                                :ico (stool/image-scale icon/alert-64-png 25)
                                :ico-hover (stool/image-scale icon/alert-64-png 25)
-                               :onClick (fn [e] ((state/state :alert-manager) :set {:header "Settings Error" :body (str "Valid output: " (:output (cm/get-in-segment [])))} 5)))]) 
+                               :onClick (fn [e] ((state/state :alert-manager)
+                                                 :set {:header "Settings Error"
+                                                       :body (str "Valid output: " (:output (cm/get-in-segment [])))}
+                                                 5)))]) 
            [(button-expand
              (gtool/get-lang-btns :settings)
              (let [current-theme (str (first (cm/get-in-value [:themes :theme_config.edn :selected-theme])) ".edn")
@@ -966,7 +969,11 @@
                                                                   config-file-list-as-keyword)
                    restore-button (button-expand-child (gtool/get-lang-btns :restore-last-configuration)
                                                        :onClick (fn [e] (do
-                                                                          (if-not (nil? (cm/restore-config)) ((state/state :alert-manager) :set {:header "Success!" :body (gtool/get-lang-alerts :restore-configuration-ok)}  5)))))]
+                                                                          (if-not (nil? (cm/restore-config)) ((state/state :alert-manager)
+                                                                                                              :set {:header "Success!"
+                                                                                                                    :body (gtool/get-lang-alerts
+                                                                                                                           :restore-configuration-ok)}
+                                                                                                              5)))))]
                (reverse
                 (conj
                  (map (fn [p]
@@ -979,7 +986,16 @@
                                                                  :view-id view-id
                                                                  :title title
                                                                  :scrollable? false
-                                                                 :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [head body] ((state/state :alert-manager) :set {:header head :body body}  5)))))))))
+                                                                 :component-fn (try
+                                                                                 (fn [] (cg/create-view--confgen
+                                                                                         path
+                                                                                         :message-ok (fn [head body]
+                                                                                                       ((state/state :alert-manager)
+                                                                                                        :set {:header head :body body}
+                                                                                                        5))))
+                                                                                 (catch Exception e (gcomp/popup-config-editor
+                                                                                                     path
+                                                                                                     (get (cm/get-in-segment path))))))))))
                       config-file-list-as-keyword-to-display)
                  (let [path [:themes :theme_config.edn] ;; Selected theme
                        title (:name (cm/get-in-segment path))
@@ -990,7 +1006,14 @@
                                                           :view-id view-id
                                                           :title title
                                                           :scrollable? false
-                                                          :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [head body] ((state/state :alert-manager) :set {:header head :body body} (((state/state :alert-manager) :message) (state/state :alert-manager)) 5))))))))
+                                                          :component-fn (fn [] (cg/create-view--confgen
+                                                                                path
+                                                                                :message-ok (fn [head body] ((state/state :alert-manager)
+                                                                                                             :set {:header head :body body}
+                                                                                                             (((state/state :alert-manager)
+                                                                                                               :message)
+                                                                                                              (state/state :alert-manager))
+                                                                                                             5))))))))
                  (let [path [:themes :current-theme] ;; Themes config
                        title (rift (:name (cm/get-in-segment path)) "NIL")
                        view-id :current-theme]
@@ -1000,7 +1023,12 @@
                                                           :view-id view-id
                                                           :title title
                                                           :scrollable? false
-                                                          :component-fn (fn [] (cg/create-view--confgen path :message-ok (fn [head body] ((state/state :alert-manager) :set {:header head :body body}  5))))))))
+                                                          :component-fn (fn [] (cg/create-view--confgen
+                                                                                path
+                                                                                :message-ok (fn [head body]
+                                                                                              ((state/state :alert-manager)
+                                                                                               :set {:header head :body body}
+                                                                                               ))))))))
               ;; restore-button
                  ))))])))
 

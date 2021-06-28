@@ -1464,3 +1464,44 @@
                                                  (:label state)
                                                  :text "Can not convert to map. Syntax error."))))})}))
   (((state/state :jarman-views-service) :reload)))
+
+(defn view-metadata-editor
+  "Description:
+     Prepared component with code editor for selected metadata by table_name as key.
+   Example:
+     (view-metadata-editor :user)
+  "
+  [table-keyword]
+  (let [meta (dbv/metadata-get table-keyword)]
+    (code-editor
+     {:val (with-out-str (clojure.pprint/pprint (:prop meta)))
+      :save-fn (fn [state]
+                 (try
+                   (dbv/metadata-set (assoc meta :prop (read-string (c/config (:code state) :text))))
+                   (c/config! (:label state) :text "Saved!")
+                   (catch Exception e (c/config!
+                                       (:label state)
+                                       :text "Can not convert to map. Syntax error."))))})))
+
+
+;; (defn popup-defview-editor
+;;   "Description:
+;;      Prepared popup window with code editor for defview.
+;;    Example:
+;;      (popup-defview-editor \"user\")
+;;   "
+;;   [table-str]
+;;   (let [dview (vm/view-get table-str)]
+;;       (popup-window
+;;        {:window-title (str "Defview manual table editor: " )
+;;         :view (code-editor
+;;                {:val (with-out-str (clojure.pprint/pprint (:view dview)))
+;;                 :save-fn (fn [state]
+;;                            (try
+;;                              (vm/view-set (assoc dview :view (c/config (:code state) :text)))
+;;                              (c/config! (:label state) :text "Saved!")
+;;                              (catch Exception e (c/config!
+;;                                                  (:label state)
+;;                                                  :text "Can not convert to map. Syntax error."))))})}))
+;;   (((state/state :jarman-views-service) :reload)))
+

@@ -292,7 +292,7 @@
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))))
 
-(defn- view-get
+(defn view-get
   "Description
     get view from db by table-name
   Example
@@ -302,7 +302,7 @@
   (first (db/query
           (select! {:table_name :view :where [:= :table_name (name table-name)]}))))
 
-(defn- view-set
+(defn view-set
   "Description
     get view-map, write to db, rewrite file view.clj
   Example

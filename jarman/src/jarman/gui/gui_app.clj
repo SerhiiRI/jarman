@@ -511,10 +511,9 @@
                                 ))
 
 (def get-table-configuration-from-list-by-table-id
-  (fn [tables-configurations table-id]
-    (let [map (first (filter (fn [item] (= table-id (get item :id))) tables-configurations))]
-      (do ;;(println map)
-        map))))
+  (fn [meta table-id]
+    (let [map (first (filter (fn [item] (= table-id (get item :id))) meta))]
+      map)))
 
 (defn table-editor--element--btn-save
   "Description:
@@ -634,99 +633,100 @@
       (keyword (:table_name selected-tab))))))
 
 
-(defn create-view--table-editor
+(def create-view--table-editor
   "Description:
      Create view for table editor. Marge all component to one big view.
    "
-  [view-id work-mode tables-configurations table-id invoker-id]
-  (let [local-changes  (atom nil)
-        table          (get-table-configuration-from-list-by-table-id (tables-configurations) table-id)
-        table-name (get-in table [:prop :table :representation])
-        col-path-to-value [:prop :columns]
-        tab-path-to-value [:prop :table]
-        columns        (get-in table col-path-to-value) ;; Get columns list
-        table-property (get-in table tab-path-to-value) ;; Get table property
-        elems          (join-vec
-                    ;; Table info
-                        [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "10px[fill]10px"] ;; menu bar for editor
-                                     :items (gtool/join-mig-items
-                                             [(table-editor--element--header-view (str "Edit table: \"" table-name "\""))]
-                                             (cond
-                                               (session/allow-permission? [:developer])
-                                               (list [(table-editor--element--btn-save local-changes table invoker-id)]
-                                                     [(table-editor--element--btn-show-changes local-changes table)]
-                                                     [(table-editor--element--btn-open-code-editor table)])
-                                               (session/allow-permission? [:admin])
-                                               (list [(table-editor--element--btn-save local-changes table invoker-id)]
-                                                     [(table-editor--element--btn-show-changes local-changes table)])
-                                               :else [])))]]
-                        [[(gcomp/min-scrollbox ;; Scroll section bottom title and button save/reload bar
-                           (mig-panel
-                            :constraints ["wrap 1" "[grow, fill]" "[fill]"]
-                            :items (gtool/join-mig-items  ;; Table properties 
-                                    (table-editor--element--header "Table configuration")
-                                    (vec (let [table-property-count (count table-property)
-                                               txtsize [150 :by 25]]
-                                           [(mig-panel
-                                             :constraints ["wrap 3" "2%[30%, fill]0px" "0px[grow, fill]5px"]
-                                             ;;:background gcomp/light-light-grey-color
-                                             :items (gtool/join-mig-items ;;here
-                                                     (let [param-to-edit (fn [param enabled]
-                                                                           (cond
-                                                                             (in? [true false] (get table-property param))
-                                                                             (do
-                                                                               (c/config! (gcomp/input-checkbox
-                                                                                         :txt (gtool/convert-key-to-title (str param))
-                                                                                         :local-changes local-changes
-                                                                                         :store-id (join-vec tab-path-to-value [param])
-                                                                                         :val (get table-property param)
-                                                                                         :enabled? enabled)))
-                                                                             :else
-                                                                             (c/config!
-                                                                              (gcomp/inpose-label
-                                                                               (gtool/convert-key-to-title (str param))
-                                                                               (gcomp/input-text-with-atom
-                                                                                {:local-changes local-changes
-                                                                                 :store-id (join-vec tab-path-to-value [param])
-                                                                                 :val (str (get table-property param))
-                                                                                 :enabled? enabled})
-                                                                               :vtop 10
-                                                                               :font-color gcomp/blue-color))))
-                                                           meta-params [:representation :description :field :is-system?
-                                                                        :is-linker? :allow-linking? :allow-modifing? :allow-deleting?]]
-                                                       (cond
-                                                         (= work-mode "developer")
-                                                         (concat (map #(param-to-edit % true) meta-params)
-                                                                 [(param-to-edit :ref true)])
-                                                         (= work-mode "admin")
-                                                         (conj (map #(param-to-edit % false) (drop 2 meta-params))
-                                                               (param-to-edit (first  meta-params) true)
-                                                               (param-to-edit (second meta-params) true))
-                                                         :else
-                                                         (map #(param-to-edit % false) meta-params)))))]))
-                                    (gcomp/hr 15);; Columns properties
-                                    (table-editor--element--header "Column configuration")
-                                    (gcomp/hr 15)
-                                    (let [column-editor-id "table-editor--component--space-for-column-editor"]
-                                      (mig-panel ;; Left and Right functional space
-                                       :constraints ["wrap 2" "0px[fill]0px" "0px[grow, fill]0px"]
-                                       :items [[(table-editor--component--column-picker work-mode local-changes column-editor-id columns col-path-to-value table-name)] ;; Left part for columns to choose for doing changes.
-                                               [(table-editor--component--space-for-column-editor column-editor-id)] ;; Space for components. Using to editing columns.
-                                               ])))))]])
-        component (cond
-                    (> (count table) 0) (do
-                                          (mig-panel
-                                           :constraints ["wrap 1" "20px[grow, fill]20px" "0px[fill]0px[grow, fill]0px"]
-                                          ;;  :border (line-border :thicness 1 :color "#f00")
-                                           :items elems
-                                           :border (empty-border :thickness 0)))
-                    :else (c/label :text "Table not found inside metadata :c"))]
-    (@gseed/changes-service :add-controller :view-id view-id :local-changes local-changes)
-    component))
+  (fn [view-id work-mode table-id invoker-id meta]
+    (let [meta           (mmeta/getset)
+          local-changes  (atom nil)
+          table          (get-table-configuration-from-list-by-table-id meta table-id)
+          table-name     (get-in table [:prop :table :representation])
+          col-path-to-value [:prop :columns]
+          tab-path-to-value [:prop :table]
+          columns        (get-in table col-path-to-value) ;; Get columns list
+          table-property (get-in table tab-path-to-value) ;; Get table property
+          elems          (join-vec
+                          ;; Table info
+                          [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "10px[fill]10px"] ;; menu bar for editor
+                                       :items (gtool/join-mig-items
+                                               [(table-editor--element--header-view (str "Edit table: \"" table-name "\""))]
+                                               (cond
+                                                 (session/allow-permission? [:developer])
+                                                 (list [(table-editor--element--btn-save local-changes table invoker-id)]
+                                                       [(table-editor--element--btn-show-changes local-changes table)]
+                                                       [(table-editor--element--btn-open-code-editor table)])
+                                                 (session/allow-permission? [:admin])
+                                                 (list [(table-editor--element--btn-save local-changes table invoker-id)]
+                                                       [(table-editor--element--btn-show-changes local-changes table)])
+                                                 :else [])))]]
+                          [[(gcomp/min-scrollbox ;; Scroll section bottom title and button save/reload bar
+                             (mig-panel
+                              :constraints ["wrap 1" "[grow, fill]" "[fill]"]
+                              :items (gtool/join-mig-items ;; Table properties 
+                                      (table-editor--element--header "Table configuration")
+                                      (vec (let [table-property-count (count table-property)
+                                                 txtsize [150 :by 25]]
+                                             [(mig-panel
+                                               :constraints ["wrap 3" "2%[30%, fill]0px" "0px[grow, fill]5px"]
+                                               ;;:background gcomp/light-light-grey-color
+                                               :items (gtool/join-mig-items ;;here
+                                                       (let [param-to-edit (fn [param enabled]
+                                                                             (cond
+                                                                               (in? [true false] (get table-property param))
+                                                                               (do
+                                                                                 (c/config! (gcomp/input-checkbox
+                                                                                             :txt (gtool/convert-key-to-title (str param))
+                                                                                             :local-changes local-changes
+                                                                                             :store-id (join-vec tab-path-to-value [param])
+                                                                                             :val (get table-property param)
+                                                                                             :enabled? enabled)))
+                                                                               :else
+                                                                               (c/config!
+                                                                                (gcomp/inpose-label
+                                                                                 (gtool/convert-key-to-title (str param))
+                                                                                 (gcomp/input-text-with-atom
+                                                                                  {:local-changes local-changes
+                                                                                   :store-id (join-vec tab-path-to-value [param])
+                                                                                   :val (str (get table-property param))
+                                                                                   :enabled? enabled})
+                                                                                 :vtop 10
+                                                                                 :font-color gcomp/blue-color))))
+                                                             meta-params [:representation :description :field :is-system?
+                                                                          :is-linker? :allow-linking? :allow-modifing? :allow-deleting?]]
+                                                         (cond
+                                                           (= work-mode "developer")
+                                                           (concat (map #(param-to-edit % true) meta-params)
+                                                                   [(param-to-edit :ref true)])
+                                                           (= work-mode "admin")
+                                                           (conj (map #(param-to-edit % false) (drop 2 meta-params))
+                                                                 (param-to-edit (first  meta-params) true)
+                                                                 (param-to-edit (second meta-params) true))
+                                                           :else
+                                                           (map #(param-to-edit % false) meta-params)))))]))
+                                      (gcomp/hr 15) ;; Columns properties
+                                      (table-editor--element--header "Column configuration")
+                                      (gcomp/hr 15)
+                                      (let [column-editor-id "table-editor--component--space-for-column-editor"]
+                                        (mig-panel ;; Left and Right functional space
+                                         :constraints ["wrap 2" "0px[fill]0px" "0px[grow, fill]0px"]
+                                         :items [[(table-editor--component--column-picker work-mode local-changes column-editor-id columns col-path-to-value table-name)] ;; Left part for columns to choose for doing changes.
+                                                 [(table-editor--component--space-for-column-editor column-editor-id)] ;; Space for components. Using to editing columns.
+                                                 ])))))]])
+          component (cond
+                      (> (count table) 0) (do
+                                            (mig-panel
+                                             :constraints ["wrap 1" "20px[grow, fill]20px" "0px[fill]0px[grow, fill]0px"]
+                                             ;;  :border (line-border :thicness 1 :color "#f00")
+                                             :items elems
+                                             :border (empty-border :thickness 0)))
+                      :else (c/label :text "Table not found inside metadata :c"))]
+      (@gseed/changes-service :add-controller :view-id view-id :local-changes local-changes)
+      component)))
 
 (defn add-to-view-service--table-editor
-  ([tables-configurations table-id]
-   (let [table          (get-table-configuration-from-list-by-table-id (tables-configurations) table-id)
+  ([table-id meta]
+   (let [table          (get-table-configuration-from-list-by-table-id meta table-id)
          view-id        (keyword (get table :table))  ;; Get name of table and create keyword to check tabs bar (opens views)
          invoker-id     ((state/state :jarman-views-service) :get-my-view-id)]
      (do
@@ -735,7 +735,7 @@
         :view-id view-id
         :title (str "Edit: " (get-in table [:prop :table :representation]))
         :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.")
-        :component-fn (fn [] (create-view--table-editor view-id (session/user-get-permission) tables-configurations table-id invoker-id))
+        :component-fn (fn [] (create-view--table-editor view-id (session/user-get-permission) table-id invoker-id meta))
         :scrollable? false)))))
 
 
@@ -762,9 +762,9 @@
 (def db-view--apsolute-pop--rmb-table-actions
   "Description:
        Right Mouse Click Menu on table to control clicked table"
-  (fn [JLP tables-configurations table-id x y]
+  (fn [JLP meta table-id x y]
     (let [border-c "#bbb"
-          selected-tab (filter (fn [tab-conf] (= (second (first tab-conf)) table-id)) tables-configurations)
+          selected-tab (filter (fn [tab-conf] (= (second (first tab-conf)) table-id)) meta)
           table-name (get (first selected-tab) :table_name)
           rm-menu (fn [e] (let [popup-menu (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e)))]
                             (.remove  JLP popup-menu)
@@ -792,7 +792,7 @@
                  ;; Popup menu buttons
                  (btn "Edit table" icon/pen-blue-64-png
                       (fn [e] (do (rm-menu e)
-                                  (add-to-view-service--table-editor mmeta/getset table-id))))
+                                  (add-to-view-service--table-editor table-id meta))))
                  (btn "Delete table" icon/basket-blue1-64-png (fn [e]))
                  (btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))
                  (if (session/allow-permission? [:developer])
@@ -812,7 +812,7 @@
 (defn table-visualizer--element--col-as-row
   "Description:
       Create a primary or special row that represents a column in the table"
-  [data
+  [meta data
    & {:keys [debug]
       :or {debug false}}]
   (if debug (println "--Column as row\n--Data: " data))
@@ -853,14 +853,14 @@
                                                                                  (.add JLP
                                                                                        (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
                                                                                         JLP
-                                                                                        (mmeta/getset) ;; forward list of table configuration
+                                                                                        meta  ;; forward list of table configuration
                                                                                         table-id ;; Get table id
                                                                                         (-> (.getX e) (+ (.getX (c/config (gtool/getParent e) :bounds))) (- 15))
                                                                                         (-> (.getY e) (+ (.getY (c/config e :bounds))) (+ (.getY (c/config (gtool/getParent e) :bounds))) (- 10)))
                                                                                        (new Integer 999) ;; z-index
                                                                                        ))
                                                                                (= (.getClickCount e) 2) ;; Open table editor by duble click
-                                                                               (add-to-view-service--table-editor mmeta/getset table-id)))))
+                                                                               (add-to-view-service--table-editor table-id meta)))))
                                   :mouse-dragged (fn [e]
                                                    (do
                                                      (if (= @last-x 0) (reset! last-x (.getX e)))
@@ -884,7 +884,7 @@
   "Description:
      Create one table on JLayeredPane using database map
   "
-  [bounds data]
+  [bounds data meta]
 ;; (if (get-in data [:prop :table :is-linker?]) (println "data " data))
   (let [bg-c "#fff"
         line-size-hover 2  ;; zwiekszenie bordera dla eventu najechania mysza
@@ -896,20 +896,29 @@
         w (nth bounds 2)
         row-h 30  ;; wysokosc wiersza w tabeli reprezentujacego kolumne
         col-in-rows (map (fn [col]
-                           (table-visualizer--element--col-as-row {:representation (cond
-                                                                                     (and (get-in data [:prop :table :is-linker?]) (contains? col :key-table))
-                                                                                     (do ;; Get represetation of linked table
-                                                                                       (let [search (filter (fn [table-meta] (= (get-in table-meta [:table]) (get col :key-table))) (mmeta/getset))]
-                                                                                         (get-in (first search) [:prop :table :representation])))
-                                                                                     :else (get col :representation))
-                                                                   :width w :height row-h
-                                                                   :type (cond
-                                                                           (and (get-in data [:prop :table :is-linker?]) (contains? col :key-table)) "connection"
-                                                                           (contains? col :key-table) "key"
-                                                                           :else "row")
-                                                                   :border-c border-c}))
+                           (table-visualizer--element--col-as-row
+                            meta
+                            {:representation (cond
+                                               (and (get-in data [:prop :table :is-linker?]) (contains? col :key-table))
+                                               (do ;; Get represetation of linked table
+                                                 (let [search (filter (fn [table-meta] (= (get-in table-meta [:table]) (get col :key-table))) meta)]
+                                                   (get-in (first search) [:prop :table :representation])))
+                                               :else (get col :representation))
+                             :width w
+                             :height row-h
+                             :type (cond
+                                     (and (get-in data [:prop :table :is-linker?]) (contains? col :key-table)) "connection"
+                                     (contains? col :key-table) "key"
+                                     :else "row")
+                             :border-c border-c}))
                          (get-in data [:prop :columns]))  ;; przygotowanie tabeli bez naglowka
-        camplete-table (conj col-in-rows (table-visualizer--element--col-as-row {:representation (get-in data [:prop :table :representation]) :width w :height row-h :type "header" :border-c border-c}))  ;; dodanie naglowka i finalizacja widoku tabeli
+        camplete-table (conj col-in-rows (table-visualizer--element--col-as-row
+                                          meta
+                                          {:representation (get-in data [:prop :table :representation])
+                                           :width w
+                                           :height row-h
+                                           :type "header"
+                                           :border-c border-c}))  ;; dodanie naglowka i finalizacja widoku tabeli
         h (* (count camplete-table) row-h)  ;; podliczenie wysokosci gotowej tabeli
         ]
     (c/vertical-panel
@@ -936,10 +945,11 @@
   ([]
    (let [rootJLP (new JLayeredPane)
          JLP (new JLayeredPane)
-         JLP-bounds (atom {})]
+         JLP-bounds (atom {})
+         meta (mmeta/getset)]
      (doall (map (fn [tab-data]
-                   (.add JLP (db-viewer--component--table (get-in tab-data [:prop :bounds] [0 0 100 100]) tab-data) (new Integer 5)))
-                 (calculate-bounds (mmeta/getset) 20 5)))
+                   (.add JLP (db-viewer--component--table (get-in tab-data [:prop :bounds] [0 0 100 100]) tab-data meta) (new Integer 5)))
+                 (calculate-bounds meta 20 5)))
      (.add rootJLP (c/vertical-panel :items [JLP]
                                    :id :JLP-DB-Visualizer
                                    :border nil
@@ -1291,8 +1301,6 @@
                                                                                           {:val "(fn [x] (println \"Nice ass\" x)"})})))])])]
                [(jarmanapp--main-view-space [] [])]]))))
 
-;; (jarman.logic.metadata/getset)
-;;(@startup)
 
 ;; ┌─────────────┐
 ;; │             │

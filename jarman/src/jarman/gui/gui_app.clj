@@ -520,27 +520,31 @@
   "Description:
      Invoker-id is a parent whos invoke editor. I mean DB Visualizer."
   [local-changes table invoker-id]
-  (gtool/table-editor--component--bar-btn :edit-view-save-btn (gtool/get-lang-btns :save) icon/agree-grey-64-png icon/agree-blue-64-png
-                                    (fn [e]
-                                      (let [new-table-meta (atom table)]
-                                        (doall
-                                         (map
-                                          (fn [change]
-                                            (let [path (first change)
-                                                  valu (second change)]
-                                              (println (str "<br/>" path " \"" (get-in table path) "\" -> \"" valu "\""))
-                                              (swap! new-table-meta (fn [atom-table] (assoc-in atom-table (first change) (second change))))))
-                                          @local-changes))
-                                        ;; (println "New table meta: " @new-table-meta)
-                                        (mmeta/do-change
-                                         (mmeta/apply-table table @new-table-meta)
-                                         table @new-table-meta)
-                                        (cm/swapp)
-                                        (println "reload invoker" invoker-id)
-                                        (if-not (nil? invoker-id) (((state/state :jarman-views-service) :reload) invoker-id))
-                                        (((state/state :jarman-views-service) :reload))
-                                        ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} 
-                                          5)))))
+  (gtool/table-editor--component--bar-btn
+   :edit-view-save-btn
+   (gtool/get-lang-btns :save)
+   icon/agree-grey-64-png
+   icon/agree-blue-64-png
+   (fn [e]
+     (let [new-table-meta (atom table)]
+       (doall
+        (map
+         (fn [change]
+           (let [path (first change)
+                 valu (second change)]
+             (println (str "<br/>" path " \"" (get-in table path) "\" -> \"" valu "\""))
+             (swap! new-table-meta (fn [atom-table] (assoc-in atom-table (first change) (second change))))))
+         @local-changes))
+       ;; (println "New table meta: " @new-table-meta)
+       (mmeta/do-change
+        (mmeta/apply-table table @new-table-meta)
+        table @new-table-meta)
+       (cm/swapp)
+       (println "reload invoker" invoker-id)
+       (if-not (nil? invoker-id) (((state/state :jarman-views-service) :reload) invoker-id))
+       (((state/state :jarman-views-service) :reload))
+       ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} 
+        5)))))
 
 
 ;; path groups {:field [[:table :field documents]]
@@ -614,6 +618,21 @@
              })
      )))
 
+(defn table-editor--element--btn-open-code-editor
+  "Description:
+    Open code editor and edit metadata for table as text.
+  Example:
+    (table-editor--element--btn-open-code-editor :user"
+  [selected-tab]
+  (gtool/table-editor--component--bar-btn
+   :open-code-editor-for-table
+   "Editor"
+   icon/json1-64-png
+   icon/json1-64-png
+   (fn [e]
+     (gcomp/popup-metadata-editor
+      (keyword (:table_name selected-tab))))))
+
 
 (defn create-view--table-editor
   "Description:
@@ -632,10 +651,15 @@
                         [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "10px[fill]10px"] ;; menu bar for editor
                                      :items (gtool/join-mig-items
                                              [(table-editor--element--header-view (str "Edit table: \"" table-name "\""))]
-                                             (cond (in? ["developer" "admin"] work-mode)
-                                                   (list [(table-editor--element--btn-save local-changes table invoker-id)]
-                                                         [(table-editor--element--btn-show-changes local-changes table)])
-                                                   :else [])))]]
+                                             (cond
+                                               (session/allow-permission? [:developer])
+                                               (list [(table-editor--element--btn-save local-changes table invoker-id)]
+                                                     [(table-editor--element--btn-show-changes local-changes table)]
+                                                     [(table-editor--element--btn-open-code-editor table)])
+                                               (session/allow-permission? [:admin])
+                                               (list [(table-editor--element--btn-save local-changes table invoker-id)]
+                                                     [(table-editor--element--btn-show-changes local-changes table)])
+                                               :else [])))]]
                         [[(gcomp/min-scrollbox ;; Scroll section bottom title and button save/reload bar
                            (mig-panel
                             :constraints ["wrap 1" "[grow, fill]" "[fill]"]
@@ -741,7 +765,7 @@
   (fn [JLP tables-configurations table-id x y]
     (let [border-c "#bbb"
           selected-tab (filter (fn [tab-conf] (= (second (first tab-conf)) table-id)) tables-configurations)
-          table-name (get (first selected-tab) :table)
+          table-name (get (first selected-tab) :table_name)
           rm-menu (fn [e] (let [popup-menu (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e)))]
                             (.remove  JLP popup-menu)
                             (.repaint JLP)))
@@ -763,18 +787,27 @@
                                                                                  (> mouse-x (- (.getWidth bounds) 5))
                                                                                  (< mouse-y (+ (.getY bounds) 5))
                                                                                  (> mouse-y (- (+ (.getHeight bounds) (.getY bounds)) 5)))
-                                                                           (rm-menu e)))))]))]
+                                                                           (rm-menu e)))))]))
+          items (gtool/join-mig-items
+                 ;; Popup menu buttons
+                 (btn "Edit table" icon/pen-blue-64-png
+                      (fn [e] (do (rm-menu e)
+                                  (add-to-view-service--table-editor mmeta/getset table-id))))
+                 (btn "Delete table" icon/basket-blue1-64-png (fn [e]))
+                 (btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))
+                 (if (session/allow-permission? [:developer])
+                   (btn "Manual edit"
+                        icon/pen-64-png
+                        (fn [e]
+                          (gcomp/popup-metadata-editor (keyword (:table_name (first selected-tab))))))
+                   []))]
       (mig-panel
        :id :db-viewer--component--menu-bar
-       :bounds [x y 150 80]
+       :bounds [x y 150 (* 30 (count items))]
        :background (new Color 0 0 0 0)
        :border (line-border :thickness 1 :color border-c)
        :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
-       :items [;; Popup menu buttons
-               [(btn "Edit table" icon/pen-blue-64-png (fn [e] (do (rm-menu e)
-                                                                   (add-to-view-service--table-editor mmeta/getset table-id))))]
-               [(btn "Delete table" icon/basket-blue1-64-png (fn [e]))]
-               [(btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))]]))))
+       :items items))))
 
 (defn table-visualizer--element--col-as-row
   "Description:

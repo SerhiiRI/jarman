@@ -1110,27 +1110,40 @@
    Example:
       (menu-bar :buttons [[\"title1\" icon1  fn1] [\"title2\" icon2  fn2]])
       (menu-bar :id :my-id :buttons [[\"title1\"  icon1 fn1] [\"title2\" icon2  fn2]])"
-  [& {:keys [id
-             buttons
-             justify-end]
-      :or {id :none
-           buttons []
-           justify-end false}}]
+  [{:keys [id
+           buttons
+           justify-end
+           font-size
+           icon-size
+           btn-border
+           bg
+           fg
+           bg-hover
+           border-c]
+    :or {id :none
+         buttons []
+         justify-end false
+         font-size 13
+         icon-size 27
+         btn-border [5 5 15 15 1]
+         bg "#fff"
+         fg "#000"
+         bg-hover "#d9ecff"
+         border-c "#bbb"}}]
   (let [btn (fn [txt ico tip onClick & args]
-              (let [border-c "#bbb"
-                    bg "#fff"
-                    bg-hover "#d9ecff"]
+              (let [[t b l r br] btn-border]
                 (c/label
-                 :font (gtool/getFont 13)
+                 :font (gtool/getFont font-size)
                  :text txt
                  :tip tip
-                 :icon (stool/image-scale ico 27)
+                 :icon (stool/image-scale ico icon-size)
                  :background bg
-                 :foreground "#000"
+                 :foreground fg
                  :focusable? true
-                 :border (b/compound-border (b/empty-border :left 15 :right 15 :top 5 :bottom 5) (b/line-border :thickness 1 :color border-c))
-                 :listen [:mouse-entered (fn [e] (c/config! e :background bg-hover :foreground "#000" :cursor :hand))
-                          :mouse-exited  (fn [e] (c/config! e :background bg :foreground "#000"))
+                 :border (b/compound-border (b/empty-border :left l :right r :top t :bottom b)
+                                            (b/line-border :thickness br :color border-c))
+                 :listen [:mouse-entered (fn [e] (c/config! e :background bg-hover :foreground fg :cursor :hand))
+                          :mouse-exited  (fn [e] (c/config! e :background bg :foreground fg))
                           :mouse-clicked onClick
                           :focus-gained  (fn [e] (c/config! e :background bg-hover  :cursor :hand))
                           :focus-lost    (fn [e] (c/config! e :background bg))
@@ -1176,28 +1189,28 @@
     (multi-panel [some-panel-1 some-panel-2 some-panel-3] title 0)"
   [panels cmpts-atom table-name title num]
   (let [btn-panel (menu-bar
-                   :id :db-viewer--component--menu-bar
-                   :buttons [["Back"
-                              icon/left-blue-64-png
-                              (fn [e]
-                                (if (= num 0)
-                                  (c/config!
-                                   (.getParent (.getParent (seesaw.core/to-widget e)))
-                                   :items [[(multi-panel panels cmpts-atom table-name title num)]])
-                                  (c/config!
-                                   (.getParent (.getParent (seesaw.core/to-widget e)))
-                                   :items [[(multi-panel panels cmpts-atom table-name title (- num 1))]])))]
-                             ["Next"
-                              icon/right-blue-64-png 
-                              (fn [e] (if (validate-fields cmpts-atom num)
-                                        (if
-                                            (=  num (- (count panels) 1))
-                                          (c/config! (.getParent
-                                                      (.getParent (seesaw.core/to-widget e))) :items [[(multi-panel panels cmpts-atom table-name
-                                                                                                                    title num)]])
-                                          (c/config! (.getParent (.getParent (seesaw.core/to-widget e))) :items [[(multi-panel panels cmpts-atom table-name
-                                                                                                                               title (+ num 1))]]))
-                                        ((state/state :alert-manager) :set {:header "Error" :body "All fields must be entered and must be longer than 3 chars"} 5)))]])
+                   {:id :db-viewer--component--menu-bar
+                    :buttons [["Back"
+                               icon/left-blue-64-png
+                               (fn [e]
+                                 (if (= num 0)
+                                   (c/config!
+                                    (.getParent (.getParent (seesaw.core/to-widget e)))
+                                    :items [[(multi-panel panels cmpts-atom table-name title num)]])
+                                   (c/config!
+                                    (.getParent (.getParent (seesaw.core/to-widget e)))
+                                    :items [[(multi-panel panels cmpts-atom table-name title (- num 1))]])))]
+                              ["Next"
+                               icon/right-blue-64-png 
+                               (fn [e] (if (validate-fields cmpts-atom num)
+                                         (if
+                                             (=  num (- (count panels) 1))
+                                           (c/config! (.getParent
+                                                       (.getParent (seesaw.core/to-widget e)))
+                                                      :items [[(multi-panel panels cmpts-atom table-name title num)]])
+                                           (c/config! (.getParent (.getParent (seesaw.core/to-widget e)))
+                                                      :items [[(multi-panel panels cmpts-atom table-name title (+ num 1))]]))
+                                         ((state/state :alert-manager) :set {:header "Error" :body "All fields must be entered and must be longer than 3 chars"} 5)))]]})
         btn-back (first (.getComponents btn-panel))
         btn-next (second (.getComponents btn-panel))]
    ;; (c/config! btn-panel :bounds [0 0 0 0])
@@ -1315,6 +1328,14 @@
                :selected-item (rift val ""))))
 
 
+
+
+;; ┌────────────────────┐
+;; │                    │
+;; │ Code area          │
+;; │                    │________________________________________
+;; └────────────────────┘                                       
+
 (defn code-area
   "Description:
     Some text area but with syntax styling.
@@ -1339,18 +1360,21 @@
   (swap! local-changes (fn [state] (assoc state store-id val)))
   (let [content (atom val)]
     (apply
-          seesaw.rsyntax/text-area
-          :text val
-          :syntax syntax
-          :user-data {:saved-content (fn [] (reset! content (second (first @local-changes))))}
-          :listen [:caret-update (fn [e]
-                                   (swap! local-changes (fn [state] (assoc state store-id (c/config (c/to-widget e) :text))))
-                                   (if-not (nil? label)
-                                           (if (= (c/config (c/to-widget e) :text) @content)
-                                             (c/config! label :text "")
-                                             (c/config! label :text "Unsaved file..."))))]
-          args)))
+     seesaw.rsyntax/text-area
+     :text val
+     :wrap-lines? true
+     :caret-position 1
+     :syntax syntax
+     :user-data {:saved-content (fn [] (reset! content (second (first @local-changes))))}
+     :listen [:caret-update (fn [e]
+                              (swap! local-changes (fn [state] (assoc state store-id (c/config (c/to-widget e) :text))))
+                              (if-not (nil? label)
+                                (if (= (c/config (c/to-widget e) :text) @content)
+                                  (c/config! label :text "")
+                                  (c/config! label :text "Unsaved file..."))))]
+     args)))
 
+;;(seesaw.dev/show-options (seesaw.rsyntax/text-area))
 
 (defn code-editor
   "Description:
@@ -1363,55 +1387,74 @@
            store-id
            val
            font-size
+           title
+           title-font-size
            save-fn
-           debug]
+           debug
+           dispose
+           args]
     :or {local-changes (atom {})
          store-id :code-tester
          val ""
+         title "Code editor"
+         title-font-size 14
          font-size 14
          save-fn (fn [state] (println "Additional save"))
-         debug false}}]
+         debug false
+         dispose false
+         args {}}}]
   (let [f-size (atom font-size)
         info-label (c/label)
         code (code-area {:args [:font (gtool/getFont @f-size)
-                                :border (b/empty-border :thickness 10)]
+                                :border (b/empty-border :left 10 :right 10)]
                          :label info-label
                          :local-changes local-changes
                          :store-id store-id
                          :val val}) 
         editor (vmig
+                :args args
                 :vrules "[fill]0px[grow, fill]0px[fill]"
-                :items [[(menu-bar
-                          :justify-end true
-                          :buttons [[""
-                                     icon/up-blue2-64-png
-                                     "Increase font"
-                                     (fn [e]
-                                       (c/config!
-                                        code
-                                        :font (gtool/getFont
-                                               (do (reset! f-size (+ 2 @f-size))
-                                                   @f-size))))]
-                                    [""
-                                     icon/down-blue2-64-png
-                                     "Decrease font"
-                                     (fn [e]
-                                       (c/config!
-                                        code
-                                        :font (gtool/getFont
-                                               (do (reset! f-size (- @f-size 2))
-                                                   @f-size))))]
-                                    (if debug
-                                      ["" icon/loupe-blue-64-png "Show changes" (fn [e] (popup-info-window
+                :items [[(hmig
+                          :args args
+                          :hrules "[70%, fill]10px[grow, fill]"
+                          :items
+                          [[(c/label :text title
+                                     :border (b/compound-border (b/line-border :bottom 1 :color "#eee")
+                                                                (b/empty-border :left 10))
+                                     :font (gtool/getFont :bold title-font-size))]
+                           [(menu-bar
+                             {:justify-end true
+                              :buttons [[""
+                                         icon/up-blue2-64-png
+                                         "Increase font"
+                                         (fn [e]
+                                           (c/config!
+                                            code
+                                            :font (gtool/getFont
+                                                   (do (reset! f-size (+ 2 @f-size))
+                                                       @f-size))))]
+                                        [""
+                                         icon/down-blue2-64-png
+                                         "Decrease font"
+                                         (fn [e]
+                                           (c/config!
+                                            code
+                                            :font (gtool/getFont
+                                                   (do (reset! f-size (- @f-size 2))
+                                                       @f-size))))]
+                                        (if debug
+                                          ["" icon/loupe-blue-64-png "Show changes" (fn [e] (popup-info-window
                                                                                              "Changes"
                                                                                              (second (first @local-changes))
                                                                                              (c/to-frame e)))]
-                                      nil)
-                                    ["" icon/agree-blue-64-png "Save" (fn [e]
-                                                                        (c/config! info-label :text "Saved")
-                                                                        ((:saved-content (c/config code :user-data)))
-                                                                        (save-fn {:state local-changes :label info-label :code code}))]
-                                    ["" icon/enter-64-png "Leave" (fn [e] (.dispose (c/to-frame e)))]])]
+                                          nil)
+                                        ["" icon/agree-blue-64-png "Save" (fn [e]
+                                                                            (c/config! info-label :text "Saved")
+                                                                            ((:saved-content (c/config code :user-data)))
+                                                                            (save-fn {:state local-changes :label info-label :code code}))]
+                                        (if dispose
+                                          ["" icon/enter-64-png "Leave" (fn [e] (.dispose (c/to-frame e)))]
+                                          nil)]})]])]
                         [(scrollbox code)]
                         [info-label]])]
     (gtool/set-focus code)
@@ -1431,6 +1474,8 @@
    {:window-title "Configuration manual editor"
     :view (code-editor
            {:val (with-out-str (clojure.pprint/pprint config-part))
+            :title (gtool/convert-key-to-title (first config-path))
+            :dispose true
             :save-fn (fn [props]
                        (try
                          (cm/assoc-in-segment config-path (read-string (c/config (:code props) :text)))
@@ -1443,6 +1488,34 @@
                                              :text "Can not convert to map. Syntax error."))))})})
   (((state/state :jarman-views-service) :reload)))
 
+(defn view-config-editor
+  "Description:
+     Prepared view with code editor for selected configuration segment.
+   Example:
+     (popup-metadata-editor [:init.edn] {:part-of-config {}})
+  "
+  [config-path config-part]
+  ((state/state :jarman-views-service)
+   :set-view
+   :view-id (keyword (str "manual-view-code" (first config-path)))
+   :title (str "Code: " (gtool/convert-key-to-title (first config-path)))
+   :component-fn
+   (fn [] (code-editor
+           {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
+                   :background "#fff"]
+            :val (with-out-str (clojure.pprint/pprint config-part))
+            :title (gtool/convert-key-to-title (first config-path))
+            :save-fn (fn [props]
+                       (try
+                         (cm/assoc-in-segment config-path (read-string (c/config (:code props) :text)))
+                         (let [validate (cm/store-and-back)]
+                           (if (:valid? validate)
+                             (c/config! (:label props) :text "Saved!")
+                             (c/config! (:label props) :text "Validation faild. Can not save.")))
+                         (catch Exception e (c/config!
+                                             (:label props)
+                                             :text "Can not convert to map. Syntax error."))))}))))
+
 
 (defn popup-metadata-editor
   "Description:
@@ -1453,9 +1526,11 @@
   [table-keyword]
   (let [meta (dbv/metadata-get table-keyword)]
       (popup-window
-       {:window-title (str "Metadata manual table editor: " (get-in meta [:prop :table :representation]))
+       {:window-title "Metadata manual table editor"
         :view (code-editor
                {:val (with-out-str (clojure.pprint/pprint (:prop meta)))
+                :title (str "Edit: " (get-in meta [:prop :table :representation]))
+                :dispose true
                 :save-fn (fn [state]
                            (try
                              (dbv/metadata-set (assoc meta :prop (read-string (c/config (:code state) :text))))
@@ -1472,16 +1547,24 @@
      (view-metadata-editor :user)
   "
   [table-keyword]
-  (let [meta (dbv/metadata-get table-keyword)]
-    (code-editor
-     {:val (with-out-str (clojure.pprint/pprint (:prop meta)))
-      :save-fn (fn [state]
-                 (try
-                   (dbv/metadata-set (assoc meta :prop (read-string (c/config (:code state) :text))))
-                   (c/config! (:label state) :text "Saved!")
-                   (catch Exception e (c/config!
-                                       (:label state)
-                                       :text "Can not convert to map. Syntax error."))))})))
+  ((state/state :jarman-views-service)
+   :set-view
+   :view-id (keyword (str "manual-view-code" (name table-keyword)))
+   :title (str "Code: " (name table-keyword))
+   :component-fn
+   (fn [] (let [meta (dbv/metadata-get table-keyword)]
+            (code-editor
+             {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
+                     :background "#fff"]
+              :title (str "Edit: " (get-in meta [:prop :table :representation]))
+              :val (with-out-str (clojure.pprint/pprint (:prop meta)))
+              :save-fn (fn [state]
+                         (try
+                           (dbv/metadata-set (assoc meta :prop (read-string (c/config (:code state) :text))))
+                           (c/config! (:label state) :text "Saved!")
+                           (catch Exception e (c/config!
+                                               (:label state)
+                                               :text "Can not convert to map. Syntax error."))))})))))
 
 
 ;; (defn popup-defview-editor

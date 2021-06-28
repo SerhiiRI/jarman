@@ -277,7 +277,7 @@
                                                (message-faild
                                                 "Can not load config!"
                                                 " Opening code editor. Configuration probably have some syntax error.")
-                                               (gcomp/popup-config-editor start-key map-part)
+                                               (gcomp/view-config-editor start-key map-part)
                                                ))))
                        
                        (smig/mig-panel
@@ -330,7 +330,7 @@
                                 (if (= "developer" (session/user-get-permission))
                                   (gcomp/button-basic
                                    ""
-                                   :onClick (fn [e] (gcomp/popup-config-editor start-key map-part))
+                                   :onClick (fn [e] (gcomp/view-config-editor start-key map-part))
                                    :flip-border true
                                    :args [:icon (stool/image-scale icon/json1-64-png 25)])
                                   () ;; Empty if can not have access

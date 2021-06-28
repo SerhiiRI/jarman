@@ -292,12 +292,6 @@
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))))
 
-(defn- metadata-get [table]
-  (first (jarman.logic.metadata/getset! table)))
-
-(defn- metadata-set [metadata]
-  (jarman.logic.metadata/update-meta metadata))
-
 (defn- view-get
   "Description
     get view from db by table-name

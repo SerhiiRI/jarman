@@ -11,6 +11,7 @@
             [jarman.logic.state :as state]
             [jarman.tools.lang :refer :all]
             [jarman.logic.metadata :as mt]
+            [jarman.gui.gui-db-visualizer :as dbv]
             [jarman.config.config-manager :as cm]
             [jarman.gui.gui-tools :as gtool]
             [seesaw.chooser :as chooser]
@@ -1249,7 +1250,7 @@
    "
   (fn [{:keys [view size window-title relative]
         :or {view (c/label :text "Popup window")
-             size [600 400]
+             size [600 600]
              window-title "Popup window"
              relative (c/to-frame (state/state :app))}}]
     (let [relative (if (nil? relative) nil (calc-popup-center size (c/to-frame relative)))
@@ -1420,6 +1421,11 @@
 ;;(popup-window {:view (code-editor {})})
 
 (defn popup-config-editor
+  "Description:
+     Prepared popup window with code editor for selected configuration segment.
+   Example:
+     (popup-metadata-editor [:init.edn] {:part-of-config {}})
+  "
   [config-path config-part]
   (popup-window
    {:window-title "Configuration manual editor"
@@ -1434,6 +1440,27 @@
                              (c/config! (:label props) :text "Validation faild. Can not save.")))
                          (catch Exception e (c/config!
                                              (:label props)
-                                             :text "Can not convert to map. Syntax error.")))
-                       )})})
+                                             :text "Can not convert to map. Syntax error."))))})})
+  (((state/state :jarman-views-service) :reload)))
+
+
+(defn popup-metadata-editor
+  "Description:
+     Prepared popup window with code editor for selected metadata by table_name as key.
+   Example:
+     (popup-metadata-editor :user)
+  "
+  [table-keyword]
+  (let [meta (dbv/metadata-get table-keyword)]
+      (popup-window
+       {:window-title (str "Metadata manual table editor: " (get-in meta [:prop :table :representation]))
+        :view (code-editor
+               {:val (with-out-str (clojure.pprint/pprint (:prop meta)))
+                :save-fn (fn [state]
+                           (try
+                             (dbv/metadata-set (assoc meta :prop (read-string (c/config (:code state) :text))))
+                             (c/config! (:label state) :text "Saved!")
+                             (catch Exception e (c/config!
+                                                 (:label state)
+                                                 :text "Can not convert to map. Syntax error."))))})}))
   (((state/state :jarman-views-service) :reload)))

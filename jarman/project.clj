@@ -17,6 +17,7 @@
                  ;; [org.odftoolkit/odfdom-java "0.9.0-RC1"]
                  ;; [org.odftoolkit/simple-odf "0.9.0-RC1"]
                  [datascript/datascript "1.2.1"]
+                 [ont-app/datascript-graph "0.1.0"]
                  [datascript-transit/datascript-transit "0.3.0"]
                  [rum/rum "0.12.6"]
                  [kaleidocs/merge "0.3.0"]

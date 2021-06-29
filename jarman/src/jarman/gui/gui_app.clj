@@ -40,6 +40,7 @@
             [jarman.logic.session :as session]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut]))
 
+
 ;; ┌────────────────────────────┐
 ;; │                            │
 ;; │ JLayeredPane Popup Service │
@@ -55,24 +56,28 @@
         last-y (atom 0)
         w (first size)
         h (second size)
-        title-bar (mig-panel
-                   :constraints ["" "10px[grow]0px[30, center]0px" "5px[]5px"]
-                   :background "#ddd" ;;"#eee"
-                   :items (gtool/join-mig-items
-                           (c/label :text title)
-                           (c/label :icon (stool/image-scale icon/up-grey1-64-png 25)
-                                    :listen [:mouse-clicked
-                                             (fn [e] (cond (> (.getHeight (gtool/getParent (gtool/getParent e))) 50)
-                                                           (c/config! (gtool/getParent (gtool/getParent e)) :bounds  [(.getX (gtool/getParent (gtool/getParent e)))
-                                                                                                                      (.getY (gtool/getParent (gtool/getParent e)))
-                                                                                                                      w 30])
-                                                           :else (c/config! (gtool/getParent (gtool/getParent e)) :bounds [(.getX (gtool/getParent (gtool/getParent e)))
-                                                                                                                           (.getY (gtool/getParent (gtool/getParent e)))
-                                                                                                                           w h])))
-                                             :mouse-entered (fn [e] (c/config! e :cursor :hand))])
-                           (c/label :icon (stool/image-scale icon/x-blue2-64-png 20)
-                                    :listen [:mouse-clicked (fn [e] ((@popup-menager :remove) storage-id))
-                                             :mouse-entered (fn [e] (c/config! e :cursor :hand))])))
+        title-bar
+        (mig-panel
+         :constraints ["" "10px[grow]0px[30, center]0px" "5px[]5px"]
+         :background "#ddd" ;;"#eee"
+         :items (gtool/join-mig-items
+                 (c/label :text title)
+                 (c/label :icon (stool/image-scale icon/up-grey1-64-png 25)
+                          :listen
+                          [:mouse-clicked
+                           (fn [e] (cond (> (.getHeight (gtool/getParent (gtool/getParent e))) 50)
+                                         (c/config! (gtool/getParent (gtool/getParent e))
+                                                    :bounds  [(.getX (gtool/getParent (gtool/getParent e)))
+                                                              (.getY (gtool/getParent (gtool/getParent e)))
+                                                              w 30])
+                                         :else (c/config! (gtool/getParent (gtool/getParent e))
+                                                          :bounds [(.getX (gtool/getParent (gtool/getParent e)))
+                                                                   (.getY (gtool/getParent (gtool/getParent e)))
+                                                                   w h])))
+                           :mouse-entered (fn [e] (c/config! e :cursor :hand))])
+                 (c/label :icon (stool/image-scale icon/x-blue2-64-png 20)
+                          :listen [:mouse-clicked (fn [e] ((@popup-menager :remove) storage-id))
+                                   :mouse-entered (fn [e] (c/config! e :cursor :hand))])))
         content (mig-panel
                  :constraints ["wrap 1" "0px[grow, center]0px" "0px[grow, center]0px"]
                  :background "#fff"
@@ -539,7 +544,7 @@
         (mmeta/apply-table table @new-table-meta)
         table @new-table-meta)
        (cm/swapp)
-       (println "reload invoker" invoker-id)
+       (println "reloadinvoker" invoker-id)
        (if-not (nil? invoker-id) (((state/state :jarman-views-service) :reload) invoker-id))
        (((state/state :jarman-views-service) :reload))
        ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} 
@@ -1263,42 +1268,43 @@
        :border (b/line-border :left margin-left :color bg-color)
        :items [;; [(c/label-fn :background "#eee" :size [50 :by 50])]
                [(jarmanapp--main-tree  [(button-expand "Database"
-                                                 [(button-expand-child "DB Visualiser" :onClick (fn [e] 
-                                                                                                  (try 
-                                                                                                    ((state/state :jarman-views-service) :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view)
-                                                                                                    (catch Exception e ((state/state :alert-manager) :set {:header "Exception" :body (.getMessage e)} 5)))))
-                                                          ;;  (button-expand-child "Users table" :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
-                                                  ])]
-                                 [(button-expand "Tables" [] :id :tables-view-plugin :expand :yes)]
-                                 [(button-expand "Okresy" [(button-expand-child "Okresy" :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id "okresy" :title "Okresy" :component-fn create-period-view)))])]
-                                 (create-expand-btns--confgen)
-                                 [(button-expand "Debug items"
-                                                 [(button-expand-child "Popup" :onClick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (c/label "Hello popup!") :size [400 200])))
-                                                  (button-expand-child "Dialog" :onClick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100])))))
-                                                  (button-expand-child "Popup window" :onClick (fn [e] (gcomp/popup-window {:relative (state/state :app)})))
-                                                  (button-expand-child "alert" :onClick (fn [e] ((state/state :alert-manager) :set {:header "Czym jest Lorem Ipsum?" :body "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle poligraficznym. Został po raz pierwszy użyty w XV w. przez nieznanego drukarza do wypełnienia tekstem próbnej książki. Pięć wieków później zaczął być używany przemyśle elektronicznym, pozostając praktycznie niezmienionym. Spopularyzował się w latach 60. XX w. wraz z publikacją arkuszy Letrasetu, zawierających fragmenty Lorem Ipsum, a ostatnio z zawierającym różne wersje Lorem Ipsum oprogramowaniem przeznaczonym do realizacji druków na komputerach osobistych, jak Aldus PageMaker"} 5)))
-                                                  (button-expand-child "Select table" :onClick (fn [e] (gcomp/popup-window {:view (gcomp/select-box-table-list {}) :relative (state/state :app) :size [250 40]})))
-                                                  (button-expand-child
-                                                   "Text multiline"
-                                                   :onClick (fn [e]
-                                                              (gcomp/popup-window {:window-title "Text multiline"
-                                                                                   :relative (state/state :app)
-                                                                                   :size [250 250]
-                                                                                   :view (c/text
-                                                                                          :text "Some text"
-                                                                                          :size [300 :by 300]
-                                                                                          :editable? true
-                                                                                          :multi-line? true
-                                                                                          :wrap-lines? true)})))
-                                                  (button-expand-child
-                                                   "Rsyntax code editor"
-                                                   :onClick (fn [e]
-                                                              (gcomp/popup-window {:window-title "Code editor"
-                                                                                   :relative (state/state :app)
-                                                                                   :size [450 350]
-                                                                                   :view (gcomp/code-editor
-                                                                                          {:dispose true
-                                                                                           :val "(fn [x] (println \"Nice ass\" x)"})})))])])]
+                                                       [(button-expand-child "DB Visualiser" :onClick (fn [e] 
+                                                                                                        (try 
+                                                                                                          ((state/state :jarman-views-service) :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view)
+                                                                                                          (catch Exception e ((state/state :alert-manager) :set {:header "Exception" :body (.getMessage e)} 5)))))
+                                                        ;;  (button-expand-child "Users table" :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
+                                                        ])]
+                                       [(button-expand "Tables" [] :id :tables-view-plugin :expand :yes)]
+                                      
+                                       [(button-expand "Okresy" [(button-expand-child "Okresy" :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id "okresy" :title "Okresy" :component-fn create-period-view)))])]
+                                       (create-expand-btns--confgen)
+                                       [(button-expand "Debug items"
+                                                       [(button-expand-child "Popup" :onClick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (c/label "Hello popup!") :size [400 200])))
+                                                        (button-expand-child "Dialog" :onClick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100])))))
+                                                        (button-expand-child "Popup window" :onClick (fn [e] (gcomp/popup-window {:relative (state/state :app)})))
+                                                        (button-expand-child "alert" :onClick (fn [e] ((state/state :alert-manager) :set {:header "Czym jest Lorem Ipsum?" :body "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle poligraficznym. Został po raz pierwszy użyty w XV w. przez nieznanego drukarza do wypełnienia tekstem próbnej książki. Pięć wieków później zaczął być używany przemyśle elektronicznym, pozostając praktycznie niezmienionym. Spopularyzował się w latach 60. XX w. wraz z publikacją arkuszy Letrasetu, zawierających fragmenty Lorem Ipsum, a ostatnio z zawierającym różne wersje Lorem Ipsum oprogramowaniem przeznaczonym do realizacji druków na komputerach osobistych, jak Aldus PageMaker"} 5)))
+                                                        (button-expand-child "Select table" :onClick (fn [e] (gcomp/popup-window {:view (gcomp/select-box-table-list {}) :relative (state/state :app) :size [250 40]})))
+                                                        (button-expand-child
+                                                         "Text multiline"
+                                                         :onClick (fn [e]
+                                                                    (gcomp/popup-window {:window-title "Text multiline"
+                                                                                         :relative (state/state :app)
+                                                                                         :size [250 250]
+                                                                                         :view (c/text
+                                                                                                :text "Some text"
+                                                                                                :size [300 :by 300]
+                                                                                                :editable? true
+                                                                                                :multi-line? true
+                                                                                                :wrap-lines? true)})))
+                                                        (button-expand-child
+                                                         "Rsyntax code editor"
+                                                         :onClick (fn [e]
+                                                                    (gcomp/popup-window {:window-title "Code editor"
+                                                                                         :relative (state/state :app)
+                                                                                         :size [450 350]
+                                                                                         :view (gcomp/code-editor
+                                                                                                {:dispose true
+                                                                                                 :val "(fn [x] (println \"Nice ass\" x)"})})))])])]
                [(jarmanapp--main-view-space [] [])]]))))
 
 
@@ -1356,7 +1362,8 @@
       (reset! popup-menager (create-popup-service atom-popup-hook))
       (if-not (nil? @relative) (.setLocation (seesaw.core/to-frame (state/state :app)) (first @relative) (second @relative))))
     (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))
-    (vmg/do-view-load)))
+    (vmg/do-view-load)
+    (vmg/buttons-list--code-editor-defview :#expand-menu-space)))
 
 
 (reset! startup

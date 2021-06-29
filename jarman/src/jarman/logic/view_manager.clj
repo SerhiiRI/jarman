@@ -4,12 +4,14 @@
    [clojure.string :as string]
    [clojure.java.io :as io]
    [seesaw.core :as c]
+   [seesaw.border :as b]
    ;; Jarman toolkit
    [jarman.tools.lang :include-macros true :refer :all]
    [jarman.config.environment :as env]
    [jarman.plugin.jspl :as jspl]
    ;; --- 
    [jarman.logic.connection :as db]
+   [jarman.gui.gui-components :as gcomp]
    [jarman.logic.sql-tool :refer [select! update! insert!]]
    [jarman.logic.metadata :as mt]
    [jarman.logic.state :as state]))
@@ -317,3 +319,75 @@
     (loader-from-db)))
 
 
+(defn popup-defview-editor
+  "Description:
+     Prepared popup window with code editor for defview.
+   Example:
+     (popup-defview-editor \"user\")
+  "
+  [table-str]
+  (let [dview (view-get table-str)]
+      (gcomp/popup-window
+       {:window-title (str "Defview manual table editor: " )
+        :view (gcomp/code-editor
+               {:val (doto (:view dview) prn)
+                :dispose true
+                :save-fn (fn [state]
+                           (try
+                             (view-set (assoc dview :view (c/config (:code state) :text)))
+                             (c/config! (:label state) :text "Saved!")
+                             (catch Exception e (c/config!
+                                                 (:label state)
+                                                 :text "Can not convert to map. Syntax error."))))})})))
+
+
+(defn view-defview-editor
+  "Description:
+     Prepared popup window with code editor for defview.
+   Example:
+     (popup-defview-editor \"user\")
+  "
+  [table-str]
+  (let [dview (view-get table-str)]
+    ((state/state :jarman-views-service)
+     :set-view
+     :view-id (keyword (str "manual-defview-code" table-str))
+     :title (str "Defview: " table-str)
+     :component-fn
+     (fn [] (gcomp/code-editor
+             {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
+                     :background "#fff"]
+              :title (str "Edit: " table-str)
+              :val (:view dview)
+              :save-fn (fn [state]
+                         (try
+                           (view-set (assoc dview :view (c/config (:code state) :text)))
+                           (c/config! (:label state) :text "Saved!")
+                           (catch Exception e (c/config!
+                                               (:label state)
+                                               :text "Can not convert to map. Syntax error."))))})))))
+
+;;(popup-defview-editor "user")
+(defn buttons-list--code-editor-defview
+  "Description:
+     Inject expand button then when pointing id.
+   Example:
+     (buttons-list--code-editor-defview :#expand-menu-space)
+  "
+  [plugplace-id]
+  (let [table-and-view-coll (db/query
+                             (select!
+                              {:table_name :view
+                               :column [:table_name]}))
+        comp (gcomp/button-expand
+              "Defviews Editors"
+              (doall
+               (map
+                (fn [m]
+                  (gcomp/button-expand-child
+                   (:table_name m)
+                   :onClick (fn [e] (view-defview-editor (:table_name m))) ))
+                table-and-view-coll)))]
+    (.add (c/select (state/state :app) [:#expand-menu-space]) comp)
+    (.revalidate (c/to-root (state/state :app)))
+    ))

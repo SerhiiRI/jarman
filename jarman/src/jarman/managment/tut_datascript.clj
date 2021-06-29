@@ -9,7 +9,10 @@
    [clojure.set :as set]
    [datascript.core :as d]
    [rum.core :as rum]
-   [datascript.transit :as dt]))
+   [datascript.transit :as dt]
+   ;; for datascript-graph
+   [ont-app.igraph.core :as igraph :refer [add, unique, query]]
+   [ont-app.datascript-graph.core :as dsg :refer [make-graph]]))
 
 ;;;;;;;;;;;;;;
 ;;; SCHEMA ;;; 
@@ -23,7 +26,7 @@
 ;;; initialize a database
 (def conn (d/create-conn {}))
 
-;;; { } define attributes fo schema 
+;;; { } define attributes fo schema x
 ;;; or datoms
 (def schema {:car/maker {:db/type :db.type/ref}
              :car/colors {:db/cardinality :db.cardinality/many}})
@@ -350,7 +353,6 @@
        [?c :car/name ?name]]
      @conn)
 
-
 (let [car-entity (ffirst
                   (d/q '[:find ?c
                          :where
@@ -462,4 +464,188 @@
         :where
         [?e :user/id]
         [?e :user/name ?n]]
-      @conn)
+     @conn)
+
+;;;;;;;;;;;;;;;
+;;; EXAMPLE ;;;
+;;;;;;;;;;;;;;;
+
+;; resolve referencess
+(let [conn (d/create-conn {:friend {:db/valueType :db.type/ref
+                                    :db/cardinality :db.cardinality/many}})
+      tx   (d/transact! conn [{:name "Bob"
+                               :friend [-1 -2]}
+                              [:db/add -1  :name "Ivan"]
+                              [:db/add -2  :name "Petro"]
+                              [:db/add "B" :name "Boris"]
+                              [:db/add "B" :friend -3]
+                              [:db/add -3  :name "John"]
+                              [:db/add -3  :friend "B"]])
+      q '[:find ?fn
+          :in $ ?n
+          :where [?e :name ?n]
+          [?e :friend ?fe]
+          [?fe :name ?fn]]]
+  (:tempids tx) 
+  ;; (d/q q @conn "Bob")
+  ;; => #{["Ivan"] ["Petro"]}
+  ;; (d/q q @conn "Boris")
+  ;; => #{["John"]}
+  ;; (d/q q @conn "John")
+  ;; => #{["Boris"]}
+  )
+;; => {1 1, -1 2, -2 3, "B" 4, -3 5, :db/current-tx 536870913}
+
+(let [conn (d/create-conn {:user {:db/valueType :db.type/ref
+                                  :db/cardinality :db.cardinality/many}})])
+
+;;;;;;;;;;;;;;;;;;
+;;; data-graph ;;;
+;;;;;;;;;;;;;;;;;;
+(def g (make-graph))
+
+(def g 
+  (add g 
+       [[:john 
+         :isa :person 
+         :likes :pizza]
+        [:mary
+         :isa :person
+         :likes :pasta]]))
+
+(g)
+
+(g :john)
+
+(:db g)
+
+(:schema (:db g))
+
+(query g '[:find ?person 
+           :where 
+           [?e :isa ?_person]
+           [?_person ::dsg/id :person]
+           [?e ::dsg/id ?person]])
+;; => ({:?person :mary} {:?person :john})
+
+;;;;;;;;;;;;;;;
+;;; EXAMPLE ;;;
+;;;;;;;;;;;;;;;
+
+(def schema {:user/documents {:db/cardinality
+                              :db.cardinality/many
+                              :db/valueType :db.type/ref}
+             :user/permission {:db/valueType :db.type/ref}})
+(def conn (d/create-conn schema))
+
+@(d/transact conn [{:db/id -1
+                    :document/name "Passport"}
+                   {:db/id -2
+                    :document/name "Sertufikat"}
+                   {:db/id -3
+                    :document/name "Dogovir"}
+                   {:db/id -4
+                    :permission/name "admin"}
+                   {:db/id -5
+                    :permission/name "user"}
+                   {:db/id -6
+                    :permission/name "developer"}
+                   
+                   {:db/id (d/tempid :user)
+                    :user/name "Julia"
+                    :user/documents [-1 -2]
+                    :user/permission -5}
+                   
+                   {:db/id -7
+                    :document/name "Doruchennia"}
+
+                   {:db/id (d/tempid :user)
+                    :user/name "Serhii"
+                    :user/documents [-1 -7]
+                    :user/permission -4}
+                   
+                   {:db/id -8
+                    :document/name "Contract"}
+
+                   {:db/id (d/tempid :user)
+                    :user/name "Anna"
+                    :user/documents [-2 -8 -7]
+                    :user/permission -4}])
+;; all users
+(d/q '[:find (pull ?user [:user/name]) :in $ :where
+       [?user :user/name]] @conn)
+;; => ([#:user{:name "Julia"}] [#:user{:name "Serhii"}] [#:user{:name "Anna"}])
+
+;; entity id of users
+(d/q '[:find ?user :in $ :where
+ [?user :user/name]] @conn)
+;; => #{[7] [9] [11]}
+
+;; list of docs Anna
+(let [n-user (d/q '[:find ?user . :in $ ?name :where [?user
+                                                       :user/name ?name]] @conn "Anna")]
+  (d/pull @conn '[* {:user/documents [:document/name]}] n-user))
+;; => {:db/id 11, :user/documents [#:document{:name "Sertufikat"} #:document{:name "Doruchennia"} #:document{:name "Contract"}], :user/name "Anna", :user/permission #:db{:id 4}}
+
+;; id of doc
+(d/q '[:find ?e . :in $ ?name :where [?e :document/name ?name]]
+     @conn "Contract")
+
+;; all docs
+(d/q '[:find (pull ?docs [:document/name]) :in $ :where [?docs
+                                                         :document/name]] @conn)
+;; find users
+(d/q '[:find ?us :in $ :where [_ :user/name ?us]] @conn)
+
+;; search, if not user, return nil
+(d/q '[:find ?n . :in $ ?name
+       :where
+       [?e :user/name ?n]
+       [(= ?n ?name)]] @conn "Anna")
+
+;;;;;;;;;;;;;;;
+;;; Example ;;;
+;;;;;;;;;;;;;;;
+
+(def schema {:table-name   { :db/unique :db.unique/identity }
+             :friend { :db/valueType :db.type/ref }})
+
+(def db (d/db-with (d/empty-db schema)
+                   [{:db/id 1 :id 1 :table-name "cashe-register" :prop "components cash-register" :friend 2}
+                    {:db/id 2 :id 2 :table-name "repair-contract" :prop "components-contract" :friend 3}
+                    {:db/id 3 :id 3 :table-name "repair-reason" :prop "components-reason" }]))
+
+(d/q '[:find ?e ?v
+       :in $ ?e
+       :where [?e :prop ?v]]
+     db [:table-name "cashe-register"])
+;; => #{[[:table-name "cashe-register"] "components cash-register"]}
+
+(d/q '[:find ?fn
+       :in $ ?n
+       :where [?e :table-name ?n]
+       [?e :friend ?fe]
+       [?fe :table-name ?fn]] db "cashe-register")
+;; => #{["repair-contract"]}
+
+(d/q '[:find ?fp
+       :in $ ?n
+       :where
+       [?e :table-name ?n]
+       [?e :friend ?fe]
+       [?fe :prop ?fp]] db "cashe-register")
+;; => #{["components-contract"]}
+
+(d/q '[:find ?p
+       :in $ ?n
+       :where
+       [?e :table-name ?n]
+       [?e :friend ?fe]
+       [?fe :friend ?ffe]
+       [?ffe :prop ?p]] db "cashe-register")
+;; => #{["components-reason"]}
+
+
+ 
+
+

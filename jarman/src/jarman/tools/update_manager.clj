@@ -40,7 +40,7 @@
 ;;; +---------------------+
 ;;;     |
 ;;;     V
-;;; +------------+ <---(merge /config)--- +---------+
+;;; +------------+                        +---------+
 ;;; |  unpacked  |                        | Files   |
 ;;; |  zip       |  /(change program)\    | in repo |
 ;;; +------------+ --(recursive copy)---> +---------+
@@ -92,7 +92,7 @@
   [repo-url]
   (ftp/with-ftp [client repo-url]
     (ftp/client-cd client "jarman")
-    (ftp/client-all-names client)))
+    (ftp/client-all-names client)))  
 
 (comment
   (ftp-list-files "ftp://jarman:dupa@192.168.1.69")

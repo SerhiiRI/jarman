@@ -808,10 +808,18 @@
                  (btn "Delete table" icon/basket-blue1-64-png (fn [e]))
                  (btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))
                  (if (session/allow-permission? [:developer])
-                   (btn "Manual edit"
+                   (btn "Metadata"
+                        icon/json-64-png
+                        (fn [e]
+                          (do (rm-menu e)
+                              (gcomp/view-metadata-editor (keyword (:table_name (first selected-tab)))))))
+                   [])
+                 (if (session/allow-permission? [:developer])
+                   (btn "Defview"
                         icon/pen-64-png
                         (fn [e]
-                          (gcomp/view-metadata-editor (keyword (:table_name (first selected-tab))))))
+                          (do (rm-menu e)
+                              ((get (state/state :defview-editors) (keyword (:table_name (first selected-tab)))) e))))
                    []))]
       (mig-panel
        :id :db-viewer--component--menu-bar
@@ -1363,7 +1371,9 @@
       (if-not (nil? @relative) (.setLocation (seesaw.core/to-frame (state/state :app)) (first @relative) (second @relative))))
     (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))
     (vmg/do-view-load)
-    (vmg/buttons-list--code-editor-defview :#expand-menu-space)))
+    ;; (vmg/buttons-list--code-editor-defview :#expand-menu-space)
+    (vmg/prepare-defview-editors-state)
+    ))
 
 
 (reset! startup

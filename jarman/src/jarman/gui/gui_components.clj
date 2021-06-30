@@ -1500,7 +1500,7 @@
   ((state/state :jarman-views-service)
    :set-view
    :view-id (keyword (str "manual-view-code" (first config-path)))
-   :title (str "Code: " (gtool/convert-key-to-title (first config-path)))
+   :title (str "Config: " (gtool/convert-key-to-title (first config-path)))
    :component-fn
    (fn [] (code-editor
            {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
@@ -1531,7 +1531,7 @@
        {:window-title "Metadata manual table editor"
         :view (code-editor
                {:val (with-out-str (clojure.pprint/pprint (:prop meta)))
-                :title (str "Edit: " (get-in meta [:prop :table :representation]))
+                :title (str "Metadata: " (get-in meta [:prop :table :representation]))
                 :dispose true
                 :save-fn (fn [state]
                            (try
@@ -1552,13 +1552,13 @@
   ((state/state :jarman-views-service)
    :set-view
    :view-id (keyword (str "manual-view-code" (name table-keyword)))
-   :title (str "Code: " (name table-keyword))
+   :title (str "Metadata: " (name table-keyword))
    :component-fn
    (fn [] (let [meta (dbv/metadata-get table-keyword)]
             (code-editor
              {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
                      :background "#fff"]
-              :title (str "Edit: " (get-in meta [:prop :table :representation]))
+              :title (str "Metadata: " (get-in meta [:prop :table :representation]))
               :val (with-out-str (clojure.pprint/pprint (:prop meta)))
               :save-fn (fn [state]
                          (try

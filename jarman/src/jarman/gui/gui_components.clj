@@ -221,9 +221,37 @@
 
 
 (defmacro textarea
-  "Description
-     TextArea with word wrap"
+  "Description:
+     TextArea with word wrap using html in label
+  Example:
+     (textarea \"Some loooong text\" :border (line-border :thickness 1 :color \"#a23\"))
+  "
   [txt & args] `(c/label :text `~(gtool/htmling ~txt) ~@args))
+
+
+(defn multiline-text
+  "Description:
+     Textarea with auto resize, word wrap and enabled selected by mouse.
+  Example:
+     (dynamic-text-area {:text \"Some loooong text\"})
+  "
+  [{:keys [text]}]
+  (let [text-area (c/styled-text
+                  :text text
+                  :editable? false
+                  :wrap-lines? true
+                  :opaque? false)]
+    text-area))
+;;
+;; Example of multiline-text TOTRY
+;;
+;; Run app and eval
+;; (popup-window
+;;  {:window-title "Popup multiline-text example"
+;;   :size [300 200]
+;;     :view (multiline-text
+;;            {:text "Ogólnie znana teza głosi, iż użytkownika może rozpraszać zrozumiała zawartość strony, kiedy ten chce zobaczyć sam jej wygląd."})})
+
 
 (defn button-basic
   "Description:
@@ -1311,10 +1339,13 @@
                                 :font (gtool/getFont 18)
                                 :border (b/empty-border :left 5 :right 5))]
                       [(hr 1 "#999" [0 0 0 5])]
-                      [(c/label
-                        :text (gtool/htmling body :justify)
-                        :font (gtool/getFont 14)
-                        :border (b/empty-border :left 10 :right 10))]])]
+                      [(multiline-text
+                        {:text body})
+                       ;; (c/label
+                       ;;  :text (gtool/htmling body :justify)
+                       ;;  :font (gtool/getFont 14)
+                       ;;  :border (b/empty-border :left 10 :right 10))
+                       ]])]
     (popup-window {:view comp :window-title "Info" :size [400 350] :relative relative})))
 
 
@@ -1573,3 +1604,16 @@
                                                (:label state)
                                                :text "Can not convert to map. Syntax error."))))})))))
 
+(seesaw.dev/show-options (c/styled-text))
+;; (seesaw.dev/show-events  (c/styled-text))
+
+;;
+;; Switch focus TOTRY
+;;
+;; Run app and eval
+;; (let [lbl (c/label :text "Dupa" :focusable? true :listen [:focus-gained (fn [e] (c/config! e :foreground "#f00"))
+;;                                                           :focus-lost   (fn [e] (c/config! e :foreground "#00f"))])
+;;       mig (c/grid-panel :items [lbl (c/button :text "a" :listen [:mouse-clicked (fn [e](seesaw.core/request-focus! lbl))])])]
+;;   (popup-window
+;;    {:window-title "Popup for debug"
+;;     :view mig}))

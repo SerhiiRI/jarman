@@ -40,7 +40,6 @@
             [jarman.logic.session :as session]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut]))
 
-
 ;; ┌────────────────────────────┐
 ;; │                            │
 ;; │ JLayeredPane Popup Service │
@@ -143,7 +142,7 @@
                                                    (mig-panel
                                                     :constraints ["" "10px[fill, grow]10px" "10px[]10px"]
                                                     :items (gtool/join-mig-items (create-dialog--answer-btn (gtool/get-lang-btns :yes) (fn [e] (c/return-from-dialog e "yes")))
-                                                                           (create-dialog--answer-btn (gtool/get-lang-btns :no)  (fn [e] (c/return-from-dialog e "no")))))))))
+                                                                                 (create-dialog--answer-btn (gtool/get-lang-btns :no)  (fn [e] (c/return-from-dialog e "no")))))))))
          :parent (gtool/getParent @atom-popup-hook))
         c/pack! c/show!)))
 
@@ -1109,6 +1108,8 @@
                                      :items (vec args))
                                     :hscroll :never)))
 
+
+
 (def jarmanapp--main-view-space
   "Description: 
       Vertical layout for tabs and table on right part of app. 
@@ -1120,24 +1121,23 @@
    Needed:
       tab-btn component is needed to corectly work"
   (fn [tabs array]
-    (let [bg-color "#fff"
-          tabs-space (mig-panel
+    (let [tabs-space (mig-panel
                       :constraints ["" "0px[fill]0px" "0px[]0px"]
                       :id :app-tabs-space
-                      :background bg-color
                       :items (gtool/join-mig-items tabs))
           views-space (mig-panel
                        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
                        :id :app-functional-space
                        :background (new Color 0 0 0 0)
                        :items (gtool/join-mig-items array))]
+      (println tabs)
       (state/set-state :jarman-views-service (vs/new-views-service tabs-space views-space))
       (mig-panel
        :id :operation-space
-       :background "#fff"
+       :background "#eee"
        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[28, shrink 0]0px[grow, fill]0px"]
        :background "#eee"
-      ;; :border (line-border :left 1 :color "#999")
+       ;; :border (line-border :left 1 :color "#999")
        :items [[(gcomp/min-scrollbox tabs-space :vscroll :never)]
                [views-space]]))))
 
@@ -1356,7 +1356,6 @@
                                                                 (println "App restart")
                                                                 (@startup)))
                                              :top-offset top-offset)
-
                              (gcomp/fake-focus :vgap top-offset :hgap img-scale)
                              @atom-popup-hook)))
       (reset! popup-menager (create-popup-service atom-popup-hook))

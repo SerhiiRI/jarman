@@ -121,12 +121,13 @@
                                      view-id (if-not (nil? tab) (get (c/config tab :user-data) :view-id))]
                                  (if-not (nil? tab)
                                    (do
+                                     (c/config! (service-data :bar-space) :background "#fff")
                                      (recolor-tab tab (service-data :active-color))
                                      (set-component-to-view-space service-data view-id))
                                    (do
+                                     (c/config! (service-data :bar-space) :background "#eee")
                                      (set-component-to-view-space service-data nil))))))]
         (if (service-data :onClose) (close-view e))))))
-
 
 (def set--view
   "Description
@@ -146,8 +147,6 @@
               (deactive-all-tabs service-data)
               (recolor-tab tab (service-data :active-color))
               (set-component-to-view-space service-data view-id))))
-
-        
         (if (nil? (component-fn))
           (do (println "[ Warning ] gui-view-service/set--view: Fn building view return nil.") (label))
           (let [component (component-fn)  ;; Add new view to views-storage and switch to new view
@@ -172,8 +171,6 @@
               (set-component-to-view-space service-data view-id))
           ;; (println "Set and switch: " view-id)
             (switch-tab service-data view-id)))))))
- 
-;; (cons 1 (list 2 3 4))
 
 (def reload-view
   "Description
@@ -206,6 +203,8 @@
   (fn [atom--views-storage]
     (fn [view-id]
       (contains? @atom--views-storage view-id))))
+
+
 
 ;; Create new service
 (defn new-views-service

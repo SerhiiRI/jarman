@@ -1108,13 +1108,14 @@
    Needed:
       button-expand component is needed to corectly work
    "
-  (fn [& args] (gcomp/min-scrollbox (mig-panel
+  (fn [& args] (gcomp/scrollbox (mig-panel
                                      :id :expand-menu-space
                                      :background "#fff"
                                      :border (b/line-border :left 4 :right 4 :color "#fff")
                                      :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill]0px"]
                                      :items (vec args))
-                                    :hscroll :never)))
+                                :hbar-size 0
+                                :vbar-size 0)))
 
 
 

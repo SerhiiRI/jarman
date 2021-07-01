@@ -330,7 +330,10 @@
       (gcomp/popup-window
        {:window-title (str "Defview manual table editor: " )
         :view (gcomp/code-editor
-               {:val (doto (:view dview) prn)
+               {:val (with-out-str
+                     (clojure.pprint/pprint
+                      (read-string (binding [jarman.logic.sql-tool/*debug* false]
+                                     (:view (view-get table-str)))))) ;;(:view dview)
                 :dispose true
                 :save-fn (fn [state]
                            (try
@@ -357,8 +360,11 @@
      (fn [] (gcomp/code-editor
              {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
                      :background "#fff"]
-              :title (str "Edit: " table-str)
-              :val (:view dview)
+              :title (str "Defview: " table-str)
+              :val (with-out-str
+                     (clojure.pprint/pprint
+                      (read-string (binding [jarman.logic.sql-tool/*debug* false]
+                                     (:view (view-get table-str)))))) ;;(:view dview)
               :save-fn (fn [state]
                          (try
                            (view-set (assoc dview :view (c/config (:code state) :text)))
@@ -366,6 +372,9 @@
                            (catch Exception e (c/config!
                                                (:label state)
                                                :text "Can not convert to map. Syntax error."))))})))))
+
+
+;;(with-out-str (clojure.pprint/pprint (str (read-string (:view (view-get "permission"))))))
 
 ;;(popup-defview-editor "user")
 (defn buttons-list--code-editor-defview
@@ -391,3 +400,27 @@
     (.add (c/select (state/state :app) [:#expand-menu-space]) comp)
     (.revalidate (c/to-root (state/state :app)))
     ))
+
+(defn prepare-defview-editors-state
+  "Description:
+     Prepare state with defview editor fns for view service
+     and set to state with :defview-editors key.
+     Invoke again to refresh state.
+   Example:
+     (prepare-defview-editors-state)
+  "
+  []
+  (let [table-and-view-coll (db/query
+                             (select!
+                              {:table_name :view
+                               :column [:table_name]}))]
+    (doall
+     (state/set-state
+      :defview-editors
+      (into
+       {}
+       (map
+        (fn [m]
+          {(keyword (:table_name m)) (fn [e] (view-defview-editor (:table_name m)))})
+        table-and-view-coll))))))
+

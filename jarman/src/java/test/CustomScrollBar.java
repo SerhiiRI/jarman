@@ -16,6 +16,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.ScrollPaneLayout;
 import javax.swing.WindowConstants;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
 public class CustomScrollBar {
@@ -54,7 +55,7 @@ public class CustomScrollBar {
                 availR.height -= parentInsets.top + parentInsets.bottom;
 
                 Rectangle vsbR = new Rectangle();
-                vsbR.width = 8;
+                vsbR.width = 16;
                 vsbR.height = availR.height;
                 vsbR.x = availR.x + availR.width - vsbR.width;
                 vsbR.y = availR.y;
@@ -114,6 +115,7 @@ public class CustomScrollBar {
             } else {
                 color = (Color.decode("#cccccc"));
             }
+	    sb.setBorder(new EmptyBorder(0, 0, 0, 8));
             g2.setPaint(color);
             g2.fillRoundRect(r.x, r.y, r.width, r.height, 0, 0);
             g2.setPaint(Color.decode("#cccccc"));

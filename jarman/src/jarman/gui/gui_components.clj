@@ -43,8 +43,7 @@
    (let [[l t r b] offset]
      (c/label :border (b/compound-border
                        (b/line-border :top line-size :color line-color)
-                       (b/empty-border :left l :right r :top t :bottom b)))))
-  )
+                       (b/empty-border :left l :right r :top t :bottom b))))))
 
 (defn fake-focus
   [& {:keys [args
@@ -157,6 +156,7 @@
     (.setPreferredSize (.getHorizontalScrollBar scr) (java.awt.Dimension. 0 hbar-size))
     scr))
 
+
 (defn min-scrollbox
   "Description
     this func get some pane (like mig-panel etc..)
@@ -166,7 +166,12 @@
     ;; => #object[seesaw.core.proxy$javax.swing"
   [component
    & args]
-  (let [scr (CustomScrollBar/myScrollPane component)
+  (let [args (apply hash-map args)
+        scr (CustomScrollBar/myScrollPane component
+             ;; (mig-panel :constraints ["" "0px[grow, fill]8px" "0px[]0px"]
+             ;;                                         :background (.getBackground component)
+             ;;                                         :items [[component]])
+             )
         get-key (fn [x] (first (first x)))
         get-val (fn [x] (second (first x)))] 
     (if-not (nil? args)
@@ -176,7 +181,7 @@
             (do 
               (c/config! scr (get-key sm) (get-val sm))
               (next (map-rest sm)))))
-        (apply hash-map args)))
+        args))
     (.setBorder scr nil)
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
@@ -809,7 +814,7 @@
                              (doall (map #(.add mig %) @atom-inside-btns))
                              (gtool/set-focus (first @atom-inside-btns))
                              (gtool/switch-focus)
-                             (.revalidate mig)
+                             (.revalidate mig) 
                              (.repaint mig))
                            (do ;;  Remove inside buttons form mig without expand button
                              (c/config! icon :icon ico)

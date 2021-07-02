@@ -103,7 +103,7 @@
     (let [tabs (u/children (service-data :bar-space))
           active-color (seesaw.color/color (service-data :active-color))
           tabs (filter #(= active-color (c/config (first (c/config % :items)) :background)) tabs)]
-      (if-not (empty? tabs) (first tabs)))))
+      (if-not (empty? tabs) (first tabs))))) 
 
 (def close-tab
   (fn [service-data view-id]
@@ -144,6 +144,7 @@
                                                        tabs)))]
           (if-not (nil? tab) ;; Switch to exist tab and view
             (do
+              (c/config! (service-data :bar-space) :background "#fff")
               (deactive-all-tabs service-data)
               (recolor-tab tab (service-data :active-color))
               (set-component-to-view-space service-data view-id))))

@@ -1256,10 +1256,10 @@
              :visible? (if (= num 0) false true))
     (if (= num (- (count panels) 1))
       (c/config! btn-next :text "Save" :listen [:mouse-clicked (fn [e]
-                                                                 (println @cmpts-atom)
+                                                                 ;;(println @cmpts-atom)
                                                                  (swap! cmpts-atom  assoc :field-qualified (str (:field @cmpts-atom) "." table-name))
-                                                                 (println (:output (mt/validate-one-column
-                                                                                       @cmpts-atom)))
+                                                                 ;; (println (:output (mt/validate-one-column
+                                                                 ;;                       @cmpts-atom)))
                                                                  (if (:valid? (mt/validate-one-column
                                                                                @cmpts-atom))
                                                                    ((state/state :alert-manager) :set {:header "Success" :body "Column was added"} 5)
@@ -1359,7 +1359,7 @@
         :or {local-changes (atom {})
              store-id :documents.table
              val nil}}]
-    (println "\ntable-select-box" store-id val)
+    ;;(println "\ntable-select-box" store-id val)
     (select-box (vec (map #(get % :table_name) (jarman.logic.metadata/getset)))
                :store-id store-id
                :local-changes local-changes

@@ -145,7 +145,7 @@
    :font (getFont 13)
    :onClick (fn [e]
               ;;  (println "Insert but Locla changes: " @local-changes)
-              (println "\nModel ID:" (first (:model-columns data-toolkit)))
+              ;; (println "\nModel ID:" (first (:model-columns data-toolkit)))
               (cond
                 (= type :insert)
                 (let [from-meta-data (vemap (map #(:field-qualified %) (:columns-meta data-toolkit)))
@@ -249,21 +249,44 @@
         meta (k meta-data)]
     ;; (println "M" model-defview)
     ;; (println "map component\n" k "\n" m "\n" model-defview "\n" meta)
-    (let [comp-fn (:model-comp m)
-          comp-fn (resolve (symbol comp-fn))
-          title   (rift (:model-reprs m) "")
-          qualified (:model-param m)
-          val     (if (empty? model-defview) "" (qualified model-defview))
-          binded  (rift (:bind-args m) {})
-          props {:title title :store-id qualified :local-changes local-changes :val val}
-          props (if (empty? binded) props (merge-binded-props props binded))
-          x     (if (nil? comp-fn) ((state/state :alert-manager) :set {:header (format "[ Warning %s ]" k) 
-                                                                       :body (format "Function fron defview looks like nil. Probably syntax error. Key %s" k)} 5))
-          pre-comp (rift (comp-fn props) (c/label "Can not invoke component from defview."))
-          comp (gcomp/inpose-label title pre-comp)]
-      ;; (println "Props: " props)
-      ;; (println "\nComplete-----------")
-      comp)))
+    ;; (println "\nComp" (:model-comp m))
+    ;; (println "\nType" (type (:model-comp m)))
+    (cond
+      ;; Overrided component
+      (symbol? (:model-comp m))
+      (let [comp-fn (:model-comp m)
+            comp-fn (resolve (symbol comp-fn))
+            title   (rift (:model-reprs m) "")
+            qualified (:model-param m)
+            val     (if (empty? model-defview) "" (qualified model-defview))
+            binded  (rift (:bind-args m) {})
+            props {:title title :store-id qualified :local-changes local-changes :val val}
+            props (if (empty? binded) props (merge-binded-props props binded))
+            x     (if (nil? comp-fn) ((state/state :alert-manager) :set {:header (format "[ Warning %s ]" k) 
+                                                                         :body (format "Function fron defview looks like nil. Probably syntax error. Key %s" k)} 5))
+            pre-comp (rift (comp-fn props) (c/label "Can not invoke component from defview."))
+            comp (gcomp/inpose-label title pre-comp)]
+        ;; (println "Props: " props)
+        ;; (println "\nComplete-----------")
+        comp)
+
+      ;; Plugin as popup component
+      (vector? (:model-comp m))
+      (let [title   (rift (:model-reprs m) "")
+            qualified (:model-param m)
+            val     (if (empty? model-defview) "" (qualified model-defview))
+            binded  (rift (:bind-args m) {})
+            props {:title title :store-id qualified :local-changes local-changes :val val}
+            props (if (empty? binded) props (merge-binded-props props binded))
+            comp (c/label :text "Plugin component here")] ;; TODO: Implement plugin invoker
+
+        ;; (println "Props: " props)
+        ;; (println "\nComplete-----------")
+        comp)
+
+      :else
+      (c/label :text "Wrong overrided component")
+      )))
 
 
 (defn convert-key-to-component
@@ -274,7 +297,7 @@
   [global-configuration local-changes meta-data table-model key]
   
   (let [meta            (key meta-data)
-        x (println "\nMetadata for key" meta)
+        ;;x (println "\nMetadata for key" meta)
         field-qualified (:field-qualified meta)
         title           (:representation  meta)
         editable?       (:editable?       meta)
@@ -474,6 +497,7 @@
         atm (:atom-expanded-items (c/config space :user-data))]
     ;; (println "\nData toolkit" data-toolkit)
     ;; (println "Allow Permission: " (session/allow-permission? (:permission configuration)))
+    (println "\nPlugin path" plugin-path)
     ;; TODO: Set invoker expand button if not exist add child invokers
     (if (s/valid? :jarman.plugin.spec/table  configuration)
       (if (session/allow-permission? (:permission configuration))

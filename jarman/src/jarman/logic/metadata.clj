@@ -1288,3 +1288,10 @@
             (do-clear-meta)
             (map #(db/exec (update-sql-by-id-template "metadata" %)) metadata-list))))))
 
+
+
+(defn metadata-get [table]
+  (first (getset! table)))
+
+(defn metadata-set [metadata]
+  (update-meta metadata))

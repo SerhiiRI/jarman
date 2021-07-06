@@ -38,6 +38,8 @@
 ;; │                         │
 ;; └─────────────────────────┘
 
+(defn opacity-color [] (new Color 0 0 0 0))
+
 (defn getWidth  [obj] (.width (.getSize obj)))
 (defn getHeight [obj] (.height (.getSize obj)))
 (defn getSize   [obj] (let [size (.getSize obj)] [(.width size) (.height size)]))

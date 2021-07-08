@@ -1603,7 +1603,8 @@
                                                (:label state)
                                                :text "Can not convert to map. Syntax error."))))})))))
 
-(seesaw.dev/show-options (c/styled-text))
+;; (seesaw.dev/show-options (c/styled-text))
+
 ;; (seesaw.dev/show-events  (c/styled-text))
 
 ;;

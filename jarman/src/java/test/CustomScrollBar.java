@@ -115,7 +115,7 @@ public class CustomScrollBar {
             } else {
                 color = (Color.decode("#cccccc"));
             }
-	    sb.setBorder(new EmptyBorder(0, 0, 0, 8));
+	    sb.setBorder(new EmptyBorder(0, 8, 0, 0));
             g2.setPaint(color);
             g2.fillRoundRect(r.x, r.y, r.width, r.height, 0, 0);
             g2.setPaint(Color.decode("#cccccc"));

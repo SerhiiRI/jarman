@@ -115,8 +115,7 @@
                  plugin-component `~(symbol (format "jspl/%s" (:plugin-name cfg)))
                  toolkit (plugin-toolkit-pipeline cfg)]
              (global-view-configs-set (:plugin-config-path cfg) cfg toolkit)
-             `(~plugin-component ~(:plugin-config-path cfg) ~'global-view-configs-get)
-             )) nil)))
+             `(~plugin-component ~(:plugin-config-path cfg) ~'global-view-configs-get))) nil)))
 
 (defmacro defview-no-eval [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
@@ -152,7 +151,7 @@
 ;; defview-debug          --  print list of final configuration and toolkit map for every plugin
 ;; defview-debug-map      --  just return structure like global-map, to programmer can overview structure only
 (comment
-  (defview-no-eval permission
+  (defview-debug permission
    (table
     :name "permission"
     :plug-place [:#tables-view-plugin]
@@ -190,8 +189,7 @@
       [:#as_is
        :permission.id
        :permission.permission_name
-       :permission.configuration]}))
-  )
+       :permission.configuration]})))
 
 ;;; ---------------------------------------
 ;;; eval this function and take a look what
@@ -205,8 +203,7 @@
   ((get-in (global-view-configs-get) [:permission]))
   ((get-in (global-view-configs-get) [:permission :dialog-test :my-custom-dialog :toolkit :dialog]))
   ((get-in (global-view-configs-get) [:permission :dialog-bigstring :my-custom-dialog :toolkit :dialog]))
-  ((get-in (global-view-configs-get) [:permission :dialog-table :my-custom-dialog :toolkit :dialog]))
-  )
+  ((get-in (global-view-configs-get) [:permission :dialog-table :my-custom-dialog :toolkit :dialog])))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;

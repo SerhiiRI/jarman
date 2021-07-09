@@ -10,9 +10,15 @@
    [datascript.core :as d]
    [rum.core :as rum]
    [datascript.transit :as dt]
+   [pullql.core :refer [pull-all]]
+   ;;;; for query
+   [edn-query-language.core :as eql]
+   ;;[edn-query-language.gen :as eql-gen]
    ;; for datascript-graph
    [ont-app.igraph.core :as igraph :refer [add, unique, query]]
-   [ont-app.datascript-graph.core :as dsg :refer [make-graph]]))
+   [ont-app.datascript-graph.core :as dsg :refer [make-graph]]
+   ;;jarman-tools
+   [jarman.managment.db-managment :as db-meta]))
 
 ;;;;;;;;;;;;;;
 ;;; SCHEMA ;;; 
@@ -32,7 +38,6 @@
              :car/colors {:db/cardinality :db.cardinality/many}})
 
 (def conn (d/create-conn schema))
-
 
 ;;;;;;;;;;;;;;;;;;
 ;;; ATTRIBUTES ;;; 
@@ -81,7 +86,7 @@
 ;;
 ;; :db/doc 
 ;; :db/unique 
-;; :db.unique/value 
+;; :db.unique/value -- :db/unique :db.unique/identity -- unique value like email
 ;; :db.unique/identity
 ;; :db.attr/preds
 ;; :db/index --  specifies a boolean value indicating that an index should be generated for this attribute (default false)
@@ -115,8 +120,7 @@
                         :movie/year 1986}])
     (-> (d/datoms @conn :eavt)
         (seq)
-        (first))
-))
+        (first))))
 
 (datascript-test)
 
@@ -607,7 +611,7 @@
 ;;; Example ;;;
 ;;;;;;;;;;;;;;;
 
-(def schema {:table-name   { :db/unique :db.unique/identity }
+(def schema {:table-name { :db/unique :db.unique/identity }
              :friend { :db/valueType :db.type/ref }})
 
 (def db (d/db-with (d/empty-db schema)
@@ -646,6 +650,403 @@
 ;; => #{["components-reason"]}
 
 
- 
 
 
+
+(def schema {:id {:db/unique :db.unique/identity} ;; unique values for tables
+             :ref {:db/cardinality
+                   :db.cardinality/many
+                   :db/valueType :db.type/ref
+                   :db/doc "references for table"}
+             :table_name {:db/unique :db.unique/identity}
+             :prop {:db/doc "data in {} for table, main keys :table and :columns"}})
+
+(def conn (d/create-conn schema))
+
+
+
+@(d/transact conn (vec (map (fn [table-map]
+                              (let [ref ((comp :front-references :ref :table :prop) table-map)
+                                    id (:id table-map)]
+                                (conj {:db/id (* -1 id)
+                                       :ref (vec (map (fn [r-table] (let [r-id (r-table id-tables)]
+                                                                      (if-not (nil? r-id) r-id 0))) ref))}
+                                      table-map))) db-meta/all-tables)))
+
+@(d/transact conn (vec (map (fn [table-map]
+                              (let [col ((comp :columns :prop) table-map)
+                                    id (:id table-map)]
+                                (conj {:db/id (* -1 id)
+                                       :table-name  (:table_name table-map)
+                                       :table ((comp :table :prop) table-map)
+                                       :columns ((comp :columns :prop) table-map)}))) db-meta/all-tables)))
+
+;;;;;;;;;;;;
+;;;; DB ;;;;
+;;;;;;;;;;;;
+
+(def schema
+  {:human/name      {}
+   :human/starships {:db/valueType   :db.type/ref
+                     :db/cardinality :db.cardinality/many}
+   :ship/name       {}
+   :ship/class      {}})
+
+(def data
+ [{:human/name      "Naomi Nagata"
+   :human/starships [{:db/id -1 :ship/name "Roci" :ship/class :ship.class/fighter}
+                     {:ship/name "Anubis" :ship/class :ship.class/science-vessel}]}
+  {:human/name      "Amos Burton"
+   :human/starships [-1]}])
+
+
+(def schema {:id {:db/unique :db.unique/identity} ;; unique values for tables
+             :table_name {:db/unique :db.unique/identity}
+             :table {:db/doc "data in {}"}
+             :columns {}
+             :foreign-keys {:db/cardinality
+                            :db.cardinality/many
+                            :db/valueType :db.type/ref
+                            :db/doc "references for table"}})
+
+
+(def schema {:id {:db/unique :db.unique/identity} ;; unique values for tables
+             :table_name {:db/unique :db.unique/identity}
+             :table {:db/doc "data in {}"}
+             :foreign-keys {:db/cardinality
+                            :db.cardinality/many
+                            :db/valueType :db.type/ref
+                            :db/doc "references for table"}})
+
+
+(def conn (d/create-conn schema))
+
+
+
+@(d/transact conn (vec (map (fn [table-map]
+                              (let [columns ((comp :columns :prop) table-map)
+                                    id (:id table-map)
+                                    f-columns (into {} (map (fn [column] (let [id-col (name (:field-qualified column))]
+                                                                           (reduce (fn [acc [k v]]
+                                                                                     (if-not (nil? v)
+                                                                                       (assoc  acc (keyword (name k) id-col)
+                                                                                               (if (= k :foreign-keys)
+                                                                                                 ((first (vals (first v))) id-tables) v))))
+                                                                                   {} (dissoc column :field-qualified)))) columns))]
+                                (conj {:db/id (* -1 id)
+                                       :id (:id table-map)
+                                       :table_name  (:table_name table-map)
+                                       :table ((comp :table :prop) table-map)}
+                                      f-columns))) db-meta/all-tables)))
+
+
+(defn find-meta-by
+  "Description
+    find meta by some key amd value,
+    return id of entity (datom)
+   Example
+    (find-entity-by :id 2) => {:id 2 :table_name \"user\"... "
+  [e-key e-value]
+  (d/pull @conn '[*] (d/q '[:find ?p .
+                            :in $ ?k ?v
+                            :wher0e
+                            [?p ?k ?v]] @conn e-key e-value)))
+
+(find-meta-by :table_name "user")
+
+(defn find-entity-id [table-name]
+  (d/q '[:find ?e .
+         :in $ ?n
+         :where
+         [?e :table_name ?n]] @conn table-name))
+
+(defn show-list-tables []
+  (flatten (into [] (d/q '[:find ?n :in $ :where [_ :table_name ?n]] @conn))))
+
+(defn show-all-meta []
+  (doall (map (fn [table_name] (find-meta-by :table-name table_name) )(show-list-tables))))
+
+(defn delete-one-meta [table-name]
+  (try (d/transact! conn [[:db.fn/retractEntity (find-entity-id table-name)]])
+       (catch clojure.lang.ExceptionInfo _ (println "Expected number or lookup ref for entity id, got nil"))))
+
+(defn delete-all-meta []
+  (doall (map (fn [table] (delete-one-meta table)) (show-list-tables))))
+
+(defn insert-meta [metadata]
+  (d/transact conn [(conj {:db/id -1} (find-meta-by :table_name "user"))] metadata))
+
+;;;(insert-meta [(conj {:db/id -1} (find-meta-by :table_name "user"))])
+
+(defn find-ref-col [field-col]
+  (let [scol (keyword "foreign-keys" field-col)
+        ref-id (d/q '[:find ?p .
+                      :in $ ?n
+                      :where
+                      [_ ?n ?p]] @conn scol)
+        ref-data (find-meta-by :id ref-id)] ref-data))
+
+(let [db (d/db-with
+          (d/empty-db {:profile {:db/valueType   :db.type/ref
+                                 :db/cardinality :db.cardinality/many
+                                 :db/isComponent true}})
+          [{:db/id 1 :name "Ivan" :profile [3 4]}
+           {:db/id 3 :email "@3"}
+           {:db/id 4 :email "@4"}])]
+  (d/touch (d/entity db 1)))
+
+
+
+
+;;;(find-ref-col "user.id_permission")
+(def schema
+  {:id                      {}
+   :table_name              {}
+   :table                   {}
+   :columns                 {:db/valueType   :db.type/ref
+                             :db/cardinality :db.cardinality/many
+                             :db/isComponent true
+                             }
+   :column/field-qualified  {}
+   :column/refs             {:db/valueType   :db.type/ref
+                             :db/cardinality :db.cardinality/one}})
+
+(def id-tables
+  (apply hash-map (flatten (map (fn [table-map] [(keyword (:table_name table-map))
+                                                 (:id table-map)]) db-meta/all-tables))))
+
+(defn serializer-cols [columns id]
+  (vec (map (fn [column] (conj ;;{:db/id (* -1 id)}
+                               (reduce (fn [acc [k v]]
+                                         (assoc acc (keyword "column" (name k))
+                                                (if (= k :foreign-keys)
+                                                 ((first (vals (first v))) id-tables) (if (nil? v)
+                                                                                        [] v))))
+                                       {} column))) columns)))
+
+(defn deserializer-col [])
+
+(def data (vec (map (fn [table-map]
+                       (let [columns ((comp :columns :prop) table-map)
+                             id (:id table-map)
+                             f-columns (serializer-cols columns id)]
+                         (conj
+                          {:db/id       (* -1 id)
+                           :id          (:id table-map)
+                           :table_name  (:table_name table-map)
+                           :table       ((comp :table :prop) table-map)
+                           :columns     f-columns}))) db-meta/all-tables)))
+
+(def db
+  (-> (d/empty-db schema)
+      (d/db-with data)))
+
+(d/touch (d/entity db 1))
+
+(d/pull db '[*](d/q '[:find ?p .
+                      :in $ ?n
+                      :where
+                      [?p :column/field-qualified ?n]] db :user.id_permission))
+
+
+
+
+
+(def schema
+  "Description
+    create schema (datoms) for db,
+    schema describes the set of attributes"
+  {:id                      {:db.unique :db.unique/identity}
+   :table_name              {:db.unique :db.unique/identity}
+   :table                   {}
+   :columns                 {:db/valueType   :db.type/ref
+                             :db/cardinality :db.cardinality/many
+                             :db/isComponent true} 
+   :column/field-qualified  {:db.unique :db.unique/identity}
+   :column/foreign-keys     {:db/valueType   :db.type/ref
+                             :db.unique :db.unique/identity
+                             :db/cardinality :db.cardinality/one}})
+
+(defn- id-tables
+  "Description
+    return map with id and table-name for converting foreign keys in func serializer-cols
+  Example
+  (id-tables)
+  => {:seal 13 :user 2 ...}
+  "
+  [] (apply hash-map (flatten (map (fn [table-map] [(keyword (:table_name table-map))
+                                                    (:id table-map)]) (db-meta/getset)))))
+
+(defn- serializer-cols
+  "Description
+    Serialize structure of metadata for schema db"
+  [columns id]
+  (vec (map (fn [column] (conj (reduce (fn [acc [k v]]
+                                         (assoc acc (keyword "column" (name k))
+                                                (if (= k :foreign-keys) ;; convert map-refs to id
+                                                  ((first (vals (first v))) (id-tables)) (if (nil? v) [] v))))
+                                       {} column))) columns)))
+
+(def data (vec (map (fn [table-map]
+                       (let [columns ((comp :columns :prop) table-map)
+                             id (:id table-map)
+                             f-columns (serializer-cols columns id)]
+                         (conj
+                          {:db/id       (* -1 id)
+                           :id          (:id table-map)
+                           :table_name  (:table_name table-map)
+                           :table       ((comp :table :prop) table-map)
+                           :columns     f-columns}))) (db-meta/getset))))
+
+(def db
+  (-> (d/empty-db schema)
+      (d/db-with data)))
+
+
+(defn table-model-columns [table-name colmn-list]
+  (let
+       ;; return from db model with id of columns in colmn-list [{:key :user.login, :text 5} ....]
+      [id-map (reduce (fn [acc x] (if (nil? (some #{(:v x)} colmn-list)) acc (conj acc {:key (:v x) :text (:e x)}))) [] (d/datoms db :eavt))
+       ;; select from db columns by id-datom [{:column/representation "Permisssion name" :column/field-qu...} ....]
+       data-map (d/pull-many db [:column/foreign-keys :column/representation :column/field-qualified] (map (fn [f] (:text f))  id-map))
+       ;; get from data-map foreign-keys (references), return map with table and repr to adding {:permission "id_permission"}
+       refs (into {}(map (fn [x] {(keyword (:table_name (d/pull db [:table_name](:db/id (:column/foreign-keys x)))))
+                                  (:column/representation x)} )(filter (fn [x] (not (empty? (:column/foreign-keys x)))) data-map)))
+       ;; get from data-map representations and convert to our format [{:text "id_permission Permission name"}....]
+       repr (reduce (fn [acc x] (conj acc {:text
+                                           (let [col-repr (:column/representation x)
+                                                 t-name (keyword (first (string/split (name  (:column/field-qualified x)) #"\.")))
+                                                 n (t-name refs)]
+                                             (str n (if-not (empty? n ) " ") col-repr))})) [] data-map)
+       ;; in id-map change :text with id -> representations
+       model-colmns (map (fn [a b] (merge a b)) id-map repr)]
+    model-colmns))
+
+(table-model-columns "user" [:user.id :user.login :user.password :user.first_name :user.last_name :user.id_permission :permission.id :permission.permission_name :permission.configuration])
+;; => [{:text "id_permission Permission name"} {:text "id_permission Configuration"} {:text "login"} {:text "password"} {:text "first_name"} {:text "last_name"} {:text "id_permission"}]
+;; => {:permission "id_permission"}
+;; => ({:key :permission.permission_name, :text "id_permission Permission name"} {:key :permission.configuration, :text "id_permission Configuration"} {:key :user.login, :text "login"} {:key :user.password, :text "password"} {:key :user.first_name, :text "first_name"} {:key :user.last_name, :text "last_name"} {:key :user.id_permission, :text "id_permission"})
+
+(g-table/gui-table-model-columns ["user" "permission"] [:user.id :user.login :user.password :user.first_name :user.last_name :user.id_permission :permission.id :permission.permission_name :permission.configuration])
+
+
+(table-model-columns "repair_contract" [:repair_contract.id_cache_register
+                                       :repair_contract.id_old_seal
+                                       :repair_contract.id_new_seal
+                                       :repair_contract.id_repair_reasons
+                                       :repair_contract.id_repair_technical_issue
+                                       :repair_contract.id_repair_nature_of_problem
+                                       :repair_contract.repair_date
+                                       :repair_contract.cache_register_register_date])
+
+
+;;(d/touch (d/entity db [:column/field-qualified :user.id_permission]))
+
+(defn- searcher
+  "Description
+    find ref-column by some key and value,
+    return ref-column
+   Example
+    (find-ref-column \"user.id_permission\" \"representation\" \"permission.permission_name\"
+     \"representation\") => [\"id_permission\" \"Permision name\" "
+  [current-column c-field ref-column r-field]
+  (first (d/q '[:find ?current-repr ?refs-repr 
+                :in $ ?column-name ?column-ref-name ?c-field ?r-field 
+                :where
+                [?entity :column/field-qualified ?column-name] ;;find id-entity of current table
+                [?entity :column/foreign-keys ?ref-id] ;;find id of ref-table
+                [?ref-id :columns ?columns-id] ;; id columns ref-table
+                [?columns-id :column/field-qualified ?column-ref-name] ;; id column , where field-qualefied = ?colun-ref-name (argument)
+                [?columns-id ?r-field ?refs-repr]
+                [?entity ?c-field ?current-repr]]
+              db (keyword current-column)(keyword ref-column)(keyword "column" c-field)(keyword "column" r-field))))
+
+
+
+(defn find-representations
+  [current-column ref-column]
+  (searcher current-column "representation" ref-column "representation"))
+
+(find-representations "user.id_permission" "permission.permission_name")
+
+(defn table-model-columns [name-table columns]
+  
+  ;;(reduce (fn [acc col] (conj acc {:key col :text "ll"})) [] columns)
+  )
+
+(table-model-columns "user" [:user.id :user.login :user.password :user.first_name :user.last_name :user.id_permission :permission.id :permission.permission_name :permission.configuration])
+
+(edn/read-string (pr-str  (d/touch (d/entity db 9))))
+
+(d/q '[:find ?r
+       :in $ ?n ?p
+       :where
+       [?t :table_name "user"]
+       [?t :columns ?c]
+       [?c :column/foreign-keys]
+       [?c :column/representation ?r]
+;;     [?e :column/field-qualified :user.id_permission]
+       ] db "user" [:user.id :user.login :user.password :user.first_name])
+
+
+
+
+(d/q '[:find ?n
+       :in   $sexes $ages %
+       :where ($sexes male ?n)
+       ($ages adult ?n) ]
+     [["Ivan" :male] ["Darya" :female] ["Ole" :male] ["Igor" :male]]
+     [["Ivan" 15] ["Ole" 66] ["Darya" 32]]
+     '[[(male ?x)
+        [?x :male]]
+       [(adult ?y)
+        [?y ?a]
+        [(>= ?a 18)]]])
+
+(contains?  [:a :b] :a  )
+
+(every? 2 [2 3])
+
+
+
+(some #(= "user" %) ["user" "permission"])
+
+(d/q '[:find ?r
+       :in $ ?n ?p ?c
+       :where
+       [?c :columns]
+       [?r :t]]
+     db "user" [:user.id :user.login :user.password :user.first_name] (hash-set "user" "permission"))
+
+
+(d/pull-many db [:db/id :column/representation] [2])
+
+(d/index-range)
+
+(d/q '[:find ?current-repr ?refs-repr 
+                :in $ ?column-name ?column-ref-name ?c-field ?r-field 
+                :where
+                [?entity :column/field-qualified ?column-name] ;;find id-entity of current table
+                [?entity :column/foreign-keys ?ref-id] ;;find id of ref-table
+                [?ref-id :columns ?columns-id] ;; id columns ref-table
+                [?columns-id :column/field-qualified ?column-ref-name] ;; id column , where field-qualefied = ?colun-ref-name (argument)
+                [?columns-id ?r-field ?refs-repr]
+                [?entity ?c-field ?current-repr]]
+              db (keyword current-column)(keyword ref-column)(keyword "column" c-field)(keyword "column" r-field))
+
+
+
+
+
+
+
+(map (fn [x] [(:column/field-qualified (:a x))(:v x)])(d/datoms db :eavt))
+
+
+
+(some #{:user.id} colmn-list)
+(def b :user.id)
+
+(some #{b} colmn-list)
+
+(map (fn [x] (some #{(:v x)} colmn-list))  (d/datoms db :eavt))

@@ -35,7 +35,8 @@
            (java.text SimpleDateFormat)))
 
 
-(def state
+;;; TO TRASH
+#_(def state
   (atom {:plugin-path []
          :plugin-global-config (fn [])
          :plugin-config (fn [] (get-in
@@ -48,24 +49,35 @@
          :model {}
          :changes {}}))
 
-(defn set-state-plugin-path
-  [plugin-path]
+;;; TO TRASH
+#_(defn set-state-plugin-path [plugin-path]
   (swap! state #(assoc % :plugin-path plugin-path)))
 
-(defn set-state-plugin-global-conf
-  [plugin-global-conf]
+;;; TO TRASH
+#_(defn set-state-plugin-global-conf [plugin-global-conf]
   (swap! state #(assoc % :plugin-global-config plugin-global-conf)))
+
+(defn action-handler [state action-m]
+  (case (:action action-m)
+    :update-changes state
+    :insert-model state
+    :update-model state
+    :refresh-model state
+    ;;...
+    ))
+
+
+
+
 
 (defn update-history [state action-m]
   "Description:
-    Update action history in plugin state.
-  "
+    Update action history in plugin state."
   (swap! state #(assoc % :history (conj (:history %) action-m))))
 
 (defn update-changes [state action-m]
   "Description:
-    Update changes in plugin state and add action map to plugin history.
-  "
+    Update changes in plugin state and add action map to plugin history."
   (doto state
     (swap! #(assoc-in % [:changes (:changes-k action-m)] (:value action-m)))
     (update-history action-m)))
@@ -214,8 +226,7 @@
      Return not binded map, just cut this what exist.
    Example:
      (get-missed-key {:a a} {:a a :b c :d e}) 
-       => {:b c, :d e}
-   "
+       => {:b c, :d e}"
   [binded-map orgin-map]
   (->> (map #(first %) orgin-map)
        (filter (fn [orgin-key] (not (in? (map #(first %) binded-map) orgin-key))))
@@ -524,15 +535,6 @@
 
 
 
-
-(defn dispatch! [action-m]
-  "Description:
-    Invoke correct function by keyword.
-  "
-  (let [action-k (:action action-m)]
-    (case action-k
-      :update-changes (update-changes state action-m))))
-
 ;; (defn example-1
 ;;   [](dispatch!
 ;;      {:action    :update-changes
@@ -548,35 +550,55 @@
 ;;                     :changes-k :user.login
 ;;                     :value     (c/value (c/to-widget e))}))])
 
+
+(defn- create-state-template [plugin-path global-configuration-getter]
+  (atom {:plugin-path          plugin-path
+         :plugin-global-config global-configuration-getter
+         :plugin-config        (get-in (global-configuration-getter) (conj plugin-path :config) {})
+         :plugin-toolkit       (get-in (global-configuration-getter) (conj plugin-path :toolkit) {}) 
+         :history              []
+         :model                {}
+         :changes              {}}))
+
+(defn- create-dispatcher [atom-var]
+  (fn [action-m] (swap! atom-var (fn [state] (action-handler state action-m)))))
+
 ;;; component
 (defn table-entry [plugin-path global-configuration]
-  (set-state-plugin-path plugin-path)
-  (set-state-plugin-global-conf global-configuration)
-  (let [configuration ((:plugin-config @state))
-        title (:name configuration)
-        space (c/select (state/state :app) (doto (:plug-place configuration) println))
-        ;; x (println "\nplug-place"(:plug-place configuration) "\nspace"space)
-        atm (:atom-expanded-items (c/config space :user-data))]
-    ;; (println "\nData toolkit" data-toolkit)
-    ;; (println "Allow Permission: " (session/allow-permission? (:permission configuration)))
-    ;; (println "\nPlugin path" plugin-path)
-    ;; TODO: Set invoker expand button if not exist add child invokers
-    (if (s/valid? :jarman.plugin.spec/table configuration)
-      (if (session/allow-permission? (:permission configuration))
-        (do (swap! atm (fn [inserted]
-                         (conj inserted
-                               (gcomp/button-expand-child
-                                title
-                                :onClick (fn [e] ((state/state :jarman-views-service)
-                                                  :set-view
-                                                  :view-id (str "auto-" title)
-                                                  :title title
-                                                  :scrollable? false
-                                                  :component-fn (fn [] (auto-builder--table-view
-                                                                        ((:plugin-global-config @state))
-                                                                        ((:plugin-toolkit @state))
-                                                                        ((:plugin-config  @state))))))))))))
-      ((state/state :alert-manager) :set {:header "Error"
-                                          :body (str (name (:table_name configuration)) "  "
-                                                     (s/explain-str :jarman.plugin.spec/table configuration))} 5))
-    (.revalidate space)))
+  (let [state (create-state-template plugin-path global-configuration)
+        dispatch! (create-dispatcher state)
+        state!    #(deref state)]
+
+    (let [;; Destruction state component
+          {{plugin-title      :name
+            plugin-plug-place :plug-place
+            plugin-permission :permission
+            :as               plugin-config} :plugin-config
+           plugin-global-config    :plugin-global-config
+           plugin-toolkit          :plugin-toolkit}
+          (state!)
+          
+          space (c/select (state/state :app) plugin-plug-place)
+          atm (:atom-expanded-items (c/config space :user-data))]
+      (if (s/valid? :jarman.plugin.spec/table plugin-config)
+        (if (session/allow-permission? plugin-permission)
+          (swap!
+           atm
+           (fn [inserted]
+             (conj inserted
+                   (gcomp/button-expand-child
+                    plugin-title
+                    :onClick
+                    (fn [e]
+                      ((state/state :jarman-views-service)
+                       :set-view
+                       :view-id (str "auto-" plugin-title)
+                       :title plugin-title
+                       :scrollable? false
+                       :component-fn
+                       (fn [] (auto-builder--table-view plugin-global-config plugin-toolkit plugin-config)))))))))
+        ((state/state :alert-manager)
+         :set {:header "Error"
+               :body (str (name (:table_name plugin-config)) "  "
+                          (s/explain-str :jarman.plugin.spec/table plugin-title))}))
+      (.revalidate space))))

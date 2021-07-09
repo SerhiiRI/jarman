@@ -9,996 +9,32 @@
            (jarman.test DateTime)
            (java.awt Color Component)
            (java.awt Dimension))
-  (:require [seesaw.core :as c]
-            [seesaw.border :as b]
+  (:require [jarman.tools.lang :refer :all]
             [clojure.string :as string]
+            [seesaw.core    :as c]
+            [seesaw.util    :as u]
+            [seesaw.border  :as b]
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
             [clojure.pprint :as pp]
             ;; logics
-            [seesaw.util :as u]
-            [jarman.config.config-manager :as cm]
-            [jarman.gui.gui-tools :as gtool]
-            [jarman.gui.gui-components :refer :all :as gcomp]
-            [jarman.gui.gui-alerts-service :refer :all]
-            [jarman.gui.gui-views-service :refer :all :as vs]
+            [jarman.config.config-manager  :as cm]
+            [jarman.gui.gui-views-service  :as vs]
+            [jarman.gui.gui-alerts-service :as gas]
+            [jarman.gui.gui-components     :as gcomp]
+            [jarman.gui.gui-tools          :as gtool]
             ;; deverloper tools 
-            [jarman.tools.swing :as stool]
-            [jarman.config.spec :as sspec]
-            [jarman.config.init :as iinit]
-            [jarman.logic.metadata :as mmeta]
-            [jarman.tools.lang :refer :all]
-            [jarman.gui.gui-seed :refer :all]
-            [jarman.gui.gui-config-generator :refer :all :as cg]
-            ;; [jarman.logic.view :as view]
-            ;; [jarman.gui.gui-docs :as docs]
-            [jarman.logic.state :as state]
+            [jarman.tools.swing  :as stool]
+            [jarman.config.init  :as iinit]
+            [jarman.logic.state  :as state]
             [jarman.gui.gui-seed :as gseed]
-            [jarman.plugin.table :as gtable]
-            [jarman.plugin.plugin :as plug]
-            [jarman.logic.view-manager :as vmg]
             [jarman.logic.session :as session]
-            [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut]))
+            [jarman.logic.view-manager :as vmg]
+            [jarman.gui.gui-dbvisualizer :as dbv]
+            [jarman.gui.gui-config-generator :as cg]))
 
-;; ┌────────────────────────────┐
-;; │                            │
-;; │ JLayeredPane Popup Service │
-;; │                            │
-;; └────────────────────────────┘
 
 (def popup-menager (atom nil))
-;; (@popup-menager :new-test)
-
-(defn ontop-panel
-  [popup-menager storage-id & {:keys [size title body] :or {size [600 400] title "Popup" body (c/label)}}]
-  (let [last-x (atom 0)
-        last-y (atom 0)
-        w (first size)
-        h (second size)
-        title-bar
-        (mig-panel
-         :constraints ["" "10px[grow]0px[30, center]0px" "5px[]5px"]
-         :background "#ddd" ;;"#eee"
-         :items (gtool/join-mig-items
-                 (c/label :text title)
-                 (c/label :icon (stool/image-scale icon/up-grey1-64-png 25)
-                          :listen
-                          [:mouse-clicked
-                           (fn [e] (cond (> (.getHeight (gtool/getParent (gtool/getParent e))) 50)
-                                         (c/config! (gtool/getParent (gtool/getParent e))
-                                                    :bounds  [(.getX (gtool/getParent (gtool/getParent e)))
-                                                              (.getY (gtool/getParent (gtool/getParent e)))
-                                                              w 30])
-                                         :else (c/config! (gtool/getParent (gtool/getParent e))
-                                                          :bounds [(.getX (gtool/getParent (gtool/getParent e)))
-                                                                   (.getY (gtool/getParent (gtool/getParent e)))
-                                                                   w h])))
-                           :mouse-entered (fn [e] (c/config! e :cursor :hand))])
-                 (c/label :icon (stool/image-scale icon/x-blue2-64-png 20)
-                          :listen [:mouse-clicked (fn [e] ((@popup-menager :remove) storage-id))
-                                   :mouse-entered (fn [e] (c/config! e :cursor :hand))])))
-        content (mig-panel
-                 :constraints ["wrap 1" "0px[grow, center]0px" "0px[grow, center]0px"]
-                 :background "#fff"
-                 :items (gtool/join-mig-items body))
-        components (gtool/join-mig-items
-                    title-bar content)
-        main-bounds (gtool/middle-bounds (first @(state/state :atom-app-size)) (second @(state/state :atom-app-size)) w h)
-        main-border (b/line-border :thickness 2 :color (gtool/get-color :decorate :gray-underline))]
-    (mig-panel
-     :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill, center]0px[fill, grow]0px"]
-     :bounds main-bounds
-     :border main-border
-     :background "#fff"
-     :id storage-id
-     :visible? true
-     :items components
-     :listen [:mouse-clicked (fn [e] ((@popup-menager :move-to-top) storage-id))
-              :mouse-dragged (fn [e] (do
-                                       (if (= @last-x 0) (reset! last-x (.getX e)) nil)
-                                       (if (= @last-y 0) (reset! last-y (.getY e)) nil)
-                                       (let [bounds (c/config e :bounds)
-                                             pre-x (- (+ (.getX bounds) (.getX e)) @last-x)
-                                             pre-y (- (+ (.getY bounds) (.getY e)) @last-y)
-                                             x (if (> pre-x 0) pre-x 0)
-                                             y (if (> pre-y 0) pre-y 0)
-                                             w (.getWidth  bounds)
-                                             h (.getHeight bounds)]
-                                         (c/config! e :bounds [x y w h]))))])))
-
-(def atom-popup-hook (atom (c/label :visible? false)))
-
-;; ┌──────────────┐
-;; │              │
-;; │ Dialog popup │
-;; │              │
-;; └──────────────┘
-
-(def create-dialog--answer-btn
-  (fn [txt func]
-    (c/label
-     :text txt
-     :halign :center
-     :listen [:mouse-clicked func
-              :mouse-entered (fn [e] (gtool/hand-hover-on e) (gtool/button-hover e))
-              :mouse-exited  (fn [e] (gtool/button-hover e (gtool/get-color :background :button_main)))]
-     :background (gtool/get-color :background :button_main)
-     :border (b/compound-border (b/empty-border :bottom 10 :top 10)
-                              (b/line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline))))))
-
-(def create-dialog-yesno
-  (fn [title ask size]
-    (-> (c/custom-dialog
-         :title title
-         :modal? true
-         :resizable? false
-         :content (mig-panel
-                   :size [(first size) :by (second size)]
-                   :constraints ["" "0px[fill, grow]0px" "0px[grow, center]0px"]
-                   :items (gtool/join-mig-items
-                           (mig-panel
-                            :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
-                            :items (gtool/join-mig-items (textarea ask :halign :center :font (gtool/getFont 14) :border (b/empty-border :thickness 12))
-                                                   (mig-panel
-                                                    :constraints ["" "10px[fill, grow]10px" "10px[]10px"]
-                                                    :items (gtool/join-mig-items (create-dialog--answer-btn (gtool/get-lang-btns :yes) (fn [e] (c/return-from-dialog e "yes")))
-                                                                                 (create-dialog--answer-btn (gtool/get-lang-btns :no)  (fn [e] (c/return-from-dialog e "no")))))))))
-         :parent (gtool/getParent @atom-popup-hook))
-        c/pack! c/show!)))
-
-
-(def create-dialog-ok
-  (fn [title ask size]
-    (-> (c/custom-dialog
-         :title title
-         :modal? true
-         :resizable? false
-         :content (mig-panel
-                   :size [(first size) :by (second size)]
-                   :constraints ["" "0px[fill, grow]0px" "0px[grow, center]0px"]
-                   :items (gtool/join-mig-items
-                           (mig-panel
-                            :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
-                            :items (gtool/join-mig-items (textarea ask :halign :center :font (gtool/getFont 14) :border (b/empty-border :thickness 12))
-                                                   (gtool/join-mig-items (create-dialog--answer-btn "OK" (fn [e] (c/return-from-dialog e "OK"))))))))
-         :parent (gtool/getParent @atom-popup-hook))
-        c/pack! c/show!)))
-
-;; ┌───────────────┐
-;; │               │
-;; │ Popup service │
-;; │               │
-;; └───────────────┘
-
-(defn create-popup-service
-  [atom-popup-hook]
-  (let [atom-popup-storage (atom {})
-        z-index (atom 1000)
-        JLP (gtool/getParent @atom-popup-hook)]
-    (fn [action & {:keys [title, body, size] :or {title "Popup" body (c/label :text "Popup") size [600 400]}}]
-      (let [unique-id (keyword (random-unique-id))
-            template (fn [component] ;; Set to main JLayeredPane new popup panel
-                       (do (swap! atom-popup-storage (fn [popups] (merge popups {unique-id component}))) ;; add new component to list with auto id
-                           (swap! z-index inc)
-                           (.add JLP (get-in @atom-popup-storage [unique-id]) (new Integer @z-index))
-                           (.repaint JLP)))]
-        (cond
-          (= action :remove) (fn [id]
-                               (let [elems-in-JLP (seesaw.util/children JLP)
-                                     elems-count  (count elems-in-JLP)]
-                                 (reset! atom-popup-storage (dissoc @atom-popup-storage id)) ;; Remove popup from storage
-                                 (doall (map (fn [index] ;; remove popup from main JLayeredPane
-                                               (cond (= (c/config (nth elems-in-JLP index) :id) id) (.remove JLP index)))
-                                             (range elems-count)))
-                                 (.repaint JLP)))  ;; Refresh GUI
-          (= action :move-to-top) (fn [id] ;; Popup order, popup on top
-                                    (let [elems-in-JLP (seesaw.util/children JLP)
-                                          elems-count  (count elems-in-JLP)]
-                                      (doall (map (fn [index] ;; Change popup order on JLayeredPane 
-                                                    (cond (= (c/config (nth elems-in-JLP index) :id) id)
-                                                          (.setLayer JLP (nth elems-in-JLP index) @z-index 0)))
-                                                  (range elems-count)))
-                                      (.repaint JLP)) ;; Refresh GUI
-                                    )
-          (= action :new-test)    (template (try (ontop-panel popup-menager unique-id)  (catch Exception e (println "\n"(.getMessage e)))))
-          (= action :new-message) (template (ontop-panel popup-menager unique-id :title title :body body :size size))
-          (= action :show)        (println @atom-popup-storage)
-          (= action :get-atom-storage) atom-popup-storage
-          (= action :ok)          (create-dialog-ok title body size)
-          (= action :yesno)       (create-dialog-yesno title body size))))))
-
-
-;; (new-layered-id-for-tables-visualizer)
-;; (new-test-for-tabs)
-;; (new-layered-id-for-tables-visualizer)
-;; @views
-;; ================================================VVVVVVVVVV Table in database view
-;; ┌─────────────────────────────┐
-;; │                             │
-;; │ Resize components functions │
-;; │                             │
-;; └─────────────────────────────┘
-
-(defn calculate-tables-size-with-tabs
-  [db-data]
-  (let [tabs-with-size (doall (map (fn [tab] (vec (list (vec (list (* 30 (+ 1 (count (get-in tab [:prop :columns]))))
-                                                                   (+ 50 (* 6 (last (sort (concat (map (fn [col] (count (get col :representation))) (get-in tab [:prop :columns])) (list (count (get tab :table))))))))))
-                                                        tab))) db-data))]
-    tabs-with-size))
-
-(defn calculate-tables-size
-  [db-data]
-  (let [tabs-with-size (doall (map (fn [tab] (vec (list
-                                                   (* 30 (+ 1 (count (get-in tab [:prop :columns]))))
-                                                   (+ 50 (* 6 (last (sort (concat (map (fn [col] (count (get col :representation))) (get-in tab [:prop :columns])) (list (count (get tab :table))))))))))) db-data))]
-    tabs-with-size))
-
-
-(defn calculate-bounds
-  [meta offset max-tabs-inline]
-  (let [sizes (partition-all max-tabs-inline (calculate-tables-size meta))
-        tables (calculate-tables-size-with-tabs meta)
-        y-bound (atom 10)
-        pre-bounds (map (fn [row] (let [x-bounds (atom 10)
-                                        bounds-x (map (fn [size] (do
-                                                                   (def xbound @x-bounds)
-                                                                   (swap! x-bounds (fn [last-x] (+ last-x offset (last size))))
-                                                                   xbound))
-                                                      row)]
-                                    (do
-                                      (def lista (list bounds-x @y-bound))
-                                      (swap! y-bound (fn [yb] (+ yb offset (first (first row)))))
-                                      lista)))
-                        sizes)
-        calculated-bounds (apply concat (map (fn [row] (let [x-list  (first row)
-                                                             y       (last row)]
-                                                         (map (fn [x] (vec (list x y))) x-list)))
-                                             pre-bounds))]
-    (map (fn [bounds tabs] (assoc-in (last tabs)
-                                     [:prop :bounds]
-                                     (vec (concat bounds (reverse (first tabs))))))
-         calculated-bounds tables)))
-
-;; ┌──────────────┐
-;; │              │
-;; │ Table editor │
-;; │              │
-;; └──────────────┘  
-
-(defn table-editor--element--header
-  "Create header GUI component in editor for separate section"
-  [name] (c/label :text name :font (gtool/getFont 14 :bold)
-                :foreground dark-grey-color
-                :border (b/line-border :bottom 2 :color (gtool/get-color :background :header))))
-
-(defn table-editor--component--column-picker-btn
-  "Description:
-     c/select button who table-editor--component--column-picker, can work with another same buttons"
-  [txt func] (let [color "#eee";; (gtool/get-color :group-buttons :background)
-                   color-hover (gtool/get-color :group-buttons :background-hover)
-                   color-clicked (gtool/get-color :group-buttons :clicked)
-                   bg-btn (atom color)
-                   id-btn :table-editor--component--column-picker-btn]
-               (mig-panel
-                :constraints ["" "15px[100:, fill ]15px" "5px[fill]5px"]
-                :border (b/line-border :left 0 :right 0 :top 1 :bottom 1 :color "#eee";;(gtool/get-color :border "#fff")
-);;heyyy grey
-                :id id-btn
-                :background color
-                :user-data bg-btn
-                :listen [:mouse-entered (fn [e] (c/config! e :cursor :hand :background color-hover))
-                         :mouse-exited  (fn [e] (c/config! e :background @bg-btn))
-                         :mouse-clicked  (fn [e] ;;(println "column picker")
-                                           (cond
-                                             (= @bg-btn color)
-                                             (do ;; reset bg and atom inside all buttons in parent if id is ok
-                                               (doall (map (fn [b] (cond (= (c/config b :id) id-btn)
-                                                                         (do (c/config! b :background color)
-                                                                             (reset! (c/config b :user-data) color))))
-                                                           (seesaw.util/children (.getParent (seesaw.core/to-widget e)))))
-                                                ;; reset atom with color
-                                               (reset! bg-btn color-clicked)
-                                                ;; update atom with color
-                                               (c/config! e :background @bg-btn)
-                                               (func e))))]
-                :items [[(c/label :text txt
-                                :maximum-size  [100 :by 100]
-                                :font (gtool/getFont 12))]])))
-
-(def table-editor--element--header-view
-  (fn [value]
-    (c/text :text value
-          :font (gtool/getFont 14)
-          :background (gtool/get-color :background :input)
-          :editable? false
-          :border (b/compound-border (b/empty-border :left 10 :right 10 :top 5 :bottom 5)
-                                   (b/line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline))))))
-
-(defn delete-column [column]
-  (let [btns (c/config!
-              (gcomp/menu-bar
-               {:id :db-viewer--component--menu-bar
-                :buttons [["Delete"
-                           icon/basket-blue1-64-png
-                           ""
-                           (fn [e]
-                             (create-dialog-yesno
-                              "Delete"
-                              (str
-                               "Delete column"
-                               (name (:field column))
-                               "?")
-                              [180 140]))]]})
-              :border (b/empty-border :left -10 :top 15))]
-    (c/config! (first (.getComponents btns))
-             :border (b/compound-border
-                      (b/empty-border :left 5 :right 10 :top 5 :bottom 5)
-                      (b/line-border :thickness 1 :color "#bbb")))
-    btns))
-
-;; heyyy
-(defn switch-column-to-editing
-  [work-mode local-changes path-to-value column]
-  (let [param-to-edit (fn [param enabled]
-                        (cond
-                          (in? [true false] (get column param))
-                          (do
-                            (c/config!
-                             (gcomp/input-checkbox
-                              :txt (gtool/convert-key-to-title (str param))
-                              :local-changes local-changes
-                              :store-id (join-vec column [param])
-                              :val (get column param)
-                              :enabled? enabled)
-                             :background gcomp/light-light-grey-color))
-                          :else
-                          (c/config! (gcomp/inpose-label (gtool/convert-key-to-title (str param))
-                                                       (gcomp/input-text-with-atom
-                                                        {:local-changes local-changes
-                                                         :store-id (join-vec path-to-value [param])
-                                                         :val (str (get column param))
-                                                         :enabled? enabled})
-                                                       :font-color dark-grey-color
-                                                       :vtop 10)
-                                   :background gcomp/light-light-grey-color)))]
-    (mig-panel ;; Editable parameters list
-     :constraints ["wrap 1" "20px[250:,fill]5px" "0px[fill]0px"]
-     :preferred-size [910 :by 360]
-     :background gcomp/light-light-grey-color
-     :items (gtool/join-mig-items
-             (filter
-              #(not (nil? %))
-              (cond
-                (= work-mode "developer")
-                (map
-                 (fn [column-parameter]
-                   (let [key-param (first column-parameter)
-                         path-to-value (join-vec path-to-value [key-param])]
-                     (param-to-edit key-param true))) ;; Parameter value
-                 column)
-                (= work-mode "admin")
-                (list
-                 (param-to-edit :representation true)
-                 (param-to-edit :description true)
-                 (param-to-edit :default-value true)
-                 (param-to-edit :private? false)
-                 (param-to-edit :editable? false)
-                 (delete-column column))
-                (= work-mode "user")
-                (list
-                 (param-to-edit :representation false)
-                 (param-to-edit :description false)
-                 (param-to-edit :default-value false)
-                 (param-to-edit :private? false)
-                 (param-to-edit :editable? false)
-                 (delete-column column))))))))
-
-(defn- get-component-add-column [data]
-  (condp = data
-    "date" ["a" "b" "c"]
-    "time" ["a"]
-    "date-time" ["s" "c" "r"]
-    "simple-number" ["c" "r"]
-    "float-number" ["k" "r" "l" "p"]
-    "boolean" ["q" "r"]
-    "linking-table" ["w" "w"]
-    "big-text" ["c" "r"]
-    "short-text" ["c" "r"]
-    ["default"]))
-
-(defn panel-for-input
-  [name description comp-key cmpts-atom]
-  (let [check (c/checkbox :text name :background gcomp/light-light-grey-color :font (gtool/getFont 12))
-        sel-comp-type (DateTime/getBar (into-array ["date" "time" "date-time"
-                                                    "simple-number" "float-number"
-                                                    "boolean" "linking-table"
-                                                    "big-text" "short-text"]))
-        sel-col-type (DateTime/getBar (into-array [" "]))
-        model-sel (.getModel sel-col-type)]
-    (c/config! check  :listen [:action-performed (fn [e]
-                                                 (swap! cmpts-atom assoc (keyword name) (.isSelected check)))])
-    (mig-panel
-     :constraints ["wrap 1" "0px[grow, left]0px" "0px[]px"]
-     ;;:preferred-size [900 :by 400]
-     :background gcomp/light-light-grey-color
-     :items [[(mig-panel
-               :constraints ["wrap 1" "20px[250:, fill, grow, left]0px" "10px[]10px"]
-               :background gcomp/light-light-grey-color
-               :items [[(c/label :text description
-                               :foreground dark-grey-color
-                             ;;  :font (gtool/getFont 14)
-                               :halign :left)]
-                       [(cond
-                          (= comp-key :check) check
-                          (= comp-key :select-comp-type) sel-comp-type
-                          (= comp-key :select-col-type) sel-col-type
-                          :else
-                          (c/config! (gcomp/input-text :placeholder name
-                                                     :style [:halign :left])
-                                   :listen [:caret-update
-                                            (fn [e] (do (swap! cmpts-atom assoc (keyword name) (c/text e))))]))]])]])))
-
-;;  heyyyy
-(defn table-editor--element--btn-add-column
-  [func]
-  (mig-panel ;; Button for add column to table
-   :constraints ["wrap 1" "10px[grow, fill, center]0px" "0px[fill]0px"]
-   :items [[(c/flow-panel :items (list (c/label :text "add" :font (gtool/getFont 12)))
-                        :align :left
-                        :listen [:mouse-clicked (fn [e] (do (func e)))
-                                 :mouse-entered (fn [e] (c/config! e :cursor :hand))])]]))
-
-(defn- add-column-panel [table-name]
-  (let [cmpts-atom (atom {:editable? false :private? false})
-        inp-name (panel-for-input "field" "database column name" :field cmpts-atom)
-        inp-repr (panel-for-input "representation" "name for end-user, by default = field" :field cmpts-atom)
-        inp-descr (panel-for-input "description" "some description information, used for UI" :field cmpts-atom)
-        inp-def (panel-for-input "default-value" "default value" :field cmpts-atom)
-        inp-selct (panel-for-input "component-type" "database type of column" :select-comp-type cmpts-atom)
-        inp-db (panel-for-input "column-type" "type of data to db" :select-col-type cmpts-atom)
-        inp-pr (panel-for-input "private?" "true if column must be hided for user" :check cmpts-atom)
-        inp-ed (panel-for-input "editable?" "symbol for representation information by UI" :check cmpts-atom)
-        selct-comp (second (.getComponents (first (.getComponents inp-selct))))
-        selct-col (second (.getComponents (first (.getComponents inp-db))))
-        main-panel (mig-panel :constraints ["wrap 1" "0px[100:,fill]0px" "0px[fill]10px"])]
-    (c/config! selct-comp
-             :listen [:action-performed (fn [e]
-                                          (swap! cmpts-atom assoc :component-type [(.getSelectedItem selct-comp)])
-                                          (c/config! selct-col :model (get-component-add-column (.getSelectedItem selct-comp)))
-                                          ;;(.addItem selct-col "heyy")
-                                          )])
-    (c/config! selct-col :listen [:action-performed (fn [e]
-                                                    (swap! cmpts-atom assoc :column-type (.toString (.getSelectedItem selct-col))))])
-    (c/config! main-panel :items [[(c/label :text "Adding column" :font (gtool/getFont 14 :bold) :foreground blue-color)]
-                                [(gcomp/multi-panel [(c/vertical-panel :items (list inp-name inp-repr inp-descr inp-def))
-                                                     (c/vertical-panel :items (list inp-selct inp-db))
-                                                     (c/vertical-panel :items (list inp-pr inp-ed))]
-                                                    cmpts-atom
-                                                    table-name
-                                                    "" 0)]])))
-
-
-;; (@startup)
-;;heyyy
-(defn table-editor--component--column-picker
-  "Create left table editor view to c/select column which will be editing on right table editor view"
-  [work-mode local-changes column-editor-id columns path-to-value table-name]
-  (mig-panel :constraints ["wrap 1" "0px[100:, fill]0px" "0px[fill]0px"]
-             :items
-             (gtool/join-mig-items
-              (c/label :text "Columns" :border (b/empty-border :top 5 :bottom 5) :foreground blue-color)
-              (map (fn [column index]
-                     (let [path-to-value (join-vec path-to-value [index])
-                           meta-panel (mig-panel
-                                       :constraints ["wrap 1" "grow, fill" ""]
-                                       :items [[(c/label :text (name (:field column))
-                                                       :border (b/empty-border :bottom 5)
-                                                       :font (gtool/getFont 14 :bold) :foreground blue-color)]
-                                               [(c/config! (switch-column-to-editing work-mode local-changes path-to-value column))]])]
-                       (table-editor--component--column-picker-btn
-                        (get-in column [:representation])
-                        (fn [e]
-                          (c/config! (c/select (c/to-root (state/state :app)) [(to-hashkey column-editor-id)])
-                                   :items (gtool/join-mig-items meta-panel))))))
-                   columns (range (count columns)))
-              (c/label :text "Actions" :border (b/empty-border :top 5 :bottom 5) :foreground blue-color)
-              (table-editor--element--btn-add-column (fn [e]
-                                                       (c/config! (c/select (c/to-root (state/state :app)) [(to-hashkey column-editor-id)])
-                                                                :items (gtool/join-mig-items (add-column-panel table-name))))))))
-
-(defn table-editor--component--space-for-column-editor
-  "Create right table editor view to editing selected column in left table editor view"
-  [column-editor-id] (mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
-                                :id (keyword column-editor-id)
-                               ;; :items [[(c/label)]]
-                               ;; :border (line-border :left 4 :color (gtool/get-color :border :dark-gray))
-                                ))
-
-(def get-table-configuration-from-list-by-table-id
-  (fn [meta table-id]
-    (let [map (first (filter (fn [item] (= table-id (get item :id))) meta))]
-      map)))
-
-(defn table-editor--element--btn-save
-  "Description:
-     Invoker-id is a parent whos invoke editor. I mean DB Visualizer."
-  [local-changes table invoker-id]
-  (gtool/table-editor--component--bar-btn
-   :edit-view-save-btn
-   (gtool/get-lang-btns :save)
-   icon/agree-grey-64-png
-   icon/agree-blue-64-png
-   (fn [e]
-     (let [new-table-meta (atom table)]
-       (doall
-        (map
-         (fn [change]
-           (let [path (first change)
-                 valu (second change)]
-             (println (str "<br/>" path " \"" (get-in table path) "\" -> \"" valu "\""))
-             (swap! new-table-meta (fn [atom-table] (assoc-in atom-table (first change) (second change))))))
-         @local-changes))
-       ;; (println "New table meta: " @new-table-meta)
-       (mmeta/do-change
-        (mmeta/apply-table table @new-table-meta)
-        table @new-table-meta)
-       (cm/swapp)
-       (println "reloadinvoker" invoker-id)
-       (if-not (nil? invoker-id) (((state/state :jarman-views-service) :reload) invoker-id))
-       (((state/state :jarman-views-service) :reload))
-       ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} 
-        5)))))
-
-
-;; path groups {:field [[:table :field documents]]
-;;              , 2 [[:columns 2 :default-value ] [:columns 2 :representation document] [:columns 2 :description ]]
-;;              , 1 [[:columns 1 :default-value ] [:columns 1 :representation name] [:columns 1 :description ]]
-;;              , 3 [[:columns 3 :default-value ] [:columns 3 :representation prop] [:columns 3 :description ]]
-;;              , 0 [[:columns 0 :default-value ] [:columns 0 :description ] [:columns 0 :representation table]]
-;;              , :representation [[:table :representation documents]]
-;;              , :description [[:table :description ]]}
-
-(defn table-editor--element--btn-show-changes
-  [local-changes table]
-  (let [w 550
-        h 400]
-    (gtool/table-editor--component--bar-btn
-     :edit-view-back-btn
-     (gtool/get-lang-btns :show-changes)
-     icon/refresh-grey-64-png
-     icon/refresh-blue-64-png
-     (fn [e] (gcomp/popup-window
-              {:window-title (gtool/get-lang-btns :show-changes)
-               :size [w h]
-               :view (let [bpnl (mig-panel
-                                 :constraints ["wrap 1" "0px[grow, fill]0px" "5px[top]0px"]
-                                 :background "#fff"
-                                 ;;:preferred-size [400 :by 400]
-                                 )
-                           scr (c/scrollable bpnl
-                                             :hscroll :never)
-                           path-groups (group-by second (map (fn [x] (conj (subvec (first x) 1) (second x))) @local-changes))]
-                       ;; (println @local-changes)
-                       ;; (println path-groups)
-                       (.add bpnl (gcomp/menu-bar {:buttons [["Close" icon/enter-64-png (fn [e] (.dispose (c/to-frame e)))]]}))
-                       (doall
-                        (map
-                         (fn [[group-name paths]]
-                           (.add bpnl
-                                 (c/label
-                                  :foreground gcomp/blue-color
-                                  :border (b/empty-border :left 20)
-                                  :text (str (name (rift (get-in table [:prop :columns group-name :field]) "")))))
-                           (doall (map
-                                   (fn [path]
-                                     (.add
-                                      bpnl
-                                      (let [a (c/label
-                                               :border (b/empty-border :left 10)
-                                               :background "#fff"
-                                               :font (gtool/getFont 12)
-                                               :text (str
-                                                      (name (last (butlast path)))
-                                                      ": "))
-                                            b (c/label
-                                               :background "#ffb8bf"
-                                               :font (gtool/getFont 12)
-                                               :text (str (get-in table (flatten [:prop (vec (butlast path))])) ""))
-                                            c (c/label
-                                               :background "#fff"
-                                               :font (gtool/getFont 12)
-                                               :text " to ")
-                                            d (c/label
-                                               :background "#d1ffd9"
-                                               :font (gtool/getFont 12)
-                                               :text (str (last path)))]
-                                        (c/horizontal-panel
-                                         :background "#fff"
-                                         :border (b/line-border :left 30 :color "#fff")
-                                         :items (list a b c d))))
-                                     )
-                                   paths))) path-groups))
-                       (.repaint bpnl)
-                       (.setUnitIncrement (.getVerticalScrollBar scr) 20)
-                       (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. 0 0))
-                       (.setBorder scr nil)
-                       scr)
-               })
-       ))))
-
-(defn table-editor--element--btn-open-code-editor
-  "Description:
-    Open code editor and edit metadata for table as text.
-  Example:
-    (table-editor--element--btn-open-code-editor :user"
-  [selected-tab]
-  (gtool/table-editor--component--bar-btn
-   :open-code-editor-for-table
-   "Editor"
-   icon/json1-64-png
-   icon/json1-64-png
-   (fn [e]
-     (gcomp/view-metadata-editor
-      (keyword (:table_name selected-tab))))))
-
-
-(def create-view--table-editor
-  "Description:
-     Create view for table editor. Marge all component to one big view.
-   "
-  (fn [view-id work-mode table-id invoker-id meta]
-    (let [meta           (mmeta/getset)
-          local-changes  (atom nil)
-          table          (get-table-configuration-from-list-by-table-id meta table-id)
-          table-name     (get-in table [:prop :table :representation])
-          col-path-to-value [:prop :columns]
-          tab-path-to-value [:prop :table]
-          columns        (get-in table col-path-to-value) ;; Get columns list
-          table-property (get-in table tab-path-to-value) ;; Get table property
-          elems          (join-vec
-                          ;; Table info
-                          [[(mig-panel :constraints ["" "0px[grow, fill]5px[]0px" "10px[fill]10px"] ;; menu bar for editor
-                                       :items (gtool/join-mig-items
-                                               [(table-editor--element--header-view (str "Edit table: \"" table-name "\""))]
-                                               (cond
-                                                 (session/allow-permission? [:developer])
-                                                 (list [(table-editor--element--btn-save local-changes table invoker-id)]
-                                                       [(table-editor--element--btn-show-changes local-changes table)]
-                                                       [(table-editor--element--btn-open-code-editor table)])
-                                                 (session/allow-permission? [:admin])
-                                                 (list [(table-editor--element--btn-save local-changes table invoker-id)]
-                                                       [(table-editor--element--btn-show-changes local-changes table)])
-                                                 :else [])))]]
-                          [[(gcomp/min-scrollbox ;; Scroll section bottom title and button save/reload bar
-                             (mig-panel
-                              :constraints ["wrap 1" "[grow, fill]" "[fill]"]
-                              :items (gtool/join-mig-items ;; Table properties 
-                                      (table-editor--element--header "Table configuration")
-                                      (vec (let [table-property-count (count table-property)
-                                                 txtsize [150 :by 25]]
-                                             [(mig-panel
-                                               :constraints ["wrap 3" "2%[30%, fill]0px" "0px[grow, fill]5px"]
-                                               ;;:background gcomp/light-light-grey-color
-                                               :items (gtool/join-mig-items ;;here
-                                                       (let [param-to-edit (fn [param enabled]
-                                                                             (cond
-                                                                               (in? [true false] (get table-property param))
-                                                                               (do
-                                                                                 (c/config! (gcomp/input-checkbox
-                                                                                             :txt (gtool/convert-key-to-title (str param))
-                                                                                             :local-changes local-changes
-                                                                                             :store-id (join-vec tab-path-to-value [param])
-                                                                                             :val (get table-property param)
-                                                                                             :enabled? enabled)))
-                                                                               :else
-                                                                               (c/config!
-                                                                                (gcomp/inpose-label
-                                                                                 (gtool/convert-key-to-title (str param))
-                                                                                 (gcomp/input-text-with-atom
-                                                                                  {:local-changes local-changes
-                                                                                   :store-id (join-vec tab-path-to-value [param])
-                                                                                   :val (str (get table-property param))
-                                                                                   :enabled? enabled})
-                                                                                 :vtop 10
-                                                                                 :font-color gcomp/blue-color))))
-                                                             meta-params [:representation :description :field :is-system?
-                                                                          :is-linker? :allow-linking? :allow-modifing? :allow-deleting?]]
-                                                         (cond
-                                                           (= work-mode "developer")
-                                                           (concat (map #(param-to-edit % true) meta-params)
-                                                                   [(param-to-edit :ref true)])
-                                                           (= work-mode "admin")
-                                                           (conj (map #(param-to-edit % false) (drop 2 meta-params))
-                                                                 (param-to-edit (first  meta-params) true)
-                                                                 (param-to-edit (second meta-params) true))
-                                                           :else
-                                                           (map #(param-to-edit % false) meta-params)))))]))
-                                      (gcomp/hr 15) ;; Columns properties
-                                      (table-editor--element--header "Column configuration")
-                                      (gcomp/hr 15)
-                                      (let [column-editor-id "table-editor--component--space-for-column-editor"]
-                                        (mig-panel ;; Left and Right functional space
-                                         :constraints ["wrap 2" "0px[fill]0px" "0px[grow, fill]0px"]
-                                         :items [[(table-editor--component--column-picker work-mode local-changes column-editor-id columns col-path-to-value table-name)] ;; Left part for columns to choose for doing changes.
-                                                 [(table-editor--component--space-for-column-editor column-editor-id)] ;; Space for components. Using to editing columns.
-                                                 ])))))]])
-          component (cond
-                      (> (count table) 0) (do
-                                            (mig-panel
-                                             :constraints ["wrap 1" "20px[grow, fill]20px" "0px[fill]0px[grow, fill]0px"]
-                                             ;;  :border (line-border :thicness 1 :color "#f00")
-                                             :items elems
-                                             :border (b/empty-border :thickness 0)))
-                      :else (c/label :text "Table not found inside metadata :c"))]
-      (@gseed/changes-service :add-controller :view-id view-id :local-changes local-changes)
-      component)))
-
-(defn add-to-view-service--table-editor
-  ([table-id meta]
-   (let [table          (get-table-configuration-from-list-by-table-id meta table-id)
-         view-id        (keyword (get table :table))  ;; Get name of table and create keyword to check tabs bar (opens views)
-         invoker-id     ((state/state :jarman-views-service) :get-my-view-id)]
-     (do
-       ((state/state :jarman-views-service)
-        :set-view
-        :view-id view-id
-        :title (str "Edit: " (get-in table [:prop :table :representation]))
-        :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.")
-        :component-fn (fn [] (create-view--table-editor view-id (session/user-get-permission) table-id invoker-id meta))
-        :scrollable? false)))))
-
-
-
-;; ┌─────────┐
-;; │         │
-;; │ DB View │
-;; │         │
-;; └─────────┘
-
-;; (def show-data-in-table
-;;   (fn [table-id-as-key]
-;;     (println "Table" table-id-as-key)
-;;     (let [table (jarman.logic.metadata/defview user
-;;                   :tables [:user :permission]
-;;                   :view   [:first_name :last_name :login :permission_name]
-;;                   :data   {:inner-join [:permission]
-;;                            :column [{:user.id :id} :login :password :first_name :last_name :permission_name :configuration :id_permission]})]
-;;       (mig-panel
-;;        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
-;;        :items [[table]]))))
-
-
-;;  (calculate-bounds 10 4)
-(def db-view--apsolute-pop--rmb-table-actions
-  "Description:
-       Right Mouse Click Menu on table to control clicked table"
-  (fn [JLP meta table-id x y]
-    (let [border-c "#bbb"
-          selected-tab (filter (fn [tab-conf] (= (second (first tab-conf)) table-id)) meta)
-          table-name (get (first selected-tab) :table_name)
-          rm-menu (fn [e] (let [popup-menu (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e)))]
-                            (.remove  JLP popup-menu)
-                            (.repaint JLP)))
-          btn (fn [txt ico onclick] (c/label
-                                     :font (gtool/getFont 13)
-                                     :text txt
-                                     :icon (stool/image-scale ico 30)
-                                     :background "#fff"
-                                     :foreground "#000"
-                                     :border (b/compound-border (b/empty-border :left 10 :right 15)
-                                                                (b/line-border :bottom 1 :color border-c))
-                                     :listen [:mouse-clicked onclick
-                                              :mouse-entered (fn [e] (c/config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
-                                              :mouse-exited  (fn [e] (do
-                                                                       (c/config! e :background "#fff" :foreground "#000")
-                                                                       (let [bounds (c/config (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :bounds)
-                                                                             mouse-y (+ (+ (.getY e) (.getY (c/config e :bounds))) (.getY bounds))
-                                                                             mouse-x (.getX e)]
-                                                                         (if (or (< mouse-x 5)
-                                                                                 (> mouse-x (- (.getWidth bounds) 5))
-                                                                                 (< mouse-y (+ (.getY bounds) 5))
-                                                                                 (> mouse-y (- (+ (.getHeight bounds) (.getY bounds)) 5)))
-                                                                           (rm-menu e)))))]))
-          items (gtool/join-mig-items
-                 ;; Popup menu buttons
-                 (btn "Edit table" icon/pen-blue-64-png
-                      (fn [e] (do (rm-menu e)
-                                  (add-to-view-service--table-editor table-id meta))))
-                 (btn "Delete table" icon/basket-blue1-64-png (fn [e]))
-                 (btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))
-                 (if (session/allow-permission? [:developer])
-                   (btn "Metadata"
-                        icon/json-64-png
-                        (fn [e]
-                          (do (rm-menu e)
-                              (gcomp/view-metadata-editor (keyword (:table_name (first selected-tab)))))))
-                   [])
-                 (if (session/allow-permission? [:developer])
-                   (btn "Defview"
-                        icon/pen-64-png
-                        (fn [e]
-                          (do (rm-menu e)
-                              ((get (state/state :defview-editors) (keyword (:table_name (first selected-tab)))) e))))
-                   []))]
-      (mig-panel
-       :id :db-viewer--component--menu-bar
-       :bounds [x y 150 (* 30 (count items))]
-       :background (new Color 0 0 0 0)
-       :border (b/line-border :thickness 1 :color border-c)
-       :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
-       :items items))))
-
-(defn table-visualizer--element--col-as-row
-  "Description:
-      Create a primary or special row that represents a column in the table"
-  [meta data
-   & {:keys [debug]
-      :or {debug false}}]
-  (if debug (println "--Column as row\n--Data: " data))
-  (let [last-x (atom 0)
-        last-y (atom 0)
-        component (c/label :text (str (:representation data))
-                         :size [(:width data) :by (if (= (:type data) "header")
-                                                    (- (:height data) 2)
-                                                    (- (:height data) 0))]
-                         :icon (cond
-                                 (= (:type data) "connection")
-                                 (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (:height data)) 1))
-                                 (= (:type data) "key")
-                                 (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (:height data)) 1))
-                                 :else nil)
-                         :background (cond
-                                       (= (:type data) "header")     gcomp/light-light-grey-color
-                                       (= (:type data) "key")        "#e2fbde"
-                                       (= (:type data) "connection") "#e2fbde"
-                                       :else "#fff")
-                         :font (cond
-                                 (= (:type data) "header")     (gtool/getFont 12 :bold)
-                                 (= (:type data) "key")        (gtool/getFont 12)
-                                 (= (:type data) "connection") (gtool/getFont 12)
-                                 :else "#fff")
-                         :foreground (cond
-                                       (= (get data :type) "header") gcomp/blue-color
-                                       :else "#000")
-                         :border (cond
-                                   (= (get data :type) "header") (b/compound-border (b/empty-border :thickness 4))
-                                   :else                         (b/compound-border (b/empty-border :thickness 4)))
-                         :listen [:mouse-entered (fn [e] (if (= (:type data) "header") (c/config! e :cursor :move)))
-                                  :mouse-clicked (fn [e] (c/invoke-later (let [table-id (:id (c/config (gtool/getParent e) :user-data))]
-                                                                         (cond (= (.getButton e) MouseEvent/BUTTON3)
-                                                                               (let [view-space ((state/state :jarman-views-service) :get-view-sapce)
-                                                                                     scrol (c/select view-space [:#JLP-DB-Visualizer])
-                                                                                     JLP (gtool/getParent scrol)]
-                                                                                 (.add JLP
-                                                                                       (db-view--apsolute-pop--rmb-table-actions ;; Open popup menu for table
-                                                                                        JLP
-                                                                                        meta  ;; forward list of table configuration
-                                                                                        table-id ;; Get table id
-                                                                                        (-> (.getX e) (+ (.getX (c/config (gtool/getParent e) :bounds))) (- 15))
-                                                                                        (-> (.getY e) (+ (.getY (c/config e :bounds))) (+ (.getY (c/config (gtool/getParent e) :bounds))) (- 10)))
-                                                                                       (new Integer 999) ;; z-index
-                                                                                       ))
-                                                                               (= (.getClickCount e) 2) ;; Open table editor by duble click
-                                                                               (add-to-view-service--table-editor table-id meta)))))
-                                  :mouse-dragged (fn [e]
-                                                   (do
-                                                     (if (= @last-x 0) (reset! last-x (.getX e)))
-                                                     (if (= @last-y 0) (reset! last-y (.getY e)))
-                                                     (cond
-                                                       (= (get data :type) "header") (let [bounds (c/config (gtool/getParent e) :bounds)
-                                                                                           pre-x (- (+ (.getX bounds) (.getX e)) @last-x)
-                                                                                           pre-y (- (+ (.getY bounds) (.getY e)) @last-y)
-                                                                                           x (if (> pre-x 0) pre-x 0)
-                                                                                           y (if (> pre-y 0) pre-y 0)
-                                                                                           w (.getWidth  bounds)
-                                                                                           h (.getHeight bounds)]
-                                                                                       (do
-                                                                                         (c/config! (gtool/getParent e) :bounds [x y w h]))))))
-                                  :mouse-released (fn [e] (do (reset! last-x 0)
-                                                              (reset! last-y 0)))])]
-    (if debug (println "--Column as row: OK"))
-    component))
-
-(defn db-viewer--component--table
-  "Description:
-     Create one table on JLayeredPane using database map
-  "
-  [bounds data meta]
-;; (if (get-in data [:prop :table :is-linker?]) (println "data " data))
-  (let [bg-c "#fff"
-        line-size-hover 2  ;; zwiekszenie bordera dla eventu najechania mysza
-        border-c "#aaa"
-        border (b/line-border :thickness 1 :color border-c)
-        border-hover (b/line-border :thickness line-size-hover :color "#000")
-        x (nth bounds 0)
-        y (+ 0 (nth bounds 1))
-        w (nth bounds 2)
-        row-h 30  ;; wysokosc wiersza w tabeli reprezentujacego kolumne
-        col-in-rows (map (fn [col]
-                           (table-visualizer--element--col-as-row
-                            meta
-                            {:representation (cond
-                                               (and (get-in data [:prop :table :is-linker?]) (contains? col :key-table))
-                                               (do ;; Get represetation of linked table
-                                                 (let [search (filter (fn [table-meta] (= (get-in table-meta [:table]) (get col :key-table))) meta)]
-                                                   (get-in (first search) [:prop :table :representation])))
-                                               :else (get col :representation))
-                             :width w
-                             :height row-h
-                             :type (cond
-                                     (and (get-in data [:prop :table :is-linker?]) (contains? col :key-table)) "connection"
-                                     (contains? col :key-table) "key"
-                                     :else "row")
-                             :border-c border-c}))
-                         (get-in data [:prop :columns]))  ;; przygotowanie tabeli bez naglowka
-        camplete-table (conj col-in-rows (table-visualizer--element--col-as-row
-                                          meta
-                                          {:representation (get-in data [:prop :table :representation])
-                                           :width w
-                                           :height row-h
-                                           :type "header"
-                                           :border-c border-c}))  ;; dodanie naglowka i finalizacja widoku tabeli
-        h (* (count camplete-table) row-h)  ;; podliczenie wysokosci gotowej tabeli
-        ]
-    (c/vertical-panel
-     :id (get data :table)
-     :user-data {:id (get data :id)}
-     :tip "Double click to show relation. PPM to show more function."
-     :border border
-     :bounds [x y w h]
-     :background bg-c
-     :items camplete-table)))
-
-
-;; (println MouseEvent/BUTTON3)
-;; (@startup)
-;; (((state/state :jarman-views-service) :reload))
-
-
-(defn create-view--db-view
-  "Description:
-     Create component and set to @views atom to use in functional space. 
-     Add open tab for db-view to open tabs bar.
-     Set prepare view from @views to functional space.
-   "
-  ([]
-   (let [rootJLP (new JLayeredPane)
-         JLP (new JLayeredPane)
-         JLP-bounds (atom {})
-         meta (mmeta/getset)]
-     (doall (map (fn [tab-data]
-                   (.add JLP (db-viewer--component--table (get-in tab-data [:prop :bounds] [0 0 100 100]) tab-data meta) (new Integer 5)))
-                 (calculate-bounds meta 20 5)))
-     (.add rootJLP (c/vertical-panel :items [JLP]
-                                   :id :JLP-DB-Visualizer
-                                   :border nil
-                                   :bounds [0 0 10000 10000]
-                                   :listen [:mouse-released (fn [e] (c/config! e :cursor :default))
-                                            :mouse-pressed (fn [e]
-                                                             (c/config! e :cursor :move)
-                                                             (let [x (.getX (c/config e :bounds))
-                                                                   y (.getY (c/config e :bounds))]
-                                                               (reset! JLP-bounds {:x (.getX e) :y (.getY e) :x-x (- (.getX e) x) :y-y (- (.getY e) y)})))
-                                            :mouse-dragged (fn [e]
-                                                        ;;  (println "Drag JLP: " (.getX e) (.getY e))
-                                                             (let [new-x (- (.getX e) (get @JLP-bounds :x-x))
-                                                                   new-y (- (.getY e) (get @JLP-bounds :y-y))]
-                                                               (c/config! e :bounds [new-x new-y 10000 10000] ;; TODO: need to change width and height on dynamic 
-                                                                        )))])
-           (new Integer 1))
-    ;;  (.setMaximumSize JLP (java.awt.Dimension. 300 300))
-    ;;  (.setSize JLP (java.awt.Dimension. 300 300))
-     (mig-panel
-      :border nil
-      :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px[grow, fill]0px"]
-      :items [[(gcomp/menu-bar
-                {:id :db-viewer--component--menu-bar
-                 :buttons [["Show all relation" icon/refresh-connection-blue-64-png "" (fn [e])]
-                           ["Save view" icon/agree-grey-64-png "" (fn [e])]
-                           ["Reset view" icon/arrow-blue-left-64-png "" (fn [e])]
-                           ["Reloade view" icon/refresh-blue-64-png "" (fn [e] (((state/state :jarman-views-service) :reload)))]]})]
-              [rootJLP]]))))
-
 
 ;; ┌─────────────────────────────────────────┐
 ;; │                                         │
@@ -1006,22 +42,21 @@
 ;; │                                         │
 ;; └─────────────────────────────────────────┘
 
-
 (def create-expand-btns--confgen
   "Discription:
      Return expand button with config generator GUI
      Complete component
    "
   (fn [] (if (= false (:valid? (cm/get-in-segment []))) 
-           (do (println "[ Warning ] Can not loading configs: " (:output (cm/get-in-segment [])))
-               [(button-expand "Settings Error" []
+           (do ;; (println "[ Warning ] Can not loading configs: " (:output (cm/get-in-segment [])))
+               [(gcomp/button-expand "Settings Error" []
                                :ico (stool/image-scale icon/alert-64-png 25)
                                :ico-hover (stool/image-scale icon/alert-64-png 25)
                                :onClick (fn [e] ((state/state :alert-manager)
                                                  :set {:header "Settings Error"
                                                        :body (str "Valid output: " (:output (cm/get-in-segment [])))}
                                                  5)))]) 
-           [(button-expand
+           [(gcomp/button-expand
              (gtool/get-lang-btns :settings)
              (let [current-theme (str (first (cm/get-in-value [:themes :theme_config.edn :selected-theme])) ".edn")
                    config-file-list-as-keyword (map #(first %) (cm/get-in-segment []))
@@ -1029,7 +64,7 @@
                                                                      (and (= :file (get map-part :type))
                                                                           (= :edit (get map-part :display))))
                                                                   config-file-list-as-keyword)
-                   restore-button (button-expand-child (gtool/get-lang-btns :restore-last-configuration)
+                   restore-button (gcomp/button-expand-child (gtool/get-lang-btns :restore-last-configuration)
                                                        :onClick (fn [e] (do
                                                                           (if-not (nil? (cm/restore-config)) ((state/state :alert-manager)
                                                                                                               :set {:header "Success!"
@@ -1042,7 +77,7 @@
                         (let [path (if (vector? p) p [p])
                               title (get (cm/get-in-segment path) :name)
                               view-id (last path)]
-                          (button-expand-child title :onClick (fn [e]
+                          (gcomp/button-expand-child title :onClick (fn [e]
                                                                 ((state/state :jarman-views-service)
                                                                  :set-view
                                                                  :view-id view-id
@@ -1062,7 +97,7 @@
                  (let [path [:themes :theme_config.edn] ;; Selected theme
                        title (:name (cm/get-in-segment path))
                        view-id :theme_config.edn]
-                   (button-expand-child title :onClick (fn [e]
+                   (gcomp/button-expand-child title :onClick (fn [e]
                                                          ((state/state :jarman-views-service)
                                                           :set-view
                                                           :view-id view-id
@@ -1079,7 +114,7 @@
                  (let [path [:themes :current-theme] ;; Themes config
                        title (rift (:name (cm/get-in-segment path)) "NIL")
                        view-id :current-theme]
-                   (button-expand-child title :onClick (fn [e]
+                   (gcomp/button-expand-child title :onClick (fn [e]
                                                          ((state/state :jarman-views-service)
                                                           :set-view
                                                           :view-id view-id
@@ -1139,7 +174,7 @@
                        :id :app-functional-space
                        :background (new Color 0 0 0 0)
                        :items (gtool/join-mig-items array))]
-      (println tabs)
+      ;; (println tabs)
       (state/set-state :jarman-views-service (vs/new-views-service tabs-space views-space))
       (mig-panel
        :id :operation-space
@@ -1149,116 +184,6 @@
        ;; :border (line-border :left 1 :color "#999")
        :items [[(gcomp/min-scrollbox tabs-space :vscroll :never)]
                [views-space]]))))
-
-;; ((state/state :jarman-views-service) :reload :view-id (keyword "DB Visualiser"))
-;; ((state/state :jarman-views-service) :get-all-view) 
-(defn create-period--period-form
-  []
-  (vmig
-   :vrules "[fill][100, shrink 0, fill][grow, fill]"
-   :items [[(gcomp/header-basic "Okresy")]
-           [(gcomp/min-scrollbox
-             (mig-panel :constraints ["wrap 4" "10px[fill][fill]50px[fill][fill]10px" "10px[fill]10px"]
-                        :items [[(c/label :text "Organization:")]
-                                [(c/label :text "Frank & Franky Co." :border (b/line-border :bottom 1 :color "#494949"))]
-                                [(c/label :text "Time:")]
-                                [(c/label :text "12/03/2021 - 11/03/2022"  :border (b/line-border :bottom 1 :color "#494949"))]
-                                [(c/label :text "Customer:")]
-                                [(c/label :text "Franklyn Badabumc" :border (b/line-border :bottom 1 :color "#494949"))]
-                                [(c/label :text "Full amount:")]
-                                [(c/label :text "7000,-" :border (b/line-border :bottom 1 :color "#494949"))]
-                                [(c/label :text "Service:")]
-                                [(c/label :text "Mr. Jarman" :border (b/line-border :bottom 1 :color "#494949"))]])
-             :vscroll :never)]
-           [(vmig
-             :vrules "[fill]0px[grow, fill]"
-             :items [[(gcomp/menu-bar
-                       {:justify-end true
-                        :id :menu-for-period-table
-                        :buttons [[(gtool/get-lang-btns :save) icon/agree1-blue-64-png "" (fn [e])]
-                                  [(gtool/get-lang-btns :export) icon/excel-64-png "" (fn [e])]]})]
-                     [(c/scrollable (seesaw.swingx/table-x :model [:columns ["Servise month" "Amount" "Payment status"] :rows [["03/2021" "2500,-" "FV: 042/03/2021"]
-                                                                                                                             ["04/2021" "2000,-" "FV: 042/04/2021"]
-                                                                                                                             ["05/2021" "2500,-" "Expected payment"]]]))]])]]))
-
-(defn get-period-list
-  [company-id]
-  (cond
-    (= company-id 1) {}))
-
-(defn create-period--period-list
-  [list-space view-space return-fn company-id]
-  (let [;; period-list (get-period-list company-id)
-        auto-menu-hide false
-        return (gcomp/button-slim (str "<< " (gtool/get-lang-btns :back))
-                                  :underline-size 1
-                                  :onClick (fn [e] (c/invoke-later (do
-                                                                   (c/config! list-space :items (gtool/join-mig-items (return-fn list-space view-space return-fn)))
-                                                                   (gtool/switch-focus)))))
-        periods (expand-form-panel
-                 list-space
-                 [return
-                  (gcomp/scrollbox
-                   (gcomp/vmig
-                    :items (gtool/join-mig-items
-                            (gcomp/vmig
-                             :items (gtool/join-mig-items
-                                     (gcomp/button-slim "01/01/2021 - 31/12/2021"
-                                                        :onClick (fn [e]
-                                                                   (c/config! view-space :items (gtool/join-mig-items (create-period--period-form)))
-                                                                   (if auto-menu-hide ((:hide-show (c/config (c/select list-space [:#expand-panel]) :user-data))))))
-                                     (gcomp/button-slim "01/01/2021 - 31/12/2021" :onClick (fn [e]))
-                                     (gcomp/button-slim "01/01/2021 - 31/12/2021" :onClick (fn [e]))
-                                     (gcomp/button-slim "01/01/2021 - 31/12/2021" :onClick (fn [e]))
-                                     (gcomp/button-slim "01/01/2021 - 31/12/2021" :onClick (fn [e])))))))]
-                 :max-w 180
-                 :args [:id :expand-panel :background "#fff"])]
-    (gtool/set-focus return)
-    return
-    periods))
-
-;; (@startup)
-
-(defn get-company-list
-  [] [{:name "Trashpanda-Team" :id 1} {:name "Frank & Franky" :id 3}
-      {:name "Trashpanda-Team" :id 1} {:name "Trashpandowe Zakłady Wyrobów Kodowych Team" :id 3}
-      {:name "Trashpanda-Team" :id 1} {:name "Frank & Franky" :id 3}])
-
-(defn create-period--period-companys-list
-  [list-space view-space return-fn] ;; [{:name "Frank & Franky" :id 3}]
-  (gtool/rm-focus)
-  (let
-   [model (get-company-list)
-    buttons (map (fn [enterpreneur]
-                   (let [name (:name enterpreneur)
-                         btn (gcomp/button-slim name
-                                                :onClick (fn [e] (c/invoke-later (do
-                                                                                 (c/config! list-space :items (gtool/join-mig-items (create-period--period-list list-space view-space return-fn (get enterpreneur :id))))
-                                                                                 (gtool/switch-focus))))
-                                                :args [:tip name])]
-                     (gtool/set-focus-if-nil btn)
-                     btn))
-                 model)]
-    (expand-form-panel
-     list-space
-     (gcomp/vmig :items (gtool/join-mig-items buttons))
-     :max-w 180
-     :args [:background "#fff"]
-    ;;  (println  buttons)
-     )))
-;; (show-events (c/label))
-
-(defn create-period-view
-  []
-  (let [list-space (gcomp/vmig :args [:border (b/line-border :left 1 :right 1 :color "#eee")])
-        view-space (gcomp/vmig)
-        list-space (c/config! list-space :items (gtool/join-mig-items (create-period--period-companys-list list-space view-space create-period--period-companys-list)))]
-    (gcomp/hmig
-     :hrules "[shrink 0, fill]0px[grow, fill]"
-     :items [[list-space]
-             [view-space]]
-     :args [:background "#fff"])))
-
 
 
 (def jarmanapp
@@ -1276,24 +201,26 @@
                      "0px[grow, fill]0px"]
        :border (b/line-border :left margin-left :color bg-color)
        :items [;; [(c/label-fn :background "#eee" :size [50 :by 50])]
-               [(jarmanapp--main-tree  [(button-expand "Database"
-                                                       [(button-expand-child "DB Visualiser" :onClick (fn [e] 
-                                                                                                        (try 
-                                                                                                          ((state/state :jarman-views-service) :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view)
-                                                                                                          (catch Exception e ((state/state :alert-manager) :set {:header "Exception" :body (.getMessage e)} 5)))))
+               [(jarmanapp--main-tree  [(gcomp/button-expand "Database"
+                                                       [(gcomp/button-expand-child
+                                                         "DB Visualiser"
+                                                         :onClick (fn [e] 
+                                                                    (try 
+                                                                      ((state/state :jarman-views-service) :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn dbv/create-view--db-view)
+                                                                      (catch Exception e ((state/state :alert-manager) :set {:header "Exception" :body (.getMessage e)} 5)))))
                                                         ;;  (button-expand-child "Users table" :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id "tab-user" :title "User" :scrollable? false :component (jarman.logic.view/auto-builder--table-view nil))))
                                                         ])]
-                                       [(button-expand "Tables" [] :id :tables-view-plugin :expand :yes)]
+                                       [(gcomp/button-expand "Tables" [] :id :tables-view-plugin :expand :yes)]
                                       
-                                       [(button-expand "Okresy" [(button-expand-child "Okresy" :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id "okresy" :title "Okresy" :component-fn create-period-view)))])]
+                                       ;; [(gcomp/button-expand "Okresy" [(gcomp/button-expand-child "Okresy" :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id "okresy" :title "Okresy" :component-fn create-period-view)))])]
                                        (create-expand-btns--confgen)
-                                       [(button-expand "Debug items"
-                                                       [(button-expand-child "Popup" :onClick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (c/label "Hello popup!") :size [400 200])))
-                                                        (button-expand-child "Dialog" :onClick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100])))))
-                                                        (button-expand-child "Popup window" :onClick (fn [e] (gcomp/popup-window {:relative (state/state :app)})))
-                                                        (button-expand-child "alert" :onClick (fn [e] ((state/state :alert-manager) :set {:header "Czym jest Lorem Ipsum?" :body "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle poligraficznym. Został po raz pierwszy użyty w XV w. przez nieznanego drukarza do wypełnienia tekstem próbnej książki. Pięć wieków później zaczął być używany przemyśle elektronicznym, pozostając praktycznie niezmienionym. Spopularyzował się w latach 60. XX w. wraz z publikacją arkuszy Letrasetu, zawierających fragmenty Lorem Ipsum, a ostatnio z zawierającym różne wersje Lorem Ipsum oprogramowaniem przeznaczonym do realizacji druków na komputerach osobistych, jak Aldus PageMaker"} 5)))
-                                                        (button-expand-child "Select table" :onClick (fn [e] (gcomp/popup-window {:view (gcomp/select-box-table-list {}) :relative (state/state :app) :size [250 40]})))
-                                                        (button-expand-child
+                                       [(gcomp/button-expand "Debug items"
+                                                       [;;(button-expand-child "Popup" :onClick (fn [e] (@popup-menager :new-message :title "Hello popup panel" :body (c/label "Hello popup!") :size [400 200])))
+                                                        ;;(button-expand-child "Dialog" :onClick (fn [e] (println (str "Result = " (@popup-menager :yesno :title "Ask dialog" :body "Do you wona some QUASĄĄĄĄ?" :size [300 100])))))
+                                                        (gcomp/button-expand-child "Popup window" :onClick (fn [e] (gcomp/popup-window {:relative (state/state :app)})))
+                                                        (gcomp/button-expand-child "alert" :onClick (fn [e] ((state/state :alert-manager) :set {:header "Czym jest Lorem Ipsum?" :body "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle poligraficznym. Został po raz pierwszy użyty w XV w. przez nieznanego drukarza do wypełnienia tekstem próbnej książki. Pięć wieków później zaczął być używany przemyśle elektronicznym, pozostając praktycznie niezmienionym. Spopularyzował się w latach 60. XX w. wraz z publikacją arkuszy Letrasetu, zawierających fragmenty Lorem Ipsum, a ostatnio z zawierającym różne wersje Lorem Ipsum oprogramowaniem przeznaczonym do realizacji druków na komputerach osobistych, jak Aldus PageMaker"} 5)))
+                                                        (gcomp/button-expand-child "Select table" :onClick (fn [e] (gcomp/popup-window {:view (gcomp/select-box-table-list {}) :relative (state/state :app) :size [250 40]})))
+                                                        (gcomp/button-expand-child
                                                          "Text multiline"
                                                          :onClick (fn [e]
                                                                     (gcomp/popup-window {:window-title "Text multiline"
@@ -1305,7 +232,7 @@
                                                                                                 :editable? true
                                                                                                 :multi-line? true
                                                                                                 :wrap-lines? true)})))
-                                                        (button-expand-child
+                                                        (gcomp/button-expand-child
                                                          "Rsyntax code editor"
                                                          :onClick (fn [e]
                                                                     (gcomp/popup-window {:window-title "Code editor"
@@ -1339,7 +266,11 @@
                             (list
                              [(jarmanapp :margin-left img-scale) 0]
                              (gtool/slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser"
-                                             :onClick (fn [e] ((state/state :jarman-views-service) :set-view :view-id "DB Visualiser" :title "DB Visualiser" :component-fn create-view--db-view))
+                                                   :onClick (fn [e] ((state/state :jarman-views-service)
+                                                                     :set-view
+                                                                     :view-id "DB Visualiser"
+                                                                     :title "DB Visualiser"
+                                                                     :component-fn dbv/create-view--db-view))
                                              :top-offset top-offset)
                              (gtool/slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Message Store"
                                              :onClick (fn [e] ((state/state :alert-manager) :show))
@@ -1366,8 +297,9 @@
                                                                 (@startup)))
                                              :top-offset top-offset)
                              (gcomp/fake-focus :vgap top-offset :hgap img-scale)
-                             @atom-popup-hook)))
-      (reset! popup-menager (create-popup-service atom-popup-hook))
+                             ;; @atom-popup-hook
+                             )))
+      ;; (reset! popup-menager (create-popup-service atom-popup-hook))
       (if-not (nil? @relative) (.setLocation (seesaw.core/to-frame (state/state :app)) (first @relative) (second @relative))))
     (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))
     (vmg/do-view-load)
@@ -1382,13 +314,15 @@
                 (run-me)
                 :else (cond (= (iinit/restore-backup-configuration) false)
                             (do
-                              (reset! popup-menager (create-popup-service atom-popup-hook))
-                              (@popup-menager :ok :title "App start failed" :body "Cennot end restore task." :size [300 100]))
+                              ;; (reset! popup-menager (create-popup-service atom-popup-hook))
+                              ;; (@popup-menager :ok :title "App start failed" :body "Cennot end restore task." :size [300 100])
+                              )
                             :else (do
                                     (= (iinit/validate-configuration-files) true)
                                     (run-me)
                                     :else (do
-                                            (reset! popup-menager (create-popup-service atom-popup-hook))
-                                            (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])))))))
+                                            ;; (reset! popup-menager (create-popup-service atom-popup-hook))
+                                            ;; (@popup-menager :ok :title "App start failed" :body "Restor failed. Some files are missing." :size [300 100])
+                                            ))))))
 
 (@startup)

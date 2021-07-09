@@ -34,43 +34,6 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
-
-(def state
-  (atom {:plugin-path []
-         :plugin-global-config (fn [])
-         :plugin-config (fn [] (get-in
-                                ((:plugin-global-config @state))
-                                (conj (:plugin-path @state) :config)))
-         :plugin-toolkit (fn [] (get-in
-                                 ((:plugin-global-config @state))
-                                 (conj (:plugin-path @state) :toolkit)))
-         :history []
-         :model {}
-         :changes {}}))
-
-(defn set-state-plugin-path
-  [plugin-path]
-  (swap! state #(assoc % :plugin-path plugin-path)))
-
-(defn set-state-plugin-global-conf
-  [plugin-global-conf]
-  (swap! state #(assoc % :plugin-global-config plugin-global-conf)))
-
-(defn update-history [state action-m]
-  "Description:
-    Update action history in plugin state.
-  "
-  (swap! state #(assoc % :history (conj (:history %) action-m))))
-
-(defn update-changes [state action-m]
-  "Description:
-    Update changes in plugin state and add action map to plugin history.
-  "
-  (doto state
-    (swap! #(assoc-in % [:changes (:changes-k action-m)] (:value action-m)))
-    (update-history action-m)))
-
-
 (defn- popup-table [table-fn selected frame]
   (let [dialog (seesaw.core/custom-dialog :modal? true :width 600 :height 400 :title "Select component")
         table (table-fn (fn [table-model] (seesaw.core/return-from-dialog dialog table-model)))
@@ -522,46 +485,21 @@
 (defn table-toolkit-pipeline [configuration]
  (query-toolkit/data-toolkit-pipeline configuration {}))
 
-
-
-
-(defn dispatch! [action-m]
-  "Description:
-    Invoke correct function by keyword.
-  "
-  (let [action-k (:action action-m)]
-    (case action-k
-      :update-changes (update-changes state action-m))))
-
-;; (defn example-1
-;;   [](dispatch!
-;;      {:action    :update-changes
-;;       :changes-k :user.name
-;;       :value     "Pussiness"}))
-
-;; @state
-
-;; (c/text
-;;  :listen [:carret-update
-;;           (fn [e] (dispatch!
-;;                    {:action    :update-value
-;;                     :changes-k :user.login
-;;                     :value     (c/value (c/to-widget e))}))])
-
 ;;; component
 (defn table-entry [plugin-path global-configuration]
-  (set-state-plugin-path plugin-path)
-  (set-state-plugin-global-conf global-configuration)
-  (let [configuration ((:plugin-config @state))
+  (let [get-from-global #(->> % (join-vec plugin-path) (get-in (global-configuration)))
+        data-toolkit  (get-from-global [:toolkit])
+        configuration (get-from-global [:config])
+        ;; title (get-in data-toolkit [:table-meta :representation])
         title (:name configuration)
-        space (c/select (state/state :app) (doto (:plug-place configuration) println))
+        space (c/select (state/state :app) (:plug-place configuration))
         ;; x (println "\nplug-place"(:plug-place configuration) "\nspace"space)
         atm (:atom-expanded-items (c/config space :user-data))]
     ;; (println "\nData toolkit" data-toolkit)
     ;; (println "Allow Permission: " (session/allow-permission? (:permission configuration)))
-    ;; (println "\nPlugin path" plugin-path)
+    (println "\nPlugin path" plugin-path)
     ;; TODO: Set invoker expand button if not exist add child invokers
-    (if (s/valid? :jarman.plugin.spec/table configuration)
+    (if (s/valid? :jarman.plugin.spec/table  configuration)
       (if (session/allow-permission? (:permission configuration))
         (do (swap! atm (fn [inserted]
                          (conj inserted
@@ -573,10 +511,11 @@
                                                   :title title
                                                   :scrollable? false
                                                   :component-fn (fn [] (auto-builder--table-view
-                                                                        ((:plugin-global-config @state))
-                                                                        ((:plugin-toolkit @state))
-                                                                        ((:plugin-config  @state))))))))))))
+                                                                        (global-configuration)
+                                                                        data-toolkit
+                                                                        configuration))))))))))
       ((state/state :alert-manager) :set {:header "Error"
                                           :body (str (name (:table_name configuration)) "  "
                                                      (s/explain-str :jarman.plugin.spec/table configuration))} 5))
     (.revalidate space)))
+

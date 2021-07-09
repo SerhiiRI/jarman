@@ -11,7 +11,6 @@
             [jarman.logic.state :as state]
             [jarman.tools.lang :refer :all]
             [jarman.logic.metadata :as mt]
-            [jarman.gui.gui-db-visualizer :as dbv]
             [jarman.config.config-manager :as cm]
             [jarman.gui.gui-tools :as gtool]
             [seesaw.chooser :as chooser]
@@ -257,7 +256,7 @@
   "Description:
       Simple button with default style.
    Example:
-      (simple-button \"Simple button\" (fn [e]) :style [:background \"#fff\"])"
+      (simple-button \"Simple button\" :onClick (fn [e]) :style [:background \"#fff\"])"
   [txt & {:keys [onClick
                  args
                  tgap
@@ -1256,10 +1255,10 @@
              :visible? (if (= num 0) false true))
     (if (= num (- (count panels) 1))
       (c/config! btn-next :text "Save" :listen [:mouse-clicked (fn [e]
-                                                                 (println @cmpts-atom)
+                                                                 ;;(println @cmpts-atom)
                                                                  (swap! cmpts-atom  assoc :field-qualified (str (:field @cmpts-atom) "." table-name))
-                                                                 (println (:output (mt/validate-one-column
-                                                                                       @cmpts-atom)))
+                                                                 ;; (println (:output (mt/validate-one-column
+                                                                 ;;                       @cmpts-atom)))
                                                                  (if (:valid? (mt/validate-one-column
                                                                                @cmpts-atom))
                                                                    ((state/state :alert-manager) :set {:header "Success" :body "Column was added"} 5)
@@ -1359,7 +1358,7 @@
         :or {local-changes (atom {})
              store-id :documents.table
              val nil}}]
-    (println "\ntable-select-box" store-id val)
+    ;;(println "\ntable-select-box" store-id val)
     (select-box (vec (map #(get % :table_name) (jarman.logic.metadata/getset)))
                :store-id store-id
                :local-changes local-changes
@@ -1562,7 +1561,7 @@
      (popup-metadata-editor :user)
   "
   [table-keyword]
-  (let [meta (dbv/metadata-get table-keyword)]
+  (let [meta (mt/metadata-get table-keyword)]
       (popup-window
        {:window-title "Metadata manual table editor"
         :view (code-editor
@@ -1571,7 +1570,7 @@
                 :dispose true
                 :save-fn (fn [state]
                            (try
-                             (dbv/metadata-set (assoc meta :prop (read-string (c/config (:code state) :text))))
+                             (mt/metadata-set (assoc meta :prop (read-string (c/config (:code state) :text))))
                              (c/config! (:label state) :text "Saved!")
                              (catch Exception e (c/config!
                                                  (:label state)
@@ -1590,7 +1589,7 @@
    :view-id (keyword (str "manual-view-code" (name table-keyword)))
    :title (str "Metadata: " (name table-keyword))
    :component-fn
-   (fn [] (let [meta (dbv/metadata-get table-keyword)]
+   (fn [] (let [meta (mt/metadata-get table-keyword)]
             (code-editor
              {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
                      :background "#fff"]
@@ -1598,13 +1597,14 @@
               :val (with-out-str (clojure.pprint/pprint (:prop meta)))
               :save-fn (fn [state]
                          (try
-                           (dbv/metadata-set (assoc meta :prop (read-string (c/config (:code state) :text))))
+                           (mt/metadata-set (assoc meta :prop (read-string (c/config (:code state) :text))))
                            (c/config! (:label state) :text "Saved!")
                            (catch Exception e (c/config!
                                                (:label state)
                                                :text "Can not convert to map. Syntax error."))))})))))
 
-(seesaw.dev/show-options (c/styled-text))
+;; (seesaw.dev/show-options (c/styled-text))
+
 ;; (seesaw.dev/show-events  (c/styled-text))
 
 ;;

@@ -63,6 +63,8 @@
     :insert-model state
     :update-model state
     :refresh-model state
+    :set-model  (assoc state :model  (:value action-m))
+    :set-return (assoc state :return (:value action-m))
     ;;...
     ))
 
@@ -117,16 +119,25 @@
                            (map #(% table-model))
                            (filter some?)
                            (string/join ", ")))]
-    (if-not (nil? (field-qualified table-model)) (swap! local-changes (fn [storage] (assoc storage field-qualified (field-qualified table-model)))))
+    (if-not (nil? (field-qualified table-model))
+      (swap! local-changes (fn [storage]
+                             (assoc storage
+                                    field-qualified
+                                    (field-qualified table-model)))))
     (gcomp/input-text-with-atom
      {:local-changes local-changes
       :editable? false
       :val (model-to-repre (:view-columns ct-conf) table-model)
       :onClick (fn [e]
-                 (let [selected-model (popup-table (:table (gtable/create-table ct-conf ct-data)) field-qualified (c/to-frame e))]
+                 (let [selected-model (popup-table (:table (gtable/create-table ct-conf ct-data))
+                                                   field-qualified
+                                                   (c/to-frame e))]
                    (if-not (nil? (get selected-model (:model-id ct-data)))
                      (do (c/config! e :text (model-to-repre (:view-columns ct-conf) selected-model))
-                         (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected-model (:model-id ct-data)))))))))})))
+                         (swap! local-changes (fn [storage]
+                                                (assoc storage
+                                                       field-qualified
+                                                       (get selected-model (:model-id ct-data)))))))))})))
 
 
 ;; ┌───────────────┐
@@ -151,9 +162,14 @@
                             (get doc-model :name)
                             :onClick (fn [e]
                                        (try
-                                         ((doc/prepare-export-file (:->table-name controller) doc-model) id (:file-path @local-changes))
-                                         ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :export-doc-ok)}  7)
-                                         (catch Exception e ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :faild) :body (gtool/get-lang-alerts :export-doc-faild)}  7))))
+                                         ((doc/prepare-export-file
+                                           (:->table-name controller) doc-model) id (:file-path @local-changes))
+                                         ((state/state :alert-manager)
+                                          :set {:header (gtool/get-lang-alerts :success)
+                                                :body (gtool/get-lang-alerts :export-doc-ok)}  7)
+                                         (catch Exception e ((state/state :alert-manager)
+                                                             :set {:header (gtool/get-lang-alerts :faild)
+                                                                   :body (gtool/get-lang-alerts :export-doc-faild)}  7))))
                             :args [:halign :left])])
                         (:->documents controller))
                    (c/label))
@@ -353,9 +369,16 @@
         key-table       (->> (rift (:key-table meta) nil) (#(if (keyword? %) % (keyword %))))
         val             (rift (str (key table-model)) "")
         ;; x               (println "\nMeta data\n" meta-data "\nMeta\n" meta "\nComp type\n" comp-type "\nKey\n" key)
-        props {:title title :store-id field-qualified  :field-qualified field-qualified  :local-changes local-changes  :editable? editable?  :val val}
+        props {:title title
+               :store-id field-qualified
+               :field-qualified field-qualified
+               :local-changes local-changes
+               :editable? editable?
+               :val val}
         comp  (if (in? comp-type mt/column-type-linking) ;; If linker add more keys to props map
-                (choose-component comp-type (into props {:key-table key-table :table-model table-model :global-configuration global-configuration}))
+                (choose-component comp-type (into props {:key-table key-table
+                                                         :table-model table-model
+                                                         :global-configuration global-configuration}))
                 (choose-component comp-type props))]
     ;; (println "\nComplete-----------")
     comp))
@@ -423,78 +446,103 @@
   "Description:
      Marge all components to one form
    "
-  (fn [data-toolkit configuration global-configuration form-model
-       & {:keys [table-model more-comps]
-          :or {table-model {} more-comps []}}]
+  (fn [state dispatch!
+       & {:keys [more-comps]
+          :or {more-comps []}}]
     ;; (println "\ndata-toolkit\n" data-toolkit "\nconfiguration\n" configuration)
-    (let [table-id (keyword (format "%s.id" (:field (:table-meta data-toolkit))))
+    (let [plugin-toolkit (:plugin-toolkit @state)
+          plugin-config  (:plugin-config @state)
+          plugin-global-config (:plugin-global-config @state)
+          form-model (if (nil? (:model-update plugin-config))
+                       :model-insert
+                       :model-update)
+          table-model (:model @state)
+          ;;x (println "\nmodel" table-model)
+          table-id (keyword (format "%s.id" (:field (:table-meta plugin-toolkit))))
           local-changes (atom {:selected-id (table-id table-model)})
-          meta-data (convert-metadata-vec-to-map (:columns-meta data-toolkit))
-          components (convert-model-to-components-list global-configuration local-changes meta-data table-model (form-model configuration))
+          meta-data (convert-metadata-vec-to-map (:columns-meta plugin-toolkit))
+          components (convert-model-to-components-list plugin-global-config
+                                                       local-changes
+                                                       meta-data
+                                                       table-model
+                                                       (form-model plugin-config))
           panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
                                 :border (sborder/empty-border :thickness 10)
                                 :items [[(c/label)]])
           components (join-mig-items
                       components
                       (gcomp/hr 10)
-                      (generate-custom-buttons local-changes configuration form-model)
+                      (generate-custom-buttons local-changes plugin-config form-model)
                       (gcomp/hr 5)
-                      (if (= true (:changes-button configuration)) (default-buttons data-toolkit local-changes table-model :changes) [])
+                      (if (= true (:changes-button plugin-config))
+                        (default-buttons plugin-toolkit local-changes table-model :changes) [])
                       (if (empty? table-model)
-                        (if-not  (= false (:insert-button configuration))
-                          (default-buttons data-toolkit local-changes table-model :insert) [])
-                        [(if-not (= false (:update-button configuration))
-                           (default-buttons data-toolkit local-changes table-model :update) [])
-                         (if-not (= false (:delete-button configuration))
-                           (default-buttons data-toolkit local-changes table-model :delete) [])
+                        (if-not  (= false (:insert-button plugin-config))
+                          (default-buttons plugin-toolkit local-changes table-model :insert) [])
+                        [(if-not (= false (:update-button plugin-config))
+                           (default-buttons plugin-toolkit local-changes table-model :update) [])
+                         (if-not (= false (:delete-button plugin-config))
+                           (default-buttons plugin-toolkit local-changes table-model :delete) [])
+                         (gcomp/button-basic
+                          "<< Return"
+                          :onClick (fn [e]
+                                     (dispatch! {:action :set-model  :value {}})
+                                     ((:return @state))))
                          (gcomp/hr 10)
-                         (if-not (= false (:export-button configuration)) (export-button data-toolkit configuration local-changes table-model) [])])
+                         (if-not (= false (:export-button plugin-config))
+                           (export-button plugin-toolkit plugin-config local-changes table-model) [])])
                       ;; (do (println "Field" (:field (:table-meta data-toolkit))) [])
                       ;; (if (= "documents" (:field (:table-meta data-toolkit))) (upload-doc local-changes) [])
                       [more-comps])
           builded (c/config! panel :items (gtool/join-mig-items components))]
       builded)))
 
+(defn- create-header
+  [state]
+  (c/label :text (:representation (:table-meta (:plugin-toolkit @state))) 
+           :halign :center
+           :border (sborder/empty-border :top 10)))
 
-(def auto-builder--table-view
+(defn- form-type [state]
+  (if (nil? (:model-update (:plugin-config @state)))
+    :model-insert
+    :model-update))
+
+(defn- create-expand
+  [state layout form]
+  (gcomp/min-scrollbox
+   (gcomp/expand-form-panel layout [(create-header state)
+                                    form])
+   :hscroll :never))
+
+(def build-plugin-gui
   "Description
      Prepare and merge complete big parts"
-  (fn [global-configuration
-       data-toolkit
-       configuration]
-    (let [x nil ;;------------ Prepare components
-          insert-form   (fn [] (build-input-form data-toolkit configuration global-configuration :model-insert))
-          view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
-          table         (fn [] (second (u/children view-layout)))
-          header        (fn [] (c/label :text (:representation (:table-meta data-toolkit)) 
-                                        :halign :center :border (sborder/empty-border :top 10)))
-          update-form   (fn [table-model return] (gcomp/expand-form-panel
-                                                  view-layout
-                                                  [(header)
-                                                   (build-input-form
-                                                    data-toolkit
-                                                    configuration
-                                                    global-configuration 
-                                                    (doto (if (nil? (:model-update configuration))
-                                                            :model-insert
-                                                            :model-update)
-                                                      println) 
-                                                    :table-model table-model
-                                                    :more-comps [(return)])]))
-          x nil ;;------------ Build
-          expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never)
-          back-to-insert     (fn [] [(gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]])))])
-          expand-update-form (fn [model-table return] (c/config! view-layout :items [[(gcomp/min-scrollbox (update-form model-table return))] [(table)]]))
-          table              (fn [] ((:table (gtable/create-table configuration data-toolkit))
-                                     (fn [model-table]
-                                       (if-not (= false (:update-mode configuration))
-                                         (expand-update-form model-table back-to-insert)))))
-          x nil ;;------------ Finish
-          view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])]
-                                                            [(try
-                                                               (c/vertical-panel :items [(table)])
-                                                               (catch Exception e (c/label :text (str "Problem with table model: " (.getMessage e)))))]])]
-      view-layout)
+  (fn [state dispatch!]
+    (let [;;------------ Prepare components
+          main-layout (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
+          table       (fn [] (second (u/children main-layout)))
+          form        (fn [] (first  (u/children main-layout)))
+          expand-form (fn [] (create-expand state main-layout (build-input-form state dispatch!)))
+          reload-form (fn [] (c/config! (form) :items [(expand-form)]))
+          update-mode (fn [model-table]
+                        (dispatch! {:action :set-model  :value model-table})
+                        (dispatch! {:action :set-return :value reload-form}))
+          table       (fn [] ((:table (gtable/create-table (:plugin-config  @state)
+                                                           (:plugin-toolkit @state)))
+                              (fn [model-table]
+                                (if-not (= false (:update-mode (:plugin-config @state)))
+                                  (do
+                                    (update-mode model-table)
+                                    (reload-form))))))
+          ;;------------ Finish
+          main-layout        (c/config! main-layout
+                                        :items [[(c/vertical-panel :items [(expand-form)])]
+                                                [(try
+                                                   (c/vertical-panel :items [(table)])
+                                                   (catch Exception e
+                                                     (c/label :text (str "Problem with table model: " (.getMessage e)))))]])]
+      main-layout)
     ;; (c/label :text "Testing mode")
     ))
 
@@ -556,12 +604,18 @@
          :plugin-global-config global-configuration-getter
          :plugin-config        (get-in (global-configuration-getter) (conj plugin-path :config) {})
          :plugin-toolkit       (get-in (global-configuration-getter) (conj plugin-path :toolkit) {}) 
+         :return               (fn [])
          :history              []
          :model                {}
          :changes              {}}))
 
 (defn- create-dispatcher [atom-var]
   (fn [action-m] (swap! atom-var (fn [state] (action-handler state action-m)))))
+
+;; (def a (atom {:model {}}))
+;; @a
+;; (def asd (create-dispatcher a))
+;; (asd {:action :set-model :key :model :value "a"})
 
 ;;; component
 (defn table-entry [plugin-path global-configuration]
@@ -596,9 +650,12 @@
                        :title plugin-title
                        :scrollable? false
                        :component-fn
-                       (fn [] (auto-builder--table-view plugin-global-config plugin-toolkit plugin-config)))))))))
+                       (fn [] (build-plugin-gui state dispatch!)))))))))
         ((state/state :alert-manager)
          :set {:header "Error"
                :body (str (name (:table_name plugin-config)) "  "
                           (s/explain-str :jarman.plugin.spec/table plugin-title))}))
       (.revalidate space))))
+
+
+

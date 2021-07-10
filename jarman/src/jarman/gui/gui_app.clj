@@ -34,8 +34,6 @@
             [jarman.gui.gui-config-generator :as cg]))
 
 
-(def popup-menager (atom nil))
-
 ;; ┌─────────────────────────────────────────┐
 ;; │                                         │
 ;; │ Create expand btns for config generator │

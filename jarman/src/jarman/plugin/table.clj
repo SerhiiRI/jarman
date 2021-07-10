@@ -64,7 +64,7 @@
     :update-model state
     :refresh-model state
     :set-model  (assoc state :model  (:value action-m))
-    :set-return (assoc state :return (:value action-m))
+    :state-update (assoc-in state (:path action-m) (:value action-m))
     ;;...
     ))
 
@@ -508,40 +508,94 @@
     :model-insert
     :model-update))
 
+;; (defn- create-expand
+;;   [state dispatch! layout form-fn]
+;;   (let [render (fn [] (gcomp/min-scrollbox
+;;                        (gcomp/expand-form-panel
+;;                         layout [(create-header state)
+;;                                 (form-fn state dispatch!)])
+;;                        :hscroll :never))
+;;         target (fn [] (first (u/children layout)))]
+;;     (add-watch state [:model]
+;;                (fn [path state old-m new-m]
+;;                  (let [[left right same] (clojure.data/diff (get-in new-m path) (get-in old-m path))]
+;;                    (if (not (and (nil? left) (nil? right)))
+;;                      (c/config! (target) :items [(render)])))))
+;;     (render)))
+
+(defn- set-state-watcher
+  [state root render-fn watch-path]
+  (if (nil? (get-in @state watch-path))
+    (swap! state #(assoc-in % watch-path nil)))
+  (add-watch
+   state :watcher
+   (fn [id-key state old-m new-m]
+     (let [[left right same] (clojure.data/diff (get-in new-m watch-path) (get-in old-m watch-path))]
+       (if (not (and (nil? left) (nil? right)))
+         (let [root (if (fn? root) (root) root)
+               render (if (= (type root) (type (smig/mig-panel)))
+                        [[(render-fn)]]
+                        [(render-fn)])]
+           (c/config! root :items render)))))))
+
 (defn- create-expand
-  [state layout form]
-  (gcomp/min-scrollbox
-   (gcomp/expand-form-panel layout [(create-header state)
-                                    form])
-   :hscroll :never))
+  [state dispatch! layout form-fn]
+  (let [render-fn (fn [] (gcomp/min-scrollbox
+                       (gcomp/expand-form-panel
+                        layout [(create-header state)
+                                (form-fn state dispatch!)])
+                       :hscroll :never))
+        root (fn [] (first (u/children layout)))]
+    (set-state-watcher state root render-fn [:model])
+    (render-fn)))
+
+(defn jmig
+  [state render-fn watch-path & props]
+  (let [props (rift props [])
+        root (apply
+              smig/mig-panel
+              :constraints ["" "0px[grow]0px" "0px[50, fill]0px"]
+              props)]
+    (set-state-watcher state
+                       root
+                       render-fn
+                       watch-path)
+    (c/config! root :items [[(render-fn)]])))
+
+(defn jlabel
+  [state watch-path]
+  (jmig state
+        (fn [] (c/label :text (str (get-in @state watch-path))))
+        watch-path))
+
+(defn jtext
+  [action]
+  (c/text :listen [:caret-update action]))
 
 (def build-plugin-gui
   "Description
      Prepare and merge complete big parts"
   (fn [state dispatch!]
-    (let [;;------------ Prepare components
-          main-layout (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
-          table       (fn [] (second (u/children main-layout)))
-          form        (fn [] (first  (u/children main-layout)))
-          expand-form (fn [] (create-expand state main-layout (build-input-form state dispatch!)))
-          reload-form (fn [] (c/config! (form) :items [(expand-form)]))
-          update-mode (fn [model-table]
-                        (dispatch! {:action :set-model  :value model-table})
-                        (dispatch! {:action :set-return :value reload-form}))
-          table       (fn [] ((:table (gtable/create-table (:plugin-config  @state)
-                                                           (:plugin-toolkit @state)))
-                              (fn [model-table]
-                                (if-not (= false (:update-mode (:plugin-config @state)))
-                                  (do
-                                    (update-mode model-table)
-                                    (reload-form))))))
-          ;;------------ Finish
-          main-layout        (c/config! main-layout
-                                        :items [[(c/vertical-panel :items [(expand-form)])]
-                                                [(try
-                                                   (c/vertical-panel :items [(table)])
-                                                   (catch Exception e
-                                                     (c/label :text (str "Problem with table model: " (.getMessage e)))))]])]
+    (let [main-layout (smig/mig-panel :constraints ["" "0px[:200:, shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
+          table       ((:table (gtable/create-table (:plugin-config  @state)
+                                                    (:plugin-toolkit @state)))
+                       (fn [model-table]
+                         (if-not (= false (:update-mode (:plugin-config @state)))
+                           (dispatch! {:action :set-model :value model-table}))))
+          main-layout (c/config! main-layout
+                                 :items [[(c/vertical-panel
+                                           :items [;; (create-expand state dispatch!
+                                                   ;;                main-layout
+                                                   ;;                build-input-form)
+                                                   (jlabel state [:watch-input])
+                                                   (jtext (fn [e] (dispatch!
+                                                                   {:action :state-update
+                                                                    :path   [:watch-input]
+                                                                    :value  (c/value (c/to-widget e))})))])]
+                                         [(try
+                                            (c/vertical-panel :items [table])
+                                            (catch Exception e
+                                              (c/label :text (str "Problem with table model: " (.getMessage e)))))]])]
       main-layout)
     ;; (c/label :text "Testing mode")
     ))
@@ -609,7 +663,14 @@
          :model                {}
          :changes              {}}))
 
-(defn- create-dispatcher [atom-var]
+;; (defn- create-watcher [atom-var]
+;;   (add-watch atom-var :watcher
+;;              (fn [k atom-v old-s new-s]
+;;                (println "-- Atom Changed --")
+;;                (println "\nkey" k)
+;;                (println "\natom" atom-v))))
+
+(defn- create-disptcher [atom-var]
   (fn [action-m] (swap! atom-var (fn [state] (action-handler state action-m)))))
 
 ;; (def a (atom {:model {}}))
@@ -620,9 +681,9 @@
 ;;; component
 (defn table-entry [plugin-path global-configuration]
   (let [state (create-state-template plugin-path global-configuration)
-        dispatch! (create-dispatcher state)
+        dispatch! (create-disptcher state)
         state!    #(deref state)]
-
+    ;; (create-watcher state)
     (let [;; Destruction state component
           {{plugin-title      :name
             plugin-plug-place :plug-place

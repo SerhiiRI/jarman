@@ -8,15 +8,6 @@
    ;; for datascript
    [clojure.set :as set]
    [datascript.core :as d]
-   [rum.core :as rum]
-   [datascript.transit :as dt]
-   [pullql.core :refer [pull-all]]
-   ;;;; for query
-   [edn-query-language.core :as eql]
-   ;;[edn-query-language.gen :as eql-gen]
-   ;; for datascript-graph
-   [ont-app.igraph.core :as igraph :refer [add, unique, query]]
-   [ont-app.datascript-graph.core :as dsg :refer [make-graph]]
    ;;jarman-tools
    [jarman.managment.db-managment :as db-meta]))
 

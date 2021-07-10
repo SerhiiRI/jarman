@@ -200,6 +200,8 @@
         (println "Exporter property is not map-type")))))
 
 
+(defn- kwds-pair-list? [col]
+  (every? #(every? keyword? %) col))
 
 (defn update-blob!
   "Description
@@ -217,7 +219,8 @@
                             :document \"./tmp2.txt\"
                             :prop (pr-str {})}})"
   [{table_name :table_name col-list :column-list m :values}]
- (let [^java.sql.Connection
+  {:pre [(some? col-list) (kwds-pair-list? col-list)]}
+  (let [^java.sql.Connection
        connection (clojure.java.jdbc/get-connection (db/connection-get))
 
        col-list (doall (map (fn [[col-name col-type]] [col-name col-type (if (= :blob col-type) (FileInputStream. (File. (col-name m))))]) col-list))
@@ -268,6 +271,7 @@
                             :document \"./tmp.txt\"
                             :prop (pr-str {})}})"
   [{table_name :table_name col-list :column-list m :values}]
+  {:pre [(some? col-list) (kwds-pair-list? col-list)]}
   (let [^java.sql.Connection
         connection (clojure.java.jdbc/get-connection (db/connection-get))
 
@@ -305,50 +309,96 @@
                          (if (and (some? maybe-stream) (instance? java.io.FileInputStream maybe-stream))
                            (.close maybe-stream))) col-list))))))
 
-;; (select-blob! {:table_name :documents
-;;                :column [:id :table_name :name :document :prop]
-;;                :where [:= :id 1]})
 
-;; "SELECT `id`, `table_name`, `name`, `document`, `prop` FROM documents WHERE `id` = ?"
+(defn- select-blob!
+  "Description
+    Allow getting :blob documents directly from db
+  
+  Example
+    (select-blob! {:table_name :documents
+                   :column-list [[:id :null] [:table_name :string] [:name :string] [:document :blob] [:prop :string]]
+                   :doc-column [[:document {:document-name :table_name :document-place \"/home/serhii\"}]]
+                   :where [:= :id 18]})
+       => [{:id nil, :table_name \"some-table\", :name \"Export month operations\", :document \"/home/serhii/some-table\", :prop \"{}\"}]"
+  [query-map]
+  {:pre [(some? (:column-list query-map))
+         (kwds-pair-list? (:column-list query-map))
+         (contains? query-map :doc-column)]}
+  (let [^java.sql.Connection
+        connection (clojure.java.jdbc/get-connection (db/connection-get))
 
-;; (defn- select-blob! [query-map]
-;;  (let [^java.sql.Connection
-;;        connection (clojure.java.jdbc/get-connection (db/connection-get))
+        ;; Transform to normal select
+        ;; column [[col-name col-type]..] to [col-name, col-name
+        ;; change :column-list on :column
+        ;; delete unnessesary select! keys
+        ^clojure.lang.PersistentArrayMap
+        sql-select-query-map
+        (-> query-map
+            (assoc-in [:column] (mapv first (:column-list query-map)))
+            (dissoc :column-list)
+            (dissoc :doc-column))
 
-;;        ^java.sql.PreparedStatement
-;;        statement (.prepareStatement connection
-;;                   (select! query-map))
+        ;; make classical JDBC query statement 
+        ^java.sql.PreparedStatement
+        statement (.prepareStatement connection (select! sql-select-query-map))
 
-;;        ^java.sql.ResultSet
-;;        res-set (.executeQuery (do (.setLong statement 1 (:id document-map)) statement))
-       
-;;        temporary-result (ref [])
-;;        temporary-push
-;;        (fn [i t n d p]
-;;          (dosync (alter temporary-result #(conj % {:id i :table_name  t :name n :document d :prop p}))))]
-;;    (try (while (.next res-set)
-;;           (let [^java.lang.String
-;;                 file-name (format "%s.odt" (string/trim (.getString res-set "name")))
-;;                 ^java.io.File
-;;                 file (clojure.java.io/file (storage/document-templates-dir) file-name)
-;;                 ^java.io.FileInputStream
-;;                 fileStream (java.io.FileOutputStream. file)
-;;                 ^java.io.InputStream
-;;                 input (.getBinaryStream res-set "document")
-;;                 buffer (byte-array 1024)]
-;;             (while (> (.read input buffer) 0)
-;;               (.write fileStream buffer))
-;;             (.close input)
-;;             (temporary-push
-;;              (.getLong res-set "id")
-;;              (.getString res-set "table")
-;;              (.getString res-set "name")
-;;              (.getAbsolutePath file)
-;;              (read-string (.getString res-set "prop")))))
-;;         (catch SQLException e (println e))
-;;         (catch IOException e (println e))
-;;         (finally (try (.close res-set)
-;;                       (catch SQLException e (println e))))) @temporary-result))
+        ;; prepare result query hash-map-like container
+        ^java.sql.ResultSet
+        res-set (.executeQuery statement)
+
+        ;; really returning value from Quering
+        temporary-result (ref [])
+        temporary-push
+        (fn [& args]
+          (dosync (alter temporary-result #(conj % (apply array-map (mapcat (comp vector) (:column sql-select-query-map) args))))))]
+    (try (while (.next res-set)
+           (doall(for [[document
+                        {:keys [document-name  document-place]
+                         :or   {document-place env/user-home}}]
+                       (:doc-column query-map)
+                       :let [^java.io.File
+                             file (clojure.java.io/file document-place (.getString res-set (name document-name)))
+                             ^java.io.FileInputStream
+                             fileStream (java.io.FileOutputStream. file)
+                             ^java.io.InputStream
+                             input  (.getBinaryStream res-set (name document))
+                             buffer (byte-array 1024)]]
+                   (do (while (> (.read input buffer) 0)
+                         (.write fileStream buffer))
+                       (.close input))))
+           (apply temporary-push
+                  (for [[col-name-k col-type] (:column-list query-map)
+                        :let [col-name (name col-name-k)]]
+                    (case col-type
+                      :null     nil
+                      :string   (.getString res-set col-name)
+                      :blob     (if-let [[document
+                                          {:keys [document-name  document-place]
+                                           :or   {document-place env/user-home}}]
+                                         (not-empty
+                                          (first
+                                           (filter
+                                            #(= col-name-k (first %))
+                                            (:doc-column query-map))))]
+                                  (.getAbsolutePath
+                                   (clojure.java.io/file
+                                    document-place
+                                    (.getString res-set (name document-name))))
+                                  "bad paths")
+                      :bool     (.getBoolean res-set col-name)
+                      :int      (.getInt res-set col-name)
+                      :double   (.getDouble res-set col-name)
+                      :long     (.getLong res-set col-name)
+                      :float    (.getFloat res-set col-name)
+                      :date     (.getDate res-set col-name)
+                      :datetime (.getString res-set col-name)
+                      nil))))
+         (catch SQLException e (println e))
+         (catch IOException  e (println e))
+         (finally (try (.close res-set)
+                       (catch SQLException e (println e))))) @temporary-result))
+
+
 
 
 (comment
@@ -375,4 +425,9 @@
                           :table_name "some-table"
                           :name "Export month operations"
                           :document "./tmp.txt"
-                          :prop (pr-str {})}}))
+                          :prop (pr-str {})}})
+  ;; query
+  (select-blob! {:table_name :documents
+               :column-list [[:id :null] [:table_name :string] [:name :string] [:document :blob] [:prop :string]]
+               :doc-column [[:document {:document-name :table_name :document-place "/home/serhii"}]]
+               :where [:= :id 18]}))

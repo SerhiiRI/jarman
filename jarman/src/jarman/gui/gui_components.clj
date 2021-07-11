@@ -396,6 +396,44 @@
                                         (reset! last-v new-v))))]
            args)))
 
+(defn state-input-text
+  "Description:
+    Text input for state architecture. Need fn in action to changing state.
+   Example:
+    (input-text :action (fn [e] (dispatch! {...}) :style [:halign :center])"
+  [func
+   val
+   & {:keys [state
+             dispach!
+             border
+             font-size
+             border-color-focus
+             border-color-unfocus
+             args]
+      :or {state nil
+           dispach! nil
+           font-size 14
+           border-color-focus   (gtool/get-color :decorate :focus-gained)
+           border-color-unfocus (gtool/get-color :decorate :focus-lost)
+           border [10 10 5 5 2]
+           args []}}]
+  (let [newBorder (fn [underline-color]
+                    (b/compound-border (b/empty-border :left (nth border 0)
+                                                       :right (nth border 1)
+                                                       :top (nth border 2)
+                                                       :bottom (nth border 3))
+                                       (b/line-border :bottom (nth border 4)
+                                                      :color underline-color)))]
+    (apply c/text
+           :text (str (rift val ""))
+           :font (gtool/getFont font-size :name "Monospaced")
+           :background (gtool/get-color :background :input)
+           :border (newBorder border-color-unfocus)
+           :listen [:focus-gained (fn [e] (c/config! e :border (newBorder border-color-focus)))
+                    :focus-lost   (fn [e] (c/config! e :border (newBorder border-color-unfocus)))
+                    :caret-update func]
+           args)))
+
 (defn input-checkbox
   [& {:keys [txt
              val

@@ -4,6 +4,7 @@
    [clojure.data :as data]
    [clojure.string :as string]
    [clojure.spec.alpha :as s]
+   [clojure.pprint :as pprint]
    ;; Seesaw components
    [seesaw.util :as u]
    [seesaw.core :as c]
@@ -37,11 +38,13 @@
 
 (defn action-handler [state action-m]
   (case (:action action-m)
-    :clear-model    (assoc-in state [:model] {})
-    :clear-changes  (assoc-in state [:changes] {})
-    :update-changes (assoc-in state (join-vec [:changes] (:path action-m)) (:value action-m))
-    :set-model      (assoc-in state [:model] (:value action-m))
-    :state-update   (assoc-in state (:path action-m) (:value action-m))))
+          :clear-model    (assoc-in state [:model] {})
+          :clear-changes  (assoc-in state [:model-changes] {})
+          :update-changes (assoc-in state (join-vec [:model-changes] (:path action-m)) (:value action-m))
+          :set-model      (assoc-in state [:model] (:value action-m))
+          :state-update   (assoc-in state (:path action-m) (:value action-m))
+          :update-export-path (assoc-in state [:export-path] (:value action-m))
+          :test           (do (println "\nTest") state)))
 
 (defn- create-header
   [state]
@@ -108,19 +111,6 @@
   (c/text :listen [:caret-update action]))
 
 
-(defn update-history [state action-m]
-  "Description:
-    Update action history in plugin state."
-  (swap! state #(assoc % :history (conj (:history %) action-m))))
-
-(defn update-changes [state action-m]
-  "Description:
-    Update changes in plugin state and add action map to plugin history."
-  (doto state
-    (swap! #(assoc-in % [:changes (:changes-k action-m)] (:value action-m)))
-    (update-history action-m)))
-
-
 (defn- popup-table [table-fn selected frame]
   (let [dialog (seesaw.core/custom-dialog :modal? true :width 600 :height 400 :title "Select component")
         table (table-fn (fn [table-model] (seesaw.core/return-from-dialog dialog table-model)))
@@ -175,6 +165,7 @@
                                                        (get selected-model (:model-id ct-data)))))))))})))
 
 
+
 ;; ┌───────────────┐
 ;; │               │
 ;; │ Docs exporter |
@@ -184,35 +175,43 @@
 (defn- document-exporter
   "Description:
      Panel with input path and buttons for export."
-  [state dispatch! id]
-  (let [{changes :changes
-         plugin-config :plugin-config} @state
-        select-file (gcomp/input-file {:store-id :file-path :local-changes changes})
-        panel-bg "#eee"]
+  [state dispatch!]
+  (let [{model-changes  :model-changes
+         plugin-config  :plugin-config
+         plugin-toolkit :plugin-toolkit} @state
+        select-file (gcomp/state-input-file
+                     (fn [e] (dispatch!
+                              {:action :update-export-path
+                               :value  (c/value (c/to-widget e))}))
+                     nil)
+        table-id    (keyword (format "%s.id" (:field (:table-meta plugin-toolkit))))
+        id          (table-id (:model @state))]
     (smig/mig-panel
      :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px[grow]0px[fill]0px"]
-     :background panel-bg
+     :background "#eee"
      :items (gtool/join-mig-items
              [select-file]
-             (rift (map (fn [doc-model]
-                          [(gcomp/button-basic
-                            (get doc-model :name)
-                            :onClick (fn [e]
-                                       (try
-                                         ((doc/prepare-export-file
-                                           (:->table-name plugin-config) doc-model) id (:file-path changes))
-                                         ((state/state :alert-manager)
-                                          :set {:header (gtool/get-lang-alerts :success)
-                                                :body (gtool/get-lang-alerts :export-doc-ok)}  7)
-                                         (catch Exception e ((state/state :alert-manager)
-                                                             :set {:header (gtool/get-lang-alerts :faild)
-                                                                   :body (gtool/get-lang-alerts :export-doc-faild)}  7))))
-                            :args [:halign :left])])
-                        (:->documents plugin-config))
+             (rift (doall
+                    (map
+                     (fn [doc-model]
+                       [(gcomp/button-basic
+                         (get doc-model :name)
+                         :onClick (fn [e]
+                                    (try
+                                      ((doc/prepare-export-file
+                                        (:->table-name plugin-config) doc-model) id (:file-path model-changes))
+                                      ((state/state :alert-manager)
+                                       :set {:header (gtool/get-lang-alerts :success)
+                                             :body (gtool/get-lang-alerts :export-doc-ok)}  7)
+                                      (catch Exception e ((state/state :alert-manager)
+                                                          :set {:header (gtool/get-lang-alerts :faild)
+                                                                :body (gtool/get-lang-alerts :export-doc-faild)}  7))))
+                         :args [:halign :left])])
+                     (:->documents plugin-config)))
                    (c/label))
              (gcomp/button-basic
               "Export"
-              :onClick (fn [e] (println "Path to file: " (rift (:file-path changes) "No file selected")))
+              :onClick (fn [e] (println "Path to file: " (rift (:file-path model-changes) "No file selected")))
               :flip-border true)))))
 
 (defn- export-button
@@ -228,8 +227,7 @@
           :onClick (fn [e]
                      (gcomp/popup-window
                       {:window-title "Documents export"
-                       :view (let [table-id (keyword (format "%s.id" (:field (:table-meta plugin-toolkit))))]
-                               (document-exporter state dispatch! (table-id table-model)))
+                       :view (document-exporter state dispatch!)
                        :size [300 300]
                        :relative (c/to-widget e)})))))
 ;;(:model-id)
@@ -247,7 +245,7 @@
   [state dispatch! type]
   (let [{plugin-toolkit :plugin-toolkit
          table-model    :model
-         changes        :changes} @state]
+         model-changes  :model-changes} @state]
     (gcomp/button-basic
      (type {:insert "Insert new data"  :update "Update row"  :delete "Delete row"
             :export "Documents export" :changes "Form state" :clear "Clear form"})
@@ -255,15 +253,16 @@
      :onClick (fn [e]
                 (cond
                   (= type :insert)
-                  (if-not (empty? (:changes @state))
-                    (let [insert-m (:changes @state)]
+                  (if-not (empty? (:model-changes @state))
+                    (let [insert-m (:model-changes @state)]
                       (println "\nRun Insert\n" ((:insert plugin-toolkit) insert-m) "\n")
                       (dispatch! {:action :clear-changes})))
-                  (= type :clear) (dispatch! {:action :clear-changes})
+                  (= type :clear) (do (dispatch! {:action :clear-model})
+                                      (dispatch! {:action :clear-changes}))
                   (= type :update) ;; TODO: Turn on update fn after added empty key map template, without throw exception, too may value in query, get permission_name
                   (do
                     (let [table-id (first (:model-columns plugin-toolkit))
-                          update-m (into {table-id (table-id table-model)} (:changes @state))]
+                          update-m (into {table-id (table-id table-model)} (:model-changes @state))]
                       (println "\nRun Update: \n" ((:update plugin-toolkit) update-m) "\n")
                       (dispatch! {:action :clear-model})
                       (dispatch! {:action :clear-changes})
@@ -275,8 +274,8 @@
                     (dispatch! {:action :clear-model}))
                   (= type :changes)
                   (do
-                    (println "\nLooks on chages: " changes)
-                    (gcomp/popup-info-window "Changes" (str changes) (state/state :app))))
+                    (println "\nLooks on chages: " model-changes)
+                    (gcomp/popup-info-window "Changes" (str model-changes) (state/state :app))))
                 (if-not (= type :changes)(((state/state :jarman-views-service) :reload)))))))
 
 (defn get-missed-props
@@ -316,38 +315,42 @@
   "Description
      Convert to component manual by map with overriding
    "
-  [state dispatch! meta-data m]
-  (let [k    (:model-param m)
-        meta (k meta-data)
+  [state dispatch! panel meta-data m]
+  (println "\nOverride")
+  (let [k           (:model-param m)
+        meta        (k meta-data)
         table-model (:model @state)]
-     (cond
-      ;; Overrided component
+    (cond
+      ;; Overrided componen
       (symbol? (:model-comp m))
       (let [comp-fn         (resolve (symbol (:model-comp m)))
             title           (rift (:model-reprs m) "")
             field-qualified (:model-param m)
             val             (if (empty? table-model) "" (field-qualified table-model))
             action          (rift (:model-action m)
-                                  (fn [e state dispatch! action state-path]
+                                  (fn [e state dispatch! action-k state-path]
                                     (dispatch!
-                                     {:action action
+                                     {:action action-k
                                       :path   state-path
                                       :value  (c/value (c/to-widget e))})))
-            pre-comp  (rift (comp-fn action val) (c/label "Can not invoke component from defview."))
+            pre-comp  (rift
+                       (comp-fn
+                        (fn [e] (action e state dispatch! :update-changes [field-qualified])) val)
+                       (c/label "Can not invoke component from defview."))
             comp      (gcomp/inpose-label title pre-comp)]
-        comp)
+        (.add panel comp))
 
       ;; Plugin as popup component
-      (vector? (:model-comp m))
-      (let [title     (rift (:model-reprs m) "")
-            qualified (:model-param m)
-            val       (if (empty? table-model) "" (qualified table-model))
-            binded    (rift (:bind-args m) {})
-            props     {:state state :dispatch! dispatch! :title title :val val}
-            props     (if (empty? binded) props (merge-binded-props props binded))
-            comp      (c/label :text "Plugin component here")] ;; TODO: Implement plugin invoker
-        comp)
-      :else (c/label :text "Wrong overrided component"))))
+      ;; (vector? (:model-comp m))
+      ;; (let [title     (rift (:model-reprs m) "")
+      ;;       qualified (:model-param m)
+      ;;       val       (if (empty? table-model) "" (qualified table-model))
+      ;;       binded    (rift (:bind-args m) {})
+      ;;       props     {:state state :dispatch! dispatch! :title title :val val}
+      ;;       props     (if (empty? binded) props (merge-binded-props props binded))
+      ;;       comp      (c/label :text "Plugin component here")] ;; TODO: Implement plugin invoker
+      ;;   comp)
+      :else (.add panel (c/label :text "Wrong overrided component")))))
 
 
 (defn convert-key-to-component
@@ -360,17 +363,30 @@
         field-qualified (:field-qualified meta)
         title           (:representation  meta)
         editable?       (:editable?       meta)
-        comp-type       (:component-type  meta)
-        val             (rift
-                         (rift (str (key (:model @state))) "")
-                         (rift (str (key (:changes @state))) ""))
+        comp-types      (:component-type  meta)
+        val             (cond
+                          (not (nil? (key (:model @state))))   (str (key (:model @state)))
+                          (not (nil? (key (:model-changes @state)))) (str (key (:model-changes @state)))
+                          :else "")
         action (fn [e]
                  (dispatch!
                   {:action :update-changes
                    :path   [field-qualified]
                    :value  (c/value (c/to-widget e))}))
         comp (gcomp/inpose-label title
-              (gcomp/state-input-text action val))]
+                                 (cond
+                                   (mt/column-type-linking (first comp-types))
+                                   (gcomp/state-input-text action val)
+                                   
+                                   (or (= mt/column-type-data (first comp-types))
+                                       (= mt/column-type-datatime (first comp-types)))
+                                   (calendar/state-input-calendar action val)
+                                   
+                                   (= mt/column-type-textarea (first comp-types))
+                                   (gcomp/state-input-text-area action val)
+
+                                   :else
+                                   (gcomp/state-input-text action val)))]
     (.add panel comp)))
 
 
@@ -382,7 +398,7 @@
   ;; (println (format "\nmeta-data %s\ntable-model %s\nmodel-defview %s\n" meta-data table-model model-defview))
   (doall (->> model-defview
               (map #(cond
-                      ;;(map? %)     (convert-map-to-component state dispatch! panel meta-data %)
+                      (map? %)     (convert-map-to-component state dispatch! panel meta-data %)
                       (keyword? %) (convert-key-to-component state dispatch! panel meta-data %)))
               ;; (filter #(not (nil? %)))
               )))
@@ -398,11 +414,11 @@
   "Description:
      Get buttons and actions from defview and create clickable button."
   [state dispatch! form-model]
-  (let [{changes :changes
+  (let [{model-changes :model-changes
          plugin-config :plugin-config} @state]
     (let [button-fn (fn [title action]
                       (if (fn? action)
-                        [(gcomp/button-basic title :onClick (fn [e] (action changes)))]))]
+                        [(gcomp/button-basic title :onClick (fn [e] (action model-changes)))]))]
       (doall (->> (:buttons plugin-config)
                   (map (fn [btn-model]
                          (if (= form-model (:form-model btn-model))
@@ -440,13 +456,17 @@
                         (gcomp/hr 10)
                         (rift (generate-custom-buttons state dispatch! form-model) nil)
                         (gcomp/hr 5)
+
                         (if (= true (:changes-button plugin-config))
                           (default-buttons state dispatch! :changes) nil)
+                        
+                        (if-not  (= false (:clear-button plugin-config))
+                             (default-buttons state dispatch! :clear) nil)
+
                         (if (empty? (:model @state))
-                          [(if-not  (= false (:insert-button plugin-config))
-                             (default-buttons state dispatch! :insert) nil)
-                           (if-not  (= false (:clear-button plugin-config))
-                             (default-buttons state dispatch! :clear) nil)]
+                          (if-not  (= false (:insert-button plugin-config))
+                            (default-buttons state dispatch! :insert) nil)
+                          
                           [(if-not (= false (:update-button plugin-config))
                              (default-buttons state dispatch! :update) nil)
                            (if-not (= false (:delete-button plugin-config))
@@ -473,19 +493,20 @@
                        (fn [model-table]
                          (if-not (= false (:update-mode (:plugin-config @state)))
                            (dispatch! {:action :set-model :value model-table}))))
-          main-layout (c/config! main-layout
-                                 :items [[(create-expand
-                                           state (fn []
-                                                   (gcomp/min-scrollbox
-                                                    (gcomp/expand-form-panel
-                                                     main-layout
-                                                     [(create-header state)
-                                                      (build-input-form state dispatch!)])
-                                                    :hscroll :never)))]
-                                         [(try
-                                            (c/vertical-panel :items [table])
-                                            (catch Exception e
-                                              (c/label :text (str "Problem with table model: " (.getMessage e)))))]])]
+          main-layout (c/config!
+                       main-layout
+                       :items [[(create-expand
+                                 state (fn []
+                                         (gcomp/min-scrollbox
+                                          (gcomp/expand-form-panel
+                                           main-layout
+                                           [(create-header state)
+                                            (build-input-form state dispatch!)])
+                                          :hscroll :never)))]
+                               [(try
+                                  (c/vertical-panel :items [table])
+                                  (catch Exception e
+                                    (c/label :text (str "Problem with table model: " (.getMessage e)))))]])]
       main-layout)
     ;; (c/label :text "Testing mode")
     ))
@@ -533,11 +554,19 @@
          :plugin-toolkit       (get-in (global-configuration-getter) (conj plugin-path :toolkit) {}) 
          :history              []
          :model                {}
-         :changes              {}}))
+         :model-changes        {}}))
 
 
 (defn- create-disptcher [atom-var]
-  (fn [action-m] (swap! atom-var (fn [state] (action-handler state action-m)))))
+  (fn [action-m]
+    (swap! atom-var (fn [state] (action-handler state action-m)))
+    ;; (println "\nModel")
+    ;; (pprint/pprint (:model @atom-var))
+    (println "\nChange")
+    (pprint/pprint (:model-changes @atom-var))
+    ;; (println "\nExport path")
+    ;; (pprint/pprint (:export-path @atom-var))
+    ))
 
 
 ;;; component

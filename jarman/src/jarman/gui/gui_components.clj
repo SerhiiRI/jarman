@@ -400,23 +400,21 @@
   "Description:
     Text input for state architecture. Need fn in action to changing state.
    Example:
-    (input-text :action (fn [e] (dispatch! {...}) :style [:halign :center])"
+    (input-text :action (fn [e] (dispatch! {...}) :args [:halign :center])"
   [func
    val
-   & {:keys [state
-             dispach!
-             border
-             font-size
+   & {:keys [font-size
              border-color-focus
              border-color-unfocus
-             args]
-      :or {state nil
-           dispach! nil
-           font-size 14
+             border
+             enabled?
+             editable?]
+      :or {font-size 14
            border-color-focus   (gtool/get-color :decorate :focus-gained)
            border-color-unfocus (gtool/get-color :decorate :focus-lost)
            border [10 10 5 5 2]
-           args []}}]
+           enabled? true
+           editable? true}}]
   (let [newBorder (fn [underline-color]
                     (b/compound-border (b/empty-border :left (nth border 0)
                                                        :right (nth border 1)
@@ -424,15 +422,16 @@
                                                        :bottom (nth border 3))
                                        (b/line-border :bottom (nth border 4)
                                                       :color underline-color)))]
-    (apply c/text
-           :text (str (rift val ""))
-           :font (gtool/getFont font-size :name "Monospaced")
-           :background (gtool/get-color :background :input)
-           :border (newBorder border-color-unfocus)
-           :listen [:focus-gained (fn [e] (c/config! e :border (newBorder border-color-focus)))
-                    :focus-lost   (fn [e] (c/config! e :border (newBorder border-color-unfocus)))
-                    :caret-update func]
-           args)))
+    (c/text
+     :text (str (rift val ""))
+     :font (gtool/getFont font-size :name "Monospaced")
+     :background (gtool/get-color :background :input)
+     :border (newBorder border-color-unfocus)
+     :enabled? enabled?
+     :editable? editable?
+     :listen [:focus-gained (fn [e] (c/config! e :border (newBorder border-color-focus)))
+              :focus-lost   (fn [e] (c/config! e :border (newBorder border-color-unfocus)))
+              :caret-update func])))
 
 (defn input-checkbox
   [& {:keys [txt
@@ -548,6 +547,36 @@
                                     (and (not (nil? store-id)) (not (= val new-v)))
                                     (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
                                     :else (reset! local-changes (dissoc @local-changes store-id)))))])
+      (scrollbox text-area :minimum-size [50 :by 100]))))
+
+(defn state-input-text-area
+  "Description:
+    Text area with state interaction.
+ Example:
+    (state-input-text-area dispatch-func val)"
+  [func
+   val
+   & {:keys [border
+             border-color-focus
+             border-color-unfocus]
+      :or {border [10 10 5 5 2]
+           border-color-focus   (gtool/get-color :decorate :focus-gained)
+           border-color-unfocus (gtool/get-color :decorate :focus-lost)}}]
+  (let [newBorder (fn [underline-color]
+                    (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
+                                       (b/line-border :bottom (nth border 4) :color underline-color)))]
+    (let [text-area (c/to-widget (javax.swing.JTextArea.))]
+      (c/config!
+       text-area
+       :text (rift val "")
+       :minimum-size [50 :by 100]
+       :border (newBorder border-color-unfocus)
+       :listen [:focus-gained (fn [e]
+                                (c/config! e :border (newBorder border-color-focus)))
+                :focus-lost   (fn [e]
+                                (c/config! e :border (newBorder border-color-unfocus)))
+                :caret-update func])
+      (func text-area)
       (scrollbox text-area :minimum-size [50 :by 100]))))
 
 (defn input-text-area-label
@@ -1167,6 +1196,21 @@
                      :args [:font (gtool/getFont  :name "Monospaced")]})
         icon (button-basic
               ""
+              :onClick (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
+                                 (c/config! input-text :text (rift new-path default-path))))
+              :args [:icon (jarman.tools.swing/image-scale icon/enter-64-png 30)])
+        panel (smig/mig-panel
+               :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[fill]0px"]
+               :items [[icon] [input-text]])]
+    panel))
+
+(defn state-input-file
+  "Description:
+     File choser"
+  [func val]
+  (let [default-path (str jarman.config.environment/user-home "/Documents")
+        input-text (state-input-text func (rift val default-path))
+        icon (button-basic ""
               :onClick (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
                                  (c/config! input-text :text (rift new-path default-path))))
               :args [:icon (jarman.tools.swing/image-scale icon/enter-64-png 30)])

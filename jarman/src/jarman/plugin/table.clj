@@ -35,28 +35,6 @@
            (java.text SimpleDateFormat)))
 
 
-;;; TO TRASH
-#_(def state
-  (atom {:plugin-path []
-         :plugin-global-config (fn [])
-         :plugin-config (fn [] (get-in
-                                ((:plugin-global-config @state))
-                                (conj (:plugin-path @state) :config)))
-         :plugin-toolkit (fn [] (get-in
-                                 ((:plugin-global-config @state))
-                                 (conj (:plugin-path @state) :toolkit)))
-         :history []
-         :model {}
-         :changes {}}))
-
-;;; TO TRASH
-#_(defn set-state-plugin-path [plugin-path]
-  (swap! state #(assoc % :plugin-path plugin-path)))
-
-;;; TO TRASH
-#_(defn set-state-plugin-global-conf [plugin-global-conf]
-  (swap! state #(assoc % :plugin-global-config plugin-global-conf)))
-
 (defn action-handler [state action-m]
   (case (:action action-m)
     :update-changes state
@@ -67,10 +45,6 @@
     :set-return (assoc state :return (:value action-m))
     ;;...
     ))
-
-
-
-
 
 (defn update-history [state action-m]
   "Description:
@@ -287,7 +261,8 @@
 
 (defn- choose-component-fn 
   "Invoke fn with components list into some var and using this var as fn.
-   Var FN - Choose component send to fn types list and props map."[comps]
+   Var FN - Choose component send to fn types list and props map."
+  [comps]
   (fn [type-coll props-coll]
     (let [props-coll (into props-coll (if (:val props-coll) {:val (:val props-coll)} {}))
           selected-comp-fn  (get-first-available-comp type-coll comps)]
@@ -308,7 +283,7 @@
   "Description
      Convert to component manual by map with overriding
    "
-  [local-changes meta-data model-defview m]
+  [plugin-toolkit plugin-config local-changes meta-data model-defview m]
   (let [k    (:model-param m)
         meta (k meta-data)]
     ;; (println "M" model-defview)
@@ -358,7 +333,7 @@
      Convert to component automaticly by keyword.
      key is an key from model in defview.
    "
-  [global-configuration local-changes meta-data table-model key]
+  [plugin-toolkit plugin-config global-configuration local-changes meta-data table-model key]
   
   (let [meta            (key meta-data)
         ;;x (println "\nMetadata for key" meta)
@@ -368,7 +343,7 @@
         comp-type       (:component-type  meta)
         key-table       (->> (rift (:key-table meta) nil) (#(if (keyword? %) % (keyword %))))
         val             (rift (str (key table-model)) "")
-        ;; x               (println "\nMeta data\n" meta-data "\nMeta\n" meta "\nComp type\n" comp-type "\nKey\n" key)
+        ;; x            (println "\nMeta data\n" meta-data "\nMeta\n" meta "\nComp type\n" comp-type "\nKey\n" key)
         props {:title title
                :store-id field-qualified
                :field-qualified field-qualified
@@ -378,7 +353,9 @@
         comp  (if (in? comp-type mt/column-type-linking) ;; If linker add more keys to props map
                 (choose-component comp-type (into props {:key-table key-table
                                                          :table-model table-model
-                                                         :global-configuration global-configuration}))
+                                                         :global-configuration global-configuration
+                                                         :plugin-toolkit plugin-toolkit
+                                                         :plugin-config  plugin-config}))
                 (choose-component comp-type props))]
     ;; (println "\nComplete-----------")
     comp))
@@ -388,12 +365,12 @@
   "Description
      Switch fn to convert by map or keyword
    "
-  [global-configuration local-changes meta-data table-model model-defview]
+  [global-configuration plugin-toolkit plugin-config local-changes meta-data table-model model-defview]
   ;; (println (format "\nmeta-data %s\ntable-model %s\nmodel-defview %s\n" meta-data table-model model-defview))
   (doall (->> model-defview
               (map #(cond
-                      (map? %)     (convert-map-to-component local-changes meta-data table-model %)
-                      (keyword? %) (convert-key-to-component global-configuration local-changes meta-data table-model %)))
+                      (map? %)     (convert-map-to-component plugin-toolkit plugin-config local-changes meta-data table-model %)
+                      (keyword? %) (convert-key-to-component plugin-toolkit plugin-config global-configuration local-changes meta-data table-model %)))
               (filter #(not (nil? %))))))
 
 
@@ -462,6 +439,8 @@
           local-changes (atom {:selected-id (table-id table-model)})
           meta-data (convert-metadata-vec-to-map (:columns-meta plugin-toolkit))
           components (convert-model-to-components-list plugin-global-config
+                                                       plugin-toolkit
+                                                       plugin-config
                                                        local-changes
                                                        meta-data
                                                        table-model
@@ -549,30 +528,43 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SPEC AND DECLARATION ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(s/def :jarman.plugin.table/keyword-list (s/and sequential? #(every? keyword? %)))
-;; (s/valid? :jarman.plugin.table/keyword-list [:suka :bliat :dsaf])
-;; (s/valid? :jarman.plugin.table/keyword-list [:suka :bliat 32])
-;; (s/valid? :jarman.plugin.table/keyword-list 3)
-(s/def :jarman.plugin.table/tables :jarman.plugin.table/keyword-list)
-(s/def :jarman.plugin.table/view-columns :jarman.plugin.table/keyword-list)
-(s/def :jarman.plugin.table/model-insert :jarman.plugin.table/keyword-list)
-(s/def :jarman.plugin.table/insert-button boolean?)
-(s/def :jarman.plugin.table/delete-button boolean?)
-(s/def :jarman.plugin.table/actions map?)
+
+;; structural SPEC pattern ;;
+
+(s/def ::keyword-list (s/and sequential? #(every? keyword? %)))
+;; (s/valid? ::keyword-list [:suka :bliat :dsaf])
+;; (s/valid? ::keyword-list [:suka :bliat 32])
+;; (s/valid? ::keyword-list 3)
+
+;; plugin SPEC patterns ;;
+
 ;;; button list
-(s/def :jarman.plugin.table/form-model #{:model-insert :model-update :model-delete :model-select})
-(s/def :jarman.plugin.table/action keyword?)
-(s/def :jarman.plugin.table/title string?)
-(s/def :jarman.plugin.table/one-button
-  (s/keys :req-un [:jarman.plugin.table/form-model
-                   :jarman.plugin.table/action
-                   :jarman.plugin.table/title]))
-(s/def :jarman.plugin.table/buttons (s/coll-of :jarman.plugin.table/one-button))
-;; (s/valid? :jarman.plugin.table/buttons
-;;           [{:form-model :model-insert, :action :upload-docs-to-db, :title "Upload document"}
-;;            {:form-model :model-update, :action :update-docs-in-db, :title "Update document info"}
-;;            {:form-model :model-update, :action :delete-doc-from-db, :title "Delete row"}])
-(s/def :jarman.plugin.table/query map?)
+(s/def ::form-model #{:model-insert :model-update :model-delete :model-select})
+(s/def ::action keyword?)
+(s/def ::title string?)
+(s/def ::one-button
+  (s/keys :req-un [::form-model
+                   ::action
+                   ::title]))
+
+
+;;; * Task list for morfeu5z
+;;; - [ ] TODO Repalce all `any?` predicate by writing for it reall spec
+;;; - [ ] TODO make big structural spec for `model-insert` and `actions`
+;;; - [ ] MAYBE change `:insert-button`... and same keys, for some DSL declaration
+;;;       for example `:display-buttons` with value `:tft` where you mean
+;;;       combination of tree keys t(true) and f(false) in order `insert` `update` `delete`.
+;;;       By the way it's really expandable pattern :)
+
+(s/def ::model-insert any?)
+(s/def ::model-update any?)
+(s/def ::actions any?)
+(s/def ::insert-button boolean?)
+(s/def ::update-button boolean?)
+(s/def ::delete-button boolean?)
+(s/def ::export-button any?)
+(s/def ::chenges-button any?)
+(s/def ::buttons (s/coll-of ::one-button))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; EXTERNAL INTERFAISE ;;;
@@ -580,8 +572,6 @@
 
 (defn table-toolkit-pipeline [configuration]
  (query-toolkit/data-toolkit-pipeline configuration {}))
-
-
 
 ;; (defn example-1
 ;;   [](dispatch!
@@ -612,12 +602,6 @@
 (defn- create-dispatcher [atom-var]
   (fn [action-m] (swap! atom-var (fn [state] (action-handler state action-m)))))
 
-;; (def a (atom {:model {}}))
-;; @a
-;; (def asd (create-dispatcher a))
-;; (asd {:action :set-model :key :model :value "a"})
-
-;;; component
 (defn table-entry [plugin-path global-configuration]
   (let [state (create-state-template plugin-path global-configuration)
         dispatch! (create-dispatcher state)

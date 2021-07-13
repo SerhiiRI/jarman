@@ -1,6 +1,7 @@
 (ns jarman.plugin.dialog-bigstring
   (:require
-   ;; Clojure toolkit 
+   ;; Clojure toolkit
+   [clojure.spec.alpha :as s]
    [clojure.string :as string]
    ;; Dev tools
    [seesaw.border]
@@ -13,6 +14,15 @@
    [jarman.logic.connection :as db]
    [jarman.logic.sql-tool :refer [select!]]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; plugin SPEC patters ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(s/def ::item-columns keyword?)
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; dialog bigstring ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn dialog-bigstring-item
   "Descrition

@@ -110,39 +110,46 @@
 (defmacro defview [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
-       ~@(for [cfg cfg-list]
-           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" (:plugin-name cfg))))
-                 plugin-component `~(symbol (format "jspl/%s" (:plugin-name cfg)))
+       ~@(for [{:keys [plugin-name plugin-config-path] :as cfg} cfg-list]
+           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" plugin-name)))
+                 plugin-test-spec        (eval `~(symbol (format "jspl/%s-spec-test"        plugin-name)))
+                 plugin-component              `~(symbol (format "jspl/%s"                  plugin-name))
                  toolkit (plugin-toolkit-pipeline cfg)]
-             (global-view-configs-set (:plugin-config-path cfg) cfg toolkit)
-             `(~plugin-component ~(:plugin-config-path cfg) ~'global-view-configs-get))) nil)))
+             (plugin-test-spec cfg)
+             (global-view-configs-set plugin-config-path cfg toolkit)
+             `(~plugin-component ~plugin-config-path ~'global-view-configs-get))) nil)))
 
 (defmacro defview-no-eval [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
        (global-view-configs-clean)
        (println "------(DEFVIEW DEBUG)------")
-       ~@(for [cfg cfg-list]
-           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" (:plugin-name cfg))))]
-             (global-view-configs-set (:plugin-config-path cfg) cfg (plugin-toolkit-pipeline cfg))
-             `(println ~(:plugin-config-path cfg))))
+       ~@(for [{:keys [plugin-name plugin-config-path] :as cfg} cfg-list]
+           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" plugin-name)))
+                 plugin-test-spec        (eval `~(symbol (format "jspl/%s-spec-test"        plugin-name)))]
+             (plugin-test-spec cfg)
+             (global-view-configs-set plugin-config-path cfg (plugin-toolkit-pipeline cfg))
+             `(println ~plugin-config-path)))
        true)))
 
 (defmacro defview-debug [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
     `(list
-      ~@(for [cfg cfg-list]
-          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" (:plugin-name cfg)))]
-            `{:cfg ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)})
-          ))))
+      ~@(for [{:keys [plugin-name] :as cfg} cfg-list]
+          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" plugin-name))
+                plugin-test-spec        `~(symbol (format "jspl/%s-spec-test"        plugin-name))]
+            `(do (~plugin-test-spec ~cfg)
+                 {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)}))))))
 
 (defmacro defview-debug-map [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
-      ~(reduce
-        (fn [m-acc cfg]
-          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" (:plugin-name cfg)))]
-            `(assoc-in ~m-acc [~@(:plugin-config-path cfg)] {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)})))
+       ~(reduce
+        (fn [cfg-acc {:keys [plugin-name plugin-config-path] :as cfg}]
+          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" plugin-name))
+                plugin-test-spec  (eval `~(symbol (format "jspl/%s-spec-test"        plugin-name)))]
+             (plugin-test-spec cfg)
+            `(assoc-in ~cfg-acc [~@plugin-config-path] {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)})))
          {} cfg-list))))
 
 ;;; TEST DEFVIEW SEGMENT
@@ -150,46 +157,53 @@
 ;; defview-no-eval        --  push data to global map, but not eval component
 ;; defview-debug          --  print list of final configuration and toolkit map for every plugin
 ;; defview-debug-map      --  just return structure like global-map, to programmer can overview structure only
-(comment
-  (defview-debug permission
-   (table
-    :name "permission"
-    :plug-place [:#tables-view-plugin]
-    :tables [:permission]
-    :view-columns [:permission.permission_name :permission.configuration]
-    :model-insert [:permission.permission_name :permission.configuration]
-    :insert-button true
-    :delete-button true
-    :actions []
-    :buttons []
-    :query
-    {:table_name :permission,
-     :column
-     [:#as_is
-      :permission.id
-      :permission.permission_name
-      :permission.configuration]})
-    (dialog-test
-     :id :my-custom-dialog
-     :name "My dialog box"
-     :permission [:user])
-    (dialog-bigstring
-     :id :my-custom-dialog
-     :name "My Bigstring box"
-     :permission [:user])
-    (dialog-table
-     :id :my-custom-dialog
-     :name "My table dialog"
-     :permission [:user]
-     :tables [:permission]
-     :view-columns [:permission.permission_name]
-     :query
-     {:table_name :permission,
-      :column
-      [:#as_is
-       :permission.id
-       :permission.permission_name
-       :permission.configuration]})))
+(defview-debug permission
+  (table
+   :name "permission"
+   :plug-place [:#tables-view-plugin]
+   :tables [:permission]
+   :view-columns [:permission.permission_name :permission.configuration]
+   :model-insert [:permission.permission_name :permission.configuration]
+   :model-update []
+   :insert-button true
+   :delete-button true
+   :actions []
+   :buttons []
+   :query
+   {:table_name :permission,
+    :column
+    [:#as_is
+     :permission.id
+     :permission.permission_name
+     :permission.configuration]})
+  (dialog-bigstring
+   :id :my-custom-dialog
+   :name "My Bigstring box"
+   :permission [:user]
+   :tables [:permission]
+   :view-columns [:permission.permission_name]
+   :item-columns :suka
+   :query
+   {:table_name :permission,
+    :column
+    [:#as_is
+     :permission.id
+     :permission.permission_name
+     :permission.configuration]})
+  (dialog-table
+   :id :my-icustom-dialog
+   :name "My table dialog"
+   :permission [:user]
+   :tables [:permission]
+   :view-columns [:permission.permission_name]
+   :query
+   {:table_name :permission,
+    :column
+    [:#as_is
+     :permission.id
+     :permission.permission_name
+     :permission.configuration]}))
+
 
 ;;; ---------------------------------------
 ;;; eval this function and take a look what
@@ -209,9 +223,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPERS `defview` ;;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn as-is [& column-list]
-  (map #(if (keyword? %) {% %} %) column-list))
 
 (defn- put-table-view-to-db [view-data]
   (((fn [f] (f f))
@@ -404,9 +415,7 @@
      and set to state with :defview-editors key.
      Invoke again to refresh state.
    Example:
-     (prepare-defview-editors-state)
-  "
-  []
+     (prepare-defview-editors-state)" []
   (let [table-and-view-coll (db/query
                              (select!
                               {:table_name :view
@@ -421,3 +430,53 @@
           {(keyword (:table_name m)) (fn [e] (view-defview-editor (:table_name m)))})
         table-and-view-coll))))))
 
+#_((defn dialog-toolkit [configuration toolkit-map]
+   (let [q (:select toolkit-map)]
+     (into toolkit-map
+           {:dialog (fn [id] ...)})))
+
+ (def UI
+   {{:title "Użytkownicy" :icon (symbol 'icon/user-blue-64)}
+    {"Edytuj uztykowników w tabeli"           [:user       :table :plugin-1]
+     "Uprawnienia" {"Edytuj tabele uprawnien" [:permission :table :plugin-1]
+                    "Przeglądaj uprawnienia"  [:permission :table :plugin-2]}}
+    "Services" [:service-contract :table :plugin-1]})
+
+ (defn- recur-walk-throw [m-config f path]
+   (let [[header tail] (map-destruct m-config)]
+     (if (some? header)
+       (let [[[k v] & _] header
+             path (conj path k)]
+         (cond
+           (map? v)
+           (do (f header path)
+               (recur-walk-throw v f path))
+
+           :else (f header path))))
+     (if (some? tail) (recur-walk-throw tail f path))))
+
+ (defn debug-flat [m]
+   (let [result-vec (atom [])
+         f (fn [[[k v] & _] path]
+             (if (vector? v)
+               (swap! result-vec conj (conj path v))))]
+     (recur-walk-throw m f [])
+     @result-vec))
+
+ (defn debug-map [m]
+   (let [result-vec (atom {})
+         f (fn [[[k v] & _] path]
+             (if (vector? v)
+               (swap! result-vec assoc-in path v)))]
+     (recur-walk-throw m f [])
+     @result-vec))
+
+ (debug-map UI)
+ (debug-flat UI)
+
+ (def UI
+   {"User"
+    {"Edytuj uztykowników w tabeli"           [:user       :table :plugin-1]
+     "Uprawnienia" {"Edytuj tabele uprawnien" [:permission :table :plugin-1]
+                    "Przeglądaj uprawnienia"  [:permission :table :plugin-2]}}
+    "Services" [:service-contract :table :plugin-1]}))

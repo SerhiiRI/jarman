@@ -67,7 +67,7 @@
        (if (not (and (nil? left) (nil? right)))
          (let [root (if (fn? root) (root) root)]
            (try
-             (c/config! root :items [(render-fn)])
+             (c/config! root :items (render-fn))
              (catch Exception e (println "\n" (str "Rerender exception:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with new component inserting
                     ))))))))
 
@@ -81,7 +81,7 @@
                        root
                        render-fn
                        watch-path)
-    (c/config! root :items [(render-fn)])))
+    (c/config! root :items (render-fn))))
 
 (defn- create-expand
   [state action]
@@ -103,7 +103,7 @@
 (defn jlabel
   [state watch-path]
   (jmig state
-        (fn [] (c/label :text (str (get-in @state watch-path))))
+        (fn [] [(c/label :text (str (get-in @state watch-path)))])
         watch-path))
 
 (defn jtext
@@ -225,11 +225,11 @@
           "Document export"
           :font (getFont 13 :bold)
           :onClick (fn [e]
-                     (gcomp/popup-window
-                      {:window-title "Documents export"
-                       :view (document-exporter state dispatch!)
-                       :size [300 300]
-                       :relative (c/to-widget e)})))))
+                     [(gcomp/popup-window
+                       {:window-title "Documents export"
+                        :view (document-exporter state dispatch!)
+                        :size [300 300]
+                        :relative (c/to-widget e)})]))))
 ;;(:model-id)
 ;; ┌───────────────────┐
 ;; │                   │
@@ -497,12 +497,12 @@
                        main-layout
                        :items [[(create-expand
                                  state (fn []
-                                         (gcomp/min-scrollbox
-                                          (gcomp/expand-form-panel
-                                           main-layout
-                                           [(create-header state)
-                                            (build-input-form state dispatch!)])
-                                          :hscroll :never)))]
+                                         [(gcomp/min-scrollbox
+                                           (gcomp/expand-form-panel
+                                            main-layout
+                                            [(create-header state)
+                                             (build-input-form state dispatch!)])
+                                           :hscroll :never)]))]
                                [(try
                                   (c/vertical-panel :items [table])
                                   (catch Exception e
@@ -562,8 +562,8 @@
     (swap! atom-var (fn [state] (action-handler state action-m)))
     ;; (println "\nModel")
     ;; (pprint/pprint (:model @atom-var))
-    (println "\nChange")
-    (pprint/pprint (:model-changes @atom-var))
+    ;; (println "\nChange")
+    ;; (pprint/pprint (:model-changes @atom-var))
     ;; (println "\nExport path")
     ;; (pprint/pprint (:export-path @atom-var))
     ))

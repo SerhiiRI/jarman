@@ -12,6 +12,7 @@
    [seesaw.mig :as smig]
    [seesaw.swingx :as swingx]
    [seesaw.chooser :as chooser]
+   [seesaw.border :as b]
    ;; Jarman toolkit
    [jarman.tools.swing :as stool]
    [jarman.tools.lang :refer :all]
@@ -58,7 +59,6 @@
     (swap! #(assoc-in % [:changes (:changes-k action-m)] (:value action-m)))
     (update-history action-m)))
 
-
 (defn- popup-table [table-fn selected frame]
   (let [dialog (seesaw.core/custom-dialog :modal? true :width 600 :height 400 :title "Select component")
         table (table-fn (fn [table-model] (seesaw.core/return-from-dialog dialog table-model)))
@@ -79,41 +79,51 @@
     (seesaw.core/show! dialog)))
 
 
-(defn input-related-popup-table ;; TODO: Auto choosing component inside popup window
+(defn show-table-in-expand [model-data]
+  (let [mig (seesaw.mig/mig-panel :constraints ["wrap 2" "0px[grow, fill]0px" "0px[:20, grow, fill, top]0px"])
+        border (b/compound-border (b/empty-border :left 4))]
+    (doall (map (fn [[k v]] (do (.add mig (seesaw.core/label :background "#E2FBDE" :text (name k) :font (gtool/getFont) :border border))
+                                (.add mig (seesaw.core/label :background "#fff" :text (str v) :font (gtool/getFont) :border border)))) model-data))
+    (.repaint mig) mig))
+
+
+
+(defn input-related-popup-table
   "Description:
-     Component for dialog window with related table. Returning selected table model (row).
-   "
-  [{:keys [global-configuration local-changes field-qualified table-model key-table]}]
-  (let
-   [connected-table (last (first (get-in global-configuration [key-table :table]))) ;; TODO: Set dedicate path to related table form data-toolkit
-    ct-conf         (:config  connected-table)
-    ct-data         (:toolkit connected-table)
-    model-to-repre  (fn [view-columns table-model]
-                      (->> view-columns
-                           (map #(% table-model))
-                           (filter some?)
-                           (string/join ", ")))]
-    (if-not (nil? (field-qualified table-model))
-      (swap! local-changes (fn [storage]
-                             (assoc storage
-                                    field-qualified
-                                    (field-qualified table-model)))))
-    (gcomp/input-text-with-atom
-     {:local-changes local-changes
-      :editable? false
-      :val (model-to-repre (:view-columns ct-conf) table-model)
-      :onClick (fn [e]
-                 (let [selected-model (popup-table (:table (gtable/create-table ct-conf ct-data))
-                                                   field-qualified
-                                                   (c/to-frame e))]
-                   (if-not (nil? (get selected-model (:model-id ct-data)))
-                     (do (c/config! e :text (model-to-repre (:view-columns ct-conf) selected-model))
-                         (swap! local-changes (fn [storage]
-                                                (assoc storage
-                                                       field-qualified
-                                                       (get selected-model (:model-id ct-data)))))))))})))
+     Component for dialog window with related table. Returning selected table model (row)."
+  [{:keys [global-configuration local-changes field-qualified table-model key-table plugin-toolkit plugin-config]}]
+  (let 
+      [connected-table ((comp first vals :table key-table) (global-configuration))
+       ct-conf         (:config  connected-table)
+       ct-data         (:toolkit connected-table)
+       dialog-path     (field-qualified (:dialog plugin-config))
+       dialog-fn       (get-in (global-configuration) (vec (concat dialog-path [:toolkit :dialog])))
+       key-column      (read-string (str key-table ".id"))
+       model-to-repre  (fn [list-tables model-colmns]
+                         (let [model-col (gtable/gui-table-model-columns list-tables (keys model-colmns))
+                               list-repr (into {} (map (fn [model] {(:key model)(:text model)})  model-col))]
+                           (into {} (map (fn [a b] {(second a) ((first a) model-colmns)}) list-repr model-colmns))))
+       colmn-panel
+      ;; (seesaw.core/vertical-panel)
+       (seesaw.core/flow-panel :hgap 0 :vgap 0)
+       component       (gcomp/expand-input 
+                        {:local-changes local-changes
+                         :panel colmn-panel
+                         :onClick (fn [e] (reset! local-changes (assoc @local-changes
+                                                                       field-qualified
+                                                                       (key-column (dialog-fn (key-column table-model)))))
+                                    (.removeAll colmn-panel)
+                                    (.add colmn-panel (show-table-in-expand
+                                                       (let [id-column (field-qualified @local-changes)]
+                                                         (if (nil? id-column) {}
+                                                             (model-to-repre (:tables ct-conf)
+                                                                             (first (filter (fn [column] (= (key-column column) id-column))
+                                                                                            ((:select ct-data)))))))))
+                                    (.revalidate colmn-panel)
+                                    (.repaint colmn-panel))})]
+    component))
 
-
+(seesaw.dev/show-options (seesaw.core/flow-panel :align :leading :hgap 0 :vgap 0))
 ;; ┌───────────────┐
 ;; │               │
 ;; │ Docs exporter |
@@ -322,10 +332,8 @@
         ;; (println "Props: " props)
         ;; (println "\nComplete-----------")
         comp)
-
       :else
-      (c/label :text "Wrong overrided component")
-      )))
+      (c/label :text "Wrong overrided component"))))
 
 
 (defn convert-key-to-component
@@ -334,7 +342,6 @@
      key is an key from model in defview.
    "
   [plugin-toolkit plugin-config global-configuration local-changes meta-data table-model key]
-  
   (let [meta            (key meta-data)
         ;;x (println "\nMetadata for key" meta)
         field-qualified (:field-qualified meta)
@@ -355,7 +362,7 @@
                                                          :table-model table-model
                                                          :global-configuration global-configuration
                                                          :plugin-toolkit plugin-toolkit
-                                                         :plugin-config  plugin-config}))
+                                                         :plugin-config plugin-config}))
                 (choose-component comp-type props))]
     ;; (println "\nComplete-----------")
     comp))
@@ -382,8 +389,7 @@
 
 (defn generate-custom-buttons
   "Description:
-     Get buttons and actions from defview and create clickable button.
-   "
+     Get buttons and actions from defview and create clickable button."
   [local-changes configuration form-model]
   (let [button-fn (fn [title action]
                     ;; (println "\nTitle " title "\nAction: "  action)
@@ -421,8 +427,7 @@
 ;; TODO: Spec dla meta-data
 (def build-input-form
   "Description:
-     Marge all components to one form
-   "
+     Marge all components to one form"
   (fn [state dispatch!
        & {:keys [more-comps]
           :or {more-comps []}}]
@@ -445,11 +450,13 @@
                                                        meta-data
                                                        table-model
                                                        (form-model plugin-config))
-          panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
+
+          panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[top]0px"]
                                 :border (sborder/empty-border :thickness 10)
                                 :items [[(c/label)]])
-          components (join-mig-items
+          components (join-mig-items ;;heyy
                       components
+;;                      (seesaw.core/vertical-panel :items components)
                       (gcomp/hr 10)
                       (generate-custom-buttons local-changes plugin-config form-model)
                       (gcomp/hr 5)
@@ -468,12 +475,13 @@
                                      (dispatch! {:action :set-model  :value {}})
                                      ((:return @state))))
                          (gcomp/hr 10)
-                         (if-not (= false (:export-button plugin-config))
+                         (if-not (=
+                                  false (:export-button plugin-config))
                            (export-button plugin-toolkit plugin-config local-changes table-model) [])])
                       ;; (do (println "Field" (:field (:table-meta data-toolkit))) [])
                       ;; (if (= "documents" (:field (:table-meta data-toolkit))) (upload-doc local-changes) [])
                       [more-comps])
-          builded (c/config! panel :items (gtool/join-mig-items components))]
+                    builded (c/config! panel :items (gtool/join-mig-items components))]
       builded)))
 
 (defn- create-header
@@ -490,8 +498,7 @@
 (defn- create-expand
   [state layout form]
   (gcomp/min-scrollbox
-   (gcomp/expand-form-panel layout [(create-header state)
-                                    form])
+   (gcomp/expand-form-panel layout [(create-header state) form])
    :hscroll :never))
 
 (def build-plugin-gui
@@ -512,6 +519,7 @@
                               (fn [model-table]
                                 (if-not (= false (:update-mode (:plugin-config @state)))
                                   (do
+                                    (println model-table)
                                     (update-mode model-table)
                                     (reload-form))))))
           ;;------------ Finish
@@ -606,7 +614,6 @@
   (let [state (create-state-template plugin-path global-configuration)
         dispatch! (create-dispatcher state)
         state!    #(deref state)]
-
     (let [;; Destruction state component
           {{plugin-title      :name
             plugin-plug-place :plug-place
@@ -618,6 +625,7 @@
           
           space (c/select (state/state :app) plugin-plug-place)
           atm (:atom-expanded-items (c/config space :user-data))]
+      (println plugin-config)
       (if (s/valid? :jarman.plugin.spec/table plugin-config)
         (if (session/allow-permission? plugin-permission)
           (swap!

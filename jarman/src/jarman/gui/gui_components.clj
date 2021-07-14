@@ -464,7 +464,7 @@
                 :items [(c/label :text (if (string? title) title "")
                                  :font (gtool/getFont 13)
                                  :foreground font-color )
-                        component]))
+                         component]))
 
 (defn input-text-area
   "Description:
@@ -511,7 +511,7 @@
                                     (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
                                     :else (reset! local-changes (dissoc @local-changes store-id)))))])
       (scrollbox text-area :minimum-size [50 :by 100]))))
-
+ 
 (defn input-text-area-label
   [& {:keys [title
              store-id
@@ -536,7 +536,6 @@
          onClick (fn [e])
          debug false}}]
   (swap! local-changes (fn [storage] (assoc storage store-id val)))
-  
   (input-text
    :args [:editable? editable?
           :enabled? enabled?
@@ -787,8 +786,7 @@
       (button-expand 'Settings' (list (button 'Do something') (button 'Do something else')))
    Needed:
       Import jarman.dev-tools
-      Function need stool/image-scale function for scalling icon
-      "
+      Function need stool/image-scale function for scalling icon"
   (fn [txt inside-btns
        & {:keys [expand
                  border
@@ -797,7 +795,9 @@
                  ico
                  ico-hover
                  id
-                 onClick]
+                 onClick
+                 over-func
+                 background]
           :or {expand :auto
                border (b/compound-border (b/empty-border :left 6))
                vsize 35
@@ -805,7 +805,9 @@
                ico  (stool/image-scale icon/plus-64-png 25)
                ico-hover (stool/image-scale icon/minus-grey-64-png 20)
                id :none
-               onClick nil}}]
+               onClick nil
+               over-func nil
+               background (gtool/get-comp :button-expand :background)}}]
     (let [atom-inside-btns (atom nil)
           inside-btns (if (nil? inside-btns) nil inside-btns)
           inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns))
@@ -813,6 +815,11 @@
           title (c/label
                  :text txt
                  :background (Color. 0 0 0 0))
+          listen (fn [func] [:mouse-entered gtool/hand-hover-on
+                             :mouse-clicked (fn [e] (func e))
+                             :focus-gained  (fn [e] (c/config! e :background (gtool/get-comp :button-expand :background-hover)))
+                             :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand :background)))
+                             :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (func e)))])
           icon (c/label
                 :size [vsize :by vsize]
                 :halign :center
@@ -820,19 +827,17 @@
                 :icon ico)
           mig (mig-panel :constraints ["wrap 1" (str "0px[" min-height ":, grow, fill]0px") "0px[fill]0px"])
           expand-btn (fn [func]
+                       (c/config! title :listen (if (nil? over-func) (listen func) [:mouse-clicked over-func
+                                                                                    :mouse-entered gtool/hand-hover-on]))
+                       (c/config! icon :listen (listen func))
                        (mig-panel
                         :constraints ["" (str "10px[grow, fill]0px[" vsize "]0px") "0px[fill]0px"]
-                        :background (gtool/get-comp :button-expand :background)
+                        :background background
                         :focusable? true
                         :border border
                         :items [[title]
-                                [icon]]
-                        :listen [:mouse-entered gtool/hand-hover-on
-                                 :mouse-clicked (fn [e] (func e))
-                                 :focus-gained  (fn [e] (c/config! e :background (gtool/get-comp :button-expand :background-hover)))
-                                 :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand :background)))
-                                 :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (func e)))]))] 
-     (if (nil? onClick)
+                                [icon]]))]
+      (if (nil? onClick)
        (let [onClick (fn [e]
                        (if-not (nil? @atom-inside-btns)
                          (if (= (count (u/children mig)) 1)
@@ -854,6 +859,14 @@
        (c/config! mig :id id :items [[(expand-btn onClick)]])))))
 
 
+(defn expand-input
+  [{:keys [local-changes panel onClick]
+    :or {local-changes (atom {})
+         panel (seesaw.mig/mig-panel)
+         onClick (fn [e])}}]
+  (button-expand "Enter" panel
+                 :over-func onClick
+                 :background "#dddddd"))
 
 
 (def button-expand-child
@@ -1603,17 +1616,20 @@
                                                (:label state)
                                                :text "Can not convert to map. Syntax error."))))})))))
 
-;; (seesaw.dev/show-options (c/styled-text))
 
-;; (seesaw.dev/show-events  (c/styled-text))
+(comment
+  ;; (seesaw.dev/show-options (c/styled-text))
 
-;;
-;; Switch focus TOTRY
-;;
-;; Run app and eval
-;; (let [lbl (c/label :text "Dupa" :focusable? true :listen [:focus-gained (fn [e] (c/config! e :foreground "#f00"))
-;;                                                           :focus-lost   (fn [e] (c/config! e :foreground "#00f"))])
-;;       mig (c/grid-panel :items [lbl (c/button :text "a" :listen [:mouse-clicked (fn [e](seesaw.core/request-focus! lbl))])])]
-;;   (popup-window
-;;    {:window-title "Popup for debug"
-;;     :view mig}))
+  ;; (seesaw.dev/show-events  (c/styled-text))
+
+  ;;
+  ;; Switch focus TOTRY
+  ;;
+  ;; Run app and eval
+  ;; (let [lbl (c/label :text "Dupa" :focusable? true :listen [:focus-gained (fn [e] (c/config! e :foreground "#f00"))
+  ;;                                                           :focus-lost   (fn [e] (c/config! e :foreground "#00f"))])
+  ;;       mig (c/grid-panel :items [lbl (c/button :text "a" :listen [:mouse-clicked (fn [e](seesaw.core/request-focus! lbl))])])]
+  ;;   (popup-window
+  ;;    {:window-title "Popup for debug"
+  ;;     :view mig}))
+  )

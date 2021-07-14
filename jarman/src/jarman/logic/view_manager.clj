@@ -123,7 +123,6 @@
   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
        (global-view-configs-clean)
-       (println "------(DEFVIEW DEBUG)------")
        ~@(for [{:keys [plugin-name plugin-config-path] :as cfg} cfg-list]
            (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" plugin-name)))
                  plugin-test-spec        (eval `~(symbol (format "jspl/%s-spec-test"        plugin-name)))]
@@ -141,6 +140,7 @@
             `(do (~plugin-test-spec ~cfg)
                  {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)}))))))
 
+
 (defmacro defview-debug-map [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
@@ -157,6 +157,7 @@
 ;; defview-no-eval        --  push data to global map, but not eval component
 ;; defview-debug          --  print list of final configuration and toolkit map for every plugin
 ;; defview-debug-map      --  just return structure like global-map, to programmer can overview structure only
+
 (defview-debug permission
   (table
    :name "permission"
@@ -214,8 +215,8 @@
   (do-view-load)
   (global-view-configs-clean)
   (global-view-configs-get)
-  ((get-in (global-view-configs-get) [:permission]))
-  ((get-in (global-view-configs-get) [:permission :dialog-test :my-custom-dialog :toolkit :dialog]))
+  (get-in (global-view-configs-get) [:user])
+  (get-in (global-view-configs-get) [ :permission :dialog-bigstring :select-name-permission])
   ((get-in (global-view-configs-get) [:permission :dialog-bigstring :my-custom-dialog :toolkit :dialog]))
   ((get-in (global-view-configs-get) [:permission :dialog-table :my-custom-dialog :toolkit :dialog])))
 
@@ -406,8 +407,7 @@
                    :onClick (fn [e] (view-defview-editor (:table_name m))) ))
                 table-and-view-coll)))]
     (.add (c/select (state/state :app) [:#expand-menu-space]) comp)
-    (.revalidate (c/to-root (state/state :app)))
-    ))
+    (.revalidate (c/to-root (state/state :app)))))
 
 (defn prepare-defview-editors-state
   "Description:

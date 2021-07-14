@@ -90,8 +90,7 @@
       [x y w h] => [100 200 250 400]
       (middle-bounds root 250 400) => [550 400 250 400]
    Needed:
-      Function need getSize function for get frame width and height
-   "
+      Function need getSize function for get frame width and height"
   ([obj width height] (let [size (getSize obj)
                             x (first size)
                             y (last size)]

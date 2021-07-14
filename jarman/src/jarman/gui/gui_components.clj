@@ -680,6 +680,58 @@
                                                     (reset! local-changes (dissoc @local-changes store-id))))))]))))
 
 
+
+(defn state-combo-box
+  "Description
+      Component using state logic so set some fn for state update,
+      vector with value and vector with representation in combo-box.
+      :start-fn can invoke function before created component.
+   Optional params:
+      editable? 
+      enabled?
+   Example:
+      (state-select-box
+        (fn [e selected new-model] {dispach! {:action ...}})
+        [1 2]
+        [\"One\" \"Two\"])
+        :start-fn (fn [] (...))"
+  [func model-v repres-v
+   & {:keys [start-fn
+             editable?
+             enabled?]
+      :or   {start-fn (fn [])
+             editable? true
+             enabled?  true}}]
+  (start-fn)
+  (let [model-m (into {} (doall
+                          (map (fn [to-k v] {(keyword to-k) v})
+                               repres-v model-v)))]
+    (c/combobox :model repres-v
+                :font (gtool/getFont 14)
+                :enabled? enabled?
+                :editable? editable?
+                :background (gtool/get-color :background :combobox)
+                :listen [:item-state-changed
+                         (fn [e]
+                           (let [selected-repres (c/config e :selected-item)
+                                 selected (get model-m (keyword selected-repres))
+                                 without-selected (filter #(not (= selected %)) model-v)
+                                 new-model (into [selected] without-selected)]
+                             (func e selected new-model)))])))
+
+
+(defn state-table-list
+  [state dispatch! action-k state-path]
+  (let [func (fn [e selected model]
+               (dispatch! {:action action-k
+                           :path   state-path
+                           :value  selected}))
+        model-v (vec (map #(get % :table_name) (jarman.logic.metadata/getset)))
+        repres-v model-v]
+    (state-combo-box func model-v repres-v)))
+
+
+
 (defn expand-form-panel
   "Description:
      Create panel who can hide inside components. 
@@ -1445,7 +1497,6 @@
                :store-id store-id
                :local-changes local-changes
                :selected-item (rift val ""))))
-
 
 
 

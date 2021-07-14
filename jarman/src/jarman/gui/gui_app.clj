@@ -271,8 +271,17 @@
             "JIT Test"
             :onClick (fn [e] ))])))))
 
-;;(jit-menu-tree-test)
-;;(state/get-atom)
+;; (jit-menu-tree-test)
+;; (state/get-atom)q
+;; (add-to-main-tree [(c/label :text "Test")])
+;; (add-to-main-tree [(gcomp/state-combo-box
+;;                     (fn [e selected model]
+;;                       (println "\n" selected)
+;;                       (println model))
+;;                     [1 2]
+;;                     ["One" "Two"]
+;;                     :start-fn (fn [] (println "Loaded")))])
+
 
 (def jarmanapp
   "Description:

@@ -327,16 +327,20 @@
             title           (rift (:model-reprs m) "")
             field-qualified (:model-param m)
             val             (if (empty? table-model) "" (field-qualified table-model))
-            action          (rift (:model-action m)
-                                  (fn [e state dispatch! action-k state-path]
-                                    (dispatch!
-                                     {:action action-k
-                                      :path   state-path
-                                      :value  (c/value (c/to-widget e))})))
-            pre-comp  (rift
-                       (comp-fn
-                        (fn [e] (action e state dispatch! :update-changes [field-qualified])) val)
-                       (c/label "Can not invoke component from defview."))
+            action          (:model-action m);; (rift (:model-action m)
+                            ;;       nil
+                            ;;       (fn [e state dispatch! action-k state-path]
+                            ;;         (dispatch!
+                            ;;          {:action action-k
+                            ;;           :path   state-path
+                            ;;           :value  (c/value (c/to-widget e))}))
+                            ;;       )
+            pre-comp  (if (or (nil? action) (empty? action))
+                        (comp-fn state dispatch! :update-changes [field-qualified])
+                        (rift
+                         (comp-fn
+                          (fn [e] (action e state dispatch! :update-changes [field-qualified])) val)
+                         (c/label "Can not invoke component from defview.")))
             comp      (gcomp/inpose-label title pre-comp)]
         (.add panel comp))
 

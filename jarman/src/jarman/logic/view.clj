@@ -5,6 +5,7 @@
 (defview
   permission
   (table
+   :id :permission
    :name
    "permission"
    :plug-place
@@ -52,6 +53,7 @@
 (defview
   user
   (table
+   :id :user
    :name
    "user"
    :plug-place
@@ -99,6 +101,7 @@
 (defview
   cache_register
   (table
+   :id :cache_register
    :name
    "cache_register"
    :plug-place
@@ -246,6 +249,7 @@
 (defview
   documents
   (table
+   :id :documents
    :name
    "documents"
    :plug-place
@@ -283,6 +287,7 @@
 (defview
   enterpreneur
   (table
+   :id :enterpreneur
    :name
    "enterpreneur"
    :plug-place
@@ -368,6 +373,7 @@
 (defview
   point_of_sale
   (table
+   :id :point_of_sale
    :name
    "point_of_sale"
    :plug-place
@@ -453,6 +459,7 @@
 (defview
   point_of_sale_group
   (table
+   :id :point_of_sale_group
    :name
    "point_of_sale_group"
    :plug-place
@@ -500,6 +507,7 @@
 (defview
   point_of_sale_group_links
   (table
+   :id :point_of_sale_group_links
    :name
    "point_of_sale_group_links"
    :plug-place
@@ -605,6 +613,7 @@
 (defview
   repair_contract
   (table
+   :id :repair_contract
    :name
    "repair_contract"
    :plug-place
@@ -824,6 +833,7 @@
 (defview
   repair_nature_of_problem
   (table
+   :id  :repair_nature_of_problem
    :name
    "repair_nature_of_problem"
    :plug-place
@@ -866,6 +876,7 @@
 (defview
   repair_reasons
   (table
+   :id :repair_reasons
    :name
    "repair_reasons"
    :plug-place
@@ -906,6 +917,7 @@
 (defview
   repair_technical_issue
   (table
+   :id :repair_technical_issue
    :name
    "repair_technical_issue"
    :plug-place
@@ -948,6 +960,7 @@
 (defview
   seal
   (table
+   :id :seal
    :name
    "seal"
    :plug-place
@@ -999,6 +1012,7 @@
 (defview
   service_contract
   (table
+   :id :service_contract
    :name
    "service_contract"
    :plug-place
@@ -1083,6 +1097,7 @@
 (defview
   service_contract_month
   (table
+   :id :service_contract_month
    :name
    "service_contract_month"
    :plug-place

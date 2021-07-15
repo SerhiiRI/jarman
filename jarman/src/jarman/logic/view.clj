@@ -7,6 +7,10 @@
  (table
   :name
   "permission"
+  :permission
+  [:user :admin :developer]
+  :active-buttons
+  [:insert :update :delete :clear]
   :plug-place
   [:#tables-view-plugin]
   :tables
@@ -93,10 +97,14 @@
  (table
   :name
   "cache_register"
+  :permission
+  [:user :admin :developer]
   :plug-place
   [:#tables-view-plugin]
   :tables
   [:cache_register :point_of_sale :enterpreneur]
+  :active-buttons
+  [:insert :update :delete :clear]
   :view-columns
   [:cache_register.id_point_of_sale
    :cache_register.name
@@ -177,16 +185,16 @@
  (table
   :name
   "Documnets import"
-  :changes-button
-  true
-  :insert-button
-  false
-  :delete-button
-  false
-  :update-button
-  false
-  :export-button
-  false
+  :permission
+  [:user :admin :developer]
+  :active-buttons
+  [:changes :clear]
+  :old-btns-info
+  {:changes-button true,
+   :insert-button false,
+   :delete-button false,
+   :update-button false,
+   :export-button false}
   :plug-place
   [:#tables-view-plugin]
   :tables
@@ -197,18 +205,16 @@
    :documents.document
    :documents.prop]
   :model-insert
-  [:documents.id
-   {:model-reprs "Table",
+  [{:model-reprs "Table",
     :model-param :documents.table_name,
     :model-comp jarman.gui.gui-components/state-table-list}
    :documents.name
    :documents.prop
    {:model-reprs "Path to file",
     :model-param :documents.document,
-    :model-comp jarman.gui.gui-components/input-file}]
+    :model-comp jarman.gui.gui-components/state-input-file}]
   :model-update
-  [:documents.id
-   {:model-reprs "Table",
+  [{:model-reprs "Table",
     :model-param :documents.table_name,
     :model-comp jarman.gui.gui-components/state-table-list}
    :documents.name
@@ -225,10 +231,10 @@
     [state]
     (let
      [insert-meta
-      {:table (first (:documents.table_name @state)),
-       :name (:documents.name @state),
-       :document (:documents.document @state),
-       :prop (:documents.prop @state)}]
+      {:table (get-in @state [:model-changes :documents.table_name]),
+       :name (get-in @state [:model-changes :documents.name]),
+       :document (get-in @state [:model-changes :documents.document]),
+       :prop (get-in @state [:model-changes :documents.prop])}]
      (println "to save" insert-meta)
      (jarman.logic.document-manager/insert-document insert-meta)
      (((jarman.logic.state/state :jarman-views-service) :reload)))),
@@ -238,10 +244,10 @@
     (println "\nState" @state)
     (let
      [insert-meta
-      {:id (:selected-id @state),
-       :table (first (:documents.table_name @state)),
-       :name (:documents.name @state),
-       :prop (:documents.prop @state)}]
+      {:id (get-in @state [:model :documents.id]),
+       :table (get-in @state [:model-changes :documents.table_name]),
+       :name (get-in @state [:model-changes :documents.name]),
+       :prop (get-in @state [:model-changes :documents.prop])}]
      (println "to save" insert-meta)
      (jarman.logic.document-manager/insert-document insert-meta)
      (((jarman.logic.state/state :jarman-views-service) :reload)))),

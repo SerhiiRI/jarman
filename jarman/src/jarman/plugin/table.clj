@@ -35,6 +35,9 @@
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
+;; {:model-reprs "Config",
+;;     :model-param :permission.configuration,
+;;     :model-comp jarman.gui.gui-components/state-input-text}
 
 (defn action-handler [state action-m]
   (case (:action action-m)
@@ -244,8 +247,7 @@
      type - :insert, :update, :delete"
   [state dispatch! type]
   (let [{plugin-toolkit :plugin-toolkit
-         table-model    :model
-         model-changes  :model-changes} @state]
+         table-model    :model} @state]
     (gcomp/button-basic
      (type {:insert "Insert new data"  :update "Update row"  :delete "Delete row"
             :export "Documents export" :changes "Form state" :clear "Clear form"})
@@ -274,8 +276,8 @@
                     (dispatch! {:action :clear-model}))
                   (= type :changes)
                   (do
-                    (println "\nLooks on chages: " model-changes)
-                    (gcomp/popup-info-window "Changes" (str model-changes) (state/state :app))))
+                    (println "\nLooks on chages: " (:model-changes @state))
+                    (gcomp/popup-info-window "Changes" (str (:model-changes @state)) (state/state :app))))
                 (if-not (= type :changes)(((state/state :jarman-views-service) :reload)))))))
 
 (defn get-missed-props
@@ -327,20 +329,19 @@
             title           (rift (:model-reprs m) "")
             field-qualified (:model-param m)
             val             (if (empty? table-model) "" (field-qualified table-model))
-            action          (:model-action m);; (rift (:model-action m)
-                            ;;       nil
-                            ;;       (fn [e state dispatch! action-k state-path]
-                            ;;         (dispatch!
-                            ;;          {:action action-k
-                            ;;           :path   state-path
-                            ;;           :value  (c/value (c/to-widget e))}))
-                            ;;       )
-            pre-comp  (if (or (nil? action) (empty? action))
-                        (comp-fn state dispatch! :update-changes [field-qualified])
-                        (rift
-                         (comp-fn
-                          (fn [e] (action e state dispatch! :update-changes [field-qualified])) val)
-                         (c/label "Can not invoke component from defview.")))
+            func            (rift (:model-action m)
+                                  (fn [e]
+                                    (dispatch!
+                                     {:action :update-changes
+                                      :path   [field-qualified]
+                                      :value  (c/value (c/to-widget e))}))
+                                  )
+            pre-comp  (comp-fn {:func      func
+                                :val       val
+                                :state     state
+                                :dispatch! dispatch!
+                                :action    :update-changes
+                                :path      [field-qualified]})
             comp      (gcomp/inpose-label title pre-comp)]
         (.add panel comp))
 
@@ -356,6 +357,13 @@
       ;;   comp)
       :else (.add panel (c/label :text "Wrong overrided component")))))
 
+;; :model-update
+;;   [:documents.id
+;;    {:model-reprs "Table",
+;;     :model-param :documents.table_name,
+;;     :model-comp jarman.gui.gui-components/state-table-list}
+;;    :documents.name
+;;    :documents.prop]
 
 (defn convert-key-to-component
   "Description
@@ -372,25 +380,25 @@
                           (not (nil? (key (:model @state))))   (str (key (:model @state)))
                           (not (nil? (key (:model-changes @state)))) (str (key (:model-changes @state)))
                           :else "")
-        action (fn [e]
+        func (fn [e]
                  (dispatch!
                   {:action :update-changes
-                   :path   [field-qualified]
+                   :path   [(rift field-qualified :unqualifited)]
                    :value  (c/value (c/to-widget e))}))
         comp (gcomp/inpose-label title
                                  (cond
                                    (mt/column-type-linking (first comp-types))
-                                   (gcomp/state-input-text action val)
+                                   (gcomp/state-input-text {:func func :val val})
                                    
                                    (or (= mt/column-type-data (first comp-types))
                                        (= mt/column-type-datatime (first comp-types)))
-                                   (calendar/state-input-calendar action val)
+                                   (calendar/state-input-calendar {:func func :val val})
                                    
                                    (= mt/column-type-textarea (first comp-types))
-                                   (gcomp/state-input-text-area action val)
+                                   (gcomp/state-input-text-area {:func func :val val})
 
                                    :else
-                                   (gcomp/state-input-text action val)))]
+                                   (gcomp/state-input-text {:func func :val val})))]
     (.add panel comp)))
 
 
@@ -414,10 +422,11 @@
   [coll]  (into {} (doall (map (fn [m] {(keyword (:field-qualified m)) m}) coll))))
 
 
+
 (defn generate-custom-buttons
   "Description:
      Get buttons and actions from defview and create clickable button."
-  [state dispatch! form-model]
+  [state dispatch! current-model]
   (let [{model-changes :model-changes
          plugin-config :plugin-config} @state]
     (let [button-fn (fn [title action]
@@ -425,8 +434,11 @@
                         [(gcomp/button-basic title :onClick (fn [e] (action model-changes)))]))]
       (doall (->> (:buttons plugin-config)
                   (map (fn [btn-model]
-                         (if (= form-model (:form-model btn-model))
-                           (button-fn (:title btn-model) (get (:actions plugin-config) (:action btn-model))) [])))
+                         (if (= current-model (:form-model btn-model))
+                           (let []
+                             (println "\nCurrent model " current-model
+                                      "\nBtn-model     " (:form-model btn-model))
+                             (button-fn (:title btn-model) (get (:actions plugin-config) (:action btn-model)))) [])))
                   (filter-nil))))))
 
 
@@ -445,39 +457,42 @@
     (let [plugin-toolkit (:plugin-toolkit @state)
           plugin-config  (:plugin-config @state)
           plugin-global-config (:plugin-global-config @state)
-          form-model (if (nil? (:model-update plugin-config))
-                       :model-insert
-                       :model-update)
+          current-model (if (empty? (:model @state))
+                          :model-insert
+                          (if (nil? (:model-update plugin-config))
+                            :model-insert
+                            :model-update))
           table-id (keyword (format "%s.id" (:field (:table-meta plugin-toolkit))))
           meta-data (convert-metadata-vec-to-map (:columns-meta plugin-toolkit))
-          model-defview (form-model plugin-config)
+          model-defview (current-model plugin-config)
           panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
                                 :border (sborder/empty-border :thickness 10)
                                 :items [[(c/label)]])
+          active-buttons (:active-buttons plugin-config)
           components (filter-nil
                       (flatten
                        (list
                         (gcomp/hr 10)
-                        (rift (generate-custom-buttons state dispatch! form-model) nil)
+                        (rift (generate-custom-buttons state dispatch! current-model) nil)
                         (gcomp/hr 5)
 
-                        (if (= true (:changes-button plugin-config))
+                        (if (in? active-buttons :changes)
                           (default-buttons state dispatch! :changes) nil)
                         
-                        (if-not  (= false (:clear-button plugin-config))
+                        (if (in? active-buttons :clear)
                              (default-buttons state dispatch! :clear) nil)
 
                         (if (empty? (:model @state))
-                          (if-not  (= false (:insert-button plugin-config))
+                          (if (in? active-buttons :insert)
                             (default-buttons state dispatch! :insert) nil)
                           
-                          [(if-not (= false (:update-button plugin-config))
+                          [(if (in? active-buttons :update)
                              (default-buttons state dispatch! :update) nil)
-                           (if-not (= false (:delete-button plugin-config))
+                           (if (in? active-buttons :delete)
                              (default-buttons state dispatch! :delete) nil)
                            (gcomp/button-basic "Back to Insert" :onClick (fn [e] (dispatch! {:action :set-model :value {}})))
                            (gcomp/hr 10)
-                           (if-not (= false (:export-button plugin-config))
+                           (if (in? active-buttons :export)
                              (export-button state dispatch!) nil)]))))]
       (convert-model-to-components-list state dispatch! panel meta-data model-defview)
       (if (not (empty? components))
@@ -486,6 +501,7 @@
           #(.add panel %)
           components)))
       panel)))
+
 
 (def build-plugin-gui
   "Description
@@ -574,6 +590,47 @@
 
 
 ;;; component
+;; (defn table-entry [plugin-path global-configuration]
+;;   (let [state (create-state-template plugin-path global-configuration)
+;;         dispatch! (create-disptcher state)
+;;         state!    #(deref state)]
+;;     (let [;; Destruction state component
+;;           {{plugin-title       :name
+;;             plugin-plug-place  :plug-place
+;;             plugin-permission  :permission
+;;             :as plugin-config} :plugin-config
+;;            plugin-global-config    :plugin-global-config
+;;            plugin-toolkit          :plugin-toolkit}
+;;           (state!)
+          
+;;           space (c/select (state/state :app) plugin-plug-place)
+;;           atm (:atom-expanded-items (c/config space :user-data))]
+;;       (if (s/valid? :jarman.plugin.spec/table plugin-config)
+;;         (if (session/allow-permission? plugin-permission)
+;;           (swap!
+;;            atm
+;;            (fn [inserted]
+;;              (conj inserted
+;;                    (gcomp/button-expand-child
+;;                     plugin-title
+;;                     :onClick
+;;                     (fn [e]
+;;                       ((state/state :jarman-views-service)
+;;                        :set-view
+;;                        :view-id (str "auto-" plugin-title)
+;;                        :title plugin-title
+;;                        :scrollable? false
+;;                        :component-fn
+;;                        (fn [] (build-plugin-gui state dispatch!)))))))))
+;;         ((state/state :alert-manager)
+;;          :set {:header "Error"
+;;                :body (str (name (:table_name plugin-config)) "  "
+;;                           (s/explain-str :jarman.plugin.spec/table plugin-title))}))
+;;       (.revalidate space))))
+
+
+
+;;; component
 (defn table-entry [plugin-path global-configuration]
   (let [state (create-state-template plugin-path global-configuration)
         dispatch! (create-disptcher state)
@@ -588,29 +645,26 @@
           (state!)
           
           space (c/select (state/state :app) plugin-plug-place)
-          atm (:atom-expanded-items (c/config space :user-data))]
+          atm (:atom-expanded-items (c/config space :user-data))
+          comp (gcomp/button-expand-child
+                plugin-title
+                :onClick
+                (fn [e]
+                  ((state/state :jarman-views-service)
+                   :set-view
+                   :view-id (str "auto-" plugin-title)
+                   :title plugin-title
+                   :scrollable? false
+                   :component-fn
+                   (fn [] (build-plugin-gui state dispatch!)))))]
       (if (s/valid? :jarman.plugin.spec/table plugin-config)
         (if (session/allow-permission? plugin-permission)
           (swap!
            atm
            (fn [inserted]
-             (conj inserted
-                   (gcomp/button-expand-child
-                    plugin-title
-                    :onClick
-                    (fn [e]
-                      ((state/state :jarman-views-service)
-                       :set-view
-                       :view-id (str "auto-" plugin-title)
-                       :title plugin-title
-                       :scrollable? false
-                       :component-fn
-                       (fn [] (build-plugin-gui state dispatch!)))))))))
+             (conj inserted comp))))
         ((state/state :alert-manager)
          :set {:header "Error"
                :body (str (name (:table_name plugin-config)) "  "
                           (s/explain-str :jarman.plugin.spec/table plugin-title))}))
       (.revalidate space))))
-
-
-

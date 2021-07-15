@@ -400,9 +400,9 @@
   "Description:
     Text input for state architecture. Need fn in action to changing state.
    Example:
-    (input-text :action (fn [e] (dispatch! {...}) :args [:halign :center])"
-  [func
-   val
+    (state-input-text {:func (fn [e] (dispatch! {...})) :val \"some value\" }"
+  [{func :func
+    val  :val}
    & {:keys [font-size
              border-color-focus
              border-color-unfocus
@@ -553,9 +553,9 @@
   "Description:
     Text area with state interaction.
  Example:
-    (state-input-text-area dispatch-func val)"
-  [func
-   val
+    (state-input-text-area {:func dispatch-func :val val})"
+  [{func :func
+    val  :val}
    & {:keys [border
              border-color-focus
              border-color-unfocus]
@@ -696,13 +696,12 @@
         [\"One\" \"Two\"])
         :start-fn (fn [] (...))"
   [func model-v repres-v
-   & {:keys [start-fn
+   & {:keys [start-v
              editable?
              enabled?]
-      :or   {start-fn (fn [])
+      :or   {start-v   (first model-v)
              editable? true
              enabled?  true}}]
-  (start-fn)
   (let [model-m (into {} (doall
                           (map (fn [to-k v] {(keyword to-k) v})
                                repres-v model-v)))]
@@ -711,24 +710,32 @@
                 :enabled? enabled?
                 :editable? editable?
                 :background (gtool/get-color :background :combobox)
+                :selected-item start-v
                 :listen [:item-state-changed
                          (fn [e]
                            (let [selected-repres (c/config e :selected-item)
                                  selected (get model-m (keyword selected-repres))
                                  without-selected (filter #(not (= selected %)) model-v)
                                  new-model (into [selected] without-selected)]
-                             (func e selected new-model)))])))
+                             (func selected)))])))
 
 
 (defn state-table-list
-  [state dispatch! action-k state-path]
-  (let [func (fn [e selected model]
-               (dispatch! {:action action-k
-                           :path   state-path
+  [{dispatch! :dispatch!
+    action    :action
+    path      :path
+    val       :val}]
+  (let [func (fn [selected]
+               (dispatch! {:action action
+                           :path   path
                            :value  selected}))
         model-v (vec (map #(get % :table_name) (jarman.logic.metadata/getset)))
-        repres-v model-v]
-    (state-combo-box func model-v repres-v)))
+        repres-v model-v
+        start-v (rift val (first model-v))]
+    (dispatch! {:action action
+                :path   path
+                :value  start-v})
+    (state-combo-box func model-v repres-v :start-v start-v)))
 
 
 
@@ -1259,9 +1266,11 @@
 (defn state-input-file
   "Description:
      File choser"
-  [func val]
+  [{func :func
+    val  :val}]
   (let [default-path (str jarman.config.environment/user-home "/Documents")
-        input-text (state-input-text func (rift val default-path))
+        input-text (state-input-text {:func func
+                                      :val  (rift val default-path)})
         icon (button-basic ""
               :onClick (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
                                  (c/config! input-text :text (rift new-path default-path))))

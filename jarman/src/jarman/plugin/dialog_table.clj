@@ -48,6 +48,5 @@
   (let [toolkit (query-toolkit/data-toolkit-pipeline configuration {})]
     {:dialog (fn [id] (dialog-table configuration toolkit id))}))
 
-(defn dialog-table-entry [plugin-path global-configuration]
-  (println global-configuration))
+(defn dialog-table-entry [plugin-path global-configuration])
 

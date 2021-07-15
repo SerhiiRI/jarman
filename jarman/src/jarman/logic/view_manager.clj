@@ -25,12 +25,14 @@
   (reset! global-view-configs {}) nil)
 (defn global-view-configs-get []
   @global-view-configs)
-(defn global-view-configs-set [path configuration toolkit]
+(defn global-view-configs-set [path configuration toolkit entry]
   {:pre [(every? keyword? path)]}
   (swap! global-view-configs
          (fn [m] (assoc-in m path
                           {:config configuration
-                           :toolkit toolkit}))) nil)
+                           :toolkit toolkit
+                           :entry entry
+                           }))) nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; CONFIG PROCESSOR ;;;
@@ -116,10 +118,10 @@
                  plugin-component              `~(symbol (format "jspl/%s"                  plugin-name))
                  toolkit (plugin-toolkit-pipeline cfg)]
              (plugin-test-spec cfg)
-             (global-view-configs-set plugin-config-path cfg toolkit)
-             `(~plugin-component ~plugin-config-path ~'global-view-configs-get))) nil)))
+             (global-view-configs-set plugin-config-path cfg toolkit (fn [] `(~plugin-component ~plugin-config-path ~'global-view-configs-get))))) nil)))
 
-(defmacro defview-no-eval [table-name & body]
+;;; DEPRECATED
+#_(defmacro defview-no-eval [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
        (global-view-configs-clean)
@@ -131,7 +133,8 @@
              `(println ~plugin-config-path)))
        true)))
 
-(defmacro defview-debug [table-name & body]
+;;; DEPRECATED
+#_(defmacro defview-debug [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
     `(list
       ~@(for [{:keys [plugin-name] :as cfg} cfg-list]
@@ -140,8 +143,8 @@
             `(do (~plugin-test-spec ~cfg)
                  {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)}))))))
 
-
-(defmacro defview-debug-map [table-name & body]
+;;; DEPRECATED
+#_(defmacro defview-debug-map [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
        ~(reduce
@@ -158,52 +161,53 @@
 ;; defview-debug          --  print list of final configuration and toolkit map for every plugin
 ;; defview-debug-map      --  just return structure like global-map, to programmer can overview structure only
 
-(defview-debug permission
-  (table
-   :name "permission"
-   :plug-place [:#tables-view-plugin]
-   :tables [:permission]
-   :view-columns [:permission.permission_name :permission.configuration]
-   :model-insert [:permission.permission_name :permission.configuration]
-   :model-update []
-   :insert-button true
-   :delete-button true
-   :actions []
-   :buttons []
-   :query
-   {:table_name :permission,
-    :column
-    [:#as_is
-     :permission.id
-     :permission.permission_name
-     :permission.configuration]})
-  (dialog-bigstring
-   :id :my-custom-dialog
-   :name "My Bigstring box"
-   :permission [:user]
-   :tables [:permission]
-   :view-columns [:permission.permission_name]
-   :item-columns :suka
-   :query
-   {:table_name :permission,
-    :column
-    [:#as_is
-     :permission.id
-     :permission.permission_name
-     :permission.configuration]})
-  (dialog-table
-   :id :my-icustom-dialog
-   :name "My table dialog"
-   :permission [:user]
-   :tables [:permission]
-   :view-columns [:permission.permission_name]
-   :query
-   {:table_name :permission,
-    :column
-    [:#as_is
-     :permission.id
-     :permission.permission_name
-     :permission.configuration]}))
+(comment
+  (defview-debug permission
+    (table
+     :name "permission"
+     :plug-place [:#tables-view-plugin]
+     :tables [:permission]
+     :view-columns [:permission.permission_name :permission.configuration]
+     :model-insert [:permission.permission_name :permission.configuration]
+     :model-update []
+     :insert-button true
+     :delete-button true
+     :actions []
+     :buttons []
+     :query
+     {:table_name :permission,
+      :column
+      [:#as_is
+       :permission.id
+       :permission.permission_name
+       :permission.configuration]})
+    (dialog-bigstring
+     :id :my-custom-dialog
+     :name "My Bigstring box"
+     :permission [:user]
+     :tables [:permission]
+     :view-columns [:permission.permission_name]
+     :item-columns :suka
+     :query
+     {:table_name :permission,
+      :column
+      [:#as_is
+       :permission.id
+       :permission.permission_name
+       :permission.configuration]})
+    (dialog-table
+     :id :my-icustom-dialog
+     :name "My table dialog"
+     :permission [:user]
+     :tables [:permission]
+     :view-columns [:permission.permission_name]
+     :query
+     {:table_name :permission,
+      :column
+      [:#as_is
+       :permission.id
+       :permission.permission_name
+       :permission.configuration]})))
 
 
 ;;; ---------------------------------------
@@ -219,6 +223,73 @@
   (get-in (global-view-configs-get) [ :permission :dialog-bigstring :select-name-permission])
   ((get-in (global-view-configs-get) [:permission :dialog-bigstring :my-custom-dialog :toolkit :dialog]))
   ((get-in (global-view-configs-get) [:permission :dialog-table :my-custom-dialog :toolkit :dialog])))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; GENERATOR MENU VIEW ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn- recur-walk-throw [m-config f path]
+  (let [[header tail] (map-destruct m-config)]
+    (if (some? header)
+      (let [[[k v] & _] header
+            path (conj path k)]
+        (cond
+          (map? v)
+          (do (f header path)
+              (recur-walk-throw v f path))
+
+          :else (f header path))))
+    (if (some? tail) (recur-walk-throw tail f path))))
+
+(defn- return-structure-flat [m]
+  (let [result-vec (atom [])
+        f (fn [[[k v] & _] path]
+            (if (vector? v)
+              (do (println (get-in (global-view-configs-get) (conj v :entry)))
+                  (swap! result-vec conj (conj path (get-in (global-view-configs-get) (conj v :entry))))
+                  )))]
+    (recur-walk-throw m f [])
+    @result-vec))
+
+
+(defn- return-structure-tree [m]
+  (let [result-vec (atom {})
+        f (fn [[[k v] & _] path]
+            ;; if value is vector then 
+            (if (vector? v)
+              (do (println k (conj v :entry))
+               (swap! result-vec assoc-in path (get-in (global-view-configs-get) (conj v :entry))))))]
+    (recur-walk-throw m f [])
+    @result-vec))
+
+
+(defn- create-header
+  ([item] {:pre [(string? item)]} item)
+  ([item icon] (cond-> {}
+                 item (assoc :item item)
+                 icon (assoc :icon icon))))
+
+(def ^:private business-menu
+  {"Admin space"
+   {"User table"                [:user :table :user]
+    "Permission edit"           [:permission :table :permission]}
+   "Sale structure"
+   {"Enterpreneur"              [:enterpreneur :table :enterpreneur]
+    "Point of sale group"       [:point_of_sale_group :table :point_of_sale_group]
+    "Point of sale group links" [:point_of_sale_group_links :table :point_of_sale_group_links],
+    "Point of sale"             [:point_of_sale :table :point_of_sale]}
+   "Repair contract"
+   {"Repair contract"           [:repair_contract :table :repair_contract]
+    "Repair reasons"            [:repair_reasons :table :repair_reasons]
+    "Repair technical issue"    [:repair_technical_issue :table :repair_technical_issue]
+    "Repair nature of problem"  [:repair_nature_of_problem :table :repair_nature_of_problem]
+    "Cache register"            [:cache_register :table :cache_register]
+    "Seal"                      [:seal :table :seal]}
+   "Service contract"
+   {"Service contract"          [:service_contract :table :service_contract]
+    "Service contract month"    [:service_contract_month :table :service_contract_month]}})
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -301,7 +372,8 @@
     (if (empty? data)
       ((state/state :alert-manager) :set {:header "Error" :body "Problem with tables. Data not found in DB"} 5)
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
-        (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))))
+        (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))
+    (return-structure-tree business-menu)))
 
 (defn- view-get
   "Description
@@ -332,8 +404,7 @@
   "Description:
      Prepared popup window with code editor for defview.
    Example:
-     (popup-defview-editor \"user\")
-  "
+     (popup-defview-editor \"user\")"
   [table-str]
   (let [dview (view-get table-str)]
       (gcomp/popup-window
@@ -430,53 +501,7 @@
           {(keyword (:table_name m)) (fn [e] (view-defview-editor (:table_name m)))})
         table-and-view-coll))))))
 
-#_((defn dialog-toolkit [configuration toolkit-map]
-   (let [q (:select toolkit-map)]
-     (into toolkit-map
-           {:dialog (fn [id] ...)})))
 
- (def UI
-   {{:title "Użytkownicy" :icon (symbol 'icon/user-blue-64)}
-    {"Edytuj uztykowników w tabeli"           [:user       :table :plugin-1]
-     "Uprawnienia" {"Edytuj tabele uprawnien" [:permission :table :plugin-1]
-                    "Przeglądaj uprawnienia"  [:permission :table :plugin-2]}}
-    "Services" [:service-contract :table :plugin-1]})
 
- (defn- recur-walk-throw [m-config f path]
-   (let [[header tail] (map-destruct m-config)]
-     (if (some? header)
-       (let [[[k v] & _] header
-             path (conj path k)]
-         (cond
-           (map? v)
-           (do (f header path)
-               (recur-walk-throw v f path))
 
-           :else (f header path))))
-     (if (some? tail) (recur-walk-throw tail f path))))
 
- (defn debug-flat [m]
-   (let [result-vec (atom [])
-         f (fn [[[k v] & _] path]
-             (if (vector? v)
-               (swap! result-vec conj (conj path v))))]
-     (recur-walk-throw m f [])
-     @result-vec))
-
- (defn debug-map [m]
-   (let [result-vec (atom {})
-         f (fn [[[k v] & _] path]
-             (if (vector? v)
-               (swap! result-vec assoc-in path v)))]
-     (recur-walk-throw m f [])
-     @result-vec))
-
- (debug-map UI)
- (debug-flat UI)
-
- (def UI
-   {"User"
-    {"Edytuj uztykowników w tabeli"           [:user       :table :plugin-1]
-     "Uprawnienia" {"Edytuj tabele uprawnien" [:permission :table :plugin-1]
-                    "Przeglądaj uprawnienia"  [:permission :table :plugin-2]}}
-    "Services" [:service-contract :table :plugin-1]}))

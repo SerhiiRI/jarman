@@ -120,15 +120,6 @@
    {:spec [:jarman.plugin.dialog-bigstring/item-columns :req-un],
     :doc "Select column to be represent one value per item"
     :examples ":permission.permission_name"}]
-  [:tables
-   {:spec [:jarman.plugin.data-toolkit/tables :req-un],
-    :doc "list of used tables"
-    :examples "[:permission]"}]
-  [:view-columns
-   {:spec [:jarman.plugin.data-toolkit/view-columns :req-un],
-    :doc "Columns which must be represented in table on right side"
-    :examples "[:permission.permission_name 
-                :permission.configuration]"}]
   [:query
    {:spec [:jarman.plugin.data-toolkit/query :req-un],
     :examples "{:table_name :permission, :column [:#as_is ...]...}",

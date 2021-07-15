@@ -65,7 +65,7 @@
                                                                           (= :edit (get map-part :display))))
                                                                   config-file-list-as-keyword)
                    restore-button (gcomp/button-expand-child (gtool/get-lang-btns :restore-last-configuration)
-              x                                               :onClick (fn [e] (do
+                                                            :onClick (fn [e] (do
                                                                                 (if-not (nil? (cm/restore-config)) ((state/state :alert-manager)
                                                                                                                     :set {:header "Success!"
                                                                                                                           :body (gtool/get-lang-alerts

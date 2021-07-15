@@ -1,4 +1,6 @@
-(ns jarman.logic.state)
+(ns jarman.logic.state
+  (:require [seesaw.core :as c]
+            [clojure.data :as data]))
 
 (def atom-state (atom {}))
 
@@ -9,7 +11,9 @@
      (set-state :mystate 42)
    "
   ([coll-map] (if (map? coll-map) (doall (map #(set-state (first %) (second %)) coll-map))))
-  ([key val] (swap! atom-state (fn [current-state] (assoc current-state key val)))))
+  ([key val] (if (vector? key)
+               (swap! atom-state (fn [current-state] (assoc-in current-state key val)))
+               (swap! atom-state (fn [current-state] (assoc current-state key val))))))
 
 (defn rm-state
   "Description:
@@ -52,8 +56,28 @@
        ;; => 41
    "
   ([] @atom-state)
-  ([key] (get @atom-state key)))
+  ([key] (if (vector? key)
+           (get-in @atom-state key)
+           (get @atom-state key))))
 
+(defn get-atom []
+  atom-state)
+
+(defn set-global-state-watcher
+  [root render-fn watch-path]
+  (if (nil? (get-in @atom-state watch-path))
+    (swap! atom-state #(assoc-in % watch-path nil)))
+  (add-watch atom-state :watcher
+             (fn [id-key state old-m new-m]
+               (let [[left right same] (data/diff (get-in new-m watch-path) (get-in old-m watch-path))]
+                 (if (not (and (nil? left) (nil? right)))
+                   (let [root (if (fn? root) (root) root)]
+                     (try
+                       (c/config! root :items (render-fn))
+                       (.revalidate (c/to-frame root))
+                       (.repaint (c/to-frame root))
+                       (catch Exception e (println "\n" (str "Rerender exception:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with new component inserting
+                              ))))))))
 
 (comment
   (set-state {:a "a" :b "b"})

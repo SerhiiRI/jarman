@@ -76,6 +76,7 @@
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]
    [jarman.logic.connection :as db]
+   [datascript.core :as d]
    [jarman.logic.sql-tool :refer [select! update! insert!
                                   alter-table! create-table! delete!
                                   show-table-columns ssql-type-parser]])
@@ -457,6 +458,67 @@
 (defn ^:private swapp-metadata [metadata-list]
   (dosync (ref-set --loaded-metadata metadata-list)))
 
+;;;;;;;;;;;;;;;;;;;;;
+;;; DB datascript ;;;
+;;;;;;;;;;;;;;;;;;;;;
+
+(defn- id-tables
+  "Description
+    return map with id and table-name for converting foreign keys in func serializer-cols
+  Example
+  (id-tables)
+  => {:seal 13 :user 2 ...}"
+  [metadata] (apply hash-map (flatten (map (fn [table-map] [(keyword (:table_name table-map))
+                                                    (:id table-map)]) metadata))))
+
+(defn- serializer-cols
+  "Description
+    Serialize structure of :columns from metadata for schema db"
+  [columns metadata]
+  (vec (map (fn [column] (conj (reduce (fn [acc [k v]]
+                                         (assoc acc (keyword "column" (name k))
+                                                (if (= k :foreign-keys) ;; convert map-refs to id
+                                                  ((first (vals (first v))) (id-tables metadata)) (if (nil? v) [] v))))
+                                       {} column))) columns)))
+
+(defn generate-data [metadata](vec (map (fn [table-map]
+                                          (let [columns ((comp :columns :prop) table-map)
+                                                id (:id table-map)
+                                                f-columns (serializer-cols columns metadata)]
+                                            (println (:column/table_name (first f-columns)))
+                                    (conj
+                                     {:db/id       (* -1 id)
+                                      :id          (:id table-map)
+                                      :table_name  (:table_name table-map)
+                                      :table       ((comp :table :prop) table-map)
+                                      :columns     f-columns}))) metadata)))
+
+(def schema
+  "Description
+    create schema (datoms) for db,
+    schema describes the set of attributes"
+  {:id                      {:db.unique :db.unique/identity}
+   :table_name              {:db.unique :db.unique/identity}
+   :table                   {}
+   :columns                 {:db/valueType   :db.type/ref
+                             :db/cardinality :db.cardinality/many
+                             :db/isComponent true} 
+   :column/field-qualified  {:db.unique :db.unique/identity}
+   :column/table_name       {:db.unique :db.unique/identity}
+   :column/foreign-keys     {:db/valueType   :db.type/ref
+                             :db.unique :db.unique/identity
+                             :db/cardinality :db.cardinality/one}})
+
+(def db (d/create-conn schema))
+
+(defn db-datoms [data]
+  (def db (d/create-conn schema))
+  (d/transact! db (generate-data data)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; back to metadata ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn getset
   "get metadate deserialized information for specified tables.
   Example 
@@ -469,6 +531,7 @@
                  (select! {:table_name :metadata})
                  (select! {:table_name :metadata
                            :where [:= (mapv (fn [x] [:= :table_name (name x)]) tables)]}))))]
+    (db-datoms metadata)
     (if (empty? tables)
       (do (swapp-metadata metadata) metadata)
       metadata)))
@@ -479,6 +542,8 @@
   (if-not tables @--loaded-metadata
           (let [tables (map name tables)]
             (vec (filter #(in? tables (:table_name %)) @--loaded-metadata)))))
+
+
 
 ;;; Make references 
 (defn- add-references-to-metadata [metadata front-reference back-reference]

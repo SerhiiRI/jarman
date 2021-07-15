@@ -1188,3 +1188,4 @@
      :enterpreneur.legal_address
      :enterpreneur.physical_address
      :enterpreneur.contacts_information]}))
+

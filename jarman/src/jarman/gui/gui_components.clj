@@ -396,6 +396,43 @@
                                         (reset! last-v new-v))))]
            args)))
 
+(defn state-input-text
+  "Description:
+    Text input for state architecture. Need fn in action to changing state.
+   Example:
+    (state-input-text {:func (fn [e] (dispatch! {...})) :val \"some value\" }"
+  [{func :func
+    val  :val}
+   & {:keys [font-size
+             border-color-focus
+             border-color-unfocus
+             border
+             enabled?
+             editable?]
+      :or {font-size 14
+           border-color-focus   (gtool/get-color :decorate :focus-gained)
+           border-color-unfocus (gtool/get-color :decorate :focus-lost)
+           border [10 10 5 5 2]
+           enabled? true
+           editable? true}}]
+  (let [newBorder (fn [underline-color]
+                    (b/compound-border (b/empty-border :left (nth border 0)
+                                                       :right (nth border 1)
+                                                       :top (nth border 2)
+                                                       :bottom (nth border 3))
+                                       (b/line-border :bottom (nth border 4)
+                                                      :color underline-color)))]
+    (c/text
+     :text (str (rift val ""))
+     :font (gtool/getFont font-size :name "Monospaced")
+     :background (gtool/get-color :background :input)
+     :border (newBorder border-color-unfocus)
+     :enabled? enabled?
+     :editable? editable?
+     :listen [:focus-gained (fn [e] (c/config! e :border (newBorder border-color-focus)))
+              :focus-lost   (fn [e] (c/config! e :border (newBorder border-color-unfocus)))
+              :caret-update func])))
+
 (defn input-checkbox
   [& {:keys [txt
              val
@@ -511,7 +548,38 @@
                                     (swap! local-changes (fn [storage] (assoc storage store-id new-v)))
                                     :else (reset! local-changes (dissoc @local-changes store-id)))))])
       (scrollbox text-area :minimum-size [50 :by 100]))))
- 
+
+(defn state-input-text-area
+  "Description:
+    Text area with state interaction.
+ Example:
+    (state-input-text-area {:func dispatch-func :val val})"
+  [{func :func
+    val  :val}
+   & {:keys [border
+             border-color-focus
+             border-color-unfocus]
+      :or {border [10 10 5 5 2]
+           border-color-focus   (gtool/get-color :decorate :focus-gained)
+           border-color-unfocus (gtool/get-color :decorate :focus-lost)}}]
+  (let [newBorder (fn [underline-color]
+                    (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
+                                       (b/line-border :bottom (nth border 4) :color underline-color)))]
+    (let [text-area (c/to-widget (javax.swing.JTextArea.))]
+      (c/config!
+       text-area
+       :text (rift val "")
+       :minimum-size [50 :by 100]
+       :border (newBorder border-color-unfocus)
+       :listen [:focus-gained (fn [e]
+                                (c/config! e :border (newBorder border-color-focus)))
+                :focus-lost   (fn [e]
+                                (c/config! e :border (newBorder border-color-unfocus)))
+                :caret-update func])
+      (func text-area)
+      (scrollbox text-area :minimum-size [50 :by 100]))))
+
+
 (defn input-text-area-label
   [& {:keys [title
              store-id
@@ -610,6 +678,65 @@
                                                   (= always-set-changes false)
                                                   (do
                                                     (reset! local-changes (dissoc @local-changes store-id))))))]))))
+
+
+
+(defn state-combo-box
+  "Description
+      Component using state logic so set some fn for state update,
+      vector with value and vector with representation in combo-box.
+      :start-fn can invoke function before created component.
+   Optional params:
+      editable? 
+      enabled?
+   Example:
+      (state-select-box
+        (fn [e selected new-model] {dispach! {:action ...}})
+        [1 2]
+        [\"One\" \"Two\"])
+        :start-fn (fn [] (...))"
+  [func model-v repres-v
+   & {:keys [start-v
+             editable?
+             enabled?]
+      :or   {start-v   (first model-v)
+             editable? true
+             enabled?  true}}]
+  (let [model-m (into {} (doall
+                          (map (fn [to-k v] {(keyword to-k) v})
+                               repres-v model-v)))]
+    (c/combobox :model repres-v
+                :font (gtool/getFont 14)
+                :enabled? enabled?
+                :editable? editable?
+                :background (gtool/get-color :background :combobox)
+                :selected-item start-v
+                :listen [:item-state-changed
+                         (fn [e]
+                           (let [selected-repres (c/config e :selected-item)
+                                 selected (get model-m (keyword selected-repres))
+                                 without-selected (filter #(not (= selected %)) model-v)
+                                 new-model (into [selected] without-selected)]
+                             (func selected)))])))
+
+
+(defn state-table-list
+  [{dispatch! :dispatch!
+    action    :action
+    path      :path
+    val       :val}]
+  (let [func (fn [selected]
+               (dispatch! {:action action
+                           :path   path
+                           :value  selected}))
+        model-v (vec (map #(get % :table_name) (jarman.logic.metadata/getset)))
+        repres-v model-v
+        start-v (rift val (first model-v))]
+    (dispatch! {:action action
+                :path   path
+                :value  start-v})
+    (state-combo-box func model-v repres-v :start-v start-v)))
+
 
 
 (defn expand-form-panel
@@ -1150,6 +1277,23 @@
                :items [[icon] [input-text]])]
     panel))
 
+(defn state-input-file
+  "Description:
+     File choser"
+  [{func :func
+    val  :val}]
+  (let [default-path (str jarman.config.environment/user-home "/Documents")
+        input-text (state-input-text {:func func
+                                      :val  (rift val default-path)})
+        icon (button-basic ""
+              :onClick (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
+                                 (c/config! input-text :text (rift new-path default-path))))
+              :args [:icon (jarman.tools.swing/image-scale icon/enter-64-png 30)])
+        panel (smig/mig-panel
+               :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[fill]0px"]
+               :items [[icon] [input-text]])]
+    panel))
+
 (defn menu-bar
   "Description:
       Bar with buttons without background.
@@ -1376,7 +1520,6 @@
                :store-id store-id
                :local-changes local-changes
                :selected-item (rift val ""))))
-
 
 
 

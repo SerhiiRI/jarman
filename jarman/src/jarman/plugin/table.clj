@@ -12,7 +12,6 @@
    [seesaw.mig :as smig]
    [seesaw.swingx :as swingx]
    [seesaw.chooser :as chooser]
-   [seesaw.border :as b]
    ;; Jarman toolkit
    [jarman.tools.swing :as stool]
    [jarman.tools.lang :refer :all]
@@ -36,28 +35,41 @@
            (java.text SimpleDateFormat)))
 
 
-(defn action-handler [state action-m]
-  (case (:action action-m)
-    :update-changes state
-    :insert-model state
-    :update-model state
-    :refresh-model state
-    :set-model  (assoc state :model  (:value action-m))
-    :set-return (assoc state :return (:value action-m))
-    ;;...
-    ))
+(def state
+  (atom {:plugin-path []
+         :plugin-global-config (fn [])
+         :plugin-config (fn [] (get-in
+                                ((:plugin-global-config @state))
+                                (conj (:plugin-path @state) :config)))
+         :plugin-toolkit (fn [] (get-in
+                                 ((:plugin-global-config @state))
+                                 (conj (:plugin-path @state) :toolkit)))
+         :history []
+         :model {}
+         :changes {}}))
+
+(defn set-state-plugin-path
+  [plugin-path]
+  (swap! state #(assoc % :plugin-path plugin-path)))
+
+(defn set-state-plugin-global-conf
+  [plugin-global-conf]
+  (swap! state #(assoc % :plugin-global-config plugin-global-conf)))
 
 (defn update-history [state action-m]
   "Description:
-    Update action history in plugin state."
+    Update action history in plugin state.
+  "
   (swap! state #(assoc % :history (conj (:history %) action-m))))
 
 (defn update-changes [state action-m]
   "Description:
-    Update changes in plugin state and add action map to plugin history."
+    Update changes in plugin state and add action map to plugin history.
+  "
   (doto state
     (swap! #(assoc-in % [:changes (:changes-k action-m)] (:value action-m)))
     (update-history action-m)))
+
 
 (defn- popup-table [table-fn selected frame]
   (let [dialog (seesaw.core/custom-dialog :modal? true :width 600 :height 400 :title "Select component")
@@ -79,51 +91,32 @@
     (seesaw.core/show! dialog)))
 
 
-(defn show-table-in-expand [model-data]
-  (let [mig (seesaw.mig/mig-panel :constraints ["wrap 2" "0px[grow, fill]0px" "0px[:20, grow, fill, top]0px"])
-        border (b/compound-border (b/empty-border :left 4))]
-    (doall (map (fn [[k v]] (do (.add mig (seesaw.core/label :background "#E2FBDE" :text (name k) :font (gtool/getFont) :border border))
-                                (.add mig (seesaw.core/label :background "#fff" :text (str v) :font (gtool/getFont) :border border)))) model-data))
-    (.repaint mig) mig))
-
-
-
-(defn input-related-popup-table
+(defn input-related-popup-table ;; TODO: Auto choosing component inside popup window
   "Description:
-     Component for dialog window with related table. Returning selected table model (row)."
-  [{:keys [global-configuration local-changes field-qualified table-model key-table plugin-toolkit plugin-config]}]
-  (let 
-      [connected-table ((comp first vals :table key-table) (global-configuration))
-       ct-conf         (:config  connected-table)
-       ct-data         (:toolkit connected-table)
-       dialog-path     (field-qualified (:dialog plugin-config))
-       dialog-fn       (get-in (global-configuration) (vec (concat dialog-path [:toolkit :dialog])))
-       key-column      (read-string (str key-table ".id"))
-       model-to-repre  (fn [list-tables model-colmns]
-                         (let [model-col (gtable/gui-table-model-columns list-tables (keys model-colmns))
-                               list-repr (into {} (map (fn [model] {(:key model)(:text model)})  model-col))]
-                           (into {} (map (fn [a b] {(second a) ((first a) model-colmns)}) list-repr model-colmns))))
-       colmn-panel
-      ;; (seesaw.core/vertical-panel)
-       (seesaw.core/flow-panel :hgap 0 :vgap 0)
-       component       (gcomp/expand-input 
-                        {:local-changes local-changes
-                         :panel colmn-panel
-                         :onClick (fn [e] (reset! local-changes (assoc @local-changes
-                                                                       field-qualified
-                                                                       (key-column (dialog-fn (key-column table-model)))))
-                                    (.removeAll colmn-panel)
-                                    (.add colmn-panel (show-table-in-expand
-                                                       (let [id-column (field-qualified @local-changes)]
-                                                         (if (nil? id-column) {}
-                                                             (model-to-repre (:tables ct-conf)
-                                                                             (first (filter (fn [column] (= (key-column column) id-column))
-                                                                                            ((:select ct-data)))))))))
-                                    (.revalidate colmn-panel)
-                                    (.repaint colmn-panel))})]
-    component))
+     Component for dialog window with related table. Returning selected table model (row).
+   "
+  [{:keys [global-configuration local-changes field-qualified table-model key-table]}]
+  (let
+   [connected-table (last (first (get-in global-configuration [key-table :table]))) ;; TODO: Set dedicate path to related table form data-toolkit
+    ct-conf         (:config  connected-table)
+    ct-data         (:toolkit connected-table)
+    model-to-repre  (fn [view-columns table-model]
+                      (->> view-columns
+                           (map #(% table-model))
+                           (filter some?)
+                           (string/join ", ")))]
+    (if-not (nil? (field-qualified table-model)) (swap! local-changes (fn [storage] (assoc storage field-qualified (field-qualified table-model)))))
+    (gcomp/input-text-with-atom
+     {:local-changes local-changes
+      :editable? false
+      :val (model-to-repre (:view-columns ct-conf) table-model)
+      :onClick (fn [e]
+                 (let [selected-model (popup-table (:table (gtable/create-table ct-conf ct-data)) field-qualified (c/to-frame e))]
+                   (if-not (nil? (get selected-model (:model-id ct-data)))
+                     (do (c/config! e :text (model-to-repre (:view-columns ct-conf) selected-model))
+                         (swap! local-changes (fn [storage] (assoc storage field-qualified (get selected-model (:model-id ct-data)))))))))})))
 
-(seesaw.dev/show-options (seesaw.core/flow-panel :align :leading :hgap 0 :vgap 0))
+
 ;; ┌───────────────┐
 ;; │               │
 ;; │ Docs exporter |
@@ -146,14 +139,9 @@
                             (get doc-model :name)
                             :onClick (fn [e]
                                        (try
-                                         ((doc/prepare-export-file
-                                           (:->table-name controller) doc-model) id (:file-path @local-changes))
-                                         ((state/state :alert-manager)
-                                          :set {:header (gtool/get-lang-alerts :success)
-                                                :body (gtool/get-lang-alerts :export-doc-ok)}  7)
-                                         (catch Exception e ((state/state :alert-manager)
-                                                             :set {:header (gtool/get-lang-alerts :faild)
-                                                                   :body (gtool/get-lang-alerts :export-doc-faild)}  7))))
+                                         ((doc/prepare-export-file (:->table-name controller) doc-model) id (:file-path @local-changes))
+                                         ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :export-doc-ok)}  7)
+                                         (catch Exception e ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :faild) :body (gtool/get-lang-alerts :export-doc-faild)}  7))))
                             :args [:halign :left])])
                         (:->documents controller))
                    (c/label))
@@ -226,7 +214,8 @@
      Return not binded map, just cut this what exist.
    Example:
      (get-missed-key {:a a} {:a a :b c :d e}) 
-       => {:b c, :d e}"
+       => {:b c, :d e}
+   "
   [binded-map orgin-map]
   (->> (map #(first %) orgin-map)
        (filter (fn [orgin-key] (not (in? (map #(first %) binded-map) orgin-key))))
@@ -271,8 +260,7 @@
 
 (defn- choose-component-fn 
   "Invoke fn with components list into some var and using this var as fn.
-   Var FN - Choose component send to fn types list and props map."
-  [comps]
+   Var FN - Choose component send to fn types list and props map."[comps]
   (fn [type-coll props-coll]
     (let [props-coll (into props-coll (if (:val props-coll) {:val (:val props-coll)} {}))
           selected-comp-fn  (get-first-available-comp type-coll comps)]
@@ -293,7 +281,7 @@
   "Description
      Convert to component manual by map with overriding
    "
-  [plugin-toolkit plugin-config local-changes meta-data model-defview m]
+  [local-changes meta-data model-defview m]
   (let [k    (:model-param m)
         meta (k meta-data)]
     ;; (println "M" model-defview)
@@ -332,8 +320,10 @@
         ;; (println "Props: " props)
         ;; (println "\nComplete-----------")
         comp)
+
       :else
-      (c/label :text "Wrong overrided component"))))
+      (c/label :text "Wrong overrided component")
+      )))
 
 
 (defn convert-key-to-component
@@ -341,7 +331,8 @@
      Convert to component automaticly by keyword.
      key is an key from model in defview.
    "
-  [plugin-toolkit plugin-config global-configuration local-changes meta-data table-model key]
+  [global-configuration local-changes meta-data table-model key]
+  
   (let [meta            (key meta-data)
         ;;x (println "\nMetadata for key" meta)
         field-qualified (:field-qualified meta)
@@ -350,19 +341,10 @@
         comp-type       (:component-type  meta)
         key-table       (->> (rift (:key-table meta) nil) (#(if (keyword? %) % (keyword %))))
         val             (rift (str (key table-model)) "")
-        ;; x            (println "\nMeta data\n" meta-data "\nMeta\n" meta "\nComp type\n" comp-type "\nKey\n" key)
-        props {:title title
-               :store-id field-qualified
-               :field-qualified field-qualified
-               :local-changes local-changes
-               :editable? editable?
-               :val val}
+        ;; x               (println "\nMeta data\n" meta-data "\nMeta\n" meta "\nComp type\n" comp-type "\nKey\n" key)
+        props {:title title :store-id field-qualified  :field-qualified field-qualified  :local-changes local-changes  :editable? editable?  :val val}
         comp  (if (in? comp-type mt/column-type-linking) ;; If linker add more keys to props map
-                (choose-component comp-type (into props {:key-table key-table
-                                                         :table-model table-model
-                                                         :global-configuration global-configuration
-                                                         :plugin-toolkit plugin-toolkit
-                                                         :plugin-config plugin-config}))
+                (choose-component comp-type (into props {:key-table key-table :table-model table-model :global-configuration global-configuration}))
                 (choose-component comp-type props))]
     ;; (println "\nComplete-----------")
     comp))
@@ -372,12 +354,12 @@
   "Description
      Switch fn to convert by map or keyword
    "
-  [global-configuration plugin-toolkit plugin-config local-changes meta-data table-model model-defview]
+  [global-configuration local-changes meta-data table-model model-defview]
   ;; (println (format "\nmeta-data %s\ntable-model %s\nmodel-defview %s\n" meta-data table-model model-defview))
   (doall (->> model-defview
               (map #(cond
-                      (map? %)     (convert-map-to-component plugin-toolkit plugin-config local-changes meta-data table-model %)
-                      (keyword? %) (convert-key-to-component plugin-toolkit plugin-config global-configuration local-changes meta-data table-model %)))
+                      (map? %)     (convert-map-to-component local-changes meta-data table-model %)
+                      (keyword? %) (convert-key-to-component global-configuration local-changes meta-data table-model %)))
               (filter #(not (nil? %))))))
 
 
@@ -389,7 +371,8 @@
 
 (defn generate-custom-buttons
   "Description:
-     Get buttons and actions from defview and create clickable button."
+     Get buttons and actions from defview and create clickable button.
+   "
   [local-changes configuration form-model]
   (let [button-fn (fn [title action]
                     ;; (println "\nTitle " title "\nAction: "  action)
@@ -427,109 +410,80 @@
 ;; TODO: Spec dla meta-data
 (def build-input-form
   "Description:
-     Marge all components to one form"
-  (fn [state dispatch!
-       & {:keys [more-comps]
-          :or {more-comps []}}]
+     Marge all components to one form
+   "
+  (fn [data-toolkit configuration global-configuration form-model
+       & {:keys [table-model more-comps]
+          :or {table-model {} more-comps []}}]
     ;; (println "\ndata-toolkit\n" data-toolkit "\nconfiguration\n" configuration)
-    (let [plugin-toolkit (:plugin-toolkit @state)
-          plugin-config  (:plugin-config @state)
-          plugin-global-config (:plugin-global-config @state)
-          form-model (if (nil? (:model-update plugin-config))
-                       :model-insert
-                       :model-update)
-          table-model (:model @state)
-          ;;x (println "\nmodel" table-model)
-          table-id (keyword (format "%s.id" (:field (:table-meta plugin-toolkit))))
+    (let [table-id (keyword (format "%s.id" (:field (:table-meta data-toolkit))))
           local-changes (atom {:selected-id (table-id table-model)})
-          meta-data (convert-metadata-vec-to-map (:columns-meta plugin-toolkit))
-          components (convert-model-to-components-list plugin-global-config
-                                                       plugin-toolkit
-                                                       plugin-config
-                                                       local-changes
-                                                       meta-data
-                                                       table-model
-                                                       (form-model plugin-config))
-
-          panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[top]0px"]
+          meta-data (convert-metadata-vec-to-map (:columns-meta data-toolkit))
+          components (convert-model-to-components-list global-configuration local-changes meta-data table-model (form-model configuration))
+          panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
                                 :border (sborder/empty-border :thickness 10)
                                 :items [[(c/label)]])
-          components (join-mig-items ;;heyy
+          components (join-mig-items
                       components
-;;                      (seesaw.core/vertical-panel :items components)
                       (gcomp/hr 10)
-                      (generate-custom-buttons local-changes plugin-config form-model)
+                      (generate-custom-buttons local-changes configuration form-model)
                       (gcomp/hr 5)
-                      (if (= true (:changes-button plugin-config))
-                        (default-buttons plugin-toolkit local-changes table-model :changes) [])
+                      (if (= true (:changes-button configuration)) (default-buttons data-toolkit local-changes table-model :changes) [])
                       (if (empty? table-model)
-                        (if-not  (= false (:insert-button plugin-config))
-                          (default-buttons plugin-toolkit local-changes table-model :insert) [])
-                        [(if-not (= false (:update-button plugin-config))
-                           (default-buttons plugin-toolkit local-changes table-model :update) [])
-                         (if-not (= false (:delete-button plugin-config))
-                           (default-buttons plugin-toolkit local-changes table-model :delete) [])
-                         (gcomp/button-basic
-                          "<< Return"
-                          :onClick (fn [e]
-                                     (dispatch! {:action :set-model  :value {}})
-                                     ((:return @state))))
+                        (if-not  (= false (:insert-button configuration))
+                          (default-buttons data-toolkit local-changes table-model :insert) [])
+                        [(if-not (= false (:update-button configuration))
+                           (default-buttons data-toolkit local-changes table-model :update) [])
+                         (if-not (= false (:delete-button configuration))
+                           (default-buttons data-toolkit local-changes table-model :delete) [])
                          (gcomp/hr 10)
-                         (if-not (=
-                                  false (:export-button plugin-config))
-                           (export-button plugin-toolkit plugin-config local-changes table-model) [])])
+                         (if-not (= false (:export-button configuration)) (export-button data-toolkit configuration local-changes table-model) [])])
                       ;; (do (println "Field" (:field (:table-meta data-toolkit))) [])
                       ;; (if (= "documents" (:field (:table-meta data-toolkit))) (upload-doc local-changes) [])
                       [more-comps])
-                    builded (c/config! panel :items (gtool/join-mig-items components))]
+          builded (c/config! panel :items (gtool/join-mig-items components))]
       builded)))
 
-(defn- create-header
-  [state]
-  (c/label :text (:representation (:table-meta (:plugin-toolkit @state))) 
-           :halign :center
-           :border (sborder/empty-border :top 10)))
 
-(defn- form-type [state]
-  (if (nil? (:model-update (:plugin-config @state)))
-    :model-insert
-    :model-update))
-
-(defn- create-expand
-  [state layout form]
-  (gcomp/min-scrollbox
-   (gcomp/expand-form-panel layout [(create-header state) form])
-   :hscroll :never))
-
-(def build-plugin-gui
+(def auto-builder--table-view
   "Description
      Prepare and merge complete big parts"
-  (fn [state dispatch!]
-    (let [;;------------ Prepare components
-          main-layout (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
-          table       (fn [] (second (u/children main-layout)))
-          form        (fn [] (first  (u/children main-layout)))
-          expand-form (fn [] (create-expand state main-layout (build-input-form state dispatch!)))
-          reload-form (fn [] (c/config! (form) :items [(expand-form)]))
-          update-mode (fn [model-table]
-                        (dispatch! {:action :set-model  :value model-table})
-                        (dispatch! {:action :set-return :value reload-form}))
-          table       (fn [] ((:table (gtable/create-table (:plugin-config  @state)
-                                                           (:plugin-toolkit @state)))
-                              (fn [model-table]
-                                (if-not (= false (:update-mode (:plugin-config @state)))
-                                  (do
-                                    (println model-table)
-                                    (update-mode model-table)
-                                    (reload-form))))))
-          ;;------------ Finish
-          main-layout        (c/config! main-layout
-                                        :items [[(c/vertical-panel :items [(expand-form)])]
-                                                [(try
-                                                   (c/vertical-panel :items [(table)])
-                                                   (catch Exception e
-                                                     (c/label :text (str "Problem with table model: " (.getMessage e)))))]])]
-      main-layout)
+  (fn [global-configuration
+       data-toolkit
+       configuration]
+    (let [x nil ;;------------ Prepare components
+          insert-form   (fn [] (build-input-form data-toolkit configuration global-configuration :model-insert))
+          view-layout   (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
+          table         (fn [] (second (u/children view-layout)))
+          header        (fn [] (c/label :text (:representation (:table-meta data-toolkit)) 
+                                        :halign :center :border (sborder/empty-border :top 10)))
+          update-form   (fn [table-model return] (gcomp/expand-form-panel
+                                                  view-layout
+                                                  [(header)
+                                                   (build-input-form
+                                                    data-toolkit
+                                                    configuration
+                                                    global-configuration 
+                                                    (doto (if (nil? (:model-update configuration))
+                                                            :model-insert
+                                                            :model-update)
+                                                      println) 
+                                                    :table-model table-model
+                                                    :more-comps [(return)])]))
+          x nil ;;------------ Build
+          expand-insert-form (gcomp/min-scrollbox (gcomp/expand-form-panel view-layout [(header) (insert-form)]) :hscroll :never)
+          back-to-insert     (fn [] [(gcomp/button-basic "<< Return to Insert Form" :onClick (fn [e] (c/config! view-layout :items [[expand-insert-form] [(table)]])))])
+          expand-update-form (fn [model-table return] (c/config! view-layout :items [[(gcomp/min-scrollbox (update-form model-table return))] [(table)]]))
+          table              (fn [] ((:table (gtable/create-table configuration data-toolkit))
+                                     (fn [model-table]
+                                       (if-not (= false (:update-mode configuration))
+                                         (expand-update-form model-table back-to-insert)))))
+          x nil ;;------------ Finish
+          view-layout        (c/config! view-layout :items [[(c/vertical-panel :items [expand-insert-form])]
+                                                            [(try
+                                                               (c/vertical-panel :items [(table)])
+                                                               (catch Exception e (c/label :text (str "Problem with table model: " (.getMessage e)))))]])]
+      view-layout)
     ;; (c/label :text "Testing mode")
     ))
 
@@ -581,6 +535,15 @@
 (defn table-toolkit-pipeline [configuration]
  (query-toolkit/data-toolkit-pipeline configuration {}))
 
+
+(defn dispatch! [action-m]
+  "Description:
+    Invoke correct function by keyword.
+  "
+  (let [action-k (:action action-m)]
+    (case action-k
+      :update-changes (update-changes state action-m))))
+
 ;; (defn example-1
 ;;   [](dispatch!
 ;;      {:action    :update-changes
@@ -596,58 +559,86 @@
 ;;                     :changes-k :user.login
 ;;                     :value     (c/value (c/to-widget e))}))])
 
-
-(defn- create-state-template [plugin-path global-configuration-getter]
-  (atom {:plugin-path          plugin-path
-         :plugin-global-config global-configuration-getter
-         :plugin-config        (get-in (global-configuration-getter) (conj plugin-path :config) {})
-         :plugin-toolkit       (get-in (global-configuration-getter) (conj plugin-path :toolkit) {}) 
-         :return               (fn [])
-         :history              []
-         :model                {}
-         :changes              {}}))
-
-(defn- create-dispatcher [atom-var]
-  (fn [action-m] (swap! atom-var (fn [state] (action-handler state action-m)))))
-
+;;; component
 (defn table-entry [plugin-path global-configuration]
-  (let [state (create-state-template plugin-path global-configuration)
-        dispatch! (create-dispatcher state)
-        state!    #(deref state)]
-    (let [;; Destruction state component
-          {{plugin-title      :name
-            plugin-plug-place :plug-place
-            plugin-permission :permission
-            :as               plugin-config} :plugin-config
-           plugin-global-config    :plugin-global-config
-           plugin-toolkit          :plugin-toolkit}
-          (state!)
-          
-          space (c/select (state/state :app) plugin-plug-place)
-          atm (:atom-expanded-items (c/config space :user-data))]
-      (println plugin-config)
-      (if (s/valid? :jarman.plugin.spec/table plugin-config)
-        (if (session/allow-permission? plugin-permission)
-          (swap!
-           atm
-           (fn [inserted]
-             (conj inserted
-                   (gcomp/button-expand-child
-                    plugin-title
-                    :onClick
-                    (fn [e]
-                      ((state/state :jarman-views-service)
-                       :set-view
-                       :view-id (str "auto-" plugin-title)
-                       :title plugin-title
-                       :scrollable? false
-                       :component-fn
-                       (fn [] (build-plugin-gui state dispatch!)))))))))
-        ((state/state :alert-manager)
-         :set {:header "Error"
-               :body (str (name (:table_name plugin-config)) "  "
-                          (s/explain-str :jarman.plugin.spec/table plugin-title))}))
-      (.revalidate space))))
+  (set-state-plugin-path plugin-path)
+  (set-state-plugin-global-conf global-configuration)
+  (let [configuration ((:plugin-config @state))
+        title (:name configuration)
+        space (c/select (state/state :app) (doto (:plug-place configuration) println))
+        ;; x (println "\nplug-place"(:plug-place configuration) "\nspace"space)
+        atm (:atom-expanded-items (c/config space :user-data))]
+    ;; (println "\nData toolkit" data-toolkit)
+    ;; (println "Allow Permission: " (session/allow-permission? (:permission configuration)))
+    ;; (println "\nPlugin path" plugin-path)
+    ;; TODO: Set invoker expand button if not exist add child invokers
+    (if (s/valid? :jarman.plugin.spec/table configuration)
+      (if (session/allow-permission? (:permission configuration))
+        (do (swap! atm (fn [inserted]
+                         (conj inserted
+                               (gcomp/button-expand-child
+                                title
+                                :onClick (fn [e] ((state/state :jarman-views-service)
+                                                  :set-view
+                                                  :view-id (str "auto-" title)
+                                                  :title title
+                                                  :scrollable? false
+                                                  :component-fn (fn [] (auto-builder--table-view
+                                                                        ((:plugin-global-config @state))
+                                                                        ((:plugin-toolkit @state))
+                                                                        ((:plugin-config  @state))))))))))))
+      ((state/state :alert-manager) :set {:header "Error"
+                                          :body (str (name (:table_name configuration)) "  "
+                                                     (s/explain-str :jarman.plugin.spec/table configuration))} 5))
+    (.revalidate space)))
 
 
 
+
+
+;;; ALEKS DONT TOUCH 
+;;; is JULIA EXAMPLE CODE HOW TO CONNECT DIALOG 
+(comment
+  (defn show-table-in-expand [model-data]
+  (let [mig (seesaw.mig/mig-panel :constraints ["wrap 2" "0px[grow, fill]0px" "0px[:20, grow, fill, top]0px"])
+        border (b/compound-border (b/empty-border :left 4))]
+    (doall (map (fn [[k v]] (do (.add mig (seesaw.core/label :background "#E2FBDE" :text (name k) :font (gtool/getFont) :border border))
+                                (.add mig (seesaw.core/label :background "#fff" :text (str v) :font (gtool/getFont) :border border)))) model-data))
+    (.repaint mig) mig))
+
+
+
+(defn input-related-popup-table
+  "Description:
+     Component for dialog window with related table. Returning selected table model (row)."
+  [{:keys [global-configuration local-changes field-qualified table-model key-table plugin-toolkit plugin-config]}]
+  (let 
+      [connected-table ((comp first vals :table key-table) (global-configuration))
+       ct-conf         (:config  connected-table)
+       ct-data         (:toolkit connected-table)
+       dialog-path     (field-qualified (:dialog plugin-config))
+       dialog-fn       (get-in (global-configuration) (vec (concat dialog-path [:toolkit :dialog])))
+       key-column      (read-string (str key-table ".id"))
+       model-to-repre  (fn [list-tables model-colmns]
+                         (let [model-col (gtable/gui-table-model-columns list-tables (keys model-colmns))
+                               list-repr (into {} (map (fn [model] {(:key model)(:text model)})  model-col))]
+                           (into {} (map (fn [a b] {(second a) ((first a) model-colmns)}) list-repr model-colmns))))
+       colmn-panel
+      ;; (seesaw.core/vertical-panel)
+       (seesaw.core/flow-panel :hgap 0 :vgap 0)
+       component       (gcomp/expand-input 
+                        {:local-changes local-changes
+                         :panel colmn-panel
+                         :onClick (fn [e] (reset! local-changes (assoc @local-changes
+                                                                       field-qualified
+                                                                       (key-column (dialog-fn (key-column table-model)))))
+                                    (.removeAll colmn-panel)
+                                    (.add colmn-panel (show-table-in-expand
+                                                       (let [id-column (field-qualified @local-changes)]
+                                                         (if (nil? id-column) {}
+                                                             (model-to-repre (:tables ct-conf)
+                                                                             (first (filter (fn [column] (= (key-column column) id-column))
+                                                                                            ((:select ct-data)))))))))
+                                    (.revalidate colmn-panel)
+                                    (.repaint colmn-panel))})]
+    component)))

@@ -98,6 +98,18 @@
                                                  (if-not (nil? store-id) 
                                                    (swap! local-changes (fn [storage] (assoc storage (keyword store-id) (value (to-widget e)))))))]])))
 
+(defn state-input-calendar
+  [{func :func
+    val  :val}
+   & {:keys [editable?
+             enabled?]
+      :or {editable? false
+           enabled? true}}]
+  (get-calendar (gcomp/state-input-text
+                 {:func func
+                  :val  val}
+                 :enabled? enabled?
+                 :editable? editable?)))
 
 
 ;; (defn- frame-calendar []

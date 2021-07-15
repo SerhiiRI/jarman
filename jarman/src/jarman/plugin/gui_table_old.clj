@@ -317,18 +317,8 @@
         {:table-model table-model
          :table (gui-table table-model)}))))
 
-(defn display
-  [content width height]
-  (let [window (seesaw.core/frame :title "Example"
-                                  :content content
-                                  :width width
-                                  :height height)]
-    (seesaw.core/show! window)))
 
-(display (seesaw.core/table :model (seesaw.table/table-model :columns [:name 
-                                                                       {:key :age :text "Age"}]
-                                                             :rows [["Jim" 65]
-                                                                    {:age 75 :name "Doris"}])) 200 300)
-
-(gui-table-model-columns [:user :permission] [:user.id :user.login :user.password :user.first_name :user.last_name :user.id_permission :permission.id :permission.permission_name :permission.configuration])
+(count (gui-table-model-columns
+       [:user :permission] [:user.id :user.login :user.password :user.first_name :user.last_name :user.id_permission :permission.id :permission.permission_name :permission.configuration]))
+;; => [{:key :user.login, :text "login"} {:key :user.password, :text "password"} {:key :user.first_name, :text "first_name"} {:key :user.last_name, :text "last_name"} {:key :user.id_permission, :text "id_permission"} {:key :permission.permission_name, :text "id_permission Permission name"} {:key :permission.configuration, :text "id_permission Configuration"}]
 

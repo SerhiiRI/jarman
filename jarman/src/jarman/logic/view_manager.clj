@@ -118,7 +118,7 @@
                  plugin-component              `~(symbol (format "jspl/%s"                  plugin-name))
                  toolkit (plugin-toolkit-pipeline cfg)]
              (plugin-test-spec cfg)
-             (global-view-configs-set plugin-config-path cfg toolkit (fn [] `(~plugin-component ~plugin-config-path ~'global-view-configs-get))))) nil)))
+             (global-view-configs-set plugin-config-path cfg toolkit (fn [] (eval `(~plugin-component ~plugin-config-path ~'global-view-configs-get)))))) nil)))
 
 ;;; DEPRECATED
 #_(defmacro defview-no-eval [table-name & body]
@@ -166,7 +166,7 @@
 ;;   (c/frame :title "Jarman-test"
 ;;            :undecorated? false
 ;;            :resizable? false
-;;            :content ((get-in (global-view-configs-get) [:user :table :user :entry]))
+;;            :content ((get-in (global-view-configs-get) [:permission :table :permission :entry]))
 ;;            :minimum-size [600 :by 600]))
 
 ;; (-> (doto (test-frame) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)

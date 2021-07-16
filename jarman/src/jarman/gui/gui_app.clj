@@ -202,74 +202,7 @@
 ;; (state/set-state
 ;;   [:jarmanapp--main-tree] [])
 
-(defn- load-default-menu-tree []
-  (state/set-state
-  [:jarmanapp--main-tree]
-  (list
-   (gcomp/button-expand
-    "Database"
-    [(gcomp/button-expand-child
-      "DB Visualiser"
-      :onClick (fn [e] 
-                 (try 
-                   ((state/state :jarman-views-service) :set-view
-                    :view-id "DB Visualiser"
-                    :title "DB Visualiser"
-                    :component-fn dbv/create-view--db-view)
-                   (catch Exception e ((state/state :alert-manager) :set {:header "Exception"
-                                                                          :body (.getMessage e)} 5)))))])
-   (gcomp/button-expand "Tables" [] :id :tables-view-plugin :expand :yes)
-   (create-expand-btns--confgen)
-   (gcomp/button-expand
-    "Debug items"
-    [(gcomp/button-expand-child "Popup window"
-                                :onClick (fn [e] (gcomp/popup-window {:relative (state/state :app)})))
-     (gcomp/button-expand-child "alert"
-                                :onClick (fn [e] ((state/state :alert-manager)
-                                                  :set {:header "Czym jest Lorem Ipsum?"
-                                                        :body "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle poligraficznym. Został po raz pierwszy użyty w XV w."} 5)))
-     (gcomp/button-expand-child "Select table"
-                                :onClick (fn [e] (gcomp/popup-window
-                                                  {:view (gcomp/select-box-table-list {})
-                                                   :relative (state/state :app) :size [250 40]})))
-     (gcomp/button-expand-child
-      "Text multiline"
-      :onClick (fn [e]
-                 (gcomp/popup-window
-                  {:window-title "Text multiline"
-                   :relative (state/state :app)
-                   :size [250 250]
-                   :view (c/text
-                          :text "Some text"
-                          :size [300 :by 300]
-                          :editable? true
-                          :multi-line? true
-                          :wrap-lines? true)})))
-     (gcomp/button-expand-child
-      "Rsyntax code editor"
-      :onClick (fn [e]
-                 (gcomp/popup-window
-                  {:window-title "Code editor"
-                   :relative (state/state :app)
-                   :size [450 350]
-                   :view (gcomp/code-editor
-                          {:dispose true
-                           :val "(fn [x] (println \"Nice ass\" x)"})})))]))))
 
-
-(defn add-to-main-tree [components-coll]
-  (let [path [:jarmanapp--main-tree]]
-    (swap! (state/get-atom) (fn [state] (assoc-in state path (concat (state path) components-coll))))))
-
-(defn- jit-menu-tree-test []
-  (add-to-main-tree
-  (concat
-   (state/state [:jarmanapp--main-tree])
-   (list (gcomp/button-expand
-          "Add just in time"
-          [(gcomp/button-expand-child
-            "JIT Test"
-            :onClick (fn [e] ))])))))
 
 ;; (jit-menu-tree-test)
 ;; (state/get-atom)q
@@ -310,7 +243,8 @@
     "Point of sale group" ["point_of_sale_group" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nPoint\n"))]},
 
    "Depper structure"
-   {"Depper 1-1"
+   {"Depper 1-0" ["Depper 2-0" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]
+    "Depper 1-1"
     {"Depper 2-1"
      {"Depper 3-1" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]
       "Depper 3-2" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]
@@ -322,17 +256,12 @@
     "Depper 1-2"
     {"Depper 2" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]}}})
 
-(defn- colors-list []
-  {1 "#7fff00"
-   2 "#00fa9a"
-   3 "#79d1c4"
-   4 "#9ae3d8"})
-
-(defn- colors-list-lite []
-  {1 "#c2ff85"
-   2 "#61ffc2"
-   3 "#9ae3d8"
-   4 "#9ae3d8"})
+(defn- expand-colors []
+  [["#eeeeee" "#eeefff"]
+   ["#7fff00" "#c2ff85"]
+   ["#00fa9a" "#61ffc2"]
+   ["#79d1c4" "#9ae3d8"]
+   ["#9ae3d8" "#9ae3d8"]])
 
 (defn- bulid-expand-by-map
   [plugin-m & {:keys [lvl] :or {lvl 0}}]
@@ -344,34 +273,93 @@
               (map?    v) (gcomp/button-expand
                            (str k)
                            (bulid-expand-by-map v :lvl (inc lvl))
-                           :left-color (if (= lvl 0) nil (get (colors-list) lvl))
-                           :bg-color   (if (= lvl 0) nil (get (colors-list) lvl))
+                           :left-color (first (nth (expand-colors) lvl))
+                           :bg-color   (first (nth (expand-colors) lvl))
                            :left (* lvl 5))
               (vector? v) (gcomp/button-expand-child
                            (str k)
                            :left (* (dec lvl) 5)
-                           :left-color (if (= lvl 0) "#fff" (get (colors-list-lite) (dec lvl)))
+                           :hover-color (second (nth (expand-colors) (dec lvl)))
                            :onClick
                            (if (fn? (last v))
-                             (fn [e]
-                               (gcomp/popup-window
-                                {:window-title k
-                                 :relative (state/state :app)
-                                 :size [600 600]
-                                 :view ((last v))}) ;; TODO: Fn crashed when try invoke
-                                        ;; ((state/state :jarman-views-service)
-                                        ;;  :set-view
-                                        ;;  :view-id (str "auto-" (first v))
-                                        ;;  :title k
-                                        ;;  :scrollable? false
-                                        ;;  :component-fn (last v)
-                                        ;;  )
-                                        )
+                             (if (= :invoke (second v))
+                               (last v)
+                               (fn [e]
+                                 ((state/state :jarman-views-service)
+                                  :set-view
+                                  :view-id (str "auto-" (first v))
+                                  :title k
+                                  :scrollable? false
+                                  :component-fn (last v))))
                                       (fn [e] (println "\nProblem with fn in " k))))
               :else (c/label :text "Uncorrect comp"))))
         plugin-m)))
 
 ;;(println "\n" (bulid-expand-by-map (example-plugins-map)))
+
+
+(defn- default-menu-items []
+  {"Database"
+   {"DB Visualizer" ["db-visualizer" dbv/create-view--db-view]},
+   
+   "Debug Items"
+   {"Popup window" ["popup-window" :invoke (fn [e] (gcomp/popup-window {:relative (state/state :app)}))],
+    "Alert"        ["test-aletr"   :invoke (fn [e] ((state/state :alert-manager)
+                                                    :set {:header "Czym jest Lorem Ipsum?"
+                                                          :body "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."}
+                                                    5))]
+    "Select table"   ["select-table"   :invoke (fn [e] (gcomp/popup-window
+                                                        {:view (gcomp/select-box-table-list {})
+                                                         :relative (state/state :app) :size [250 40]}))]
+    "Text multiline" ["text-multiline" :invoke (fn [e]
+                                                 (gcomp/popup-window
+                                                  {:window-title "Text multiline"
+                                                   :relative (state/state :app)
+                                                   :size [250 250]
+                                                   :view (c/text
+                                                          :text "Some text"
+                                                          :size [300 :by 300]
+                                                          :editable? true
+                                                          :multi-line? true
+                                                          :wrap-lines? true)}))]
+    "Rsyntax code editor" ["rsyntax-code-editor" :invoke (fn [e]
+                                                           (gcomp/popup-window
+                                                            {:window-title "Code editor"
+                                                             :relative (state/state :app)
+                                                             :size [450 350]
+                                                             :view (gcomp/code-editor
+                                                                    {:dispose true
+                                                                     :val "(fn [x] (println \"Nice ass\" x)"})}))]}})
+
+
+
+
+(defn- clean-main-menu []
+  (state/set-state :jarmanapp--main-tree []))
+
+(defn- load-static-main-menu []
+  (clean-main-menu)
+  (state/set-state
+   [:jarmanapp--main-tree]
+   (concat
+    (bulid-expand-by-map (default-menu-items))
+    [(create-expand-btns--confgen)])))
+
+
+(defn add-to-main-tree [components-coll]
+  (let [path [:jarmanapp--main-tree]]
+    (swap! (state/get-atom) (fn [state] (assoc-in state path (concat (state path) components-coll))))))
+
+(defn- jit-menu-tree-test []
+  (add-to-main-tree
+  (concat
+   (state/state [:jarmanapp--main-tree])
+   (list (gcomp/button-expand
+          "Add just in time"
+          [(gcomp/button-expand-child
+            "JIT Test"
+            :onClick (fn [e] ))])))))
+
 
 (defn- jit-expand-plugin []
   (add-to-main-tree
@@ -383,14 +371,16 @@
 ;; (state/set-state [:jarmanapp--main-tree] [])
 
 (defn- load-plugins-to-main-menu []
-  (let [plugins-m (vmg/do-view-load)
-        ;;plugins-m (example-plugins-map)
+  (let [;;plugins-m (vmg/do-view-load)
+        plugins-m (example-plugins-map)
         ]
     ;; (vmg/prepare-defview-editors-state)
     (add-to-main-tree
      (concat
       (state/state [:jarmanapp--main-tree])
       (bulid-expand-by-map plugins-m)))))
+
+(state/state [:jarmanapp--main-tree])
 
 ;; ┌─────────────┐
 ;; │             │
@@ -410,10 +400,10 @@
                           (.y (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))])
         (.dispose (seesaw.core/to-frame (state/state :app)))
         (catch Exception e (println "Last pos is nil")))
-      (load-default-menu-tree)
       (gseed/build
        :items (let [img-scale 35
                     top-offset 2]
+                (clean-main-menu)
                 (list
                  [(jarmanapp :margin-left img-scale) 0]
                  (gtool/slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser"
@@ -450,6 +440,7 @@
                  (gcomp/fake-focus :vgap top-offset :hgap img-scale))))
            (if-not (nil? @relative) (.setLocation (seesaw.core/to-frame (state/state :app)) (first @relative) (second @relative))))
     (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))
+    (load-static-main-menu)
     (load-plugins-to-main-menu)))
 
 

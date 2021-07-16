@@ -1011,11 +1011,11 @@
   (fn [title
        & {:keys [onClick
                  left
-                 left-color
+                 hover-color
                  args]
           :or {onClick (fn [e] (println "Clicked: " title))
-               left 10
-               left-color "#fff"
+               left 0
+               hover-color "#eeefff"
                args []}}]
     (apply c/label :font (gtool/getFont)
            :text (str title)
@@ -1027,7 +1027,7 @@
                     :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
                     :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
                     :focus-gained  (fn [e] (c/config! e :background ;; (gtool/get-comp :button-expand-child :background-hover)
-                                                      left-color))
+                                                      hover-color))
                     :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand-child :background)))
                     :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gtool/switch-focus))))]
            args)))

@@ -13,6 +13,7 @@
    [seesaw.mig :as smig]
    [seesaw.swingx :as swingx]
    [seesaw.chooser :as chooser]
+   [seesaw.border  :as b]
    ;; Jarman toolkit
    [jarman.tools.swing :as stool]
    [jarman.tools.lang :refer :all]
@@ -114,60 +115,49 @@
   (c/text :listen [:caret-update action]))
 
 
-(defn- popup-table [table-fn selected frame]
-  (let [dialog (seesaw.core/custom-dialog :modal? true :width 600 :height 400 :title "Select component")
-        table (table-fn (fn [table-model] (seesaw.core/return-from-dialog dialog table-model)))
-        key-p (seesaw.mig/mig-panel
-               :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px[grow, fill]0px"]
-              ;;  :border (sborder/line-border :color "#888" :bottom 1 :top 1 :left 1 :right 1)
-               :items [[(c/label :text (gtool/get-lang :tips :press-to-search) :halign :center)]
-                      ;;  [(seesaw.core/label
-                      ;;    :icon (stool/image-scale ico/left-blue-64-png 30)
-                      ;;    :listen [:mouse-entered (fn [e] (gtool/hand-hover-on e))
-                      ;;             :mouse-exited (fn [e] (gtool/hand-hover-off e))
-                      ;;             :mouse-clicked (fn [e] (.dispose (seesaw.core/to-frame e)))])]
-                       [table]])
-        key-p (key-tut/get-key-panel \q (fn [jpan] (.dispose (seesaw.core/to-frame jpan))) key-p)]
-    (seesaw.core/config! dialog :content key-p :title (gtool/get-lang :tips :related-popup-table))
-    ;; (.setUndecorated dialog true)
-    (.setLocationRelativeTo dialog frame)
-    (seesaw.core/show! dialog)))
+(defn show-table-in-expand [model-data]
+  (let [mig (seesaw.mig/mig-panel :constraints ["wrap 2" "0px[grow, fill]0px" "0px[:20, grow, fill, top]0px"])
+        border (b/compound-border (b/empty-border :left 4))]
+    (doall (map (fn [[k v]] (do (.add mig (seesaw.core/label :background "#E2FBDE" :text (name k) :font (gtool/getFont) :border border))
+                                (.add mig (seesaw.core/label :background "#fff" :text (str v) :font (gtool/getFont) :border border)))) model-data))
+    (.repaint mig) mig))
 
 
-(defn input-related-popup-table ;; TODO: Auto choosing component inside popup window
+
+(defn input-related-popup-table
   "Description:
-     Component for dialog window with related table. Returning selected table model (row). "
-  [{:keys [global-configuration local-changes field-qualified table-model key-table]}]
-  (let
-   [connected-table (last (first (get-in global-configuration [key-table :table]))) ;; TODO: Set dedicate path to related table form data-toolkit
-    ct-conf         (:config  connected-table)
-    ct-data         (:toolkit connected-table)
-    model-to-repre  (fn [view-columns table-model]
-                      (->> view-columns
-                           (map #(% table-model))
-                           (filter some?)
-                           (string/join ", ")))]
-    (if-not (nil? (field-qualified table-model))
-      (swap! local-changes (fn [storage]
-                             (assoc storage
-                                    field-qualified
-                                    (field-qualified table-model)))))
-    (gcomp/input-text-with-atom
-     {:local-changes local-changes
-      :editable? false
-      :val (model-to-repre (:view-columns ct-conf) table-model)
-      :onClick (fn [e]
-                 (let [selected-model (popup-table (:table (gtable/create-table ct-conf ct-data))
-                                                   field-qualified
-                                                   (c/to-frame e))]
-                   (if-not (nil? (get selected-model (:model-id ct-data)))
-                     (do (c/config! e :text (model-to-repre (:view-columns ct-conf) selected-model))
-                         (swap! local-changes (fn [storage]
-                                                (assoc storage
-                                                       field-qualified
-                                                       (get selected-model (:model-id ct-data)))))))))})))
-
-
+     Component for dialog window with related table. Returning selected table model (row)."
+  [{:keys [global-configuration local-changes field-qualified table-model key-table plugin-toolkit plugin-config]}]
+  (let 
+      [connected-table ((comp first vals :table key-table) (global-configuration))
+       ct-conf         (:config  connected-table)
+       ct-data         (:toolkit connected-table)
+       dialog-path     (field-qualified (:dialog plugin-config))
+       dialog-fn       (get-in (global-configuration) (vec (concat dialog-path [:toolkit :dialog])))
+       key-column      (read-string (str key-table ".id"))
+       model-to-repre  (fn [list-tables model-colmns]
+                         (let [model-col (gtable/gui-table-model-columns list-tables (keys model-colmns))
+                               list-repr (into {} (map (fn [model] {(:key model)(:text model)})  model-col))]
+                           (into {} (map (fn [a b] {(second a) ((first a) model-colmns)}) list-repr model-colmns))))
+       colmn-panel
+      ;; (seesaw.core/vertical-panel)
+       (seesaw.core/flow-panel :hgap 0 :vgap 0)
+       component       (gcomp/expand-input 
+                        {:local-changes local-changes
+                         :panel colmn-panel
+                         :onClick (fn [e] (reset! local-changes (assoc @local-changes
+                                                                       field-qualified
+                                                                       (key-column (dialog-fn (key-column table-model)))))
+                                    (.removeAll colmn-panel)
+                                    (.add colmn-panel (show-table-in-expand
+                                                       (let [id-column (field-qualified @local-changes)]
+                                                         (if (nil? id-column) {}
+                                                             (model-to-repre (:tables ct-conf)
+                                                                             (first (filter (fn [column] (= (key-column column) id-column))
+                                                                                            ((:select ct-data)))))))))
+                                    (.revalidate colmn-panel)
+                                    (.repaint colmn-panel))})]
+    component))
 
 ;; ┌───────────────┐
 ;; │               │
@@ -388,6 +378,7 @@
         comp (gcomp/inpose-label title
                                  (cond
                                    (mt/column-type-linking (first comp-types))
+                                ;;   (input-related-popup-table )
                                    (gcomp/state-input-text {:func func :val val})
                                    
                                    (or (= mt/column-type-data (first comp-types))
@@ -685,6 +676,12 @@
 
 
 
+
+(defn table-entry [plugin-path global-configuration]
+  (let [state (create-state-template plugin-path global-configuration)
+        dispatch! (create-disptcher state)
+        state!    #(deref state)]
+    (build-plugin-gui state dispatch!)))
 
 
 

@@ -917,25 +917,30 @@
       "
   (fn [txt inside-btns
        & {:keys [expand
-                 border
                  vsize
                  min-height
                  ico
                  ico-hover
                  id
+                 left-color
+                 left
                  onClick]
           :or {expand :auto
-               border (b/compound-border (b/empty-border :left 6))
                vsize 35
                min-height 200
                ico  (stool/image-scale icon/plus-64-png 25)
                ico-hover (stool/image-scale icon/minus-grey-64-png 20)
                id :none
+               left-color nil
+               left 0
                onClick nil}}]
     (let [atom-inside-btns (atom nil)
           inside-btns (if (nil? inside-btns) nil inside-btns)
           inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns))
           ico (if (or (= :always expand) (not (nil? inside-btns))) ico nil)
+          bg-color (gtool/get-comp :button-expand :background)
+          left-color (if (nil? left-color) bg-color left-color)
+          border-fn (fn [](b/compound-border (b/line-border :left left :color left-color)))
           title (c/label
                  :text txt
                  :background (Color. 0 0 0 0))
@@ -948,9 +953,9 @@
           expand-btn (fn [func]
                        (mig-panel
                         :constraints ["" (str "10px[grow, fill]0px[" vsize "]0px") "0px[fill]0px"]
-                        :background (gtool/get-comp :button-expand :background)
+                        :background bg-color
                         :focusable? true
-                        :border border
+                        :border (border-fn)
                         :items [[title]
                                 [icon]]
                         :listen [:mouse-entered gtool/hand-hover-on

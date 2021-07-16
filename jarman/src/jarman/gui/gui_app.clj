@@ -313,17 +313,29 @@
     "Point of sale group" ["point_of_sale_group" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nPoint\n"))]},
 
    "Depper structure"
-   {"Depper 1"
+   {"Depper 1-1"
+    {"Depper 2"
+     {"Depper 3" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]}}
+    "Depper 1-2"
     {"Depper 2" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]}}})
 
+(defn- colors-list []
+  {1 "#7ed696"
+   2 "#d6ad78"
+   3 "#79d1c4"})
+
 (defn- bulid-expand-by-map
-  [plugin-m]
+  [plugin-m & {:keys [lvl] :or {lvl 0}}]
   (doall
    (map (fn [coll]
           (let [k (first  coll)
                 v (second coll)]
             (cond
-              (map?    v) (gcomp/button-expand (str k) (bulid-expand-by-map v))
+              (map?    v) (gcomp/button-expand
+                           (str k)
+                           (bulid-expand-by-map v :lvl (inc lvl))
+                           :left-color (if (= lvl 0) nil (get (colors-list) lvl))
+                           :left (* lvl 10))
               (vector? v) (gcomp/button-expand-child
                            (str k)
                            :onClick (if (fn? (last v))

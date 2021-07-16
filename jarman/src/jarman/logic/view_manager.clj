@@ -115,10 +115,10 @@
        ~@(for [{:keys [plugin-name plugin-config-path] :as cfg} cfg-list]
            (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" plugin-name)))
                  plugin-test-spec        (eval `~(symbol (format "jspl/%s-spec-test"        plugin-name)))
-                 plugin-component              `~(symbol (format "jspl/%s"                  plugin-name))
+                 plugin-component        (resolve `~(symbol (format "jspl/%s"                  plugin-name)))
                  toolkit (plugin-toolkit-pipeline cfg)]
              (plugin-test-spec cfg)
-             (global-view-configs-set plugin-config-path cfg toolkit (fn [] (eval `(~plugin-component ~plugin-config-path ~'global-view-configs-get)))))) nil)))
+             (global-view-configs-set plugin-config-path cfg toolkit (eval (fn [] (plugin-component plugin-config-path global-view-configs-get)))))) nil)))
 
 ;;; DEPRECATED
 #_(defmacro defview-no-eval [table-name & body]
@@ -193,19 +193,20 @@
        :permission.id
        :permission.permission_name
        :permission.configuration]})
-    (dialog-table
-     :id :permission-table
-     :name "permission dialog"
-     :permission [:user]
-     :tables [:permission]
-     :view-columns [:permission.permission_name :permission.configuration]
-     :query
-     {:table_name :permission,
-      :column
-      [:#as_is
-       :permission.id
-       :permission.permission_name
-       :permission.configuration]})))
+    ;; (dialog-table
+    ;;  :id :permission-table
+    ;;  :name "permission dialog"
+    ;;  :permission [:user]
+    ;;  :tables [:permission]
+    ;;  :view-columns [:permission.permission_name :permission.configuration]
+    ;;  :query
+    ;;  {:table_name :permission,
+    ;;   :column
+    ;;   [:#as_is
+    ;;    :permission.id
+    ;;    :permission.permission_name
+    ;;    :permission.configuration]})
+    ))
 
 
 ;;; ---------------------------------------
@@ -298,7 +299,8 @@
     "Seal"                      [:seal :table :seal]}
    "Service contract"
    {"Service contract"          [:service_contract :table :service_contract]
-    "Service contract month"    [:service_contract_month :table :service_contract_month]}})
+    "Service contract month"    [:service_contract_month :table :service_contract_month]}
+   })
 
 
 

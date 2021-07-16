@@ -98,11 +98,11 @@
 
 
 (defn dialog-toolkit [configuration toolkit-map]
-  (let [query     ((:select toolkit-map))
+  (let [query     (:select toolkit-map)
         get-item  (fn [m] ((:item-column configuration) m))
         get-id    (fn [m] (:model-id toolkit-map))]
     (into toolkit-map
-          {:dialog (fn [id] (dialog-bigstring query get-item get-id id))})))
+          {:dialog (fn [id] (dialog-bigstring (query) get-item get-id id))})))
 
 (defn dialog-bigstring-toolkit-pipeline [plugin-config]
   (let [toolkit-map (query-toolkit/data-toolkit-pipeline plugin-config {})]

@@ -369,6 +369,15 @@
 
 ;; (jit-expand-plugin)
 ;; (state/set-state [:jarmanapp--main-tree] [])
+;; (vmg/do-view-load)
+;; (defn- test-frame []
+;;   (c/frame :title "Jarman-test"
+;;            :undecorated? false
+;;            :resizable? false
+;;            :content ((last (get-in (vmg/do-view-load) ["Admin space" "User table"])))
+;;            :minimum-size [600 :by 600]))
+
+;; (-> (doto (test-frame) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
 
 (defn- load-plugins-to-main-menu []
   (let [;;plugins-m (vmg/do-view-load)

@@ -573,11 +573,7 @@
 (s/def ::model-insert any?)
 (s/def ::model-update any?)
 (s/def ::actions any?)
-(s/def ::insert-button boolean?)
-(s/def ::update-button boolean?)
-(s/def ::delete-button boolean?)
-(s/def ::export-button any?)
-(s/def ::chenges-button any?)
+(s/def ::active-buttons any?)
 (s/def ::buttons (s/coll-of ::one-button))
 
 

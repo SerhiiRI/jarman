@@ -61,26 +61,10 @@
                  :model-param :documents.table_name
                  :bind-args {:store_id :state_is}
                  :model-comp jarman.gui.gui-components/select-box-table-list}"}]
-  [:insert-button
-   {:spec [:jarman.plugin.table/insert-button :opt-un],
-    :doc "Set button with insert new data fn from form."
-    :examples "true"}]
-  [:update-button
-   {:spec [:jarman.plugin.table/update-button :opt-un],
-    :doc "Set button with update selected row fn from form."
-    :examples "true"}]
-  [:delete-button
-   {:spec [:jarman.plugin.table/delete-button :opt-un],
-    :doc "Set button with delete row fn."
-    :examples "true"}]
-  [:export-button
-   {:spec [:jarman.plugin.table/export-button :opt-un],
-    :doc "Set button which open popup window with export to document."
-    :examples "true"}]
-  [:changes-button
-   {:spec [:jarman.plugin.table/chenges-button :opt-un],
-    :doc "Set debug button. Can display in popup window changes to insert or update. Actually it showing state."
-    :examples "true"}]  
+  [:active-buttons
+   {:spec [:jarman.plugin.table/active-buttons :req-un]
+    :doc "Select buttons who should be display."
+    :examples ":active-buttons [:insert :update :delete :clear :changes]"}]
   [:actions
    {:spec [:jarman.plugin.table/actions :req-un],
     :doc "Realise additional logic to standart CRUD operation. Set key as id and some fn with state as arg.

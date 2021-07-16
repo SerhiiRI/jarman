@@ -291,7 +291,7 @@
                                   :title k
                                   :scrollable? false
                                   :component-fn (last v))))
-                                      (fn [e] (println "\nProblem with fn in " k))))
+                             (fn [e] (println "\nProblem with fn in " k v))))
               :else (c/label :text "Uncorrect comp"))))
         plugin-m)))
 
@@ -380,10 +380,10 @@
 ;; (-> (doto (test-frame) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
 
 (defn- load-plugins-to-main-menu []
-  (let [;;plugins-m (vmg/do-view-load)
-        plugins-m (example-plugins-map)
+  (let [plugins-m (vmg/do-view-load)
+        ;;plugins-m (example-plugins-map)
         ]
-    ;; (vmg/prepare-defview-editors-state)
+    (vmg/prepare-defview-editors-state)
     (add-to-main-tree
      (concat
       (state/state [:jarmanapp--main-tree])

@@ -161,15 +161,27 @@
 ;; defview-debug          --  print list of final configuration and toolkit map for every plugin
 ;; defview-debug-map      --  just return structure like global-map, to programmer can overview structure only
 
+;;; TEST FRAME
+;; (defn- test-frame []
+;;   (c/frame :title "Jarman-test"
+;;            :undecorated? false
+;;            :resizable? false
+;;            :content ((get-in (global-view-configs-get) [:user :table :user :entry]))
+;;            :minimum-size [600 :by 600]))
+
+;; (-> (doto (test-frame) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
+
 (comment
-  (defview-debug permission
+  ;; TEST SEGMENT 
+  (defview
+    permission
     (table
+     :id :permission
      :name "permission"
      :plug-place [:#tables-view-plugin]
      :tables [:permission]
      :view-columns [:permission.permission_name :permission.configuration]
      :model-insert [:permission.permission_name :permission.configuration]
-     :model-update []
      :insert-button true
      :delete-button true
      :actions []
@@ -181,26 +193,12 @@
        :permission.id
        :permission.permission_name
        :permission.configuration]})
-    (dialog-bigstring
-     :id :my-custom-dialog
-     :name "My Bigstring box"
-     :permission [:user]
-     :tables [:permission]
-     :view-columns [:permission.permission_name]
-     :item-columns :suka
-     :query
-     {:table_name :permission,
-      :column
-      [:#as_is
-       :permission.id
-       :permission.permission_name
-       :permission.configuration]})
     (dialog-table
-     :id :my-icustom-dialog
-     :name "My table dialog"
+     :id :permission-table
+     :name "permission dialog"
      :permission [:user]
      :tables [:permission]
-     :view-columns [:permission.permission_name]
+     :view-columns [:permission.permission_name :permission.configuration]
      :query
      {:table_name :permission,
       :column
@@ -217,10 +215,12 @@
 
 (comment
   (do-view-load)
+  (return-structure-tree business-menu)
+  (return-structure-flat business-menu)
   (global-view-configs-clean)
   (global-view-configs-get)
   (get-in (global-view-configs-get) [:user])
-  (get-in (global-view-configs-get) [ :permission :dialog-bigstring :select-name-permission])
+  (get-in (global-view-configs-get)  [:permission :dialog-bigstring :select-name-permission])
   ((get-in (global-view-configs-get) [:permission :dialog-bigstring :my-custom-dialog :toolkit :dialog]))
   ((get-in (global-view-configs-get) [:permission :dialog-table :my-custom-dialog :toolkit :dialog])))
 
@@ -228,6 +228,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GENERATOR MENU VIEW ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; TODO @riser
+;;; - [ ] make request as returned result 
+(defn transform-path-to-request [^clojure.lang.PersistentVector plugin-path]
+  (let [{{plugin-title      :name
+          plugin-plug-place :plug-place
+          plugin-permission :permission
+          :as plugin-config} :config
+         plugin-toolkit      :toolkit
+         plugin-entry        :entry}
+        (get-in (global-view-configs-get) plugin-path)]
+    [plugin-title
+     plugin-plug-place
+     plugin-permission
+     plugin-entry]))
 
 (defn- recur-walk-throw [m-config f path]
   (let [[header tail] (map-destruct m-config)]
@@ -246,23 +261,18 @@
   (let [result-vec (atom [])
         f (fn [[[k v] & _] path]
             (if (vector? v)
-              (do (println (get-in (global-view-configs-get) (conj v :entry)))
-                  (swap! result-vec conj (conj path (get-in (global-view-configs-get) (conj v :entry))))
-                  )))]
+              (swap! result-vec conj (conj path (transform-path-to-request v)))))]
     (recur-walk-throw m f [])
     @result-vec))
-
 
 (defn- return-structure-tree [m]
   (let [result-vec (atom {})
         f (fn [[[k v] & _] path]
             ;; if value is vector then 
             (if (vector? v)
-              (do (println k (conj v :entry))
-               (swap! result-vec assoc-in path (get-in (global-view-configs-get) (conj v :entry))))))]
+              (swap! result-vec assoc-in path (transform-path-to-request v))))]
     (recur-walk-throw m f [])
     @result-vec))
-
 
 (defn- create-header
   ([item] {:pre [(string? item)]} item)
@@ -292,9 +302,9 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; HELPERS `defview` ;;; 
-;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; loader chain for `defview` ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- put-table-view-to-db [view-data]
   (((fn [f] (f f))

@@ -921,6 +921,7 @@
                  ico
                  ico-hover
                  id
+                 bg-color
                  left-color
                  left
                  onClick
@@ -931,6 +932,7 @@
                ico  (stool/image-scale icon/plus-64-png 25)
                ico-hover (stool/image-scale icon/minus-grey-64-png 20)
                id :none
+               bg-color nil
                left-color nil
                left 0
                onClick nil
@@ -940,9 +942,9 @@
           inside-btns (if (nil? inside-btns) nil inside-btns)
           inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns))
           ico (if (or (= :always expand) (not (nil? inside-btns))) ico nil)
-          bg-color (gtool/get-comp :button-expand :background)
+          bg-color (if (nil? bg-color) (gtool/get-comp :button-expand :background) bg-color)
           left-color (if (nil? left-color) bg-color left-color)
-          border-fn (fn [](b/compound-border (b/line-border :left left :color left-color)))
+          border-fn (fn [](b/compound-border (b/line-border :left left :color "#fff")))
           title (c/label
                  :text txt
                  :background (Color. 0 0 0 0))
@@ -1007,19 +1009,25 @@
      (button-expand-child \"Title\" {:onClick (fn [e]) :args [:border nil]})
    "
   (fn [title
-       & {:keys [onClick args]
+       & {:keys [onClick
+                 left
+                 left-color
+                 args]
           :or {onClick (fn [e] (println "Clicked: " title))
+               left 10
+               left-color "#fff"
                args []}}]
     (apply c/label :font (gtool/getFont)
            :text (str title)
            :background "#fff"
            :size [200 :by 25]
            :focusable? true
-           :border (b/empty-border :left 10)
-           :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
+           :border (b/compound-border (b/empty-border :left 10) (b/line-border :left left :color "#fff"))
+           :listen [:mouse-clicked onClick
                     :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
                     :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
-                    :focus-gained  (fn [e] (c/config! e :background (gtool/get-comp :button-expand-child :background-hover)))
+                    :focus-gained  (fn [e] (c/config! e :background ;; (gtool/get-comp :button-expand-child :background-hover)
+                                                      left-color))
                     :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand-child :background)))
                     :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gtool/switch-focus))))]
            args)))

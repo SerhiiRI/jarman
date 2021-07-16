@@ -4,6 +4,7 @@
         seesaw.dev
         seesaw.border)
   (:require
+   [jarman.tools.lang :refer :all]
    [seesaw.core :as c]
    [jarman.resource-lib.icon-library :as icon]
    [seesaw.util :as u]
@@ -148,9 +149,10 @@
               (deactive-all-tabs service-data)
               (recolor-tab tab (service-data :active-color))
               (set-component-to-view-space service-data view-id))))
-        (if (nil? (component-fn))
-          (do (println "[ Warning ] gui-view-service/set--view: Fn building view return nil.") (label))
-          (let [component (component-fn)  ;; Add new view to views-storage and switch to new view
+        (if (nil? component-fn)
+          (do (println "[ Warning ] gui-view-service/set--view: Fn is nil.") (label))
+          (let [component (rift (component-fn) (do (println "[ Warning ] gui-view-service/set--view: Fn is nil.") (label)))
+                ;; Fn invoke. Add new view to views-storage and switch to new view
                 view {view-id {:component-fn component-fn
                                :component component
                                :view-id view-id

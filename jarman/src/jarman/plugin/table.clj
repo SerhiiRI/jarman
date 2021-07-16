@@ -88,8 +88,8 @@
     (c/config! root :items (render-fn))))
 
 (defn- create-expand
-  [state action]
-  (jvpanel state action [:model]))
+  [state render-fn]
+  (jvpanel state render-fn [:model]))
 
 (defn jmig
   [state render-fn watch-path & props]
@@ -308,7 +308,7 @@
      Convert to component manual by map with overriding
    "
   [state dispatch! panel meta-data m]
-  (println "\nOverride")
+  ;; (println "\nOverride")
   (let [k           (:model-param m)
         meta        (k meta-data)
         table-model (:model @state)]
@@ -346,6 +346,26 @@
       ;;       comp      (c/label :text "Plugin component here")] ;; TODO: Implement plugin invoker
       ;;   comp)
       :else (.add panel (c/label :text "Wrong overrided component")))))
+
+
+;; :model-insert
+;;   [{:model-reprs "Table",
+;;     :model-param :documents.table_name,
+;;     :model-comp jarman.gui.gui-components/state-table-list
+;;     :model-action :my-fn}
+;;    :documents.name
+;;    :documents.prop
+;;    {:model-reprs "Path to file",
+;;     :model-param :documents.document,
+;;     :model-comp jarman.gui.gui-components/state-input-file}]
+
+;; :model-update
+;;   [{:model-reprs "Table",
+;;     :model-param :documents.table_name,
+;;     :model-comp jarman.gui.gui-components/state-table-list}
+;;    :documents.name
+;;    :documents.prop]
+
 
 ;; :model-update
 ;;   [:documents.id
@@ -393,25 +413,23 @@
     (.add panel comp)))
 
 
-(defn convert-model-to-components-list
-  "Description
-     Switch fn to convert by map or keyword
-   "
-  [state dispatch! panel meta-data model-defview]
-  ;; (println (format "\nmeta-data %s\ntable-model %s\nmodel-defview %s\n" meta-data table-model model-defview))
-  (doall (->> model-defview
-              (map #(cond
-                      (map? %)     (convert-map-to-component state dispatch! panel meta-data %)
-                      (keyword? %) (convert-key-to-component state dispatch! panel meta-data %)))
-              ;; (filter #(not (nil? %)))
-              )))
-
-
 (defn convert-metadata-vec-to-map
   "Description:
      Convert [{:x a :field-qualified b}{:d w :field-qualified f}] => {:b {:x a :field-qualified b} :f {:d w :field-qualified f}}"
   [coll]  (into {} (doall (map (fn [m] {(keyword (:field-qualified m)) m}) coll))))
 
+
+(defn convert-model-to-components-list
+  "Description
+     Switch fn to convert by map or keyword
+   "
+  [state dispatch! panel model-defview]
+  ;; (println (format "\nmeta-data %s\ntable-model %s\nmodel-defview %s\n" meta-data table-model model-defview))
+  (let [meta-data (convert-metadata-vec-to-map (get-in @state [:plugin-toolkit :columns-meta]))]
+    (doall (->> model-defview
+                     (map #(cond
+                             (map? %)     (convert-map-to-component state dispatch! panel meta-data %)
+                             (keyword? %) (convert-key-to-component state dispatch! panel meta-data %)))))))
 
 
 (defn generate-custom-buttons
@@ -454,7 +472,6 @@
                             :model-insert
                             :model-update))
           table-id (keyword (format "%s.id" (:field (:table-meta plugin-toolkit))))
-          meta-data (convert-metadata-vec-to-map (:columns-meta plugin-toolkit))
           model-defview (current-model plugin-config)
           panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
                                 :border (sborder/empty-border :thickness 10)
@@ -485,7 +502,7 @@
                            (gcomp/hr 10)
                            (if (in? active-buttons :export)
                              (export-button state dispatch!) nil)]))))]
-      (convert-model-to-components-list state dispatch! panel meta-data model-defview)
+      (convert-model-to-components-list state dispatch! panel model-defview)
       (if (not (empty? components))
         (doall
          (map
@@ -594,93 +611,12 @@
     ))
 
 
-;;; component
-;; (defn table-entry [plugin-path global-configuration]
-;;   (let [state (create-state-template plugin-path global-configuration)
-;;         dispatch! (create-disptcher state)
-;;         state!    #(deref state)]
-;;     (let [;; Destruction state component
-;;           {{plugin-title       :name
-;;             plugin-plug-place  :plug-place
-;;             plugin-permission  :permission
-;;             :as plugin-config} :plugin-config
-;;            plugin-global-config    :plugin-global-config
-;;            plugin-toolkit          :plugin-toolkit}
-;;           (state!)
-          
-;;           space (c/select (state/state :app) plugin-plug-place)
-;;           atm (:atom-expanded-items (c/config space :user-data))]
-;;       (if (s/valid? :jarman.plugin.spec/table plugin-config)
-;;         (if (session/allow-permission? plugin-permission)
-;;           (swap!
-;;            atm
-;;            (fn [inserted]
-;;              (conj inserted
-;;                    (gcomp/button-expand-child
-;;                     plugin-title
-;;                     :onClick
-;;                     (fn [e]
-;;                       ((state/state :jarman-views-service)
-;;                        :set-view
-;;                        :view-id (str "auto-" plugin-title)
-;;                        :title plugin-title
-;;                        :scrollable? false
-;;                        :component-fn
-;;                        (fn [] (build-plugin-gui state dispatch!)))))))))
-;;         ((state/state :alert-manager)
-;;          :set {:header "Error"
-;;                :body (str (name (:table_name plugin-config)) "  "
-;;                           (s/explain-str :jarman.plugin.spec/table plugin-title))}))
-;;       (.revalidate space))))
-
-
-
-;;; component
-(defn table-entry [plugin-path global-configuration]
-  (let [state (create-state-template plugin-path global-configuration)
-        dispatch! (create-disptcher state)
-        state!    #(deref state)]
-    (let [;; Destruction state component
-          {{plugin-title       :name
-            plugin-plug-place  :plug-place
-            plugin-permission  :permission
-            :as plugin-config} :plugin-config
-           plugin-global-config    :plugin-global-config
-           plugin-toolkit          :plugin-toolkit}
-          (state!)
-          
-          space (c/select (state/state :app) plugin-plug-place)
-          atm (:atom-expanded-items (c/config space :user-data))
-          comp (gcomp/button-expand-child
-                plugin-title
-                :onClick
-                (fn [e]
-                  ((state/state :jarman-views-service)
-                   :set-view
-                   :view-id (str "auto-" plugin-title)
-                   :title plugin-title
-                   :scrollable? false
-                   :component-fn
-                   (fn [] (build-plugin-gui state dispatch!)))))]
-      (if (s/valid? :jarman.plugin.spec/table plugin-config)
-        (if (session/allow-permission? plugin-permission)
-          (swap!
-           atm
-           (fn [inserted]
-             (conj inserted comp))))
-        ((state/state :alert-manager)
-         :set {:header "Error"
-               :body (str (name (:table_name plugin-config)) "  "
-                          (s/explain-str :jarman.plugin.spec/table plugin-title))}))
-      (.revalidate space))))
-
-
-
 
 (defn table-entry [plugin-path global-configuration]
   (let [state (create-state-template plugin-path global-configuration)
         dispatch! (create-disptcher state)
         state!    #(deref state)]
+    (println "\nBuilding plugin")
     (build-plugin-gui state dispatch!)))
 
 

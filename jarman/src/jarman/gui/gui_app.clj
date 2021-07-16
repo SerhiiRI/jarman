@@ -33,7 +33,6 @@
             [jarman.gui.gui-dbvisualizer :as dbv]
             [jarman.gui.gui-config-generator :as cg]))
 
-
 ;; ┌─────────────────────────────────────────┐
 ;; │                                         │
 ;; │ Create expand btns for config generator │
@@ -190,8 +189,6 @@
           render-fn (fn [] (let [comps (gtool/join-mig-items
                                         (rift (state/state [:jarmanapp--main-tree])
                                               (c/label :text "No comps")))]
-                             (println "\nComps\n" comps)
-                             (println "\nComps state\n" (state/state [:jarmanapp--main-tree]))
                              comps))]
       (state/set-global-state-watcher
        root
@@ -299,7 +296,8 @@
                      "0px[shrink 0, fill]0px[grow, fill]0px"
                      "0px[grow, fill]0px"]
        :border (b/line-border :left margin-left :color bg-color)
-       :items [[(jarmanapp--main-tree)]]))))
+       :items [[(jarmanapp--main-tree)]
+               [(jarmanapp--main-view-space [] [])]]))))
 
 (defn- example-plugins-map
 []
@@ -313,15 +311,28 @@
 
    "Depper structure"
    {"Depper 1-1"
-    {"Depper 2"
-     {"Depper 3" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]}}
+    {"Depper 2-1"
+     {"Depper 3-1" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]
+      "Depper 3-2" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]
+      "Depper 3-3" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]}
+     "Depper 2-2"
+     {"Depper 3-4" {"Depper 4-1" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]
+                  "Depper 4-2" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]
+                  "Depper 4-3" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]}}}
     "Depper 1-2"
     {"Depper 2" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]}}})
 
 (defn- colors-list []
-  {1 "#7ed696"
-   2 "#d6ad78"
-   3 "#79d1c4"})
+  {1 "#7fff00"
+   2 "#00fa9a"
+   3 "#79d1c4"
+   4 "#9ae3d8"})
+
+(defn- colors-list-lite []
+  {1 "#c2ff85"
+   2 "#61ffc2"
+   3 "#9ae3d8"
+   4 "#9ae3d8"})
 
 (defn- bulid-expand-by-map
   [plugin-m & {:keys [lvl] :or {lvl 0}}]
@@ -334,17 +345,28 @@
                            (str k)
                            (bulid-expand-by-map v :lvl (inc lvl))
                            :left-color (if (= lvl 0) nil (get (colors-list) lvl))
-                           :left (* lvl 10))
+                           :bg-color   (if (= lvl 0) nil (get (colors-list) lvl))
+                           :left (* lvl 5))
               (vector? v) (gcomp/button-expand-child
                            (str k)
-                           :onClick (if (fn? (last v))
-                                      (fn [e]
-                                        ((state/state :jarman-views-service)
-                                         :set-view
-                                         :view-id (str "auto-" (first v))
-                                         :title k
-                                         :scrollable? false
-                                         :component-fn (last v)))
+                           :left (* (dec lvl) 5)
+                           :left-color (if (= lvl 0) "#fff" (get (colors-list-lite) (dec lvl)))
+                           :onClick
+                           (if (fn? (last v))
+                             (fn [e]
+                               (gcomp/popup-window
+                                {:window-title k
+                                 :relative (state/state :app)
+                                 :size [600 600]
+                                 :view ((last v))}) ;; TODO: Fn crashed when try invoke
+                                        ;; ((state/state :jarman-views-service)
+                                        ;;  :set-view
+                                        ;;  :view-id (str "auto-" (first v))
+                                        ;;  :title k
+                                        ;;  :scrollable? false
+                                        ;;  :component-fn (last v)
+                                        ;;  )
+                                        )
                                       (fn [e] (println "\nProblem with fn in " k))))
               :else (c/label :text "Uncorrect comp"))))
         plugin-m)))
@@ -361,88 +383,14 @@
 ;; (state/set-state [:jarmanapp--main-tree] [])
 
 (defn- load-plugins-to-main-menu []
-  (let [;; plugins-m (vmg/do-view-load)
-        plugins-m (example-plugins-map)]
+  (let [plugins-m (vmg/do-view-load)
+        ;;plugins-m (example-plugins-map)
+        ]
     ;; (vmg/prepare-defview-editors-state)
     (add-to-main-tree
      (concat
       (state/state [:jarmanapp--main-tree])
       (bulid-expand-by-map plugins-m)))))
-
-;; {"Admin space"
-;;  {"User table"
-;;   ["user"
-;;    [:#tables-view-plugin]
-;;    [:user]
-;;    #function[jarman.logic.view-manager/defview/iter--21432--21436/fn--21437/fn--21438/fn--21440]],
-;;   "Permission edit"
-;;   ["permission"
-;;    [:#tables-view-plugin]
-;;    [:user]
-;;    #function[jarman.logic.view-manager/defview/iter--21432--21436/fn--21437/fn--21438/fn--21440]]},
-;;  "Sale structure"
-;;  {"Enterpreneur"
-;;   ["enterpreneur"
-;;    [:#tables-view-plugin]
-;;    [:user]
-;;    #function[jarman.logic.view-manager/defview/iter--21432--21436/fn--21437/fn--21438/fn--21440]],
-;;   "Point of sale group"
-;;   ["point_of_sale_group"
-;;    [:#tables-view-plugin]
-;;    [:user]
-;;    #function[jarman.logic.view-manager/defview/iter--21432--21436/fn--21437/fn--21438/fn--21440]],
-;;   "Point of sale group links"
-;;   ["point_of_sale_group_links"
-;;    [:#tables-view-plugin]
-;;    [:user]
-;;    #function[jarman.logic.view-manager/defview/iter--21432--21436/fn--21437/fn--21438/fn--21440]],
-;;   "Point of sale"
-;;   ["point_of_sale"
-;;    [:#tables-view-plugin]
-;;    [:user]
-;;    #function[jarman.logic.view-manager/defview/iter--21432--21436/fn--21437/fn--21438/fn--21440]]},
-;;  "Repair contract"
-;;  {"Repair contract"
-;;   ["repair_contract"
-;;    [:#tables-view-plugin]
-;;    [:user]
-;;    #function[jarman.logic.view-manager/defview/iter--21432--21436/fn--21437/fn--21438/fn--21440]],
-;;   "Repair reasons"
-;;   ["repair_reasons"
-;;    [:#tables-view-plugin]
-;;    [:user]
-;;    #function[jarman.logic.view-manager/defview/iter--21432--21436/fn--21437/fn--21438/fn--21440]],
-;;   "Repair technical issue"
-;;   ["repair_technical_issue"
-;;    [:#tables-view-plugin]
-;;    [:user]
-;;    #function[jarman.logic.view-manager/defview/iter--21432--21436/fn--21437/fn--21438/fn--21440]],
-;;   "Repair nature of problem"
-;;   ["repair_nature_of_problem"
-;;    [:#tables-view-plugin]
-;;    [:user]
-;;    #function[jarman.logic.view-manager/defview/iter--21432--21436/fn--21437/fn--21438/fn--21440]],
-;;   "Cache register"
-;;   ["cache_register"
-;;    [:#tables-view-plugin]
-;;    [:user]
-;;    #function[jarman.logic.view-manager/defview/iter--21432--21436/fn--21437/fn--21438/fn--21440]],
-;;   "Seal"
-;;   ["seal"
-;;    [:#tables-view-plugin]
-;;    [:user]
-;;    #function[jarman.logic.view-manager/defview/iter--21432--21436/fn--21437/fn--21438/fn--21440]]},
-;;  "Service contract"
-;;  {"Service contract"
-;;   ["service_contract"
-;;    [:#tables-view-plugin]
-;;    [:user]
-;;    #function[jarman.logic.view-manager/defview/iter--21432--21436/fn--21437/fn--21438/fn--21440]],
-;;   "Service contract month"
-;;   ["service_contract_month"
-;;    [:#tables-view-plugin]
-;;    [:user]
-;;    #function[jarman.logic.view-manager/defview/iter--21432--21436/fn--21437/fn--21438/fn--21440]]}}
 
 ;; ┌─────────────┐
 ;; │             │

@@ -4,6 +4,7 @@
    ;; Clojure toolkit 
    [clojure.string :as string]
    [clojure.java.io :as io]
+   [clojure.spec.alpha :as s]
    [seesaw.core :as c]
    ;; Jarman toolkit
    [jarman.logic.document-manager :as doc]
@@ -14,6 +15,15 @@
    [jarman.logic.metadata :as mt])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
+
+;;;;;;;;;;;;;;;;;;;;;
+;;; SPEC KEYWORDS ;;;
+;;;;;;;;;;;;;;;;;;;;;
+
+(s/def ::keyword-list (s/and sequential? #(every? keyword? %)))
+(s/def ::tables       ::keyword-list)
+(s/def ::view-columns ::keyword-list)
+(s/def ::query map?)
 
 ;;;;;;;;;;;;;;;;;;;
 ;;; SQL TOOLKIT ;;;

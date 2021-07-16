@@ -147,14 +147,78 @@
         @result))))
 (def ^:private take-meta-for-view (make-recur-meta-one-table conj-table-meta))
 
+(defn- create-dialog-table [table-name]
+  (let [meta-table (first (mt/getset! table-name))
+        table-model (mapv :field-qualified ((comp :columns :prop) meta-table))
+        ;; name-of-table ((comp :representation :table :prop) meta-table)
+        name-of-table ((comp :field :table :prop) meta-table)
+        full-meta-debug (take-meta-for-view table-name)
+        tables (vec (for [meta-debug full-meta-debug]
+                      (:field-refer (first meta-debug))))
+        joines (vec (for [meta-debug full-meta-debug
+                          :when (keyword? (:join-rule (first meta-debug)))]
+                      (:join-rule (first meta-debug))))
+        columns (vec (concat (list :#as_is) ;; (list (read-string (format "%s.id" table-name)))
+                             (mapcat identity (for [meta-debug full-meta-debug]
+                                                (mapv :field-column (second meta-debug))))))
+        models (vec (concat ;; (list (read-string (format "%s.id" table-name)))
+                     (mapcat identity (for [meta-debug full-meta-debug]
+                                        (mapv :field-column (second meta-debug))))))]
+    (list 'dialog-table
+          :id (keyword (str name-of-table "-table"))
+          :name (str name-of-table " dialog")
+          :permission [:user]
+          ;; :plug-place [:#tables-view-plugin]
+          :tables tables
+          :view-columns table-model
+          ;; :model-insert table-model
+          :query (if-not (empty? joines)
+                   {:table_name (keyword name-of-table)
+                    :inner-join joines :column columns}
+                   {:table_name (keyword name-of-table)
+                    :column columns}))))
+
+(defn- create-dialog-bigstring [table-name]
+  (let [meta-table (first (mt/getset! table-name))
+        table-model (mapv :field-qualified ((comp :columns :prop) meta-table))
+        ;; name-of-table ((comp :representation :table :prop) meta-table)
+        name-of-table ((comp :field :table :prop) meta-table)
+        full-meta-debug (take-meta-for-view table-name)
+        tables (vec (for [meta-debug full-meta-debug]
+                      (:field-refer (first meta-debug))))
+        joines (vec (for [meta-debug full-meta-debug
+                          :when (keyword? (:join-rule (first meta-debug)))]
+                      (:join-rule (first meta-debug))))
+        columns (vec (mapcat identity (for [meta-debug full-meta-debug]
+                                        (mapv :field-column (second meta-debug)))))
+        models (vec (concat ;; (list (read-string (format "%s.id" table-name)))
+                     (mapcat identity (for [meta-debug full-meta-debug]
+                                        (mapv :field-column (second meta-debug))))))]
+    ;; list 'defview (symbol table-name)
+    (list 'dialog-bigstring
+          :id (keyword (str name-of-table "-bigstring"))
+          :name (str name-of-table " dialog")
+          :permission [:user]
+          ;;:plug-place [:#tables-view-plugin]
+          :item-columns columns
+          :query (if-not (empty? joines)
+                   {:table_name (keyword name-of-table)
+                    :inner-join joines :column columns}
+                   {:table_name (keyword name-of-table)
+                    :column columns}))))
 
 (defn- create-table-plugin [table-name]
   (let [meta-table (first (mt/getset! table-name))
         table-model (mapv :field-qualified ((comp :columns :prop) meta-table))
-        name-of-table ((comp :representation :table :prop) meta-table)
+        
+        ;; name-of-table ((comp :representation :table :prop) meta-table)
+        name-of-table ((comp :field :table :prop) meta-table)
         full-meta-debug (take-meta-for-view table-name)
         tables (vec (for [meta-debug full-meta-debug]
                       (:field-refer (first meta-debug))))
+        
+        other-tables (remove (partial = table-name ) tables)
+        
         joines (vec (for [meta-debug full-meta-debug
                           :when (keyword? (:join-rule (first meta-debug)))]
                       (:join-rule (first meta-debug))))
@@ -163,31 +227,65 @@
                                             (mapv :field-column (second meta-debug))))))
         models (vec (concat ;; (list (read-string (format "%s.id" table-name)))
                      (mapcat identity (for [meta-debug full-meta-debug]
-                                        (mapv :field-column (second meta-debug))))))]
-    (list 'defview (symbol table-name)
-          (list 'table
-                :name name-of-table
-                :plug-place [:#tables-view-plugin]
-                :tables tables
-                :view-columns table-model
-                :model-insert table-model
-                :insert-button true
-                :delete-button true
-                :actions []
-                :buttons []
-                :query (if-not (empty? joines)
-                         {:table_name (keyword name-of-table)
-                          :inner-join joines :column columns}
-                         {:table_name (keyword name-of-table)
-                          :column columns})))))
+                                        (mapv :field-column (second meta-debug))))))
+        dialogs
+        (let [foreign-keys (->> ((comp :columns :prop) meta-table)
+                                (filter #(in? (:component-type %) mt/column-type-linking))
+                                (map #(select-keys % [:field-qualified :key-table])))]
+          (reduce #(let [{:keys [field-qualified key-table] } %2]
+                     (into %1 {field-qualified
+                               [[key-table :dialog-table (keyword (str (name key-table) "-table"))]
+                                [key-table :dialog-bigstring (keyword (str (name key-table) "-bigstring"))]]}))
+                  {} foreign-keys))
+        ;; for realted table if being needed
+        ;; bigstr-dialog (map create-dialog-bigstring other-tables)
+        ;; table--dialog (map create-dialog-table other-tables)
+        ]
+    (concat (list 'defview (symbol table-name)
+                  (list 'table
+                      :name name-of-table
+                      :plug-place [:#tables-view-plugin]
+                      :tables tables
+                      :view-columns table-model
+                      :model-insert table-model
+                      :insert-button true
+                      :delete-button true
+                      :dialog dialogs
+                      :actions []
+                      :buttons []
+                      :query (if-not (empty? joines)
+                               {:table_name (keyword name-of-table)
+                                :inner-join joines :column columns}
+                               {:table_name (keyword name-of-table)
+                                :column columns}))
+                  (create-dialog-bigstring table-name)
+                  (create-dialog-table     table-name)))))
+
+(create-table-plugin :user)
+
+
+{:user.id_permission
+                               [:permission ;; :dialog-bigstring
+                                :dialog-table
+                                :select-name-permission]}
+
+
+(mt/getset)
+(create-table-plugin :user)
+(create-dialog-bigstring :permission)
+(create-dialog-table :permission)
+
+
+
+
 
 ;; (create-table-plugin :user)
 
-;; (mapv create-table-plugin
-;;       [;; :permission :user
-;;        :cache_register :documents :enterpreneur :point_of_sale :point_of_sale_group :point_of_sale_group_links :repair_contract :repair_nature_of_problem :repair_reasons :repair_technical_issue :seal :service_contract :service_contract_month]
-;;       ;; [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month]
-;;       )
+(mapv create-table-plugin
+      [:permission :user
+       :cache_register :documents :enterpreneur :point_of_sale :point_of_sale_group :point_of_sale_group_links :repair_contract :repair_nature_of_problem :repair_reasons :repair_technical_issue :seal :service_contract :service_contract_month]
+      ;; [:permission :user :enterpreneur :point_of_sale :cache_register :point_of_sale_group :point_of_sale_group_links :seal :repair_contract :service_contract :service_contract_month]
+      )
 
 (defn- gui-table-model-columns [table-list table-column-list]
   (let

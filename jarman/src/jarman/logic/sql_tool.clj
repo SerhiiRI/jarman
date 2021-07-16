@@ -22,7 +22,7 @@
 
 (def ^{:dynamic true :private true} *data-format* "DB date format" "yyyy-MM-dd HH:mm:ss")
 (def ^{:dynamic true :private true} *namespace-lib* "" "jarman.logic.sql-tool")
-(def ^{:dynamic true} *debug*      "Enable debugging" true)
+(def ^{:dynamic true} *debug*      "Enable debugging" false)
 (def ^{:dynamic true} *debug-to*   "Enable debugging" (first [:output :file]))
 (def ^{:dynamic true} *debug-file* "Enable debugging" "./sql.log.clj")
 (def ^{:dynamic true} *debug-full-descript*   "Enable debugging" false)

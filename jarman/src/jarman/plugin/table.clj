@@ -13,6 +13,7 @@
    [seesaw.mig :as smig]
    [seesaw.swingx :as swingx]
    [seesaw.chooser :as chooser]
+   [seesaw.border  :as b]
    ;; Jarman toolkit
    [jarman.tools.swing :as stool]
    [jarman.tools.lang :refer :all]
@@ -114,60 +115,49 @@
   (c/text :listen [:caret-update action]))
 
 
-(defn- popup-table [table-fn selected frame]
-  (let [dialog (seesaw.core/custom-dialog :modal? true :width 600 :height 400 :title "Select component")
-        table (table-fn (fn [table-model] (seesaw.core/return-from-dialog dialog table-model)))
-        key-p (seesaw.mig/mig-panel
-               :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px[grow, fill]0px"]
-              ;;  :border (sborder/line-border :color "#888" :bottom 1 :top 1 :left 1 :right 1)
-               :items [[(c/label :text (gtool/get-lang :tips :press-to-search) :halign :center)]
-                      ;;  [(seesaw.core/label
-                      ;;    :icon (stool/image-scale ico/left-blue-64-png 30)
-                      ;;    :listen [:mouse-entered (fn [e] (gtool/hand-hover-on e))
-                      ;;             :mouse-exited (fn [e] (gtool/hand-hover-off e))
-                      ;;             :mouse-clicked (fn [e] (.dispose (seesaw.core/to-frame e)))])]
-                       [table]])
-        key-p (key-tut/get-key-panel \q (fn [jpan] (.dispose (seesaw.core/to-frame jpan))) key-p)]
-    (seesaw.core/config! dialog :content key-p :title (gtool/get-lang :tips :related-popup-table))
-    ;; (.setUndecorated dialog true)
-    (.setLocationRelativeTo dialog frame)
-    (seesaw.core/show! dialog)))
+(defn show-table-in-expand [model-data]
+  (let [mig (seesaw.mig/mig-panel :constraints ["wrap 2" "0px[grow, fill]0px" "0px[:20, grow, fill, top]0px"])
+        border (b/compound-border (b/empty-border :left 4))]
+    (doall (map (fn [[k v]] (do (.add mig (seesaw.core/label :background "#E2FBDE" :text (name k) :font (gtool/getFont) :border border))
+                                (.add mig (seesaw.core/label :background "#fff" :text (str v) :font (gtool/getFont) :border border)))) model-data))
+    (.repaint mig) mig))
 
 
-(defn input-related-popup-table ;; TODO: Auto choosing component inside popup window
+
+(defn input-related-popup-table
   "Description:
-     Component for dialog window with related table. Returning selected table model (row). "
-  [{:keys [global-configuration local-changes field-qualified table-model key-table]}]
-  (let
-   [connected-table (last (first (get-in global-configuration [key-table :table]))) ;; TODO: Set dedicate path to related table form data-toolkit
-    ct-conf         (:config  connected-table)
-    ct-data         (:toolkit connected-table)
-    model-to-repre  (fn [view-columns table-model]
-                      (->> view-columns
-                           (map #(% table-model))
-                           (filter some?)
-                           (string/join ", ")))]
-    (if-not (nil? (field-qualified table-model))
-      (swap! local-changes (fn [storage]
-                             (assoc storage
-                                    field-qualified
-                                    (field-qualified table-model)))))
-    (gcomp/input-text-with-atom
-     {:local-changes local-changes
-      :editable? false
-      :val (model-to-repre (:view-columns ct-conf) table-model)
-      :onClick (fn [e]
-                 (let [selected-model (popup-table (:table (gtable/create-table ct-conf ct-data))
-                                                   field-qualified
-                                                   (c/to-frame e))]
-                   (if-not (nil? (get selected-model (:model-id ct-data)))
-                     (do (c/config! e :text (model-to-repre (:view-columns ct-conf) selected-model))
-                         (swap! local-changes (fn [storage]
-                                                (assoc storage
-                                                       field-qualified
-                                                       (get selected-model (:model-id ct-data)))))))))})))
-
-
+     Component for dialog window with related table. Returning selected table model (row)."
+  [{:keys [global-configuration local-changes field-qualified table-model key-table plugin-toolkit plugin-config]}]
+  (let 
+      [connected-table ((comp first vals :table key-table) (global-configuration))
+       ct-conf         (:config  connected-table)
+       ct-data         (:toolkit connected-table)
+       dialog-path     (field-qualified (:dialog plugin-config))
+       dialog-fn       (get-in (global-configuration) (vec (concat dialog-path [:toolkit :dialog])))
+       key-column      (read-string (str key-table ".id"))
+       model-to-repre  (fn [list-tables model-colmns]
+                         (let [model-col (gtable/gui-table-model-columns list-tables (keys model-colmns))
+                               list-repr (into {} (map (fn [model] {(:key model)(:text model)})  model-col))]
+                           (into {} (map (fn [a b] {(second a) ((first a) model-colmns)}) list-repr model-colmns))))
+       colmn-panel
+      ;; (seesaw.core/vertical-panel)
+       (seesaw.core/flow-panel :hgap 0 :vgap 0)
+       component       (gcomp/expand-input 
+                        {:local-changes local-changes
+                         :panel colmn-panel
+                         :onClick (fn [e] (reset! local-changes (assoc @local-changes
+                                                                       field-qualified
+                                                                       (key-column (dialog-fn (key-column table-model)))))
+                                    (.removeAll colmn-panel)
+                                    (.add colmn-panel (show-table-in-expand
+                                                       (let [id-column (field-qualified @local-changes)]
+                                                         (if (nil? id-column) {}
+                                                             (model-to-repre (:tables ct-conf)
+                                                                             (first (filter (fn [column] (= (key-column column) id-column))
+                                                                                            ((:select ct-data)))))))))
+                                    (.revalidate colmn-panel)
+                                    (.repaint colmn-panel))})]
+    component))
 
 ;; ┌───────────────┐
 ;; │               │
@@ -388,6 +378,7 @@
         comp (gcomp/inpose-label title
                                  (cond
                                    (mt/column-type-linking (first comp-types))
+                                ;;   (input-related-popup-table )
                                    (gcomp/state-input-text {:func func :val val})
                                    
                                    (or (= mt/column-type-data (first comp-types))
@@ -534,30 +525,44 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SPEC AND DECLARATION ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(s/def :jarman.plugin.table/keyword-list (s/and sequential? #(every? keyword? %)))
-;; (s/valid? :jarman.plugin.table/keyword-list [:suka :bliat :dsaf])
-;; (s/valid? :jarman.plugin.table/keyword-list [:suka :bliat 32])
-;; (s/valid? :jarman.plugin.table/keyword-list 3)
-(s/def :jarman.plugin.table/tables :jarman.plugin.table/keyword-list)
-(s/def :jarman.plugin.table/view-columns :jarman.plugin.table/keyword-list)
-(s/def :jarman.plugin.table/model-insert :jarman.plugin.table/keyword-list)
-(s/def :jarman.plugin.table/insert-button boolean?)
-(s/def :jarman.plugin.table/delete-button boolean?)
-(s/def :jarman.plugin.table/actions map?)
+
+;; structural SPEC pattern ;;
+
+(s/def ::keyword-list (s/and sequential? #(every? keyword? %)))
+;; (s/valid? ::keyword-list [:suka :bliat :dsaf])
+;; (s/valid? ::keyword-list [:suka :bliat 32])
+;; (s/valid? ::keyword-list 3)
+
+;; plugin SPEC patterns ;;
+
 ;;; button list
-(s/def :jarman.plugin.table/form-model #{:model-insert :model-update :model-delete :model-select})
-(s/def :jarman.plugin.table/action keyword?)
-(s/def :jarman.plugin.table/title string?)
-(s/def :jarman.plugin.table/one-button
-  (s/keys :req-un [:jarman.plugin.table/form-model
-                   :jarman.plugin.table/action
-                   :jarman.plugin.table/title]))
-(s/def :jarman.plugin.table/buttons (s/coll-of :jarman.plugin.table/one-button))
-;; (s/valid? :jarman.plugin.table/buttons
-;;           [{:form-model :model-insert, :action :upload-docs-to-db, :title "Upload document"}
-;;            {:form-model :model-update, :action :update-docs-in-db, :title "Update document info"}
-;;            {:form-model :model-update, :action :delete-doc-from-db, :title "Delete row"}])
-(s/def :jarman.plugin.table/query map?)
+(s/def ::form-model #{:model-insert :model-update :model-delete :model-select})
+(s/def ::action keyword?)
+(s/def ::title string?)
+(s/def ::one-button
+  (s/keys :req-un [::form-model
+                   ::action
+                   ::title]))
+
+
+;;; * Task list for morfeu5z
+;;; - [ ] TODO Repalce all `any?` predicate by writing for it reall spec
+;;; - [ ] TODO make big structural spec for `model-insert` and `actions`
+;;; - [ ] MAYBE change `:insert-button`... and same keys, for some DSL declaration
+;;;       for example `:display-buttons` with value `:tft` where you mean
+;;;       combination of tree keys t(true) and f(false) in order `insert` `update` `delete`.
+;;;       By the way it's really expandable pattern :)
+
+(s/def ::model-insert any?)
+(s/def ::model-update any?)
+(s/def ::actions any?)
+(s/def ::insert-button boolean?)
+(s/def ::update-button boolean?)
+(s/def ::delete-button boolean?)
+(s/def ::export-button any?)
+(s/def ::chenges-button any?)
+(s/def ::buttons (s/coll-of ::one-button))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; EXTERNAL INTERFAISE ;;;
@@ -668,3 +673,67 @@
                :body (str (name (:table_name plugin-config)) "  "
                           (s/explain-str :jarman.plugin.spec/table plugin-title))}))
       (.revalidate space))))
+
+
+
+
+(defn table-entry [plugin-path global-configuration]
+  (let [state (create-state-template plugin-path global-configuration)
+        dispatch! (create-disptcher state)
+        state!    #(deref state)]
+    (build-plugin-gui state dispatch!)))
+
+
+
+
+
+;;; ALEKS DONT TOUCH 
+;;; is JULIA EXAMPLE CODE HOW TO CONNECT DIALOG 
+(comment
+  (defn show-table-in-expand [model-data]
+  (let [mig (seesaw.mig/mig-panel :constraints ["wrap 2" "0px[grow, fill]0px" "0px[:20, grow, fill, top]0px"])
+        border (b/compound-border (b/empty-border :left 4))]
+    (doall (map (fn [[k v]] (do (.add mig (seesaw.core/label :background "#E2FBDE" :text (name k) :font (gtool/getFont) :border border))
+                                (.add mig (seesaw.core/label :background "#fff" :text (str v) :font (gtool/getFont) :border border)))) model-data))
+    (.repaint mig) mig))
+
+
+
+(defn input-related-popup-table
+  "Description:
+     Component for dialog window with related table. Returning selected table model (row)."
+  [{:keys [global-configuration local-changes field-qualified table-model key-table plugin-toolkit plugin-config]}]
+  (let 
+      [connected-table ((comp first vals :table key-table) (global-configuration))
+       ct-conf         (:config  connected-table)
+       ct-data         (:toolkit connected-table)
+       dialog-path     (field-qualified (:dialog plugin-config))
+       dialog-fn       (get-in (global-configuration) (vec (concat dialog-path [:toolkit :dialog])))
+       key-column      (read-string (str key-table ".id"))
+       model-to-repre  (fn [list-tables model-colmns]
+                         (let [model-col (gtable/gui-table-model-columns list-tables (keys model-colmns))
+                               list-repr (into {} (map (fn [model] {(:key model)(:text model)})  model-col))]
+                           (into {} (map (fn [a b] {(second a) ((first a) model-colmns)}) list-repr model-colmns))))
+       colmn-panel
+      ;; (seesaw.core/vertical-panel)
+       (seesaw.core/flow-panel :hgap 0 :vgap 0)
+       component       (gcomp/expand-input 
+                        {:local-changes local-changes
+                         :panel colmn-panel
+                         :onClick (fn [e] (reset! local-changes (assoc @local-changes
+                                                                       field-qualified
+                                                                       (key-column (dialog-fn (key-column table-model)))))
+                                    (.removeAll colmn-panel)
+                                    (.add colmn-panel (show-table-in-expand
+                                                       (let [id-column (field-qualified @local-changes)]
+                                                         (if (nil? id-column) {}
+                                                             (model-to-repre (:tables ct-conf)
+                                                                             (first (filter (fn [column] (= (key-column column) id-column))
+                                                                                            ((:select ct-data)))))))))
+                                    (.revalidate colmn-panel)
+                                    (.repaint colmn-panel))})]
+    component)))
+
+
+
+

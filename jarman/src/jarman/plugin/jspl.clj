@@ -13,19 +13,28 @@
    [jarman.plugin.dialog-test]
    [jarman.plugin.dialog-bigstring]))
 
+;;; check assertion
+(s/check-asserts true)
+
+
 (defplugin table jarman.plugin.table
   "Plugin allow to editing One table from database"
+  ;; DATATOOLKIT SPEC
   [:tables
-   {:spec [:jarman.plugin.table/tables :req-un],
+   {:spec [:jarman.plugin.data-toolkit/tables :req-un],
     :doc "list of used tables"
     :examples "[:permission]"}]
   [:view-columns
-   {:spec [:jarman.plugin.table/view-columns :req-un],
+   {:spec [:jarman.plugin.data-toolkit/view-columns :req-un],
     :doc "Columns which must be represented in table on right side"
     :examples "[:permission.permission_name 
                 :permission.configuration]"}]
+  [:query
+   {:spec [:jarman.plugin.data-toolkit/query :req-un],
+    :examples "{:table_name :permission, :column [:#as_is ...]...}",
+    :doc "SQL syntax for `select!` query"}]
   [:model-insert
-   {;;:spec [:jarman.plugin.table/model-insert :req-un],
+   {:spec [:jarman.plugin.table/model-insert :opt-un],
     :doc "Columns which represent model keys or map with overriding.
           * Bind-args is a overriding key name. 
             On left it's orginal key and you can set your own if you using another in component.
@@ -39,7 +48,7 @@
                  :bind-args {:store_id :state_is}
                  :model-comp jarman.gui.gui-components/select-box-table-list}"}]
   [:model-update
-   {;;:spec [:jarman.plugin.table/model-insert :req-un],
+   {:spec [:jarman.plugin.table/model-update :opt-un],
     :doc "Columns which represent model keys or map with overriding.
           * Bind-args is a overriding key name. 
             On left it's orginal key and you can set your own if you using another in component.
@@ -73,43 +82,47 @@
     :doc "Set debug button. Can display in popup window changes to insert or update. Actually it showing state."
     :examples "true"}]  
   [:actions
-   {:spec [:jarman.plugin.jspl/actions :req-un],
+   {:spec [:jarman.plugin.table/actions :req-un],
     :doc "Realise additional logic to standart CRUD operation. Set key as id and some fn with state as arg.
           \"{:some-action-keys (fn [state]...)
           :some-another.... }\""}]
   [:buttons
-   {:spec [:jarman.plugin.jspl/buttons :opt-un],
+   {:spec [:jarman.plugin.table/buttons :opt-un],
     :examples "[{:form-model :model-insert, 
                  :action :upload-docs-to-db, 
                  :title \"Upload document\"}
                {:form-model :model-update...}...]"
-    :doc "This is an vector of optional buttons which do some logic bainded by acition key, discribed in `:action`"}]
-  [:query
-   {:spec [:jarman.plugin.jspl/query :req-un],
-    :examples "{:table_name :permission, :column [:#as_is ...]...}",
-    :doc "SQL syntax for `select!` query"}])
+    :doc "This is an vector of optional buttons which do some logic bainded by acition key, discribed in `:action`"}])
 
-
+;; TO DELETE
 (defplugin dialog-test jarman.plugin.dialog-test
   "Plugin allow to editing One table from database")
 
 (defplugin dialog-table jarman.plugin.dialog-table
   "Dialog table"
   [:tables
-   {:spec [:jarman.plugin.table/tables :req-un],
+   {:spec [:jarman.plugin.data-toolkit/tables :req-un],
     :doc "list of used tables"
     :examples "[:permission]"}]
   [:view-columns
-   {:spec [:jarman.plugin.table/view-columns :req-un],
+   {:spec [:jarman.plugin.data-toolkit/view-columns :req-un],
     :doc "Columns which must be represented in table on right side"
     :examples "[:permission.permission_name 
                 :permission.configuration]"}]
   [:query
-   {:spec [:jarman.plugin.jspl/query :req-un],
+   {:spec [:jarman.plugin.data-toolkit/query :req-un],
     :examples "{:table_name :permission, :column [:#as_is ...]...}",
     :doc "SQL syntax for `select!` query"}])
 
 (defplugin dialog-bigstring jarman.plugin.dialog-bigstring
-  "Dialog bigstring")
+  "Dialog for selecting some ONE item by ONE column in `:query` model"
+  [:item-columns
+   {:spec [:jarman.plugin.dialog-bigstring/item-columns :req-un],
+    :doc "Select column to be represent one value per item"
+    :examples ":permission.permission_name"}]
+  [:query
+   {:spec [:jarman.plugin.data-toolkit/query :req-un],
+    :examples "{:table_name :permission, :column [:#as_is ...]...}",
+    :doc "SQL syntax for `select!` query"}])
 
 

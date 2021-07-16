@@ -17,7 +17,7 @@
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
             [clojure.pprint :as pp]
-            ;; logics
+            ;; logicsx
             [jarman.config.config-manager  :as cm]
             [jarman.gui.gui-views-service  :as vs]
             [jarman.gui.gui-alerts-service :as gas]
@@ -299,8 +299,7 @@
                      "0px[shrink 0, fill]0px[grow, fill]0px"
                      "0px[grow, fill]0px"]
        :border (b/line-border :left margin-left :color bg-color)
-       :items [[(jarmanapp--main-tree)]
-               [(jarmanapp--main-view-space [] [])]]))))
+       :items [[(jarmanapp--main-tree)]]))))
 
 (defn- example-plugins-map
 []

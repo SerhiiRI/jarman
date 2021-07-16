@@ -124,13 +124,17 @@
   [plugin-name ns description & body]
   (let [create-name-func (fn [fname] (symbol (str ns "/" plugin-name "-" fname)))
         func-entrypoint (create-name-func "entry")
+        
         ;; for `table` plugin
         ;; inside-plugin-pipeline         -> `jarman.plugin.table/table-toolkit-pipeline`
         ;; proxyed-inside-plugin-pipeline -> `table-toolkit-pipeline`
         inside-plugin-pipeline  (symbol (str ns "/" (str plugin-name "-toolkit-pipeline")))
-        proxyed-inside-toolkit-pipeline (symbol (str plugin-name "-toolkit-pipeline"))]    
+        proxyed-inside-toolkit-pipeline (symbol (str plugin-name "-toolkit-pipeline"))
+        plugin-name-spec-test           (symbol (str plugin-name "-spec-test"))]    
     `(do
        ~(generate-dynamic-spec (str plugin-name) body)
+       (defn ~plugin-name-spec-test [~'configurations]
+         (s/assert ~(keyword "jarman.plugin.spec" (str plugin-name)) ~'configurations))
        (defn ~plugin-name
          ;;; documentations
          ~(generate-plugin-doc description body)

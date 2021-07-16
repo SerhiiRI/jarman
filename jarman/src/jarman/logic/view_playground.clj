@@ -9,7 +9,6 @@
    ;; for datascript
    [clojure.set :as set]
    [datascript.core :as d]
-   [rum.core :as rum]
    [datascript.transit :as dt]
    ;; ;; Jarman toolkit
    [jarman.logic.connection :as db]

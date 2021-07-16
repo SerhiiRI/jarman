@@ -25,12 +25,14 @@
   (reset! global-view-configs {}) nil)
 (defn global-view-configs-get []
   @global-view-configs)
-(defn global-view-configs-set [path configuration toolkit]
+(defn global-view-configs-set [path configuration toolkit entry]
   {:pre [(every? keyword? path)]}
   (swap! global-view-configs
          (fn [m] (assoc-in m path
                           {:config configuration
-                           :toolkit toolkit}))) nil)
+                           :toolkit toolkit
+                           :entry entry
+                           }))) nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; CONFIG PROCESSOR ;;;
@@ -110,39 +112,47 @@
 (defmacro defview [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
-       ~@(for [cfg cfg-list]
-           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" (:plugin-name cfg))))
-                 plugin-component `~(symbol (format "jspl/%s" (:plugin-name cfg)))
+       ~@(for [{:keys [plugin-name plugin-config-path] :as cfg} cfg-list]
+           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" plugin-name)))
+                 plugin-test-spec        (eval `~(symbol (format "jspl/%s-spec-test"        plugin-name)))
+                 plugin-component              `~(symbol (format "jspl/%s"                  plugin-name))
                  toolkit (plugin-toolkit-pipeline cfg)]
-             (global-view-configs-set (:plugin-config-path cfg) cfg toolkit)
-             `(~plugin-component ~(:plugin-config-path cfg) ~'global-view-configs-get))) nil)))
+             (plugin-test-spec cfg)
+             (global-view-configs-set plugin-config-path cfg toolkit (fn [] (eval `(~plugin-component ~plugin-config-path ~'global-view-configs-get)))))) nil)))
 
-(defmacro defview-no-eval [table-name & body]
+;;; DEPRECATED
+#_(defmacro defview-no-eval [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
        (global-view-configs-clean)
-       (println "------(DEFVIEW DEBUG)------")
-       ~@(for [cfg cfg-list]
-           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" (:plugin-name cfg))))]
-             (global-view-configs-set (:plugin-config-path cfg) cfg (plugin-toolkit-pipeline cfg))
-             `(println ~(:plugin-config-path cfg))))
+       ~@(for [{:keys [plugin-name plugin-config-path] :as cfg} cfg-list]
+           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" plugin-name)))
+                 plugin-test-spec        (eval `~(symbol (format "jspl/%s-spec-test"        plugin-name)))]
+             (plugin-test-spec cfg)
+             (global-view-configs-set plugin-config-path cfg (plugin-toolkit-pipeline cfg))
+             `(println ~plugin-config-path)))
        true)))
 
-(defmacro defview-debug [table-name & body]
+;;; DEPRECATED
+#_(defmacro defview-debug [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
     `(list
-      ~@(for [cfg cfg-list]
-          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" (:plugin-name cfg)))]
-            `{:cfg ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)})
-          ))))
+      ~@(for [{:keys [plugin-name] :as cfg} cfg-list]
+          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" plugin-name))
+                plugin-test-spec        `~(symbol (format "jspl/%s-spec-test"        plugin-name))]
+            `(do (~plugin-test-spec ~cfg)
+                 {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)}))))))
 
-(defmacro defview-debug-map [table-name & body]
+;;; DEPRECATED
+#_(defmacro defview-debug-map [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
-      ~(reduce
-        (fn [m-acc cfg]
-          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" (:plugin-name cfg)))]
-            `(assoc-in ~m-acc [~@(:plugin-config-path cfg)] {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)})))
+       ~(reduce
+        (fn [cfg-acc {:keys [plugin-name plugin-config-path] :as cfg}]
+          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" plugin-name))
+                plugin-test-spec  (eval `~(symbol (format "jspl/%s-spec-test"        plugin-name)))]
+             (plugin-test-spec cfg)
+            `(assoc-in ~cfg-acc [~@plugin-config-path] {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)})))
          {} cfg-list))))
 
 ;;; TEST DEFVIEW SEGMENT
@@ -150,39 +160,45 @@
 ;; defview-no-eval        --  push data to global map, but not eval component
 ;; defview-debug          --  print list of final configuration and toolkit map for every plugin
 ;; defview-debug-map      --  just return structure like global-map, to programmer can overview structure only
+
+;;; TEST FRAME
+;; (defn- test-frame []
+;;   (c/frame :title "Jarman-test"
+;;            :undecorated? false
+;;            :resizable? false
+;;            :content ((get-in (global-view-configs-get) [:permission :table :permission :entry]))
+;;            :minimum-size [600 :by 600]))
+
+;; (-> (doto (test-frame) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
+
 (comment
-  (defview-debug permission
-   (table
-    :name "permission"
-    :plug-place [:#tables-view-plugin]
-    :tables [:permission]
-    :view-columns [:permission.permission_name :permission.configuration]
-    :model-insert [:permission.permission_name :permission.configuration]
-    :insert-button true
-    :delete-button true
-    :actions []
-    :buttons []
-    :query
-    {:table_name :permission,
-     :column
-     [:#as_is
-      :permission.id
-      :permission.permission_name
-      :permission.configuration]})
-    (dialog-test
-     :id :my-custom-dialog
-     :name "My dialog box"
-     :permission [:user])
-    (dialog-bigstring
-     :id :my-custom-dialog
-     :name "My Bigstring box"
-     :permission [:user])
+  ;; TEST SEGMENT 
+  (defview
+    permission
+    (table
+     :id :permission
+     :name "permission"
+     :plug-place [:#tables-view-plugin]
+     :tables [:permission]
+     :view-columns [:permission.permission_name :permission.configuration]
+     :model-insert [:permission.permission_name :permission.configuration]
+     :insert-button true
+     :delete-button true
+     :actions []
+     :buttons []
+     :query
+     {:table_name :permission,
+      :column
+      [:#as_is
+       :permission.id
+       :permission.permission_name
+       :permission.configuration]})
     (dialog-table
-     :id :my-custom-dialog
-     :name "My table dialog"
+     :id :permission-table
+     :name "permission dialog"
      :permission [:user]
      :tables [:permission]
-     :view-columns [:permission.permission_name]
+     :view-columns [:permission.permission_name :permission.configuration]
      :query
      {:table_name :permission,
       :column
@@ -191,6 +207,7 @@
        :permission.permission_name
        :permission.configuration]})))
 
+
 ;;; ---------------------------------------
 ;;; eval this function and take a look what
 ;;; you get in that configuration
@@ -198,20 +215,96 @@
 
 (comment
   (do-view-load)
+  (return-structure-tree business-menu)
+  (return-structure-flat business-menu)
   (global-view-configs-clean)
   (global-view-configs-get)
-  ((get-in (global-view-configs-get) [:permission]))
-  ((get-in (global-view-configs-get) [:permission :dialog-test :my-custom-dialog :toolkit :dialog]))
+  (get-in (global-view-configs-get) [:user])
+  (get-in (global-view-configs-get)  [:permission :dialog-bigstring :select-name-permission])
   ((get-in (global-view-configs-get) [:permission :dialog-bigstring :my-custom-dialog :toolkit :dialog]))
   ((get-in (global-view-configs-get) [:permission :dialog-table :my-custom-dialog :toolkit :dialog])))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; HELPERS `defview` ;;; 
-;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; GENERATOR MENU VIEW ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn as-is [& column-list]
-  (map #(if (keyword? %) {% %} %) column-list))
+;;; TODO @riser
+;;; - [ ] make request as returned result 
+(defn transform-path-to-request [^clojure.lang.PersistentVector plugin-path]
+  (let [{{plugin-title      :name
+          plugin-plug-place :plug-place
+          plugin-permission :permission
+          :as plugin-config} :config
+         plugin-toolkit      :toolkit
+         plugin-entry        :entry}
+        (get-in (global-view-configs-get) plugin-path)]
+    [plugin-title
+     plugin-plug-place
+     plugin-permission
+     plugin-entry]))
+
+(defn- recur-walk-throw [m-config f path]
+  (let [[header tail] (map-destruct m-config)]
+    (if (some? header)
+      (let [[[k v] & _] header
+            path (conj path k)]
+        (cond
+          (map? v)
+          (do (f header path)
+              (recur-walk-throw v f path))
+
+          :else (f header path))))
+    (if (some? tail) (recur-walk-throw tail f path))))
+
+(defn- return-structure-flat [m]
+  (let [result-vec (atom [])
+        f (fn [[[k v] & _] path]
+            (if (vector? v)
+              (swap! result-vec conj (conj path (transform-path-to-request v)))))]
+    (recur-walk-throw m f [])
+    @result-vec))
+
+(defn- return-structure-tree [m]
+  (let [result-vec (atom {})
+        f (fn [[[k v] & _] path]
+            ;; if value is vector then 
+            (if (vector? v)
+              (swap! result-vec assoc-in path (transform-path-to-request v))))]
+    (recur-walk-throw m f [])
+    @result-vec))
+
+(defn- create-header
+  ([item] {:pre [(string? item)]} item)
+  ([item icon] (cond-> {}
+                 item (assoc :item item)
+                 icon (assoc :icon icon))))
+
+(def ^:private business-menu
+  {"Admin space"
+   {"User table"                [:user :table :user]
+    "Permission edit"           [:permission :table :permission]}
+   "Sale structure"
+   {"Enterpreneur"              [:enterpreneur :table :enterpreneur]
+    "Point of sale group"       [:point_of_sale_group :table :point_of_sale_group]
+    "Point of sale group links" [:point_of_sale_group_links :table :point_of_sale_group_links],
+    "Point of sale"             [:point_of_sale :table :point_of_sale]}
+   "Repair contract"
+   {"Repair contract"           [:repair_contract :table :repair_contract]
+    "Repair reasons"            [:repair_reasons :table :repair_reasons]
+    "Repair technical issue"    [:repair_technical_issue :table :repair_technical_issue]
+    "Repair nature of problem"  [:repair_nature_of_problem :table :repair_nature_of_problem]
+    "Cache register"            [:cache_register :table :cache_register]
+    "Seal"                      [:seal :table :seal]}
+   "Service contract"
+   {"Service contract"          [:service_contract :table :service_contract]
+    "Service contract month"    [:service_contract_month :table :service_contract_month]}})
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; loader chain for `defview` ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- put-table-view-to-db [view-data]
   (((fn [f] (f f))
@@ -289,7 +382,8 @@
     (if (empty? data)
       ((state/state :alert-manager) :set {:header "Error" :body "Problem with tables. Data not found in DB"} 5)
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
-        (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))))
+        (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))
+    (return-structure-tree business-menu)))
 
 (defn- view-get
   "Description
@@ -320,8 +414,7 @@
   "Description:
      Prepared popup window with code editor for defview.
    Example:
-     (popup-defview-editor \"user\")
-  "
+     (popup-defview-editor \"user\")"
   [table-str]
   (let [dview (view-get table-str)]
       (gcomp/popup-window
@@ -395,8 +488,7 @@
                    :onClick (fn [e] (view-defview-editor (:table_name m))) ))
                 table-and-view-coll)))]
     (.add (c/select (state/state :app) [:#expand-menu-space]) comp)
-    (.revalidate (c/to-root (state/state :app)))
-    ))
+    (.revalidate (c/to-root (state/state :app)))))
 
 (defn prepare-defview-editors-state
   "Description:
@@ -404,9 +496,7 @@
      and set to state with :defview-editors key.
      Invoke again to refresh state.
    Example:
-     (prepare-defview-editors-state)
-  "
-  []
+     (prepare-defview-editors-state)" []
   (let [table-and-view-coll (db/query
                              (select!
                               {:table_name :view
@@ -420,4 +510,8 @@
         (fn [m]
           {(keyword (:table_name m)) (fn [e] (view-defview-editor (:table_name m)))})
         table-and-view-coll))))))
+
+
+
+
 

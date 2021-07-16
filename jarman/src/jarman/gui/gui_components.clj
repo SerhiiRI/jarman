@@ -916,35 +916,29 @@
       Function need stool/image-scale function for scalling icon"
   (fn [txt inside-btns
        & {:keys [expand
+                 border
                  vsize
                  min-height
                  ico
                  ico-hover
                  id
-                 bg-color
-                 left-color
-                 left
                  onClick
-                 over-func]
+                 over-func
+                 background]
           :or {expand :auto
+               border (b/compound-border (b/empty-border :left 6))
                vsize 35
                min-height 200
                ico  (stool/image-scale icon/plus-64-png 25)
                ico-hover (stool/image-scale icon/minus-grey-64-png 20)
                id :none
-               bg-color nil
-               left-color nil
-               left 0
                onClick nil
                over-func nil
-               }}]
+               background (gtool/get-comp :button-expand :background)}}]
     (let [atom-inside-btns (atom nil)
           inside-btns (if (nil? inside-btns) nil inside-btns)
           inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns))
           ico (if (or (= :always expand) (not (nil? inside-btns))) ico nil)
-          bg-color (if (nil? bg-color) (gtool/get-comp :button-expand :background) bg-color)
-          left-color (if (nil? left-color) bg-color left-color)
-          border-fn (fn [](b/compound-border (b/line-border :left left :color "#fff")))
           title (c/label
                  :text txt
                  :background (Color. 0 0 0 0))
@@ -965,9 +959,9 @@
                        (c/config! icon :listen (listen func))
                        (mig-panel
                         :constraints ["" (str "10px[grow, fill]0px[" vsize "]0px") "0px[fill]0px"]
-                        :background bg-color
+                        :background background
                         :focusable? true
-                        :border (border-fn)
+                        :border border
                         :items [[title]
                                 [icon]]))]
       (if (nil? onClick)
@@ -993,9 +987,8 @@
 
 
 (defn expand-input
-  [{:keys [local-changes panel onClick]
-    :or {local-changes (atom {})
-         panel (seesaw.mig/mig-panel)
+  [{:keys [panel onClick]
+    :or {panel (seesaw.mig/mig-panel)
          onClick (fn [e])}}]
   (button-expand "Enter" panel
                  :over-func onClick
@@ -1022,8 +1015,8 @@
            :background "#fff"
            :size [200 :by 25]
            :focusable? true
-           :border (b/compound-border (b/empty-border :left 10) (b/line-border :left left :color "#fff"))
-           :listen [:mouse-clicked onClick
+           :border (b/empty-border :left 10)
+           :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
                     :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
                     :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
                     :focus-gained  (fn [e] (c/config! e :background ;; (gtool/get-comp :button-expand-child :background-hover)

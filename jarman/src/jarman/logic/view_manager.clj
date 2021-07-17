@@ -14,7 +14,11 @@
    [jarman.gui.gui-components :as gcomp]
    [jarman.logic.sql-tool :refer [select! update! insert!]]
    [jarman.logic.metadata :as mt]
-   [jarman.logic.state :as state]))
+   [jarman.logic.state :as state]
+   ;; ---
+   [jarman.gui.gui-declarations :as gui]))
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GLOBAL DEFVIEW MAP ;;;
@@ -120,21 +124,11 @@
              (plugin-test-spec cfg)
              (global-view-configs-set plugin-config-path cfg toolkit (eval (fn [] (plugin-component plugin-config-path global-view-configs-get)))))) nil)))
 
-;;; DEPRECATED
-#_(defmacro defview-no-eval [table-name & body]
-  (let [cfg-list (defview-prepare-config table-name body)]
-    `(do
-       (global-view-configs-clean)
-       ~@(for [{:keys [plugin-name plugin-config-path] :as cfg} cfg-list]
-           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" plugin-name)))
-                 plugin-test-spec        (eval `~(symbol (format "jspl/%s-spec-test"        plugin-name)))]
-             (plugin-test-spec cfg)
-             (global-view-configs-set plugin-config-path cfg (plugin-toolkit-pipeline cfg))
-             `(println ~plugin-config-path)))
-       true)))
+;;;;;;;;;;;;;;;;;;;;;
+;;; DEBUG SEGMENT ;;; 
+;;;;;;;;;;;;;;;;;;;;;
 
-;;; DEPRECATED
-#_(defmacro defview-debug [table-name & body]
+(defmacro defview-debug [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
     `(list
       ~@(for [{:keys [plugin-name] :as cfg} cfg-list]
@@ -143,8 +137,8 @@
             `(do (~plugin-test-spec ~cfg)
                  {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)}))))))
 
-;;; DEPRECATED
-#_(defmacro defview-debug-map [table-name & body]
+
+(defmacro defview-debug-map [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
        ~(reduce
@@ -153,28 +147,14 @@
                 plugin-test-spec  (eval `~(symbol (format "jspl/%s-spec-test"        plugin-name)))]
              (plugin-test-spec cfg)
             `(assoc-in ~cfg-acc [~@plugin-config-path] {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)})))
-         {} cfg-list))))
+        {} cfg-list))))
 
-;;; TEST DEFVIEW SEGMENT
-;; defview                --  push data to global map and eval component 
-;; defview-no-eval        --  push data to global map, but not eval component
-;; defview-debug          --  print list of final configuration and toolkit map for every plugin
-;; defview-debug-map      --  just return structure like global-map, to programmer can overview structure only
 
-;;; TEST FRAME
-;; (defn- test-frame []
-;;   (c/frame :title "Jarman-test"
-;;            :undecorated? false
-;;            :resizable? false
-;;            :content ((get-in (global-view-configs-get) [:permission :table :permission :entry]))
-;;            :minimum-size [600 :by 600]))
 
-;; (-> (doto (test-frame) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
+;;; TEST SEGMENT ;;;
 
 (comment
-  ;; TEST SEGMENT 
-  (defview
-    permission
+  (defview permission
     (table
      :id :permission
      :name "permission"
@@ -182,8 +162,8 @@
      :tables [:permission]
      :view-columns [:permission.permission_name :permission.configuration]
      :model-insert [:permission.permission_name :permission.configuration]
-     :insert-button true
-     :delete-button true
+     :active-buttons [:insert :update :delete :clear :changes]
+     :permission [:admin :user :developer]
      :actions []
      :buttons []
      :query
@@ -193,20 +173,19 @@
        :permission.id
        :permission.permission_name
        :permission.configuration]})
-    ;; (dialog-table
-    ;;  :id :permission-table
-    ;;  :name "permission dialog"
-    ;;  :permission [:user]
-    ;;  :tables [:permission]
-    ;;  :view-columns [:permission.permission_name :permission.configuration]
-    ;;  :query
-    ;;  {:table_name :permission,
-    ;;   :column
-    ;;   [:#as_is
-    ;;    :permission.id
-    ;;    :permission.permission_name
-    ;;    :permission.configuration]})
-    ))
+    (dialog-table
+     :id :permission-table
+     :name "permission dialog"
+     :permission [:admin :user :developer]
+     :tables [:permission]
+     :view-columns [:permission.permission_name :permission.configuration]
+     :query
+     {:table_name :permission,
+      :column
+      [:#as_is
+       :permission.id
+       :permission.permission_name
+       :permission.configuration]})))
 
 
 ;;; ---------------------------------------
@@ -225,13 +204,34 @@
   ((get-in (global-view-configs-get) [:permission :dialog-bigstring :my-custom-dialog :toolkit :dialog]))
   ((get-in (global-view-configs-get) [:permission :dialog-table :my-custom-dialog :toolkit :dialog])))
 
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; button extension ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; (defprotocol IPluginQuery
+;;   (return-path [this])
+;;   (return-entry [this])
+;;   (return-title [this]))
+
+;; (extend jarman.gui.gui_declarations.Button
+;;   IPluginQuery
+;;   {:return-path  (fn [this] (.additional-info this))
+;;    :return-entry (fn [this] (get-in (global-view-configs-get) (conj (return-path this) :entry)))
+;;    :return-title (fn [this] (get-in (global-view-configs-get) (conj (return-path this) :config :name)))})
+
+;; (let [view (gui/->Button (gui/->Representation nil "SOME")
+;;                (fn [x])
+;;                [:user :table :user])]
+;;  (return-title view))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GENERATOR MENU VIEW ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; TODO @riser
-;;; - [ ] make request as returned result 
+(defrecord View [title plugin-place permission swing-component])
+(defn isView? [^jarman.logic.view_manager.View e]
+     (instance? jarman.logic.view_manager.View e))
+
 (defn transform-path-to-request [^clojure.lang.PersistentVector plugin-path]
   (let [{{plugin-title      :name
           plugin-plug-place :plug-place
@@ -240,10 +240,10 @@
          plugin-toolkit      :toolkit
          plugin-entry        :entry}
         (get-in (global-view-configs-get) plugin-path)]
-    [plugin-title
-     plugin-plug-place
-     plugin-permission
-     plugin-entry]))
+    (->View plugin-title
+            plugin-plug-place
+            plugin-permission
+            plugin-entry)))
 
 (defn- recur-walk-throw [m-config f path]
   (let [[header tail] (map-destruct m-config)]
@@ -301,8 +301,6 @@
    {"Service contract"          [:service_contract :table :service_contract]
     "Service contract month"    [:service_contract_month :table :service_contract_month]}
    })
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; loader chain for `defview` ;;;
@@ -513,7 +511,98 @@
           {(keyword (:table_name m)) (fn [e] (view-defview-editor (:table_name m)))})
         table-and-view-coll))))))
 
+;;;;;;;;;;;;;;;;;;;;;
+;;; DEBUG SEGMENT ;;;
+;;;;;;;;;;;;;;;;;;;;;
 
+(defn- is-plugin? [m]
+  (if (map? m)
+   (and
+    (contains? m :config)
+    (contains? m :entry)
+    (contains? m :toolkit))))
 
+(defn- recur-walk-throw-views [m-config f path]
+  (let [[header tail] (map-destruct m-config)]
+    (if (some? header)
+      (let [[[k v] & _] header
+            path (conj path k)]
+        (cond
+          (and (map? v) (not (is-plugin? v)))
+          (do (f header path)
+              (recur-walk-throw v f path))
 
+          :else (f header path))))
+    (if (some? tail) (recur-walk-throw tail f path))))
+
+(defn plugin-paths []
+  (let [result-vec (atom [])
+        f (fn [[[k v] & _] path]
+            (if (is-plugin? v)
+              (swap! result-vec conj path)))]
+    (recur-walk-throw (global-view-configs-get) f [])
+    @result-vec))
+
+(defn- plugin-paths-getters []
+  (for [path (plugin-paths)]
+    (list 'get-in (list 'global-view-configs-get) path)))
+
+(defn- plugin-paths-fn [f & plugin-partial-path]
+  (let [list-all
+        (mapcat
+         vec
+         (for [path (plugin-paths)]
+           (f path)))]
+    (if (empty? plugin-partial-path)
+      list-all
+      (filter
+       #(= (take (count plugin-partial-path) %) plugin-partial-path)
+       list-all))))
+
+(def plugin-paths-all (partial plugin-paths-fn
+                         (fn [path]
+                           [(conj path :toolkit)
+                            (conj path :config)
+                            (conj path :entry)])) )
+(def plugin-paths-toolkit (partial plugin-paths-fn (fn [path] [(conj path :toolkit)])) )
+(def plugin-paths-entry (partial plugin-paths-fn (fn [path] [(conj path :entry)])) )
+(def plugin-paths-config (partial plugin-paths-fn (fn [path] [(conj path :config)])) )
+
+(defn plugin-open-in-frame [& paths]
+  (for [path paths]
+   (if-let [plugin (get-in (global-view-configs-get) path)]
+     (let [{{name :name} :config
+            entry :entry}
+           plugin]
+       (-> (doto (c/frame :title name
+                          :undecorated? false
+                          :resizable? false
+                          :content (entry)
+                          :minimum-size [600 :by 600])
+             (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)))))
+
+(comment
+  ;; return in different way
+  ;; path's list to plugins
+  (plugin-paths)
+  (plugin-paths-all)
+  (plugin-paths-toolkit)
+  (plugin-paths-entry)
+  (plugin-paths-config)
+  ;; you can limit path from start keys
+  ;; for exmaple return all keys for
+  ;; :permission 
+  (plugin-paths-all :permission)
+  ;; or more concrate plugin etc.
+  (plugin-paths-all :permission :dialog-table)
+  ;; get simple debug map getter
+  (plugin-paths-getters)
+  ;; open some plugin :entryes in frame
+  (plugin-open-in-frame [:permission :table :permission])
+  ;; or two and more interesting to us plugins
+  (plugin-open-in-frame
+   [:user :table :user]
+   [:permission :table :permission]
+   ;;...
+   ))
 

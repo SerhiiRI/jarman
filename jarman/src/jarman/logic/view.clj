@@ -11,8 +11,8 @@
    :tables [:permission]
    :view-columns [:permission.permission_name :permission.configuration]
    :model-insert [:permission.permission_name :permission.configuration]
-   :insert-button true
-   :delete-button true
+   :active-buttons [:insert :update :delete :clear :changes]
+   :permission [:admin :user :developer]
    :actions []
    :buttons []
    :query
@@ -25,7 +25,7 @@
   (dialog-table
    :id :permission-table
    :name "permission dialog"
-   :permission [:user]
+   :permission [:admin :user :developer]
    :tables [:permission]
    :view-columns [:permission.permission_name :permission.configuration]
    :query
@@ -53,8 +53,8 @@
                   :user.first_name
                   :user.last_name
                   :user.id_permission]
-   :insert-button true
-   :delete-button true
+   :active-buttons [:insert :update :delete :clear :changes]
+   :permission [:admin :user :developer]
    :dialog {:user.id_permission
             [:permission :dialog-table :permission-table]}
    :actions []
@@ -109,8 +109,8 @@
                   :cache_register.modem_model
                   :cache_register.modem_serial_number
                   :cache_register.modem_phone_number]
-   :insert-button true
-   :delete-button true
+   :active-buttons [:insert :update :delete :clear :changes]
+   :permission [:admin :user :developer]
    :dialog {:cache_register.id_point_of_sale
             [:point_of_sale :dialog-table :point_of_sale-table]}
    :actions []
@@ -154,7 +154,7 @@
   (dialog-table
    :id :cache_register-table
    :name "cache_register dialog"
-   :permission [:user]
+   :permission [:admin :user :developer]
    :tables [:cache_register :point_of_sale :enterpreneur]
    :view-columns [:cache_register.id_point_of_sale
                   :cache_register.name
@@ -222,8 +222,8 @@
                   :documents.name
                   :documents.document
                   :documents.prop]
-   :insert-button true
-   :delete-button true
+   :active-buttons [:insert :update :delete :clear :changes]
+   :permission [:admin :user :developer]
    :actions []
    :buttons []
    :query
@@ -261,8 +261,8 @@
                   :enterpreneur.legal_address
                   :enterpreneur.physical_address
                   :enterpreneur.contacts_information]
-   :insert-button true
-   :delete-button true
+   :active-buttons [:insert :update :delete :clear :changes]
+   :permission [:admin :user :developer]
    :actions []
    :buttons []
    :query
@@ -282,7 +282,7 @@
   (dialog-table
    :id :enterpreneur-table
    :name "enterpreneur dialog"
-   :permission [:user]
+   :permission [:admin :user :developer]
    :tables [:enterpreneur]
    :view-columns [:enterpreneur.ssreou
                   :enterpreneur.ownership_form
@@ -323,8 +323,8 @@
                   :point_of_sale.name
                   :point_of_sale.physical_address
                   :point_of_sale.telefons]
-   :insert-button true
-   :delete-button true
+   :active-buttons [:insert :update :delete :clear :changes]
+   :permission [:admin :user :developer]
    :dialog {:point_of_sale.id_enterpreneur
             [:enterpreneur :dialog-table :enterpreneur-table]}
    :actions []
@@ -352,7 +352,7 @@
   (dialog-table
    :id :point_of_sale-table
    :name "point_of_sale dialog"
-   :permission [:user]
+   :permission [:admin :user :developer]
    :tables [:point_of_sale :enterpreneur]
    :view-columns [:point_of_sale.id_enterpreneur
                   :point_of_sale.name
@@ -388,8 +388,8 @@
    :tables [:point_of_sale_group]
    :view-columns [:point_of_sale_group.group_name :point_of_sale_group.information]
    :model-insert [:point_of_sale_group.group_name :point_of_sale_group.information]
-   :insert-button true
-   :delete-button true
+   :active-buttons [:insert :update :delete :clear :changes]
+   :permission [:admin :user :developer]
    :actions []
    :buttons []
    :query
@@ -402,7 +402,7 @@
   (dialog-table
    :id :point_of_sale_group-table
    :name "point_of_sale_group dialog"
-   :permission [:user]
+   :permission [:admin :user :developer]
    :tables [:point_of_sale_group]
    :view-columns [:point_of_sale_group.group_name :point_of_sale_group.information]
    :query
@@ -427,8 +427,8 @@
                   :point_of_sale_group_links.id_point_of_sale]
    :model-insert [:point_of_sale_group_links.id_point_of_sale_group
                   :point_of_sale_group_links.id_point_of_sale]
-   :insert-button true
-   :delete-button true
+   :active-buttons [:insert :update :delete :clear :changes]
+   :permission [:admin :user :developer]
    :dialog {:point_of_sale_group_links.id_point_of_sale_group
             [:point_of_sale_group :dialog-table :point_of_sale_group-table],
             :point_of_sale_group_links.id_point_of_sale
@@ -467,7 +467,7 @@
   (dialog-table
    :id :point_of_sale_group_links-table
    :name "point_of_sale_group_links dialog"
-   :permission [:user]
+   :permission [:admin :user :developer]
    :tables [:point_of_sale_group_links
             :point_of_sale_group
             :point_of_sale
@@ -535,8 +535,8 @@
                   :repair_contract.id_repair_nature_of_problem
                   :repair_contract.repair_date
                   :repair_contract.cache_register_register_date]
-   :insert-button true
-   :delete-button true
+   :active-buttons [:insert :update :delete :clear :changes]
+   :permission [:admin :user :developer]
    :dialog {:repair_contract.id_cache_register
             [:cache_register :dialog-table :cache_register-table],
             :repair_contract.id_old_seal
@@ -624,7 +624,7 @@
   (dialog-table
    :id :repair_contract-table
    :name "repair_contract dialog"
-   :permission [:user]
+   :permission [:admin :user :developer]
    :tables [:repair_contract
             :cache_register
             :point_of_sale
@@ -718,8 +718,8 @@
    :tables [:repair_nature_of_problem]
    :view-columns [:repair_nature_of_problem.description]
    :model-insert [:repair_nature_of_problem.description]
-   :insert-button true
-   :delete-button true
+   :active-buttons [:insert :update :delete :clear :changes]
+   :permission [:admin :user :developer]
    :actions []
    :buttons []
    :query
@@ -731,7 +731,7 @@
   (dialog-bigstring
    :id :repair_nature_of_problem-bigstring
    :name "repair_nature_of_problem dialog"
-   :permission [:user]
+   :permission [:admin :user :developer]
    :item-columns
    :repair_nature_of_problem.description
    :query
@@ -749,8 +749,8 @@
    :tables [:repair_reasons]
    :view-columns [:repair_reasons.description]
    :model-insert [:repair_reasons.description]
-   :insert-button true
-   :delete-button true
+   :active-buttons [:insert :update :delete :clear :changes]
+   :permission [:admin :user :developer]
    :dialog {}
    :actions []
    :buttons []
@@ -761,7 +761,7 @@
   (dialog-bigstring
    :id :repair_reasons-bigstring
    :name "repair_reasons dialog"
-   :permission [:user]
+   :permission [:admin :user :developer]
    :item-columns
    :repair_reasons.description
    :query
@@ -777,8 +777,8 @@
    :tables [:repair_technical_issue]
    :view-columns [:repair_technical_issue.description]
    :model-insert [:repair_technical_issue.description]
-   :insert-button true
-   :delete-button true
+   :active-buttons [:insert :update :delete :clear :changes]
+   :permission [:admin :user :developer]
    :actions []
    :buttons []
    :query
@@ -790,7 +790,7 @@
   (dialog-bigstring
    :id :repair_technical_issue-bigstring
    :name "repair_technical_issue dialog"
-   :permission [:user]
+   :permission [:admin :user :developer]
    :item-columns
    :repair_technical_issue.description
    :query
@@ -808,8 +808,8 @@
    :tables [:seal]
    :view-columns [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove]
    :model-insert [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove]
-   :insert-button true
-   :delete-button true
+   :active-buttons [:insert :update :delete :clear :changes]
+   :permission [:admin :user :developer]
    :dialog {}
    :actions []
    :buttons []
@@ -824,7 +824,7 @@
   (dialog-table
    :id :seal-table
    :name "seal dialog"
-   :permission [:user]
+   :permission [:admin :user :developer]
    :tables [:seal]
    :view-columns [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove]
    :query
@@ -851,8 +851,8 @@
                   :service_contract.contract_start_term
                   :service_contract.contract_end_term
                   :service_contract.money_per_month]
-   :insert-button true
-   :delete-button true
+   :active-buttons [:insert :update :delete :clear :changes]
+   :permission [:admin :user :developer]
    :dialog {:service_contract.id_enterpreneur
             [:enterpreneur :dialog-table :enterpreneur-table]}
    :actions []
@@ -880,7 +880,7 @@
   (dialog-table
    :id :service_contract-table
    :name "service_contract dialog"
-   :permission [:user]
+   :permission [:admin :user :developer]
    :tables [:service_contract :enterpreneur]
    :view-columns [:service_contract.id_enterpreneur
                   :service_contract.contract_start_term
@@ -920,8 +920,8 @@
    :model-insert [:service_contract_month.id_service_contract
                   :service_contract_month.service_month_date
                   :service_contract_month.money_per_month]
-   :insert-button true
-   :delete-button true
+   :active-buttons [:insert :update :delete :clear :changes]
+   :permission [:admin :user :developer]
    :dialog {:service_contract_month.id_service_contract
             [:service_contract :dialog-table :service_contract-table]}
    :actions []
@@ -955,7 +955,7 @@
   (dialog-table
    :id :service_contract_month-table
    :name "service_contract_month dialog"
-   :permission [:user]
+   :permission [:admin :user :developer]
    :tables [:service_contract_month :service_contract :enterpreneur]
    :view-columns [:service_contract_month.id_service_contract
                   :service_contract_month.service_month_date
@@ -986,4 +986,3 @@
      :enterpreneur.legal_address
      :enterpreneur.physical_address
      :enterpreneur.contacts_information]}))
-

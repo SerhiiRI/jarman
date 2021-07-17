@@ -1002,8 +1002,13 @@
      (button-expand-child \"Title\" {:onClick (fn [e]) :args [:border nil]})
    "
   (fn [title
-       & {:keys [onClick args]
+       & {:keys [onClick
+                 left
+                 hover-color
+                 args]
           :or {onClick (fn [e] (println "Clicked: " title))
+               left 0
+               hover-color "#eeefff"
                args []}}]
     (apply c/label :font (gtool/getFont)
            :text (str title)
@@ -1014,7 +1019,8 @@
            :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
                     :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
                     :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
-                    :focus-gained  (fn [e] (c/config! e :background (gtool/get-comp :button-expand-child :background-hover)))
+                    :focus-gained  (fn [e] (c/config! e :background ;; (gtool/get-comp :button-expand-child :background-hover)
+                                                      hover-color))
                     :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand-child :background)))
                     :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gtool/switch-focus))))]
            args)))

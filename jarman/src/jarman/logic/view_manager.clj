@@ -211,18 +211,20 @@
 ;; (defprotocol IPluginQuery
 ;;   (return-path [this])
 ;;   (return-entry [this])
-;;   (return-title [this]))
+;;   (return-title [this])
+;;   (return-config [this]))
 
 ;; (extend jarman.gui.gui_declarations.Button
 ;;   IPluginQuery
 ;;   {:return-path  (fn [this] (.additional-info this))
 ;;    :return-entry (fn [this] (get-in (global-view-configs-get) (conj (return-path this) :entry)))
-;;    :return-title (fn [this] (get-in (global-view-configs-get) (conj (return-path this) :config :name)))})
+;;    :return-title (fn [this] (get-in (global-view-configs-get) (conj (return-path this) :config :name)))
+;;    :return-config (fn [this] (get-in (global-view-configs-get) (conj (return-path this) :config)))})
 
-;; (let [view (gui/->Button (gui/->Representation nil "SOME")
-;;                (fn [x])
-;;                [:user :table :user])]
-;;  (return-title view))
+;; (gui/->Button [:user :table :user])
+
+;; (let [view (gui/->Button [:user :table :user])]
+;;   (return-title view))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GENERATOR MENU VIEW ;;;

@@ -31,7 +31,8 @@
    [w h]))
 
 (defn- pop [render-fn]
-  (let [last-pos (atom [0 0])
+  (let [last-x (atom 0)
+        last-y (atom 0)
         [frame-w frame-h] (frame-wh)
         [body-w body-h]   [300 200]
         [x y] [(- (/ frame-w 2) (/ body-w 2))
@@ -40,28 +41,27 @@
         root (mig-panel :constraints ["" "0px[fill, grow]0px" "0px[fill, grow]0px"]
                         :bounds bounds
                         :background "#bbb"
-                        )]
-    (c/config! root :listen [:mouse-dragged
+                        :border (b/line-border :thickness 2 :color "#aaa"))]
+    (c/config! root :listen [:mouse-pressed (fn [e]
+                                              (let [new-pos (.getLocation (java.awt.MouseInfo/getPointerInfo))
+                                                    start-x   (.getX new-pos)
+                                                    start-y   (.getY new-pos)]
+                                                (reset! last-x start-x)
+                                                (reset! last-y start-y)
+                                                (c/move! (c/to-widget e) :to-front)))
+                             :mouse-dragged
                              (fn [e]
-                               (let [[now-x now-y] [(.getX e) (.getY e)]
-                                     [old-x old-y] [(first @last-pos) (second @last-pos)]
-                                     diff-x (- now-x old-x)
-                                     diff-y (- now-y old-y)
-                                     diff-x (if (neg? diff-x) (* -1 diff-x) diff-x)
-                                     diff-y (if (neg? diff-y) (* -1 diff-y) diff-y)]
-                                 (println "\nPos" [diff-x diff-y now-x now-y])
-                                 (do
-                                     (reset! last-pos [now-x now-y])
-                                     (c/move! root :to [:* now-y]))
-                                 ;; (if (or (< diff-x 50) (< diff-y 50))
-                                 ;;   (do
-                                 ;;     (reset! last-pos [now-x now-y])
-                                 ;;     (c/move! root :to [now-x now-y])))
-                                 ;; (println "\nPos" pos)
-                                 
-                                 ;; (println "\nPos" (new java.awt.Point x y))
-                                 ;; (c/config! root :location-on-screen (new java.awt.Point x y))
-                                 ))])
+                               (let [old-bounds (c/config (c/to-widget e) :bounds)
+                                     [old-x old-y] [(.getX old-bounds) (.getY old-bounds)]
+                                     new-pos (.getLocation (java.awt.MouseInfo/getPointerInfo))
+                                     new-x   (.getX new-pos)
+                                     new-y   (.getY new-pos)
+                                     move-x  (if (= 0 @last-x) 0 (- new-x @last-x))
+                                     move-y  (if (= 0 @last-y) 0 (- new-y @last-y))]
+                                 (reset! last-x new-x)
+                                 (reset! last-y new-y)
+                                 (c/config! (c/to-widget e) :bounds [(+ old-x move-x) (+ old-y move-y) :* :*]))
+                               )])
     (.add root (render-fn))
     root))
 
@@ -86,4 +86,5 @@
 (-> (doto build (.setLocationRelativeTo nil) c/pack! c/show!))
 
 
+(.add (app) (pop comp) (new Integer 25))
 (.add (app) (pop comp) (new Integer 25))

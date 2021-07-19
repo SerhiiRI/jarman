@@ -72,7 +72,7 @@
          (let [root (if (fn? root) (root) root)]
            (try
              (c/config! root :items (render-fn))
-             (catch Exception e (println "\n" (str "Rerender exception:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with new component inserting
+             (catch Exception e (println "\n" (str "Rerender exception:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
                     ))))))))
 
 (defn- jvpanel
@@ -93,94 +93,53 @@
 
 
 (defn show-table-in-expand [model-data]
-  (let [mig (seesaw.mig/mig-panel :constraints ["wrap 2" "0px[grow, fill]0px" "0px[:20, grow, fill, top]0px"])
+  (let [mig (seesaw.mig/mig-panel :constraints ["wrap 2" "0px[grow, fill]0px" "0px[fill, top]0px"])
         border (b/compound-border (b/empty-border :left 4))]
-    (doall (map (fn [[k v]] (do (.add mig (seesaw.core/label :background "#E2FBDE" :text (name k) :font (gtool/getFont) :border border))
-                                (.add mig (seesaw.core/label :background "#fff" :text (str v) :font (gtool/getFont) :border border)))) model-data))
+    (doall (map (fn [[k v]] (do (.add mig (seesaw.core/label :background "#E2FBDE" :size [100 :by 20] :text (name k) :font (gtool/getFont :size 11) :border border))
+                                (.add mig (seesaw.core/label :background "#fff" :size [140 :by 20] :text (str v) :font (gtool/getFont :size 11) :border border)))) model-data))
     (.repaint mig) mig))
 
 
 
+(defn refresh-panel [colmn-panel ct-conf ct-data dialog-model-id id]
+  (let [model-to-repre (fn [list-tables model-colmns]
+                         (let [model-col  (gtable/gui-table-model-columns list-tables (keys model-colmns))
+                                 list-repr (into {} (map (fn [model] {(:key model)(:text model)})  model-col))]  {"repr" "kjj"}
+                           (into {} (map (fn [a b] {(second a) ((first a) model-colmns)}) list-repr model-colmns))))]
+    (.removeAll colmn-panel)
+    (.add colmn-panel (show-table-in-expand  
+                       (model-to-repre (:tables ct-conf)
+                                       (do (println "SELECT >>>")
+                                           (first ((:select ct-data) {:where [:= dialog-model-id id]}))))))
+    (.revalidate colmn-panel)
+    (.repaint colmn-panel)))
+
 (defn input-related-popup-table
   "Description:
      Component for dialog window with related table. Returning selected table model (row)."
-  [{:keys [val state field-qualified dispatch!]}
-
-   ;;{:keys [global-configuration local-changes field-qualified table-model key-table plugin-toolkit plugin-config]}
-   ]
-
-
-  (println "STATEEE" (keys @state))
-
-  (println "PLUGIN PATH " (:plugin-path @state))
-
-  (println "Dialog PATH >>>" nil)
-
-  (println "MODEL --->>" (:model @state))
-
-  (let [dialog-path (field-qualified (:dialog (:plugin-config @state)))
-        dialog-model-id #break (get-in ((:plugin-global-config @state)) (vec (concat dialog-path [:toolkit :model-id]))) ;;:permission.id
-        dialog-fn   (get-in ((:plugin-global-config @state)) (vec (concat dialog-path [:toolkit :dialog])))
-        key-column  (:model-id (:plugin-toolkit @state)) ;;user.id_permission
-        model-to-repre  (fn [list-tables model-colmns]
-                          (let [model-col (gtable/gui-table-model-columns list-tables (keys model-colmns))
-                                list-repr (into {} (map (fn [model] {(:key model)(:text model)})  model-col))]
-                            (into {} (map (fn [a b] {(second a) ((first a) model-colmns)}) list-repr model-colmns))))
-        colmn-panel (seesaw.core/flow-panel :hgap 0 :vgap 0)
-        component       (gcomp/expand-input 
-                         {:panel colmn-panel
-                          :onClick (fn [e]
-                                     (dispatch!
-                                      {:action :update-changes
-                                       :path   [(rift field-qualified :unqualifited)]
-                                       :value  (dialog-model-id (dialog-fn (key-column (:model @state))))})
-                                     (.removeAll colmn-panel)
-                                     (.add colmn-panel (show-table-in-expand 
-                                                        (let [id-column (key-column (:model @state))]
-                                                          (if (nil? id-column) {}
-                                                              (model-to-repre (:tables (:plugin-config @state))
-                                                                              (first (filter (fn [column] (= (key-column column) id-column))
-                                                                                             ((:select (:plugin-toolkit @state))))))))))
-                                     (.revalidate colmn-panel)
-                                     (.repaint colmn-panel))})] component)
-
-
-  
-  
-   ;; (let 
-   ;;    [connected-table ((comp first vals :table key-table) (global-configuration))
-   ;;     ct-conf         (:config  connected-table)
-   ;;     ct-data         (:toolkit connected-table)
-   ;;     dialog-path     (field-qualified (:dialog plugin-config))
-   ;;     dialog-fn       (get-in (global-configuration) (vec (concat dialog-path [:toolkit :dialog])))
-   ;;     key-column      (read-string (str key-table ".id"))
-   ;;     model-to-repre  (fn [list-tables model-colmns]
-   ;;                       (let [model-col (gtable/gui-table-model-columns list-tables (keys model-colmns))
-   ;;                             list-repr (into {} (map (fn [model] {(:key model)(:text model)})  model-col))]
-   ;;                         (into {} (map (fn [a b] {(second a) ((first a) model-colmns)}) list-repr model-colmns))))
-   ;;     colmn-panel
-   ;;    ;; (seesaw.core/vertical-panel)
-   ;;     (seesaw.core/flow-panel :hgap 0 :vgap 0)
-   ;;     component       (gcomp/expand-input 
-   ;;                      {:local-changes local-changes
-   ;;                       :panel colmn-panel
-   ;;                       :onClick (fn [e] (reset! local-changes (assoc @local-changes
-   ;;                                                                     field-qualified
-   ;;                                                                     (key-column (dialog-fn (key-column table-model)))))
-   ;;                                  (.removeAll colmn-panel)
-   ;;                                  (.add colmn-panel (show-table-in-expand
-   ;;                                                     (let [id-column (field-qualified @local-changes)]
-   ;;                                                       (if (nil? id-column) {}
-   ;;                                                           (model-to-repre (:tables ct-conf)
-   ;;                                                                           (first (filter (fn [column] (= (key-column column) id-column))
-   ;;                                                                                          ((:select ct-data)))))))))
-   ;;                                  (.revalidate colmn-panel)
-   ;;                                  (.repaint colmn-panel))})
-
-   ;;     ]
-   ;;   component)
-;;    (c/label :text "heyy")
-  )
+  [{:keys [val state field-qualified dispatch!]}]
+  (let [dialog-path      (field-qualified (:dialog (:plugin-config @state)))
+        ct-conf          (get-in ((:plugin-global-config @state)) (vec (concat dialog-path [:config])))
+        ct-data          (get-in ((:plugin-global-config @state)) (vec (concat dialog-path [:toolkit])))
+        dialog-model-id  (:model-id ct-data) ;;:permission.id
+        dialog-fn        (:dialog ct-data) 
+        key-column       (:model-id (:plugin-toolkit @state)) ;;user.id
+        colmn-panel      (seesaw.core/flow-panel :hgap 0 :vgap 0)
+        component        (gcomp/expand-input 
+                          {:panel colmn-panel
+                           :onClick (fn [e]
+                                      (let [state @state
+                                            dialog  (dialog-model-id (dialog-fn (dialog-model-id (:model state))))]
+                                        (refresh-panel colmn-panel ct-conf ct-data dialog-model-id dialog)
+                                        (dispatch!   
+                                         {:action :update-changes
+                                          :path   [(rift field-qualified :unqualifited)]
+                                          :value dialog})))})]
+    (if-not (nil? (:model @state))
+      (do (println "MODEL" (:model @state))
+          (println "ID"    (dialog-model-id (:model @state)))
+          (refresh-panel colmn-panel ct-conf ct-data dialog-model-id (dialog-model-id (:model @state)))))
+    component))
 
 ;; ┌───────────────┐
 ;; │               │
@@ -595,7 +554,11 @@
 (s/def ::model-insert any?)
 (s/def ::model-update any?)
 (s/def ::actions any?)
-(s/def ::active-buttons any?)
+(s/def ::insert-button boolean?)
+(s/def ::update-button boolean?)
+(s/def ::delete-button boolean?)
+(s/def ::export-button any?)
+(s/def ::chenges-button any?)
 (s/def ::buttons (s/coll-of ::one-button))
 
 
@@ -652,40 +615,41 @@
 
 
 
-(defn input-related-popup-table
-  "Description:
-     Component for dialog window with related table. Returning selected table model (row)."
-  [{:keys [global-configuration local-changes field-qualified table-model key-table plugin-toolkit plugin-config]}]
-  (let 
-      [connected-table ((comp first vals :table key-table) (global-configuration))
-       ct-conf         (:config  connected-table)
-       ct-data         (:toolkit connected-table)
-       dialog-path     (field-qualified (:dialog plugin-config))
-       dialog-fn       (get-in (global-configuration) (vec (concat dialog-path [:toolkit :dialog])))
-       key-column      (read-string (str key-table ".id"))
-       model-to-repre  (fn [list-tables model-colmns]
-                         (let [model-col (gtable/gui-table-model-columns list-tables (keys model-colmns))
-                               list-repr (into {} (map (fn [model] {(:key model)(:text model)})  model-col))]
-                           (into {} (map (fn [a b] {(second a) ((first a) model-colmns)}) list-repr model-colmns))))
-       colmn-panel
-      ;; (seesaw.core/vertical-panel)
-       (seesaw.core/flow-panel :hgap 0 :vgap 0)
-       component       (gcomp/expand-input 
-                        {:local-changes local-changes
-                         :panel colmn-panel
-                         :onClick (fn [e] (reset! local-changes (assoc @local-changes
-                                                                       field-qualified
-                                                                       (key-column (dialog-fn (key-column table-model)))))
-                                    (.removeAll colmn-panel)
-                                    (.add colmn-panel (show-table-in-expand
-                                                       (let [id-column (field-qualified @local-changes)]
-                                                         (if (nil? id-column) {}
-                                                             (model-to-repre (:tables ct-conf)
-                                                                             (first (filter (fn [column] (= (key-column column) id-column))
-                                                                                            ((:select ct-data)))))))))
-                                    (.revalidate colmn-panel)
-                                    (.repaint colmn-panel))})]
-    component)))
+;; (defn input-related-popup-table
+;;   "Description:
+;;      Component for dialog window with related table. Returning selected table model (row)."
+;;   [{:keys [global-configuration local-changes field-qualified table-model key-table plugin-toolkit plugin-config]}]
+;;   (let 
+;;       [connected-table ((comp first vals :table key-table) (global-configuration))
+;;        ct-conf         (:config  connected-table)
+;;        ct-data         (:toolkit connected-table)
+;;        dialog-path     (field-qualified (:dialog plugin-config))
+;;        dialog-fn       (get-in (global-configuration) (vec (concat dialog-path [:toolkit :dialog])))
+;;        key-column      (read-string (str key-table ".id"))
+;;        model-to-repre  (fn [list-tables model-colmns]
+;;                          (let [model-col (gtable/gui-table-model-columns list-tables (keys model-colmns))
+;;                                list-repr (into {} (map (fn [model] {(:key model)(:text model)})  model-col))]
+;;                            (into {} (map (fn [a b] {(second a) ((first a) model-colmns)}) list-repr model-colmns))))
+;;        colmn-panel
+;;       ;; (seesaw.core/vertical-panel)
+;;        (seesaw.core/flow-panel :hgap 0 :vgap 0)
+;;        component       (gcomp/expand-input 
+;;                         {:local-changes local-changes
+;;                          :panel colmn-panel
+;;                          :onClick (fn [e] (reset! local-changes (assoc @local-changes
+;;                                                                        field-qualified
+;;                                                                        (key-column (dialog-fn (key-column table-model)))))
+;;                                     (.removeAll colmn-panel)
+;;                                     (.add colmn-panel (show-table-in-expand
+;;                                                        (let [id-column (field-qualified @local-changes)]
+;;                                                          (if (nil? id-column) {}
+;;                                                              (model-to-repre (:tables ct-conf)
+;;                                                                              (first (filter (fn [column] (= (key-column column) id-column))
+;;                                                                                             ((:select ct-data)))))))))
+;;                                     (.revalidate colmn-panel)
+;;                                     (.repaint colmn-panel))})]
+;;     component))
+)
 
 
 

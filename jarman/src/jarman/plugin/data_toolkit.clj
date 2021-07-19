@@ -197,7 +197,7 @@
           (update-expression (fn [entity] (if (id_column entity) (update! {:table_name table-name :set entity :where [:= id_column (id_column entity)]}))))
           (insert-expression (fn [entity] (if (nil? (id_column entity)) (insert! {:table_name table-name :set entity}))))
           (delete-expression (fn [entity] (if (id_column entity) (delete! {:table_name table-name :where [:= id_column (id_column entity)]}))))
-          (select-expression (fn [& {:as args}]
+          (select-expression (fn [& [{:as args}]]
                                (select!
                                 (merge
                                  (if (:table_name (:query configuration))
@@ -212,7 +212,7 @@
           :update (fn [e] (exec-fn (update-expression e)))
           :insert (fn [e] (exec-fn (insert-expression e)))
           :delete (fn [e] (exec-fn (delete-expression e)))
-          :select (fn [ ] (query-fn (select-expression)))
+          :select (fn [& [args]] (query-fn (select-expression args)))
           :model-id id_column
           :model-columns model_column}))
 

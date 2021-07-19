@@ -940,6 +940,7 @@
           inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns))
           ico (if (or (= :always expand) (not (nil? inside-btns))) ico nil)
           title (c/label
+                 :border (b/empty-border :left 10)
                  :text txt
                  :background (Color. 0 0 0 0))
           listen (fn [func] [:mouse-entered gtool/hand-hover-on
@@ -952,18 +953,25 @@
                 :halign :center
                 :background (Color. 0 0 0 0)
                 :icon ico)
-          mig (mig-panel :constraints ["wrap 1" (str "0px[" min-height ":, grow, fill]0px") "0px[fill]0px"])
+          mig (mig-panel :constraints ["wrap 1" (str "0px[" min-height ":, fill]0px") "0px[fill]0px"] :background background)
           expand-btn (fn [func]
                        (c/config! title :listen (if (nil? over-func) (listen func) [:mouse-clicked over-func
                                                                                     :mouse-entered gtool/hand-hover-on]))
                        (c/config! icon :listen (listen func))
-                       (mig-panel
-                        :constraints ["" (str "10px[grow, fill]0px[" vsize "]0px") "0px[fill]0px"]
-                        :background background
+                       ;; (mig-panel
+                       ;;  :constraints ["" (str "10px[grow, fill]0px[" vsize "]0px") "0px[fill]0px"]
+                       ;;  :background background
+                       ;;  :focusable? true
+                       ;;  :border border
+                       ;;  :items [[title]
+                       ;;          [icon]])
+                       (c/border-panel
                         :focusable? true
+                        :background background
                         :border border
-                        :items [[title]
-                                [icon]]))]
+                        :size [min-height :by vsize]
+                        :items [[title :west]
+                                [icon :east]]))]
       (if (nil? onClick)
        (let [onClick (fn [e]
                        (if-not (nil? @atom-inside-btns)
@@ -988,9 +996,10 @@
 
 (defn expand-input
   [{:keys [panel onClick]
-    :or {panel (seesaw.mig/mig-panel)
+    :or {panel (seesaw.core/vertical-panel :items (list (c/label :text "heyy")))
          onClick (fn [e])}}]
   (button-expand "Enter" panel
+                 :min-height 220
                  :over-func onClick
                  :background "#dddddd"))
 

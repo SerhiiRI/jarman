@@ -47,7 +47,9 @@
                   :user.password
                   :user.first_name
                   :user.last_name
-                  :user.id_permission]
+                  :permission.permission_name
+;;                  :user.id_permission
+                  ]
    :model-insert [:user.login
                   :user.password
                   :user.first_name

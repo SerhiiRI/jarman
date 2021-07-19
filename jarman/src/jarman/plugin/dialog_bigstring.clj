@@ -106,7 +106,7 @@
 
 (defn dialog-bigstring-toolkit-pipeline [plugin-config]
   (let [toolkit-map (query-toolkit/data-toolkit-pipeline plugin-config {})]
-    (dialog-toolkit plugin-config toolkit-map)))
+    (into toolkit-map (dialog-toolkit plugin-config toolkit-map))))
 
 (defn dialog-bigstring-entry [path-to-plugin global-plugin-storrage-getter])
 

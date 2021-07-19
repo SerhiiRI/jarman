@@ -969,6 +969,7 @@
                         :focusable? true
                         :background background
                         :border border
+                        :size [min-height :by vsize]
                         :items [[title :west]
                                 [icon :east]]))]
       (if (nil? onClick)

@@ -270,28 +270,39 @@
           (let [k (first  coll)
                 v (second coll)]
             (cond
+              (vector? v) (gcomp/button-expand-child
+                               (str k)
+                               :left (* (dec lvl) 5)
+                               :hover-color (second (nth (expand-colors) (dec lvl)))
+                               :onClick
+                               (if (fn? (last v))
+                                 (if (= :invoke (second v))
+                                   (last v)
+                                   (fn [e]
+                                     ((state/state :jarman-views-service)
+                                      :set-view
+                                      :view-id (str "auto-" (first v))
+                                      :title k
+                                      :scrollable? false
+                                      :component-fn (last v))))
+                                 (fn [e] (println "\nProblem with fn in " k v))))
+              (vmg/isView? v) (gcomp/button-expand-child
+                               (str k)
+                               :left (* (dec lvl) 5)
+                               :hover-color (second (nth (expand-colors) (dec lvl)))
+                               :onClick (fn [e]
+                                          ((state/state :jarman-views-service)
+                                           :set-view
+                                           :view-id (str "auto-" (.title v))
+                                           :title k
+                                           :scrollable? false
+                                           :component-fn (.swing-component v))))
               (map?    v) (gcomp/button-expand
                            (str k)
                            (bulid-expand-by-map v :lvl (inc lvl))
                            :left-color (first (nth (expand-colors) lvl))
                            :bg-color   (first (nth (expand-colors) lvl))
                            :left (* lvl 5))
-              (vector? v) (gcomp/button-expand-child
-                           (str k)
-                           :left (* (dec lvl) 5)
-                           :hover-color (second (nth (expand-colors) (dec lvl)))
-                           :onClick
-                           (if (fn? (last v))
-                             (if (= :invoke (second v))
-                               (last v)
-                               (fn [e]
-                                 ((state/state :jarman-views-service)
-                                  :set-view
-                                  :view-id (str "auto-" (first v))
-                                  :title k
-                                  :scrollable? false
-                                  :component-fn (last v))))
-                             (fn [e] (println "\nProblem with fn in " k v))))
               :else (c/label :text "Uncorrect comp"))))
         plugin-m)))
 

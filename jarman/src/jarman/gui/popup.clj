@@ -64,7 +64,6 @@
         root (mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill, fill]0px[fill, grow]0px"]
                         :bounds bounds
                         :border (b/line-border :thickness 1 :color br))]
-    
     (c/config! root :listen [:mouse-pressed
                              (fn [e]
                                (let [[start-x start-y] (gtool/get-mouse-pos)]
@@ -105,18 +104,19 @@
 ;; run app on middle screen
 ;; (-> (doto build (.setLocationRelativeTo nil) c/pack! c/show!))
 
-(defn set-new [{:keys [comp-fn title size]
-                :or {comp-fn comp
-                     title ""
-                     size [400 300]}}]
+(defn build-popup
+  [{:keys [comp-fn title size]
+    :or {comp-fn comp
+         title ""
+         size [400 300]}}]
   (.add (jlp) (popup {:render-fn comp-fn
                       :title title
                       :size size})
         (new Integer 10)))
 
-(defn set-demo [] (set-new {:comp-fn comp :title "Demo"}))
+(defn set-demo [] (build-popup {:comp-fn comp :title "Demo"}))
 
-;; (set-demo)
-;; (set-demo)
+(build-popup {:comp-fn (fn [] (seesaw.core/vertical-panel :items (list (seesaw.core/label :text "heyy"))))
+              :title "heyy"})
 
 

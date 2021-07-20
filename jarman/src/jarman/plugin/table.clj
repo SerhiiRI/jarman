@@ -24,12 +24,13 @@
    [jarman.gui.gui-components :refer :all :as gcomp]
    [jarman.gui.gui-calendar :as calendar]
    [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut]
+   [jarman.gui.popup :as gpop]
    
    [jarman.logic.session :as session]
    [jarman.logic.state :as state]
    [jarman.logic.metadata :as mt]
    [jarman.logic.document-manager :as doc]
-   
+
    [jarman.plugin.spec :as spec]
    [jarman.plugin.data-toolkit :as query-toolkit]
    [jarman.plugin.gui-table :as gtable])
@@ -121,7 +122,7 @@
    Example
      (show-table-in-expand \"Permission name\" \"user\", Configuration \"{}\"} 2)
      => object, JPanel"
-  [model-data scale]
+  [model-data scale] 
   (let [border      (b/compound-border (b/empty-border :left 4))
         font-size   (* 11 scale)
         width       (* 20 scale)
@@ -131,18 +132,11 @@
                                                  :font (gtool/getFont :size font-size) :border border)]
                         (if-not (nil? size) (seesaw.core/config! l :size size))
                         (.add mig l )))]
-
-   ;; (.setMinimumSize mig (Dimension. 240 (.getHeight mig))) 
-
     (doall (map (fn [[k v]] (do (col-label "#E2FBDE" nil ;; [(* scale 100) :by width] 
                                            (name k))
                                 (col-label "#fff"  nil  ;; (if (= 1 scale) [140 :by width] nil)
-                                           
                                            (str v)))) model-data))
     (.repaint mig) mig))
-
-
-
 
 (defn refresh-panel
   "Description
@@ -155,8 +149,6 @@
   (.revalidate colmn-panel)
   (.repaint colmn-panel))
 
-;;grow verticall 
-
 (defn input-related-popup-table
   "Description:
      Component for dialog window with related table. Returning selected table model (row)."
@@ -167,7 +159,6 @@
         dialog-model-id  (:model-id ct-data) ;;:permission.id
         dialog-fn        (:dialog ct-data) 
         key-column       (:model-id (:plugin-toolkit @state)) ;;user.id
-
         model-to-repre   (fn [list-tables model-colmns]
                            (let [model-col  (gtable/gui-table-model-columns list-tables (keys model-colmns))
                                  list-repr (into {} (map (fn [model] {(:key model)(:text model)})  model-col))]  {"repr" "kjj"}
@@ -177,12 +168,10 @@
                                                          (first ((:select ct-data) {:where [:= dialog-model-id id]}))) scale))
         colmn-panel      (seesaw.core/flow-panel :hgap 0 :vgap 0
                                                  :listen [:mouse-clicked (fn [e]
-                                                                           (seesaw.core/show!
-                                                                            (seesaw.core/custom-dialog
-                                                                             :modal? true :width 500 :height 300
-                                                                             :title "Select component"
-                                                                             :content (gcomp/min-scrollbox
-                                                                                       (build-expand-fn (dialog-model-id (:model @state)) 1.4)))))])
+                                                                           (gpop/build-popup {:comp-fn (fn []
+                                                                                                         (gcomp/min-scrollbox
+                                                                                                          (build-expand-fn (dialog-model-id (:model @state)) 1.4)))
+                                                                                              :title "Show columns"}))])
         component        (gcomp/expand-input 
                           {:panel colmn-panel
                            :onClick (fn [e]
@@ -195,7 +184,7 @@
                                           :value  dialog})))})]
     (if-not (nil? (:model @state))
       (refresh-panel colmn-panel build-expand-fn (dialog-model-id (:model @state)) 1))
-    component))
+    component)) 
 
 ;; ┌───────────────┐
 ;; │               │

@@ -507,7 +507,7 @@
                                 :border (sborder/empty-border :thickness 10)
                                 :items [[(c/label)]])
           active-buttons (:active-buttons plugin-config)
-          components (ilter-nil
+          components (filter-nil
                       (flatten
                        (list
                         (gcomp/hr 10)

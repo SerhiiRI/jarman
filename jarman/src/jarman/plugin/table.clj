@@ -123,19 +123,16 @@
      (show-table-in-expand \"Permission name\" \"user\", Configuration \"{}\"} 2)
      => object, JPanel"
   [model-data scale] 
-  (let [border      (b/compound-border (b/empty-border :left 4))
+  (let [border      (b/compound-border (b/empty-border :left 4)) 
         font-size   (* 11 scale)
         width       (* 20 scale)
-        mig         (seesaw.mig/mig-panel :constraints ["wrap 2" "0px[:25% , grow, fill]0px[:60%, grow, fill]0px"  (str "[" width ":, fill, top]0px")] :size [240 :by (* 20 (+ (count model-data) 1))])
-        col-label   (fn [color size text]
+        mig         (seesaw.mig/mig-panel :constraints ["wrap 2" "0px[:25% , grow, fill]0px[:60%, grow, fill]0px"  (str "0px[" width ":, fill, top]0px")] :size [240 :by (* 20 (+ (count model-data) 1))])
+        col-label   (fn [color text]
                       (let [l (seesaw.core/label :background color :text text
                                                  :font (gtool/getFont :size font-size) :border border)]
-                        (if-not (nil? size) (seesaw.core/config! l :size size))
-                        (.add mig l )))]
-    (doall (map (fn [[k v]] (do (col-label "#E2FBDE" nil ;; [(* scale 100) :by width] 
-                                           (name k))
-                                (col-label "#fff"  nil  ;; (if (= 1 scale) [140 :by width] nil)
-                                           (str v)))) model-data))
+                        (.add mig l)))]
+    (doall (map (fn [[k v]] (do (col-label "#E2FBDE" (name k))
+                                (col-label "#fff" (str v)))) model-data))
     (.repaint mig) mig))
 
 (defn refresh-panel
@@ -152,39 +149,47 @@
 (defn input-related-popup-table
   "Description:
      Component for dialog window with related table. Returning selected table model (row)."
-  [{:keys [val state field-qualified dispatch!]}]
-  (let [dialog-path      (field-qualified (:dialog (:plugin-config @state)))
-        ct-conf          (get-in ((:plugin-global-config @state)) (vec (concat dialog-path [:config])))
-        ct-data          (get-in ((:plugin-global-config @state)) (vec (concat dialog-path [:toolkit])))
-        dialog-model-id  (:model-id ct-data) ;;:permission.id
-        dialog-fn        (:dialog ct-data) 
-        key-column       (:model-id (:plugin-toolkit @state)) ;;user.id
-        model-to-repre   (fn [list-tables model-colmns]
-                           (let [model-col  (gtable/gui-table-model-columns list-tables (keys model-colmns))
-                                 list-repr (into {} (map (fn [model] {(:key model)(:text model)})  model-col))]  {"repr" "kjj"}
-                                (into {} (map (fn [a b] {(second a) ((first a) model-colmns)}) list-repr model-colmns))))
-        build-expand-fn  (fn [id scale] (show-table-in-expand  
-                                         (model-to-repre (:tables ct-conf)
-                                                         (first ((:select ct-data) {:where [:= dialog-model-id id]}))) scale))
-        colmn-panel      (seesaw.core/flow-panel :hgap 0 :vgap 0
-                                                 :listen [:mouse-clicked (fn [e]
-                                                                           (gpop/build-popup {:comp-fn (fn []
-                                                                                                         (gcomp/min-scrollbox
-                                                                                                          (build-expand-fn (dialog-model-id (:model @state)) 1.4)))
-                                                                                              :title "Show columns"}))])
-        component        (gcomp/expand-input 
-                          {:panel colmn-panel
-                           :onClick (fn [e]
-                                      (let [state @state
-                                            dialog  (dialog-model-id (dialog-fn (dialog-model-id (:model state))))]
-                                        (refresh-panel colmn-panel build-expand-fn dialog 1)
-                                        (dispatch!   
-                                         {:action :update-changes
-                                          :path   [(rift field-qualified :unqualifited)]
-                                          :value  dialog})))})]
-    (if-not (nil? (:model @state))
-      (refresh-panel colmn-panel build-expand-fn (dialog-model-id (:model @state)) 1))
-    component)) 
+  [{:keys [val state-atom field-qualified dispatch!]}]
+  (let [state (fn [] (deref state-atom))]
+    (let [;; Current table plugin
+          {{{dialog-path field-qualified} :dialog} :plugin-config
+           plugin-global-getter                    :plugin-global-config} (state)
+          ;; Related dialog plugin
+          {{dialog-tables  :tables} :config
+           {dialog-model-id  :model-id
+            dialog-component :dialog
+            dialog-select    :select} :toolkit} (get-in (plugin-global-getter) dialog-path)
+          model-to-repre   (fn [list-tables model-colmns]
+                             (let [maps-repr (gtable/gui-table-model-columns list-tables (keys model-colmns))
+                                   list-repr (into {} (map (fn [model] {(:key model)(:text model)}) maps-repr))]
+                               ;;list-repr  {:permission.permission_name Permission name, :permission.configuration Configuration}
+                               (into {} (map (fn [[field-qualified representation]]
+                                               {representation (field-qualified model-colmns)}) list-repr))))
+          build-expand-fn  (fn [id scale] (show-table-in-expand  
+                                           (model-to-repre dialog-tables
+                                                           (first (dialog-select {:where [:= dialog-model-id id]}))) scale))
+          scale            1.4
+          not-scaled       1
+          colmn-panel      (seesaw.core/flow-panel
+                            :hgap 0 :vgap 0
+                            :listen [:mouse-clicked
+                                     (fn [e] (gpop/build-popup
+                                              {:title "Show columns"
+                                               :comp-fn (fn []
+                                                          (gcomp/min-scrollbox 
+                                                           (build-expand-fn (field-qualified (:model (state))) scale)))}))])]
+      (if-not (nil? (:model (state)))
+        (refresh-panel colmn-panel build-expand-fn (field-qualified (:model (state))) not-scaled))
+      (gcomp/expand-input 
+       {:panel colmn-panel
+        :onClick (fn [e]
+                   (let [dialog  (dialog-model-id (dialog-component (field-qualified (:model (state)))))]
+                     (refresh-panel colmn-panel build-expand-fn dialog not-scaled)
+                     (dispatch!   
+                      {:action :update-changes
+                       :path   [(rift field-qualified :unqualifited)]
+                       :value  dialog})))}))))
+
 
 ;; ┌───────────────┐
 ;; │               │
@@ -423,7 +428,7 @@
         comp (gcomp/inpose-label title
                                  (cond
                                    (= mt/column-type-linking (first comp-types))
-                                   (input-related-popup-table {:val val :state state :field-qualified field-qualified :dispatch! dispatch!})
+                                   (input-related-popup-table {:val val :state-atom state :field-qualified field-qualified :dispatch! dispatch!})
                                   ;; (gcomp/state-input-text {:func func :val val})
                                    
                                    (or (= mt/column-type-data (first comp-types))
@@ -498,11 +503,11 @@
                             :model-update))
           table-id (keyword (format "%s.id" (:field (:table-meta plugin-toolkit))))
           model-defview (current-model plugin-config)
-          panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
+          panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"];;heyy
                                 :border (sborder/empty-border :thickness 10)
                                 :items [[(c/label)]])
           active-buttons (:active-buttons plugin-config)
-          components (filter-nil
+          components (ilter-nil
                       (flatten
                        (list
                         (gcomp/hr 10)

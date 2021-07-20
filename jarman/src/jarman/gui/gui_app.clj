@@ -338,7 +338,7 @@
                                                                      :val "(fn [x] (println \"Nice ass\" x)"})}))]
     "Popup demo" ["popup-demo" :invoke (fn [e] (popup/set-demo))]
     "Popup demo 2" ["popup-demo 2" :invoke (fn [e]
-                                             (popup/set-new
+                                             (popup/build-popup
                                               {:comp-fn (fn []
                                                           (gcomp/code-editor
                                                            {:val "(fn [x] (println \"Nice ass\" x)"}))

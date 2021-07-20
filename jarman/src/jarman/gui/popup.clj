@@ -116,7 +116,6 @@
 
 (defn set-demo [] (build-popup {:comp-fn comp :title "Demo"}))
 
-(build-popup {:comp-fn (fn [] (seesaw.core/vertical-panel :items (list (seesaw.core/label :text "heyy"))))
-              :title "heyy"})
+
 
 

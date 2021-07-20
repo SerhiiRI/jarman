@@ -34,9 +34,10 @@
    [jarman.plugin.spec :as spec]
    [jarman.plugin.data-toolkit :as query-toolkit]
    [jarman.plugin.gui-table :as gtable])
-  (:import  (java.awt Dimension)
-            (java.util Date)
-            (java.text SimpleDateFormat)))
+  (:import
+   (java.awt Dimension BorderLayout)
+   (java.util Date)
+   (java.text SimpleDateFormat)))
 
 ;; {:model-reprs "Config",
 ;;     :model-param :permission.configuration,
@@ -241,8 +242,7 @@
 
 (defn- export-button
   "Description:
-     Export panel invoker. Invoke as popup window.
-   "
+     Export panel invoker. Invoke as popup window."
   [state dispatch!]
   (let [{plugin-toolkit :plugin-toolkit
          table-model    :model} @state]
@@ -409,8 +409,7 @@
 (defn convert-key-to-component
   "Description
      Convert to component automaticly by keyword.
-     key is an key from model in defview as :user.name.
-   "
+     key is an key from model in defview as :user.name."
   [state dispatch! panel meta-data key]
   (let [meta            (key meta-data)
         field-qualified (:field-qualified meta)
@@ -425,21 +424,25 @@
                                  {:action :update-changes
                                   :path   [(rift field-qualified :unqualifited)]
                                   :value  (c/value (c/to-widget e))}))
-        comp (gcomp/inpose-label title
-                                 (cond
-                                   (= mt/column-type-linking (first comp-types))
-                                   (input-related-popup-table {:val val :state-atom state :field-qualified field-qualified :dispatch! dispatch!})
-                                  ;; (gcomp/state-input-text {:func func :val val})
-                                   
-                                   (or (= mt/column-type-data (first comp-types))
-                                       (= mt/column-type-datatime (first comp-types)))
-                                   (calendar/state-input-calendar {:func func :val val})
-                                   
-                                   (= mt/column-type-textarea (first comp-types))
-                                   (gcomp/state-input-text-area {:func func :val val})
+        comp (;;gcomp/inpose-label
+              seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "5px[]5px"]
+              :items
+              [[(c/label :text title
+                         :font (gtool/getFont 13)) "align l"] 
+               [(cond
+                  (= mt/column-type-linking (first comp-types))
+                  (input-related-popup-table {:val val :state-atom state :field-qualified field-qualified :dispatch! dispatch!})
+                  ;; (gcomp/state-input-text {:func func :val val})
+                  
+                  (or (= mt/column-type-data (first comp-types))
+                      (= mt/column-type-datatime (first comp-types)))
+                  (calendar/state-input-calendar {:func func :val val})
+                  
+                  (= mt/column-type-textarea (first comp-types))
+                  (gcomp/state-input-text-area {:func func :val val})
 
-                                   :else
-                                   (gcomp/state-input-text {:func func :val val})))]
+                  :else
+                  (gcomp/state-input-text {:func func :val val}))]])]
     (.add panel comp)))
 
 
@@ -451,8 +454,7 @@
 
 (defn convert-model-to-components-list
   "Description
-     Switch fn to convert by map or keyword
-   "
+     Switch fn to convert by map or keyword"
   [state dispatch! panel model-defview]
   ;; (println (format "\nmeta-data %s\ntable-model %s\nmodel-defview %s\n" meta-data table-model model-defview))
   (let [meta-data (convert-metadata-vec-to-map (get-in @state [:plugin-toolkit :columns-meta]))]
@@ -480,6 +482,7 @@
                              (button-fn (:title btn-model) (get (:actions plugin-config) (:action btn-model)))) [])))
                   (filter-nil))))))
 
+(seesaw.dev/show-options (seesaw.core/border-panel))
 
 ;; ┌──────────────┐
 ;; │              │
@@ -503,7 +506,9 @@
                             :model-update))
           table-id (keyword (format "%s.id" (:field (:table-meta plugin-toolkit))))
           model-defview (current-model plugin-config)
-          panel (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"];;heyy
+;;          panel (seesaw.core/vertical-panel)
+          panel  (;;seesaw.core/border-panel
+                 smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"];;heyy
                                 :border (sborder/empty-border :thickness 10)
                                 :items [[(c/label)]])
           active-buttons (:active-buttons plugin-config)
@@ -539,7 +544,7 @@
           #(.add panel %)
           components)))
       panel)))
-
+(seesaw.dev/show-options (seesaw.core/flow-panel))
 
 (def build-plugin-gui
   "Description

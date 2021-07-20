@@ -356,8 +356,7 @@
                                     (dispatch!
                                      {:action :update-changes
                                       :path   [field-qualified]
-                                      :value  (c/value (c/to-widget e))}))
-                                  )
+                                      :value  (c/value (c/to-widget e))})))
             pre-comp  (comp-fn {:func      func
                                 :val       val
                                 :state     state
@@ -424,25 +423,28 @@
                                  {:action :update-changes
                                   :path   [(rift field-qualified :unqualifited)]
                                   :value  (c/value (c/to-widget e))}))
-        comp (;;gcomp/inpose-label
-              seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "5px[]5px"]
-              :items
-              [[(c/label :text title
-                         :font (gtool/getFont 13)) "align l"] 
-               [(cond
-                  (= mt/column-type-linking (first comp-types))
-                  (input-related-popup-table {:val val :state-atom state :field-qualified field-qualified :dispatch! dispatch!})
-                  ;; (gcomp/state-input-text {:func func :val val})
-                  
-                  (or (= mt/column-type-data (first comp-types))
-                      (= mt/column-type-datatime (first comp-types)))
-                  (calendar/state-input-calendar {:func func :val val})
-                  
-                  (= mt/column-type-textarea (first comp-types))
-                  (gcomp/state-input-text-area {:func func :val val})
+        comp (gcomp/inpose-label
+              ;;seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "5px[]5px"]
+              ;;:items
+              ;; (c/label :text title
+              ;;          :font (gtool/getFont 13))
+              ;;"align l"
+              
+              title
+              (cond
+                (= mt/column-type-linking (first comp-types))
+                (input-related-popup-table {:val val :state-atom state :field-qualified field-qualified :dispatch! dispatch!})
+                ;; (gcomp/state-input-text {:func func :val val})
+                
+                (or (= mt/column-type-data (first comp-types))
+                    (= mt/column-type-datatime (first comp-types)))
+                (calendar/state-input-calendar {:func func :val val})
+                
+                (= mt/column-type-textarea (first comp-types))
+                (gcomp/state-input-text-area {:func func :val val})
 
-                  :else
-                  (gcomp/state-input-text {:func func :val val}))]])]
+                :else
+                (gcomp/state-input-text {:func func :val val})))]
     (.add panel comp)))
 
 
@@ -506,11 +508,9 @@
                             :model-update))
           table-id (keyword (format "%s.id" (:field (:table-meta plugin-toolkit))))
           model-defview (current-model plugin-config)
-;;          panel (seesaw.core/vertical-panel)
-          panel  (;;seesaw.core/border-panel
-                 smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"];;heyy
-                                :border (sborder/empty-border :thickness 10)
-                                :items [[(c/label)]])
+          panel  (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"];;heyy
+                                 :border (sborder/empty-border :thickness 10)
+                                 :items [[(c/label)]])
           active-buttons (:active-buttons plugin-config)
           components (filter-nil
                       (flatten
@@ -544,7 +544,7 @@
           #(.add panel %)
           components)))
       panel)))
-(seesaw.dev/show-options (seesaw.core/flow-panel))
+
 
 (def build-plugin-gui
   "Description

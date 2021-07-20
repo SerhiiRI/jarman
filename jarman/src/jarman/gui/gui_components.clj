@@ -483,25 +483,40 @@
 
 ;; (show-options (c/text))
 
+;; (defn inpose-label
+;;   "Params: 
+;;      title
+;;      component
+;;    "
+;;   [title component
+;;    & {:keys [tgap
+;;              font-color
+;;              id]
+;;       :or {tgap 0
+;;            font-color "#000"
+;;            id nil}}] 
+;;   (c/grid-panel :columns 1
+;;                 :id id
+;;                 :border (b/empty-border :top tgap)
+;;                 :items [(c/label :text (if (string? title) title "")
+;;                                  :font (gtool/getFont 13)
+;;                                  :foreground font-color )
+;;                         component]))
+
 (defn inpose-label
   "Params: 
      title
      component
    "
   [title component
-   & {:keys [tgap
-             font-color
-             id]
-      :or {tgap 0
-           font-color "#000"
-           id nil}}] 
-  (c/grid-panel :columns 1
-                :id id
-                :border (b/empty-border :top tgap)
-                :items [(c/label :text (if (string? title) title "")
-                                 :font (gtool/getFont 13)
-                                 :foreground font-color )
-                         component]))
+   & {:keys [font-color]
+      :or {font-color "#000"}}] 
+  (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "5px[]5px"]
+                        :items [[(c/label :text title
+                                          :font (gtool/getFont 13)
+                                          :foreground font-color ) "align l"]
+                                [component]]))
+
 
 (defn input-text-area
   "Description:

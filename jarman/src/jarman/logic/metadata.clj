@@ -114,9 +114,6 @@
                                         column-type-blob
                                         column-type-filepath
                                         column-type-url
-                                        column-type-dialog-table 
-                                        column-type-dialog-bigstring
-                                        column-type-dialog-shortstring
                                         column-type-nil])
 
 ;;;;;;;;;;;;;;;;;;;;;;

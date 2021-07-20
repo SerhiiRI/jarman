@@ -18,8 +18,6 @@
    ;; ---
    [jarman.gui.gui-declarations :as gui]))
 
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GLOBAL DEFVIEW MAP ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -149,8 +147,6 @@
             `(assoc-in ~cfg-acc [~@plugin-config-path] {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)})))
         {} cfg-list))))
 
-
-
 ;;; TEST SEGMENT ;;;
 
 (comment
@@ -204,48 +200,47 @@
   ((get-in (global-view-configs-get) [:permission :dialog-bigstring :my-custom-dialog :toolkit :dialog]))
   ((get-in (global-view-configs-get) [:permission :dialog-table :my-custom-dialog :toolkit :dialog])))
 
-;;;;;;;;;;;;;;;;;;;;;;;;
-;;; button extension ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;
+;;; PluginLink ;;;
+;;;;;;;;;;;;;;;;;;
 
-;; (defprotocol IPluginQuery
-;;   (return-path [this])
-;;   (return-entry [this])
-;;   (return-title [this])
-;;   (return-config [this]))
+(defprotocol IPluginQuery
+  (return-path [this])
+  (return-entry [this])
+  (return-permission [this])
+  (return-title [this])
+  (return-config [this])
+  (exists? [this]))
 
-;; (extend jarman.gui.gui_declarations.Button
-;;   IPluginQuery
-;;   {:return-path  (fn [this] (.additional-info this))
-;;    :return-entry (fn [this] (get-in (global-view-configs-get) (conj (return-path this) :entry)))
-;;    :return-title (fn [this] (get-in (global-view-configs-get) (conj (return-path this) :config :name)))
-;;    :return-config (fn [this] (get-in (global-view-configs-get) (conj (return-path this) :config)))})
+(defrecord PluginLink [plugin-path]
+  IPluginQuery
+  (return-path [this] (.plugin-path this))
+  (return-entry [this] (get-in (global-view-configs-get) (conj (return-path this) :entry)))
+  (return-title [this] (get-in (global-view-configs-get) (conj (return-path this) :config :name)))
+  (return-permission [this] (get-in (global-view-configs-get) (conj (return-path this) :config :permission)))
+  (return-config [this] (get-in (global-view-configs-get) (conj (return-path this) :config)))
+  (exists? [this] (some? (get-in (global-view-configs-get) (return-path this)))))
 
-;; (gui/->Button [:user :table :user])
+(defn isPluginLink? [^jarman.logic.view_manager.PluginLink e]
+  (instance? jarman.logic.view_manager.PluginLink e))
 
-;; (let [view (gui/->Button [:user :table :user])]
-;;   (return-title view))
+(defn plugin-link [^clojure.lang.PersistentVector plugin-path]
+  {:pre [(every? keyword? plugin-path)]}
+  (->PluginLink plugin-path))
+
+(comment
+  ;; test segment for some link
+  (def --test-link (plugin-link [:user :table :user]))
+  (.return-path --test-link)
+  (.return-entry --test-link)
+  (.return-permission --test-link)
+  (.return-title --test-link)
+  (.return-config --test-link)
+  (.exists? --test-link))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GENERATOR MENU VIEW ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defrecord View [title plugin-place permission swing-component])
-(defn isView? [^jarman.logic.view_manager.View e]
-     (instance? jarman.logic.view_manager.View e))
-
-(defn transform-path-to-request [^clojure.lang.PersistentVector plugin-path]
-  (let [{{plugin-title      :name
-          plugin-plug-place :plug-place
-          plugin-permission :permission
-          :as plugin-config} :config
-         plugin-toolkit      :toolkit
-         plugin-entry        :entry}
-        (get-in (global-view-configs-get) plugin-path)]
-    (->View plugin-title
-            plugin-plug-place
-            plugin-permission
-            plugin-entry)))
 
 (defn- recur-walk-throw [m-config f path]
   (let [[header tail] (map-destruct m-config)]
@@ -264,16 +259,15 @@
   (let [result-vec (atom [])
         f (fn [[[k v] & _] path]
             (if (vector? v)
-              (swap! result-vec conj (conj path (transform-path-to-request v)))))]
+              (swap! result-vec conj (conj path (plugin-link v)))))]
     (recur-walk-throw m f [])
     @result-vec))
 
 (defn- return-structure-tree [m]
   (let [result-vec (atom {})
         f (fn [[[k v] & _] path]
-            ;; if value is vector then 
             (if (vector? v)
-              (swap! result-vec assoc-in path (transform-path-to-request v))))]
+              (swap! result-vec assoc-in path (plugin-link v))))]
     (recur-walk-throw m f [])
     @result-vec))
 
@@ -283,6 +277,7 @@
                  item (assoc :item item)
                  icon (assoc :icon icon))))
 
+(declare user-menu)
 (def ^:private business-menu
   {"Admin space"
    {"User table"                [:user :table :user]
@@ -301,8 +296,7 @@
     "Seal"                      [:seal :table :seal]}
    "Service contract"
    {"Service contract"          [:service_contract :table :service_contract]
-    "Service contract month"    [:service_contract_month :table :service_contract_month]}
-   })
+    "Service contract month"    [:service_contract_month :table :service_contract_month]}})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; loader chain for `defview` ;;;
@@ -532,17 +526,17 @@
         (cond
           (and (map? v) (not (is-plugin? v)))
           (do (f header path)
-              (recur-walk-throw v f path))
+              (recur-walk-throw-views v f path))
 
           :else (f header path))))
-    (if (some? tail) (recur-walk-throw tail f path))))
+    (if (some? tail) (recur-walk-throw-views tail f path))))
 
 (defn plugin-paths []
   (let [result-vec (atom [])
         f (fn [[[k v] & _] path]
             (if (is-plugin? v)
               (swap! result-vec conj path)))]
-    (recur-walk-throw (global-view-configs-get) f [])
+    (recur-walk-throw-views (global-view-configs-get) f [])
     @result-vec))
 
 (defn- plugin-paths-getters []
@@ -565,7 +559,7 @@
                          (fn [path]
                            [(conj path :toolkit)
                             (conj path :config)
-                            (conj path :entry)])) )
+                            (conj path :entry)])))
 (def plugin-paths-toolkit (partial plugin-paths-fn (fn [path] [(conj path :toolkit)])) )
 (def plugin-paths-entry (partial plugin-paths-fn (fn [path] [(conj path :entry)])) )
 (def plugin-paths-config (partial plugin-paths-fn (fn [path] [(conj path :config)])) )

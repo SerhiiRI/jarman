@@ -141,7 +141,6 @@
 ;; │                          │
 ;; └──────────────────────────┘
 
-
 (def jarmanapp--main-view-space
   "Description: 
       Vertical layout for tabs and table on right part of app. 
@@ -173,7 +172,6 @@
        :items [[(gcomp/min-scrollbox tabs-space :vscroll :never)]
                [views-space]]))))
 
-
 (def jarmanapp--main-tree
   "Description:
       Vertical layout of elements, left part of app for functions
@@ -203,8 +201,6 @@
 ;; (state/set-state
 ;;   [:jarmanapp--main-tree] [])
 
-
-
 ;; (jit-menu-tree-test)
 ;; (state/get-atom)q
 ;; (add-to-main-tree [(c/label :text "Test")])
@@ -215,7 +211,6 @@
 ;;                     [1 2]
 ;;                     ["One" "Two"]
 ;;                     :start-fn (fn [] (println "Loaded")))])
-
 
 (def jarmanapp
   "Description:
@@ -233,8 +228,7 @@
        :items [[(jarmanapp--main-tree)]
                [(jarmanapp--main-view-space [] [])]]))))
 
-(defn- example-plugins-map
-[]
+(defn- example-plugins-map []
   {"Admin space"
    {"User table"      ["user"       [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nUser\n"))],
     "Permission edit" ["permission" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nPermission\n"))]},
@@ -252,8 +246,8 @@
       "Depper 3-3" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]}
      "Depper 2-2"
      {"Depper 3-4" {"Depper 4-1" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]
-                  "Depper 4-2" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]
-                  "Depper 4-3" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]}}}
+                    "Depper 4-2" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]
+                    "Depper 4-3" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]}}}
     "Depper 1-2"
     {"Depper 2" ["enterpreneur" [:#tables-view-plugin] [:user] (fn [] (c/label :text "\nDepper2\n"))]}}})
 
@@ -287,17 +281,17 @@
                                       :scrollable? false
                                       :component-fn (last v))))
                                  (fn [e] (println "\nProblem with fn in " k v))))
-              (vmg/isView? v) (gcomp/button-expand-child
-                               (str k)
-                               :left (* (dec lvl) 5)
-                               :hover-color (second (nth (expand-colors) (dec lvl)))
-                               :onClick (fn [e]
-                                          ((state/state :jarman-views-service)
-                                           :set-view
-                                           :view-id (str "auto-" (.title v))
-                                           :title k
-                                           :scrollable? false
-                                           :component-fn (.swing-component v))))
+              (vmg/isPluginLink? v) (gcomp/button-expand-child
+                                     (str k)
+                                     :left (* (dec lvl) 5)
+                                     :hover-color (second (nth (expand-colors) (dec lvl)))
+                                     :onClick (fn [e]
+                                                ((state/state :jarman-views-service)
+                                                 :set-view
+                                                 :view-id (str "auto-" (.return-title v))
+                                                 :title k
+                                                 :scrollable? false
+                                                 :component-fn (.return-entry v))))
               (map?    v) (gcomp/button-expand
                            (str k)
                            (bulid-expand-by-map v :lvl (inc lvl))

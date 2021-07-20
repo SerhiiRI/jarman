@@ -101,9 +101,6 @@
 (def column-type-blob       :blob)
 (def column-type-filepath   :filepath)
 (def column-type-url        :url)
-(def column-type-dialog-table       :dialog-table)
-(def column-type-dialog-bigstring   :dialog-bigstring)
-(def column-type-dialog-shortstring :dialog-shortstring)
 (def column-type-nil nil)
 (def ^:dynamic *meta-column-type-list* [column-type-data
                                         column-type-time

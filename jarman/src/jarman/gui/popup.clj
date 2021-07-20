@@ -48,13 +48,14 @@
                                       (.remove (jlp) root)
                                       (.repaint (jlp)))]))))
 
-(defn- popup [{:keys [render-fn title]
+(defn- popup [{:keys [render-fn title size]
                :or {render-fn (fn [] (c/label))
-                    title ""}}]
+                    title ""
+                    size [400 300]}}]
   (let [last-x (atom 0)
         last-y (atom 0)
         [frame-w frame-h] (frame-wh)
-        [body-w body-h]   [300 200]
+        [body-w body-h]   size
         [x y] [(- (/ frame-w 2) (/ body-w 2))
                (- (/ frame-h 2) (/ body-h 2))]
         bounds [x y body-w body-h]
@@ -91,8 +92,7 @@
   (gcomp/vmig
    :args [:background "#eee"]
    :items (gtool/join-mig-items
-           (c/label :text "My title")
-           (gcomp/textarea "Some body once pepe : D"))))
+           (gcomp/textarea "(ﾉ◉ᗜ◉)ﾉ*:･ﾟ✧OLA NINIOO .:ヽ(⚆ o ⚆)ﾉ"))))
 
 
   ;; create jframe
@@ -105,10 +105,14 @@
 ;; run app on middle screen
 ;; (-> (doto build (.setLocationRelativeTo nil) c/pack! c/show!))
 
-(defn set-new [{:keys [comp-fn title]
+(defn set-new [{:keys [comp-fn title size]
                 :or {comp-fn comp
-                     title ""}}]
-  (.add (jlp) (popup {:render-fn comp-fn :title title}) (new Integer 10)))
+                     title ""
+                     size [400 300]}}]
+  (.add (jlp) (popup {:render-fn comp-fn
+                      :title title
+                      :size size})
+        (new Integer 10)))
 
 (defn set-demo [] (set-new {:comp-fn comp :title "Demo"}))
 

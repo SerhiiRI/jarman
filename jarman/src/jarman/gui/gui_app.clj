@@ -348,7 +348,8 @@
                                               {:comp-fn (fn []
                                                           (gcomp/code-editor
                                                            {:val "(fn [x] (println \"Nice ass\" x)"}))
-                                               :title "Code in popup"}))]}})
+                                               :title "Code in popup"
+                                               :size [500 400]}))]}})
 
 
 

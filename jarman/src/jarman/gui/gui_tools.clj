@@ -58,6 +58,17 @@
                                                                                                                 (if (= (get m :style) :bold) (merge m {:style #{:bold :italic}}) (merge m {:style :italic}))
                                                                                                                 (conj m {}))))))))
 
+(defn get-mouse-pos
+  "Description:
+     Return mouse position on screen, x and y.
+  Example:
+     (get-mouse-pos) => [800.0 600.0]"
+  []
+  (let [mouse-pos (.getLocation (java.awt.MouseInfo/getPointerInfo))
+        screen-x  (.getX mouse-pos)
+        screen-y  (.getY mouse-pos)]
+    [screen-x screen-y]))
+
 ;; (seesaw.font/font-families)
 ;; (label-fn :text "txt")
 ;; Function for label with pre font

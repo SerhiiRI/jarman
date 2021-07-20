@@ -14,18 +14,14 @@
             [jarman.logic.state :as state]
             [jarman.tools.lang :refer :all]
             [jarman.logic.changes-service :as cs]
+            [jarman.gui.popup :as popup]
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
-            ))
+            )
+  (:import javax.swing.JLayeredPane))
 
 ;;  (get-color :jarman :bar)
 
 (def changes-service (atom (cs/new-changes-service)))
-
-(import javax.swing.JLayeredPane)
-;; (import javax.swing.JLabel)
-;; (import java.awt.Color)
-;; (import java.awt.Dimension)
-;; (import java.awt.event.MouseEvent)
 
 (state/set-state :atom-app-size (atom [1200 700]))
 (state/set-state :app nil)

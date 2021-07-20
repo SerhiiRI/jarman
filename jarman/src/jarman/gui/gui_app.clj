@@ -31,7 +31,8 @@
             [jarman.logic.session :as session]
             [jarman.logic.view-manager :as vmg]
             [jarman.gui.gui-dbvisualizer :as dbv]
-            [jarman.gui.gui-config-generator :as cg]))
+            [jarman.gui.gui-config-generator :as cg]
+            [jarman.gui.popup :as popup]))
 
 ;; ┌─────────────────────────────────────────┐
 ;; │                                         │
@@ -340,7 +341,14 @@
                                                              :size [450 350]
                                                              :view (gcomp/code-editor
                                                                     {:dispose true
-                                                                     :val "(fn [x] (println \"Nice ass\" x)"})}))]}})
+                                                                     :val "(fn [x] (println \"Nice ass\" x)"})}))]
+    "Popup demo" ["popup-demo" :invoke (fn [e] (popup/set-demo))]
+    "Popup demo 2" ["popup-demo 2" :invoke (fn [e]
+                                             (popup/set-new
+                                              {:comp-fn (fn []
+                                                          (gcomp/code-editor
+                                                           {:val "(fn [x] (println \"Nice ass\" x)"}))
+                                               :title "Code in popup"}))]}})
 
 
 

@@ -15,9 +15,7 @@
    [jarman.gui.gui-components :as gcomp]
    [jarman.logic.sql-tool :refer [select! update! insert!]]
    [jarman.logic.metadata :as mt]
-   [jarman.logic.state :as state]
-   ;; ---
-   [jarman.gui.gui-declarations :as gui]))
+   [jarman.logic.state :as state]))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Variables ;;;

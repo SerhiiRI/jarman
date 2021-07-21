@@ -146,12 +146,65 @@
 (def delete-in-value (make-delete-in value-path))
 (def delete-in-segment (make-delete-in segment-path))
 
-;; (restore-config)
-;; (get-in-segment [:database.edn :datalist :localhost :dbtype])
-;; (get-in-value [:database.edn :datalist :localhost :dbtype])
-;; (delete-in-value [:database.edn :datalist :localhost :dbtype])
-;; (assoc-in-value [:database.edn :datalist :localhost :dbtype] "DUDUDU")
-;; (update-in-value [:database.edn :datalist :localhost :dbtype] (fn [x] (format "<h1>%s</h1>" x)))
+(comment
+  (restore-config)
+  (get-in-segment [:database.edn :datalist :jarman--trashpanda-team_ddns_net--3306 :dbtype])
+  (get-in-value [:database.edn :datalist :jarman--trashpanda-team_ddns_net--3306 :dbtype])
+  (delete-in-value [:database.edn :datalist :jarman--trashpanda-team_ddns_net--3306 :dbtype])
+  (assoc-in-value [:database.edn :datalist :jarman--trashpanda-team_ddns_net--3306 :dbtype] "DUDUDU")
+  (update-in-value [:database.edn :datalist :jarman--trashpanda-team_ddns_net--3306 :dbtype] (fn [x] (format "<h1>%s</h1>" x))))
+
+;;;;;;;;;;;;;;;;;;;
+;;; CONFIG LINK ;;;
+;;;;;;;;;;;;;;;;;;;
+
+(defprotocol IConfigManagment
+  (path [this])
+  (get-value [this])
+  (delete-value [this])
+  (assoc-value [this new-value])
+  (update-value [this update-fn])
+  (get-segment [this])
+  (delete-segment [this])
+  (assoc-segment [this new-segment])
+  (update-segment [this update-fn]))
+
+(defrecord ConfLink [^clojure.lang.PersistentVector configuration-path]
+  IConfigManagment
+  (path [this] (.configuration-path this))
+  ;; value
+  (get-value      [this]           (get-in-value (path this)))
+  (delete-value   [this]           (delete-in-value (path this)))
+  (assoc-value    [this new-value] (assoc-in-value (path this) new-value))
+  (update-value   [this update-fn] (update-in-value (path this) update-fn))
+  ;; segment
+  (get-segment    [this]             (get-in-segment (path this)))
+  (delete-segment [this]             (delete-in-segment (path this)))
+  (assoc-segment  [this new-segment] (assoc-in-segment (path this) new-segment))
+  (update-segment [this update-fn]   (update-in-segment (path this) update-fn)))
+
+(defn isConfLink? [^jarman.config.config_manager.ConfLink e]
+  (instance? ^jarman.config.config_manager.ConfLink e))
+
+(defn conf-link [^clojure.lang.PersistentVector configuration-path]
+  {:pre [(every? keyword? configuration-path)]}
+  (->ConfLink configuration-path))
+
+(comment
+  (restore-config)
+  (def clink (conf-link [:themes :theme_config.edn :selected-theme]))
+  (.path clink)
+  ;; value
+  (.get-value clink)
+  (.delete-value clink)
+  (.assoc-value clink ["FIRST"])
+  (.update-value clink (fn [v] (conj v "SECOND")))
+  ;; segment
+  (.get-segment clink)
+  (.delete-segment clink)
+  (.assoc-segment clink {:type :TEST, :component :TEST :value ["TEST"]})
+  (.update-segment clink (fn [m] (assoc-in m [:type] :MY_CUSTOM_TYPE))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Mapping/Coverting ;;;
@@ -332,4 +385,9 @@
   {:name name :doc doc :display display :type type :value value})
 (defn spec-make-param [name doc component display value]
   {:name name :doc doc :type :param :component component :display display :value value})
+
+
+
+
+
 

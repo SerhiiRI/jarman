@@ -12,7 +12,7 @@
    :view-columns [:permission.permission_name :permission.configuration]
    :model-insert [:permission.permission_name :permission.configuration]
    :active-buttons [:insert :update :delete :clear :changes]
-   :permission [:admin :user :developer]
+   :permission [:user :developer]
    :actions []
    :buttons []
    :query
@@ -56,7 +56,7 @@
                   :user.last_name
                   :user.id_permission]
    :active-buttons [:insert :update :delete :clear :changes]
-   :permission [:admin :user :developer]
+   :permission [:user :developer]
    :dialog {:user.id_permission
             [:permission :dialog-table :permission-table]}
    :actions []

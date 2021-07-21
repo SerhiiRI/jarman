@@ -8,15 +8,37 @@
    ;; Jarman toolkit
    [jarman.tools.lang :include-macros true :refer :all]
    [jarman.config.environment :as env]
+   [jarman.config.dot-jarman-param :refer [defvar]]
    [jarman.plugin.jspl :as jspl]
    ;; --- 
    [jarman.logic.connection :as db]
    [jarman.gui.gui-components :as gcomp]
    [jarman.logic.sql-tool :refer [select! update! insert!]]
    [jarman.logic.metadata :as mt]
-   [jarman.logic.state :as state]
-   ;; ---
-   [jarman.gui.gui-declarations :as gui]))
+   [jarman.logic.state :as state]))
+
+;;;;;;;;;;;;;;;;;
+;;; Variables ;;;
+;;;;;;;;;;;;;;;;;
+
+(comment
+  (defvar dupa1 nil)
+  (defvar dupa2 nil
+    :type clojure.lang.PersistentHashMap)
+  (defvar dupa3 nil
+    :type clojure.lang.PersistentHashMap)
+  (defvar dupa4 nil
+    :type clojure.lang.PersistentHashMap
+    :group :plugin)
+  (defvar dupa5 nil
+    :type clojure.lang.PersistentHashMap
+    :group :plugin)
+  (defvar dupa6 nil
+    :type clojure.lang.PersistentHashMap
+    :group :cargo))
+(defvar user-menu {}
+  :type clojure.lang.PersistentArrayMap
+  :group :plugin-system)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GLOBAL DEFVIEW MAP ;;;
@@ -190,8 +212,8 @@
 
 (comment
   (do-view-load)
-  (return-structure-tree business-menu)
-  (return-structure-flat business-menu)
+  (return-structure-tree (deref user-menu))
+  (return-structure-flat (deref user-menu))
   (global-view-configs-clean)
   (global-view-configs-get)
   (get-in (global-view-configs-get)
@@ -279,6 +301,7 @@
   ([item icon] (cond-> {}
                  item (assoc :item item)
                  icon (assoc :icon icon))))
+
 
 (declare user-menu)
 (def ^:private business-menu
@@ -385,7 +408,7 @@
       ((state/state :alert-manager) :set {:header "Error" :body "Problem with tables. Data not found in DB"} 5)
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))
-    (return-structure-tree business-menu)))
+    (return-structure-tree (deref user-menu))))
 
 (defn- view-get
   "Description

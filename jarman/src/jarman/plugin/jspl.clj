@@ -109,4 +109,5 @@
     :examples "{:table_name :permission, :column [:#as_is ...]...}",
     :doc "SQL syntax for `select!` query"}])
 
-
+(defplugin service-period jarman.plugin.service-period
+  "Plugin for service contracts of enterpreneurs")

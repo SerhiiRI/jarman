@@ -159,7 +159,8 @@
           {{dialog-tables  :tables} :config
            {dialog-model-id  :model-id
             dialog-component :dialog
-            dialog-select    :select} :toolkit} (get-in (plugin-global-getter) dialog-path)
+            dialog-select    :select} :toolkit}
+          (get-in (plugin-global-getter) dialog-path)
           model-to-repre   (fn [list-tables model-colmns]
                              (let [maps-repr (gtable/gui-table-model-columns list-tables (keys model-colmns))
                                    list-repr (into {} (map (fn [model] {(:key model)(:text model)}) maps-repr))]
@@ -173,6 +174,7 @@
           not-scaled       1
           colmn-panel      (seesaw.core/flow-panel
                             :hgap 0 :vgap 0
+                            :cursor :hand
                             :listen [:mouse-clicked
                                      (fn [e] (gpop/build-popup
                                               {:title "Show columns"

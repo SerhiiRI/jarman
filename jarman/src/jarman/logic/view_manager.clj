@@ -33,8 +33,7 @@
          (fn [m] (assoc-in m path
                           {:config configuration
                            :toolkit toolkit
-                           :entry entry
-                           }))) nil)
+                           :entry entry}))) nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; CONFIG PROCESSOR ;;;
@@ -195,10 +194,14 @@
   (return-structure-flat business-menu)
   (global-view-configs-clean)
   (global-view-configs-get)
-  (get-in (global-view-configs-get) [:user])
+  (get-in (global-view-configs-get)
+          [:service_contract :service-period :service_contract :toolkit])
   (get-in (global-view-configs-get)  [:permission :dialog-bigstring :select-name-permission])
   ((get-in (global-view-configs-get) [:permission :dialog-bigstring :my-custom-dialog :toolkit :dialog]))
   ((get-in (global-view-configs-get) [:permission :dialog-table :my-custom-dialog :toolkit :dialog])))
+
+:service_contract :service-period :service_contract
+:service-period :toolkit :service-period
 
 ;;;;;;;;;;;;;;;;;;
 ;;; PluginLink ;;;
@@ -295,8 +298,11 @@
     "Cache register"            [:cache_register :table :cache_register]
     "Seal"                      [:seal :table :seal]}
    "Service contract"
-   {"Service contract"          [:service_contract :table :service_contract]
+   {"Service period"            [:service_contract :service-period :service_contract]
+    "Service contract"          [:service_contract :table :service_contract]
     "Service contract month"    [:service_contract_month :table :service_contract_month]}})
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; loader chain for `defview` ;;;
@@ -594,7 +600,7 @@
   ;; get simple debug map getter
   (plugin-paths-getters)
   ;; open some plugin :entryes in frame
-  (plugin-open-in-frame [:permission :table :permission])
+  (plugin-open-in-frame [:user :table :user])
   ;; or two and more interesting to us plugins
   (plugin-open-in-frame
    [:user :table :user]
@@ -602,3 +608,4 @@
    ;;...
    ))
 
+;;[:service_contract :service-period :service_contract]

@@ -22,7 +22,6 @@
    [jarman.resource-lib.icon-library :as icon]))
 
 
-
 (defn create-period--period-form
   []
   (gcomp/vmig
@@ -128,11 +127,19 @@
      :args [:background "#fff"])))
 
 
+
+
 (defn periods [plugin-config plugin-toolkit]
   (create-period-view))
 
 (defn periods-toolkit-pipeline [configuration]
   (let [toolkit (query-toolkit/data-toolkit-pipeline configuration {})]
-    {:periods (fn [] (periods configuration toolkit))}))
+    {:periods (fn [] (do (println "heyy") (periods configuration toolkit)))}))
 
 (defn periods-entry [plugin-path global-configuration])
+
+
+
+(doto (seesaw.core/frame :size [700 :by 700] :content (create-period-view))
+  (.setLocationRelativeTo nil)  seesaw.core/pack! seesaw.core/show!)
+

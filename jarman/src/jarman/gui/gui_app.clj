@@ -18,7 +18,9 @@
             [jarman.resource-lib.icon-library :as icon]
             [clojure.pprint :as pp]
             ;; logicsx
-            [jarman.config.config-manager  :as cm]
+            [jarman.config.config-manager   :as cm]
+            [jarman.config.dot-jarman       :as dot-jarman]
+            [jarman.config.dot-jarman-param :as dot-jarman-param]
             [jarman.gui.gui-views-service  :as vs]
             [jarman.gui.gui-alerts-service :as gas]
             [jarman.gui.gui-components     :as gcomp]
@@ -302,7 +304,6 @@
 
 ;;(println "\n" (bulid-expand-by-map (example-plugins-map)))
 
-
 (defn- default-menu-items []
   {"Database"
    {"DB Visualizer" {:key "db-visualizer"
@@ -374,7 +375,6 @@
 
 
 
-
 (defn- clean-main-menu []
   (state/set-state :jarmanapp--main-tree []))
 
@@ -415,17 +415,35 @@
 
 ;; ┌─────────────┐
 ;; │             │
-;; │ App starter │
+;; │ Load stages │
 ;; │             │
 ;; └─────────────┘
 
+;; before central swing-component build
+(defn load-level-0 []
+  (cm/swapp)
+  (dot-jarman/dot-jarman-load)
+  (dot-jarman-param/print-list-not-loaded))
+;; after swing component was builded
+(defn load-level-1 [])
+(defn load-level-2 [])
+(defn load-level-3 [])
+(defn load-level-4 [])
+;; halt application
+(defn load-level-5 [])
+
+;; ┌─────────────┐
+;; │             │
+;; │ App starter │
+;; │             │
+;; └─────────────┘
 
 (def startup (atom nil))
 
 (def run-me
   (fn []
     (let [relative (atom nil)]
-      (cm/swapp)
+      (load-level-0)
       (try
         (reset! relative [(.x (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))
                           (.y (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))])
@@ -465,15 +483,14 @@
                                        :top-offset top-offset)
                  (gtool/slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 5 img-scale "Restart"
                                        :onClick (fn [e] (do
-                                                          (println "App restart")
-                                                          (@startup)))
+                                                         (println "App restart")
+                                                         (@startup)))
                                        :top-offset top-offset)
                  (gcomp/fake-focus :vgap top-offset :hgap img-scale))))
            (if-not (nil? @relative) (.setLocation (seesaw.core/to-frame (state/state :app)) (first @relative) (second @relative))))
     (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))
     (load-static-main-menu)
     (load-plugins-to-main-menu)))
-
 
 (reset! startup
         (fn []

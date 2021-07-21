@@ -11,10 +11,9 @@
                   :prop
                   {:table
                    {:description nil,
-                    :ref {:front-references nil, :back-references nil},
                     :allow-linking? true,
                     :field "documents",
-                    :representation "documents",
+                    :representation "Documents",
                     :is-linker? false,
                     :allow-modifing? true,
                     :allow-deleting? true,
@@ -61,7 +60,6 @@
                   :prop
                   {:table
                    {:description nil,
-                    :ref {:front-references nil, :back-references nil},
                     :allow-linking? true,
                     :field "permission",
                     :representation "permission",
@@ -93,7 +91,6 @@
                   :prop
                   {:table
                    {:description nil,
-                    :ref {:front-references [:permission], :back-references nil},
                     :allow-linking? true,
                     :field "user",
                     :representation "user",
@@ -156,10 +153,9 @@
                   :prop
                   {:table
                    {:description nil,
-                    :ref {:front-references nil, :back-references nil},
                     :allow-linking? true,
-                    :field "enterpreneur",
-                    :representation "enterpreneur",
+                    :field :enterpreneur,
+                    :representation "Enterpreneur",
                     :is-linker? false,
                     :allow-modifing? true,
                     :allow-deleting? true,
@@ -170,10 +166,19 @@
                      :default-value nil,
                      :editable? true,
                      :field :ssreou,
-                     :column-type [:tinytext :nnull],
-                     :component-type [:textarea],
-                     :representation "ssreou",
+                     :column-type [:text :nnull],
+                     :component-type [:text],
+                     :representation "number of SSREOU",
                      :field-qualified :enterpreneur.ssreou}
+                    {:description nil,
+                     :private? false,
+                     :default-value nil,
+                     :editable? true,
+                     :field :name,
+                     :column-type [:varchar-120 :default :null],
+                     :component-type [:text],
+                     :representation "Name",
+                     :field-qualified :enterpreneur.name}
                     {:description nil,
                      :private? false,
                      :default-value nil,
@@ -251,7 +256,6 @@
                   :prop
                   {:table
                    {:description nil,
-                    :ref {:front-references [:enterpreneur], :back-references nil},
                     :allow-linking? true,
                     :field "point_of_sale",
                     :representation "point_of_sale",
@@ -304,7 +308,6 @@
                   :prop
                   {:table
                    {:description nil,
-                    :ref {:front-references [:point_of_sale], :back-references nil},
                     :allow-linking? true,
                     :field "cache_register",
                     :representation "cache_register",
@@ -448,7 +451,6 @@
                   :prop
                   {:table
                    {:description nil,
-                    :ref {:front-references nil, :back-references nil},
                     :allow-linking? true,
                     :field "point_of_sale_group",
                     :representation "point_of_sale_group",
@@ -519,7 +521,6 @@
                   :prop
                   {:table
                    {:description nil,
-                    :ref {:front-references nil, :back-references nil},
                     :allow-linking? true,
                     :field "seal",
                     :representation "seal",
@@ -560,7 +561,6 @@
                   :prop
                   {:table
                    {:description nil,
-                    :ref {:front-references nil, :back-references nil},
                     :allow-linking? true,
                     :field "repair_reasons",
                     :representation "repair_reasons",
@@ -583,7 +583,6 @@
                   :prop
                   {:table
                    {:description nil,
-                    :ref {:front-references nil, :back-references nil},
                     :allow-linking? true,
                     :field "repair_technical_issue",
                     :representation "repair_technical_issue",
@@ -606,7 +605,6 @@
                   :prop
                   {:table
                    {:description nil,
-                    :ref {:front-references nil, :back-references nil},
                     :allow-linking? true,
                     :field "repair_nature_of_problem",
                     :representation "repair_nature_of_problem",
@@ -745,7 +743,6 @@
                   :prop
                   {:table
                    {:description nil,
-                    :ref {:front-references [:enterpreneur], :back-references nil},
                     :allow-linking? true,
                     :field "service_contract",
                     :representation "service_contract",
@@ -764,7 +761,7 @@
                      [{:id_enterpreneur :enterpreneur}
                       {:delete :cascade, :update :cascade}],
                      :component-type [:link],
-                     :representation "id_enterpreneur",
+                     :representation "Enterpreneur",
                      :field-qualified :service_contract.id_enterpreneur,
                      :key-table :enterpreneur}
                     {:description nil,
@@ -773,8 +770,8 @@
                      :editable? true,
                      :field :contract_start_term,
                      :column-type [:date :default :null],
-                     :component-type [:data :datatime :text],
-                     :representation "contract_start_term",
+                     :component-type [:data],
+                     :representation "Contract start term",
                      :field-qualified :service_contract.contract_start_term}
                     {:description nil,
                      :private? false,
@@ -782,27 +779,17 @@
                      :editable? true,
                      :field :contract_end_term,
                      :column-type [:date :default :null],
-                     :component-type [:data :datatime :text],
-                     :representation "contract_end_term",
-                     :field-qualified :service_contract.contract_end_term}
-                    {:description nil,
-                     :private? false,
-                     :default-value nil,
-                     :editable? true,
-                     :field :money_per_month,
-                     :column-type [:float :nnull :default "0"],
-                     :component-type [:float :text],
-                     :representation "money_per_month",
-                     :field-qualified :service_contract.money_per_month}]}}
+                     :component-type [:data],
+                     :representation "Contract end term",
+                     :field-qualified :service_contract.contract_end_term}]}}
                  {:id 14,
                   :table_name "service_contract_month",
                   :prop
                   {:table
                    {:description nil,
-                    :ref {:front-references [:service_contract], :back-references nil},
                     :allow-linking? true,
                     :field "service_contract_month",
-                    :representation "service_contract_month",
+                    :representation "Service Contract Month",
                     :is-linker? false,
                     :allow-modifing? true,
                     :allow-deleting? true,
@@ -818,18 +805,27 @@
                      [{:id_service_contract :service_contract}
                       {:delete :cascade, :update :cascade}],
                      :component-type [:link],
-                     :representation "id_service_contract",
+                     :representation "Service contract",
                      :field-qualified :service_contract_month.id_service_contract,
                      :key-table :service_contract}
                     {:description nil,
                      :private? false,
                      :default-value nil,
                      :editable? true,
-                     :field :service_month_date,
+                     :field :service_month_start,
                      :column-type [:date :default :null],
-                     :component-type [:data :datatime :text],
-                     :representation "service_month_date",
-                     :field-qualified :service_contract_month.service_month_date}
+                     :component-type [:data],
+                     :representation "Service month start",
+                     :field-qualified :service_contract_month.service_month_start}
+                    {:description nil,
+                     :private? false,
+                     :default-value nil,
+                     :editable? true,
+                     :field :service_month_end,
+                     :column-type [:date :default :null],
+                     :component-type [:data],
+                     :representation "Service month end",
+                     :field-qualified :service_contract_month.service_month_end}
                     {:description nil,
                      :private? false,
                      :default-value nil,
@@ -837,6 +833,6 @@
                      :field :money_per_month,
                      :column-type [:float :nnull :default "0"],
                      :component-type [:float :text],
-                     :representation "money_per_month",
+                     :representation "Money per month",
                      :field-qualified :service_contract_month.money_per_month}]}}])
 

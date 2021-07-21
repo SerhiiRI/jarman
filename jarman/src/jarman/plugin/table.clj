@@ -20,7 +20,6 @@
    [jarman.gui.gui-calendar   :as calendar]
    [jarman.gui.popup :as gpop]
    
-   [jarman.logic.session :as session]
    [jarman.logic.state :as state]
    [jarman.logic.metadata :as mt]
    [jarman.logic.document-manager :as doc]

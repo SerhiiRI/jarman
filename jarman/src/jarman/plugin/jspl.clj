@@ -11,7 +11,8 @@
    [jarman.plugin.table]
    [jarman.plugin.dialog-table]
    [jarman.plugin.dialog-test]
-   [jarman.plugin.dialog-bigstring]))
+   [jarman.plugin.dialog-bigstring]
+   [jarman.plugin.service-period]))
 
 ;;; check assertion
 (s/check-asserts true)

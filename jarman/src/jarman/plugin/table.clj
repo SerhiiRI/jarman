@@ -138,48 +138,47 @@
 (defn input-related-popup-table
   "Description:
      Component for dialog window with related table. Returning selected table model (row)."
-  [{:keys [val state-atom field-qualified dispatch!]}]
-  (let [state (fn [] (deref state-atom))]
-    (let [;; Current table plugin
-          {{{dialog-path field-qualified} :dialog} :plugin-config
-           plugin-global-getter                    :plugin-global-config} (state)
-          ;; Related dialog plugin
-          {{dialog-tables  :tables} :config
-           {dialog-model-id  :model-id
-            dialog-component :dialog
-            dialog-select    :select} :toolkit}
-          (get-in (plugin-global-getter) dialog-path)
-          model-to-repre   (fn [list-tables model-colmns]
-                             (let [maps-repr (gtable/gui-table-model-columns list-tables (keys model-colmns))
-                                   list-repr (into {} (map (fn [model] {(:key model)(:text model)}) maps-repr))]
-                               ;;list-repr  {:permission.permission_name Permission name, :permission.configuration Configuration}
-                               (into {} (map (fn [[field-qualified representation]]
-                                               {representation (field-qualified model-colmns)}) list-repr))))
-          build-expand-fn  (fn [id scale] (show-table-in-expand  
-                                           (model-to-repre dialog-tables
-                                                           (first (dialog-select {:where [:= dialog-model-id id]}))) scale))
-          scale            1.4
-          not-scaled       1
-          colmn-panel      (seesaw.core/flow-panel
-                            :hgap 0 :vgap 0
-                            :cursor :hand
-                            :listen [:mouse-clicked
-                                     (fn [e] (gpop/build-popup
-                                              {:title "Show columns"
-                                               :comp-fn (fn []
-                                                          (gcomp/min-scrollbox 
-                                                           (build-expand-fn (field-qualified (:model (state))) scale)))}))])]
-      (if-not (nil? (:model (state)))
-        (refresh-panel colmn-panel build-expand-fn (field-qualified (:model (state))) not-scaled))
-      (gcomp/expand-input 
-       {:panel colmn-panel
-        :onClick (fn [e]
-                   (let [dialog  (dialog-model-id (dialog-component (field-qualified (:model (state)))))]
-                     (refresh-panel colmn-panel build-expand-fn dialog not-scaled)
-                     (dispatch!   
-                      {:action :update-changes
-                       :path   [(rift field-qualified :unqualifited)]
-                       :value  dialog})))}))))
+  [{:keys [state! dispatch! val field-qualified]}]
+  (let [;; Current table plugin
+        {{{dialog-path field-qualified} :dialog} :plugin-config
+         plugin-global-getter                    :plugin-global-config} (state!)
+        ;; Related dialog plugin
+        {{dialog-tables  :tables} :config
+         {dialog-model-id  :model-id
+          dialog-component :dialog
+          dialog-select    :select} :toolkit}
+        (get-in (plugin-global-getter) dialog-path)
+        model-to-repre   (fn [list-tables model-colmns]
+                           (let [maps-repr (gtable/gui-table-model-columns list-tables (keys model-colmns))
+                                 list-repr (into {} (map (fn [model] {(:key model)(:text model)}) maps-repr))]
+                             ;;list-repr  {:permission.permission_name Permission name, :permission.configuration Configuration}
+                             (into {} (map (fn [[field-qualified representation]]
+                                             {representation (field-qualified model-colmns)}) list-repr))))
+        build-expand-fn  (fn [id scale] (show-table-in-expand  
+                                         (model-to-repre dialog-tables
+                                                         (first (dialog-select {:where [:= dialog-model-id id]}))) scale))
+        scale            1.4
+        not-scaled       1
+        colmn-panel      (seesaw.core/flow-panel
+                          :hgap 0 :vgap 0
+                          :cursor :hand
+                          :listen [:mouse-clicked
+                                   (fn [e] (gpop/build-popup
+                                            {:title "Show columns"
+                                             :comp-fn (fn []
+                                                        (gcomp/min-scrollbox 
+                                                         (build-expand-fn (field-qualified (:model (state!))) scale)))}))])]
+    (if-not (nil? (:model (state!)))
+      (refresh-panel colmn-panel build-expand-fn (field-qualified (:model (state!))) not-scaled))
+    (gcomp/expand-input 
+     {:panel colmn-panel
+      :onClick (fn [e]
+                 (let [dialog  (dialog-model-id (dialog-component (field-qualified (:model (state!)))))]
+                   (refresh-panel colmn-panel build-expand-fn dialog not-scaled)
+                   (dispatch!   
+                    {:action :update-changes
+                     :path   [(rift field-qualified :unqualifited)]
+                     :value  dialog})))})))
 
 
 

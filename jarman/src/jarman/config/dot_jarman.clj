@@ -57,8 +57,8 @@
            (binding [*ns* (find-ns 'jarman.config.dot-jarman)] 
              (load-file (str jarman-path)))
            (create-empty-dot-jarman))
-       (fn [e] "Cannot open `.jarman` config file")
-       (fn [e] "Reading exception for `.jarman`. Maybe declaration or code in is corrupted")) nil)
+         (fn [e] "Cannot open `.jarman` config file")
+         (fn [e] "Reading exception for `.jarman`. Maybe declaration or code in is corrupted")) nil)
 
 (dot-jarman-load)
 

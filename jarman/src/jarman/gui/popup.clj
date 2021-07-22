@@ -37,6 +37,7 @@
 (defn- popup-bar [root title]
   (gcomp/hmig
    :hrules "[grow]0px[fill]"
+   :lgap 10
    :items (gtool/join-mig-items
            (c/label :text title :font (gtool/getFont 10))
            (c/label ;;:text "Close"

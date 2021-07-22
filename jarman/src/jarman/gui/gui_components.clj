@@ -294,8 +294,8 @@
            :halign halign
            :font font
            :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
-                    :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
-                    :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
+                    :mouse-entered (fn [e] (c/config! e :border (newBorder focus-color)   :background mouse-in  :cursor :hand))
+                    :mouse-exited  (fn [e] (c/config! e :border (newBorder unfocus-color) :background mouse-out))
                     :focus-gained  (fn [e] (c/config! e :border (newBorder focus-color)   :background mouse-in  :cursor :hand))
                     :focus-lost    (fn [e] (c/config! e :border (newBorder unfocus-color) :background mouse-out))
                     :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gtool/switch-focus))))]
@@ -994,8 +994,8 @@
                            (do ;;  Add inside buttons to mig with expand button
                              (c/config! icon :icon ico-hover)
                              (doall (map #(.add mig %) @atom-inside-btns))
-                             (gtool/set-focus (first @atom-inside-btns))
-                             (gtool/switch-focus)
+                             ;;(gtool/set-focus (first @atom-inside-btns))
+                             ;;(gtool/switch-focus)
                              (.revalidate mig) 
                              (.repaint mig))
                            (do ;;  Remove inside buttons form mig without expand button
@@ -1005,15 +1005,20 @@
                              (.repaint mig)))))]
          (do
            (reset! atom-inside-btns inside-btns)
-           (c/config! mig :id id :user-data {:atom-expanded-items atom-inside-btns} :items [[(expand-btn onClick)]])))
+           (c/config! mig
+                      :id id
+                      :user-data {:atom-expanded-items atom-inside-btns
+                                  :title-fn (fn [new-title] (c/config! title :text new-title))}
+                      :items [[(expand-btn onClick)]])))
        (c/config! mig :id id :items [[(expand-btn onClick)]])))))
 
 
 (defn expand-input
-  [{:keys [panel onClick]
+  [{:keys [panel onClick title]
     :or {panel (seesaw.core/vertical-panel :items (list (c/label :text "heyy")))
          onClick (fn [e])}}]
-  (button-expand "Enter" panel
+  (button-expand (rift title "Enter")
+                 panel
                  :min-height 220
                  :over-func onClick
                  :background "#dddddd"))

@@ -123,6 +123,8 @@
    :basic
    {:description "Opis",
     :yes "Tak",
+    :empty "Pusty",
+    :selected "Wybrany",
     :search-input "Wyszukaj",
     :in-short "We",
     :date-end "Data do",
@@ -275,6 +277,8 @@
  :basic
  {:description "Description"
   :yes "Yes"
+  :empty "Empty"
+  :selected "Selected"
   :search-input "Search"
   :in-short "In"
   :date-end "Date from"

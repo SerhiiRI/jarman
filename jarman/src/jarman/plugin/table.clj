@@ -193,8 +193,6 @@
                              (.repaint (c/to-root e))))})]
       exi)))
 
-(:model-changes (@debug-atom))
-
 
 ;; ┌───────────────┐
 ;; │               │
@@ -635,7 +633,6 @@
     ;; (pprint/pprint (:export-path @atom-var))
     ))
 
-(def debug-atom (atom nil))
 
 (defn table-entry [plugin-path global-configuration]
   (let [state (create-state-template plugin-path global-configuration)
@@ -643,7 +640,6 @@
         state!     (fn [& prop]
                     (cond (= :atom (first prop)) state
                           :else (deref state)))]
-    (reset! debug-atom state!)
     (println "\nBuilding plugin")
     (build-plugin-gui state! dispatch!)))
 

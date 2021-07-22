@@ -88,7 +88,7 @@
     root))
 
 
-(defn- comp []
+(defn- compo []
   (gcomp/vmig
    :args [:background "#eee"]
    :items (gtool/join-mig-items
@@ -107,7 +107,7 @@
 
 (defn build-popup
   [{:keys [comp-fn title size]
-    :or {comp-fn comp
+    :or {comp-fn compo
          title ""
          size [400 300]}}]
   (.add (jlp) (popup {:render-fn comp-fn

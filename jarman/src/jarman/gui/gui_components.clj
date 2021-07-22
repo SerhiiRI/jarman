@@ -951,8 +951,9 @@
                over-func nil
                background (gtool/get-comp :button-expand :background)}}]
     (let [atom-inside-btns (atom nil)
-          inside-btns (if (nil? inside-btns) nil inside-btns)
-          inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns))
+          inside-btns (if (nil? inside-btns) nil inside-btns) ;; check if nill
+          inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns)) ;; check if not in list
+          inside-btns (if (sequential? (first inside-btns)) (first inside-btns) inside-btns) ;; check if list in list
           ico (if (or (= :always expand) (not (nil? inside-btns))) ico nil)
           title (c/label
                  :border (b/empty-border :left 10)
@@ -993,7 +994,9 @@
                          (if (= (count (u/children mig)) 1)
                            (do ;;  Add inside buttons to mig with expand button
                              (c/config! icon :icon ico-hover)
-                             (doall (map #(.add mig %) @atom-inside-btns))
+                             (doall (map (fn [btn]
+                                           (.add mig btn))
+                                         @atom-inside-btns))
                              ;;(gtool/set-focus (first @atom-inside-btns))
                              ;;(gtool/switch-focus)
                              (.revalidate mig) 

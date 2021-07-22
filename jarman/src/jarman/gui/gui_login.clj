@@ -5,26 +5,20 @@
         seesaw.style
         seesaw.mig
         seesaw.font)
-  (:import (java.awt BorderLayout Dimension ComponentOrientation)
-           (java.text SimpleDateFormat)
-           (java.text SimpleDateFormat)
-           (javax.swing JScrollPane)
-           (java.awt Dimension)
-           (jarman.test CustomScrollBar))
-  (:require [clojure.string :as string]
-            [jarman.gui.gui-tools :as tool]
-            [jarman.config.config-manager :as conf]
+  (:import (java.awt Dimension))
+  (:require [clojure.string            :as string]
+            [jarman.gui.gui-tools      :as gtool]
+            [jarman.config.config-manager     :as conf]
             [jarman.resource-lib.icon-library :as icon]
-            [clojure.java.jdbc :as jdbc]
-            [jarman.tools.swing :as stool]
-            [jarman.gui.gui-app :as app]
+            [clojure.java.jdbc         :as jdbc]
+            [jarman.tools.swing        :as stool]
+            [jarman.gui.gui-app        :as app]
             [jarman.logic.system-login :as system-login]
-            [jarman.gui.gui-components :as components]
-            [jarman.logic.connection :as c]
-            [jarman.plugin.table :as ptab]
+            [jarman.gui.gui-components :as gcomp]
+            [jarman.logic.connection   :as conn]
+            [jarman.plugin.table       :as ptab]
             [jarman.logic.view-manager :as pvm]
-            ;; [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]
-            ))
+            [jarman.logic.state        :as state]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; validation login ;;;
@@ -63,7 +57,7 @@
 (def my-style {[:.css1] {:foreground blue-green-color}})
 
 (defn color-border [color]
-  (tool/my-border [color 2] [10 10 5 5])
+  (gtool/my-border [color 2] [10 10 5 5])
 )
 ;; (color-border "#222")
 
@@ -73,7 +67,7 @@
   {:size size :font "Arial" :style :bold})
 
 (def ^:private emp-border
-  (tool/my-border [10 10 5 5]))
+  (gtool/my-border [10 10 5 5]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; some-components ;;; 
@@ -83,9 +77,9 @@
 (declare info-panel)
 (declare login-panel)
 (defn some-text [color]
-  (label :text (tool/htmling "<p align= \"justify\">It is a long established fact that a reader will be distracted by the readable content of a page when lookiult model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like)</p>") :foreground color :font (myFont 14)))
+  (label :text (gtool/htmling "<p align= \"justify\">It is a long established fact that a reader will be distracted by the readable content of a page when lookiult model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like)</p>") :foreground color :font (myFont 14)))
 
-(def  contact-info [(label :text (tool/htmling "<h2>Contacts</h2>") :foreground blue-green-color :font (myFont 14))
+(def  contact-info [(label :text (gtool/htmling "<h2>Contacts</h2>") :foreground blue-green-color :font (myFont 14))
                              (horizontal-panel :items (list (label :text "Website:"
                                                                    :foreground  blue-green-color :font (myFont 14)
                                                                    :border (empty-border :right 8))
@@ -107,7 +101,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def confgen-header
-  (fn [title] (label :text title :font (tool/getFont 16 :bold)
+  (fn [title] (label :text title :font (gtool/getFont 16 :bold)
                      :foreground blue-green-color
                      ;; :border (compound-border
                      ;;          (line-border :bottom 2 :color dark-grey-color)(empty-border :bottom 5))
@@ -115,10 +109,10 @@
 
 (def confgen-title
   (fn [title]
-    (label :text title :foreground light-grey-color :font (tool/getFont 12 :bold))))
+    (label :text title :foreground light-grey-color :font (gtool/getFont 12 :bold))))
 
 (def confgen-input 
-  (fn [data] (text :text data :font (tool/getFont 14)
+  (fn [data] (text :text data :font (gtool/getFont 14)
                :background "#fff"
                :columns 20
                :border (color-border light-grey-color))))
@@ -240,10 +234,10 @@
 
 
 (defn config-generator-fields [key-title]
-  (if (nil? (c/datalist-get))
-    (do (println "[ Warning ] (c/datalist-get) return nil in gui_login/config-generator-fields.") (label))
-    (let [data (key-title (c/datalist-get))
-          dbtype-inp (text :text "mysql" :font (tool/getFont 14)
+  (if (nil? (conn/datalist-get))
+    (do (println "[ Warning ] (conn/datalist-get) return nil in gui_login/config-generator-fields.") (label))
+    (let [data (key-title (conn/datalist-get))
+          dbtype-inp (text :text "mysql" :font (gtool/getFont 14)
                            :editable? false
                            :background "#fff"
                            :columns 20
@@ -266,7 +260,7 @@
                           :border (empty-border :top 10 :right 10 :left 10 :bottom 10)
                           :listen [:mouse-entered (fn [e] (config! e :background back-color :cursor :hand))
                                    :mouse-exited  (fn [e] (config! e :background "#fff"))
-                                   :mouse-clicked (fn [e] (if (= nil (c/test-connection {:dbtype (text dbtype-inp)
+                                   :mouse-clicked (fn [e] (if (= nil (conn/test-connection {:dbtype (text dbtype-inp)
                                                                                          :host (text host-inp)
                                                                                          :port (text port-inp)
                                                                                          :dbname (text dbname-inp)
@@ -318,8 +312,8 @@
                :constraints ["wrap 2" "0px[grow, fill, center]80px" "20px[grow, fill]20px"]
                :items [[(mig-panel  :constraints ["" "0px[10%, fill]0px[grow,center]0px[10%, fill]0px" ""]
                                     :items [[(label :icon (stool/image-scale icon/left-blue-64-png 50)
-                                                    :listen [:mouse-entered (fn [e] (tool/hand-hover-on e))
-                                                             :mouse-exited (fn [e] (tool/hand-hover-off e))
+                                                    :listen [:mouse-entered (fn [e] (gtool/hand-hover-on e))
+                                                             :mouse-exited (fn [e] (gtool/hand-hover-off e))
                                                              :mouse-clicked (fn [e] (config! (to-frame e) :content (login-panel)))])]
                                             
                                             [(label :text "CONNECT TO DATABASE"
@@ -331,16 +325,16 @@
                        [(let [scr (scrollable (doto (border-panel
                                                      :items [[(vertical-panel
                                                                :items (concat (list
-                                                                               (label :text (tool/htmling "<h2>About</h2>")
+                                                                               (label :text (gtool/htmling "<h2>About</h2>")
                                                                                       :foreground blue-green-color :font (myFont 14))
-                                                                               (label :text (tool/htmling "<p align= \"justify\">This configuration page describe data binding and data environment of program. De-facto is a backend for jarman</p>")
+                                                                               (label :text (gtool/htmling "<p align= \"justify\">This configuration page describe data binding and data environment of program. De-facto is a backend for jarman</p>")
                                                                                       :foreground light-grey-color
                                                                                       :font (myFont 14))
-                                                                               (label :text (tool/htmling "<p align= \"justify\">You must set right hostname(server ip adress and port), database name also application user and password</p>")
+                                                                               (label :text (gtool/htmling "<p align= \"justify\">You must set right hostname(server ip adress and port), database name also application user and password</p>")
                                                                                       :border (empty-border :top 10)
                                                                                       :foreground light-grey-color
                                                                                       :font (myFont 14))
-                                                                               (label :text (tool/htmling "<h2>FAQ</h2>")
+                                                                               (label :text (gtool/htmling "<h2>FAQ</h2>")
                                                                                       :foreground blue-green-color :font (myFont 14)))
                                                                               (flatten (map (fn [x] [(label :text (str "- " (:q x)) :foreground blue-green-color :font (myFont 14) :border (empty-border :top 4 :bottom 4))
                                                                                                      (label :text (:a x) :foreground light-grey-color :font (myFont 14) :border (empty-border :top 4 :bottom 4))]) faq)))) :north]])
@@ -355,8 +349,8 @@
   (string/split (string/replace (name some-key) #"\_" ".") #"\--" ))
 
 (defn test-key-connection [key-title]
-  (let [data (key-title (c/datalist-mapper (c/datalist-get)))]
-    (c/test-connection {:dbtype (:dbtype data)
+  (let [data (key-title (conn/datalist-mapper (conn/datalist-get)))]
+    (conn/test-connection {:dbtype (:dbtype data)
                         :host (:host data)
                         :port (:port data)
                         :dbname (:dbname data)
@@ -365,7 +359,7 @@
 
 
 (defn test-key-login [key-title login pass]
-  (let [data (key-title (c/datalist-mapper (c/datalist-get)))]
+  (let [data (key-title (conn/datalist-mapper (conn/datalist-get)))]
     (println login)
     (println pass)
     (if-let [login-fn (system-login/login
@@ -409,18 +403,18 @@
                           :visible? true
                           :border (empty-border :right 5)
                           :listen [
-                                   :mouse-entered (fn [e] (do (tool/hand-hover-on e) (config! e :visible? true)))
-                                   :mouse-exited (fn [e] (do (tool/hand-hover-off e) (config! e :visible? false)))
-                                   :mouse-clicked (fn [e] (do (tool/hand-hover-off e) (config! (to-frame e) :content (info-panel))))])
+                                   :mouse-entered (fn [e] (do (gtool/hand-hover-on e) (config! e :visible? true)))
+                                   :mouse-exited (fn [e] (do (gtool/hand-hover-off e) (config! e :visible? false)))
+                                   :mouse-clicked (fn [e] (do (gtool/hand-hover-off e) (config! (to-frame e) :content (info-panel))))])
         icon-conf
         (label :icon (stool/image-scale icon/settings-64-png 36)
                :halign :right
                :visible? false
                :border (empty-border :right 5 )
                :listen [
-                        :mouse-entered (fn [e] (do (tool/hand-hover-on e) (config! e :visible? true)))
-                        :mouse-exited (fn [e] (do (tool/hand-hover-off e) (config! e :visible? false)))
-                        :mouse-clicked (fn [e] (do (tool/hand-hover-off e) (config! (to-frame e)
+                        :mouse-entered (fn [e] (do (gtool/hand-hover-on e) (config! e :visible? true)))
+                        :mouse-exited (fn [e] (do (gtool/hand-hover-off e) (config! e :visible? false)))
+                        :mouse-clicked (fn [e] (do (gtool/hand-hover-off e) (config! (to-frame e)
                                                                                :content (config-generator-panel key-title))))])
         icons-pan (flow-panel :items (list icon-conf) :background "#fff" :align :right)
         my-panel (border-panel
@@ -440,7 +434,7 @@
                             (if (instance? clojure.lang.PersistentArrayMap data-log)
                               (do (.revalidate my-panel)
                                   (.dispose (to-frame e))
-                                  (@app/startup))
+                                  (state/state :startup))
                               (do
                                 (config! dbn :foreground red-color)
                                 (println (name data-log))
@@ -458,7 +452,7 @@
                                                                      (if (instance? clojure.lang.PersistentArrayMap data-log)
                                                                        (do (.revalidate my-panel)
                                                                            (.dispose (to-frame e))
-                                                                           (@app/startup)))))
+                                                                           (state/state :startup)))))
                                                   :mouse-exited  (fn [e] (do
                                                                            (config! icon-conf :visible? false)
                                                                            (config! icon-info :visible? false)
@@ -486,7 +480,7 @@
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setBorder scr nil)
     (doall (map (fn [[k v]] (.add mig (label-to-config (:dbname v) (:host v) k login pass)))
-                (c/datalist-mapper (c/datalist-get))))
+                (conn/datalist-mapper (conn/datalist-get))))
     (.add mig
           (border-panel
            :center (label :icon (stool/image-scale icon/pen-128-png 34)
@@ -508,12 +502,12 @@
               :constraints ["wrap 1" "[grow, center]" "20px[]20px"]
               :items [[(label :icon (stool/image-scale icon/alert-red-512-png 8)
                               :border (empty-border :right 10)) "split 2"]
-                      [(label :text (tool/htmling "<h2>ERROR</h2>") :foreground blue-green-color :font (myFont 14))]
+                      [(label :text (gtool/htmling "<h2>ERROR</h2>") :foreground blue-green-color :font (myFont 14))]
                       [(let [mig (mig-panel
                                   :constraints ["wrap 1" "40px[:600, grow, center]40px" "10px[]10px"]
-                                  :items [[(label :text (tool/htmling "<h2>About</h2>")
+                                  :items [[(label :text (gtool/htmling "<h2>About</h2>")
                                                   :foreground blue-green-color :font (myFont 14)) "align l"]
-                                          [(label :text (tool/htmling (str "<p align= \"justify\">" (:description errors) "</p>"))
+                                          [(label :text (gtool/htmling (str "<p align= \"justify\">" (:description errors) "</p>"))
                                                   :foreground light-grey-color
                                                   :font (myFont 14)) "align l"]])]               
                          (doall (map (fn [x] (.add mig x "align l"))
@@ -531,7 +525,7 @@
     (doall (map (fn [x] (do (.add mig (label :text (str "- " (:q x)) :foreground blue-green-color :font (myFont 14)) "align l")
                             (.add mig (label :text (:a x) :foreground light-grey-color :font (myFont 14)) "align l"))) faq))
     (.repaint mig)
-    [(label :text (tool/htmling "<h2>FAQ</h2>")
+    [(label :text (gtool/htmling "<h2>FAQ</h2>")
             :foreground blue-green-color
             :font (myFont 14)) mig]))
 
@@ -546,25 +540,25 @@
              (mig-panel
               :constraints ["wrap 1" "[grow, center]" "20px[]20px"]
               :items [[(label :icon (stool/image-scale icon/left-blue-64-png 50)
-                              :listen [:mouse-entered (fn [e] (tool/hand-hover-on e))
-                                       :mouse-exited (fn [e] (tool/hand-hover-off e))
+                              :listen [:mouse-entered (fn [e] (gtool/hand-hover-on e))
+                                       :mouse-exited (fn [e] (gtool/hand-hover-off e))
                                        :mouse-clicked (fn [e] (config! (to-frame e) :content (login-panel)))]
                               :border (empty-border :right 220)) "align l, split 2"]
                       [(label :icon (stool/image-scale "icons/imgs/trashpanda2-stars-blue-1024.png" 47))]
                       [(let [mig (mig-panel
                                   :constraints ["wrap 1" "100px[:600, grow, center]100px" "20px[]20px"]
-                                  :items [[(label :text (tool/htmling "<h2>About</h2>")
+                                  :items [[(label :text (gtool/htmling "<h2>About</h2>")
                                                   :foreground blue-green-color :font (myFont 14)) "align l"]
                                           [(info  light-grey-color)]
-                                          [(label :text (tool/htmling "<h2>Jarman</h2>")
+                                          [(label :text (gtool/htmling "<h2>Jarman</h2>")
                                                   :foreground blue-green-color :font (myFont 14)) "align l"]
                                           [(info  light-grey-color)]
-                                          [(label :text (tool/htmling "<h2>Contact</h2>")
+                                          [(label :text (gtool/htmling "<h2>Contact</h2>")
                                                   :foreground blue-green-color :font (myFont 14)) "align l"]
                                           [(info  light-grey-color)]
-                                          [(label :text (tool/htmling "<h2>Links</h2>")
+                                          [(label :text (gtool/htmling "<h2>Links</h2>")
                                                   :foreground blue-green-color :font (myFont 14)) "align l"] 
-                                          [(label :text (tool/htmling "<p align= \"justify\">http://trashpanda-team.ddns.net</p>")
+                                          [(label :text (gtool/htmling "<p align= \"justify\">http://trashpanda-team.ddns.net</p>")
                                                   :foreground light-grey-color :font (myFont 14) ) "align l"]])]
                          (doall (map (fn [x] (.add mig x "align l")) (if (= faq nil)
                                                                        contact-info (concat (asks-panel faq) contact-info))))
@@ -574,10 +568,10 @@
 
 
 (defn login-panel []
-  (let [flogin (components/input-text :placeholder "Login"
+  (let [flogin (gcomp/input-text :placeholder "Login"
                                       :border-color-hover light-blue-color
                                       :args [:halign :left])
-        fpass (components/input-password :placeholder "Password"
+        fpass (gcomp/input-password :placeholder "Password"
                                          :border-color-hover light-blue-color
                                          :style [:halign :left])]
     (mig-panel

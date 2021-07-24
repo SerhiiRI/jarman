@@ -373,7 +373,7 @@
         fn-assoc        (fn [e key val] (assoc-in (c/config e :user-data) [key] val))
         newBorder (fn [underline-color]
                     (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
-                                     (b/line-border :bottom (nth border 4) :color underline-color)))
+                                       (b/line-border :bottom (nth border 4) :color underline-color)))
         last-v (atom "")]
     (apply c/text
            :text (if (empty? val) placeholder (if (string? val) val (str val)))
@@ -759,9 +759,7 @@
      Create panel who can hide inside components. 
      Inside :user-data is function to hide/show panel ((get (config e :user-data) :hide-show))
    Example:
-     (expand-form-panel parent (component or components))
-      
-   "
+     (expand-form-panel parent (component or components))"
   [view-layout comps
    & {:keys [args 
              min-w
@@ -787,9 +785,9 @@
            tgap 0
            bgap 0
            vrules "[fill]"
-           ico-open nil
+           icon-open nil
            icon-hide nil
-           text-open "<<"
+           text-open "back"
            text-hide "..."
            focus-color (gtool/get-color :decorate :focus-gained-dark)
            unfocus-color "#fff"}}]
@@ -806,22 +804,22 @@
                     (if (nil? @hidden-comp)
                       (do
                         (c/config! form-space :constraints form-space-hide)
-                        (c/config! e :text text-hide :valign :top :halign :center)
+                        (c/config! e :text text-hide :valign :top :halign :center :icon nil :font (gtool/getFont 18 :bold) :background "#eee")
                         (reset! hidden-comp (drop 1 inside))
                         (doall (map #(.remove form-space %) (reverse (drop 1 (range (count inside))))))
                         (.revalidate view-layout))
                       (do
                         (c/config! form-space :constraints form-space-open)
-                        (c/config! e :text text-open :halign :left :font (gtool/getFont 16 :bold))
+                        (c/config! e :text text-open :halign :left :font (gtool/getFont 15) :background "#fff")
                         (doall (map #(.add form-space %) @hidden-comp))
                         (reset! hidden-comp nil)
                         (.revalidate view-layout)))))
         hide-show (c/label :text text-open
                            :icon icon-open
                            :focusable? true
-                           :background "#bbb"
-                           :foreground "#fff"
-                           :font (gtool/getFont 16 :bold)
+                           :background "#fff" ;;
+                           :foreground blue-color ;;"#bbb"
+                           :font (gtool/getFont 15)
                            :border (b/empty-border :left 2 :right 2)
                            :listen [:focus-gained (fn [e] (c/config! e :foreground focus-color))
                                     :focus-lost   (fn [e] (c/config! e :foreground unfocus-color))

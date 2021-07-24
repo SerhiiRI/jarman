@@ -971,8 +971,10 @@
     [:#as_is
      :service_contract_month.id
      :service_contract_month.id_service_contract
-     :service_contract_month.service_month_date
+     :service_contract_month.service_month_start
+     :service_contract_month.service_month_end
      :service_contract_month.money_per_month
+     :service_contract_month.was_payed
      :service_contract.id
      :service_contract.id_enterpreneur
      :service_contract.contract_start_term
@@ -987,4 +989,5 @@
      :enterpreneur.accountant
      :enterpreneur.legal_address
      :enterpreneur.physical_address
-     :enterpreneur.contacts_information]}))
+     :enterpreneur.contacts_information
+     ]}))

@@ -18,12 +18,12 @@
 ;;; Variable Stack
 
 (def --jarman-variable-stack-- (atom {}))
-(add-watch --jarman-variable-stack-- :log-difference
-           (fn [_ref _ old-value new-value]
-             (let [[things-only-in-a things-only-in-b things-in-both]
-                   (cl-data/diff old-value new-value)]
-               (if (or things-only-in-a things-only-in-b)
-                 (println things-only-in-b)))))
+;; (add-watch --jarman-variable-stack-- :log-difference
+;;            (fn [_ref _ old-value new-value]
+;;              (let [[things-only-in-a things-only-in-b things-in-both]
+;;                    (cl-data/diff old-value new-value)]
+;;                (if (or things-only-in-a things-only-in-b)
+;;                  (println things-only-in-b)))))
 
 ;;; Declare type
 

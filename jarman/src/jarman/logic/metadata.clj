@@ -96,6 +96,7 @@
 (def column-type-number     :number)
 (def column-type-boolean    :boolean)
 (def column-type-textarea   :textarea)
+(def column-type-prop       :prop)
 (def column-type-floated    :float)
 (def column-type-input      :text)
 (def column-type-blob       :blob)
@@ -109,12 +110,15 @@
                                         column-type-number
                                         column-type-boolean
                                         column-type-textarea
+                                        column-type-prop
                                         column-type-floated
                                         column-type-input
                                         column-type-blob
                                         column-type-filepath
                                         column-type-url
                                         column-type-nil])
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; RULE FILTRATOR ;;;

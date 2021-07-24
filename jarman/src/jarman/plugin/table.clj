@@ -20,7 +20,7 @@
    [jarman.gui.gui-tools      :as gtool]
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-calendar   :as calendar]
-   [jarman.gui.popup :as gpop]
+   [jarman.gui.popup :as popup]
    
    [jarman.logic.state :as state]
    [jarman.logic.metadata :as mt]
@@ -165,23 +165,35 @@
                           :hgap 0 :vgap 0
                           :cursor :hand
                           :listen [:mouse-clicked
-                                   (fn [e] (gpop/build-popup
+                                   (fn [e] (popup/build-popup
                                             {:title "Show columns"
                                              :comp-fn (fn []
                                                         (gcomp/min-scrollbox 
-                                                         (build-expand-fn (field-qualified (:model (state!))) scale)))}))])]
+                                                         (build-expand-fn (field-qualified (:model (state!))) scale)))}))])
+        update-changes (fn [val]
+                         (dispatch!   
+                          {:action :update-changes
+                           :path   [(rift field-qualified :unqualifited)]
+                           :value  val}))]
     (if-not (nil? (:model (state!)))
-      (refresh-panel colmn-panel build-expand-fn (field-qualified (:model (state!))) not-scaled))
-    (gcomp/expand-input 
-     {:panel colmn-panel
-      :onClick (fn [e]
-                 (let [dialog  (dialog-model-id (dialog-component (field-qualified (:model (state!)))))]
-                   (refresh-panel colmn-panel build-expand-fn dialog not-scaled)
-                   (dispatch!   
-                    {:action :update-changes
-                     :path   [(rift field-qualified :unqualifited)]
-                     :value  dialog})))})))
-
+      (do
+        (update-changes (rift (field-qualified (:model (state!))) (field-qualified (:model-changes (state!)))))
+        (refresh-panel colmn-panel build-expand-fn (field-qualified (:model-changes (state!))) not-scaled)))
+    (let [exi (gcomp/expand-input 
+               {:title (if (nil? (get-in (state!) [:model-changes field-qualified]))
+                         (gtool/get-lang :basic :empty)
+                         (gtool/get-lang :basic :selected))
+                :panel colmn-panel
+                :onClick (fn [e]
+                           (let [dialog  (dialog-model-id (dialog-component (field-qualified (:model (state!)))))]
+                             (refresh-panel colmn-panel build-expand-fn dialog not-scaled)
+                             (update-changes dialog)
+                             (c/config! (c/to-widget e)
+                                        :text (if (nil? (get-in (state!) [:model-changes field-qualified]))
+                                                (gtool/get-lang :basic :empty)
+                                                (gtool/get-lang :basic :selected)))
+                             (.repaint (c/to-root e))))})]
+      exi)))
 
 
 ;; ┌───────────────┐
@@ -279,7 +291,9 @@
                   (do
                     (let [table-id (first (:model-columns plugin-toolkit))
                           update-m (into {table-id (table-id table-model)} (:model-changes (state!)))]
-                      (println "\nRun Update: \n" ((:update plugin-toolkit) update-m) "\n")
+                      (try
+                        ((:update plugin-toolkit) update-m)
+                        (catch Exception e (popup/build-popup {:title "Warning" :size [300 200] :comp-fn (fn [] (c/label :text "Wrong data to update!"))})))
                       (dispatch! {:action :clear-model})
                       (dispatch! {:action :clear-changes})
                       ))
@@ -357,16 +371,6 @@
                                 :path      [field-qualified]})
             comp      (gcomp/inpose-label title pre-comp)]
         (.add panel comp))
-      ;; Plugin as popup component
-      ;; (vector? (:model-comp m))
-      ;; (let [title     (rift (:model-reprs m) "")
-      ;;       qualified (:model-param m)
-      ;;       val       (if (empty? table-model) "" (qualified table-model))
-      ;;       binded    (rift (:bind-args m) {})
-      ;;       props     {:state state :dispatch! dispatch! :title title :val val}
-      ;;       props     (if (empty? binded) props (merge-binded-props props binded))
-      ;;       comp      (c/label :text "Plugin component here")] ;; TODO: Implement plugin invoker
-      ;;   comp)
       :else (.add panel (c/label :text "Wrong overrided component")))))
 
 
@@ -389,14 +393,6 @@
 ;;    :documents.prop]
 
 
-;; :model-update
-;;   [:documents.id
-;;    {:model-reprs "Table",
-;;     :model-param :documents.table_name,
-;;     :model-comp jarman.gui.gui-components/state-table-list}
-;;    :documents.name
-;;    :documents.prop]
-
 (defn convert-key-to-component
   "Description
      Convert to component automaticly by keyword.
@@ -408,8 +404,8 @@
         editable?       (:editable?       meta)
         comp-types      (:component-type  meta)
         val             (cond
-                          (not (nil? (key (:model-changes (state!))))) (str (key (:model-changes (state!))))
                           (not (nil? (key (:model (state!)))))   (str (key (:model (state!))))
+                          (not (nil? (key (:model-changes (state!))))) (str (key (:model-changes (state!))))
                           :else "")
         func            (fn [e] (dispatch!
                                  {:action :update-changes
@@ -639,6 +635,7 @@
     ;; (println "\nExport path")
     ;; (pprint/pprint (:export-path @atom-var))
     ))
+
 
 (defn table-entry [plugin-path global-configuration]
   (let [state (create-state-template plugin-path global-configuration)

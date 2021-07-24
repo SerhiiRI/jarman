@@ -73,8 +73,7 @@
          (fn [m] (assoc-in m path
                           {:config configuration
                            :toolkit toolkit
-                           :entry entry
-                           }))) nil)
+                           :entry entry}))) nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; CONFIG PROCESSOR ;;;
@@ -235,10 +234,14 @@
   (return-structure-flat (deref user-menu))
   (global-view-configs-clean)
   (global-view-configs-get)
-  (get-in (global-view-configs-get) [:user])
+  (get-in (global-view-configs-get)
+          [:service_contract :service-period :service_contract :toolkit])
   (get-in (global-view-configs-get)  [:permission :dialog-bigstring :select-name-permission])
   ((get-in (global-view-configs-get) [:permission :dialog-bigstring :my-custom-dialog :toolkit :dialog]))
   ((get-in (global-view-configs-get) [:permission :dialog-table :my-custom-dialog :toolkit :dialog])))
+
+:service_contract :service-period :service_contract
+:service-period :toolkit :service-period
 
 ;;;;;;;;;;;;;;;;;;
 ;;; PluginLink ;;;
@@ -317,25 +320,30 @@
                  item (assoc :item item)
                  icon (assoc :icon icon))))
 
-;; (def ^:private business-menu
-;;   {"Admin space"
-;;    {"User table"                [:user :table :user]
-;;     "Permission edit"           [:permission :table :permission]}
-;;    "Sale structure"
-;;    {"Enterpreneur"              [:enterpreneur :table :enterpreneur]
-;;     "Point of sale group"       [:point_of_sale_group :table :point_of_sale_group]
-;;     "Point of sale group links" [:point_of_sale_group_links :table :point_of_sale_group_links],
-;;     "Point of sale"             [:point_of_sale :table :point_of_sale]}
-;;    "Repair contract"
-;;    {"Repair contract"           [:repair_contract :table :repair_contract]
-;;     "Repair reasons"            [:repair_reasons :table :repair_reasons]
-;;     "Repair technical issue"    [:repair_technical_issue :table :repair_technical_issue]
-;;     "Repair nature of problem"  [:repair_nature_of_problem :table :repair_nature_of_problem]
-;;     "Cache register"            [:cache_register :table :cache_register]
-;;     "Seal"                      [:seal :table :seal]}
-;;    "Service contract"
-;;    {"Service contract"          [:service_contract :table :service_contract]
-;;     "Service contract month"    [:service_contract_month :table :service_contract_month]}})
+
+(declare user-menu)
+(def ^:private business-menu
+  {"Admin space"
+   {"User table"                [:user :table :user]
+    "Permission edit"           [:permission :table :permission]}
+   "Sale structure"
+   {"Enterpreneur"              [:enterpreneur :table :enterpreneur]
+    "Point of sale group"       [:point_of_sale_group :table :point_of_sale_group]
+    "Point of sale group links" [:point_of_sale_group_links :table :point_of_sale_group_links],
+    "Point of sale"             [:point_of_sale :table :point_of_sale]}
+   "Repair contract"
+   {"Repair contract"           [:repair_contract :table :repair_contract]
+    "Repair reasons"            [:repair_reasons :table :repair_reasons]
+    "Repair technical issue"    [:repair_technical_issue :table :repair_technical_issue]
+    "Repair nature of problem"  [:repair_nature_of_problem :table :repair_nature_of_problem]
+    "Cache register"            [:cache_register :table :cache_register]
+    "Seal"                      [:seal :table :seal]}
+   "Service contract"
+   {"Service period"            [:service_contract :service-period :service_contract]
+    "Service contract"          [:service_contract :table :service_contract]
+    "Service contract month"    [:service_contract_month :table :service_contract_month]}})
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; loader chain for `defview` ;;;
@@ -633,7 +641,7 @@
   ;; get simple debug map getter
   (plugin-paths-getters)
   ;; open some plugin :entryes in frame
-  (plugin-open-in-frame [:permission :table :permission])
+  (plugin-open-in-frame [:user :table :user])
   ;; or two and more interesting to us plugins
   (plugin-open-in-frame
    [:user :table :user]
@@ -956,3 +964,4 @@
    (delete! {:table_name :service_contract :where [:= :id service_contract_id]})))
 
 
+;;[:service_contract :service-period :service_contract]

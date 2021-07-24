@@ -11,7 +11,8 @@
    [jarman.plugin.table]
    [jarman.plugin.dialog-table]
    [jarman.plugin.dialog-test]
-   [jarman.plugin.dialog-bigstring]))
+   [jarman.plugin.dialog-bigstring]
+   [jarman.plugin.service-period]))
 
 ;;; check assertion
 (s/check-asserts true)
@@ -109,4 +110,5 @@
     :examples "{:table_name :permission, :column [:#as_is ...]...}",
     :doc "SQL syntax for `select!` query"}])
 
-
+(defplugin service-period jarman.plugin.service-period
+  "Plugin for service contracts of enterpreneurs")

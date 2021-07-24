@@ -76,6 +76,13 @@
      :permission.permission_name
      :permission.configuration]}))
 
+(defview service_contract
+  (service-period
+   :id :service_contract
+   :permission [:admin :developer :user]
+   :name "service_contract"
+   :plug-place [:#tables-view-plugin]))
+
 (defview
   cache_register
   (table

@@ -14,6 +14,8 @@
    [seesaw.border  :as b]
    ;; Jarman toolkit
    [jarman.tools.lang :refer :all]
+   [jarman.tools.swing :as stool]
+   [jarman.resource-lib.icon-library :as icon]
    
    [jarman.gui.gui-tools      :as gtool]
    [jarman.gui.gui-components :as gcomp]
@@ -498,7 +500,7 @@
                             :model-update))
           table-id (keyword (format "%s.id" (:field (:table-meta plugin-toolkit))))
           model-defview (current-model plugin-config)
-          panel  (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"];;heyy
+          panel  (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
                                  :border (b/empty-border :thickness 10)
                                  :items [[(c/label)]])
           active-buttons (:active-buttons plugin-config)
@@ -556,7 +558,8 @@
                                      (gcomp/expand-form-panel
                                       main-layout
                                       [(create-header state!)
-                                       (build-input-form state! dispatch!)])
+                                       (build-input-form state! dispatch!)]
+                                      :icon-open (stool/image-scale icon/left-blue-64-png 20)) ;;heyy
                                      :hscroll :never)]))]
                                [(try
                                   (c/vertical-panel :items [table])

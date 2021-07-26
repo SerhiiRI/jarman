@@ -128,7 +128,7 @@
 ;;; FOR DEBUG CONNECTION
 (connection-set
  ;; set selected
- (:dell
+ (:dell-test
   ;;------------
   {:localhost
    {:dbtype "mysql",
@@ -145,6 +145,13 @@
     :user "jarman",
     :password "dupa"}
    :dell
+   {:dbtype "mysql",
+    :host "trashpanda-team.ddns.net",
+    :port 3307,
+    :dbname "jarman",
+    :user "root",
+    :password "1234"}
+   :dell-test
    {:dbtype "mysql",
     :host "trashpanda-team.ddns.net",
     :port 3307,

@@ -30,6 +30,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPER FUNCTIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn get-tables
   "Description
     - get path to file with db (db_meta or db_ssql)
@@ -42,7 +43,8 @@
     (catch java.io.FileNotFoundException e
       (println (str "[e] File not found" (.toString e))))))
 
-(get-tables "src\\jarman\\managment\\db_meta.clj")
+(assert (.exists (clojure.java.io/file "src" "jarman" "managment" "db_meta.clj")))
+(get-tables (str (clojure.java.io/file "src" "jarman" "managment" "db_meta.clj")))
 
 (defn get-list-tables-file-db
   "Description
@@ -106,10 +108,14 @@
   [] (doall (for [table (metadata/show-tables-not-meta)]
               (metadata/create-one-meta (get-table-file-db table) table))))
 
-(defn create-one-table[metadata]
+#_(defn create-one-table[metadata]
   (try (do (metadata/update-meta metadata)
            (db/exec (metadata/create-table-by-meta metadata)))
        (catch Exception e (println "[!] Problem with " (:table_name metadata)))))
+
+(defn create-one-table[metadata]
+  (do (metadata/update-meta metadata)
+      (db/exec (metadata/create-table-by-meta metadata))))
 
 (defn create-all-tables []
   ;; (sinit/procedure-test-all)
@@ -119,6 +125,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; FUNCTIONS FOR DELETE TABLES ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn delete-one-table [tbl]
   (try
     (db/exec (drop-table tbl))
@@ -133,6 +140,7 @@
 ;;;;;;;;;;;;;;;
 ;;; SCRIPTS ;;;
 ;;;;;;;;;;;;;;;
+
 (defn reset-one-db [tbl]
   (do (delete-one-table tbl)
       (sinit/procedure-test-all)
@@ -141,9 +149,9 @@
       (metadata/create-one-meta (get-table-file-db tbl) tbl)
       (println (format "[i] Table %s was reset successufuly" (name tbl)))))
 
- (defn reset-all-db []
-   (do (delete-all-tables)
-       (println "[i] DB was deleted")
+(defn reset-all-db []
+  (do (delete-all-tables)
+      (println "[i] DB was deleted")
       (sinit/procedure-test-all)
       (println "[i] Created and validated jarman-tables")
       (create-all-tables)
@@ -155,6 +163,12 @@
       (if (valid-tables)
         (println "[i] DB was reset successufuly")
         (println "[i] You have problem with table's structure"))))
+
+(comment
+  (delete-all-tables)
+  (sinit/procedure-test-all)
+  (create-all-tables)
+  (create-all-meta))
 
 (defn reset-one-meta [tbl]
   (do (metadata/delete-one-meta tbl)
@@ -176,17 +190,4 @@
     :user "root",
     :password "1234"})
   (db/connection-get))
-
-
-
-
-
-
-
-
-
-
-
-
-
 

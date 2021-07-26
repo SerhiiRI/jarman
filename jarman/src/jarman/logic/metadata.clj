@@ -89,9 +89,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;
 
 (def ^{:dynamic true :private true} *not-allowed-to-edition-tables* ["user" "permission"])
-(def column-type-data       :data)
+(def column-type-data       :date)
 (def column-type-time       :time)
-(def column-type-datatime   :datatime)
+(def column-type-datatime   :datetime)
 (def column-type-linking    :link)
 (def column-type-number     :number)
 (def column-type-boolean    :boolean)

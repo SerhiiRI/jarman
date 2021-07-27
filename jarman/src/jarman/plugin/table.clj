@@ -42,7 +42,9 @@
     (@state {:action :test})"
   [state action-m]
   (case (:action action-m)
+    :table-render   (assoc-in state [:table-render] (:value action-m))
     :add-missing    (assoc-in state (:path action-m) nil)
+    :pepe-model     (assoc-in state [:model] {:pepe :pepe-was-here})
     :clear-model    (assoc-in state [:model] {})
     :clear-changes  (assoc-in state [:model-changes] {})
     :update-changes (assoc-in state (join-vec [:model-changes] (:path action-m)) (:value action-m))
@@ -55,9 +57,10 @@
   "Description:
     Header in expand panel."
   [state!]
-  (c/label :text (:representation (:table-meta (:plugin-toolkit (state!)))) 
-           :halign :center
-           :border (b/empty-border :top 10)))
+  (c/label
+   :text (:representation (:table-meta (:plugin-toolkit (state!)))) 
+   :halign :center
+   :border (b/empty-border :top 10)))
 
 (defn- form-type
   "Description:
@@ -480,6 +483,33 @@
 ;; │              │
 ;; └──────────────┘
 
+
+(defn- custom-icon-bar
+  [state! dispatch!
+   & {:keys [more-front]}]
+  (let [icos [{:icon-off icon/eraser-blue-64-png
+               :icon-on  icon/eraser-blue-64-png
+               :tip      "Clear state and form"
+               :func     (fn [e]
+                           (dispatch! {:action :clear-changes})
+                           (dispatch! {:action :clear-model}))}
+              {:icon-on  icon/loupe-blue1-64-png
+               :tip      "Display state"
+               :func     (fn [e] (gcomp/popup-info-window
+                                  "Changes"
+                                  (str (:model-changes (state!)))
+                                  (state/state :app)))}
+              {:icon-on  icon/refresh-blue-64-png
+               :tip      "Refresh table"
+               :func     (fn [e] ((:table-render (state!))))}]
+        icos (if (nil? more-front) icos (concat more-front icos))]
+    (gcomp/icon-bar
+     :size 40
+     :align :right
+     :margin [5 0 10 10]
+     :items icos)))
+
+
 ;; TODO: Spec dla meta-data
 (def build-input-form
   "Description:
@@ -500,18 +530,29 @@
                                  :border (b/empty-border :thickness 10)
                                  :items [[(c/label)]])
           active-buttons (:active-buttons plugin-config)
+          return-button  (if (empty? (:model (state!)))
+                           []
+                           [{:icon-off icon/pen-blue-64-png
+                             :icon-on  icon/pen-blue-64-png
+                             :tip      "Return to insert"
+                             :func     (fn [e] (dispatch! {:action :set-model :value {}}))}])
           components (filter-nil
                       (flatten
                        (list
+                        (gcomp/hr 5)
+                        (custom-icon-bar
+                         state! dispatch!
+                         :more-front return-button)
+                        
                         (gcomp/hr 10)
                         (rift (generate-custom-buttons state! dispatch! current-model) nil)
                         (gcomp/hr 5)
 
-                        (if (in? active-buttons :changes)
-                          (default-buttons state! dispatch! :changes) nil)
+                        ;; (if (in? active-buttons :changes)
+                        ;;   (default-buttons state! dispatch! :changes) nil)
                         
-                        (if (in? active-buttons :clear)
-                             (default-buttons state! dispatch! :clear) nil)
+                        ;; (if (in? active-buttons :clear)
+                        ;;      (default-buttons state! dispatch! :clear) nil)
 
                         (if (empty? (:model (state!)))
                           (if (in? active-buttons :insert)
@@ -521,7 +562,7 @@
                              (default-buttons state! dispatch! :update) nil)
                            (if (in? active-buttons :delete)
                              (default-buttons state! dispatch! :delete) nil)
-                           (gcomp/button-basic "Back to Insert" :onClick (fn [e] (dispatch! {:action :set-model :value {}})))
+                           ;;(gcomp/button-basic "Back to Insert" :onClick (fn [e] (dispatch! {:action :set-model :value {}})))
                            (gcomp/hr 10)
                            (if (in? active-buttons :export)
                              (export-button state! dispatch!) nil)]))))]
@@ -538,12 +579,22 @@
   "Description
      Prepare and merge complete big parts"
   (fn [state! dispatch!]
-    (let [main-layout (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
-          table       ((:table (gtable/create-table (:plugin-config  (state!))
-                                                    (:plugin-toolkit (state!))))
-                       (fn [model-table]
-                         (if-not (= false (:update-mode (:plugin-config (state!))))
-                           (dispatch! {:action :set-model :value model-table}))))
+    (let [main-layout  (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
+          
+          table-fn     (fn []((:table (gtable/create-table (:plugin-config  (state!))
+                                                           (:plugin-toolkit (state!))))
+                              (fn [model-table]
+                                (if-not (= false (:update-mode (:plugin-config (state!))))
+                                  (dispatch! {:action :set-model :value model-table})))))
+
+          table-container (c/vertical-panel)
+
+          table-render (fn []
+                         (try
+                           (c/config! table-container :items [(table-fn)])
+                           (catch Exception e
+                             (c/label :text (str "Problem with table model: " (.getMessage e))))))
+          
           main-layout (c/config!
                        main-layout
                        :items [[(create-expand
@@ -557,10 +608,10 @@
                                        (build-input-form state! dispatch!)]
                                       :icon-open (stool/image-scale icon/left-blue-64-png 20)) ;;heyy
                                      :hscroll :never)]))]
-                               [(try
-                                  (c/vertical-panel :items [table])
-                                  (catch Exception e
-                                    (c/label :text (str "Problem with table model: " (.getMessage e)))))]])]
+                               [table-container]])]
+      (table-render)
+      (dispatch! {:action :table-render
+                  :value table-render})
       main-layout)
     ;; (c/label :text "Testing mode")
     ))

@@ -339,6 +339,73 @@
                 :unfocus-color (gtool/get-comp :button-return :unfocus-color)
                 :args [:foreground (gtool/get-comp :button-return :foreground)]))
 
+
+
+(defn button-icon
+  [{:keys [icon-on icon-off size func tip margin]
+    :or   {icon-on icon/question-64-png
+           size 30
+           func (fn [e])
+           margin [0 0 0 0]}}]
+  (let [ico-off (rift icon-off icon-on)
+        ico-fn (fn [i](jarman.tools.swing/image-scale i size))
+        [t b l r] margin]
+    (c/label
+     :icon (ico-fn icon-off)
+     :tip tip
+     :border (b/empty-border :top t :bottom b :left l :right r)
+     :listen [:mouse-entered (fn [e]
+                               (gtool/hand-hover-on e)
+                               (c/config! e :icon (ico-fn icon-on)))
+              :mouse-exited  (fn [e]
+                               (c/config! e :icon (ico-fn ico-off)))
+              :mouse-clicked func])))
+
+
+(defn icon-bar
+  "Description
+
+  Example
+    (gcomp/icon-bar
+     :size 40
+     :align :right
+     :margin [5 0 10 10]
+     :items icos)"
+  [& {:keys [items size align margin]
+      :or {size 30
+           align :left
+           margin [0 0 0 0]}}]
+  (let [comps (doall
+               (map (fn [{icon-on  :icon-on
+                          icon-off :icon-off
+                          tip      :tip
+                          func     :func}]
+                      (let [ico-off (rift icon-off icon-on)]
+                        (button-icon {:icon-on  icon-on
+                                      :icon-off ico-off
+                                      :tip  tip
+                                      :func func
+                                      :size size
+                                      :margin margin})))
+                    items))
+        align-m {:left    ["[fill]"
+                           #(gtool/join-mig-items %)]
+                 :right   ["[grow]0px[fill]"
+                           #(gtool/join-mig-items (c/label) %)]
+                 :center  ["[grow]0px[fill]0px[grow]"
+                           #(gtool/join-mig-items
+                             (c/label)
+                             (gtool/join-mig-items %)
+                             (c/label))]
+                 :between ["[grow, center]"
+                           #(gtool/join-mig-items %)]}
+        [hrules comps-fn] (align align-m)]
+    (hmig
+     :hrules hrules
+     :items (comps-fn comps))))
+
+
+
 (defn input-text
   "Description:
     Text component converted to c/text component with placeholder. Placehlder will be default value.
@@ -1054,6 +1121,8 @@
                     :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand-child :background)))
                     :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gtool/switch-focus))))]
            args)))
+
+
 
 
 

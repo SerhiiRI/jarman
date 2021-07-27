@@ -115,7 +115,7 @@
                       :size size})
         (new Integer 10)))
 
-(defn set-demo [] (build-popup {:comp-fn comp :title "Demo"}))
+(defn set-demo [] (build-popup {:comp-fn compo :title "Demo"}))
 
 
 

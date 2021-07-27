@@ -730,7 +730,11 @@
                    
                    :listen [:mouse-entered (fn [e] (if (= (:type data) "header") (c/config! e :cursor :move)))
                             :mouse-clicked
-                            (fn [e]                          
+                            (fn [e]
+                              (let [[start-x start-y] (gtool/get-mouse-pos)]
+                                (reset! last-x start-x)
+                                (reset! last-y start-y)
+                                (c/move! (c/to-widget e) :to-front))
                               (c/invoke-later
                                (let [table-id (:id (c/config (gtool/getParent e) :user-data))]
                                  (cond (= (.getButton e) MouseEvent/BUTTON3)
@@ -748,23 +752,39 @@
                             
                             :mouse-dragged
                             (fn [e]
-                              (c/move! (gtool/getParent e) :to-front)
-                              (if (= @last-x 0) (reset! last-x (.getX e)))
-                              (if (= @last-y 0) (reset! last-y (.getY e)))
-                              (cond
-                                (= (get data :type) "header") (let [bounds (c/config (gtool/getParent e) :bounds)
-                                                                    pre-x (- (+ (.getX bounds) (.getX e)) @last-x)
-                                                                    pre-y (- (+ (.getY bounds) (.getY e)) @last-y)
-                                                                    x (if (> pre-x 0) pre-x 0)
-                                                                    y (if (> pre-y 0) pre-y 0)
-                                                                    w (.getWidth  bounds)
-                                                                    h (.getHeight bounds)]
-                                                                (do
-                                                                  (c/config! (gtool/getParent e) :bounds [x y w h])))))
+                              (let [vpanel (:vpanel data)]
+                                (if (not (nil? vpanel))
+                                  (do
+                                    
+                                    (if (or (= -1 @last-x) (= -1 @last-y))
+                                      (let [[start-x start-y] (gtool/get-mouse-pos)]
+                                        (reset! last-x start-x)
+                                        (reset! last-y start-y)))
+                                    
+                                    (c/config! e :cursor :move)
+                                    (c/move! (gtool/getParent e) :to-front)
+                                    
+                                    (let [old-bounds (c/config vpanel :bounds)
+                                          [old-x old-y] [(.getX old-bounds) (.getY old-bounds)]
+                                          [new-x new-y] (gtool/get-mouse-pos)
+                                          move-x  (if (= 0 @last-x) 0 (- new-x @last-x))
+                                          move-y  (if (= 0 @last-y) 0 (- new-y @last-y))]
+                                      (reset! last-x new-x)
+                                      (reset! last-y new-y)
+                                      
+                                      (let [next-x (+ old-x move-x)
+                                            next-y (+ old-y move-y)
+                                            next-x (if (< next-x 0) 0 next-x)
+                                            next-y (if (< next-y 0) 0 next-y)]
+                                        (c/config! vpanel :bounds [next-x next-y :* :*])))))))
                             
                             :mouse-released
-                            (fn [e] (do (reset! last-x 0)
-                                        (reset! last-y 0)))])]
+                            (fn [e]
+                              (reset! last-x -1)
+                              (reset! last-y -1)
+                              (c/config! e :cursor :default)
+                              (.repaint (c/to-root e)))])]
+    
     (if debug (println "--Column as row: OK"))
     component))
 
@@ -784,6 +804,7 @@
         y (+ 0 (nth bounds 1))
         w (nth bounds 2)
         row-h 30  ;; wysokosc wiersza w tabeli reprezentujacego kolumne
+        
         col-in-rows (map (fn [col]
                            (table-visualizer--element--col-as-row
                             meta
@@ -808,25 +829,31 @@
                                (contains? col :key-table) "key"
                                :else "row")}))
                          (get-in data [:prop :columns]))  ;; przygotowanie tabeli bez naglowka
+        
+        vpanel (c/vertical-panel
+                :id         (get data :table)
+                :tip        "PPM to show more function."
+                :border     border
+                :background bg-c
+                :user-data  {:id (get data :id)})
+        
         camplete-table (conj col-in-rows
                              (table-visualizer--element--col-as-row
                               meta
                               JLP
                               {:representation (get-in data [:prop :table :representation])
+                               :vpanel   vpanel
                                :width    w
                                :height   row-h
                                :type     "header"
                                :border-c border-c}))  ;; dodanie naglowka i finalizacja widoku tabeli
+        
         h (* (count camplete-table) row-h)  ;; podliczenie wysokosci gotowej tabeli
         ]
-    (c/vertical-panel
-     :id         (get data :table)
-     :tip        "PPM to show more function."
-     :border     border
-     :bounds     [x y w h]
-     :background bg-c
-     :user-data  {:id (get data :id)}
-     :items      camplete-table)))
+    (c/config! vpanel
+               :bounds [x y w h]
+               :items  camplete-table)
+    vpanel))
 
 
 ;; (println MouseEvent/BUTTON3)

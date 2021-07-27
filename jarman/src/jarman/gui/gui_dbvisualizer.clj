@@ -50,25 +50,26 @@
      (calculate-tables-size metadata) => ([[100 100] {:metadata :segment}] ...)
   "
   [metadata]
-  (let [size-and-meta (doall
-                       (map
-                        (fn [table]
-                          (let [columns-count (count (get-in table [:prop :columns]))
-                                letters-in-column-title (map
-                                                         #(count (:representation %))
-                                                         (get-in table [:prop :columns]))
-                                letters-in-table-title (list
-                                                        (count
-                                                         (:table table)))
-                                size [(* 10 (last
-                                            (sort
-                                             (concat
-                                              letters-in-column-title
-                                              letters-in-table-title))))
-                                      (* row-height-in-table (+ 1 columns-count))]]
-                            ;;(println "\nSize " size)
-                            [size table]))
-                        metadata))]
+  (let [size-and-meta
+        (doall
+         (map
+          (fn [table]
+            (let [columns-count (count (get-in table [:prop :columns]))
+                  letters-in-column-title (map
+                                           #(count (:representation %))
+                                           (get-in table [:prop :columns]))
+                  letters-in-table-title (list
+                                          (count
+                                           (:table table)))
+                  size [(* 10 (last
+                               (sort
+                                (concat
+                                 letters-in-column-title
+                                 letters-in-table-title))))
+                        (* row-height-in-table (+ 1 columns-count))]]
+              ;;(println "\nSize " size)
+              [size table]))
+          metadata))]
   ;; (println "\nSAM" size-and-meta)
     size-and-meta))
 
@@ -687,71 +688,83 @@
 (defn table-visualizer--element--col-as-row
   "Description:
       Create a primary or special row that represents a column in the table"
-  [meta data
+  [meta JLP data
    & {:keys [debug]
       :or {debug false}}]
   (if debug (println "--Column as row\n--Data: " data))
   (let [last-x (atom 0)
         last-y (atom 0)
-        component (c/label :text (str (:representation data))
-                         :size [(:width data) :by (if (= (:type data) "header")
-                                                    (- (:height data) 2)
-                                                    (- (:height data) 0))]
-                         :icon (cond
-                                 (= (:type data) "connection")
-                                 (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (:height data)) 1))
-                                 (= (:type data) "key")
-                                 (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (:height data)) 1))
-                                 :else nil)
-                         :background (cond
-                                       (= (:type data) "header")     gcomp/light-light-grey-color
-                                       (= (:type data) "key")        "#e2fbde"
-                                       (= (:type data) "connection") "#e2fbde"
-                                       :else "#fff")
-                         :font (cond
-                                 (= (:type data) "header")     (gtool/getFont 12 :bold)
-                                 (= (:type data) "key")        (gtool/getFont 12)
-                                 (= (:type data) "connection") (gtool/getFont 12)
+        component (c/label
+                   :text (str (:representation data))
+                   
+                   :size [(:width data) :by (if (= (:type data) "header")
+                                              (- (:height data) 2)
+                                              (- (:height data) 0))]
+
+                   :icon (cond
+                           (= (:type data) "connection")
+                           (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (:height data)) 1))
+                           (= (:type data) "key")
+                           (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (:height data)) 1))
+                           :else nil)
+                   
+                   :background (cond
+                                 (= (:type data) "header")     gcomp/light-light-grey-color
+                                 (= (:type data) "key")        "#e2fbde"
+                                 (= (:type data) "connection") "#e2fbde"
                                  :else "#fff")
-                         :foreground (cond
-                                       (= (get data :type) "header") gcomp/blue-color
-                                       :else "#000")
-                         :border (cond
-                                   (= (get data :type) "header") (b/compound-border (b/empty-border :thickness 4))
-                                   :else                         (b/compound-border (b/empty-border :thickness 4)))
-                         :listen [:mouse-entered (fn [e] (if (= (:type data) "header") (c/config! e :cursor :move)))
-                                  :mouse-clicked (fn [e] (c/invoke-later (let [table-id (:id (c/config (gtool/getParent e) :user-data))]
-                                                                         (cond (= (.getButton e) MouseEvent/BUTTON3)
-                                                                               (let [view-space ((state/state :jarman-views-service) :get-view-sapce)
-                                                                                     scrol (c/select view-space [:#JLP-DB-Visualizer])
-                                                                                     JLP (gtool/getParent scrol)]
-                                                                                 (.add JLP
-                                                                                       (popup-menu-for-table ;; Open popup menu for table
-                                                                                        JLP
-                                                                                        meta  ;; forward list of table configuration
-                                                                                        table-id ;; Get table id
-                                                                                        (-> (.getX e) (+ (.getX (c/config (gtool/getParent e) :bounds))) (- 15))
-                                                                                        (-> (.getY e) (+ (.getY (c/config e :bounds))) (+ (.getY (c/config (gtool/getParent e) :bounds))) (- 10)))
-                                                                                       (new Integer 999) ;; z-index
-                                                                                       ))
-                                                                               (= (.getClickCount e) 2) ;; Open table editor by double click
-                                                                               (add-to-view-service--table-editor table-id meta)))))
-                                  :mouse-dragged (fn [e]
-                                                   (do
-                                                     (if (= @last-x 0) (reset! last-x (.getX e)))
-                                                     (if (= @last-y 0) (reset! last-y (.getY e)))
-                                                     (cond
-                                                       (= (get data :type) "header") (let [bounds (c/config (gtool/getParent e) :bounds)
-                                                                                           pre-x (- (+ (.getX bounds) (.getX e)) @last-x)
-                                                                                           pre-y (- (+ (.getY bounds) (.getY e)) @last-y)
-                                                                                           x (if (> pre-x 0) pre-x 0)
-                                                                                           y (if (> pre-y 0) pre-y 0)
-                                                                                           w (.getWidth  bounds)
-                                                                                           h (.getHeight bounds)]
-                                                                                       (do
-                                                                                         (c/config! (gtool/getParent e) :bounds [x y w h]))))))
-                                  :mouse-released (fn [e] (do (reset! last-x 0)
-                                                              (reset! last-y 0)))])]
+                   
+                   :font (cond
+                           (= (:type data) "header")     (gtool/getFont 12 :bold)
+                           (= (:type data) "key")        (gtool/getFont 12)
+                           (= (:type data) "connection") (gtool/getFont 12)
+                           :else "#fff")
+                   
+                   :foreground (cond
+                                 (= (get data :type) "header") gcomp/blue-color
+                                 :else "#000")
+                   
+                   :border (cond
+                             (= (get data :type) "header") (b/compound-border (b/empty-border :thickness 4))
+                             :else                         (b/compound-border (b/empty-border :thickness 4)))
+                   
+                   :listen [:mouse-entered (fn [e] (if (= (:type data) "header") (c/config! e :cursor :move)))
+                            :mouse-clicked
+                            (fn [e]                          
+                              (c/invoke-later
+                               (let [table-id (:id (c/config (gtool/getParent e) :user-data))]
+                                 (cond (= (.getButton e) MouseEvent/BUTTON3)
+                                       (.add JLP
+                                             (popup-menu-for-table ;; Open popup menu for table
+                                              JLP
+                                              meta  ;; forward list of table configuration
+                                              table-id ;; Get table id
+                                              (-> (.getX e) (+ (.getX (c/config (gtool/getParent e) :bounds))) (- 15))
+                                              (-> (.getY e) (+ (.getY (c/config e :bounds))) (+ (.getY (c/config (gtool/getParent e) :bounds))) (- 10)))
+                                             (new Integer 999) ;; z-index
+                                             )
+                                       (= (.getClickCount e) 2) ;; Open table editor by double click
+                                       (add-to-view-service--table-editor table-id meta)))))
+                            
+                            :mouse-dragged
+                            (fn [e]
+                              (c/move! (gtool/getParent e) :to-front)
+                              (if (= @last-x 0) (reset! last-x (.getX e)))
+                              (if (= @last-y 0) (reset! last-y (.getY e)))
+                              (cond
+                                (= (get data :type) "header") (let [bounds (c/config (gtool/getParent e) :bounds)
+                                                                    pre-x (- (+ (.getX bounds) (.getX e)) @last-x)
+                                                                    pre-y (- (+ (.getY bounds) (.getY e)) @last-y)
+                                                                    x (if (> pre-x 0) pre-x 0)
+                                                                    y (if (> pre-y 0) pre-y 0)
+                                                                    w (.getWidth  bounds)
+                                                                    h (.getHeight bounds)]
+                                                                (do
+                                                                  (c/config! (gtool/getParent e) :bounds [x y w h])))))
+                            
+                            :mouse-released
+                            (fn [e] (do (reset! last-x 0)
+                                        (reset! last-y 0)))])]
     (if debug (println "--Column as row: OK"))
     component))
 
@@ -759,7 +772,7 @@
   "Description:
      Create one table on JLayeredPane using database map
   "
-  [bounds data meta]
+  [bounds data meta JLP]
 ;; (if (get-in data [:prop :table :is-linker?]) (println "data " data))
   ;;(println "\nbounds" bounds)
   (let [bg-c "#fff"
@@ -774,37 +787,46 @@
         col-in-rows (map (fn [col]
                            (table-visualizer--element--col-as-row
                             meta
-                            {:representation (cond
-                                               (and (get-in data [:prop :table :is-linker?]) (contains? col :key-table))
-                                               (do ;; Get represetation of linked table
-                                                 (let [search (filter (fn [table-meta] (= (get-in table-meta [:table]) (get col :key-table))) meta)]
-                                                   (get-in (first search) [:prop :table :representation])))
-                                               :else (get col :representation))
-                             :width w
-                             :height row-h
-                             :type (cond
-                                     (and (get-in data [:prop :table :is-linker?]) (contains? col :key-table)) "connection"
-                                     (contains? col :key-table) "key"
-                                     :else "row")
-                             :border-c border-c}))
+                            JLP
+                            {:representation
+                             (cond
+                               (and (get-in data [:prop :table :is-linker?])
+                                    (contains? col :key-table))
+                               (do ;; Get represetation of linked table
+                                 (let [search (filter (fn [table-meta] (= (get-in table-meta [:table]) (get col :key-table))) meta)]
+                                   (get-in (first search) [:prop :table :representation])))
+                               :else (get col :representation))
+                             
+                             :width    w
+                             :height   row-h
+                             :border-c border-c
+                             
+                             :type
+                             (cond
+                               (and (get-in data [:prop :table :is-linker?])
+                                    (contains? col :key-table)) "connection"
+                               (contains? col :key-table) "key"
+                               :else "row")}))
                          (get-in data [:prop :columns]))  ;; przygotowanie tabeli bez naglowka
-        camplete-table (conj col-in-rows (table-visualizer--element--col-as-row
-                                          meta
-                                          {:representation (get-in data [:prop :table :representation])
-                                           :width w
-                                           :height row-h
-                                           :type "header"
-                                           :border-c border-c}))  ;; dodanie naglowka i finalizacja widoku tabeli
+        camplete-table (conj col-in-rows
+                             (table-visualizer--element--col-as-row
+                              meta
+                              JLP
+                              {:representation (get-in data [:prop :table :representation])
+                               :width    w
+                               :height   row-h
+                               :type     "header"
+                               :border-c border-c}))  ;; dodanie naglowka i finalizacja widoku tabeli
         h (* (count camplete-table) row-h)  ;; podliczenie wysokosci gotowej tabeli
         ]
     (c/vertical-panel
-     :id (get data :table)
-     :user-data {:id (get data :id)}
-     :tip "PPM to show more function."
-     :border border
-     :bounds [x y w h]
+     :id         (get data :table)
+     :tip        "PPM to show more function."
+     :border     border
+     :bounds     [x y w h]
      :background bg-c
-     :items camplete-table)))
+     :user-data  {:id (get data :id)}
+     :items      camplete-table)))
 
 
 ;; (println MouseEvent/BUTTON3)
@@ -820,20 +842,22 @@
    "
   (fn []
    (let [rootJLP (new JLayeredPane)
-         JLP (new JLayeredPane)
-         JLP-bounds (atom {})
-         meta (mt/getset)]
+         JLP     (new JLayeredPane)
+         last-x  (atom 0)
+         last-y  (atom 0)
+         meta    (mt/getset)]
      (doall (map
              (fn [tables]
                (doall
                 (map
                  (fn [table-props]
                    (let [bounds (first table-props)
-                         table (second table-props)]
+                         table  (second table-props)]
                      (.add JLP (db-viewer--component--table
                                 bounds
                                 table
-                                meta)
+                                meta
+                                JLP)
                            (new Integer 5))))
                  tables)))
              (calculate-bounds-and-tables meta 20 5)))
@@ -842,18 +866,29 @@
                     :id :JLP-DB-Visualizer
                     :border nil
                     :bounds [0 0 10000 10000]
-                    :listen [:mouse-released (fn [e] (c/config! e :cursor :default))
-                             :mouse-pressed (fn [e]
-                                              (c/config! e :cursor :move)
-                                              (let [x (.getX (c/config e :bounds))
-                                                    y (.getY (c/config e :bounds))]
-                                                (reset! JLP-bounds {:x (.getX e) :y (.getY e) :x-x (- (.getX e) x) :y-y (- (.getY e) y)})))
-                             :mouse-dragged (fn [e]
-                                              ;;  (println "Drag JLP: " (.getX e) (.getY e))
-                                              (let [new-x (- (.getX e) (get @JLP-bounds :x-x))
-                                                    new-y (- (.getY e) (get @JLP-bounds :y-y))]
-                                                (c/config! e :bounds [new-x new-y 10000 10000] ;; TODO: need to change width and height on dynamic 
-                                                           )))])
+                    :listen [:mouse-pressed
+                             (fn [e]
+                               (let [[start-x start-y] (gtool/get-mouse-pos)]
+                                 (reset! last-x start-x)
+                                 (reset! last-y start-y)
+                                 (c/move! (c/to-widget e) :to-front)))
+                             
+                             :mouse-dragged
+                             (fn [e]
+                               (c/config! e :cursor :move)
+                               (let [old-bounds (c/config (c/to-widget e) :bounds)
+                                     [old-x old-y] [(.getX old-bounds) (.getY old-bounds)]
+                                     [new-x new-y] (gtool/get-mouse-pos)
+                                     move-x  (if (= 0 @last-x) 0 (- new-x @last-x))
+                                     move-y  (if (= 0 @last-y) 0 (- new-y @last-y))]
+                                 (reset! last-x new-x)
+                                 (reset! last-y new-y)
+                                 (c/config! (c/to-widget e) :bounds [(+ old-x move-x) (+ old-y move-y) :* :*])))
+                             
+                             :mouse-released
+                             (fn [e]
+                               (c/config! e :cursor :default)
+                               (.repaint (c/to-root e)))])
            (new Integer 1))
     ;;  (.setMaximumSize JLP (java.awt.Dimension. 300 300))
     ;;  (.setSize JLP (java.awt.Dimension. 300 300))
@@ -863,9 +898,9 @@
       :items [[(gcomp/menu-bar
                 {:id :db-viewer--component--menu-bar
                  :buttons [["Show all relation" icon/refresh-connection-blue-64-png "" (fn [e])]
-                           ["Save view" icon/agree-grey-64-png       "" (fn [e])]
-                           ["Reset view" icon/arrow-blue-left-64-png "" (fn [e])]
-                           ["Reloade view" icon/refresh-blue-64-png  "" (fn [e] (((state/state :jarman-views-service) :reload)))]]})]
+                           ["Save view"    icon/agree-grey-64-png       "" (fn [e])]
+                           ["Reset view"   icon/arrow-blue-left-64-png  "" (fn [e])]
+                           ["Reloade view" icon/refresh-blue-64-png     "" (fn [e] (((state/state :jarman-views-service) :reload)))]]})]
               [rootJLP]]))))
 
 

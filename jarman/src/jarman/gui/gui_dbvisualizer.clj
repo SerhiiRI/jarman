@@ -43,7 +43,9 @@
 ;; │                             │
 ;; └─────────────────────────────┘
 
-(defn calculate-tables-size
+;; (state/set-state :dbv-bounds {7 [301.0 322.0], 1 [650.0 120.0], 4 [421.0 2.0], 15 [265.0 723.0], 13 [265.0 442.0], 6 [14.0 343.0], 3 [562.0 446.0], 12 [14.0 245.0], 2 [138.0 246.0], 11 [301.0 247.0], 9 [561.0 638.0], 5 [650.0 283.0], 14 [212.0 51.0], 10 [11.0 14.0], 8 [417.0 342.0]})
+
+(defn- calculate-tables-size
   "Description:
      Prepare list with vectors, in vectors as first is vector with width and height of table and metadata segment.
    Example:
@@ -74,7 +76,7 @@
     size-and-meta))
 
 
-(defn calculate-bounds-and-tables
+(defn- calculate-bounds-and-tables
   "Description:
      Calculate where on JLayeredPane should be rendered visualized table.
   "
@@ -86,6 +88,7 @@
                         (list (repeat max-tabs-inline 0)))
         y-bound (atom 10)
         x-bound (atom 10)
+        
         pre-bounds (doall
                     (map
                      (fn [row]
@@ -101,6 +104,7 @@
                                              row))]
                          bounds-list-x))
                      size-and-meta-in-rows))
+        
         calculate-xy (doall ;; => ([x y] ...)
                       (map
                        (fn [bx by]
@@ -109,14 +113,17 @@
                             (vec (list x y)))
                           bx by))
                        pre-bounds tables-heights))
+        
         bounds-and-meta (doall
                          (map ;; => (((([x y w h] {:meta :data}) ...table) ...row))
                           (fn [row bounds]
                             (map
-                             (fn [table bound-xy]
-                               (let [[width height] (first table)
+                             (fn [table xy]
+                               (let [bound-xy (rift (get-in (second table) [:prop :table :bounds]) xy)
+                                     [width height] (first table)
                                      width-height [width (+ height offset)]
                                      meta-data    (second table)]
+                                 ;; (println "\nTID" (second table))
                                  (list
                                   (vec (concat bound-xy width-height))
                                   meta-data)))
@@ -124,7 +131,8 @@
                           size-and-meta-in-rows calculate-xy))]
     ;;(println "\nBM" bounds-and-meta) 
     bounds-and-meta))
-
+;; (state/state :dbv-bounds)
+;; (state/set-state :dbv-bounds {})
 ;; (calculate-bounds (mt/getset) 10 5)
 
 ;; ┌──────────────┐
@@ -633,9 +641,16 @@
     (let [border-c "#bbb"
           selected-tab (filter (fn [tab-conf] (= (second (first tab-conf)) table-id)) meta)
           table-name (get (first selected-tab) :table_name)
-          rm-menu (fn [e] (let [popup-menu (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e)))]
-                            (.remove  JLP popup-menu)
-                            (.repaint JLP)))
+          
+          mig (mig-panel
+               :id :db-viewer--component--menu-bar
+               :background (gtool/opacity-color)
+               :border (b/line-border :thickness 1 :color border-c)
+               :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
+               :items [[(c/label)]])
+          
+          rm-menu (fn [e] (.remove JLP mig) (.repaint JLP))
+          
           btn (fn [txt ico onclick] (c/label
                                      :font (gtool/getFont 13)
                                      :text txt
@@ -648,7 +663,7 @@
                                               :mouse-entered (fn [e] (c/config! e :background "#d9ecff" :foreground "#000" :cursor :hand))
                                               :mouse-exited  (fn [e] (do
                                                                        (c/config! e :background "#fff" :foreground "#000")
-                                                                       (let [bounds (c/config (seesaw.core/to-widget (.getParent (seesaw.core/to-widget e))) :bounds)
+                                                                       (let [bounds (c/config mig :bounds)
                                                                              mouse-y (+ (+ (.getY e) (.getY (c/config e :bounds))) (.getY bounds))
                                                                              mouse-x (.getX e)]
                                                                          (if (or (< mouse-x 5)
@@ -677,13 +692,10 @@
                           (do (rm-menu e)
                               ((get (state/state :defview-editors) (keyword (:table_name (first selected-tab)))) e))))
                    []))]
-      (mig-panel
-       :id :db-viewer--component--menu-bar
-       :bounds [x y 150 (* 30 (count items))]
-       :background (gtool/opacity-color)
-       :border (b/line-border :thickness 1 :color border-c)
-       :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
-       :items items))))
+      (c/config! mig
+                 :bounds [x y 150 (* 30 (count items))]
+                 :items items)
+      mig)))
 
 (defn table-visualizer--element--col-as-row
   "Description:
@@ -734,17 +746,17 @@
                               (let [[start-x start-y] (gtool/get-mouse-pos)]
                                 (reset! last-x start-x)
                                 (reset! last-y start-y)
-                                (c/move! (c/to-widget e) :to-front))
+                                (c/move! (:vpanel data) :to-front))
                               (c/invoke-later
-                               (let [table-id (:id (c/config (gtool/getParent e) :user-data))]
+                               (let [table-id (:id data)]
                                  (cond (= (.getButton e) MouseEvent/BUTTON3)
                                        (.add JLP
                                              (popup-menu-for-table ;; Open popup menu for table
                                               JLP
                                               meta  ;; forward list of table configuration
-                                              table-id ;; Get table id
-                                              (-> (.getX e) (+ (.getX (c/config (gtool/getParent e) :bounds))) (- 15))
-                                              (-> (.getY e) (+ (.getY (c/config e :bounds))) (+ (.getY (c/config (gtool/getParent e) :bounds))) (- 10)))
+                                              table-id
+                                              (-> (.getX e) (+ (.getX (c/config (:vpanel data) :bounds))) (- 15))
+                                              (-> (.getY e) (+ (.getY (c/config e :bounds))) (+ (.getY (c/config (:vpanel data) :bounds))) (- 10)))
                                              (new Integer 999) ;; z-index
                                              )
                                        (= (.getClickCount e) 2) ;; Open table editor by double click
@@ -762,7 +774,7 @@
                                         (reset! last-y start-y)))
                                     
                                     (c/config! e :cursor :move)
-                                    (c/move! (gtool/getParent e) :to-front)
+                                    (c/move! vpanel :to-front)
                                     
                                     (let [old-bounds (c/config vpanel :bounds)
                                           [old-x old-y] [(.getX old-bounds) (.getY old-bounds)]
@@ -782,19 +794,27 @@
                             (fn [e]
                               (reset! last-x -1)
                               (reset! last-y -1)
+                              (let [dbv-bounds    (rift (state/state :dbv-bounds) {}) ;;(rift (state/state :dbv-bounds) {})
+                                    vpanel-bounds (c/config (:vpanel data) :bounds)
+                                    [x y] [(.getX vpanel-bounds) (.getY vpanel-bounds)]]
+                                ;;(println "\nID" (:id data))
+                                ;; (println "\nNew XY: " (:table-name data) [x y])
+                                (state/set-state :dbv-bounds (assoc dbv-bounds (:table-name data) [x y])))
                               (c/config! e :cursor :default)
                               (.repaint (c/to-root e)))])]
     
     (if debug (println "--Column as row: OK"))
     component))
 
+;; (state/state :dbv-bounds)
+;; => {7 [301.0 322.0], 1 [650.0 120.0], 4 [421.0 2.0], 15 [265.0 723.0], 13 [265.0 442.0], 6 [14.0 343.0], 3 [562.0 446.0], 12 [14.0 245.0], 2 [138.0 246.0], 11 [301.0 247.0], 9 [561.0 638.0], 5 [650.0 283.0], 14 [212.0 51.0], 10 [11.0 14.0], 8 [417.0 342.0]}
+;; (state/set-state :dbv-bounds {})
+
 (defn db-viewer--component--table
   "Description:
      Create one table on JLayeredPane using database map
   "
-  [bounds data meta JLP]
-;; (if (get-in data [:prop :table :is-linker?]) (println "data " data))
-  ;;(println "\nbounds" bounds)
+  [bounds table-meta meta JLP]
   (let [bg-c "#fff"
         line-size-hover 2  ;; zwiekszenie bordera dla eventu najechania mysza
         border-c "#aaa"
@@ -804,6 +824,15 @@
         y (+ 0 (nth bounds 1))
         w (nth bounds 2)
         row-h 30  ;; wysokosc wiersza w tabeli reprezentujacego kolumne
+        table-name (:table_name table-meta)
+        table-id   (:id table-meta)
+
+        vpanel (c/vertical-panel
+                :id         (:id table-meta)
+                :tip        "PPM to show more function."
+                :border     border
+                :background bg-c
+                :user-data  {:table-name table-name})
         
         col-in-rows (map (fn [col]
                            (table-visualizer--element--col-as-row
@@ -811,45 +840,45 @@
                             JLP
                             {:representation
                              (cond
-                               (and (get-in data [:prop :table :is-linker?])
+                               (and (get-in table-meta [:prop :table :is-linker?])
                                     (contains? col :key-table))
                                (do ;; Get represetation of linked table
                                  (let [search (filter (fn [table-meta] (= (get-in table-meta [:table]) (get col :key-table))) meta)]
                                    (get-in (first search) [:prop :table :representation])))
                                :else (get col :representation))
                              
-                             :width    w
-                             :height   row-h
-                             :border-c border-c
+                             :width      w
+                             :height     row-h
+                             :border-c   border-c
+                             :id         table-id
+                             :table-name table-name
+                             :vpanel     vpanel
                              
                              :type
                              (cond
-                               (and (get-in data [:prop :table :is-linker?])
+                               (and (get-in table-meta [:prop :table :is-linker?])
                                     (contains? col :key-table)) "connection"
                                (contains? col :key-table) "key"
                                :else "row")}))
-                         (get-in data [:prop :columns]))  ;; przygotowanie tabeli bez naglowka
+                         (get-in table-meta [:prop :columns]))  ;; przygotowanie tabeli bez naglowka
         
-        vpanel (c/vertical-panel
-                :id         (get data :table)
-                :tip        "PPM to show more function."
-                :border     border
-                :background bg-c
-                :user-data  {:id (get data :id)})
+        header-row (table-visualizer--element--col-as-row
+                    meta
+                    JLP
+                    {:representation (get-in table-meta [:prop :table :representation])
+                     :vpanel     vpanel
+                     :table-name table-name
+                     :id         table-id
+                     :width      w
+                     :height     row-h
+                     :type       "header"
+                     :border-c   border-c})
         
-        camplete-table (conj col-in-rows
-                             (table-visualizer--element--col-as-row
-                              meta
-                              JLP
-                              {:representation (get-in data [:prop :table :representation])
-                               :vpanel   vpanel
-                               :width    w
-                               :height   row-h
-                               :type     "header"
-                               :border-c border-c}))  ;; dodanie naglowka i finalizacja widoku tabeli
+        camplete-table (conj col-in-rows header-row)  ;; dodanie naglowka i finalizacja widoku tabeli
         
         h (* (count camplete-table) row-h)  ;; podliczenie wysokosci gotowej tabeli
         ]
+    
     (c/config! vpanel
                :bounds [x y w h]
                :items  camplete-table)
@@ -879,13 +908,16 @@
                 (map
                  (fn [table-props]
                    (let [bounds (first table-props)
-                         table  (second table-props)]
+                         table-meta  (second table-props)]
+                     ;;(println "\nTable" table-props) [bounds] {:table :meta}
+                     
                      (.add JLP (db-viewer--component--table
                                 bounds
-                                table
+                                table-meta
                                 meta
                                 JLP)
                            (new Integer 5))))
+                 
                  tables)))
              (calculate-bounds-and-tables meta 20 5)))
      (.add rootJLP (c/vertical-panel
@@ -925,9 +957,38 @@
       :items [[(gcomp/menu-bar
                 {:id :db-viewer--component--menu-bar
                  :buttons [["Show all relation" icon/refresh-connection-blue-64-png "" (fn [e])]
-                           ["Save view"    icon/agree-grey-64-png       "" (fn [e])]
-                           ["Reset view"   icon/arrow-blue-left-64-png  "" (fn [e])]
+                           ["Save view"    icon/agree-blue-64-png       "" (fn [e] (doall
+                                                                                    (map
+                                                                                     (fn [save-xy]
+                                                                                       (if-not (and (nil? (first  save-xy))
+                                                                                                    (nil? (second save-xy)))
+                                                                                         (let [table-name (first save-xy)
+                                                                                               table-name (if (nil? table-name) nil (keyword table-name))
+                                                                                               xy         (rift (second save-xy) nil)]
+                                                                                           (let [meta (mt/metadata-get table-name)
+                                                                                                 new-meta (assoc-in meta [:prop :table :bounds] xy)]
+                                                                                             (mt/metadata-set new-meta)))))
+                                                                                     (state/state :dbv-bounds)))
+                                                                             ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :success)
+                                                                                                                 :body   (gtool/get-lang-alerts :changes-saved)}  5)
+                                                                             (state/set-state :dbv-bounds {}))]
+                           ["Reset view"   icon/arrow-blue-left-64-png  "" (fn [e]
+                                                                             (state/set-state :dbv-bounds {})
+                                                                             (((state/state :jarman-views-service) :reload)))]
                            ["Reloade view" icon/refresh-blue-64-png     "" (fn [e] (((state/state :jarman-views-service) :reload)))]]})]
               [rootJLP]]))))
 
 
+;; meta (mt/metadata-get table-keyword)
+;; (mt/metadata-set (assoc meta :prop (read-string (c/config (:code state) :text))))
+
+(state/state :dbv-bounds)
+
+;; => {7 [301.0 322.0], 1 [650.0 120.0], 4 [421.0 2.0], 15 [265.0 723.0], 13 [265.0 442.0], 6 [14.0 343.0], 3 [562.0 446.0], 12 [14.0 245.0], 2 [138.0 246.0], 11 [301.0 247.0], 9 [561.0 638.0], 5 [650.0 283.0], 14 [212.0 51.0], 10 [11.0 14.0], 8 [417.0 342.0]}
+;; (state/set-state :dbv-bounds {})
+
+
+
+
+
+;;(mt/getset)

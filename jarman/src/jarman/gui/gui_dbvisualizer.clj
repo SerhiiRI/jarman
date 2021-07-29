@@ -956,8 +956,8 @@
       :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px[grow, fill]0px"]
       :items [[(gcomp/menu-bar
                 {:id :db-viewer--component--menu-bar
-                 :buttons [["Show all relation" icon/refresh-connection-blue-64-png "" (fn [e])]
-                           ["Save view"    icon/agree-blue-64-png       "" (fn [e] (doall
+                 :buttons [["Show all relation" icon/refresh-connection-grey-64-png "" (fn [e])]
+                           ["Save view"    icon/agree-grey-64-png       "" (fn [e] (doall
                                                                                     (map
                                                                                      (fn [save-xy]
                                                                                        (if-not (and (nil? (first  save-xy))
@@ -972,10 +972,10 @@
                                                                              ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :success)
                                                                                                                  :body   (gtool/get-lang-alerts :changes-saved)}  5)
                                                                              (state/set-state :dbv-bounds {}))]
-                           ["Reset view"   icon/arrow-blue-left-64-png  "" (fn [e]
+                           ["Reset view"   icon/max-64-png              "" (fn [e]
                                                                              (state/set-state :dbv-bounds {})
                                                                              (((state/state :jarman-views-service) :reload)))]
-                           ["Reloade view" icon/refresh-blue-64-png     "" (fn [e] (((state/state :jarman-views-service) :reload)))]]})]
+                           ["Reloade view" icon/refresh-grey-64-png     "" (fn [e] (((state/state :jarman-views-service) :reload)))]]})]
               [rootJLP]]))))
 
 

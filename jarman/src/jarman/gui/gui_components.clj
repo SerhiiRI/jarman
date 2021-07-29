@@ -1415,6 +1415,7 @@
       (menu-bar :id :my-id :buttons [[\"title1\"  icon1 fn1] [\"title2\" icon2  fn2]])"
   [{:keys [id
            buttons
+           offset
            justify-end
            font-size
            icon-size
@@ -1425,13 +1426,14 @@
            border-c]
     :or {id :none
          buttons []
+         offset 4
          justify-end false
          font-size 13
          icon-size 27
-         btn-border [5 5 15 15 1]
+         btn-border [4 4 10 10 1]
          bg "#fff"
          fg "#000"
-         bg-hover "#d9ecff"
+         bg-hover "#e2fbde"
          border-c "#bbb"}}]
   (let [btn (fn [txt ico tip onClick & args]
               (let [[t b l r br] btn-border]
@@ -1456,7 +1458,7 @@
      :background (new Color 0 0 0 0)
      :constraints (if justify-end
                     ["" "5px[grow, fill]0px[fill]5px" "5px[fill]5px"]
-                    ["" "10px[fill]0px" "5px[fill]5px"])
+                    ["" (str offset "px[fill]0px") "5px[fill]5px"])
      :items (if (empty? (filter-nil buttons)) [[(c/label)]]
                 (if justify-end
                   (gtool/join-mig-items (c/label) (map #(btn (first %) (second %) (nth % 2) (last %)) (filter-nil buttons)))

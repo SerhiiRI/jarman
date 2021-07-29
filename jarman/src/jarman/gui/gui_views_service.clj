@@ -3,6 +3,7 @@
         seesaw.mig
         seesaw.dev
         seesaw.border)
+  (:import (java.awt.event MouseEvent))
   (:require
    [jarman.tools.lang :refer :all]
    [seesaw.core :as c]
@@ -38,7 +39,10 @@
                 :halign :center
                 :border (empty-border :left 5 :right 5)
                 :size [hsize :by vsize]
-                :listen [:mouse-clicked onclick
+                :listen [:mouse-clicked (fn [e]
+                                          (if (= (.getButton e) MouseEvent/BUTTON2)
+                                            (onclose e)
+                                            (onclick e)))
                          :mouse-entered (fn [e] (c/config! e :cursor :hand))])
                (label ;; close icon
                 :icon (jarman.tools.swing/image-scale icon/x-grey2-64-png 15)

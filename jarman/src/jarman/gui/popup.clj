@@ -14,7 +14,8 @@
    [jarman.logic.state :as state]
    [jarman.gui.gui-components :as gcomp])
   (:import javax.swing.JLayeredPane
-           java.awt.PointerInfo))
+           java.awt.PointerInfo
+           (java.awt.event MouseEvent)))
 
 (println "\nNew Window")
 
@@ -65,7 +66,13 @@
         root (mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill, fill]0px[fill, grow]0px"]
                         :bounds bounds
                         :border (b/line-border :thickness 1 :color br))]
-    (c/config! root :listen [:mouse-pressed
+    (c/config! root :listen [:mouse-clicked
+                             (fn [e]
+                               (if (= (.getButton e) MouseEvent/BUTTON2)
+                                 (do (.remove (jlp) root)
+                                     (.repaint (jlp)))))
+                             
+                             :mouse-pressed
                              (fn [e]
                                (let [[start-x start-y] (gtool/get-mouse-pos)]
                                  (reset! last-x start-x)

@@ -106,8 +106,6 @@
 ;; (select-keys {} [:service_contract.id :service_contract.id_enterpreneur :service_contract.contract_start_term :service_contract.contract_end_term])
 ;; (select-keys {} [:enterpreneur.id :enterpreneur.name :enterpreneur.ssreou :enterpreneur.ownership_form :enterpreneur.vat_certificate :enterpreneur.individual_tax_number :enterpreneur.director :enterpreneur.accountant :enterpreneur.legal_address :enterpreneur.physical_address :enterpreneur.contacts_information])
 
-
-
 ;; -----------
 ;; all columns
 ;; -----------
@@ -141,7 +139,6 @@
    :service_contract_month.was_payed]
 
 ;;; INFO SELECTS ;;;
-
 (defn info-for-enterpreneur [enterpreneur_id]
   {:pre [(number? enterpreneur_id)]}
   (db/query
@@ -199,14 +196,14 @@
 (defn get-paiment-for-enterpreneur [enterpreneur_id]
   {:pre [(number? enterpreneur_id)]}
   (reduce
-   (fn [acc x] (+ acc (:service_contract.money_per_month x))) 0       
+   (fn [acc x] (+ acc (:service_contract_month.money_per_month x))) 0       
    (db/query (select! {:table_name :service_contract_month,
                        :inner-join
                        [:service_contract_month->service_contract
                         :service_contract->enterpreneur],
                        :column
                        [:#as_is
-                        :service_contract.money_per_month
+                        :service_contract_month.money_per_month
                         :service_contract.id
                         :enterpreneur.id]
                        :where [:= :enterpreneur.id enterpreneur_id]}))))
@@ -216,7 +213,7 @@
 (defn get-payment-for-enterpreneur [enterpreneur_id]
   {:pre [(number? enterpreneur_id)]}
   (reduce
-   (fn [acc x] (+ acc (:service_contract.money_per_month x))) 0       
+   (fn [acc x] (+ acc (:service_contract_month.money_per_month x))) 0       
    (db/query (select! {:table_name :service_contract_month,
                        :inner-join
                        [:service_contract_month->service_contract
@@ -231,7 +228,7 @@
 (defn get-payment-for-service_contract [service_contract_id]
   {:pre [(number? service_contract_id)]}
   (reduce
-   (fn [acc x] (+ acc (:service_contract.money_per_month x))) 0       
+   (fn [acc x] (+ acc (:service_contract_month.money_per_month x))) 0       
    (db/query (select! {:table_name :service_contract_month,
                        :inner-join
                        [:service_contract_month->service_contract
@@ -246,7 +243,7 @@
 
 (comment
   (get-payment-for-enterpreneur 1)
-  (get-payment-for-service_contract 2))
+  (get-payment-for-service_contract 1))
 
 ;;; INSERTS
 

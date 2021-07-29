@@ -491,6 +491,8 @@
                :icon-on  icon/eraser-blue-64-png
                :tip      "Clear state and form"
                :func     (fn [e]
+                           ((:table-render (state!)))
+                           (dispatch! {:action :pepe-model})
                            (dispatch! {:action :clear-changes})
                            (dispatch! {:action :clear-model}))}
               {:icon-on  icon/loupe-blue1-64-png
@@ -535,7 +537,9 @@
                            [{:icon-off icon/pen-blue-64-png
                              :icon-on  icon/pen-blue-64-png
                              :tip      "Return to insert"
-                             :func     (fn [e] (dispatch! {:action :set-model :value {}}))}])
+                             :func     (fn [e]
+                                         (dispatch! {:action :set-model :value {}})
+                                         ((:table-render (state!))))}])
           components (filter-nil
                       (flatten
                        (list

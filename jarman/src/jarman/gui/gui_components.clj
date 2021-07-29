@@ -342,23 +342,31 @@
 
 
 (defn button-icon
-  [{:keys [icon-on icon-off size func tip margin]
+  [{:keys [icon-on icon-off size func tip margin frame-hover]
     :or   {icon-on icon/question-64-png
            size 30
            func (fn [e])
-           margin [0 0 0 0]}}]
+           margin [0 0 0 0]
+           frame-hover true}}]
   (let [ico-off (rift icon-off icon-on)
         ico-fn (fn [i](jarman.tools.swing/image-scale i size))
-        [t b l r] margin]
+        [t b l r] margin
+        border-fn (fn [frame-color] (b/compound-border
+                                         (b/empty-border :top t :bottom b :left l :right r)
+                                         (if frame-hover (b/line-border  :left 2 :right 2 :color frame-color))))]
     (c/label
      :icon (ico-fn icon-off)
      :tip tip
-     :border (b/empty-border :top t :bottom b :left l :right r)
+     :border (border-fn (gtool/opacity-color))
      :listen [:mouse-entered (fn [e]
                                (gtool/hand-hover-on e)
-                               (c/config! e :icon (ico-fn icon-on)))
+                               (c/config! e
+                                          :icon (ico-fn icon-on)
+                                          :border (border-fn "#ddd")))
               :mouse-exited  (fn [e]
-                               (c/config! e :icon (ico-fn ico-off)))
+                               (c/config! e
+                                          :icon (ico-fn ico-off)
+                                          :border (border-fn (gtool/opacity-color))))
               :mouse-clicked func])))
 
 

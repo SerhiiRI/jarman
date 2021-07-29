@@ -19,16 +19,38 @@
    [jarman.logic.metadata :as mt]
    [jarman.plugin.spec :as spec]
    [jarman.plugin.data-toolkit :as query-toolkit]
-   [jarman.resource-lib.icon-library :as icon]))
+   [jarman.resource-lib.icon-library :as icon]
+   [jarman.plugin.service-period-requires :as req]))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; HELPER FUNCTIONS ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+(defn- refresh-panel
+  ([panel] (doto panel (.revalidate) (.repaint)))
+  ([panel content] (doto panel (.removeAll) (.add content) (.revalidate) (.repaint))))
+
+(defn- format-date [date]
+  (let [fn-format (fn [date] (.format (java.text.SimpleDateFormat. "dd-MM-YYYY") date))]
+    (if (or (vector? date)(seq? date))
+      (map (fn [d] (fn-format d)) date)
+      (fn-format date))))
+(defn- split-date [date-vec]
+  (apply str (interpose " / " (format-date date-vec))))
+
+
+
+;;;;;;;;;;;;;;;;;;
+;;; GUI Panels ;;;
+;;;;;;;;;;;;;;;;;;
 (defn- panel-one-period [model-data]
   (let [label-fn     (fn [text foreground] (seesaw.core/label :text (str text)
                                                               :font (gtool/getFont 16)
                                                               :foreground foreground))
-        {st-date         :service_month_start 
-         end-date        :service_month_end
+        {st-date         :service_contract_month.service_month_start 
+         end-date        :service_contract_month.service_month_end
          payment-st      :service_contract_month.was_payed
-         payment         :money_per_month}  model-data
+         payment         :service_contract_month.money_per_month}  model-data
         date         (str st-date " / " end-date)
         status       (if payment-st "It was payed, you cannot change this field" "Waiting for payment")
         panel        (seesaw.mig/mig-panel :constraints ["wrap 2" "5px[]30px" "10px[]10px"]
@@ -39,7 +61,7 @@
                                                         (gcomp/input-text :args [:columns 7]))]
                                                    [(label-fn "payment status:" gcomp/dark-grey-color)]
                                                    [(label-fn status gcomp/blue-color)]])]
-    (gcomp/min-scrollbox panel :hscroll :never)))
+    panel))
 
 
 (defn- panel-one-contract-periods [data]
@@ -60,113 +82,131 @@
         panel     (seesaw.mig/mig-panel :constraints ["wrap 1" "15px[]15px" "15px[]15px"]
                                         :items [[btn-panel]])]
     (doall (map (fn [period] (.add panel (panel-one-period period))) data))
-    (.revalidate panel)
-    (.repaint panel)   
-    panel))
+    (gcomp/min-scrollbox panel :hscroll :never)))
+
+(defn- open-periods-contract-fn [panel select-fn id]
+  (fn [e] (c/config! panel :items (gtool/join-mig-items
+                                   (panel-one-contract-periods
+                                    (select-fn id))))))
+
+(defn gener-label
+  "Description
+    h-panel -. component, on which we change color on event"
+  [
+   & {:keys [h-panel onClick listen border size halign font foreground cursor text args]
+      :or {h-panel     nil
+           onClick     (fn [e])
+           listen      [:mouse-entered  (fn [e] (seesaw.core/config! h-panel :background "#cecece"))
+                        :mouse-exited   (fn [e] (seesaw.core/config! h-panel :background gcomp/light-light-grey-color))
+                        :mouse-clicked  onClick]
+           border      (b/line-border :left 1 :right 1 :top 1 :bottom 1 :color "#bbb" :thickness 0.5)
+           size        [100 :by 44]
+           halign      :center
+           font        (gtool/getFont 16)
+           foreground  gcomp/blue-color 
+           text        ""
+           args        []
+           cursor      :hand}}]
+  (seesaw.core/label
+   :text        text
+   :cursor      cursor
+   :foreground  foreground
+   :font        font
+   :halign      halign 
+   :size        size
+   :border      border
+   :listen      listen))
 
 
- 
-(defn create-period--period-form
-  []
-  (gcomp/vmig
-   :vrules "[fill][100, shrink 0, fill][grow, fill]"
-   :items [[(gcomp/header-basic "Okresy")]
-           [(gcomp/min-scrollbox
-             (mig/mig-panel :constraints ["wrap 4" "10px[fill][fill]50px[fill][fill]10px" "10px[fill]10px"]
-                        :items [[(c/label :text "Organization:")]
-                                [(c/label :text "Frank & Franky Co." :border (b/line-border :bottom 1 :color "#494949"))]
-                                [(c/label :text "Time:")]
-                                [(c/label :text "12/03/2021 - 11/03/2022"  :border (b/line-border :bottom 1 :color "#494949"))]
-                                
-                                [(c/label :text "Customer:")]
-                                [(c/label :text "Franklyn Badabumc" :border (b/line-border :bottom 1 :color "#494949"))]
-                                [(c/label :text "Full amount:")]
-                                [(c/label :text "7000,-" :border (b/line-border :bottom 1 :color "#494949"))]
-                                
-                                [(c/label :text "Service:")]
-                                [(c/label :text "Mr. Jarman" :border (b/line-border :bottom 1 :color "#494949"))]])
-             :vscroll :never)]
-           [(gcomp/vmig
-             :vrules "[fill]0px[grow, fill]"
-             :items [[(gcomp/menu-bar
-                       {:justify-end true
-                        :id :menu-for-period-table
-                        :buttons [[(gtool/get-lang-btns :save) icon/agree1-blue-64-png "" (fn [e])]
-                                  [(gtool/get-lang-btns :export) icon/excel-64-png "" (fn [e])]]})]
-                     [(c/scrollable (seesaw.swingx/table-x :model [:columns ["Servise month" "Amount" "Payment status"] :rows [["03/2021" "2500,-" "FV: 042/03/2021"]
-                                                                                                                             ["04/2021" "2000,-" "FV: 042/04/2021"]
-                                                                                                                             ["05/2021" "2500,-" "Expected payment"]]]))]])]]))
 
-(defn get-period-list
-  [company-id]
-  (cond
-    (= company-id 1) {}))
 
+(defn panel-agenda-contracts [view-space company-id state]
+  (let [{{:keys [select-service_contract-fn select-service_contract-info-fn]} :plugin-toolkit}  @state
+        data-model (select-service_contract-fn company-id) 
+        btn-panel (gcomp/menu-bar
+                   {:justify-end true
+                    :buttons [[" Add cotract"
+                               icon/plus-64-png
+                               (fn [e])]
+                              [" Delete contract"
+                               icon/basket-blue1-64-png
+                               (fn [e])]]})
+        onClick-fn  (fn [data] (open-periods-contract-fn view-space select-service_contract-info-fn (:service_contract.id data)))
+        panel (seesaw.mig/mig-panel
+               :constraints ["wrap 1" "5px[]0px" "0px[]0px"] :items  [[(let [h-panel (seesaw.core/horizontal-panel)]
+                                                                         (seesaw.core/config! h-panel
+                                                                                              :background gcomp/light-light-grey-color
+                                                                                              :items (list
+                                                                                                      (gener-label :text "Start term" :cursor :default)
+                                                                                                      (gener-label :text "End term" :cursor :default))) h-panel)]])
+        mig   (seesaw.mig/mig-panel
+               :constraints ["wrap 1" "0px[]0px" "1px[]0px"]
+               :items [[btn-panel]
+                       [panel]])
+        
+        date  (doall (map (fn [data]
+                            (.add panel
+                                  (let [h-panel (seesaw.core/horizontal-panel)]
+                                    (seesaw.core/config! h-panel 
+                                                         :background gcomp/light-light-grey-color
+                                                         :focusable? true
+                                                         :items (list (gener-label :h-panel h-panel :text (format-date (:service_contract.contract_start_term data)) :onClick (onClick-fn data))
+                                                                      (gener-label :h-panel h-panel :text (format-date (:service_contract.contract_end_term data)) :onClick (onClick-fn data)))) h-panel))) data-model))]
+    (println "DATA MODEL" data-model)
+    (refresh-panel panel)
+    mig))
+
+;;(split-date ((juxt :service_contract.contract_start_term :service_contract.contract_end_term) data))
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Logic for Panels ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
 (defn create-period--period-list
-  [list-space view-space return-fn select-fn state company-id]
-  (let [;; period-list (get-period-list company-id)
-        periods-model (select-fn company-id)
-        ;; start-term    (:service_contract.contract_start_term periods-model)
-        ;; end-term      (:service_contract.contract_end_term periods-model)
-        auto-menu-hide false
-        return (gcomp/button-slim (str "<< " (gtool/get-lang-btns :back))
+  [list-space view-space return-fn periods-model state]
+  (let [{{:keys [select-enterpreneur-fn select-service_contract-info-fn]} :plugin-toolkit}  @state
+        auto-menu-hide      false
+        return (gcomp/button-slim (str "...")
                                   :underline-size 1
                                   :onClick (fn [e] (c/invoke-later (do
+                                                                     (.removeAll view-space)
+                                                                     (refresh-panel view-space)
                                                                      (c/config! list-space :items (gtool/join-mig-items (return-fn list-space view-space return-fn state)))
                                                                      (gtool/switch-focus)))))
-        date-fn  (fn [date]  (.format (java.text.SimpleDateFormat. "dd-MM-YYYY") date))
-        panel (gcomp/vmig)
+        panel   (gcomp/vmig)
         periods (gcomp/expand-form-panel
                  list-space
                  [return
-                  (gcomp/min-scrollbox panel
-                                       :hscroll :never)]
+                  (gcomp/min-scrollbox panel :hscroll :never)]
                  :max-w 180
                  :args [:id :expand-panel :background "#fff"])]
-    (doall (map (fn [period] (.add panel (gcomp/button-slim (str (date-fn (:service_contract.contract_start_term period)) " / "
-                                                                 (date-fn (:service_contract.contract_end_term period)))
-                                                            :onClick (fn [e] (c/config! view-space :items (gtool/join-mig-items
-                                                                                                           (panel-one-contract-periods
-                                                                                                            [{:id_service_contract 2
-                                                                                                              :service_month_start "2020-09-30"
-                                                                                                              :service_month_end "2021-09-30"
-                                                                                                              :money_per_month 400
-                                                                                                              :service_contract_month.was_payed false}
-
-                                                                                                             {:id_service_contract 3
-                                                                                                              :service_month_start "2020-09-28"
-                                                                                                              :service_month_end "2018-02-12"
-                                                                                                              :money_per_month 600
-                                                                                                              :service_contract_month.was_payed true}]
-                                                                                                            ))))))) periods-model))
+    (doall (map (fn [period] (.add panel (gcomp/button-slim (split-date [(:service_contract.contract_start_term period) 
+                                                                         (:service_contract.contract_end_term period)])
+                                                            :onClick (open-periods-contract-fn view-space select-service_contract-info-fn (:service_contract.id period))))) periods-model))
     (gtool/set-focus return)
     return
-    periods))
-
-;; (defn get-company-list
-;;   [select-fn]
-;;   (println "SELECT >>" select-fn)
-;;   [{:name "Trashpanda-Team" :id 1} {:name "Frank & Franky" :id 3}
-;;    {:name "Trashpanda-Team" :id 1} {:name "Trashpandowe Zakłady Wyrobów Kodowych Team" :id 3}
-;;    {:name "Trashpanda-Team" :id 1} {:name "Frank & Franky" :id 3}])
+    periods)) 
 
 (defn create-period--period-companys-list
   [list-space view-space return-fn state] ;; [{:name "Frank & Franky" :id 3}]
   (gtool/rm-focus)
   (let
-      [{{select-enterpreneurs-fn :enterpreneur-query
-         select-service-contr-fn :service_contract-query} :plugin-toolkit}  @state
-       model (select-enterpreneurs-fn)
-       buttons (map (fn [enterpreneur]
-                      (let [name (:ssreou enterpreneur) ;;name
-                            btn (gcomp/button-slim name
-                                                   :onClick (fn [e] (c/invoke-later
-                                                                     (do (c/config! list-space :items (gtool/join-mig-items
-                                                                                                       (create-period--period-list list-space view-space return-fn select-service-contr-fn state (get enterpreneur :id))))
-                                                                         (gtool/switch-focus))))
-                                                   :args [:tip name])]
-                        (gtool/set-focus-if-nil btn)
-                        btn)) model)]
+      [{{:keys [select-enterpreneur-fn select-enterpreneur-info-fn select-service_contract-fn]} :plugin-toolkit}  @state
+       model     (select-enterpreneur-fn)
+       buttons   (if (empty? model) (seesaw.core/label :text "[!] Empty db, no enterpreneurs" :foreground gcomp/blue-color) 
+                     (map (fn [enterpreneur]
+                            (let [name           (:name enterpreneur) ;;name
+                                  company-id     (get enterpreneur :id)
+                                  view-fn        (fn [e]
+                                                   (c/config! view-space :items [[(panel-agenda-contracts view-space company-id state)]])
+                                                   (c/invoke-later
+                                                    (do (c/config! list-space :items (gtool/join-mig-items
+                                                                                      (create-period--period-list list-space view-space return-fn  (select-service_contract-fn company-id) state)))
+                                                        (gtool/switch-focus))))
+                                  btn (gcomp/button-slim name
+                                                         :onClick view-fn
+                                                         :args [:tip name])]
+                              (gtool/set-focus-if-nil btn)
+                              btn)) model))]
     (gcomp/expand-form-panel
      list-space
      (gcomp/min-scrollbox
@@ -174,6 +214,7 @@
      :max-w 180
      :focus-color "#444"
      :args [:background "#fff"])))
+
 
 (defn create-period-view
   [state]
@@ -186,24 +227,38 @@
              [view-space]]
      :args  [:background "#fff"])))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Toolkit with SQl funcs ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn service-period-toolkit-pipeline [configuration]
-  {:enterpreneur-query
+  {:select-enterpreneur-info-fn
+   (fn [enterpreneur-id] (req/info-for-enterpreneur enterpreneur-id))
+   :select-enterpreneur-fn 
    (fn [] (db/query (select! {:table_name :enterpreneur,
                               :column [:enterpreneur.id
-                                       :enterpreneur.ssreou]})))
-   :service_contract-query
+                                       :enterpreneur.name]})))
+   :select-service_contract-info-fn
+   (fn [service_contract-id] (req/info-for-service_contract service_contract-id))
+   :select-service_contract-fn
    (fn [enterpreneur-id] (db/query (select! {:table_name :service_contract,
                                              :inner-join
                                              [:service_contract->enterpreneur],
                                              :column
                                              [:#as_is
+                                              :service_contract.id
                                               :service_contract.contract_start_term
                                               :service_contract.contract_end_term]
                                              :where [:= enterpreneur-id :id_enterpreneur]})))})
 
+;;;;;;;;;;;;;
+;;; Entry ;;;
+;;;;;;;;;;;;;
 (defn service-period-entry [plugin-path global-configuration-getter]
   (create-period-view
    (atom {:plugin-path          plugin-path
           :plugin-global-config global-configuration-getter
           :plugin-config        (get-in (global-configuration-getter) (conj plugin-path :config) {})
           :plugin-toolkit       (get-in (global-configuration-getter) (conj plugin-path :toolkit) {})}))) 
+
+
+

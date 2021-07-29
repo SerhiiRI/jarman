@@ -166,6 +166,26 @@
   [coll-map]
   (into {} (filter #(not (nil? (second %))) coll-map)))
 
+(defn v-tim
+  "Description:
+     Verify - types in map
+     Set two map, first with kye and type check fn, second with key and value.
+     Fn return true or false.
+   Example:
+     (verify-types-in-map {:a string?} {:a \"Pepe\"}) => true
+     (verify-types-in-map {:a string?} {:a :pepe}) => false
+  "
+  [m-rules m-valid]
+  (let [tf-list (doall
+                 (map
+                  (fn [[key valid]]
+                    (let [to-check (get m-valid key)]
+                          (if-not (nil? to-check)
+                            (valid to-check)
+                            false)))
+                  m-rules))]
+    (empty?
+     (filter #(false? %) tf-list))))
 
 
 (defmacro join

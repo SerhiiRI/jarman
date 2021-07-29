@@ -21,6 +21,13 @@
 (defplugin table jarman.plugin.table
   "Plugin allow to editing One table from database"
   ;; DATATOOLKIT SPEC
+  [:id
+   {:spec [:jarman.plugin.spec/keyword :opt-un]
+    :doc "Custom plugin ID"}]
+  [:name
+   {:spec [:jarman.plugin.spec/name :req-un]
+    :doc "Plugin name"
+    :example ":name \"Some str\""}]
   [:tables
    {:spec [:jarman.plugin.data-toolkit/tables :req-un],
     :doc "list of used tables"
@@ -35,7 +42,7 @@
     :examples "{:table_name :permission, :column [:#as_is ...]...}",
     :doc "SQL syntax for `select!` query"}]
   [:model-insert
-   {:spec [:jarman.plugin.table/model-insert :opt-un],
+   {:spec [:jarman.plugin.table/model-insert :req-un],
     :doc "Columns which represent model keys or map with overriding.
           * Bind-args is a overriding key name. 
             On left it's orginal key and you can set your own if you using another in component.
@@ -67,9 +74,9 @@
     :doc "Select buttons who should be display."
     :examples ":active-buttons [:insert :update :delete :clear :changes]"}]
   [:actions
-   {:spec [:jarman.plugin.table/actions :req-un],
+   {:spec [:jarman.plugin.table/actions :opt-un],
     :doc "Realise additional logic to standart CRUD operation. Set key as id and some fn with state as arg.
-          \"{:some-action-keys (fn [state]...)
+          \"{:some-action-keys (fn [state! dispatch!]...)
           :some-another.... }\""}]
   [:buttons
    {:spec [:jarman.plugin.table/buttons :opt-un],

@@ -461,11 +461,11 @@
   "Description:
      Get buttons and actions from defview and create clickable button."
   [state! dispatch! current-model]
-  (let [{model-changes :model-changes
-         plugin-config :plugin-config} (state!)]
+  (let [{plugin-config :plugin-config} (state!)]
     (let [button-fn (fn [title action]
                       (if (fn? action)
-                        [(gcomp/button-basic title :onClick (fn [e] (action model-changes)))]))]
+                        (gcomp/button-basic title :onClick (fn [e] (action state! dispatch!)))))]
+      
       (doall (->> (:buttons plugin-config)
                   (map (fn [btn-model]
                          (if (= current-model (:form-model btn-model))
@@ -545,7 +545,7 @@
                          :more-front return-button)
                         
                         (gcomp/hr 10)
-                        (rift (generate-custom-buttons state! dispatch! current-model) nil)
+                        (generate-custom-buttons state! dispatch! current-model)
                         (gcomp/hr 5)
 
                         ;; (if (in? active-buttons :changes)
@@ -631,31 +631,49 @@
 
 ;;; button list
 (s/def ::form-model #{:model-insert :model-update :model-delete :model-select})
+(s/def ::override (s/and map? not-empty))
+(s/def ::column keyword?)
 (s/def ::action keyword?)
-(s/def ::title string?)
-(s/def ::one-button
-  (s/keys :req-un [::form-model
-                   ::action
-                   ::title]))
+(s/def ::title  string?)
+(s/def ::func   fn?)
+
+(s/def ::active-buttons ;; Check patern [:some :keys]
+  (s/and vector?
+         (s/coll-of #{:insert :update :delete :clear :changes})))
+
+(s/def ::model-insert ;; Check patern [:user {}]
+  (s/or
+   :empty-v (s/and vector? empty?)
+   :model   (s/and vector? not-empty
+                   (s/coll-of
+                    (s/or :key ::column
+                          :map ::override)))))
+
+(s/def ::model-update ;; Check patern [:user {}]
+  ::model-insert)
+
+(s/def ::actions ;; Check patern [{:key (fn [])}]
+  (s/and vector?
+         (s/coll-of
+          (s/and map?
+                 (s/coll-of
+                  #(and (keyword? (first %))
+                        (fn? (last  %))))))))
 
 
-;;; * Task list for morfeu5z
-;;; - [ ] TODO Repalce all `any?` predicate by writing for it reall spec
-;;; - [ ] TODO make big structural spec for `model-insert` and `actions`
-;;; - [ ] MAYBE change `:insert-button`... and same keys, for some DSL declaration
-;;;       for example `:display-buttons` with value `:tft` where you mean
-;;;       combination of tree keys t(true) and f(false) in order `insert` `update` `delete`.
-;;;       By the way it's really expandable pattern :)
+(defn- verify-buttons [m-valid]
+  (v-tim
+   {:form-model keyword?
+    :action keyword?
+    :title string?}
+   m-valid))
 
-(s/def ::model-insert any?)
-(s/def ::model-update any?)
-(s/def ::actions any?)
-(s/def ::insert-button boolean?)
-(s/def ::update-button boolean?)
-(s/def ::delete-button boolean?)
-(s/def ::export-button any?)
-(s/def ::chenges-button any?)
-(s/def ::buttons (s/coll-of ::one-button))
+(s/def ::buttons ;; Check patern [{:form-model keyword? :action keyword? :title string?}]
+  (s/and
+   vector?
+   (s/coll-of verify-buttons))) ;; TODO: can we valid key value?
+
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -138,6 +138,100 @@
    :service_contract_month.money_per_month
    :service_contract_month.was_payed]
 
+(def enterpreneur-cols
+  [:enterpreneur.id
+   :enterpreneur.name
+   :enterpreneur.ssreou
+   :enterpreneur.ownership_form
+   :enterpreneur.vat_certificate
+   :enterpreneur.individual_tax_number
+   :enterpreneur.director
+   :enterpreneur.accountant
+   :enterpreneur.legal_address
+   :enterpreneur.physical_address
+   :enterpreneur.contacts_information])
+(def service_contract-cols
+  [:service_contract.id
+   :service_contract.contract_start_term
+   :service_contract.contract_end_term])
+(def service_contract_month-cols
+  [:service_contract_month.id
+   :service_contract_month.service_month_start
+   :service_contract_month.service_month_end
+   :service_contract_month.money_per_month
+   :service_contract_month.was_payed])
+
+(defn group-by-v [f f-v coll]  
+  (persistent!
+   (reduce
+    (fn [ret x]
+      (let [k (f x)
+            x (f-v x)]
+        (assoc! ret k (conj (get ret k []) x))))
+    (transient {}) coll)))
+
+(defn group-by-2
+  [[l1 l2 l3] f1 f2 f-v2 coll]
+  (let [all-paths  (atom [])
+        index-tree (atom {})
+        tree (reduce
+              (fn [ret x]
+                (let [k1 (f1 x) 
+                      k2 (f2 x) x2 (f-v2 x)]
+                  (update ret k1
+                          (fn [m] (let [m (if (nil? m) {} m)
+                                       v (get-in m [k2] [])
+                                       [lk1 lk2 lk3][(l1 x) (l2 x) (l3 x)]]
+                                   (swap! all-paths conj [lk1 lk2 lk3])
+                                   (swap! index-tree #(assoc-in % [lk1 lk2 lk3] x))
+                                   (assoc m k2 (conj v x2))))))) {} coll)]
+    {:raw-list coll
+     :tree-index-paths @all-paths
+     :tree-index @index-tree
+     :tree-view tree}))
+
+(group-by-2 [:a :b :c]
+            :a :b
+            :c
+            [{:a 1, :b 1, :c -1}
+             {:a 1, :b 2, :c -2}
+             {:a 1, :b 2, :c -4}
+             {:a 2, :b 1, :c -3}])
+
+;; defn info-grouped-query
+(defn info-grouped-query []
+  (->>
+   (db/query
+    (select!
+     {:table_name :enterpreneur,
+      :left-join
+      [:service_contract<-enterpreneur
+       :service_contract_month<-service_contract]
+      :column
+      (vec
+       (concat
+        [:#as_is]
+        enterpreneur-cols
+        service_contract-cols
+        service_contract_month-cols))}))
+   (filter #(and (:service_contract.id %) (:service_contract_month.id %)))
+   (map #(array-map :enterpreneur (select-keys % enterpreneur-cols)
+                    :service_contract (select-keys % service_contract-cols)
+                    :service_contract_month (select-keys % service_contract_month-cols)))
+   (group-by-2 [(comp :enterpreneur.id :enterpreneur)
+                (comp :service_contract.id :service_contract)
+                (comp :service_contract_month.id :service_contract_month)]
+               ;; two factorization level
+               :enterpreneur
+               :service_contract
+               ;; lambda on leaf
+               :service_contract_month )))
+
+;; (def grouped-query (info-grouped-query))
+;; (let [{rl :raw-list tip :tree-index-paths ti :tree-index tv :tree-view} grouped-query]
+;;   (map #(conj % false )tip))
+
+
 ;;; INFO SELECTS ;;;
 (defn info-for-enterpreneur [enterpreneur_id]
   {:pre [(number? enterpreneur_id)]}

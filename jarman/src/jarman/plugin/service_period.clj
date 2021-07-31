@@ -1,5 +1,6 @@
 (ns jarman.plugin.service-period
   (:require
+   [jarman.logic.state :as state]
    [jarman.tools.lang :refer :all] 
    [clojure.string :as string]
    [clojure.spec.alpha :as s]
@@ -22,14 +23,12 @@
    [jarman.resource-lib.icon-library :as icon]
    [jarman.plugin.service-period-requires :as req]))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPER FUNCTIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- refresh-panel
   ([panel] (doto panel (.revalidate) (.repaint)))
   ([panel content] (doto panel (.removeAll) (.add content) (.revalidate) (.repaint))))
-
 (defn- format-date [date]
   (let [fn-format (fn [date] (.format (java.text.SimpleDateFormat. "dd-MM-YYYY") date))]
     (if (or (vector? date)(seq? date))
@@ -37,8 +36,6 @@
       (fn-format date))))
 (defn- split-date [date-vec]
   (apply str (interpose " / " (format-date date-vec))))
-
-
 
 ;;;;;;;;;;;;;;;;;;
 ;;; GUI Panels ;;;
@@ -92,8 +89,7 @@
 (defn gener-label
   "Description
     h-panel -. component, on which we change color on event"
-  [
-   & {:keys [h-panel onClick listen border size halign font foreground cursor text args]
+  [& {:keys [h-panel onClick listen border size halign font foreground cursor text args]
       :or {h-panel     nil
            onClick     (fn [e])
            listen      [:mouse-entered  (fn [e] (seesaw.core/config! h-panel :background "#cecece"))
@@ -116,9 +112,6 @@
    :size        size
    :border      border
    :listen      listen))
-
-
-
 
 (defn panel-agenda-contracts [view-space company-id state]
   (let [{{:keys [select-service_contract-fn select-service_contract-info-fn]} :plugin-toolkit}  @state
@@ -164,7 +157,7 @@
 (defn create-period--period-list
   [list-space view-space return-fn periods-model state]
   (let [{{:keys [select-enterpreneur-fn select-service_contract-info-fn]} :plugin-toolkit}  @state
-        auto-menu-hide      false
+        auto-menu-hide            false
         return (gcomp/button-slim (str "...")
                                   :underline-size 1
                                   :onClick (fn [e] (c/invoke-later (do
@@ -216,16 +209,157 @@
      :args [:background "#fff"])))
 
 
+;; (defn create-period-view
+;;   [state]
+;;   (let [list-space (gcomp/vmig :args [:border (b/line-border :left 1 :right 1 :color "#eee")])
+;;         view-space (gcomp/vmig)
+;;         list-space (c/config! list-space :items (gtool/join-mig-items (create-period--period-companys-list list-space view-space create-period--period-companys-list state)))]
+;;     (gcomp/hmig
+;;      :hrules "[shrink 0, fill]0px[grow, fill]"
+;;      :items [[list-space]
+;;              [view-space]]
+;;      :args  [:background "#fff"])))
+
+(defn- expand-colors []
+  [["#00fa9a" "#61ffc2"]
+   ["#79d1c4" "#9aefdf"]
+   ["#67a39a" "#9ae3d8"]
+   ;;["#eeeeee" "#eeefff"]
+   ;;["#7fff00" "#c2ff85"]    
+    ]) 
+
+(defn- part-expand [k item color width]
+  (gcomp/button-expand
+   (str k)
+   item
+   ;;:left width
+   :min-height 800
+   :background color))
+
+(defn- part-button [k color width]
+  (gcomp/button-expand-child
+   (str k)
+   ;;:left 0
+   :width width
+   :hover-color color))
+
+(seesaw.dev/show-options  (seesaw.core/checkbox))
+
+(defn choice-checkbox [id-map check] ;;[1 2 3]
+  (assoc-in
+   {1 {1 {3 {:checked? true}}
+       2 {3 {:checked? true}}}
+    3 {3 {3 {:checked? true}}}
+    2 {2 {3 {:checked? true}}}}
+   (conj id-map :checked?) check))
+
+1 -> [1] [1 2] [1 2 3]
+2 -> event
+
+
+{1 {1 {3 true}
+    2 true}
+ 3 true
+ 2 {2 {3 {:checked? true}}}}
+
+[[1 1 3] [1 2 3] [3 3 3] [2 2 3]]
+;; 1 -> [[1 1 3] [1 2 3]]
+
+
+
+
+
+
+
+
+(defn checked-box? []
+  (some (fn [period] (= (nth period 3) false))
+        [[1 2 1 true] [1 2 3 false] [1 2 3 true] [2 2 1 false]]))
+
+
+
+(defn build-expand-by-map
+  "Description:
+    Build list of recursive button expand using configuration map."
+  [plugin-m & {:keys [lvl] :or {lvl 0}}]
+  (let [v-pan        (seesaw.core/vertical-panel)
+        pan          (seesaw.core/vertical-panel)
+        get-color    (fn [lvl] (nth (expand-colors) lvl))
+        color-vec-1  (get-color lvl)
+        color-vec-2  (get-color (+ 1 lvl))
+        mig-hor      (fn [item color] (seesaw.core/border-panel
+                                       :background color
+                                       :west   (seesaw.core/flow-panel :background "#fff"
+                                                                       :size [25 :by 25]
+                                                                       :items (list
+                                                                               (seesaw.core/checkbox
+                                                                                :listen [:mouse-clicked
+                                                                                         (fn [e] (choice-checkbox [1 2 3]))]
+                                                                                :background "#fff")))
+                                       :east   (seesaw.core/flow-panel :background "#fff"
+                                                                       :size [80 :by 25])
+                                       :center (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[:820]0px" "0px[]0px"]
+                                                                     :background (first color-vec-2)
+                                                                     :items [[item]])))]
+    (doall (map (fn btn [[k v]]
+                  (if-not (map? v)
+                    (do (.add v-pan (mig-hor (part-expand (:name k)
+                                                          (seesaw.core/vertical-panel
+                                                           :items (doall (map (fn [item]
+                                                                                (mig-hor (part-button item "#e3fffb"
+                                                                                                      800))) v)))
+                                                          (second color-vec-2) 100)
+                                             "#fff"
+                                             ;;(second color-vec-1)
+                                             )))
+                    (do 
+                      (.add pan
+                            (mig-hor (part-expand (:name k) v-pan (first color-vec-2) 200) "#fff" ;;(first color-vec-1)
+                ))
+                      (btn (first v))))) plugin-m))
+    (println  (.width (.getMaximumSize pan)))
+    pan)) 
+
+;; (map (fn btn [[k v]]
+;;        (if-not (map? v) (do (println (:name k))  (map (fn [i] (println i)) v)) 
+;;            (do 
+;;              (println (:name k))
+;;                (btn (first v))  ))) {{:name "solomon" :id 2} {{:name "contract" :id 3} ["a" "b" "c"]}})
+
 (defn create-period-view
   [state]
-  (let [list-space (gcomp/vmig :args [:border (b/line-border :left 1 :right 1 :color "#eee")])
-        view-space (gcomp/vmig)
-        list-space (c/config! list-space :items (gtool/join-mig-items (create-period--period-companys-list list-space view-space create-period--period-companys-list state)))]
+  (let [btn-panel (gcomp/menu-bar
+                   {:justify-end true
+                    :buttons [[" Add cotract"
+                               icon/plus-64-png
+                               (fn [e])]
+                              [" Delete contract"
+                               icon/basket-blue1-64-png
+                               (fn [e])]]})
+        view-space (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "0px[top]0px"]
+                                         :items [[btn-panel]])]
+    (doall
+     (map (fn [item] (.add view-space (build-expand-by-map item :lvl 1))) [{{:name "solom" :id 2} {{:name "cotract" :id 3} ["a" "b" "c"]}} {{:name "solomon" :id 2} {{:name "contract" :id 3} ["a" "b" "c"]}}]))
+    (.revalidate view-space)
+    (.repaint view-space)
+    (println "parent..." (.width (.getMaximumSize view-space)))
     (gcomp/hmig
      :hrules "[shrink 0, fill]0px[grow, fill]"
-     :items [[list-space]
-             [view-space]]
+     :items [[view-space]]
      :args  [:background "#fff"])))
+
+
+;; (defn create-period-view
+;;   [state]
+;;   (let [list-space (gcomp/vmig :args [:border (b/line-border :left 1 :right 1 :color "#eee")])
+;;         view-space (gcomp/vmig)
+;;         list-space (c/config! list-space :items (gtool/join-mig-items (create-period--period-companys-list list-space view-space create-period--period-companys-list state)))]
+;;     (gcomp/hmig
+;;      :hrules "[shrink 0, fill]0px[grow, fill]"
+;;      :items [[list-space]
+;;              [view-space]]
+;;      :args  [:background "#fff"])))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Toolkit with SQl funcs ;;;
@@ -261,4 +395,105 @@
           :plugin-toolkit       (get-in (global-configuration-getter) (conj plugin-path :toolkit) {})}))) 
 
 
+
+{{:enterpreneur.director nil,
+  :enterpreneur.id 1,
+  :enterpreneur.ownership_form "eeeeee",
+  :enterpreneur.accountant nil,
+  :enterpreneur.vat_certificate "weded",
+  :enterpreneur.physical_address nil,
+  :enterpreneur.name "Solomon",
+  :enterpreneur.contacts_information nil,
+  :enterpreneur.individual_tax_number "23323",
+  :enterpreneur.ssreou "222333",
+  :enterpreneur.legal_address nil}
+ {{:service_contract.id 1,
+   :service_contract.contract_start_term
+   #inst "2021-10-11T22:00:00.000-00:00",
+   :service_contract.contract_end_term
+   #inst "2021-12-19T23:00:00.000-00:00"}
+  [{:service_contract_month.id 1,
+    :service_contract_month.service_month_start
+    #inst "2021-09-12T22:00:00.000-00:00",
+    :service_contract_month.service_month_end
+    #inst "2021-09-29T22:00:00.000-00:00",
+    :service_contract_month.money_per_month 69.0,
+    :service_contract_month.was_payed false}
+   {:service_contract_month.id 2,
+    :service_contract_month.service_month_start
+    #inst "2021-09-30T22:00:00.000-00:00",
+    :service_contract_month.service_month_end
+    #inst "2021-10-30T22:00:00.000-00:00",
+    :service_contract_month.money_per_month 400.0,
+    :service_contract_month.was_payed true}
+   {:service_contract_month.id 3,
+    :service_contract_month.service_month_start
+    #inst "2021-10-31T23:00:00.000-00:00",
+    :service_contract_month.service_month_end
+    #inst "2021-11-12T23:00:00.000-00:00",
+    :service_contract_month.money_per_month 399.0,
+    :service_contract_month.was_payed false}
+   {:service_contract_month.id 4,
+    :service_contract_month.service_month_start
+    #inst "2021-11-30T23:00:00.000-00:00",
+    :service_contract_month.service_month_end
+    #inst "2021-12-14T23:00:00.000-00:00",
+    :service_contract_month.money_per_month 400.0,
+    :service_contract_month.was_payed false}],
+  {:service_contract.id 5,
+   :service_contract.contract_start_term
+   #inst "2021-09-12T22:00:00.000-00:00",
+   :service_contract.contract_end_term
+   #inst "2021-12-14T23:00:00.000-00:00"}
+  [{:service_contract_month.id 5,
+    :service_contract_month.service_month_start
+    #inst "2021-09-12T22:00:00.000-00:00",
+    :service_contract_month.service_month_end
+    #inst "2021-09-29T22:00:00.000-00:00",
+    :service_contract_month.money_per_month 400.0,
+    :service_contract_month.was_payed false}
+   {:service_contract_month.id 6,
+    :service_contract_month.service_month_start
+    #inst "2021-09-30T22:00:00.000-00:00",
+    :service_contract_month.service_month_end
+    #inst "2021-10-30T22:00:00.000-00:00",
+    :service_contract_month.money_per_month 400.0,
+    :service_contract_month.was_payed false}
+   {:service_contract_month.id 7,
+    :service_contract_month.service_month_start
+    #inst "2021-10-31T23:00:00.000-00:00",
+    :service_contract_month.service_month_end
+    #inst "2021-11-29T23:00:00.000-00:00",
+    :service_contract_month.money_per_month 400.0,
+    :service_contract_month.was_payed false}
+   {:service_contract_month.id 8,
+    :service_contract_month.service_month_start
+    #inst "2021-11-30T23:00:00.000-00:00",
+    :service_contract_month.service_month_end
+    #inst "2021-12-14T23:00:00.000-00:00",
+    :service_contract_month.money_per_month 400.0,
+    :service_contract_month.was_payed false}]},
+ {:enterpreneur.director nil,
+  :enterpreneur.id 2,
+  :enterpreneur.ownership_form nil,
+  :enterpreneur.accountant nil,
+  :enterpreneur.vat_certificate nil,
+  :enterpreneur.physical_address nil,
+  :enterpreneur.name "Bukinist",
+  :enterpreneur.contacts_information nil,
+  :enterpreneur.individual_tax_number nil,
+  :enterpreneur.ssreou "232",
+  :enterpreneur.legal_address nil}
+ {{:service_contract.id 6,
+   :service_contract.contract_start_term
+   #inst "2021-08-31T22:00:00.000-00:00",
+   :service_contract.contract_end_term
+   #inst "2021-09-24T22:00:00.000-00:00"}
+  [{:service_contract_month.id 9,
+    :service_contract_month.service_month_start
+    #inst "2021-08-31T22:00:00.000-00:00",
+    :service_contract_month.service_month_end
+    #inst "2021-08-31T22:00:00.000-00:00",
+    :service_contract_month.money_per_month 200.0,
+    :service_contract_month.was_payed false}]}}
 

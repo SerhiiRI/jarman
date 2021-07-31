@@ -182,7 +182,7 @@
                           (fn [m] (let [m (if (nil? m) {} m)
                                        v (get-in m [k2] [])
                                        [lk1 lk2 lk3][(l1 x) (l2 x) (l3 x)]]
-                                   (swap! all-paths conj [lk1 lk2 lk3])
+                                   (swap! all-paths conj [lk1 lk2 lk3 false])
                                    (swap! index-tree #(assoc-in % [lk1 lk2 lk3] x))
                                    (assoc m k2 (conj v x2))))))) {} coll)]
     {:raw-list coll
@@ -227,9 +227,11 @@
                ;; lambda on leaf
                :service_contract_month )))
 
-;; (def grouped-query (info-grouped-query))
-;; (let [{rl :raw-list tip :tree-index-paths ti :tree-index tv :tree-view} grouped-query]
-;;   (map #(conj % false )tip))
+(def grouped-query (info-grouped-query))
+(let [{rl :raw-list tip :tree-index-paths ti :tree-index tv :tree-view} grouped-query]
+  ;; (map #(conj % false )tip)
+  tip
+  )
 
 
 ;;; INFO SELECTS ;;;

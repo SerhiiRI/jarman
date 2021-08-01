@@ -245,20 +245,34 @@
 
 (seesaw.dev/show-options  (seesaw.core/checkbox))
 
-(defn choice-checkbox [id-map check] ;;[1 2 3]
-  (assoc-in
-   {1 {1 {3 {:checked? true}}
-       2 {3 {:checked? true}}}
-    3 {3 {3 {:checked? true}}}
-    2 {2 {3 {:checked? true}}}}
-   (conj id-map :checked?) check))
+(def checkboxes (atom [[1 2 1 true] [1 2 3 false] [1 1 3 true] [2 2 1 true]]))
+
+(defn- comparator-fn [id-vec]
+  (let [[_e _sc _scm] id-vec]
+    (case (count id-vec)
+      1 (fn [[e]] (= e _e))
+      2 (fn [[e sc]] (and (= e _e) (= sc _sc)))
+      3 (fn [[e sc scm]] (and (= e _e) (= sc _sc) (= scm _scm)))
+      false)))
+
+(defn- update-checkboxes [id-vec check?]
+  (let [cmpr? (comparator-fn id-vec)]
+    (reduce (fn [acc period] (if (cmpr? period)
+                               (conj acc (assoc period 3 check?))
+                               (conj acc period))) [] @checkboxes)))
+
+(defn- checked-all? [id-vec]
+  (let [cmpr? (comparator-fn id-vec)]
+    (reduce (fn [acc period] (if (cmpr? period)
+                               (and acc (last period))
+                               acc)) true @checkboxes)))
+
+(defn- choice-checkbox [id-vec]
+  (println "ID_VEC" id-vec))
 
 
 (defn checked-box? []
-  (some (fn [period] (= (nth period 3) false))
-        [[1 2 1 true] [1 2 3 false] [1 2 3 true] [2 2 1 false]]))
-
-
+  (some (fn [period] (= (nth period 3) false)) checkboxes))
 
 (defn build-expand-by-map
   "Description:
@@ -269,14 +283,15 @@
         get-color    (fn [lvl] (nth (expand-colors) lvl))
         color-vec-1  (get-color lvl)
         color-vec-2  (get-color (+ 1 lvl))
-        mig-hor      (fn [item color] (seesaw.core/border-panel
+        mig-hor      (fn [item color id-vec] (seesaw.core/border-panel
                                        :background color
                                        :west   (seesaw.core/flow-panel :background "#fff"
                                                                        :size [25 :by 25]
                                                                        :items (list
                                                                                (seesaw.core/checkbox
                                                                                 :listen [:mouse-clicked
-                                                                                         (fn [e] (choice-checkbox [1 2 3]))]
+                                                                                         ;;;TO DOOOO
+                                                                                         (fn [e] (choice-checkbox id-vec))]
                                                                                 :background "#fff")))
                                        :east   (seesaw.core/flow-panel :background "#fff"
                                                                        :size [80 :by 25])
@@ -284,23 +299,27 @@
                                                                      :background (first color-vec-2)
                                                                      :items [[item]])))]
     (doall (map (fn btn [[k v]]
-                  (if-not (map? v)
-                    (do (.add v-pan (mig-hor (part-expand (:name k)
-                                                          (seesaw.core/vertical-panel
-                                                           :items (doall (map (fn [item]
-                                                                                (mig-hor (part-button item "#e3fffb"
-                                                                                                      800))) v)))
-                                                          (second color-vec-2) 100)
-                                             "#fff"
-                                             ;;(second color-vec-1)
-                                             )))
-                    (do 
-                      (.add pan
-                            (mig-hor (part-expand (:name k) v-pan (first color-vec-2) 200) "#fff" ;;(first color-vec-1)
-                ))
-                      (btn (first v))))) plugin-m))
+                    (if-not (map? v)
+                      (do
+                          (.add v-pan (mig-hor (part-expand (:name k)
+                                                            (seesaw.core/vertical-panel
+                                                             :items (doall (map (fn [item]
+                                                                                  (do
+                                                                                      (mig-hor (part-button (:name item) "#e3fffb"
+                                                                                                            800) "#fff" (:id item)))) v)))
+                                                            (second color-vec-2) 100) "#fff" (:id k))))
+                      (do
+                        (.add pan
+                              (mig-hor (part-expand (:name k) v-pan (first color-vec-2) 200) "#fff" (:id k)))
+                        (btn (first v))))) plugin-m))
     (println  (.width (.getMaximumSize pan)))
-    pan)) 
+    pan))
+
+(reset! (atom []) "d")
+(swap! (atom []) conj "d")
+
+
+
 
 ;; (map (fn btn [[k v]]
 ;;        (if-not (map? v) (do (println (:name k))  (map (fn [i] (println i)) v)) 
@@ -321,7 +340,12 @@
         view-space (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "0px[top]0px"]
                                          :items [[btn-panel]])]
     (doall
-     (map (fn [item] (.add view-space (build-expand-by-map item :lvl 1))) [{{:name "solom" :id 2} {{:name "cotract" :id 3} ["a" "b" "c"]}} {{:name "solomon" :id 2} {{:name "contract" :id 3} ["a" "b" "c"]}}]))
+     (map (fn [item] (.add view-space (build-expand-by-map item :lvl 1))) [{{:name "solom" :id [3]} {{:name "cotract" :id [3 4]} [{:name "a"
+                                                                                                                             :id [3 4 7]}
+                                                                                                                            {:name"b"
+                                                                                                                             :id [3 4 6]}
+                                                                                                                            {:name "c"
+                                                                                                                             :id [3 4 5]}]}} {{:name "solomon" :id [2]} {{:name "contract" :id [2 3]}  [{:name "d" :id [2 3 4]} {:name "ddd" :id [2 3 5]} {:name "dd" :id [2 3 6]}]}}]))
     (.revalidate view-space)
     (.repaint view-space)
     (println "parent..." (.width (.getMaximumSize view-space)))

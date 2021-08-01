@@ -516,8 +516,7 @@
              local-changes
              store-id
              args]
-      :or   {
-             txt ""
+      :or   {txt ""
              selected? false
              font-size 14
              enabled? true
@@ -1099,7 +1098,6 @@
                  :over-func onClick
                  :background "#dddddd"))
 
-
 (def button-expand-child
   "Description
      Interactive button inside menu from expand button.
@@ -1110,15 +1108,17 @@
        & {:keys [onClick
                  left
                  hover-color
+                 width
                  args]
           :or {onClick (fn [e] (println "Clicked: " title))
                left 0
                hover-color "#eeefff"
+               width 200 
                args []}}]
     (apply c/label :font (gtool/getFont)
            :text (str title)
            :background "#fff"
-           :size [200 :by 25]
+           :size  [width :by 25]
            :focusable? true
            :border (b/empty-border :left 10)
            :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
@@ -1129,10 +1129,6 @@
                     :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand-child :background)))
                     :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gtool/switch-focus))))]
            args)))
-
-
-
-
 
 ;; ┌────────────────────┐
 ;; │                    │

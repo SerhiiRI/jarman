@@ -192,8 +192,7 @@
      :tree-index @index-tree
      :tree-view tree}))
 
-(group-by-2 [:a :b :c]
-            [:a :b :c]
+#_(group-by-2 [:a :b :c]
             :a :b
             :c
             [{:a 1, :b 1, :c -1}

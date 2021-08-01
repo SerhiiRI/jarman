@@ -253,24 +253,6 @@
     2 {2 {3 {:checked? true}}}}
    (conj id-map :checked?) check))
 
-1 -> [1] [1 2] [1 2 3]
-2 -> event
-
-
-{1 {1 {3 true}
-    2 true}
- 3 true
- 2 {2 {3 {:checked? true}}}}
-
-[[1 1 3] [1 2 3] [3 3 3] [2 2 3]]
-;; 1 -> [[1 1 3] [1 2 3]]
-
-
-
-
-
-
-
 
 (defn checked-box? []
   (some (fn [period] (= (nth period 3) false))

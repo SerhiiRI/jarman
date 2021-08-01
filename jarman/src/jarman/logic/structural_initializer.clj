@@ -134,8 +134,7 @@
                  :values [["user" "user" "user" "user" (:id perm)]]})))))
 
 (defn fill-metadata []
-  (doall (mt/do-create-meta))
-  (doall (mt/do-create-references)))
+  (doall (mt/do-create-meta-database)))
 
 (defn hard-reload-struct []
   ;; for make it uncoment section belove
@@ -195,7 +194,7 @@
 (defn procedure-test-metadata [tables-list]
   (if (verify-table-exists :metadata tables-list)
     (if (verify-table-columns :metadata metadata-cols)
-      (if-not (test-metadata) (do (mt/do-create-meta) true) true)
+      (if-not (test-metadata) (do (mt/do-create-meta-database) true) true)
       {:valid? false :output "Metadata table not compatible with Jarman" :table :metadata})
     (do (db/exec metadata) (fill-metadata) true)))
 

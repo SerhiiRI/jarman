@@ -551,8 +551,11 @@
 
 
 
-;;; Make references 
-(defn- add-references-to-metadata [metadata front-reference back-reference]
+;;; Make references
+;;;
+;;; DEPRECATED
+;;;
+#_(defn- add-references-to-metadata [metadata front-reference back-reference]
   (-> (fn [current added]
         (cond
           (nil? added) current
@@ -564,7 +567,7 @@
        metadata
        {:prop {:table {:ref {:front-references front-reference :back-references back-reference}}}})))
 
-(defn- --recur-make-references [meta-list table-name & {:keys [back-ref]}]
+#_(defn- --recur-make-references [meta-list table-name & {:keys [back-ref]}]
   (if-let [index-metadata (find-column #(= ((comp :field :table :prop) (second %)) table-name) (deref meta-list))]
     (let [front-refs (filter :foreign-keys ((comp :columns :prop) (second index-metadata)))]
       (if (empty? front-refs)
@@ -582,7 +585,7 @@
             (--recur-make-references meta-list (:key-table reference)
                                      :back-ref ((comp :field :table :prop) (second index-metadata)))))))))
 
-(defn do-create-references []
+#_(defn do-create-references []
   (let [meta-list (ref (vec (map-indexed #(vector %1 %2) (getset))))]
     (doseq [m @meta-list
             :let [table (:table (second m))]]
@@ -1175,7 +1178,7 @@
 
 ;; (create-all-table-by-meta ["user" "permission"])
 
-;; (do-create-meta)
+;; (do-create-meta-database)
 ;; (do-clear-meta)
 
  ;; (let [meta (db/query (select :metadata :where [:= :metadata.table table-name]))]
@@ -1331,12 +1334,12 @@
          (catch Exception e nil))))
 
 ;; (do-clear-meta)
-;; (do-create-meta)
+;; (do-create-meta-database)
 ;; (make-backup-metadata)
 ;; (restore-backup-metadata)
 
 ;; (do-clear-meta)
-;; (do-create-meta)
+;; (do-create-meta-database)
 ;; (getset :user)
 
 ;; (update-meta {:id 188, :table "user", :prop {:table {:field "user", :representation "Користувач", :is-system? false, :is-linker? false, :description nil, :allow-modifing? true, :allow-deleting? true, :allow-linking? true}, :columns [{:field :login, :field-qualified :user.login, :representation "login", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :password, :field-qualified :user.password, :representation "password", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :first_name, :field-qualified :user.first_name, :representation "first_name", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :last_name, :field-qualified :user.last_name, :representation "last_name", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:description nil, :private? false, :editable? true, :field :id_permission, :column-type [:bigint-120-unsigned :nnull], :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}], :component-type ["l"], :representation "id_permission", :field-qualified :user.id_permission, :key-table "permission"}]}})

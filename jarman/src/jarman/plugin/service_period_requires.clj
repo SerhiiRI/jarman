@@ -45,6 +45,24 @@
   ([YYYY MM dd hh mm] (date-object YYYY MM dd hh mm 0))
   ([YYYY MM dd hh mm ss] (java.util.Date. (- YYYY 1900) MM dd hh mm ss)))
 
+(defn data-comparator-new-old [d1 d2]
+  (let [cd1 (doto (java.util.Calendar/getInstance) (.setTime d1))
+        cd2 (doto (java.util.Calendar/getInstance) (.setTime d2))]
+    (.before cd1 cd2)))
+
+(defn data-comparator-old-new [d1 d2]
+  (let [cd1 (doto (java.util.Calendar/getInstance) (.setTime d1))
+        cd2 (doto (java.util.Calendar/getInstance) (.setTime d2))]
+    (.before cd2 cd1)))
+
+#_(sort-by
+   identity
+   data-comparator-new-old
+   [(date-object 2021 8  13)
+    (date-object 2021 9  13)
+    (date-object 2021 11 15)
+    (date-object 2021 6 15)])
+
 (defn get-date-pairs
   "Description
     (get-date-pairs
@@ -95,9 +113,7 @@
     (deref buffer)))
 
 
-
 ;;; ---------------------SQL Inserts func---------------------------
-
 
 ;; -------------
 ;; clean-up keys
@@ -186,7 +202,10 @@
                                   [lk1 lk2 lk3] [(l1 x) (l2 x) (l3 x)]]
                               (swap! all-paths conj [lk1 lk2 lk3 false])
                               (swap! index-tree #(assoc-in % [lk1 lk2 lk3] x))
-                              (assoc m k2 (conj v (into {:v [i1 i2 i3]} x2)))))))) {} coll)]
+                              (assoc m k2 (sort-by
+                                           :service_contract_month.service_month_start
+                                           data-comparator-new-old ;; data-comparator-old-new
+                                           (conj v (into {:v [i1 i2 i3]} x2))))))))) {} coll)]
     {:raw-list coll
      :tree-index-paths @all-paths
      :tree-index @index-tree

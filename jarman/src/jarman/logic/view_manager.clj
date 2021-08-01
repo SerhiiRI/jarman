@@ -20,7 +20,6 @@
 ;;;;;;;;;;;;;;;;;
 ;;; Variables ;;;
 ;;;;;;;;;;;;;;;;;
-
 (comment
  (defvar dupa1 nil)
  (defvar dupa2 nil
@@ -53,7 +52,8 @@
         "Cache register"            [:cache_register :table :cache_register]
         "Seal"                      [:seal :table :seal]}
        "Service contract"
-       {"Service contract"          [:service_contract :table :service_contract]
+       {"Service period"            [:service_contract :service-period :service_contract]
+        "Service contract"          [:service_contract :table :service_contract]
         "Service contract month"    [:service_contract_month :table :service_contract_month]}}
   :type clojure.lang.PersistentArrayMap
   :group :plugin-system)
@@ -342,8 +342,6 @@
    {"Service period"            [:service_contract :service-period :service_contract]
     "Service contract"          [:service_contract :table :service_contract]
     "Service contract month"    [:service_contract_month :table :service_contract_month]}})
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; loader chain for `defview` ;;;

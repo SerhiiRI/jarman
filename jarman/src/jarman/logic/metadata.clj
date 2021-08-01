@@ -438,10 +438,18 @@
     (if (empty? meta)
       (db/exec (update-sql-by-id-template "metadata" metadata)))))
 
-(defn do-create-meta []
+(defn create-one-meta-force [metadata table-name]
+  (db/exec (update-sql-by-id-template "metadata" metadata)))
+
+(defn do-create-meta-database []
   (doall
    (for [table (show-tables-not-meta)]
      (create-one-meta (get-meta table) table))))
+
+(defn do-create-meta-snapshot []
+  (doall
+   (for [table (show-tables-not-meta)]
+     (get-meta table))))
 
 (defn delete-one-meta [table-name]
   {:pre [(string? table-name)]}

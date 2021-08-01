@@ -35,7 +35,9 @@
             [jarman.gui.gui-dbvisualizer     :as dbv]
             [jarman.gui.gui-config-generator :as cg]
             [jarman.gui.popup                :as popup]
-            [jarman.gui.gui-main-menu        :as menu]))
+            [jarman.gui.gui-main-menu        :as menu]
+
+            [jarman.managment.data           :as managment-data]))
 
 
 ;; ┌──────────────────────────┐
@@ -154,6 +156,7 @@
   "Description:
     Load configuration"
   []
+  ;; (managment-data/on-app-start)
   (cm/swapp)
   (dot-jarman/dot-jarman-load)
   (dot-jarman-param/print-list-not-loaded))

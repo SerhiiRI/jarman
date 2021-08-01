@@ -96,8 +96,7 @@
       (println "[!] Table not found"))))
 
 (defmethod create-table-multi "create-meta-all" [params]
-  (do (metadata/do-create-meta)
-      (metadata/do-create-references)
+  (do (metadata/do-create-meta-database)
       (println "[!] Metadata created successfuly")))
 
 (defmethod create-table-multi :default [params]

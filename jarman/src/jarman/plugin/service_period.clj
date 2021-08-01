@@ -245,8 +245,6 @@
 
 (seesaw.dev/show-options  (seesaw.core/checkbox))
 
-
-
 (def checkboxes (atom [[1 2 1 true] [1 2 3 false] [1 1 3 true] [2 2 1 true]]))
 
 (defn- comparator-fn [id-vec]
@@ -271,6 +269,7 @@
 
 (defn- choice-checkbox [id-vec]
   (println "ID_VEC" id-vec))
+
 
 (defn checked-box? []
   (some (fn [period] (= (nth period 3) false)) checkboxes))

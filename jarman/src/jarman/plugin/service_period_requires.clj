@@ -176,21 +176,23 @@
         index-tree (atom {})
         tree (reduce
               (fn [ret x]
-                (let [k1 (f1 x) 
-                      k2 (f2 x) x2 (f-v2 x)]
+                (let [[i1 i2 i3] [(l1 x) (l2 x) (l3 x)]
+                      k1 (into {:v [i1]} (f1 x)) 
+                      k2 (into {:v [i1 i2]} (f2 x)) x2 (f-v2 x)]
                   (update ret k1
-                          (fn [m] (let [m (if (nil? m) {} m)
-                                       v (get-in m [k2] [])
-                                       [lk1 lk2 lk3][(l1 x) (l2 x) (l3 x)]]
-                                   (swap! all-paths conj [lk1 lk2 lk3 false])
-                                   (swap! index-tree #(assoc-in % [lk1 lk2 lk3] x))
-                                   (assoc m k2 (conj v x2))))))) {} coll)]
+                          (fn [m]
+                            (let [m (if (nil? m) {} m)
+                                  v (get-in m [k2] [])
+                                  [lk1 lk2 lk3] [(l1 x) (l2 x) (l3 x)]]
+                              (swap! all-paths conj [lk1 lk2 lk3 false])
+                              (swap! index-tree #(assoc-in % [lk1 lk2 lk3] x))
+                              (assoc m k2 (conj v (into {:v [i1 i2 i3]} x2)))))))) {} coll)]
     {:raw-list coll
      :tree-index-paths @all-paths
      :tree-index @index-tree
      :tree-view tree}))
 
-(group-by-2 [:a :b :c]
+#_(group-by-2 [:a :b :c]
             :a :b
             :c
             [{:a 1, :b 1, :c -1}
@@ -230,8 +232,7 @@
 (def grouped-query (info-grouped-query))
 (let [{rl :raw-list tip :tree-index-paths ti :tree-index tv :tree-view} grouped-query]
   ;; (map #(conj % false )tip)
-  tip
-  )
+  tv)
 
 
 ;;; INFO SELECTS ;;;

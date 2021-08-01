@@ -8,7 +8,6 @@
 ;;   -- bottom -- scripts for generate or reset DB-jarman, metadata
 
 (ns jarman.managment.db-managment
-  (:refer-clojure :exclude [update])
   (:require
    [clojure.data :as data]
    [clojure.java.jdbc :as jdbc]   
@@ -113,7 +112,7 @@
            (db/exec (metadata/create-table-by-meta metadata)))
        (catch Exception e (println "[!] Problem with " (:table_name metadata)))))
 
-(defn create-one-table[metadata]
+(defn create-one-table [metadata]
   (do (metadata/update-meta metadata)
       (db/exec (metadata/create-table-by-meta metadata))))
 

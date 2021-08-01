@@ -678,8 +678,6 @@
    (s/coll-of verify-buttons))) ;; TODO: can we valid key value?
 
 
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; EXTERNAL INTERFAISE ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;

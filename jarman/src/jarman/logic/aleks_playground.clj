@@ -91,7 +91,7 @@
 ;;   (sinit/procedure-test-all)
 ;;   (delete-scheme)
 ;;   (create-scheme)
-;;   (metadata/do-create-meta)
+;;   (metadata/do-create-meta-database)
 ;;   (metadata/do-create-references))
 ;;
 ;; (delete-scheme) usuwa zawartość bazy

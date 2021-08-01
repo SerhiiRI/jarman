@@ -128,7 +128,7 @@
 ;;; FOR DEBUG CONNECTION
 (connection-set
  ;; set selected
- (:dell-test
+ (:dell
   ;;------------
   {:localhost
    {:dbtype "mysql",

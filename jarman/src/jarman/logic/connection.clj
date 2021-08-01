@@ -155,7 +155,7 @@
    {:dbtype "mysql",
     :host "trashpanda-team.ddns.net",
     :port 3307,
-    :dbname "jarman",
+    :dbname "jarman-test",
     :user "root",
     :password "1234"}}))
 

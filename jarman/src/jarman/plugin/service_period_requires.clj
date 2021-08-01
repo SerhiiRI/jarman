@@ -233,9 +233,7 @@
 (def grouped-query (info-grouped-query))
 (let [{rl :raw-list tip :tree-index-paths ti :tree-index tv :tree-view} grouped-query]
   ;; (map #(conj % false )tip)
-  tv
-  
-  )
+  tv)
 
 
 ;;; INFO SELECTS ;;;

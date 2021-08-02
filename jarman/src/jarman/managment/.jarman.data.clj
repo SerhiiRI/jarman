@@ -1,3 +1,38 @@
+(require '[jarman.logic.connection :as connection])
+
+#_(connection/connection-set
+   ;; set selected
+   (:dell-test
+    ;;------------
+    {:localhost
+     {:dbtype "mysql",
+      :host "127.0.0.1",
+      :port 3306,
+      :dbname "jarman",
+      :user "root",
+      :password "1234"},
+     :raspberry
+     {:dbtype "mysql",
+      :host "trashpanda-team.ddns.net",
+      :port 3306,
+      :dbname "jarman",
+      :user "jarman",
+      :password "dupa"}
+     :dell
+     {:dbtype "mysql",
+      :host "trashpanda-team.ddns.net",
+      :port 3307,
+      :dbname "jarman",
+      :user "root",
+      :password "1234"}
+     :dell-test
+     {:dbtype "mysql",
+      :host "trashpanda-team.ddns.net",
+      :port 3307,
+      :dbname "jarman-test",
+      :user "root",
+      :password "1234"}}))
+
 (require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link]])
 
 (def metadata-list
@@ -198,6 +233,11 @@
   (jarman.managment.data-managment/database-verify-system-tables)
   (println "done."))
 
+(defn on-update-meta []
+  (println "Persisting metadata to database.")
+  (jarman.managment.data-managment/metadata-persist-into-database metadata-list)
+  (println "done."))
+
 (defn on-app-close []
   (println "`on-app-close` not yet impelemented"))
 
@@ -210,17 +250,25 @@
 (defn on-clear []
   (println "`on-clear` not yet impelemented"))
 
+(defn on-info []
+  (jarman.managment.data-managment/database-info)
+  (jarman.managment.data-managment/metadata-info metadata-list))
+
 (comment
   (on-install)
   (on-delete)
   (on-backup)
   (on-app-start)
   (on-app-close)
+  (on-metadata-update)
   (on-crash)
   (on-log)
-  (on-clear))
+  (on-clear)
+  (on-info))
 
 (comment
+  (jarman.managment.data-managment/database-info)
+  (jarman.managment.data-managment/metadata-info metadata-list)
   (jarman.managment.data-managment/database-recreate-metadata-to-db)
   (jarman.managment.data-managment/database-recreate-metadata-to-file "some.edn")
   (jarman.managment.data-managment/metadata-persist-into-database metadata-list)
@@ -230,4 +278,6 @@
   (jarman.managment.data-managment/database-delete-business-scheme metadata-list)
   (jarman.managment.data-managment/database-delete-scheme metadata-list)
   (jarman.managment.data-managment/database-create-scheme metadata-list))
+
+
 

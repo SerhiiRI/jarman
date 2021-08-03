@@ -1,11 +1,20 @@
 (ns jarman.config.storage
   (:gen-class)
-  (:import (java.io IOException))
+  (:import (java.io IOException FileNotFoundException))
   (:require [clojure.string :as s]
             [jarman.tools.lang :refer :all]
             [jarman.config.environment :as env]
             [me.raynes.fs :as fs]
             [clojure.java.io :as io]))
+
+
+(defn return-first-exists [file-list]
+ (if-let [file (first (filter #(.exists %) file-list))]
+   file
+   (throw (FileNotFoundException.
+           (format "No one file [%s] doesn't exists"
+                   (clojure.string/join
+                    ", " (map str file-list)))))))
 
 ;;; Function 
 (defmacro ioerr
@@ -46,10 +55,10 @@
      (def ~(symbol (str store-name "-clean")) (make-store-clean store-path#))
      (def ~(symbol (str store-name "-rename")) (make-store-rename store-path#))))
 
-(defstore temporary            (io/file env/java-io-tmpdir  ".jarman.d"))
-(defstore document-templates   (io/file env/user-home       ".jarman.d" "documents"))
-(defstore user-config          (io/file env/user-home       ".jarman.d" "config"))
-(defstore user-metadata        (io/file env/user-home       ".jarman.d" "metadata"))
+;; (defstore temporary            (io/file env/java-io-tmpdir  "jarman-tmp"))
+(defstore document-templates   (io/file env/user-home       ".jarman.d" "dump" "documents"))
+(defstore user-config          (io/file env/user-home       ".jarman.d" "backup" "config"))
+(defstore user-metadata        (io/file env/user-home       ".jarman.d" "backup" "metadata"))
 
 ;;; Example usage
 (comment
@@ -81,3 +90,5 @@
   (temporary-clean)
   (temporary-rename "temp.txt" "alalal")
   (temporary-dir-path))
+
+

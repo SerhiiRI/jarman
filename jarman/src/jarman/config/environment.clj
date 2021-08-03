@@ -34,8 +34,6 @@
 
 ;;; JARMAN 
 (def jarman-home (-> (clojure.java.io/file ".") .getAbsoluteFile .getParentFile .getAbsolutePath))
-(def jarman-standart-config (clojure.string/join file-separator ["." "config"]))
-(def jarman-user-storage (.getAbsolutePath (clojure.java.io/file user-home ".jarman")))
 
 ;;; ENV VARIABLES ;;;
 (def path (System/getenv "path"))

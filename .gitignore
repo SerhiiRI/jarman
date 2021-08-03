@@ -20,3 +20,5 @@ pom.xml.asc
 .vscode/*
 jarman/.vscode/settings.json
 jarman/.lsp/sqlite.db
+installer/inno-target/
+

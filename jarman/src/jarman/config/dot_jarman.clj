@@ -13,6 +13,11 @@
 (def jarman ".jarman")
 (def jarman-path (io/file env/user-home jarman))
 
+;; (str
+;;    (storage/return-first-exists
+;;     [(io/file "." ".jarman.d" "config")
+;;      (io/file env/user-home ".jarman.d" "config")]))
+
 ;;;;;;;;;;;;;;;
 ;;; HELPERS ;;;
 ;;;;;;;;;;;;;;;

@@ -35,8 +35,8 @@
   :javac-options     ["-Xlint:unchecked"]
   :profiles {:user
              {:plugins [[lein-launch4j "0.1.2"]]
-              :launch4j-install-dir ""
-              :launch4j-config-file "resources/config.xml"}
+              :launch4j-install-dir "../installer"
+              :launch4j-config-file "../installer/launch4j.xml"}
              :cli
              {:aot [jarman.jarman-cli
                     jarman.managment.data

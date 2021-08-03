@@ -1,6 +1,6 @@
 (ns jarman.config.dot-jarman
   (:gen-class)
-  (:import (java.io IOException))
+  (:import (java.io IOException FileNotFoundException))
   (:require
    ;; Clojure
    [clojure.string :as s]
@@ -12,11 +12,8 @@
 
 (def jarman ".jarman")
 (def jarman-path (io/file env/user-home jarman))
-
-;; (str
-;;    (storage/return-first-exists
-;;     [(io/file "." ".jarman.d" "config")
-;;      (io/file env/user-home ".jarman.d" "config")]))
+(def jarman-paths-list [(io/file env/user-home jarman)
+                        (io/file "." jarman)])
 
 ;;;;;;;;;;;;;;;
 ;;; HELPERS ;;;
@@ -34,20 +31,20 @@
          (catch IOException e# (~f-io-exception (format "I/O error. Maybe problem in file: %s" (ex-message e#))))
          (catch Exception   e# (~f-exception (format "Undefinied problem: %s" (ex-message e#)))))))
 
-(defn fput [s] (ioerr (with-open [W (io/writer jarman-path)] (.write W s))))
-(defn fappend [s] (ioerr (with-open [W (io/writer jarman-path :append true)] (.write W s))))
+(defn fput [f s] (ioerr (with-open [W (io/writer f)] (.write W s))))
+(defn fappend [f s] (ioerr (with-open [W (io/writer f :append true)] (.write W s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; DECLARATION ENV ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- create-empty-dot-jarman []
-  (if-not (not (.exists jarman-path))
-    (do (fput ";; This is Main configuration `.jarman` file. Declare in it any machine or app-specyfic configurations\n")
-        (fappend ";; Set global variables, by using `setq` macro and power of jarman customizing system\n")
-        (fappend "\n")
+(defn- create-empty-dot-jarman [f]
+  (if-not (not (.exists f))
+    (do (fput f ";; This is Main configuration `.jarman` file. Declare in it any machine or app-specyfic configurations\n")
+        (fappend f ";; Set global variables, by using `setq` macro and power of jarman customizing system\n")
+        (fappend f "\n")
         (doall
-         (map (comp fappend (partial str ";;"))
+         (map (comp (partial fappend f) (partial str ";;"))
               [" 1. Declare variable in any place you want in system\n"
                "    Attribute `:type` and `:group` aren't required, but\n"
                "    specifing may help you in debug moment\n;;\n"
@@ -55,36 +52,17 @@
                "\n"
                " 2. In `.jarman` set previosly declared in code variable\n;;\n"
                "    => (setq some-global-variable {:some-value {:a 1}})\n"]))
-        (fappend "\n"))))
+        (fappend f "\n"))))
 
 (defn dot-jarman-load []
-  (ioerr (if (.exists jarman-path)
-           (binding [*ns* (find-ns 'jarman.config.dot-jarman)] 
-             (load-file (str jarman-path)))
-           (create-empty-dot-jarman))
-         (fn [e] "Cannot open `.jarman` config file")
-         (fn [e] "Reading exception for `.jarman`. Maybe declaration or code in is corrupted")) nil)
+  (if-let [file (first (filter #(.exists %) jarman-paths-list))]
+   (ioerr (load-file (str file))
+          (fn [e] "Cannot open `.jarman` config file")
+          (fn [e] "Reading exception for `.jarman`. Maybe declaration or code in is corrupted"))
+   (throw (FileNotFoundException.
+           (format "No one file [%s] doesn't exists"
+                   (clojure.string/join
+                    ", " (map str jarman-paths-list)))))) true)
 
 (dot-jarman-load)
 
-
-#_(require 'jarman.logic.view-manager)
-#_(setq jarman.logic.view-manager/user-menu
-      {"Admin space"
-       {"User table"                [:user :table :user]
-        "Permission edit"           [:permission :table :permission]}
-       "Sale structure"
-       {"Enterpreneur"              [:enterpreneur :table :enterpreneur]
-        "Point of sale group"       [:point_of_sale_group :table :point_of_sale_group]
-        "Point of sale group links" [:point_of_sale_group_links :table :point_of_sale_group_links],
-        "Point of sale"             [:point_of_sale :table :point_of_sale]}
-       "Repair contract"
-       {"Repair contract"           [:repair_contract :table :repair_contract]
-        "Repair reasons"            [:repair_reasons :table :repair_reasons]
-        "Repair technical issue"    [:repair_technical_issue :table :repair_technical_issue]
-        "Repair nature of problem"  [:repair_nature_of_problem :table :repair_nature_of_problem]
-        "Cache register"            [:cache_register :table :cache_register]
-        "Seal"                      [:seal :table :seal]}
-       "Service contract"
-       {"Service contract"          [:service_contract :table :service_contract]
-        "Service contract month"    [:service_contract_month :table :service_contract_month]}})

@@ -13,7 +13,6 @@
            (java.sql SQLException)))
 
 ;;; HELPER FUNCION ;;;
-
 (defn test-connection [db-spec]
   ;; {:pre [(spec/valid? ::db-connector-scheme db-spec)]}
   (let [subprotocols {"hsql"       "hsqldb"
@@ -128,7 +127,7 @@
 ;;; FOR DEBUG CONNECTION
 (connection-set
  ;; set selected
- (:dell-test
+ (:dell
   ;;------------
   {:localhost
    {:dbtype "mysql",
@@ -202,7 +201,6 @@
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; JDBC WRAPPERS ;;; 
 ;;;;;;;;;;;;;;;;;;;;;
-
 (defmacro sqlerr
   ([f]
    `(sqlerr ~f

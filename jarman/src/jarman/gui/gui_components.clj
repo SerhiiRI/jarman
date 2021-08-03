@@ -668,7 +668,6 @@
       (func text-area)
       (scrollbox text-area :minimum-size [50 :by 100]))))
 
-
 (defn input-text-area-label
   [& {:keys [title
              store-id
@@ -825,7 +824,6 @@
                 :path   path
                 :value  start-v})
     (state-combo-box func model-v repres-v :start-v start-v)))
-
 
 
 (defn expand-form-panel
@@ -987,7 +985,6 @@
 ;; │ Expand buttons     │
 ;; │                    │________________________________________
 ;; └────────────────────┘                                       
-
 (def button-expand
   "Description:
       It's a space for main button with more option. 
@@ -1042,6 +1039,8 @@
                 :background (Color. 0 0 0 0)
                 :icon ico)
           mig (mig-panel :constraints ["wrap 1" (str "0px[" min-height ":, fill]0px") "0px[fill]0px"] :background background)
+          user-data  {:atom-expanded-items atom-inside-btns
+                      :title-fn (fn [new-title] (c/config! title :text new-title))}
           expand-btn (fn [func]
                        (c/config! title :listen (if (nil? over-func) (listen func) [:mouse-clicked over-func
                                                                                     :mouse-entered gtool/hand-hover-on]))
@@ -1059,9 +1058,9 @@
                         :border border
                         :size [min-height :by vsize]
                         :items [[title :west]
-                                [icon :east]]))]
+                                [icon  :east]]))]
       (if (nil? onClick)
-       (let [onClick (fn [e]
+        (let [onClick (fn [e]
                        (if-not (nil? @atom-inside-btns)
                          (if (= (count (u/children mig)) 1)
                            (do ;;  Add inside buttons to mig with expand button
@@ -1071,21 +1070,28 @@
                                          @atom-inside-btns))
                              ;;(gtool/set-focus (first @atom-inside-btns))
                              ;;(gtool/switch-focus)
+                             (println "OPENN")
                              (.revalidate mig) 
-                             (.repaint mig))
+                             (.repaint mig)
+                             (c/config! mig :user-data "HEYY" ;;(into user-data {:expanded? true})
+                                        ))
                            (do ;;  Remove inside buttons form mig without expand button
                              (c/config! icon :icon ico)
+                             (println  "CLOOSEEE")
                              (doall (map #(.remove mig %) (reverse (drop 1 (range (count (u/children mig)))))))
+                             
                              (.revalidate mig)
-                             (.repaint mig)))))]
-         (do
-           (reset! atom-inside-btns inside-btns)
-           (c/config! mig
-                      :id id
-                      :user-data {:atom-expanded-items atom-inside-btns
-                                  :title-fn (fn [new-title] (c/config! title :text new-title))}
-                      :items [[(expand-btn onClick)]])))
-       (c/config! mig :id id :items [[(expand-btn onClick)]])))))
+                             (.repaint mig)
+                             (c/config! mig :user-data "HEyy-NOO" ;;(into user-data {:expanded? false})
+                                        )))))]
+          (do
+            (reset! atom-inside-btns inside-btns)
+            (c/config! mig
+                       :id id
+                       ;;:user-data (if-not (nil? @atom-inside-btns) "YEEESS" "NOOO")
+                       :items [[(expand-btn onClick)]])))
+        (c/config! mig :id id :items [[(expand-btn onClick)]])))))
+
 
 
 (defn expand-input

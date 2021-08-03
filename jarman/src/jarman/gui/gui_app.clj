@@ -36,7 +36,6 @@
             [jarman.gui.gui-config-generator :as cg]
             [jarman.gui.popup                :as popup]
             [jarman.gui.gui-main-menu        :as menu]
-
             [jarman.managment.data           :as managment-data]))
 
 

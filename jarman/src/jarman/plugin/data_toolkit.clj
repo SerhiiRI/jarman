@@ -116,6 +116,7 @@
         :test-insert ((:test-insert-expression toolkit) test-user)
         :test-update ((:test-update-expression toolkit) test-user)
         :test-delete ((:test-delete-expression toolkit) test-user)})
+ 
    ;;=> 
       {:test-m-select \"SELECT * FROM user\",
        :test-select \"SELECT * FROM user WHERE \\\"admin\\\" = login\",

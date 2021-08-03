@@ -3,6 +3,7 @@
    [clojure.data :as data]
    [clojure.java.jdbc :as jdbc]   
    [clojure.string :as string]
+   [clojure.pprint :refer [pprint cl-format]]
    [jarman.logic.sql-tool :as sql]
    [jarman.logic.metadata :as metadata]
    [jarman.config.storage :as storage]
@@ -14,7 +15,7 @@
            (java.text SimpleDateFormat)))
 
 
-(def all-tables [{:id nil,
+#_(def all-tables [{:id nil,
                   :table_name "documents",
                   :prop
                   {:table
@@ -51,7 +52,7 @@
                      :editable? true,
                      :field :document,
                      :column-type [:blob :default :null],
-                     :component-type nil,
+                     :component-type [:blob]
                      :representation "document",
                      :field-qualified :documents.document}
                     {:description nil,
@@ -906,6 +907,11 @@
 (defn- database-list-all-tables []
   (mapv (comp second first) (db/query (sql/show-tables))))
 
+(map (fn [[l v]]
+       [(clojure.string/upper-case (str l)) v])
+     (sort-by first (seq (group-by first (database-list-all-tables)))))
+
+
 ;;; scheme up/down functionality
 
 (defn database-create-scheme [metadata-v]
@@ -943,7 +949,44 @@
    (for [m metadata-v]
      (metadata/create-one-meta-force m (:table_name m)))))
 
+(defn metadata-info [metadata-v]
+  (let [t-off "  "
+        f-off "      "]
+    (println "Metadata structure")
+    (doall
+     (for [{{tabl :table
+             cols :columns} :prop} metadata-v]
+       (do
+         (println (format "%s %s" t-off (keyword (:field tabl))))
+         (println (format "%s  #+TITLE: \"%s\" " t-off (:representation tabl)))
+         (println (format "%s  #+COLUMS: " t-off))
+         (doall
+          (for [{field :field
+                 repr :representation
+                 comp-type :component-type} cols]
+            (println (format "%s %-35s %s" f-off (keyword field) (str comp-type)))
+            )))))nil))
+
+(defn database-info []
+  (let [table-off "   "
+      chr-off "  "
+      structurized-data
+      (->> (database-list-all-tables)
+           (group-by first)
+           (sort-by first)
+           (map (fn [[l v]] (vector (clojure.string/upper-case (str l)) v))))]
+    (println "Database tables")
+    (doall (for [[chr tbls] structurized-data]
+             (do (println (format "%s%s" chr-off chr))
+                 (doall (for [tbl tbls]
+                          (println (format "%s%s" table-off
+                                           (if (in? sinit/*system-tables* tbl)
+                                             (str tbl " [system]")
+                                             tbl)))))))) nil))
+
 (comment
+  (database-info)
+  (metadata-info all-tables)
   (database-recreate-metadata-to-db)
   (database-recreate-metadata-to-file "some.edn")
   (metadata-persist-into-database all-tables)

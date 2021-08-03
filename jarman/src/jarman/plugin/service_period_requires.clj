@@ -45,6 +45,24 @@
   ([YYYY MM dd hh mm] (date-object YYYY MM dd hh mm 0))
   ([YYYY MM dd hh mm ss] (java.util.Date. (- YYYY 1900) MM dd hh mm ss)))
 
+(defn data-comparator-new-old [d1 d2]
+  (let [cd1 (doto (java.util.Calendar/getInstance) (.setTime d1))
+        cd2 (doto (java.util.Calendar/getInstance) (.setTime d2))]
+    (.before cd1 cd2)))
+
+(defn data-comparator-old-new [d1 d2]
+  (let [cd1 (doto (java.util.Calendar/getInstance) (.setTime d1))
+        cd2 (doto (java.util.Calendar/getInstance) (.setTime d2))]
+    (.before cd2 cd1)))
+
+#_(sort-by
+   identity
+   data-comparator-new-old
+   [(date-object 2021 8  13)
+    (date-object 2021 9  13)
+    (date-object 2021 11 15)
+    (date-object 2021 6 15)])
+
 (defn get-date-pairs
   "Description
     (get-date-pairs
@@ -95,9 +113,7 @@
     (deref buffer)))
 
 
-
 ;;; ---------------------SQL Inserts func---------------------------
-
 
 ;; -------------
 ;; clean-up keys
@@ -186,7 +202,10 @@
                                   [lk1 lk2 lk3] [(l1 x) (l2 x) (l3 x)]]
                               (swap! all-paths conj [lk1 lk2 lk3 false])
                               (swap! index-tree #(assoc-in % [lk1 lk2 lk3] x))
-                              (assoc m k2 (conj v (into {:v [i1 i2 i3]} x2)))))))) {} coll)]
+                              (assoc m k2 (sort-by
+                                           :service_contract_month.service_month_start
+                                           data-comparator-new-old ;; data-comparator-old-new
+                                           (conj v (into {:v [i1 i2 i3]} x2))))))))) {} coll)]
     {:raw-list coll
      :tree-index-paths @all-paths
      :tree-index @index-tree
@@ -229,10 +248,36 @@
                ;; lambda on leaf
                :service_contract_month )))
 
+
+;;; FOR @JULIA
+
+;;; WARNIGN! is just example for you.
+;;; Try to rename and rewrite func's
+;;; like it will comprotable for you
+(defn calculate-payment-for-enterprenier [enterprenier-k service-contracts-m]
+ (reduce (fn [acc x]
+           (if-not (:service_contract_month.was_payed x)
+             (+ acc (:service_contract_month.money_per_month x))
+             acc)) 0 (apply concat (vals service-contracts-m))))
+
+(defn calculate-payment-for-service_contract [service-contracts-k service-contracts-month-list-m]
+ (reduce (fn [acc x]
+           (if-not (:service_contract_month.was_payed x)
+             (+ acc (:service_contract_month.money_per_month x))
+             acc)) 0 service-contracts-month-list-m))
+
+;;; In test case i showed how in simply way
+;;; geting and calculating all of this data
+;;; try to use this when you recursively render
+;;; any you want
 (def grouped-query (info-grouped-query))
 (let [{rl :raw-list tip :tree-index-paths ti :tree-index tv :tree-view} grouped-query]
   ;; (map #(conj % false )tip)
-  tv)
+  {:per-enterpreneur (mapv (fn [[enter sc-m]] (calculate-payment-for-enterprenier enter sc-m)) (seq tv))
+   :per-contracts (mapv (fn [[enter sc-m]]
+                          (mapv (fn [[sc-m scm-m]] (calculate-payment-for-service_contract sc-m scm-m)) (seq sc-m))) (seq tv))})
+
+
 
 
 ;;; INFO SELECTS ;;;
@@ -393,9 +438,37 @@
   (insert-service_contract       1 (date-object 2021 8  13) (date-object 2021 11 15))
   (insert-all                    1 (date-object 2021 8  13) (date-object 2021 11 15) 400))
 ;; => nil
-;;; UPDATE 
 
-(defn update-list-service-month-start [list-of-service-month]
+
+;;;;;;;;;;;;;;
+;;; UPDATE ;;;
+;;;;;;;;;;;;;;
+
+
+;;; FOR @JULIA ;;;
+
+(defn update-service-month-to-payed [list-months-id]
+  (doall
+   (for [m-id list-months-id]
+     (db/exec
+      (update! {:table_name :service_contract_month
+                :set {:service_contract_month.was_payed true}
+                :where [:= :id m-id]})))))
+
+(defn update-service-month-to-not-payed [list-months-id]
+  (doall
+   (for [m-id list-months-id]
+     (db/exec
+      (update! {:table_name :service_contract_month
+                :set {:service_contract_month.was_payed false}
+                :where [:= :id m-id]})))))
+
+(comment
+  (update-service-month-to-payed [1 2 3])
+  (update-service-month-to-not-payed [1 2 3]))
+
+
+#_(defn update-list-service-month-start [list-of-service-month]
   (for [entity list-of-service-month]
     (if (:id entity)
       (db/exec

@@ -1,7 +1,6 @@
 (defproject jarman "0.0.1"
   :description "Jarman"
-  :license {:name "EPL-2.0"
-            :url "https://www.eclipse.org/legal/epl-2.0/"}
+  :license {:name "EPL-2.0" :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/tools.cli "1.0.194"]
                  [seesaw "1.5.0"]
@@ -38,16 +37,14 @@
              {:plugins [[lein-launch4j "0.1.2"]]
               :launch4j-install-dir ""
               :launch4j-config-file "resources/config.xml"}
-
-             :lets-scheme
+             :cli
              {:aot [jarman.jarman-cli
-                    jarman.cli.cli-tool
-                    jarman.logic.sql-tool
-                    jarman.managment.db-managment
+                    jarman.managment.data
+                    jarman.config.storage
                     jarman.tools.ftp-toolbox]
               :main jarman.jarman-cli
-              :jar-name "lets-scheme-lib.jar"
-              :uberjar-name "lets-scheme.jar"}
+              :jar-name "jarman-cli-lib.jar"
+              :uberjar-name "jarman-cli.jar"}
              ;; :cider
              ;; {:dependencies [[cider/cider-nrepl "0.26.0"]]
              ;;  :repl-options {:nrepl-middleware

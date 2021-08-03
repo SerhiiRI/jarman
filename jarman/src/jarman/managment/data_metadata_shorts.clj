@@ -32,7 +32,7 @@
    :field-qualified field-qualified})
 
 (defn field-link [& {:keys [field-qualified key-table description private? default-value editable? field column-type foreign-keys component-type representation]
-                     :or {key-table :enterpreneur, private? false, default-value nil, editable? true, component-type [:link]}}]
+                     :or {private? false, default-value nil, editable? true, component-type [:link]}}]
   {:pre [(some? field) (some? field-qualified) (some? foreign-keys)]}
   {:description (if description description (name field))
    :private? private?,

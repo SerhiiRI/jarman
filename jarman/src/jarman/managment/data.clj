@@ -16,6 +16,8 @@
 (declare on-crash)
 (declare on-log)
 (declare on-clear)
+(declare on-update-meta)
+(declare on-info)
 
 ;;;;;;;;;;;;;;;;;
 ;;; CONSTANTS ;;;

@@ -438,9 +438,37 @@
   (insert-service_contract       1 (date-object 2021 8  13) (date-object 2021 11 15))
   (insert-all                    1 (date-object 2021 8  13) (date-object 2021 11 15) 400))
 ;; => nil
-;;; UPDATE 
 
-(defn update-list-service-month-start [list-of-service-month]
+
+;;;;;;;;;;;;;;
+;;; UPDATE ;;;
+;;;;;;;;;;;;;;
+
+
+;;; FOR @JULIA ;;;
+
+(defn update-service-month-to-payed [list-months-id]
+  (doall
+   (for [m-id list-months-id]
+     (db/exec
+      (update! {:table_name :service_contract_month
+                :set {:service_contract_month.was_payed true}
+                :where [:= :id m-id]})))))
+
+(defn update-service-month-to-not-payed [list-months-id]
+  (doall
+   (for [m-id list-months-id]
+     (db/exec
+      (update! {:table_name :service_contract_month
+                :set {:service_contract_month.was_payed false}
+                :where [:= :id m-id]})))))
+
+(comment
+  (update-service-month-to-payed [1 2 3])
+  (update-service-month-to-not-payed [1 2 3]))
+
+
+#_(defn update-list-service-month-start [list-of-service-month]
   (for [entity list-of-service-month]
     (if (:id entity)
       (db/exec

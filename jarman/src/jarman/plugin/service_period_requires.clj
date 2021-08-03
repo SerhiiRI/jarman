@@ -248,10 +248,36 @@
                ;; lambda on leaf
                :service_contract_month )))
 
+
+;;; FOR @JULIA
+
+;;; WARNIGN! is just example for you.
+;;; Try to rename and rewrite func's
+;;; like it will comprotable for you
+(defn calculate-payment-for-enterprenier [enterprenier-k service-contracts-m]
+ (reduce (fn [acc x]
+           (if-not (:service_contract_month.was_payed x)
+             (+ acc (:service_contract_month.money_per_month x))
+             acc)) 0 (apply concat (vals service-contracts-m))))
+
+(defn calculate-payment-for-service_contract [service-contracts-k service-contracts-month-list-m]
+ (reduce (fn [acc x]
+           (if-not (:service_contract_month.was_payed x)
+             (+ acc (:service_contract_month.money_per_month x))
+             acc)) 0 service-contracts-month-list-m))
+
+;;; In test case i showed how in simply way
+;;; geting and calculating all of this data
+;;; try to use this when you recursively render
+;;; any you want
 (def grouped-query (info-grouped-query))
 (let [{rl :raw-list tip :tree-index-paths ti :tree-index tv :tree-view} grouped-query]
   ;; (map #(conj % false )tip)
-  tv)
+  {:per-enterpreneur (mapv (fn [[enter sc-m]] (calculate-payment-for-enterprenier enter sc-m)) (seq tv))
+   :per-contracts (mapv (fn [[enter sc-m]]
+                          (mapv (fn [[sc-m scm-m]] (calculate-payment-for-service_contract sc-m scm-m)) (seq sc-m))) (seq tv))})
+
+
 
 
 ;;; INFO SELECTS ;;;

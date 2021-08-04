@@ -16,7 +16,7 @@
             [seesaw.chooser :as chooser]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
   (:import (java.awt Color)
-           (jarman.test CustomScrollBar)))
+           (jarman.jarmanjcomp CustomScrollBar)))
 
 (jarman.config.config-manager/swapp)
 

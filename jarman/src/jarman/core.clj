@@ -1,8 +1,9 @@
 (ns jarman.core
   (:gen-class)
   ;; (:require  [jarman.gui.gui-login :as log])
-  (:require [jarman.gui.gui-app :as gui-app]
-            [jarman.logic.state :as state]))
+  ;; (:require [jarman.gui.gui-app :as gui-app]
+  ;;           [jarman.logic.state :as state])
+  )
 
 #_(defn -main
   "I don't do a whole lot ... yet."

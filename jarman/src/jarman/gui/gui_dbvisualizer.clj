@@ -4,7 +4,7 @@
         seesaw.mig
         seesaw.font)
   (:import (javax.swing JLayeredPane)
-           (jarman.test DateTime)
+           (jarman.jarmanjcomp DateTime)
            (java.awt.event MouseEvent))  
   (:require [seesaw.core :as c]
             [seesaw.border :as b]

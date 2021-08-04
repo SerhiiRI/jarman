@@ -6,7 +6,7 @@
   (:import (javax.swing JLayeredPane JLabel JTable JComboBox DefaultCellEditor JCheckBox)
            (javax.swing.table TableCellRenderer TableColumn)
            (java.awt.event MouseEvent)
-           (jarman.test DateTime)
+           (jarman.jarmanjcomp DateTime)
            (java.awt Color Component)
            (java.awt Dimension))
   (:require [jarman.tools.lang :refer :all]

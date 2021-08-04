@@ -57,12 +57,8 @@
        ;; => 41
    "
   
-  ([]
-   (println "lslsls")
-   @atom-state)
-  ([key]
-   (println "lslsls")
-   (if (vector? key)
+  ([] @atom-state)
+  ([key] (if (vector? key)
            (get-in @atom-state key)
            (get @atom-state key))))
 

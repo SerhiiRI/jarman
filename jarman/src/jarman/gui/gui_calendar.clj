@@ -7,8 +7,8 @@
         seesaw.font)
   (:import (java.text SimpleDateFormat)
            (java.awt Dimension)
-           (jarman.test Chooser)
-           (jarman.test DateTime))
+           (jarman.jarmanjcomp Chooser)
+           (jarman.jarmanjcomp DateTime))
   (:require [clojure.string :as string]
             [jarman.gui.gui-tools :refer :all :as gtool]
             [jarman.gui.gui-components :refer :all :as gcomp]))

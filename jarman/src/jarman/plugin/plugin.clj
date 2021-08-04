@@ -89,27 +89,27 @@
 
 (defn generate-dynamic-spec
   "Take `defplugin` body, get and process :spec key in key
- and generate full map spec body `s/key`. All specs grouping
- by `:req-un` and `:opt-un`. 
+  and generate full map spec body `s/key`. All specs grouping
+  by `:req-un` and `:opt-un`. 
 
- Warning! also function add to `plugin-key-list` 
- `plugin-system-requirements` list of specs
+  Warning! also function add to `plugin-key-list` 
+  `plugin-system-requirements` list of specs
 
-(generate-dynamic-spec
- (list 
-  [:tables
-   {:spec [:jarman.plugin.table/tables :req-un]}]
-  [:view-columns
-   {:spec [:jarman.plugin.table/view-columns :opt-un]}]))
+  (generate-dynamic-spec
+   (list 
+    [:tables
+     {:spec [:jarman.plugin.table/tables :req-un]}]
+    [:view-columns
+     {:spec [:jarman.plugin.table/view-columns :opt-un]}]))
 
-;; => 
-(s/key
- :req-un
- [:jarman.plugin.spec/name
-  :jarman.plugin.spec/permission
-  :jarman.plugin.table/tables]
- :opt-un
- [:jarman.plugin.spec/plug-place :jarman.plugin.table/view-columns])"
+  ;; => 
+  (s/key
+   :req-un
+   [:jarman.plugin.spec/name
+    :jarman.plugin.spec/permission
+    :jarman.plugin.table/tables]
+   :opt-un
+   [:jarman.plugin.spec/plug-place :jarman.plugin.table/view-columns])"
   [plugin-name plugin-key-list]
  (let [klist (vec (concat (plugin-system-requirements) plugin-key-list))
        gruoped-spec (group-by second
@@ -120,7 +120,7 @@
        :req-un ~(mapv first (:req-un gruoped-spec))
        :opt-un ~(mapv first (:opt-un gruoped-spec))))))
 
-(defmacro defplugin
+#_(defmacro defplugin
   [plugin-name ns description & body]
   (let [create-name-func (fn [fname] (symbol (str ns "/" plugin-name "-" fname)))
         func-entrypoint (create-name-func "entry")
@@ -145,12 +145,30 @@
           ~'plugin-path ~'global-configuration))
        (def ~proxyed-inside-toolkit-pipeline ~inside-plugin-pipeline))))
 
+(defmacro defplugin
+  [plugin-name description & body]
+  (let [create-name-func (fn [fname] (symbol (str (str *ns*) "/" plugin-name "-" fname)))
+        func-entrypoint (create-name-func "entry")
+        
+        ;; for `table` plugin
+        ;; inside-plugin-pipeline         -> `jarman.plugin.table/table-toolkit-pipeline`
+        ;; proxyed-inside-plugin-pipeline -> `table-toolkit-pipeline`
+        inside-plugin-pipeline  (symbol (str (str *ns*) "/" (str plugin-name "-toolkit-pipeline")))
+        proxyed-inside-toolkit-pipeline (symbol (str plugin-name "-toolkit"))
+        plugin-name-spec-test           (symbol (str plugin-name "-spec-test"))]    
+    `(do
+       ~(generate-dynamic-spec (str plugin-name) body)
+       (defn ~plugin-name-spec-test [~'configurations]
+         (s/assert ~(keyword (str *ns*) (str plugin-name)) ~'configurations))
+       (defn ~plugin-name
+         ;;; documentations
+         ~(generate-plugin-doc description body)
+         ;;; argumnets
+         [~'plugin-path ~'global-configuration]
+         ;;; body
+         (~func-entrypoint
+          ~'plugin-path ~'global-configuration))
+       (def ~proxyed-inside-toolkit-pipeline ~inside-plugin-pipeline))))
 
 
-;;; TEST LOADING EXTERNAL RESOURCE
-(defn load-files [dir]
-  (doseq [f (file-seq dir)
-          :when (.isFile f)]
-    (load-file (.getAbsolutePath f))))
 
-(load-files (clojure.java.io/file ".jarman.d" "plugins"))

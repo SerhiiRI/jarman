@@ -200,7 +200,7 @@
                             (let [m (if (nil? m) {} m)
                                   v (get-in m [k2] [])
                                   [lk1 lk2 lk3] [(l1 x) (l2 x) (l3 x)]]
-                              (swap! all-paths conj [lk1 lk2 lk3 false])
+                              (swap! all-paths conj [lk1 lk2 lk3 (:service_contract_month.was_payed (f-v2 x))])  ;; TO REWRITE
                               (swap! index-tree #(assoc-in % [lk1 lk2 lk3] x))
                               (assoc m k2 (sort-by
                                            :service_contract_month.service_month_start
@@ -275,7 +275,8 @@
   ;; (map #(conj % false )tip)
   {:per-enterpreneur (mapv (fn [[enter sc-m]] (calculate-payment-for-enterprenier enter sc-m)) (seq tv))
    :per-contracts (mapv (fn [[enter sc-m]]
-                          (mapv (fn [[sc-m scm-m]] (calculate-payment-for-service_contract sc-m scm-m)) (seq sc-m))) (seq tv))})
+                          (mapv (fn [[sc-m scm-m]] (calculate-payment-for-service_contract sc-m scm-m)) (seq sc-m))) (seq tv))}
+  tip)
 
 
 
@@ -423,6 +424,7 @@
          (some? money_per_month)
          (instance? java.util.Date contract_start_term)
          (instance? java.util.Date contract_end_term)]}
+  (println "INSEERRTT")
   (if-let [service_contract_id (insert-service_contract id_enterpreneur
                                                         contract_start_term
                                                         contract_end_term)]
@@ -433,10 +435,11 @@
      money_per_month)
     (println "Service month not been created for enterprenier with '%d' id" id_enterpreneur)))
 
+
 (comment 
   (insert-service_contract_month 1 (date-object 2021 8  13) (date-object 2021 11 15) 400)
   (insert-service_contract       1 (date-object 2021 8  13) (date-object 2021 11 15))
-  (insert-all                    1 (date-object 2021 8  13) (date-object 2021 11 15) 400))
+  (insert-all                    3 (date-object 2000 4  12) (date-object 2000 10 10) 100))
 ;; => nil
 
 
@@ -464,7 +467,7 @@
                 :where [:= :id m-id]})))))
 
 (comment
-  (update-service-month-to-payed [1 2 3])
+  (update-service-month-to-payed [1 25 237])
   (update-service-month-to-not-payed [1 2 3]))
 
 

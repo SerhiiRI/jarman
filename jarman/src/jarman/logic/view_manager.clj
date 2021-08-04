@@ -37,24 +37,25 @@
    :group :cargo))
 (defvar user-menu
   {"Admin space"
-       {"User table"                [:user :table :user]
-        "Permission edit"           [:permission :table :permission]}
-       "Sale structure"
-       {"Enterpreneur"              [:enterpreneur :table :enterpreneur]
-        "Point of sale group"       [:point_of_sale_group :table :point_of_sale_group]
-        "Point of sale group links" [:point_of_sale_group_links :table :point_of_sale_group_links],
-        "Point of sale"             [:point_of_sale :table :point_of_sale]}
-       "Repair contract"
-       {"Repair contract"           [:repair_contract :table :repair_contract]
-        "Repair reasons"            [:repair_reasons :table :repair_reasons]
-        "Repair technical issue"    [:repair_technical_issue :table :repair_technical_issue]
-        "Repair nature of problem"  [:repair_nature_of_problem :table :repair_nature_of_problem]
-        "Cache register"            [:cache_register :table :cache_register]
-        "Seal"                      [:seal :table :seal]}
-       "Service contract"
-       {"Service period"            [:service_contract :service-period :service_contract]
-        "Service contract"          [:service_contract :table :service_contract]
-        "Service contract month"    [:service_contract_month :table :service_contract_month]}}
+   {"User table"                [:user :table :user]
+    "Permission edit"           [:permission :table :permission]
+    "FFF"                       [:permission :fff :fff]}
+   "Sale structure"
+   {"Enterpreneur"              [:enterpreneur :table :enterpreneur]
+    "Point of sale group"       [:point_of_sale_group :table :point_of_sale_group]
+    "Point of sale group links" [:point_of_sale_group_links :table :point_of_sale_group_links],
+    "Point of sale"             [:point_of_sale :table :point_of_sale]}
+   "Repair contract"
+   {"Repair contract"           [:repair_contract :table :repair_contract]
+    "Repair reasons"            [:repair_reasons :table :repair_reasons]
+    "Repair technical issue"    [:repair_technical_issue :table :repair_technical_issue]
+    "Repair nature of problem"  [:repair_nature_of_problem :table :repair_nature_of_problem]
+    "Cache register"            [:cache_register :table :cache_register]
+    "Seal"                      [:seal :table :seal]}
+   "Service contract"
+   {"Service period"            [:service_contract :service-period :service_contract]
+    "Service contract"          [:service_contract :table :service_contract]
+    "Service contract month"    [:service_contract_month :table :service_contract_month]}}
   :type clojure.lang.PersistentArrayMap
   :group :plugin-system)
 

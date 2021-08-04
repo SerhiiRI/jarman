@@ -8,7 +8,8 @@
    ;; Seesaw components
    [seesaw.core   :as c]
    ;; Jarman toolkit
-   [jarman.tools.lang :refer :all]))
+   [jarman.tools.lang :refer :all]
+   [jarman.plugin.plugin :refer :all]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; EXTERNAL INTERFAISE ;;;
@@ -19,6 +20,8 @@
 
 (defn fff-entry [plugin-path global-configuration]
   (let []    
-    (c/label "FFFFFFFFFFFFFFFFFFFFFFFF")))
+    (c/label "UUU")))
 
+(defplugin fff 
+  "Plugin for service contracts of enterpreneurs")
 

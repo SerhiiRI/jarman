@@ -156,13 +156,12 @@
           ((state/state :alert-manager) :set {:header "Success" :body "Added service contract"} 5))
         ((state/state :alert-manager) :set {:header "Error" :body "Price must be number"} 5)))))
 
-;;; TO DO error
 (defn update-contracts [state]
   (let [{:keys [update-service-month]} (:plugin-toolkit @state)
         {:keys [view-space exp-panel]} @state
         checkboxes  (doall (filter (fn [item] (= (last item) true)) @(:checkboxes @state)))]
     (println "FUNC" update-service-month)
-    (map (fn [item] (update-service-month (vec (butlast item)))) checkboxes)
+    (update-service-month checkboxes) 
     (.removeAll exp-panel)
     (doall
      (map (fn [[entr srv_cntr]] (.add view-space (build-expand-by-map [entr srv_cntr] (seesaw.core/vertical-panel) state)))

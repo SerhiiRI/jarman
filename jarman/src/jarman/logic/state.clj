@@ -1,4 +1,5 @@
 (ns jarman.logic.state
+  (:gen-class)
   (:require [seesaw.core :as c]
             [clojure.data :as data]))
 
@@ -55,8 +56,13 @@
      (state :mystate1)
        ;; => 41
    "
-  ([] @atom-state)
-  ([key] (if (vector? key)
+  
+  ([]
+   (println "lslsls")
+   @atom-state)
+  ([key]
+   (println "lslsls")
+   (if (vector? key)
            (get-in @atom-state key)
            (get @atom-state key))))
 

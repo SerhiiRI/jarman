@@ -36,7 +36,11 @@
             [jarman.gui.gui-config-generator :as cg]
             [jarman.gui.popup                :as popup]
             [jarman.gui.gui-main-menu        :as menu]
-            [jarman.managment.data           :as managment-data]))
+            [jarman.managment.data           :as managment-data]
+
+            [jarman.plugin.plugin-loader :refer [do-load-plugins]]
+            [jarman.config.dot-jarman :refer [dot-jarman-load]]))
+
 
 
 ;; ┌──────────────────────────┐
@@ -226,6 +230,8 @@
   "Description:
     Load main menu."
   []
+  (dot-jarman-load)
+  (do-load-plugins)
   (load-static-main-menu)
   (load-plugins-to-main-menu))
 
@@ -259,3 +265,4 @@
                              :else (do (fn [])))))))
 
 ((state/state :startup))
+

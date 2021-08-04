@@ -27,8 +27,6 @@
             ;; [jarman.logic.view :as view]
             ;; [jarman.gui.gui-docs :as docs]
             [jarman.logic.state :as state]
-           
-            [jarman.plugin.table :as gtable]
             [jarman.plugin.plugin :as plug]
             [jarman.logic.view-manager :as vmg]
             [jarman.logic.session :as session]))

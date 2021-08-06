@@ -1,4 +1,4 @@
-package jarman.test;
+package jarman.jarmanjcomp;
 
 import java.awt.*;
 import javax.swing.*;

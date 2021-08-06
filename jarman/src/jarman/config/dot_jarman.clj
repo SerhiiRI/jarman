@@ -11,7 +11,6 @@
    [jarman.config.dot-jarman-param :refer [setq defvar print-list-not-loaded]]))
 
 (def jarman ".jarman")
-(def jarman-path (io/file env/user-home jarman))
 (def jarman-paths-list [(io/file env/user-home jarman)
                         (io/file "." jarman)])
 

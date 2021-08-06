@@ -9,7 +9,9 @@
    [jarman.tools.lang :include-macros true :refer :all]
    [jarman.config.environment :as env]
    [jarman.config.dot-jarman-param :refer [defvar]]
-   [jarman.plugin.jspl :as jspl]
+   ;; [jarman.plugin.jspl :as jspl]
+   [jarman.plugin.plugin-loader :refer [do-load-plugins]]
+   [jarman.config.dot-jarman :refer [dot-jarman-load]]
    ;; --- 
    [jarman.logic.connection :as db]
    [jarman.gui.gui-components :as gcomp]
@@ -20,42 +22,12 @@
 ;;;;;;;;;;;;;;;;;
 ;;; Variables ;;;
 ;;;;;;;;;;;;;;;;;
-(comment
- (defvar dupa1 nil)
- (defvar dupa2 nil
-   :type clojure.lang.PersistentHashMap)
- (defvar dupa3 nil
-   :type clojure.lang.PersistentHashMap)
- (defvar dupa4 nil
-   :type clojure.lang.PersistentHashMap
-   :group :plugin)
- (defvar dupa5 nil
-   :type clojure.lang.PersistentHashMap
-   :group :plugin)
- (defvar dupa6 nil
-   :type clojure.lang.PersistentHashMap
-   :group :cargo))
-(defvar user-menu
-  {"Admin space"
-   {"User table"                [:user :table :user]
-    "Permission edit"           [:permission :table :permission]
-    "FFF"                       [:permission :fff :fff]}
-   "Sale structure"
-   {"Enterpreneur"              [:enterpreneur :table :enterpreneur]
-    "Point of sale group"       [:point_of_sale_group :table :point_of_sale_group]
-    "Point of sale group links" [:point_of_sale_group_links :table :point_of_sale_group_links],
-    "Point of sale"             [:point_of_sale :table :point_of_sale]}
-   "Repair contract"
-   {"Repair contract"           [:repair_contract :table :repair_contract]
-    "Repair reasons"            [:repair_reasons :table :repair_reasons]
-    "Repair technical issue"    [:repair_technical_issue :table :repair_technical_issue]
-    "Repair nature of problem"  [:repair_nature_of_problem :table :repair_nature_of_problem]
-    "Cache register"            [:cache_register :table :cache_register]
-    "Seal"                      [:seal :table :seal]}
-   "Service contract"
-   {"Service period"            [:service_contract :service-period :service_contract]
-    "Service contract"          [:service_contract :table :service_contract]
-    "Service contract month"    [:service_contract_month :table :service_contract_month]}}
+
+(defvar jarman-plugin-list '()
+  :type clojure.lang.PersistentList
+  :group :plugin-system)
+
+(defvar user-menu {}
   :type clojure.lang.PersistentArrayMap
   :group :plugin-system)
 
@@ -155,12 +127,13 @@
   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
        ~@(for [{:keys [plugin-name plugin-config-path] :as cfg} cfg-list]
-           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jspl/%s-toolkit-pipeline" plugin-name)))
-                 plugin-test-spec        (eval `~(symbol (format "jspl/%s-spec-test"        plugin-name)))
-                 plugin-component        (resolve `~(symbol (format "jspl/%s"                  plugin-name)))
+           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jarman.plugins.%s/%s-toolkit" plugin-name plugin-name)))
+                 plugin-test-spec        (eval `~(symbol (format "jarman.plugins.%s/%s-spec-test" plugin-name plugin-name)))
+                 plugin-component        (resolve `~(symbol (format "jarman.plugins.%s/%s" plugin-name plugin-name)))
                  toolkit (plugin-toolkit-pipeline cfg)]
              (plugin-test-spec cfg)
-             (global-view-configs-set plugin-config-path cfg toolkit (eval (fn [] (plugin-component plugin-config-path global-view-configs-get)))))) nil)))
+             (global-view-configs-set plugin-config-path cfg toolkit
+                                      (eval (fn [] (plugin-component plugin-config-path global-view-configs-get)))))) nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; DEBUG SEGMENT ;;; 
@@ -170,19 +143,18 @@
   (let [cfg-list (defview-prepare-config table-name body)]
     `(list
       ~@(for [{:keys [plugin-name] :as cfg} cfg-list]
-          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" plugin-name))
-                plugin-test-spec        `~(symbol (format "jspl/%s-spec-test"        plugin-name))]
+          (let [plugin-toolkit-pipeline `~(symbol (format "jarman.plugins.%s/%s-toolkit" plugin-name plugin-name))
+                plugin-test-spec        `~(symbol (format "jarman.plugins.%s/%s-spec-test" plugin-name plugin-name))]
             `(do (~plugin-test-spec ~cfg)
                  {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)}))))))
-
 
 (defmacro defview-debug-map [table-name & body]
   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
        ~(reduce
         (fn [cfg-acc {:keys [plugin-name plugin-config-path] :as cfg}]
-          (let [plugin-toolkit-pipeline `~(symbol (format "jspl/%s-toolkit-pipeline" plugin-name))
-                plugin-test-spec  (eval `~(symbol (format "jspl/%s-spec-test"        plugin-name)))]
+          (let [plugin-toolkit-pipeline `~(symbol (format "jarman.plugins.%s/%s-toolkit" plugin-name plugin-name))
+                plugin-test-spec  (eval `~(symbol (format "jarman.plugins.%s/%s-spec-test" plugin-name plugin-name)))]
              (plugin-test-spec cfg)
             `(assoc-in ~cfg-acc [~@plugin-config-path] {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)})))
         {} cfg-list))))
@@ -240,9 +212,6 @@
   (get-in (global-view-configs-get)  [:permission :dialog-bigstring :select-name-permission])
   ((get-in (global-view-configs-get) [:permission :dialog-bigstring :my-custom-dialog :toolkit :dialog]))
   ((get-in (global-view-configs-get) [:permission :dialog-table :my-custom-dialog :toolkit :dialog])))
-
-:service_contract :service-period :service_contract
-:service-period :toolkit :service-period
 
 ;;;;;;;;;;;;;;;;;;
 ;;; PluginLink ;;;
@@ -320,29 +289,6 @@
   ([item icon] (cond-> {}
                  item (assoc :item item)
                  icon (assoc :icon icon))))
-
-
-(declare user-menu)
-(def ^:private business-menu
-  {"Admin space"
-   {"User table"                [:user :table :user]
-    "Permission edit"           [:permission :table :permission]}
-   "Sale structure"
-   {"Enterpreneur"              [:enterpreneur :table :enterpreneur]
-    "Point of sale group"       [:point_of_sale_group :table :point_of_sale_group]
-    "Point of sale group links" [:point_of_sale_group_links :table :point_of_sale_group_links],
-    "Point of sale"             [:point_of_sale :table :point_of_sale]}
-   "Repair contract"
-   {"Repair contract"           [:repair_contract :table :repair_contract]
-    "Repair reasons"            [:repair_reasons :table :repair_reasons]
-    "Repair technical issue"    [:repair_technical_issue :table :repair_technical_issue]
-    "Repair nature of problem"  [:repair_nature_of_problem :table :repair_nature_of_problem]
-    "Cache register"            [:cache_register :table :cache_register]
-    "Seal"                      [:seal :table :seal]}
-   "Service contract"
-   {"Service period"            [:service_contract :service-period :service_contract]
-    "Service contract"          [:service_contract :table :service_contract]
-    "Service contract month"    [:service_contract_month :table :service_contract_month]}})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; loader chain for `defview` ;;;

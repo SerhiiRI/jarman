@@ -70,7 +70,7 @@
       (date-object 2021 11 15))
       => [[\"2021-09-13\" \"2021-09-30\"] [\"2021-10-01\" \"2021-10-31\"] [\"2021-11-01\" \"2021-11-30\"] [\"2021-12-01\" \"2021-12-15\"]]"
   [data-s data-e]
-  (let [formater (java.text.SimpleDateFormat. "YYYY-MM-dd")
+  (let [formater (java.text.SimpleDateFormat. "dd-MM-YYYY")
         CONST_START    (java.util.Calendar/getInstance)
         CONST_END      (java.util.Calendar/getInstance)
         beginCalendar  (java.util.Calendar/getInstance)
@@ -254,7 +254,7 @@
 ;;; WARNIGN! is just example for you.
 ;;; Try to rename and rewrite func's
 ;;; like it will comprotable for you
-(defn calculate-payment-for-enterprenier [enterprenier-k service-contracts-m]
+(defn calculate-payment-for-enterpreneuer [enterpreneuer-k service-contracts-m]
  (reduce (fn [acc x]
            (if-not (:service_contract_month.was_payed x)
              (+ acc (:service_contract_month.money_per_month x))
@@ -273,16 +273,15 @@
 (def grouped-query (info-grouped-query))
 (let [{rl :raw-list tip :tree-index-paths ti :tree-index tv :tree-view} grouped-query]
   ;; (map #(conj % false )tip)
-  {:per-enterpreneur (mapv (fn [[enter sc-m]] (calculate-payment-for-enterprenier enter sc-m)) (seq tv))
-   :per-contracts (mapv (fn [[enter sc-m]]
-                          (mapv (fn [[sc-m scm-m]] (calculate-payment-for-service_contract sc-m scm-m)) (seq sc-m))) (seq tv))}
-  tip)
-
-
+  ;; {:per-enterpreneur (mapv (fn [[enter sc-m]]
+  ;;                            (calculate-payment-for-enterpreneuer enter sc-m)) (seq tv))
+  ;;  :per-contracts (mapv (fn [[enter sc-m]]
+  ;;                         (mapv (fn [[sc-m scm-m]] (calculate-payment-for-service_contract sc-m scm-m)) (seq sc-m))) (seq tv))}
+  (first (seq tv)))
 
 
 ;;; INFO SELECTS ;;;
-(defn info-for-enterpreneur [enterpreneur_id]
+#_(defn info-for-enterpreneur [enterpreneur_id]
   {:pre [(number? enterpreneur_id)]}
   (db/query
    (select!
@@ -316,7 +315,7 @@
       :service_contract_month.was_payed]
      :where [:= :enterpreneur.id enterpreneur_id]})))
 
-(defn info-for-service_contract [service_contract_id]
+#_(defn info-for-service_contract [service_contract_id]
   {:pre [(number? service_contract_id)]}
   (db/query
    (select!
@@ -336,7 +335,7 @@
       :service_contract_month.was_payed]
      :where [:= :service_contract.id service_contract_id]})))
 
-(defn get-paiment-for-enterpreneur [enterpreneur_id]
+#_(defn get-paiment-for-enterpreneur [enterpreneur_id]
   {:pre [(number? enterpreneur_id)]}
   (reduce
    (fn [acc x] (+ acc (:service_contract_month.money_per_month x))) 0       
@@ -353,7 +352,7 @@
 
 ;;; PAYMENT SELECTS
 
-(defn get-payment-for-enterpreneur [enterpreneur_id]
+#_(defn get-payment-for-enterpreneur [enterpreneur_id]
   {:pre [(number? enterpreneur_id)]}
   (reduce
    (fn [acc x] (+ acc (:service_contract_month.money_per_month x))) 0       
@@ -368,7 +367,7 @@
                         :enterpreneur.id]
                        :where [:= :enterpreneur.id enterpreneur_id]}))))
 
-(defn get-payment-for-service_contract [service_contract_id]
+#_(defn get-payment-for-service_contract [service_contract_id]
   {:pre [(number? service_contract_id)]}
   (reduce
    (fn [acc x] (+ acc (:service_contract_month.money_per_month x))) 0       
@@ -452,11 +451,23 @@
             :set {:service_contract_month.was_payed true}
             :where (reduce (fn [acc item] (conj acc [:= :id (nth item 2)])) [:or] list-months-id)})))
 
+(defn update-all-service-month-payment [bln]
+  (db/exec
+   (update! {:table_name :service_contract_month
+             :set {:service_contract_month.was_payed bln}})))
+
+(defn update-service-money-per-month [id money] 
+ (db/exec
+  (update! {:table_name :service_contract_month
+            :set {:service_contract_month.money_per_month money}
+            :where [:= :id id]})))
 
 
 
 (comment
-  (update-service-month-to-payed [[1 25 195] [1 2 190]]))
+  (update-service-month-to-payed [[1 25 195] [1 2 190]])
+  (update-service-money-per-month 47 1000)
+  (update-all-service-month-payment false))
 
 #_(defn update-list-service-month-start [list-of-service-month]
   (for [entity list-of-service-month]
@@ -493,8 +504,4 @@
                           :where [:= :id service_contract_id]}))))
    ;; db/exec
    (delete! {:table_name :service_contract :where [:= :id service_contract_id]})))
-
-
-;;[:service_contract :service-period :service_contract]
-;;(info-for-service_contract 1)
 

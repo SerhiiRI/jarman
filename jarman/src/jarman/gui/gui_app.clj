@@ -37,11 +37,8 @@
             [jarman.gui.popup                :as popup]
             [jarman.gui.gui-main-menu        :as menu]
             [jarman.managment.data           :as managment-data]
-
             [jarman.plugin.plugin-loader :refer [do-load-plugins]]
             [jarman.config.dot-jarman :refer [dot-jarman-load]]))
-
-
 
 ;; ┌──────────────────────────┐
 ;; │                          │
@@ -50,7 +47,7 @@
 ;; └──────────────────────────┘
 
 (def jarmanapp--main-view-space
-  "Description: 
+  "Description:
       Vertical layout for tabs and table on right part of app. 
       Tabs are inside horizontal panel on top.
    Example: 

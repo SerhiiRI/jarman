@@ -1,7 +1,8 @@
 (ns jarman.plugin.plugin
   (:require [jarman.config.environment :as env]
             [jarman.tools.lang :refer :all]
-            [clojure.spec.alpha :as s]))
+            [clojure.spec.alpha :as s]
+            [clojure.java.io :as io]))
 
 ;;; TODO there must be specs
 
@@ -144,6 +145,9 @@
          (~func-entrypoint
           ~'plugin-path ~'global-configuration))
        (def ~proxyed-inside-toolkit-pipeline ~inside-plugin-pipeline))))
+
+;; (defn load-plugin-req [plugin-dir-s file-name]
+;;   (load-file (str (io/file ".jarman.d" "plugins" plugin-dir-s file-name))))
 
 (defmacro defplugin
   [plugin-name description & body]

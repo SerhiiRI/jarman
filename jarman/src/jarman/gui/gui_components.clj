@@ -859,7 +859,7 @@
            vrules "[fill]"
            icon-open nil
            icon-hide nil
-           text-open "back"
+           text-open "hide"
            text-hide "..."
            focus-color (gtool/get-color :decorate :focus-gained-dark)
            unfocus-color "#fff"}}]
@@ -1017,7 +1017,7 @@
                ico-hover (stool/image-scale icon/minus-grey-64-png 20)
                id :none
                onClick nil
-               over-func nil
+               over-func :none
                background (gtool/get-comp :button-expand :background)}}]
     (let [atom-inside-btns (atom nil)
           inside-btns (if (nil? inside-btns) nil inside-btns) ;; check if nill
@@ -1042,8 +1042,8 @@
           user-data  {:atom-expanded-items atom-inside-btns
                       :title-fn (fn [new-title] (c/config! title :text new-title))}
           expand-btn (fn [func]
-                       (c/config! title :listen (if (nil? over-func) (listen func) [:mouse-clicked over-func
-                                                                                    :mouse-entered gtool/hand-hover-on]))
+                       (c/config! title :listen (if (= :none over-func) (listen func) [:mouse-clicked over-func
+                                                                                       :mouse-entered gtool/hand-hover-on]))
                        (c/config! icon :listen (listen func))
                        ;; (mig-panel
                        ;;  :constraints ["" (str "10px[grow, fill]0px[" vsize "]0px") "0px[fill]0px"]
@@ -1079,7 +1079,6 @@
                              (c/config! icon :icon ico)
                              (println  "CLOOSEEE")
                              (doall (map #(.remove mig %) (reverse (drop 1 (range (count (u/children mig)))))))
-                             
                              (.revalidate mig)
                              (.repaint mig)
                              (c/config! mig :user-data "HEyy-NOO" ;;(into user-data {:expanded? false})
@@ -1114,10 +1113,12 @@
        & {:keys [onClick
                  left
                  hover-color
+                 cursor
                  width
                  args]
           :or {onClick (fn [e] (println "Clicked: " title))
                left 0
+               cursor :hand
                hover-color "#eeefff"
                width 200 
                args []}}]
@@ -1125,6 +1126,7 @@
            :text (str title)
            :background "#fff"
            :size  [width :by 25]
+           :cursor cursor
            :focusable? true
            :border (b/empty-border :left 10)
            :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))

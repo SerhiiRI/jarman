@@ -147,3 +147,10 @@
 
 
 
+;;; TEST LOADING EXTERNAL RESOURCE
+(defn load-files [dir]
+  (doseq [f (file-seq dir)
+          :when (.isFile f)]
+    (load-file (.getAbsolutePath f))))
+
+(load-files (clojure.java.io/file ".jarman.d" "plugins"))

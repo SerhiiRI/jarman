@@ -18,7 +18,8 @@
 (setq jarman.logic.view-manager/user-menu
       {"Admin space"
        {"User table"                [:user :table :user]
-        "Permission edit"           [:permission :table :permission]}
+        "Permission edit"           [:permission :table :permission]
+	"FFF"                       [:permission :fff :fff]}
        "Sale structure"
        {"Enterpreneur"              [:enterpreneur :table :enterpreneur]
         "Point of sale group"       [:point_of_sale_group :table :point_of_sale_group]

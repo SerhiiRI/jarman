@@ -12,7 +12,9 @@
    [jarman.plugin.dialog-table]
    [jarman.plugin.dialog-test]
    [jarman.plugin.dialog-bigstring]
-   [jarman.plugin.service-period]))
+   [jarman.plugin.service-period]
+
+   [jarman.plugins.fff]))
 
 ;;; check assertion
 (s/check-asserts true)
@@ -119,3 +121,7 @@
 
 (defplugin service-period jarman.plugin.service-period
   "Plugin for service contracts of enterpreneurs")
+
+(defplugin fff jarman.plugins.fff
+  "Plugin for service contracts of enterpreneurs")
+

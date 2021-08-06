@@ -4,6 +4,11 @@
 
 (defview
   permission
+  (fff
+   :id :fff
+   :permission [:admin :developer :user]
+   :name "FFF"
+   :plug-place [:#tables-view-plugin])
   (table
    :id :permission
    :name "permission"

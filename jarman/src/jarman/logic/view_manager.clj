@@ -23,6 +23,11 @@
 ;;; Variables ;;;
 ;;;;;;;;;;;;;;;;;
 
+(comment
+  (dot-jarman-load)
+  (deref user-menu)
+  (deref jarman-plugin-list))
+
 (defvar jarman-plugin-list '()
   :type clojure.lang.PersistentList
   :group :plugin-system)

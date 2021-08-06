@@ -6,20 +6,31 @@
   (:import (java.io IOException FileNotFoundException)))
 
 
-(def ^:private jarman-plugins-dir-list [(io/file env/user-home ".jarman.d" "plugins")
-                                        (io/file ".jarman.d" "plugins")])
+(def ^:private jarman-plugins-dir-list
+  "List of all plugins directory in client filesystem"
+  [(io/file env/user-home ".jarman.d" "plugins")
+   (io/file ".jarman.d" "plugins")])
 
-(defn load-files [dir]
-  (doseq [f (file-seq dir)
-          :when (.isFile f)]
-    (load-file (.getAbsolutePath f))))
+(defn do-load-plugins
+  "Description
+    Sequentually walk throught the `plugins` directory in `.jarman.d`
+    and evaluate 'Central Plugin File'. 
 
-(defn do-load-plugins []
-  (if-let [file (first (filter #(.exists %) jarman-plugins-dir-list))]
-    (load-files file)
-    (throw (FileNotFoundException.
-            (format "No one plugin directory [%s] doesn't exists"
-                    (clojure.string/join
-                     ", " (map str jarman-plugins-dir-list)))))) true)
+  What is?
+    'Central Plugin File' - is file which name equal with directory name
+    For example \"some_plugin/some_plugin.clj\", where in directory
+    plugin \"some_plugin\" we compile \"some_plugin.clj\" file. That
+    file is entry-point, or main file to compilation all plugin structure"
+  []
+  (->> (first (filter #(.exists %) jarman-plugins-dir-list))
+       .listFiles 
+       (filter #(.isDirectory %))
+       (map (fn [d] 
+              (let [plugin-intro (format "%s.clj"(.getName d))]
+                (if (.exists (io/file d plugin-intro))
+                  (load-file (str (io/file d plugin-intro)))
+                  (println "File is not exist")))))
+       (doall)) true)
 
 (do-load-plugins)
+

@@ -49,11 +49,12 @@
                 :halign :center
                 :border (line-border :right 2 :color border)
                 :size [vsize :by vsize]
-                :listen [:mouse-entered (fn [e] (c/config! e
-                                                         :cursor :hand
-                                                         :icon (jarman.tools.swing/image-scale icon/x-blue1-64-png 15)))
-                         :mouse-exited  (fn [e] (c/config! e
-                                                         :icon (jarman.tools.swing/image-scale icon/x-grey2-64-png 15)))
+                :listen [;; :mouse-entered (fn [e] (c/config! e
+                         ;;                                 :cursor :hand
+                         ;;                                 :icon (jarman.tools.swing/image-scale icon/x-blue1-64-png 15)))
+                         ;; :mouse-exited  (fn [e] (c/config! e
+                         ;;                                 :icon (jarman.tools.swing/image-scale icon/x-grey2-64-png 15)))
+                         :mouse-entered (fn [e](c/config! e :cursor :hand))
                          :mouse-clicked onclose])]
        :listen [:mouse-entered (fn [e] (c/config! e :cursor :hand))]))))
 

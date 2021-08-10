@@ -128,11 +128,10 @@
 
 
 (defn- load-static-main-menu []
-  (menu/clean-main-menu)
-  (state/set-state
-   [:main-menu]
-   (concat
-    (menu/bulid-expand-by-map (menu/default-menu-items)))))
+  (menu/add-to-main-tree
+     (concat
+      (state/state [:main-menu])
+      (menu/bulid-expand-by-map (menu/default-menu-items)))))
 
 
 (defn load-plugins-to-main-menu []
@@ -177,8 +176,7 @@
   []
   (gseed/build
    :items (let [img-scale 35
-                top-offset 2
-                god-mode false]
+                top-offset 2]
             (menu/clean-main-menu)
 
             (concat ;; items for jlp
@@ -187,19 +185,6 @@
                           [{:icon  icon/I-64-png
                             :title "Message Store"
                             :fn    (fn [e] ((state/state :alert-manager) :show))}
-                           
-                           (if god-mode
-                             {:icon  icon/key-blue-64-png
-                              :title "Change work mode"
-                              :fn    (fn [e]
-                                       (let [test true] ;; TODO: Add input with question about secret code
-                                         (if test
-                                           (do
-                                             (cond (= "user"      (session/user-get-permission)) (session/user-set-permission "admin")
-                                                   (= "admin"     (session/user-get-permission)) (session/user-set-permission "developer")
-                                                   (= "developer" (session/user-get-permission)) (session/user-set-permission "user"))
-                                             ((state/state :alert-manager) :set {:header "Work mode" :body (str "Switched to: " (session/user-get-permission))}  5)
-                                             (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))))))})
                            
                            {:icon  icon/refresh-blue1-64-png
                             :title "Reload active view"
@@ -217,7 +202,8 @@
 
                            {:icon  icon/enter-64-png
                             :title "Close app"
-                            :fn    (fn [e] (.dispose (c/to-frame e)))}])))))
+                            :fn    (fn [e] (.dispose (c/to-frame e)))}])
+             [(gcomp/fake-focus :vgap top-offset :hgap img-scale)]))))
 
 
 
@@ -235,8 +221,9 @@
   []
   (dot-jarman-load)
   (do-load-plugins)
-  (load-static-main-menu)
-  (load-plugins-to-main-menu))
+  (menu/clean-main-menu)
+  (load-plugins-to-main-menu)
+  (load-static-main-menu))
 
 ;; ┌─────────────┐
 ;; │             │

@@ -9,7 +9,8 @@
             [jarman.logic.view-manager       :as vmg]
             [jarman.gui.gui-dbvisualizer     :as dbv]
             [jarman.gui.gui-config-generator :as cg]
-            [jarman.gui.popup                :as popup]))
+            [jarman.gui.popup                :as popup]
+            [jarman.tools.swing              :as stool]))
 
 
 (defn- expand-colors []
@@ -174,3 +175,19 @@
 (defn add-to-main-tree [components-coll]
   (let [path [:main-menu]]
     (swap! (state/get-atom) (fn [state] (assoc-in state path (concat (state path) components-coll))))))
+
+
+(defn menu-slider
+  "Description:
+     Return list of buttons in columne, one by one for jlayeredpane"
+  [scale offset btns]
+  (let [inc-fn #(range 0 (doto (count btns) println ))]
+    (doall
+     (map
+      (fn [m index]
+        (gtool/slider-ico-btn (stool/image-scale (:icon m) scale)
+                              index scale (:title m)
+                              :onClick (:fn m)
+                              :top-offset offset))
+      (filter-nil btns) (inc-fn)))))
+

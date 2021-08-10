@@ -26,7 +26,6 @@
             [jarman.gui.gui-components       :as gcomp]
             [jarman.gui.gui-tools            :as gtool]
             ;; deverloper tools 
-            [jarman.tools.swing              :as stool]
             [jarman.config.init              :as iinit]
             [jarman.logic.state              :as state]
             [jarman.gui.gui-seed             :as gseed]
@@ -171,49 +170,56 @@
     (.dispose (seesaw.core/to-frame (state/state :app)))
     (catch Exception e (println "Last pos is nil"))))
 
+
 (defn load-level-2
   "Description:
     Bulid application."
   []
   (gseed/build
    :items (let [img-scale 35
-                top-offset 2]
+                top-offset 2
+                god-mode false]
             (menu/clean-main-menu)
-            (list
-             [(jarmanapp :margin-left img-scale) 0]
-             (gtool/slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser"
-                                   :onClick (fn [e] ((state/state :jarman-views-service)
-                                                     :set-view
-                                                     :view-id "DB Visualiser"
-                                                     :title "DB Visualiser"
-                                                     :component-fn dbv/create-view--db-view))
-                                   :top-offset top-offset)
-             (gtool/slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Message Store"
-                                   :onClick (fn [e] ((state/state :alert-manager) :show))
-                                   :top-offset top-offset)
-             (gtool/slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 2 img-scale "Change work mode"
-                                   :onClick (fn [e]
-                                              (cond (= "user"      (session/user-get-permission)) (session/user-set-permission "admin")
-                                                    (= "admin"     (session/user-get-permission)) (session/user-set-permission "developer")
-                                                    (= "developer" (session/user-get-permission)) (session/user-set-permission "user"))
-                                              ((state/state :alert-manager) :set {:header "Work mode" :body (str "Switched to: " (session/user-get-permission))}  5)
-                                              (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission))))
-                                   :top-offset top-offset)
-             (gtool/slider-ico-btn (stool/image-scale icon/enter-64-png img-scale) 3 img-scale "Close app"
-                                   :onClick (fn [e] (.dispose (c/to-frame e)))
-                                   :top-offset top-offset)
-             (gtool/slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 4 img-scale "Reload active view"
-                                   :onClick (fn [e] (try
-                                                      (((state/state :jarman-views-service) :reload))
-                                                      (catch Exception e (str "Can not reload. Storage is empty."))))
-                                   :top-offset top-offset)
 
-             (gtool/slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 5 img-scale "Restart"
-                                   :onClick (fn [e] (do
-                                                      (println "App restart")
-                                                      ((state/state :startup))))
-                                   :top-offset top-offset)
-             (gcomp/fake-focus :vgap top-offset :hgap img-scale)))))
+            (concat ;; items for jlp
+             [[(jarmanapp :margin-left img-scale) 0]]
+             (menu/menu-slider img-scale top-offset
+                          [{:icon  icon/I-64-png
+                            :title "Message Store"
+                            :fn    (fn [e] ((state/state :alert-manager) :show))}
+                           
+                           (if god-mode
+                             {:icon  icon/key-blue-64-png
+                              :title "Change work mode"
+                              :fn    (fn [e]
+                                       (let [test true] ;; TODO: Add input with question about secret code
+                                         (if test
+                                           (do
+                                             (cond (= "user"      (session/user-get-permission)) (session/user-set-permission "admin")
+                                                   (= "admin"     (session/user-get-permission)) (session/user-set-permission "developer")
+                                                   (= "developer" (session/user-get-permission)) (session/user-set-permission "user"))
+                                             ((state/state :alert-manager) :set {:header "Work mode" :body (str "Switched to: " (session/user-get-permission))}  5)
+                                             (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission)))))))})
+                           
+                           {:icon  icon/refresh-blue1-64-png
+                            :title "Reload active view"
+                            :fn    (fn [e] (try
+                                             (((state/state :jarman-views-service) :reload))
+                                             (catch Exception e (str "Can not reload. Storage is empty."))))}
+
+                           {:icon  icon/refresh-blue-64-png
+                            :title "Restart"
+                            :fn    (fn [e] ((state/state :startup)))}
+
+                           {:icon  icon/download-blue-64-png
+                            :title "Update"
+                            :fn    (fn [e] (println "Check update"))}
+
+                           {:icon  icon/enter-64-png
+                            :title "Close app"
+                            :fn    (fn [e] (.dispose (c/to-frame e)))}])))))
+
+
 
 (defn load-level-3
   "Description:

@@ -60,7 +60,7 @@
                 items (label :text "Hello Boi!" :bounds [100 100 300 300])
                 size @(state/state :atom-app-size)
                 undecorated? false}}]
-    (let [set-items (if-not (list? items) (list items) items)]
+    (let [set-items (if-not (sequential? items) (list items) items)]
       (do
         (state/set-state :app (base set-items))
         (state/set-state :alert-manager (gas/message-server-creator (state/state :app)))

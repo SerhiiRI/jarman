@@ -11,7 +11,6 @@
    [seesaw.swingx :as swingx]
    [seesaw.chooser :as chooser]
    ;; Jarman toolkit
-
    [jarman.tools.lang :refer :all]
    [jarman.tools.swing :as stool]
    [jarman.gui.gui-tools :as gtool]
@@ -42,12 +41,12 @@
     (c/config! dialog :content key-p :title (gtool/get-lang :tips :related-popup-table))
     (c/show! dialog)))
 
-(defn dialog-table [plugin-config plugin-toolkit id]
+(defn dialog-table-component [plugin-config plugin-toolkit id]
   (popup-table (:table (gtable/create-table plugin-config plugin-toolkit)) id))
 
-(defn dialog-table-toolkit-pipeline [configuration]
+(defn dialog-table-toolkit-pipeline [configuration] (println "dupa")
   (let [toolkit (query-toolkit/data-toolkit-pipeline configuration {})]
-    (into toolkit {:dialog (fn [id] (dialog-table configuration toolkit id))})))
+    (into toolkit {:dialog (fn [id] (dialog-table-component configuration toolkit id))})))
 
 (defn dialog-table-entry [plugin-path global-configuration])
 
@@ -66,3 +65,4 @@
    {:spec [:jarman.plugins.data-toolkit/query :req-un],
     :examples "{:table_name :permission, :column [:#as_is ...]...}",
     :doc "SQL syntax for `select!` query"}])
+

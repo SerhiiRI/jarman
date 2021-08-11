@@ -229,8 +229,8 @@
                (do (enterpr-exp k v)
                    (doall (map btn v))))) plugin-m) pan))
 
-;;;;;;;;;;;;;;;;
-;;; REQUIRES ;;;
+;;;;;;;;;;;;;;;; 
+;;; REQUIRES ;;; 
 ;;;;;;;;;;;;;;;;
 (defn- insert-contract [state calndr-start calndr-end price-input select-box]
   (let [date1         (seesaw.core/text calndr-start)
@@ -239,15 +239,19 @@
         entpr         (seesaw.core/selection select-box)
         enterpreneurs (:all-enterpreneurs @state)
         date-to-obj   (fn [data-string] (.parse (java.text.SimpleDateFormat. "dd-MM-YYYY") data-string))
-        id-entr       (:id (first (filter (fn [x] (= (:name x) entpr)) enterpreneurs)))]
-    (if (some empty? [date1 date2 price entpr])
-      ((state/state :alert-manager) :set {:header "Error" :body "All fields must be entered"} 5)
-      (if (isNumber? price) 
-        (do
-          (req/insert-all id-entr (date-to-obj date1) (date-to-obj date2) (read-string price))
-          (refresh-data-and-panel state)
-          ((state/state :alert-manager) :set {:header "Success" :body "Added service contract"} 5))))))
- 
+        id-entr       (:id (first (filter (fn [x] (= (:name x) entpr)) enterpreneurs)))
+        alert-fn      (fn [header body] ((state/state :alert-manager) :set {:header header :body body} 5))]
+    (if-let [alerts (not-empty (cond-> []
+                                 (empty? entpr)
+                                 (conj (fn [] (alert-fn "Invalid enterpreneur" "Enterpreneur field must be not empty")))
+                                 (or (empty? price) (not (isNumber? price)))
+                                 (conj (fn [] (alert-fn "Invalid price" "Price must be number")))
+                                 (or (empty? date1) (empty? date2) (req/data-comparator-old-new (date-to-obj date1) (date-to-obj date2)))
+                                 (conj (fn [] (alert-fn "Invalid date" "Date fields must be not empty, start day must be older")))))]
+      (doall (map (fn [alert-fn] (alert-fn)) alerts))
+      (let [ins-req (req/insert-all id-entr (date-to-obj date1) (date-to-obj date2) (read-string price))]
+        (if ins-req  (alert-fn "Success" "Added service contract") (alert-fn "Error with sql require" ins-req))))))
+
 (defn- update-contracts [state]
   (let [{:keys [update-service-month select-group-data]} (:plugin-toolkit @state)
         checkboxes  (doall (filter (fn [item] (= (last item) true)) @(:checkboxes @state)))]
@@ -322,7 +326,7 @@
         view-space         (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "0px[top]0px"]
                                                  :items [[btn-panel]
                                                          [insert-space]
-                                                         [exp-panel]])]
+                                                         [(seesaw.core/border-panel :center exp-panel)]])]
     (swap! state merge {:all-enterpreneurs all-enterpreneurs :btn-panel btn-panel :tip tip :view-space view-space :exp-panel exp-panel :insert-space insert-space :checkboxes checkboxes})
     (refresh-data-and-panel state)
     (gcomp/hmig
@@ -362,3 +366,5 @@
 
 (defplugin service-period 
   "Plugin for service contracts of enterpreneurs")
+
+

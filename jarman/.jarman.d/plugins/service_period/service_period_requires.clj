@@ -411,12 +411,14 @@
               :column-list [:id_service_contract :service_month_start :service_month_end :money_per_month :was_payed]
               :values [[1 \"2021-09-13\" \"2021-09-30\" 400] [1 \"2021-10-01\" \"2021-10-31\" 400]]})"
   {:pre [(instance? java.util.Date start-date) (instance? java.util.Date end-date)]}
-  (db/exec
-   (insert! {:table_name :service_contract_month
-             :column-list [:id_service_contract :service_month_start :service_month_end :money_per_month :was_payed]
-             :values (mapv (fn [[start-date end-date]]
-                             (vector service_contract_id start-date end-date money_per_month false))
-                           (get-date-pairs start-date end-date))})))
+  (let [date-list (get-date-pairs start-date end-date)
+        sql-require (insert! {:table_name :service_contract_month
+                              :column-list [:id_service_contract :service_month_start :service_month_end :money_per_month :was_payed]
+                              :values (mapv (fn [[start-date end-date]]
+                                              (vector service_contract_id start-date end-date money_per_month false)) date-list)})]
+    (try 
+      (do (db/exec sql-require) true)
+      (catch Exception e sql-require))))
 
 (defn insert-all [id_enterpreneur contract_start_term contract_end_term money_per_month]
   {:pre [(some? id_enterpreneur)
@@ -461,8 +463,6 @@
   (update! {:table_name :service_contract_month
             :set {:service_contract_month.money_per_month money}
             :where [:= :id id]})))
-
-
 
 (comment
   (update-service-month-to-payed [[1 25 195] [1 2 190]])

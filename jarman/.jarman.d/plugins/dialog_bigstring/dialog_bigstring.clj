@@ -47,7 +47,7 @@
    :foreground gcomp/blue-green-color
    :border (seesaw.border/compound-border (seesaw.border/empty-border :left 20 :right 20 :bottom 10 :top 10))))
 
-(defn dialog-bigstring
+(defn dialog-bigstring-component
   "Description
     this func create dialog-window whith big strings, which gets from db,
     by table-name and name of column. The first label with data will be
@@ -64,18 +64,20 @@
                                  :constraints ["wrap 1" "0px [fill, grow]0px" "0px[]0px"]
                                  :items
                                  (gtool/join-mig-items
-                                  (map (fn [m]
-                                         (let [item-text (item-getter m)
-                                               selected? (= (id-getter m) selected-id)
-                                               return-function (fn [e] (seesaw.core/return-from-dialog dialog m))
-                                               item (dialog-bigstring-item
-                                                     item-text
-                                                     return-function
-                                                     selected?)]
-                                           (if selected?
-                                             (swap! selected-element (fn [e] item))
-                                             item)))
-                                       item-list)))))
+                                  (if (empty? item-list)
+                                    (dialog-bigstring-item "[!] Empty DB" (fn [e] (seesaw.core/return-from-dialog dialog nil)) 0)
+                                    (map (fn [m]
+                                           (let [item-text (item-getter m)
+                                                 selected? (= (id-getter m) selected-id)
+                                                 return-function (fn [e] (seesaw.core/return-from-dialog dialog m))
+                                                 item (dialog-bigstring-item
+                                                       item-text
+                                                       return-function
+                                                       selected?)]
+                                             (if selected?
+                                               (swap! selected-element (fn [e] item))
+                                               item)))
+                                         item-list))))))
         dialog-content-scroll (gcomp/min-scrollbox
                                ;;seesaw.core/scrollable
                                dialog-content
@@ -101,7 +103,7 @@
         get-item  (fn [m] ((:item-column configuration) m))
         get-id    (fn [m] (:model-id toolkit-map))]
     (into toolkit-map
-          {:dialog (fn [id] (dialog-bigstring (query) get-item get-id id))})))
+          {:dialog (fn [id] (dialog-bigstring-component (query) get-item get-id id))})))
 
 (defn dialog-bigstring-toolkit-pipeline [plugin-config]
   (let [toolkit-map (query-toolkit/data-toolkit-pipeline plugin-config {})]

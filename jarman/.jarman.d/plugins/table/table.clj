@@ -288,10 +288,11 @@
                   (if-not (empty? (:model-changes (state!)))
                     (let [insert-m (:model-changes (state!))]
                       (println "\nRun Insert\n" ((:insert plugin-toolkit) insert-m) "\n")
-                      (dispatch! {:action :clear-changes})))
+                      ;; (dispatch! {:action :clear-changes})
+                      ))
                   (= type :clear) (do (dispatch! {:action :clear-model})
                                       (dispatch! {:action :clear-changes}))
-                  (= type :update) ;; TODO: Turn on update fn after added empty key map template, without throw exception, too may value in query, get permission_name
+                  (= type :update)
                   (do
                     (let [table-id (first (:model-columns plugin-toolkit))
                           update-m (into {table-id (table-id table-model)} (:model-changes (state!)))]
@@ -299,7 +300,7 @@
                         ((:update plugin-toolkit) update-m)
                         (catch Exception e (popup/build-popup {:title "Warning" :size [300 200] :comp-fn (fn [] (c/label :text "Wrong data to update!"))})))
                       (dispatch! {:action :clear-model})
-                      (dispatch! {:action :clear-changes})
+                      ;; (dispatch! {:action :clear-changes})
                       ))
                   (= type :delete)
                   (let [to-delete {(first (:model-columns plugin-toolkit))
@@ -310,7 +311,7 @@
                   (do
                     (println "\nLooks on chages: " (:model-changes (state!)))
                     (gcomp/popup-info-window "Changes" (str (:model-changes (state!))) (state/state :app))))
-                (if-not (= type :changes)(((state/state :jarman-views-service) :reload)))))))
+                (if-not (= type :changes) ((:table-render (state!)))))))) 
 
 (defn get-missed-props
   "Description:
@@ -507,7 +508,7 @@
                :func     (fn [e] ((:table-render (state!))))}]
         icos (if (nil? more-front) icos (concat more-front icos))]
     (gcomp/icon-bar
-     :size 40
+     :size 35
      :align :right
      :margin [5 0 10 10]
      :items icos)))

@@ -89,6 +89,7 @@
              rgap
              tgap
              bgap
+             gap
              vrules
              hrules
              debug
@@ -99,15 +100,17 @@
            rgap 0
            tgap 0
            bgap 0
+           gap  []
            vrules "[grow, fill]"
            hrules "[grow, fill]"
            debug [0 "#f00"]
            args []}}]
-  (apply mig-panel
-         :constraints [(str "wrap " wrap) (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
-         :items items
-         :border (b/line-border :thickness (first debug) :color (second debug))
-         args))
+  (let [[tgap bgap lgap rgap] (rift gap [tgap bgap lgap rgap])]
+    (apply mig-panel
+           :constraints [(str "wrap " wrap) (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
+           :items items
+           :border (b/line-border :thickness (first debug) :color (second debug))
+           args)))
 
 (defn hmig
   [& {:keys [items
@@ -116,6 +119,7 @@
              rgap
              tgap
              bgap
+             gap
              vrules
              hrules
              debug
@@ -126,15 +130,17 @@
            rgap 0
            tgap 0
            bgap 0
+           gap []
            vrules "[grow, fill]"
            hrules "[grow, fill]"
            debug [0 "#f00"]
            args []}}]
-  (apply mig-panel
-         :constraints [wrap (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
-         :items items
-         :border (b/line-border :thickness (first debug) :color (second debug))
-         args))
+  (let [[tgap bgap lgap rgap] (rift gap [tgap bgap lgap rgap])]
+    (apply mig-panel
+          :constraints [wrap (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
+          :items items
+          :border (b/line-border :thickness (first debug) :color (second debug))
+          args)))
 
 (defn scrollbox
   [component
@@ -473,40 +479,64 @@
 
 (defn state-input-text
   "Description:
-    Text input for state architecture. Need fn in action to changing state.
+     Text component converted to c/text component with placeholder. Placehlder will be default value.
+     Text input for state architecture. Need fn in action to changing state.
+   Params:
+     val
+     placeholder
+     border
+     font-size
+     border-color-focus
+     border-color-unfocus
+     char-limit
+     args
    Example:
-    (state-input-text {:func (fn [e] (dispatch! {...})) :val \"some value\" }"
+     (state-input-text {:func (fn [e] (dispatch! {...})) :val \"some value\" }"
   [{func :func
     val  :val}
-   & {:keys [font-size
+   & {:keys [placeholder
+             border
+             font-size
              border-color-focus
              border-color-unfocus
-             border
-             enabled?
-             editable?]
-      :or {font-size 14
+             char-limit
+             args]
+      :or {placeholder ""
+           font-size 14
            border-color-focus   (gtool/get-color :decorate :focus-gained)
            border-color-unfocus (gtool/get-color :decorate :focus-lost)
            border [10 10 5 5 2]
-           enabled? true
-           editable? true}}]
-  (let [newBorder (fn [underline-color]
-                    (b/compound-border (b/empty-border :left (nth border 0)
-                                                       :right (nth border 1)
-                                                       :top (nth border 2)
-                                                       :bottom (nth border 3))
-                                       (b/line-border :bottom (nth border 4)
-                                                      :color underline-color)))]
-    (c/text
-     :text (str (rift val ""))
-     :font (gtool/getFont font-size :name "Monospaced")
-     :background (gtool/get-color :background :input)
-     :border (newBorder border-color-unfocus)
-     :enabled? enabled?
-     :editable? editable?
-     :listen [:focus-gained (fn [e] (c/config! e :border (newBorder border-color-focus)))
-              :focus-lost   (fn [e] (c/config! e :border (newBorder border-color-unfocus)))
-              :caret-update func])))
+           char-limit 0
+           args []}}]
+  (let [fn-get-data     (fn [e key] (get-in (c/config e :user-data) [key]))
+        fn-assoc        (fn [e key val] (assoc-in (c/config e :user-data) [key] val))
+        newBorder (fn [underline-color]
+                    (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
+                                       (b/line-border :bottom (nth border 4) :color underline-color)))
+        last-v (atom "")]
+    (apply c/text
+           :text (if (empty? val) placeholder (if (string? val) val (str val)))
+           :font (gtool/getFont font-size :name "Monospaced")
+           :background (gtool/get-color :background :input)
+           :border (newBorder border-color-unfocus)
+           :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
+           :listen [:focus-gained (fn [e]
+                                    (c/config! e :border (newBorder border-color-focus))
+                                    (cond (= (c/value e) placeholder) (c/config! e :text ""))
+                                    (c/config! e :user-data (fn-assoc e :edit? true)))
+                    :focus-lost   (fn [e]
+                                    (c/config! e :border (newBorder border-color-unfocus))
+                                    (cond (= (c/value e) "") (c/config! e :text placeholder))
+                                    (c/config! e :user-data (fn-assoc e :edit? false)))
+                    :caret-update (fn [e]
+                                    (let [new-v (c/value (c/to-widget e))]
+                                      (if (and (> (count new-v) char-limit) (< 0 char-limit))
+                                        (c/invoke-later (c/config! e :text @last-v))
+                                        (do
+                                          (reset! last-v new-v)
+                                          (c/config! e :user-data (fn-assoc e :value (if (= placeholder @last-v) "" @last-v)))
+                                          (func e)))))]
+           args)))
 
 (defn input-checkbox
   [& {:keys [txt
@@ -962,6 +992,78 @@
                                                     (c/config! e :user-data (fn-assoc e :value ""))
                                                     (c/invoke-later (c/config! e :text ""))
                                                     (reset! allow-clean false)))))]
+             style))))
+
+
+(def state-input-password
+  "Description:
+    Text component converted to state password input component.
+ Example:
+    (state-input-password {:state! state! :dispatch! dispatch! :action :update :path [:a :b]})"
+  (fn [{dispatch! :dispatch!
+        action    :action
+        path      :path}
+       & {:keys [placeholder
+                 border
+                 font-size
+                 border-color-focus
+                 border-color-unfocus
+                 style]
+          :or   {placeholder "Password"
+                 font-size 14
+                 border-color-focus   (gtool/get-color :decorate :focus-gained)
+                 border-color-unfocus (gtool/get-color :decorate :focus-lost)
+                 border [10 10 5 5 2]
+                 style []}}]
+    (let [allow-clean (atom false)
+          fn-letter-count (fn [e] (count (c/value e)))
+          fn-hide-chars   (fn [e] (apply str (repeat (fn-letter-count e) "*")))
+          fn-get-data     (fn [e k] (get-in (c/config e :user-data) [k]))
+          fn-assoc        (fn [e k v] (assoc-in (c/config e :user-data) [k] v))
+          newBorder       (fn [underline-color]
+                            (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
+                                             (b/line-border :bottom (nth border 4) :color underline-color)))]
+      (apply c/text
+             :text placeholder
+             :font (gtool/getFont font-size :name "Monospaced")
+             :background (gtool/get-color :background :input)
+             :border (newBorder border-color-unfocus)
+             :user-data {:placeholder placeholder :value "" :edit? false :type :password}
+             :listen [:focus-gained (fn [e]
+                                      (c/config! e :border (newBorder border-color-focus))
+                                      (cond (= (fn-get-data e :value) "")    (c/config! e :text ""))
+                                      (c/config! e :user-data (fn-assoc e :edit? true)))
+                      :focus-lost   (fn [e]
+                                      (c/config! e :border (newBorder border-color-unfocus))
+                                      (cond (= (c/value e) "") (c/config! e :text placeholder))
+                                      (c/config! e :user-data (fn-assoc e :edit? false)))
+                      :caret-update (fn [e]
+                                      (let [dispatch-fn (fn [m] (dispatch! {:action action
+                                                                            :path   path
+                                                                            :value  (:value m)}))]
+                                        (cond (and (= (fn-get-data e :edit?) true)
+                                                   (not (= (c/value e) placeholder)))
+                                              (cond (< 0 (count (c/value e)))
+                                                    (let [added-chars (clojure.string/replace (c/value e) #"\*+" "")]
+                                                      (cond (> (count added-chars) 0)
+                                                            (let [update-pass (fn-assoc e :value (str (fn-get-data e :value) added-chars))]
+                                                              (c/config! e :user-data update-pass)
+                                                              (dispatch-fn update-pass)
+                                                              (c/invoke-later (c/config! e :text (fn-hide-chars e))))
+                                                            (< (fn-letter-count e) (count (fn-get-data e :value)))
+                                                            (let [update-pass (fn-assoc e :value (subs (fn-get-data e :value) 0 (fn-letter-count e)))]
+                                                              (c/config! e :user-data update-pass)
+                                                              (dispatch-fn update-pass)
+                                                              (if (= 1 (count (c/value e))) (reset! allow-clean true))
+                                                              (c/invoke-later (c/config! e :text (fn-hide-chars e))))))
+
+                                                    (and (= true @allow-clean)
+                                                         (= 0 (count (c/value e))))
+                                                    (let [update-pass (fn-assoc e :value "")]
+                                                      (c/config! e :user-data update-pass)
+                                                      (dispatch-fn update-pass)
+                                                      (c/invoke-later (c/config! e :text ""))
+                                                      (reset! allow-clean false))))))]
              style))))
 
 ;; (def pass (input-password :placeholder "password"))

@@ -37,8 +37,8 @@
             [jarman.gui.popup                :as popup]
             [jarman.gui.gui-main-menu        :as menu]
             [jarman.managment.data           :as managment-data]
-            [jarman.plugin.plugin-loader :refer [do-load-plugins]]
-            [jarman.config.dot-jarman :refer [dot-jarman-load]]))
+            [jarman.plugin.plugin-loader     :refer [do-load-plugins]]
+            [jarman.config.dot-jarman        :refer [dot-jarman-load]]))
 
 ;; ┌──────────────────────────┐
 ;; │                          │
@@ -78,7 +78,7 @@
                [views-space]]))))
 
 (def jarmanapp--main-tree
-  "Description:
+  "Dscription:
       Vertical layout of elements, left part of app for functions
    Example:
       (jarmanapp--main-tree  [(button-expand 'Ukryte opcje 1' [(some-button)])] [(button-expand 'Ukryte opcje 2')])
@@ -193,11 +193,11 @@
                                    :top-offset top-offset)
              (gtool/slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 2 img-scale "Change work mode"
                                    :onClick (fn [e]
-                                              (cond (= "user"      (session/user-get-permission)) (session/user-set-permission "admin")
-                                                    (= "admin"     (session/user-get-permission)) (session/user-set-permission "developer")
-                                                    (= "developer" (session/user-get-permission)) (session/user-set-permission "user"))
-                                              ((state/state :alert-manager) :set {:header "Work mode" :body (str "Switched to: " (session/user-get-permission))}  5)
-                                              (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission))))
+                                              (cond (= "user"      (session/get-user-permission)) (session/set-user-permission "admin")
+                                                    (= "admin"     (session/get-user-permission)) (session/set-user-permission "developer")
+                                                    (= "developer" (session/get-user-permission)) (session/set-user-permission "user"))
+                                              ((state/state :alert-manager) :set {:header "Work mode" :body (str "Switched to: " (session/get-user-permission))}  5)
+                                              (gseed/extend-frame-title (str ", " (session/get-user-login) "@" (session/get-user-permission))))
                                    :top-offset top-offset)
              (gtool/slider-ico-btn (stool/image-scale icon/enter-64-png img-scale) 3 img-scale "Close app"
                                    :onClick (fn [e] (.dispose (c/to-frame e)))
@@ -221,7 +221,7 @@
   [relative-pos]
   (if-not (nil? @relative-pos)
     (.setLocation (seesaw.core/to-frame (state/state :app)) (first @relative-pos) (second @relative-pos)))
-  (gseed/extend-frame-title (str ", " (session/user-get-login) "@" (session/user-get-permission))))
+  (gseed/extend-frame-title (str ", " (session/get-user-login) "@" (session/get-user-permission))))
 
 (defn load-level-4
   "Description:

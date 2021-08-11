@@ -1,3 +1,5 @@
+(do (load-file (str (clojure.java.io/file ".jarman.d" "plugins" "table" "composite_components.clj"))) nil)
+
 (ns jarman.plugins.table
   (:require
    ;; Clojure toolkit 
@@ -16,16 +18,14 @@
    [jarman.tools.lang :refer :all]
    [jarman.tools.swing :as stool]
    [jarman.resource-lib.icon-library :as icon]
-   
    [jarman.gui.gui-tools      :as gtool]
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-calendar   :as calendar]
    [jarman.gui.popup :as popup]
-   
+   [jarman.plugins.composite-components :as ccomp]
    [jarman.logic.state :as state]
    [jarman.logic.metadata :as mt]
    [jarman.logic.document-manager :as doc]
-
    [jarman.plugin.spec :as spec]
    [jarman.plugin.data-toolkit :as query-toolkit]
    [jarman.plugin.gui-table :as gtable]
@@ -34,7 +34,6 @@
    (java.awt Dimension BorderLayout)
    (java.util Date)
    (java.text SimpleDateFormat)))
-
 
 (defn action-handler
   "Description:
@@ -347,8 +346,7 @@
 
 (defn convert-map-to-component
   "Description
-     Convert to component manual by map with overriding
-   "
+     Convert to component manual by map with overriding"
   [state! dispatch! panel meta-data m]
   ;; (println "\nOverride")
   (let [k           (:model-param m)
@@ -425,7 +423,9 @@
               title
               (cond
                 (= mt/column-type-linking (first comp-types))
-                (input-related-popup-table {:val val :state! state! :field-qualified field-qualified :dispatch! dispatch!})
+                (ccomp/link-test #(swap! (atom {}) (fn [s] (assoc-in s [:link-defr %])) [])
+                              (jarman.logic.composite-components/->Link "panda" "some-path/heyy/file.txt"))
+                ;; (input-related-popup-table {:val val :state! state! :field-qualified field-qualified :dispatch! dispatch!})
                 ;; (gcomp/state-input-text {:func func :val val})
                 
                 (or (= mt/column-type-data (first comp-types))

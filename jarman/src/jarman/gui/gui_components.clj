@@ -264,6 +264,7 @@
                  lgap
                  rgap
                  halign
+                 tip
                  mouse-in
                  underline-size
                  mouse-out
@@ -279,6 +280,7 @@
                  rgap 10
                  underline-size 2
                  halign :center
+                 tip  ""
                  mouse-in  (gtool/get-color :background :button_hover_light)
                  mouse-out (gtool/get-color :background :button_main)
                  focus-color (gtool/get-color :decorate :focus-gained)
@@ -293,6 +295,7 @@
            :focusable? true
            :halign halign
            :font font
+           :tip tip
            :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
                     :mouse-entered (fn [e] (c/config! e :border (newBorder focus-color)   :background mouse-in  :cursor :hand))
                     :mouse-exited  (fn [e] (c/config! e :border (newBorder unfocus-color) :background mouse-out))
@@ -372,7 +375,6 @@
 
 (defn icon-bar
   "Description
-
   Example
     (gcomp/icon-bar
      :size 40
@@ -1372,7 +1374,7 @@
 
 (defn input-file
   "Description:
-     File choser"
+     File chooser"
   [{:keys [store-id local-changes val]
     :or {store-id :input-file
          local-changes (atom {})
@@ -1395,7 +1397,7 @@
 
 (defn state-input-file
   "Description:
-     File choser"
+     File chooser"
   [{func :func
     val  :val}]
   (let [default-path (str jarman.config.environment/user-home "/Documents")
@@ -1409,6 +1411,23 @@
                :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[fill]0px"]
                :items [[icon] [input-text]])]
     panel))
+
+
+(defn status-input-file
+  "Description:
+     File choser, button with icon, when path is selected it changes background color"
+  [{func :func
+    val  :val}]
+  (let [ico-to-choose (jarman.tools.swing/image-scale icon/enter-64-png 30)
+        ico-chosen (jarman.tools.swing/image-scale icon/agree-blue-64-png 30)
+        icon (button-basic ""
+                           :tgap 4 :bgap 4 :lgap 0 :rgap 0
+                           :onClick (fn [e] func
+                                      (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
+                                              (if-not (empty? new-path)
+                                                (c/config! (.getComponent e) :tip new-path :icon ico-chosen)
+                                                (c/config! (.getComponent e) :tip "" :icon ico-to-choose))))
+                           :args [:icon ico-to-choose :listen [:mouse-clicked func]])] icon))
 
 (defn menu-bar
   "Description:

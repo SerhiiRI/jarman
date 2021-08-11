@@ -197,9 +197,9 @@
                             :title "Restart"
                             :fn    (fn [e] ((state/state :startup)))}
 
-                           {:icon  icon/download-blue-64-png
-                            :title "Update"
-                            :fn    (fn [e] (println "Check update"))}
+                           ;; {:icon  icon/download-blue-64-png
+                           ;;  :title "Update"
+                           ;;  :fn    (fn [e] (println "Check update"))}
 
                            {:icon  icon/enter-64-png
                             :title "Close app"

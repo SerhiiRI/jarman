@@ -21,7 +21,7 @@
             [jarman.config.config-manager    :as cm]
             [jarman.config.dot-jarman        :as dot-jarman]
             [jarman.config.dot-jarman-param  :as dot-jarman-param]
-            [jarman.gui.gui-views-service    :as vs]
+            [jarman.gui.gui-views-service    :as gvs]
             [jarman.gui.gui-alerts-service   :as gas]
             [jarman.gui.gui-components       :as gcomp]
             [jarman.gui.gui-tools            :as gtool]
@@ -38,6 +38,7 @@
             [jarman.managment.data           :as managment-data]
             [jarman.plugin.plugin-loader :refer [do-load-plugins]]
             [jarman.config.dot-jarman :refer [dot-jarman-load]]))
+
 
 ;; ┌──────────────────────────┐
 ;; │                          │
@@ -66,12 +67,12 @@
                        :background (new Color 0 0 0 0)
                        :items (gtool/join-mig-items array))]
       ;; (println tabs)
-      (state/set-state :jarman-views-service (vs/new-views-service tabs-space views-space))
+      ;;(state/set-state :jarman-views-service (vs/new-views-service tabs-space views-space))
+      (gvs/start views-space tabs-space)
       (mig-panel
        :id :operation-space
-       :background "#eee"
+       ;; :background "#eee"
        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[28, shrink 0]0px[grow, fill]0px"]
-       :background "#eee"
        ;; :border (line-border :left 1 :color "#999")
        :items [[(gcomp/min-scrollbox tabs-space :vscroll :never)]
                [views-space]]))))
@@ -189,7 +190,7 @@
                            {:icon  icon/refresh-blue1-64-png
                             :title "Reload active view"
                             :fn    (fn [e] (try
-                                             (((state/state :jarman-views-service) :reload))
+                                             (gvs/reload-view)
                                              (catch Exception e (str "Can not reload. Storage is empty."))))}
 
                            {:icon  icon/refresh-blue-64-png

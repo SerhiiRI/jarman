@@ -18,6 +18,8 @@
             [jarman.tools.swing :as stool]
             [jarman.logic.state :as state]
             [jarman.gui.gui-seed :as gseed]
+            [jarman.gui.gui-editors :as gedit]
+            [jarman.gui.gui-views-service :as gvs]
 
             ;; deverloper tools 
             [jarman.tools.lang :refer :all]))
@@ -277,7 +279,7 @@
                                              (message-faild
                                               "Can not load config!"
                                               " Opening code editor. Configuration probably have some syntax error.")
-                                             (gcomp/view-config-editor start-key map-part)
+                                             (gedit/view-config-editor start-key map-part)
                                              ))))
                      
                      (smig/mig-panel
@@ -330,7 +332,7 @@
                               (if (= "developer" (session/user-get-permission))
                                 (gcomp/button-basic
                                  ""
-                                 :onClick (fn [e] (gcomp/view-config-editor start-key map-part))
+                                 :onClick (fn [e] (gedit/view-config-editor start-key map-part))
                                  :flip-border true
                                  :args [:icon (stool/image-scale icon/json1-64-png 25)])
                                 () ;; Empty if can not have access
@@ -391,19 +393,17 @@
                     (gcomp/button-expand-child
                      title
                      :onClick (fn [e]
-                                ((state/state :jarman-views-service)
-                                 :set-view
+                                (gvs/add-view
                                  :view-id view-id
                                  :title title
-                                 :scrollable? false
-                                 :component-fn (try
+                                 :render-fn (try
                                                  (fn [] (create-view--confgen
                                                          path
                                                          :message-ok (fn [head body]
                                                                        ((state/state :alert-manager)
                                                                         :set {:header head :body body}
                                                                         5))))
-                                                 (catch Exception e (gcomp/popup-config-editor
+                                                 (catch Exception e (gedit/popup-config-editor
                                                                      path
                                                                      (get (cm/get-in-segment path))))))))))
                 config-file-list-as-keyword-to-display)
@@ -413,12 +413,10 @@
                  (gcomp/button-expand-child
                   title
                   :onClick (fn [e]
-                             ((state/state :jarman-views-service)
-                              :set-view
+                             (gvs/add-view
                               :view-id view-id
                               :title title
-                              :scrollable? false
-                              :component-fn (fn [] (create-view--confgen
+                              :render-fn (fn [] (create-view--confgen
                                                     path
                                                     :message-ok (fn [head body] ((state/state :alert-manager)
                                                                                  :set {:header head :body body}
@@ -432,12 +430,10 @@
                  (gcomp/button-expand-child
                   title
                   :onClick (fn [e]
-                             ((state/state :jarman-views-service)
-                              :set-view
+                             (gvs/add-view
                               :view-id view-id
                               :title title
-                              :scrollable? false
-                              :component-fn (fn [] (create-view--confgen
+                              :render-fn (fn [] (create-view--confgen
                                                     path
                                                     :message-ok (fn [head body]
                                                                   ((state/state :alert-manager)

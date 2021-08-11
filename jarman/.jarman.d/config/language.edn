@@ -102,7 +102,9 @@
     :clean-inputs "Wyczyść pola"
     :workers "Pracownicy"
     :test-connection "Testuj połączenie"
-    :save-and-reload "Zapisz i przeładuj"},
+    :save-and-reload "Zapisz i przeładuj"
+    :login "Login"
+    :password "Hasło"},
    :alerts
    {:success "Sukces!"
     :changes-saved "Zapisano zmiany"
@@ -251,7 +253,9 @@
   :clean-inputs "Clean fields"
   :workers "Workers"
   :test-connection "Test connection"
-  :save-and-reload "Save and reload"}
+  :save-and-reload "Save and reload"
+  :login "Login"
+  :password "Password"}
  :alerts
  {:success "Success!"
   :faild "! Faild !"

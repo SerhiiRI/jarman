@@ -14,6 +14,7 @@
    [jarman.config.dot-jarman :refer [dot-jarman-load]]
    ;; --- 
    [jarman.logic.connection :as db]
+   [jarman.gui.gui-editors  :as gedit]
    [jarman.gui.gui-components :as gcomp]
    [jarman.logic.sql-tool :refer [select! update! insert! delete!]]
    [jarman.logic.metadata :as mt]
@@ -412,7 +413,7 @@
   (let [dview (view-get table-str)]
       (gcomp/popup-window
        {:window-title (str "Defview manual table editor: " )
-        :view (gcomp/code-editor
+        :view (gedit/code-editor
                {:val (with-out-str
                      (clojure.pprint/pprint
                       (read-string (binding [jarman.logic.sql-tool/*debug* false]
@@ -440,7 +441,7 @@
      :view-id (keyword (str "manual-defview-code" table-str))
      :title (str "Defview: " table-str)
      :component-fn
-     (fn [] (gcomp/code-editor
+     (fn [] (gedit/code-editor
              {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
                      :background "#fff"]
               :title (str "Defview: " table-str)

@@ -7,9 +7,12 @@
             [jarman.logic.state        :as state]
             [jarman.logic.session      :as session]
             [jarman.logic.view-manager       :as vmg]
+            [jarman.gui.gui-views-service    :as gvs]
             [jarman.gui.gui-dbvisualizer     :as dbv]
             [jarman.gui.gui-config-generator :as cg]
-            [jarman.gui.popup                :as popup]))
+            [jarman.gui.popup                :as popup]
+            [jarman.tools.swing              :as stool]
+            [jarman.gui.gui-editors          :as gedit]))
 
 
 (defn- expand-colors []
@@ -27,12 +30,10 @@
           :left (* (dec lvl) 5)
           :hover-color (second (nth (expand-colors) (dec lvl)))
           :onClick (fn [e]
-                     ((state/state :jarman-views-service)
-                      :set-view
+                     (gvs/add-view
                       :view-id (str "auto-plugin" (.return-title v))
                       :title k
-                      :scrollable? false
-                      :component-fn (.return-entry v))))
+                      :render-fn (.return-entry v))))
     ;; or return nil
     nil))
 
@@ -61,12 +62,10 @@
          (if (= :invoke (:action v))
            (:fn v)
            (fn [e]
-             ((state/state :jarman-views-service)
-              :set-view
+             (gvs/add-view
               :view-id (str "auto-menu-" (:key v))
               :title k
-              :scrollable? false
-              :component-fn (:fn v))))
+              :render-fn (:fn v))))
          (fn [e] (println "\nProblem with fn in " k v)))))
     ;; or return nil
     nil))
@@ -142,7 +141,7 @@
                                           {:window-title "Code editor"
                                            :relative (state/state :app)
                                            :size [450 350]
-                                           :view (gcomp/code-editor
+                                           :view (gedit/code-editor
                                                   {:dispose true
                                                    :val "(fn [x] (println \"Nice ass\" x)"})}))}
     
@@ -157,7 +156,7 @@
                     :fn         (fn [e]
                                   (popup/build-popup
                                    {:comp-fn (fn []
-                                               (gcomp/code-editor
+                                               (gedit/code-editor
                                                 {:val "(fn [x] (println \"Nice ass\" x)"}))
                                     :title "Code in popup"
                                     :size [500 400]}))}}
@@ -174,3 +173,19 @@
 (defn add-to-main-tree [components-coll]
   (let [path [:main-menu]]
     (swap! (state/get-atom) (fn [state] (assoc-in state path (concat (state path) components-coll))))))
+
+
+(defn menu-slider
+  "Description:
+     Return list of buttons in columne, one by one for jlayeredpane"
+  [scale offset btns]
+  (let [inc-fn #(range 0 (doto (count btns) println ))]
+    (doall
+     (map
+      (fn [m index]
+        (gtool/slider-ico-btn (stool/image-scale (:icon m) scale)
+                              index scale (:title m)
+                              :onClick (:fn m)
+                              :top-offset offset))
+      (filter-nil btns) (inc-fn)))))
+

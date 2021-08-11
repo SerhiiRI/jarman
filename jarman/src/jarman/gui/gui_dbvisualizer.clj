@@ -514,8 +514,10 @@
    icon/json1-64-png
    icon/json1-64-png
    (fn [e]
-     (gcomp/view-metadata-editor
-      (keyword (:table_name selected-tab))))))
+     (c/label) ;; TODO
+     ;; (gcomp/view-metadata-editor
+     ;;  (keyword (:table_name selected-tab)))
+     )))
 
 
 (def create-view--table-editor
@@ -681,7 +683,8 @@
                         icon/json-64-png
                         (fn [e]
                           (do (rm-menu e)
-                              (gcomp/view-metadata-editor (keyword (:table_name (first selected-tab)))))))
+                              ;; (gcomp/view-metadata-editor (keyword (:table_name (first selected-tab))))
+                              )))
                    [])
                  (if (session/allow-permission? [:developer])
                    (btn "Defview"

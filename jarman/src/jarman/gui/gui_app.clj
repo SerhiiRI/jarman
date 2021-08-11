@@ -21,12 +21,11 @@
             [jarman.config.config-manager    :as cm]
             [jarman.config.dot-jarman        :as dot-jarman]
             [jarman.config.dot-jarman-param  :as dot-jarman-param]
-            [jarman.gui.gui-views-service    :as vs]
+            [jarman.gui.gui-views-service    :as gvs]
             [jarman.gui.gui-alerts-service   :as gas]
             [jarman.gui.gui-components       :as gcomp]
             [jarman.gui.gui-tools            :as gtool]
             ;; deverloper tools 
-            [jarman.tools.swing              :as stool]
             [jarman.config.init              :as iinit]
             [jarman.logic.state              :as state]
             [jarman.gui.gui-seed             :as gseed]
@@ -39,6 +38,7 @@
             [jarman.managment.data           :as managment-data]
             [jarman.plugin.plugin-loader     :refer [do-load-plugins]]
             [jarman.config.dot-jarman        :refer [dot-jarman-load]]))
+
 
 ;; ┌──────────────────────────┐
 ;; │                          │
@@ -67,12 +67,12 @@
                        :background (new Color 0 0 0 0)
                        :items (gtool/join-mig-items array))]
       ;; (println tabs)
-      (state/set-state :jarman-views-service (vs/new-views-service tabs-space views-space))
+      ;;(state/set-state :jarman-views-service (vs/new-views-service tabs-space views-space))
+      (gvs/start views-space tabs-space)
       (mig-panel
        :id :operation-space
-       :background "#eee"
+       ;; :background "#eee"
        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[28, shrink 0]0px[grow, fill]0px"]
-       :background "#eee"
        ;; :border (line-border :left 1 :color "#999")
        :items [[(gcomp/min-scrollbox tabs-space :vscroll :never)]
                [views-space]]))))
@@ -129,11 +129,10 @@
 
 
 (defn- load-static-main-menu []
-  (menu/clean-main-menu)
-  (state/set-state
-   [:main-menu]
-   (concat
-    (menu/bulid-expand-by-map (menu/default-menu-items)))))
+  (menu/add-to-main-tree
+     (concat
+      (state/state [:main-menu])
+      (menu/bulid-expand-by-map (menu/default-menu-items)))))
 
 
 (defn load-plugins-to-main-menu []
@@ -171,6 +170,7 @@
     (.dispose (seesaw.core/to-frame (state/state :app)))
     (catch Exception e (println "Last pos is nil"))))
 
+
 (defn load-level-2
   "Description:
     Bulid application."
@@ -179,41 +179,33 @@
    :items (let [img-scale 35
                 top-offset 2]
             (menu/clean-main-menu)
-            (list
-             [(jarmanapp :margin-left img-scale) 0]
-             (gtool/slider-ico-btn (stool/image-scale icon/scheme-grey-64-png img-scale) 0 img-scale "DB Visualiser"
-                                   :onClick (fn [e] ((state/state :jarman-views-service)
-                                                     :set-view
-                                                     :view-id "DB Visualiser"
-                                                     :title "DB Visualiser"
-                                                     :component-fn dbv/create-view--db-view))
-                                   :top-offset top-offset)
-             (gtool/slider-ico-btn (stool/image-scale icon/I-64-png img-scale) 1 img-scale "Message Store"
-                                   :onClick (fn [e] ((state/state :alert-manager) :show))
-                                   :top-offset top-offset)
-             (gtool/slider-ico-btn (stool/image-scale icon/key-blue-64-png img-scale) 2 img-scale "Change work mode"
-                                   :onClick (fn [e]
-                                              (cond (= "user"      (session/get-user-permission)) (session/set-user-permission "admin")
-                                                    (= "admin"     (session/get-user-permission)) (session/set-user-permission "developer")
-                                                    (= "developer" (session/get-user-permission)) (session/set-user-permission "user"))
-                                              ((state/state :alert-manager) :set {:header "Work mode" :body (str "Switched to: " (session/get-user-permission))}  5)
-                                              (gseed/extend-frame-title (str ", " (session/get-user-login) "@" (session/get-user-permission))))
-                                   :top-offset top-offset)
-             (gtool/slider-ico-btn (stool/image-scale icon/enter-64-png img-scale) 3 img-scale "Close app"
-                                   :onClick (fn [e] (.dispose (c/to-frame e)))
-                                   :top-offset top-offset)
-             (gtool/slider-ico-btn (stool/image-scale icon/refresh-blue1-64-png img-scale) 4 img-scale "Reload active view"
-                                   :onClick (fn [e] (try
-                                                      (((state/state :jarman-views-service) :reload))
-                                                      (catch Exception e (str "Can not reload. Storage is empty."))))
-                                   :top-offset top-offset)
+            (concat ;; items for jlp
+             [[(jarmanapp :margin-left img-scale) 0]]
+             (menu/menu-slider img-scale top-offset
+                          [{:icon  icon/I-64-png
+                            :title "Message Store"
+                            :fn    (fn [e] ((state/state :alert-manager) :show))}
+                           
+                           {:icon  icon/refresh-blue1-64-png
+                            :title "Reload active view"
+                            :fn    (fn [e] (try
+                                             (gvs/reload-view)
+                                             (catch Exception e (str "Can not reload. Storage is empty."))))}
 
-             (gtool/slider-ico-btn (stool/image-scale icon/refresh-blue-64-png img-scale) 5 img-scale "Restart"
-                                   :onClick (fn [e] (do
-                                                      (println "App restart")
-                                                      ((state/state :startup))))
-                                   :top-offset top-offset)
-             (gcomp/fake-focus :vgap top-offset :hgap img-scale)))))
+                           {:icon  icon/refresh-blue-64-png
+                            :title "Restart"
+                            :fn    (fn [e] ((state/state :startup)))}
+
+                           ;; {:icon  icon/download-blue-64-png
+                           ;;  :title "Update"
+                           ;;  :fn    (fn [e] (println "Check update"))}
+
+                           {:icon  icon/enter-64-png
+                            :title "Close app"
+                            :fn    (fn [e] (.dispose (c/to-frame e)))}])
+             [(gcomp/fake-focus :vgap top-offset :hgap img-scale)]))))
+
+
 
 (defn load-level-3
   "Description:
@@ -229,8 +221,9 @@
   []
   (dot-jarman-load)
   (do-load-plugins)
-  (load-static-main-menu)
-  (load-plugins-to-main-menu))
+  (menu/clean-main-menu)
+  (load-plugins-to-main-menu)
+  (load-static-main-menu))
 
 ;; ┌─────────────┐
 ;; │             │

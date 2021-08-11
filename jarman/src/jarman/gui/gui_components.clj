@@ -89,6 +89,7 @@
              rgap
              tgap
              bgap
+             gap
              vrules
              hrules
              debug
@@ -99,15 +100,17 @@
            rgap 0
            tgap 0
            bgap 0
+           gap  []
            vrules "[grow, fill]"
            hrules "[grow, fill]"
            debug [0 "#f00"]
            args []}}]
-  (apply mig-panel
-         :constraints [(str "wrap " wrap) (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
-         :items items
-         :border (b/line-border :thickness (first debug) :color (second debug))
-         args))
+  (let [[tgap bgap lgap rgap] (rift gap [tgap bgap lgap rgap])]
+    (apply mig-panel
+           :constraints [(str "wrap " wrap) (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
+           :items items
+           :border (b/line-border :thickness (first debug) :color (second debug))
+           args)))
 
 (defn hmig
   [& {:keys [items
@@ -116,6 +119,7 @@
              rgap
              tgap
              bgap
+             gap
              vrules
              hrules
              debug
@@ -126,15 +130,17 @@
            rgap 0
            tgap 0
            bgap 0
+           gap []
            vrules "[grow, fill]"
            hrules "[grow, fill]"
            debug [0 "#f00"]
            args []}}]
-  (apply mig-panel
-         :constraints [wrap (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
-         :items items
-         :border (b/line-border :thickness (first debug) :color (second debug))
-         args))
+  (let [[tgap bgap lgap rgap] (rift gap [tgap bgap lgap rgap])]
+    (apply mig-panel
+          :constraints [wrap (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
+          :items items
+          :border (b/line-border :thickness (first debug) :color (second debug))
+          args)))
 
 (defn scrollbox
   [component
@@ -475,40 +481,64 @@
 
 (defn state-input-text
   "Description:
-    Text input for state architecture. Need fn in action to changing state.
+     Text component converted to c/text component with placeholder. Placehlder will be default value.
+     Text input for state architecture. Need fn in action to changing state.
+   Params:
+     val
+     placeholder
+     border
+     font-size
+     border-color-focus
+     border-color-unfocus
+     char-limit
+     args
    Example:
-    (state-input-text {:func (fn [e] (dispatch! {...})) :val \"some value\" }"
+     (state-input-text {:func (fn [e] (dispatch! {...})) :val \"some value\" }"
   [{func :func
     val  :val}
-   & {:keys [font-size
+   & {:keys [placeholder
+             border
+             font-size
              border-color-focus
              border-color-unfocus
-             border
-             enabled?
-             editable?]
-      :or {font-size 14
+             char-limit
+             args]
+      :or {placeholder ""
+           font-size 14
            border-color-focus   (gtool/get-color :decorate :focus-gained)
            border-color-unfocus (gtool/get-color :decorate :focus-lost)
            border [10 10 5 5 2]
-           enabled? true
-           editable? true}}]
-  (let [newBorder (fn [underline-color]
-                    (b/compound-border (b/empty-border :left (nth border 0)
-                                                       :right (nth border 1)
-                                                       :top (nth border 2)
-                                                       :bottom (nth border 3))
-                                       (b/line-border :bottom (nth border 4)
-                                                      :color underline-color)))]
-    (c/text
-     :text (str (rift val ""))
-     :font (gtool/getFont font-size :name "Monospaced")
-     :background (gtool/get-color :background :input)
-     :border (newBorder border-color-unfocus)
-     :enabled? enabled?
-     :editable? editable?
-     :listen [:focus-gained (fn [e] (c/config! e :border (newBorder border-color-focus)))
-              :focus-lost   (fn [e] (c/config! e :border (newBorder border-color-unfocus)))
-              :caret-update func])))
+           char-limit 0
+           args []}}]
+  (let [fn-get-data     (fn [e key] (get-in (c/config e :user-data) [key]))
+        fn-assoc        (fn [e key val] (assoc-in (c/config e :user-data) [key] val))
+        newBorder (fn [underline-color]
+                    (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
+                                       (b/line-border :bottom (nth border 4) :color underline-color)))
+        last-v (atom "")]
+    (apply c/text
+           :text (if (empty? val) placeholder (if (string? val) val (str val)))
+           :font (gtool/getFont font-size :name "Monospaced")
+           :background (gtool/get-color :background :input)
+           :border (newBorder border-color-unfocus)
+           :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
+           :listen [:focus-gained (fn [e]
+                                    (c/config! e :border (newBorder border-color-focus))
+                                    (cond (= (c/value e) placeholder) (c/config! e :text ""))
+                                    (c/config! e :user-data (fn-assoc e :edit? true)))
+                    :focus-lost   (fn [e]
+                                    (c/config! e :border (newBorder border-color-unfocus))
+                                    (cond (= (c/value e) "") (c/config! e :text placeholder))
+                                    (c/config! e :user-data (fn-assoc e :edit? false)))
+                    :caret-update (fn [e]
+                                    (let [new-v (c/value (c/to-widget e))]
+                                      (if (and (> (count new-v) char-limit) (< 0 char-limit))
+                                        (c/invoke-later (c/config! e :text @last-v))
+                                        (do
+                                          (reset! last-v new-v)
+                                          (c/config! e :user-data (fn-assoc e :value (if (= placeholder @last-v) "" @last-v)))
+                                          (func e)))))]
+           args)))
 
 (defn input-checkbox
   [& {:keys [txt
@@ -964,6 +994,78 @@
                                                     (c/config! e :user-data (fn-assoc e :value ""))
                                                     (c/invoke-later (c/config! e :text ""))
                                                     (reset! allow-clean false)))))]
+             style))))
+
+
+(def state-input-password
+  "Description:
+    Text component converted to state password input component.
+ Example:
+    (state-input-password {:state! state! :dispatch! dispatch! :action :update :path [:a :b]})"
+  (fn [{dispatch! :dispatch!
+        action    :action
+        path      :path}
+       & {:keys [placeholder
+                 border
+                 font-size
+                 border-color-focus
+                 border-color-unfocus
+                 style]
+          :or   {placeholder "Password"
+                 font-size 14
+                 border-color-focus   (gtool/get-color :decorate :focus-gained)
+                 border-color-unfocus (gtool/get-color :decorate :focus-lost)
+                 border [10 10 5 5 2]
+                 style []}}]
+    (let [allow-clean (atom false)
+          fn-letter-count (fn [e] (count (c/value e)))
+          fn-hide-chars   (fn [e] (apply str (repeat (fn-letter-count e) "*")))
+          fn-get-data     (fn [e k] (get-in (c/config e :user-data) [k]))
+          fn-assoc        (fn [e k v] (assoc-in (c/config e :user-data) [k] v))
+          newBorder       (fn [underline-color]
+                            (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
+                                             (b/line-border :bottom (nth border 4) :color underline-color)))]
+      (apply c/text
+             :text placeholder
+             :font (gtool/getFont font-size :name "Monospaced")
+             :background (gtool/get-color :background :input)
+             :border (newBorder border-color-unfocus)
+             :user-data {:placeholder placeholder :value "" :edit? false :type :password}
+             :listen [:focus-gained (fn [e]
+                                      (c/config! e :border (newBorder border-color-focus))
+                                      (cond (= (fn-get-data e :value) "")    (c/config! e :text ""))
+                                      (c/config! e :user-data (fn-assoc e :edit? true)))
+                      :focus-lost   (fn [e]
+                                      (c/config! e :border (newBorder border-color-unfocus))
+                                      (cond (= (c/value e) "") (c/config! e :text placeholder))
+                                      (c/config! e :user-data (fn-assoc e :edit? false)))
+                      :caret-update (fn [e]
+                                      (let [dispatch-fn (fn [m] (dispatch! {:action action
+                                                                            :path   path
+                                                                            :value  (:value m)}))]
+                                        (cond (and (= (fn-get-data e :edit?) true)
+                                                   (not (= (c/value e) placeholder)))
+                                              (cond (< 0 (count (c/value e)))
+                                                    (let [added-chars (clojure.string/replace (c/value e) #"\*+" "")]
+                                                      (cond (> (count added-chars) 0)
+                                                            (let [update-pass (fn-assoc e :value (str (fn-get-data e :value) added-chars))]
+                                                              (c/config! e :user-data update-pass)
+                                                              (dispatch-fn update-pass)
+                                                              (c/invoke-later (c/config! e :text (fn-hide-chars e))))
+                                                            (< (fn-letter-count e) (count (fn-get-data e :value)))
+                                                            (let [update-pass (fn-assoc e :value (subs (fn-get-data e :value) 0 (fn-letter-count e)))]
+                                                              (c/config! e :user-data update-pass)
+                                                              (dispatch-fn update-pass)
+                                                              (if (= 1 (count (c/value e))) (reset! allow-clean true))
+                                                              (c/invoke-later (c/config! e :text (fn-hide-chars e))))))
+
+                                                    (and (= true @allow-clean)
+                                                         (= 0 (count (c/value e))))
+                                                    (let [update-pass (fn-assoc e :value "")]
+                                                      (c/config! e :user-data update-pass)
+                                                      (dispatch-fn update-pass)
+                                                      (c/invoke-later (c/config! e :text ""))
+                                                      (reset! allow-clean false))))))]
              style))))
 
 ;; (def pass (input-password :placeholder "password"))
@@ -1658,244 +1760,7 @@
                :local-changes local-changes
                :selected-item (rift val ""))))
 
-
-
-;; ┌────────────────────┐
-;; │                    │
-;; │ Code area          │
-;; │                    │________________________________________
-;; └────────────────────┘                                       
-
-(defn code-area
-  "Description:
-    Some text area but with syntax styling.
-    To check avaliable languages eval (seesaw.dev/show-options (seesaw.rsyntax/text-area)).
-    Default language is Clojure.
-  Example:
-    (code-area {})
-    (code-area :syntax :css)
-  "
-  [{:keys [val
-           store-id
-           local-changes
-           syntax
-           label
-           args]
-    :or {val ""
-         store-id :code
-         local-changes (atom {})
-         syntax :clojure
-         label nil
-         args []}}]
-  (swap! local-changes (fn [state] (assoc state store-id val)))
-  (let [content (atom val)]
-    (apply
-     seesaw.rsyntax/text-area
-     :text val
-     :wrap-lines? true
-     :caret-position 1
-     :syntax syntax
-     :user-data {:saved-content (fn [] (reset! content (second (first @local-changes))))}
-     :listen [:caret-update (fn [e]
-                              (swap! local-changes (fn [state] (assoc state store-id (c/config (c/to-widget e) :text))))
-                              (if-not (nil? label)
-                                (if (= (c/config (c/to-widget e) :text) @content)
-                                  (c/config! label :text "")
-                                  (c/config! label :text "Unsaved file..."))))]
-     args)))
-
-;;(seesaw.dev/show-options (seesaw.rsyntax/text-area))
-
-(defn code-editor
-  "Description:
-     Simple code editor using syntax.
-     When you send save-fn then inside is invoke (save-fn {:state local-changes :label info-label :code code})
-   Example:
-     (code-editor {})
-  "
-  [{:keys [local-changes
-           store-id
-           val
-           font-size
-           title
-           title-font-size
-           save-fn
-           debug
-           dispose
-           args]
-    :or {local-changes (atom {})
-         store-id :code-tester
-         val ""
-         title "Code editor"
-         title-font-size 14
-         font-size 14
-         save-fn (fn [state] (println "Additional save"))
-         debug false
-         dispose false
-         args {}}}]
-  (let [f-size (atom font-size)
-        info-label (c/label)
-        code (code-area {:args [:font (gtool/getFont @f-size)
-                                :border (b/empty-border :left 10 :right 10)]
-                         :label info-label
-                         :local-changes local-changes
-                         :store-id store-id
-                         :val val}) 
-        editor (vmig
-                :args args
-                :vrules "[fill]0px[grow, fill]0px[fill]"
-                :items [[(hmig
-                          :args args
-                          :hrules "[70%, fill]10px[grow, fill]"
-                          :items
-                          [[(c/label :text title
-                                     :border (b/compound-border (b/line-border :bottom 1 :color "#eee")
-                                                                (b/empty-border :left 10))
-                                     :font (gtool/getFont :bold title-font-size))]
-                           [(menu-bar
-                             {:justify-end true
-                              :buttons [[""
-                                         icon/up-blue2-64-png
-                                         "Increase font"
-                                         (fn [e]
-                                           (c/config!
-                                            code
-                                            :font (gtool/getFont
-                                                   (do (reset! f-size (+ 2 @f-size))
-                                                       @f-size))))]
-                                        [""
-                                         icon/down-blue2-64-png
-                                         "Decrease font"
-                                         (fn [e]
-                                           (c/config!
-                                            code
-                                            :font (gtool/getFont
-                                                   (do (reset! f-size (- @f-size 2))
-                                                       @f-size))))]
-                                        (if debug
-                                          ["" icon/loupe-blue-64-png "Show changes" (fn [e] (popup-info-window
-                                                                                             "Changes"
-                                                                                             (second (first @local-changes))
-                                                                                             (c/to-frame e)))]
-                                          nil)
-                                        ["" icon/agree-blue-64-png "Save" (fn [e]
-                                                                            (c/config! info-label :text "Saved")
-                                                                            ((:saved-content (c/config code :user-data)))
-                                                                            (save-fn {:state local-changes :label info-label :code code}))]
-                                        (if dispose
-                                          ["" icon/enter-64-png "Leave" (fn [e] (.dispose (c/to-frame e)))]
-                                          nil)]})]])]
-                        [(scrollbox code)]
-                        [info-label]])]
-    (gtool/set-focus code)
-    
-    editor))
-
-;;(popup-window {:view (code-editor {})})
-
-(defn popup-config-editor
-  "Description:
-     Prepared popup window with code editor for selected configuration segment.
-   Example:
-     (popup-metadata-editor [:init.edn] {:part-of-config {}})
-  "
-  [config-path config-part]
-  (popup-window
-   {:window-title "Configuration manual editor"
-    :view (code-editor
-           {:val (with-out-str (clojure.pprint/pprint config-part))
-            :title (gtool/convert-key-to-title (first config-path))
-            :dispose true
-            :save-fn (fn [props]
-                       (try
-                         (cm/assoc-in-segment config-path (read-string (c/config (:code props) :text)))
-                         (let [validate (cm/store-and-back)]
-                           (if (:valid? validate)
-                             (c/config! (:label props) :text "Saved!")
-                             (c/config! (:label props) :text "Validation faild. Can not save.")))
-                         (catch Exception e (c/config!
-                                             (:label props)
-                                             :text "Can not convert to map. Syntax error."))))})})
-  (((state/state :jarman-views-service) :reload)))
-
-(defn view-config-editor
-  "Description:
-     Prepared view with code editor for selected configuration segment.
-   Example:
-     (popup-metadata-editor [:init.edn] {:part-of-config {}})
-  "
-  [config-path config-part]
-  ((state/state :jarman-views-service)
-   :set-view
-   :view-id (keyword (str "manual-view-code" (first config-path)))
-   :title (str "Config: " (gtool/convert-key-to-title (first config-path)))
-   :component-fn
-   (fn [] (code-editor
-           {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
-                   :background "#fff"]
-            :val (with-out-str (clojure.pprint/pprint config-part))
-            :title (gtool/convert-key-to-title (first config-path))
-            :save-fn (fn [props]
-                       (try
-                         (cm/assoc-in-segment config-path (read-string (c/config (:code props) :text)))
-                         (let [validate (cm/store-and-back)]
-                           (if (:valid? validate)
-                             (c/config! (:label props) :text "Saved!")
-                             (c/config! (:label props) :text "Validation faild. Can not save.")))
-                         (catch Exception e (c/config!
-                                             (:label props)
-                                             :text "Can not convert to map. Syntax error."))))}))))
-
-
-(defn popup-metadata-editor
-  "Description:
-     Prepared popup window with code editor for selected metadata by table_name as key.
-   Example:
-     (popup-metadata-editor :user)
-  "
-  [table-keyword]
-  (let [meta (mt/metadata-get table-keyword)]
-      (popup-window
-       {:window-title "Metadata manual table editor"
-        :view (code-editor
-               {:val (with-out-str (clojure.pprint/pprint (:prop meta)))
-                :title (str "Metadata: " (get-in meta [:prop :table :representation]))
-                :dispose true
-                :save-fn (fn [state]
-                           (try
-                             (mt/metadata-set (assoc meta :prop (read-string (c/config (:code state) :text))))
-                             (c/config! (:label state) :text "Saved!")
-                             (catch Exception e (c/config!
-                                                 (:label state)
-                                                 :text "Can not convert to map. Syntax error."))))})}))
-  (((state/state :jarman-views-service) :reload)))
-
-(defn view-metadata-editor
-  "Description:
-     Prepared component with code editor for selected metadata by table_name as key.
-   Example:
-     (view-metadata-editor :user)
-  "
-  [table-keyword]
-  ((state/state :jarman-views-service)
-   :set-view
-   :view-id (keyword (str "manual-view-code" (name table-keyword)))
-   :title (str "Metadata: " (name table-keyword))
-   :component-fn
-   (fn [] (let [meta (mt/metadata-get table-keyword)]
-            (code-editor
-             {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
-                     :background "#fff"]
-              :title (str "Metadata: " (get-in meta [:prop :table :representation]))
-              :val (with-out-str (clojure.pprint/pprint (:prop meta)))
-              :save-fn (fn [state]
-                         (try
-                           (mt/metadata-set (assoc meta :prop (read-string (c/config (:code state) :text))))
-                           (c/config! (:label state) :text "Saved!")
-                           (catch Exception e (c/config!
-                                               (:label state)
-                                               :text "Can not convert to map. Syntax error."))))})))))
-
+ 
 
 (comment
   ;; (seesaw.dev/show-options (c/styled-text))

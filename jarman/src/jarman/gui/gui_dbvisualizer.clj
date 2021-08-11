@@ -620,7 +620,7 @@
         :view-id view-id
         :title (str "Edit: " (get-in table [:prop :table :representation]))
         :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.")
-        :component-fn (fn [] (create-view--table-editor view-id (session/user-get-permission) table-id invoker-id meta))
+        :component-fn (fn [] (create-view--table-editor view-id (session/get-user-permission) table-id invoker-id meta))
         :scrollable? false)))))
 
 

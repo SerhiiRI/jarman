@@ -327,7 +327,7 @@
                                                    (state/state :app))))
                                :flip-border true
                                :args [:icon (stool/image-scale icon/loupe-blue-64-png 25)])
-                              (if (= "developer" (session/user-get-permission))
+                              (if (= "developer" (session/get-user-permission))
                                 (gcomp/button-basic
                                  ""
                                  :onClick (fn [e] (gcomp/view-config-editor start-key map-part))

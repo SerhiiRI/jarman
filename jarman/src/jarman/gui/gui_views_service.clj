@@ -35,7 +35,9 @@
        (if (not (and (nil? left) (nil? right)))
          (let [root (if (fn? root) (root) root)]
            (try
-             (c/config! root :items (render-fn))
+             (do
+               (c/config! root :items (render-fn))
+               ((:repaint (state!))))
              (catch Exception e (println "\n" (str "Rerender exception:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
                     ))))))))
 

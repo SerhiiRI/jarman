@@ -57,10 +57,15 @@
   "Description:
     Header in expand panel."
   [state!]
-  (c/label
-   :text (:representation (:table-meta (:plugin-toolkit (state!)))) 
-   :halign :center
-   :border (b/empty-border :top 10)))
+  (gcomp/vmig
+   :hrules "[grow, center]"
+   :items [[(c/label
+             :text (:representation (:table-meta (:plugin-toolkit (state!)))) 
+             :halign :center
+             :font (gtool/getFont 15 :bold)
+             :foreground "#2c7375"
+             :border (b/compound-border (b/line-border :bottom 1 :color "#2c7375")
+                                        (b/empty-border :top 10)))]]))
 
 (defn- form-type
   "Description:
@@ -514,7 +519,6 @@
      :items icos)))
 
 
-;; TODO: Spec dla meta-data
 (def build-input-form
   "Description:
      Marge all components to one form "

@@ -761,6 +761,8 @@
       (-> (doto (frame-error state! dispatch!) (.setLocationRelativeTo nil) (apply-stylesheet my-style))
           (c/config! :content (error-panel res-validation)) seesaw.core/pack! seesaw.core/show!))))
 
+(state/set-state :invoke-login-panel start)
+
 (start)
 
 

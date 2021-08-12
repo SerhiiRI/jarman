@@ -199,6 +199,12 @@
                            ;; {:icon  icon/download-blue-64-png
                            ;;  :title "Update"
                            ;;  :fn    (fn [e] (println "Check update"))}
+                           
+                           {:icon  icon/user-blue1-64-png
+                            :title "Logout"
+                            :fn    (fn [e]
+                                     (.dispose (c/to-frame e))
+                                     ((state/state :invoke-login-panel)))}
 
                            {:icon  icon/enter-64-png
                             :title "Close app"

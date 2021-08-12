@@ -107,7 +107,13 @@
            args []}}]
   (let [[tgap bgap lgap rgap] (rift gap [tgap bgap lgap rgap])]
     (apply mig-panel
-           :constraints [(str "wrap " wrap) (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
+           :constraints [(str "wrap " wrap)
+                         (str lgap (if (string? lgap) "" "px")
+                              hrules
+                              rgap (if (string? rgap) "" "px"))
+                         (str tgap (if (string? tgap) "" "px")
+                              vrules
+                              bgap (if (string? bgap) "" "px"))]
            :items items
            :border (b/line-border :thickness (first debug) :color (second debug))
            args)))
@@ -125,7 +131,7 @@
              debug
              args]
       :or {items [[(c/label)]]
-           wrap ""
+           wrap 0
            lgap 0
            rgap 0
            tgap 0
@@ -137,7 +143,13 @@
            args []}}]
   (let [[tgap bgap lgap rgap] (rift gap [tgap bgap lgap rgap])]
     (apply mig-panel
-          :constraints [wrap (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
+           :constraints [(if (= 0 wrap) "" (str "wrap " wrap))
+                         (str lgap (if (string? lgap) "" "px")
+                              hrules
+                              rgap (if (string? rgap) "" "px"))
+                         (str tgap (if (string? tgap) "" "px")
+                              vrules
+                              bgap (if (string? bgap) "" "px"))]
           :items items
           :border (b/line-border :thickness (first debug) :color (second debug))
           args)))
@@ -240,12 +252,19 @@
   Example:
      (dynamic-text-area {:text \"Some loooong text\"})
   "
-  [{:keys [text]}]
+  [{:keys [text foreground font lgap tgap]
+    :or {foreground "#000"
+         font (gtool/getFont)
+         lgap 0
+         tgap 0}}]
   (let [text-area (c/styled-text
-                  :text text
-                  :editable? false
-                  :wrap-lines? true
-                  :opaque? false)]
+                   :border (b/empty-border :left lgap :top tgap)
+                   :text text
+                   :font font
+                   :foreground  foreground
+                   :editable?   false
+                   :wrap-lines? true
+                   :opaque?     false)]
     text-area))
 ;;
 ;; Example of multiline-text TOTRY
@@ -1137,7 +1156,7 @@
                           (b/empty-border :left 10)
                           (b/line-border :left left-gap :color left-color))
                  :text txt
-                 :font (gtool/getFont 15 :name "Ubuntu Bold")
+                 :font (gtool/getFont 14 :name "Ubuntu Bold")
                  :foreground "#030D1C"
                  :background (Color. 0 0 0 0))
           listen (fn [func] [:mouse-entered gtool/hand-hover-on
@@ -1230,7 +1249,8 @@
                hover-color "#f7f7f7"
                width 200 
                args []}}]
-    (apply c/label :font (gtool/getFont)
+    (apply c/label
+           :font (gtool/getFont 12)
            :text (str title)
            :background "#fff"
            :foreground "#030D1C"

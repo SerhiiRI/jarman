@@ -68,7 +68,8 @@
               :render-fn (:fn v))))
          (fn [e] (println "\nProblem with fn in " k v)))))
     ;; or return nil
-    nil))
+    (do (println "Permission denied for plugin '%s'" k)
+      nil)))
 
 ;;((state/state :startup))
 

@@ -674,73 +674,25 @@
   (list
    ["About"   "We are Trashpanda-Team, we are the innovation."]
    ["Jarman"  "Jarman is an flexible aplication using plugins to extending basic functionality."]
-   ["Contact" "For contact with us summon the demon and give him happy pepe. Then deam will be kind and will send u to us."]
+   ["Contact" "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will send u to us."]
    ["Website" "http://trashpanda-team.ddns.net"]))
 
 
-;;;;;;;;;;;;;;;
-;;
-;; Contact
-;;
-
 (defn- info-header
+  ([txt] (info-header txt 16))
+  ([txt fsize]
+     (gcomp/textarea
+      txt
+      :foreground (colors :blue-green-color)
+      :font       (gtool/getFont fsize :bold))))
+
+(defn- info-body
   [txt]
-  (gcomp/multiline-text
-   {:text       txt
-    :foreground (colors :blue-green-color)
-    :font       (gtool/getFont 16 :bold)}))
-
-(defn- contact-body
-  [txt]
-  (gcomp/multiline-text
-   {:text       txt
-    :foreground (colors :light-grey-color)
-    :font       (gtool/getFont 14 :bold)
-    :lgap       10
-    :tgap       5}))
-
-(defn contact-info
-  [] 
-  (gcomp/vmig
-   :tgap 5
-   :items (gtool/join-mig-items
-           (info-header "Contacts")
-           (contact-body "http://trashpanda-team.ddns.net")
-           (contact-body "contact.tteam@gmail.com")
-           (contact-body "+38 0 966 085 615"))))
-
-
-;;;;;;;;;;;;;;;
-;;
-;; FAQ
-;;
-
-(defn faq-panel
-  "Description:
-     Return vertical mig with FAQs."
-  []
-  (let [faqs (doall
-              (map
-               (fn [faq-m]
-                 (gcomp/vmig
-                  :items (gtool/join-mig-items
-                          (gcomp/multiline-text
-                           {:text       (str "- " (:question faq-m))
-                            :foreground (colors :blue-green-color)
-                            :font       (gtool/getFont 14 :bold)
-                            :lgap       10})
-                          (gcomp/multiline-text
-                           {:text       (:answer faq-m)
-                            :foreground (colors :light-grey-color)
-                            :font       (gtool/getFont 14 :bold)
-                            :lgap       22
-                            :tgap       5}))))
-               (faq-list)))
-        
-        compo (gcomp/vmig
-               :tgap 10
-               :items (gtool/join-mig-items (info-header "FAQ") faqs))]
-    compo))
+  (gcomp/textarea
+   txt
+   :foreground (colors :light-grey-color)
+   :font       (gtool/getFont 14 :bold)
+   :border     (b/empty-border :left 10 :top 5)))
 
 ;;;;;;;;;;;;;;;
 ;;
@@ -758,18 +710,54 @@
             (map
              (fn [[header body]]
                (gcomp/vmig
+                :vrules "[grow, fill]"
                 :items (gtool/join-mig-items
-                        (gcomp/multiline-text
-                         {:text       header
-                          :foreground (colors :blue-green-color)
-                          :font       (gtool/getFont 16 :bold)})
-                        (gcomp/multiline-text
-                         {:text       body
-                          :foreground (colors :light-grey-color)
-                          :font       (gtool/getFont 14 :bold)
-                          :lgap       10
-                          :tgap       5}))))
+                        (info-header header)
+                        (info-body body))))
              (info-list))))))
+
+
+;;;;;;;;;;;;;;;
+;;
+;; FAQ
+;;
+
+(defn faq-panel
+  "Description:
+     Return vertical mig with FAQs."
+  []
+  (let [faqs (doall
+              (map
+               (fn [faq-m]
+                 (gcomp/vmig
+                  :items (gtool/join-mig-items
+                          (info-header (str "- " (:question faq-m)) 14)
+                          (info-body (:answer faq-m)))))
+               (faq-list)))
+        
+        compo (gcomp/vmig
+               :tgap 10
+               :items (gtool/join-mig-items
+                       (info-header "FAQ")
+                       faqs))]
+    compo))
+
+
+;;;;;;;;;;;;;;;
+;;
+;; Contact
+;;
+
+(defn contact-info
+  [] 
+  (gcomp/vmig
+   :tgap 5
+   :items (gtool/join-mig-items
+           (info-header "Contacts")
+           (info-body   "http://trashpanda-team.ddns.net")
+           (info-body   "contact.tteam@gmail.com")
+           (info-body   "+38 0 966 085 615"))))
+
 
 (defn- info-logo
   "Description:

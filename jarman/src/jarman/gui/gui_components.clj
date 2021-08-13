@@ -107,7 +107,13 @@
            args []}}]
   (let [[tgap bgap lgap rgap] (rift gap [tgap bgap lgap rgap])]
     (apply mig-panel
-           :constraints [(str "wrap " wrap) (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
+           :constraints [(str "wrap " wrap)
+                         (str lgap (if (string? lgap) "" "px")
+                              hrules
+                              rgap (if (string? rgap) "" "px"))
+                         (str tgap (if (string? tgap) "" "px")
+                              vrules
+                              bgap (if (string? bgap) "" "px"))]
            :items items
            :border (b/line-border :thickness (first debug) :color (second debug))
            args)))
@@ -125,7 +131,7 @@
              debug
              args]
       :or {items [[(c/label)]]
-           wrap ""
+           wrap 0
            lgap 0
            rgap 0
            tgap 0
@@ -137,7 +143,13 @@
            args []}}]
   (let [[tgap bgap lgap rgap] (rift gap [tgap bgap lgap rgap])]
     (apply mig-panel
-          :constraints [wrap (str lgap "px" hrules rgap "px") (str tgap "px" vrules bgap "px")]
+           :constraints [(if (= 0 wrap) "" (str "wrap " wrap))
+                         (str lgap (if (string? lgap) "" "px")
+                              hrules
+                              rgap (if (string? rgap) "" "px"))
+                         (str tgap (if (string? tgap) "" "px")
+                              vrules
+                              bgap (if (string? bgap) "" "px"))]
           :items items
           :border (b/line-border :thickness (first debug) :color (second debug))
           args)))
@@ -240,12 +252,19 @@
   Example:
      (dynamic-text-area {:text \"Some loooong text\"})
   "
-  [{:keys [text]}]
+  [{:keys [text foreground font lgap tgap]
+    :or {foreground "#000"
+         font (gtool/getFont)
+         lgap 0
+         tgap 0}}]
   (let [text-area (c/styled-text
-                  :text text
-                  :editable? false
-                  :wrap-lines? true
-                  :opaque? false)]
+                   :border (b/empty-border :left lgap :top tgap)
+                   :text text
+                   :font font
+                   :foreground  foreground
+                   :editable?   false
+                   :wrap-lines? true
+                   :opaque?     false)]
     text-area))
 ;;
 ;; Example of multiline-text TOTRY
@@ -1112,9 +1131,11 @@
                  id
                  onClick
                  over-func
-                 background]
+                 background
+                 left-color
+                 left-gap]
           :or {expand :auto
-               border (b/compound-border (b/empty-border :left 6))
+               border (b/compound-border (b/empty-border :left 3))
                vsize 35
                min-height 200
                ico  (stool/image-scale icon/plus-64-png 25)
@@ -1122,15 +1143,21 @@
                id :none
                onClick nil
                over-func :none
-               background (gtool/get-comp :button-expand :background)}}]
+               background (gtool/get-comp :button-expand :background)
+               left-color "#fff"
+               left-gap 0}}]
     (let [atom-inside-btns (atom nil)
           inside-btns (if (nil? inside-btns) nil inside-btns) ;; check if nill
           inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns)) ;; check if not in list
           inside-btns (if (sequential? (first inside-btns)) (first inside-btns) inside-btns) ;; check if list in list
           ico (if (or (= :always expand) (not (nil? inside-btns))) ico nil)
           title (c/label
-                 :border (b/empty-border :left 10)
+                 :border (b/compound-border
+                          (b/empty-border :left 10)
+                          (b/line-border :left left-gap :color left-color))
                  :text txt
+                 :font (gtool/getFont 14 :name "Ubuntu Bold")
+                 :foreground "#030D1C"
                  :background (Color. 0 0 0 0))
           listen (fn [func] [:mouse-entered gtool/hand-hover-on
                              :mouse-clicked (fn [e] (func e))
@@ -1142,20 +1169,14 @@
                 :halign :center
                 :background (Color. 0 0 0 0)
                 :icon ico)
-          mig (mig-panel :constraints ["wrap 1" (str "0px[" min-height ":, fill]0px") "0px[fill]0px"] :background background)
+          mig (mig-panel :constraints ["wrap 1" (str "0px[" min-height ":, fill]0px") "0px[fill]0px"]
+                         :background background)
           user-data  {:atom-expanded-items atom-inside-btns
                       :title-fn (fn [new-title] (c/config! title :text new-title))}
           expand-btn (fn [func]
                        (c/config! title :listen (if (= :none over-func) (listen func) [:mouse-clicked over-func
                                                                                        :mouse-entered gtool/hand-hover-on]))
                        (c/config! icon :listen (listen func))
-                       ;; (mig-panel
-                       ;;  :constraints ["" (str "10px[grow, fill]0px[" vsize "]0px") "0px[fill]0px"]
-                       ;;  :background background
-                       ;;  :focusable? true
-                       ;;  :border border
-                       ;;  :items [[title]
-                       ;;          [icon]])
                        (c/border-panel
                         :focusable? true
                         :background background
@@ -1174,14 +1195,14 @@
                                          @atom-inside-btns))
                              ;;(gtool/set-focus (first @atom-inside-btns))
                              ;;(gtool/switch-focus)
-                             (println "OPENN")
+                             ;;(println "OPENN")
                              (.revalidate mig) 
                              (.repaint mig)
                              (c/config! mig :user-data "HEYY" ;;(into user-data {:expanded? true})
                                         ))
                            (do ;;  Remove inside buttons form mig without expand button
                              (c/config! icon :icon ico)
-                             (println  "CLOOSEEE")
+                             ;;(println  "CLOOSEEE")
                              (doall (map #(.remove mig %) (reverse (drop 1 (range (count (u/children mig)))))))
                              (.revalidate mig)
                              (.repaint mig)
@@ -1216,23 +1237,29 @@
   (fn [title
        & {:keys [onClick
                  left
+                 left-color
                  hover-color
                  cursor
                  width
                  args]
           :or {onClick (fn [e] (println "Clicked: " title))
-               left 0
+               left 6
+               left-color "#fff"
                cursor :hand
-               hover-color "#eeefff"
+               hover-color "#f7f7f7"
                width 200 
                args []}}]
-    (apply c/label :font (gtool/getFont)
+    (apply c/label
+           :font (gtool/getFont 12)
            :text (str title)
            :background "#fff"
+           :foreground "#030D1C"
            :size  [width :by 25]
            :cursor cursor
+           :font (gtool/getFont 14 :name "Ubuntu Regular")
            :focusable? true
-           :border (b/empty-border :left 10)
+           :border (b/compound-border (b/empty-border :left 10)
+                                      (b/line-border :left left :color left-color))
            :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
                     :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
                     :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))

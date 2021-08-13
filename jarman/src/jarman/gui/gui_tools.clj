@@ -50,7 +50,7 @@
 (defn firstToWidget [list] (seesaw.core/to-widget (first list)))
 
 (def getFont
-  (fn [& params] (-> {:size 12 :style :plain :name "Arial"}
+  (fn [& params] (-> {:size 12 :style :plain :name "Ubuntu Regular"}
                      ((fn [m] (let [size  (first (filter (fn [item] (if (number? item) item nil)) params))] (if (number? size) (merge m {:size size}) (conj m {})))))
                      ((fn [m] (let [name  (first (filter (fn [item] (if (string? item) item nil)) params))] (if (string? name) (merge m {:name name}) (conj m {})))))
                      ((fn [m] (let [style (first (filter (fn [item] (if (= item :bold) item nil)) params))] (if (= style :bold) (merge m {:style :bold}) (conj m {})))))

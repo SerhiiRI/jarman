@@ -76,7 +76,7 @@
                               [:= :password user-password]]}))
            first
            (update-in [:user.configuration] read-string)
-           (update-in [:permission.configuration] read-string)q)]
+           (update-in [:permission.configuration] read-string))]
     (if (nil? u)
       :user-not-found
       (session/user-set u))))

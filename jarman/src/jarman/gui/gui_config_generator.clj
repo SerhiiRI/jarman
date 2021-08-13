@@ -366,8 +366,12 @@
 (defn create-expand-btns--confgen
   "Discription:
      Return list of button expand chlide with configurations parts."
-  []
-  (let [current-theme (str (first (cm/get-in-value [:themes :theme_config.edn :selected-theme])) ".edn")
+  [colors-fn]
+  (let [[color-bg color-hover] (if (fn? colors-fn)
+                                 (nth (colors-fn 0) 0)
+                                 ["f7f7f7" "f7f7f7"])
+        x (println color-bg color-hover)
+        current-theme (str (first (cm/get-in-value [:themes :theme_config.edn :selected-theme])) ".edn")
         config-file-list-as-keyword (map #(first %) (cm/get-in-segment []))
         config-file-list-as-keyword-to-display
         (filter #(let [map-part (cm/get-in-segment (if (vector? %) % [%]))]
@@ -392,43 +396,50 @@
                         view-id (last path)]
                     (gcomp/button-expand-child
                      title
+                     :left 6
+                     :hover-color color-hover
                      :onClick (fn [e]
                                 (gvs/add-view
                                  :view-id view-id
                                  :title title
                                  :render-fn (try
-                                                 (fn [] (create-view--confgen
-                                                         path
-                                                         :message-ok (fn [head body]
-                                                                       ((state/state :alert-manager)
-                                                                        :set {:header head :body body}
-                                                                        5))))
-                                                 (catch Exception e (gedit/popup-config-editor
-                                                                     path
-                                                                     (get (cm/get-in-segment path))))))))))
+                                              (fn [] (create-view--confgen
+                                                      path
+                                                      :message-ok (fn [head body]
+                                                                    ((state/state :alert-manager)
+                                                                     :set {:header head :body body}
+                                                                     5))))
+                                              (catch Exception e (gedit/popup-config-editor
+                                                                  path
+                                                                  (get (cm/get-in-segment path))))))))))
                 config-file-list-as-keyword-to-display)
                (let [path [:themes :theme_config.edn] ;; Selected theme
                      title (:name (cm/get-in-segment path))
                      view-id :theme_config.edn]
                  (gcomp/button-expand-child
                   title
+                  :left 6
+                  :hover-color color-hover
                   :onClick (fn [e]
                              (gvs/add-view
                               :view-id view-id
                               :title title
                               :render-fn (fn [] (create-view--confgen
-                                                    path
-                                                    :message-ok (fn [head body] ((state/state :alert-manager)
-                                                                                 :set {:header head :body body}
-                                                                                 (((state/state :alert-manager)
-                                                                                   :message)
-                                                                                  (state/state :alert-manager))
-                                                                                 5))))))))
+                                                 path
+                                                 :message-ok (fn [head body]
+                                                               ((state/state :alert-manager)
+                                                                :set {:header head :body body}
+                                                                (((state/state :alert-manager)
+                                                                  :message)
+                                                                 (state/state :alert-manager))
+                                                                5))))))))
                (let [path [:themes :current-theme] ;; Themes config
                      title (rift (:name (cm/get-in-segment path)) "NIL")
                      view-id :current-theme]
                  (gcomp/button-expand-child
                   title
+                  :left 6
+                  :hover-color color-hover
                   :onClick (fn [e]
                              (gvs/add-view
                               :view-id view-id

@@ -42,14 +42,18 @@
 (defn- gui-table-model [model-columns data-loader]
   (fn [] [:columns model-columns :rows (data-loader)]))
 
+;; (seesaw.dev/show-options (swingx/table-x))
+
 (defn- gui-table [table-model]
   (fn [listener-fn]
-    (let [TT (swingx/table-x :model (table-model))]
+    (let [TT (swingx/table-x :model (table-model) :border (seesaw.border/empty-border))]
       (c/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (c/selection TT)))))
       (c/config! TT :horizontal-scroll-enabled? true)
       (c/config! TT :show-grid? false)
       (c/config! TT :show-horizontal-lines? true)
-      (c/scrollable TT :hscroll :as-needed :vscroll :as-needed :border nil))))
+      (c/scrollable TT :hscroll :as-needed
+                    :vscroll :as-needed
+                    :border (seesaw.border/line-border :thickness 0 :color "#fff")))))
 
 (defn create-table [configuration toolkit-map]
   (let [view (:view-columns configuration) table-list (:tables configuration)]

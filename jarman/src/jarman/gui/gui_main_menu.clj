@@ -15,25 +15,62 @@
             [jarman.gui.gui-editors          :as gedit]))
 
 
+;; (defn- expand-colors []
+;;   [["#eeeeee" "#f7f7f7"]
+;;    ["#d3ebe7" "#e9f5f3"]
+;;    ["#d5f2db" "#ebfaee"]
+;;    ["#dfecf7" "#f0f8ff"]])
+
+;; (defn- expand-colors []
+;;   [["#eeeeee" "#eeeeee"]
+;;    ["#d3ebe7" "#d3ebe7"]
+;;    ["#d5f2db" "#d5f2db"]
+;;    ["#dfecf7" "#dfecf7"]])
+
+;; (defn- expand-colors []
+;;   [["#eeeeee" "#f7f7f7"]
+;;    ["#dddddd" "#eeeeee"]
+;;    ["#cccccc" "#dddddd"]
+;;    ["#bbbbbb" "#cccccc"]])
+
+;; (defn- expand-colors []
+;;   [["#f7f7f7" "#f7f7f7"]
+;;    ["#eeeeee" "#eeeeee"]
+;;    ["#e7e7e7" "#e7e7e7"]
+;;    ["#dddddd" "#dddddd"]])
+
 (defn- expand-colors []
-  [["#eeeeee" "#eeefff"]
-   ["#7fff00" "#c2ff85"]
-   ["#00fa9a" "#61ffc2"]
-   ["#79d1c4" "#9ae3d8"]
-   ["#9ae3d8" "#9ae3d8"]])
+  [["#f7f7f7" "#fafafa"]
+   ["#f0f6fa" "#f0f6fa"]
+   ["#ebf7ff" "#ebf7ff"]
+   ["#daeaf5" "#daeaf5"]
+   ["#bfd3e0" "#bfd3e0"]])
+
+
+(defn- repeat-colors
+  [colors-fn loop]
+  (reduce
+   (fn [acc v] (concat acc v))
+   (repeatedly loop colors-fn)))
+
+(defn- get-colors [lvl]
+  (let [colors-c (count (expand-colors))]
+    (if (> (inc lvl) colors-c)
+      (repeat-colors expand-colors (Math/ceil (/ (inc lvl) colors-c)))
+      (expand-colors))))
 
 (defn- part-plugin
   [k v lvl]
   (if (session/allow-permission? (.return-permission v))
     (gcomp/button-expand-child
-          (str k)
-          :left (* (dec lvl) 5)
-          :hover-color (second (nth (expand-colors) (dec lvl)))
-          :onClick (fn [e]
-                     (gvs/add-view
-                      :view-id (str "auto-plugin" (.return-title v))
-                      :title k
-                      :render-fn (.return-entry v))))
+     (str k)
+     :left (+ (* (dec lvl) 3) 6)
+     :hover-color (second (nth (get-colors (dec lvl)) (dec lvl)))
+     :onClick (fn [e]
+                (gvs/add-view
+                 :view-id (str "auto-plugin" (.return-title v))
+                 :title k
+                 :render-fn (.return-entry v))))
     ;; or return nil
     nil))
 
@@ -44,9 +81,8 @@
       (gcomp/button-expand
        (str k)
        depper
-       :left-color (first (nth (expand-colors) lvl))
-       :bg-color   (first (nth (expand-colors) lvl))
-       :left (* lvl 5)))))
+       :background (first (nth (get-colors lvl) lvl))
+       :left-gap   (* lvl 3)))))
 
 (defn- part-button [k v lvl]
   (if (or (nil? (:permission v))
@@ -55,8 +91,8 @@
       ((:fn v))
       (gcomp/button-expand-child
        (str k)
-       :left (* (dec lvl) 5)
-       :hover-color (second (nth (expand-colors) (dec lvl)))
+       :left (+ (* (dec lvl) 3) 6)
+       :hover-color (second (nth (get-colors (dec lvl)) (dec lvl)))
        :onClick
        (if-not (nil? (:fn v))
          (if (= :invoke (:action v))
@@ -93,8 +129,43 @@
 
 ;;(println "\n" (bulid-expand-by-map (example-plugins-map)))
 
+(defn demo-menu []
+  {"LVL 1" {:key    "lvl 1-1"
+            :action :invoke
+            :fn      (fn [e] )}})
+
 (defn default-menu-items []
-  {"Database"
+  {"Menu demo"
+   {"lvl-1"
+    {"lvl-11"
+      {:key    "lvl 3-1"
+       :action :invoke
+       :fn      (fn [e] )}
+     
+     "lvl-2"
+     {"lvl-31"
+      {"lvl-3-1" {:key    "lvl 3-1"
+                  :action :invoke
+                  :fn      (fn [e] )}
+       "lvl-3-2" {:key    "lvl 3-2"
+                  :action :invoke
+                  :fn      (fn [e] )}}
+      "lvl-32"
+      {"lvl-3-4" {:key    "lvl 3-1"
+                  :action :invoke
+                  :fn      (fn [e] )}
+       "lvl-3-5" {:key    "lvl 3-2"
+                  :action :invoke
+                  :fn      (fn [e] )}}}
+     "lvl-22"
+     {"lvl-2-1" {:key    "lvl 3-1"
+                 :action :invoke
+                 :fn      (fn [e] )}
+      "lvl-2-2" {:key    "lvl 3-2"
+                 :action :invoke
+                 :fn      (fn [e] )}}}}
+   
+   "Database"
    {"DB Visualizer" {:key "db-visualizer"
                      :fn    dbv/create-view--db-view}},
    
@@ -164,7 +235,7 @@
    (gtool/get-lang-btns :settings)
    {(gtool/get-lang-btns :settings) {:key    "settings"
                                      :action :list
-                                     :fn     cg/create-expand-btns--confgen}}})
+                                     :fn     (fn [] (cg/create-expand-btns--confgen get-colors))}}})
 
 
 

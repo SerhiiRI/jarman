@@ -196,9 +196,24 @@
                             :title "Restart"
                             :fn    (fn [e] ((state/state :startup)))}
 
+                           {:icon  icon/key-blue-64-png
+                            :title "Change work mode"
+                            :fn    (fn [e]
+                                     (cond (= "user"      (session/get-user-permission)) (session/set-user-permission "admin")
+                                           (= "admin"     (session/get-user-permission)) (session/set-user-permission "developer")
+                                           (= "developer" (session/get-user-permission)) (session/set-user-permission "user"))
+                                     ((state/state :alert-manager) :set {:header "Work mode" :body (str "Switched to: " (session/get-user-permission))}  5)
+                                     (gseed/extend-frame-title (str ", " (session/get-user-login) "@" (session/get-user-permission))))}
+                           
                            ;; {:icon  icon/download-blue-64-png
                            ;;  :title "Update"
                            ;;  :fn    (fn [e] (println "Check update"))}
+                           
+                           {:icon  icon/user-blue1-64-png
+                            :title "Logout"
+                            :fn    (fn [e]
+                                     (.dispose (c/to-frame e))
+                                     ((state/state :invoke-login-panel)))}
 
                            {:icon  icon/enter-64-png
                             :title "Close app"

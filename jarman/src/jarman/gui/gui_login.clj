@@ -629,6 +629,8 @@
         icons   (if (> (count items) 1) [(last items)] nil)
 
         items   (if (> (count items) 1) (butlast items) items)
+        
+        data-log (get-in (state!) [:data-log config-k])
 
         listens [:mouse-entered (fn [e]
                                   (gtool/hand-hover-on vpanel)
@@ -636,7 +638,7 @@
                                   (if icons (c/config! (first icons) :visible? true)))
                  :mouse-exited  (fn [e]
                                   (c/config! vpanel :border (border-fn false))
-                                  (if icons (c/config! (first icons) :visible? false)))
+                                  (if (and icons (empty? data-log)) (c/config! (first icons) :visible? false)))
                  ;; TODO: choose info or settings by keyboard
                  :focus-gained  (fn [e] (c/config! vpanel :border (border-fn true)))
                  :focus-lost    (fn [e] (c/config! vpanel :border (border-fn false)))]
@@ -659,9 +661,10 @@
     Tools icons for tiles with access configs.
     Icons are invokers for new view like configuration manager or error info panel."
   [state! dispatch! config-k log]
-  (let [isize 32]
+  (let [isize 32
+        show (if log true false)]
     (gcomp/hmig
-     :args [:background "#fff" :visible? false]
+     :args (concat [:background "#fff" :visible? show])
      :hrules "[grow]5px[fill]"
      :vrules "[grow, bottom]"
      :gap [5 5 5 5]
@@ -895,16 +898,17 @@
   "Description:
      Generate button return to login panel."
   [state! dispatch!]
-  (c/label ;; Return to login panel
-   :text   "Back to login"
-   :font   (gtool/getFont 15)
-   :halign :center
-   :border (b/empty-border :thickness 8)
-   :icon   (stool/image-scale icon/user-blue1-64-png 40)
-   :listen [:mouse-entered gtool/hand-hover-on
-            :mouse-clicked (fn [e] (c/config!
-                                    (c/to-frame e)
-                                    :content (login-panel state! dispatch!)))]))
+  (gcomp/button-basic
+   "Back to login"
+   :onClick (fn [e] (c/config!
+                     (c/to-frame e)
+                     :content (login-panel state! dispatch!)))
+   :flip-border true
+   :mouse-out "#eee"
+   :tgap 6
+   :bgap 6
+   :args [:icon (stool/image-scale icon/user-blue1-64-png 30)]))
+
 
 ;;;;;;;;;;;;;;;
 ;;
@@ -917,14 +921,15 @@
    Example:
      (info-panel state! dispatch!)"
   [state! dispatch!]
-  (gcomp/min-scrollbox
-   (gcomp/vmig
-    :hrules "[:800, grow, fill]"
-    :tgap 25
-    :items (gtool/join-mig-items
-            (info-logo)
-            (info-section)
-            (return-to-login state! dispatch!)))))
+  (gcomp/vmig
+   :items [[(gcomp/min-scrollbox
+             (gcomp/vmig
+              :hrules "[:800, grow, fill]"
+              :tgap 25
+              :items (gtool/join-mig-items
+                      (info-logo)
+                      (info-section))))]
+           [(return-to-login state! dispatch!)]]))
 
 
 ;; ┌─────────────────────────────────────┐
@@ -994,13 +999,17 @@
                     (state-access-configs state! dispatch!)))
            
            (gcomp/hmig ;; More info buttons
-            :hrules "[grow, right]"
-            :items [[(c/label :icon (stool/image-scale icon/I-64-png 40)
+            :hrules "[grow]10px[fill]"
+            :items [[(c/label)]
+                    [(c/label :icon (stool/image-scale icon/I-64-png 40)
+                                :listen [:mouse-entered gtool/hand-hover-on
+                                         :mouse-clicked (fn [e]
+                                                          (c/config!
+                                                           (c/to-frame e)
+                                                           :content (info-panel state! dispatch!)))])]
+                    [(c/label :icon (stool/image-scale icon/enter-64-png 40)
                               :listen [:mouse-entered gtool/hand-hover-on
-                                       :mouse-clicked (fn [e]
-                                                        (c/config!
-                                                         (c/to-frame e)
-                                                         :content (info-panel state! dispatch!)))])]]))))
+                                       :mouse-clicked (fn [e] (.dispose (c/to-frame e)))])]]))))
 
 
 ;; ┌─────────────────────────────────────┐
@@ -1062,3 +1071,4 @@
 ;;            :size [200 :by 200]
 ;;            :content (label :text "a" :border ((color-border "#222"))))
 ;;       (.setLocationRelativeTo nil) pack! show!))
+  

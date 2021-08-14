@@ -36,27 +36,6 @@
 ;;       :not-valid-connection
 ;;       "NOT VALID CONNECTION")))
 
-(defn login-user [user-login user-password]
-  (let [u (->>
-           (c/query
-            (select! {:table_name :user
-                      :column [:#as_is
-                               :user.id
-                               :user.login
-                               :user.last_name
-                               :user.first_name
-                               :user.configuration
-                               :permission.permission_name
-                               :permission.configuration]
-                      :inner-join [:user->permission]
-                      :where [:and
-                              [:= :login user-login]
-                              [:= :password user-password]]}))
-         (map #(update-in % [:configuration] read-string))
-         first)]
-    (if (nil? u)
-      :user-not-found
-      (session/user-set u))))
 
 (defn login-user [user-login user-password]
   (let [u (->
@@ -74,16 +53,17 @@
                       :where [:and
                               [:= :login user-login]
                               [:= :password user-password]]}))
-           first
-           (update-in [:user.configuration] read-string)
-           (update-in [:permission.configuration] read-string))]
-    (if (nil? u)
+           first)]
+    (if (empty? u)
       :user-not-found
-      (session/user-set u))))
+      (-> u
+        (update-in [:user.configuration] read-string)
+        (update-in [:permission.configuration] read-string)
+        (session/user-set)))))
 
 
-({:user.login "admin", :user.last_name "admin", :user.first_name "admin", :user.configuration "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}", :permission.permission_name "admin", :permission.configuration "{}"} {:user.login "user", :user.last_name "user", :user.first_name "user", :user.configuration "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}", :permission.permission_name "user", :permission.configuration "{}"}
- {:user.login "dev", :user.last_name "dev", :user.first_name "dev", :user.configuration "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}", :permission.permission_name "developer", :permission.configuration "{}"})
+;; ({:user.login "admin", :user.last_name "admin", :user.first_name "admin", :user.configuration "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}", :permission.permission_name "admin", :permission.configuration "{}"} {:user.login "user", :user.last_name "user", :user.first_name "user", :user.configuration "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}", :permission.permission_name "user", :permission.configuration "{}"}
+;;  {:user.login "dev", :user.last_name "dev", :user.first_name "dev", :user.configuration "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}", :permission.permission_name "developer", :permission.configuration "{}"})
 
 (comment
   (login-user "user" "user")

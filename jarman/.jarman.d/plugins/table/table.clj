@@ -692,7 +692,7 @@
  (query-toolkit/data-toolkit-pipeline configuration {}))
 
 
-(defn- create-state-template [plugin-path global-configuration-getter]
+(defn create-state-template [plugin-path global-configuration-getter]
   (atom {:plugin-path          plugin-path
          :plugin-global-config global-configuration-getter
          :plugin-config        (get-in (global-configuration-getter) (conj plugin-path :config) {})

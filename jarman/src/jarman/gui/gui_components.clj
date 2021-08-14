@@ -477,7 +477,7 @@
         last-v (atom "")]
     (apply c/text
            :text (if (empty? val) placeholder (if (string? val) val (str val)))
-           :font (gtool/getFont font-size :name "Monospaced")
+           :font (gtool/getFont font-size)
            :background (gtool/get-color :background :input)
            :border (newBorder border-color-unfocus)
            :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
@@ -535,7 +535,7 @@
         last-v (atom "")]
     (apply c/text
            :text (if (empty? val) placeholder (if (string? val) val (str val)))
-           :font (gtool/getFont font-size :name "Monospaced")
+           :font (gtool/getFont font-size)
            :background (gtool/get-color :background :input)
            :border (newBorder border-color-unfocus)
            :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
@@ -574,7 +574,7 @@
              args []}}]
   (apply c/checkbox
          :text txt
-         :font (gtool/getFont font-size :name "Monospaced")
+         :font (gtool/getFont font-size)
          :selected? val
          :enabled? enabled?
          :border (b/empty-border :top 15)
@@ -978,7 +978,7 @@
                                              (b/line-border :bottom (nth border 4) :color underline-color)))]
       (apply c/text
              :text placeholder
-             :font (gtool/getFont font-size :name "Monospaced")
+             :font (gtool/getFont font-size)
              :background (gtool/get-color :background :input)
              :border (newBorder border-color-unfocus)
              :user-data {:placeholder placeholder :value "" :edit? false :type :password}
@@ -1044,7 +1044,7 @@
                                              (b/line-border :bottom (nth border 4) :color underline-color)))]
       (apply c/text
              :text placeholder
-             :font (gtool/getFont font-size :name "Monospaced")
+             :font (gtool/getFont font-size)
              :background (gtool/get-color :background :input)
              :border (newBorder border-color-unfocus)
              :user-data {:placeholder placeholder :value "" :edit? false :type :password}
@@ -1248,13 +1248,12 @@
                width 200 
                args []}}]
     (apply c/label
-           :font (gtool/getFont 12)
            :text (str title)
            :background "#fff"
            :foreground "#030D1C"
            :size  [width :by 25]
            :cursor cursor
-           :font (gtool/getFont 14 :name "Ubuntu Regular")
+           :font (gtool/getFont 12 :name "Ubuntu Regular")
            :focusable? true
            :border (b/compound-border (b/empty-border :left 10)
                                       (b/line-border :left left :color left-color))
@@ -1345,7 +1344,7 @@
       (apply c/text
              :text val
              :background "#fff"
-             :font (gtool/getFont font-size :name "Monospaced")
+             :font (gtool/getFont font-size)
              :background (gtool/get-color :background :input)
              :border (newBorder border-color-unfocus)
              :listen [:focus-gained (fn [e] (c/config! e :border (newBorder border-color-focus)))

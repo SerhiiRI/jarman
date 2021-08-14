@@ -16,6 +16,7 @@
             [seesaw.chooser :as chooser]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
   (:import (java.awt Color)
+           (java.awt Dimension)
            (jarman.jarmanjcomp CustomScrollBar)))
 
 (jarman.config.config-manager/swapp)
@@ -182,13 +183,10 @@
     (min-scrollbox (mig-panel ...) :hscroll :never)
     ;; => #object[seesaw.core.proxy$javax.swing"
   [component
-   & args]
+   & {:keys [args]
+      :or {args []}}]
   (let [args (apply hash-map args)
-        scr (CustomScrollBar/myScrollPane component
-             ;; (mig-panel :constraints ["" "0px[grow, fill]8px" "0px[]0px"]
-             ;;                                         :background (.getBackground component)
-             ;;                                         :items [[component]])
-             )
+        scr (CustomScrollBar/myScrollPane component)
         get-key (fn [x] (first (first x)))
         get-val (fn [x] (second (first x)))] 
     (if-not (nil? args)

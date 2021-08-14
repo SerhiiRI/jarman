@@ -74,7 +74,7 @@
        ;; :background "#eee"
        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[28, shrink 0]0px[grow, fill]0px"]
        ;; :border (line-border :left 1 :color "#999")
-       :items [[(gcomp/min-scrollbox tabs-space :vscroll :never)]
+       :items [[(gcomp/min-scrollbox tabs-space :args [:vscroll :never])]
                [views-space]]))))
 
 (def jarmanapp--main-tree
@@ -212,8 +212,9 @@
                            {:icon  icon/user-blue1-64-png
                             :title "Logout"
                             :fn    (fn [e]
+                                     ((state/state :invoke-login-panel))
                                      (.dispose (c/to-frame e))
-                                     ((state/state :invoke-login-panel)))}
+                                     )}
 
                            {:icon  icon/enter-64-png
                             :title "Close app"

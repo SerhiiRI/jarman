@@ -19,6 +19,7 @@
    [jarman.tools.swing :as stool]
    [jarman.resource-lib.icon-library :as icon]
    [jarman.gui.gui-tools      :as gtool]
+   [jarman.gui.gui-editors    :as gedit]
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-calendar   :as calendar]
    [jarman.gui.popup :as popup]
@@ -441,8 +442,12 @@
                 (= mt/column-type-textarea (first comp-types))
                 (gcomp/state-input-text-area {:func func :val val})
 
+                (= mt/column-type-prop (first comp-types))
+                (gedit/state-code-area {:func func :val val})
+                
                 :else
-                (gcomp/state-input-text {:func func :val val})))]
+                (gcomp/state-input-text {:func func :val val})
+                ))]
     (.add panel comp)))
 
 

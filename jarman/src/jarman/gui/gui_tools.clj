@@ -94,6 +94,28 @@
   (fn [& args]
     (join-vec (map #(vector %) (flatten args)))))
 
+(defn repeat-listener-to-all
+  "Descritpion:
+    Go over all obj and children and insert same listeners.
+  Example:
+    (repeat-listener-to-all [panel label] [:mouse-clicked ...])" 
+  [items-list listen-vec]
+  (if (empty? items-list) (println "\nrepeat-listener-to-all: Items list is empty")
+      (if (empty? listen-vec) (println "\nrepeat-listener-to-all: Listeners vector is empty")
+        (doall
+         (map
+          #(if (sequential? %)
+             (repeat-listener-to-all %)
+             (do
+               (try
+                 (c/config! % :listen listen-vec)
+                 (catch Exception e (println "\n" (str "Set Listener exception:\n" (.getMessage e)))))
+               
+               (let [children (seesaw.util/children %)]
+                 (if-not (empty? children)
+                   (repeat-listener-to-all children listen-vec)))))
+          items-list)))))
+
 (defn middle-bounds
   "Description:
       Return middle bounds with size.

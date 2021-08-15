@@ -430,9 +430,9 @@
               title
               (cond
                 (= mt/column-type-linking (first comp-types))
-                (ccomp/link-test #(swap! (atom {}) (fn [s] (assoc-in s [:link-defr %])) [])
-                              (jarman.logic.composite-components/->Link "panda" "some-path/heyy/file.txt"))
-                ;; (input-related-popup-table {:val val :state! state! :field-qualified field-qualified :dispatch! dispatch!})
+                ;; (ccomp/link-test #(swap! (atom {}) (fn [s] (assoc-in s [:link-defr %])) [])
+                ;;               (jarman.logic.composite-components/->Link "panda" "some-path/heyy/file.txt"))
+                (input-related-popup-table {:val val :state! state! :field-qualified field-qualified :dispatch! dispatch!})
                 ;; (gcomp/state-input-text {:func func :val val})
                 
                 (or (= mt/column-type-data (first comp-types))

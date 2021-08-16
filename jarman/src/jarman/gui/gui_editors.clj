@@ -207,7 +207,7 @@
      (popup-metadata-editor :user)
   "
   [table-keyword]
-  (let [meta (mt/metadata-get table-keyword)]
+  (let [meta (first (mt/getset! table-keyword))]
       (gcomp/popup-window
        {:window-title "Metadata manual table editor"
         :view (code-editor
@@ -216,7 +216,7 @@
                 :dispose true
                 :save-fn (fn [state]
                            (try
-                             (mt/metadata-set (assoc meta :prop (read-string (c/config (:code state) :text))))
+                             (mt/update-meta (assoc meta :prop (read-string (c/config (:code state) :text))))
                              (c/config! (:label state) :text "Saved!")
                              (catch Exception e (c/config!
                                                  (:label state)
@@ -234,7 +234,7 @@
    :view-id (keyword (str "manual-view-code" (name table-keyword)))
    :title (str "Metadata: " (name table-keyword))
    :render-fn
-   (fn [] (let [meta (mt/metadata-get table-keyword)]
+   (fn [] (let [meta (first (mt/getset! table-keyword))]
             (code-editor
              {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
                      :background "#fff"]
@@ -242,7 +242,7 @@
               :val (with-out-str (clojure.pprint/pprint (:prop meta)))
               :save-fn (fn [state]
                          (try
-                           (mt/metadata-set (assoc meta :prop (read-string (c/config (:code state) :text))))
+                           (mt/update-meta (assoc meta :prop (read-string (c/config (:code state) :text))))
                            (c/config! (:label state) :text "Saved!")
                            (catch Exception e (c/config!
                                                (:label state)

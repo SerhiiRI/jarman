@@ -514,6 +514,7 @@
              border-color-focus
              border-color-unfocus
              char-limit
+             start-underline
              args]
       :or {placeholder ""
            font-size 14
@@ -521,6 +522,7 @@
            border-color-unfocus (gtool/get-color :decorate :focus-lost)
            border [10 10 5 5 2]
            char-limit 0
+           start-underline nil
            args []}}]
   (let [fn-get-data     (fn [e key] (get-in (c/config e :user-data) [key]))
         fn-assoc        (fn [e key val] (assoc-in (c/config e :user-data) [key] val))
@@ -532,7 +534,7 @@
            :text (if (empty? val) placeholder (if (string? val) val (str val)))
            :font (gtool/getFont font-size)
            :background (gtool/get-color :background :input)
-           :border (newBorder border-color-unfocus)
+           :border (newBorder (rift start-underline border-color-unfocus))
            :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
            :listen [:focus-gained (fn [e]
                                     (c/config! e :border (newBorder border-color-focus))

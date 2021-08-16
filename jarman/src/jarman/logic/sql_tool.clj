@@ -22,8 +22,8 @@
 
 (def ^{:dynamic true :private true} *data-format* "DB date format" "yyyy-MM-dd HH:mm:ss")
 (def ^{:dynamic true :private true} *namespace-lib* "" "jarman.logic.sql-tool")
-(def ^{:dynamic true} *debug*      "Enable debugging" false)
-(def ^{:dynamic true} *debug-to*   "Enable debugging" (first [:output :file]))
+(def ^{:dynamic true} *debug*      "Enable debugging" true)
+(def ^{:dynamic true} *debug-to*   "Enable debugging" (second [:output :file]))
 (def ^{:dynamic true} *debug-file* "Enable debugging" "./sql.log.clj")
 (def ^{:dynamic true} *debug-full-descript*   "Enable debugging" false)
 
@@ -86,6 +86,7 @@
   ([YYYY MM dd hh mm ss] (.format (java.text.SimpleDateFormat. "YYYY-MM-dd HH:mm:ss")
                                   (java.util.Date. (- YYYY 1900) MM dd hh mm ss))))
 
+(spit *debug-file* (format ";; S-SQL jarman log session\n;; Timestamp: %s\n\n" (date)))
 
 (defn date-object
   "Remember that simple (date) ruturn current
@@ -1295,7 +1296,8 @@
         (println ""))
       (do
         (println (list operation args))
-        (println ";;=> " generated-SQL)))))
+        (println ";;=> " generated-SQL)
+        (println "")))))
 
 (defn- debug-ssql [operation accepted-rules list-of-rules args generated-SQL]
   (if *debug*

@@ -1,26 +1,26 @@
 (ns jarman.logic.composite-components
   (:require [miner.ftp :as ftp]
             [jarman.logic.session :refer [get-user-configuration]]))
+
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; FTP FUNCTIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;
-(defn copy [uri file]
+
+(defn- copy [uri file]
   (with-open [in (clojure.java.io/input-stream uri)
               out (clojure.java.io/output-stream file)]
     (clojure.java.io/copy in out)))
 
-(defn ftp-list-files [repo-url]
+(defn- ftp-list-files [repo-url]
   (ftp/with-ftp [client repo-url]
     (ftp/client-cd client "jarman")
     (ftp/client-all-names client)))
 
-(defn ftp-put-file [ftp-repo-url repo-path file-path ] 
+(defn- ftp-put-file [ftp-repo-url repo-path file-path ] 
   (ftp/with-ftp [client ftp-repo-url]
     (ftp/client-cd client repo-path)))
 
- 
-
-(defn ftp-get-file
+(defn- ftp-get-file
   ([repo-url file-name]
    (do (copy (clojure.string/join "/" [repo-url "jarman" file-name]) file-name))))
 
@@ -34,6 +34,10 @@
 ;;download file
 ;;upload file
 ;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;
+;;; FtpFile ;;;
+;;;;;;;;;;;;;;;
 
 (defprotocol IStorage
   (load-session-config [this]))
@@ -57,7 +61,7 @@
   (put-file-ftp [this]
     (ftp-put-file (load-session-config this) "/bd/user"  file-path)))
 
-(defn isFtp? [^jarman.logic.composite_components.FtpFile e]
+(defn isFtpFile? [^jarman.logic.composite_components.FtpFile e]
   (instance? jarman.logic.composite_components.FtpFile e))
 
 (defn ftp-file [login password file-name file-path]
@@ -68,8 +72,9 @@
 
 ;;ftp://jarman:dupa@trashpanda-team.ddns.net
 
-
-
+;;;;;;;;;;;;
+;;; Link ;;;
+;;;;;;;;;;;;
 
 ;; (clojure.java.browse/browse-url "http://clojuredocs.org")
 (defrecord Link [text link])
@@ -77,33 +82,13 @@
 (defn isLink? [^jarman.logic.composite_components.Link e]
   (instance? jarman.logic.composite_components.Link e))
 
-;;(if (isLink? col) (build-panel (fn) col))
-(defrecord File [file-name file-path])
+;;;;;;;;;;;;
+;;; File ;;;
+;;;;;;;;;;;;
 
-(comment
-  (defprotocol IPluginQuery
-    (return-path [this])
-    (return-entry [this])
-    (return-permission [this])
-    (return-title [this])
-    (return-config [this])
-    (exists? [this]))
-  
-  (defrecord PluginLink [plugin-path]
-    IPluginQuery
-    (return-path [this] (.plugin-path this))
-    (return-entry [this] (get-in (global-view-configs-get) (conj (return-path this) :entry)))
-    (return-title [this] (get-in (global-view-configs-get) (conj (return-path this) :config :name)))
-    (return-permission [this] (get-in (global-view-configs-get) (conj (return-path this) :config :permission)))
-    (return-config [this] (get-in (global-view-configs-get) (conj (return-path this) :config)))
-    (exists? [this] (some? (get-in (global-view-configs-get) (return-path this)))))
-
-  (defn isPluginLink? [^jarman.logic.view_manager.PluginLink e]
-    (instance? jarman.logic.view_manager.PluginLink e))
-
-  (defn plugin-link [^clojure.lang.PersistentVector plugin-path]
-    {:pre [(every? keyword? plugin-path)]}
-    (->PluginLink plugin-path)))
+(defrecord File [file-name file])
+(defn isFile? [^jarman.logic.composite_components.File e]
+  (instance? jarman.logic.composite_components.File e))
 
 (comment
   ;; test segment for some link

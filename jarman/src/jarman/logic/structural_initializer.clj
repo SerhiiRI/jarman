@@ -28,7 +28,7 @@
                   :columns [{:permission_name [:varchar-20 :default :null]}
                             {:configuration [:tinytext :nnull :default "\"{}\""]}]}))
 
-(def user-cols [:login :password :first_name :last_name :id_permission])
+(def user-cols [:login :password :first_name :last_name :id_permission :configuration])
 (def user
   (create-table! {:table_name :user
                   :columns [{:login [:varchar-100 :nnull]}
@@ -119,20 +119,20 @@
     (if (empty? (db/query (select! {:table_name :user :where [:= :login "admin"]})))
       (db/exec
        (insert! {:table_name :user
-                 :column-list [:login :password :first_name :last_name :id_permission]
-                 :values [["admin" "admin" "admin" "admin" (:id perm)]]}))))
+                 :column-list [:login :password :first_name :last_name :id_permission :configuration]
+                 :values [["admin" "admin" "admin" "admin" (:id perm) "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}"]]}))))
   (if-let [perm (first (db/query (select! {:table_name :permission :column [:id] :where [:= :permission_name "developer"]})))]
     (if (empty? (db/query (select! {:table_name :user :where [:= :login "dev"]})))
       (db/exec
        (insert! {:table_name :user
-                 :column-list [:login :password :first_name :last_name :id_permission]
-                 :values [["dev" "dev" "dev" "dev" (:id perm)]]}))))
+                 :column-list [:login :password :first_name :last_name :id_permission :configuration]
+                 :values [["dev" "dev" "dev" "dev" (:id perm) "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}"]]}))))
   (if-let [perm (first (db/query (select! {:table_name :permission :column [:id] :where [:= :permission_name "user"]})))]
     (if (empty? (db/query (select! {:table_name :user :where [:= :login "user"]})))
       (db/exec
        (insert! {:table_name :user
-                 :column-list [:login :password :first_name :last_name :id_permission]
-                 :values [["user" "user" "user" "user" (:id perm)]]})))))
+                 :column-list [:login :password :first_name :last_name :id_permission :configuration]
+                 :values [["user" "user" "user" "user" (:id perm) "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}"]]})))))
 
 (defn fill-metadata []
   (doall (mt/do-create-meta-database)))

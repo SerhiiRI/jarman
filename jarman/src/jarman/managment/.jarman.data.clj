@@ -1,4 +1,7 @@
 (require '[jarman.logic.connection :as connection])
+(require '[clojure.set :refer [rename-keys]])
+(require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link field-composite]])
+(require '[jarman.logic.composite-components])
 
 #_(connection/connection-set
    ;; set selected
@@ -33,14 +36,12 @@
       :user "root",
       :password "1234"}}))
 
-(require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link]])
-
 (def metadata-list
   [{:id nil, :table_name "documents",
     :prop
     {:table (table :field :documents :representation "Documents")
      :columns
-     [(field :field :table :field-qualified :documents.table :component-type [:text])
+     [(field :field :table_name :field-qualified :documents.table_name :component-type [:text])
       (field :field :name :field-qualified :documents.name :component-type [:text])
       (field :field :document :field-qualified :documents.document :component-type [:blob])
       (field :field :prop :field-qualified :documents.prop :component-type [:textarea])]}}
@@ -60,7 +61,7 @@
       (field :field :password :field-qualified :user.password :component-type [:text])
       (field :field :first_name :field-qualified :user.first_name :component-type [:text])
       (field :field :last_name :field-qualified :user.last_name :component-type [:text])
-      (field :field :user.configuration :field-qualified :user.configuration :component-type [:prop])
+      (field :field :configuration :field-qualified :user.configuration :component-type [:prop])
       (field-link :field :id_permission :field-qualified :user.id_permission :component-type [:link]
                   :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}] :key-table :permission)]}}
    ;; ----------------------------------------------------
@@ -137,7 +138,17 @@
      :columns
      [(field :field :seal_number :field-qualified :seal.seal_number :component-type [:text])
       (field :field :datetime_of_use :field-qualified :seal.datetime_of_use :component-type [:datetime :date :text])
-      (field :field :datetime_of_remove :field-qualified :seal.datetime_of_remove :component-type [:datetime :date :text])]}}
+      (field :field :datetime_of_remove :field-qualified :seal.datetime_of_remove :component-type [:datetime :date :text])]
+     :columns-composite
+     [(field-composite :field :site :field-qualified :seal.site :component-type [:url] :constructor jarman.logic.composite-components/map->Link
+                       :columns [(field :field :site_name :field-qualified :seal.site_name :constructor-var :text :component-type [:text])
+                                 (field :field :site_url :field-qualified :seal.site_url :constructor-var :link :component-type [:text])])
+      (field-composite :field :file :field-qualified :seal.file :component-type [:url] :constructor jarman.logic.composite-components/map->File
+                       :columns [(field :field :file_name :field-qualified :seal.file_name :constructor-var :file-name :component-type [:text])
+                                 (field :field :file :field-qualified :seal.file :constructor-var :file  :component-type [:blob])])
+      (field-composite :field :ftp_file :field-qualified :seal.ftp_file :component-type [:url] :constructor jarman.logic.composite-components/map->FtpFile
+                       :columns [(field :field :ftp_file_name :field-qualified :seal.ftp_file_name :constructor-var :file-name :component-type [:text])
+                                 (field :field :ftp_file :field-qualified :seal.ftp_file :constructor-var :file  :component-type [:blob])])]}}
    ;; ----------------------------------------------------
    {:id nil, :table_name "repair_reasons",
     :prop
@@ -220,6 +231,7 @@
   (println "persisting metadata.")
   (jarman.managment.data-managment/metadata-persist-into-database metadata-list)
   (println "done."))
+(on-install)
 
 (defn on-delete []
   (println "Deleting all jarman system/business shemas.")
@@ -279,6 +291,4 @@
   (jarman.managment.data-managment/database-delete-business-scheme metadata-list)
   (jarman.managment.data-managment/database-delete-scheme metadata-list)
   (jarman.managment.data-managment/database-create-scheme metadata-list))
-
-
 

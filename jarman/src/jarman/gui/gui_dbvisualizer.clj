@@ -966,9 +966,9 @@
                                                                                          (let [table-name (first save-xy)
                                                                                                table-name (if (nil? table-name) nil (keyword table-name))
                                                                                                xy         (rift (second save-xy) nil)]
-                                                                                           (let [meta (mt/metadata-get table-name)
+                                                                                           (let [meta (first (mt/getset! table-name))
                                                                                                  new-meta (assoc-in meta [:prop :table :bounds] xy)]
-                                                                                             (mt/metadata-set new-meta)))))
+                                                                                             (mt/update-meta new-meta)))))
                                                                                      (state/state :dbv-bounds)))
                                                                              ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :success)
                                                                                                                  :body   (gtool/get-lang-alerts :changes-saved)}  5)

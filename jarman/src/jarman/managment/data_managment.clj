@@ -907,10 +907,9 @@
 (defn- database-list-all-tables []
   (mapv (comp second first) (db/query (sql/show-tables))))
 
-(map (fn [[l v]]
-       [(clojure.string/upper-case (str l)) v])
-     (sort-by first (seq (group-by first (database-list-all-tables)))))
-
+;; (map (fn [[l v]]
+;;        [(clojure.string/upper-case (str l)) v])
+;;      (sort-by first (seq (group-by first (database-list-all-tables)))))
 
 ;;; scheme up/down functionality
 

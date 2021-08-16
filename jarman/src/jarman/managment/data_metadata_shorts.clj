@@ -18,7 +18,16 @@
     :filepath  [:varchar-360 :default :null]
     :url       [:varchar-360 :default :null]))
 
-(defn field [& {:keys [field-qualified description private? default-value editable? field column-type component-type representation]
+(defn field [& {:keys [field
+                       field-qualified
+                       representation
+                       description
+                       private?
+                       default-value
+                       editable?
+                       column-type
+                       component-type
+                       constructor-var]
                 :or   {description nil private? false default-value nil editable? true}}]
   {:pre [(some? field) (some? field-qualified) (some? component-type)]}
   {:description (if description description (name field))
@@ -29,7 +38,40 @@
    :column-type (if column-type column-type (column-mapper component-type)) 
    :component-type component-type
    :representation (if representation representation (name field))
-   :field-qualified field-qualified})
+   :field-qualified field-qualified
+   :constructor-var constructor-var})
+
+(defn field-composite [& {:keys [field
+                                 field-qualified
+                                 description
+                                 representation
+                                 column-type
+                                 component-type
+                                 default-value
+                                 constructor
+                                 columns
+                                 private?
+                                 editable? ]}]
+  {:pre [(some? field) (some? field-qualified)]}
+  (if (nil? field)
+    (assert false (format "Coposite column has bad declaration. `:field` cannot be nil")))
+  (if (nil? field-qualified)
+    (assert false (format "Coposite column `%s` has bad declaration. `:field-qualified` cannot be nil" (str field))))
+  (if (nil? constructor)
+    (assert false (format "Coposite column `%s` has bad declaration. `:constructor` cannot be nil" (str field-qualified))))
+  (if (not (every? #(keyword? (:constructor-var %)) columns))
+    (assert false (format "Coposite column `%s` has bad declaration. One or more embaded columns not contain `:constructor-var` param" (str field-qualified))))
+  {:description (if description description (name field))
+   :private? private?
+   :default-value default-value
+   :editable? editable?
+   :field field
+   :column-type (if column-type column-type (column-mapper component-type)) 
+   :component-type component-type
+   :representation (if representation representation (name field))
+   :field-qualified field-qualified
+   :constructor constructor
+   :columns columns})
 
 (defn field-link [& {:keys [field-qualified key-table description private? default-value editable? field column-type foreign-keys component-type representation]
                      :or {private? false, default-value nil, editable? true, component-type [:link]}}]

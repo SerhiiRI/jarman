@@ -199,7 +199,6 @@
       (fn [& body]
         (println "Exporter property is not map-type")))))
 
-
 (defn- kwds-pair-list? [col]
   (every? #(every? keyword? %) col))
 
@@ -308,7 +307,6 @@
            (doall (map (fn [[col-name col-type maybe-stream]]
                          (if (and (some? maybe-stream) (instance? java.io.FileInputStream maybe-stream))
                            (.close maybe-stream))) col-list))))))
-
 
 (defn- select-blob!
   "Description

@@ -1,73 +1,3 @@
-;; Description
-;;    Module generate metainformation for database
-;;   tables(but exclude metainformation for table
-;;   defined in `*meta-rules*` variable. All
-;;   metadata must be saving in `METATABLE`
-;;   database table.
-;;
-;;    One metatable entity describes on top level
-;;   table name and serialized properties, for
-;;   example {:id 412 :table "cache" :props "{}"},
-;;   where `:table` describe 1:1 table name,
-;;   and `:props` properties used for building
-;;   UI and db-logic to program.
-;;
-;; Properties `prop` data
-;;   {:id 1
-;;    :table "cache_register"
-;;    :prop {:table {:field :cache_register
-;;                   :representatoin "user"
-;;                   :description nil
-;;                   :is-system? false
-;;                   :is-linker? false 
-;;                   :allow-modifing? true
-;;                   :allow-deleting? true
-;;                   :allow-linking?  true}
-;;           :columns [{:field "id_point_of_sale"
-;;                      :field-qualified :cache_register.id_point_of_sale
-;;                      :representation "Cache register"
-;;                      :description "This table used for some bla-bla"
-;;                      :component-type ["l"]
-;;                      :default-value nil
-;;                      :column-type [:bigint-20-unsigned]
-;;                      :private? false
-;;                      :editable? false}
-;;                     {:field "name"
-;;                      :field-qualified ...
-;;                      :representation "name" ...}...]
-;;
-;;    Deserialized `prop`(look above) contain
-;;   specially meta for whole table behavior and
-;;   some selected column(not for all, in this
-;;   version, only column 'id' hasn't self meta
-;;   info).
-;;
-;;   Short meta description for table:
-;;    :representation - is name of table which was viewed by user. By default it equal to table name. 
-;;    :is-linker? - specifing table which created to bind other table with has N to N relations to other.
-;;    :is-system? - mark this table as system table.
-;;    :allow-modifing? - if it false, program not allowe to extending or reducing column count. Only for UI. 
-;;    :allow-modifing? - if true, permit user to modify of column specyfication(adding, removing, changing type)
-;;    :allow-linking? - if true, than GUI must give user posible way to adding relation this data table to other.
-;;
-;;   Short meta description for columns
-;;    :field - database column name.
-;;    :field-qualified - table-dot-field notation.
-;;    :representation - name for end-user. By default equal to :field. 
-;;    :description - some description information, used for UI.
-;;    :column-type - database type of column.
-;;    :private? - true if column must be hided for user UI. 
-;;    :editable? - true if column editable
-;;    :component-type - influed by column-type key, contain list of keys
-;;      , which describe some hint to representation information by UI. 
-;;      All of this types place in variable `*meta-column-type-list*`
-;;
-;;  UI FAQ
-;;    1. I want change column-type (not component-type)?
-;;        Then user must delete column and create new to replace it
-;;    2. I want change component-type
-;;        `TODO` for gui must be realized "type-converter" field rule, for example you can make string from data, but not in reverse direction.
-;;        This library no detected column-type changes. 
 (ns jarman.logic.metadata
   (:require
    [clojure.data :as data]
@@ -79,7 +9,8 @@
    [datascript.core :as d]
    [jarman.logic.sql-tool :refer [select! update! insert!
                                   alter-table! create-table! delete!
-                                  show-table-columns ssql-type-parser]])
+                                  show-table-columns ssql-type-parser]]
+   [jarman.logic.composite-components])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 
@@ -100,8 +31,6 @@
 (def column-type-floated    :float)
 (def column-type-input      :text)
 (def column-type-blob       :blob)
-(def column-type-filepath   :filepath)
-(def column-type-url        :url)
 (def column-type-nil nil)
 (def ^:dynamic *meta-column-type-list* [column-type-data
                                         column-type-time
@@ -114,8 +43,6 @@
                                         column-type-floated
                                         column-type-input
                                         column-type-blob
-                                        column-type-filepath
-                                        column-type-url
                                         column-type-nil])
 
 
@@ -989,7 +916,7 @@
 ;;   :editnable? true, :key-table "permission"})
 
 
-(def user-original {:id 30
+#_(def user-original {:id 30
                     :table "user"
                     :prop {:table {:representation "user"
                                    :is-system? false :is-linker? false
@@ -1009,7 +936,7 @@
 ;; :representation "UĹźytkownik"
 ;; :add field "age"
 ;; :delete "first_name
-(def user-changed {:id 30
+#_(def user-changed {:id 30
                    :table "user"
                    :prop {:table {:representation "Uďż˝ytkownik"
                                   :is-system? false :is-linker? false
@@ -1096,8 +1023,6 @@
  ;; (apply-table user-original user-changed)
   )
 
-
-
 ;;; `TODO` persist do database in metadata tabel.
 ;;; `TODO` persist do database in metadata tabel.
 ;;; `TODO` persist do database in metadata tabel.
@@ -1149,116 +1074,272 @@
          (update-sql-by-id-template "metadata")
          (db/exec)))))
 
+;;;;;;;;;;;;;;;;;;;;;
+;;; OBJECT SYSTEM ;;;
+;;;;;;;;;;;;;;;;;;;;;
+
+(defprotocol IField
+  (return-field           [this])
+  (return-field-qualified [this])
+  (return-description     [this])
+  (return-representation  [this])
+  (return-column-type     [this])
+  (return-component-type  [this])
+  (return-default-value   [this])
+  (return-private?        [this])
+  (return-editable?       [this]))
+
+(defprotocol IFieldReference
+  (return-foreign-keys    [this])
+  (return-key-table       [this]))
+
+(defprotocol IColumns
+  (return-columns [this]))
+
+(defprotocol IFieldComposite
+  (return-constructor     [this])
+  (group                  [this m])
+  (ungroup                [this m]))
+
+(defprotocol IMetadata
+  (return-table_name [this])
+  (return-id [this])
+  (return-prop [this])
+  (return-table [this])
+  (return-columns-composite [this])
+  (return-columns-join [this])
+  (return-columns-flatten [this])
+  (return-columns-wrapp [this])
+  (return-columns-composite-wrapp [this])
+  (return-columns-join-wrapp [this])
+  (return-columns-flatten-wrapp [this])
+  (exists? [this])
+  (persist [this])
+  (refresh [this])
+  (diff-changes [this changed])
+  (diff-changes-apply [this changed])
+  (group   [this m])
+  (ungroup [this m]))
+
+(defrecord Field [m]
+
+  IField
+  (return-field           [this] (get (.m this) :field))
+  (return-field-qualified [this] (get (.m this) :field-qualified))
+  (return-description     [this] (get (.m this) :description))
+  (return-representation  [this] (get (.m this) :representation))
+  (return-column-type     [this] (get (.m this) :column-type))
+  (return-component-type  [this] (get (.m this) :component-type))
+  (return-default-value   [this] (get (.m this) :default-value))
+  (return-private?        [this] (get (.m this) :private?))
+  (return-editable?       [this] (get (.m this) :editable?)))
+
+(defrecord FieldLink [m]
+
+  IField
+  (return-field           [this] (get (.m this) :field))
+  (return-field-qualified [this] (get (.m this) :field-qualified))
+  (return-description     [this] (get (.m this) :description))
+  (return-representation  [this] (get (.m this) :representation))
+  (return-column-type     [this] (get (.m this) :column-type))
+  (return-component-type  [this] (get (.m this) :component-type))
+  (return-default-value   [this] (get (.m this) :default-value))
+  (return-private?        [this] (get (.m this) :private?))
+  (return-editable?       [this] (get (.m this) :editable?))
+
+  IFieldReference
+  (return-foreign-keys    [this] (get (.m this) :foreign-keys))
+  (return-key-table       [this] (get (.m this) :key-table)))
+
+(defrecord FieldComposite [m group-fn ungroup-fn]
+
+  IField
+  (return-field           [this] (get (.m this) :field))
+  (return-field-qualified [this] (get (.m this) :field-qualified))
+  (return-description     [this] (get (.m this) :description))
+  (return-representation  [this] (get (.m this) :representation))
+  (return-private?        [this] (get (.m this) :private?))
+  (return-editable?       [this] (get (.m this) :editable?))
+  
+  IColumns
+  (return-columns         [this] (get (.m this) :columns))
+
+  IFieldComposite
+  (return-constructor     [this] (get (.m this) :constructor))
+  (group                  [this data-m] ((.group-fn this) data-m))
+  (ungroup                [this data-m] ((.ungroup-fn this) data-m)))
+
+(defn isField? [^jarman.logic.metadata.Field e]
+  (instance? jarman.logic.metadata.Field e))
+(defn isFieldLink? [^jarman.logic.metadata.FieldLink e]
+  (instance? jarman.logic.metadata.FieldLink e))
+(defn isFieldComposite? [^jarman.logic.metadata.FieldComposite e]
+  (instance? jarman.logic.metadata.FieldComposite e))
+
+(defn to-field [m]
+  (Field. m))
+(defn to-field-link [m]
+  (FieldLink. m))
+(defn to-field-composite [field]
+  (let [{field-list :fields-list var-list :var-list :as all}
+        (reduce (fn [a f]
+                  (-> a
+                      (update :fields-list conj (:field-qualified f))
+                      (update :var-list conj (:constructor-var f))
+                      (update :mapp into {(:field-qualified f) (:constructor-var f)})
+                      (update :demapp into {(:constructor-var f) (:field-qualified f)})))
+                {:mapp {} :demapp {} :fields-list [] :var-list []}
+                (:columns field))
+        make-mapp   (fn [e] (clojure.set/rename-keys (select-keys e field-list) (:mapp all)))
+        make-demapp (fn [e] (clojure.set/rename-keys e                          (:demapp all)))
+        from-flatt (fn [m]
+                     (-> (reduce (fn [acc f] (dissoc acc f)) m field-list)
+                         (assoc-in [(:field-qualified field)]
+                                   ((:constructor field) (make-mapp m)))))
+        to-flatt   (fn [m]
+                     (if-not (contains? m (:field-qualified field)) m
+                             (let [composite-flatt (make-demapp (get-in m [(:field-qualified field)]))
+                                   m (dissoc m (:field-qualified field))
+                                   m (merge m composite-flatt)] m)))]
+    (->FieldComposite field from-flatt to-flatt)))
+
+(defn- wrapp-cols-metadata-types [cols]
+  (map (fn [c] (cond
+                (contains? c :foreign-keys) (to-field-link c)
+                (contains? c :columns)  (to-field-composite c)
+                :else (to-field c))) cols))
+
+(deftype TableMetadata [m]
+
+  IColumns
+  (return-columns    [this]
+    (vec (get-in (.m this) [:prop :columns] [])))
+  
+  IMetadata
+  (return-prop       [this] (get (.m this) :prop nil))
+  (return-id         [this] (get (.m this) :id nil))
+  (return-table_name [this] (get (.m this) :table_name nil))
+  (return-table      [this] (get-in (.m this) [:prop :table] nil))
+
+  (return-columns-wrapp [this]
+    (vec (wrapp-cols-metadata-types (get-in (.m this) [:prop :columns] []))))
+  (return-columns-composite-wrapp [this]
+    (vec (wrapp-cols-metadata-types (get-in (.m this) [:prop :columns-composite] []))))
+  (return-columns-join-wrapp [this]
+    (vec (concat (.return-columns-wrapp this)
+                 (.return-columns-composite-wrapp this))))
+  (return-columns-flatten-wrapp [this]
+    (vec (concat (.return-columns-wrapp this)
+                 (mapcat #(wrapp-cols-metadata-types (.return-columns %))
+                         (.return-columns-composite-wrapp this)))))
+  
+  (return-columns-composite [this]
+    (vec (get-in (.m this) [:prop :columns-composite] [])))
+  (return-columns-join [this]
+    (vec (concat (.return-columns this) (.return-columns-composite this))))
+  (return-columns-flatten [this]
+    (vec (concat (.return-columns this) (mapcat :columns (.return-columns-composite this)))))
+  
+  (group [this m]
+    (reduce
+     (fn [acc field] (.group field acc))
+     m (.return-columns-composite-wrapp this)))
+  (ungroup [this m]
+    (reduce
+     (fn [acc field] (.ungroup field acc))
+     m (.return-columns-composite-wrapp this)))
+  (exists? [this]
+    (if (not-empty (jarman.logic.metadata/getset! (.return-table-name this)))
+      true))
+  (refresh [this]
+    (if (.exists? this)
+      (set! (.m this) (first (jarman.logic.metadata/getset! (.return-table-name this))))))
+  (persist [this]
+    (jarman.logic.metadata/update-meta (.m this)))
+  (diff-changes [this changed]
+    (if changed
+      (let [metadata-original (.m this)
+            metadata-changed (.m changed)]
+        (jarman.logic.metadata/apply-table metadata-original metadata-changed))))
+  (diff-changes-apply [this changed]
+    (if changed
+      (let [metadata-original (.m this)
+            metadata-changed (.m changed)]
+        (jarman.logic.metadata/do-change
+         (jarman.logic.metadata/apply-table metadata-original metadata-changed)
+         metadata-original metadata-changed)))))
+
+(defn isTableMetadata? [^jarman.logic.metadata.TableMetadata e]
+  (instance? jarman.logic.metadata.TableMetadata e))
+
+;;;;;;;;;;;;;;;;;;
+;; test segment ;;
+;;;;;;;;;;;;;;;;;;
+
+
+
+(comment
+  (require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link field-composite]])
+  (def u (TableMetadata. {:id nil, :table_name "user",
+                          :prop
+                          {:table (table :field :user :representation "User"),
+                           :columns
+                           [(field :field :login :field-qualified :user.login :component-type [:text])
+                            (field :field :password :field-qualified :user.password :component-type [:text])
+                            (field :field :first_name :field-qualified :user.first_name :component-type [:text])
+                            (field :field :last_name :field-qualified :user.last_name :component-type [:text])
+                            (field-link :field :id_permission :field-qualified :user.id_permission :component-type [:link]
+                                        :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}] :key-table :permission)]
+                           :columns-composite
+                           [(field-composite 
+                             :field :user-site-url
+                             :field-qualified :user.user-site-url
+                             :component-type [:url]
+                             :constructor jarman.logic.composite-components/map->Link
+                             :columns [(field
+                                        :field :profile-label
+                                        :field-qualified :user.profile-label
+                                        :constructor-var :text
+                                        :component-type [:text]
+                                        :default-value "Domain")
+                                       (field
+                                        :field :profile-url
+                                        :field-qualified :user.profile-url
+                                        :constructor-var :link
+                                        :component-type [:text]
+                                        :default-value "https://localhost/temporary")])]}}))
+ 
+ (.return-columns-flatten u)
+ (.return-columns-flatten-wrapp u)
+ (.return-columns-join u)
+ (.return-columns-join-wrapp u)
+ (.return-columns-composite u)
+ (.return-columns-composite-wrapp u)
+ (.return-columns u)
+ (.return-columns-wrapp u)
+ (.ungroup u (.group u {:user.last_name "", :user.profile-label "", :user.login "", :user.id_permission "", :user.password "", :user.first_name "", :user.profile-url ""}))
+ (create-table-by-meta u))
+
 ;;;;;;;;;;;;;;;;
 ;;; On meta! ;;;
 ;;;;;;;;;;;;;;;;
 
-
 (defn create-table-by-meta [metadata]
-  (let [smpl-fields (filter (comp (partial not-allowed-rules ["meta*"]) :field) ((comp :columns :prop) metadata))
-        idfl-fields (filter (comp (partial allowed-rules "id_*") :field) ((comp :columns :prop) metadata))
-        fkeys-fields (vec (eduction (filter :foreign-keys) (map :foreign-keys) idfl-fields))]
-    ;; (println (format "--- Create Table %s ---" (:table metadata)))
-    ;; (clojure.pprint/pprint
-    ;;  {:table_name (keyword (:table metadata))
-    ;;   :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
-    ;;   :foreign-keys fkeys-fields})
-    (create-table!
-     {:table_name (keyword (:table_name metadata))
-      :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
-      :foreign-keys fkeys-fields})))
+  (let [metadata (if (isTableMetadata? metadata) metadata (TableMetadata. metadata) )
+        all-columns (.return-columns-flatten metadata)]
+    (let [smpl-fields (filter (comp (partial not-allowed-rules ["meta*"]) name :field) all-columns)
+          idfl-fields (filter (comp (partial allowed-rules "id_*") name :field) all-columns)
+          fkeys-fields (vec (eduction (filter :foreign-keys) (map :foreign-keys) idfl-fields))]
+      (create-table!
+       {:table_name (keyword (.return-table_name metadata))
+        :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
+        :foreign-keys fkeys-fields}))))
 
 (defn create-all-table-by-meta [table-list]
   (for [table table-list]
     (let [mtable (first (getset table))]
       (if-not (nil? mtable)
         (create-table-by-meta mtable)))))
-
-;;;heyyy
-;; (first (getset "user"))
-
-;; (create-all-table-by-meta ["user" "permission"])
-
-;; (do-create-meta-database)
-;; (do-clear-meta)
-
- ;; (let [meta (db/query (select :metadata :where [:= :metadata.table table-name]))]
- ;;    (if (empty? meta)
- ;;      (db/exec (update-sql-by-id-template "metadata" (get-meta table-name)))))
-
-;;(db/connection-get)
-
-
-
-;;; TODO unit test
-;; (create-table-by-meta (first (getset "user")))
-;; (create-table :user
-;;               :columns [{:login [:varchar-100 :nnull]}
-;;                         {:password [:varchar-100 :nnull]}
-;;                         {:first_name [:varchar-100 :nnull]}
-;;                         {:last_name [:varchar-100 :nnull]}
-;;                         {:id_permission [:bigint-120-unsigned :nnull]}]
-;;               :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}])
-;; ----- CREATE TABLE 
-;; ----- From script 
-;; => "CREATE TABLE IF NOT EXISTS `user` (`id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT, `login` VARCHAR(100) NOT NULL, `password` VARCHAR(100) NOT NULL, `first_name` VARCHAR(100) NOT NULL, `last_name` VARCHAR(100) NOT NULL, `id_permission` BIGINT(120) UNSIGNED NOT NULL, PRIMARY KEY (`id`), KEY `user17738` (`id_permission`), CONSTRAINT `user17738` FOREIGN KEY (`id_permission`) REFERENCES `permission` (`id`) ON DELETE CASCADE ON UPDATE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"
-;; ----- From meta
-;; => "CREATE TABLE IF NOT EXISTS `user` (`id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT, `login` VARCHAR(100) NOT NULL, `password` VARCHAR(100) NOT NULL, `first_name` VARCHAR(100) NOT NULL, `last_name` VARCHAR(100) NOT NULL, `id_permission` BIGINT(120) UNSIGNED NOT NULL, PRIMARY KEY (`id`), KEY `user17760` (`id_permission`), CONSTRAINT `user17760` FOREIGN KEY (`id_permission`) REFERENCES `permission` (`id`) ON DELETE CASCADE ON UPDATE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"
-
-;; (create-table :point_of_sale_group_links
-;;               :columns [{:id_point_of_sale_group [:bigint-20-unsigned :default :null]}
-;;                         {:id_point_of_sale [:bigint-20-unsigned :default :null]}]
-;;               :foreign-keys [[{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade :update :cascade}]
-;;                              [{:id_point_of_sale :point_of_sale}]])
-;; (create-table-by-meta (first (getset "point_of_sale_group_links")))
-;; ----- CREATE TABLE 
-;; ----- From script
-;; => "CREATE TABLE IF NOT EXISTS `point_of_sale_group_links` (`id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT, `id_point_of_sale_group` BIGINT(20) UNSIGNED DEFAULT NULL, `id_point_of_sale` BIGINT(20) UNSIGNED DEFAULT NULL, PRIMARY KEY (`id`), KEY `point_of_sale_group_links17774` (`id_point_of_sale_group`), CONSTRAINT `point_of_sale_group_links17774` FOREIGN KEY (`id_point_of_sale_group`) REFERENCES `point_of_sale_group` (`id`) ON DELETE CASCADE ON UPDATE CASCADE, KEY `point_of_sale_group_links17775` (`id_point_of_sale`), CONSTRAINT `point_of_sale_group_links17775` FOREIGN KEY (`id_point_of_sale`) REFERENCES `point_of_sale` (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"
-;; ----- From meta
-;; => "CREATE TABLE IF NOT EXISTS `point_of_sale_group_links` (`id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT, `id_point_of_sale_group` BIGINT(20) UNSIGNED DEFAULT NULL, `id_point_of_sale` BIGINT(20) UNSIGNED DEFAULT NULL, PRIMARY KEY (`id`), KEY `point_of_sale_group_links17799` (`id_point_of_sale_group`), CONSTRAINT `point_of_sale_group_links17799` FOREIGN KEY (`id_point_of_sale_group`) REFERENCES `point_of_sale_group` (`id`) ON DELETE CASCADE ON UPDATE CASCADE, KEY `point_of_sale_group_links17800` (`id_point_of_sale`), CONSTRAINT `point_of_sale_group_links17800` FOREIGN KEY (`id_point_of_sale`) REFERENCES `point_of_sale` (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"
-
-;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; METABASED TOOLKIT ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;; !!!- DEPRECATED NOT USED -!!!!
-;;; !!!- UNSTABLE -!!!
-
-(defn- --get-foreight-table-by-column [metadata-colum]
-  ((:field metadata-colum) (first (:foreign-keys metadata-colum))))
-
-(defn recur-find-front-path [ml]
-  {:tbl ((comp :field :table :prop) ml)
-   :ref (if ((comp :front-references :ref :table :prop) ml)
-          (mapv #(recur-find-front-path (first (getset! %)))
-                ((comp :front-references :ref :table :prop) ml)))})
-
-(defn recur-find-columns-path [ml & {:keys [table-name]}]
-  (into {(if table-name table-name (keyword ((comp :field :table :prop) ml))) ((comp :columns :prop) ml)}
-        (if ((comp :front-references :ref :table :prop) ml)
-          ;; reduce #(if (some? ) into) {}
-          (map #(recur-find-columns-path (first (getset! %)) :table_name ((comp :front-references :ref :table :prop) ml)) 
-               ((comp :front-references :ref :table :prop) ml)))))
-
-;; (recur-find-columns-path (first (getset! :repair_contract)))
-;; (defn make-column-list [table-name]
-;;   (if-let [table-meta (first (getset! table-name))]
-;;     (->> (recur-find-columns-path table-meta)
-;;          (map (fn [[table-name columns]]
-;;                 (println table-name)
-;;                 (doall (map (comp (partial println "\t") :field-qualified) columns)))))))
-
-;; (make-column-list :repair_contract)
-;; (quick-front-paths :repair_contract)
-(defn quick-front-paths [table-name]
-  (if-let [table-meta (first (getset! table-name))]
-    (recur-find-front-path table-meta)))
-
-;; (recur-find-columns-path (first (getset! :repair_contract)))
-;; (recur-find-columns-path (first (getset! :repair_contract)))
-;; (map :field-qualified ((comp :columns :prop)(first (getset! :repair_contract))))
-;; :cache_register->cache_register->point_of_sale->enterpreneur
-;; (clojure.pprint/pprint (first(getset! :user)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; METADATA RECUR ENGINE ;;; 
@@ -1276,97 +1357,3 @@
            (first (getset! (--get-foreight-table-by-column reference)))
            on-recur-action :back-ref table-meta :column-ref reference))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;
-;;; METADATA BACKUP ;;;
-;;;;;;;;;;;;;;;;;;;;;;;
-
-(def ^:private backup-name "metadata")
-(def ^:private backup-file-name (format "%s.edn" backup-name))
-;; (defn- backup-keep-10-last-modified
-;;   "Remove 10 last modified backup files, when new backups being created"[]
-;;   (let [max-bkp 10 l-files (storage/user-metadata-list) c-files (count l-files)]
-;;     (if (> c-files max-bkp) 
-;;       (doall (map #(-> % .getName storage/user-metadata-delete)
-;;                   (take (- c-files max-bkp) 
-;;                         (sort-by #(-> % .lastModified Date.)
-;;                                  #(.before %1 %2)
-;;                                  (map clojure.java.io/file l-files))))))))
-
-(defn make-backup-metadata
-  "Description
-    Make backup files 'metadata.edn', if file was created
-    before, rename and add timestamp to name in format
-    YYYY-MM-dd_HHmmss 'metadata_2021-03-22_004353.edn'
-
-  Example
-    (make-backup-metadata)
-  
-  Warning!
-    Timestamp related to event when your backup became
-    a old, and replace to new. Timestamp not mean Time
-    of backup creation
-
-  See
-    `backup-keep-10-last-modified` function which delete
-      oldest file from all backup snapshots, if number
-      of backups will reach 10 files" []
-  (blet
-   ;; if exist backup file, please make new one
-   (if (.exists (clojure.java.io/file (storage/user-metadata-dir) backup-file-name))
-     (blet (storage/user-metadata-rename backup-file-name old-backup-file)
-           [old-backup-file (format "%s_%s.edn" backup-name (.format (SimpleDateFormat. "YYYY-MM-dd_HHmmss") (Date.)))]))
-   ;; Store the metainformation
-   (storage/user-metadata-put backup-file-name (str backup-metadata))
-   ;; clean-up oldest files 
-   ;; (backup-keep-10-last-modified)
-   ;;; make a backup
-   [metadata-list (vec (getset))
-    tables-list (map :table metadata-list)
-    date-format "YYYY-MM-dd HH:mm:ss"
-    backup-metadata
-    {:info {:date (.format (SimpleDateFormat. date-format) (Date.))
-            :program-dir env/user-dir}
-     :table (vec (map :table metadata-list))
-     :backup metadata-list}]))
-
-(defn- default-backup-loader []
-  (if-let [_TMP0 (storage/user-metadata-get backup-file-name)] _TMP0
-    (try (slurp (clojure.java.io/file env/user-dir backup-file-name))
-         (catch Exception e nil))))
-
-;; (do-clear-meta)
-;; (do-create-meta-database)
-;; (make-backup-metadata)
-;; (restore-backup-metadata)
-
-;; (do-clear-meta)
-;; (do-create-meta-database)
-;; (getset :user)
-
-;; (update-meta {:id 188, :table "user", :prop {:table {:field "user", :representation "Користувач", :is-system? false, :is-linker? false, :description nil, :allow-modifing? true, :allow-deleting? true, :allow-linking? true}, :columns [{:field :login, :field-qualified :user.login, :representation "login", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :password, :field-qualified :user.password, :representation "password", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :first_name, :field-qualified :user.first_name, :representation "first_name", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:field :last_name, :field-qualified :user.last_name, :representation "last_name", :description nil, :component-type ["i"], :column-type [:varchar-100 :nnull], :private? false, :editable? true} {:description nil, :private? false, :editable? true, :field :id_permission, :column-type [:bigint-120-unsigned :nnull], :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}], :component-type ["l"], :representation "id_permission", :field-qualified :user.id_permission, :key-table "permission"}]}})
-
-
-(defn restore-backup-metadata
-  "Description
-    Restore all backups from user-stored buffer
-
-  Example
-    (restore-backup-metadata)
-    (restore-backup-metadata default-backup-loader)"
-  ([] (restore-backup-metadata default-backup-loader))
-  ([f-backup-loader]
-   (if-let [backup (f-backup-loader)]
-     (try (let [backup-swapped (read-string backup)
-                table-list     (:table backup-swapped)
-                metadata-list  (map #(assoc % :id nil) (:backup backup-swapped))
-                info           (:info backup-swapped)]
-            (do-clear-meta)
-            (map #(db/exec (update-sql-by-id-template "metadata" %)) metadata-list))))))
-
-
-
-(defn metadata-get [table]
-  (first (getset! table)))
-
-(defn metadata-set [metadata]
-  (update-meta metadata))

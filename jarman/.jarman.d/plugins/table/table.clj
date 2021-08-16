@@ -19,6 +19,7 @@
    [jarman.tools.swing :as stool]
    [jarman.resource-lib.icon-library :as icon]
    [jarman.gui.gui-tools      :as gtool]
+   [jarman.gui.gui-editors    :as gedit]
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-calendar   :as calendar]
    [jarman.gui.popup :as popup]
@@ -429,9 +430,9 @@
               title
               (cond
                 (= mt/column-type-linking (first comp-types))
-                (ccomp/link-test #(swap! (atom {}) (fn [s] (assoc-in s [:link-defr %])) [])
-                              (jarman.logic.composite-components/->Link "panda" "some-path/heyy/file.txt"))
-                ;; (input-related-popup-table {:val val :state! state! :field-qualified field-qualified :dispatch! dispatch!})
+                ;; (ccomp/link-test #(swap! (atom {}) (fn [s] (assoc-in s [:link-defr %])) [])
+                ;;               (jarman.logic.composite-components/->Link "panda" "some-path/heyy/file.txt"))
+                (input-related-popup-table {:val val :state! state! :field-qualified field-qualified :dispatch! dispatch!})
                 ;; (gcomp/state-input-text {:func func :val val})
                 
                 (or (= mt/column-type-data (first comp-types))
@@ -441,8 +442,12 @@
                 (= mt/column-type-textarea (first comp-types))
                 (gcomp/state-input-text-area {:func func :val val})
 
+                (= mt/column-type-prop (first comp-types))
+                (gedit/state-code-area {:func func :val val})
+                
                 :else
-                (gcomp/state-input-text {:func func :val val})))]
+                (gcomp/state-input-text {:func func :val val})
+                ))]
     (.add panel comp)))
 
 
@@ -692,7 +697,7 @@
  (query-toolkit/data-toolkit-pipeline configuration {}))
 
 
-(defn- create-state-template [plugin-path global-configuration-getter]
+(defn create-state-template [plugin-path global-configuration-getter]
   (atom {:plugin-path          plugin-path
          :plugin-global-config global-configuration-getter
          :plugin-config        (get-in (global-configuration-getter) (conj plugin-path :config) {})

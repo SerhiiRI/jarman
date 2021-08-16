@@ -16,6 +16,7 @@
             [seesaw.chooser :as chooser]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
   (:import (java.awt Color)
+           (java.awt Dimension)
            (jarman.jarmanjcomp CustomScrollBar)))
 
 (jarman.config.config-manager/swapp)
@@ -182,13 +183,10 @@
     (min-scrollbox (mig-panel ...) :hscroll :never)
     ;; => #object[seesaw.core.proxy$javax.swing"
   [component
-   & args]
+   & {:keys [args]
+      :or {args []}}]
   (let [args (apply hash-map args)
-        scr (CustomScrollBar/myScrollPane component
-             ;; (mig-panel :constraints ["" "0px[grow, fill]8px" "0px[]0px"]
-             ;;                                         :background (.getBackground component)
-             ;;                                         :items [[component]])
-             )
+        scr (CustomScrollBar/myScrollPane component)
         get-key (fn [x] (first (first x)))
         get-val (fn [x] (second (first x)))] 
     (if-not (nil? args)
@@ -479,7 +477,7 @@
         last-v (atom "")]
     (apply c/text
            :text (if (empty? val) placeholder (if (string? val) val (str val)))
-           :font (gtool/getFont font-size :name "Monospaced")
+           :font (gtool/getFont font-size)
            :background (gtool/get-color :background :input)
            :border (newBorder border-color-unfocus)
            :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
@@ -537,7 +535,7 @@
         last-v (atom "")]
     (apply c/text
            :text (if (empty? val) placeholder (if (string? val) val (str val)))
-           :font (gtool/getFont font-size :name "Monospaced")
+           :font (gtool/getFont font-size)
            :background (gtool/get-color :background :input)
            :border (newBorder border-color-unfocus)
            :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
@@ -576,7 +574,7 @@
              args []}}]
   (apply c/checkbox
          :text txt
-         :font (gtool/getFont font-size :name "Monospaced")
+         :font (gtool/getFont font-size)
          :selected? val
          :enabled? enabled?
          :border (b/empty-border :top 15)
@@ -980,7 +978,7 @@
                                              (b/line-border :bottom (nth border 4) :color underline-color)))]
       (apply c/text
              :text placeholder
-             :font (gtool/getFont font-size :name "Monospaced")
+             :font (gtool/getFont font-size)
              :background (gtool/get-color :background :input)
              :border (newBorder border-color-unfocus)
              :user-data {:placeholder placeholder :value "" :edit? false :type :password}
@@ -1046,7 +1044,7 @@
                                              (b/line-border :bottom (nth border 4) :color underline-color)))]
       (apply c/text
              :text placeholder
-             :font (gtool/getFont font-size :name "Monospaced")
+             :font (gtool/getFont font-size)
              :background (gtool/get-color :background :input)
              :border (newBorder border-color-unfocus)
              :user-data {:placeholder placeholder :value "" :edit? false :type :password}
@@ -1250,13 +1248,12 @@
                width 200 
                args []}}]
     (apply c/label
-           :font (gtool/getFont 12)
            :text (str title)
            :background "#fff"
            :foreground "#030D1C"
            :size  [width :by 25]
            :cursor cursor
-           :font (gtool/getFont 14 :name "Ubuntu Regular")
+           :font (gtool/getFont 12 :name "Ubuntu Regular")
            :focusable? true
            :border (b/compound-border (b/empty-border :left 10)
                                       (b/line-border :left left :color left-color))
@@ -1347,7 +1344,7 @@
       (apply c/text
              :text val
              :background "#fff"
-             :font (gtool/getFont font-size :name "Monospaced")
+             :font (gtool/getFont font-size)
              :background (gtool/get-color :background :input)
              :border (newBorder border-color-unfocus)
              :listen [:focus-gained (fn [e] (c/config! e :border (newBorder border-color-focus)))

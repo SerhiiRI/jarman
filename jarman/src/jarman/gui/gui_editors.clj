@@ -48,7 +48,7 @@
      seesaw.rsyntax/text-area
      :text val
      :wrap-lines? true
-     :caret-position 1
+     :caret-position 0
      :syntax syntax
      :user-data {:saved-content (fn [] (reset! content (second (first @local-changes))))}
      :listen [:caret-update (fn [e]
@@ -248,3 +248,48 @@
                                                (:label state)
                                                :text "Can not convert to map. Syntax error."))))})))))
 
+
+
+(defn state-code-area
+  "Description:
+    Some text area but with syntax styling.
+    To check avaliable languages eval (seesaw.dev/show-options (seesaw.rsyntax/text-area)).
+    Default language is Clojure.
+  Example:
+    (state-code-area {})
+    (state-code-area :syntax :css)
+  "
+  [{func :func
+    val  :val}
+   & {:keys [lang args]
+      :or   {lang :clojure
+             args []}}]
+  (let [border-fn (fn [color]
+                     (b/line-border  :bottom 2 :color color))
+        code (apply
+              seesaw.rsyntax/text-area
+              :text (rift val "")
+              :wrap-lines? true
+              :caret-position 0
+              :syntax lang
+              :border (border-fn (gtool/get-color :decorate :focus-lost))
+              :listen [:focus-gained (fn [e] (c/config! e :border (border-fn (gtool/get-color :decorate :focus-gained))))
+                       :focus-lost   (fn [e] (c/config! e :border (border-fn (gtool/get-color :decorate :focus-lost))))
+                       :caret-update (fn [e] (func e))]
+              args)]
+    (gcomp/vmig
+          :hrules "[0:150:150, fill]"
+          :items [[code]])))
+
+;;(seesaw.dev/show-options (seesaw.rsyntax/text-area))
+
+
+;;Start app window
+;; (-> (doto (seesaw.core/frame
+;;            :title "DEBUG WINDOW" :undecorated? false
+;;            :minimum-size [200 :by 200]
+;;            :size [200 :by 200]
+;;            :content (state-code-area {:func (fn [e])
+;;                                       :val  ""}))
+;;       (.setLocationRelativeTo nil) c/pack! c/show!))
+  

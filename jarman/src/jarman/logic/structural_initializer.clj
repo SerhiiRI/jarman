@@ -35,6 +35,7 @@
                             {:password [:varchar-100 :nnull]}
                             {:first_name [:varchar-100 :nnull]}
                             {:last_name [:varchar-100 :nnull]}
+                            {:configuration [:text :nnull :default "'{}'"]}
                             {:id_permission [:bigint-120-unsigned :nnull]}]
                   :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}]}))
 
@@ -196,7 +197,8 @@
     (if (verify-table-columns :metadata metadata-cols)
       (if-not (test-metadata) (do (mt/do-create-meta-database) true) true)
       {:valid? false :output "Metadata table not compatible with Jarman" :table :metadata})
-    (do (db/exec metadata) (fill-metadata) true)))
+    (do (db/exec metadata) ;; (fill-metadata)
+        true)))
 
 (defn procedure-test-documents [tables-list]
   (if (verify-table-exists :documents tables-list)
@@ -213,7 +215,7 @@
 (defn procedure-create-all-structure []
   (db/exec permission) (fill-permission) 
   (db/exec user)       (fill-user)
-  (db/exec metadata)   (fill-metadata) 
+  (db/exec metadata)   ;; (fill-metadata) 
   (db/exec documents)
   (db/exec view))
 

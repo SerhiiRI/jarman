@@ -84,7 +84,8 @@
                   :user.password
                   :user.first_name
                   :user.last_name
-                  :user.id_permission]
+                  :user.id_permission
+                  :user.configuration]
    :active-buttons [:insert :update :delete :clear :changes]
    :permission [:user :developer]
    :dialog {:user.id_permission

@@ -436,10 +436,10 @@
 (defn create-one-meta [metadata table-name]
   (let [meta (db/query (select! {:table_name :metadata :where [:= :table_name table-name]}))]
     (if (empty? meta)
-      (db/exec (update-sql-by-id-template "metadata" metadata)))))
+      (db/exec (update-sql-by-id-template "metadata" metadata))
+      (let [metadata (assoc-in metadata [:id] (get-in (first meta) [:id] nil))]
+       (db/exec (update-sql-by-id-template "metadata" metadata))))))
 
-(defn create-one-meta-force [metadata table-name]
-  (db/exec (update-sql-by-id-template "metadata" metadata)))
 
 (defn do-create-meta-database []
   (doall

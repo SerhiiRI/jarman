@@ -947,7 +947,7 @@
 (defn metadata-persist-into-database [metadata-v]
   (doall
    (for [m metadata-v]
-     (metadata/create-one-meta-force m (:table_name m)))))
+     (metadata/create-one-meta m (:table_name m)))))
 
 (defn metadata-info [metadata-v]
   (let [t-off "  "

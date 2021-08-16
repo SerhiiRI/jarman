@@ -60,6 +60,7 @@
       (field :field :password :field-qualified :user.password :component-type [:text])
       (field :field :first_name :field-qualified :user.first_name :component-type [:text])
       (field :field :last_name :field-qualified :user.last_name :component-type [:text])
+      (field :field :user.configuration :field-qualified :user.configuration :component-type [:prop])
       (field-link :field :id_permission :field-qualified :user.id_permission :component-type [:link]
                   :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}] :key-table :permission)]}}
    ;; ----------------------------------------------------

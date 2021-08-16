@@ -139,7 +139,8 @@
     :parameters "Parametry",
     :no "Nie",
     :in "Wejście"
-    :configuration "Konfiguracja"},
+    :configuration "Konfiguracja"
+    :db-conn-config "Konfiguracja DB"},
    :tips
    {:save "Zapisz zmiany.",
     :clean "Wyczyść pola powyżej.",
@@ -296,7 +297,8 @@
   :parameters "Parameters"
   :no "No"
   :in "Entrance"
-  :configuration "Configuration"}
+  :configuration "Configuration"
+  :db-conn-config "DB Configuration"}
  :tips
  {:save "Save changes."
   :clean "Clean up fields."

@@ -79,6 +79,7 @@
                   :user.password
                   :user.first_name
                   :user.last_name
+                  :user.configuration
                   :permission.permission_name]
    :model-insert [:user.login
                   :user.password
@@ -102,6 +103,7 @@
      :user.password
      :user.first_name
      :user.last_name
+     :user.configuration
      :user.id_permission
      :permission.id
      :permission.permission_name
@@ -885,12 +887,10 @@
    :tables [:service_contract :enterpreneur]
    :view-columns [:service_contract.id_enterpreneur
                   :service_contract.contract_start_term
-                  :service_contract.contract_end_term
-                  :service_contract.money_per_month]
+                  :service_contract.contract_end_term]
    :model-insert [:service_contract.id_enterpreneur
                   :service_contract.contract_start_term
-                  :service_contract.contract_end_term
-                  :service_contract.money_per_month]
+                  :service_contract.contract_end_term]
    :active-buttons [:insert :update :delete :clear :changes]
    :permission [:admin :user :developer]
    :dialog {:service_contract.id_enterpreneur
@@ -906,7 +906,6 @@
      :service_contract.id_enterpreneur
      :service_contract.contract_start_term
      :service_contract.contract_end_term
-     :service_contract.money_per_month
      :enterpreneur.id
      :enterpreneur.ssreou
      :enterpreneur.ownership_form
@@ -924,8 +923,7 @@
    :tables [:service_contract :enterpreneur]
    :view-columns [:service_contract.id_enterpreneur
                   :service_contract.contract_start_term
-                  :service_contract.contract_end_term
-                  :service_contract.money_per_month]
+                  :service_contract.contract_end_term]
    :query
    {:table_name :service_contract,
     :inner-join [:service_contract->enterpreneur],
@@ -935,7 +933,6 @@
      :service_contract.id_enterpreneur
      :service_contract.contract_start_term
      :service_contract.contract_end_term
-     :service_contract.money_per_month
      :enterpreneur.id
      :enterpreneur.ssreou
      :enterpreneur.ownership_form
@@ -955,11 +952,15 @@
    :plug-place [:#tables-view-plugin]
    :tables [:service_contract_month :service_contract :enterpreneur]
    :view-columns [:service_contract_month.id_service_contract
-                  :service_contract_month.service_month_date
-                  :service_contract_month.money_per_month]
+                  :service_contract_month.service_month_start
+                  :service_contract_month.service_month_end
+                  :service_contract_month.money_per_month
+                  :service_contract_month.was_payed]
    :model-insert [:service_contract_month.id_service_contract
-                  :service_contract_month.service_month_date
-                  :service_contract_month.money_per_month]
+                  :service_contract_month.service_month_start
+                  :service_contract_month.service_month_end
+                  :service_contract_month.money_per_month
+                  :service_contract_month.was_payed]
    :active-buttons [:insert :update :delete :clear :changes]
    :permission [:admin :user :developer]
    :dialog {:service_contract_month.id_service_contract
@@ -975,13 +976,14 @@
     [:#as_is
      :service_contract_month.id
      :service_contract_month.id_service_contract
-     :service_contract_month.service_month_date
+     :service_contract_month.service_month_start
+     :service_contract_month.service_month_end
      :service_contract_month.money_per_month
+     :service_contract_month.was_payed
      :service_contract.id
      :service_contract.id_enterpreneur
      :service_contract.contract_start_term
      :service_contract.contract_end_term
-     :service_contract.money_per_month
      :enterpreneur.id
      :enterpreneur.ssreou
      :enterpreneur.ownership_form
@@ -998,8 +1000,10 @@
    :permission [:admin :user :developer]
    :tables [:service_contract_month :service_contract :enterpreneur]
    :view-columns [:service_contract_month.id_service_contract
-                  :service_contract_month.service_month_date
-                  :service_contract_month.money_per_month]
+                  :service_contract_month.service_month_start
+                  :service_contract_month.service_month_end
+                  :service_contract_month.money_per_month
+                  :service_contract_month.was_payed]
    :query
    {:table_name :service_contract_month,
     :inner-join
@@ -1027,5 +1031,4 @@
      :enterpreneur.accountant
      :enterpreneur.legal_address
      :enterpreneur.physical_address
-     :enterpreneur.contacts_information
-     ]}))
+     :enterpreneur.contacts_information]}))

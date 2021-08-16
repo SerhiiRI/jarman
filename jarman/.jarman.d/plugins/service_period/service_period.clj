@@ -143,7 +143,10 @@
                                (fn [e] (back-to-main-panel state))]
                               [" Save"
                                icon/agree1-blue-64-png
-                               (fn [e] (update-money-per-month state))]]})
+                               (fn [e] (update-money-per-month state))]
+                              [" Export ODT"
+                               icon/odt-64-png
+                               (fn [e] )]]})
         panel     (seesaw.mig/mig-panel :constraints ["wrap 1" "15px[]15px" "15px[]15px"]
                                         :items [[btn-panel]])]
     (doall (map (fn [period] (.add panel (panel-one-period state period))) data)) panel))

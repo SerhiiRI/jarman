@@ -213,6 +213,7 @@
   (return-structure-flat (deref user-menu))
   (global-view-configs-clean)
   (global-view-configs-get)
+  
   (get-in (global-view-configs-get)
           [:service_contract :service-period :service_contract :toolkit])
   (get-in (global-view-configs-get)  [:permission :dialog-bigstring :select-name-permission])
@@ -596,5 +597,9 @@
   ;; or two and more interesting to us plugins
   (plugin-open-in-frame
    [:user :table :user]
-   [:permission :table :permission]))
+   [:permission :table :permission])
 
+  )
+
+
+;; ((:select-expression (get-in (global-view-configs-get) [:repair_contract :table :repair_contract :toolkit])))

@@ -178,7 +178,7 @@
                                             {:title "Show columns"
                                              :comp-fn (fn []
                                                         (gcomp/min-scrollbox 
-                                                         (build-expand-fn (field-qualified (:model (state!))) scale)))}))])
+                                                         (build-expand-fn (field-qualified (:model-changes (state!))) scale)))}))])
         update-changes (fn [val]
                          (dispatch!   
                           {:action :update-changes
@@ -194,14 +194,17 @@
                          (gtool/get-lang :basic :selected))
                 :panel colmn-panel
                 :onClick (fn [e]
-                           (let [dialog  (dialog-model-id (dialog-component (field-qualified (:model (state!)))))]
+                           (let [dialog  (dialog-model-id (dialog-component (field-qualified (:model-changes (state!)))))]
                              (refresh-panel colmn-panel build-expand-fn dialog not-scaled)
                              (update-changes dialog)
                              (c/config! (c/to-widget e)
                                         :text (if (nil? (get-in (state!) [:model-changes field-qualified]))
                                                 (gtool/get-lang :basic :empty)
                                                 (gtool/get-lang :basic :selected)))
-                             (.repaint (c/to-root e))))})]
+                             (.repaint (c/to-root e))
+                             (println "MODEL" (:model (state!)))
+                             (println "fieild" field-qualified)
+                             (println "MODEL-changes" (:model-changes (state!)))))})]
       exi)))
 
 
@@ -413,7 +416,7 @@
         editable?       (:editable?       meta)
         comp-types      (:component-type  meta)
         val             (cond
-                          (not (nil? (key (:model (state!)))))   (str (key (:model (state!))))
+                          (not (nil? (key (:model (state!))))) (str (key (:model (state!))))
                           (not (nil? (key (:model-changes (state!))))) (str (key (:model-changes (state!))))
                           :else "")
         func            (fn [e] (dispatch!
@@ -444,11 +447,15 @@
 
                 (= mt/column-type-prop (first comp-types))
                 (gedit/state-code-area {:func func :val val})
+
+                (= mt/column-type-boolean (first comp-types))
+                (gcomp/state-input-checkbox {:func func :val val})
                 
                 :else
-                (gcomp/state-input-text {:func func :val val})
-                ))]
+                (gcomp/state-input-text {:func func :val val})))]
     (.add panel comp)))
+
+
 
 
 (defn convert-metadata-vec-to-map
@@ -465,7 +472,7 @@
   (let [meta-data (convert-metadata-vec-to-map (get-in (state!) [:plugin-toolkit :columns-meta]))]
     (doall (->> model-defview
                      (map #(cond
-                             (map? %)     (convert-map-to-component state! dispatch! panel meta-data %)
+                             (map? %) (convert-map-to-component state! dispatch! panel meta-data %)
                              (keyword? %) (convert-key-to-component state! dispatch! panel meta-data %)))))))
 
 
@@ -601,15 +608,12 @@
                               (fn [model-table]
                                 (if-not (= false (:update-mode (:plugin-config (state!))))
                                   (dispatch! {:action :set-model :value model-table})))))
-
           table-container (c/vertical-panel)
-
           table-render (fn []
                          (try
                            (c/config! table-container :items [(table-fn)])
                            (catch Exception e
                              (c/label :text (str "Problem with table model: " (.getMessage e))))))
-          
           main-layout (c/config!
                        main-layout
                        :items [[(create-expand
@@ -716,7 +720,7 @@
   (let [state (create-state-template plugin-path global-configuration)
         dispatch! (create-disptcher state)
         state!     (fn [& prop]
-                    (cond (= :atom (first prop)) state
+                     (cond (= :atom (first prop)) state
                           :else (deref state)))]
     (println "\nBuilding plugin")
     (build-plugin-gui state! dispatch!)))

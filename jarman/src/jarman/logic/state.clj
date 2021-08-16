@@ -74,12 +74,16 @@
                (let [[left right same] (data/diff (get-in new-m watch-path) (get-in old-m watch-path))]
                  (if (not (and (nil? left) (nil? right)))
                    (let [root (if (fn? root) (root) root)]
-                     (try
+                     ;; SERHII HIDE EXCEPTION
+                     #_(try
                        (c/config! root :items (render-fn))
                        (.revalidate (c/to-frame root))
                        (.repaint (c/to-frame root))
                        (catch Exception e (println "\n" (str "Rerender exception:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with new component inserting
-                              ))))))))
+                              ))
+                     (c/config! root :items (render-fn))
+                     (.revalidate (c/to-frame root))
+                     (.repaint (c/to-frame root))))))))
 
 (comment
   (set-state {:a "a" :b "b"})

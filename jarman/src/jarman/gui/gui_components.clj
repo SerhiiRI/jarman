@@ -582,6 +582,24 @@
                                             :else (reset! local-changes (dissoc @local-changes store-id)))))]
          args))
 
+(defn state-input-checkbox
+  [{func :func
+    val  :val}
+   & {:keys [txt
+             font-size
+             args]
+      :or   {txt ""
+             font-size 14
+             args []}}]
+  (let [check  (apply c/checkbox
+                      :text (str (= "true" val))
+                      :font (gtool/getFont font-size)
+                      :selected? (= "true" val)
+                      :border (b/empty-border :top 15)
+                      :listen [:mouse-clicked (fn [e] (c/config! e :text (str (c/value (c/to-widget e)))) (func e))]
+                      args)] (func check)
+       check))
+
 
 ;; (def view (fn [] (let [lbl (c/label)]
 ;;                    (mig-panel :constraints ["" "fill, grow" ""] :border (b/line-border :thickness 1 :color "#000") :size [200 :by 30]
@@ -1131,7 +1149,7 @@
                border (b/compound-border (b/empty-border :left 3))
                vsize 35
                min-height 200
-               ico  (stool/image-scale icon/plus-64-png 25)
+               ico  (stool/image-scale icon/plus-blue-64-png 25)
                ico-hover (stool/image-scale icon/minus-grey-64-png 20)
                id :none
                onClick nil

@@ -265,10 +265,11 @@
       :or   {lang :clojure
              args []}}]
   (let [border-fn (fn [color]
-                     (b/line-border  :bottom 2 :color color))
+                    (b/line-border  :bottom 2 :color color))
         code (apply
               seesaw.rsyntax/text-area
-              :text (rift val "")
+              :text (try (pp-str (read-string (rift val "{}")))
+                         (catch Exception e "{:error \"Error parsing\"}"))
               :wrap-lines? true
               :caret-position 0
               :syntax lang
@@ -280,6 +281,5 @@
     (gcomp/vmig
           :hrules "[0:150:150, fill]"
           :items [[code]])))
-
 
   

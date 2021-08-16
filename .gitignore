@@ -22,4 +22,5 @@ jarman/.vscode/settings.json
 jarman/.lsp/sqlite.db
 installer/inno-target/
 installer/*.exe
+.git-credentials
 

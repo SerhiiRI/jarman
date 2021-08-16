@@ -112,7 +112,7 @@
     (refresh-icon-lib) "[]
   (let [icon-data (get-icon-data)]
     (spit *icon-library* (format ";; Icon pack generated in %s\n" (.format (java.text.SimpleDateFormat. "YYYY-MM-dd HH:mm:ss") (java.util.Date.))))
-    (spit *icon-library* (prn-str `(~(symbol "ns") ~(symbol (namespace-for-path-name *icon-library*)))) :append true)
+    (spit *icon-library* "(ns jarman.resource-lib.icon-library)" :append true)
     (spit *icon-library* "\n;; Icons\n" :append true)
     (doseq [[icon-symbol-name icon-symbol-doc icon-file] icon-data]
       (spit *icon-library* (prn-str `(def ~icon-symbol-name ~icon-symbol-doc ~icon-file)) :append true))
@@ -199,8 +199,7 @@
     (refresh-font-lib) "[]
   (let [font-data (get-font-data)]
     (spit *font-library* (format ";; Local fonts generated in %s\n" (.format (java.text.SimpleDateFormat. "YYYY-MM-dd HH:mm:ss") (java.util.Date.))))
-    (spit *font-library* (prn-str `(~(symbol "ns") ~(symbol (namespace-for-path-name *font-library*)))) :append true)
-    
+    (spit *font-library* "(ns jarman.resource-lib.font-library)" :append true)
     (spit *font-library* "\n;; Font list:\n" :append true)
     (doseq [[font-symbol-name font-symbol-doc font-file] font-data]
       (spit *font-library* (prn-str `(def ~font-symbol-name ~font-symbol-doc ~font-file)) :append true))

@@ -34,12 +34,16 @@
      (let [[left right same] (clojure.data/diff (get-in new-m watch-path) (get-in old-m watch-path))]
        (if (not (and (nil? left) (nil? right)))
          (let [root (if (fn? root) (root) root)]
-           (try
-             (do
+           (do
                (c/config! root :items (render-fn))
                ((:repaint (state!))))
-             (catch Exception e (println "\n" (str "Rerender exception:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
-                    ))))))))
+           ;; (try
+           ;;   (do
+           ;;     (c/config! root :items (render-fn))
+           ;;     ((:repaint (state!))))
+           ;;   (catch Exception e (println "\n" (str "Rerender exception:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
+           ;;          ))
+           ))))))
 
 
 (def state     (atom {}))
@@ -149,7 +153,7 @@
                                         ;; (c/move!   e :to-front)
                                         )])
              (label ;; close icon
-              :icon (jarman.tools.swing/image-scale icon/x-grey2-64-png 15)
+              :icon (jarman.tools.swing/image-scale icon/x-grey-64-png 15)
               :halign :center
               :size [vsize :by vsize]
               :listen [:mouse-entered (fn [e](c/config! e :cursor :hand))

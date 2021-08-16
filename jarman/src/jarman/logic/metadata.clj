@@ -1096,10 +1096,12 @@
 (defprotocol IColumns
   (return-columns [this]))
 
-(defprotocol IFieldComposite
-  (return-constructor     [this])
+(defprotocol IGroup
   (group                  [this m])
   (ungroup                [this m]))
+
+(defprotocol IFieldComposite
+  (return-constructor     [this]))
 
 (defprotocol IMetadata
   (return-table_name [this])
@@ -1117,9 +1119,7 @@
   (persist [this])
   (refresh [this])
   (diff-changes [this changed])
-  (diff-changes-apply [this changed])
-  (group   [this m])
-  (ungroup [this m]))
+  (diff-changes-apply [this changed]))
 
 (defrecord Field [m]
 
@@ -1166,6 +1166,8 @@
 
   IFieldComposite
   (return-constructor     [this] (get (.m this) :constructor))
+
+  IGroup
   (group                  [this data-m] ((.group-fn this) data-m))
   (ungroup                [this data-m] ((.ungroup-fn this) data-m)))
 
@@ -1240,14 +1242,7 @@
   (return-columns-flatten [this]
     (vec (concat (.return-columns this) (mapcat :columns (.return-columns-composite this)))))
   
-  (group [this m]
-    (reduce
-     (fn [acc field] (.group field acc))
-     m (.return-columns-composite-wrapp this)))
-  (ungroup [this m]
-    (reduce
-     (fn [acc field] (.ungroup field acc))
-     m (.return-columns-composite-wrapp this)))
+  
   (exists? [this]
     (if (not-empty (jarman.logic.metadata/getset! (.return-table-name this)))
       true))
@@ -1267,7 +1262,16 @@
             metadata-changed (.m changed)]
         (jarman.logic.metadata/do-change
          (jarman.logic.metadata/apply-table metadata-original metadata-changed)
-         metadata-original metadata-changed)))))
+         metadata-original metadata-changed))))
+  IGroup
+  (group [this m]
+    (reduce
+     (fn [acc field] (.group field acc))
+     m (.return-columns-composite-wrapp this)))
+  (ungroup [this m]
+    (reduce
+     (fn [acc field] (.ungroup field acc))
+     m (.return-columns-composite-wrapp this))))
 
 (defn isTableMetadata? [^jarman.logic.metadata.TableMetadata e]
   (instance? jarman.logic.metadata.TableMetadata e))

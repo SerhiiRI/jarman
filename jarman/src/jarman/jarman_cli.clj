@@ -1,4 +1,4 @@
-H(ns jarman.jarman-cli
+(ns jarman.jarman-cli
   (:gen-class)
   (:refer-clojure :exclude [update])
   (:require

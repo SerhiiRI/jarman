@@ -22,10 +22,10 @@ help:
 	@echo -e "\thelp - print this message"
 
 project/gen-font-lib: project.clj
-	@lein jarman structure --refresh-icons
+	@lein jarman structure --refresh-fonts
 
 project/gen-icon-lib: project.clj
-	@lein jarman structure --refresh-fonts
+	@lein jarman structure --refresh-icons
 
 build/jarman-cli:
 	lein with-profile cli uberjar

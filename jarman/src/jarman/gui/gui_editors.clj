@@ -281,15 +281,5 @@
           :hrules "[0:150:150, fill]"
           :items [[code]])))
 
-;;(seesaw.dev/show-options (seesaw.rsyntax/text-area))
 
-
-;;Start app window
-;; (-> (doto (seesaw.core/frame
-;;            :title "DEBUG WINDOW" :undecorated? false
-;;            :minimum-size [200 :by 200]
-;;            :size [200 :by 200]
-;;            :content (state-code-area {:func (fn [e])
-;;                                       :val  ""}))
-;;       (.setLocationRelativeTo nil) c/pack! c/show!))
   

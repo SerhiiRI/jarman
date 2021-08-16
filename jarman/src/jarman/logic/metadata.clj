@@ -525,6 +525,7 @@
 ;;; back to metadata ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;; TODO change function name from `getset` to `do-metadata-load`, also remove args
 (defn getset
   "get metadate deserialized information for specified tables.
   Example 
@@ -536,7 +537,7 @@
                (if (empty? tables)
                  (select! {:table_name :metadata})
                  (select! {:table_name :metadata
-                           :where [:= (mapv (fn [x] [:= :table_name (name x)]) tables)]}))))]
+                           :where (vec (concat [:or] (mapv (fn [x] [:= :table_name (name x)]) tables)))}))))]
     (db-datoms metadata)
     (if (empty? tables)
       (do (swapp-metadata metadata) metadata)

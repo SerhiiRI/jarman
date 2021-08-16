@@ -185,22 +185,17 @@
   [component
    & {:keys [args]
       :or {args []}}]
-  (let [args (apply hash-map args)
-        scr (CustomScrollBar/myScrollPane component)
+  (let [scr (CustomScrollBar/myScrollPane component)
         get-key (fn [x] (first (first x)))
-        get-val (fn [x] (second (first x)))] 
-    (if-not (nil? args)
-       ((fn next [sm]
-          (if (empty? sm)                   
-            scr
-            (do 
-              (c/config! scr (get-key sm) (get-val sm))
-              (next (map-rest sm)))))
-        args))
+        get-val (fn [x] (second (first x)))]
+    (if-not (empty? args)
+      (map (fn [[k v]] (c/config! scr k v))
+           (apply hash-map args)))    
     (.setBorder scr nil)
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
     scr))
+
 
 (defn header-basic
   [title
@@ -220,7 +215,7 @@
            border-color (gtool/get-comp :header-basic :border-color)
            border-size (gtool/get-comp :header-basic :border-size)
            underline-color (gtool/get-comp :header-basic :underline-color)
-           underline-size (gtool/get-comp :header-basic :underline-size)
+            underline-size (gtool/get-comp :header-basic :underline-size)
            border (fn [size color usize ucolor] (b/compound-border  (b/line-border :thickness size :color color) (b/line-border :bottom usize :color ucolor)))
            font-size (gtool/get-comp :header-basic :font-size)
            font-style (keyword (first (gtool/get-comp :header-basic :font-style)))

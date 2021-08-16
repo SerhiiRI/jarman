@@ -231,7 +231,6 @@
   (println "persisting metadata.")
   (jarman.managment.data-managment/metadata-persist-into-database metadata-list)
   (println "done."))
-(on-install)
 
 (defn on-delete []
   (println "Deleting all jarman system/business shemas.")

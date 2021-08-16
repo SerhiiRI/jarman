@@ -601,8 +601,8 @@
     [:repair_contract->cache_register
      :cache_register->point_of_sale
      :point_of_sale->enterpreneur
-     :repair_contract.id_old_seal->seal.id
-     :repair_contract.id_new_seal->seal.id
+     :repair_contract.id_old_seal->seal*old_seal.id
+     :repair_contract.id_new_seal->seal*new_seal.id
      :repair_contract->repair_reasons
      :repair_contract->repair_technical_issue
      :repair_contract->repair_nature_of_problem],

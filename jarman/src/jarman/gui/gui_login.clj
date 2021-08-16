@@ -68,6 +68,7 @@
     :load-connections-configs (assoc-in state [:connections] (:value action-m))
     :update-data-log (assoc-in state (into [:data-log] (:path action-m)) (:value action-m))
     :clear-data-log  (assoc-in state [:data-log] {})
+    :update-current-config (assoc-in state (into [:current-config] (:path action-m)) (:value action-m))
     ))
 
 (defn- create-disptcher [atom-var]
@@ -83,7 +84,9 @@
   (atom {:login       nil
          :passwd      nil
          :connections {}
-         :data-log    {}}))
+         :data-log    {}
+         :current-config {}
+         :validated-inputs {}}))
 
 
 (defn- load-connection-configs [dispatch!]
@@ -121,7 +124,7 @@
   [k]
   (k {:dark-grey-color  "#676d71"
       :blue-color       "#256599"
-      :light-grey-color "#82959f"
+      :light-grey-color "#72858f"
       :blue-green-color "#2c7375"
       :light-blue-color "#96c1ea"
       :red-color        "#f01159"
@@ -129,21 +132,6 @@
       :back-color       "#c5d3dd"}))
 
 (def my-style {[:.css1] {:foreground (colors :blue-green-color)}})
-
-(defn color-border [color]
-  (gtool/my-border [color 2] [10 10 5 5])
-)
-;; (color-border "#222")
-
-
-
-(defn myFont [size]
-  {:size size :font "Arial" :style :bold})
-
-(def ^:private emp-border
-  (gtool/my-border [10 10 5 5]))
-
-
 
 ;; ┌───────────────┐
 ;; │               │
@@ -154,8 +142,8 @@
 (defn- label-header
   ([txt] (label-header txt 16))
   ([txt fsize]
-   (gcomp/textarea
-    txt
+   (c/label
+    :text txt
     :foreground (colors :blue-green-color)
     :font       (gtool/getFont fsize :bold))))
 
@@ -188,24 +176,7 @@
 ;;; config-generator-JDBC + panel for config ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def confgen-header
-  (fn [title] (c/label :text title
-                       :font (gtool/getFont 16 :bold)
-                       :foreground (colors :blue-green-color))))
 
-(def confgen-title
-  (fn [title]
-    (c/label :text title
-             :foreground (colors :light-grey-color)
-             :font (gtool/getFont 12 :bold))))
-
-(def confgen-input 
-  (fn [data] (c/text
-              :text data
-              :font (gtool/getFont 14)
-              :background "#fff"
-              :columns 20
-              :border (color-border (colors :light-grey-color)))))
 
 (def template-map  {:name "Raspberry",
                     :type :block,
@@ -252,14 +223,14 @@
                       :component :text,
                       :value "dupa"}}})
 
-(defn update-map [dbtype host port dbname user password key-title]
+(defn update-map [dbtype host port dbname user password config-k]
   (do
-    (cm/assoc-in-value [:database.edn :datalist key-title :dbtype] dbtype)
-    (cm/assoc-in-value [:database.edn :datalist key-title :host] host)
-    (cm/assoc-in-value [:database.edn :datalist key-title :port] (Integer. port))
-    (cm/assoc-in-value [:database.edn :datalist key-title :dbname] dbname)
-    (cm/assoc-in-value [:database.edn :datalist key-title :user] user)
-    (cm/assoc-in-value [:database.edn :datalist key-title :password] password))
+    (cm/assoc-in-value [:database.edn :datalist config-k :dbtype]   dbtype)
+    (cm/assoc-in-value [:database.edn :datalist config-k :host]     host)
+    (cm/assoc-in-value [:database.edn :datalist config-k :port]     (Integer. port))
+    (cm/assoc-in-value [:database.edn :datalist config-k :dbname]   dbname)
+    (cm/assoc-in-value [:database.edn :datalist config-k :user]     user)
+    (cm/assoc-in-value [:database.edn :datalist config-k :password] password))
   (if (:valid? (cm/store)) "yes"))
 
 (defn keys-generator [dbname title port]
@@ -284,26 +255,39 @@
   (cm/update-in-value [:database.edn :datalist] (fn [x] (dissoc x config-k)))
   (if (:valid? (cm/store)) "yes"))
 
+(defn- err-underline [err?]
+  (b/line-border :bottom 1 :color (if err? (colors :red-color) (colors :blue-green-color))))
+
 (defn validate-fields
   "Description
-    this function vaalidate text fields from config-generator-panel
-    if sum of fields 0 -> validation succses -> update-map, else validation fail"
-  [v-dbtype v-host v-port v-dbname v-user v-password config-k]
-  (if (= 0 (+ (if (= (c/text v-dbtype) "") (do (c/config! v-dbtype :border (color-border (colors :red-color))) 1)
-                  (do (c/config! v-dbtype :border (color-border :blue-green-color)) 0))
-              (if (< (count (c/text v-host)) 4) (do (c/config! v-host :border (color-border (colors :red-color))) 1)
-                  (do (c/config! v-host :border (color-border :blue-green-color)) 0))
+    This function valid text fields from configuration.
+    If sum of fields is 0 then validation is succses and next will do update-map, else validation fail and return something"
+  [[v-dbtype v-host v-port v-dbname v-user v-password] config-k]
+  (if (= 0 (+ (if (= (c/text v-dbtype) "")
+                (do (c/config! v-dbtype :border (err-underline true))  1)
+                (do (c/config! v-dbtype :border (err-underline false)) 0))
+
+              (if (< (count (c/text v-host)) 4)
+                (do (c/config! v-host :border (err-underline true))    1)
+                (do (c/config! v-host :border (err-underline false))   0))
+
               (if (= (re-find #"[\d]+" (c/text v-port)) nil)
-                (do (c/config! v-port :border (color-border (colors :red-color))) 1)
+                (do (c/config! v-port :border (err-underline true))    1)
                 (if (< (Integer. (c/text v-port)) 65000)
-                  (do (c/config! v-port :border (color-border :blue-green-color)) 0)
-                  (do (c/config! v-port :border (color-border (colors :red-color))) 1)))
-              (if (=  (c/text v-dbname) "") (do (c/config! v-dbname :border (color-border (colors :red-color))) 1)
-                  (do (c/config! v-dbname :border (color-border :blue-green-color)) 0))
-              (if (=  (c/text v-user) "") (do (c/config! v-user :border (color-border (colors :red-color))) 1)
-                  (do (c/config! v-user :border (color-border :blue-green-color)) 0))
-              (if (=  (c/text v-password) "") (do (c/config! v-password :border (color-border (colors :red-color))) 1)
-                  (do (c/config! v-password :border (color-border :blue-green-color)) 0))))           
+                  (do (c/config! v-port :border (err-underline false)) 0)
+                  (do (c/config! v-port :border (err-underline true))  1)))
+              
+              (if (=  (c/text v-dbname) "")
+                (do (c/config! v-dbname :border (err-underline true))  1)
+                (do (c/config! v-dbname :border (err-underline false)) 0))
+              
+              (if (=  (c/text v-user) "")
+                (do (c/config! v-user :border (err-underline true))    1)
+                (do (c/config! v-user :border (err-underline false))   0))
+              
+              (if (=  (c/text v-password) "")
+                (do (c/config! v-password :border (err-underline true)) 1)
+                (do (c/config! v-password :border (err-underline false)) 0))))           
     (do 
       (if (= config-k :empty)
         (create-map
@@ -323,74 +307,93 @@
          config-k)))))
 
 
-(defn config-generator-fields [state! dispatch! config-k]
-  (if (nil? (conn/datalist-get))
-    (do (println "[ Warning ] (conn/datalist-get) return nil in gui_login/config-generator-fields.") (c/label))
-    (let [data (config-k (conn/datalist-get))
-          dbtype-inp (c/text :text "mysql" :font (gtool/getFont 14)
-                           :editable? false
-                           :background "#fff"
-                           :columns 20
-                           :border (color-border (colors :light-grey-color)))
-          host-inp (confgen-input (:value (:host (:value data))))
-          port-inp (confgen-input (:value (:port (:value data))))
-          dbname-inp (confgen-input (:value (:dbname (:value data))))
-          user-inp (confgen-input (:value (:user (:value data))))
-          password-inp (confgen-input (:value (:password (:value data))))
-          err-lbl (c/label :text "" :foreground (colors :blue-green-color) :font (myFont 14))
-          btn-del (c/label :text "Delete" :background "#fff"
-                         :class :css1
-                         :border (b/empty-border :top 10 :right 10 :left 10 :bottom 10)
-                         :listen [:mouse-entered (fn [e] (c/config! e :background (colors :back-color) :cursor :hand))
-                                  :mouse-exited  (fn [e] (c/config! e :background "#fff"))
-                                  :mouse-clicked (fn [e] (if (= "yes" (delete-map config-k))
-                                                           (c/config! (c/to-frame e) :content (login-panel state! dispatch!))))])
-          btn-conn (c/label :text "Connect" :background "#fff"
-                          :class :css1
-                          :border (b/empty-border :top 10 :right 10 :left 10 :bottom 10)
-                          :listen [:mouse-entered (fn [e] (c/config! e :background (colors :back-color) :cursor :hand))
-                                   :mouse-exited  (fn [e] (c/config! e :background "#fff"))
-                                   :mouse-clicked (fn [e] (if (= nil (conn/test-connection {:dbtype (c/text dbtype-inp)
-                                                                                         :host (c/text host-inp)
-                                                                                         :port (c/text port-inp)
-                                                                                         :dbname (c/text dbname-inp)
-                                                                                         :user (c/text user-inp)
-                                                                                         :password (c/text password-inp)}))
-                                                            (c/config! err-lbl :text "ERROR!! PLEASE RECONNECT" :foreground (colors :red-color))
-                                                            (c/config! err-lbl :text "SUCCESS" :foreground (colors :blue-green-color))))])
-          btn-ent (c/label :text "Edit" :background "#fff"
-                         :class :css1
-                         :halign :center
-                         :border (b/empty-border :top 10 :right 10 :left 10 :bottom 10)
-                         :listen [:mouse-entered (fn [e] (c/config! e :background (colors :back-color) :cursor :hand))
-                                  :mouse-exited  (fn [e] (c/config! e :background "#fff"))
-                                  :mouse-clicked (fn [e] (if (= (validate-fields dbtype-inp host-inp port-inp
-                                                                                 dbname-inp user-inp password-inp config-k) "yes")
-                                                           (c/config! (c/to-frame e)
-                                                                    :content (login-panel state! dispatch!))))])
-          mig-for-btn (mig-panel :constraints ["" "0px[:33%, grow, fill]5px[:33%, grow, fill]0px" ""]
-                                 :items [])
-          mig (mig-panel
-               :constraints ["wrap 1" "25%[grow, fill, center]25%" "20px[]20px"]
-            ;; :background "#666"
-               :items [[(confgen-header "Data configuration")]
-                    ;; [(grid-panel :columns 1 :items [(confgen-title (:name (:dbtype (:value template-map)))) dbtype-inp])]
-                       [(c/grid-panel :columns 1 :items [(confgen-title (:name (:host (:value template-map)))) host-inp])]
-                       [(c/grid-panel :columns 1 :items [(confgen-title (:name (:port (:value template-map)))) port-inp])]
-                       [(c/grid-panel :columns 1 :items [(confgen-title (:name (:dbname (:value template-map)))) dbname-inp])]
-                       [(c/grid-panel :columns 1 :items [(confgen-title (:name (:user (:value template-map)))) user-inp])]
-                       [(c/grid-panel :columns 1 :items [(confgen-title (:name (:password (:value template-map)))) password-inp])]
-                       [mig-for-btn]])]
-      (if (= config-k :empty)
-        (do (c/config! btn-ent :text "Create")
-            (.add mig-for-btn btn-conn)
-            (.add mig-for-btn btn-ent)
-            (.add mig-for-btn err-lbl)))
-      (do
-        (.add mig-for-btn btn-ent)
-        (.add mig-for-btn btn-conn)
-        (.add mig-for-btn btn-del)
-        (.add mig err-lbl)) mig)))
+(defn- confgen-input
+  "Description:
+    Return input for configuration"
+  [state! dispatch! data param]
+  (println "\nComp param: " param)
+  (;;apply
+   gcomp/state-input-text
+   {:val (str (rift (get-in data [:value param :value]) ""))
+    :func (fn [e] (dispatch! {:action :update-current-config
+                              :path   [param]
+                              :value  (c/text (c/to-widget e))}))}
+   ;; (if true [:border-color-focus (colors :light-red-color)] [])
+   ;; (if true [:border-color-unfocus (colors :red-color)] [])
+   ))
+
+(defn- confgen-compo
+  "Description:
+    Return component with label and input."
+  [data compo]
+  (let [label-fn (fn [title]
+                   (c/label :text title
+                            :foreground (colors :light-grey-color)
+                            :font (gtool/getFont 14)
+                            :border (b/empty-border :bottom 5)))]
+    ;;(println "\nData" data)
+    (gcomp/vmig
+     :vrules "[fill]"
+     :items [[(label-fn (get-in data [:value :dbtype :name]))]
+             [compo]])))
+
+
+;; (@start)
+
+(defn config-generator-fields
+  "Description:
+    Return mig panel with db configuration editor.
+    It's vertical layout with inputs and functions to save, try connection, delete."
+  [state! dispatch! config-k]
+  (let [data (get (conn/datalist-get) config-k)]
+    (if (nil? data)
+      (do (println "[ Warning ] (conn/datalist-get) return nil in gui_login/config-generator-fields.") (c/label))
+      (let [inputs [(gcomp/state-input-text {:func (fn [e]) :val "mysql"} :args [:editable? false])
+                    (confgen-input state! dispatch! data :host)
+                    (confgen-input state! dispatch! data :port)
+                    (confgen-input state! dispatch! data :dbname)
+                    (confgen-input state! dispatch! data :user)
+                    (confgen-input state! dispatch! data :password)]
+            
+            info-lbl (c/label :text "" :foreground (colors :blue-green-color) :font (myFont 14))
+
+            btn-del (if (= config-k :empty) []
+                      (gcomp/button-basic (gtool/get-lang-btns :remove)
+                                          :onClick (fn [e] (if (= "yes" (delete-map config-k))
+                                                             (c/config! (c/to-frame e) :content (login-panel state! dispatch!))))))
+
+            btn-conn (gcomp/button-basic (gtool/get-lang-btns :connect)
+                                         :onClick (fn [e] (if (= nil (conn/test-connection
+                                                                      (gtool/kc-to-map [:dbtype :host :port :dbname :user :password] inputs)))
+                                                            (c/config! info-lbl :text "ERROR!! PLEASE RECONNECT" :foreground (colors :red-color))
+                                                            (c/config! info-lbl :text "SUCCESS" :foreground (colors :blue-green-color)))))
+
+            btn-save (gcomp/button-basic (gtool/get-lang-btns :save)
+                                         :onClick (fn [e] (if (= "yes" (validate-fields state! dispatch! inputs config-k))
+                                                            (c/config! (c/to-frame e) :content (login-panel state! dispatch!)))))
+            
+            actions (fn []
+                      (gcomp/hmig
+                       :vrules "[fill]"
+                       :items (gtool/join-mig-items btn-save btn-conn btn-del)))
+
+            config-form (fn []
+                          (let [render-fn (gtool/join-mig-items
+                                              (doall
+                                               (map #(confgen-compo template-map %) inputs)))
+                                root (gcomp/vmig
+                                      :tgap 15
+                                      :items (render-fn))]
+                            (set-state-watcher state! dispatch! root render-fn [:validated-inputs] :validated-inputs)))
+            
+            mig (gcomp/vmig
+                 :lgap "25%"
+                 :items (gtool/join-mig-items
+                         (label-header (gtool/get-lang-basic :db-conn-config) 18)
+                         (config-form)
+                         (actions)
+                         info-lbl))]
+         mig))))
 
 
 
@@ -597,6 +600,9 @@
                  :else (colors :light-grey-color))))))
 
 (defn- try-to-login
+  "Description:
+    Check access by config, login and password.
+    Return error to state or close login and run jarman."
   [state! dispatch! frame config-k]
   (let [data-log (check-access state! config-k)]
     (println "\nData log\n" data-log)
@@ -611,6 +617,8 @@
                       :value  (name data-log)}))))))
 
 (defn- tail-vpanel-template
+  "Description:
+    Panel for tails with configuration and add configuration button."
   [state! dispatch! items-list config-k]
   (let [border-fn (tail-border state! config-k)
         
@@ -624,12 +632,9 @@
                 :focusable?     true
                 :items          items)
 
-        onClick (fn [e] (try-to-login state! dispatch! (c/to-frame e) config-k))
-        
-        icons   (if (> (count items) 1) [(last items)] nil)
-
-        items   (if (> (count items) 1) (butlast items) items)
-        
+        onClick  (fn [e] (try-to-login state! dispatch! (c/to-frame e) config-k))
+        icons    (if (> (count items) 1) [(last items)] nil)
+        items    (if (> (count items) 1) (butlast items) items)
         data-log (get-in (state!) [:data-log config-k])
 
         listens [:mouse-entered (fn [e]

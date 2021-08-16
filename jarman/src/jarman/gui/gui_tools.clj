@@ -49,11 +49,20 @@
 (defn getChildren [parent] (let [children (seesaw.util/children (seesaw.core/to-widget parent))] children))
 (defn firstToWidget [list] (seesaw.core/to-widget (first list)))
 
+;; (def getFont
+;;   (fn [& params] (-> {:size 12 :style :plain :name "Ubuntu Regular"}
+;;                      ((fn [m] (let [size  (first (filter (fn [item] (if (number? item) item nil)) params))] (if (number? size) (merge m {:size size}) (conj m {})))))
+;;                      ((fn [m] (let [name  (first (filter (fn [item] (if (string? item) item nil)) params))] (if (string? name) (merge m {:name name}) (conj m {})))))
+;;                      ((fn [m] (let [style (first (filter (fn [item] (if (= item :bold) item nil)) params))] (if (= style :bold) (merge m {:style :bold}) (conj m {})))))
+;;                      ((fn [m] (let [style (first (filter (fn [item] (if (= item :italic) item nil)) params))] (if (= style :italic)
+;;                                                                                                                 (if (= (get m :style) :bold) (merge m {:style #{:bold :italic}}) (merge m {:style :italic}))
+;;                                                                                                                 (conj m {}))))))))
+
 (def getFont
   (fn [& params] (-> {:size 12 :style :plain :name "Ubuntu Regular"}
                      ((fn [m] (let [size  (first (filter (fn [item] (if (number? item) item nil)) params))] (if (number? size) (merge m {:size size}) (conj m {})))))
                      ((fn [m] (let [name  (first (filter (fn [item] (if (string? item) item nil)) params))] (if (string? name) (merge m {:name name}) (conj m {})))))
-                     ((fn [m] (let [style (first (filter (fn [item] (if (= item :bold) item nil)) params))] (if (= style :bold) (merge m {:style :bold}) (conj m {})))))
+                     ((fn [m] (let [style (first (filter (fn [item] (if (= item :bold) item nil)) params))] (if (= style :bold) (merge m {:name "Ubuntu bold"}) (conj m {})))))
                      ((fn [m] (let [style (first (filter (fn [item] (if (= item :italic) item nil)) params))] (if (= style :italic)
                                                                                                                 (if (= (get m :style) :bold) (merge m {:style #{:bold :italic}}) (merge m {:style :italic}))
                                                                                                                 (conj m {}))))))))
@@ -93,6 +102,20 @@
    "
   (fn [& args]
     (join-vec (map #(vector %) (flatten args)))))
+
+(defn kc-to-map
+  "Description:
+    Get two vector and marg to map.
+    First vector with keys.
+    Second vector with components.
+    First key will maped value from first component.
+  Example:
+    (kv-to-map [:a :b] [text1 text2]) => {:a 1 :b 2}"
+  [k-vec v-vec]
+  (into {} (doall
+           (map
+            (fn [k v] {k (c/text v)})
+            k-vec v-vec))))
 
 (defn repeat-listener-to-all
   "Descritpion:
@@ -193,7 +216,8 @@
 (def get-frame (partial theme-map 1000 :frame))
 (def get-font (partial theme-map "Ubuntu" :font))
 (def get-lang (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui] path))))
-(def get-lang-btns (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :buttons] path))))
+(def get-lang-basic  (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :basic] path))))
+(def get-lang-btns   (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :buttons] path))))
 (def get-lang-alerts (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :alerts] path))))
 
 

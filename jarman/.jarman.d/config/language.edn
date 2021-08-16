@@ -138,7 +138,8 @@
     :search-tool "Wyszukiwarka",
     :parameters "Parametry",
     :no "Nie",
-    :in "Wejście"},
+    :in "Wejście"
+    :configuration "Konfiguracja"},
    :tips
    {:save "Zapisz zmiany.",
     :clean "Wyczyść pola powyżej.",
@@ -246,7 +247,7 @@
   :register "Register"
   :back "Back"
   :goback "Step back"
-    :restore-last-configuration "Restore last configuration"
+  :restore-last-configuration "Restore last configuration"
   :disconnect "Disconnect"
   :rfid-cards "RFID cards"
   :clean-filters "Clean filters"
@@ -294,7 +295,8 @@
   :search-tool "Search engine"
   :parameters "Parameters"
   :no "No"
-  :in "Entrance"}
+  :in "Entrance"
+  :configuration "Configuration"}
  :tips
  {:save "Save changes."
   :clean "Clean up fields."

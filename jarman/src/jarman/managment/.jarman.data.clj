@@ -41,7 +41,7 @@
     :prop
     {:table (table :field :documents :representation "Documents")
      :columns
-     [(field :field :table :field-qualified :documents.table :component-type [:text])
+     [(field :field :table_name :field-qualified :documents.table_name :component-type [:text])
       (field :field :name :field-qualified :documents.name :component-type [:text])
       (field :field :document :field-qualified :documents.document :component-type [:blob])
       (field :field :prop :field-qualified :documents.prop :component-type [:textarea])]}}
@@ -61,7 +61,7 @@
       (field :field :password :field-qualified :user.password :component-type [:text])
       (field :field :first_name :field-qualified :user.first_name :component-type [:text])
       (field :field :last_name :field-qualified :user.last_name :component-type [:text])
-      (field :field :user.configuration :field-qualified :user.configuration :component-type [:prop])
+      (field :field :configuration :field-qualified :user.configuration :component-type [:prop])
       (field-link :field :id_permission :field-qualified :user.id_permission :component-type [:link]
                   :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}] :key-table :permission)]}}
    ;; ----------------------------------------------------
@@ -147,8 +147,8 @@
                        :columns [(field :field :file_name :field-qualified :seal.file_name :constructor-var :file-name :component-type [:text])
                                  (field :field :file :field-qualified :seal.file :constructor-var :file  :component-type [:blob])])
       (field-composite :field :ftp_file :field-qualified :seal.ftp_file :component-type [:url] :constructor jarman.logic.composite-components/map->FtpFile
-                       :columns [(field :field :file_name :field-qualified :seal.file_name :constructor-var :file-name :component-type [:text])
-                                 (field :field :file :field-qualified :seal.file :constructor-var :file  :component-type [:blob])])]}}
+                       :columns [(field :field :ftp_file_name :field-qualified :seal.ftp_file_name :constructor-var :file-name :component-type [:text])
+                                 (field :field :ftp_file :field-qualified :seal.ftp_file :constructor-var :file  :component-type [:blob])])]}}
    ;; ----------------------------------------------------
    {:id nil, :table_name "repair_reasons",
     :prop
@@ -231,6 +231,7 @@
   (println "persisting metadata.")
   (jarman.managment.data-managment/metadata-persist-into-database metadata-list)
   (println "done."))
+(on-install)
 
 (defn on-delete []
   (println "Deleting all jarman system/business shemas.")

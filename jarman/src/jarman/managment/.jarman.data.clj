@@ -1,4 +1,7 @@
 (require '[jarman.logic.connection :as connection])
+(require '[clojure.set :refer [rename-keys]])
+(require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link field-composite]])
+(require '[jarman.logic.composite-components])
 
 #_(connection/connection-set
    ;; set selected
@@ -32,8 +35,6 @@
       :dbname "jarman-test",
       :user "root",
       :password "1234"}}))
-
-(require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link]])
 
 (def metadata-list
   [{:id nil, :table_name "documents",
@@ -137,7 +138,17 @@
      :columns
      [(field :field :seal_number :field-qualified :seal.seal_number :component-type [:text])
       (field :field :datetime_of_use :field-qualified :seal.datetime_of_use :component-type [:datetime :date :text])
-      (field :field :datetime_of_remove :field-qualified :seal.datetime_of_remove :component-type [:datetime :date :text])]}}
+      (field :field :datetime_of_remove :field-qualified :seal.datetime_of_remove :component-type [:datetime :date :text])]
+     :columns-composite
+     [(field-composite :field :site :field-qualified :seal.site :component-type [:url] :constructor jarman.logic.composite-components/map->Link
+                       :columns [(field :field :site_name :field-qualified :seal.site_name :constructor-var :text :component-type [:text])
+                                 (field :field :site_url :field-qualified :seal.site_url :constructor-var :link :component-type [:text])])
+      (field-composite :field :file :field-qualified :seal.file :component-type [:url] :constructor jarman.logic.composite-components/map->File
+                       :columns [(field :field :file_name :field-qualified :seal.file_name :constructor-var :file-name :component-type [:text])
+                                 (field :field :file :field-qualified :seal.file :constructor-var :file  :component-type [:blob])])
+      (field-composite :field :ftp_file :field-qualified :seal.ftp_file :component-type [:url] :constructor jarman.logic.composite-components/map->FtpFile
+                       :columns [(field :field :file_name :field-qualified :seal.file_name :constructor-var :file-name :component-type [:text])
+                                 (field :field :file :field-qualified :seal.file :constructor-var :file  :component-type [:blob])])]}}
    ;; ----------------------------------------------------
    {:id nil, :table_name "repair_reasons",
     :prop
@@ -279,6 +290,4 @@
   (jarman.managment.data-managment/database-delete-business-scheme metadata-list)
   (jarman.managment.data-managment/database-delete-scheme metadata-list)
   (jarman.managment.data-managment/database-create-scheme metadata-list))
-
-
 

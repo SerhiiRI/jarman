@@ -101,22 +101,6 @@
 ;; │     Body      │
 ;; │               │
 ;; └───────────────┘
-;;;;;;;;;;;;;;;;;;;;;;;;
-;;; validation login ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def validate3 {:validate? true})
-(def validate4 {:validate? true})
-
-(defn- validation []
-  (cond 
-    (not (:validate? validate3)) (:output validate3)
-    (not (:validate? validate4)) (:output validate4)
-    :else nil))
-
-(defn- authenticate-user [login password]
-  (if (and (= login "a")(= password "a")) true))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; style color and font ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -132,7 +116,6 @@
       :light-red-color  "#Ffa07a"
       :back-color       "#c5d3dd"}))
 
-(def my-style {[:.css1] {:foreground (colors :blue-green-color)}})
 
 ;; ┌───────────────┐
 ;; │               │
@@ -183,7 +166,6 @@
      Prepare info components"
   [info-list]
   (gcomp/vmig
-   :args [:border (b/line-border :thickness 2 :color "#2ac")]
    :tgap 15
    :hrules "[grow, fill]"
    :items (gtool/join-mig-items
@@ -191,7 +173,6 @@
             (map
              (fn [[header body]]
                (gcomp/vmig
-               :args [:border (b/line-border :thickness 1 :color "#ca2")]
                 :hrules "[:100%,fill]"
                 :vrules "[grow, fill]"
                 :items (gtool/join-mig-items
@@ -225,9 +206,6 @@
   [mig-comps]
   (let [info
         (gcomp/vmig
-         :args [:border (b/line-border :thickness 2 :color "#00ff00")]
-         :tgap   10
-         :bgap   30
          :hrules "[fill]"
          :items  mig-comps)]
     info))
@@ -512,27 +490,51 @@
    ["Contact" "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will send u to us."]
    ["Website" "http://trashpanda-team.ddns.net"]))
 
-(defn hmig
-  ([mig-items args]
-   (vmig nil mig-items args))
-  ([size mig-items args]
-   (gcomp/hmig
-    :hrules (if size (str "[" size "%:" size "%:100%,fill]") "[:100%:100%,fill]")
-    :vrules "[:100%:100%,fill]"
-    :gap [0 0 0 0]
-    :items mig-items
-    :args args)))
-
-(defn hmig
-  [mig-items
-   & {:keys [args]
-      :or {args []}}]
-  (gcomp/hmig
-   :hrules "[:100%:100%,fill]"
-   :vrules "[:100%:100%,fill]"
-   :gap [0 0 0 0]
-   :items mig-items
-   :args args))
+(defn migrid
+  [direction items
+   & {:keys [args vpos hpos hrules vrules xgap ygap vtemplate htemplate]
+      :or {args []
+           vpos :center
+           hpos :left
+           vrules nil
+           hrules nil
+           xgap 0
+           ygap 0
+           vtemplate nil
+           htemplate nil}}]
+  (let [templates {:auto   "[:100%:100%, fill]"
+                   :right  "[grow]0px[fill]"
+                   :top    "[fill]"
+                   :bottom "[grow]0px[fill]"
+                   :center "[grow, center]"
+                   :fgf    "[fill]0px[grow, fill]0px[fill]"
+                   :gfg    "[grow, fill]0px[fill]0px[grow, fill]"}]
+    (gcomp/hmig
+     :wrap (cond
+             (or (= :h direction) (= hpos :right))  0
+             (or (= :v direction) (= vpos :bottom)) 1
+             :else 0)
+     :hrules (cond
+               hrules           hrules
+               htemplate         (get templates htemplate)
+               (= hpos :center) (:center templates)
+               (= hpos :right)  (:right  templates)
+               :else            (:auto   templates))
+     :vrules (cond
+               vrules           vrules
+               vtemplate         (get templates vtemplate)
+               (= vpos :top)    (:top    templates)
+               (= vpos :bottom) (:bottom templates)
+               :else            (:auto   templates))
+     :gap [0 0 0 0]
+     :items (gtool/join-mig-items
+             (if (or (= vpos :bottom) (= hpos :right)) (c/label) [])
+             (if (sequential? items) items [items]))
+     :tgap ygap
+     :bgap ygap
+     :lgap xgap
+     :rgap xgap
+     :args args)))
 
 (defn configuration-panel
   "Description:
@@ -540,39 +542,49 @@
     You can change selected db connection."
   [state! dispatch! config-k]
   (let [faq (config-faq-list)
-        mig-p (hmig-container
-               
-               (gtool/join-mig-items
-                       (gcomp/hmig
-                        :args [:border (b/line-border :thickness 2 :color "#0000ff")]
-                        :hrules "[50%:100%, fill]"
-                        :items (gtool/join-mig-items
-                                (c/label "LOL")))
-                       (gcomp/hmig
-                        :args [:border (b/line-border :thickness 2 :color "#0000ff")]
-                        :hrules "[50%:100%, fill]"
-                        :items (gtool/join-mig-items
-                                (label-body "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will send u to us.")))
-                       ;; (db-config-fields state! dispatch! config-k)
-                       ;; (let [scr (c/scrollable
-                       ;;            (info-section (gtool/join-mig-items
-                       ;;                           (about-panel (config-info-list))
-                       ;;                           (faq-panel   (config-faq-list))))
-                       ;;            :hscroll :never :border nil)]
-                       ;;   (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
-                       ;;   (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr)
-                       )
-               :args [:border (b/line-border :thickness 2 :color "#ff0000")])]
+        mig-p (migrid :> [(db-config-fields state! dispatch! config-k)
+                          (let [scr (c/scrollable
+                                     (info-section (gtool/join-mig-items
+                                                    (about-panel (config-info-list))
+                                                    (faq-panel   (config-faq-list))))
+                                     :hscroll :never :border nil)]
+                            (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
+                            (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr)])]
     
-    (gcomp/vmig
-     :vrules "[fill]0px[grow, fill]0px[fill]"
-     :hrules "[100%, fill]"
-     :items (gtool/join-mig-items
-             (-> (label-header (gtool/convert-txt-to-UP (gtool/get-lang-header :login-db-config-editor)) 20)
-                 (c/config! :halign :center :border (b/empty-border :thickness 20)))
-             mig-p
-             (return-to-login state! dispatch!)))))
+    (migrid :v [(-> (label-header (gtool/convert-txt-to-UP (gtool/get-lang-header :login-db-config-editor)) 20)
+                    (c/config! :halign :center :border (b/empty-border :thickness 20)))
+                mig-p
+                (return-to-login state! dispatch!)]
+            :vtemplate :fgf)))
 
+(defn migrid-demo
+  "Description:
+    Panel with FAQ and configuration form.
+    You can change selected db connection."
+  [state! dispatch!]
+  (let [ mig-p (migrid :>
+               [(migrid :> (c/label "LOL LEFT"))
+                (migrid :v [(migrid :> [(migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
+                                                :vpos :top
+                                                :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")])
+                                        (migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
+                                                :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")])
+                                        (migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
+                                                :vpos :bottom
+                                                :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")])])
+                            (migrid :> (c/label :text "LOL CENTER")
+                                    :hpos :center
+                                    :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")])])
+                (migrid :> (c/label "LOL RIGHT")
+                        :hpos :right
+                        :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")])])]
+    
+    (migrid :v [(gtool/join-mig-items
+                 (-> (label-header "MIGRID DEMO" 20)
+                     (c/config! :halign :center :border (b/empty-border :thickness 20)))
+                 mig-p
+                 (return-to-login state! dispatch!))]
+            :vtemplate :fgf)))
 
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
@@ -1023,6 +1035,12 @@
            (gcomp/hmig ;; More info buttons
             :hrules "[grow]10px[fill]"
             :items [[(c/label)]
+                    [(c/label :icon (stool/image-scale icon/pen-blue-64-png 40)
+                                :listen [:mouse-entered gtool/hand-hover-on
+                                         :mouse-clicked (fn [e]
+                                                          (c/config!
+                                                           (c/to-frame e)
+                                                           :content (migrid-demo state! dispatch!)))])]
                     [(c/label :icon (stool/image-scale icon/I-64-png 40)
                                 :listen [:mouse-entered gtool/hand-hover-on
                                          :mouse-clicked (fn [e]
@@ -1075,7 +1093,7 @@
 
     
     (if (= res-validation nil)
-      (-> (doto (frame-login state! dispatch!) (.setLocationRelativeTo nil) (apply-stylesheet my-style)) seesaw.core/pack! seesaw.core/show!)
+      (-> (doto (frame-login state! dispatch!) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
       ;; (-> (doto (frame-error state! dispatch!) (.setLocationRelativeTo nil) (apply-stylesheet my-style))
       ;;     (c/config! :content (error-panel res-validation)) seesaw.core/pack! seesaw.core/show!)
       )))

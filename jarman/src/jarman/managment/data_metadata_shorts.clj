@@ -17,7 +17,7 @@
     :prop      [:text :nnull :default "'{}'"]
     :text      [:varchar-120 :default :null]
     :filepath  [:varchar-360 :default :null]
-    :url       [:varchar-360 :default :null]
+    :url       nil
     true       nil))
 
 (defn field [& {:keys [field
@@ -69,7 +69,7 @@
    :default-value default-value
    :editable? editable?
    :field field
-   :column-type (if column-type column-type (column-mapper component-type)) 
+   :column-type nil 
    :component-type component-type
    :representation (if representation representation (name field))
    :field-qualified field-qualified

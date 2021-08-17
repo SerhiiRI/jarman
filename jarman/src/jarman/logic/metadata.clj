@@ -31,6 +31,9 @@
 (def column-type-floated    :float)
 (def column-type-input      :text)
 (def column-type-blob       :blob)
+(def column-comp-url        :comp-url)
+(def column-comp-file       :comp-file)
+(def column-comp-ftp-file   :comp-ftp)
 (def column-type-nil nil)
 (def ^:dynamic *meta-column-type-list* [column-type-data
                                         column-type-time
@@ -43,10 +46,10 @@
                                         column-type-floated
                                         column-type-input
                                         column-type-blob
+                                        column-comp-url
+                                        column-comp-file
+                                        column-comp-ftp-file
                                         column-type-nil])
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; RULE FILTRATOR ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -1199,7 +1202,7 @@
         from-flatt (fn [m]
                      (-> (reduce (fn [acc f] (dissoc acc f)) m field-list)
                          (assoc-in [(:field-qualified field)]
-                                   ((:constructor field) (make-mapp m)))))
+                                   ((eval (:constructor field)) (make-mapp m)))))
         to-flatt   (fn [m]
                      (if-not (contains? m (:field-qualified field)) m
                              (let [composite-flatt (make-demapp (get-in m [(:field-qualified field)]))
@@ -1301,7 +1304,7 @@
   (require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link field-composite prop]])
   ;;; ------------------
   (def s (TableMetadata. 
-          {:table_name "seal",
+          #_{:table_name "seal",
            :prop
            (prop
             :table (table :field "seal" :representation "seal"),
@@ -1310,18 +1313,28 @@
              (field :field :datetime_of_use :component-type [:datetime :date :text])
              (field :field :datetime_of_remove :component-type [:datetime :date :text])]
             :columns-composite
-            [(field-composite :field :site :field-qualified :seal-site :constructor #'jarman.logic.composite-components/map->Link
+            [(field-composite :field :site :component-type [:comp-url] :constructor #'jarman.logic.composite-components/map->Link
                               :columns [(field :field :site_name :constructor-var :text :component-type [:text])
                                         (field :field :site_url :constructor-var :link :component-type [:text])])
-             (field-composite :field :loc_file :field-qualified :seal-loc :constructor #'jarman.logic.composite-components/map->File
+             (field-composite :field :loc_file :component-type [:comp-file] :constructor #'jarman.logic.composite-components/map->File
                               :columns [(field :field :file_name :constructor-var :file-name :component-type [:text])
                                         (field :field :file :constructor-var :file  :component-type [:blob])])
-             (field-composite :field :ftp_file :field-qualified :fuck :constructor #'jarman.logic.composite-components/map->FtpFile
+             (field-composite :field :ftp_file :component-type [:comp-ftp] :constructor #'jarman.logic.composite-components/map->FtpFile
                               :columns [(field :field :ftp_login :constructor-var :login :component-type [:text])
                                         (field :field :ftp_password :constructor-var :password :component-type [:text])
                                         (field :field :ftp_file_name :constructor-var :file-name :component-type [:text])
-                                        (field :field :ftp_file_path :constructor-var :file-path :component-type [:text])])])}))
-  
+                                        (field :field :ftp_file_path :constructor-var :file-path :component-type [:text])])])}
+          (first (getset! :seal))
+          ))
+
+  (.return-columns-flatten s)
+  (.return-columns-flatten-wrapp s)
+  (.return-columns-join s)
+  (.return-columns-join-wrapp s)
+  (.return-columns-composite s)
+  (.return-columns-composite-wrapp s)
+  (.return-columns s)
+  (.return-columns-wrapp s)
   ;;; ------------------
   ;;; return all columsn 
   (map #(.return-field-qualified %) (.return-columns-flatten-wrapp s))
@@ -1332,7 +1345,15 @@
                               [:#as_is :seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove :seal.site_name :seal.site_url :seal.file_name :seal.file :seal.ftp_login :seal.ftp_password :seal.ftp_file_name :seal.ftp_file_path]}))))
   (.ungroup s (.group s s-e)))
 
-
+(.group s {:seal.ftp_file_path "/jarman/path",
+         :seal.datetime_of_remove "#inst \"2020-09-18T21:00:00.000000000-00:00\"",
+         :seal.site_name "dupa",
+         :seal.ftp_login "admin",
+         :seal.id 1, :seal.file nil,
+         :seal.ftp_password 1234,
+         :seal.ftp_file_name "jarman-0.1.2.zip",
+         :seal.seal_number 123432, :seal.file_name "temp-file",
+         :seal.datetime_of_use "#inst \"2021-09-17T21:00:00.000000000-00:00\"", :seal.site_url "https://dupa.com.ua"})
 
 
 ;;;;;;;;;;;;;;;;

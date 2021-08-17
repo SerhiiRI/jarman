@@ -1,6 +1,6 @@
 (require '[jarman.logic.connection :as connection])
 (require '[clojure.set :refer [rename-keys]])
-(require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link field-composite]])
+(require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link field-composite prop]])
 (require '[jarman.logic.composite-components])
 
 #_(connection/connection-set
@@ -37,179 +37,185 @@
       :password "1234"}}))
 
 (def metadata-list
-  [{:id nil, :table_name "documents",
+  [{:table_name "documents",
     :prop
-    {:table (table :field :documents :representation "Documents")
+    (prop
+     :table (table :field :documents :representation "Documents")
      :columns
-     [(field :field :table_name :field-qualified :documents.table_name :component-type [:text])
-      (field :field :name :field-qualified :documents.name :component-type [:text])
-      (field :field :document :field-qualified :documents.document :component-type [:blob])
-      (field :field :prop :field-qualified :documents.prop :component-type [:textarea])]}}
+     [(field :field :table_name :component-type [:text])
+      (field :field :name :component-type [:text])
+      (field :field :document :component-type [:blob])
+      (field :field :prop :component-type [:textarea])])}
    ;; ----------------------------------------------------
-   {:id nil, :table_name "permission",
+   {:table_name "permission",
     :prop
-    {:table (table :field :permission :representation "Permission")
+    (prop
+     :table (table :field :permission :representation "Permission")
      :columns
-     [(field :field :permission_name :field-qualified :permission.permission_name :column-type [:varchar-20 :default :null] :component-type [:text])
-      (field :field :configuration :field-qualified :permission.configuration :column-type [:tinytext :nnull :default "'{}'"] :component-type [:textarea])]}}
+     [(field :field :permission_name :column-type [:varchar-20 :default :null] :component-type [:text])
+      (field :field :configuration :column-type [:tinytext :nnull :default "'{}'"] :component-type [:textarea])])}
    ;; ----------------------------------------------------
-   {:id nil, :table_name "user",
+   {:table_name "user",
     :prop
-    {:table (table :field :user :representation "User"),
+    (prop
+     :table (table :field :user :representation "User"),
      :columns
-     [(field :field :login :field-qualified :user.login :component-type [:text])
-      (field :field :password :field-qualified :user.password :component-type [:text])
-      (field :field :first_name :field-qualified :user.first_name :component-type [:text])
-      (field :field :last_name :field-qualified :user.last_name :component-type [:text])
-      (field :field :configuration :field-qualified :user.configuration :component-type [:prop])
-      (field-link :field :id_permission :field-qualified :user.id_permission :component-type [:link]
-                  :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}] :key-table :permission)]}}
+     [(field :field :login :component-type [:text])
+      (field :field :password :component-type [:text])
+      (field :field :first_name :component-type [:text])
+      (field :field :last_name :component-type [:text])
+      (field :field :configuration :component-type [:prop])
+      (field-link :field :id_permission :component-type [:link]
+                  :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}] :key-table :permission)])}
    ;; ----------------------------------------------------
-   {:id nil, :table_name "enterpreneur",
+   {:table_name "enterpreneur",
     :prop
-    {:table (table :field :enterpreneur :representation "Enterpreneur"),
+    (prop
+     :table (table :field :enterpreneur :representation "Enterpreneur"),
      :columns
-     [(field :field :ssreou :field-qualified :enterpreneur.ssreou :representation "number of SSREOU" :component-type [:text])
-      (field :field :name :field-qualified :enterpreneur.name :component-type [:text])
-      (field :field :ownership_form :field-qualified :enterpreneur.ownership_form :component-type [:text])
-      (field :field :vat_certificate :field-qualified :enterpreneur.vat_certificate :component-type [:textarea])
-      (field :field :individual_tax_number :field-qualified :enterpreneur.individual_tax_number :component-type [:text])
-      (field :field :director :field-qualified :enterpreneur.director :component-type [:text])
-      (field :field :accountant :field-qualified :enterpreneur.accountant :component-type [:text])
-      (field :field :legal_address :field-qualified :enterpreneur.legal_address :component-type [:text])
-      (field :field :physical_address :field-qualified :enterpreneur.physical_address :component-type [:text])
-      (field :field :contacts_information :field-qualified :enterpreneur.contacts_information
-             :column-type [:mediumtext :default :null] :component-type [:textarea])]}}
+     [(field :field :ssreou :representation "number of SSREOU" :component-type [:text])
+      (field :field :name :component-type [:text])
+      (field :field :ownership_form :component-type [:text])
+      (field :field :vat_certificate :component-type [:textarea])
+      (field :field :individual_tax_number :component-type [:text])
+      (field :field :director :component-type [:text])
+      (field :field :accountant :component-type [:text])
+      (field :field :legal_address :component-type [:text])
+      (field :field :physical_address :component-type [:text])
+      (field :field :contacts_information :column-type [:mediumtext :default :null] :component-type [:textarea])])}
    ;; ----------------------------------------------------
-   {:id nil, :table_name "point_of_sale",
+   {:table_name "point_of_sale",
     :prop
-    {:table (table :field :point_of_sale :representation "point_of_sale"),
+    (prop
+     :table (table :field :point_of_sale :representation "point_of_sale"),
      :columns
-     [(field-link :field :id_enterpreneur :field-qualified :point_of_sale.id_enterpreneur :component-type [:link]
+     [(field-link :field :id_enterpreneur :component-type [:link]
                   :foreign-keys [{:id_enterpreneur :enterpreneur} {:update :cascade}] :key-table :enterpreneur)
-      (field :field :name :field-qualified :point_of_sale.name :component-type [:text])
-      (field :field :physical_address :field-qualified :point_of_sale.physical_address :component-type [:text])
-      (field :field :telefons :field-qualified :point_of_sale.telefons :component-type [:text])]}}
+      (field :field :name :component-type [:text])
+      (field :field :physical_address :component-type [:text])
+      (field :field :telefons :component-type [:text])])}
    ;; ----------------------------------------------------
-   {:id nil, :table_name "cache_register",
+   {:table_name "cache_register",
     :prop
-    {:table (table :field :cache_register :representation "cache_register"),
+    (prop
+     :table (table :field :cache_register :representation "cache_register"),
      :columns
-     [(field-link :field :id_point_of_sale :field-qualified :cache_register.id_point_of_sale :component-type [:link]
+     [(field-link :field :id_point_of_sale :component-type [:link]
                   :foreign-keys [{:id_point_of_sale :point_of_sale} {:delete :cascade, :update :cascade}] :key-table :point_of_sale)
-      (field :field :name :field-qualified :cache_register.name :component-type [:text])
-      (field :field :serial_number :field-qualified :cache_register.serial_number :component-type [:text])
-      (field :field :fiscal_number :field-qualified :cache_register.fiscal_number :component-type [:text])
-      (field :field :manufacture_date :field-qualified :cache_register.manufacture_date :component-type [:date :datetime :text])
-      (field :field :first_registration_date :field-qualified :cache_register.first_registration_date
-             :component-type [:date :datetime :text])
-      (field :field :is_working :field-qualified :cache_register.is_working :component-type [:boolean :number :text])
-      (field :field :version :field-qualified :cache_register.version :component-type [:text])
-      (field :field :dev_id :field-qualified :cache_register.dev_id :component-type [:text])
-      (field :field :producer :field-qualified :cache_register.producer :component-type [:text])
-      (field :field :modem :field-qualified :cache_register.modem :component-type [:text])
-      (field :field :modem_model :field-qualified :cache_register.modem_model :component-type [:text])
-      (field :field :modem_serial_number :field-qualified :cache_register.modem_serial_number :component-type [:text])
-      (field :field :modem_phone_number :field-qualified :cache_register.modem_phone_number :component-type [:text])]}}
+      (field :field :name :component-type [:text])
+      (field :field :serial_number :component-type [:text])
+      (field :field :fiscal_number :component-type [:text])
+      (field :field :manufacture_date :component-type [:date :datetime :text])
+      (field :field :first_registration_date             :component-type [:date :datetime :text])
+      (field :field :is_working :component-type [:boolean :number :text])
+      (field :field :version :component-type [:text])
+      (field :field :dev_id :component-type [:text])
+      (field :field :producer :component-type [:text])
+      (field :field :modem :component-type [:text])
+      (field :field :modem_model :component-type [:text])
+      (field :field :modem_serial_number :component-type [:text])
+      (field :field :modem_phone_number :component-type [:text])])}
    ;; ----------------------------------------------------
-   {:id nil, :table_name "point_of_sale_group",
+   {:table_name "point_of_sale_group",
     :prop
-    {:table (table :field "point_of_sale_group" :representation "point_of_sale_group"),
-     :columns
-     [(field :field :group_name :field-qualified :point_of_sale_group.group_name :component-type [:text])
-      (field :field :information :field-qualified :point_of_sale_group.information :component-type [:textarea])]}}
+    (prop
+     :table (table :field "point_of_sale_group" :representation "point_of_sale_group"),
+     :columns [(field :field :group_name :component-type [:text])
+               (field :field :information :component-type [:textarea])])}
    ;; ----------------------------------------------------
-   {:id nil, :table_name "point_of_sale_group_links",
+   {:table_name "point_of_sale_group_links",
     :prop
-    {:table (table-link :field :point_of_sale_group_links :representation "Point of sale gruop selection"),
-     :columns
-     [(field-link :field :id_point_of_sale_group
-                  :field-qualified :point_of_sale_group_links.id_point_of_sale_group :component-type [:link]
-                  :foreign-keys [{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade, :update :cascade}]
-                  :key-table :point_of_sale_group)
-      (field-link :field :id_point_of_sale
-                  :field-qualified :point_of_sale_group_links.id_point_of_sale :component-type [:link]
-                  :foreign-keys [{:id_point_of_sale :point_of_sale}]
-                  :key-table :point_of_sale)]}}
+    (prop
+     :table (table-link :field :point_of_sale_group_links :representation "Point of sale gruop selection"),
+     :columns [(field-link :field :id_point_of_sale_group
+                           :component-type [:link]
+                           :foreign-keys [{:id_point_of_sale_group :point_of_sale_group}
+                                          {:delete :cascade, :update :cascade}]
+                           :key-table :point_of_sale_group)
+               (field-link :field :id_point_of_sale
+                           :component-type [:link]
+                           :foreign-keys [{:id_point_of_sale :point_of_sale}]
+                           :key-table :point_of_sale)])}
    ;; ----------------------------------------------------
-   {:id nil, :table_name "seal",
+   {:table_name "seal",
     :prop
-    {:table (table :field "seal" :representation "seal"),
+    (prop
+     :table (table :field "seal" :representation "seal"),
      :columns
-     [(field :field :seal_number :field-qualified :seal.seal_number :component-type [:text])
-      (field :field :datetime_of_use :field-qualified :seal.datetime_of_use :component-type [:datetime :date :text])
-      (field :field :datetime_of_remove :field-qualified :seal.datetime_of_remove :component-type [:datetime :date :text])]
+     [(field :field :seal_number :component-type [:text])
+      (field :field :datetime_of_use :component-type [:datetime :date :text])
+      (field :field :datetime_of_remove :component-type [:datetime :date :text])]
      :columns-composite
-     [(field-composite :field :site :field-qualified :seal.site :component-type [:url] :constructor jarman.logic.composite-components/map->Link
-                       :columns [(field :field :site_name :field-qualified :seal.site_name :constructor-var :text :component-type [:text])
-                                 (field :field :site_url :field-qualified :seal.site_url :constructor-var :link :component-type [:text])])
-      (field-composite :field :file :field-qualified :seal.file :component-type [:url] :constructor jarman.logic.composite-components/map->File
-                       :columns [(field :field :file_name :field-qualified :seal.file_name :constructor-var :file-name :component-type [:text])
-                                 (field :field :file :field-qualified :seal.file :constructor-var :file  :component-type [:blob])])
-      (field-composite :field :ftp_file :field-qualified :seal.ftp_file :component-type [:url] :constructor jarman.logic.composite-components/map->FtpFile
-                       :columns [(field :field :ftp_file_name :field-qualified :seal.ftp_file_name :constructor-var :file-name :component-type [:text])
-                                 (field :field :ftp_file :field-qualified :seal.ftp_file :constructor-var :file  :component-type [:blob])])]}}
+     [(field-composite :field :site :constructor #'jarman.logic.composite-components/map->Link
+                       :columns [(field :field :site_name :constructor-var :text :component-type [:text])
+                                 (field :field :site_url :constructor-var :link :component-type [:text])])
+      (field-composite :field :loc_file :constructor #'jarman.logic.composite-components/map->File
+                       :columns [(field :field :file_name :constructor-var :file-name :component-type [:text])
+                                 (field :field :file :constructor-var :file  :component-type [:blob])])
+      (field-composite :field :ftp_file :constructor #'jarman.logic.composite-components/map->FtpFile
+                       :columns [(field :field :ftp_login :constructor-var :login :component-type [:text])
+                                 (field :field :ftp_password :constructor-var :password :component-type [:text])
+                                 (field :field :ftp_file_name :constructor-var :file-name :component-type [:text])
+                                 (field :field :ftp_file_path :constructor-var :file-path :component-type [:text])])])}
    ;; ----------------------------------------------------
-   {:id nil, :table_name "repair_reasons",
+   {:table_name "repair_reasons",
     :prop
-    {:table (table :field "repair_reasons" :representation "repair_reasons"),
+    (prop :table (table :field "repair_reasons" :representation "repair_reasons"),
+          :columns [(field :field :description :component-type [:text])])}
+   ;; ----------------------------------------------------
+   {:table_name "repair_technical_issue",
+    :prop
+    (prop :table (table :field "repair_technical_issue" :representation "repair_technical_issue"),
+          :columns [(field :field :description :component-type [:text])])}
+   ;; ----------------------------------------------------
+   {:table_name "repair_nature_of_problem",
+    :prop
+    (prop :table (table :field "repair_nature_of_problem" :representation "repair_nature_of_problem"),
+          :columns [(field :field :description :component-type [:text])])}
+   ;; ----------------------------------------------------
+   {:table_name "repair_contract",
+    :prop
+    (prop
+     :table (table :field "repair_contract" :representation "repair_contract"),
      :columns
-     [(field :field :description :field-qualified :repair_reasons.description :component-type [:text])]}}
-   ;; ----------------------------------------------------
-   {:id nil,
-    :table_name "repair_technical_issue",
-    :prop
-    {:table (table :field "repair_technical_issue" :representation "repair_technical_issue"),
-     :columns [(field :field :description :field-qualified :repair_technical_issue.description :component-type [:text])]}}
-   ;; ----------------------------------------------------
-   {:id nil,
-    :table_name "repair_nature_of_problem",
-    :prop
-    {:table (table :field "repair_nature_of_problem" :representation "repair_nature_of_problem"),
-     :columns
-     [(field :field :description :field-qualified :repair_nature_of_problem.description :component-type [:text])]}}
-   ;; ----------------------------------------------------
-   {:id nil,
-    :table_name "repair_contract",
-    :prop
-    {:table (table :field "repair_contract" :representation "repair_contract"),
-     :columns
-     [(field-link :field :id_cache_register :field-qualified :repair_contract.id_cache_register :component-type [:link]
+     [(field-link :field :id_cache_register :component-type [:link]
                   :foreign-keys [{:id_cache_register :cache_register} {:delete :cascade, :update :cascade}] :key-table :cache_register)
-      (field-link :field :id_old_seal :field-qualified :repair_contract.id_old_seal :component-type [:link]
+      (field-link :field :id_old_seal :component-type [:link]
                   :foreign-keys [{:id_old_seal :seal} {:delete :null, :update :null}] :key-table :seal)
-      (field-link :field :id_new_seal :field-qualified :repair_contract.id_new_seal :component-type [:link]
+      (field-link :field :id_new_seal :component-type [:link]
                   :foreign-keys [{:id_new_seal :seal} {:delete :null, :update :null}] :key-table :seal)
-      (field-link :field :id_repair_reasons :field-qualified :repair_contract.id_repair_reasons :component-type [:link]
+      (field-link :field :id_repair_reasons :component-type [:link]
                   :foreign-keys [{:id_repair_reasons :repair_reasons} {:delete :null, :update :null}] :key-table :repair_reasons)
-      (field-link :field :id_repair_technical_issue :field-qualified :repair_contract.id_repair_technical_issue :component-type [:link]
+      (field-link :field :id_repair_technical_issue :component-type [:link]
                   :foreign-keys [{:id_repair_technical_issue :repair_technical_issue} {:delete :null, :update :null}] :key-table :repair_technical_issue)
-      (field-link :field :id_repair_nature_of_problem :field-qualified :repair_contract.id_repair_nature_of_problem :component-type [:link]
+      (field-link :field :id_repair_nature_of_problem :component-type [:link]
                   :foreign-keys [{:id_repair_nature_of_problem :repair_nature_of_problem} {:delete :null, :update :null}] :key-table :repair_nature_of_problem)
-      (field :field :repair_date :field-qualified :repair_contract.repair_date :component-type [:date :datetime :text])
-      (field :field :cache_register_register_date :field-qualified :repair_contract.cache_register_register_date :component-type [:date :datetime :text])]}}
+      (field :field :repair_date :component-type [:date :datetime :text])
+      (field :field :cache_register_register_date :component-type [:date :datetime :text])])}
    ;; ----------------------------------------------------
-   {:id nil,
-    :table_name "service_contract",
+   {:table_name "service_contract",
     :prop
-    {:table (table :field "service_contract" :representation "Service contracts"),
-     :columns
-     [(field-link :field :id_enterpreneur :field-qualified :service_contract.id_enterpreneur :component-type [:link]
-                  :foreign-keys [{:id_enterpreneur :enterpreneur} {:delete :cascade, :update :cascade}] :key-table :enterpreneur)
-      (field :field :contract_start_term :field-qualified :service_contract.contract_start_term :component-type [:date])
-      (field :field :contract_end_term :field-qualified :service_contract.contract_end_term :component-type [:date])]}}
+    (prop
+     :table (table :field "service_contract" :representation "Service contracts"),
+     :columns [(field-link :field :id_enterpreneur :component-type [:link]
+                           :key-table :enterpreneur
+                           :foreign-keys [{:id_enterpreneur :enterpreneur}
+                                          {:delete :cascade, :update :cascade}])
+               (field :field :contract_start_term :component-type [:date])
+               (field :field :contract_end_term :component-type [:date])])}
    ;; ----------------------------------------------------
-   {:id nil,
-    :table_name "service_contract_month",
+   {:table_name "service_contract_month",
     :prop
-    {:table (table :field "service_contract_month" :representation "Service Contract Month"),
-     :columns
-     [(field-link :field :id_service_contract :field-qualified :service_contract_month.id_service_contract :component-type [:link]
-                  :foreign-keys [{:id_service_contract :service_contract} {:delete :cascade, :update :cascade}] :key-table :service_contract)
-      (field :field :service_month_start :field-qualified :service_contract_month.service_month_start :component-type [:date])
-      (field :field :service_month_end :field-qualified :service_contract_month.service_month_end :component-type [:date])
-      (field :field :money_per_month :field-qualified :service_contract_month.money_per_month :component-type [:float :text])
-      (field :field :was_payed :field-qualified :service_contract_month.was_payed :component-type [:boolean])]}}])
+    (prop
+     :table (table :field "service_contract_month" :representation "Service Contract Month"),
+     :columns [(field :field :service_month_start :component-type [:date])
+               (field :field :service_month_end :component-type [:date])
+               (field :field :money_per_month :component-type [:float :text])
+               (field :field :was_payed :component-type [:boolean])
+               (field-link :field :id_service_contract :component-type [:link]
+                           :key-table :service_contract
+                           :foreign-keys [{:id_service_contract :service_contract}
+                                          {:delete :cascade, :update :cascade}])])}])
 
 ;;;;;;;;;;;;;;
 ;;; Events ;;;

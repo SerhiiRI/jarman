@@ -90,8 +90,6 @@
     :settings "Ustawienia"
     :save "Zapisz"
     :search "Szukaj"
-    :connected-to-database "Nawiązano połączenie z bazą danych."
-    :connection-error "Błąd połączenia, sprawdz konfigurację."
     :register "Rejestr"
     :back "Cofnij"
     :goback "Wróć"
@@ -118,10 +116,14 @@
     :testing-connection "Testowanie połączenia z bazą danych."
     :information "Informacja"
     :write-enter-search "Wpisz frazę i kliknij - ENTER - by wyszukać w tabeli."
+    :connected-to-database "Nawiązano połączenie z bazą danych."
+    :connection-error "Błąd połączenia, sprawdz konfigurację."
+    :connection-faild "Połączenie nie powiodło się."
     :unsaved-changes-title "Nie zapisano zmian!"
     :unsaved-changes-body "Wprowadzono zmiany w konfiguracji, które nie zostały zapisane. Czy zamknąć okno mimo to?"
     :restore-configuration-ok "Przywrócono konfiguracje! Proszę bądź ostrożny następnym razem."
-    :configuration-corrupted "Konfiguracja jest uszkodzona. Spróbuj przywrócić wcześniejszą wersję."},
+    :configuration-corrupted "Konfiguracja jest uszkodzona. Spróbuj przywrócić wcześniejszą wersję."
+    },
    :basic
    {:description "Opis",
     :yes "Tak",
@@ -151,7 +153,9 @@
     :excel "Zapisz widok do excela."
     :press-to-search "Wciśnij Ctrl + F by wyszukać rekord."
     :related-popup-table "Wyszukaj w powiązanej tabeli"
-    }}},
+    }
+   :header
+   {:login-db-config-editor "Konfiguracja połącznia z bazą danych."}}},
  :en
  {:init.edn
   {:name "Initial configuration",
@@ -274,6 +278,7 @@
   :write-enter-search "Enter the phrase and click - Enter - to search in the table."
   :connected-to-database "Connected to database."
   :connection-error "Failed connection with database."
+  :connection-faild "Connection faild."
   :unsaved-changes-title "Unsaved changes!"
   :unsaved-changes-body "Configuration changes have been made but not saved. Should I close the window anyway?"
   :export-doc-ok "Successfully exported the document."
@@ -298,7 +303,10 @@
   :no "No"
   :in "Entrance"
   :configuration "Configuration"
-  :db-conn-config "DB Configuration"}
+  :db-conn-config "DB Configuration"
+  }
+ :header
+ {:login-db-config-editor "Configuration of DB connection."}
  :tips
  {:save "Save changes."
   :clean "Clean up fields."

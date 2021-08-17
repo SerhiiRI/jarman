@@ -4,6 +4,7 @@
 
 (defn column-mapper [component-type]
   (case (first component-type)
+    nil nil
     :date      [:date      :default :null]
     :datetime  [:datetime  :null]
     :time      [:time      :null]
@@ -16,7 +17,8 @@
     :prop      [:text :nnull :default "'{}'"]
     :text      [:varchar-120 :default :null]
     :filepath  [:varchar-360 :default :null]
-    :url       [:varchar-360 :default :null]))
+    :url       [:varchar-360 :default :null]
+    true       nil))
 
 (defn field [& {:keys [field
                        field-qualified
@@ -29,7 +31,8 @@
                        component-type
                        constructor-var]
                 :or   {description nil private? false default-value nil editable? true}}]
-  {:pre [(some? field) (some? field-qualified) (some? component-type)]}
+  {:pre [(some? field) ;; (some? field-qualified)
+         (some? component-type)]}
   {:description (if description description (name field))
    :private? private?
    :default-value default-value
@@ -51,12 +54,12 @@
                                  constructor
                                  columns
                                  private?
-                                 editable? ]}]
-  {:pre [(some? field) (some? field-qualified)]}
+                                 editable?]}]
+  {:pre [(some? field)]}
   (if (nil? field)
     (assert false (format "Coposite column has bad declaration. `:field` cannot be nil")))
-  (if (nil? field-qualified)
-    (assert false (format "Coposite column `%s` has bad declaration. `:field-qualified` cannot be nil" (str field))))
+  ;; (if (nil? field-qualified)
+  ;;   (assert false (format "Coposite column `%s` has bad declaration. `:field-qualified` cannot be nil" (str field))))
   (if (nil? constructor)
     (assert false (format "Coposite column `%s` has bad declaration. `:constructor` cannot be nil" (str field-qualified))))
   (if (not (every? #(keyword? (:constructor-var %)) columns))
@@ -75,7 +78,8 @@
 
 (defn field-link [& {:keys [field-qualified key-table description private? default-value editable? field column-type foreign-keys component-type representation]
                      :or {private? false, default-value nil, editable? true, component-type [:link]}}]
-  {:pre [(some? field) (some? field-qualified) (some? foreign-keys)]}
+  {:pre [(some? field) ;; (some? field-qualified)
+         (some? foreign-keys)]}
   {:description (if description description (name field))
    :private? private?,
    :default-value default-value,
@@ -109,6 +113,25 @@
      :allow-modifing? allow-modifing?
      :allow-deleting? allow-deleting?
      :is-system? is-system?})
+
+
+(defn- do-field-qualified [table field]
+  (keyword (format "%s.%s" (name table) (name field))))
+(defn- create-field-qualified [table field]
+  (assoc field :field-qualified (do-field-qualified table (:field field))))
+
+(defn prop [& {:keys [table columns columns-composite]}]
+  (if (nil? (:field table))
+    (assert false (format "Bad table declaration, `:field` cannot be nil '%s'. " (str table))))
+  (let [table-name (:field table)
+        add-field-qualified (partial create-field-qualified table-name)]
+    {:table table 
+     :columns (mapv add-field-qualified columns)
+     :columns-composite
+     (mapv (fn [comp-column]
+             (-> comp-column
+                 (update :columns #(mapv add-field-qualified %))
+                 add-field-qualified))columns-composite)}))
 
 (comment
   (table      :field :documents)
@@ -148,7 +171,7 @@
                                    (keys m)
                                    (map symbol (keys m))))]
    (list 'defn f-name ['& {:keys (vec (keys kv))
-                          :or kv}]
+                           :or kv}]
          fkk)))
 
 (comment

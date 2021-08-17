@@ -352,7 +352,9 @@
   (letfn [(serialize [m] (update m :prop #(str %)))]
     (if (:id m)
       (update! {:table_name table :set (serialize (dissoc m :id)) :where [:= :id (:id m)]})
-      (insert! {:table_name table :values (vals (serialize m))}))))
+      (insert! {:table_name table
+                :column-list [:table_name :prop]
+                :values (vals (serialize m))}))))
 
 (defn show-tables-not-meta []
   (not-allowed-rules ["view" "metatable" "meta*"] (map (comp second first) (db/query "SHOW TABLES"))))
@@ -1280,49 +1282,58 @@
 ;; test segment ;;
 ;;;;;;;;;;;;;;;;;;
 
-
+(comment
+  (require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link field-composite prop]])
+  (.return-columns-flatten u)
+  (.return-columns-flatten-wrapp u)
+  (.return-columns-join u)
+  (.return-columns-join-wrapp u)
+  (.return-columns-composite u)
+  (.return-columns-composite-wrapp u)
+  (.return-columns u)
+  (.return-columns-wrapp u)
+  (.ungroup u (.group u {:user.last_name "", :user.profile-label "", :user.login "", :user.id_permission "", :user.password "", :user.first_name "", :user.profile-url ""}))
+  (create-table-by-meta u))
 
 (comment
-  (require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link field-composite]])
-  (def u (TableMetadata. {:id nil, :table_name "user",
-                          :prop
-                          {:table (table :field :user :representation "User"),
-                           :columns
-                           [(field :field :login :field-qualified :user.login :component-type [:text])
-                            (field :field :password :field-qualified :user.password :component-type [:text])
-                            (field :field :first_name :field-qualified :user.first_name :component-type [:text])
-                            (field :field :last_name :field-qualified :user.last_name :component-type [:text])
-                            (field-link :field :id_permission :field-qualified :user.id_permission :component-type [:link]
-                                        :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}] :key-table :permission)]
-                           :columns-composite
-                           [(field-composite 
-                             :field :user-site-url
-                             :field-qualified :user.user-site-url
-                             :component-type [:url]
-                             :constructor jarman.logic.composite-components/map->Link
-                             :columns [(field
-                                        :field :profile-label
-                                        :field-qualified :user.profile-label
-                                        :constructor-var :text
-                                        :component-type [:text]
-                                        :default-value "Domain")
-                                       (field
-                                        :field :profile-url
-                                        :field-qualified :user.profile-url
-                                        :constructor-var :link
-                                        :component-type [:text]
-                                        :default-value "https://localhost/temporary")])]}}))
- 
- (.return-columns-flatten u)
- (.return-columns-flatten-wrapp u)
- (.return-columns-join u)
- (.return-columns-join-wrapp u)
- (.return-columns-composite u)
- (.return-columns-composite-wrapp u)
- (.return-columns u)
- (.return-columns-wrapp u)
- (.ungroup u (.group u {:user.last_name "", :user.profile-label "", :user.login "", :user.id_permission "", :user.password "", :user.first_name "", :user.profile-url ""}))
- (create-table-by-meta u))
+  ;;; Julia test segment
+  ;;; ------------------
+  (require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link field-composite prop]])
+  ;;; ------------------
+  (def s (TableMetadata. 
+          {:table_name "seal",
+           :prop
+           (prop
+            :table (table :field "seal" :representation "seal"),
+            :columns
+            [(field :field :seal_number :component-type [:text])
+             (field :field :datetime_of_use :component-type [:datetime :date :text])
+             (field :field :datetime_of_remove :component-type [:datetime :date :text])]
+            :columns-composite
+            [(field-composite :field :site :field-qualified :seal-site :constructor #'jarman.logic.composite-components/map->Link
+                              :columns [(field :field :site_name :constructor-var :text :component-type [:text])
+                                        (field :field :site_url :constructor-var :link :component-type [:text])])
+             (field-composite :field :loc_file :field-qualified :seal-loc :constructor #'jarman.logic.composite-components/map->File
+                              :columns [(field :field :file_name :constructor-var :file-name :component-type [:text])
+                                        (field :field :file :constructor-var :file  :component-type [:blob])])
+             (field-composite :field :ftp_file :field-qualified :fuck :constructor #'jarman.logic.composite-components/map->FtpFile
+                              :columns [(field :field :ftp_login :constructor-var :login :component-type [:text])
+                                        (field :field :ftp_password :constructor-var :password :component-type [:text])
+                                        (field :field :ftp_file_name :constructor-var :file-name :component-type [:text])
+                                        (field :field :ftp_file_path :constructor-var :file-path :component-type [:text])])])}))
+  
+  ;;; ------------------
+  ;;; return all columsn 
+  (map #(.return-field-qualified %) (.return-columns-flatten-wrapp s))
+  ;;; quick select data
+  (def s-e (first (db/query (select! 
+                             {:table_name :seal,
+                              :column
+                              [:#as_is :seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove :seal.site_name :seal.site_url :seal.file_name :seal.file :seal.ftp_login :seal.ftp_password :seal.ftp_file_name :seal.ftp_file_path]}))))
+  (.ungroup s (.group s s-e)))
+
+
+
 
 ;;;;;;;;;;;;;;;;
 ;;; On meta! ;;;

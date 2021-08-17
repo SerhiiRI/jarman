@@ -146,17 +146,19 @@
       (field :field :datetime_of_use :component-type [:datetime :date :text])
       (field :field :datetime_of_remove :component-type [:datetime :date :text])]
      :columns-composite
-     [(field-composite :field :site :constructor #'jarman.logic.composite-components/map->Link
-                       :columns [(field :field :site_name :constructor-var :text :component-type [:text])
-                                 (field :field :site_url :constructor-var :link :component-type [:text])])
-      (field-composite :field :loc_file :constructor #'jarman.logic.composite-components/map->File
-                       :columns [(field :field :file_name :constructor-var :file-name :component-type [:text])
-                                 (field :field :file :constructor-var :file  :component-type [:blob])])
-      (field-composite :field :ftp_file :constructor #'jarman.logic.composite-components/map->FtpFile
-                       :columns [(field :field :ftp_login :constructor-var :login :component-type [:text])
-                                 (field :field :ftp_password :constructor-var :password :component-type [:text])
-                                 (field :field :ftp_file_name :constructor-var :file-name :component-type [:text])
-                                 (field :field :ftp_file_path :constructor-var :file-path :component-type [:text])])])}
+
+     [(field-composite :field :site :field-qualified :seal.site :component-type [:url] :constructor #'jarman.logic.composite-components/map->Link
+                       :columns [(field :field :site_name :field-qualified :seal.site_name :constructor-var :text :component-type [:text])
+                                 (field :field :site_url :field-qualified :seal.site_url :constructor-var :link :component-type [:text])])
+      (field-composite :field :file :field-qualified :seal.file :component-type [:file] :constructor #'jarman.logic.composite-components/map->File
+                       :columns [(field :field :file_name :field-qualified :seal.file_name :constructor-var :file-name :component-type [:text])
+                                 (field :field :file :field-qualified :seal.file :constructor-var :file  :component-type [:blob])])
+      (field-composite :field :ftp_file :field-qualified :seal.ftp_file :component-type [:ftp] :constructor #'jarman.logic.composite-components/map->FtpFile
+                       :columns [(field :field :ftp_file_name :field-qualified :seal.ftp_file_name :constructor-var :file-name :component-type [:text])
+                                 (field :field :ftp_file :field-qualified :seal.ftp_file :constructor-var :file  :component-type [:blob])
+                                 ;; Add also login field, password field, file-name, file-path
+                                 ;; also host
+                                 ])]}}
    ;; ----------------------------------------------------
    {:table_name "repair_reasons",
     :prop

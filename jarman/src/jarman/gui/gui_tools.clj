@@ -217,6 +217,7 @@
 (def get-font (partial theme-map "Ubuntu" :font))
 (def get-lang (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui] path))))
 (def get-lang-basic  (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :basic] path))))
+(def get-lang-header (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :header] path))))
 (def get-lang-btns   (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :buttons] path))))
 (def get-lang-alerts (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :alerts] path))))
 

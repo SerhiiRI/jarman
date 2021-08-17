@@ -68,7 +68,8 @@
     :load-connections-configs (assoc-in state [:connections] (:value action-m))
     :update-data-log (assoc-in state (into [:data-log] (:path action-m)) (:value action-m))
     :clear-data-log  (assoc-in state [:data-log] {})
-    :update-current-config (assoc-in state (into [:current-config] (:path action-m)) (:value action-m))
+    :set-current-config (assoc-in state [:current-config] (:value action-m))
+    :update-current-config (assoc-in state [:current-config :value (:path action-m) :value] (:value action-m))
     ))
 
 (defn- create-disptcher [atom-var]
@@ -139,6 +140,11 @@
 ;; │               │
 ;; └───────────────┘
 
+(declare faq-panel)
+(declare info-panel)
+(declare login-panel)
+(declare contact-info)
+
 (defn- label-header
   ([txt] (label-header txt 16))
   ([txt fsize]
@@ -149,29 +155,82 @@
 
 (defn- label-body
   [txt]
-  (gcomp/textarea
-   txt
-   :foreground (colors :light-grey-color)
-   :font       (gtool/getFont 14 :bold)
-   :border     (b/empty-border :left 10 :top 5)))
+  (gcomp/multiline-text
+   {:text txt
+    :foreground (colors :light-grey-color)
+    :font       (gtool/getFont 14 :bold)
+    :border     (b/empty-border :left 10 :top 5)}))
 
 
+(defn- return-to-login
+  "Description:
+     Generate button return to login panel."
+  [state! dispatch!]
+  (gcomp/button-basic
+   "Back to login"
+   :onClick (fn [e] (c/config!
+                     (c/to-frame e)
+                     :content (login-panel state! dispatch!)))
+   :flip-border true
+   :mouse-out "#eee"
+   :tgap 6
+   :bgap 6
+   :args [:icon (stool/image-scale icon/user-blue1-64-png 30)]))
 
-;;;;;;;;;;;;;;;;;;;;;;;
-;;; some-components ;;; 
-;;;;;;;;;;;;;;;;;;;;;;;
 
-(declare faq-panel)
-(declare info-panel)
-(declare login-panel)
-(declare contact-info)
+(defn- about-panel
+  "Description:
+     Prepare info components"
+  [info-list]
+  (gcomp/vmig
+   :args [:border (b/line-border :thickness 2 :color "#2ac")]
+   :tgap 15
+   :hrules "[grow, fill]"
+   :items (gtool/join-mig-items
+           (doall
+            (map
+             (fn [[header body]]
+               (gcomp/vmig
+               :args [:border (b/line-border :thickness 1 :color "#ca2")]
+                :hrules "[:100%,fill]"
+                :vrules "[grow, fill]"
+                :items (gtool/join-mig-items
+                        (label-header header)
+                        (label-body body))))
+             info-list)))))
 
-(defn- some-text []
-  (c/label
-   :font       (myFont 14)
-   :text       (gtool/htmling
-                "<p align= \"justify\">It is a long established fact that a reader will be distracted by the readable content of a page when lookiult model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like)</p>")))
 
+(defn- faq-panel
+  "Description:
+     Return vertical mig with FAQs."
+  [faq-list]
+  (gcomp/vmig
+   :tgap 10
+   :hrules "[100%, fill]"
+   :items (gtool/join-mig-items
+           (label-header "FAQ")
+           (doall
+            (map
+             (fn [faq-m]
+               (gcomp/vmig
+                :hrules "[100%, fill]"
+                :items (gtool/join-mig-items
+                        (label-header (str "- " (:question faq-m)) 14)
+                        (label-body (:answer faq-m)))))
+             faq-list)))))
+
+(defn- info-section
+  "Description:
+     Generate mig with info items."
+  [mig-comps]
+  (let [info
+        (gcomp/vmig
+         :args [:border (b/line-border :thickness 2 :color "#00ff00")]
+         :tgap   10
+         :bgap   30
+         :hrules "[fill]"
+         :items  mig-comps)]
+    info))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; config-generator-JDBC + panel for config ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -307,102 +366,120 @@
          config-k)))))
 
 
-(defn- confgen-input
+
+;; ┌─────────────────────────────────────┐
+;; │                                     │
+;; │       Configuration form            │
+;; │                                     │
+;; └─────────────────────────────────────┘
+
+(defn- config-input
   "Description:
     Return input for configuration"
-  [state! dispatch! data param]
-  (println "\nComp param: " param)
+  [state! dispatch! param-k editable?]
+  ;;(println "\nComp param: " param-k)
   (;;apply
    gcomp/state-input-text
-   {:val (str (rift (get-in data [:value param :value]) ""))
+   {:val (str (rift (get-in (:current-config (state!)) [:value param-k :value]) ""))
     :func (fn [e] (dispatch! {:action :update-current-config
-                              :path   [param]
+                              :path   [param-k]
                               :value  (c/text (c/to-widget e))}))}
-   ;; (if true [:border-color-focus (colors :light-red-color)] [])
-   ;; (if true [:border-color-unfocus (colors :red-color)] [])
-   ))
+   :start-underline (let [valid? (get-in (state!) [:validated-inputs param-k])]
+                      (cond 
+                        (= valid? true) (colors :blue-green-color)
+                        (= valid? false)(colors :red-color)
+                        :else nil))
+   :args [:editable? editable?]))
 
-(defn- confgen-compo
+(defn- config-label
+  [title]
+  (c/label :text       title
+           :foreground (colors :light-grey-color)
+           :font       (gtool/getFont 14)
+           :border     (b/empty-border :bottom 5)))
+
+(defn- config-compo
   "Description:
     Return component with label and input."
-  [data compo]
-  (let [label-fn (fn [title]
-                   (c/label :text title
-                            :foreground (colors :light-grey-color)
-                            :font (gtool/getFont 14)
-                            :border (b/empty-border :bottom 5)))]
-    ;;(println "\nData" data)
-    (gcomp/vmig
-     :vrules "[fill]"
-     :items [[(label-fn (get-in data [:value :dbtype :name]))]
-             [compo]])))
+  [state! dispatch! param-k
+   & {:keys [editable?] :or {editable? true}}]
+  (gcomp/vmig
+   :vrules "[fill]"
+   :items [[(config-label (get-in (state!) [:current-config :value param-k :name]))]
+           [(config-input state! dispatch! param-k editable?)]]))
 
 
-;; (@start)
+;;(@start)
 
-(defn config-generator-fields
+(defn- config-to-check-map
+  "Description:
+    Get current configuration from state and marge keys vector with state values.
+    Path to state [:current-config :value key :value]
+  Example:
+    (config-to-check-map state! [:a :b]) => {:a 1 :b 2}"
+  [state! keys-v]
+  (into {} (doall (map (fn [k] {k (get-in (state!) [:current-config :value k :value])}) keys-v))))
+
+(defn- db-config-fields
   "Description:
     Return mig panel with db configuration editor.
     It's vertical layout with inputs and functions to save, try connection, delete."
   [state! dispatch! config-k]
-  (let [data (get (conn/datalist-get) config-k)]
-    (if (nil? data)
+  (let [config-m (get (conn/datalist-get) config-k)]
+    (if (nil? config-m)
       (do (println "[ Warning ] (conn/datalist-get) return nil in gui_login/config-generator-fields.") (c/label))
-      (let [inputs [(gcomp/state-input-text {:func (fn [e]) :val "mysql"} :args [:editable? false])
-                    (confgen-input state! dispatch! data :host)
-                    (confgen-input state! dispatch! data :port)
-                    (confgen-input state! dispatch! data :dbname)
-                    (confgen-input state! dispatch! data :user)
-                    (confgen-input state! dispatch! data :password)]
+      (do
+        (dispatch! {:action :set-current-config
+                    :value  config-m})
+        (let [inputs [(config-compo state! dispatch! :dbtype :editable? false)
+                      (config-compo state! dispatch! :host)
+                      (config-compo state! dispatch! :port)
+                      (config-compo state! dispatch! :dbname)
+                      (config-compo state! dispatch! :user)
+                      (config-compo state! dispatch! :password)]
             
-            info-lbl (c/label :text "" :foreground (colors :blue-green-color) :font (myFont 14))
+             info-lbl (c/label :text "Check connection." :halign :center :foreground (colors :blue-green-color) :font (gtool/getFont 14))
 
-            btn-del (if (= config-k :empty) []
-                      (gcomp/button-basic (gtool/get-lang-btns :remove)
-                                          :onClick (fn [e] (if (= "yes" (delete-map config-k))
-                                                             (c/config! (c/to-frame e) :content (login-panel state! dispatch!))))))
+             btn-del (if (= config-k :empty) []
+                         (gcomp/button-basic (gtool/get-lang-btns :remove)
+                                             :onClick (fn [e] ;; (if (= "yes" (delete-map config-k))
+                                                        ;;   (c/config! (c/to-frame e) :content (login-panel state! dispatch!)))
+                                                        )))
 
-            btn-conn (gcomp/button-basic (gtool/get-lang-btns :connect)
-                                         :onClick (fn [e] (if (= nil (conn/test-connection
-                                                                      (gtool/kc-to-map [:dbtype :host :port :dbname :user :password] inputs)))
-                                                            (c/config! info-lbl :text "ERROR!! PLEASE RECONNECT" :foreground (colors :red-color))
-                                                            (c/config! info-lbl :text "SUCCESS" :foreground (colors :blue-green-color)))))
+              btn-conn (gcomp/button-basic
+                        (gtool/get-lang-btns :connect)
+                        :onClick (fn [e]
+                                   (if (= nil (conn/test-connection
+                                               (config-to-check-map state! [:dbtype :host :port :dbname :user :password])))
+                                     (c/config! info-lbl
+                                                :text (gtool/get-lang-alerts :connection-faild)
+                                                :foreground (colors :red-color))
+                                     (c/config! info-lbl
+                                                :text (gtool/get-lang-alerts :success)
+                                                :foreground (colors :blue-green-color)))))
 
-            btn-save (gcomp/button-basic (gtool/get-lang-btns :save)
-                                         :onClick (fn [e] (if (= "yes" (validate-fields state! dispatch! inputs config-k))
-                                                            (c/config! (c/to-frame e) :content (login-panel state! dispatch!)))))
+             btn-save (gcomp/button-basic (gtool/get-lang-btns :save)
+                                          :onClick (fn [e] ))
             
-            actions (fn []
-                      (gcomp/hmig
-                       :vrules "[fill]"
-                       :items (gtool/join-mig-items btn-save btn-conn btn-del)))
+             actions (fn []
+                       (gcomp/hmig
+                        :vrules "[fill]"
+                        :items (gtool/join-mig-items btn-save btn-conn btn-del)))
 
-            config-form (fn []
-                          (let [render-fn (gtool/join-mig-items
-                                              (doall
-                                               (map #(confgen-compo template-map %) inputs)))
-                                root (gcomp/vmig
-                                      :tgap 15
-                                      :items (render-fn))]
-                            (set-state-watcher state! dispatch! root render-fn [:validated-inputs] :validated-inputs)))
-            
-            mig (gcomp/vmig
-                 :lgap "25%"
-                 :items (gtool/join-mig-items
-                         (label-header (gtool/get-lang-basic :db-conn-config) 18)
-                         (config-form)
-                         (actions)
-                         info-lbl))]
-         mig))))
-
-
-
+             mig (gcomp/vmig
+                  :lgap "25%"
+                  :items (gtool/join-mig-items
+                          ;;(label-header (gtool/get-lang-basic :db-conn-config) 18)
+                          inputs
+                          (actions)
+                          info-lbl))]
+         mig)))))
 
 
 
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
-;; │       Configuration editor          │
+;; │       Configuration panel           │
 ;; │                                     │
 ;; └─────────────────────────────────────┘
 
@@ -422,66 +499,79 @@
    {:question "Where can i find data to connect?"
     :answer   "Please contact with your system administrator"}))
 
+(defn config-info-list
+  "Description:
+     List with info for client.
+     To list set vector with header and content.
+  Example:
+     [\"Header\" \"Content]"
+  []
+  (list
+   ["About"   "We are Trashpanda-Team, we are the innovation."]
+   ["Jarman"  "Jarman is an flexible aplication using plugins to extending basic functionality."]
+   ["Contact" "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will send u to us."]
+   ["Website" "http://trashpanda-team.ddns.net"]))
 
-;;;;;;;;;;;;;;;
-;;
-;; Configurator
-;;
+(defn hmig
+  ([mig-items args]
+   (vmig nil mig-items args))
+  ([size mig-items args]
+   (gcomp/hmig
+    :hrules (if size (str "[" size "%:" size "%:100%,fill]") "[:100%:100%,fill]")
+    :vrules "[:100%:100%,fill]"
+    :gap [0 0 0 0]
+    :items mig-items
+    :args args)))
+
+(defn hmig
+  [mig-items
+   & {:keys [args]
+      :or {args []}}]
+  (gcomp/hmig
+   :hrules "[:100%:100%,fill]"
+   :vrules "[:100%:100%,fill]"
+   :gap [0 0 0 0]
+   :items mig-items
+   :args args))
 
 (defn configuration-panel
   "Description:
     Panel with FAQ and configuration form.
     You can change selected db connection."
   [state! dispatch! config-k]
-  (let [info (some-text)
-        faq (config-faq-list)
-        mig-p (mig-panel
-               :constraints ["wrap 2" "0px[grow, fill, center]80px" "20px[grow, fill]20px"]
-               :items [[(mig-panel  :constraints ["" "0px[10%, fill]0px[grow,center]0px[10%, fill]0px" ""]
-                                    :items [[(c/label :icon (stool/image-scale icon/left-blue-64-png 50)
-                                                    :listen [:mouse-entered (fn [e] (gtool/hand-hover-on e))
-                                                             :mouse-exited (fn [e] (gtool/hand-hover-off e))
-                                                             :mouse-clicked (fn [e] (c/config! (c/to-frame e) :content (login-panel state! dispatch!)))])]
-                                            
-                                            [(c/label :text "CONNECT TO DATABASE"
-                                                    :foreground (colors :blue-green-color) :font (myFont 18))]
-                                            [(c/label)]]) "span 2" ]
-                       ;; [(label :icon (stool/image-scale icon/refresh-connection-grey1-64-png 80)
-                       ;;         :border (b/empty-border :right 30))]
-                       [(config-generator-fields state! dispatch! config-k)]
-                       [(let [scr (c/scrollable (doto (c/border-panel
-                                                       :items [[(c/vertical-panel
-                                                                 :items (concat (list
-                                                                                 (c/label :text       (gtool/htmling "<h2>About</h2>")
-                                                                                          :foreground (colors :blue-green-color) :font (myFont 14))
-                                                                                 (c/label :text       (gtool/htmling "<p align= \"justify\">This configuration page describe data binding and data environment of program. De-facto is a backend for jarman</p>")
-                                                                                          :foreground (colors :light-grey-color)
-                                                                                          :font       (myFont 14))
-                                                                                 (c/label :text       (gtool/htmling "<p align= \"justify\">You must set right hostname(server ip adress and port), database name also application user and password</p>")
-                                                                                          :border     (b/empty-border :top 10)
-                                                                                          :foreground (colors :light-grey-color)
-                                                                                          :font       (myFont 14))
-                                                                                 (c/label :text       (gtool/htmling "<h2>FAQ</h2>")
-                                                                                          :foreground (colors :blue-green-color)
-                                                                                          :font       (myFont 14)))
-                                                                                (flatten
-                                                                                 (map
-                                                                                  (fn [x]
-                                                                                    [(c/label :text       (str "- " (:question x))
-                                                                                              :foreground (colors :blue-green-color)
-                                                                                              :font       (myFont 14)
-                                                                                              :border     (b/empty-border :top 4 :bottom 4))
-                                                                                     (c/label :text       (:answer x)
-                                                                                              :foreground (colors :light-grey-color)
-                                                                                              :font       (myFont 14)
-                                                                                              :border     (b/empty-border :top 4 :bottom 4))])
-                                                                                  faq))))
-                                                                :north]])
-                                                  (.setPreferredSize (new Dimension 340 10000)))
-                                                :hscroll :never :border nil)]
-                          (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
-                          (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr) "aligny top"]])]
-    mig-p))
+  (let [faq (config-faq-list)
+        mig-p (hmig-container
+               
+               (gtool/join-mig-items
+                       (gcomp/hmig
+                        :args [:border (b/line-border :thickness 2 :color "#0000ff")]
+                        :hrules "[50%:100%, fill]"
+                        :items (gtool/join-mig-items
+                                (c/label "LOL")))
+                       (gcomp/hmig
+                        :args [:border (b/line-border :thickness 2 :color "#0000ff")]
+                        :hrules "[50%:100%, fill]"
+                        :items (gtool/join-mig-items
+                                (label-body "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will send u to us.")))
+                       ;; (db-config-fields state! dispatch! config-k)
+                       ;; (let [scr (c/scrollable
+                       ;;            (info-section (gtool/join-mig-items
+                       ;;                           (about-panel (config-info-list))
+                       ;;                           (faq-panel   (config-faq-list))))
+                       ;;            :hscroll :never :border nil)]
+                       ;;   (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
+                       ;;   (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr)
+                       )
+               :args [:border (b/line-border :thickness 2 :color "#ff0000")])]
+    
+    (gcomp/vmig
+     :vrules "[fill]0px[grow, fill]0px[fill]"
+     :hrules "[100%, fill]"
+     :items (gtool/join-mig-items
+             (-> (label-header (gtool/convert-txt-to-UP (gtool/get-lang-header :login-db-config-editor)) 20)
+                 (c/config! :halign :center :border (b/empty-border :thickness 20)))
+             mig-p
+             (return-to-login state! dispatch!)))))
 
 
 ;; ┌─────────────────────────────────────┐
@@ -535,17 +625,17 @@
 ;;                       [(c/label
 ;;                         :text       (gtool/htmling "<h2>ERROR</h2>")
 ;;                         :foreground (colors :blue-green-color)
-;;                         :font       (myFont 14))]
+;;                         :font       (gtool/getFont 14))]
 ;;                       [(let [mig (mig-panel
 ;;                                   :constraints ["wrap 1" "40px[:600, grow, center]40px" "10px[]10px"]
 ;;                                   :items [[(c/label
 ;;                                             :text (gtool/htmling "<h2>About</h2>")
 ;;                                             :foreground (colors :blue-green-color)
-;;                                             :font (myFont 14)) "align l"]
+;;                                             :font (gtool/getFont 14)) "align l"]
 ;;                                           [(c/label
 ;;                                             :text (gtool/htmling (str "<p align= \"justify\">" (:description errors) "</p>"))
 ;;                                             :foreground (colors :light-grey-color)
-;;                                             :font (myFont 14)) "align l"]])]               
+;;                                             :font (gtool/getFont 14)) "align l"]])]               
 ;;                          (doall
 ;;                           (map
 ;;                            (fn [x]
@@ -567,7 +657,7 @@
 (defn- tile-label [txt fsize fcolor-k]
   (c/label
    :text       txt
-   :font       (myFont fsize)
+   :font       (gtool/getFont fsize)
    :foreground (colors fcolor-k)
    :border     (b/empty-border :top 5 :left 5 :bottom 5)))
 
@@ -795,7 +885,7 @@
    {:question "Where can i find data to connect?"
     :answer   "Please contact with your system administrator"}))
 
-(defn info-list
+(defn about-info-list
   "Description:
      List with info for client.
      To list set vector with header and content.
@@ -814,51 +904,6 @@
    "http://trashpanda-team.ddns.net"
    "contact.tteam@gmail.com"
    "+38 0 966 085 615"))
-
-;;;;;;;;;;;;;;;
-;;
-;; About
-;;
-
-(defn- about-panel
-  "Description:
-     Prepare info components"
-  []
-  (gcomp/vmig
-   :tgap 15
-   :items (gtool/join-mig-items
-           (doall
-            (map
-             (fn [[header body]]
-               (gcomp/vmig
-                :vrules "[grow, fill]"
-                :items (gtool/join-mig-items
-                        (label-header header)
-                        (label-body body))))
-             (info-list))))))
-
-
-;;;;;;;;;;;;;;;
-;;
-;; FAQ
-;;
-
-(defn faq-panel
-  "Description:
-     Return vertical mig with FAQs."
-  []
-  (gcomp/vmig
-   :tgap 10
-   :items (gtool/join-mig-items
-           (label-header "FAQ")
-           (doall
-            (map
-             (fn [faq-m]
-               (gcomp/vmig
-                :items (gtool/join-mig-items
-                        (label-header (str "- " (:question faq-m)) 14)
-                        (label-body (:answer faq-m)))))
-             (about-faq-list))))))
 
 
 ;;;;;;;;;;;;;;;
@@ -883,37 +928,6 @@
    :halign :center
    :icon   (stool/image-scale "icons/imgs/trashpanda2-stars-blue-1024.png" 47)))
 
-(defn- info-section
-  "Description:
-     Generate mig with info items."
-  []
-  (let [info
-        (gcomp/vmig
-         :tgap   10
-         :bgap   30
-         :lgap   "12%"
-         :rgap   "12%"
-         :items  (gtool/join-mig-items
-                  (rift (about-panel)  [])
-                  (rift (faq-panel)    [])
-                  (rift (contact-info) [])))]
-    info))
-
-(defn- return-to-login
-  "Description:
-     Generate button return to login panel."
-  [state! dispatch!]
-  (gcomp/button-basic
-   "Back to login"
-   :onClick (fn [e] (c/config!
-                     (c/to-frame e)
-                     :content (login-panel state! dispatch!)))
-   :flip-border true
-   :mouse-out "#eee"
-   :tgap 6
-   :bgap 6
-   :args [:icon (stool/image-scale icon/user-blue1-64-png 30)]))
-
 
 ;;;;;;;;;;;;;;;
 ;;
@@ -933,7 +947,10 @@
               :tgap 25
               :items (gtool/join-mig-items
                       (info-logo)
-                      (info-section))))]
+                      (info-section (gtool/join-mig-items
+                                     (rift (about-panel (about-info-list)) [])
+                                     (rift (faq-panel   (about-faq-list))  [])
+                                     (rift (contact-info) []))))))]
            [(return-to-login state! dispatch!)]]))
 
 

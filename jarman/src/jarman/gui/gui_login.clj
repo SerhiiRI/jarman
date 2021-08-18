@@ -7,6 +7,7 @@
   (:import (java.awt Dimension))
   (:require [seesaw.core               :as c]
             [seesaw.border             :as b]
+            [seesaw.util               :as u]
             [clojure.string            :as string]
             [jarman.gui.gui-tools      :as gtool]
             [jarman.config.config-manager     :as cm]
@@ -141,8 +142,7 @@
   (gcomp/multiline-text
    {:text txt
     :foreground (colors :light-grey-color)
-    :font       (gtool/getFont 14 :bold)
-    :border     (b/empty-border :left 10 :top 5)}))
+    :font       (gtool/getFont 14 :bold)}))
 
 
 (defn- return-to-login
@@ -165,44 +165,39 @@
   "Description:
      Prepare info components"
   [info-list]
-  (gcomp/migrid :v
-   (doall
-    (map
-     (fn [[header body]]
-       (gcomp/migrid :v
-                     [(label-header header)
-                      (label-body body)]))
-     info-list))))
+  (map
+   (fn [[header body]]
+     [(gcomp/migrid
+       :>
+       (label-header header)
+       :vtemp :f)
+      (gcomp/migrid
+       :>
+       (label-body body)
+       :vtemp :f
+       :gap [0 10 10 0])])
+   info-list))
 
 
 (defn- faq-panel
   "Description:
      Return vertical mig with FAQs."
   [faq-list]
-  (gcomp/vmig
-   :tgap 10
-   :hrules "[100%, fill]"
-   :items (gtool/join-mig-items
-           (label-header "FAQ")
-           (doall
-            (map
-             (fn [faq-m]
-               (gcomp/vmig
-                :hrules "[100%, fill]"
-                :items (gtool/join-mig-items
-                        (label-header (str "- " (:question faq-m)) 14)
-                        (label-body (:answer faq-m)))))
-             faq-list)))))
+  [(-> (label-header "FAQ") (c/config! :border (b/empty-border :top 20)))
+   (map
+    (fn [faq-m]
+      [(gcomp/migrid
+        :>
+        (label-header (str "- " (:question faq-m)) 14)
+        :vtemp :f)
+       (gcomp/migrid
+        :>
+        (label-body (:answer faq-m))
+        :vtemp :f
+        :lgap 10
+        :bgap 5)])
+    faq-list)])
 
-(defn- info-section
-  "Description:
-     Generate mig with info items."
-  [mig-comps]
-  (let [info
-        (gcomp/vmig
-         :hrules "[fill]"
-         :items  mig-comps)]
-    info))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; config-generator-JDBC + panel for config ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -409,15 +404,15 @@
                       (config-compo state! dispatch! :port)
                       (config-compo state! dispatch! :dbname)
                       (config-compo state! dispatch! :user)
-                      (config-compo state! dispatch! :password)]
-            
-             info-lbl (c/label :text "Check connection." :halign :center :foreground (colors :blue-green-color) :font (gtool/getFont 14))
+                      (config-compo state! dispatch! :password)] ;; TODO: New empty inputs
+              
+              info-lbl (c/label :text "Check connection." :halign :center :foreground (colors :blue-green-color) :font (gtool/getFont 14))
 
-             btn-del (if (= config-k :empty) []
-                         (gcomp/button-basic (gtool/get-lang-btns :remove)
-                                             :onClick (fn [e] ;; (if (= "yes" (delete-map config-k))
-                                                        ;;   (c/config! (c/to-frame e) :content (login-panel state! dispatch!)))
-                                                        )))
+              btn-del (if (= config-k :empty) []
+                          (gcomp/button-basic (gtool/get-lang-btns :remove)
+                                              :onClick (fn [e] ;; (if (= "yes" (delete-map config-k))
+                                                         ;;   (c/config! (c/to-frame e) :content (login-panel state! dispatch!)))
+                                                         ))) ;; TODO: Delete config
 
               btn-conn (gcomp/button-basic
                         (gtool/get-lang-btns :connect)
@@ -431,22 +426,19 @@
                                                 :text (gtool/get-lang-alerts :success)
                                                 :foreground (colors :blue-green-color)))))
 
-             btn-save (gcomp/button-basic (gtool/get-lang-btns :save)
-                                          :onClick (fn [e] ))
-            
-             actions (fn []
-                       (gcomp/hmig
-                        :vrules "[fill]"
-                        :items (gtool/join-mig-items btn-save btn-conn btn-del)))
+              btn-save (gcomp/button-basic (gtool/get-lang-btns :save)
+                                           :onClick (fn [e] )) ;; TODO: Save config
+              
+              actions (fn []
+                        (gcomp/migrid
+                         :>
+                         [btn-save btn-conn btn-del]
+                         :vtemp :f))
 
-             mig (gcomp/vmig
-                  :lgap "25%"
-                  :items (gtool/join-mig-items
-                          ;;(label-header (gtool/get-lang-basic :db-conn-config) 18)
-                          inputs
-                          (actions)
-                          info-lbl))]
-         mig)))))
+              comps [inputs
+                     (actions)
+                     info-lbl]]
+          comps)))))
 
 
 
@@ -470,6 +462,10 @@
    {:question "Why i can not get connection with server?"
     :answer   "Please check that you have entered the data correctly"}
    {:question "Where can i find data to connect?"
+    :answer   "Please contact with your system administrator"}
+   {:question "Where can i find data to connect?"
+    :answer   "Please contact with your system administrator"}
+   {:question "Where can i find data to connect?"
     :answer   "Please contact with your system administrator"}))
 
 (defn config-info-list
@@ -483,6 +479,8 @@
    ["About"   "We are Trashpanda-Team, we are the innovation."]
    ["Jarman"  "Jarman is an flexible aplication using plugins to extending basic functionality."]
    ["Contact" "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will send u to us."]
+   ["Website" "http://trashpanda-team.ddns.net"]
+   ["Website" "http://trashpanda-team.ddns.net"]
    ["Website" "http://trashpanda-team.ddns.net"]))
 
 
@@ -491,21 +489,33 @@
     Panel with FAQ and configuration form.
     You can change selected db connection."
   [state! dispatch! config-k]
-  (let [faq (config-faq-list)
-        mig-p (gcomp/migrid :> [(db-config-fields state! dispatch! config-k)
-                          (let [scr (c/scrollable
-                                     (info-section (gtool/join-mig-items
-                                                    (about-panel (config-info-list))
-                                                    (faq-panel   (config-faq-list))))
-                                     :hscroll :never :border nil)]
-                            (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
-                            (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr)])]
+  (let [mig-p (gcomp/migrid
+               :>
+               [(gcomp/migrid
+                 :v
+                 (db-config-fields state! dispatch! config-k)
+                 :htemp 80
+                 :lgap "20%")
+
+                (gcomp/min-scrollbox
+                 (gcomp/migrid
+                  :v
+                  [(rift (about-panel (config-info-list)) [])
+                   (rift (faq-panel (config-faq-list))    [])]
+                  :vtemp :f
+                  :htemp 80
+                  :gap [10 "10%"]))]
+               :hrules "[:40%:40%, fill]0px[:60%:60%, fill]"
+               :vtemp :f)]
     
-    (gcomp/migrid :v [(-> (label-header (gtool/convert-txt-to-UP (gtool/get-lang-header :login-db-config-editor)) 20)
-                    (c/config! :halign :center :border (b/empty-border :thickness 20)))
-                mig-p
-                (return-to-login state! dispatch!)]
-            :vtemplate :fgf)))
+        (gcomp/migrid
+         :v
+         [(-> (label-header (gtool/convert-txt-to-UP (gtool/get-lang-header :login-db-config-editor)) 20)
+              (c/config! :halign :center :border (b/empty-border :thickness 20)))
+          mig-p
+          (return-to-login state! dispatch!)]
+         :vtemp :fgf
+         :htemp :g)))
 
 (defn migrid-demo
   "Description:
@@ -534,7 +544,7 @@
                      (c/config! :halign :center :border (b/empty-border :thickness 20)))
                  mig-p
                  (return-to-login state! dispatch!))]
-            :vtemplate :fgf)))
+            :vtemp :fgf)))
 
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
@@ -570,7 +580,7 @@
           :not-valid-connection
           "Configuration is incorrect."
           :else
-          "Something goes wrong.")))))
+          "Something goes wrong."))))) ;; TODO: Comunication from language.edn
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -731,7 +741,7 @@
                (c/label ;; Info about error
                 :icon (stool/image-scale icon/I-grey-64-png isize)
                 :border (empty-border :thicness 5)
-                :listen [:mouse-clicked (fn [e] (println "\nInfo about error in progress"))])
+                :listen [:mouse-clicked (fn [e] (println "\nInfo about error in progress"))]) ;; TODO: Create panel witch info about error
                [])
              (c/label ;; configuration panel
               :icon (stool/image-scale icon/settings-64-png isize)
@@ -834,10 +844,10 @@
 
 ;;;;;;;;;;;;;;;
 ;;
-;; Content
+;; Content 
 ;;
 
-(defn about-faq-list
+(defn about-faq-list ;; TODO: Load form somewhere
   "Description:
      Load Answer and Question"
   []
@@ -847,7 +857,7 @@
    {:question "Where can i find data to connect?"
     :answer   "Please contact with your system administrator"}))
 
-(defn about-info-list
+(defn about-info-list ;; TODO: Load form somewhere
   "Description:
      List with info for client.
      To list set vector with header and content.
@@ -860,7 +870,7 @@
    ["Contact" "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will send u to us."]
    ["Website" "http://trashpanda-team.ddns.net"]))
 
-(defn contact-list
+(defn contact-list ;; TODO: Load form somewhere
   []
   (list
    "http://trashpanda-team.ddns.net"
@@ -875,11 +885,16 @@
 
 (defn contact-info
   [] 
-  (gcomp/vmig
-   :items (gtool/join-mig-items
-           (label-header "Contacts")
-           (doall
-            (map #(label-body %) (contact-list))))))
+  (gcomp/migrid
+   :v
+   [(-> (label-header "Contacts") (c/config! :border (b/empty-border :top 20)))
+    (gcomp/migrid
+     :v
+     (doall
+      (map #(label-body %) (contact-list)))
+     :gap [10]
+     :vtemp :f)]
+   :vtemp :f))
 
 
 (defn- info-logo
@@ -890,7 +905,7 @@
    :halign :center
    :icon   (stool/image-scale "icons/imgs/trashpanda2-stars-blue-1024.png" 47)))
 
-
+;;(@start)
 ;;;;;;;;;;;;;;;
 ;;
 ;; Info view
@@ -905,13 +920,15 @@
   (gcomp/migrid :v
    [(gcomp/min-scrollbox
      (gcomp/migrid :v
-      [(info-logo)
+      [(gcomp/migrid :v (info-logo) :gap [30] :vtemp :f)
        (rift (about-panel (about-info-list)) [])
-       ;; (rift (faq-panel   (about-faq-list))  [])
-       ;; (rift (contact-info) [])
-       ]))
+       (rift (faq-panel   (about-faq-list))  [])
+       (rift (contact-info) [])]
+      :vtemp :fg
+      :htemp 70
+      :gap [10 "15%"]))
     (return-to-login state! dispatch!)]
-   :vtemplate :gf))
+   :vrules "[grow, fill]0px[fill]"))
 
 
 ;; ┌─────────────────────────────────────┐
@@ -974,14 +991,14 @@
                                                 :vrules "[fill]"
                                                 :gap [10 15 0 0])]
                                  :hpos :center
-                                 :vtemplate :f)
+                                 :vtemp :f)
                   
                    (state-access-configs state! dispatch!)]
                   :hpos :center
-                  :vtemplate :f)
+                  :vtemp :f)
    
     (gcomp/migrid :> ;; More info buttons
-                  [(c/label :icon (stool/image-scale icon/pen-blue-64-png 40)
+                  [(c/label :icon (stool/image-scale icon/pen-blue-64-png 40) ;; TODO: Move demo to app
                             :listen [:mouse-entered gtool/hand-hover-on
                                      :mouse-clicked (fn [e]
                                                       (c/config!
@@ -997,9 +1014,9 @@
                             :listen [:mouse-entered gtool/hand-hover-on
                                      :mouse-clicked (fn [e] (.dispose (c/to-frame e)))])]
                   :hpos :right
-                  :vtemplate :f
+                  :vtemp :f
                   :gap [10 20])]
-   :vtemplate :gf))
+   :vtemp :gf))
 
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │

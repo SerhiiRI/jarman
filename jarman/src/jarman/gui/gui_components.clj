@@ -162,7 +162,7 @@
 (defn migrid
   "Dynamic mig"
   [direction items
-   & {:keys [args vpos hpos hrules vrules tgap bgap lgap rgap gap vtemplate htemplate]
+   & {:keys [args vpos hpos hrules vrules tgap bgap lgap rgap gap vtemp htemp]
       :or {args []
            vpos :center
            hpos :left
@@ -173,8 +173,8 @@
            lgap 0
            rgap 0
            gap []
-           vtemplate nil
-           htemplate nil}}]
+           vtemp nil
+           htemp nil}}]
   (let [templates {:auto   "[:100%:100%, fill]"
                    :right  "[grow]0px[fill]"
                    :top    "[fill]"
@@ -183,7 +183,9 @@
                    :fgf    "[fill]0px[grow, fill]0px[fill]"
                    :gfg    "[grow, fill]0px[fill]0px[grow, fill]"
                    :gf     "[grow, fill]0px[fill]"
-                   :f      "[fill]"}]
+                   :fg     "[fill]0px[grow, fill]"
+                   :f      "[fill]"
+                   :g      "[::100%, grow, fill]"}]
     (hmig
      :wrap (cond
              (or (= :h direction) (= hpos :right))  0
@@ -191,13 +193,13 @@
              :else 0)
      :hrules (cond
                hrules           hrules
-               htemplate         (get templates htemplate)
+               htemp            (if (int? htemp) (str "[" htemp ":" htemp "%:100%, fill]") (get templates htemp))
                (= hpos :center) (:center templates)
                (= hpos :right)  (:right  templates)
                :else            (:auto   templates))
      :vrules (cond
                vrules           vrules
-               vtemplate         (get templates vtemplate)
+               vtemp            (if (int? vtemp) (str "[" vtemp ":" vtemp "%:100%, fill]") (get templates vtemp))
                (= vpos :top)    (:top    templates)
                (= vpos :bottom) (:bottom templates)
                :else            (:auto   templates))
@@ -248,7 +250,7 @@
     (if-not (empty? args)
       (map (fn [[k v]] (c/config! scr k v))
            (apply hash-map args)))    
-    (.setBorder scr nil)
+    (c/config! scr :border (b/line-border :thickness 0))
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
     scr))

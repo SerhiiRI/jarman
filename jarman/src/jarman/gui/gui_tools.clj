@@ -326,7 +326,8 @@
                               :mouse-exited  (fn [e] (.requestFocus (c/to-frame e)))
                               :focus-gained  (fn [e] (onEnter e))
                               :focus-lost    (fn [e] (onExit e))
-                              :mouse-clicked (fn [e] (println "onClick") (onClick e))
+                              :mouse-clicked (fn [e] ;; (println "onClick")
+                                               (onClick e))
                               :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))]))
       mig)))
 

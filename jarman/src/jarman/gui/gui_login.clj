@@ -1079,7 +1079,7 @@
          :minimum-size [600 :by 600]))
 
 (defn st []
-  (let [res-validation (validation)
+  (let [res-validation nil ;;(validation)
         state  (create-state-template)
         state! (fn [& prop]
                  (cond (= :atom (first prop)) state

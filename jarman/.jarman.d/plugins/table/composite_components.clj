@@ -92,5 +92,6 @@
 
  ;; :content (link-test #(swap! state (fn [s] (assoc-in s [:link-defr %]))  [])
                       ;;                           (Link. "Just click" "https://www.youtube.com/"))
-(seesaw.dev/show-events (seesaw.core/label))
+;;(seesaw.dev/show-events (seesaw.core/label))
+
 

@@ -251,7 +251,7 @@
   "Description:
      Return list of buttons in columne, one by one for jlayeredpane"
   [scale offset btns]
-  (let [inc-fn #(range 0 (doto (count btns) println ))]
+  (let [inc-fn #(range 0 (count btns) )]
     (doall
      (map
       (fn [m index]

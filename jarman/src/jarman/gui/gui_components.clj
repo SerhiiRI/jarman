@@ -142,7 +142,11 @@
            hrules "[grow, fill]"
            debug [0 "#f00"]
            args []}}]
-  (let [[tgap bgap lgap rgap] (rift gap [tgap bgap lgap rgap])]
+  (let [[tgap bgap lgap rgap] (cond
+                                (= 4 (count gap)) gap
+                                (= 2 (count gap)) [(first gap)(first gap)(second gap)(second gap)]
+                                (= 1 (count gap)) [(first gap)(first gap)(first gap)(first gap)]
+                                :else [tgap bgap lgap rgap])]
     (apply mig-panel
            :constraints [(if (= 0 wrap) "" (str "wrap " wrap))
                          (str lgap (if (string? lgap) "" "px")
@@ -154,6 +158,59 @@
           :items items
           :border (b/line-border :thickness (first debug) :color (second debug))
           args)))
+
+(defn migrid
+  "Dynamic mig"
+  [direction items
+   & {:keys [args vpos hpos hrules vrules tgap bgap lgap rgap gap vtemplate htemplate]
+      :or {args []
+           vpos :center
+           hpos :left
+           vrules nil
+           hrules nil
+           tgap 0
+           bgap 0
+           lgap 0
+           rgap 0
+           gap []
+           vtemplate nil
+           htemplate nil}}]
+  (let [templates {:auto   "[:100%:100%, fill]"
+                   :right  "[grow]0px[fill]"
+                   :top    "[fill]"
+                   :bottom "[grow]0px[fill]"
+                   :center "[grow, center]"
+                   :fgf    "[fill]0px[grow, fill]0px[fill]"
+                   :gfg    "[grow, fill]0px[fill]0px[grow, fill]"
+                   :gf     "[grow, fill]0px[fill]"
+                   :f      "[fill]"}]
+    (hmig
+     :wrap (cond
+             (or (= :h direction) (= hpos :right))  0
+             (or (= :v direction) (= vpos :bottom)) 1
+             :else 0)
+     :hrules (cond
+               hrules           hrules
+               htemplate         (get templates htemplate)
+               (= hpos :center) (:center templates)
+               (= hpos :right)  (:right  templates)
+               :else            (:auto   templates))
+     :vrules (cond
+               vrules           vrules
+               vtemplate         (get templates vtemplate)
+               (= vpos :top)    (:top    templates)
+               (= vpos :bottom) (:bottom templates)
+               :else            (:auto   templates))
+     :items (gtool/join-mig-items
+             (if (or (= vpos :bottom) (= hpos :right)) (c/label) [])
+             (if (sequential? items) items [items]))
+     :gap gap
+     :tgap tgap
+     :bgap bgap
+     :lgap lgap
+     :rgap rgap
+     :args args)))
+
 
 (defn scrollbox
   [component

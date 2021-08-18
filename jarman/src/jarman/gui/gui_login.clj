@@ -165,20 +165,14 @@
   "Description:
      Prepare info components"
   [info-list]
-  (gcomp/vmig
-   :tgap 15
-   :hrules "[grow, fill]"
-   :items (gtool/join-mig-items
-           (doall
-            (map
-             (fn [[header body]]
-               (gcomp/vmig
-                :hrules "[:100%,fill]"
-                :vrules "[grow, fill]"
-                :items (gtool/join-mig-items
-                        (label-header header)
-                        (label-body body))))
-             info-list)))))
+  (gcomp/migrid :v
+   (doall
+    (map
+     (fn [[header body]]
+       (gcomp/migrid :v
+                     [(label-header header)
+                      (label-body body)]))
+     info-list))))
 
 
 (defn- faq-panel
@@ -351,6 +345,7 @@
 ;; │                                     │
 ;; └─────────────────────────────────────┘
 
+
 (defn- config-input
   "Description:
     Return input for configuration"
@@ -490,51 +485,6 @@
    ["Contact" "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will send u to us."]
    ["Website" "http://trashpanda-team.ddns.net"]))
 
-(defn migrid
-  [direction items
-   & {:keys [args vpos hpos hrules vrules xgap ygap vtemplate htemplate]
-      :or {args []
-           vpos :center
-           hpos :left
-           vrules nil
-           hrules nil
-           xgap 0
-           ygap 0
-           vtemplate nil
-           htemplate nil}}]
-  (let [templates {:auto   "[:100%:100%, fill]"
-                   :right  "[grow]0px[fill]"
-                   :top    "[fill]"
-                   :bottom "[grow]0px[fill]"
-                   :center "[grow, center]"
-                   :fgf    "[fill]0px[grow, fill]0px[fill]"
-                   :gfg    "[grow, fill]0px[fill]0px[grow, fill]"}]
-    (gcomp/hmig
-     :wrap (cond
-             (or (= :h direction) (= hpos :right))  0
-             (or (= :v direction) (= vpos :bottom)) 1
-             :else 0)
-     :hrules (cond
-               hrules           hrules
-               htemplate         (get templates htemplate)
-               (= hpos :center) (:center templates)
-               (= hpos :right)  (:right  templates)
-               :else            (:auto   templates))
-     :vrules (cond
-               vrules           vrules
-               vtemplate         (get templates vtemplate)
-               (= vpos :top)    (:top    templates)
-               (= vpos :bottom) (:bottom templates)
-               :else            (:auto   templates))
-     :gap [0 0 0 0]
-     :items (gtool/join-mig-items
-             (if (or (= vpos :bottom) (= hpos :right)) (c/label) [])
-             (if (sequential? items) items [items]))
-     :tgap ygap
-     :bgap ygap
-     :lgap xgap
-     :rgap xgap
-     :args args)))
 
 (defn configuration-panel
   "Description:
@@ -542,7 +492,7 @@
     You can change selected db connection."
   [state! dispatch! config-k]
   (let [faq (config-faq-list)
-        mig-p (migrid :> [(db-config-fields state! dispatch! config-k)
+        mig-p (gcomp/migrid :> [(db-config-fields state! dispatch! config-k)
                           (let [scr (c/scrollable
                                      (info-section (gtool/join-mig-items
                                                     (about-panel (config-info-list))
@@ -551,7 +501,7 @@
                             (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
                             (.setUnitIncrement (.getVerticalScrollBar scr) 20) scr)])]
     
-    (migrid :v [(-> (label-header (gtool/convert-txt-to-UP (gtool/get-lang-header :login-db-config-editor)) 20)
+    (gcomp/migrid :v [(-> (label-header (gtool/convert-txt-to-UP (gtool/get-lang-header :login-db-config-editor)) 20)
                     (c/config! :halign :center :border (b/empty-border :thickness 20)))
                 mig-p
                 (return-to-login state! dispatch!)]
@@ -562,25 +512,25 @@
     Panel with FAQ and configuration form.
     You can change selected db connection."
   [state! dispatch!]
-  (let [ mig-p (migrid :>
-               [(migrid :> (c/label "LOL LEFT"))
-                (migrid :v [(migrid :> [(migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
+  (let [ mig-p (gcomp/migrid :>
+               [(gcomp/migrid :> (c/label "LOL LEFT"))
+                (gcomp/migrid :v [(gcomp/migrid :> [(gcomp/migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
                                                 :vpos :top
                                                 :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")])
-                                        (migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
+                                        (gcomp/migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
                                                 :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")])
-                                        (migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
+                                        (gcomp/migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
                                                 :vpos :bottom
                                                 :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")])])
-                            (migrid :> (c/label :text "LOL CENTER")
+                            (gcomp/migrid :> (c/label :text "LOL CENTER")
                                     :hpos :center
                                     :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")])])
-                (migrid :> (c/label "LOL RIGHT")
+                (gcomp/migrid :> (c/label "LOL RIGHT")
                         :hpos :right
                         :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")])])]
     
-    (migrid :v [(gtool/join-mig-items
-                 (-> (label-header "MIGRID DEMO" 20)
+    (gcomp/migrid :v [(gtool/join-mig-items
+                 (-> (label-header "GCOMP/MIGRID DEMO" 20)
                      (c/config! :halign :center :border (b/empty-border :thickness 20)))
                  mig-p
                  (return-to-login state! dispatch!))]
@@ -952,18 +902,16 @@
    Example:
      (info-panel state! dispatch!)"
   [state! dispatch!]
-  (gcomp/vmig
-   :items [[(gcomp/min-scrollbox
-             (gcomp/vmig
-              :hrules "[:800, grow, fill]"
-              :tgap 25
-              :items (gtool/join-mig-items
-                      (info-logo)
-                      (info-section (gtool/join-mig-items
-                                     (rift (about-panel (about-info-list)) [])
-                                     (rift (faq-panel   (about-faq-list))  [])
-                                     (rift (contact-info) []))))))]
-           [(return-to-login state! dispatch!)]]))
+  (gcomp/migrid :v
+   [(gcomp/min-scrollbox
+     (gcomp/migrid :v
+      [(info-logo)
+       (rift (about-panel (about-info-list)) [])
+       ;; (rift (faq-panel   (about-faq-list))  [])
+       ;; (rift (contact-info) [])
+       ]))
+    (return-to-login state! dispatch!)]
+   :vtemplate :gf))
 
 
 ;; ┌─────────────────────────────────────┐
@@ -1008,49 +956,50 @@
   (load-connection-configs dispatch!)
   (dispatch! {:action :clear-data-log})
 
-  (gcomp/vmig
-   :gap [10 5 10 10]
-   :items (gtool/join-mig-items
-           
-           (gcomp/vmig ;; Main content
-            :hrules "[grow, center]"
-            :tgap 15
-            :items (gtool/join-mig-items
-                    
-                    (c/label ;; Jarman logo
-                     :icon (stool/image-scale "icons/imgs/jarman-text.png" 6))
-                    
-                    (gcomp/vmig ;; Login inputs
-                     :wrap 2
-                     :hrules "[fill]10px[200:, fill]"
-                     :gap [5 5 10 0]
-                     :items (gtool/join-mig-items
-                             (c/label :icon (stool/image-scale icon/user-blue1-64-png 40))
-                             (login-input  dispatch!)
-                             (c/label :icon (stool/image-scale icon/key-blue-64-png 40))
-                             (passwd-input dispatch!)))
-                    
-                    (state-access-configs state! dispatch!)))
-           
-           (gcomp/hmig ;; More info buttons
-            :hrules "[grow]10px[fill]"
-            :items [[(c/label)]
-                    [(c/label :icon (stool/image-scale icon/pen-blue-64-png 40)
-                                :listen [:mouse-entered gtool/hand-hover-on
-                                         :mouse-clicked (fn [e]
-                                                          (c/config!
-                                                           (c/to-frame e)
-                                                           :content (migrid-demo state! dispatch!)))])]
-                    [(c/label :icon (stool/image-scale icon/I-64-png 40)
-                                :listen [:mouse-entered gtool/hand-hover-on
-                                         :mouse-clicked (fn [e]
-                                                          (c/config!
-                                                           (c/to-frame e)
-                                                           :content (info-panel state! dispatch!)))])]
-                    [(c/label :icon (stool/image-scale icon/enter-64-png 40)
-                              :listen [:mouse-entered gtool/hand-hover-on
-                                       :mouse-clicked (fn [e] (.dispose (c/to-frame e)))])]]))))
-
+  (gcomp/migrid :v
+   [(gcomp/migrid :v ;; Main content
+                  [(c/label ;; Jarman logo
+                    :icon (stool/image-scale "icons/imgs/jarman-text.png" 6)
+                    :border (b/empty-border :thickness 20))
+                  
+                   (gcomp/migrid :v ;; Login inputs
+                                 [(gcomp/migrid :> [(c/label :icon (stool/image-scale icon/user-blue1-64-png 40))
+                                                    (login-input  dispatch!)]
+                                                :hrules "[fill]10px[200:, fill]"
+                                                :vrules "[fill]"
+                                                :tgap 5)
+                                  (gcomp/migrid :> [(c/label :icon (stool/image-scale icon/key-blue-64-png 40))
+                                                    (passwd-input dispatch!)]
+                                                :hrules "[fill]10px[200:, fill]"
+                                                :vrules "[fill]"
+                                                :gap [10 15 0 0])]
+                                 :hpos :center
+                                 :vtemplate :f)
+                  
+                   (state-access-configs state! dispatch!)]
+                  :hpos :center
+                  :vtemplate :f)
+   
+    (gcomp/migrid :> ;; More info buttons
+                  [(c/label :icon (stool/image-scale icon/pen-blue-64-png 40)
+                            :listen [:mouse-entered gtool/hand-hover-on
+                                     :mouse-clicked (fn [e]
+                                                      (c/config!
+                                                       (c/to-frame e)
+                                                       :content (migrid-demo state! dispatch!)))])
+                   (c/label :icon (stool/image-scale icon/I-64-png 40)
+                            :listen [:mouse-entered gtool/hand-hover-on
+                                     :mouse-clicked (fn [e]
+                                                      (c/config!
+                                                       (c/to-frame e)
+                                                       :content (info-panel state! dispatch!)))])
+                   (c/label :icon (stool/image-scale icon/enter-64-png 40)
+                            :listen [:mouse-entered gtool/hand-hover-on
+                                     :mouse-clicked (fn [e] (.dispose (c/to-frame e)))])]
+                  :hpos :right
+                  :vtemplate :f
+                  :gap [10 20])]
+   :vtemplate :gf))
 
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
@@ -1065,7 +1014,7 @@
   (c/frame :title "Jarman-login"
          :undecorated? false
          :resizable? false
-         :minimum-size [800 :by 600]
+         :minimum-size [800 :by 620]
          :icon (stool/image-scale
                 icon/calendar1-64-png) 
          :content (login-panel state! dispatch!)))

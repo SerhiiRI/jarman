@@ -41,7 +41,7 @@
              (do
                (c/config! root :items (render-fn))
                ((:repaint (state!))))
-             (catch Exception e (println "\n" (str "Cannot rerender " id (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
+             (catch Exception e (println "\n" (str "Gui view service: Cannot rerender " id (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
                     ))
            ))))))
 

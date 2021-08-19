@@ -161,57 +161,72 @@
 
 (defn migrid
   "Dynamic mig"
-  [direction items
-   & {:keys [args vpos hpos hrules vrules tgap bgap lgap rgap gap vtemp htemp]
-      :or {args []
-           vpos :center
-           hpos :left
-           vrules nil
-           hrules nil
-           tgap 0
-           bgap 0
-           lgap 0
-           rgap 0
-           gap []
-           vtemp nil
-           htemp nil}}]
-  (let [templates {:auto   "[:100%:100%, fill]"
-                   :right  "[grow]0px[fill]"
-                   :top    "[fill]"
-                   :bottom "[grow]0px[fill]"
-                   :center "[grow, center]"
-                   :fgf    "[fill]0px[grow, fill]0px[fill]"
-                   :gfg    "[grow, fill]0px[fill]0px[grow, fill]"
-                   :gf     "[grow, fill]0px[fill]"
-                   :fg     "[fill]0px[grow, fill]"
-                   :f      "[fill]"
-                   :g      "[::100%, grow, fill]"}]
-    (hmig
-     :wrap (cond
-             (or (= :h direction) (= hpos :right))  0
-             (or (= :v direction) (= vpos :bottom)) 1
-             :else 0)
-     :hrules (cond
-               hrules           hrules
-               htemp            (if (int? htemp) (str "[" htemp ":" htemp "%:100%, fill]") (get templates htemp))
-               (= hpos :center) (:center templates)
-               (= hpos :right)  (:right  templates)
-               :else            (:auto   templates))
-     :vrules (cond
-               vrules           vrules
-               vtemp            (if (int? vtemp) (str "[" vtemp ":" vtemp "%:100%, fill]") (get templates vtemp))
-               (= vpos :top)    (:top    templates)
-               (= vpos :bottom) (:bottom templates)
-               :else            (:auto   templates))
-     :items (gtool/join-mig-items
-             (if (or (= vpos :bottom) (= hpos :right)) (c/label) [])
-             (if (sequential? items) items [items]))
-     :gap gap
-     :tgap tgap
-     :bgap bgap
-     :lgap lgap
-     :rgap rgap
-     :args args)))
+  ([items]
+   (migrid :v :a :f {} items))
+  
+  ([direction items]
+   (migrid direction :a :f {} items))
+  
+  ([direction htemp items]
+   (if (map? htemp)
+     (migrid direction :a :f htemp items)
+     (migrid direction htemp :f {} items)))
+  
+  ([direction htemp vtemp items]
+   (if (map? vtemp)
+     (migrid direction htemp :f vtemp items)
+     (migrid direction htemp vtemp {} items)))
+  
+  ([direction htemp vtemp
+    {:keys [args vpos hpos tgap bgap lgap rgap gap]
+     :or {args []
+          vpos :center
+          hpos :left
+          tgap 0
+          bgap 0
+          lgap 0
+          rgap 0
+          gap []}}
+    items]
+   (let [templates {:a      "[:100%:100%, fill]"
+                    :right  "[grow]0px[fill]"
+                    :top    "[fill]"
+                    :bottom "[grow]0px[fill]"
+                    :center "[grow, center]"
+                    :fgf    "[fill]0px[grow, fill]0px[fill]"
+                    :gfg    "[grow, fill]0px[fill]0px[grow, fill]"
+                    :gf     "[grow, fill]0px[fill]"
+                    :fg     "[fill]0px[grow, fill]"
+                    :f      "[fill]"
+                    :g      "[::100%, grow, fill]"}]
+     (hmig
+      :wrap (cond
+              (or (= :h direction) (= hpos :right))  0
+              (or (= :v direction) (= vpos :bottom)) 1
+              :else 0)
+      :hrules (cond
+                (string?  htemp) htemp
+                (keyword? htemp) (get templates htemp)
+                (int?     htemp) (str "[" htemp ":" htemp "%:100%, fill]")
+                (= hpos :center) (:center templates)
+                (= hpos :right)  (:right  templates)
+                :else            (:a   templates))
+      :vrules (cond
+                (string?  vtemp) vtemp
+                (keyword? vtemp) (get templates vtemp)
+                (int?     vtemp) (str "[" vtemp ":" vtemp "%:100%, fill]")
+                (= vpos :top)    (:top    templates)
+                (= vpos :bottom) (:bottom templates)
+                :else            (:a   templates))
+      :items (gtool/join-mig-items
+              (if (or (= vpos :bottom) (= hpos :right)) (c/label) [])
+              (if (sequential? items) items [items]))
+      :gap gap
+      :tgap tgap
+      :bgap bgap
+      :lgap lgap
+      :rgap rgap
+      :args args))))
 
 
 (defn scrollbox

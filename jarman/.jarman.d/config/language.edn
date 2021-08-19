@@ -155,7 +155,13 @@
     :related-popup-table "Wyszukaj w powiązanej tabeli"
     }
    :header
-   {:login-db-config-editor "Konfiguracja połącznia z bazą danych."}}},
+   {:login-db-config-editor "Konfiguracja połącznia z bazą danych."
+    :dbtype "Typ połączenia"
+    :host   "Host"
+    :port   "Port"
+    :dbname "Baza danych"
+    :user   "Użytkownik bazy"
+    :password "Hasło do bazy"}}},
  :en
  {:init.edn
   {:name "Initial configuration",
@@ -306,7 +312,13 @@
   :db-conn-config "DB Configuration"
   }
  :header
- {:login-db-config-editor "Configuration of DB connection."}
+ {:login-db-config-editor "Configuration of DB connection."
+  :dbtype "Connection type"
+  :host   "Host"
+  :port   "Port"
+  :dbname "Database"
+  :user   "DB user"
+  :password "DB password"}
  :tips
  {:save "Save changes."
   :clean "Clean up fields."

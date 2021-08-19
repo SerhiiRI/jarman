@@ -168,14 +168,11 @@
   (map
    (fn [[header body]]
      [(gcomp/migrid
-       :>
-       (label-header header)
-       :vtemp :f)
+       :> :a
+       (label-header header))
       (gcomp/migrid
-       :>
-       (label-body body)
-       :vtemp :f
-       :gap [0 10 10 0])])
+       :> :a {:gap [0 10 10 0]}
+       (label-body body))])
    info-list))
 
 
@@ -187,21 +184,22 @@
    (map
     (fn [faq-m]
       [(gcomp/migrid
-        :>
-        (label-header (str "- " (:question faq-m)) 14)
-        :vtemp :f)
+        :> :a
+        (label-header (str "- " (:question faq-m)) 14))
        (gcomp/migrid
-        :>
-        (label-body (:answer faq-m))
-        :vtemp :f
-        :lgap 10
-        :bgap 5)])
+        :> :a {:lgap 10 :bgap 5}
+        (label-body (:answer faq-m)))])
     faq-list)])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; config-generator-JDBC + panel for config ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn keys-generator
+  "Example:
+    (keys-generator \"abc\" \"abc\" 3308) ;; => :abc--abc--3308"
+  [dbname title port]
+  (keyword (string/replace (str dbname "--" title "--" port) #"\." "_")))
 
 
 (def template-map  {:name "Raspberry",
@@ -259,8 +257,6 @@
     (cm/assoc-in-value [:database.edn :datalist config-k :password] password))
   (if (:valid? (cm/store)) "yes"))
 
-(defn keys-generator [dbname title port]
-  (keyword (string/replace (str dbname "--" title "--" port) #"\." "_")))
 
 (defn create-map [dbtype host port dbname user password]
   (cm/assoc-in-segment [:database.edn :datalist (keys-generator dbname host port)]
@@ -340,6 +336,16 @@
 ;; │                                     │
 ;; └─────────────────────────────────────┘
 
+(defn- config-template []
+  {:name "Localhost",
+   :type :block,
+   :display :edit,
+   :value {:dbtype {:name "Typ połączenia", :type :param, :display :none, :component :text, :value "mysql"},
+           :host   {:name "Database host", :doc "Enter jarman SQL database server. It may be IP adress, or domain name, where your server in. Not to set port in this input.", :type :param, :display :edit, :component :text, :value ""},
+           :port   {:name "Port", :doc "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'", :type :param, :display :edit, :component :textnumber, :value ""},
+           :dbname {:name "Database name", :type :param, :display :edit, :component :text, :value "3306"},
+           :user   {:name "User login", :type :param, :display :edit, :component :text, :value ""},
+           :password {:name "User password", :type :param, :display :edit, :component :text, :value ""}}})
 
 (defn- config-input
   "Description:
@@ -348,7 +354,7 @@
   ;;(println "\nComp param: " param-k)
   (;;apply
    gcomp/state-input-text
-   {:val (str (rift (get-in (:current-config (state!)) [:value param-k :value]) ""))
+   {:val (str (rift (get-in (state!) [:current-config :value param-k :value]) ""))
     :func (fn [e] (dispatch! {:action :update-current-config
                               :path   [param-k]
                               :value  (c/text (c/to-widget e))}))}
@@ -371,10 +377,10 @@
     Return component with label and input."
   [state! dispatch! param-k
    & {:keys [editable?] :or {editable? true}}]
-  (gcomp/vmig
-   :vrules "[fill]"
-   :items [[(config-label (get-in (state!) [:current-config :value param-k :name]))]
-           [(config-input state! dispatch! param-k editable?)]]))
+  (gcomp/migrid
+   :v
+   [[(config-label (gtool/get-lang-header param-k))]
+    [(config-input state! dispatch! param-k editable?)]]))
 
 
 ;;(@start)
@@ -393,52 +399,50 @@
     Return mig panel with db configuration editor.
     It's vertical layout with inputs and functions to save, try connection, delete."
   [state! dispatch! config-k]
-  (let [config-m (get (conn/datalist-get) config-k)]
-    (if (nil? config-m)
-      (do (println "[ Warning ] (conn/datalist-get) return nil in gui_login/config-generator-fields.") (c/label))
-      (do
-        (dispatch! {:action :set-current-config
-                    :value  config-m})
-        (let [inputs [(config-compo state! dispatch! :dbtype :editable? false)
-                      (config-compo state! dispatch! :host)
-                      (config-compo state! dispatch! :port)
-                      (config-compo state! dispatch! :dbname)
-                      (config-compo state! dispatch! :user)
-                      (config-compo state! dispatch! :password)] ;; TODO: New empty inputs
-              
-              info-lbl (c/label :text "Check connection." :halign :center :foreground (colors :blue-green-color) :font (gtool/getFont 14))
+  (let [config-m (get (conn/datalist-get) config-k)
+        config-m (if (nil? config-m) (config-template) config-m)]
+ 
+    (dispatch! {:action :set-current-config
+                :value  config-m})
+    (let [inputs [(config-compo state! dispatch! :dbtype :editable? false)
+                  (config-compo state! dispatch! :host)
+                  (config-compo state! dispatch! :port)
+                  (config-compo state! dispatch! :dbname)
+                  (config-compo state! dispatch! :user)
+                  (config-compo state! dispatch! :password)] ;; TODO: New empty inputs
+          
+          info-lbl (c/label :text "Check connection." :halign :center :foreground (colors :blue-green-color) :font (gtool/getFont 14))
 
-              btn-del (if (= config-k :empty) []
-                          (gcomp/button-basic (gtool/get-lang-btns :remove)
-                                              :onClick (fn [e] ;; (if (= "yes" (delete-map config-k))
-                                                         ;;   (c/config! (c/to-frame e) :content (login-panel state! dispatch!)))
-                                                         ))) ;; TODO: Delete config
+          btn-del (if (= config-k :empty) []
+                      (gcomp/button-basic (gtool/get-lang-btns :remove)
+                                          :onClick (fn [e] ;; (if (= "yes" (delete-map config-k))
+                                                     ;;   (c/config! (c/to-frame e) :content (login-panel state! dispatch!)))
+                                                     ))) ;; TODO: Delete config
 
-              btn-conn (gcomp/button-basic
-                        (gtool/get-lang-btns :connect)
-                        :onClick (fn [e]
-                                   (if (= nil (conn/test-connection
-                                               (config-to-check-map state! [:dbtype :host :port :dbname :user :password])))
-                                     (c/config! info-lbl
-                                                :text (gtool/get-lang-alerts :connection-faild)
-                                                :foreground (colors :red-color))
-                                     (c/config! info-lbl
-                                                :text (gtool/get-lang-alerts :success)
-                                                :foreground (colors :blue-green-color)))))
+          btn-conn (gcomp/button-basic
+                    (gtool/get-lang-btns :connect)
+                    :onClick (fn [e]
+                               (if (= nil (conn/test-connection
+                                           (config-to-check-map state! [:dbtype :host :port :dbname :user :password])))
+                                 (c/config! info-lbl
+                                            :text (gtool/get-lang-alerts :connection-faild)
+                                            :foreground (colors :red-color))
+                                 (c/config! info-lbl
+                                            :text (gtool/get-lang-alerts :success)
+                                            :foreground (colors :blue-green-color)))))
 
-              btn-save (gcomp/button-basic (gtool/get-lang-btns :save)
-                                           :onClick (fn [e] )) ;; TODO: Save config
-              
-              actions (fn []
-                        (gcomp/migrid
-                         :>
-                         [btn-save btn-conn btn-del]
-                         :vtemp :f))
+          btn-save (gcomp/button-basic (gtool/get-lang-btns :save)
+                                       :onClick (fn [e] )) ;; TODO: Save config
+          
+          actions (fn []
+                    (gcomp/migrid
+                     :> :a
+                     [btn-save btn-conn btn-del]))
 
-              comps [inputs
-                     (actions)
-                     info-lbl]]
-          comps)))))
+          comps [inputs
+                 (actions)
+                 info-lbl]]
+      comps)))
 
 
 
@@ -483,68 +487,62 @@
    ["Website" "http://trashpanda-team.ddns.net"]
    ["Website" "http://trashpanda-team.ddns.net"]))
 
-
 (defn configuration-panel
   "Description:
     Panel with FAQ and configuration form.
     You can change selected db connection."
   [state! dispatch! config-k]
   (let [mig-p (gcomp/migrid
-               :>
+               :> "[:40%:40%, fill]0px[:60%:60%, fill]" :f
                [(gcomp/migrid
-                 :v
-                 (db-config-fields state! dispatch! config-k)
-                 :htemp 80
-                 :lgap "20%")
+                 :v 80 :a {:lgap "20%"}
+                 (db-config-fields state! dispatch! config-k))
 
                 (gcomp/min-scrollbox
                  (gcomp/migrid
-                  :v
+                  :v 80 {:gap [10 "10%"]}
                   [(rift (about-panel (config-info-list)) [])
-                   (rift (faq-panel (config-faq-list))    [])]
-                  :vtemp :f
-                  :htemp 80
-                  :gap [10 "10%"]))]
-               :hrules "[:40%:40%, fill]0px[:60%:60%, fill]"
-               :vtemp :f)]
+                   (rift (faq-panel (config-faq-list))    [])]))])]
     
         (gcomp/migrid
-         :v
+         :v :g :fgf
          [(-> (label-header (gtool/convert-txt-to-UP (gtool/get-lang-header :login-db-config-editor)) 20)
               (c/config! :halign :center :border (b/empty-border :thickness 20)))
           mig-p
-          (return-to-login state! dispatch!)]
-         :vtemp :fgf
-         :htemp :g)))
+          (return-to-login state! dispatch!)])))
 
-(defn migrid-demo
-  "Description:
-    Panel with FAQ and configuration form.
-    You can change selected db connection."
-  [state! dispatch!]
-  (let [ mig-p (gcomp/migrid :>
-               [(gcomp/migrid :> (c/label "LOL LEFT"))
-                (gcomp/migrid :v [(gcomp/migrid :> [(gcomp/migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
-                                                :vpos :top
-                                                :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")])
-                                        (gcomp/migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
-                                                :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")])
-                                        (gcomp/migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
-                                                :vpos :bottom
-                                                :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")])])
-                            (gcomp/migrid :> (c/label :text "LOL CENTER")
-                                    :hpos :center
-                                    :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")])])
-                (gcomp/migrid :> (c/label "LOL RIGHT")
-                        :hpos :right
-                        :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")])])]
+(defn migrid-demo [state! dispatch!]
+  (gcomp/migrid 
+   (return-to-login state! dispatch!)))
+
+;; (defn migrid-demo
+;;   "Description:
+;;     Panel with FAQ and configuration form.
+;;     You can change selected db connection."
+;;   [state! dispatch!]
+;;   (let [ mig-p (gcomp/migrid :> :a :a
+;;                [(gcomp/migrid :> (c/label "LOL LEFT"))
+;;                 (gcomp/migrid :v [(gcomp/migrid :> [(gcomp/migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
+;;                                                 :vpos :top
+;;                                                 {:args [:border (b/line-border :left 1 :bottom 1 :color "#fff")]})
+;;                                         (gcomp/migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
+;;                                                 {:args [:border (b/line-border :left 1 :bottom 1 :color "#fff")]})
+;;                                         (gcomp/migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
+;;                                                 {:vpos :bottom
+;;                                                  :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")]})])
+;;                             (gcomp/migrid :> (c/label :text "LOL CENTER")
+;;                                     {:hpos :center
+;;                                      :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")]})])
+;;                 (gcomp/migrid :> (c/label "LOL RIGHT")
+;;                         {:hpos :right
+;;                          :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")]})])]
     
-    (gcomp/migrid :v [(gtool/join-mig-items
-                 (-> (label-header "GCOMP/MIGRID DEMO" 20)
-                     (c/config! :halign :center :border (b/empty-border :thickness 20)))
-                 mig-p
-                 (return-to-login state! dispatch!))]
-            :vtemp :fgf)))
+;;     (gcomp/migrid :v [(gtool/join-mig-items
+;;                  (-> (label-header "GCOMP/MIGRID DEMO" 20)
+;;                      (c/config! :halign :center :border (b/empty-border :thickness 20)))
+;;                  mig-p
+;;                  (return-to-login state! dispatch!))]
+;;            {:vtemp :fgf})))
 
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
@@ -886,15 +884,11 @@
 (defn contact-info
   [] 
   (gcomp/migrid
-   :v
+   :v :a
    [(-> (label-header "Contacts") (c/config! :border (b/empty-border :top 20)))
     (gcomp/migrid
-     :v
-     (doall
-      (map #(label-body %) (contact-list)))
-     :gap [10]
-     :vtemp :f)]
-   :vtemp :f))
+     :v :a {:gap [10]}
+     (doall (map #(label-body %) (contact-list))))]))
 
 
 (defn- info-logo
@@ -917,18 +911,19 @@
    Example:
      (info-panel state! dispatch!)"
   [state! dispatch!]
-  (gcomp/migrid :v
+  (gcomp/migrid :v :a "[grow, fill]0px[fill]"
    [(gcomp/min-scrollbox
-     (gcomp/migrid :v
-      [(gcomp/migrid :v (info-logo) :gap [30] :vtemp :f)
-       (rift (about-panel (about-info-list)) [])
-       (rift (faq-panel   (about-faq-list))  [])
-       (rift (contact-info) [])]
-      :vtemp :fg
-      :htemp 70
-      :gap [10 "15%"]))
-    (return-to-login state! dispatch!)]
-   :vrules "[grow, fill]0px[fill]"))
+     (gcomp/migrid
+      :v 70 :fg
+      {:gap [10 "15%"]}
+      [(gcomp/migrid
+        :v {:gap [30]}
+        (info-logo))
+        (rift (about-panel (about-info-list)) [])
+        (rift (faq-panel   (about-faq-list))  [])
+        (rift (contact-info) [])
+       ]))
+    (return-to-login state! dispatch!)]))
 
 
 ;; ┌─────────────────────────────────────┐
@@ -973,50 +968,43 @@
   (load-connection-configs dispatch!)
   (dispatch! {:action :clear-data-log})
 
-  (gcomp/migrid :v
-   [(gcomp/migrid :v ;; Main content
+  (gcomp/migrid :v :g :gf
+                [(gcomp/migrid
+                  :v :center;; Main content
                   [(c/label ;; Jarman logo
                     :icon (stool/image-scale "icons/imgs/jarman-text.png" 6)
                     :border (b/empty-border :thickness 20))
                   
-                   (gcomp/migrid :v ;; Login inputs
-                                 [(gcomp/migrid :> [(c/label :icon (stool/image-scale icon/user-blue1-64-png 40))
-                                                    (login-input  dispatch!)]
-                                                :hrules "[fill]10px[200:, fill]"
-                                                :vrules "[fill]"
-                                                :tgap 5)
-                                  (gcomp/migrid :> [(c/label :icon (stool/image-scale icon/key-blue-64-png 40))
-                                                    (passwd-input dispatch!)]
-                                                :hrules "[fill]10px[200:, fill]"
-                                                :vrules "[fill]"
-                                                :gap [10 15 0 0])]
-                                 :hpos :center
-                                 :vtemp :f)
+                   (gcomp/migrid
+                    :v :f :f;; Login inputs
+                    {:hpos :center}
+                    [(gcomp/migrid
+                      :> "[fill]10px[200:, fill]" "[fill]"
+                      {:tgap 5}
+                      [(c/label :icon (stool/image-scale icon/user-blue1-64-png 40))
+                       (login-input  dispatch!)])
+                     
+                     (gcomp/migrid
+                      :> "[fill]10px[200:, fill]" "[fill]"
+                      {:gap [10 15 0 0]}
+                      [(c/label :icon (stool/image-scale icon/key-blue-64-png 40))
+                       (passwd-input dispatch!)])])
                   
-                   (state-access-configs state! dispatch!)]
-                  :hpos :center
-                  :vtemp :f)
+                   (state-access-configs state! dispatch!)])
    
-    (gcomp/migrid :> ;; More info buttons
-                  [(c/label :icon (stool/image-scale icon/pen-blue-64-png 40) ;; TODO: Move demo to app
-                            :listen [:mouse-entered gtool/hand-hover-on
-                                     :mouse-clicked (fn [e]
-                                                      (c/config!
-                                                       (c/to-frame e)
-                                                       :content (migrid-demo state! dispatch!)))])
-                   (c/label :icon (stool/image-scale icon/I-64-png 40)
-                            :listen [:mouse-entered gtool/hand-hover-on
-                                     :mouse-clicked (fn [e]
-                                                      (c/config!
-                                                       (c/to-frame e)
-                                                       :content (info-panel state! dispatch!)))])
-                   (c/label :icon (stool/image-scale icon/enter-64-png 40)
-                            :listen [:mouse-entered gtool/hand-hover-on
-                                     :mouse-clicked (fn [e] (.dispose (c/to-frame e)))])]
-                  :hpos :right
-                  :vtemp :f
-                  :gap [10 20])]
-   :vtemp :gf))
+                 (gcomp/migrid :> :gf;; More info buttons
+                               {:hpos :right :gap [10 20]}
+                               [(c/label :icon (stool/image-scale icon/I-64-png 40)
+                                         :listen [:mouse-entered gtool/hand-hover-on
+                                                  :mouse-clicked (fn [e]
+                                                                   (c/config!
+                                                                    (c/to-frame e)
+                                                                    :content (info-panel state! dispatch!)))])
+                                (c/label :icon (stool/image-scale icon/enter-64-png 40)
+                                         :listen [:mouse-entered gtool/hand-hover-on
+                                                  :mouse-clicked (fn [e] (.dispose (c/to-frame e)))])])]))
+
+;; (@start)
 
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │

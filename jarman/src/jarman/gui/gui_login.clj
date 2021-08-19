@@ -202,50 +202,55 @@
   (keyword (string/replace (str dbname "--" title "--" port) #"\." "_")))
 
 
-(def template-map  {:name "Raspberry",
-                    :type :block,
-                    :display :edit,
-                    :value
-                    {:dbtype
-                     {:name "Typ połączenia",
-                      :type :param,
-                      :display :none,
-                      :component :text,
-                      :value "mysql"},
-                     :host
-                     {:name "Database host",
-                      :doc
-                      "Enter jarman SQL database server. It may be IP adress, or domain name, where your server in. Not to set port in this input.",
-                      :type :param,
-                      :display :edit,
-                      :component :text,
-                      :value "trashpanda-team.ddns.net"},
-                     :port
-                     {:name "Port",
-                      :doc
-                      "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'",
-                      :type :param,
-                      :display :edit,
-                      :component :text,
-                      :value "3306"},
-                     :dbname
-                     {:name "Database name",
-                      :type :param,
-                      :display :edit,
-                      :component :text,
-                      :value "jarman"},
-                     :user
-                     {:name "User login",
-                      :type :param,
-                      :display :edit,
-                      :component :text,
-                      :value "jarman"},
-                     :password
-                     {:name "User password",
-                      :type :param,
-                      :display :edit,
-                      :component :text,
-                      :value "dupa"}}})
+(defn delete-map [config-k]
+  (cm/update-in-value [:database.edn :datalist] (fn [x] (dissoc x config-k)))
+  (if (:valid? (cm/store)) "yes"))
+
+(defn- config-template
+  []{:name "Raspberry",
+     :type :block,
+     :display :edit,
+     :value
+     {:dbtype
+      {:name "Typ połączenia",
+       :type :param,
+       :display :none,
+       :component :text,
+       :value "mysql"},
+      :host
+      {:name "Database host",
+       :doc
+       "Enter jarman SQL database server. It may be IP adress, or domain name, where your server in. Not to set port in this input.",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "trashpanda-team.ddns.net"},
+      :port
+      {:name "Port",
+       :doc
+       "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "3306"},
+      :dbname
+      {:name "Database name",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "jarman"},
+      :user
+      {:name "User login",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "jarman"},
+      :password
+      {:name "User password",
+       :type :param,
+       :display :edit,
+       :component :text,
+       :value "dupa"}}})
 
 (defn update-map [dbtype host port dbname user password config-k]
   (do
@@ -258,24 +263,20 @@
   (if (:valid? (cm/store)) "yes"))
 
 
-(defn create-map [dbtype host port dbname user password]
-  (cm/assoc-in-segment [:database.edn :datalist (keys-generator dbname host port)]
-                    (-> template-map
-                               (assoc-in  [:value :dbtype :value] dbtype)
-                               (assoc-in  [:value :host :value] host)
-                               (assoc-in  [:value :port :value] (Integer. port))
-                               (assoc-in  [:value :dbname :value] dbname)
-                               (assoc-in  [:value :user :value] user)
-                               (assoc-in  [:value :password :value] password)))  
-  (if (:valid? (cm/store)) "yes"))
+(defn create-config [state! dispatch! config-k] ;; TODO: Save
+  (let [c-config (get-in (state!) [:current-config])
+        config-k (if (= config-k :empty) (keys-generator (:dbname c-config) "" (:port c-config)))]
+    (println "\nCK" config-k)
+    (println "\nNew" c-config)
+    ;; (cm/assoc-in-segment [:database.edn :datalist config-k]
+    ;;                      (get-in (state!) [:current-config config-k]))  
+    ;; (if (:valid? (cm/store)) "yes")
+    ))
+
 
 ;; (store)
 ;; (swapp)
 
-
-(defn delete-map [config-k]
-  (cm/update-in-value [:database.edn :datalist] (fn [x] (dissoc x config-k)))
-  (if (:valid? (cm/store)) "yes"))
 
 (defn- err-underline [err?]
   (b/line-border :bottom 1 :color (if err? (colors :red-color) (colors :blue-green-color))))
@@ -335,17 +336,6 @@
 ;; │       Configuration form            │
 ;; │                                     │
 ;; └─────────────────────────────────────┘
-
-(defn- config-template []
-  {:name "Localhost",
-   :type :block,
-   :display :edit,
-   :value {:dbtype {:name "Typ połączenia", :type :param, :display :none, :component :text, :value "mysql"},
-           :host   {:name "Database host", :doc "Enter jarman SQL database server. It may be IP adress, or domain name, where your server in. Not to set port in this input.", :type :param, :display :edit, :component :text, :value ""},
-           :port   {:name "Port", :doc "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'", :type :param, :display :edit, :component :textnumber, :value ""},
-           :dbname {:name "Database name", :type :param, :display :edit, :component :text, :value "3306"},
-           :user   {:name "User login", :type :param, :display :edit, :component :text, :value ""},
-           :password {:name "User password", :type :param, :display :edit, :component :text, :value ""}}})
 
 (defn- config-input
   "Description:
@@ -409,16 +399,16 @@
                   (config-compo state! dispatch! :port)
                   (config-compo state! dispatch! :dbname)
                   (config-compo state! dispatch! :user)
-                  (config-compo state! dispatch! :password)] ;; TODO: New empty inputs
+                  (config-compo state! dispatch! :password)]
           
           info-lbl (c/label :text "Check connection." :halign :center :foreground (colors :blue-green-color) :font (gtool/getFont 14))
 
           btn-del (if (= config-k :empty) []
                       (gcomp/button-basic (gtool/get-lang-btns :remove)
-                                          :onClick (fn [e] ;; (if (= "yes" (delete-map config-k))
-                                                     ;;   (c/config! (c/to-frame e) :content (login-panel state! dispatch!)))
-                                                     ))) ;; TODO: Delete config
-
+                                          :onClick (fn [e]
+                                                     (if (= "yes" (delete-map config-k))
+                                                       (c/config! (c/to-frame e) :content (login-panel state! dispatch!)))
+                                                     )))
           btn-conn (gcomp/button-basic
                     (gtool/get-lang-btns :connect)
                     :onClick (fn [e]
@@ -432,7 +422,10 @@
                                             :foreground (colors :blue-green-color)))))
 
           btn-save (gcomp/button-basic (gtool/get-lang-btns :save)
-                                       :onClick (fn [e] )) ;; TODO: Save config
+                                       :onClick (fn [e] (if (= "yes" (create-config state! dispatch! config-k))
+                                                          (c/config!
+                                                           (c/to-frame e)
+                                                           :content (info-panel state! dispatch!))))) ;; TODO: Save config
           
           actions (fn []
                     (gcomp/migrid
@@ -445,7 +438,7 @@
       comps)))
 
 
-
+;; (@start)
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
 ;; │       Configuration panel           │

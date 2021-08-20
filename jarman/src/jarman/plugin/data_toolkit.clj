@@ -220,11 +220,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; METADATA TOOLKIT ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
-
+;;heyy
 (defn- metadata-toolkit-constructor [configuration toolkit-map]
   (if-let [table-metadata (first (mt/getset! (:table_name configuration)))]
-    {:table-meta   ((comp :table :prop) table-metadata)
-     :columns-meta ((comp :columns :prop) table-metadata)}))
+    (let [meta-obj (mt/->TableMetadata table-metadata)]
+      {:table-meta   ((comp :table :prop) table-metadata)
+       :columns-meta ((comp :columns :prop) table-metadata)
+       :columns-group (fn [model] (.group meta-obj model))
+       :columns-ungroup (fn [model] (.ungroup meta-obj model))
+       :columns-meta-join (.return-columns-join meta-obj)})))
+
+
 
 ;;;;;;;;;;;;
 ;;; TODO ;;;

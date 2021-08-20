@@ -75,7 +75,6 @@
 ;;;;;;;;;;;;
 ;;; Link ;;;
 ;;;;;;;;;;;;
-
 ;; (clojure.java.browse/browse-url "http://clojuredocs.org")
 (defrecord Link [text link])
 ;; => jarman.plugin.agr_col_test.Link
@@ -89,6 +88,10 @@
 (defrecord File [file-name file])
 (defn isFile? [^jarman.logic.composite_components.File e]
   (instance? jarman.logic.composite_components.File e))
+
+
+(def component-list [isFile? isLink? isFtpFile?])
+
 
 (comment
   ;; test segment for some link

@@ -849,7 +849,7 @@
    :plug-place [:#tables-view-plugin]
    :tables [:seal]
    :view-columns [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove]
-   :model-insert [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove]
+   :model-insert [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove :seal.site :seal.loc_file :seal.ftp_file]
    :active-buttons [:insert :update :delete :clear :changes]
    :permission [:admin :user :developer]
    :dialog {}
@@ -862,7 +862,15 @@
      :seal.id
      :seal.seal_number
      :seal.datetime_of_use
-     :seal.datetime_of_remove]})
+     :seal.datetime_of_remove
+     :seal.site_name
+     :seal.site_url
+     :seal.file_name
+     :seal.file
+     :seal.ftp_login
+     :seal.ftp_password
+     :seal.ftp_file_name
+     :seal.ftp_file_path]})
   (dialog-table
    :id :seal-table
    :name "seal dialog"
@@ -876,7 +884,15 @@
      :seal.id
      :seal.seal_number
      :seal.datetime_of_use
-     :seal.datetime_of_remove]}))
+     :seal.datetime_of_remove
+     :seal.site_name
+     :seal.site_url
+     :seal.file_name
+     :seal.file
+     :seal.ftp_login
+     :seal.ftp_password
+     :seal.ftp_file_name
+     :seal.ftp_file_path]}))
 
 (defview
   service_contract

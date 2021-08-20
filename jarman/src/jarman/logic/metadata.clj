@@ -1345,15 +1345,7 @@
                               [:#as_is :seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove :seal.site_name :seal.site_url :seal.file_name :seal.file :seal.ftp_login :seal.ftp_password :seal.ftp_file_name :seal.ftp_file_path]}))))
   (.ungroup s (.group s s-e)))
 
-(.group s {:seal.ftp_file_path "/jarman/path",
-         :seal.datetime_of_remove "#inst \"2020-09-18T21:00:00.000000000-00:00\"",
-         :seal.site_name "dupa",
-         :seal.ftp_login "admin",
-         :seal.id 1, :seal.file nil,
-         :seal.ftp_password 1234,
-         :seal.ftp_file_name "jarman-0.1.2.zip",
-         :seal.seal_number 123432, :seal.file_name "temp-file",
-         :seal.datetime_of_use "#inst \"2021-09-17T21:00:00.000000000-00:00\"", :seal.site_url "https://dupa.com.ua"})
+
 
 
 ;;;;;;;;;;;;;;;;

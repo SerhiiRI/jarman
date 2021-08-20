@@ -24,6 +24,7 @@
    [jarman.gui.gui-calendar   :as calendar]
    [jarman.gui.popup :as popup]
    [jarman.plugins.composite-components :as ccomp]
+   [jarman.logic.composite-components :as lcomp]
    [jarman.logic.state :as state]
    [jarman.logic.metadata :as mt]
    [jarman.logic.document-manager :as doc]
@@ -36,6 +37,14 @@
    (java.util Date)
    (java.text SimpleDateFormat)))
 
+(defn grouping-model [state table-model]
+  (let [group-fn (:columns-group (:plugin-toolkit state))]
+    (group-fn table-model)))
+
+(defn ungrouping-model [state table-model]
+  (let [ungroup-fn (:columns-ungroup (:plugin-toolkit state))]
+    (ungroup-fn table-model)))
+
 (defn action-handler
   "Description:
     Invoke fn using dispatch!.
@@ -43,13 +52,14 @@
     (@state {:action :test})"
   [state action-m]
   (case (:action action-m)
+    ;;; add switch for insert update
     :table-render   (assoc-in state [:table-render] (:value action-m))
     :add-missing    (assoc-in state (:path action-m) nil)
     :pepe-model     (assoc-in state [:model] {:pepe :pepe-was-here})
     :clear-model    (assoc-in state [:model] {})
     :clear-changes  (assoc-in state [:model-changes] {})
     :update-changes (assoc-in state (join-vec [:model-changes] (:path action-m)) (:value action-m))
-    :set-model      (assoc-in state [:model] (:value action-m))
+    :set-model      (assoc-in state [:model] (grouping-model state (:value action-m)))
     :state-update   (assoc-in state (:path action-m) (:value action-m))
     :update-export-path (assoc-in state [:export-path] (:value action-m))
     :test           (do (println "\nTest") state)))
@@ -86,14 +96,14 @@
     (dispatch! {:action :add-missing
                 :path   watch-path}))
   (add-watch (state! :atom) :watcher
-   (fn [id-key state old-m new-m]
-     (let [[left right same] (clojure.data/diff (get-in new-m watch-path) (get-in old-m watch-path))]
-       (if (not (and (nil? left) (nil? right)))
-         (let [root (if (fn? root) (root) root)]
-           (try
-             (c/config! root :items (render-fn))
-             (catch Exception e (println "\n" (str "Rerender exception:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
-                    ))))))))
+             (fn [id-key state old-m new-m]
+               (let [[left right same] (clojure.data/diff (get-in new-m watch-path) (get-in old-m watch-path))]
+                 (if (not (and (nil? left) (nil? right)))
+                   (let [root (if (fn? root) (root) root)]
+                     (try
+                       (c/config! root :items (render-fn))
+                       (catch Exception e (println "\n" (str "Rerender exception:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
+                              ))))))))
 
 (defn- jvpanel
   "Description:
@@ -201,10 +211,7 @@
                                         :text (if (nil? (get-in (state!) [:model-changes field-qualified]))
                                                 (gtool/get-lang :basic :empty)
                                                 (gtool/get-lang :basic :selected)))
-                             (.repaint (c/to-root e))
-                             (println "MODEL" (:model (state!)))
-                             (println "fieild" field-qualified)
-                             (println "MODEL-changes" (:model-changes (state!)))))})]
+                             (.repaint (c/to-root e))))})]
       exi)))
 
 
@@ -263,14 +270,14 @@
   (let [{plugin-toolkit :plugin-toolkit
          table-model    :model} (state!)]
     (gcomp/button-basic
-          "Document export"
-          :font (gtool/getFont 13 :bold)
-          :onClick (fn [e]
-                     [(gcomp/popup-window
-                       {:window-title "Documents export"
-                        :view (document-exporter (state!) dispatch!)
-                        :size [300 300]
-                        :relative (c/to-widget e)})]))))
+     "Document export"
+     :font (gtool/getFont 13 :bold)
+     :onClick (fn [e]
+                [(gcomp/popup-window
+                  {:window-title "Documents export"
+                   :view (document-exporter (state!) dispatch!)
+                   :size [300 300]
+                   :relative (c/to-widget e)})]))))
 ;;(:model-id)
 ;; ┌───────────────────┐
 ;; │                   │
@@ -294,7 +301,8 @@
                 (cond
                   (= type :insert)
                   (if-not (empty? (:model-changes (state!)))
-                    (let [insert-m (:model-changes (state!))]
+                    (let [insert-m (ungrouping-model (state!)(:model-changes (state!)))]
+                      (println "INSERT MODEL CHANGES ___"  (ungrouping-model (state!)(:model-changes (state!))))
                       (println "\nRun Insert\n" ((:insert plugin-toolkit) insert-m) "\n")
                       ;; (dispatch! {:action :clear-changes})
                       ))
@@ -303,7 +311,7 @@
                   (= type :update)
                   (do
                     (let [table-id (first (:model-columns plugin-toolkit))
-                          update-m (into {table-id (table-id table-model)} (:model-changes (state!)))]
+                          update-m (into {table-id (table-id table-model)} (ungrouping-model (state!) (:model-changes (state!))))]
                       (try
                         ((:update plugin-toolkit) update-m)
                         (catch Exception e (popup/build-popup {:title "Warning" :size [300 200] :comp-fn (fn [] (c/label :text "Wrong data to update!"))})))
@@ -312,7 +320,7 @@
                       ))
                   (= type :delete)
                   (let [to-delete {(first (:model-columns plugin-toolkit))
-                                    (get table-model (first (:model-columns plugin-toolkit)))}]
+                                   (get table-model (first (:model-columns plugin-toolkit)))}]
                     (println "\nRun Delete: \n" ((:delete plugin-toolkit) to-delete) "\n")
                     (dispatch! {:action :clear-model}))
                   (= type :changes)
@@ -404,25 +412,36 @@
 ;;    :documents.name
 ;;    :documents.prop]
 
+(defn isComponent? [val]
+  (some #(% val) lcomp/component-list))
 
 (defn convert-key-to-component
   "Description
      Convert to component automaticly by keyword.
      key is an key from model in defview as :user.name."
   [state! dispatch! panel meta-data key]
+  
   (let [meta            (key meta-data)
+        ;;  meta            (meta/.return-columns-join meta)
         field-qualified (:field-qualified meta)
         title           (:representation  meta)
         editable?       (:editable?       meta)
         comp-types      (:component-type  meta)
         val             (cond
-                          (not (nil? (key (:model (state!))))) (str (key (:model (state!))))
-                          (not (nil? (key (:model-changes (state!))))) (str (key (:model-changes (state!))))
-                          :else "")
+                          (not (nil? (key (:model (state!))))) (key (:model (state!)))
+                          (not (nil? (key (:model-changes (state!))))) (key (:model-changes (state!))))
+        val             (if (isComponent? val)
+                          val (str val))
         func            (fn [e] (dispatch!
                                  {:action :update-changes
                                   :path   [(rift field-qualified :unqualifited)]
                                   :value  (c/value (c/to-widget e))}))
+        comp-func       (fn [e col-key] 
+                          (dispatch!
+                           {:action :update-changes
+                            ;;:state-update
+                            :path   [(rift field-qualified :unqualifited)]
+                            :value (assoc (key (:model-changes (state!))) col-key (c/value (c/to-widget e)))}))
         comp (gcomp/inpose-label
               ;;seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "5px[]5px"]
               ;;:items
@@ -433,14 +452,23 @@
               title
               (cond
                 (= mt/column-type-linking (first comp-types))
-                ;; (ccomp/link-test #(swap! (atom {}) (fn [s] (assoc-in s [:link-defr %])) [])
-                ;;               (jarman.logic.composite-components/->Link "panda" "some-path/heyy/file.txt"))
                 (input-related-popup-table {:val val :state! state! :field-qualified field-qualified :dispatch! dispatch!})
-                ;; (gcomp/state-input-text {:func func :val val})
                 
                 (or (= mt/column-type-data (first comp-types))
                     (= mt/column-type-datatime (first comp-types)))
                 (calendar/state-input-calendar {:func func :val val})
+
+                (= mt/column-comp-url (first comp-types))
+                (ccomp/url-panel {:func comp-func
+                                  :val val})
+
+                (= mt/column-comp-file (first comp-types))
+                (ccomp/file-panel {:func comp-func
+                                   :val val})
+
+                (= mt/column-comp-ftp-file (first comp-types))
+                (ccomp/ftp-panel {:func comp-func
+                                  :val val})
                 
                 (= mt/column-type-textarea (first comp-types))
                 (gcomp/state-input-text-area {:func func :val val})
@@ -456,12 +484,10 @@
     (.add panel comp)))
 
 
-
-
 (defn convert-metadata-vec-to-map
   "Description:
      Convert [{:x a :field-qualified b}{:d w :field-qualified f}] => {:b {:x a :field-qualified b} :f {:d w :field-qualified f}}"
-  [coll]  (into {} (doall (map (fn [m] {(keyword (:field-qualified m)) m}) coll))))
+  [coll] (into {} (doall (map (fn [m] {(keyword (:field-qualified m)) m}) coll))))
 
 
 (defn convert-model-to-components-list
@@ -469,11 +495,11 @@
      Switch fn to convert by map or keyword"
   [state! dispatch! panel model-defview]
   ;; (println (format "\nmeta-data %s\ntable-model %s\nmodel-defview %s\n" meta-data table-model model-defview))
-  (let [meta-data (convert-metadata-vec-to-map (get-in (state!) [:plugin-toolkit :columns-meta]))]
+  (let [meta-data (convert-metadata-vec-to-map (get-in (state!) [:plugin-toolkit :columns-meta-join]))]
     (doall (->> model-defview
-                     (map #(cond
-                             (map? %) (convert-map-to-component state! dispatch! panel meta-data %)
-                             (keyword? %) (convert-key-to-component state! dispatch! panel meta-data %)))))))
+                (map #(cond
+                        (map? %) (convert-map-to-component state! dispatch! panel meta-data %)
+                        (keyword? %) (convert-key-to-component state! dispatch! panel meta-data %)))))))
 
 
 (defn generate-custom-buttons
@@ -603,11 +629,13 @@
   (fn [state! dispatch!]
     (let [main-layout  (smig/mig-panel :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"])
           
-          table-fn     (fn []((:table (gtable/create-table (:plugin-config  (state!))
-                                                           (:plugin-toolkit (state!))))
-                              (fn [model-table]
-                                (if-not (= false (:update-mode (:plugin-config (state!))))
-                                  (dispatch! {:action :set-model :value model-table})))))
+          table-fn     (fn [] ((:table (gtable/create-table (:plugin-config  (state!))
+                                                            (:plugin-toolkit (state!))))
+                               (fn [model-table]
+                                 (println "MODEL" (:model (state!)))
+                                 (println "MODEL-changes" (:model-changes (state!)))
+                                 (if-not (= false (:update-mode (:plugin-config (state!))))
+                                   (dispatch! {:action :set-model :value model-table})))))
           table-container (c/vertical-panel)
           table-render (fn []
                          (try
@@ -629,11 +657,10 @@
                                      :hscroll :never)]))]
                                [table-container]])]
       (table-render)
+      (dispatch! {:action :set-model :value {}})
       (dispatch! {:action :table-render
                   :value table-render})
-      main-layout)
-    ;; (c/label :text "Testing mode")
-    ))
+      main-layout)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SPEC AND DECLARATION ;;;
@@ -698,7 +725,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn table-toolkit-pipeline [configuration]
- (query-toolkit/data-toolkit-pipeline configuration {}))
+  (query-toolkit/data-toolkit-pipeline configuration {}))
 
 
 (defn create-state-template [plugin-path global-configuration-getter]
@@ -721,7 +748,7 @@
         dispatch! (create-disptcher state)
         state!     (fn [& prop]
                      (cond (= :atom (first prop)) state
-                          :else (deref state)))]
+                           :else (deref state)))]
     (println "\nBuilding plugin")
     (build-plugin-gui state! dispatch!)))
 

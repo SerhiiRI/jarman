@@ -464,7 +464,8 @@
            border [10 10 5 5 2]
            char-limit 0
            args []}}]
-  (let [fn-get-data     (fn [e key] (get-in (c/config e :user-data) [key]))
+  (let [          
+        fn-get-data     (fn [e key] (get-in (c/config e :user-data) [key]))
         fn-assoc        (fn [e key val] (assoc-in (c/config e :user-data) [key] val))
         newBorder (fn [underline-color]
                     (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
@@ -524,7 +525,8 @@
            char-limit 0
            start-underline nil
            args []}}]
-  (let [fn-get-data     (fn [e key] (get-in (c/config e :user-data) [key]))
+  (let [;;val             (if (empty? val) "" (str val))
+        fn-get-data     (fn [e key] (get-in (c/config e :user-data) [key]))
         fn-assoc        (fn [e key val] (assoc-in (c/config e :user-data) [key] val))
         newBorder (fn [underline-color]
                     (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
@@ -1559,16 +1561,22 @@
      File choser, button with icon, when path is selected it changes background color"
   [{func :func
     val  :val}]
-  (let [ico-to-choose (jarman.tools.swing/image-scale icon/enter-64-png 30)
-        ico-chosen (jarman.tools.swing/image-scale icon/agree-blue-64-png 30)
+  (let [val            (if (empty? val) "" val)
+        ico-to-choose  (jarman.tools.swing/image-scale icon/enter-64-png 30)
+        ico-chosen     (jarman.tools.swing/image-scale icon/agree-blue-64-png 30)
+        icon-chooser   (fn [compn path] (if-not (empty? path)
+                                          (c/config! compn :icon ico-chosen :tip path)
+                                          (c/config! compn :icon ico-to-choose :tip "")))
         icon (button-basic ""
                            :tgap 4 :bgap 4 :lgap 0 :rgap 0
-                           :onClick (fn [e] func
-                                      (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
-                                              (if-not (empty? new-path)
-                                                (c/config! (.getComponent e) :tip new-path :icon ico-chosen)
-                                                (c/config! (.getComponent e) :tip "" :icon ico-to-choose))))
-                           :args [:icon ico-to-choose :listen [:mouse-clicked func]])] icon))
+                           :onClick (fn [e] (func e)
+                                      (let [new-path (chooser/choose-file
+                                                      :suggested-name val
+                                                      :success-fn  (fn [fc file] (.getAbsolutePath file)))]
+                                        (icon-chooser (.getComponent e) new-path)))
+                           :args [:icon ico-to-choose :listen [:mouse-clicked func]])]
+    (icon-chooser icon val)
+    icon))
 
 (defn menu-bar
   "Description:

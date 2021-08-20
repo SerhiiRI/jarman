@@ -597,9 +597,8 @@
   ;; or two and more interesting to us plugins
   (plugin-open-in-frame
    [:user :table :user]
-   [:permission :table :permission])
+   [:permission :table :permission]))
 
-  )
-
-
+;; (do-view-load)
+;; ( (get-in (global-view-configs-get) [:seal :table :seal :toolkit :columns-group]) {})
 ;; ((:select-expression (get-in (global-view-configs-get) [:repair_contract :table :repair_contract :toolkit])))

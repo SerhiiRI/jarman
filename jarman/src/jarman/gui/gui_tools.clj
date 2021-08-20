@@ -255,6 +255,15 @@
       (convert-mappath-to-key [:path :to :my :conf]) => :path-to-my-conf"
   [path] (keyword (string/join "-" (vec (map #(name %) path)))))
 
+(defn gud
+  "Description:
+    Return value from :user-data map in component.
+  Example:
+    (get-user-data (c/label ...) [:some-value]"
+  [compo path]
+  (let [path (if (keyword? path) [path] path)
+        data (c/config compo :user-data)]
+    (get-in data path)))
 
 ;; ############# COMPONENTS TODO: need move to gui_components.clj
 

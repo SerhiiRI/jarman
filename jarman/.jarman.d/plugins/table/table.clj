@@ -53,6 +53,7 @@
   [state action-m]
   (case (:action action-m)
     ;;; add switch for insert update
+    :switch-insert-update (assoc-in state [:insert-mode] (:value action-m))
     :table-render   (assoc-in state [:table-render] (:value action-m))
     :add-missing    (assoc-in state (:path action-m) nil)
     :pepe-model     (assoc-in state [:model] {:pepe :pepe-was-here})
@@ -537,6 +538,7 @@
                :tip      "Clear state and form"
                :func     (fn [e]
                            ((:table-render (state!)))
+                           (dispatch! {:action :switch-insert-update :value true})
                            (dispatch! {:action :pepe-model})
                            (dispatch! {:action :clear-changes})
                            (dispatch! {:action :clear-model}))}
@@ -565,7 +567,8 @@
     (let [plugin-toolkit (:plugin-toolkit (state!))
           plugin-config  (:plugin-config (state!))
           plugin-global-config (:plugin-global-config (state!))
-          current-model (if (empty? (:model (state!)))
+          current-model (if ;; (empty? (:model (state!)))
+                          (:insert-mode (state!))
                           :model-insert
                           (if (nil? (:model-update plugin-config))
                             :model-insert
@@ -602,7 +605,8 @@
                         ;; (if (in? active-buttons :clear)
                         ;;      (default-buttons state! dispatch! :clear) nil)
 
-                        (if (empty? (:model (state!)))
+                        (if ;; (empty? (:model (state!)))
+                            (:insert-mode (state!))
                           (if (in? active-buttons :insert)
                             (default-buttons state! dispatch! :insert) nil)
                           
@@ -634,6 +638,7 @@
                                (fn [model-table]
                                  (println "MODEL" (:model (state!)))
                                  (println "MODEL-changes" (:model-changes (state!)))
+                                 (dispatch! {:action :switch-insert-update :value false}) 
                                  (if-not (= false (:update-mode (:plugin-config (state!))))
                                    (dispatch! {:action :set-model :value model-table})))))
           table-container (c/vertical-panel)
@@ -732,7 +737,8 @@
   (atom {:plugin-path          plugin-path
          :plugin-global-config global-configuration-getter
          :plugin-config        (get-in (global-configuration-getter) (conj plugin-path :config) {})
-         :plugin-toolkit       (get-in (global-configuration-getter) (conj plugin-path :toolkit) {}) 
+         :plugin-toolkit       (get-in (global-configuration-getter) (conj plugin-path :toolkit) {})
+         :insert-mode          true
          :history              []
          :model                {}
          :model-changes        {}}))

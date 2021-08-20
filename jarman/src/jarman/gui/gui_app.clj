@@ -168,7 +168,8 @@
     (reset! relative-pos [(.x (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))
                           (.y (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))])
     (.dispose (seesaw.core/to-frame (state/state :app)))
-    (catch Exception e (println "Last pos is nil"))))
+    (catch Exception e nil ;;(println "Last pos is nil")
+           )))
 
 
 (defn load-level-2
@@ -194,7 +195,9 @@
 
                            {:icon  icon/refresh-blue-64-png
                             :title "Restart"
-                            :fn    (fn [e] ((state/state :startup)))}
+                            :fn    (fn [e]
+                                     (gvs/stop-watching)
+                                     ((state/state :startup)))}
 
                            {:icon  icon/key-blue-64-png
                             :title "Change work mode"

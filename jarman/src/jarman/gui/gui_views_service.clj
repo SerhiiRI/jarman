@@ -34,15 +34,15 @@
      (let [[left right same] (clojure.data/diff (get-in new-m watch-path) (get-in old-m watch-path))]
        (if (not (and (nil? left) (nil? right)))
          (let [root (if (fn? root) (root) root)]
-           (do
-               (c/config! root :items (render-fn))
-               ((:repaint (state!))))
-           ;; (try
-           ;;   (do
+           ;; (do
            ;;     (c/config! root :items (render-fn))
            ;;     ((:repaint (state!))))
-           ;;   (catch Exception e (println "\n" (str "Rerender exception:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
-           ;;          ))
+           (try
+             (do
+               (c/config! root :items (render-fn))
+               ((:repaint (state!))))
+             (catch Exception e (println "\n" (str "Gui view service: Cannot rerender " id (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
+                    ))
            ))))))
 
 
@@ -50,6 +50,9 @@
 (def state!    (fn [& prop]
                  (cond (= :atom (first prop)) state
                        :else (deref state))))
+(defn stop-watching []
+  (remove-watch state :tabs-bar)
+  (remove-watch state :view-space))
 
 (defn- action-handler
   "Description:

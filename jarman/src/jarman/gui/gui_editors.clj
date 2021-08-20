@@ -278,8 +278,7 @@
                        :focus-lost   (fn [e] (c/config! e :border (border-fn (gtool/get-color :decorate :focus-lost))))
                        :caret-update (fn [e] (func e))]
               args)]
-    (gcomp/vmig
-          :hrules "[0:150:150, fill]"
-          :items [[code]])))
+    (gcomp/min-scrollbox
+     code)))
 
   

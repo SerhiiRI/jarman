@@ -44,7 +44,8 @@
 (defn dialog-table-component [plugin-config plugin-toolkit id]
   (popup-table (:table (gtable/create-table plugin-config plugin-toolkit)) id))
 
-(defn dialog-table-toolkit-pipeline [configuration] 
+
+(defn dialog-table-toolkit-pipeline [configuration]
   (let [toolkit (query-toolkit/data-toolkit-pipeline configuration {})]
     (into toolkit {:dialog (fn [id] (dialog-table-component configuration toolkit id))})))
 

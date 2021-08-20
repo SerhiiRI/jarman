@@ -23,7 +23,6 @@
             [jarman.tools.lang :refer :all]))
 
 
-
 ;; ┌───────────────┐
 ;; │               │
 ;; │  State init   │
@@ -52,9 +51,6 @@
                     ))))))))
 
 
-;; (def state     (atom {}))
-
-
 (defn- action-handler
   "Description:
     Invoke fn using dispatch!.
@@ -70,7 +66,7 @@
     :update-data-log (assoc-in state (into [:data-log] (:path action-m)) (:value action-m))
     :clear-data-log  (assoc-in state [:data-log] {})
     :set-current-config (assoc-in state [:current-config] (:value action-m))
-    :update-current-config (assoc-in state [:current-config :value (:path action-m) :value] (:value action-m))
+    :update-current-config (assoc-in state [:current-config :value (:param action-m) :value] (:value action-m))
     ))
 
 (defn- create-disptcher [atom-var]
@@ -97,14 +93,13 @@
 
 
 (def start (atom nil))
+
 ;; ┌───────────────┐
 ;; │               │
 ;; │     Body      │
 ;; │               │
 ;; └───────────────┘
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; style color and font ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn- colors
   "Return color by keyname"
   [k]
@@ -124,10 +119,7 @@
 ;; │               │
 ;; └───────────────┘
 
-(declare faq-panel)
-(declare info-panel)
 (declare login-panel)
-(declare contact-info)
 
 (defn- label-header
   ([txt] (label-header txt 16))
@@ -195,14 +187,14 @@
 ;;; config-generator-JDBC + panel for config ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn keys-generator
+(defn- keys-generator
   "Example:
     (keys-generator \"abc\" \"abc\" 3308) ;; => :abc--abc--3308"
-  [dbname title port]
-  (keyword (string/replace (str dbname "--" title "--" port) #"\." "_")))
+  [dbname host port]
+  (keyword (string/replace (str dbname "--" host "--" port) #"\." "_")))
 
 
-(defn delete-map [config-k]
+(defn- delete-map [config-k]
   (cm/update-in-value [:database.edn :datalist] (fn [x] (dissoc x config-k)))
   (if (:valid? (cm/store)) "yes"))
 
@@ -224,7 +216,7 @@
        :type :param,
        :display :edit,
        :component :text,
-       :value "trashpanda-team.ddns.net"},
+       :value "127.0.0.1"},
       :port
       {:name "Port",
        :doc
@@ -238,96 +230,84 @@
        :type :param,
        :display :edit,
        :component :text,
-       :value "jarman"},
+       :value "my_database"},
       :user
       {:name "User login",
        :type :param,
        :display :edit,
        :component :text,
-       :value "jarman"},
+       :value "user"},
       :password
       {:name "User password",
        :type :param,
        :display :edit,
        :component :text,
-       :value "dupa"}}})
-
-(defn update-map [dbtype host port dbname user password config-k]
-  (do
-    (cm/assoc-in-value [:database.edn :datalist config-k :dbtype]   dbtype)
-    (cm/assoc-in-value [:database.edn :datalist config-k :host]     host)
-    (cm/assoc-in-value [:database.edn :datalist config-k :port]     (Integer. port))
-    (cm/assoc-in-value [:database.edn :datalist config-k :dbname]   dbname)
-    (cm/assoc-in-value [:database.edn :datalist config-k :user]     user)
-    (cm/assoc-in-value [:database.edn :datalist config-k :password] password))
-  (if (:valid? (cm/store)) "yes"))
+       :value "password"}}})
 
 
-(defn create-config [state! dispatch! config-k] ;; TODO: Save
-  (let [c-config (get-in (state!) [:current-config])
-        config-k (if (= config-k :empty) (keys-generator (:dbname c-config) "" (:port c-config)))]
-    (println "\nCK" config-k)
-    (println "\nNew" c-config)
-    ;; (cm/assoc-in-segment [:database.edn :datalist config-k]
-    ;;                      (get-in (state!) [:current-config config-k]))  
-    ;; (if (:valid? (cm/store)) "yes")
-    ))
+(defn- err-underline [compo err?]
+  ((gtool/gud compo :border-fn) (if err? (colors :red-color) (colors :blue-green-color))))
 
-
-;; (store)
-;; (swapp)
-
-
-(defn- err-underline [err?]
-  (b/line-border :bottom 1 :color (if err? (colors :red-color) (colors :blue-green-color))))
-
-(defn validate-fields
+(defn- validate-fields
   "Description
     This function valid text fields from configuration.
     If sum of fields is 0 then validation is succses and next will do update-map, else validation fail and return something"
   [[v-dbtype v-host v-port v-dbname v-user v-password] config-k]
-  (if (= 0 (+ (if (= (c/text v-dbtype) "")
-                (do (c/config! v-dbtype :border (err-underline true))  1)
-                (do (c/config! v-dbtype :border (err-underline false)) 0))
+  (if (= 0 (+ (let [compo (gtool/gud v-dbtype :val-compo)]
+                (if (= (c/text ) "")
+                  (do (c/config! compo :border (err-underline compo true))  1)
+                  (do (c/config! compo :border (err-underline compo false)) 0)))
+              (do (println "\nTry validate dbtype") 0)
 
-              (if (< (count (c/text v-host)) 4)
-                (do (c/config! v-host :border (err-underline true))    1)
-                (do (c/config! v-host :border (err-underline false))   0))
+              (let [compo (gtool/gud v-host :val-compo)]
+                (if (< (count (c/text compo)) 4)
+                  (do (c/config! compo :border (err-underline compo true))    1)
+                  (do (c/config! compo :border (err-underline compo false))   0)))
+              (do (println "\nTry validate host") 0)
 
-              (if (= (re-find #"[\d]+" (c/text v-port)) nil)
-                (do (c/config! v-port :border (err-underline true))    1)
-                (if (< (Integer. (c/text v-port)) 65000)
-                  (do (c/config! v-port :border (err-underline false)) 0)
-                  (do (c/config! v-port :border (err-underline true))  1)))
-              
-              (if (=  (c/text v-dbname) "")
-                (do (c/config! v-dbname :border (err-underline true))  1)
-                (do (c/config! v-dbname :border (err-underline false)) 0))
-              
-              (if (=  (c/text v-user) "")
-                (do (c/config! v-user :border (err-underline true))    1)
-                (do (c/config! v-user :border (err-underline false))   0))
-              
-              (if (=  (c/text v-password) "")
-                (do (c/config! v-password :border (err-underline true)) 1)
-                (do (c/config! v-password :border (err-underline false)) 0))))           
-    (do 
-      (if (= config-k :empty)
-        (create-map
-         (c/text v-dbtype)
-         (c/text v-host)
-         (c/text v-port)
-         (c/text v-dbname)
-         (c/text v-user)
-         (c/text v-password))
-        (update-map
-         (c/text v-dbtype)
-         (c/text v-host)
-         (c/text v-port)
-         (c/text v-dbname)
-         (c/text v-user)
-         (c/text v-password)
-         config-k)))))
+              (let [compo (gtool/gud v-port :val-compo)]
+                (if (= (re-find #"[\d]+" (c/text compo)) nil)
+                  (do (c/config! compo :border (err-underline compo true))    1)
+                  (if (< (Integer. (c/text compo)) 65000)
+                    (do (c/config! compo :border (err-underline compo false)) 0)
+                    (do (c/config! compo :border (err-underline compo true))  1))))
+              (do (println "\nTry validate port") 0)
+
+              (let [compo (gtool/gud v-dbname :val-compo)]
+                (if (=  (c/text compo) "")
+                  (do (c/config! compo :border (err-underline compo true))  1)
+                  (do (c/config! compo :border (err-underline compo false)) 0)))
+              (do (println "\nTry validate dbname") 0)
+
+              (let [compo (gtool/gud v-user :val-compo)]
+               (if (=  (c/text compo) "")
+                 (do (c/config! compo :border (err-underline compo true))    1)
+                 (do (c/config! compo :border (err-underline compo false))   0)))
+              (do (println "\nTry validate user") 0)
+
+              (let [compo (gtool/gud v-password :val-compo)]
+               (if (=  (c/text compo) "")
+                 (do (c/config! compo :border (err-underline compo true)) 1)
+                 (do (c/config! compo :border (err-underline compo false)) 0)))
+              (do (println "\nTry validate passwd") 0)))
+    true false))
+
+
+(defn- create-config
+  "Description:
+    Create or save configuration for connection to database."
+  [state! dispatch! config-k inputs] 
+  (let [c-config (get-in (state!) [:current-config])
+        config-k (if (= config-k :empty)
+                   (keys-generator (get-in c-config [:value :dbname :value])
+                                   (get-in c-config [:value :host :value])
+                                   (get-in c-config [:value :port :value]))
+                   config-k)]
+    (if (validate-fields inputs config-k)
+        (do
+          (cm/assoc-in-segment [:database.edn :datalist config-k] (:current-config (state!)))  
+          (if (:valid? (cm/store)) "yes"))
+        "Some field is incorrect.")))
 
 
 
@@ -346,8 +326,10 @@
    gcomp/state-input-text
    {:val (str (rift (get-in (state!) [:current-config :value param-k :value]) ""))
     :func (fn [e] (dispatch! {:action :update-current-config
-                              :path   [param-k]
-                              :value  (c/text (c/to-widget e))}))}
+                              :param  param-k
+                              :value  (if (= param-k :port)
+                                        (Integer/parseInt (rift (c/text (c/to-widget e)) "3306"))
+                                        (c/text (c/to-widget e)))}))}
    :start-underline (let [valid? (get-in (state!) [:validated-inputs param-k])]
                       (cond 
                         (= valid? true) (colors :blue-green-color)
@@ -367,13 +349,12 @@
     Return component with label and input."
   [state! dispatch! param-k
    & {:keys [editable?] :or {editable? true}}]
-  (gcomp/migrid
-   :v
-   [[(config-label (gtool/get-lang-header param-k))]
-    [(config-input state! dispatch! param-k editable?)]]))
+  (let [value-component (config-input state! dispatch! param-k editable?)]
+    (gcomp/migrid
+     :v {:args [:user-data {:val-compo value-component}]}
+     [[(config-label (gtool/get-lang-header param-k))]
+      [value-component]])))
 
-
-;;(@start)
 
 (defn- config-to-check-map
   "Description:
@@ -390,10 +371,10 @@
     It's vertical layout with inputs and functions to save, try connection, delete."
   [state! dispatch! config-k]
   (let [config-m (get (conn/datalist-get) config-k)
-        config-m (if (nil? config-m) (config-template) config-m)]
- 
+        c-config-m (if (nil? config-m) (do (println "\nNew config") (config-template)) config-m)]
+    
     (dispatch! {:action :set-current-config
-                :value  config-m})
+                :value  c-config-m})
     (let [inputs [(config-compo state! dispatch! :dbtype :editable? false)
                   (config-compo state! dispatch! :host)
                   (config-compo state! dispatch! :port)
@@ -422,10 +403,10 @@
                                             :foreground (colors :blue-green-color)))))
 
           btn-save (gcomp/button-basic (gtool/get-lang-btns :save)
-                                       :onClick (fn [e] (if (= "yes" (create-config state! dispatch! config-k))
+                                       :onClick (fn [e] (if (= "yes" (create-config state! dispatch! config-k inputs))
                                                           (c/config!
                                                            (c/to-frame e)
-                                                           :content (info-panel state! dispatch!))))) ;; TODO: Save config
+                                                           :content (login-panel state! dispatch!)))))
           
           actions (fn []
                     (gcomp/migrid
@@ -438,14 +419,12 @@
       comps)))
 
 
-;; (@start)
+
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
 ;; │       Configuration panel           │
 ;; │                                     │
 ;; └─────────────────────────────────────┘
-
-
 ;;;;;;;;;;;;;;;
 ;;
 ;; Content
@@ -457,13 +436,7 @@
   []
   (list
    {:question "Why i can not get connection with server?"
-    :answer   "Please check that you have entered the data correctly"}
-   {:question "Where can i find data to connect?"
-    :answer   "Please contact with your system administrator"}
-   {:question "Where can i find data to connect?"
-    :answer   "Please contact with your system administrator"}
-   {:question "Where can i find data to connect?"
-    :answer   "Please contact with your system administrator"}))
+    :answer   "Please check that you have entered the data correctly"}))
 
 (defn config-info-list
   "Description:
@@ -476,11 +449,9 @@
    ["About"   "We are Trashpanda-Team, we are the innovation."]
    ["Jarman"  "Jarman is an flexible aplication using plugins to extending basic functionality."]
    ["Contact" "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will send u to us."]
-   ["Website" "http://trashpanda-team.ddns.net"]
-   ["Website" "http://trashpanda-team.ddns.net"]
    ["Website" "http://trashpanda-team.ddns.net"]))
 
-(defn configuration-panel
+(defn- configuration-panel
   "Description:
     Panel with FAQ and configuration form.
     You can change selected db connection."
@@ -504,47 +475,14 @@
           mig-p
           (return-to-login state! dispatch!)])))
 
-(defn migrid-demo [state! dispatch!]
-  (gcomp/migrid 
-   (return-to-login state! dispatch!)))
-
-;; (defn migrid-demo
-;;   "Description:
-;;     Panel with FAQ and configuration form.
-;;     You can change selected db connection."
-;;   [state! dispatch!]
-;;   (let [ mig-p (gcomp/migrid :> :a :a
-;;                [(gcomp/migrid :> (c/label "LOL LEFT"))
-;;                 (gcomp/migrid :v [(gcomp/migrid :> [(gcomp/migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
-;;                                                 :vpos :top
-;;                                                 {:args [:border (b/line-border :left 1 :bottom 1 :color "#fff")]})
-;;                                         (gcomp/migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
-;;                                                 {:args [:border (b/line-border :left 1 :bottom 1 :color "#fff")]})
-;;                                         (gcomp/migrid :> (label-header "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will...")
-;;                                                 {:vpos :bottom
-;;                                                  :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")]})])
-;;                             (gcomp/migrid :> (c/label :text "LOL CENTER")
-;;                                     {:hpos :center
-;;                                      :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")]})])
-;;                 (gcomp/migrid :> (c/label "LOL RIGHT")
-;;                         {:hpos :right
-;;                          :args [:border (b/line-border :left 1 :bottom 1 :color "#fff")]})])]
-    
-;;     (gcomp/migrid :v [(gtool/join-mig-items
-;;                  (-> (label-header "GCOMP/MIGRID DEMO" 20)
-;;                      (c/config! :halign :center :border (b/empty-border :thickness 20)))
-;;                  mig-p
-;;                  (return-to-login state! dispatch!))]
-;;            {:vtemp :fgf})))
 
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
 ;; │          Logic operation            │
 ;; │                                     │
 ;; └─────────────────────────────────────┘
-;;(@start)
 
-(defn check-access
+(defn- check-access
   "Description:
     Check if configuration and login data are correct.
     Return map about user if loggin is ok.
@@ -574,42 +512,6 @@
           "Something goes wrong."))))) ;; TODO: Comunication from language.edn
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; panels for login and error ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; (defn- error-panel [errors]
-;;   (let [scr (c/scrollable
-;;              (mig-panel
-;;               :constraints ["wrap 1" "[grow, center]" "20px[]20px"]
-;;               :items [[(c/label
-;;                         :icon   (stool/image-scale icon/alert-red-512-png 8)
-;;                         :border (b/empty-border :right 10)) "split 2"]
-;;                       [(c/label
-;;                         :text       (gtool/htmling "<h2>ERROR</h2>")
-;;                         :foreground (colors :blue-green-color)
-;;                         :font       (gtool/getFont 14))]
-;;                       [(let [mig (mig-panel
-;;                                   :constraints ["wrap 1" "40px[:600, grow, center]40px" "10px[]10px"]
-;;                                   :items [[(c/label
-;;                                             :text (gtool/htmling "<h2>About</h2>")
-;;                                             :foreground (colors :blue-green-color)
-;;                                             :font (gtool/getFont 14)) "align l"]
-;;                                           [(c/label
-;;                                             :text (gtool/htmling (str "<p align= \"justify\">" (:description errors) "</p>"))
-;;                                             :foreground (colors :light-grey-color)
-;;                                             :font (gtool/getFont 14)) "align l"]])]               
-;;                          (doall
-;;                           (map
-;;                            (fn [x]
-;;                              (.add mig x "align l"))
-;;                            (if (= (:faq errors) nil)
-;;                              (contact-info)
-;;                              (concat ((faq-panel) (:faq errors)) contact-info))))
-;;                          (.repaint mig) mig)]])
-;;              :hscroll :never)]
-;;     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
-;;     scr))
 
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
@@ -634,8 +536,6 @@
   (if (empty? log)
     (c/label)
     (tile-label log 12 :red-color)))
-
- ;;(@start)
 
 (defn- tail-border
   "Description:
@@ -712,8 +612,6 @@
 
     vpanel))
 
-;; (@start)
-
 (defn- tile-icons
   "Description:
     Tools icons for tiles with access configs.
@@ -765,8 +663,6 @@
         panel (tail-vpanel-template state! dispatch! (render-fn) config-k)]
     panel))
 
-;;(@start)
-
 (defn- tiles-list-with-confs
   "Description:
     Return list of tiles with access to db configurations.
@@ -775,8 +671,8 @@
   [state! dispatch!]
   (doall
    (map
-    (fn [id-k]
-      (config-tile state! dispatch! id-k))
+    (fn [config-k]
+      (config-tile state! dispatch! config-k))
     (keys (:connections (state!))))))
 
 
@@ -797,8 +693,6 @@
                                                    :content (configuration-panel
                                                              state! dispatch! :empty)))])]])
    :none))
-
-;;(@start)
 
 (defn- state-access-configs
   "Description:
@@ -838,7 +732,7 @@
 ;; Content 
 ;;
 
-(defn about-faq-list ;; TODO: Load form somewhere
+(defn about-faq-list ;; TODO: Load from somewhere
   "Description:
      Load Answer and Question"
   []
@@ -848,7 +742,7 @@
    {:question "Where can i find data to connect?"
     :answer   "Please contact with your system administrator"}))
 
-(defn about-info-list ;; TODO: Load form somewhere
+(defn about-info-list ;; TODO: Load from somewhere
   "Description:
      List with info for client.
      To list set vector with header and content.
@@ -861,7 +755,7 @@
    ["Contact" "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will send u to us."]
    ["Website" "http://trashpanda-team.ddns.net"]))
 
-(defn contact-list ;; TODO: Load form somewhere
+(defn contact-list ;; TODO: Load from somewhere
   []
   (list
    "http://trashpanda-team.ddns.net"
@@ -874,7 +768,7 @@
 ;; Contact
 ;;
 
-(defn contact-info
+(defn- contact-info
   [] 
   (gcomp/migrid
    :v :a
@@ -892,13 +786,13 @@
    :halign :center
    :icon   (stool/image-scale "icons/imgs/trashpanda2-stars-blue-1024.png" 47)))
 
-;;(@start)
+
 ;;;;;;;;;;;;;;;
 ;;
 ;; Info view
 ;;
 
-(defn info-panel
+(defn- info-panel
   "Description:
      Return panel with info content.
    Example:
@@ -997,16 +891,12 @@
                                          :listen [:mouse-entered gtool/hand-hover-on
                                                   :mouse-clicked (fn [e] (.dispose (c/to-frame e)))])])]))
 
-;; (@start)
 
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
 ;; │          Building lvl               │
 ;; │                                     │
 ;; └─────────────────────────────────────┘
-
-(def debat (atom nil))
-(def debdi (atom nil))
 
 (defn- frame-login [state! dispatch!]
   (c/frame :title "Jarman-login"
@@ -1017,15 +907,7 @@
                 icon/calendar1-64-png) 
          :content (login-panel state! dispatch!)))
 
-(defn- frame-error [state! dispatch!]
-  (c/frame :title "Jarman-error"
-         :undecorated? false
-         :resizable? false
-         :icon (stool/image-scale
-                icon/calendar1-64-png)
-         :minimum-size [600 :by 600]))
-
-(defn st []
+(defn- st []
   (let [res-validation nil ;;(validation)
         state  (create-state-template)
         state! (fn [& prop]
@@ -1033,17 +915,10 @@
                        :else (deref state)))
         dispatch! (create-disptcher state)]
 
-    (reset! debdi dispatch!)
-    (reset! debat state)
-
     (cm/swapp)
-
     
     (if (= res-validation nil)
-      (-> (doto (frame-login state! dispatch!) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!)
-      ;; (-> (doto (frame-error state! dispatch!) (.setLocationRelativeTo nil) (apply-stylesheet my-style))
-      ;;     (c/config! :content (error-panel res-validation)) seesaw.core/pack! seesaw.core/show!)
-      )))
+      (-> (doto (frame-login state! dispatch!) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))))
 
 (state/set-state :invoke-login-panel st)
 (reset! start st)

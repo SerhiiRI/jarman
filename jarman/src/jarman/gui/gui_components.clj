@@ -178,10 +178,8 @@
      (migrid direction htemp vtemp {} items)))
   
   ([direction htemp vtemp
-    {:keys [args vpos hpos tgap bgap lgap rgap gap]
+    {:keys [args tgap bgap lgap rgap gap]
      :or {args []
-          vpos :center
-          hpos :left
           tgap 0
           bgap 0
           lgap 0
@@ -201,25 +199,21 @@
                     :g      "[::100%, grow, fill]"}]
      (hmig
       :wrap (cond
-              (or (= :h direction) (= hpos :right))  0
-              (or (= :v direction) (= vpos :bottom)) 1
+              (or (= :h direction) (= htemp :right))  0
+              (or (= :v direction) (= vtemp :bottom)) 1
               :else 0)
       :hrules (cond
                 (string?  htemp) htemp
                 (keyword? htemp) (get templates htemp)
                 (int?     htemp) (str "[" htemp ":" htemp "%:100%, fill]")
-                (= hpos :center) (:center templates)
-                (= hpos :right)  (:right  templates)
                 :else            (:a   templates))
       :vrules (cond
                 (string?  vtemp) vtemp
                 (keyword? vtemp) (get templates vtemp)
                 (int?     vtemp) (str "[" vtemp ":" vtemp "%:100%, fill]")
-                (= vpos :top)    (:top    templates)
-                (= vpos :bottom) (:bottom templates)
                 :else            (:a   templates))
       :items (gtool/join-mig-items
-              (if (or (= vpos :bottom) (= hpos :right)) (c/label) [])
+              (if (or (= vtemp :bottom) (= htemp :right)) (c/label) [])
               (if (sequential? items) items [items]))
       :gap gap
       :tgap tgap

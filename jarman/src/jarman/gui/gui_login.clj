@@ -505,11 +505,11 @@
 
         (case login-fn
           :no-connection-to-database
-          "Cannot connect to database. Problem with connection."
+          (gtool/get-lang-alerts :connection-problem)
           :not-valid-connection
-          "Configuration is incorrect."
+          (gtool/get-lang-alerts :configuration-incorrect)
           :else
-          "Something goes wrong."))))) ;; TODO: Comunication from language.edn
+          (gtool/get-lang-alerts :something-went-wrong))))))
 
 
 
@@ -694,13 +694,13 @@
                                                              state! dispatch! :empty)))])]])
    :none))
 
-(defn- state-access-configs
+(defn- tails-configs
   "Description:
     State component. Return panel with tiles.
     Tiles have configurations to db connection.
     Panel watching state and will renderering items if some will be change in state.
   Example:
-    (state-access-configs state! dispatch!)"
+    (tails-configs state! dispatch!)"
   [state! dispatch!]
   (let [render-fn (fn []
                     (gtool/join-mig-items
@@ -845,6 +845,41 @@
    :placeholder (gtool/get-lang-btns :password)
    :style [:halign :left]))
 
+(defn- login-icons
+  "Description:
+    Bottom bar with icons whos invoking info panel, exit apa, etc"
+  [state! dispatch!]
+  (gcomp/migrid :> :right {:gap [10 20]}
+                [(c/label :icon (stool/image-scale icon/I-64-png 40)
+                          :listen [:mouse-entered gtool/hand-hover-on
+                                   :mouse-clicked (fn [e]
+                                                    (c/config!
+                                                     (c/to-frame e)
+                                                     :content (info-panel state! dispatch!)))])
+                 (c/label :icon (stool/image-scale icon/enter-64-png 40)
+                          :listen [:mouse-entered gtool/hand-hover-on
+                                   :mouse-clicked (fn [e] (.dispose (c/to-frame e)))])]))
+
+(defn- login-inputs
+  "Description:
+    Login and password inputs with state logic."
+  [state! dispatch!]
+  (gcomp/migrid
+   :v :f :f;; Login inputs
+   {:hpos :center}
+   [(gcomp/migrid
+     :> "[fill]10px[200:, fill]" "[fill]"
+     {:tgap 5}
+     [(c/label :icon (stool/image-scale icon/user-blue1-64-png 40))
+      (login-input  dispatch!)])
+    
+    (gcomp/migrid
+     :> "[fill]10px[200:, fill]" "[fill]"
+     {:gap [10 15 0 0]}
+     [(c/label :icon (stool/image-scale icon/key-blue-64-png 40))
+      (passwd-input dispatch!)])]))
+
+
 (defn login-panel 
   "Description:
      Build and return to frame form for login panel.
@@ -861,35 +896,10 @@
                   [(c/label ;; Jarman logo
                     :icon (stool/image-scale "icons/imgs/jarman-text.png" 6)
                     :border (b/empty-border :thickness 20))
-                  
-                   (gcomp/migrid
-                    :v :f :f;; Login inputs
-                    {:hpos :center}
-                    [(gcomp/migrid
-                      :> "[fill]10px[200:, fill]" "[fill]"
-                      {:tgap 5}
-                      [(c/label :icon (stool/image-scale icon/user-blue1-64-png 40))
-                       (login-input  dispatch!)])
-                     
-                     (gcomp/migrid
-                      :> "[fill]10px[200:, fill]" "[fill]"
-                      {:gap [10 15 0 0]}
-                      [(c/label :icon (stool/image-scale icon/key-blue-64-png 40))
-                       (passwd-input dispatch!)])])
-                  
-                   (state-access-configs state! dispatch!)])
-   
-                 (gcomp/migrid :> :gf;; More info buttons
-                               {:hpos :right :gap [10 20]}
-                               [(c/label :icon (stool/image-scale icon/I-64-png 40)
-                                         :listen [:mouse-entered gtool/hand-hover-on
-                                                  :mouse-clicked (fn [e]
-                                                                   (c/config!
-                                                                    (c/to-frame e)
-                                                                    :content (info-panel state! dispatch!)))])
-                                (c/label :icon (stool/image-scale icon/enter-64-png 40)
-                                         :listen [:mouse-entered gtool/hand-hover-on
-                                                  :mouse-clicked (fn [e] (.dispose (c/to-frame e)))])])]))
+                   (login-inputs state! dispatch!)
+                   (tails-configs state! dispatch!)])
+
+                 (login-icons state! dispatch!)]))
 
 
 ;; ┌─────────────────────────────────────┐

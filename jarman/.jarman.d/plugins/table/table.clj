@@ -103,8 +103,10 @@
                    (let [root (if (fn? root) (root) root)]
                      (try
                        (c/config! root :items (render-fn))
-                       (catch Exception e (println "\n" (str "Rerender exception:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
-                              ))))))))
+                       (catch Exception e
+                         (println 
+                          (format "Plugin `table`. Problem with registation watcher by path `%s` in state. \n"
+                                  (str watch-path)) (.getMessage e))))))))))
 
 (defn- jvpanel
   "Description:
@@ -113,14 +115,8 @@
     (jvpanel state! dispatch! (fn [] component) [:path-to-state])"
   [state! dispatch! render-fn watch-path & props]
   (let [props (rift props [])
-        root (apply
-              c/vertical-panel
-              props)]
-    (set-state-watcher state!
-                       dispatch!
-                       root
-                       render-fn
-                       watch-path)
+        root (apply c/vertical-panel props)]
+    (set-state-watcher state! dispatch! root render-fn watch-path)
     (c/config! root :items (render-fn))))
 
 (defn- create-expand
@@ -394,7 +390,6 @@
         (.add panel comp))
       :else (.add panel (c/label :text "Wrong overrided component")))))
 
-
 ;; :model-insert
 ;;   [{:model-reprs "Table",
 ;;     :model-param :documents.table_name,
@@ -433,10 +428,11 @@
                           (not (nil? (key (:model-changes (state!))))) (key (:model-changes (state!))))
         val             (if (isComponent? val)
                           val (str val))
-        func            (fn [e] (dispatch!
-                                 {:action :update-changes
-                                  :path   [(rift field-qualified :unqualifited)]
-                                  :value  (c/value (c/to-widget e))}))
+        func            (fn [e]
+                          (dispatch!
+                           {:action :update-changes
+                            :path   [(rift field-qualified :unqualifited)]
+                            :value  (c/value (c/to-widget e))}))
         comp-func       (fn [e col-key] 
                           (dispatch!
                            {:action :update-changes
@@ -444,44 +440,44 @@
                             :path   [(rift field-qualified :unqualifited)]
                             :value (assoc (key (:model-changes (state!))) col-key (c/value (c/to-widget e)))}))
         comp (gcomp/inpose-label
-              ;;seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "5px[]5px"]
-              ;;:items
-              ;; (c/label :text title
-              ;;          :font (gtool/getFont 13))
-              ;;"align l"
-              
-              title
-              (cond
-                (= mt/column-type-linking (first comp-types))
-                (input-related-popup-table {:val val :state! state! :field-qualified field-qualified :dispatch! dispatch!})
-                
-                (or (= mt/column-type-data (first comp-types))
-                    (= mt/column-type-datatime (first comp-types)))
-                (calendar/state-input-calendar {:func func :val val})
+           ;;seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "5px[]5px"]
+           ;;:items
+           ;; (c/label :text title
+           ;;          :font (gtool/getFont 13))
+           ;;"align l"
+           
+           title
+           (cond
+             (= mt/column-type-linking (first comp-types))
+             (input-related-popup-table {:val val :state! state! :field-qualified field-qualified :dispatch! dispatch!})
+             
+             (or (= mt/column-type-data (first comp-types))
+                (= mt/column-type-datatime (first comp-types)))
+             (calendar/state-input-calendar {:func func :val val})
 
-                (= mt/column-comp-url (first comp-types))
-                (ccomp/url-panel {:func comp-func
-                                  :val val})
+             (= mt/column-comp-url (first comp-types))
+             (ccomp/url-panel {:func comp-func
+                               :val val})
 
-                (= mt/column-comp-file (first comp-types))
-                (ccomp/file-panel {:func comp-func
-                                   :val val})
+             (= mt/column-comp-file (first comp-types))
+             (ccomp/file-panel {:func comp-func
+                                :val val})
 
-                (= mt/column-comp-ftp-file (first comp-types))
-                (ccomp/ftp-panel {:func comp-func
-                                  :val val})
-                
-                (= mt/column-type-textarea (first comp-types))
-                (gcomp/state-input-text-area {:func func :val val})
+             (= mt/column-comp-ftp-file (first comp-types))
+             (ccomp/ftp-panel {:func comp-func
+                               :val val})
+             
+             (= mt/column-type-textarea (first comp-types))
+             (gcomp/state-input-text-area {:func func :val val})
 
-                (= mt/column-type-prop (first comp-types))
-                (gedit/state-code-area {:func func :val val})
+             (= mt/column-type-prop (first comp-types))
+             (gedit/state-code-area {:func func :val val})
 
-                (= mt/column-type-boolean (first comp-types))
-                (gcomp/state-input-checkbox {:func func :val val})
-                
-                :else
-                (gcomp/state-input-text {:func func :val val})))]
+             (= mt/column-type-boolean (first comp-types))
+             (gcomp/state-input-checkbox {:func func :val val})
+             
+             :else
+             (gcomp/state-input-text {:func func :val val})))]
     (.add panel comp)))
 
 
@@ -529,7 +525,6 @@
 ;; │              │
 ;; └──────────────┘
 
-
 (defn- custom-icon-bar
   [state! dispatch!
    & {:keys [more-front]}]
@@ -557,7 +552,6 @@
      :align :right
      :margin [5 0 10 10]
      :items icos)))
-
 
 (def build-input-form
   "Description:
@@ -732,7 +726,6 @@
 (defn table-toolkit-pipeline [configuration]
   (query-toolkit/data-toolkit-pipeline configuration {}))
 
-
 (defn create-state-template [plugin-path global-configuration-getter]
   (atom {:plugin-path          plugin-path
          :plugin-global-config global-configuration-getter
@@ -744,14 +737,14 @@
          :model-changes        {}}))
 
 
-(defn- create-disptcher [atom-var]
+(defn- create-dispatcher [atom-var]
   (fn [action-m]
     (swap! atom-var (fn [state] (action-handler state action-m)))))
 
 
 (defn table-entry [plugin-path global-configuration]
   (let [state (create-state-template plugin-path global-configuration)
-        dispatch! (create-disptcher state)
+        dispatch! (create-dispatcher state)
         state!     (fn [& prop]
                      (cond (= :atom (first prop)) state
                            :else (deref state)))]

@@ -313,19 +313,22 @@
   Example:
      (dynamic-text-area {:text \"Some loooong text\"})
   "
-  [{:keys [text foreground font lgap tgap]
+  [{:keys [text foreground font lgap tgap args]
     :or {foreground "#000"
          font (gtool/getFont)
          lgap 0
-         tgap 0}}]
-  (let [text-area (c/styled-text
+         tgap 0
+         args []}}]
+  (let [text-area (apply
+                   c/styled-text
                    :border (b/empty-border :left lgap :top tgap)
                    :text text
                    :font font
                    :foreground  foreground
                    :editable?   false
                    :wrap-lines? true
-                   :opaque?     false)]
+                   :opaque?     false
+                   args)]
     text-area))
 ;;
 ;; Example of multiline-text TOTRY

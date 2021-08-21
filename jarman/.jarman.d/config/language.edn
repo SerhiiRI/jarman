@@ -102,7 +102,8 @@
     :test-connection "Testuj połączenie"
     :save-and-reload "Zapisz i przeładuj"
     :login "Login"
-    :password "Hasło"},
+    :password "Hasło"
+    :back-to-login-panel "Wróć do panelu logowania"},
    :alerts
    {:success "Sukces!"
     :changes-saved "Zapisano zmiany"
@@ -125,7 +126,11 @@
     :restore-configuration-ok "Przywrócono konfiguracje! Proszę bądź ostrożny następnym razem."
     :configuration-corrupted "Konfiguracja jest uszkodzona. Spróbuj przywrócić wcześniejszą wersję."
     :configuration-incorrect "Konfiguracja jest błędna. Proszę sprawdź parametry połączenia."
-    },
+    :incorrect-login-or-pass "Nieprawidłowy login lub hasło. Upewnij się czy posiadasz dobre dane logowania."
+    :something-went-wrong "Coś poszło nie tak. Nieokreślony błąd."
+    :Unknown-database "Nieznana baza danych."
+    :check-connection "Sprawdź połączenie."
+    :incorrect-input-fields "Nie wszystkie pola są prawidłowo wypełnione!"},
    :basic
    {:description "Opis",
     :yes "Tak",
@@ -269,7 +274,8 @@
   :test-connection "Test connection"
   :save-and-reload "Save and reload"
   :login "Login"
-  :password "Password"}
+  :password "Password"
+  :back-to-login-panel "Return to login panel"}
  :alerts
  {:success "Success!"
   :faild "! Faild !"
@@ -295,7 +301,11 @@
   :restore-configuration-ok "Configurations restored! Please be careful next time."
   :configuration-corrupted "The configuration is corrupted. Try to roll back to an earlier version."
   :configuration-incorrect "Configuration is incorrect. Please check connection parameters."
-  :something-went-wrong "Something went wrong. Unknow problem."}
+  :incorrect-login-or-pass "Incorrect login or password. Please check if your login informations are correct."
+  :something-went-wrong "Something went wrong. Unknow problem."
+  :Unknown-database "Unknown database."
+  :check-connection "Check connection."
+  :incorrect-input-fields "Not all fields are correct!"}
  :basic
  {:description "Description"
   :yes "Yes"

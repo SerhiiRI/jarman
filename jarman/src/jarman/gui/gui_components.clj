@@ -187,9 +187,9 @@
           gap []}}
     items]
    (let [templates {:a      "[:100%:100%, fill]"
-                    :right  "[grow]0px[fill]"
+                    :right  "[grow, right]0px[fill]"
                     :top    "[fill]"
-                    :bottom "[grow]0px[fill]"
+                    :bottom "[grow, bottom]0px[fill]"
                     :center "[grow, center]"
                     :fgf    "[fill]0px[grow, fill]0px[fill]"
                     :gfg    "[grow, fill]0px[fill]0px[grow, fill]"
@@ -326,6 +326,7 @@
                    :font font
                    :foreground  foreground
                    :editable?   false
+                   :focusable?  false
                    :wrap-lines? true
                    :opaque?     false
                    args)]

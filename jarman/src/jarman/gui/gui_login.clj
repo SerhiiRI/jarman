@@ -47,7 +47,7 @@
              (do
                (c/config! root :items (render-fn))
                (.repaint root))
-             (catch Exception e (println "\n" (str "Rerender exception:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
+             (catch Exception e (println "\n" (str "gui_login.clj: Rerender exception in set-state-water:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
                     ))))))))
 
 
@@ -142,7 +142,7 @@
      Generate button return to login panel."
   [state! dispatch!]
   (gcomp/button-basic
-   "Back to login"
+   (gtool/get-lang-btns :back-to-login-panel)
    :onClick (fn [e] (c/config!
                      (c/to-frame e)
                      :content (login-panel state! dispatch!)))
@@ -307,7 +307,7 @@
         (do
           (cm/assoc-in-segment [:database.edn :datalist config-k] (:current-config (state!)))  
           (if (:valid? (cm/store)) "yes"))
-        "Some field is incorrect.")))
+        (gtool/get-lang-alerts :incorrect-input-fields))))
 
 
 
@@ -365,13 +365,15 @@
   [state! keys-v]
   (into {} (doall (map (fn [k] {k (get-in (state!) [:current-config :value k :value])}) keys-v))))
 
+(@start)
+
 (defn- db-config-fields
   "Description:
     Return mig panel with db configuration editor.
     It's vertical layout with inputs and functions to save, try connection, delete."
   [state! dispatch! config-k]
   (let [config-m (get (conn/datalist-get) config-k)
-        c-config-m (if (nil? config-m) (do (println "\nNew config") (config-template)) config-m)]
+        c-config-m (if (nil? config-m) (config-template) config-m)]
     
     (dispatch! {:action :set-current-config
                 :value  c-config-m})
@@ -382,7 +384,11 @@
                   (config-compo state! dispatch! :user)
                   (config-compo state! dispatch! :password)]
           
-          info-lbl (c/label :text "Check connection." :halign :center :foreground (colors :blue-green-color) :font (gtool/getFont 14))
+          info-lbl (c/label
+                    :text (gtool/htmling (gtool/get-lang-alerts :check-connection))
+                    :foreground (colors :blue-green-color)
+                    :font (gtool/getFont 14)
+                    :halign :center)
 
           btn-del (if (= config-k :empty) []
                       (gcomp/button-basic (gtool/get-lang-btns :remove)
@@ -403,10 +409,13 @@
                                             :foreground (colors :blue-green-color)))))
 
           btn-save (gcomp/button-basic (gtool/get-lang-btns :save)
-                                       :onClick (fn [e] (if (= "yes" (create-config state! dispatch! config-k inputs))
-                                                          (c/config!
-                                                           (c/to-frame e)
-                                                           :content (login-panel state! dispatch!)))))
+                                       :onClick (fn [e] (let [complete? (create-config state! dispatch! config-k inputs)]
+                                                            (if (= "yes" complete?)
+                                                              (c/config! (c/to-frame e)
+                                                                         :content (login-panel state! dispatch!))
+                                                              (c/config! info-lbl
+                                                                         :text (str complete?)
+                                                                         :foreground (colors :red-color))))))
           
           actions (fn []
                     (gcomp/migrid
@@ -491,17 +500,24 @@
   (let [config (get-in (state!) [:connections config-k])
         login  (:login  (state!))
         passwd (:passwd (state!))]
-    (println "\nLogin:" login passwd)
+    ;;(println "\nLogin:" login passwd)
     (let [login-fn (system-login/login config)] 
       (if (fn? login-fn)
 
         (do
-          (println "\nConfig ok")
-          (let [user-m (login-fn login passwd)]
-            (println "\nCheck login")
-           (if (map? user-m)
-             user-m
-             "Login or password is incorrect.")))
+          ;;(println "\nConfig ok")
+          (let [user-m (try
+                         (login-fn login passwd)
+                         (catch Exception e
+                           (let [exc (str (.getMessage e))
+                                 exc-type (keyword (string/join "-" (butlast (string/split "Unknown database 'pepeland'" #" "))))]
+                             (println "gui_login.clj: Exception in check-access:\n" exc)
+                             (rift (gtool/get-lang-alerts exc-type) exc))))]
+            ;;(println "\nCheck login");;
+            (cond
+              (map? user-m) user-m
+              (string? user-m) user-m
+              :else (gtool/get-lang-alerts :incorrect-login-or-pass))))
 
         (case login-fn
           :no-connection-to-database
@@ -558,7 +574,7 @@
     Return error to state or close login and run jarman."
   [state! dispatch! frame config-k]
   (let [data-log (check-access state! config-k)]
-    (println "\nData log\n" data-log)
+    ;;(println "\nData log\n" data-log)
     (if-not (= :none config-k)
       (if (map? (rift data-log nil))
         (do ;; close login panel and run jarman
@@ -630,7 +646,7 @@
                (c/label ;; Info about error
                 :icon (stool/image-scale icon/I-grey-64-png isize)
                 :border (empty-border :thicness 5)
-                :listen [:mouse-clicked (fn [e] (println "\nInfo about error in progress"))]) ;; TODO: Create panel witch info about error
+                :listen [:mouse-clicked (fn [e] (c/alert (str log)))])
                [])
              (c/label ;; configuration panel
               :icon (stool/image-scale icon/settings-64-png isize)

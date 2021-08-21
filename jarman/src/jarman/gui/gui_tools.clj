@@ -83,14 +83,17 @@
 ;; Function for label with pre font
 (def label-fn (fn [& params] (apply label :font (getFont) params)))
 
-(def htmling
+(defn htmling
   "Description
      Build word wrap html
    "
-  (fn [body & args] 
-    (string/join ["<html><body style='width: 100%; overflow-wrap: break-word;'>" 
-                  (if (in? args :justify) (format "<p align= \"justify\">%s</p>" body) body) 
-                  "</body><html>"])))
+  [body & args] 
+  (string/join ["<html><body style='width: 100%; overflow-wrap: break-word;'>" 
+                (cond
+                  (in? args :justify) (format "<p align= \"justify\">%s</p>" body)
+                  (in? args :center)  (format "<p align= \"center\">%s</p>" body)
+                  :else  body)
+                "</body><html>"]))
 
 ;; (macroexpand-1 `(textarea "ala am kota" :border (line-border :thickness 1 :color "#a23")))
 

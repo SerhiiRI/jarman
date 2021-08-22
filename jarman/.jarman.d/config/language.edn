@@ -168,7 +168,23 @@
     :port   "Port"
     :dbname "Baza danych"
     :user   "Użytkownik bazy"
-    :password "Hasło do bazy"}}},
+    :password "Hasło do bazy"
+    :contact  "Kontakt"
+    :faq      "FAQ"}
+   :infos
+   {:info-panel-about   [["Trashpanda-Team" "Jesteśmy zespołem przyjaciół programistów mających na celu stworzenie uniwersalnej, a przy tym prostej w obsódze i rozwoju aplikacji. Kodzimy bo lubimy, kodzimy bo możemy, kodzimy by nasi klienci otrzymali to czego potrzebują."]
+                         ["Jarman"  "Bazowa wersja aplikacji. Naszym marzeniem jest możliwość dostosowania jej do każdego przypadku, rozszerzając podstawowe funkcje z pomocą dołączanych pluginów oraz konfiguracji."]]
+    
+    :config-panel-about [["O konfiguracji" "Formatka dla konfiguracji w prosty sposób pozwoli na zapisanie lub edycję połączeń do bazy danych. Na tej podstawie możliwe będzie logowanie do systemu i uruchomienie aplikacji."]]
+
+    :info-panel-faq   [{:question "Wystąpił problem i potrzebujesz pomocy?"
+                        :answer   "Złap oddech i zachowuj spokój, nasz zespół z chęcią Ci pomoże. Dane kontaktowe znajdują się poniżej."}]
+
+    :config-panel-faq [{:question "Dlaczego nie mogę się połączyć z serwerem?"
+                        :answer   "Być może nieprawidłowo podano dane dla konfiguracji połączenia. Upewnij się, że konfiguracja jest prawidłowa. Jeśli nadal występuje problem, proszę sprawwdź połączenie z serwerem."}]
+
+    :contact ["http://trashpanda-team.ddns.net"
+              "contact.tteam@gmail.com"]}}},
  :en
  {:init.edn
   {:name "Initial configuration",
@@ -248,7 +264,8 @@
  {:name "Start configuration"
   :value {:lang {:name "Lenguage", :doc "Please, choose your lenguage."}}}
  :database {}}
-:ui
+
+  :ui
 {:buttons
  {:remove "Remove"
   :yes "Yes"
@@ -276,6 +293,7 @@
   :login "Login"
   :password "Password"
   :back-to-login-panel "Return to login panel"}
+
  :alerts
  {:success "Success!"
   :faild "! Faild !"
@@ -306,6 +324,7 @@
   :Unknown-database "Unknown database."
   :check-connection "Check connection."
   :incorrect-input-fields "Not all fields are correct!"}
+
  :basic
  {:description "Description"
   :yes "Yes"
@@ -326,14 +345,7 @@
   :configuration "Configuration"
   :db-conn-config "DB Configuration"
   }
- :header
- {:login-db-config-editor "Configuration of DB connection."
-  :dbtype "Connection type"
-  :host   "Host"
-  :port   "Port"
-  :dbname "Database"
-  :user   "DB user"
-  :password "DB password"}
+ 
  :tips
  {:save "Save changes."
   :clean "Clean up fields."
@@ -343,5 +355,33 @@
   :user-trash-can "Disconnect user from card."
   :excel "Save view to excel."
   :press-to-search "Press Ctrl + F to search record."
-  :related-popup-table "Search inside related table"}}
-  }}
+  :related-popup-table "Search inside related table"}
+ 
+ :header
+ {:login-db-config-editor "Configuration of DB connection."
+  :dbtype "Connection type"
+  :host   "Host"
+  :port   "Port"
+  :dbname "Database"
+  :user   "DB user"
+  :password "DB password"
+  :contact  "Contact"
+  :faq      "FAQ"}
+
+ :infos
+ {:info-panel-about   [["Trashpanda-Team"
+                        "We are a team of programmer friends who aim to create a universal application that is easy to use and expand. We coding because we like, we coding because we can, we coding becouse our clients need good solutions."]
+                       ["Jarman"
+                        "The base version of the application. Our dream is to be able to adapt it to each case, extending the basic functions with using plugins and configurations."]]
+    
+  :config-panel-about [["About configuration"
+                        "The form for configuration allows you to easily save or edit connections to the database. On this basis, it will be possible to log into the system and launch the application."]]
+
+    :info-panel-faq   [{:question "There was a problem and you need help?"
+                        :answer   "Catch your breath and stay calm, our team will be happy to help you. Contact details are provided below."}]
+
+    :config-panel-faq [{:question "Why can't I log into the system?"
+                        :answer   "Perhaps the data for the connection configuration was incorrectly provided. Make sure the configuration is correct. If there is still a problem, please check the connection to the server."}]
+
+    :contact ["http://trashpanda-team.ddns.net"
+              "contact.tteam@gmail.com"]}}}}

@@ -124,6 +124,26 @@
     (map? con)        (if (empty? con) els con)
     :else con))
 
+(defn timelife
+  "Description:
+    Run fn after some time.
+    Set time, 1 is a 1 sec
+    Set fn 
+  Example:
+    (timelife (1 ))"
+  ([time fn-to-invoke]
+   (timelife time fn-to-invoke ""))
+  ([time fn-to-invoke title]
+   (.start
+    (Thread.
+     (fn []
+       (if (>= time 0)
+         (do
+           (Thread/sleep (* 1000 time))
+           (try
+             (fn-to-invoke)
+             (catch Exception e (println (str "\nException in timelife: " title "\n" (str (.getMessage e)))))))))))))
+
 (defn left-merge
   "Description
      Merge for map.

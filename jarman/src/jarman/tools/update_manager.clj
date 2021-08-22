@@ -412,7 +412,7 @@
 
 (defn verify-file [file]
   (println (cl-format nil "~:[[not exists]~;[verified]~] file `~A`" (.exists file) (str file)))
-  (when (.exists file)
+  (when (not (.exists file))
     (throw (ex-info (format "File `%s` not exists" (str file))
                     {:type :install-file-not-exists}))))
 
@@ -455,7 +455,8 @@
 
 (defn update-project [^PandaPackage package]
   (let [;; Global configurations
-        unzip-folder (str (gensym "transact"))
+        unzip-folder ;; (str (gensym "transact"))
+        (str "../transact")
         ;; unzip-config-folder (clojure.java.io/file unzip-folder "config")
         
         ;; Files and folder inside unzipped
@@ -475,12 +476,12 @@
         destination-jarman-executable "Jarman.exe"]
 
     (println "* Startup installing")
-    (println "[info] install `%s`" (:name package))
+    #_(println "[info] install `%s`" (:name package))
     (println "** Package")
-    (println "[process] Downloading package `%s`" (:name package))
-    (download-package package)
-    (verify-file (clojure.java.io/file unzip-folder))
-    (verify-file (clojure.java.io/file "jarman-0.1.12-windows.zip"))
+    #_(println "[process] Downloading package `%s`" (:name package))
+    #_(download-package package)
+    #_(verify-file (clojure.java.io/file unzip-folder))
+    #_(verify-file (clojure.java.io/file "jarman-0.1.12-windows.zip"))
     (println "** Unpacking package")
     (verify-file (clojure.java.io/file unzip-folder))
     (println "** Verifing folder")
@@ -498,9 +499,9 @@
     (copy-dir transact-jarman-plugins-dir destination-plugins-dir)
     (copy-file transact-jarman-executable destination-jarman-executable)
     (println "** Remove temporary files")
-    (delete-file (:file package))
-    (delete-dir unzip-folder)
-    (println "* Finish!")
+    ;; (delete-file (:file package))
+    ;; (delete-dir unzip-folder)
+    ;; (println "* Finish!")
     
     
     ;; (println (format "[!] Download package from %s" (:uri package)))

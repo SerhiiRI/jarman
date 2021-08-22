@@ -1,24 +1,17 @@
 (ns jarman.gui.gui-login
-  (:use seesaw.border
-        seesaw.dev
-        seesaw.style
-        seesaw.mig
-        seesaw.font)
   (:import (java.awt Dimension))
   (:require [seesaw.core               :as c]
             [seesaw.border             :as b]
             [seesaw.util               :as u]
             [clojure.string            :as string]
-            [jarman.gui.gui-tools      :as gtool]
             [jarman.config.config-manager     :as cm]
             [jarman.resource-lib.icon-library :as icon]
-            [clojure.java.jdbc         :as jdbc]
             [jarman.tools.swing        :as stool]
-            [jarman.gui.gui-app        :as app]
+            [jarman.gui.gui-app        :as app] ;; Need for startup by state
             [jarman.logic.system-login :as system-login]
+            [jarman.gui.gui-tools      :as gtool]
             [jarman.gui.gui-components :as gcomp]
             [jarman.logic.connection   :as conn]
-            [jarman.logic.view-manager :as pvm]
             [jarman.logic.state        :as state]
             [jarman.tools.lang :refer :all]))
 
@@ -47,7 +40,7 @@
              (do
                (c/config! root :items (render-fn))
                (.repaint root))
-             (catch Exception e (println "\n" (str "gui_login.clj: Rerender exception in set-state-water:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
+             (catch Exception e (println "\n" (str "gui_login.clj: Rerender exception in set-state-watcher:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
                     ))))))))
 
 
@@ -106,9 +99,6 @@
   ([state! dispatch! compo]
    (new-focus dispatch! compo)
    (switch-focus state!)))
-
-
-(def start (atom nil))
 
 ;; ┌───────────────┐
 ;; │               │
@@ -188,7 +178,7 @@
   "Description:
      Return vertical mig with FAQs."
   [faq-list]
-  [(-> (label-header "FAQ") (c/config! :border (b/empty-border :top 20)))
+  [(-> (label-header (gtool/get-lang-header :faq)) (c/config! :border (b/empty-border :top 20)))
    (map
     (fn [faq-m]
       [(gcomp/migrid
@@ -457,32 +447,6 @@
 ;; │       Configuration panel           │
 ;; │                                     │
 ;; └─────────────────────────────────────┘
-;;;;;;;;;;;;;;;
-;;
-;; Content
-;;
-
-(defn config-faq-list
-  "Description:
-     Load Answer and Question"
-  []
-  (list
-   {:question "Why i can not get connection with server?"
-    :answer   "Please check that you have entered the data correctly"}))
-
-(defn config-info-list
-  "Description:
-     List with info for client.
-     To list set vector with header and content.
-  Example:
-     [\"Header\" \"Content]"
-  []
-  (list
-   ["About"   "We are Trashpanda-Team, we are the innovation."]
-   ["Jarman"  "Jarman is an flexible aplication using plugins to extending basic functionality."]
-   ["Contact" "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will send u to us."]
-   ["Website" "http://trashpanda-team.ddns.net"]))
-
 
 (defn- configuration-panel
   "Description:
@@ -498,8 +462,8 @@
                 (gcomp/min-scrollbox
                  (gcomp/migrid
                   :v 80 {:gap [10 "10%"]}
-                  [(rift (about-panel (config-info-list)) [])
-                   (rift (faq-panel (config-faq-list))    [])])
+                  [(rift (about-panel (gtool/get-lang-infos :config-panel-about)) [])
+                   (rift (faq-panel   (gtool/get-lang-infos :config-panel-faq))   [])])
                  :args [:listen [:focus-gained (fn [e] (println "\nFOcus scroll"))]])])
         return-btn (return-to-login state! dispatch!)
         panel (gcomp/migrid
@@ -585,7 +549,7 @@
   [state! config-k]
   (fn [on]
     (let [err? (rift (get-in (state!) [:data-log config-k]) nil)]
-      (line-border
+      (b/line-border
        :bottom 4
        :color  (cond
                  on    (if err?
@@ -641,7 +605,6 @@
                  :mouse-exited  (fn [e]
                                   (c/config! vpanel :border (border-fn false))
                                   (if (and icons (empty? data-log)) (c/config! (first icons) :visible? false)))
-                 ;; TODO: choose info or settings by keyboard
                  :focus-gained  (fn [e]
                                   (c/config! vpanel :border (border-fn true))
                                   (if icons (c/config! (first icons) :visible? true)))
@@ -664,7 +627,7 @@
   [ico isize onClick]
   (c/label ;; configuration panel
    :icon (stool/image-scale ico isize)
-   :border (empty-border :thicness 5)
+   :border (b/empty-border :thicness 5)
    :focusable? true
    :listen [:mouse-entered gtool/hand-hover-on
             :focus-gained (fn [e] (c/config! e :border (b/compound-border
@@ -693,7 +656,7 @@
                           (fn [e] (c/config!
                                    (c/to-frame e)
                                    :content (configuration-panel state! dispatch! config-k))))])))
-;; (@start)
+
 (defn- config-tile
   "Description:
     State component.
@@ -776,55 +739,14 @@
 ;; │                                     │
 ;; └─────────────────────────────────────┘
 
-;;;;;;;;;;;;;;;
-;;
-;; Content 
-;;
-
-(defn about-faq-list ;; TODO: Load from somewhere
-  "Description:
-     Load Answer and Question"
-  []
-  (list
-   {:question "Why i can not get connection with server?"
-    :answer   "Please check that you have entered the data correctly"}
-   {:question "Where can i find data to connect?"
-    :answer   "Please contact with your system administrator"}))
-
-(defn about-info-list ;; TODO: Load from somewhere
-  "Description:
-     List with info for client.
-     To list set vector with header and content.
-  Example:
-     [\"Header\" \"Content]"
-  []
-  (list
-   ["About"   "We are Trashpanda-Team, we are the innovation."]
-   ["Jarman"  "Jarman is an flexible aplication using plugins to extending basic functionality."]
-   ["Contact" "For contact with us summon the demon and give him happy pepe. Then demon will be kind and will send u to us."]
-   ["Website" "http://trashpanda-team.ddns.net"]))
-
-(defn contact-list ;; TODO: Load from somewhere
-  []
-  (list
-   "http://trashpanda-team.ddns.net"
-   "contact.tteam@gmail.com"
-   "+38 0 966 085 615"))
-
-
-;;;;;;;;;;;;;;;
-;;
-;; Contact
-;;
-
 (defn- contact-info
   [] 
   (gcomp/migrid
    :v :a
-   [(-> (label-header "Contacts") (c/config! :border (b/empty-border :top 20)))
+   [(-> (label-header (gtool/get-lang-header :contact)) (c/config! :border (b/empty-border :top 20)))
     (gcomp/migrid
      :v :a {:gap [10]}
-     (doall (map #(label-body %) (contact-list))))]))
+     (doall (map #(label-body %) (gtool/get-lang-infos :contact))))]))
 
 
 (defn- info-logo
@@ -855,8 +777,8 @@
       [(gcomp/migrid
         :v {:gap [30]}
         (info-logo))
-        (rift (about-panel (about-info-list)) [])
-        (rift (faq-panel   (about-faq-list))  [])
+        (rift (about-panel (gtool/get-lang-infos :info-panel-about)) [])
+        (rift (faq-panel   (gtool/get-lang-infos :info-panel-faq))  [])
         (rift (contact-info) [])
        ]))
     (let [return-btn (return-to-login state! dispatch!)]
@@ -925,7 +847,6 @@
      [(c/label :icon (stool/image-scale icon/key-blue-64-png 40))
       (passwd-input dispatch!)])]))
 
-;;(@start)
 
 (defn login-panel 
   "Description:
@@ -982,8 +903,7 @@
       (-> (doto (frame-login state! dispatch!) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))))
 
 (state/set-state :invoke-login-panel st)
-(reset! start st)
-(@start)
+(st)
 
 
 

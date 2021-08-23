@@ -78,7 +78,6 @@
          :connections {}
          :data-log    {}
          :current-config {}
-         :validated-inputs {}
          :focus-compo nil}))
 
 
@@ -263,13 +262,13 @@
                 (if (= (c/text ) "")
                   (do (c/config! compo :border (err-underline compo true))  1)
                   (do (c/config! compo :border (err-underline compo false)) 0)))
-              (do (println "\nTry validate dbtype") 0)
+              ;;(do (println "\nTry validate dbtype") 0)
 
               (let [compo (gtool/gud v-host :val-compo)]
                 (if (< (count (c/text compo)) 4)
                   (do (c/config! compo :border (err-underline compo true))    1)
                   (do (c/config! compo :border (err-underline compo false))   0)))
-              (do (println "\nTry validate host") 0)
+              ;;(do (println "\nTry validate host") 0)
 
               (let [compo (gtool/gud v-port :val-compo)]
                 (if (= (re-find #"[\d]+" (c/text compo)) nil)
@@ -277,25 +276,26 @@
                   (if (< (Integer. (c/text compo)) 65000)
                     (do (c/config! compo :border (err-underline compo false)) 0)
                     (do (c/config! compo :border (err-underline compo true))  1))))
-              (do (println "\nTry validate port") 0)
+              ;;(do (println "\nTry validate port") 0)
 
               (let [compo (gtool/gud v-dbname :val-compo)]
                 (if (=  (c/text compo) "")
                   (do (c/config! compo :border (err-underline compo true))  1)
                   (do (c/config! compo :border (err-underline compo false)) 0)))
-              (do (println "\nTry validate dbname") 0)
+              ;;(do (println "\nTry validate dbname") 0)
 
               (let [compo (gtool/gud v-user :val-compo)]
                (if (=  (c/text compo) "")
                  (do (c/config! compo :border (err-underline compo true))    1)
                  (do (c/config! compo :border (err-underline compo false))   0)))
-              (do (println "\nTry validate user") 0)
+              ;;(do (println "\nTry validate user") 0)
 
               (let [compo (gtool/gud v-password :val-compo)]
                (if (=  (c/text compo) "")
                  (do (c/config! compo :border (err-underline compo true)) 1)
                  (do (c/config! compo :border (err-underline compo false)) 0)))
-              (do (println "\nTry validate passwd") 0)))
+              ;; (do (println "\nTry validate passwd") 0)
+              ))
     true false))
 
 (defn- config-to-check-map
@@ -362,11 +362,6 @@
                               :value  (if (= param-k :port)
                                         (Integer/parseInt (rift (c/text (c/to-widget e)) "3306"))
                                         (c/text (c/to-widget e)))}))}
-   :start-underline (let [valid? (get-in (state!) [:validated-inputs param-k])]
-                      (cond 
-                        (= valid? true) (colors :blue-green-color)
-                        (= valid? false)(colors :red-color)
-                        :else nil))
    :args [:editable? editable?]))
 
 (defn- config-label

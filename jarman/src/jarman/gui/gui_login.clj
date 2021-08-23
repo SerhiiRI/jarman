@@ -99,9 +99,11 @@
    (new-focus dispatch! compo)
    (switch-focus state!)))
 
+
+
 ;; ┌───────────────┐
 ;; │               │
-;; │     Body      │
+;; │  Local comps  │
 ;; │               │
 ;; └───────────────┘
 
@@ -117,12 +119,6 @@
       :light-red-color  "#Ffa07a"
       :back-color       "#c5d3dd"}))
 
-
-;; ┌───────────────┐
-;; │               │
-;; │  Local comps  │
-;; │               │
-;; └───────────────┘
 
 (declare login-panel)
 
@@ -188,9 +184,14 @@
         (label-body (:answer faq-m)))])
     faq-list)])
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; config-generator-JDBC + panel for config ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;; ┌──────────────────────────┐
+;; │                          │
+;; │  Access Configurations   │
+;; │                          │
+;; └──────────────────────────┘
 
 (defn- keys-generator
   "Example:
@@ -204,12 +205,12 @@
   (if (:valid? (cm/store)) "yes"))
 
 (defn- config-template
-  []{:name "Raspberry",
+  []{:name "Template",
      :type :block,
      :display :edit,
      :value
      {:dbtype
-      {:name "Typ połączenia",
+      {:name "Connection type",
        :type :param,
        :display :none,
        :component :text,
@@ -458,8 +459,7 @@
                  (gcomp/migrid
                   :v 80 {:gap [10 "10%"]}
                   [(rift (about-panel (gtool/get-lang-infos :config-panel-about)) [])
-                   (rift (faq-panel   (gtool/get-lang-infos :config-panel-faq))   [])])
-                 :args [:listen [:focus-gained (fn [e] (println "\nFOcus scroll"))]])])
+                   (rift (faq-panel   (gtool/get-lang-infos :config-panel-faq))   [])]))])
         return-btn (return-to-login state! dispatch!)
         panel (gcomp/migrid
                :v :g :fgf
@@ -701,13 +701,13 @@
                 :halign :center)]])
      :empty))
 
-(defn- tails-configs
+(defn- all-tails-configs-panel
   "Description:
     State component. Return panel with tiles.
     Tiles have configurations to db connection.
     Panel watching state and will renderering items if some will be change in state.
   Example:
-    (tails-configs state! dispatch!)"
+    (all-tails-configs-panel state! dispatch!)"
   [state! dispatch!]
   (let [render-fn (fn []
                     (gtool/join-mig-items
@@ -862,7 +862,7 @@
                                 :icon (stool/image-scale "icons/imgs/jarman-text.png" 6)
                                 :border (b/empty-border :thickness 20))
                                (login-inputs state! dispatch!)
-                               (tails-configs state! dispatch!)])
+                               (all-tails-configs-panel state! dispatch!)])
 
                              (login-icons state! dispatch!)])]
     (switch-focus state!)

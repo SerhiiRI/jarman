@@ -13,6 +13,7 @@
             [jarman.logic.metadata :as mt]
             [jarman.config.config-manager :as cm]
             [jarman.gui.gui-tools :as gtool]
+            [jarman.gui.gui-style :as gstyle]
             [jarman.gui.gui-migrid :as gmg]
             [seesaw.chooser :as chooser]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
@@ -21,6 +22,7 @@
            (jarman.jarmanjcomp CustomScrollBar)))
 
 (jarman.config.config-manager/swapp)
+(gstyle/load-style)
 
 ;; ┌────────────────────�
 ;; │                    │

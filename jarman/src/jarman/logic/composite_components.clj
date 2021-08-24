@@ -39,6 +39,10 @@
 ;;; FtpFile ;;;
 ;;;;;;;;;;;;;;;
 
+(defprotocol RemoteFileLoader
+  (download [this] [this attributes])
+  (upload [this] [this attributes]))
+
 (defprotocol IStorage
   (load-session-config [this]))
 
@@ -85,13 +89,28 @@
 ;;; File ;;;
 ;;;;;;;;;;;;
 
-(defrecord File [file-name file])
+;; (defprotocol SqlReq
+;;   (insert-file [this])
+;;   (update-file [this]))
+
+ ;; (update-blob!
+ ;;     {:table_name      :seal
+ ;;      :column-list     [[:file :blob]]
+ ;;      :values          {:id   31,
+ ;;                        :file "/home/julia/test.txt"}})
+
+(defrecord File [file-name file]
+  RemoteFileLoader
+  (upload [this attributes]
+    (jarman.logic.document-manager/update-blob!
+     {:table_name      (:table_name attributes)
+      :column-list     (:column_list attributes)
+      :values          {:id   (:id attributes),
+                        :file (:file-path attributes)}})))
 (defn isFile? [^jarman.logic.composite_components.File e]
   (instance? jarman.logic.composite_components.File e))
 
-
 (def component-list [isFile? isLink? isFtpFile?])
-
 
 (comment
   ;; test segment for some link

@@ -1641,12 +1641,13 @@
                                           (c/config! compn :icon ico-to-choose :tip "")))
         icon (button-basic ""
                            :tgap 4 :bgap 4 :lgap 0 :rgap 0
-                           :onClick (fn [e] (func e)
+                           :onClick (fn [e] 
                                       (let [new-path (chooser/choose-file
                                                       :suggested-name val
                                                       :success-fn  (fn [fc file] (.getAbsolutePath file)))]
-                                        (icon-chooser (.getComponent e) new-path)))
-                           :args [:icon ico-to-choose :listen [:mouse-clicked func]])]
+                                        (icon-chooser (.getComponent e) new-path)
+                                        (func (seesaw.core/label :text new-path))))
+                           :args [:icon ico-to-choose])]
     (icon-chooser icon val)
     icon))
 

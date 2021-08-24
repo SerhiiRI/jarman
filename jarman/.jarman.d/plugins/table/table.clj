@@ -45,6 +45,7 @@
   (let [ungroup-fn (:columns-ungroup (:plugin-toolkit state))]
     (ungroup-fn table-model)))
 
+
 (defn action-handler
   "Description:
     Invoke fn using dispatch!.
@@ -59,7 +60,7 @@
     :pepe-model     (assoc-in state [:model] {:pepe :pepe-was-here})
     :clear-model    (assoc-in state [:model] {})
     :clear-changes  (assoc-in state [:model-changes] {})
-    :update-changes (assoc-in state (join-vec [:model-changes] (:path action-m)) (:value action-m))
+    :update-changes (assoc-in state (do (println "val" (:value action-m)) (join-vec [:model-changes] (:path action-m))) (:value action-m))
     :set-model      (assoc-in state [:model] (grouping-model state (:value action-m)))
     :state-update   (assoc-in state (:path action-m) (:value action-m))
     :update-export-path (assoc-in state [:export-path] (:value action-m))
@@ -429,16 +430,17 @@
         val             (if (isComponent? val)
                           val (str val))
         func            (fn [e]
-                          (dispatch!
+                         (dispatch!
                            {:action :update-changes
                             :path   [(rift field-qualified :unqualifited)]
                             :value  (c/value (c/to-widget e))}))
         comp-func       (fn [e col-key] 
-                          (dispatch!
-                           {:action :update-changes
-                            ;;:state-update
-                            :path   [(rift field-qualified :unqualifited)]
-                            :value (assoc (key (:model-changes (state!))) col-key (c/value (c/to-widget e)))}))
+                          (do (dispatch!
+                              {:action :update-changes
+                               ;;:state-update
+                               :path   [(rift field-qualified :unqualifited)]
+                               :value (do (println "KEY" col-key) (println "PATH >>" (c/value (c/to-widget e)))(assoc (key (:model-changes (state!))) col-key (c/value (c/to-widget e))))})
+                              (println "M-Ch" (:model-changes (state!))) (println "STATE-->" (:model (state!)))))
         comp (gcomp/inpose-label
            ;;seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "5px[]5px"]
            ;;:items

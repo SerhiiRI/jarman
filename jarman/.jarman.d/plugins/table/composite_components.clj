@@ -34,7 +34,7 @@
                                                            :val (defr-key val)}))  
         name-txt   (input-fn :file-name)
         path-txt   (gcomp/status-input-file {:func (fn [e] (func e :file))
-                                             :val  (:file val)})
+                                             :val  ""})
         panel      (build-test-panel [(label-fn "file-name:") (label-fn "file:") name-txt path-txt])]
     (seesaw.core/config! path-txt :listen [:property-change (fn [e]
                                                               (let [file-name  (last (s/split (.getToolTipText path-txt)
@@ -49,7 +49,7 @@
 
 
 (defn ftp-panel [{func :func
-                  val  :val} ]
+                  val  :val}]
   (let [label-fn   (fn [text] (seesaw.core/label :text text :font (gtool/getFont)))
         input-fn   (fn [defr-key] (gcomp/state-input-text {:func (fn [e] (func e defr-key))
                                                            :val (defr-key val)}))

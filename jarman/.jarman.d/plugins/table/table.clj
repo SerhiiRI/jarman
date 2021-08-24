@@ -21,6 +21,7 @@
    [jarman.gui.gui-tools      :as gtool]
    [jarman.gui.gui-editors    :as gedit]
    [jarman.gui.gui-components :as gcomp]
+   [jarman.gui.gui-migrid     :as gmg]
    [jarman.gui.gui-calendar   :as calendar]
    [jarman.gui.popup :as popup]
    [jarman.plugins.composite-components :as ccomp]
@@ -70,15 +71,14 @@
   "Description:
     Header in expand panel."
   [state!]
-  (gcomp/vmig
-   :hrules "[grow, center]"
-   :items [[(c/label
-             :text (:representation (:table-meta (:plugin-toolkit (state!)))) 
-             :halign :center
-             :font (gtool/getFont 15 :bold)
-             :foreground "#2c7375"
-             :border (b/compound-border (b/line-border :bottom 1 :color "#2c7375")
-                                        (b/empty-border :top 10)))]]))
+  (gmg/migrid :v "[grow, center]"
+              [(c/label
+                :text (:representation (:table-meta (:plugin-toolkit (state!)))) 
+                :halign :center
+                :font (gtool/getFont 15 :bold)
+                :foreground "#2c7375"
+                :border (b/compound-border (b/line-border :bottom 1 :color "#2c7375")
+                                           (b/empty-border :top 10)))]))
 
 (defn- form-type
   "Description:

@@ -12,7 +12,8 @@
    [jarman.tools.swing :as stool]
    [jarman.resource-lib.icon-library :as icon]
    [jarman.logic.state :as state]
-   [jarman.gui.gui-components :as gcomp])
+   [jarman.gui.gui-components :as gcomp]
+   [jarman.gui.gui-migrid     :as gmg])
   (:import javax.swing.JLayeredPane
            java.awt.PointerInfo
            (java.awt.event MouseEvent)))
@@ -36,7 +37,7 @@
     [w h]))
 
 (defn- popup-bar [root title]
-  (gcomp/hmig
+  (gmg/hmig
    :hrules "[grow]0px[fill]"
    :lgap 10
    :items (gtool/join-mig-items
@@ -96,10 +97,8 @@
 
 
 (defn- compo []
-  (gcomp/vmig
-   :args [:background "#eee"]
-   :items (gtool/join-mig-items
-           (gcomp/textarea "(ﾉ◉ᗜ◉)ﾉ*:･ﾟ✧OLA NINIOO .:ヽ(⚆ o ⚆)ﾉ"))))
+  (gmg/migrid :v {:args [:background "#eee"]}
+   (gcomp/textarea "(ﾉ◉ᗜ◉)ﾉ*:･ﾟ✧OLA NINIOO .:ヽ(⚆ o ⚆)ﾉ")))
 
 
   ;; create jframe

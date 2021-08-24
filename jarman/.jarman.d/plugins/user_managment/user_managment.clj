@@ -5,6 +5,7 @@
    [seesaw.core :as c]
    [seesaw.border :as b]
    [jarman.gui.gui-components :as gcomp]
+   [jarman.gui.gui-migrid :as gmg]
    [jarman.gui.gui-tools  :as gtool]
    [jarman.plugin.plugin :refer :all]
    [jarman.plugin.gui-table :as gtable]
@@ -25,10 +26,11 @@
 ;;; configura
 
 (defn panel-code-area [code title info]
-  (let [editor (gcomp/vmig
+  (let [editor (gmg/hmig
+                :wrap 1
                 :vrules "[fill]0px[grow, fill]0px[fill]"
                 ;;:args [:size [400 :by 100]]
-                :items [[(gcomp/hmig
+                :items [[(gmg/hmig
                          :hrules "[70%, fill]10px[grow, fill]"
                           :items
                           [[(c/label :text title

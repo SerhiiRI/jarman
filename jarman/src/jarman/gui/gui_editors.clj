@@ -12,7 +12,8 @@
             [jarman.gui.gui-views-service :as gvs]
             [jarman.logic.state    :as state]
             [jarman.logic.metadata :as mt]
-            [jarman.gui.gui-tools  :as gtool]))
+            [jarman.gui.gui-tools  :as gtool]
+            [jarman.gui.gui-migrid  :as gmg]))
 
 
 ;; ┌────────────────────�
@@ -96,10 +97,11 @@
                          :local-changes local-changes
                          :store-id store-id
                          :val val}) 
-        editor (gcomp/vmig
+        editor (gmg/hmig
                 :args args
+                :wrap 1
                 :vrules "[fill]0px[grow, fill]0px[fill]"
-                :items [[(gcomp/hmig
+                :items [[(gmg/hmig
                           :args args
                           :hrules "[70%, fill]10px[grow, fill]"
                           :items

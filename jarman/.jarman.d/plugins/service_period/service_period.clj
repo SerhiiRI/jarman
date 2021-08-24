@@ -10,6 +10,7 @@
    [clojure.spec.alpha :as s]
    [jarman.gui.gui-tools :as gtool]
    [jarman.gui.gui-components :as gcomp]
+   [jarman.gui.gui-migrid :as gmg]
    [jarman.gui.gui-calendar :as calndr]
    [jarman.logic.sql-tool :refer [select!]]
    [jarman.logic.connection :as db]
@@ -332,7 +333,7 @@
                                                          [(seesaw.core/border-panel :center exp-panel)]])]
     (swap! state merge {:all-enterpreneurs all-enterpreneurs :btn-panel btn-panel :tip tip :view-space view-space :exp-panel exp-panel :insert-space insert-space :checkboxes checkboxes})
     (refresh-data-and-panel state)
-    (gcomp/hmig
+    (gmg/hmig
      :hrules "[grow, fill]"
      :items [[(gcomp/min-scrollbox view-space :border nil)]]
      :args  [:background "#fff"])))

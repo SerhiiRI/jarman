@@ -13,6 +13,7 @@
             [jarman.logic.metadata :as mt]
             [jarman.config.config-manager :as cm]
             [jarman.gui.gui-tools :as gtool]
+            [jarman.gui.gui-migrid :as gmg]
             [seesaw.chooser :as chooser]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
   (:import (java.awt Color)
@@ -76,151 +77,6 @@
     (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
     (.setPreferredSize (.getHorizontalScrollBar scr) (java.awt.Dimension. 0 12))
     scr))
-
-
-(defn vmig
-  "Description:
-     Use vmig for quick vertical layout or container.
-   Example:
-    (vmig :items [[component]])
-  "
-  [& {:keys [items
-             wrap
-             lgap
-             rgap
-             tgap
-             bgap
-             gap
-             vrules
-             hrules
-             debug
-             args]
-      :or {items [[(c/label)]]
-           wrap 1
-           lgap 0
-           rgap 0
-           tgap 0
-           bgap 0
-           gap  []
-           vrules "[grow, fill]"
-           hrules "[grow, fill]"
-           debug [0 "#f00"]
-           args []}}]
-  (let [[tgap bgap lgap rgap] (rift gap [tgap bgap lgap rgap])]
-    (apply mig-panel
-           :constraints [(str "wrap " wrap)
-                         (str lgap (if (string? lgap) "" "px")
-                              hrules
-                              rgap (if (string? rgap) "" "px"))
-                         (str tgap (if (string? tgap) "" "px")
-                              vrules
-                              bgap (if (string? bgap) "" "px"))]
-           :items items
-           :border (b/line-border :thickness (first debug) :color (second debug))
-           args)))
-
-(defn hmig
-  [& {:keys [items
-             wrap
-             lgap
-             rgap
-             tgap
-             bgap
-             gap
-             vrules
-             hrules
-             debug
-             args]
-      :or {items [[(c/label)]]
-           wrap 0
-           lgap 0
-           rgap 0
-           tgap 0
-           bgap 0
-           gap []
-           vrules "[grow, fill]"
-           hrules "[grow, fill]"
-           debug [0 "#f00"]
-           args []}}]
-  (let [[tgap bgap lgap rgap] (cond
-                                (= 4 (count gap)) gap
-                                (= 2 (count gap)) [(first gap)(first gap)(second gap)(second gap)]
-                                (= 1 (count gap)) [(first gap)(first gap)(first gap)(first gap)]
-                                :else [tgap bgap lgap rgap])]
-    (apply mig-panel
-           :constraints [(if (= 0 wrap) "" (str "wrap " wrap))
-                         (str lgap (if (string? lgap) "" "px")
-                              hrules
-                              rgap (if (string? rgap) "" "px"))
-                         (str tgap (if (string? tgap) "" "px")
-                              vrules
-                              bgap (if (string? bgap) "" "px"))]
-          :items items
-          :border (b/line-border :thickness (first debug) :color (second debug))
-          args)))
-
-(defn migrid
-  "Dynamic mig"
-  ([items]
-   (migrid :v :a :f {} items))
-  
-  ([direction items]
-   (migrid direction :a :f {} items))
-  
-  ([direction htemp items]
-   (if (map? htemp)
-     (migrid direction :a :f htemp items)
-     (migrid direction htemp :f {} items)))
-  
-  ([direction htemp vtemp items]
-   (if (map? vtemp)
-     (migrid direction htemp :f vtemp items)
-     (migrid direction htemp vtemp {} items)))
-  
-  ([direction htemp vtemp
-    {:keys [args tgap bgap lgap rgap gap]
-     :or {args []
-          tgap 0
-          bgap 0
-          lgap 0
-          rgap 0
-          gap []}}
-    items]
-   (let [templates {:a      "[:100%:100%, fill]"
-                    :right  "[grow, right]0px[fill]"
-                    :top    "[fill]"
-                    :bottom "[grow, bottom]0px[fill]"
-                    :center "[grow, center]"
-                    :fgf    "[fill]0px[grow, fill]0px[fill]"
-                    :gfg    "[grow, fill]0px[fill]0px[grow, fill]"
-                    :gf     "[grow, fill]0px[fill]"
-                    :fg     "[fill]0px[grow, fill]"
-                    :f      "[fill]"
-                    :g      "[::100%, grow, fill]"}]
-     (hmig
-      :wrap (cond
-              (or (= :h direction) (= htemp :right))  0
-              (or (= :v direction) (= vtemp :bottom)) 1
-              :else 0)
-      :hrules (cond
-                (string?  htemp) htemp
-                (keyword? htemp) (get templates htemp)
-                (int?     htemp) (str "[" htemp ":" htemp "%:100%, fill]")
-                :else            (:a   templates))
-      :vrules (cond
-                (string?  vtemp) vtemp
-                (keyword? vtemp) (get templates vtemp)
-                (int?     vtemp) (str "[" vtemp ":" vtemp "%:100%, fill]")
-                :else            (:a   templates))
-      :items (gtool/join-mig-items
-              (if (or (= vtemp :bottom) (= htemp :right)) (c/label) [])
-              (if (sequential? items) items [items]))
-      :gap gap
-      :tgap tgap
-      :bgap bgap
-      :lgap lgap
-      :rgap rgap
-      :args args))))
 
 
 (defn scrollbox
@@ -500,7 +356,7 @@
                  :between ["[grow, center]"
                            #(gtool/join-mig-items %)]}
         [hrules comps-fn] (align align-m)]
-    (hmig
+    (gmg/hmig
      :hrules hrules
      :items (comps-fn comps))))
 

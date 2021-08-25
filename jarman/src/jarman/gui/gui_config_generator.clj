@@ -13,12 +13,13 @@
             [jarman.resource-lib.icon-library :as icon]
             ;; logics
             [jarman.config.config-manager :as cm]
-            [jarman.gui.gui-tools :as gtool]
-            [jarman.gui.gui-components :as gcomp]
-            [jarman.tools.swing :as stool]
-            [jarman.logic.state :as state]
-            [jarman.gui.gui-seed :as gseed]
-            [jarman.gui.gui-editors :as gedit]
+            [jarman.gui.gui-tools         :as gtool]
+            [jarman.gui.gui-components    :as gcomp]
+            [jarman.gui.gui-style         :as gs]
+            [jarman.tools.swing           :as stool]
+            [jarman.logic.state           :as state]
+            [jarman.gui.gui-seed          :as gseed]
+            [jarman.gui.gui-editors       :as gedit]
             [jarman.gui.gui-views-service :as gvs]
 
             ;; deverloper tools 
@@ -33,12 +34,12 @@
 (defn- confgen--element--header-block
   [title] 
   (gcomp/header-basic title)
-  (c/label :text title :font (gtool/getFont 16 :bold)
+  (c/label :text title :font (gs/getFont :bold 16)
            :border (b/compound-border  (b/line-border :bottom 2 :color (gtool/get-color :decorate :underline)) (b/empty-border :bottom 5))))
 
 (defn- confgen--element--header-parameter
   [title]
-  (c/label :text title :font (gtool/getFont 14 :bold)))
+  (c/label :text title :font (gs/getFont 14 :bold)))
 
 (defn- confgen--element--combobox
   [local-changes path model]
@@ -79,7 +80,7 @@
     ;; (println "Textlist path: " path)
     (smig/mig-panel
      :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
-     :items [[(c/text :text v :font (gtool/getFont 14)
+     :items [[(c/text :text v
                       :background (gtool/get-color :background :input)
                       :border (b/compound-border (b/empty-border :left 10 :right 10 :top 5 :bottom 5)
                                                  (b/line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline)))
@@ -90,7 +91,7 @@
   [local-changes path value]
   (smig/mig-panel
    :constraints ["" "0px[200:, fill, grow]0px" "0px[30:, fill, grow]0px"]
-   :items [[(c/text :text value :font (gtool/getFont 14)
+   :items [[(c/text :text value
                     :background value :foreground "#444"
                     :border (b/compound-border (b/empty-border :left 10 :right 10 :top 5 :bottom 5)
                                                (b/line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline)))
@@ -115,8 +116,7 @@
   ;;          "\nparam" (param :doc))
   (let [comp (if (nil? (param :doc))
                ()
-               (gcomp/textarea (str (param :doc))
-                               :font (gtool/getFont 12)))]
+               (gcomp/textarea (str (param :doc))))]
     ;;(println "textarea ok")
     comp))
 
@@ -126,8 +126,7 @@
   ;; (println "\ntextarea doc---------"
   ;;          "\nparam" (param :doc))
   (if-not (nil? (param :doc))
-    (gcomp/textarea (str (param :doc))
-                    :font (gtool/getFont 14))
+    (gcomp/textarea (str (param :doc)))
     ()))
 
 (defn- confgen--element--margin-top-if-doc-exist

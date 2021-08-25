@@ -6,14 +6,15 @@
             [seesaw.border :as b]
             [seesaw.util   :as u]
             [seesaw.rsyntax]
-            [jarman.tools.lang :refer :all]
             [jarman.config.config-manager :as cm]
+            [jarman.gui.gui-style         :as gs]
             [jarman.gui.gui-components    :as gcomp]
             [jarman.gui.gui-views-service :as gvs]
-            [jarman.logic.state    :as state]
-            [jarman.logic.metadata :as mt]
-            [jarman.gui.gui-tools  :as gtool]
-            [jarman.gui.gui-migrid  :as gmg]))
+            [jarman.logic.state           :as state]
+            [jarman.logic.metadata        :as mt]
+            [jarman.gui.gui-tools         :as gtool]
+            [jarman.gui.gui-migrid        :as gmg]
+            [jarman.tools.lang            :refer :all]))
 
 
 ;; ┌────────────────────�
@@ -91,7 +92,7 @@
          args {}}}]
   (let [f-size (atom font-size)
         info-label (c/label)
-        code (code-area {:args [:font (gtool/getFont @f-size)
+        code (code-area {:args [:font (gs/getFont @f-size)
                                 :border (b/empty-border :left 10 :right 10)]
                          :label info-label
                          :local-changes local-changes
@@ -108,7 +109,7 @@
                           [[(c/label :text title
                                      :border (b/compound-border (b/line-border :bottom 1 :color "#eee")
                                                                 (b/empty-border :left 10))
-                                     :font (gtool/getFont :bold title-font-size))]
+                                     :font (gs/getFont :bold title-font-size))]
                            [(gcomp/menu-bar
                              {:justify-end true
                               :buttons [[""
@@ -117,7 +118,7 @@
                                          (fn [e]
                                            (c/config!
                                             code
-                                            :font (gtool/getFont
+                                            :font (gs/getFont
                                                    (do (reset! f-size (+ 2 @f-size))
                                                        @f-size))))]
                                         [""
@@ -126,7 +127,7 @@
                                          (fn [e]
                                            (c/config!
                                             code
-                                            :font (gtool/getFont
+                                            :font (gs/getFont
                                                    (do (reset! f-size (- @f-size 2))
                                                        @f-size))))]
                                         (if debug

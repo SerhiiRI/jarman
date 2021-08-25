@@ -564,8 +564,10 @@
     (if-not (= :empty config-k)
       (if (map? (rift data-log nil))
         (do ;; close login panel and run jarman
-          (.dispose frame)
-          ((state/state :startup)))
+          (if (fn? (state/state :startup))
+            (do (.dispose frame)
+                ((state/state :startup)))
+            (c/alert (gtool/get-lang-alerts :app-startup-fail))))
         (do ;; set data info about error to state
           (dispatch! {:action :update-data-log
                       :path   [config-k]

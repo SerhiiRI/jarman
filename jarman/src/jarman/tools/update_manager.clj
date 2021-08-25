@@ -77,23 +77,6 @@
 
 (def ^:private jarman-executable "Jarman.exe")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Transact folder functions ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-#_(comment
-  (defn ^:private transact-jarman-plugins-dir [directory]
-    (io/file directory ".jarman.d" "plugins"))
-
-  (defn ^:private transact-jarman-configs-dir [directory]
-    (io/file directory ".jarman.d" "config"))
-
-  (defn ^:private transact-jarman-dot-file [directory]
-    (io/file directory ".jarman"))
-
-  (defn ^:private transact-jarman-dot-data-file [directory]
-    (io/file directory ".jarman.data.clj")))
-
 ;;;;;;;;;;;;;;;;;;;;
 ;;; DECLARATIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;
@@ -150,7 +133,8 @@
 
 (defn ftp-put-file [ftp-repo-url repo-path file-path]
   (ftp/with-ftp [client ftp-repo-url]
-    (ftp/client-cd client repo-path)))
+    (ftp/client-cd client repo-path)
+    (ftp/client-put client file-path)))
 
 (defn ftp-get-file
   #_([file-url]
@@ -410,34 +394,34 @@
     (apply io/file directory paths)))
 
 (defn verify-file [file]
-  (println (cl-format nil "  ~:[not exists~;verified~] file `~A`" (.exists file) (str file)))
+  (println (cl-format nil "  ~:[not exists~;verified~] file =~A=" (.exists file) (str file)))
   (when (not (.exists file))
-    (throw (ex-info (format "File `%s` not exists" (str file))
+    (throw (ex-info (format "File =%s= not exists" (str file))
                     {:type :install-file-not-exists}))))
 
 (defn copy-file [f-from f-out]
   (try (do
-         (print (format "  copy file `%s` to `%s`..." f-from f-out))
+         (print (format "  copy file =%s= to =%s= ..." f-from f-out))
          (fs/copy f-from f-out)
          (println "done!"))
        (catch IOException e
-         (throw (ex-info (format "I/O error, while coping `%s` to `%s`." f-from f-out) {:type :io-exception})))
+         (throw (ex-info (format "I/O error, while coping =%s= to =%s= ." f-from f-out) {:type :io-exception})))
        (catch Exception e
-         (throw (ex-info (format "Error while coping `%s` to `%s`" f-from f-out) {:type :common-exception})))))
+         (throw (ex-info (format "Error while coping =%s= to =%s=" f-from f-out) {:type :common-exception})))))
 
 (defn copy-dir [d-from d-out]
   (try (do
-         (print (format "  copy directory `%s` to `%s`..." d-from d-out))
+         (print (format "  copy directory =%s= to =%s= ..." d-from d-out))
          (fs/copy-dir-replace d-from d-out)
          (println "done!"))
        (catch IOException e
-         (throw (ex-info (format "I/O error, while coping `%s` to `%s`." d-from d-out) {:type :io-exception})))
+         (throw (ex-info (format "I/O error, while coping =%s= to =%s= ." d-from d-out) {:type :io-exception})))
        (catch Exception e
-         (throw (ex-info (format "Error while coping `%s` to `%s`" d-from d-out) {:type :common-exception})))))
+         (throw (ex-info (format "Error while coping =%s= to =%s=" d-from d-out) {:type :common-exception})))))
 
 (defn delete-file [file]
   (try (do
-         (print (format "  delete file `%s`..." file))
+         (print (format "  delete file =%s= ..." file))
          (gfs/delete file)
          (println "done!"))
        (catch Exception e
@@ -445,7 +429,7 @@
 
 (defn delete-dir [directory]
   (try (do
-         (print (format "  delete directory `%s`..." directory))
+         (print (format "  delete directory =%s= ..." directory))
          (gfs/delete-dir directory)
          (println "done!"))
        (catch Exception e
@@ -454,12 +438,23 @@
 (defn unzip [package-file unzip-folder]
   (try 
     (do
-      (print (format "  unzipping `%s` PandaPackage into directory `%s`..." package-file unzip-folder))
+      (print (format "  unzipping =%s= PandaPackage into directory =%s= ..." package-file unzip-folder))
       (fs/unzip package-file unzip-folder)
       (println "done!"))
     (catch Exception e
-      (throw (ex-info (format "Error while unzip `%s`" package-file unzip-folder) {:type :unzipping-error})))))
+      (throw (ex-info (format "Error while unzip =%s= into =%s=" package-file unzip-folder) {:type :unzipping-error})))))
 
+(defn zip [package-file folder-to-zip]
+  (try 
+    (do
+      (print (format "  Zipping =%s= into PandaPackage =%s= ..." folder-to-zip package-file ))
+      (fs/zip folder-to-zip package-file)
+      (println "done!"))
+    (catch Exception e
+      (throw (ex-info (format "Error while try make zip =%s= from =%s=" package-file folder-to-zip) {:type :zipping-error})))))
+
+(defn quick-timestamp []
+  (.format (java.text.SimpleDateFormat. "YYYY-MM-dd HH:mm") (java.util.Date.)))
 
 (defn update-project [^PandaPackage package]
   (let [;; Global configurations
@@ -482,10 +477,10 @@
         destination-jarman-data (first dot-jarman-data-paths-list)
         destination-jarman-executable "Jarman.exe"]
 
-    (println "* Startup installing")
-    (println (format "  install `%s`" (:file package)))
+    (println (format "* Install package (%s)" (quick-timestamp)))
+    (println (format "  install =%s=" (:file package)))
     (println "** Package")
-    (println (format "  downloading `%s`" (:url package)))
+    (println (format "  downloading =%s=" (:uri package)))
     (download-package package)
     (verify-file (clojure.java.io/file (:file package)))
     (unzip (:file package) unzip-folder)
@@ -510,17 +505,30 @@
     (delete-file (:file package))
     (delete-dir unzip-folder)))
 
+(defn clean-up-environment []
+  (let [destination-plugins-dir (first jarman-plugins-dir-list)
+        destination-configs-dir (first jarman-configs-dir-list)
+        destination-jarman-dot  (first dot-jarman-paths-list)
+        destination-jarman-data (first dot-jarman-data-paths-list)
+        destination-jarman-executable "Jarman.exe"]
+    (println (format "* Delete environment (%s)" (quick-timestamp)))
+    (println "** Remove .jarman.d folders")
+    (delete-dir destination-configs-dir)
+    (delete-dir destination-plugins-dir)
+    (println "** Remove jarman configs")
+    (delete-file destination-jarman-dot)
+    (delete-file destination-jarman-data)
+    (println "** Remove Executable")
+    (delete-file destination-jarman-executable)))
 
-"./jarman.d/plugins"
-"./jarman.d/config"
-"src/jarman/managment/.jarman.data.clj"
-".jarman"
-
-(defn build-package [^PandaPackage package]
+(defn build-package []
   (let [;; Global configurations
         unzip-folder (str (gensym "transact"))
-        ;; unzip-config-folder (clojure.java.io/file unzip-folder "config")
-        
+        ;; package params
+        version *program-vers* ;; "0.0.1"
+        prog-name *program-name* ;; "jarman"
+        artifact ".zip"
+        package-name (format "%s-%s%s" prog-name version artifact)
         ;; Files and folder inside unzipped
         ;; transactional directory 
         transact-file (make-transact-folder unzip-folder)
@@ -529,45 +537,149 @@
         transact-jarman-dot-file      (transact-file ".jarman")
         transact-jarman-dot-data-file (transact-file ".jarman.data.clj")
         transact-jarman-executable    (transact-file "Jarman.exe")
+        ;; original source files
+        plugins-dir (clojure.java.io/file "./.jarman.d/plugins")
+        configs-dir (clojure.java.io/file "./.jarman.d/config")
+        jarman-dot  (clojure.java.io/file ".jarman")
+        jarman-data (clojure.java.io/file "src/jarman/managment/.jarman.data.clj")
+        jarman-executable (clojure.java.io/file "Jarman.exe")]
 
-        ;; destination directories
-        destination-plugins-dir (first jarman-plugins-dir-list)
-        destination-configs-dir (first jarman-configs-dir-list)
-        destination-jarman-dot  (first dot-jarman-paths-list)
-        destination-jarman-data (first dot-jarman-data-paths-list)
-        destination-jarman-executable "Jarman.exe"]
+    (println (format "* Bulding PandaPackage (%s)" (quick-timestamp)))
+    
+    (println "** Testing file structure")
+    (verify-file plugins-dir)
+    (verify-file configs-dir)
+    (verify-file jarman-dot)
+    (verify-file jarman-data)
+    (verify-file jarman-executable)
 
-    (println "* Startup installing")
-    (println (format "  install `%s`" (:file package)))
-    (println "** Package")
-    (println (format "  downloading `%s`" (:url package)))
-    (download-package package)
-    (verify-file (clojure.java.io/file (:file package)))
-    (unzip (:file package) unzip-folder)
+    (println "** Making transact dir")
+    (.mkdir      (clojure.java.io/file unzip-folder))
     (verify-file (clojure.java.io/file unzip-folder))
-    (println "** Unpacking package")
-    (verify-file (clojure.java.io/file unzip-folder))
-    (println "** Verifing folder")
+    
+    (println "** Moving data to directory")
+    (copy-file jarman-dot transact-jarman-dot-file)
+    (copy-file jarman-data transact-jarman-dot-data-file)
+    (copy-dir configs-dir transact-jarman-configs-dir)
+    (copy-dir plugins-dir transact-jarman-plugins-dir)
+    (copy-file jarman-executable transact-jarman-executable)
+
+    (println "** Testring copyed files")
     (verify-file transact-jarman-plugins-dir)
     (verify-file transact-jarman-configs-dir)
     (verify-file transact-jarman-dot-file)
     (verify-file transact-jarman-dot-data-file)
     (verify-file transact-jarman-executable)
-    (println "** Verifing destinations")
-    (verify-file (clojure.java.io/file env/user-home))
-    (println "** Copying files")
-    (copy-file transact-jarman-dot-file destination-jarman-dot)
-    (copy-file transact-jarman-dot-data-file destination-jarman-data)
-    (copy-dir transact-jarman-configs-dir destination-configs-dir)
-    (copy-dir transact-jarman-plugins-dir destination-plugins-dir)
-    (copy-file transact-jarman-executable destination-jarman-executable)
-    (println "** Remove temporary files")
-    (delete-file (:file package))
-    (delete-dir unzip-folder)))
 
+    (println "** Creation PandaPackage")
+    (zip package-name (clojure.java.io/file unzip-folder))
+    (println "** Clean temporary files")
+    (delete-dir unzip-folder)
+    (map->PandaPackage {:file package-name, :name prog-name, :version version, :artifacts artifact, :uri nil})))
+
+;; (build-package)
+
+;; (send-package #jarman.tools.update_manager.PandaPackage{:file "jarman-0.0.1.zip", :name "jarman", :version "0.0.1", :artifacts ".zip", :uri nil}
+;;               (first *repositories*))
+
+
+(defn send-package [^PandaPackage package ^String repository]
+  (println "** send package to repository")
+  (cond
+    ;; Send on remote repository
+    (is-url? repository)
+    (do
+      (print (format "  sending package =%s= to =%s= ..." (:file package) repository))
+      (ftp-put-file repository *program-name* (:file package))
+      (println "done!")
+      (assoc package :uri (format "%s/%s/%s" repository *program-name* (:file package))))
+    ;; Send on local file repository
+    (is-path? repository)
+    (do
+      (copy-file (clojure.java.io/file (:file package))
+                 (clojure.java.io/file repository *program-name* (:file package)))
+      (assoc package :uri (clojure.java.io/file repository *program-name* (:file package))))))
+
+
+(let [to-file? true]
+  (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
+    (let [package (build-package)]
+      (doall (map (partial send-package package) *repositories*)))
+    (update-project (max-version (get-all-packages *repositories*)))))
+
+(let [to-file? true]
+  (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
+    (let [package (build-package)]
+      (doall (map (partial send-package package) *repositories*)))
+    ))
+
+(def ^:dynamic *debug-to-file* true)
+
+(defn info-list-repository-packages [package-list]
+  (doall
+   (map-indexed
+    (fn [i {:keys [file _ _ _ uri]}]
+      (println (format "  %d. package =%s= from =%s=" i file uri)))
+    package-list)))
+
+(defn info-max-package [package-list]
+  (let [{:keys [file _ version artifacts uri]} (max-version package-list)]
+    (println (format "  package *%s*, version *%s*, artifacts *%s* from =%s=" file version artifacts uri))))
+
+(defn info-packages [package-list]
+  (println (format "* Package info (%s)" (quick-timestamp)))
+  (println "** Max Version package")
+  (info-max-package package-list)
+  (println "** List all packages")
+  (info-list-repository-packages package-list))
+
+;;;;;;;;;;;;;;;;;;
+;;; Procedures ;;;
+;;;;;;;;;;;;;;;;;;
+
+(defn procedure-create-log-file []
+  (spit "update-manager-log.org"
+        "#+TITLE: Update manager Log file\n#+AUTHOR: Serhii Riznychuk\n#+EMAIL: sergii.riznychuk@gmail.com\n#+STARTUP: overview
+"))
+
+(defn procedure-package []
+  (let [to-file? *debug-to-file*]
+    (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
+      (let [package (build-package)]
+        (doall (map (partial send-package package) *repositories*))
+        (delete-file (clojure.java.io/file (:file package)))
+        package))))
+
+(defn procedure-update []
+  (let [to-file? *debug-to-file*]
+    (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
+      (let [package-list (get-all-packages *repositories*)]
+        (info-packages package-list)
+        (update-project (max-version package-list))))))
+
+(defn procedure-info []
+  (let [to-file? *debug-to-file*]
+    (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
+      (let [package-list (get-all-packages *repositories*)]
+        (info-packages package-list)))) true)
+
+(defn procedure-clean-env []
+  (let [to-file? *debug-to-file*]
+    (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
+      (clean-up-environment))) true)
+
+
+
+(comment
+  (procedure-create-log-file)
+  ;; functions
+  (procedure-clean-env)
+  (procedure-package)
+  (procedure-update)
+  (procedure-info))
 
 ;;;;;;;;;;;;;;;;;;;;;;
-;;; user functions ;;;
+;;; functions ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
 (defn show-list-of-all-packages []
@@ -579,8 +691,16 @@
 (comment
   (def --tmp-package-list-- (get-all-packages *repositories*))
   (max-version --tmp-package-list--)
+  
   (update-project (max-version --tmp-package-list--))
   (update-project (max-version (get-all-packages *repositories*)))
   ;; unzip test
   (unzip "ftp://jarman:bliatdoit@192.168.1.69//jarman/jarman-1.0.4.zip" "kupa.zip"))
+;; => nil
+;; => nil
+
+
+
+
+
 

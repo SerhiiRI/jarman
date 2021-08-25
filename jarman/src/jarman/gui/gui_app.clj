@@ -35,7 +35,7 @@
             [jarman.gui.gui-config-generator :as cg]
             [jarman.gui.popup                :as popup]
             [jarman.gui.gui-main-menu        :as menu]
-            [jarman.managment.data           :as managment-data]
+            ;; [jarman.managment.data           :as managment-data]
             [jarman.plugin.plugin-loader     :refer [do-load-plugins]]
             [jarman.config.dot-jarman        :refer [dot-jarman-load]]))
 
@@ -273,5 +273,4 @@
                              (invoke-app)
                              :else (do (fn [])))))))
 
-((state/state :startup))
-
+;; ((state/state :startup))

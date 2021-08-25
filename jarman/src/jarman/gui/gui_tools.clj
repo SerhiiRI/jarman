@@ -7,13 +7,17 @@
         seesaw.dev
         seesaw.mig)
   (:require
-   [seesaw.core :as c]
+   [seesaw.core                      :as c]
+   [jarman.tools.swing               :as stool]
+   [clojure.string                   :as string]
+   [jarman.logic.state               :as state]
+   [jarman.gui.gui-style             :as gs]
+   [jarman.config.config-manager     :as cm]
    [jarman.resource-lib.icon-library :as icon]
-   [jarman.tools.swing :as stool]
-   [clojure.string :as string]
-   [jarman.config.config-manager :as cm]
-   [jarman.tools.lang :refer :all]
+   [jarman.tools.lang                :refer :all]
    ))
+
+(gs/load-style)
 
 (import javax.swing.JLayeredPane)
 (import java.awt.Color)
@@ -77,11 +81,6 @@
         screen-x  (.getX mouse-pos)
         screen-y  (.getY mouse-pos)]
     [screen-x screen-y]))
-
-;; (seesaw.font/font-families)
-;; (label-fn :text "txt")
-;; Function for label with pre font
-(def label-fn (fn [& params] (apply label :font (getFont) params)))
 
 (defn htmling
   "Description
@@ -311,8 +310,7 @@
                       :icon ico
                       :size [size :by size])
           title (label ;; :halign :center
-                 :text txt
-                 :font (getFont 15))
+                 :text txt)
           mig (mig-panel
                :constraints ["" (str "0px[" size "]15px[grow, fill]0px") (str "0px[" size "]0px")]
                :bounds [0 y size size]
@@ -355,7 +353,7 @@
           c-border  "#bbb"]
       (label :text title
              :id id
-             :font (getFont :bold)
+             :font (gs/getFont :bold)
              :icon (stool/image-scale ico 26)
              :halign :center
              :size [150 :by 30]

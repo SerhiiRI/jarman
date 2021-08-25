@@ -2,16 +2,16 @@
   (:import (java.awt Color))
   (:use seesaw.dev
         seesaw.mig)
-  (:require [seesaw.core :as c]
-            [seesaw.border :as b]
+  (:require [seesaw.core                      :as c]
+            [seesaw.border                    :as b]
+            [jarman.tools.swing               :as stool]
+            [jarman.gui.gui-style             :as gs]
+            [jarman.gui.gui-tools             :as gtool]
+            [jarman.gui.gui-components        :as gcomp]
+            [jarman.logic.state               :as state]
+            [clojure.string                   :as string]
             [jarman.resource-lib.icon-library :as icon]
-            [jarman.tools.swing :as stool]
-            [jarman.config.config-manager :refer :all]
-            [jarman.gui.gui-tools :as gtool]
-            [jarman.gui.gui-components :as gcomp]
-            [jarman.logic.state :as state]
-            [jarman.tools.lang :refer :all]
-            [clojure.string :as string]))
+            [jarman.tools.lang                :refer :all]))
 
 
 ;; Defrecord for elements in alerts-storage
@@ -38,7 +38,7 @@
       (build-header 'Information')
    "
   [txt] (c/label :text txt
-                 :font (gtool/getFont 14 :bold)
+                 :font (gs/getFont :bold)
                  :background (new Color 0 0 0 0)))
 
 (defn build-body
@@ -47,8 +47,7 @@
    Example:
       (build-body 'My message')
    "
-  [txt] (c/label :text txt
-                 :font (gtool/getFont 13)
+  [txt] (c/label :text txt 
                  :background (new Color 0 0 0 0)
                  :border (b/empty-border :left 5 :right 5 :bottom 2)))
 
@@ -259,8 +258,8 @@
         bord     (b/empty-border :left 5)
         header   (if (= (contains? data :header) true) (get data :header) "Information")
         body     (if (= (contains? data :body) true) (get data :body) "Template of information...")
-        comp-header (c/label :size [w :by h] :background (new Color 0 0 0 0) :border bord :text header :font (gtool/getFont 14 :bold))
-        comp-body   (c/label :size [w :by h] :background (new Color 0 0 0 0) :border bord :text body   :font (gtool/getFont 12))
+        comp-header (c/label :size [w :by h] :background (new Color 0 0 0 0) :border bord :text header :font (gs/getFont :bold))
+        comp-body   (c/label :size [w :by h] :background (new Color 0 0 0 0) :border bord :text body)
         comp        (mig-panel
                      :focusable? true
                      :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
@@ -305,8 +304,7 @@
                                     :listen [:mouse-motion (fn [e] (.repaint (c/select (c/to-root e) [:#all-alerts])))
                                              :mouse-wheel-moved (fn [e] (.repaint (c/select (c/to-root e) [:#all-alerts])))]])]
                            [(gcomp/button-basic
-                             "Clear all message"
-                             :font (gtool/getFont 14)
+                             "Clear all message" 
                              :flip-border true
                              :onClick (fn [e]
                                         (rmallAlert alerts-storage layered-pane);;  remove all history

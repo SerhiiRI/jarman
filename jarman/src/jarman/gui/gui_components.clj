@@ -13,8 +13,8 @@
             [jarman.logic.metadata :as mt]
             [jarman.config.config-manager :as cm]
             [jarman.gui.gui-tools :as gtool]
-            [jarman.gui.gui-style :as gstyle]
             [jarman.gui.gui-migrid :as gmg]
+            [jarman.gui.gui-style  :as gs]
             [seesaw.chooser :as chooser]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
   (:import (java.awt Color)
@@ -22,7 +22,6 @@
            (jarman.jarmanjcomp CustomScrollBar)))
 
 (jarman.config.config-manager/swapp)
-(gstyle/load-style)
 
 ;; ┌────────────────────�
 ;; │                    │
@@ -132,9 +131,9 @@
              border
              underline-color
              underline-size
-             font-size
-             font-style
-             font
+             ;; font-size
+             ;; font-style
+             ;; font
              args]
       :or {foreground (gtool/get-comp :header-basic :foreground)
            background (gtool/get-comp :header-basic :background)
@@ -143,13 +142,13 @@
            underline-color (gtool/get-comp :header-basic :underline-color)
             underline-size (gtool/get-comp :header-basic :underline-size)
            border (fn [size color usize ucolor] (b/compound-border  (b/line-border :thickness size :color color) (b/line-border :bottom usize :color ucolor)))
-           font-size (gtool/get-comp :header-basic :font-size)
-           font-style (keyword (first (gtool/get-comp :header-basic :font-style)))
-           font (fn [size style] (gtool/getFont size style))
+           ;; font-size (gtool/get-comp :header-basic :font-size)
+           ;; font-style (keyword (first (gtool/get-comp :header-basic :font-style)))
+           ;; font (fn [size style] (gtool/getFont size style))
            args []}}]
   (apply c/label
          :text title
-         :font (font font-size font-style)
+         ;; :font (font font-size font-style)
          :foreground foreground
          :background background
          :border (border border-size border-color underline-size underline-color)
@@ -171,9 +170,10 @@
   Example:
      (dynamic-text-area {:text \"Some loooong text\"})
   "
-  [{:keys [text foreground font lgap tgap args]
+  [{:keys [text foreground ;; font
+           lgap tgap args]
     :or {foreground "#000"
-         font (gtool/getFont)
+         ;; font (gtool/getFont)
          lgap 0
          tgap 0
          args []}}]
@@ -181,7 +181,7 @@
                    c/styled-text
                    :border (b/empty-border :left lgap :top tgap)
                    :text text
-                   :font font
+                   ;; :font font
                    :foreground  foreground
                    :editable?   false
                    :focusable?  false
@@ -219,7 +219,8 @@
                  focus-color
                  unfocus-color
                  flip-border
-                 font]
+                 ;; font
+                 ]
           :or   {onClick (fn [e] (println "Click"))
                  args []
                  tgap 10
@@ -234,7 +235,8 @@
                  focus-color (gtool/get-color :decorate :focus-gained)
                  unfocus-color (gtool/get-color :decorate :focus-lost)
                  flip-border false
-                 font (gtool/getFont 12)}}]
+                 ;; font (gtool/getFont 12)
+                 }}]
   (let [newBorder (fn [underline-color]
                     (b/compound-border (b/empty-border :bottom bgap :top tgap :left lgap :right rgap)
                                        (b/line-border (if flip-border :top :bottom) underline-size :color underline-color)))]
@@ -242,7 +244,7 @@
            :text txt
            :focusable? true
            :halign halign
-           :font font
+           ;; :font font
            :tip tip
            :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
                     :mouse-entered (fn [e] (c/config! e :border (newBorder focus-color)   :background mouse-in  :cursor :hand))
@@ -403,7 +405,7 @@
         last-v (atom "")]
     (apply c/text
            :text (if (empty? val) placeholder (if (string? val) val (str val)))
-           :font (gtool/getFont font-size)
+           ;; :font (gtool/getFont font-size)
            :background (gtool/get-color :background :input)
            :border (newBorder border-color-unfocus)
            :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
@@ -464,7 +466,7 @@
         last-v (atom "")]
     (apply c/text
            :text (if (empty? val) placeholder (if (string? val) val (str val)))
-           :font (gtool/getFont font-size)
+           ;; :font (gtool/getFont font-size)
            :background (gtool/get-color :background :input)
            :border (newBorder (rift start-underline border-color-unfocus))
            :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
@@ -503,7 +505,7 @@
              args []}}]
   (apply c/checkbox
          :text txt
-         :font (gtool/getFont font-size)
+         ;; :font (gtool/getFont font-size)
          :selected? val
          :enabled? enabled?
          :border (b/empty-border :top 15)
@@ -527,7 +529,7 @@
              args []}}]
   (let [check  (apply c/checkbox
                       :text (str (= "true" val))
-                      :font (gtool/getFont font-size)
+                      ;; :font (gtool/getFont font-size)
                       :selected? (= "true" val)
                       :border (b/empty-border :top 15)
                       :listen [:mouse-clicked (fn [e] (c/config! e :text (str (c/value (c/to-widget e)))) (func e))]
@@ -583,7 +585,7 @@
       :or {font-color "#000"}}] 
   (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "5px[]5px"]
                         :items [[(c/label :text title
-                                          :font (gtool/getFont 13)
+                                          ;; :font (gtool/getFont 13)
                                           :foreground font-color ) "align l"]
                                 [component]]))
 
@@ -744,7 +746,7 @@
      (do
        (swap! local-changes (fn [storage] (assoc storage store-id combo-model)))))
    (c/combobox :model combo-model
-               :font (gtool/getFont 14)
+               ;; :font (gtool/getFont 14)
                :enabled? enabled?
                :editable? editable?
                :background (gtool/get-color :background :combobox)
@@ -790,7 +792,7 @@
                           (map (fn [to-k v] {(keyword to-k) v})
                                repres-v model-v)))]
     (c/combobox :model repres-v
-                :font (gtool/getFont 14)
+                ;; :font (gtool/getFont 14)
                 :enabled? enabled?
                 :editable? editable?
                 :background (gtool/get-color :background :combobox)
@@ -872,13 +874,15 @@
                     (if (nil? @hidden-comp)
                       (do
                         (c/config! form-space :constraints form-space-hide)
-                        (c/config! e :text text-hide :valign :top :halign :center :icon nil :font (gtool/getFont 18 :bold) :background "#eee")
+                        (c/config! e :text text-hide :valign :top :halign :center :icon nil ;; :font (gtool/getFont 18 :bold)
+                                   :background "#eee")
                         (reset! hidden-comp (drop 1 inside))
                         (doall (map #(.remove form-space %) (reverse (drop 1 (range (count inside))))))
                         (.revalidate view-layout))
                       (do
                         (c/config! form-space :constraints form-space-open)
-                        (c/config! e :text text-open :halign :left :font (gtool/getFont 15) :background "#fff")
+                        (c/config! e :text text-open :halign :left ;; :font (gtool/getFont 15)
+                                   :background "#fff")
                         (doall (map #(.add form-space %) @hidden-comp))
                         (reset! hidden-comp nil)
                         (.revalidate view-layout)))))
@@ -887,7 +891,7 @@
                            :focusable? true
                            :background "#fff" ;;
                            :foreground blue-color ;;"#bbb"
-                           :font (gtool/getFont 15)
+                           ;; :font (gtool/getFont 15)
                            :border (b/empty-border :left 2 :right 2)
                            :listen [:focus-gained (fn [e] (c/config! e :foreground focus-color))
                                     :focus-lost   (fn [e] (c/config! e :foreground unfocus-color))
@@ -925,7 +929,7 @@
                                              (b/line-border :bottom (nth border 4) :color underline-color)))]
       (apply c/text
              :text placeholder
-             :font (gtool/getFont font-size)
+             ;; :font (gtool/getFont font-size)
              :background (gtool/get-color :background :input)
              :border (newBorder border-color-unfocus)
              :user-data {:placeholder placeholder :value "" :edit? false :type :password}
@@ -991,7 +995,7 @@
                                              (b/line-border :bottom (nth border 4) :color underline-color)))]
       (apply c/text
              :text placeholder
-             :font (gtool/getFont font-size)
+             ;; :font (gtool/getFont font-size)
              :background (gtool/get-color :background :input)
              :border (newBorder border-color-unfocus)
              :user-data {:placeholder placeholder :value "" :edit? false :type :password}
@@ -1101,7 +1105,7 @@
                           (b/empty-border :left 10)
                           (b/line-border :left left-gap :color left-color))
                  :text txt
-                 :font (gtool/getFont 14 :name "Ubuntu Bold")
+                 :font (gs/getFont :bold)
                  :foreground "#030D1C"
                  :background (Color. 0 0 0 0))
           listen (fn [func] [:mouse-entered gtool/hand-hover-on
@@ -1200,7 +1204,7 @@
            :foreground "#030D1C"
            :size  [width :by 25]
            :cursor cursor
-           :font (gtool/getFont 12 :name "Ubuntu Regular")
+           ;; :font (gtool/getFont 12 :name "Ubuntu Regular")
            :focusable? true
            :border (b/compound-border (b/empty-border :left 10)
                                       (b/line-border :left left :color left-color))
@@ -1222,7 +1226,8 @@
 ;; BUTTON EXPAND
 (def view (fn [] (button-expand "Expand"
                                 (button-expand-child "Expanded")
-                                (button-expand-child "Don't touch me." :onClick (fn [e] (c/config! (c/to-widget e) :text "FAQ 🖕( ͡° ᴗ ͡°)🖕" :font (gtool/getFont 14 :name "calibri")))))))
+                                (button-expand-child "Don't touch me." :onClick (fn [e] (c/config! (c/to-widget e) :text "FAQ 🖕( ͡° ᴗ ͡°)🖕" ;; :font (gtool/getFont 14 :name "calibri")
+                                                                                                   ))))))
 
 (def label-img
   (fn [file-path w h]
@@ -1291,7 +1296,7 @@
       (apply c/text
              :text val
              :background "#fff"
-             :font (gtool/getFont font-size)
+             ;; :font (gtool/getFont font-size)
              :background (gtool/get-color :background :input)
              :border (newBorder border-color-unfocus)
              :listen [:focus-gained (fn [e] (c/config! e :border (newBorder border-color-focus)))
@@ -1383,7 +1388,7 @@
           last-v (atom 0)]
       (apply c/text
              :text (if (nil? val) "0" val)
-             :font (gtool/getFont font-size :name (gtool/get-font :regular))
+             ;; :font (gtool/getFont font-size :name (gtool/get-font :regular))
              :background (gtool/get-color :background :input)
              :border (newBorder border-color-unfocus)
              :listen [:focus-gained (fn [e] (c/config! e :border (newBorder border-color-focus)))
@@ -1457,7 +1462,8 @@
                     {:val (rift val default-path)
                      :store-id store-id
                      :local-changes local-changes
-                     :args [:font (gtool/getFont  :name "Monospaced")]})
+                     ;; :args [:font (gtool/getFont  :name "Monospaced")]
+                     })
         icon (button-basic
               ""
               :onClick (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
@@ -1541,7 +1547,7 @@
   (let [btn (fn [txt ico tip onClick & args]
               (let [[t b l r br] btn-border]
                 (c/label
-                 :font (gtool/getFont font-size)
+                 ;; :font (gtool/getFont font-size)
                  :text txt
                  :tip tip
                  :icon (stool/image-scale ico icon-size)
@@ -1709,7 +1715,7 @@
               :constraints ["wrap 1" "10px[grow, fill]10px" "10px[fill]10px"]
               :id :message-view-box
               :items [[(c/label :text header
-                                :font (gtool/getFont 18)
+                                ;; :font (gtool/getFont 18)
                                 :border (b/empty-border :left 5 :right 5))]
                       [(hr 1 "#999" [0 0 0 5])]
                       [(multiline-text

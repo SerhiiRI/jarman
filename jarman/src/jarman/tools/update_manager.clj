@@ -81,7 +81,6 @@
 ;;; Transact folder functions ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 #_(comment
   (defn ^:private transact-jarman-plugins-dir [directory]
     (io/file directory ".jarman.d" "plugins"))
@@ -411,14 +410,14 @@
     (apply io/file directory paths)))
 
 (defn verify-file [file]
-  (println (cl-format nil "~:[[not exists]~;[verified]~] file `~A`" (.exists file) (str file)))
+  (println (cl-format nil "  ~:[not exists~;verified~] file `~A`" (.exists file) (str file)))
   (when (not (.exists file))
     (throw (ex-info (format "File `%s` not exists" (str file))
                     {:type :install-file-not-exists}))))
 
 (defn copy-file [f-from f-out]
   (try (do
-         (print (format "[coping] copy file `%s` to `%s`..." f-from f-out))
+         (print (format "  copy file `%s` to `%s`..." f-from f-out))
          (fs/copy f-from f-out)
          (println "done!"))
        (catch IOException e
@@ -428,7 +427,7 @@
 
 (defn copy-dir [d-from d-out]
   (try (do
-         (print (format "[coping] copy directory `%s` to `%s`..." d-from d-out))
+         (print (format "  copy directory `%s` to `%s`..." d-from d-out))
          (fs/copy-dir-replace d-from d-out)
          (println "done!"))
        (catch IOException e
@@ -438,7 +437,7 @@
 
 (defn delete-file [file]
   (try (do
-         (print (format "[delete] delete file `%s`" file))
+         (print (format "  delete file `%s`..." file))
          (gfs/delete file)
          (println "done!"))
        (catch Exception e
@@ -446,17 +445,25 @@
 
 (defn delete-dir [directory]
   (try (do
-         (print (format "[delete] delete directory `%s`" directory))
+         (print (format "  delete directory `%s`..." directory))
          (gfs/delete-dir directory)
          (println "done!"))
        (catch Exception e
          (println "Error deleting directory"))))
 
+(defn unzip [package-file unzip-folder]
+  (try 
+    (do
+      (print (format "  unzipping `%s` PandaPackage into directory `%s`..." package-file unzip-folder))
+      (fs/unzip package-file unzip-folder)
+      (println "done!"))
+    (catch Exception e
+      (throw (ex-info (format "Error while unzip `%s`" package-file unzip-folder) {:type :unzipping-error})))))
+
 
 (defn update-project [^PandaPackage package]
   (let [;; Global configurations
-        unzip-folder ;; (str (gensym "transact"))
-        (str "../transact")
+        unzip-folder (str (gensym "transact"))
         ;; unzip-config-folder (clojure.java.io/file unzip-folder "config")
         
         ;; Files and folder inside unzipped
@@ -476,12 +483,13 @@
         destination-jarman-executable "Jarman.exe"]
 
     (println "* Startup installing")
-    #_(println "[info] install `%s`" (:name package))
+    (println (format "  install `%s`" (:file package)))
     (println "** Package")
-    #_(println "[process] Downloading package `%s`" (:name package))
-    #_(download-package package)
-    #_(verify-file (clojure.java.io/file unzip-folder))
-    #_(verify-file (clojure.java.io/file "jarman-0.1.12-windows.zip"))
+    (println (format "  downloading `%s`" (:url package)))
+    (download-package package)
+    (verify-file (clojure.java.io/file (:file package)))
+    (unzip (:file package) unzip-folder)
+    (verify-file (clojure.java.io/file unzip-folder))
     (println "** Unpacking package")
     (verify-file (clojure.java.io/file unzip-folder))
     (println "** Verifing folder")
@@ -499,38 +507,63 @@
     (copy-dir transact-jarman-plugins-dir destination-plugins-dir)
     (copy-file transact-jarman-executable destination-jarman-executable)
     (println "** Remove temporary files")
-    ;; (delete-file (:file package))
-    ;; (delete-dir unzip-folder)
-    ;; (println "* Finish!")
-    
-    
-    ;; (println (format "[!] Download package from %s" (:uri package)))
-    ;; (list transact-jarman-plugins-dir transact-jarman-configs-dir transact-jarman-dot-file transact-jarman-dot-data-file)
-    ;; (do
-    ;;   ;; unzipping
-    ;;   (println (format "[!] Unpack to folder %s" unzip-folder))
-    ;;   (fs/unzip (:file package) unzip-folder)
-    ;;   ;;
-    ;;   (fs/copy unzip-folder ".")
-    ;;   )
+    (delete-file (:file package))
+    (delete-dir unzip-folder)))
 
-    
-    ;; (fs/copy file-jarman-executable file )
-    #_(if (download-package package)
-        (do (println (format "[!] Create folder %s" unzip-folder))
-            (fs/create-dir unzip-folder)
-            (println (format "[!] Unpack to folder %s" unzip-folder))
-            (fs/unzip (:file package) unzip-folder)
-            (println (format "[!] Merge configurations in %s" unzip-config-folder))
-            (fs/copy-dir-replace unzip-folder ".")
-            (fs/copy unzip-folder ".")
-            (println (format "[!] Delete update-package %s" (:file package)) )
-            (gfs/delete (:file package))
-            (println (format "[!] Delete temporary folder %s" unzip-config-folder) )
-            (gfs/delete-dir unzip-folder)
-            (println (format "[!] Finished update"))))
-    ;; (catch java.io.IOException e)
-    ))
+
+"./jarman.d/plugins"
+"./jarman.d/config"
+"src/jarman/managment/.jarman.data.clj"
+".jarman"
+
+(defn build-package [^PandaPackage package]
+  (let [;; Global configurations
+        unzip-folder (str (gensym "transact"))
+        ;; unzip-config-folder (clojure.java.io/file unzip-folder "config")
+        
+        ;; Files and folder inside unzipped
+        ;; transactional directory 
+        transact-file (make-transact-folder unzip-folder)
+        transact-jarman-plugins-dir   (transact-file "plugins")
+        transact-jarman-configs-dir   (transact-file "config")
+        transact-jarman-dot-file      (transact-file ".jarman")
+        transact-jarman-dot-data-file (transact-file ".jarman.data.clj")
+        transact-jarman-executable    (transact-file "Jarman.exe")
+
+        ;; destination directories
+        destination-plugins-dir (first jarman-plugins-dir-list)
+        destination-configs-dir (first jarman-configs-dir-list)
+        destination-jarman-dot  (first dot-jarman-paths-list)
+        destination-jarman-data (first dot-jarman-data-paths-list)
+        destination-jarman-executable "Jarman.exe"]
+
+    (println "* Startup installing")
+    (println (format "  install `%s`" (:file package)))
+    (println "** Package")
+    (println (format "  downloading `%s`" (:url package)))
+    (download-package package)
+    (verify-file (clojure.java.io/file (:file package)))
+    (unzip (:file package) unzip-folder)
+    (verify-file (clojure.java.io/file unzip-folder))
+    (println "** Unpacking package")
+    (verify-file (clojure.java.io/file unzip-folder))
+    (println "** Verifing folder")
+    (verify-file transact-jarman-plugins-dir)
+    (verify-file transact-jarman-configs-dir)
+    (verify-file transact-jarman-dot-file)
+    (verify-file transact-jarman-dot-data-file)
+    (verify-file transact-jarman-executable)
+    (println "** Verifing destinations")
+    (verify-file (clojure.java.io/file env/user-home))
+    (println "** Copying files")
+    (copy-file transact-jarman-dot-file destination-jarman-dot)
+    (copy-file transact-jarman-dot-data-file destination-jarman-data)
+    (copy-dir transact-jarman-configs-dir destination-configs-dir)
+    (copy-dir transact-jarman-plugins-dir destination-plugins-dir)
+    (copy-file transact-jarman-executable destination-jarman-executable)
+    (println "** Remove temporary files")
+    (delete-file (:file package))
+    (delete-dir unzip-folder)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -549,6 +582,5 @@
   (update-project (max-version --tmp-package-list--))
   (update-project (max-version (get-all-packages *repositories*)))
   ;; unzip test
-  (unzip "ftp://jarman:bliatdoit@192.168.1.69//jarman/jarman-1.0.4.zip" "kupa.zip")
-  (unzip "tst/kupa.zip" "tst/kkk"))
+  (unzip "ftp://jarman:bliatdoit@192.168.1.69//jarman/jarman-1.0.4.zip" "kupa.zip"))
 

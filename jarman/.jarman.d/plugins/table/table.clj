@@ -39,12 +39,16 @@
    (java.text SimpleDateFormat)))
 
 (defn grouping-model [state table-model]
-  (let [group-fn (:columns-group (:plugin-toolkit state))]
-    (group-fn table-model)))
+  (.group (:meta-obj (:plugin-toolkit state)) table-model)
+  ;; (let [group-fn (:columns-group (:plugin-toolkit state))]
+  ;;   (group-fn table-model))
+  )
 
 (defn ungrouping-model [state table-model]
-  (let [ungroup-fn (:columns-ungroup (:plugin-toolkit state))]
-    (ungroup-fn table-model)))
+  (.ungroup (:meta-obj (:plugin-toolkit state)) table-model)
+  ;; (let [ungroup-fn (:columns-ungroup (:plugin-toolkit state))]
+  ;;   (ungroup-fn table-model))
+  )
 
 
 (defn action-handler
@@ -73,7 +77,7 @@
   [state!]
   (gmg/migrid :v "[grow, center]"
               [(c/label
-                :text (:representation (:table-meta (:plugin-toolkit (state!)))) 
+                :text (:representation (.return-table (:meta-obj (:plugin-toolkit (state!))))) 
                 :halign :center
                 :font (gtool/getFont 15 :bold)
                 :foreground "#2c7375"
@@ -231,7 +235,7 @@
                               {:action :update-export-path
                                :value  (c/value (c/to-widget e))}))
                      nil)
-        table-id    (keyword (format "%s.id" (:field (:table-meta plugin-toolkit))))
+        table-id    (keyword (format "%s.id" (:field (.return-table (:meta-obj plugin-toolkit)))))
         id          (table-id (:model (state!)))]
     (smig/mig-panel
      :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px[grow]0px[fill]0px"]
@@ -494,7 +498,7 @@
      Switch fn to convert by map or keyword"
   [state! dispatch! panel model-defview]
   ;; (println (format "\nmeta-data %s\ntable-model %s\nmodel-defview %s\n" meta-data table-model model-defview))
-  (let [meta-data (convert-metadata-vec-to-map (get-in (state!) [:plugin-toolkit :columns-meta-join]))]
+  (let [meta-data (convert-metadata-vec-to-map (.return-columns-join (get-in (state!) [:plugin-toolkit :meta-obj])))]
     (doall (->> model-defview
                 (map #(cond
                         (map? %) (convert-map-to-component state! dispatch! panel meta-data %)
@@ -569,7 +573,7 @@
                           (if (nil? (:model-update plugin-config))
                             :model-insert
                             :model-update))
-          table-id (keyword (format "%s.id" (:field (:table-meta plugin-toolkit))))
+          table-id (keyword (format "%s.id" (:field (.return-table (:meta-obj plugin-toolkit)))))
           model-defview (current-model plugin-config)
           panel  (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
                                  :border (b/empty-border :thickness 10)

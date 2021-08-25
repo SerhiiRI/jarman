@@ -61,35 +61,48 @@
     Convert hex color in string and create obj color for background."
   [hex] `(ColorUIResource. (Color. ~@(hex-to-rgb hex))))
 
-(defn- compo-list
+(defn- compos-list
+  "Description:
+    Default swing layout."
+  []
+  ["Button" "ToggleButton" "RadioButton" "CheckBox" "ColorChooser"
+   "Label" "Table" "TextField" "PasswordField" "TextArea" "TextPane"
+   "EditorPane" "ToolTip"])
+
+(defn- layouts-list
   "Description:
     Default swing components."
   []
-  ["Button" "ToggleButton" "RadioButton" "CheckBox" "ColorChooser"
-   "ComboBox" "Label" "List" "MenuBar" "MenuItem" "RadioButtonMenuItem"
+  ["ComboBox" "List" "MenuBar" "MenuItem" "RadioButtonMenuItem"
    "CheckBoxMenuItem" "Menu" "PopupMenu" "OptionPane" "Panel"
-   "ProgressBar" "ScrollPane" "Viewport" "TabbedPane" "Table"
-   "TableHeader" "TextField" "PasswordField" "TextArea" "TextPane"
-   "EditorPane" "TitledBorder" "ToolBar" "ToolTip" "Tree"])
+   "ProgressBar" "ScrollPane" "Viewport" "TabbedPane"
+   "TitledBorder" "ToolBar" "Tree" "TableHeader"])
+
+(defn- all-compos [] (concat (layouts-list) (compos-list)))
 
 (defn- compo-list-suffix
   "Description:
     Add suffix to point component parameter."
-  [suffix]
-  (doall (map #(str % suffix) (compo-list))))
+  [compos suffix]
+  (doall (map #(str % suffix) compos)))
 
 (defn update-fonts
-  ([]                (update-fonts (:plain fonts) (compo-list-suffix ".font")))
-  ([font]            (update-fonts font (compo-list-suffix ".font")))
+  ([]                (update-fonts (:plain fonts) (compo-list-suffix (all-compos) ".font")))
+  ([font]            (update-fonts font (compo-list-suffix (all-compos) ".font")))
   ([font compo-list] (doall (map #(UIManager/put % font) compo-list))))
 
-(defn update-background
-  ([]                (update-background (bg-hex "#efefef") (compo-list-suffix ".background")))
-  ([background]      (update-background background (compo-list-suffix ".background")))
+(defn update-layouts-background
+  ([]                (update-layouts-background (bg-hex "#efefef") (compo-list-suffix (layouts-list) ".background")))
+  ([background]      (update-layouts-background background (compo-list-suffix (layouts-list) ".background")))
+  ([background compo-list] (doall (map #(UIManager/put % background) compo-list))))
+
+(defn update-compos-background
+  ([]                (update-compos-background (bg-hex "#fff") (compo-list-suffix (compos-list) ".background")))
+  ([background]      (update-compos-background background (compo-list-suffix (compos-list) ".background")))
   ([background compo-list] (doall (map #(UIManager/put % background) compo-list))))
 
 (defn update-foreground
-  ([]                (update-foreground (color-hex "#020020") (compo-list-suffix ".foreground")))
+  ([]                (update-foreground (color-hex "#020020") (compo-list-suffix (all-compos) ".foreground")))
   ([background]      (update-foreground background (compo-list-suffix ".foreground")))
   ([background compo-list] (doall (map #(UIManager/put % background) compo-list))))
 
@@ -105,7 +118,8 @@
     Load global style."
   []
   (update-fonts)
-  (update-background)
+  (update-layouts-background)
+  (update-compos-background)
   (update-foreground))
 
 ;; ┌───────────────┐
@@ -131,6 +145,7 @@
         (.setLocationRelativeTo nil) c/pack! c/show!)))
   
 ;;(style-demo)
+
 
 
 

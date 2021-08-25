@@ -39,7 +39,7 @@
 
 (defn- confgen--element--header-parameter
   [title]
-  (c/label :text title :font (gs/getFont 14 :bold)))
+  (c/label :text title :font (gs/getFont :bold)))
 
 (defn- confgen--element--combobox
   [local-changes path model]

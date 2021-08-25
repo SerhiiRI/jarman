@@ -4,8 +4,9 @@
             [jarman.tools.config-manager :as cm]))
 
 (defn copy [uri file]
-  (with-open [in (io/input-stream uri)
-              out (io/output-stream file)]
+  (with-open
+    [in (io/input-stream uri)
+     out (io/output-stream file)]
     (io/copy in out)))
 
 (defn is-edn?
@@ -14,7 +15,6 @@
   (let [f (if-not (string? path) path (clojure.java.io/file path))]
     (if (and (.isFile f) (.exists f))
       (= (rafs/extension path) ".edn"))))
-
 
 (defn create-dir [dir]
   (rafs/mkdirs dir))
@@ -33,6 +33,14 @@
                 (if-not (.exists parentDir) (.mkdirs parentDir))
                 (io/copy stream saveFile)))
             (recur (.getNextEntry stream))))))))
+
+
+(defn zip [directory out-file]
+ (with-open [zip (java.util.zip.ZipOutputStream. (io/output-stream out-file))]
+   (doseq [f (file-seq directory) :when (.isFile f)]
+     (.putNextEntry zip (java.util.zip.ZipEntry. (.getPath f)))
+     (io/copy f zip)
+     (.closeEntry zip))))
 
 #_(defn is-edn?
   "test if file have .edn extention"

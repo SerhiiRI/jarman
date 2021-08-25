@@ -6,11 +6,11 @@
         seesaw.border
         seesaw.dev
         seesaw.mig)
-  (:require [jarman.resource-lib.icon-library :as icon]
-            [jarman.gui.gui-tools :refer :all]
-            [jarman.gui.gui-alerts-service :refer :all]
-            [jarman.tools.swing :as stool]
-            [clojure.string :as string]))
+  (:require [clojure.string                   :as string]
+            [jarman.resource-lib.icon-library :as icon]
+            [jarman.gui.gui-tools             :as gtool]
+            [jarman.tools.swing               :as stool]
+            [jarman.gui.gui-alerts-service    :refer :all]))
 
 (import javax.swing.JLayeredPane)
 (import javax.swing.JLabel)
@@ -138,7 +138,6 @@
        Right Mouse Click Menu on table to control clicked table"
   [id x y] (let [border-c "#bbb"
                  btn (fn [txt ico] (label
-                                    :font (getFont 13)
                                     :text txt
                                     :icon (stool/image-scale ico 30)
                                     :background "#fff"
@@ -196,16 +195,16 @@
                            :mouse-clicked (fn [e]
                                             (if (= (.getButton e) MouseEvent/BUTTON3)
                                               (.add (get-in @views [:layered-for-tabs :component])
-                                                    (table-funcs-menu (config (getParent e) :id)
-                                                                      (- (+ (.getX e) (.getX (config (getParent e) :bounds))) 15)
-                                                                      (- (+ (+ (.getY e) (.getY (config e :bounds))) (.getY (config (getParent e) :bounds))) 10))
+                                                    (table-funcs-menu (config (gtool/getParent e) :id)
+                                                                      (- (+ (.getX e) (.getX (config (gtool/getParent e) :bounds))) 15)
+                                                                      (- (+ (+ (.getY e) (.getY (config e :bounds))) (.getY (config (gtool/getParent e) :bounds))) 10))
                                                     (new Integer 999))))
                            :mouse-dragged (fn [e]
                                             (do
                                               (if (= @last-x 0) (reset! last-x (.getX e)))
                                               (if (= @last-y 0) (reset! last-y (.getY e)))
                                               (cond
-                                                (= (get data :type) "header") (let [bounds (config (getParent e) :bounds)
+                                                (= (get data :type) "header") (let [bounds (config (gtool/getParent e) :bounds)
                                                                                     ;; x (- (+ (.getX bounds) (.getX e)) (/ (.getWidth (getParent e)) 2))
                                                                                     ;; y (- (+ (.getY bounds) (.getY e)) 15)
                                                                                     pre-x (- (+ (.getX bounds) (.getX e)) @last-x)
@@ -216,7 +215,7 @@
                                                                                     h (.getHeight bounds)]
                                                                                 (do
                                                                                   ;; (println [@last-x @last-y])
-                                                                                  (config! (getParent e) :bounds [x y w h]))))))
+                                                                                  (config! (gtool/getParent e) :bounds [x y w h]))))))
                            :mouse-released (fn [e] (do (reset! last-x 0)
                                                        (reset! last-y 0)))])))
 
@@ -256,7 +255,6 @@
   [] (let [btn (fn [txt ico & args] (let
                                      [border-c "#bbb"]
                                       (label
-                                       :font (getFont 13)
                                        :text txt
                                        :icon (stool/image-scale ico 30)
                                        :background "#fff"

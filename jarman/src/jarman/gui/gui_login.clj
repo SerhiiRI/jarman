@@ -11,6 +11,7 @@
             [jarman.logic.system-login :as system-login]
             [jarman.gui.gui-tools      :as gtool]
             [jarman.gui.gui-components :as gcomp]
+            [jarman.gui.gui-migrid     :as gmg]
             [jarman.logic.connection   :as conn]
             [jarman.logic.state        :as state]
             [jarman.tools.lang :refer :all]))
@@ -78,7 +79,6 @@
          :connections {}
          :data-log    {}
          :current-config {}
-         :validated-inputs {}
          :focus-compo nil}))
 
 
@@ -100,9 +100,11 @@
    (new-focus dispatch! compo)
    (switch-focus state!)))
 
+
+
 ;; ┌───────────────┐
 ;; │               │
-;; │     Body      │
+;; │  Local comps  │
 ;; │               │
 ;; └───────────────┘
 
@@ -118,12 +120,6 @@
       :light-red-color  "#Ffa07a"
       :back-color       "#c5d3dd"}))
 
-
-;; ┌───────────────┐
-;; │               │
-;; │  Local comps  │
-;; │               │
-;; └───────────────┘
 
 (declare login-panel)
 
@@ -165,10 +161,10 @@
   [info-list]
   (map
    (fn [[header body]]
-     [(gcomp/migrid
+     [(gmg/migrid
        :> :a
        (label-header header))
-      (gcomp/migrid
+      (gmg/migrid
        :> :a {:gap [0 10 10 0]}
        (label-body body))])
    info-list))
@@ -181,17 +177,22 @@
   [(-> (label-header (gtool/get-lang-header :faq)) (c/config! :border (b/empty-border :top 20)))
    (map
     (fn [faq-m]
-      [(gcomp/migrid
+      [(gmg/migrid
         :> :a
         (label-header (str "- " (:question faq-m)) 14))
-       (gcomp/migrid
+       (gmg/migrid
         :> :a {:lgap 10 :bgap 5}
         (label-body (:answer faq-m)))])
     faq-list)])
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; config-generator-JDBC + panel for config ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;; ┌──────────────────────────┐
+;; │                          │
+;; │  Access Configurations   │
+;; │                          │
+;; └──────────────────────────┘
 
 (defn- keys-generator
   "Example:
@@ -205,12 +206,12 @@
   (if (:valid? (cm/store)) "yes"))
 
 (defn- config-template
-  []{:name "Raspberry",
+  []{:name "Template",
      :type :block,
      :display :edit,
      :value
      {:dbtype
-      {:name "Typ połączenia",
+      {:name "Connection type",
        :type :param,
        :display :none,
        :component :text,
@@ -263,13 +264,13 @@
                 (if (= (c/text ) "")
                   (do (c/config! compo :border (err-underline compo true))  1)
                   (do (c/config! compo :border (err-underline compo false)) 0)))
-              (do (println "\nTry validate dbtype") 0)
+              ;;(do (println "\nTry validate dbtype") 0)
 
               (let [compo (gtool/gud v-host :val-compo)]
                 (if (< (count (c/text compo)) 4)
                   (do (c/config! compo :border (err-underline compo true))    1)
                   (do (c/config! compo :border (err-underline compo false))   0)))
-              (do (println "\nTry validate host") 0)
+              ;;(do (println "\nTry validate host") 0)
 
               (let [compo (gtool/gud v-port :val-compo)]
                 (if (= (re-find #"[\d]+" (c/text compo)) nil)
@@ -277,25 +278,26 @@
                   (if (< (Integer. (c/text compo)) 65000)
                     (do (c/config! compo :border (err-underline compo false)) 0)
                     (do (c/config! compo :border (err-underline compo true))  1))))
-              (do (println "\nTry validate port") 0)
+              ;;(do (println "\nTry validate port") 0)
 
               (let [compo (gtool/gud v-dbname :val-compo)]
                 (if (=  (c/text compo) "")
                   (do (c/config! compo :border (err-underline compo true))  1)
                   (do (c/config! compo :border (err-underline compo false)) 0)))
-              (do (println "\nTry validate dbname") 0)
+              ;;(do (println "\nTry validate dbname") 0)
 
               (let [compo (gtool/gud v-user :val-compo)]
                (if (=  (c/text compo) "")
                  (do (c/config! compo :border (err-underline compo true))    1)
                  (do (c/config! compo :border (err-underline compo false))   0)))
-              (do (println "\nTry validate user") 0)
+              ;;(do (println "\nTry validate user") 0)
 
               (let [compo (gtool/gud v-password :val-compo)]
                (if (=  (c/text compo) "")
                  (do (c/config! compo :border (err-underline compo true)) 1)
                  (do (c/config! compo :border (err-underline compo false)) 0)))
-              (do (println "\nTry validate passwd") 0)))
+              ;; (do (println "\nTry validate passwd") 0)
+              ))
     true false))
 
 (defn- config-to-check-map
@@ -362,11 +364,6 @@
                               :value  (if (= param-k :port)
                                         (Integer/parseInt (rift (c/text (c/to-widget e)) "3306"))
                                         (c/text (c/to-widget e)))}))}
-   :start-underline (let [valid? (get-in (state!) [:validated-inputs param-k])]
-                      (cond 
-                        (= valid? true) (colors :blue-green-color)
-                        (= valid? false)(colors :red-color)
-                        :else nil))
    :args [:editable? editable?]))
 
 (defn- config-label
@@ -382,7 +379,7 @@
   [state! dispatch! param-k
    & {:keys [editable?] :or {editable? true}}]
   (let [value-component (config-input state! dispatch! param-k editable?)]
-    (gcomp/migrid
+    (gmg/migrid
      :v {:args [:user-data {:val-compo value-component}]}
      [[(config-label (gtool/get-lang-header param-k))]
       [value-component]])))
@@ -431,7 +428,7 @@
                                                               (update-info-fn (str complete?) (colors :red-color))))))
           
           actions (fn []
-                    (gcomp/migrid
+                    (gmg/migrid
                      :> :a
                      [btn-save btn-conn btn-del]))
 
@@ -453,20 +450,19 @@
     Panel with FAQ and configuration form.
     You can change selected db connection."
   [state! dispatch! config-k]
-  (let [mig-p (gcomp/migrid
+  (let [mig-p (gmg/migrid
                :> "[:40%:40%, fill]0px[:60%:60%, fill]" :f
-               [(gcomp/migrid
+               [(gmg/migrid
                  :v 80 :a {:lgap "20%"}
                  (db-config-fields state! dispatch! config-k))
 
                 (gcomp/min-scrollbox
-                 (gcomp/migrid
+                 (gmg/migrid
                   :v 80 {:gap [10 "10%"]}
                   [(rift (about-panel (gtool/get-lang-infos :config-panel-about)) [])
-                   (rift (faq-panel   (gtool/get-lang-infos :config-panel-faq))   [])])
-                 :args [:listen [:focus-gained (fn [e] (println "\nFOcus scroll"))]])])
+                   (rift (faq-panel   (gtool/get-lang-infos :config-panel-faq))   [])]))])
         return-btn (return-to-login state! dispatch!)
-        panel (gcomp/migrid
+        panel (gmg/migrid
                :v :g :fgf
                [(-> (label-header (gtool/convert-txt-to-UP (gtool/get-lang-header :login-db-config-editor)) 20)
                     (c/config! :halign :center :border (b/empty-border :thickness 20)))
@@ -568,8 +564,10 @@
     (if-not (= :empty config-k)
       (if (map? (rift data-log nil))
         (do ;; close login panel and run jarman
-          (.dispose frame)
-          ((state/state :startup)))
+          (if (fn? (state/state :startup))
+            (do (.dispose frame)
+                ((state/state :startup)))
+            (c/alert (gtool/get-lang-alerts :app-startup-fail))))
         (do ;; set data info about error to state
           (dispatch! {:action :update-data-log
                       :path   [config-k]
@@ -646,7 +644,7 @@
   [state! dispatch! config-k log]
   (let [isize 32
         show (if log true false)]
-    (gcomp/migrid
+    (gmg/migrid
      :v :right :bottom
      {:gap [5 5 5 5] :args [:background "#fff" :visible? show]}
      [(if log
@@ -699,26 +697,27 @@
   (tail-vpanel-template
      state!
      dispatch!
-     (gcomp/vmig
+     (gmg/hmig
+      :wrap 1
       :args [:background "#fff"]
       :items [[(c/label
                 :icon (stool/image-scale icon/pen-128-png 34)
                 :halign :center)]])
      :empty))
 
-(defn- tails-configs
+(defn- all-tails-configs-panel
   "Description:
     State component. Return panel with tiles.
     Tiles have configurations to db connection.
     Panel watching state and will renderering items if some will be change in state.
   Example:
-    (tails-configs state! dispatch!)"
+    (all-tails-configs-panel state! dispatch!)"
   [state! dispatch!]
   (let [render-fn (fn []
                     (gtool/join-mig-items
                      (rift (tiles-list-with-confs state! dispatch!) [])
                      (rift (tile-add-new-config   state! dispatch!) [])))
-        mig (gcomp/vmig
+        mig (gmg/hmig
              :wrap 4
              :gap [10 10 10 10]
              :items (render-fn))
@@ -741,10 +740,10 @@
 
 (defn- contact-info
   [] 
-  (gcomp/migrid
+  (gmg/migrid
    :v :a
    [(-> (label-header (gtool/get-lang-header :contact)) (c/config! :border (b/empty-border :top 20)))
-    (gcomp/migrid
+    (gmg/migrid
      :v :a {:gap [10]}
      (doall (map #(label-body %) (gtool/get-lang-infos :contact))))]))
 
@@ -769,12 +768,12 @@
    Example:
      (info-panel state! dispatch!)"
   [state! dispatch!]
-  (gcomp/migrid :v :a "[grow, fill]0px[fill]"
+  (gmg/migrid :v :a "[grow, fill]0px[fill]"
    [(gcomp/min-scrollbox
-     (gcomp/migrid
+     (gmg/migrid
       :v 70 :fg
       {:gap [10 "15%"]}
-      [(gcomp/migrid
+      [(gmg/migrid
         :v {:gap [30]}
         (info-logo))
         (rift (about-panel (gtool/get-lang-infos :info-panel-about)) [])
@@ -822,7 +821,7 @@
   "Description:
     Bottom bar with icons whos invoking info panel, exit apa, etc"
   [state! dispatch!]
-  (gcomp/migrid :> :right {:gap [10 20]}
+  (gmg/migrid :> :right {:gap [10 20]}
                 [(icon-template icon/I-64-png     40 (fn [e] (c/config! (c/to-frame e) :content (info-panel state! dispatch!))))
                  (icon-template icon/enter-64-png 40 (fn [e] (.dispose (c/to-frame e))))
                  ]))
@@ -831,17 +830,17 @@
   "Description:
     Login and password inputs with state logic."
   [state! dispatch!]
-  (gcomp/migrid
+  (gmg/migrid
    :v :f :f;; Login inputs
    {:hpos :center}
-   [(gcomp/migrid
+   [(gmg/migrid
      :> "[fill]10px[200:, fill]" :f
      {:tgap 5}
      [(c/label :icon (stool/image-scale icon/user-blue1-64-png 40))
       (let [nf (login-input dispatch!)]
         (new-focus dispatch! nf) nf)])
     
-    (gcomp/migrid
+    (gmg/migrid
      :> "[fill]10px[200:, fill]" :f
      {:gap [10 15 0 0]}
      [(c/label :icon (stool/image-scale icon/key-blue-64-png 40))
@@ -860,14 +859,14 @@
 
   
   
-  (let [panel (gcomp/migrid :v :g :gf
-                            [(gcomp/migrid
+  (let [panel (gmg/migrid :v :g :gf
+                            [(gmg/migrid
                               :v :center ;; Main content
                               [(c/label  ;; Jarman logo
                                 :icon (stool/image-scale "icons/imgs/jarman-text.png" 6)
                                 :border (b/empty-border :thickness 20))
                                (login-inputs state! dispatch!)
-                               (tails-configs state! dispatch!)])
+                               (all-tails-configs-panel state! dispatch!)])
 
                              (login-icons state! dispatch!)])]
     (switch-focus state!)

@@ -16,6 +16,7 @@
             [seesaw.util :as u]
             [jarman.gui.gui-tools :as gtool]
             [jarman.gui.gui-components :as gcomp]
+            [jarman.gui.gui-style :as gs]
             
             ;; deverloper tools 
             [jarman.tools.swing :as stool]
@@ -144,7 +145,7 @@
   [name]
   (c/label
    :text name
-   :font (gtool/getFont 14 :bold)
+   :font (gs/getFont :bold)
    :foreground dark-grey-color
    :border (b/line-border :bottom 2
                           :color (gtool/get-color :background :header))))
@@ -181,12 +182,13 @@
                                     (func e))))]
      :items [[(c/label :text txt
                        :maximum-size  [100 :by 100]
-                       :font (gtool/getFont 12))]])))
+                       ;; :font (gtool/getFont 12)
+                       )]])))
 
 (def table-editor--element--header-view
   (fn [value]
     (c/text :text value
-          :font (gtool/getFont 14)
+          ;; :font (gtool/getFont 14)
           :background (gtool/get-color :background :input)
           :editable? false
           :border (b/compound-border (b/empty-border :left 10 :right 10 :top 5 :bottom 5)
@@ -289,7 +291,8 @@
 
 (defn panel-for-input
   [name description comp-key cmpts-atom]
-  (let [check (c/checkbox :text name :background gcomp/light-light-grey-color :font (gtool/getFont 12))
+  (let [check (c/checkbox :text name :background gcomp/light-light-grey-color ;; :font (gtool/getFont 12)
+                          )
         sel-comp-type (DateTime/getBar (into-array ["date" "time" "date-time"
                                                     "simple-number" "float-number"
                                                     "boolean" "linking-table"
@@ -324,7 +327,8 @@
   [func]
   (mig-panel ;; Button for add column to table
    :constraints ["wrap 1" "10px[grow, fill, center]0px" "0px[fill]0px"]
-   :items [[(c/flow-panel :items (list (c/label :text "add" :font (gtool/getFont 12)))
+   :items [[(c/flow-panel :items (list (c/label :text "add" ;; :font (gtool/getFont 12)
+                                                ))
                         :align :left
                         :listen [:mouse-clicked (fn [e] (do (func e)))
                                  :mouse-entered (fn [e] (c/config! e :cursor :hand))])]]))
@@ -350,7 +354,7 @@
                                           )])
     (c/config! selct-col :listen [:action-performed (fn [e]
                                                     (swap! cmpts-atom assoc :column-type (.toString (.getSelectedItem selct-col))))])
-    (c/config! main-panel :items [[(c/label :text "Adding column" :font (gtool/getFont 14 :bold) :foreground blue-color)]
+    (c/config! main-panel :items [[(c/label :text "Adding column" :font (gs/getFont :bold) :foreground blue-color)]
                                 [(gcomp/multi-panel [(c/vertical-panel :items (list inp-name inp-repr inp-descr inp-def))
                                                      (c/vertical-panel :items (list inp-selct inp-db))
                                                      (c/vertical-panel :items (list inp-pr inp-ed))]
@@ -374,7 +378,7 @@
                                        :constraints ["wrap 1" "grow, fill" ""]
                                        :items [[(c/label :text (name (:field column))
                                                        :border (b/empty-border :bottom 5)
-                                                       :font (gtool/getFont 14 :bold) :foreground blue-color)]
+                                                       :font (gs/getFont :bold) :foreground blue-color)]
                                                [(c/config! (switch-column-to-editing work-mode local-changes path-to-value column))]])]
                        (table-editor--component--column-picker-btn
                         (get-in column [:representation])
@@ -472,21 +476,21 @@
                                       (let [a (c/label
                                                :border (b/empty-border :left 10)
                                                :background "#fff"
-                                               :font (gtool/getFont 12)
+                                               ;; :font (gtool/getFont 12)
                                                :text (str
                                                       (name (last (butlast path)))
                                                       ": "))
                                             b (c/label
                                                :background "#ffb8bf"
-                                               :font (gtool/getFont 12)
+                                               ;; :font (gtool/getFont 12)
                                                :text (str (get-in table (flatten [:prop (vec (butlast path))])) ""))
                                             c (c/label
                                                :background "#fff"
-                                               :font (gtool/getFont 12)
+                                               ;; :font (gtool/getFont 12)
                                                :text " to ")
                                             d (c/label
                                                :background "#d1ffd9"
-                                               :font (gtool/getFont 12)
+                                               ;; :font (gtool/getFont 12)
                                                :text (str (last path)))]
                                         (c/horizontal-panel
                                          :background "#fff"
@@ -652,7 +656,7 @@
           rm-menu (fn [e] (.remove JLP mig) (.repaint JLP))
           
           btn (fn [txt ico onclick] (c/label
-                                     :font (gtool/getFont 13)
+                                     ;; :font (gtool/getFont 13)
                                      :text txt
                                      :icon (stool/image-scale ico 30)
                                      :background "#fff"
@@ -728,9 +732,9 @@
                                  :else "#fff")
                    
                    :font (cond
-                           (= (:type data) "header")     (gtool/getFont 12 :bold)
-                           (= (:type data) "key")        (gtool/getFont 12)
-                           (= (:type data) "connection") (gtool/getFont 12)
+                           (= (:type data) "header")     (gs/getFont :bold)
+                           (= (:type data) "key")        (gs/getFont 12)
+                           (= (:type data) "connection") (gs/getFont 12)
                            :else "#fff")
                    
                    :foreground (cond

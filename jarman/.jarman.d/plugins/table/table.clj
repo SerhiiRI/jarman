@@ -21,6 +21,7 @@
    [jarman.gui.gui-tools      :as gtool]
    [jarman.gui.gui-editors    :as gedit]
    [jarman.gui.gui-components :as gcomp]
+   [jarman.gui.gui-migrid     :as gmg]
    [jarman.gui.gui-calendar   :as calendar]
    [jarman.gui.popup :as popup]
    [jarman.plugins.composite-components :as ccomp]
@@ -38,12 +39,17 @@
    (java.text SimpleDateFormat)))
 
 (defn grouping-model [state table-model]
-  (let [group-fn (:columns-group (:plugin-toolkit state))]
-    (group-fn table-model)))
+  (.group (:meta-obj (:plugin-toolkit state)) table-model)
+  ;; (let [group-fn (:columns-group (:plugin-toolkit state))]
+  ;;   (group-fn table-model))
+  )
 
 (defn ungrouping-model [state table-model]
-  (let [ungroup-fn (:columns-ungroup (:plugin-toolkit state))]
-    (ungroup-fn table-model)))
+  (.ungroup (:meta-obj (:plugin-toolkit state)) table-model)
+  ;; (let [ungroup-fn (:columns-ungroup (:plugin-toolkit state))]
+  ;;   (ungroup-fn table-model))
+  )
+
 
 (defn action-handler
   "Description:
@@ -59,7 +65,7 @@
     :pepe-model     (assoc-in state [:model] {:pepe :pepe-was-here})
     :clear-model    (assoc-in state [:model] {})
     :clear-changes  (assoc-in state [:model-changes] {})
-    :update-changes (assoc-in state (join-vec [:model-changes] (:path action-m)) (:value action-m))
+    :update-changes (assoc-in state (do (println "val" (:value action-m)) (join-vec [:model-changes] (:path action-m))) (:value action-m))
     :set-model      (assoc-in state [:model] (grouping-model state (:value action-m)))
     :state-update   (assoc-in state (:path action-m) (:value action-m))
     :update-export-path (assoc-in state [:export-path] (:value action-m))
@@ -69,15 +75,14 @@
   "Description:
     Header in expand panel."
   [state!]
-  (gcomp/vmig
-   :hrules "[grow, center]"
-   :items [[(c/label
-             :text (:representation (:table-meta (:plugin-toolkit (state!)))) 
-             :halign :center
-             :font (gtool/getFont 15 :bold)
-             :foreground "#2c7375"
-             :border (b/compound-border (b/line-border :bottom 1 :color "#2c7375")
-                                        (b/empty-border :top 10)))]]))
+  (gmg/migrid :v "[grow, center]"
+              [(c/label
+                :text (:representation (.return-table (:meta-obj (:plugin-toolkit (state!))))) 
+                :halign :center
+                :font (gtool/getFont 15 :bold)
+                :foreground "#2c7375"
+                :border (b/compound-border (b/line-border :bottom 1 :color "#2c7375")
+                                           (b/empty-border :top 10)))]))
 
 (defn- form-type
   "Description:
@@ -230,7 +235,7 @@
                               {:action :update-export-path
                                :value  (c/value (c/to-widget e))}))
                      nil)
-        table-id    (keyword (format "%s.id" (:field (:table-meta plugin-toolkit))))
+        table-id    (keyword (format "%s.id" (:field (.return-table (:meta-obj plugin-toolkit)))))
         id          (table-id (:model (state!)))]
     (smig/mig-panel
      :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px[grow]0px[fill]0px"]
@@ -429,16 +434,17 @@
         val             (if (isComponent? val)
                           val (str val))
         func            (fn [e]
-                          (dispatch!
+                         (dispatch!
                            {:action :update-changes
                             :path   [(rift field-qualified :unqualifited)]
                             :value  (c/value (c/to-widget e))}))
         comp-func       (fn [e col-key] 
-                          (dispatch!
-                           {:action :update-changes
-                            ;;:state-update
-                            :path   [(rift field-qualified :unqualifited)]
-                            :value (assoc (key (:model-changes (state!))) col-key (c/value (c/to-widget e)))}))
+                          (do (dispatch!
+                              {:action :update-changes
+                               ;;:state-update
+                               :path   [(rift field-qualified :unqualifited)]
+                               :value (do (println "KEY" col-key) (println "PATH >>" (c/value (c/to-widget e)))(assoc (key (:model-changes (state!))) col-key (c/value (c/to-widget e))))})
+                              (println "M-Ch" (:model-changes (state!))) (println "STATE-->" (:model (state!)))))
         comp (gcomp/inpose-label
            ;;seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "5px[]5px"]
            ;;:items
@@ -492,7 +498,7 @@
      Switch fn to convert by map or keyword"
   [state! dispatch! panel model-defview]
   ;; (println (format "\nmeta-data %s\ntable-model %s\nmodel-defview %s\n" meta-data table-model model-defview))
-  (let [meta-data (convert-metadata-vec-to-map (get-in (state!) [:plugin-toolkit :columns-meta-join]))]
+  (let [meta-data (convert-metadata-vec-to-map (.return-columns-join (get-in (state!) [:plugin-toolkit :meta-obj])))]
     (doall (->> model-defview
                 (map #(cond
                         (map? %) (convert-map-to-component state! dispatch! panel meta-data %)
@@ -567,7 +573,7 @@
                           (if (nil? (:model-update plugin-config))
                             :model-insert
                             :model-update))
-          table-id (keyword (format "%s.id" (:field (:table-meta plugin-toolkit))))
+          table-id (keyword (format "%s.id" (:field (.return-table (:meta-obj plugin-toolkit)))))
           model-defview (current-model plugin-config)
           panel  (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
                                  :border (b/empty-border :thickness 10)

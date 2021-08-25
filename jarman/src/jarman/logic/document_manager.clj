@@ -4,23 +4,16 @@
            (java.sql ResultSet SQLException))
   (:require
    ;; Clojure toolkit 
-   [clojure.data :as data]
    [clojure.string :as string]
    [clojure.java.io :as io]
    [clojure.java.jdbc :as jdbc]
    [kaleidocs.merge :refer [merge-doc]]
    ;; Jarman toolkit
    [jarman.logic.connection :as db]
-   [jarman.config.config-manager :as cm]
    [jarman.tools.lang :refer :all]
-   [jarman.gui.gui-tools :refer :all :as gtool]
-   [jarman.resource-lib.icon-library :as ico]
-   [jarman.tools.swing :as stool]
-   [jarman.gui.gui-components :as gcomp]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
-   [jarman.logic.sql-tool :refer [select! update! insert! delete!]]
-   [jarman.logic.metadata :as mt])
+   [jarman.logic.sql-tool :refer [select! update! insert! delete!]])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 

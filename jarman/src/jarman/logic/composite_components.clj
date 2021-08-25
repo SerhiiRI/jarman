@@ -1,6 +1,7 @@
 (ns jarman.logic.composite-components
   (:require [miner.ftp :as ftp]
-            [jarman.logic.session :refer [get-user-configuration]]))
+            [jarman.logic.session :refer [get-user-configuration]]
+            [jarman.logic.document-manager :refer [update-blob!]]))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; FTP FUNCTIONS ;;;
@@ -102,11 +103,12 @@
 (defrecord File [file-name file]
   RemoteFileLoader
   (upload [this attributes]
-    (jarman.logic.document-manager/update-blob!
+    (update-blob!
      {:table_name      (:table_name attributes)
       :column-list     (:column_list attributes)
       :values          {:id   (:id attributes),
                         :file (:file-path attributes)}})))
+
 (defn isFile? [^jarman.logic.composite_components.File e]
   (instance? jarman.logic.composite_components.File e))
 

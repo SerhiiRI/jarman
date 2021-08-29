@@ -1,0 +1,17 @@
+#+TITLE: Jarman Manual v0.1
+#+AUTHOR: Serhii Riznychuk
+#+EMAIL: sergii.riznychuk@gmail.com
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style/org.css"/>
+#+OPTIONS: toc:3 html-postamble:nil
+
+* Menu
+  #+INCLUDE: "menu.org"
+
+* About
+  This book contain whole knowlage about what is Jarman by the client, user, buisness side. Explaining what purpose and how to develop this product. 
+  
+* Metadata
+  #+INCLUDE: "manual/metadata.org"
+  
+* Development
+  #+INCLUDE: "manual/git-flow.org"

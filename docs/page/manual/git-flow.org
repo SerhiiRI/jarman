@@ -1,0 +1,28 @@
+* Codebase
+
+Jarman code base is single repository, with all libraries, toolkits. Any cli toolkits also any managment code partially embed into jarman, this information are important by the servicing side, when we have some cli tool which can fix some problem to some version of client app was installed.
+Also that mean that new version jarman not would contain some legasy or any backward compatibility. If client app has 1.2.3 version, then toolkit you will fix some issues must have also 1.2.3 release version.
+
+** Git Flow
+
+Code, documentation and any things which has relation to jarman or main environment, also an project files as a documentation must be on one git repository, without any division on submodules. 
+
+Version explaining for central GUI client. 
+#+begin_example
+1.2.3 
+^ ^ ^-- patch
+| +---- minor release 
++------ major release
+#+end_example
+ 
+Every major release pushed on *dedicated branch*, with name "release-<number>". Major release mean "new architecture" or "new logical" concept, which require some buisness environment restriction. 
+Minor release mainly touch some additional feature, and good practise for this feature is making branch, but is not required, and relate do programmer comfort. 
+Patch updates it's some fix for platform or any visual changes, that must be updated by user. 
+You can create your branch per feature. Jarman haven't any ticketing system or etc. Every development changes pushed directly to the *master* branch.
+All changes must be noted in file =changelog.org=
+
+What important! You cannot increasing version jarman cli or jarman-box. All changes must be declared as changes for jarman central gui app, and pushed into the main /changelog.org/ file. Also not allowed making small patches only for cli applications. Argued this bahavior the same code base, which is not divided on libraries.  
+
+
+
+

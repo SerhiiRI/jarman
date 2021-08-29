@@ -1,0 +1,20 @@
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style/org.css"/>
+#+OPTIONS: toc:nil num:nil html-postamble:nil
+
+#+BEGIN_EXPORT html
+<img src="images/trashpanda-logo.png" alt="Trashpanda" width="500">
+#+END_EXPORT
+
+* Menu
+  #+INCLUDE: "menu.org"
+
+* Download
+
+  #+BEGIN_EXPORT html
+  <p>Please  jarman installer latest into your computer</p>
+  <p>Windows: <a href="jarman-setup.exe">download</a></p>
+  <p>Linux: <a href="jarman-setup.exe">download</a></p>
+  #+END_EXPORT
+  
+* News
+  #+INCLUDE: "news.org"

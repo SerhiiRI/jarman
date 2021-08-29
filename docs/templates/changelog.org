@@ -1,0 +1,30 @@
+#+TITLE: changelog
+# #+SETUPFILE: ../themes/src/simple_inline/simple_inline.theme
+# #+SETUPFILE: ../themes/src/stylish_white/stylish_white.theme
+# #+SETUPFILE: ../themes/src/white_clean/white_clean.theme
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../themes/org.css"/>
+#+OPTIONS: toc:1 num:nil html-postamble:nil
+
+* 0.1.0
+  
+** Added
+   - Another new features
+
+** Removed
+   - metadata new information
+     
+* 0.0.1
+
+** Added
+   - some features
+   
+** Changed
+   - Update year to match in every README example.
+   - Reluctantly stop making fun of Brits only, since most of the world writes dates in a strange way.
+   
+** Removed
+   - old export module
+   
+** Fixed
+   - Fix typos in recent README changes.
+   - Update outdated unreleased diff link.

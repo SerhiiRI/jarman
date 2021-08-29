@@ -1,0 +1,27 @@
+* June 2021 
+  
+** Table plugin. Export doc
+   <2021-08-29 Sun>
+
+   from now table plugin support new export features. Clicking by specific icon you can see dialog box, where you can choose one prefared way to export your data, it maybe Execl, CSV, or even Markdown
+
+   [[https://www.google.com][read more...]]
+
+* July 2021    
+  
+** Jarman storage support
+   <2021-08-29 Sun>
+  
+   Jarman version 1.0.1 support new composite datatypes, that must allow user to pushed data into external company storage
+
+   [[https://www.google.com][read more...]]
+
+** Redisign of menu
+   <2021-08-26 Thu>
+  
+   Plaining new feature release on end of month
+
+   [[https://www.google.com][read more...]]
+
+
+

@@ -1,0 +1,53 @@
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper,9pt]
+# +LATEX_HEADER: \usepackage[landscape]{geometry}
+#+LATEX_HEADER: \usepackage{xcolor}
+#+LATEX_HEADER: \usepackage{color}
+#+LATEX_HEADER: \usepackage{listings}
+#+TITLE: Jarman Manual v0.1
+#+LANGUAGE: en
+#+AUTHOR: Serhii Riznychuk
+#+EMAIL: sergii.riznychuk@gmail.com
+#+PROPERTY: cache yes 
+#+OPTIONS: toc:3 author:t date:nil
+# LATEX COLOR CONFIGURATION
+#+begin_export latex
+\definecolor{lightbackground}{RGB}{245,245,245}
+\definecolor{commentgray}{RGB}{143,143,143}
+\definecolor{keywordsblue}{RGB}{2,44,122}
+\definecolor{stringgreen}{RGB}{19,105,30}
+#+end_export
+# LISTINGS GLOBAL CONFIGURATION
+#+begin_export latex
+\lstset{ 
+  column=fixed,
+  backgroundcolor=\color{white},   
+  basicstyle=\small\ttfamily,
+  breakatwhitespace=false,
+  captionpos=b,
+  commentstyle=\ttfamily\color{commentgray},
+  frame=none,
+  keepspaces=true,
+  keywordstyle=\ttfamily\color{keywordsblue},
+  numbers=left,
+  numbersep=5pt,
+  numberstyle=\tiny\color{commentgray},
+  showtabs=false,
+  stepnumber=1,
+  showstringspaces=false,
+  stringstyle=\ttfamily\color{stringgreen},
+  tabsize=4
+}
+#+end_export
+
+* About
+  This book contain whole knowlage about what is Jarman by the client, user, buisness side. Explaining what purpose and how to develop this product. 
+  
+* DevOps
+  #+INCLUDE: "manual/installer.org"
+  
+* Metadata
+  #+INCLUDE: "manual/metadata.org"
+  
+* Development
+  #+INCLUDE: "manual/git-flow.org"

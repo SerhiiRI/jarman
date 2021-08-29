@@ -23,4 +23,5 @@ jarman/.lsp/sqlite.db
 installer/inno-target/
 installer/*.exe
 .git-credentials
-
+*.tex
+docs/public/site

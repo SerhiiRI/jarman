@@ -26,5 +26,4 @@
 	;; CHANGELOG
 	("jarman-all" :components ("jarman-documentation-index" "jarman-org-style" "jarman-org-images"))))
 
-(org-mode)
 (org-publish "jarman-all" t)

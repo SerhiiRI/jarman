@@ -1,4 +1,4 @@
-# Created 2021-08-29 Sun 19:44
+# Created 2021-08-31 Tue 19:08
 #+OPTIONS: toc:3 author:t date:nil
 #+TITLE: Jarman Manual v0.1
 #+AUTHOR: Serhii Riznychuk
@@ -12,6 +12,7 @@
 #+property: cache yes
 
 * About
+
 This book contain whole knowlage about what is Jarman by the client, user, buisness side. Explaining what purpose and how to develop this product. 
 
 * DevOps
@@ -62,7 +63,7 @@ Jarman files dividing logicaly as "something that is just program" and "all user
 While you try to say about "/something/ or /stuff/ must be dynamically generated" the main keyword is "dynamically". When you try to do some automatically build GUI or metadata logistic, some algorythm require a data, which in any scope discribe some "logic" for render or logic for composition something.
 Indeed, jarman don't understand how and what they must build, even that things discribe in #_CREATE_REF view.clj. Plugins, core jarman app need information about system tables, any other aspects that discribe one or anoter. For example name of table /user_account_system/ in database also must have some not ugly name for user, which will work with that table by the client side. Also we need to /inform/ user about permission to editing this table, or specifying for system if is table is something internal or it's buisness logic.
 Jarman system require avoid those information and allow to use it in any of cases, to get information about environtment, used tables, fields, refernces etc. 
-Take and look closelly by the example how to declare one.
+Take and look closelly by the example how to declare one. 
 
 ** Structure
 

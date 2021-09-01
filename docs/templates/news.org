@@ -1,8 +1,8 @@
-#+TITLE: changelog
-# #+SETUPFILE: ../themes/src/simple_inline/simple_inline.theme
+#+TITLE: news
+#+SETUPFILE: ../themes/src/simple_inline/simple_inline.theme
 # #+SETUPFILE: ../themes/src/stylish_white/stylish_white.theme
-# #+SETUPFILE: ../themes/src/white_clean/white_clean.themeh
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../themes/org.css"/>
+# #+SETUPFILE: ../themes/src/white_clean/white_clean.theme
+# #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../themes/org.css"/>
 #+OPTIONS: toc:2 num:nil html-postamble:nil
 
 * June 2021 

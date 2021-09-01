@@ -1,4 +1,4 @@
-#+SETUPFILE: ~/.emacs.d/org-styles/html/simple_white.theme
+#+SETUPFILE: simple_white.theme
 #+TITLE: Simple White
 #+AUTHOR: Unknown
 #+EMAIL: mail@blablub.nil

@@ -41,6 +41,7 @@
 #+end_export
 
 * About
+
   This book contain whole knowlage about what is Jarman by the client, user, buisness side. Explaining what purpose and how to develop this product. 
   
 * DevOps

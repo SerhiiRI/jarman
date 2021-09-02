@@ -31,19 +31,19 @@
      
 *** TODO Main view                                                   :@Aleks:
     - [X] On tabs replace non-active tab on more brighter color.
-    - [X] ON tabs replace `x` icon on one color.
+    - [X] ON tabs replace ~x~ icon on one color.
     - [-] change slider menu [3/4]
-      - [X] to `close-app` also add `logout`
-      - [X] remove `Change work mode`, and add optino to `.jarman` which will be add "key icon" to slider menu.
-      - [ ] create slider menu `.jarman` configuraion.
-      - [X] Remove `Db visuliser` from left bar.
+      - [X] to ~close-app~ also add ~logout~
+      - [X] remove ~Change work mode~, and add optino to ~.jarman~ which will be add "key icon" to slider menu.
+      - [ ] create slider menu ~.jarman~ configuraion.
+      - [X] Remove ~Db visuliser~ from left bar.
     - [X] Font. Select automaticaly Font's for all GUI components, becuase all plugins also must inherit those.
     - [-] Menu bar [6/7]
-      - [ ] increase slider menu size, and put this option to `.jarman` or `.jarman.d/config` directory, for you taste.
+      - [ ] increase slider menu size, and put this option to ~.jarman~ or ~.jarman.d/config~ directory, for you taste.
       - [X] Levels. Add spaces inside expand buttons groups.
       - [X] For levels in expand button please choose at least Six color levels, and repeat if user create level 7 or 8.
       - [X] For levels choose rainbow colors but make it little bit more pastel.
-      - [X] Change all black font's on closelly to black. Use some *dark-gray*, with blue-direction - `#030D1C` as example.
+      - [X] Change all black font's on closelly to black. Use some *dark-gray*, with blue-direction - ~#030D1C~ as example.
       - [X] Also for expand buttons use bold ubuntu fonts (looks little crappy).
       - [X] Chnage ordering items in menubar. At first place user must saw all buisness tables, and next any other *setting* or *db visualizer* etc.
 
@@ -78,9 +78,8 @@
    - [x] - fix alert window
    - [ ] - Changes in theme again can not saving to file
 ** TODO [#2] Check theme covering the GUI. Fix style  :@Julia:@Aleks:@Serhii:
-   - Note taken on [2021-09-02 чт 17:52] \\
      @Morfeu5z and @Julia47 , and I if you want, must create a group meeting
-      on which we try to resolve problems:
+     on which we try to resolve problems:
       
    - [ ] find were style in system not getting from config. 
    - [ ] create low priority issue with icons which must be redraw
@@ -91,9 +90,8 @@
    - [ ] Save table location in DB visualiser into configurations
 ** TODO [#3] DB Visualiser: Table adding form                        :@Julia:
 ** TODO [#2] Load fonts from jarman resourcesx                :@Julia:@Aleks:
-   - Note taken on [2021-09-02 чт 18:00] \\
-     Inside resources/fonts is an drirectory with JetBrainsMono font.
-     We need to use somehow this fonts.
+   Inside resources/fonts is an drirectory with JetBrainsMono font.
+   We need to use somehow this fonts.
 
    - [ ] - Create fontlist inside resources/fonts
    - [ ] - Select font
@@ -101,14 +99,13 @@
    - [ ] - View with avaliable fonts    
 ** TODO [#2] DB Visualiser, finishing                 :@Julia:@Aleks:@Serhii:
    - [ ] React on profile from session user. @SerhiiRI 
-   - [ ] Add button for `delete table` , `create table`
+   - [ ] Add button for ~delete table~ , ~create table~
    - [ ] Fix changes output , because now look bad
-   - [ ] Change `textfield` on type depending component, mean for boolean `chackbox` componetnt , etc. 
+   - [ ] Change ~textfield~ on type depending component, mean for boolean ~chackbox~ componetnt , etc. 
    - [ ] If table contain id-field, make button with dialog box. @SerhiiRI generate list of table can be related to current editable table  
-   - [ ] Make `:component-type`, `:field` , `:field-qualified` not editable even by admin. 
-   - [ ] Add buttons `remove column`, `add column`
+   - [ ] Make ~:component-type~, ~:field~ , ~:field-qualified~ not editable even by admin. 
+   - [ ] Add buttons ~remove column~, ~add column~
 ** TODO [#2] Table Controller Forms                                  :@Aleks:
-   
 ** TODO [#3] Config Generator Upgrade and Fix                        :@Aleks:
    - [ ] - block expand (there is to many parameters, we need to hide them as subconfig with title)
    - [ ] - message on save success
@@ -132,25 +129,24 @@
    - [ ] try add more KeyEventDispachers
    - [ ] lock repeating event on hold key
 * Backend
-** TODO [#2] service_period.clj | sort contract list         :@Julia:@Serhii:
-*** [ ] sorting contract by date
-*** [ ] colorize contract by active-nonactive depend on current date
 ** TODO [#1] themes plugin system                            :@Aleks:@Serhii:
-   - Note taken on [2021-09-02 чт 09:16] \\
-     With relation to our conversation, @Morfeu5z please make namespace like jarman.gui.style,
-     when you put simple variables . to customizing all styles per compoennt, after you done those taks,
-     call me, for "talk" about idiomatic direction of naming for styles(i mean lexical abstracution you use
-     to specifying variables style). As you remember i warn you not create variables like "button-one-border-bottom" etc.
+   With relation to our conversation, @Morfeu5z please make namespace like jarman.gui.style,
+   when you put simple variables . to customizing all styles per compoennt, after you done those taks,
+   call me, for "talk" about idiomatic direction of naming for styles(i mean lexical abstracution you use
+   to specifying variables style). As you remember i warn you not create variables like "button-one-border-bottom" etc.
      
-     Try to minimize count of those varaibles(mean not more 50 etc. it's not about repeating colors, it's about abstraction division)
+   Try to minimize count of those varaibles(mean not more 50 etc. it's not about repeating colors, it's about abstraction division)
 *** [ ] make this file, but not start integrate it to system, just create file. :@Aleks:    
 *** [ ] try to prepare some graphical view for changing theme. Discribe one theme as ", " :@Aleks:    
 *** [ ] create plugin declaration for themes.                       :@Serhii:
+** TODO [#2] service_period.clj | sort contract list         :@Julia:@Serhii:
+*** [ ] sorting contract by date
+*** [ ] colorize contract by active-nonactive depend on current date
 ** TODO [#2] Permission systems                                      :@Aleks:
-   - Note taken on [2021-09-02 чт 18:29] \\
-     ```clojure
+
+   #+begin_src clojure
      (session/test-persmission [:user :admin]) ;; => true
-     ```
+   #+end_src
    - [x] Render menu buttons by permission and hide empty expand
    - [x] Check permision for popup menu in DB Visualizer. Metadata and defview editor.
    - [ ] Create permission system 
@@ -161,6 +157,13 @@
    - [x] - Create function which invoke dialog box with export options
    - [ ] - Make spinner and notify if export is done
    - [ ] - Import custom defview
+** TODO [#2] Add history of state                                   :@Serhii:
+   - [ ] safe history
+   - [ ] restore state
+   - [ ] ~redo/undo~ only test
+** TODO [#2] Scroll to selected in table                             :@Aleks:
+   - [ ] - Scroll to selected in table
+** TODO [#2] Mapping and demapping toolkit for confgen              :@Serhii:
 ** TODO [#3] encrypt business files                                 :@Serhii:
    - [ ] create crypo toolkit
    - [ ] create key-storage
@@ -169,50 +172,34 @@
    - [ ] create key-storage     
 ** TODO [#3] Forms as quick table layout for component               :@Aleks:
    - [ ] Create tutorial how to use forms component
-   - [ ] Create own component where send as args vector with comonents in vector 
-[ [(label)(label)] ;; row 1 
-  [(label)(label)] ] ;; row 2
-** TODO [#2] Add history of state                                   :@Serhii:
-   - [ ] safe history
-   - [ ] restore state
-   - [ ] `redo/undo` only test
-** TODO [#2] Scroll to selected in table                             :@Aleks:
-   - [ ] - Scroll to selected in table
+   - [ ] Create own component where send as args vector with comonents in vector
+     #+begin_example
+     [ [(label)(label)] ;; row 1 
+     [(label)(label)] ] ;; row 2
+     #+end_example
+
 ** TODO [#3] Rewrite test for SSQL toolkit                   :@Julia:@Serhii:
-   - Note taken on [2021-09-02 чт 18:54] \\
-     Current testable API too old. API standard was reimplemented.
-      And strongly need to rewrite test cases for oll things query.
-     @SerhiiRI
+   Current testable API too old. API standard was reimplemented.
+   And strongly need to rewrite test cases for oll things query.
 ** TODO [#3] Versioning data structure                :@Julia:@Aleks:@Serhii:
-** TODO [#2] Mapping and demapping toolkit for confgen              :@Serhii:
 ** TODO [#3] sql_tools | debug                                      :@Serhii:
     - [ ] pretty printing for sql syntax
 ** TODO [#3] defvar managment                                :@Aleks:@Serhii:
-   - Note taken on [2021-09-02 чт 19:03] \\
-     After app loading, we have some values in system variables, divided by group name,
-     
-     - [ ] Create GUI which allow controlling and changing variables inside gui. 
-     - [ ] Make persistant function, which automatically wrote customized variable
-        back to =.jarman=, (also mean parsing file) 
+   After app loading, we have some values in system variables, divided by group name,
+   
+   - [ ] Create GUI which allow controlling and changing variables inside gui. 
+   - [ ] Make persistant function, which automatically wrote customized variable
+     back to =.jarman=, (also mean parsing file) 
 * Infrastructure
 ** TODO [#3] Ekka todo#1 chages                       :@Julia:@Aleks:@Serhii:
-*** Table of Contents
-    1.  [Під# Table of Contents приємець](#org1b56b41)
-    2.  [Point of sale](#org77a689a)
-    3.  [РРО](#org3f657b9)
-    4.  [Пломби](#org4e80084)
-    5.  [Ремонти](#orga3c8f0f)
-    6.  [ДОговір сервісного обслуговування](#org58b70df)
-    7.  [Акт виконаних робіт](#orgdc116d0)
-    <a id="org1b56b41"></a>
 *** Підприємець
     -   ЄДРПОУ - 10 цифр довжина з переду нулями
     -   Форма власності - комбобокс
     -   Номер ПДВ
-     <a id="org77a689a"></a>
+     
 *** Point of sale
     -   Назва торгового обєкту
-     <a id="org3f657b9"></a>
+     
 *** РРО
     -   повна назва
     -   Заводський номер замість серійний
@@ -222,10 +209,10 @@
     -   Ідентифікатор виробника -> Просто виробник назва
     -   Три поля модему замінити на тип зв'язку GPRS,Ethernet,Wireless.комбобокс. Якщо ГПРС то активний телефонний номер, якщо ні то дай компонент неактивним
     -   Телефонний номер не модема а РРО
-    <a id="org4e80084"></a>
+    
 *** Пломби
      -   Використана чи ні.
-     <a id="orga3c8f0f"></a>
+     
 *** Ремонти
       -   остання датат контаркуту видалити
       -   Фіскальний номер
@@ -235,7 +222,7 @@
       -   Характер насправності  - вибір
       -   Яка пломба ставиться   - додати
       -   Час(дата.година) розпломбування апарту
-      <a id="org58b70df"></a>
+      
 *** ДОговір сервісного обслуговування
        -   підприємець
        -   Сторона підписуванн
@@ -245,14 +232,14 @@
        -   Реквізити
        -   Строк дії договору(дефолт на рік)
        -   Нарахунок по дням
-       <a id="orgdc116d0"></a>
+       
 *** Акт виконаних робіт
 	-   створити
 
 * Documentations
 ** TODO [#2] Create jarman Vocabluary                               :@Serhii:
 ** TODO [#3] create jarman manifest file              :@Julia:@Aleks:@Serhii:
-   - Note taken on [2021-09-02 чт 19:01] \\
+   - Note taken on [2021-09-02 чт 19:01] 
      After making first release of Jarman and finishing plugin system write
      Manifest which must explain to us and others:
      

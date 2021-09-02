@@ -149,7 +149,7 @@
     :port 3307,
     :dbname "jarman",
     :user "root",
-    :password "1234"}
+    :password "misiePysie69"}
    :dell-test
    {:dbtype "mysql",
     :host "trashpanda-team.ddns.net",

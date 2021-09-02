@@ -1509,6 +1509,7 @@
                                       (let [new-path (chooser/choose-file
                                                       :suggested-name val
                                                       :success-fn  (fn [fc file] (.getAbsolutePath file)))]
+
                                         (icon-chooser (.getComponent e) new-path)
                                         (func (seesaw.core/label :text new-path))))
                            :args [:icon ico-to-choose])]

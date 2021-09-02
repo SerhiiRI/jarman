@@ -1083,6 +1083,11 @@
 ;;; OBJECT SYSTEM ;;;
 ;;;;;;;;;;;;;;;;;;;;;
 
+(defprotocol IFieldSearch
+  (find-field           [this field-name-kwd])
+  (find-field-qualified [this field-name-qualified-kwd])
+  (find-field-by-comp-var [this field-comp-var field-name-qualified-kwd]))
+
 (defprotocol IField
   (return-field           [this])
   (return-field-qualified [this])
@@ -1158,6 +1163,19 @@
 
 (defrecord FieldComposite [m group-fn ungroup-fn]
 
+  IFieldSearch
+  (find-field           [this field-name-kwd]
+    (first (filter (fn [field-m]
+                     (= (:field field-m) field-name-kwd)) (.return-columns this))))
+  
+  (find-field-qualified [this field-name-qualified-kwd]
+    (first (filter (fn [field-m]
+                     (= (:field-qualified field-m) field-name-qualified-kwd)) (.return-columns this))))
+  (find-field-by-comp-var [this field-comp-var field-name-qualified-kwd]
+    (reduce (fn [acc column] (if (= (:constructor-var column) field-comp-var)
+                               (conj acc (:field column)) acc)) []
+            (:columns (:m this))))
+
   IField
   (return-field           [this] (get (.m this) :field))
   (return-field-qualified [this] (get (.m this) :field-qualified))
@@ -1218,6 +1236,20 @@
 
 (deftype TableMetadata [m]
 
+  IFieldSearch
+  (find-field [this field-name-kwd]
+    (first (wrapp-cols-metadata-types
+            (filter (fn [field-m]
+                      (= (:field field-m) field-name-kwd)) (.return-columns-join this)))))
+  (find-field-qualified [this field-name-qualified-kwd]
+    (first (wrapp-cols-metadata-types
+            (filter (fn [field-m]
+                      (= (:field-qualified field-m) field-name-qualified-kwd)) (.return-columns-join this)))))
+  (find-field-by-comp-var [this field-comp-var field-name-qualified-kwd]
+    (reduce (fn [acc column] (if (= (:constructor-var column) field-comp-var)
+                             (conj acc (:field column)) acc)) []
+            (:columns (:m (.find-field-qualified this field-name-qualified-kwd)))))
+  
   IColumns
   (return-columns    [this]
     (vec (get-in (.m this) [:prop :columns] [])))
@@ -1304,7 +1336,7 @@
   (require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link field-composite prop]])
   ;;; ------------------
   (def s (TableMetadata. 
-          #_{:table_name "seal",
+          {:table_name "seal",
            :prop
            (prop
             :table (table :field "seal" :representation "seal"),
@@ -1324,8 +1356,24 @@
                                         (field :field :ftp_password :constructor-var :password :component-type [:text])
                                         (field :field :ftp_file_name :constructor-var :file-name :component-type [:text])
                                         (field :field :ftp_file_path :constructor-var :file-path :component-type [:text])])])}
-          (first (getset! :seal))
+          ;;(first (getset! :seal))
           ))
+
+  (def ftp-composite-field (nth (return-columns-composite-wrapp s) 2))
+
+  (.group ftp-composite-field {:seal.ftp_login "some" :seal.ftp_password "one"})
+  (.group ftp-composite-field {:seal.ftp_file_name "one"})
+
+  (.find-field-by-comp-var s :file-name :seal.loc_file)
+  (.find-field-by-comp-var (.find-field-qualified s :seal.loc_file) :file-name :seal.loc_file)
+
+  (.find-field-qualified s :seal.loc_file)
+
+  (.ungroup s {:seal.seal_number "jj", :seal.datetime_of_use "2021-08-31", :seal.datetime_of_remove "2021-09-25", :seal.site {:seal.site #jarman.logic.composite_components.Link{:text "kk", :link "kkk"}}, :seal.loc_file {:seal.loc_file #jarman.logic.composite_components.File{:file-name "test.txt", :file "/home/julia/test.txt"}}, :seal.ftp_file {:seal.ftp_file #jarman.logic.composite_components.FtpFile{:login "kjjj", :password "mm", :file-name "test.txt", :file-path "/home/julia/test.txt"}}})
+  
+  (.find-field s :site)
+  (.find-field-qualified s :seal.site)
+  (.find-field ftp-composite-field :ftp_login)
 
   (.return-columns-flatten s)
   (.return-columns-flatten-wrapp s)
@@ -1335,6 +1383,11 @@
   (.return-columns-composite-wrapp s)
   (.return-columns s)
   (.return-columns-wrapp s)
+  (.group (.find-field-qualified s :seal.site) {:seal.site_name "ddd"})
+
+  (let [name :seal.site]
+    (first (filter (comp not nil?) (map (fn [item] (if (= name (:field-qualified item))
+                                                     (vec (map (fn [column] [(:field-qualified column) (:component-type column)]) (:columns item))) nil)) (.return-columns-composite s)))))
   ;;; ------------------
   ;;; return all columsn 
   (map #(.return-field-qualified %) (.return-columns-flatten-wrapp s))
@@ -1343,7 +1396,48 @@
                              {:table_name :seal,
                               :column
                               [:#as_is :seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove :seal.site_name :seal.site_url :seal.file_name :seal.file :seal.ftp_login :seal.ftp_password :seal.ftp_file_name :seal.ftp_file_path]}))))
-  (.ungroup s (.group s s-e)))
+  (.ungroup s (.group s s-e))
+  
+  (.ungroup s (.group s {:text "ff"}))
+  (.ungroup s {:seal.site #jarman.logic.composite_components.Link{:text nil, :link nil}, :seal.loc_file #jarman.logic.composite_components.File{:file-name nil, :file nil}, :seal.ftp_file #jarman.logic.composite_components.FtpFile{:login nil, :password nil, :file-name nil, :file-path nil}})
+  (.ungroup s  {:seal.ftp_file {:login "fj"}, :seal.loc_file {:file-name "k"}}))
+
+;;;;;;;;;;;;;;;;
+;;; On meta! ;;;
+;;;;;;;;;;;;;;;;
+
+(defn create-table-by-meta [metadata]
+  (let [metadata (if (isTableMetadata? metadata) metadata (TableMetadata. metadata) )
+        all-columns (.return-columns-flatten metadata)]
+    (let [smpl-fields (filter (comp (partial not-allowed-rules ["meta*"]) name :field) all-columns)
+          idfl-fields (filter (comp (partial allowed-rules "id_*") name :field) all-columns)
+          fkeys-fields (vec (eduction (filter :foreign-keys) (map :foreign-keys) idfl-fields))]
+      (create-table!
+       {:table_name (keyword (.return-table_name metadata))
+        :columns (vec (map (fn [sf] {(keyword (:field sf)) (:column-type sf)}) smpl-fields))
+        :foreign-keys fkeys-fields}))))
+
+(defn create-all-table-by-meta [table-list]
+  (for [table table-list]
+    (let [mtable (first (getset table))]
+      (if-not (nil? mtable)
+        (create-table-by-meta mtable)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; METADATA RECUR ENGINE ;;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn --get-foreight-table-by-column [metadata-colum]
+  ((:field metadata-colum) (first (:foreign-keys metadata-colum))))
+(defn --do-table-frontend-recursion [table-meta on-recur-action & {:keys [back-ref column-ref]}]
+  (if table-meta
+    (let [front-refs (filter :foreign-keys ((comp :columns :prop) table-meta))]
+      (on-recur-action back-ref column-ref table-meta)
+      (if (not-empty front-refs)
+        (doseq [reference front-refs]
+          (--do-table-frontend-recursion
+           (first (getset! (--get-foreight-table-by-column reference)))
+           on-recur-action :back-ref table-meta :column-ref reference))))))
 
 ;;;;;;;;;;;;;;;;
 ;;; On meta! ;;;

@@ -15,7 +15,7 @@
     (.repaint mig)
     mig))
 
-(defn url-panel  [{func :func
+(defn url-panel  [{func :func  
                    val  :val}]
   (let [label-fn   (fn [text] (seesaw.core/label :text text :font (gtool/getFont)))
         title-txt  (gcomp/state-input-text {:func (fn [e] (func e :text))

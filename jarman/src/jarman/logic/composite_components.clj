@@ -52,7 +52,21 @@
   (get-file-ftp [this])
   (put-file-ftp [this]))
 
+(defn update-file [attributes]
+  (update-blob!
+   {:table_name      (:table_name attributes)
+    :column-list     (:column-list attributes)
+    :values          (conj {:id (:id attributes)}
+                           (:values attributes))}))
+
 (defrecord FtpFile [login password file-name file-path]
+  RemoteFileLoader
+  (upload [this attributes]
+    (update-blob!
+     {:table_name      (:table_name attributes)
+      :column-list     (:column-list attributes)
+      :values          (conj {:id (:id attributes)}
+                             (:values attributes))}))
   IStorage
   (load-session-config [this]
     (let [{:keys [login, password, host]}
@@ -81,7 +95,14 @@
 ;;; Link ;;;
 ;;;;;;;;;;;;
 ;; (clojure.java.browse/browse-url "http://clojuredocs.org")
-(defrecord Link [text link])
+(defrecord Link [text link]
+  RemoteFileLoader
+  (upload [this attributes]
+    (update-blob!
+     {:table_name      (:table_name attributes)
+      :column-list     (:column-list attributes)
+      :values          (conj {:id (:id attributes)}
+                             (:values attributes))})))
 ;; => jarman.plugin.agr_col_test.Link
 (defn isLink? [^jarman.logic.composite_components.Link e]
   (instance? jarman.logic.composite_components.Link e))
@@ -105,14 +126,25 @@
   (upload [this attributes]
     (update-blob!
      {:table_name      (:table_name attributes)
-      :column-list     (:column_list attributes)
-      :values          {:id   (:id attributes),
-                        :file (:file-path attributes)}})))
+      :column-list     (:column-list attributes)
+      :values          (conj {:id (:id attributes)}
+                             (:values attributes))})))
+
+ ;; (update-blob! {:table_name :seal
+ ;;                :column-list [[:file :blob]]
+ ;;                :values {:id 31
+ ;;                         :file "/home/julia/test.txt"}})
 
 (defn isFile? [^jarman.logic.composite_components.File e]
   (instance? jarman.logic.composite_components.File e))
 
 (def component-list [isFile? isLink? isFtpFile?])
+(def component-files [isFile? isFtpFile?])
+
+(defn isComponent? [val]
+  (some #(% val) component-list))
+(defn isComponentFiles? [val]
+  (some #(% val) component-files))
 
 (comment
   ;; test segment for some link

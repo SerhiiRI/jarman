@@ -39,7 +39,7 @@
             [jarman.plugin.plugin-loader     :refer [do-load-plugins]]
             [jarman.config.dot-jarman        :refer [dot-jarman-load]]))
 
-
+ 
 ;; ┌──────────────────────────┐
 ;; │                          │
 ;; │ App layout and GUI build │
@@ -273,4 +273,4 @@
                              (invoke-app)
                              :else (do (fn [])))))))
 
-;; ((state/state :startup))
+((state/state :startup))

@@ -8,8 +8,17 @@
 # #+ARCHIVE: ::* Archived
 #+ARCHIVE: %s_done::
 
+
 * Frontend
-** TODO [#1] Frontend refactorization
+** PROCESSING [#2] Jarman Theme Light Style, live coding :@Julia:@Aleks:@Serhii:
+   - [X] global font
+   - [X] global background
+   - [X] global foreground
+   - [ ] rewrite styles config
+   - [ ] unifing styles in UI
+   - [ ] removing unnessesary borders.
+   - [X] removing unnessesary font override         
+** PROCESSING [#1] Frontend refactorization
 *** TODO Icons                                                       :@Julia:
     - [ ] Plus icon. Replace =plus= icon, make add width, and make only one color. And =minus= do little bit higher, also =x= icon
     - [ ] refresh-reload icons, increase arrow, and make some distance between each other. Only one color
@@ -79,5 +88,20 @@
     fdsfdas
 
 * Backend
+** TODO [#2] service_period.clj | sort contract list         :@Julia:@Serhii:
+*** [ ] sorting contract by date
+*** [ ] colorize contract by active-nonactive depend on current date
+** TODO [#1] themes plugin system                            :@Aleks:@Serhii:
+   - Note taken on [2021-09-02 чт 09:16] \\
+     With relation to our conversation, @Morfeu5z please make namespace like jarman.gui.style,
+     when you put simple variables . to customizing all styles per compoennt, after you done those taks,
+     call me, for "talk" about idiomatic direction of naming for styles(i mean lexical abstracution you use
+     to specifying variables style). As you remember i warn you not create variables like "button-one-border-bottom" etc.
+     
+     Try to minimize count of those varaibles(mean not more 50 etc. it's not about repeating colors, it's about abstraction division)
+*** [ ] make this file, but not start integrate it to system, just create file. :@Aleks:    
+*** [ ] try to prepare some graphical view for changing theme. Discribe one theme as ", " :@Aleks:    
+*** [ ] create plugin declaration for themes.                       :@Serhii:
+
 * Infrastructure
 * Documentations

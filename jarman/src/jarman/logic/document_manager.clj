@@ -421,4 +421,31 @@
   (select-blob! {:table_name :documents
                :column-list [[:id :null] [:table_name :string] [:name :string] [:document :blob] [:prop :string]]
                :doc-column [[:document {:document-name :table_name :document-place "/home/serhii"}]]
-               :where [:= :id 18]}))
+                 :where [:= :id 18]}))
+
+
+(defn convert-to-jdbc-types [component-type]
+  (case (first component-type)
+    nil        :null
+    :date      :date
+    :datetime  :datetime
+    :time      :datetime   
+    :link      (throw (ex-info (format "Component type `%s` not supported by `document-manager.clj`. Please change type for metadata composite column where does it put from" (first component-type))
+                       {:type :unsupported-jdbc-type}))
+    :number    :int
+    :float     :float
+    :boolean   :bool
+    :textarea  :string
+    :blob      :blob
+    :prop      :string
+    :text      :string
+    :filepath  :string
+    :url       nil
+    true       nil))
+
+
+(defn get-columns-types [comp-name meta-obj]
+  (first (filter (comp not nil?) (map (fn [item] (if (= comp-name (:field-qualified item))
+                                                   (vec (map (fn [column] [(:field-qualified column)
+                                                                           (convert-to-jdbc-types(:component-type column))])
+                                                             (:columns item))) nil)) (.return-columns-composite meta-obj)))))

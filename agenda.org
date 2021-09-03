@@ -190,7 +190,6 @@
    - [ ] Create GUI which allow controlling and changing variables inside gui. 
    - [ ] Make persistant function, which automatically wrote customized variable
      back to =.jarman=, (also mean parsing file) 
-* Infrastructure
 ** TODO [#3] Ekka todo#1 chages                       :@Julia:@Aleks:@Serhii:
 *** Підприємець
     -   ЄДРПОУ - 10 цифр довжина з переду нулями
@@ -236,6 +235,7 @@
 *** Акт виконаних робіт
 	-   створити
 
+* Infrastructure
 * Documentations
 ** TODO [#2] Create jarman Vocabluary                               :@Serhii:
 ** TODO [#3] create jarman manifest file              :@Julia:@Aleks:@Serhii:
@@ -247,3 +247,5 @@
      - which things must be scalled, what must be classificated
         as Core and unchanged with no reason part of jarman
      - strategy and aims   
+
+       

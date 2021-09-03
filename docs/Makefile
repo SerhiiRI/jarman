@@ -12,6 +12,7 @@ help:
 	@echo -e "\tPublication manager help to create documentation\n\tto the jarman architecutre like static site\n\tgenerator, help to push on web info like changelog,\n\t news and developer manual"
 	@echo -e "${GREEN}${BOLD}TARGETS${NC}"
 	@echo -e "\tmanual/build-local - building developer manual book to /public/doc"
+	@echo -e "\tagenda/build-remote - publishing developer agenda to remote server"
 	@echo -e "\tsite/build-local - build site and push to local /public/site dir."
 	@echo -e "\tsite/build-remote - build site and push to remote server"
 	@echo -e "\tsite/clean - clean /public/site directory"
@@ -19,6 +20,9 @@ help:
 
 manual/build-local:
 	emacs --batch -l ../docs/el/publish-manual-local.el
+
+agenda/build-remote:
+	emacs --batch -l ../docs/el/publish-agenda-remote.el
 
 site/build-local:
 	emacs --batch -l ../docs/el/publish-site-local.el

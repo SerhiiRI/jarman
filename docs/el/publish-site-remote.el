@@ -8,7 +8,7 @@
          :base-directory "~/programs/jarman/docs/page"
 	 :base-extension "org"
 	 :exclude ".*"
-	 :include ["manual.org" "changelog.org" "index.org"]
+	 :include ["changelog.org" "index.org"]
          :publishing-function org-html-publish-to-html
          :publishing-directory "/ssh:root@trashpanda-team.ddns.net:/var/www/html/jarman"
          :style "<link rel=\"stylesheet\" type=\"text/css\" href=\"../themes/org.css\"/>")

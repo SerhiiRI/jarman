@@ -94,7 +94,16 @@
 (defn supply-content-info [items]
   (conj items
         (info "System information:")
-        (package-content (update-manager/->PandaPackage "Current Version" update-manager/*program-name* update-manager/*program-vers* nil nil))))
+        (c/horizontal-panel
+         :items
+         [(package-content (update-manager/->PandaPackage "Current Version" update-manager/*program-name* update-manager/*program-vers* nil nil))
+          (gcomp/button-basic "Clean Environment"
+                              :onClick (fn [_] (try-catch-alert
+                                               (update-manager/procedure-clean-env)
+                                               ((state/state :alert-manager)
+                                                :set {:header "Update Manager"
+                                                      :body   "Local Jarman configuraion was deleted"} 7))))])))
+
 
 (defn supply-content-to-install  [items package]
   (if package
@@ -105,10 +114,18 @@
            [(package-content package)
             (gcomp/button-basic "Install"
                                 :onClick (fn [_] (try-catch-alert
-                                                 (update-manager/procedure-update package))))
+                                                 (update-manager/procedure-update package)
+                                                 ((state/state :alert-manager)
+                                                  :set {:header "Update Manager"
+                                                        :body   (format "Jarman %s installed successfully"
+                                                                        (:version package))} 7))))
             (gcomp/button-basic "Download"
                                 :onClick (fn [_] (try-catch-alert
-                                                 (update-manager/download-package package))))]))
+                                                 (update-manager/download-package package)
+                                                 ((state/state :alert-manager)               
+                                                  :set {:header "Update Manager"
+                                                        :body   (format "Package %s was downloaded"
+                                                                        (:file package))}  7))))]))
     items))
 
 (defn supply-content-all-package [items package-list]
@@ -121,10 +138,19 @@
                [(package-content pkg)
                 (gcomp/button-basic (if (= (:version pkg) update-manager/*program-vers*) "Reinstall" "Downgrade")
                                     :onClick (fn [_] (try-catch-alert
-                                                     (update-manager/procedure-update pkg))))
+                                                     (update-manager/procedure-update pkg)
+                                                     ((state/state :alert-manager)
+                                                      :set {:header "Update Manager"
+                                                            :body   (format "Downgrade from %s to %s version was successfully"
+                                                                            update-manager/*program-vers*
+                                                                            (:version pkg))} 7))))
                 (gcomp/button-basic "Download"
                                     :onClick (fn [_] (try-catch-alert
-                                                     (update-manager/download-package pkg))))])))
+                                                     (update-manager/download-package pkg)
+                                                     ((state/state :alert-manager)               
+                                                      :set {:header "Update Manager"
+                                                            :body   (format "Package %s was downloaded"
+                                                                            (:file pkg))}  7))))])))
     (conj items
           (info "Available packages:")
           (info "-- empty --"))))

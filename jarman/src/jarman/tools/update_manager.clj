@@ -617,18 +617,6 @@
                  (clojure.java.io/file repository *program-name* (:file package)))
       (assoc package :uri (clojure.java.io/file repository *program-name* (:file package))))))
 
-;; (let [to-file? true]
-;;   (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
-;;     (let [package (build-package)]
-;;       (doall (map (partial send-package package) *repositories*)))
-;;     (update-project (max-version (get-all-packages *repositories*)))))
-
-;; (let [to-file? true]
-;;   (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
-;;     (let [package (build-package)]
-;;       (doall (map (partial send-package package) *repositories*)))
-;;     ))
-
 (def ^:dynamic *debug-to-file* true)
 
 (defn info-list-repository-packages [package-list]

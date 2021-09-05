@@ -32,12 +32,13 @@
 
 ;;(ftp-get-file "ftp://jarman:dupa@trashpanda-team.ddns.net" "jarman.txt")
 
-(.exists (clojure.java.io/file "/home/julia/test.txt"))
-(ftp-list-files "ftp://jarman:dupa@trashpanda-team.ddns.net" "jarman")
-(ftp-list-files "ftp://jarman:dupa@trashpanda-team.ddns.net" "/")
-(ftp-put-file "ftp://jarman:dupa@trashpanda-team.ddns.net"
-               "/test"
-              "/home/julia/test.txt")
+;; (.exists (clojure.java.io/file "/home/julia/test.txt"))
+;; (ftp-list-files "ftp://jarman:dupa@trashpanda-team.ddns.net" "jarman")
+;; (ftp-list-files "ftp://jarman:dupa@trashpanda-team.ddns.net" "/")
+;; (ftp-put-file "ftp://jarman:dupa@trashpanda-team.ddns.net"
+;;                "/test"
+;;               "/home/julia/test.txt")
+
 ;;show all files in directory
 ;;download file
 ;;upload file

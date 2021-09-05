@@ -6,31 +6,38 @@
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; FTP FUNCTIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;
+(defn get-configuration []
+  (let [conf (:ftp (get-user-configuration))]
+    (str "ftp://" (:login conf) ":" (:password conf) "@" (:host conf) )))
 
 (defn- copy [uri file]
   (with-open [in (clojure.java.io/input-stream uri)
               out (clojure.java.io/output-stream file)]
     (clojure.java.io/copy in out)))
 
-(defn- ftp-list-files [repo-url]
+(defn- ftp-list-files [repo-url path]
   (ftp/with-ftp [client repo-url]
-    (ftp/client-cd client "jarman")
+    (ftp/client-cd client path)
     (ftp/client-all-names client)))
 
 (defn- ftp-put-file [ftp-repo-url repo-path file-path ] 
   (ftp/with-ftp [client ftp-repo-url]
-    (ftp/client-cd client repo-path)))
+    (ftp/client-cd client repo-path)
+    (ftp/client-put client file-path)))
 
 (defn- ftp-get-file
   ([repo-url file-name]
    (do (copy (clojure.string/join "/" [repo-url "jarman" file-name]) file-name))))
 
+
 ;;(ftp-get-file "ftp://jarman:dupa@trashpanda-team.ddns.net" "jarman.txt")
-;;(.exists (clojure.java.io/file "/home/julia/test.png"))
-;;(ftp-list-files "ftp://jarman:dupa@trashpanda-team.ddns.net")
-;; (ftp-put-file "ftp://jarman:dupa@trashpanda-team.ddns.net"
-;;               "/db/user/"
-;;               "/home/julia/test.png")
+
+(.exists (clojure.java.io/file "/home/julia/test.txt"))
+(ftp-list-files "ftp://jarman:dupa@trashpanda-team.ddns.net" "jarman")
+(ftp-list-files "ftp://jarman:dupa@trashpanda-team.ddns.net" "/")
+(ftp-put-file "ftp://jarman:dupa@trashpanda-team.ddns.net"
+               "/test"
+              "/home/julia/test.txt")
 ;;show all files in directory
 ;;download file
 ;;upload file
@@ -53,6 +60,7 @@
   (put-file-ftp [this]))
 
 (defn update-file [attributes]
+  (println "HEYYYY")
   (update-blob!
    {:table_name      (:table_name attributes)
     :column-list     (:column-list attributes)
@@ -66,7 +74,11 @@
      {:table_name      (:table_name attributes)
       :column-list     (:column-list attributes)
       :values          (conj {:id (:id attributes)}
-                             (:values attributes))}))
+                             (:values attributes))})
+    (ftp-put-file (get-configuration)
+                  "/jarman"
+                  "/home/julia/test.txt"))
+  
   IStorage
   (load-session-config [this]
     (let [{:keys [login, password, host]}

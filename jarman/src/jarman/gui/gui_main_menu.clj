@@ -168,10 +168,13 @@
 
    "Administration"
    {"Update Manager" {:key "update-manager"
-                      :fn    update-manager/update-manager-panel}}
-   "Database"
-   {"DB Visualizer" {:key "db-visualizer"
-                     :fn    dbv/create-view--db-view}},
+                      :fn    update-manager/update-manager-panel}
+    "DB Visualizer" {:key "db-visualizer"
+                     :fn    dbv/create-view--db-view}
+    (gtool/get-lang-btns :settings)
+   {(gtool/get-lang-btns :settings) {:key    "settings"
+                                     :action :list
+                                     :fn     (fn [] (cg/create-expand-btns--confgen get-colors))}}}
    "Debug Items"
    {"Popup window" {:key        "popup-window"
                     :action     :invoke
@@ -235,10 +238,11 @@
                                                 {:val "(fn [x] (println \"Nice ass\" x)"}))
                                     :title "Code in popup"
                                     :size [500 400]}))}}
-   (gtool/get-lang-btns :settings)
-   {(gtool/get-lang-btns :settings) {:key    "settings"
-                                     :action :list
-                                     :fn     (fn [] (cg/create-expand-btns--confgen get-colors))}}})
+   ;; (gtool/get-lang-btns :settings)
+   ;; {(gtool/get-lang-btns :settings) {:key    "settings"
+   ;;                                   :action :list
+   ;;                                   :fn     (fn [] (cg/create-expand-btns--confgen get-colors))}}
+   })
 
 
 

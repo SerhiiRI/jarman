@@ -2,6 +2,7 @@
   (:require [jarman.tools.lang :refer :all]
             [clojure.string :as string]
             [seesaw.core    :as c]
+            [jarman.tools.update-manager-gui :as update-manager]
             [jarman.gui.gui-components :as gcomp]
             [jarman.gui.gui-tools      :as gtool]
             [jarman.logic.state        :as state]
@@ -164,11 +165,13 @@
       "lvl-2-2" {:key    "lvl 3-2"
                  :action :invoke
                  :fn      (fn [e] )}}}}
-   
+
+   "Administration"
+   {"Update Manager" {:key "update-manager"
+                      :fn    update-manager/update-manager-panel}}
    "Database"
    {"DB Visualizer" {:key "db-visualizer"
                      :fn    dbv/create-view--db-view}},
-   
    "Debug Items"
    {"Popup window" {:key        "popup-window"
                     :action     :invoke

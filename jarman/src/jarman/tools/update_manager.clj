@@ -9,6 +9,7 @@
    [me.raynes.fs :as gfs]
    ;; local functionality
    [jarman.tools.config-manager :as cm]
+   [jarman.config.dot-jarman-param :refer [defvar]]
    [jarman.tools.lang :refer [in?]]
    [jarman.tools.fs :as fs]
    ;; environtemnt variables
@@ -83,8 +84,11 @@
 
 ;; Struktura danych opisująca jeden package
 (defrecord PandaPackage [file name version artifacts uri])
-(def ^:dynamic *repositories* ["ftp://jarman:dupa@trashpanda-team.ddns.net"
-                               "/home/serhii/programs/jarman/jarman/test-repository"])
+
+(defvar jarman-update-repository-list ["ftp://jarman:dupa@trashpanda-team.ddns.net"]
+  :type clojure.lang.PersistentList
+  :group :update-system)
+
 (def ^:dynamic *program-name* "jarman")
 (def ^:dynamic *program-attr* ["zip" "windows.zip"])
 (def ^:dynamic *program-vers* `~(-> "project.clj" slurp read-string (nth 2)))
@@ -318,10 +322,10 @@
   "Description
     Get list of all packages from all repositories  
   Example
-    (get-all-packages *repositories*)
+    (get-all-packages jarman-update-repository-list)
       ;;=> [#PandaPackage{..}, #PandaPackage {
   See
-    `*repositories*` - list of all repositories"
+    `jarman-update-repository-list` - list of all repositories"
   [repositories]
   (mapcat
    (fn [url]
@@ -337,10 +341,10 @@
     Get list of all package, then filter
     relative to current environment attribues   
   Example
-    (get-all-packages *repositories*)
+    (get-all-packages jarman-update-repository-list)
       ;;=> [#PandaPackage{..}, #PandaPackage {
   See
-    `*repositories*` - list of all repositories"
+    `jarman-update-repository-list` - list of all repositories"
   [repositories]
   (reduce (fn [acc package]
             (if (and (= *program-name* (:name package))
@@ -530,8 +534,11 @@
         destination-jarman-executable "Jarman.exe"]
     (println (format "* Delete environment (%s)" (quick-timestamp)))
     (println "** Remove .jarman.d folders")
-    (delete-dir destination-configs-dir)
-    (delete-dir destination-plugins-dir)
+    ;; TEMPORARY ADD
+    (delete-dir (clojure.java.io/file env/user-home ".jarman.d"))
+    ;; TEMPORARY REMOVE
+    ;; (delete-dir destination-configs-dir)
+    ;; (delete-dir destination-plugins-dir)
     (println "** Remove jarman configs")
     (delete-file destination-jarman-dot)
     (delete-file destination-jarman-data)
@@ -597,7 +604,7 @@
 ;; (build-package)
 
 ;; (send-package #jarman.tools.update_manager.PandaPackage{:file "jarman-0.0.1.zip", :name "jarman", :version "0.0.1", :artifacts ".zip", :uri nil}
-;;               (first *repositories*))
+;;               (first jarman-update-repository-list))
 
 
 (defn send-package [^PandaPackage package ^String repository]
@@ -654,7 +661,7 @@
   (let [to-file? *debug-to-file*]
     (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
       (let [package (build-package)]
-        (doall (map (partial send-package package) *repositories*))
+        (doall (map (partial send-package package) (deref jarman-update-repository-list)))
         (delete-file (clojure.java.io/file (:file package)))
         package))))
 
@@ -663,7 +670,7 @@
    (procedure-create-log-file)
    (let [to-file? *debug-to-file*]
      (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
-       (let [package-list (get-all-packages *repositories*)]
+       (let [package-list (get-all-packages (deref jarman-update-repository-list))]
          (info-packages package-list)
          (update-project (max-version package-list))))))
   ([package]
@@ -676,7 +683,7 @@
   (procedure-create-log-file)
   (let [to-file? *debug-to-file*]
     (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
-      (let [package-list (get-filtered-packages *repositories*)]
+      (let [package-list (get-filtered-packages (deref jarman-update-repository-list))]
         (info-packages package-list)
         package-list))))
 
@@ -701,17 +708,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;
 
 (defn show-list-of-all-packages []
-  (get-all-packages *repositories*))
+  (get-all-packages (deref jarman-update-repository-list)))
 
 (defn check-package-for-update []
-  (max-version (get-all-packages *repositories*)))
+  (max-version (get-all-packages (deref jarman-update-repository-list))))
 
 (comment
-  (def --tmp-package-list-- (get-all-packages *repositories*))
+  (def --tmp-package-list-- (get-all-packages (deref jarman-update-repository-list)))
   (max-version --tmp-package-list--)
   
   (update-project (max-version --tmp-package-list--))
-  (update-project (max-version (get-all-packages *repositories*)))
+  (update-project (max-version (get-all-packages (deref jarman-update-repository-list))))
   ;; unzip test
   (unzip "ftp://jarman:bliatdoit@192.168.1.69//jarman/jarman-1.0.4.zip" "kupa.zip"))
 

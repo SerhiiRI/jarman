@@ -84,7 +84,7 @@
 ;; Struktura danych opisująca jeden package
 (defrecord PandaPackage [file name version artifacts uri])
 (def ^:dynamic *repositories* ["ftp://jarman:dupa@trashpanda-team.ddns.net"
-                               "/home/serhii/programs/jarman/jarman/test-repository"])
+                               "/home/julia/jarman/jarman/test-repository"])
 (def ^:dynamic *program-name* "jarman")
 (def ^:dynamic *program-attr* ["zip" "windows.zip"])
 (def ^:dynamic *program-vers* `~(-> "project.clj" slurp read-string (nth 2)))

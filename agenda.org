@@ -1,6 +1,5 @@
 #+TITLE: Agenda
-#+TODO: TODO(t) PROCESSING(p) | DONE(d)
-#+TODO: TOREVIEW(r) | REVIEWED(d)
+#+TODO: PLANNED(s) TODO(t) PROCESSING(p) TOREVIEW(r) | DONE(d)
 #+TAGS: @Julia(j) @Aleks(a) @Serhii(s)
 #+PRIORITIES: 1 3 2
 #+PROPERTY: session *EL* 
@@ -11,14 +10,16 @@
 
 * Frontend
 ** PROCESSING [#2] Jarman Theme Light Style, live coding :@Julia:@Aleks:@Serhii:
-   - [X] global font
-   - [X] global background
-   - [X] global foreground
+   DEADLINE: <2021-09-16 Thu>
    - [ ] rewrite styles config
    - [ ] unifing styles in UI
    - [ ] removing unnessesary borders.
+   - [X] global font
+   - [X] global background
+   - [X] global foreground
    - [X] removing unnessesary font override         
 ** PROCESSING [#1] Frontend refactorization
+   DEADLINE: <2021-09-15 Wed>
 *** TODO Icons                                                       :@Julia:
     - [ ] Plus icon. Replace =plus= icon, make add width, and make only one color. And =minus= do little bit higher, also =x= icon
     - [ ] refresh-reload icons, increase arrow, and make some distance between each other. Only one color
@@ -38,8 +39,14 @@
       - [ ] create slider menu ~.jarman~ configuraion.
       - [X] Remove ~Db visuliser~ from left bar.
     - [X] Font. Select automaticaly Font's for all GUI components, becuase all plugins also must inherit those.
-    - [-] Menu bar [6/7]
+    - [-] Menu bar [6/8]
       - [ ] increase slider menu size, and put this option to ~.jarman~ or ~.jarman.d/config~ directory, for you taste.
+      - [ ] Add documentation how to correctly pin some components to menus. Also add more information to the Exceptions
+	When i pin my panel, i get exception
+	#+begin_example
+	Gui view service: Cannot rerender :view-spaceWrong number of args (0) passed to: jarman.gui.gui-main-menu/default-menu-items/fn--28447
+	#+end_example
+	This is missunderstandable, please make throw some Exeption
       - [X] Levels. Add spaces inside expand buttons groups.
       - [X] For levels in expand button please choose at least Six color levels, and repeat if user create level 7 or 8.
       - [X] For levels choose rainbow colors but make it little bit more pastel.
@@ -47,6 +54,7 @@
       - [X] Also for expand buttons use bold ubuntu fonts (looks little crappy).
       - [X] Chnage ordering items in menubar. At first place user must saw all buisness tables, and next any other *setting* or *db visualizer* etc.
 
+	
 *** TODO Table.clj                                                   :@Aleks:
     - [X] remove 1pixel black border for right table.
     - [ ] text "hide" replace on julia (not created at that moment) left arrow, and background fill with one gray color, as "tab", or left section in table.clj, where components is.
@@ -85,11 +93,11 @@
    - [ ] create low priority issue with icons which must be redraw
    - [ ] unification design in some places.      
       
-** TODO [#3] Make diagram from DB Visualiser                         :@Julia:
+** PLANNED [#3] Make diagram from DB Visualiser                        :@Julia:
    - [ ] Visualize relation between tables
    - [ ] Save table location in DB visualiser into configurations
-** TODO [#3] DB Visualiser: Table adding form                        :@Julia:
-** TODO [#2] Load fonts from jarman resourcesx                :@Julia:@Aleks:
+** PLANNED [#3] DB Visualiser: Table adding form                       :@Julia:
+** PLANNED [#2] Load fonts from jarman resourcesx               :@Julia:@Aleks:
    Inside resources/fonts is an drirectory with JetBrainsMono font.
    We need to use somehow this fonts.
 
@@ -97,7 +105,7 @@
    - [ ] - Select font
    - [ ] - Using selected font
    - [ ] - View with avaliable fonts    
-** TODO [#2] DB Visualiser, finishing                 :@Julia:@Aleks:@Serhii:
+** PLANNED [#2] DB Visualiser, finishing                :@Julia:@Aleks:@Serhii:
    - [ ] React on profile from session user. @SerhiiRI 
    - [ ] Add button for ~delete table~ , ~create table~
    - [ ] Fix changes output , because now look bad
@@ -105,13 +113,13 @@
    - [ ] If table contain id-field, make button with dialog box. @SerhiiRI generate list of table can be related to current editable table  
    - [ ] Make ~:component-type~, ~:field~ , ~:field-qualified~ not editable even by admin. 
    - [ ] Add buttons ~remove column~, ~add column~
-** TODO [#2] Table Controller Forms                                  :@Aleks:
-** TODO [#3] Config Generator Upgrade and Fix                        :@Aleks:
+** PLANNED [#2] Table Controller Forms                                 :@Aleks:
+** PLANNED [#3] Config Generator Upgrade and Fix                       :@Aleks:
    - [ ] - block expand (there is to many parameters, we need to hide them as subconfig with title)
    - [ ] - message on save success
    - [ ] - message on save failed
    - [x] - fixed alert box permeation   
-** TODO [#3] Base components and views                       :@Aleks:@Serhii:
+** PLANNED [#3] Base components and views                      :@Aleks:@Serhii:
    - [ ] Popup dialog with auto size
    - [ ] Popup box with auto size
    - [x] Select list with atom to state save
@@ -122,14 +130,17 @@
    - [x] Empty frame as base window for quick testing components
    - [x] Popup box allways on top with exit button
    - [x] Popup dialog with block background
-** TODO [#3] Clobal event on key pressed                      :@Julia:@Aleks:
+** PLANNED [#3] Clobal event on key pressed                     :@Julia:@Aleks:
    - [x] Proxy for KeyEventDispacher for add global event on key pressed
    - [x] add and remove own KeyEventDispacher
    - [x] tutorial point
    - [ ] try add more KeyEventDispachers
    - [ ] lock repeating event on hold key
 * Backend
-** TODO [#1] themes plugin system                            :@Aleks:@Serhii:
+** TOREVIEW [#1] Update manager                                     :@Serhii:
+   - [X] updata manager lib and log
+   - [X] update manager GUI 
+** PLANNED [#2] themes plugin system                         :@Aleks:@Serhii:
    With relation to our conversation, @Morfeu5z please make namespace like jarman.gui.style,
    when you put simple variables . to customizing all styles per compoennt, after you done those taks,
    call me, for "talk" about idiomatic direction of naming for styles(i mean lexical abstracution you use
@@ -139,10 +150,10 @@
 *** [ ] make this file, but not start integrate it to system, just create file. :@Aleks:    
 *** [ ] try to prepare some graphical view for changing theme. Discribe one theme as ", " :@Aleks:    
 *** [ ] create plugin declaration for themes.                       :@Serhii:
-** TODO [#2] service_period.clj | sort contract list         :@Julia:@Serhii:
+** PLANNED [#2] service_period.clj | sort contract list      :@Julia:@Serhii:
 *** [ ] sorting contract by date
 *** [ ] colorize contract by active-nonactive depend on current date
-** TODO [#2] Permission systems                                      :@Aleks:
+** PLANNED [#2] Permission systems                                   :@Aleks:
 
    #+begin_src clojure
      (session/test-persmission [:user :admin]) ;; => true
@@ -152,25 +163,25 @@
    - [ ] Create permission system 
    - [ ] Make hide some element when user not in component persmission list
    - [ ] add function to get permission from session, or function which TEST something in session, for example
-** TODO [#2] Export doc as function                                  :@Aleks:
+** PLANNED [#2] Export doc as function                               :@Aleks:
    - [x] - Popup window
    - [x] - Create function which invoke dialog box with export options
    - [ ] - Make spinner and notify if export is done
    - [ ] - Import custom defview
-** TODO [#2] Add history of state                                   :@Serhii:
+** PLANNED [#2] Add history of state                                :@Serhii:
    - [ ] safe history
    - [ ] restore state
    - [ ] ~redo/undo~ only test
-** TODO [#2] Scroll to selected in table                             :@Aleks:
+** PLANNED [#2] Scroll to selected in table                          :@Aleks:
    - [ ] - Scroll to selected in table
-** TODO [#2] Mapping and demapping toolkit for confgen              :@Serhii:
-** TODO [#3] encrypt business files                                 :@Serhii:
+** PLANNED [#2] Mapping and demapping toolkit for confgen           :@Serhii:
+** PLANNED [#3] encrypt business files                              :@Serhii:
    - [ ] create crypo toolkit
    - [ ] create key-storage
-** TODO [#3] make URL clojure loader                         :@Julia:@Serhii:
+** PLANNED [#3] make URL clojure loader                      :@Julia:@Serhii:
    - [ ] create crypo toolkit
    - [ ] create key-storage     
-** TODO [#3] Forms as quick table layout for component               :@Aleks:
+** PLANNED [#3] Forms as quick table layout for component            :@Aleks:
    - [ ] Create tutorial how to use forms component
    - [ ] Create own component where send as args vector with comonents in vector
      #+begin_example
@@ -178,19 +189,19 @@
      [(label)(label)] ] ;; row 2
      #+end_example
 
-** TODO [#3] Rewrite test for SSQL toolkit                   :@Julia:@Serhii:
+** PLANNED [#3] Rewrite test for SSQL toolkit                :@Julia:@Serhii:
    Current testable API too old. API standard was reimplemented.
    And strongly need to rewrite test cases for oll things query.
-** TODO [#3] Versioning data structure                :@Julia:@Aleks:@Serhii:
-** TODO [#3] sql_tools | debug                                      :@Serhii:
+** PLANNED [#3] Versioning data structure             :@Julia:@Aleks:@Serhii:
+** PLANNED [#3] sql_tools | debug                                   :@Serhii:
     - [ ] pretty printing for sql syntax
-** TODO [#3] defvar managment                                :@Aleks:@Serhii:
+** PLANNED [#3] defvar managment                             :@Aleks:@Serhii:
    After app loading, we have some values in system variables, divided by group name,
    
    - [ ] Create GUI which allow controlling and changing variables inside gui. 
    - [ ] Make persistant function, which automatically wrote customized variable
      back to =.jarman=, (also mean parsing file) 
-** TODO [#3] Ekka todo#1 chages                       :@Julia:@Aleks:@Serhii:
+** PLANNED [#3] Ekka todo#1 chages                    :@Julia:@Aleks:@Serhii:
 *** Підприємець
     -   ЄДРПОУ - 10 цифр довжина з переду нулями
     -   Форма власності - комбобокс

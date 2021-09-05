@@ -127,10 +127,6 @@
     (ftp/client-cd client "jarman")
     (ftp/client-all-names client)))  
 
-(comment
-  (ftp-list-files "ftp://jarman:dupa@192.168.1.69")
-  (ftp-list-files "ftp://jarman:dupa@trashpanda-team.ddns.net"))
-
 (defn ftp-put-file [ftp-repo-url repo-path file-path]
   (ftp/with-ftp [client ftp-repo-url]
     (ftp/client-cd client repo-path)
@@ -153,6 +149,10 @@
          path-to-file)))
   ([repo-url file-name]
    (do (copy (string/join "/" [repo-url "jarman" file-name]) file-name))))
+
+(comment
+  (ftp-list-files "ftp://jarman:dupa@192.168.1.69")
+  (ftp-list-files "ftp://jarman:dupa@trashpanda-team.ddns.net"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; path file manager ;;;
@@ -223,7 +223,7 @@
                      (or (= 1 (count xs)) (not= (first xs) (first ys))) (cmpr (first xs) (first ys))
                      :else ((f f) cmpr (rest xs) (rest ys)))))) comparator-f (parse-int v1) (parse-int v2))))
 
-(defn- max-version
+(defn max-version
   "Return max version package from `package-list`, if current
   program version equal to package - return `nil`"
   [package-list]
@@ -313,6 +313,7 @@
                %1))
           [] (path-list-files repository)))
 
+
 (defn get-all-packages
   "Description
     Get list of all packages from all repositories  
@@ -330,6 +331,22 @@
          (ftp? url)  (preproces-from-ftp  url)
          (path? url) (preproces-from-path url)
          :else nil))) repositories))
+
+(defn get-filtered-packages
+  "Description
+    Get list of all package, then filter
+    relative to current environment attribues   
+  Example
+    (get-all-packages *repositories*)
+      ;;=> [#PandaPackage{..}, #PandaPackage {
+  See
+    `*repositories*` - list of all repositories"
+  [repositories]
+  (reduce (fn [acc package]
+            (if (and (= *program-name* (:name package))
+                   (in? *program-attr* (:artifacts package)))
+              (conj acc package) acc))
+          [] (get-all-packages repositories)))
 
 (defn download-package
   "Description
@@ -600,18 +617,17 @@
                  (clojure.java.io/file repository *program-name* (:file package)))
       (assoc package :uri (clojure.java.io/file repository *program-name* (:file package))))))
 
+;; (let [to-file? true]
+;;   (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
+;;     (let [package (build-package)]
+;;       (doall (map (partial send-package package) *repositories*)))
+;;     (update-project (max-version (get-all-packages *repositories*)))))
 
-(let [to-file? true]
-  (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
-    (let [package (build-package)]
-      (doall (map (partial send-package package) *repositories*)))
-    (update-project (max-version (get-all-packages *repositories*)))))
-
-(let [to-file? true]
-  (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
-    (let [package (build-package)]
-      (doall (map (partial send-package package) *repositories*)))
-    ))
+;; (let [to-file? true]
+;;   (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
+;;     (let [package (build-package)]
+;;       (doall (map (partial send-package package) *repositories*)))
+;;     ))
 
 (def ^:dynamic *debug-to-file* true)
 
@@ -638,11 +654,15 @@
 ;;;;;;;;;;;;;;;;;;
 
 (defn procedure-create-log-file []
-  (spit "update-manager-log.org"
-        "#+TITLE: Update manager Log file\n#+AUTHOR: Serhii Riznychuk\n#+EMAIL: sergii.riznychuk@gmail.com\n#+STARTUP: overview
-"))
+  (if (not (.exists (clojure.java.io/file "update-manager-log.org")))
+    (spit "update-manager-log.org"
+          "#+TITLE: Update manager Log file\n#+AUTHOR: Serhii Riznychuk\n#+EMAIL: sergii.riznychuk@gmail.com\n#+STARTUP: overview
+")))
+
+
 
 (defn procedure-package []
+  (procedure-create-log-file)
   (let [to-file? *debug-to-file*]
     (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
       (let [package (build-package)]
@@ -650,20 +670,30 @@
         (delete-file (clojure.java.io/file (:file package)))
         package))))
 
-(defn procedure-update []
-  (let [to-file? *debug-to-file*]
-    (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
-      (let [package-list (get-all-packages *repositories*)]
-        (info-packages package-list)
-        (update-project (max-version package-list))))))
+(defn procedure-update
+  ([]
+   (procedure-create-log-file)
+   (let [to-file? *debug-to-file*]
+     (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
+       (let [package-list (get-all-packages *repositories*)]
+         (info-packages package-list)
+         (update-project (max-version package-list))))))
+  ([package]
+   (procedure-create-log-file)
+   (let [to-file? *debug-to-file*]
+     (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
+       (update-project package)))))
 
 (defn procedure-info []
+  (procedure-create-log-file)
   (let [to-file? *debug-to-file*]
     (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
-      (let [package-list (get-all-packages *repositories*)]
-        (info-packages package-list)))) true)
+      (let [package-list (get-filtered-packages *repositories*)]
+        (info-packages package-list)
+        package-list))))
 
 (defn procedure-clean-env []
+  (procedure-create-log-file)
   (let [to-file? *debug-to-file*]
     (binding [*out* (if to-file? (clojure.java.io/writer "update-manager-log.org" :append true))]
       (clean-up-environment))) true)
@@ -696,11 +726,4 @@
   (update-project (max-version (get-all-packages *repositories*)))
   ;; unzip test
   (unzip "ftp://jarman:bliatdoit@192.168.1.69//jarman/jarman-1.0.4.zip" "kupa.zip"))
-;; => nil
-;; => nil
-
-
-
-
-
 

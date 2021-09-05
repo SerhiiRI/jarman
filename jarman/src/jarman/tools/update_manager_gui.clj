@@ -166,16 +166,16 @@
 (defn update-manager-panel []
   (let [package-list package-list-chache
         package-to-update (update-manager/max-version package-list)]
-    (c/vertical-panel
-     :background "#fff"
-     :items
-     (-> (startup-components)
-         (supply-content-info)
-         (supply-content-to-install package-to-update)
-         (supply-content-all-package package-list)))))
+    (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[]0px"]
+                          :background "#fff"
+                          :items
+                          (gtool/join-mig-items (-> (startup-components)
+                                                    (supply-content-info)
+                                                    (supply-content-to-install package-to-update)
+                                                    (supply-content-all-package package-list))))))
 
 (comment
- (-> (c/frame :content (update-manager-panel))
-     c/pack!
-     c/show!))
+  (-> (c/frame :content (update-manager-panel))
+      c/pack!
+      c/show!))
 

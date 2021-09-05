@@ -29,7 +29,7 @@
     - [ ] =Select all=, is like "checkbox" =[V]=
     - [ ] Pay icon. (hrywna) + (dolar)
     - [ ] До лупи додати кінець, одноколірна.
-*** TODO Upgrade UI Elements                                         :@Julia:
+*** TODO Upgrade UI Elements                                  :@Julia:@Aleks:
     - [ ] to ~(state/state :alert-manager)~
       #+begin_src clojure
 	((state/state :alert-manager)
@@ -148,10 +148,8 @@
    - [ ] try add more KeyEventDispachers
    - [ ] lock repeating event on hold key
 * Backend
-** DONE [#1] Update manager                                         :@Serhii:
-   CLOSED: [2021-09-05 Sun 15:43]
-   - [X] updata manager lib and log
-   - [X] update manager GUI 
+** TODO Rewrite plugin system                                       :@Serhii:
+   
 ** PLANNED [#2] themes plugin system                         :@Aleks:@Serhii:
    With relation to our conversation, @Morfeu5z please make namespace like jarman.gui.style,
    when you put simple variables . to customizing all styles per compoennt, after you done those taks,
@@ -258,10 +256,14 @@
 *** Акт виконаних робіт
 	-   створити
 
+** DONE [#1] Update manager                                         :@Serhii:
+   CLOSED: [2021-09-05 Sun 15:43]
+   - [X] updata manager lib and log
+   - [X] update manager GUI 
 * Infrastructure
 * Documentations
-** TODO [#2] Create jarman Vocabluary                               :@Serhii:
-** TODO [#3] create jarman manifest file              :@Julia:@Aleks:@Serhii:
+** PLANNED [#3] Create jarman Vocabluary                            :@Serhii:
+** PLANNED [#3] create jarman manifest file                         :@Serhii:
    - Note taken on [2021-09-02 чт 19:01] 
      After making first release of Jarman and finishing plugin system write
      Manifest which must explain to us and others:

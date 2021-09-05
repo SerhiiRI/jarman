@@ -84,7 +84,6 @@
 
 ;; Struktura danych opisująca jeden package
 (defrecord PandaPackage [file name version artifacts uri])
-
 (defvar jarman-update-repository-list ["ftp://jarman:dupa@trashpanda-team.ddns.net"]
   :type clojure.lang.PersistentList
   :group :update-system)

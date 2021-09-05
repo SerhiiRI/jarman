@@ -130,7 +130,12 @@
           (info "-- empty --"))))
 
 ;; (def package-list-chache (update-manager/get-filtered-packages update-manager/*repositories*))
-(def package-list-chache (update-manager/procedure-info))
+
+(def package-list-chache [])
+(.start
+ (Thread.
+  (fn []
+    (def package-list-chache (update-manager/procedure-info)))))
 
 (defn update-manager-panel []
   (let [package-list package-list-chache

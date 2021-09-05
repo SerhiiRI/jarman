@@ -49,5 +49,9 @@
 (defn allow-permission?
   [coll] (in? coll (keyword (get-user-permission))))
 
-(user-get)
 
+
+;; (jarman.logic.system-login/login-user "user" "user")
+;; (user-get)
+
+ 

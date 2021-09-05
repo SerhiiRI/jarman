@@ -44,35 +44,36 @@
 
 (defn ungrouping-model [state table-model]
   (.ungroup (:meta-obj (:plugin-toolkit state)) table-model))
-(merge {:a 2} {:a 3})
 
-(vals {:a 2})
-;; to do
 (defn action-handler
   "Description:
     Invoke fn using dispatch!.
   Example:
     (@state {:action :test})"
   [state action-m]
-  (let [meta-obj (:meta-obj (:plugin-toolkit state))]
+  (let [meta-obj (:meta-obj (:plugin-toolkit state))
+        value    (:value action-m)
+        k-path   (:path action-m)
+        k-field  (first k-path)]
     (case (:action action-m)
     ;;; add switch for insert update
-      :switch-insert-update (assoc-in state [:insert-mode] (:value action-m))
-      :table-render         (assoc-in state [:table-render] (:value action-m))
-      :add-missing          (assoc-in state (:path action-m) nil)
+      :switch-insert-update (assoc-in state [:insert-mode] value)
+      :table-render         (assoc-in state [:table-render] value)
+      :add-missing          (assoc-in state k-path nil)
       :pepe-model           (assoc-in state [:model] {:pepe :pepe-was-here})
       :clear-model          (assoc-in state [:model] {})
       :clear-changes        (assoc-in state [:model-changes] {})
-      :update-changes       (assoc-in state (join-vec [:model-changes] (:path action-m))
-                                      (:value action-m))
-      :update-comps-changes (assoc-in state (join-vec [:model-changes] (:path action-m))
-                                      ;; TO REWRITE
-                                      ((first (:path action-m)) (.group (.find-field-qualified meta-obj (first (:path action-m)))
-                                                                  (merge (reduce (fn [acc [k v]] (if (nil? v) acc (conj acc {k v}))) {}
-                                                                                 (.ungroup meta-obj (get-in state (join-vec [:model-changes] (:path action-m))))) (first (map (fn [[k v]] {(keyword (str (first (string/split (name (first (:path action-m))) #"\.")) "." (name (first (.find-field-by-comp-var meta-obj k (first (:path action-m))))))) v}) (:value action-m)))))) )
-      :set-model            (assoc-in state [:model] (grouping-model state (:value action-m)))
-      :state-update         (assoc-in state (:path action-m) (:value action-m))
-      :update-export-path   (assoc-in state [:export-path] (:value action-m))
+      :update-changes       (assoc-in state (join-vec [:model-changes] k-path) value)
+      :update-comps-changes (assoc-in state (join-vec [:model-changes] k-path)
+                                      (k-field (.group (.find-field-qualified meta-obj k-field)
+                                                       (merge (reduce (fn [acc [k v]] (if (nil? v) acc (conj acc {k v}))) {}
+                                                                      (ungrouping-model state  {k-field (get-in state (join-vec [:model-changes] k-path))}))
+                                                              (first (map (fn [[k v]] {(keyword (str (first (string/split (name k-field) #"\.")) "."
+                                                                                                     (name (first (.find-field-by-comp-var meta-obj k k-field))))) v})
+                                                                          value))))))
+      :set-model            (assoc-in state [:model] (grouping-model state value))
+      :state-update         (assoc-in state k-path value)
+      :update-export-path   (assoc-in state [:export-path] value)
       :test                 (do (println "\nTest") state))))
 
 (defn- create-header
@@ -255,7 +256,7 @@
                                     (try
                                       ((doc/prepare-export-file
                                         (:->table-name plugin-config) doc-model) id (:file-path model-changes))
-                                      ((state/state :alert-manager)
+                                      ((state/state :alert-manager)               
                                        :set {:header (gtool/get-lang-alerts :success)
                                              :body (gtool/get-lang-alerts :export-doc-ok)}  7)
                                       (catch Exception e ((state/state :alert-manager)
@@ -294,45 +295,40 @@
 ;; (defn component-files? [data meta-obj]
 ;;   (in? (map (fn [item] (:field-qualified item)) (.return-columns-composite meta-obj)) data))
 (defn group-clms [data-model]
-  (group-by (fn [[k v]] (lcomp/isComponentFiles? k)) data-model))
+  (group-by (fn [[k v]] (lcomp/isComponentFiles? v)) data-model))
 
 (defn insert-comp-col [state! id model-data]
   (let [meta-obj       (:meta-obj (:plugin-toolkit (state!)))
         col-model      (ungrouping-model (state!) (into {} model-data))
         all-colmns-nil (fn [col-model] (into {} (map (fn [[k v]] [k nil]) col-model)))]
-    (map (fn [[k v]]
-           (let [columns-types (doc/get-columns-types k meta-obj)]
-             (lcomp/update-file {:id id
-                                  :table_name  (.return-table_name meta-obj)
-                                  :column-list columns-types
-                                  :values (merge (all-colmns-nil columns-types)
-                                                 (into {} col-model))})
-             ;; (.upload v {:id id
-             ;;             :table_name  (.return-table_name meta-obj)
-             ;;             :column-list columns-types
-             ;;             :values (merge (all-colmns-nil columns-types)
-             ;;                            (into {} col-model))})
-             )) model-data)))
+    (doall (map (fn [[k v]]
+             (let [columns-types (doc/get-columns-types k meta-obj)]
+               (.upload v {:id id
+                           :table_name  (.return-table_name meta-obj)
+                           :column-list columns-types
+                           :values (merge (all-colmns-nil columns-types)
+                                          (into {} col-model))}))) model-data))))
 
-;;(map (fn [[k v]] k)[[:seal {:s "d"}] [:a {:w "a"}]])
+;; we can not add record without main-model(simple columns, not composite)
 
 (defn insert-data [state!]
   (let [{plugin-toolkit :plugin-toolkit
          model-changes  :model-changes} (state!)]
     (if-not (empty? (:model-changes (state!)))
-      (let [grouped-model  (group-clms model-changes ;;(:meta-obj plugin-toolkit)
-                                       )
-            fcomps-colmns  (get grouped-model true)
+      (let [grouped-model  (group-clms model-changes)
+            fcomps-colmns  (do (println "Compos colmsa" (get grouped-model true)) (get grouped-model true))
             sm-colmns      (do (println  "COL>>"  (get grouped-model nil)) (get grouped-model nil)) 
-            id-insert      (:generated_key
-                            (jdbc/execute! @jarman.logic.connection/*connection*
-                                           ((:insert-expression plugin-toolkit)
-                                            (ungrouping-model (state!) (apply hash-map
-                                                                       (apply concat sm-colmns))))
-                                           {:return-keys true}))
-           ;; comps-colmns (ungrouping-model (state!) comps-colmns)
-            ]
-        (insert-comp-col state! id-insert fcomps-colmns)
+            id-insert      (if (empty? sm-colmns)
+                             (do ((state/state :alert-manager)               
+                                  :set {:header (gtool/get-lang-alerts :success)
+                                        :body   "Model can not be empty, please enter at least one simple field"}  7))
+                             (:generated_key
+                              (jdbc/execute! @jarman.logic.connection/*connection*
+                                             ((:insert-expression plugin-toolkit)
+                                              (ungrouping-model (state!) (apply hash-map
+                                                                                (apply concat sm-colmns))))
+                                             {:return-keys true})))]
+        (if-not (nil? id-insert) (insert-comp-col state! id-insert fcomps-colmns))
         (println "INSERT MODEL CHANGES ___" model-changes ">>>" id-insert)))))
 
 (defn update-data [state! dispatch!]
@@ -464,7 +460,6 @@
 ;;     :model-comp jarman.gui.gui-components/state-table-list}
 ;;    :documents.name
 ;;    :documents.prop]
-
 
 (defn convert-key-to-component
   "Description
@@ -641,7 +636,6 @@
                         (custom-icon-bar
                          state! dispatch!
                          :more-front return-button)
-                        
                         (gcomp/hr 10)
                         (generate-custom-buttons state! dispatch! current-model)
                         (gcomp/hr 5)
@@ -872,6 +866,8 @@
                  :title \"Upload document\"}
                {:form-model :model-update...}...]"
     :doc "This is an vector of optional buttons which do some logic bainded by acition key, discribed in `:action`"}])
+
+
 
 
 

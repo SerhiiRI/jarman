@@ -1,0 +1,8 @@
+* README
+
+  This is my plugin ~AAA~ which doing something
+
+* Installation!
+
+  put all the files in ~.jarman.d/plugins/<plugin-name>~, and note about it to =.jarman= variable
+

@@ -4,11 +4,11 @@
 
 (defview
   permission
-  (fff
-   :id :fff
-   :permission [:admin :developer :user]
-   :name "FFF"
-   :plug-place [:#tables-view-plugin])
+  ;; (fff
+  ;;  :id :fff
+  ;;  :permission [:admin :developer :user]
+  ;;  :name "FFF"
+  ;;  :plug-place [:#tables-view-plugin])
   (table
    :id :permission
    :name "permission"
@@ -43,33 +43,33 @@
 
 (defview 
   user
-  (user-managment
-   :id :user
-   :name "user"
-   :permission [:user :admin :developer]
-   :plug-place [:#tables-view-plugin]
-   :tables [:user :permission]
-   :view-columns [:user.login
-                  :user.first_name
-                  :user.last_name
-                  :permission.permission_name]
-   :dialog {:user.id_permission
-            [:permission :dialog-table :permission-table]}
-   :query
-   {:table_name :user,
-    :inner-join [:user->permission],
-    :column
-    [:#as_is
-     :user.id
-     :user.login
-     :user.password
-     :user.first_name
-     :user.last_name
-     :user.id_permission
-     :user.configuration
-     :permission.id
-     :permission.permission_name
-     :permission.configuration]})
+  ;; (user-managment
+  ;;  :id :user
+  ;;  :name "user"
+  ;;  :permission [:user :admin :developer]
+  ;;  :plug-place [:#tables-view-plugin]
+  ;;  :tables [:user :permission]
+  ;;  :view-columns [:user.login
+  ;;                 :user.first_name
+  ;;                 :user.last_name
+  ;;                 :permission.permission_name]
+  ;;  :dialog {:user.id_permission
+  ;;           [:permission :dialog-table :permission-table]}
+  ;;  :query
+  ;;  {:table_name :user,
+  ;;   :inner-join [:user->permission],
+  ;;   :column
+  ;;   [:#as_is
+  ;;    :user.id
+  ;;    :user.login
+  ;;    :user.password
+  ;;    :user.first_name
+  ;;    :user.last_name
+  ;;    :user.id_permission
+  ;;    :user.configuration
+  ;;    :permission.id
+  ;;    :permission.permission_name
+  ;;    :permission.configuration]})
   (table
    :id :user
    :name "user"

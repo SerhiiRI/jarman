@@ -1,4 +1,4 @@
-(ns jarman.plugins.dialog-test
+(ns plugin.dialog-test.dialog-test
   (:require
    ;; Clojure toolkit 
    [clojure.data :as data]
@@ -26,7 +26,7 @@
    [jarman.logic.metadata :as mt]
    [jarman.plugin.spec :as spec]
    [jarman.plugin.data-toolkit :as query-toolkit]
-   [jarman.plugin.plugin :refer :all]))
+   [jarman.plugin.plugin]))
 
 
 ;;; EXAMPLE DIALOG
@@ -55,5 +55,10 @@
 ;;;PLUGINS ;;;        
 (defn dialog-test-entry [plugin-path global-configuration])
 
-(defplugin dialog-test 
-  "Plugin allow to editing One table from database")
+
+(jarman.plugin.plugin/register-custom-view-plugin
+ :name 'dialog-table 
+ :description "Plugin allow to editing One table from database"
+ :entry dialog-test-entry
+ :toolkit dialog-test-toolkit-pipeline
+ :spec-list [])

@@ -1,3 +1,4 @@
+;; -*- mode: Clojure;-*-
 (require '[jarman.logic.connection :as connection])
 (require '[clojure.set :refer [rename-keys]])
 (require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link field-composite prop]])

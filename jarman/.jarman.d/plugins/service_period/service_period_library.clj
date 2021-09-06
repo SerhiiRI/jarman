@@ -1,4 +1,4 @@
-(ns jarman.plugins.service-period-requires
+(ns plugin.service-period.service-period-library
   (:require
    ;; Clojure toolkit 
    [clojure.string :as string]

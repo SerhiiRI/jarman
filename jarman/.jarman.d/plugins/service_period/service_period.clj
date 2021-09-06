@@ -1,10 +1,10 @@
 ;;; Local plugin imports loadings ;;;
 
-(do (load-file (str (clojure.java.io/file ".jarman.d" "plugins" "service_period" "service_period_requires.clj"))) nil)
+;; (do (load-file (str (clojure.java.io/file ".jarman.d" "plugins" "service_period" "service_period_requires.clj"))) nil)
 
 ;;; Plugin ;;;
 
-(ns jarman.plugins.service-period
+(ns plugins.service-period.service-period
   (:require
    [jarman.tools.lang :refer :all] 
    [clojure.spec.alpha :as s]
@@ -18,11 +18,11 @@
    [jarman.plugin.spec :as spec]
    [jarman.plugin.data-toolkit :as query-toolkit]
    [jarman.resource-lib.icon-library :as icon]
-   [jarman.plugins.service-period-requires :as req]
-   [jarman.plugin.plugin :refer :all]))
+   [jarman.plugin.plugin]
+   [plugin.service-period.service-period-library :as req]))
 
 ;; please, look om mark TO DO
-(require '[jarman.plugins.service-period-requires :as req])
+;; (require '[jarman.plugins.service-period-library :as req])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPER FUNCTIONS ;;;  
@@ -368,7 +368,16 @@
           :plugin-toolkit       (get-in (global-configuration-getter) (conj plugin-path :toolkit) {})})))
 
 
-(defplugin service-period 
-  "Plugin for service contracts of enterpreneurs")
+;; (defplugin service-period 
+;;   )
+
+
+(jarman.plugin.plugin/register-custom-view-plugin
+ :name 'service-period
+ :description "Plugin for service contracts of enterpreneurs"
+ :entry service-period-entry
+ :toolkit service-period-toolkit-pipeline
+ :spec-list [])
+
 
 

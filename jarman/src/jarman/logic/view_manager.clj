@@ -9,8 +9,9 @@
    [jarman.tools.lang :include-macros true :refer :all]
    [jarman.config.environment :as env]
    [jarman.config.dot-jarman-param :refer [defvar]]
-   ;; [jarman.plugin.jspl :as jspl]
-   [jarman.plugin.plugin-loader :refer [do-load-plugins]]
+
+   ;; [jarman.plugin.plugin-loader :refer [do-load-plugins]]
+   [jarman.plugin.plugin :as plugin-system]
    [jarman.config.dot-jarman :refer [dot-jarman-load]]
    ;; --- 
    [jarman.logic.connection :as db]
@@ -28,10 +29,6 @@
   (dot-jarman-load)
   (deref user-menu)
   (deref jarman-plugin-list))
-
-(defvar jarman-plugin-list '()
-  :type clojure.lang.PersistentList
-  :group :plugin-system)
 
 (defvar user-menu {}
   :type clojure.lang.PersistentArrayMap
@@ -133,37 +130,50 @@
   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
        ~@(for [{:keys [plugin-name plugin-config-path] :as cfg} cfg-list]
-           (let [plugin-toolkit-pipeline (eval `~(symbol (format "jarman.plugins.%s/%s-toolkit" plugin-name plugin-name)))
-                 plugin-test-spec        (eval `~(symbol (format "jarman.plugins.%s/%s-spec-test" plugin-name plugin-name)))
-                 plugin-component        (resolve `~(symbol (format "jarman.plugins.%s/%s" plugin-name plugin-name)))
-                 toolkit (plugin-toolkit-pipeline cfg)]
-             (plugin-test-spec cfg)
-             (global-view-configs-set plugin-config-path cfg toolkit
-                                      (eval (fn [] (plugin-component plugin-config-path global-view-configs-get)))))) nil)))
+           (if-let [{:keys [plugin-toolkit-fn plugin-test-spec-fn plugin-entry-fn]}
+                    (get-in (group-by :plugin-name (plugin-system/system-ViewPlugin-list-get))
+                            [(symbol plugin-name) 0])]
+             (do
+              (plugin-test-spec-fn cfg)
+              (global-view-configs-set plugin-config-path cfg (plugin-toolkit-fn cfg)
+                                       (eval (fn [] (plugin-entry-fn plugin-config-path global-view-configs-get))))))) nil)))
+
+;; (first (get (group-by :plugin-name (plugin-system/system-ViewPlugin-list-get))
+;;       (symbol 'aaa)))
+;; '(:plugin-test-spec-fn :plugin-entry-fn :plugin-toolkit-fn :plugin-description :plugin-name)
+
+;; (defview permission
+;;   (aaa
+;;    :id :permission
+;;    :name "permission"
+;;    :plug-place [:#tables-view-plugin]))
+
+;; (global-view-configs-clean)
+;; (global-view-configs-get)
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; DEBUG SEGMENT ;;; 
 ;;;;;;;;;;;;;;;;;;;;;
 
-(defmacro defview-debug [table-name & body]
-  (let [cfg-list (defview-prepare-config table-name body)]
-    `(list
-      ~@(for [{:keys [plugin-name] :as cfg} cfg-list]
-          (let [plugin-toolkit-pipeline `~(symbol (format "jarman.plugins.%s/%s-toolkit" plugin-name plugin-name))
-                plugin-test-spec        `~(symbol (format "jarman.plugins.%s/%s-spec-test" plugin-name plugin-name))]
-            `(do (~plugin-test-spec ~cfg)
-                 {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)}))))))
+;; (defmacro defview-debug [table-name & body]
+;;   (let [cfg-list (defview-prepare-config table-name body)]
+;;     `(list
+;;       ~@(for [{:keys [plugin-name] :as cfg} cfg-list]
+;;           (let [plugin-toolkit-pipeline `~(symbol (format "jarman.plugins.%s/%s-toolkit" plugin-name plugin-name))
+;;                 plugin-test-spec        `~(symbol (format "jarman.plugins.%s/%s-spec-test" plugin-name plugin-name))]
+;;             `(do (~plugin-test-spec ~cfg)
+;;                  {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)}))))))
 
-(defmacro defview-debug-map [table-name & body]
-  (let [cfg-list (defview-prepare-config table-name body)]
-    `(do
-       ~(reduce
-        (fn [cfg-acc {:keys [plugin-name plugin-config-path] :as cfg}]
-          (let [plugin-toolkit-pipeline `~(symbol (format "jarman.plugins.%s/%s-toolkit" plugin-name plugin-name))
-                plugin-test-spec  (eval `~(symbol (format "jarman.plugins.%s/%s-spec-test" plugin-name plugin-name)))]
-             (plugin-test-spec cfg)
-            `(assoc-in ~cfg-acc [~@plugin-config-path] {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)})))
-        {} cfg-list))))
+;; (defmacro defview-debug-map [table-name & body]
+;;   (let [cfg-list (defview-prepare-config table-name body)]
+;;     `(do
+;;        ~(reduce
+;;         (fn [cfg-acc {:keys [plugin-name plugin-config-path] :as cfg}]
+;;           (let [plugin-toolkit-pipeline `~(symbol (format "jarman.plugins.%s/%s-toolkit" plugin-name plugin-name))
+;;                 plugin-test-spec  (eval `~(symbol (format "jarman.plugins.%s/%s-spec-test" plugin-name plugin-name)))]
+;;              (plugin-test-spec cfg)
+;;             `(assoc-in ~cfg-acc [~@plugin-config-path] {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)})))
+;;         {} cfg-list))))
 
 ;;; TEST SEGMENT ;;;
 
@@ -201,7 +211,6 @@
        :permission.permission_name
        :permission.configuration]})))
 
-
 ;;; ---------------------------------------
 ;;; eval this function and take a look what
 ;;; you get in that configuration
@@ -214,8 +223,7 @@
   (global-view-configs-clean)
   (global-view-configs-get)
   
-  (get-in (global-view-configs-get)
-          [:service_contract :service-period :service_contract :toolkit])
+  (get-in (global-view-configs-get)  [:service_contract :service-period :service_contract :toolkit])
   (get-in (global-view-configs-get)  [:permission :dialog-bigstring :select-name-permission])
   ((get-in (global-view-configs-get) [:permission :dialog-bigstring :my-custom-dialog :toolkit :dialog]))
   ((get-in (global-view-configs-get) [:permission :dialog-table :my-custom-dialog :toolkit :dialog])))

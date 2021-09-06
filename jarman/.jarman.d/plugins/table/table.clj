@@ -1,6 +1,6 @@
-(do (load-file (str (clojure.java.io/file ".jarman.d" "plugins" "table" "composite_components.clj"))) nil)
 
-(ns jarman.plugins.table
+;; (do (load-file (str (clojure.java.io/file ".jarman.d" "plugins" "table" "composite_components.clj"))) nil)
+(ns plugin.table.table
   (:require
    ;; Clojure toolkit 
    [clojure.data :as data]
@@ -25,7 +25,6 @@
    [jarman.gui.gui-migrid     :as gmg]
    [jarman.gui.gui-calendar   :as calendar]
    [jarman.gui.popup :as popup]
-   [jarman.plugins.composite-components :as ccomp]
    [jarman.logic.composite-components :as lcomp]
    [jarman.logic.state :as state]
    [jarman.logic.metadata :as mt]
@@ -33,7 +32,9 @@
    [jarman.plugin.spec :as spec]
    [jarman.plugin.data-toolkit :as query-toolkit]
    [jarman.plugin.gui-table :as gtable]
-   [jarman.plugin.plugin :refer :all])
+   [jarman.plugin.plugin]
+   ;; locals 
+   [plugin.table.composite-components :as ccomp])
   (:import
    (java.awt Dimension BorderLayout)
    (java.util Date)
@@ -798,11 +799,17 @@
     (println "\nBuilding plugin")
     (build-plugin-gui state! dispatch!)))
 
+;;;;;;;;;;;;
+;;; BIND ;;;
+;;;;;;;;;;;;
 
-(defplugin table 
-  "Plugin allow to editing One table from database"
-  ;; DATATOOLKIT SPEC
-  [:id
+(jarman.plugin.plugin/register-custom-view-plugin
+ :name 'table
+ :description "Plugin allow to editing One table from database"
+ :entry table-entry
+ :toolkit table-toolkit-pipeline
+ :spec-list
+ [[:id
    {:spec [:jarman.plugins.spec/keyword :opt-un]
     :doc "Custom plugin ID"}]
   [:name
@@ -865,9 +872,4 @@
                  :action :upload-docs-to-db, 
                  :title \"Upload document\"}
                {:form-model :model-update...}...]"
-    :doc "This is an vector of optional buttons which do some logic bainded by acition key, discribed in `:action`"}])
-
-
-
-
-
+    :doc "This is an vector of optional buttons which do some logic bainded by acition key, discribed in `:action`"}]])

@@ -1,4 +1,4 @@
-(ns jarman.plugins.composite-components
+(ns plugin.table.composite-components
   (:require
    [clojure.string :as s]
    [jarman.gui.gui-tools :as gtool]

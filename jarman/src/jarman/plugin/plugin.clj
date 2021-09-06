@@ -4,74 +4,13 @@
             [clojure.spec.alpha :as s]
             [clojure.java.io :as io]))
 
-;;; TODO there must be specs
+(declare register-custom-view-plugin)
+(declare register-custom-theme-plugin)
 
-(def ^:private str-space (fn [num] (apply str (take num (repeat " ")))))
 
-(defn- flatt-offset-vec
-  "Description:
-    this func concat empty space on the left side with str-doc for formatting our comment,
-    get func, which generate empty space on the left side and struct like vector of our
-    strings"
-  [func struct]
-  (map func (reduce
-             (fn [acc [index form]]
-               (cond
-                 (string? form) (conj acc [index form])
-                 (sequential? form)
-                 (concat acc (map #(vector index %) form))))
-             [] struct)))
+;;; HELPERS ;;;
 
-(defn generate-key-section
-  "Description:
-    this function get offset for generate empty space on the left side
-    for formatting our comment and get one vector of configurations,
-    return formatting section with key-content for our comment"
-  [offset map-keys]
-  (let [formatter (fn [[local-offset text]] (apply str (str-space (+ offset local-offset)) text env/line-separator))
-        [key {spec :spec exmp :examples doc :doc}] map-keys]
-    (clojure.string/join ""
-                         (flatt-offset-vec
-                          formatter
-                          [[0 (format "%s (spec %s)" key spec)]
-                           [2 "Doc"]
-                           [4 doc]
-                           [2 "Examples"]
-                           [4 (clojure.string/split (pp-str exmp) #"\r\n")]]))))
-
-(defn generate-plugin-doc
-  "Description
-    This function generate doc for some plugin. Get title as description
-    and map of configurations, return doc-strinf for function
-  
-   Example
-    [[:permission
-     {:spec :global-plugin/permission
-      :examples [:user :admin]
-      :doc \"Allow resolve access to this plugin by user\"}] ...]
-    ;; => Description\n    some-descriotion\n  Keys\n    :permission
-          (spec :global-plugin/permission)\r\n      Doc\r\n        Allow
-          resolve access to this plugin by user\r\n
-          Examples\r\n        [:user :admin]\r\n"
-  [title body]
-  (let [sp (fn [num] (apply str (take num (repeat " "))))])
-  (apply str
-         (format "Description\n    %s\n  Keys\n" title)
-         (doall (map (fn [b] (generate-key-section 4 b)) body))))
-
-(defn get-spec-from-map
-  "Example
-    [[:permission
-     {:spec :global-plugin/permission
-      :examples [:user :admin]
-      :doc \"Allow resolve access to this plugin by user\"}] ...]
-    ;; => {:permission :global-plugin/permission}"
-  [body]
-  (reduce into {} (for [b body]
-                    (if-not (nil? (:spec (second b)))
-                      {(first b) (:spec (second b))}))))
-
-(defn plugin-system-requirements []
+(defn default-system-view-plugin-spec-list []
   (list
    [:name
     {:spec [:jarman.plugin.spec/name :req-un],
@@ -112,67 +51,55 @@
    :opt-un
    [:jarman.plugin.spec/plug-place :jarman.plugin.table/view-columns])"
   [plugin-name plugin-key-list]
- (let [klist (vec (concat (plugin-system-requirements) plugin-key-list))
+ (let [klist (vec (concat (default-system-view-plugin-spec-list) plugin-key-list))
        gruoped-spec (group-by second
                               (map (fn [[k {[spec-k spec-req] :spec}]]
                                      [spec-k spec-req]) klist))]
-   `(s/def ~(keyword "jarman.plugin.spec" plugin-name) 
-      (s/keys
-       :req-un ~(mapv first (:req-un gruoped-spec))
-       :opt-un ~(mapv first (:opt-un gruoped-spec))))))
-
-#_(defmacro defplugin
-  [plugin-name ns description & body]
-  (let [create-name-func (fn [fname] (symbol (str ns "/" plugin-name "-" fname)))
-        func-entrypoint (create-name-func "entry")
-        
-        ;; for `table` plugin
-        ;; inside-plugin-pipeline         -> `jarman.plugin.table/table-toolkit-pipeline`
-        ;; proxyed-inside-plugin-pipeline -> `table-toolkit-pipeline`
-        inside-plugin-pipeline  (symbol (str ns "/" (str plugin-name "-toolkit-pipeline")))
-        proxyed-inside-toolkit-pipeline (symbol (str plugin-name "-toolkit-pipeline"))
-        plugin-name-spec-test           (symbol (str plugin-name "-spec-test"))]    
+   (eval
     `(do
-       ~(generate-dynamic-spec (str plugin-name) body)
-       (defn ~plugin-name-spec-test [~'configurations]
-         (s/assert ~(keyword "jarman.plugin.spec" (str plugin-name)) ~'configurations))
-       (defn ~plugin-name
-         ;;; documentations
-         ~(generate-plugin-doc description body)
-         ;;; argumnets
-         [~'plugin-path ~'global-configuration]
-         ;;; body
-         (~func-entrypoint
-          ~'plugin-path ~'global-configuration))
-       (def ~proxyed-inside-toolkit-pipeline ~inside-plugin-pipeline))))
+       (s/def ~(keyword "plugin.spec" (str plugin-name)) 
+         (s/keys
+          :req-un ~(mapv first (:req-un gruoped-spec))
+          :opt-un ~(mapv first (:opt-un gruoped-spec))))
+       (fn [~'configurations]
+         (s/assert ~(keyword "plugin.spec" (str plugin-name))  ~'configurations))))))
 
-;; (defn load-plugin-req [plugin-dir-s file-name]
-;;   (load-file (str (io/file ".jarman.d" "plugins" plugin-dir-s file-name))))
+;;;;;;;;;;;;;;;;;;
+;;; ViewPlugin ;;;
+;;;;;;;;;;;;;;;;;;
 
-(defmacro defplugin
-  [plugin-name description & body]
-  (let [create-name-func (fn [fname] (symbol (str (str *ns*) "/" plugin-name "-" fname)))
-        func-entrypoint (create-name-func "entry")
-        
-        ;; for `table` plugin
-        ;; inside-plugin-pipeline         -> `jarman.plugin.table/table-toolkit-pipeline`
-        ;; proxyed-inside-plugin-pipeline -> `table-toolkit-pipeline`
-        inside-plugin-pipeline  (symbol (str (str *ns*) "/" (str plugin-name "-toolkit-pipeline")))
-        proxyed-inside-toolkit-pipeline (symbol (str plugin-name "-toolkit"))
-        plugin-name-spec-test           (symbol (str plugin-name "-spec-test"))]    
-    `(do
-       ~(generate-dynamic-spec (str plugin-name) body)
-       (defn ~plugin-name-spec-test [~'configurations]
-         (s/assert ~(keyword (str *ns*) (str plugin-name)) ~'configurations))
-       (defn ~plugin-name
-         ;;; documentations
-         ~(generate-plugin-doc description body)
-         ;;; argumnets
-         [~'plugin-path ~'global-configuration]
-         ;;; body
-         (~func-entrypoint
-          ~'plugin-path ~'global-configuration))
-       (def ~proxyed-inside-toolkit-pipeline ~inside-plugin-pipeline))))
+(def ^:private system-ViewPlugin-list (ref []))
+(defn system-ViewPlugin-list-get [] (deref system-ViewPlugin-list))
+(defrecord ViewPlugin
+    [plugin-test-spec-fn
+     plugin-entry-fn
+     plugin-toolkit-fn 
+     plugin-description
+     plugin-name])
+(defn constructViewPlugin [{:keys [description toolkit name entry spec-list]}]
+  (assert (symbol? name) "View plugin `:name` must be symbol")
+  (assert (string? description) "View plugin `:description` is not string type")
+  (assert (fn? toolkit) "View plugin `:toolkit` might be a function (fn [configuration]..)")
+  (assert (fn? entry) "View plugin `:entry` might be a function (fn [plugin-path global-configuration]..)")
+  (map->ViewPlugin
+   {:plugin-test-spec-fn (generate-dynamic-spec name spec-list)
+    :plugin-entry-fn entry
+    :plugin-toolkit-fn toolkit
+    :plugin-description description
+    :plugin-name name}))
+
+(defn register-custom-view-plugin [& {:as args}]
+  (dosync (alter system-ViewPlugin-list conj (constructViewPlugin args)))
+  true)
+
+;;;;;;;;;;;;;;;;;;;
+;;; ThemePlugin ;;;
+;;;;;;;;;;;;;;;;;;;
+
+(comment (def ^:private system-ThemePlugin-list (ref []))
+         (defn system-ThemePlugin-list-get [] (deref system-ThemePlugin-list))
+         (defrecord ThemePlugin []))
+
 
 
 

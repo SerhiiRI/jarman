@@ -3,6 +3,7 @@
             [clojure.string :as string]
             [seesaw.core    :as c]
             [jarman.tools.update-manager-gui :as update-manager]
+            [jarman.plugin.plugin-manager-gui :as plugin-manager]
             [jarman.gui.gui-components :as gcomp]
             [jarman.gui.gui-tools      :as gtool]
             [jarman.logic.state        :as state]
@@ -169,6 +170,9 @@
    "Administration"
    {"Update Manager" {:key "update-manager"
                       :fn    update-manager/update-manager-panel}
+    "Plugin Manager" {:key "plugin-manager"
+                      :fn    plugin-manager/plugin-manager-panel}
+    
     "DB Visualizer" {:key "db-visualizer"
                      :fn    dbv/create-view--db-view}
     (gtool/get-lang-btns :settings)

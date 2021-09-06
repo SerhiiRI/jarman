@@ -1,4 +1,4 @@
-(ns jarman.plugins.dialog-bigstring
+(ns plugin.dialog-bigstring.dialog-bigstring
   (:require
    ;; Clojure toolkit
    [clojure.spec.alpha :as s]
@@ -15,7 +15,7 @@
    ;; remove on production
    [jarman.logic.connection :as db]
    [jarman.logic.sql-tool :refer [select!]]))
-
+(require 'jarman.plugin.plugin)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; plugin SPEC patters ;;;
@@ -111,14 +111,21 @@
 
 (defn dialog-bigstring-entry [path-to-plugin global-plugin-storrage-getter])
 
-(defplugin dialog-bigstring 
-  "Dialog for selecting some ONE item by ONE column in `:query` model"
-  [:item-columns
+;;;;;;;;;;;;
+;;; BIND ;;;
+;;;;;;;;;;;;
+
+(jarman.plugin.plugin/register-custom-view-plugin
+ :name 'dialog-bigstring 
+ :description "Dialog for selecting some ONE item by ONE column in `:query` model"
+ :entry dialog-bigstring-entry
+ :toolkit dialog-bigstring-toolkit-pipeline
+ :spec-list
+ [[:item-columns
    {:spec [:jarman.plugins.dialog-bigstring/item-columns :req-un],
     :doc "Select column to be represent one value per item"
     :examples ":permission.permission_name"}]
   [:query
    {:spec [:jarman.plugins.data-toolkit/query :req-un],
     :examples "{:table_name :permission, :column [:#as_is ...]...}",
-    :doc "SQL syntax for `select!` query"}])
-
+    :doc "SQL syntax for `select!` query"}]])

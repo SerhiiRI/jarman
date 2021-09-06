@@ -1,0 +1,10 @@
+;; -*- mode: Clojure;-*-
+(define-package "dialog_bigstring" "Dialog for choosing some massive text string option"
+  :version     "0.1"
+  :authors     '(("Serhii Riznychuk" "serhii.riznychuk@gmail.com")
+                 ("Julia Burmych"    "cutyBurMICH77@somewhere.com"))
+  :license     '("EPL-2.0" "https://www.eclipse.org/legal/epl-2.0/")
+  :keywords    '("dialog" "modal" "popup" "view")
+  :url         '("https://github.com/emacs-dashboard/emacs-dashboard")
+  :loading-seq '(dialog_bigstring))
+

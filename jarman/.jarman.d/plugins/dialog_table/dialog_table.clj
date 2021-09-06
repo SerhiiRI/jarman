@@ -1,4 +1,4 @@
-(ns jarman.plugins.dialog-table
+(ns plugin.dialog-table.dialog-table
   (:require
    ;; Clojure toolkit 
    [clojure.string :as string]
@@ -27,7 +27,7 @@
    [jarman.plugin.spec :as spec]
    [jarman.plugin.gui-table :as gtable]
    [jarman.plugin.data-toolkit :as query-toolkit]
-   [jarman.plugin.plugin :refer :all]))
+   [jarman.plugin.plugin]))
 
 (defn- popup-table [table-fn id]
   (let [dialog (c/custom-dialog :modal? true :width 600 :height 400 :title "Select component")
@@ -51,9 +51,18 @@
 
 (defn dialog-table-entry [plugin-path global-configuration])
 
-(defplugin dialog-table 
-  "Dialog table"
-  [:tables
+
+;;;;;;;;;;;;
+;;; BIND ;;;
+;;;;;;;;;;;;
+
+(jarman.plugin.plugin/register-custom-view-plugin
+ :name 'dialog-table 
+ :description "Dialog table"
+ :entry dialog-table-entry
+ :toolkit dialog-table-toolkit-pipeline
+ :spec-list
+ [[:tables
    {:spec [:jarman.plugins.data-toolkit/tables :req-un],
     :doc "list of used tables"
     :examples "[:permission]"}]
@@ -65,5 +74,4 @@
   [:query
    {:spec [:jarman.plugins.data-toolkit/query :req-un],
     :examples "{:table_name :permission, :column [:#as_is ...]...}",
-    :doc "SQL syntax for `select!` query"}])
-
+    :doc "SQL syntax for `select!` query"}]])

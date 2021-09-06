@@ -11,6 +11,7 @@
            (java.awt Dimension))
   (:require [jarman.tools.lang :refer :all]
             [clojure.string    :as string]
+            [seesaw.swingx  :as swingx]
             [seesaw.core       :as c]
             [seesaw.util       :as u]
             [seesaw.border     :as b]
@@ -36,7 +37,7 @@
             [jarman.gui.popup                :as popup]
             [jarman.gui.gui-main-menu        :as menu]
             ;; [jarman.managment.data           :as managment-data]
-            [jarman.plugin.plugin-loader     :refer [do-load-plugins]]
+            [jarman.plugin.plugin-manager    :refer [do-load-plugins]]
             [jarman.config.dot-jarman        :refer [dot-jarman-load]]))
 
  

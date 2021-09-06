@@ -1,7 +1,8 @@
 ;; -*- mode: Clojure;-*-
+
 ;; This is Main configuration `.jarman` file. Declare in it any machine or app-specyfic configurations
 ;; Set global variables, by using `setq` macro and power of jarman customizing system
-;; 
+
 ;; 1. Declare variable in any place you want in system
 ;;    Attribute `:type` and `:group` aren't required, but
 ;;    specifing may help you in debug moment

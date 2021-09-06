@@ -1,9 +1,3 @@
-;;; Local plugin imports loadings ;;;
-
-;; (do (load-file (str (clojure.java.io/file ".jarman.d" "plugins" "service_period" "service_period_requires.clj"))) nil)
-
-;;; Plugin ;;;
-
 (ns plugins.service-period.service-period
   (:require
    [jarman.tools.lang :refer :all] 
@@ -20,9 +14,6 @@
    [jarman.resource-lib.icon-library :as icon]
    [jarman.plugin.plugin]
    [plugin.service-period.service-period-library :as req]))
-
-;; please, look om mark TO DO
-;; (require '[jarman.plugins.service-period-library :as req])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPER FUNCTIONS ;;;  
@@ -360,6 +351,7 @@
 ;;;;;;;;;;;;;
 ;;; Entry ;;;
 ;;;;;;;;;;;;;
+
 (defn service-period-entry [plugin-path global-configuration-getter]
   (create-period-view
    (atom {:plugin-path          plugin-path
@@ -368,9 +360,9 @@
           :plugin-toolkit       (get-in (global-configuration-getter) (conj plugin-path :toolkit) {})})))
 
 
-;; (defplugin service-period 
-;;   )
-
+;;;;;;;;;;;;
+;;; BIND ;;;
+;;;;;;;;;;;;
 
 (jarman.plugin.plugin/register-custom-view-plugin
  :name 'service-period

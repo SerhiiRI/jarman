@@ -1,5 +1,3 @@
-
-;; (do (load-file (str (clojure.java.io/file ".jarman.d" "plugins" "table" "composite_components.clj"))) nil)
 (ns plugin.table.table
   (:require
    ;; Clojure toolkit 

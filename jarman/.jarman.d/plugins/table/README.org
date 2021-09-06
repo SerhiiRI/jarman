@@ -1,6 +1,6 @@
 * README
 
-  This is my plugin ~AAA~ which doing something
+  This is my plugin ~table~ which doing something
 
 * Installation!
 

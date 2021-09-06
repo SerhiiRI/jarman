@@ -24,12 +24,24 @@
     - [ ] Plus icon. Replace =plus= icon, make add width, and make only one color. And =minus= do little bit higher, also =x= icon
     - [ ] refresh-reload icons, increase arrow, and make some distance between each other. Only one color
     - [ ] Left/Right direction one arrow. like =->= and =<-=
-    - [ ] =odt export= file icon
+    - [X] =odt export= file icon
     - [ ] logout icon.
     - [ ] =Select all=, is like "checkbox" =[V]=
     - [ ] Pay icon. (hrywna) + (dolar)
     - [ ] До лупи додати кінець, одноколірна.
-     
+*** TODO Upgrade UI Elements                                  :@Julia:@Aleks:
+    - [ ] to ~(state/state :alert-manager)~
+      #+begin_src clojure
+	((state/state :alert-manager)
+	 :set {:status :warning
+	       :header "Update Manager"
+	       :body   "Local Jarman configuraion was deleted"} 7)
+      #+end_src
+      add =:status= key, with options
+      - =:warning=, that colorify alert box in /Yellow/ or /Orange/ box
+      - =:info= - colorify alert box in /Blue/ (default color, and default option if =:status= not set)
+      - =:error= - colorify alert box in /Red/.
+      
 *** TODO Main view                                                   :@Aleks:
     - [X] On tabs replace non-active tab on more brighter color.
     - [X] ON tabs replace ~x~ icon on one color.
@@ -54,7 +66,6 @@
       - [X] Also for expand buttons use bold ubuntu fonts (looks little crappy).
       - [X] Chnage ordering items in menubar. At first place user must saw all buisness tables, and next any other *setting* or *db visualizer* etc.
 
-	
 *** TODO Table.clj                                                   :@Aleks:
     - [X] remove 1pixel black border for right table.
     - [ ] text "hide" replace on julia (not created at that moment) left arrow, and background fill with one gray color, as "tab", or left section in table.clj, where components is.
@@ -137,9 +148,8 @@
    - [ ] try add more KeyEventDispachers
    - [ ] lock repeating event on hold key
 * Backend
-** TOREVIEW [#1] Update manager                                     :@Serhii:
-   - [X] updata manager lib and log
-   - [X] update manager GUI 
+** TODO Rewrite plugin system                                       :@Serhii:
+   
 ** PLANNED [#2] themes plugin system                         :@Aleks:@Serhii:
    With relation to our conversation, @Morfeu5z please make namespace like jarman.gui.style,
    when you put simple variables . to customizing all styles per compoennt, after you done those taks,
@@ -246,10 +256,14 @@
 *** Акт виконаних робіт
 	-   створити
 
+** DONE [#1] Update manager                                         :@Serhii:
+   CLOSED: [2021-09-05 Sun 15:43]
+   - [X] updata manager lib and log
+   - [X] update manager GUI 
 * Infrastructure
 * Documentations
-** TODO [#2] Create jarman Vocabluary                               :@Serhii:
-** TODO [#3] create jarman manifest file              :@Julia:@Aleks:@Serhii:
+** PLANNED [#3] Create jarman Vocabluary                            :@Serhii:
+** PLANNED [#3] create jarman manifest file                         :@Serhii:
    - Note taken on [2021-09-02 чт 19:01] 
      After making first release of Jarman and finishing plugin system write
      Manifest which must explain to us and others:

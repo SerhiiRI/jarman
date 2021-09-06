@@ -51,7 +51,7 @@
        )))
 
 (defn setColumnWidth [^javax.swing.JTable table & {:keys [column size]}]
-9  (let [^javax.swing.table.TableColumnModel column-model (.getColumnModel table)
+  (let [^javax.swing.table.TableColumnModel column-model (.getColumnModel table)
         ^javax.swing.table.TableColumn      table-column (.getColumn column-model column)]
     (.setPreferredWidth table-column size)))
 
@@ -174,8 +174,8 @@
                                                     (supply-content-to-install package-to-update)
                                                     (supply-content-all-package package-list))))))
 
-;; (comment
-;;   (-> (c/frame :content (update-manager-panel))
-;;       c/pack!
-;;       c/show!))
+(comment
+  (-> (c/frame :content (update-manager-panel))
+      c/pack!
+      c/show!))
 

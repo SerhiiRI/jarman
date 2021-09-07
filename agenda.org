@@ -9,16 +9,7 @@
 #+STARTUP: overview
 
 * Frontend
-** PROCESSING [#2] Jarman Theme Light Style, live coding :@Julia:@Aleks:@Serhii:
-   DEADLINE: <2021-09-16 Thu>
-   - [ ] rewrite styles config
-   - [ ] unifing styles in UI
-   - [ ] removing unnessesary borders.
-   - [X] global font
-   - [X] global background
-   - [X] global foreground
-   - [X] removing unnessesary font override         
-** PROCESSING [#1] Frontend refactorization
+** PROCESSING [#2] Frontend refactorization
    DEADLINE: <2021-09-15 Wed>
 *** TODO Icons                                                       :@Julia:
     - [ ] Plus icon. Replace =plus= icon, make add width, and make only one color. And =minus= do little bit higher, also =x= icon
@@ -83,20 +74,34 @@
       - [ ] For Service Months use ths format style notation "01-01-2020 - 04-01-2021,  100 zl", money also in pastel green.
     - [ ] Julia call it *insert-space*, is section where we adding new service contract. Rewrite whole panel, but keep logic as we create before.
     - [ ] After you click on one month, you can edit all service contract month payments. You can edit, only if month wasn't payed. Rewrite Julia view, on your implementation. I think better be when all those month fields be in one line.
+** PROCESSING [#2] /Feature/. Jarman Theme Light Style  :@Julia:@Aleks:@Serhii:
+   DEADLINE: <2021-09-16 Thu>
+   - [ ] rewrite styles config
+   - [ ] unifing styles in UI
+   - [ ] removing unnessesary borders.
+   - [X] global font
+   - [X] global background
+   - [X] global foreground
+   - [X] removing unnessesary font override         
 ** PROCESSING [#2] Database Visualizer                               :@Aleks:
-   - [x] global font
-   - [x] global background
-   - [x] global foreground
+   - [X] global font
+   - [X] global background
+   - [X] global foreground
    - [ ] rewrite styles config, 
    - [ ] unifing styles in UI
    - [ ] removing unnessesary borders. 
-   - [x] removing unnessesary font override
+   - [X] removing unnessesary font override
    
-** PROCESSING [#2] Confgen fix                                       :@Aleks:
-   - [x] - If display do not exist then editable
-   - [x] - fix alert window
+** PROCESSING [#2] /Bug/. Confgen fix                                  :@Aleks:
+   - [X] - If display do not exist then editable
+   - [X] - fix alert window
    - [ ] - Changes in theme again can not saving to file
-** TODO [#2] Check theme covering the GUI. Fix style  :@Julia:@Aleks:@Serhii:
+** TODO [#1] /Bug/. Loggin panel not compile                         :@Aleks:
+** TODO [#1] /Bug/. DB Visualizer editing                      :@Aleks:@Serhii:
+   1. [ ] Cannot edit table =view=
+   2. [ ] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
+   3. [ ] Cannot edit metadata of table 
+** TODO [#2] /Check/. Check theme covering the GUI. Fix style :@Julia:@Aleks:@Serhii:
      @Morfeu5z and @Julia47 , and I if you want, must create a group meeting
      on which we try to resolve problems:
       
@@ -104,11 +109,7 @@
    - [ ] create low priority issue with icons which must be redraw
    - [ ] unification design in some places.      
       
-** PLANNED [#3] Make diagram from DB Visualiser                        :@Julia:
-   - [ ] Visualize relation between tables
-   - [ ] Save table location in DB visualiser into configurations
-** PLANNED [#3] DB Visualiser: Table adding form                       :@Julia:
-** PLANNED [#2] Load fonts from jarman resourcesx               :@Julia:@Aleks:
+** TODO [#2] /Feature/. Load fonts from jarman resources      :@Julia:@Aleks:
    Inside resources/fonts is an drirectory with JetBrainsMono font.
    We need to use somehow this fonts.
 
@@ -116,6 +117,32 @@
    - [ ] - Select font
    - [ ] - Using selected font
    - [ ] - View with avaliable fonts    
+** PLANNED [#3] Make diagram from DB Visualiser                        :@Julia:
+   - [ ] Visualize relation between tables
+   - [ ] Save table location in DB visualiser into configurations
+** PLANNED [#2] Table Controller Forms                                 :@Aleks:
+** PLANNED [#3] Config Generator Upgrade and Fix                       :@Aleks:
+   - [ ] - block expand (there is to many parameters, we need to hide them as subconfig with title)
+   - [ ] - message on save success
+   - [ ] - message on save failed
+   - [X] - fixed alert box permeation   
+** PLANNED [#3] Base components and views                      :@Aleks:@Serhii:
+   - [ ] Popup dialog with auto size
+   - [ ] Popup box with auto size
+   - [X] Select list with atom to state save
+   - [X] Input text with atom to state save
+   - [X] Input text-area with atom to state save
+   - [X] Input password with atom to state save
+   - [X] scrollbox - pre-configurated scrollable with speedup on mouse scroll and border nil
+   - [X] Empty frame as base window for quick testing components
+   - [X] Popup box allways on top with exit button
+   - [X] Popup dialog with block background
+** PLANNED [#3] Clobal event on key pressed                     :@Julia:@Aleks:
+   - [X] Proxy for KeyEventDispacher for add global event on key pressed
+   - [X] add and remove own KeyEventDispacher
+   - [X] tutorial point
+   - [ ] try add more KeyEventDispachers
+   - [ ] lock repeating event on hold key
 ** PLANNED [#2] DB Visualiser, finishing                :@Julia:@Aleks:@Serhii:
    - [ ] React on profile from session user. @SerhiiRI 
    - [ ] Add button for ~delete table~ , ~create table~
@@ -124,33 +151,9 @@
    - [ ] If table contain id-field, make button with dialog box. @SerhiiRI generate list of table can be related to current editable table  
    - [ ] Make ~:component-type~, ~:field~ , ~:field-qualified~ not editable even by admin. 
    - [ ] Add buttons ~remove column~, ~add column~
-** PLANNED [#2] Table Controller Forms                                 :@Aleks:
-** PLANNED [#3] Config Generator Upgrade and Fix                       :@Aleks:
-   - [ ] - block expand (there is to many parameters, we need to hide them as subconfig with title)
-   - [ ] - message on save success
-   - [ ] - message on save failed
-   - [x] - fixed alert box permeation   
-** PLANNED [#3] Base components and views                      :@Aleks:@Serhii:
-   - [ ] Popup dialog with auto size
-   - [ ] Popup box with auto size
-   - [x] Select list with atom to state save
-   - [x] Input text with atom to state save
-   - [x] Input text-area with atom to state save
-   - [x] Input password with atom to state save
-   - [x] scrollbox - pre-configurated scrollable with speedup on mouse scroll and border nil
-   - [x] Empty frame as base window for quick testing components
-   - [x] Popup box allways on top with exit button
-   - [x] Popup dialog with block background
-** PLANNED [#3] Clobal event on key pressed                     :@Julia:@Aleks:
-   - [x] Proxy for KeyEventDispacher for add global event on key pressed
-   - [x] add and remove own KeyEventDispacher
-   - [x] tutorial point
-   - [ ] try add more KeyEventDispachers
-   - [ ] lock repeating event on hold key
+** PLANNED [#3] DB Visualiser: Table adding form                       :@Julia:
 * Backend
-** TODO Rewrite plugin system                                       :@Serhii:
-   
-** PLANNED [#2] themes plugin system                         :@Aleks:@Serhii:
+** PROCESSING [#2] themes plugin system                      :@Aleks:@Serhii:
    With relation to our conversation, @Morfeu5z please make namespace like jarman.gui.style,
    when you put simple variables . to customizing all styles per compoennt, after you done those taks,
    call me, for "talk" about idiomatic direction of naming for styles(i mean lexical abstracution you use
@@ -160,6 +163,17 @@
 *** [ ] make this file, but not start integrate it to system, just create file. :@Aleks:    
 *** [ ] try to prepare some graphical view for changing theme. Discribe one theme as ", " :@Aleks:    
 *** [ ] create plugin declaration for themes.                       :@Serhii:
+** PROCESSING [#2] /Feature/. Rewrite plugin system                   :@Serhii:
+   DEADLINE: <2021-09-09 Thu>
+   - [ ] Theme plugin [0/2]
+     with relation to [[themes plugin system]]
+     - [ ] Theme declaration
+     - [ ] Registration function
+   - [ ] View plugin
+     - [ ] Registration function.
+       - [ ] Remove duplications of loaded plugins
+   - [ ] Package
+
 ** PLANNED [#2] service_period.clj | sort contract list      :@Julia:@Serhii:
 *** [ ] sorting contract by date
 *** [ ] colorize contract by active-nonactive depend on current date
@@ -168,50 +182,20 @@
    #+begin_src clojure
      (session/test-persmission [:user :admin]) ;; => true
    #+end_src
-   - [x] Render menu buttons by permission and hide empty expand
-   - [x] Check permision for popup menu in DB Visualizer. Metadata and defview editor.
+   - [X] Render menu buttons by permission and hide empty expand
+   - [X] Check permision for popup menu in DB Visualizer. Metadata and defview editor.
    - [ ] Create permission system 
    - [ ] Make hide some element when user not in component persmission list
    - [ ] add function to get permission from session, or function which TEST something in session, for example
 ** PLANNED [#2] Export doc as function                               :@Aleks:
-   - [x] - Popup window
-   - [x] - Create function which invoke dialog box with export options
+   - [X] - Popup window
+   - [X] - Create function which invoke dialog box with export options
    - [ ] - Make spinner and notify if export is done
    - [ ] - Import custom defview
-** PLANNED [#2] Add history of state                                :@Serhii:
-   - [ ] safe history
-   - [ ] restore state
-   - [ ] ~redo/undo~ only test
 ** PLANNED [#2] Scroll to selected in table                          :@Aleks:
    - [ ] - Scroll to selected in table
 ** PLANNED [#2] Mapping and demapping toolkit for confgen           :@Serhii:
-** PLANNED [#3] encrypt business files                              :@Serhii:
-   - [ ] create crypo toolkit
-   - [ ] create key-storage
-** PLANNED [#3] make URL clojure loader                      :@Julia:@Serhii:
-   - [ ] create crypo toolkit
-   - [ ] create key-storage     
-** PLANNED [#3] Forms as quick table layout for component            :@Aleks:
-   - [ ] Create tutorial how to use forms component
-   - [ ] Create own component where send as args vector with comonents in vector
-     #+begin_example
-     [ [(label)(label)] ;; row 1 
-     [(label)(label)] ] ;; row 2
-     #+end_example
-
-** PLANNED [#3] Rewrite test for SSQL toolkit                :@Julia:@Serhii:
-   Current testable API too old. API standard was reimplemented.
-   And strongly need to rewrite test cases for oll things query.
-** PLANNED [#3] Versioning data structure             :@Julia:@Aleks:@Serhii:
-** PLANNED [#3] sql_tools | debug                                   :@Serhii:
-    - [ ] pretty printing for sql syntax
-** PLANNED [#3] defvar managment                             :@Aleks:@Serhii:
-   After app loading, we have some values in system variables, divided by group name,
-   
-   - [ ] Create GUI which allow controlling and changing variables inside gui. 
-   - [ ] Make persistant function, which automatically wrote customized variable
-     back to =.jarman=, (also mean parsing file) 
-** PLANNED [#3] Ekka todo#1 chages                    :@Julia:@Aleks:@Serhii:
+** PLANNED [#2] Ekka todo#1 chages                    :@Julia:@Aleks:@Serhii:
 *** Підприємець
     -   ЄДРПОУ - 10 цифр довжина з переду нулями
     -   Форма власності - комбобокс
@@ -255,7 +239,37 @@
        
 *** Акт виконаних робіт
 	-   створити
+** PLANNED [#3] Add history of state                                :@Serhii:
+   - [ ] safe history
+   - [ ] restore state
+   - [ ] ~redo/undo~ only test
+** PLANNED [#3] encrypt business files                              :@Serhii:
+   - [ ] create crypo toolkit
+   - [ ] create key-storage
+** PLANNED [#3] make URL clojure loader                      :@Julia:@Serhii:
+   - [ ] create crypo toolkit
+   - [ ] create key-storage     
+** PLANNED [#3] Forms as quick table layout for component            :@Aleks:
+   - [ ] Create tutorial how to use forms component
+   - [ ] Create own component where send as args vector with comonents in vector
+     #+begin_example
+     [ [(label)(label)] ;; row 1 
+     [(label)(label)] ] ;; row 2
+     #+end_example
 
+** PLANNED [#3] Rewrite test for SSQL toolkit                :@Julia:@Serhii:
+   Current testable API too old. API standard was reimplemented.
+   And strongly need to rewrite test cases for oll things query.
+** PLANNED [#3] Versioning data structure             :@Julia:@Aleks:@Serhii:
+** PLANNED [#3] sql_tools | debug                                   :@Serhii:
+    - [ ] pretty printing for sql syntax
+** PLANNED [#3] defvar managment                             :@Aleks:@Serhii:
+   After app loading, we have some values in system variables, divided by group name,
+   
+   - [ ] Create GUI which allow controlling and changing variables inside gui. 
+   - [ ] Make persistant function, which automatically wrote customized variable
+     back to =.jarman=, (also mean parsing file) 
+** PLANNED [#3] Package Manager upgrade                              :@Julia:
 ** DONE [#1] Update manager                                         :@Serhii:
    CLOSED: [2021-09-05 Sun 15:43]
    - [X] updata manager lib and log
@@ -274,3 +288,4 @@
      - strategy and aims   
 
        
+   

@@ -101,6 +101,7 @@
    1. [ ] Cannot edit table =view=
    2. [ ] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
    3. [ ] Cannot edit metadata of table 
+** TODO [#2] /Feature/. Implement Faces                                :@Aleks:
 ** TODO [#2] /Check/. Check theme covering the GUI. Fix style :@Julia:@Aleks:@Serhii:
      @Morfeu5z and @Julia47 , and I if you want, must create a group meeting
      on which we try to resolve problems:
@@ -153,30 +154,21 @@
    - [ ] Add buttons ~remove column~, ~add column~
 ** PLANNED [#3] DB Visualiser: Table adding form                       :@Julia:
 * Backend
-** PROCESSING [#2] themes plugin system                      :@Aleks:@Serhii:
-   With relation to our conversation, @Morfeu5z please make namespace like jarman.gui.style,
-   when you put simple variables . to customizing all styles per compoennt, after you done those taks,
-   call me, for "talk" about idiomatic direction of naming for styles(i mean lexical abstracution you use
-   to specifying variables style). As you remember i warn you not create variables like "button-one-border-bottom" etc.
-     
-   Try to minimize count of those varaibles(mean not more 50 etc. it's not about repeating colors, it's about abstraction division)
-*** [ ] make this file, but not start integrate it to system, just create file. :@Aleks:    
-*** [ ] try to prepare some graphical view for changing theme. Discribe one theme as ", " :@Aleks:    
-*** [ ] create plugin declaration for themes.                       :@Serhii:
-** PROCESSING [#2] /Feature/. Rewrite plugin system                   :@Serhii:
+** PROCESSING [#1] /Feature/. Rewrite plugin system                   :@Serhii:
    DEADLINE: <2021-09-09 Thu>
-   - [ ] Theme plugin [0/2]
+   - [X] View plugin
+     - [X] Registration function.
+       - [X] Remove duplications of loaded plugins
+   - [-] Theme plugin [2/3]
      with relation to [[themes plugin system]]
-     - [ ] Theme declaration
-     - [ ] Registration function
-   - [ ] View plugin
-     - [ ] Registration function.
-       - [ ] Remove duplications of loaded plugins
-   - [ ] Package
+     - [X] Theme declaration
+     - [X] Registration function
+     - [ ] GUI Theme manager
+   - [ ] Rename PandaPackage to PandaExtension
 
 ** PLANNED [#2] Service Period. sort contract list    :@Julia:@Serhii:
-*** [ ] sorting contract by date
-*** [ ] colorize contract by active-nonactive depend on current date
+   - [ ] sorting contract by date
+   - [ ] colorize contract by active-nonactive depend on current date
 ** PLANNED [#2] Permission systems                                   :@Aleks:
 
    #+begin_src clojure

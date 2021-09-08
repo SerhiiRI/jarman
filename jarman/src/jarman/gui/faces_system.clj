@@ -13,7 +13,7 @@
       (swap! faces-storage conj ~face-variable-ref)
       ~face-variable-ref)))
 
-;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;
 ;;; HELPERS ;;;
 ;;;;;;;;;;;;;;;
 

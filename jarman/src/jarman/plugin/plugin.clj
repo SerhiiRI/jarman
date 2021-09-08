@@ -94,12 +94,14 @@
                  (fn [l] (let [plugin (constructViewPlugin args)
                               l-without-old-plugin
                               (filterv #(not= (:plugin-name plugin) (:plugin-name %)) l)]
-                          (conj l-without-old-plugin plugin)))))
-  true)
+                          (conj l-without-old-plugin plugin))))) true)
 
 ;;;;;;;;;;;;;;;;;;;
 ;;; ThemePlugin ;;;
 ;;;;;;;;;;;;;;;;;;;
+
+(def ^:private selected-theme (atom nil))
+(defn selected-theme-get [] (deref selected-theme))
 
 (def ^:private system-ThemePlugin-list (ref []))
 (defn system-ThemePlugin-list-get [] (deref system-ThemePlugin-list))
@@ -127,7 +129,8 @@
   {:pre [(string? theme-name)]}
   (let [theme (first (filter #(= (:theme-name %) theme-name) (system-ThemePlugin-list-get)))]
     (println (format "* Choose `%s` theme" theme-name))
-    ((:theme-loader-fn theme))))
+    ((:theme-loader-fn theme))
+    (swap! selected-theme theme)))
 
 (comment
   (system-ThemePlugin-list-get)

@@ -7,8 +7,9 @@
 (declare register-custom-view-plugin)
 (declare register-custom-theme-plugin)
 
-
+;;;;;;;;;;;;;;;
 ;;; HELPERS ;;;
+;;;;;;;;;;;;;;;
 
 (defn default-system-view-plugin-spec-list []
   (list
@@ -89,17 +90,46 @@
     :plugin-name name}))
 
 (defn register-custom-view-plugin [& {:as args}]
-  (dosync (alter system-ViewPlugin-list conj (constructViewPlugin args)))
+  (dosync (alter system-ViewPlugin-list
+                 (fn [l] (let [plugin (constructViewPlugin args)
+                              l-without-old-plugin
+                              (filterv #(not= (:plugin-name plugin) (:plugin-name %)) l)]
+                          (conj l-without-old-plugin plugin)))))
   true)
 
 ;;;;;;;;;;;;;;;;;;;
 ;;; ThemePlugin ;;;
 ;;;;;;;;;;;;;;;;;;;
 
-(comment (def ^:private system-ThemePlugin-list (ref []))
-         (defn system-ThemePlugin-list-get [] (deref system-ThemePlugin-list))
-         (defrecord ThemePlugin []))
+(def ^:private system-ThemePlugin-list (ref []))
+(defn system-ThemePlugin-list-get [] (deref system-ThemePlugin-list))
+(defrecord ThemePlugin
+    [theme-name
+     theme-description
+     theme-loader-fn])
+(defn constructThemePlugin [{:keys [name description loader]}]
+  (assert (string? name) "Theme plugin `:name` must be symbol")
+  (assert (string? description) "Theme plugin `:description` is not string type")
+  (assert (fn? loader) "Theme plugin `:loader` might be a function (fn []..)")
+  (map->ThemePlugin
+   {:theme-loader-fn loader
+    :theme-description description
+    :theme-name name}))
+(defn register-custom-theme-plugin [& {:as args}]
+  (dosync (alter system-ThemePlugin-list
+                 (fn [l] (let [plugin (constructThemePlugin args)
+                              l-without-old-plugin
+                              (filterv #(not= (:theme-name plugin) (:theme-name %)) l)]
+                          (conj l-without-old-plugin plugin)))))
+  true)
 
+(defn do-load-theme [theme-name]
+  {:pre [(string? theme-name)]}
+  (let [theme (first (filter #(= (:theme-name %) theme-name) (system-ThemePlugin-list-get)))]
+    (println (format "* Choose `%s` theme" theme-name))
+    ((:theme-loader-fn theme))))
 
-
+(comment
+  (system-ThemePlugin-list-get)
+  (system-ViewPlugin-list-get))
 

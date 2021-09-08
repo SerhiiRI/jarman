@@ -68,11 +68,19 @@
    "alizarin"         "#e74c3c"
    "pomegranate"      "#c0392b"})
 
+;; (defmacro with-flatui-color-variables
+;;   "`let' bind all colors defined in `flatui-colors-alist' around BODY.
+;;   Also bind `class' to ((class color) (min-colors 89))."
+;;   [& body]
+;;   `(let [~@(mapcat (fn [[colr hex]] (vector (symbol colr) hex)) (seq flatui-colors-alist))]
+;;      ~@body))
+
 (defmacro with-flatui-color-variables
   "`let' bind all colors defined in `flatui-colors-alist' around BODY.
   Also bind `class' to ((class color) (min-colors 89))."
   [& body]
-  `(let [~@(mapcat (fn [[colr hex]] (vector (symbol colr) hex)) (seq flatui-colors-alist))]
+  `(do
+     ~@(map (fn [[colr hex]] (list 'def (symbol colr) hex)) (seq flatui-colors-alist))
      ~@body))
 
 
@@ -82,10 +90,22 @@
  `(quote
    (button )))
 
+(jarman.gui.faces-theme/prepare-bind-variable-set
+ '( ;; -- 
+   underscore-panel     clouds
+   button-border-top    underscore-panel
+   button-border-bottom underscore-panel))
 
-(with-flatui-color-variables
-  pomegranate)
 
+((with-flatui-color-variables
+   (jarman.gui.faces-theme/custom-theme-set-faces
+    "jarman"
+    '( ;; -- 
+      underscore-panel     clouds
+      button-border-top    underscore-panel
+      button-border-bottom underscore-panel))))
+
+(alter-var-root #'jarman.gui.faces-theme/underscore-panel (fn [_] "chuj"))
 
 
 

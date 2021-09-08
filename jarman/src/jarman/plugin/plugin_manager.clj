@@ -38,8 +38,7 @@
    [clojure.pprint :refer [cl-format]]
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]
-   [jarman.config.dot-jarman-param :refer [defvar]]
-   [jarman.plugin.plugin])
+   [jarman.config.dot-jarman-param :refer [defvar]])
   (:import (java.io IOException FileNotFoundException)))
 
 

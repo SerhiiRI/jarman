@@ -9,7 +9,8 @@
            (jarman.jarmanjcomp DateTime)
            (java.awt Color Component)
            (java.awt Dimension))
-  (:require [jarman.tools.lang :refer :all]
+  (:require [jarman.gui.faces]
+            [jarman.tools.lang :refer :all]
             [clojure.string    :as string]
             [seesaw.swingx  :as swingx]
             [seesaw.core       :as c]
@@ -38,7 +39,9 @@
             [jarman.gui.gui-main-menu        :as menu]
             ;; [jarman.managment.data           :as managment-data]
             [jarman.plugin.plugin-manager    :refer [do-load-plugins]]
-            [jarman.config.dot-jarman        :refer [dot-jarman-load]]))
+            [jarman.plugin.plugin            :refer [do-load-theme]]
+            [jarman.config.dot-jarman        :refer [dot-jarman-load]]
+            [jarman.gui.builtin-themes.jarman-light]))
 
  
 ;; ┌──────────────────────────┐
@@ -241,6 +244,7 @@
   []
   (dot-jarman-load)
   (do-load-plugins)
+  (do-load-theme "Jarman Light")
   (menu/clean-main-menu)
   (load-plugins-to-main-menu)
   (load-static-main-menu))

@@ -174,7 +174,7 @@
        - [ ] Remove duplications of loaded plugins
    - [ ] Package
 
-** PLANNED [#2] service_period.clj | sort contract list      :@Julia:@Serhii:
+** PLANNED [#2] Service Period. sort contract list    :@Julia:@Serhii:
 *** [ ] sorting contract by date
 *** [ ] colorize contract by active-nonactive depend on current date
 ** PLANNED [#2] Permission systems                                   :@Aleks:

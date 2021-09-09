@@ -173,6 +173,15 @@
    - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [ ] Make refreshing for jarman, when theme was selected
 * Backend
+** TODO [#1] REST!                                                   :@Julia:
+   DEADLINE: <2021-09-12 niedz.>
+   deWorkaholization stages: 
+   - [ ] Watch interesting film.
+   - [ ] Go outside house(send selfy for approvement)
+   - [ ] Read something interesting.
+   - [ ] Find something interesting.
+   - [ ] Also love your Project Manager <3
+
 ** PROCESSING [#1] /Feature/. Rewrite plugin system                   :@Serhii:
    DEADLINE: <2021-09-09 Thu>
    - [ ] Add ~:deps~ key into ~package~

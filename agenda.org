@@ -9,6 +9,7 @@
 #+STARTUP: overview
 
 * Frontend
+
 ** PROCESSING [#2] Frontend refactorization
    DEADLINE: <2021-09-15 Wed>
 *** TODO Icons                                                       :@Julia:
@@ -21,6 +22,9 @@
     - [ ] Pay icon. (hrywna) + (dolar)
     - [ ] До лупи додати кінець, одноколірна.
 *** TODO Upgrade UI Elements                                  :@Julia:@Aleks:
+    :PROPERTIES:
+    :CUSTOM_ID: alert-boxes-replacement
+    :END:
     - [ ] to ~(state/state :alert-manager)~
       #+begin_src clojure
 	((state/state :alert-manager)
@@ -153,18 +157,35 @@
    - [ ] Make ~:component-type~, ~:field~ , ~:field-qualified~ not editable even by admin. 
    - [ ] Add buttons ~remove column~, ~add column~
 ** PLANNED [#3] DB Visualiser: Table adding form                       :@Julia:
+** PLANNED /Feature/. Update Manager                                   :@Julia:
+   - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
+   - [ ] Show popup with hard program restart
+   - [ ] Button for reading log file /update-manager-log.org/
+** PLANNED /Feature/. Extension Manager                        :@Julia:@Serhii:
+   - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
+   - [ ] Show extension file-tree. Alow editing file throw the through the jarman
+   - [ ] Show whole information about package, from file =package=, when you click on
+     special expand segment
+   - [ ] Enable/Disable extension
+   - [ ] Extention searching/install template, because repository we currently doesnt have
+   - [ ] Button for reading log file /extension-manager-log.org/
+** PLANNED /Feature/. Theme Manager                                    :@Julia:
+   - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
+   - [ ] Make refreshing for jarman, when theme was selected
 * Backend
 ** PROCESSING [#1] /Feature/. Rewrite plugin system                   :@Serhii:
    DEADLINE: <2021-09-09 Thu>
+   - [ ] Add ~:deps~ key into ~package~
+     - [ ] create package compiling sequence 
    - [X] View plugin
      - [X] Registration function.
        - [X] Remove duplications of loaded plugins
-   - [-] Theme plugin [2/3]
+   - [X] Theme plugin [3/3]
      with relation to [[themes plugin system]]
      - [X] Theme declaration
      - [X] Registration function
-     - [ ] GUI Theme manager
-   - [ ] Rename PandaPackage to PandaExtension
+     - [X] GUI Theme manager
+   - [X] Rename PandaPackage to PandaExtension
 
 ** PLANNED [#2] Service Period. sort contract list    :@Julia:@Serhii:
    - [ ] sorting contract by date
@@ -262,13 +283,16 @@
    - [ ] Make persistant function, which automatically wrote customized variable
      back to =.jarman=, (also mean parsing file) 
 ** PLANNED [#3] Package Manager upgrade                              :@Julia:
+** PLANNED [#3] /Feature/. Support Org file                           :@Serhii:
+   - [ ] Create library for printing directly to org file
+   - [ ] Create parser library
 ** DONE [#1] Update manager                                         :@Serhii:
    CLOSED: [2021-09-05 Sun 15:43]
    - [X] updata manager lib and log
    - [X] update manager GUI 
 * Infrastructure
 * Documentations
-** PLANNED [#3] Create jarman Vocabluary                            :@Serhii:
+** PROCESSING [#3] Create jarman Vocabluary                         :@Serhii:
 ** PLANNED [#3] create jarman manifest file                         :@Serhii:
    - Note taken on [2021-09-02 чт 19:01] 
      After making first release of Jarman and finishing plugin system write

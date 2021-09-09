@@ -1,4 +1,4 @@
-(ns jarman.plugin.plugin-manager-gui
+(ns jarman.plugin.extension-manager-gui
   (:require
    ;; swing tools
    [seesaw.core   :as c]
@@ -22,7 +22,7 @@
    [jarman.gui.gui-tools :as gtool]
    ;; [jarman.tools.lang :refer [in?]]
    ;; [jarman.tools.fs :as fs]
-   [jarman.plugin.plugin-manager :as plugin-manager]
+   [jarman.plugin.extension-manager :as extension-manager]
    ;; environtemnt variables
    [jarman.config.environment :as env])
   (:import (java.io IOException FileNotFoundException)))
@@ -60,7 +60,7 @@
 ;;; UI COMPONENTS ;;;
 ;;;;;;;;;;;;;;;;;;;;;
 
-(defn package-content [package]
+(defn extension-content [extension]
   (doto
       (c/table
        :show-horizontal-lines? nil
@@ -70,7 +70,7 @@
                                            {:key :description}
                                            ;; {:key :url}
                                            ]
-                                 :rows [package]))
+                                 :rows [extension]))
     (.setRowMargin 10)
     (.setRowHeight 35)
     (.setIntercellSpacing (java.awt.Dimension. 10 0))
@@ -93,37 +93,38 @@
 
 (defn startup-components [] [])
 
-(defn supply-content-all-package [items package-list]
-  (if (seq package-list)
+(defn supply-content-all-extensions [items extension-list]
+  (if (seq extension-list)
     (concat items
             [(info "Installed plugins:")]
-            (for [pkg package-list]
+            (for [ext extension-list]
               (c/horizontal-panel
                :items 
-               [(package-content pkg)
+               [(extension-content ext)
                 (gcomp/button-basic "Reload"
                                     :onClick (fn [_] (try-catch-alert
-                                                     (plugin-manager/do-load-plugins pkg)
+                                                     (extension-manager/do-load-extensions ext)
                                                      ((state/state :alert-manager)               
-                                                      :set {:header "Plugin manager"
-                                                            :body   (format "plugin `%s` successfully reloaded"
-                                                                            (:name pkg))} 7))))])))
+                                                      :set {:header "Extension manager"
+                                                            :body   (format "Extension `%s` successfully reloaded"
+                                                                            (:name ext))} 7))))])))
     (conj items
-          (info "Installed plugins:")
+          (info "Installed extentions:")
           (info "-- empty --"))))
 
-(plugin-manager/package-storage-list-load)
+(extension-manager/extension-storage-list-load)
 
-(defn plugin-manager-panel []
-  (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[]0px"]
-                        :background "#fff"
-                        :items
-                        (gtool/join-mig-items
-                         (-> (startup-components)
-                             (supply-content-all-package (plugin-manager/package-storage-list-get))))))
+(defn extension-manager-panel []
+  (seesaw.mig/mig-panel
+   :constraints ["wrap 1" "0px[grow, fill]0px" "0px[]0px"]
+   :background "#fff"
+   :items
+   (gtool/join-mig-items
+    (-> (startup-components)
+        (supply-content-all-extensions (extension-manager/extension-storage-list-get))))))
 
 (comment
-  (-> (c/frame :content (plugin-manager-panel))
+  (-> (c/frame :content (extention-manager-panel))
       c/pack!
       c/show!))
 

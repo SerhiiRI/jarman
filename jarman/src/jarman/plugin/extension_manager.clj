@@ -1,4 +1,4 @@
-(ns jarman.plugin.plugin-manager
+(ns jarman.plugin.extension-manager
   (:require
    ;; -------------------
    [clojure.data :as data]
@@ -46,18 +46,17 @@
 ;;; CONFIGURATIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
-(def ^:dynamic *debug-to-file* false)
-(def ^:dynamic *debug-file-name* "plugin-manager-log.org")
+(def ^:dynamic *debug-to-file* true)
+(def ^:dynamic *debug-file-name* "extension-manager-log.org")
 
-(defvar jarman-plugin-list '(aaa)
+(defvar jarman-extension-list '(aaa)
   :type clojure.lang.PersistentList
   :group :plugin-system)
 
-(def ^:private jarman-plugins-dir-list
+(def ^:private jarman-extensions-dir-list
   "List of all plugins directory in client filesystem"
   [(io/file env/user-home ".jarman.d" "plugins")
    (io/file "."           ".jarman.d" "plugins")])
-
 
 ;;;;;;;;;;;;;;;
 ;;; HELPERS ;;; 
@@ -69,7 +68,7 @@
 (defn ^:private create-log-file []
   (if (not (.exists (clojure.java.io/file *debug-file-name*)))
     (spit *debug-file-name*
-          "#+TITLE: Plugin manager Log file\n#+AUTHOR: Serhii Riznychuk\n#+EMAIL: sergii.riznychuk@gmail.com\n#+STARTUP: overview\n")))
+          "#+TITLE: Extension manager Log file\n#+AUTHOR: Serhii Riznychuk\n#+EMAIL: sergii.riznychuk@gmail.com\n#+STARTUP: overview\n")))
 
 (defmacro ^:private with-out-debug-file [& body]
   `(binding [*out* (if *debug-to-file*
@@ -80,20 +79,19 @@
      (do
        ~@body)))
 
-
 ;;;;;;;;;;;;;;;;;;;;
-;;; PandaPackage ;;;
+;;; PandaExtension ;;;
 ;;;;;;;;;;;;;;;;;;;;
 
 (defprotocol IPluginLoader
   (do-load [this]))
-(defrecord PandaPackage [name description package-path version authors license keywords url loading-seq]
+(defrecord PandaExtension [name description extension-path version authors license keywords url loading-seq]
   IPluginLoader
   (do-load [this]
     (println (format "** load ~%s~" name))
     (doall
      (doseq [loading-file loading-seq
-             :let [f (io/file package-path (format "%s.clj" (str loading-file)))]]
+             :let [f (io/file extension-path (format "%s.clj" (str loading-file)))]]
        (if (.exists f)
          (do
            (println (format "*** compiling ~%s~" (str f)))
@@ -105,66 +103,64 @@
                  (doall (map (partial cl-format *out* "~,,4<~A~>~%") (clojure.string/split file-output #"\n")))
                  (cl-format *out* "~,,3<~A~> ~%" "#+end_example")))))
          (throw (FileNotFoundException.
-                 (format "Plugin `%s`. Loading sequnce `%s` not exist"
+                 (format "Extension `%s`. Loading sequnce `%s` not exist"
                          name loading-file))))))))
-(defn constructPandaPackage [name description path package-m]
-  (-> package-m
+(defn constructPandaExtension [name description path extension-m]
+  (-> extension-m
       (assoc :name name)
       (assoc :description description)
-      (assoc :package-path path)
-      map->PandaPackage))
-
+      (assoc :extension-path path)
+      map->PandaExtension))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SYSTEM VARS, LOADERS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
-(def ^:private package-storage-list (ref []))
-(defn          package-storage-list-get  [] (deref package-storage-list))
-(defn          package-storage-list-load []
-  (if-let [loading-path (first (filter #(.exists %) jarman-plugins-dir-list))]
+(def ^:private extension-storage-list (ref []))
+(defn          extension-storage-list-get  [] (deref extension-storage-list))
+(defn          extension-storage-list-load []
+  (if-let [loading-path (first (filter #(.exists %) jarman-extensions-dir-list))]
     (do
-      (dosync (ref-set package-storage-list []))   
-      (doseq [package (deref jarman-plugin-list)]
-        (let [package-path (io/file loading-path (str package) "package")]
-          (if (.exists package-path)
-            (let [define-package-body (rest (read-string (slurp (io/file loading-path (str package) "package"))))
-                  [name description] (take 2 define-package-body)
-                  package-map-sequence (drop 2 define-package-body)]
-              (assert (even? (count package-map-sequence))
+      (dosync (ref-set extension-storage-list []))   
+      (doseq [extension (deref jarman-extension-list)]
+        (let [extension-path (io/file loading-path (str extension) "package")]
+          (if (.exists extension-path)
+            (let [define-extension-body (rest (read-string (slurp (io/file loading-path (str extension) "package"))))
+                  [name description] (take 2 define-extension-body)
+                  extension-map-sequence (drop 2 define-extension-body)]
+              (assert (even? (count extension-map-sequence))
                       (format "Odd config keywords in `%s` plugin declaration"
-                              (str package)))
+                              (str extension)))
               (dosync
-               ;; wrapp into a package 
-               ;;=> (:verions ...) => #PandaPackage{:version ...}
-               (alter package-storage-list conj
-                      (constructPandaPackage
+               ;; wrapp into a extension 
+               ;;=> (:verions ...) => #PandaExtension{:version ...}
+               (alter extension-storage-list conj
+                      (constructPandaExtension
                        name
                        description
-                       (io/file loading-path (str package))
-                       (eval (apply hash-map package-map-sequence))))))
+                       (io/file loading-path (str extension))
+                       (eval (apply hash-map extension-map-sequence))))))
             (throw (FileNotFoundException.
-                    (format "Package `%s` doesn't contain declaration")))))))
+                    (format "Extension `%s` doesn't contain declaration" extension)))))))
     (throw (FileNotFoundException.
             (format "Any plugin loading path [%s] doesn't exists in system"
                     (clojure.string/join
-                     ", " (map str jarman-plugins-dir-list)))))))
+                     ", " (map str jarman-extensions-dir-list)))))))
 
-(defn do-load-plugins
+(defn do-load-extensions
   ([]
-   (package-storage-list-load)
+   (extension-storage-list-load)
    (with-out-debug-file
-     (println (format "* Loading plugins (%s)" (quick-timestamp)))
-     (println (format " Total plugin count: ~%d~" (count (deref package-storage-list))))
-     (doall (map do-load @package-storage-list))))
-  ([& panda-packages]
+     (println (format "* Loading extensions (%s)" (quick-timestamp)))
+     (println (format " Total extensions count: ~%d~" (count (deref extension-storage-list))))
+     (doall (map do-load @extension-storage-list))))
+  ([& panda-extensions]
    (with-out-debug-file
-     (println (format "* Reload plugins (%s)" (quick-timestamp)))
-     (doall (map do-load panda-packages)))))
+     (println (format "* Reload extensions (%s)" (quick-timestamp)))
+     (doall (map do-load panda-extensions)))))
 
 (comment
-  (package-storage-list-load)
-  (package-storage-list-get)
-  (do-load-plugins))
+  (extension-storage-list-load)
+  (extension-storage-list-get)
+  (do-load-extensions))
 

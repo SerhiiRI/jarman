@@ -71,22 +71,26 @@
 ;; Here you can saw theme bindign by my Helper toolkit
 ;; Where you discribe variable name and your colors
 ;; also use as variable
-(def automatic-binder
- (with-dracula-colors
-   (custom-theme-set-faces
-    '( ;; -- FACE BINDINGS --
-      underscore-panel     blue-light
-      button-border-top    yellow-light
-      button-border-bottom underscore-panel))))
+;;
+;; Example:
+;;    (def automatic-binder
+;;     (with-dracula-colors
+;;       (custom-theme-set-faces
+;;        '( ;;    -- FACE BINDINGS --
+;;          underscore-panel     blue-light
+;;          button-border-top    yellow-light
+;;          button-border-bottom underscore-panel))))
 
 ;; But if you do not want to going this way, you can
 ;; also write yourself implemnetation for binding,
 ;; or for color scheme.
-(defn manual-binder []
-  (println "** Refresh sequence")
-  (def jarman.gui.faces/underscore-panel    (get dracula-color-scheme "blue-light"))
-  (def jarman.gui.faces/button-border-top   (get dracula-color-scheme "yellow-light"))
-  (def jarman.gui.faces/button-border-bottom jarman.gui.faces/underscore-panel ))
+;; 
+;; Example: 
+;;    (defn manual-binder []
+;;      (println "** Refresh sequence")
+;;      (def jarman.gui.faces/underscore-panel    (get dracula-color-scheme "blue-light"))
+;;      (def jarman.gui.faces/button-border-top   (get dracula-color-scheme "yellow-light"))
+;;      (def jarman.gui.faces/button-border-bottom jarman.gui.faces/underscore-panel ))
 
 ;; The main aim is gave you freedom to implementaion
 ;; your customization in whay you beter choose for

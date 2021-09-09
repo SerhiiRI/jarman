@@ -23,6 +23,9 @@
 			:c]}]}
     #+end_src
   - Composite Component
+  - Extension
+    Is special type of plugin system.
+    Every extension /MUST/ have file with name =package=, and SHOULD has =README.org= and another source =.clj= files that must be registered in special loading moment in Jaman. 
   - Face
   - Face Variable
   - File Storage

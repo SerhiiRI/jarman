@@ -3,7 +3,8 @@
             [clojure.string :as string]
             [seesaw.core    :as c]
             [jarman.tools.update-manager-gui :as update-manager]
-            [jarman.plugin.plugin-manager-gui :as plugin-manager]
+            [jarman.plugin.extension-manager-gui :as extension-manager]
+            [jarman.plugin.themes-manager-gui :as themes-manager]
             [jarman.gui.gui-components :as gcomp]
             [jarman.gui.gui-tools      :as gtool]
             [jarman.logic.state        :as state]
@@ -168,11 +169,12 @@
                  :fn      (fn [e] )}}}}
 
    "Administration"
-   {"Update Manager" {:key "update-manager"
-                      :fn    update-manager/update-manager-panel}
-    "Plugin Manager" {:key "plugin-manager"
-                      :fn    plugin-manager/plugin-manager-panel}
-    
+   {"Update manager" {:key "update-manager"
+                      :fn update-manager/update-manager-panel}
+    "Extension manager" {:key "extension-manager"
+                         :fn extension-manager/extension-manager-panel}
+    "Themes manager" {:key "themes-manager"
+                         :fn themes-manager/theme-manager-panel}
     "DB Visualizer" {:key "db-visualizer"
                      :fn    dbv/create-view--db-view}
     (gtool/get-lang-btns :settings)

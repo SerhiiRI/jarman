@@ -130,7 +130,7 @@
   (let [theme (first (filter #(= (:theme-name %) theme-name) (system-ThemePlugin-list-get)))]
     (println (format "* Choose `%s` theme" theme-name))
     ((:theme-loader-fn theme))
-    (swap! selected-theme theme)))
+    (swap! selected-theme (fn [_]theme))))
 
 (comment
   (system-ThemePlugin-list-get)

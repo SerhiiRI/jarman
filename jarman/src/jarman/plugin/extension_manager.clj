@@ -46,7 +46,7 @@
 ;;; CONFIGURATIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
-(def ^:dynamic *debug-to-file* true)
+(def ^:dynamic *debug-to-file* false)
 (def ^:dynamic *debug-file-name* "extension-manager-log.org")
 
 (defvar jarman-extension-list '(aaa)
@@ -163,4 +163,39 @@
   (extension-storage-list-load)
   (extension-storage-list-get)
   (do-load-extensions))
+
+
+;; (def xs '({:n "2"
+;;            :d ["4"]}
+;;           {:n "1"
+;;            :d ["2" "3"]}
+;;           {:n "3"
+;;            :d []}
+;;           {:n "4"
+;;            :d []}))
+
+;; 2->4
+;; 1->2->4
+;;  ->3
+;; 3
+;; 4
+
+;; (defn search-deps [n]
+;;   (first (remove #(not= n (:n %)) xs)))
+;; (defn remove-deps [n]
+;;   (vec (remove #(= n (:n %)) xs)))
+
+;; (search-deps "2")
+
+;; (throw (ex-info (format "Extension error. Not found dependency `%s` for `%s` plugin"
+;;                             n ext)
+;;                     {:type :undefinied-face-var
+;;                      :var face-variable}))
+
+;; (fn ext-load [{:keys [loaded extension-list]}]
+;;   (let [extension (first extension-list)]
+;;     (if (seq (:d extension))
+;;       (contains? loaded (first ()))))
+  
+;;   (for (contains? loaded (:n extension))))
 

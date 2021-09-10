@@ -1,0 +1,8 @@
+*.js
+*.html
+*.css
+.css
+docs/themes/
+docs/themes/org.css
+*.theme
+

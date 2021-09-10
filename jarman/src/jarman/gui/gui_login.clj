@@ -905,13 +905,12 @@
 (st)
 
 
-
-;; Start app window
-;; (-> (doto (seesaw.core/frame
-;;            :title "DEBUG WINDOW" :undecorated? false
-;;            :minimum-size [200 :by 200]
-;;            :size [200 :by 200]
-;;            :content (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[]0px" "0px[]0px"]
-;;                                     :items [[(seesaw.core/label :text "a")]]))
-;;       (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
-  
+(comment
+  Start app window
+  (-> (doto (seesaw.core/frame
+             :title "DEBUG WINDOW" :undecorated? false
+             :minimum-size [200 :by 200]
+             :size [200 :by 200]
+             :content (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[]0px" "0px[]0px"]
+                                            :items [[(seesaw.core/label :text "a")]]))
+        (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!)))

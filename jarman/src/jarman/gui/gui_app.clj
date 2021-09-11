@@ -9,7 +9,7 @@
            (jarman.jarmanjcomp DateTime)
            (java.awt Color Component)
            (java.awt Dimension))
-  (:require [jarman.gui.faces]
+  (:require [jarman.faces]
             [jarman.tools.lang :refer :all]
             [clojure.string    :as string]
             [seesaw.swingx  :as swingx]
@@ -21,12 +21,12 @@
             [clojure.pprint :as pp]
             ;; logic
             [jarman.config.config-manager    :as cm]
-            [jarman.config.dot-jarman        :as dot-jarman]
-            [jarman.config.dot-jarman-param  :as dot-jarman-param]
+            
             [jarman.gui.gui-views-service    :as gvs]
             [jarman.gui.gui-alerts-service   :as gas]
             [jarman.gui.gui-components       :as gcomp]
             [jarman.gui.gui-tools            :as gtool]
+            [jarman.tools.org                :refer :all]
             ;; deverloper tools 
             [jarman.config.init              :as iinit]
             [jarman.logic.state              :as state]
@@ -40,6 +40,7 @@
             ;; [jarman.managment.data           :as managment-data]
             [jarman.plugin.extension-manager :refer [do-load-extensions]]
             [jarman.plugin.plugin            :refer [do-load-theme]]
+            [jarman.config.vars              :refer [setq print-list-not-loaded]]
             [jarman.config.dot-jarman        :refer [dot-jarman-load]]
             [jarman.gui.builtin-themes.jarman-light]))
 
@@ -154,6 +155,16 @@
 ;; │             │
 ;; └─────────────┘
 
+;;; Quick log
+;; (defmacro ^:private log
+;;   ([msg]
+;;    `(println (format "** %s" ~msg)))
+;;   ([action msg]
+;;    `(do
+;;      (println (format "*** %s" ~msg))
+;;      ~action)))
+
+
 ;; before central swing-component build
 (defn- load-level-0
   "Description:
@@ -161,8 +172,8 @@
   []
   ;; (managment-data/on-app-start)
   (cm/swapp)
-  (dot-jarman/dot-jarman-load)
-  (dot-jarman-param/print-list-not-loaded))
+  (dot-jarman-load)
+  (print-list-not-loaded))
 ;; after swing component was builded
 (defn load-level-1
   "Description:
@@ -242,16 +253,30 @@
   "Description:
     Load main menu."
   []
-  (dot-jarman-load)
-  (do-load-extensions)
-  (do-load-theme "Jarman Light")
-  (menu/clean-main-menu)
-  (load-plugins-to-main-menu)
-  (load-static-main-menu))
+  (print-header
+   "Load .jarman"
+   (dot-jarman-load)
+   (print-list-not-loaded))
+  (print-header
+   "Load Extensions"
+   (do-load-extensions))
+  (print-header
+   "Load default theme `Jarman Light`"
+   (do-load-theme "Jarman Light"))
+  (print-header
+   "Clean main menu"
+   (menu/clean-main-menu))
+  (print-header
+   "Load view plugin into main menu"
+   (load-plugins-to-main-menu))
+  (print-header
+   "Load static main menu"
+   (load-static-main-menu)))
+
 
 ;; ┌─────────────┐
 ;; │             │
-;; │ App starter │
+;; │ app starter │
 ;; │             │
 ;; └─────────────┘
 

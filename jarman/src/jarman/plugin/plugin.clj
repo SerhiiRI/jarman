@@ -3,6 +3,7 @@
             [jarman.tools.lang :refer :all]
             [clojure.spec.alpha :as s]
             [clojure.java.io :as io]))
+(require '[jarman.tools.org :refer :all])
 
 (declare register-custom-view-plugin)
 (declare register-custom-theme-plugin)
@@ -128,9 +129,10 @@
 (defn do-load-theme [theme-name]
   {:pre [(string? theme-name)]}
   (let [theme (first (filter #(= (:theme-name %) theme-name) (system-ThemePlugin-list-get)))]
-    (println (format "* Choose `%s` theme" theme-name))
-    ((:theme-loader-fn theme))
-    (swap! selected-theme (fn [_]theme))))
+    (print-header
+     (format "Choose `%s` theme" theme-name)
+     ((:theme-loader-fn theme))
+     (swap! selected-theme (fn [_]theme)))))
 
 (comment
   (system-ThemePlugin-list-get)

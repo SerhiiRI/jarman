@@ -18,8 +18,6 @@
            java.awt.PointerInfo
            (java.awt.event MouseEvent)))
 
-(println "\nNew Window")
-
 ;; (def popup-state (atom (new JLayeredPane)))
 
 ;; (defn set-JLP [jlp] (swap! popup-state #(assoc % :jlp jlp)))

@@ -5,7 +5,7 @@ New-Item -Path "." -Name "$TMPPackageFolder" -ItemType "directory"
 Copy-Item -Path '.jarman.d\plugins' -Recurse -DestinationPath "$TMPPackageFolder\plugins"
 Copy-Item -Path '.jarman.d\configs' -Recurse -DestinationPath "$TMPPackageFolder\configs"
 Copy-Item -Path '.jarman' -Destination "$TMPPackageFolder"
-Copy-Item -Path '.jarman.data.clj' -Destination "$TMPPackageFolder"
+Copy-Item -Path '.jarman.data' -Destination "$TMPPackageFolder"
 # Copy-Item -Path 'Jarman EXE' -Destination "$TMPPackageFolder"
 Compress-Archive -Path "$TMPPackageFolder" -DestinationPath "$PackageName"
 

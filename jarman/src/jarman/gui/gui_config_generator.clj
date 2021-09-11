@@ -369,7 +369,6 @@
   (let [[color-bg color-hover] (if (fn? colors-fn)
                                  (nth (colors-fn 0) 0)
                                  ["f7f7f7" "f7f7f7"])
-        x (println color-bg color-hover)
         current-theme (str (first (cm/get-in-value [:themes :theme_config.edn :selected-theme])) ".edn")
         config-file-list-as-keyword (map #(first %) (cm/get-in-segment []))
         config-file-list-as-keyword-to-display

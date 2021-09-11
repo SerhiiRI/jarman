@@ -1,3 +1,4 @@
+;; -*- mode: clojure; mode: rainbow; -*-
 (ns jarman.gui.builtin-themes.jarman-light)
 (require 'jarman.plugin.plugin)
 (require 'jarman.gui.faces-system)

@@ -20,7 +20,7 @@ CLI_TMP_PATH="target/jarman-box-builder"
 CLI_JAR="./target/uberjar/jarman-cli.jar"
 CLI_ZIP_NAME="jarman-box"
 
-DOT_JARMAN_DATA=".jarman.data.clj"
+DOT_JARMAN_DATA=".jarman.data"
 DJD_1="src/jarman/managment/$DOT_JARMAN_DATA"
 DJD_2="./$DOT_JARMAN_DATA"
 DJD_3="~/$DOT_JARMAN_DATA"

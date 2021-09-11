@@ -23,7 +23,7 @@
 ;;; CONSTANTS ;;;
 ;;;;;;;;;;;;;;;;;
 
-(def jarman-data ".jarman.data.clj")
+(def jarman-data ".jarman.data")
 (def jarman-data-devl-path "file in `src/jarman/managment` namespace" (io/file "src" "jarman" "managment" jarman-data))
 (def jarman-data-curr-path "file in jarman.exe path" (io/file jarman-data))
 (def jarman-data-home-path "file in user home" (io/file env/user-home jarman-data))
@@ -33,6 +33,6 @@
   (if-let [file (first (filter #(.exists %) jarman-data-all))]
     (binding [*ns* (find-ns 'jarman.managment.data)] 
       (load-file (str file)))
-    (throw (FileNotFoundException. "Not found '.jarman.data.clj' file."))))
+    (throw (FileNotFoundException. "Not found '.jarman.data' file."))))
 
 (jarman-data-load)

@@ -1,4 +1,4 @@
-(ns jarman.gui.faces)
+(ns jarman.faces)
 (require '[jarman.gui.faces-system :refer [define-face]])
 
 ;;; UI elemnt colors

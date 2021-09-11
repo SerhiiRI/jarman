@@ -373,13 +373,7 @@
     (load-data-recur nil loaders)))
  
 
-(def ^:dynamic *view-loader-chain-fn* (make-loader-chain loader-from-view-clj loader-from-db)
-  ;; "Main function "
-  ;; (do (println "--1--")
-  ;;     (let [x (make-loader-chain loader-from-view-clj loader-from-db)]
-  ;;       (println "--1--")
-  ;;       x))
-  )
+(def ^:dynamic *view-loader-chain-fn* (make-loader-chain loader-from-view-clj loader-from-db))
 
 (defn do-view-load
   "using in self `*view-loader-chain-fn*`, swapp using

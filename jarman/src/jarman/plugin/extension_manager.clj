@@ -87,7 +87,7 @@
 
 (defprotocol IPluginLoader
   (do-load [this]))
-(defrecord PandaExtension [name description extension-path version authors license keywords url loading-seq]
+(defrecord PandaExtension [name description extension-path version authors license keywords url dependencies loading-seq]
   IPluginLoader
   (do-load [this]
     (print-header
@@ -109,9 +109,10 @@
                           name loading-file)))))))))
 (defn constructPandaExtension [name description path extension-m]
   (-> extension-m
-      (assoc :name name)
-      (assoc :description description)
-      (assoc :extension-path path)
+      (assoc  :name name)
+      (assoc  :description description)
+      (assoc  :extension-path path)
+      ;; (update :dependencies path)
       map->PandaExtension))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -149,6 +150,66 @@
                     (clojure.string/join
                      ", " (map str jarman-extensions-dir-list)))))))
 
+;; (extension-storage-list-get)
+;; (extension-storage-list-load)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; COMPILE WITH DEPENDENCIEST ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn- remove-deps [extension-name extension-list]
+  (vec (remove #(= extension-name (:name %)) extension-list)))
+
+(defn- replace-on-first [extension-name extension-list]
+  (concat
+   [(if-let [e (first (remove #(not= extension-name (:name %)) extension-list))]
+      e (throw (ex-info (format "Extension error. Not found dependency `%s`" extension-name)
+                        {:type :deps-undef})))]
+   (remove-deps extension-name extension-list)))
+
+(defn- was-loaded? [extension-name extension-list]
+  (some? (first (remove #(not= extension-name (:name %)) extension-list))))
+
+(defn- was-locked? [extension-name extension-list]
+  (if (and (some? (first (remove #(not= extension-name (:name %)) extension-list)))
+         (not= extension-name (:name (last extension-list))))
+    (throw (ex-info (format "Extension error. Circular dependencies `%s` in `%s`" extension-name (:name (last extension-list)))
+                    {:type :deps-circular-load}))))
+
+(defn- compile-with-deps
+  [& {:keys [extension-loaded
+             extension-locked
+             extension-list]}]
+  (print-line "Extension loading debug")
+  (print-line (cl-format nil "loaded [~{~a~^,~}]" (map :name extension-loaded)))
+  (print-line (cl-format nil "locked [~{~a~^,~}]" (map :name extension-locked)))
+  (print-line (cl-format nil "waiter [~{~a~^,~}]" (map :name extension-list)))
+  (when (seq extension-list)
+    (let [[extension & rest-extensions] extension-list]
+      (if (seq (:dependencies extension))
+        (if (was-loaded? (first (:dependencies extension)) extension-loaded)
+          (do
+            ;; 
+            (compile-with-deps
+             :extension-loaded extension-loaded
+             :extension-locked extension-locked
+             :extension-list   (conj rest-extensions (update-in extension [:dependencies] rest))))
+          (do
+            ;; 
+            (was-locked? extension extension-locked)
+            (compile-with-deps
+             :extension-loaded extension-loaded
+             :extension-locked (conj extension-locked extension)
+             :extension-list   (replace-on-first (first (:dependencies extension)) extension-list))))
+        (do
+          ;; COMPILE EXTENSION
+          (do-load extension)
+          ;; RECUR (EXTENSION . REST-EXTENSION)
+          ;; WITH REST-EXTENSION
+          (compile-with-deps
+           :extension-loaded (conj extension-loaded extension)
+           :extension-locked (remove-deps (:name extension) extension-locked)
+           :extension-list   rest-extensions))))))
+
 (defn do-load-extensions
   ([]
    (extension-storage-list-load)
@@ -156,7 +217,13 @@
      (print-header
       (format "Loading extensions (%s)" (quick-timestamp))
       (print-line (format "Total extensions count: ~%d~" (count (deref extension-storage-list))))
-      (doall (map do-load @extension-storage-list)))))
+      ;; COMPILE SEQUENTIAL 
+      ;; (doall (map do-load @extension-storage-list))
+      ;; COMPILE WITH DEPS
+      (compile-with-deps
+       :extension-loaded []
+       :extension-locked []
+       :extension-list @extension-storage-list))))
   ([& panda-extensions]
    (with-out-debug-file
      (print-header
@@ -169,38 +236,84 @@
   (do-load-extensions))
 
 
-;; (def xs '({:n "2"
-;;            :d ["4"]}
-;;           {:n "1"
-;;            :d ["2" "3"]}
-;;           {:n "3"
-;;            :d []}
-;;           {:n "4"
-;;            :d []}))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; DEPENDECY ALGORYTHM ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; 2->4
-;; 1->2->4
-;;  ->3
-;; 3
-;; 4
+(comment
+  (defn remove-deps [n lst]
+    (vec (remove #(= n (:n %)) lst)))
 
-;; (defn search-deps [n]
-;;   (first (remove #(not= n (:n %)) xs)))
-;; (defn remove-deps [n]
-;;   (vec (remove #(= n (:n %)) xs)))
+  (defn replace-on-first [n lst]
+    (concat
+     [(if-let [d (first (remove #(not= n (:n %)) lst))]
+        d (throw (ex-info (format "Extension error. Not found dependency `%s`" n)
+                          {:type :deps-undef})))]
+     (remove-deps n lst)))
 
-;; (search-deps "2")
+  (defn was-loaded? [n lst]
+    (some? (first (remove #(not= n (:n %)) lst))))
 
-;; (throw (ex-info (format "Extension error. Not found dependency `%s` for `%s` plugin"
-;;                             n ext)
-;;                     {:type :undefinied-face-var
-;;                      :var face-variable}))
+  (defn was-locked? [n lst]
+    (if (and (some? (first (remove #(not= n (:n %)) lst)))
+           (not= n (:n (last lst))))
+      (throw (ex-info (format "Extension error. Circular dependencies `%s` in `%s`" n (:n (last lst)))
+                      {:type :deps-circular-load}))))
 
-;; (fn ext-load [{:keys [loaded extension-list]}]
-;;   (let [extension (first extension-list)]
-;;     (if (seq (:d extension))
-;;       (contains? loaded (first ()))))
+  (defn ext-load [& {:keys [loaded locked extension-list]}]
+    (println (format "[Loaded|%s] [Locked| %s] [Waiting|%s]"
+                     (clojure.string/join "," (map :n loaded))
+                     (clojure.string/join "," (map :n locked))
+                     (clojure.string/join "," (map :n extension-list))))
+    (when (seq extension-list)
+      (let [[extension & rest-extensions] extension-list]
+        (if (seq (:d extension))
+          (do
+            
+            (if (was-loaded? (first (:d extension)) loaded)
+              (do
+                
+                (ext-load :loaded loaded
+                          :locked locked
+                          :extension-list (conj rest-extensions (update-in extension [:d] rest))))
+              (do
+                (was-locked? (:n extension) locked)
+                (ext-load :loaded loaded
+                          :locked (conj locked extension)
+                          :extension-list (replace-on-first (first (:d extension)) extension-list)))))
+          (do
+            ;; (println (:n extension))
+            (ext-load :loaded (conj loaded extension)
+                      :locked (remove-deps (:n extension) locked)
+                      :extension-list rest-extensions))))))
+
+  (def xs1 '({:n "2"
+              :d ["4" "5"]}
+             {:n "1"
+              :d ["2" "3"]}
+             {:n "3"
+              :d []}
+             {:n "4"
+              :d []}))
+
+  (def xs2 '({:n "2"
+              :d ["4"]}
+             {:n "5"
+              :d ["1"]}
+             {:n "1"
+              :d ["2" "3"]}
+             {:n "3"
+              :d []}
+             {:n "4"
+              :d []}))
+
+  (def xs3 '({:n "2"
+              :d ["1"]}
+             {:n "1"
+              :d ["3"]}
+             {:n "3"
+              :d ["2"]}))
+  (println "Loading:")
+  (ext-load :loaded [] :locked [] :extension-list xs2))
   
-;;   (for (contains? loaded (:n extension))))
 
-(comment dupa)

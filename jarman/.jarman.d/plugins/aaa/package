@@ -1,12 +1,13 @@
 ;; -*- mode: Clojure;-*-
 (define-package "aaa" "Some description for AAA"
   :version     "0.1"
-  :authors     '(("Serhii Riznychuk" "serhii.riznychuk@gmail.com")
-                 ("Julia Burmych"    "cutyBurMICH77@somewhere.com"))
-  :license     '("EPL-2.0" "https://www.eclipse.org/legal/epl-2.0/")
-  :keywords    '("startup" "screen" "tools" "dashboard")
-  :url         '("https://github.com/emacs-dashboard/emacs-dashboard")
-  :loading-seq '(first_file
-                 second_file
-                 main_plugin_file))
+  :authors      '(("Serhii Riznychuk" "serhii.riznychuk@gmail.com")
+                  ("Julia Burmych"    "cutyBurMICH77@somewhere.com"))
+  :license      '("EPL-2.0" "https://www.eclipse.org/legal/epl-2.0/")
+  :keywords     '("startup" "screen" "tools" "dashboard")
+  :dependencies '("dracula")
+  :url          '("https://github.com/emacs-dashboard/emacs-dashboard")
+  :loading-seq  '(first_file
+                  second_file
+                  main_plugin_file))
 

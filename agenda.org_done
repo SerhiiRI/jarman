@@ -1,0 +1,27 @@
+#    -*- mode: org -*-
+
+
+Archived entries from file /home/serhii/programs/jarman/agenda.org
+
+
+* DONE [#1] Update manager                                          :@Serhii:
+  CLOSED: [2021-09-05 Sun 15:43]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-09-12 Sun 15:39
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Backend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+  - [X] updata manager lib and log
+  - [X] update manager GUI 
+
+* DONE [#3] Create jarman Vocabluary                                :@Serhii:
+  CLOSED: [2021-09-09 Thu 18:25]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-09-12 Sun 15:42
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Documentations
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:

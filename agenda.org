@@ -190,10 +190,10 @@
    - [ ] /Feature/. Pin special key where you can put special lambda gui element
      which be edit this variable.
    
-** PROCESSING [#1] /Feature/. Rewrite plugin system                   :@Serhii:
+** TOREVIEW [#1] /Feature/. Rewrite plugin system                     :@Serhii:
    DEADLINE: <2021-09-09 Thu>
-   - [ ] Add ~:deps~ key into ~package~
-     - [ ] create package compiling sequence 
+   - [X] Add ~:deps~ key into ~package~
+     - [X] create package compiling sequence 
    - [X] View plugin
      - [X] Registration function.
        - [X] Remove duplications of loaded plugins

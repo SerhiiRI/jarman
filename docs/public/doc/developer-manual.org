@@ -56,7 +56,7 @@ Jarman files dividing logicaly as "something that is just program" and "all user
 - =C:\\P.. F..\\Jarman\\= - is main folder where =Jarman.exe=, and related binary or another application must be located.
 - =${USERHOME}\.jarman.d= - directory must contain all needed plugin, configurations, backups and any file dumps.
 - =${USERHOME}\.jarman= - central configuration file, which help to set some behavior pattern for jarman
-- =${USERHOME}\.jarman.data.clj= - in this file we define all configuraiton to database that up whole jarman buisness logic infrastructure.
+- =${USERHOME}\.jarman.data= - in this file we define all configuraiton to database that up whole jarman buisness logic infrastructure.
 
 * Metadata
 ** Cause
@@ -67,7 +67,7 @@ Take and look closelly by the example how to declare one.
 
 ** Structure
 
-Please open #_CREATE_REF .jarman.data.clj, which contain declaration of metadata for all/partial mentioned tables in database. Metadata not require to cover whole db, is just list of tables which you prefare to managing from the program client side. In this file you can find variable ~metadata-list~ with declared metadata to db tables in one long list.
+Please open #_CREATE_REF .jarman.data, which contain declaration of metadata for all/partial mentioned tables in database. Metadata not require to cover whole db, is just list of tables which you prefare to managing from the program client side. In this file you can find variable ~metadata-list~ with declared metadata to db tables in one long list.
 Please notice that metadata cannot be created for tables like "metadata" or another bad names, that not allowed, or currently use for system. #_LANG Відповідний warning abount bad naming you can see in runtime. All declarated and validated #_CREATE_REF metadata pushed into ~metadata~ table name in database.
 
 One metatable entity describes on top level table name and serialized properties, for example ={:id 412 :table "cache" :props "{}"}=, where =:table= describe 1:1 table name, and =:props= properties used for building UI and db-logic to program.

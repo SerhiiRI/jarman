@@ -43,7 +43,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "C:\programs\GitHub\jarman\installer\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\programs\GitHub\jarman\jarman\.jarman.d\config\*"; DestDir: "{%HOMEPATH}\.jarman.d\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "C:\programs\GitHub\jarman\jarman\.jarman"; DestDir: "{%HOMEPATH}"; Flags: ignoreversion
-Source: "C:\programs\GitHub\jarman\jarman\src\jarman\managment\.jarman.data.clj"; DestDir: "{%HOMEPATH}"; Flags: ignoreversion
+Source: "C:\programs\GitHub\jarman\jarman\src\jarman\managment\.jarman.data"; DestDir: "{%HOMEPATH}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

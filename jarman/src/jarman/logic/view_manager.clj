@@ -7,8 +7,9 @@
    [seesaw.border :as b]
    ;; Jarman toolkit
    [jarman.tools.lang :include-macros true :refer :all]
+   [jarman.tools.org  :refer :all]
    [jarman.config.environment :as env]
-   [jarman.config.dot-jarman-param :refer [defvar]]
+   [jarman.config.vars :refer [defvar]]
 
    ;; [jarman.plugin.plugin-loader :refer [do-load-plugins]]
    [jarman.plugin.plugin :as plugin-system]
@@ -127,7 +128,7 @@
                         add-full-path-cfg)])) [] plugin-list))))
 
 (defmacro defview [table-name & body]
-  (let [cfg-list (defview-prepare-config table-name body)]
+  #break (let [cfg-list (defview-prepare-config table-name body)]
     `(do
        ~@(for [{:keys [plugin-name plugin-config-path] :as cfg} cfg-list]
            (if-let [{:keys [plugin-toolkit-fn plugin-test-spec-fn plugin-entry-fn]}
@@ -349,7 +350,7 @@
   (let [data 
         (try
           (read-seq-from-file  "src/jarman/logic/view.clj")
-          (catch Exception e (println (str "caught exception: file not find" (.toString e)))))
+          (catch Exception e (print-line (str "caught exception: file not find" (.toString e)))))
         con (dissoc (db/connection-get)
                     :dbtype :user :password
                     :useUnicode :characterEncoding)]
@@ -373,19 +374,20 @@
     (load-data-recur nil loaders)))
  
 
-(def ^:dynamic *view-loader-chain-fn* (make-loader-chain loader-from-view-clj loader-from-db))
+(def ^:dynamic *view-loader-chain-fn*
+  (make-loader-chain loader-from-view-clj loader-from-db))
 
 (defn do-view-load
   "using in self `*view-loader-chain-fn*`, swapp using
   make-loader chain. deserialize view, and execute every
   defview."
   []
-  (let [data (*view-loader-chain-fn*)]
-    (if (empty? data)
-      ((state/state :alert-manager) :set {:header "Error" :body "Problem with tables. Data not found in DB"} 5)
-      (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
-        (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))
-    (return-structure-tree (deref user-menu))))
+  #break (let [data (*view-loader-chain-fn*)]
+           (if (empty? data)
+             ((state/state :alert-manager) :set {:header "Error" :body "Problem with tables. Data not found in DB"} 5)
+             (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
+               (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))
+           (return-structure-tree (deref user-menu))))
 
 (defn- view-get
   "Description

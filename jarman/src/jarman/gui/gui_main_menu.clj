@@ -4,6 +4,7 @@
             [seesaw.core    :as c]
             [jarman.faces   :as face]
             [jarman.tools.update-manager-gui :as update-manager]
+            [jarman.tools.org :refer :all]
             [jarman.plugin.extension-manager-gui :as extension-manager]
             [jarman.plugin.themes-manager-gui :as themes-manager]
             [jarman.gui.gui-components :as gcomp]
@@ -68,17 +69,19 @@
 (defn- part-plugin
   [k v lvl]
   (if (session/allow-permission? (.return-permission v))
-    (gcomp/button-expand-child
-     (str k)
-     :left (+ (* (dec lvl) 3) 6)
-     :hover-color (second (nth (get-colors (dec lvl)) (dec lvl)))
-     :onClick (fn [e]
-                (gvs/add-view
-                 :view-id (str "auto-plugin" (.return-title v))
-                 :title k
-                 :render-fn (.return-entry v))))
-    ;; or return nil
-    nil))
+    (do
+      (print-line (format "pin plugin %s to menu"(.return-title v)))
+      (gcomp/button-expand-child
+       (str k)
+       :left (+ (* (dec lvl) 3) 6)
+       :hover-color (second (nth (get-colors (dec lvl)) (dec lvl)))
+       :onClick (fn [e]
+                  (gvs/add-view
+                   :view-id (str "auto-plugin" (.return-title v))
+                   :title k
+                   :render-fn (.return-entry v)))))
+    (do (print-line (format "permission denied for View plugin '%s'" (.return-title v)))
+        nil)))
 
 (defn- part-expand [bulid-expand-by-map k v lvl]
   (let [depper (filter-nil (bulid-expand-by-map v :lvl (inc lvl)))]
@@ -109,9 +112,9 @@
               :view-id (str "auto-menu-" (:key v))
               :title k
               :render-fn (:fn v))))
-         (fn [e] (println "\nProblem with fn in " k v)))))
+         (fn [e] (print-line (str "\nProblem with fn in " k v))))))
     ;; or return nil
-    (do (println (format "Permission denied for plugin '%s'" k))
+    (do (print-line (format "permission denied for '%s'" k))
       nil)))
 
 ;;((state/state :startup))

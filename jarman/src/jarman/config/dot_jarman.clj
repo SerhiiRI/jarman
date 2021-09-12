@@ -3,12 +3,13 @@
   (:import (java.io IOException FileNotFoundException))
   (:require
    ;; Clojure
-   [clojure.string :as s]
+   [clojure.string  :as s]
    [clojure.java.io :as io]
    ;; Jarman 
    [jarman.tools.lang :refer :all]
+   [jarman.tools.org  :refer :all]
    [jarman.config.environment :as env]
-   [jarman.config.dot-jarman-param :refer [setq defvar print-list-not-loaded]]))
+   [jarman.config.vars :refer [setq defvar print-list-not-loaded]]))
 
 (def jarman ".jarman")
 (def jarman-paths-list [(io/file env/user-home jarman)
@@ -39,7 +40,8 @@
 
 (defn- create-empty-dot-jarman [f]
   (if-not (not (.exists f))
-    (do (fput f ";; This is Main configuration `.jarman` file. Declare in it any machine or app-specyfic configurations\n")
+    (do (fput f ";; -*- mode: Clojure; -*- \n")
+        (fappend f ";; This is Main configuration `.jarman` file. Declare in it any machine or app-specyfic configurations\n")
         (fappend f ";; Set global variables, by using `setq` macro and power of jarman customizing system\n")
         (fappend f "\n")
         (doall
@@ -56,12 +58,10 @@
 (defn dot-jarman-load []
   (if-let [file (first (filter #(.exists %) jarman-paths-list))]
    (ioerr (load-file (str file))
-          (fn [e] "Cannot open `.jarman` config file")
-          (fn [e] "Reading exception for `.jarman`. Maybe declaration or code in is corrupted"))
+          (fn [e] (print-line "Error! Cannot open `.jarman` config file"))
+          (fn [e] (print-line "Error! Reading exception for `.jarman`. Maybe declaration or code in is corrupted")))
    (throw (FileNotFoundException.
            (format "No one file [%s] doesn't exists"
                    (clojure.string/join
-                    ", " (map str jarman-paths-list)))))) true)
-
-(dot-jarman-load)
+                    ", " (map str jarman-paths-list)))))))
 

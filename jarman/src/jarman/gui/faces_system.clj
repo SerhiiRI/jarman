@@ -1,4 +1,5 @@
 (ns jarman.gui.faces-system)
+(require '[jarman.tools.org :refer :all])
 
 ;;;;;;;;;;;;
 ;;; CORE ;;;
@@ -18,14 +19,21 @@
 ;;;;;;;;;;;;;;;
 
 (defn faces-list-out-all []
-  (println "All registered faces:")
-  (when (seq (deref faces-storage))
-    (doall (map #(println (format " %s" (str (symbol %)))) (seq (deref faces-storage))))))
+  (print-header
+   "All registered faces:"
+   (when (seq (deref faces-storage))
+     (doall (map #(print-line (format "- %s" (str (symbol %)))) (seq (deref faces-storage)))))))
+
+;; (defn- output-faces [msg faces-list]
+;;   (when (seq faces-list)
+;;     (println (format "** %s" msg))
+;;     (doall (map #(println (format "  - %s" (str (symbol %)))) (seq faces-list)))))
 
 (defn- output-faces [msg faces-list]
   (when (seq faces-list)
-    (println (format "** %s" msg))
-    (doall (map #(println (format "  - %s" (str (symbol %)))) (seq faces-list)))))
+    (print-header
+     msg
+     (doall (map #(print-line (format "- %s" (str (symbol %)))) (seq faces-list))))))
 
 (defn prepare-bind-variable-set [variable-list]
   ;; Hard NAMESPACE to faces

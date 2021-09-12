@@ -1,4 +1,4 @@
-(ns jarman.config.dot-jarman-param
+(ns jarman.config.vars
   (:gen-class)
   (:import (java.io IOException))
   (:require
@@ -9,6 +9,7 @@
    [clojure.data :as cl-data]
    ;; Jarman 
    [jarman.tools.lang :refer :all]
+   [jarman.tools.org  :refer :all]
    [jarman.config.environment :as env]))
 
 ;;;;;;;;;;;;;;;;
@@ -46,6 +47,8 @@
       --jarman-variable-stack--
       (fn [m#] (assoc-in m# [(keyword (symbol (var ~variable-name)))]
                         (merge {:link (var ~variable-name)
+                                :name nil
+                                :doc nil
                                 :ns (ns-name *ns*)
                                 :loaded false
                                 :type nil
@@ -54,7 +57,7 @@
      (alter-meta!
       (var ~variable-name)
       #(assoc-in % [:variable-stack-reference]
-                 (fn [] (get-in (deref jarman.config.dot-jarman-param/--jarman-variable-stack--) [(keyword (symbol (var ~variable-name)))]))))
+                 (fn [] (get-in (deref jarman.config.vars/--jarman-variable-stack--) [(keyword (symbol (var ~variable-name)))]))))
      (alter-meta!
       (var ~variable-name)
       #(assoc-in % [:variable-params] (merge {:type nil :group :global} ~params)))
@@ -86,10 +89,10 @@
      (seq (group-by (comp :group second) (variable-list-not-loaded)))))
 (defn print-list-not-loaded []
   (if-let [grouped-variable-list (not-empty (variable-gruop-by-group-not-loaded))]
-    (do (println "Warning! Not used variables (:group-name|[:values-list]):")
-        (println (cl-format nil "~{~A~}"
-                            (for [[group-name-kwd variables-kwdx] grouped-variable-list
-                                  :let [group-name (name group-name-kwd)]]
-                              (cl-format nil "  :~A~%~{    ~A ~%~}" group-name (map symbol (keys variables-kwdx)))))))))
+    (do (print-line "Warning! Not used variables (:group-name|[:values-list]):")
+        (print-line (cl-format nil "~{~A~}"
+                               (for [[group-name-kwd variables-kwdx] grouped-variable-list
+                                     :let [group-name (name group-name-kwd)]]
+                                 (cl-format nil "  :~A~%~{    ~A ~%~}" group-name (map symbol (keys variables-kwdx)))))))))
 
 

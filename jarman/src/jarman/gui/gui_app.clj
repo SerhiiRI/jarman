@@ -22,12 +22,12 @@
             [clojure.pprint :as pp]
             ;; logic
             [jarman.config.config-manager    :as cm]
-            [jarman.config.dot-jarman        :as dot-jarman]
-            [jarman.config.dot-jarman-param  :as dot-jarman-param]
+            
             [jarman.gui.gui-views-service    :as gvs]
             [jarman.gui.gui-alerts-service   :as gas]
             [jarman.gui.gui-components       :as gcomp]
             [jarman.gui.gui-tools            :as gtool]
+            [jarman.tools.org                :refer :all]
             ;; deverloper tools 
             [jarman.config.init              :as iinit]
             [jarman.logic.state              :as state]
@@ -41,6 +41,7 @@
             ;; [jarman.managment.data           :as managment-data]
             [jarman.plugin.extension-manager :refer [do-load-extensions]]
             [jarman.plugin.plugin            :refer [do-load-theme]]
+            [jarman.config.vars              :refer [setq print-list-not-loaded]]
             [jarman.config.dot-jarman        :refer [dot-jarman-load]]
             [jarman.gui.builtin-themes.jarman-light]))
 
@@ -50,7 +51,6 @@
 ;; │ App layout and GUI build │
 ;; │                          │
 ;; └──────────────────────────┘
-(do-load-theme (state/state :theme-name))
 
 (def jarmanapp--main-view-space
   "Description:
@@ -157,6 +157,16 @@
 ;; │             │
 ;; └─────────────┘
 
+;;; Quick log
+;; (defmacro ^:private log
+;;   ([msg]
+;;    `(println (format "** %s" ~msg)))
+;;   ([action msg]
+;;    `(do
+;;      (println (format "*** %s" ~msg))
+;;      ~action)))
+
+
 ;; before central swing-component build
 (defn- load-level-0
   "Description:
@@ -164,8 +174,15 @@
   []
   ;; (managment-data/on-app-start)
   (cm/swapp)
-  (dot-jarman/dot-jarman-load)
-  (dot-jarman-param/print-list-not-loaded))
+  (dot-jarman-load)
+  (print-list-not-loaded)
+  ;; ----------------------------------
+  ;; Warning! 
+  ;; This theme loaded before
+  ;; all extension's are up and compiled.
+  ;; please do not remove Jarman-Ligth out
+  ;; from integrated into jarman ns's.
+  (do-load-theme (state/state :theme-name)))
 ;; after swing component was builded
 (defn load-level-1
   "Description:
@@ -252,21 +269,38 @@
 
 (defn load-level-4
   "Description:
-    Load main menu."
-  []
-  (dot-jarman-load)
-  (do-load-extensions)
-  (do-load-theme (state/state :theme-name))
-  (gs/update-layouts-background face/c-layout-background)
-  (gs/update-compos-background  face/c-compos-background)
-  (gs/update-foreground         face/c-foreground)
-  (menu/clean-main-menu)
-  (load-plugins-to-main-menu)
-  (load-static-main-menu))
+    Load main menu." []
+  (print-header
+   "Load .jarman"
+   (dot-jarman-load)
+   (print-list-not-loaded))
+  (print-header
+   "Load Extensions"
+   (do-load-extensions))
+  (print-header
+   "Load default theme `Jarman Light`"
+   (do-load-theme "Jarman Light")
+   (print-line "apply global backgrounds faces for layouts")
+   (gs/update-layouts-background face/c-layout-background)
+   (print-line "apply global backgrounds faces for components")
+   (gs/update-compos-background  face/c-compos-background)
+   (print-line "apply global foreground for all elements")
+   (gs/update-foreground         face/c-foreground))
+  (print-header
+   "Clean main menu"
+   (menu/clean-main-menu))
+  (print-header
+   "Load view plugin into main menu"
+   (load-plugins-to-main-menu))
+  (print-header
+   "Load static main menu"
+   (load-static-main-menu)))
+
+
 
 ;; ┌─────────────┐
 ;; │             │
-;; │ App starter │
+;; │ app starter │
 ;; │             │
 ;; └─────────────┘
 

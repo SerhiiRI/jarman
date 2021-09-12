@@ -16,6 +16,7 @@
    ;; Jarman toolkit
    [jarman.tools.lang :refer :all]
    [jarman.tools.swing :as stool]
+   [jarman.tools.org :refer :all]
    [jarman.resource-lib.icon-library :as icon]
    [jarman.gui.gui-tools      :as gtool]
    [jarman.gui.gui-editors    :as gedit]
@@ -38,7 +39,7 @@
    [clojure.pprint :refer [cl-format]]
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]
-   [jarman.config.dot-jarman-param :refer [defvar]])
+   [jarman.config.vars :refer [defvar]])
   (:import (java.io IOException FileNotFoundException)))
 
 
@@ -71,7 +72,8 @@
           "#+TITLE: Extension manager Log file\n#+AUTHOR: Serhii Riznychuk\n#+EMAIL: sergii.riznychuk@gmail.com\n#+STARTUP: overview\n")))
 
 (defmacro ^:private with-out-debug-file [& body]
-  `(binding [*out* (if *debug-to-file*
+  `(binding [*level* 0
+             *out* (if *debug-to-file*
                      (do
                        (create-log-file)
                        (clojure.java.io/writer *debug-file-name* :append true))
@@ -88,23 +90,23 @@
 (defrecord PandaExtension [name description extension-path version authors license keywords url loading-seq]
   IPluginLoader
   (do-load [this]
-    (println (format "** load ~%s~" name))
-    (doall
-     (doseq [loading-file loading-seq
-             :let [f (io/file extension-path (format "%s.clj" (str loading-file)))]]
-       (if (.exists f)
-         (do
-           (println (format "*** compiling ~%s~" (str f)))
-           (let [file-output (with-out-str (load-file (str f)))]
-             (if (not-empty file-output)
-               (do
-                 (cl-format *out* "~,,3<compilling file output~> ~%")
-                 (cl-format *out* "~,,3<~A~> ~%" "#+begin_example")
-                 (doall (map (partial cl-format *out* "~,,4<~A~>~%") (clojure.string/split file-output #"\n")))
-                 (cl-format *out* "~,,3<~A~> ~%" "#+end_example")))))
-         (throw (FileNotFoundException.
-                 (format "Extension `%s`. Loading sequnce `%s` not exist"
-                         name loading-file))))))))
+    (print-header
+     (format "load ~%s~" name)
+     (doall
+      (doseq [loading-file loading-seq
+              :let [f (io/file extension-path (format "%s.clj" (str loading-file)))]]
+        (if (.exists f)
+          (do
+            (print-header
+             (format "compiling ~%s~" (str f))
+             (let [file-output (with-out-str (load-file (str f)))]
+               (if (not-empty file-output)
+                 (do
+                   (print-line "plugin compiling output")
+                   (print-example file-output))))))
+          (throw (FileNotFoundException.
+                  (format "Extension `%s`. Loading sequnce `%s` not exist"
+                          name loading-file)))))))))
 (defn constructPandaExtension [name description path extension-m]
   (-> extension-m
       (assoc :name name)
@@ -151,13 +153,15 @@
   ([]
    (extension-storage-list-load)
    (with-out-debug-file
-     (println (format "* Loading extensions (%s)" (quick-timestamp)))
-     (println (format " Total extensions count: ~%d~" (count (deref extension-storage-list))))
-     (doall (map do-load @extension-storage-list))))
+     (print-header
+      (format "Loading extensions (%s)" (quick-timestamp))
+      (print-line (format "Total extensions count: ~%d~" (count (deref extension-storage-list))))
+      (doall (map do-load @extension-storage-list)))))
   ([& panda-extensions]
    (with-out-debug-file
-     (println (format "* Reload extensions (%s)" (quick-timestamp)))
-     (doall (map do-load panda-extensions)))))
+     (print-header
+      (format "Reload extensions (%s)" (quick-timestamp))
+      (doall (map do-load panda-extensions))))))
 
 (comment
   (extension-storage-list-load)
@@ -199,3 +203,4 @@
   
 ;;   (for (contains? loaded (:n extension))))
 
+(comment dupa)

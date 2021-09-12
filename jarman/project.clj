@@ -21,7 +21,8 @@
                  [org.clojure/java.jdbc "0.7.10"]
                  [me.raynes/fs "1.4.6"]
                  [mysql/mysql-connector-java "5.1.6"]
-                 [instaparse "1.4.10"]]
+                 [instaparse "1.4.10"]
+                 [rewrite-clj "1.0.682-alpha"]]
   ;;:main ^:skip-aot jarman.core
   :main jarman.core
   :aot [jarman.core]

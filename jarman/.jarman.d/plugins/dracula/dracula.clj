@@ -38,7 +38,11 @@
    "fg3-light"          "#ccccc7"
    "fg3-strong"         "#c6c6c6"
    "fg4-light"          "#b6b6b2"
-   "fg4-strong"         "#b2b2b2"})
+   "fg4-strong"         "#b2b2b2"
+
+   "underline-size"     2
+   "expand-btn-colors" [["#303030" "#44475a"]
+                        ["#272824" "#373844"]]})
 
 (defmacro ^:private with-dracula-colors
   [& body]
@@ -100,12 +104,54 @@
 ;; make some logs
 
 (register-custom-theme-plugin
- :name "Dracula"
- :description "Dracula theme"
- :loader
- (with-dracula-colors
-   (custom-theme-set-faces
-    '(;; -- FACE BINDINGS --
-      underscore-panel     blue-light
-      button-border-top    yellow-light
-      button-border-bottom underscore-panel))))
+  :name "Dracula"
+  :description "Dracula theme"
+  :loader
+  (with-dracula-colors
+    (custom-theme-set-faces
+     '( ;; -- FACE BINDINGS --
+       c-foreground         orange-strong
+       c-layout-background  bg3-strong
+       c-compos-background  bg2-light
+       c-on-focus           hightlight-light
+
+       c-main-menu-bg       hightlight-strong
+       c-main-menu-vhr      c-main-menu-bg
+
+       cvv-button-expand    expand-btn-colors
+       
+       c-btn-bg             hightlight-strong
+       c-btn-bg-focus       hightlight-light
+       c-btn-foreground     white
+
+       c-underline          hightlight-strong
+       c-underline-on-focus orange-strong
+       c-underline-on-mouse orange-strong
+
+       c-slider-bg          c-layout-background
+       c-slider-underline   c-layout-background
+       c-slider-underline-on-focus orange-strong
+
+       c-menu-bar-on-focus  c-on-focus
+       c-tab-active         c-on-focus
+       
+       c-input-bg           c-compos-background
+       c-input-header       c-foreground
+       
+       s-underline          underline-size
+       ))))
+
+
+;; First example
+(comment
+  (register-custom-theme-plugin
+  :name "Dracula"
+  :description "Dracula theme"
+  :loader
+  (with-dracula-colors
+    (custom-theme-set-faces
+     '( ;; -- FACE BINDINGS --
+       underscore-panel     blue-light
+       button-border-top    yellow-light
+       button-border-bottom underscore-panel))))
+ )

@@ -19,6 +19,8 @@
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-tools :as gtool]
    [jarman.plugin.plugin :as plugin]
+   [jarman.gui.gui-style :as gs]
+   [jarman.gui.gui-views-service :as gvs]
    ;; [jarman.tools.lang :refer [in?]]
    ;; [jarman.tools.fs :as fs]
    ;; [jarman.plugin.extension-manager :as extension-manager]
@@ -107,6 +109,8 @@
                                     :onClick (fn [_] (try-catch-alert
                                                      (plugin/do-load-theme
                                                       (:theme-name theme))
+                                                     (state/set-state :theme-name (:theme-name theme))
+                                                     (gvs/soft-restar)
                                                      ((state/state :alert-manager)               
                                                       :set {:header "Theme manager"
                                                             :body   (format "Theme `%s` successfully applyed"

@@ -27,7 +27,7 @@
     (println (format "** %s" msg))
     (doall (map #(println (format "  - %s" (str (symbol %)))) (seq faces-list)))))
 
-(defn- prepare-bind-variable-set [variable-list]
+(defn prepare-bind-variable-set [variable-list]
   ;; Hard NAMESPACE to faces
   (let [faces-ns 'jarman.faces]
    (reduce

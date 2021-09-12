@@ -9,14 +9,15 @@
            (jarman.jarmanjcomp DateTime)
            (java.awt Color Component)
            (java.awt Dimension))
-  (:require [jarman.gui.faces]
+  (:require [jarman.faces :as face]
             [jarman.tools.lang :refer :all]
             [clojure.string    :as string]
             [seesaw.swingx  :as swingx]
             [seesaw.core       :as c]
             [seesaw.util       :as u]
             [seesaw.border     :as b]
-            ;; resource 
+            ;; resource
+            [jarman.gui.gui-style             :as gs]
             [jarman.resource-lib.icon-library :as icon]
             [clojure.pprint :as pp]
             ;; logic
@@ -49,6 +50,7 @@
 ;; │ App layout and GUI build │
 ;; │                          │
 ;; └──────────────────────────┘
+(do-load-theme (state/state :theme-name))
 
 (def jarmanapp--main-view-space
   "Description:
@@ -64,11 +66,12 @@
     (let [tabs-space (mig-panel
                       :constraints ["" "0px[fill]0px" "0px[]0px"]
                       :id :app-tabs-space
+                      :background face/c-layout-background
                       :items (gtool/join-mig-items tabs))
           views-space (mig-panel
                        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
-                       :id :app-functional-space
-                       :background (new Color 0 0 0 0)
+                       :id :app-functional-space 
+                       :background face/c-layout-background
                        :items (gtool/join-mig-items array))]
       ;; (println tabs)
       ;;(state/set-state :jarman-views-service (vs/new-views-service tabs-space views-space))
@@ -78,6 +81,7 @@
        ;; :background "#eee"
        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[28, shrink 0]0px[grow, fill]0px"]
        ;; :border (line-border :left 1 :color "#999")
+       :background face/c-layout-background
        :items [[(gcomp/min-scrollbox tabs-space :args [:vscroll :never])]
                [views-space]]))))
 
@@ -91,8 +95,8 @@
   (fn []
     (let [root (mig-panel
                 :id :expand-menu-space
-                :background "#fff"
-                :border (b/line-border :left 4 :right 4 :color "#fff")
+                :background face/c-main-menu-bg
+                :border (b/line-border :left 4 :right 4 :color face/c-main-menu-vhr)
                 :constraints ["wrap 1" "0px[200::, fill, grow]0px" "0px[fill]0px"])
           render-fn (fn [] (let [comps (gtool/join-mig-items
                                         (rift (state/state [:main-menu])
@@ -113,16 +117,15 @@
       Main space for app inside JLayeredPane. There is menu with expand btns and space for tables with tab btns."
   (fn [& {:keys [margin-left]
           :or {margin-left 0}}]
-    (let [bg-color "#eee"
-          vhr-color "#999"]
-      (mig-panel
-       :id :rebound-layer
-       :constraints [""
-                     "0px[shrink 0, fill]0px[grow, fill]0px"
-                     "0px[grow, fill]0px"]
-       :border (b/line-border :left margin-left :color bg-color)
-       :items [[(jarmanapp--main-tree)]
-               [(jarmanapp--main-view-space [] [])]]))))
+    (mig-panel
+     :id :rebound-layer
+     :constraints [""
+                   "0px[shrink 0, fill]0px[grow, fill]0px"
+                   "0px[grow, fill]0px"]
+     :border (b/line-border :left margin-left :color face/c-layout-background)
+     :background face/c-layout-background
+     :items [[(jarmanapp--main-tree)]
+             [(jarmanapp--main-view-space [] [])]])))
 
 
 ;; ┌────────────────┐
@@ -168,12 +171,13 @@
   "Description:
     Check last position and remember x y"
   [relative-pos]
-  (try
-    (reset! relative-pos [(.x (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))
-                          (.y (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))])
-    (.dispose (seesaw.core/to-frame (state/state :app)))
-    (catch Exception e nil ;;(println "Last pos is nil")
-           )))
+  (if (= false (state/state :soft-restart))
+      (try
+        (reset! relative-pos [(.x (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))
+                              (.y (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))])
+        (.dispose (seesaw.core/to-frame (state/state :app)))
+        (catch Exception e nil ;;(println "Last pos is nil")
+               ))))
 
 
 (defn load-level-2
@@ -201,8 +205,13 @@
                             :title "Restart"
                             :fn    (fn [e]
                                      (gvs/stop-watching)
+                                     (state/set-state :soft-restart false)
                                      ((state/state :startup)))}
 
+                           {:icon  icon/ban-blue-64-png
+                            :title "Soft Restart"
+                            :fn    (fn [e] (gvs/soft-restar))}
+                           
                            {:icon  icon/key-blue-64-png
                             :title "Change work mode"
                             :fn    (fn [e]
@@ -220,12 +229,15 @@
                             :title "Logout"
                             :fn    (fn [e]
                                      ((state/state :invoke-login-panel))
+                                     (state/set-state :soft-restart nil)
                                      (.dispose (c/to-frame e))
                                      )}
 
                            {:icon  icon/enter-64-png
                             :title "Close app"
-                            :fn    (fn [e] (.dispose (c/to-frame e)))}])
+                            :fn    (fn [e]
+                                     (state/set-state :soft-restart nil)
+                                     (.dispose (c/to-frame e)))}])
              [(gcomp/fake-focus :vgap top-offset :hgap img-scale)]))))
 
 
@@ -244,7 +256,10 @@
   []
   (dot-jarman-load)
   (do-load-extensions)
-  (do-load-theme "Jarman Light")
+  (do-load-theme (state/state :theme-name))
+  (gs/update-layouts-background face/c-layout-background)
+  (gs/update-compos-background  face/c-compos-background)
+  (gs/update-foreground         face/c-foreground)
   (menu/clean-main-menu)
   (load-plugins-to-main-menu)
   (load-static-main-menu))
@@ -279,4 +294,3 @@
                              :else (do (fn [])))))))
 
 ((state/state :startup))
-

@@ -4,6 +4,7 @@
         seesaw.mig)
   (:require [seesaw.core                      :as c]
             [seesaw.border                    :as b]
+            [jarman.faces                     :as face]
             [jarman.tools.swing               :as stool]
             [jarman.gui.gui-style             :as gs]
             [jarman.gui.gui-tools             :as gtool]
@@ -112,7 +113,7 @@
       (mig-panel
        :id :alert-box
        :constraints ["wrap 1" "0px[fill, grow]0px" "0px[20]0px[30]0px[20]0px"]
-       :background bg-c
+       :background face/c-compos-background
        :border (b/line-border :top t :bottom b :left l :right r :color (rift (gtool/get-comp :message-box :border-color) "#fff"))
        :bounds [680 480 300 75]
        :items [[(c/flow-panel
@@ -253,8 +254,8 @@
   [data layered-pane size]
   (let [w (first size)
         h (last size)
-        bg-c     "#fff"
-        hover-c  "#d9ecff"
+        bg-c     face/c-compos-background
+        hover-c  face/c-on-focus
         bord     (b/empty-border :left 5)
         header   (if (= (contains? data :header) true) (get data :header) "Information")
         body     (if (= (contains? data :body) true) (get data :body) "Template of information...")

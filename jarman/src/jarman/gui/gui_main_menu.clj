@@ -2,6 +2,7 @@
   (:require [jarman.tools.lang :refer :all]
             [clojure.string :as string]
             [seesaw.core    :as c]
+            [jarman.faces   :as face]
             [jarman.tools.update-manager-gui :as update-manager]
             [jarman.plugin.extension-manager-gui :as extension-manager]
             [jarman.plugin.themes-manager-gui :as themes-manager]
@@ -43,11 +44,13 @@
 ;;    ["#dddddd" "#dddddd"]])
 
 (defn- expand-colors []
-  [["#f7f7f7" "#fafafa"]
-   ["#f0f6fa" "#f0f6fa"]
-   ["#ebf7ff" "#ebf7ff"]
-   ["#daeaf5" "#daeaf5"]
-   ["#bfd3e0" "#bfd3e0"]])
+  (if (empty? face/cvv-button-expand)
+    [["#f7f7f7" "#fafafa"]
+     ["#f0f6fa" "#f0f6fa"]
+     ["#ebf7ff" "#ebf7ff"]
+     ["#daeaf5" "#daeaf5"]
+     ["#bfd3e0" "#bfd3e0"]]
+    face/cvv-button-expand))
 
 
 (defn- repeat-colors
@@ -85,6 +88,7 @@
        (str k)
        depper
        :background (first (nth (get-colors lvl) lvl))
+       :c-left     (first (nth (get-colors lvl) lvl))
        :left-gap   (* lvl 3)))))
 
 (defn- part-button [k v lvl]

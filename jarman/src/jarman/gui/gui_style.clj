@@ -2,6 +2,7 @@
   (:use seesaw.mig)
   (:require [seesaw.core   :as c]
             [seesaw.border :as b]
+            [jarman.faces  :as face]
             [jarman.logic.state :as state]
             [jarman.tools.lang :refer :all])
   (:import (javax.swing.text SimpleAttributeSet)
@@ -51,15 +52,22 @@
         blue  (if (= 6 (count colors)) (take 2 (drop 4 colors)) (flatten (repeat 2 (take 1 (drop 2 colors)))))]
     (map #(-> (conj % "0x") (clojure.string/join) (read-string)) [red green blue])))
 
-(defmacro color-hex
+(defn- jcolor [red green blue]
+  (Color. red green blue))
+(defn color-hex
   "Description:
     Convert hex color in string and create obj color."
-  [hex] `(Color. ~@(hex-to-rgb hex)))
+  [hex] (apply jcolor (hex-to-rgb hex)))
 
-(defmacro bg-hex
+(defn- juiresource [red green blue]
+  (ColorUIResource. (Color. red green blue)))
+(defn bg-hex
   "Description:
     Convert hex color in string and create obj color for background."
-  [hex] `(ColorUIResource. (Color. ~@(hex-to-rgb hex))))
+  [hex]
+  (assert (string? hex) "Color must be in string and hex like \"#ffffff\"!")
+  (assert (let [c (count hex)] (or (= 4 c) (= 7 c))) "Color must have 3 or 6 values and # on begin!")
+  (apply juiresource (hex-to-rgb hex)))
 
 (defn- compos-list
   "Description:
@@ -93,18 +101,18 @@
 
 (defn update-layouts-background
   ([]                (update-layouts-background (bg-hex "#efefef") (compo-list-suffix (layouts-list) ".background")))
-  ([background]      (update-layouts-background background (compo-list-suffix (layouts-list) ".background")))
+  ([background]      (update-layouts-background (bg-hex background) (compo-list-suffix (layouts-list) ".background")))
   ([background compo-list] (doall (map #(UIManager/put % background) compo-list))))
 
 (defn update-compos-background
-  ([]                (update-compos-background (bg-hex "#fff") (compo-list-suffix (compos-list) ".background")))
-  ([background]      (update-compos-background background (compo-list-suffix (compos-list) ".background")))
+  ([]                (update-compos-background (bg-hex "#ffffff") (compo-list-suffix (compos-list) ".background")))
+  ([background]      (update-compos-background (bg-hex background) (compo-list-suffix (compos-list) ".background")))
   ([background compo-list] (doall (map #(UIManager/put % background) compo-list))))
 
 (defn update-foreground
   ([]                (update-foreground (color-hex "#020020") (compo-list-suffix (all-compos) ".foreground")))
-  ([background]      (update-foreground background (compo-list-suffix ".foreground")))
-  ([background compo-list] (doall (map #(UIManager/put % background) compo-list))))
+  ([foreground]      (update-foreground (color-hex foreground) (compo-list-suffix (all-compos) ".foreground")))
+  ([foreground compo-list] (doall (map #(UIManager/put % foreground) compo-list))))
 
 (defn getFont
   ([] fonts)
@@ -112,6 +120,8 @@
                   (sizeorfont fonts)
                   (getFont :plain sizeorfont)))
   ([font size] (.deriveFont (font fonts) (float size))))
+
+(state/set-state :theme-name "Jarman Light")
 
 (defn load-style
   "Description:

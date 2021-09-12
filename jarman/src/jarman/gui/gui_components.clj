@@ -2,20 +2,21 @@
   (:use seesaw.dev
         seesaw.mig)
   (:require [jarman.resource-lib.icon-library :as icon]
-            [seesaw.core :as c]
+            [jarman.faces  :as face]
+            [seesaw.core   :as c]
             [seesaw.border :as b]
-            [seesaw.util :as u]
-            [seesaw.mig :as smig]
+            [seesaw.util   :as u]
+            [seesaw.mig    :as smig]
             [seesaw.rsyntax]
-            [jarman.tools.swing :as stool]
-            [jarman.logic.state :as state]
-            [jarman.tools.lang :refer :all]
+            [jarman.tools.swing    :as stool]
+            [jarman.logic.state    :as state]
+            [jarman.tools.lang     :refer :all]
             [jarman.logic.metadata :as mt]
-            [jarman.config.config-manager :as cm]
-            [jarman.gui.gui-tools :as gtool]
+            [jarman.gui.gui-tools  :as gtool]
             [jarman.gui.gui-migrid :as gmg]
             [jarman.gui.gui-style  :as gs]
-            [seesaw.chooser :as chooser]
+            [seesaw.chooser        :as chooser]
+            [jarman.config.config-manager :as cm]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
   (:import (java.awt Color)
            (java.awt Dimension)
@@ -172,7 +173,7 @@
   "
   [{:keys [text foreground ;; font
            lgap tgap args]
-    :or {foreground "#000"
+    :or {foreground face/c-foreground
          ;; font (gtool/getFont)
          lgap 0
          tgap 0
@@ -213,13 +214,12 @@
                  rgap
                  halign
                  tip
-                 mouse-in
+                 bg-hover
+                 bg
                  underline-size
-                 mouse-out
-                 focus-color
-                 unfocus-color
+                 underline-focus
+                 underline
                  flip-border
-                 ;; font
                  ]
           :or   {onClick (fn [e] (println "Click"))
                  args []
@@ -227,15 +227,14 @@
                  bgap 10
                  lgap 10
                  rgap 10
-                 underline-size 2
+                 tip    ""
                  halign :center
-                 tip  ""
-                 mouse-in  (gtool/get-color :background :button_hover_light)
-                 mouse-out (gtool/get-color :background :button_main)
-                 focus-color (gtool/get-color :decorate :focus-gained)
-                 unfocus-color (gtool/get-color :decorate :focus-lost)
-                 flip-border false
-                 ;; font (gtool/getFont 12)
+                 bg              face/c-btn-bg
+                 bg-hover        face/c-btn-bg-focus
+                 underline-focus face/c-underline-on-focus
+                 underline       face/c-underline
+                 underline-size  face/s-underline
+                 flip-border     false
                  }}]
   (let [newBorder (fn [underline-color]
                     (b/compound-border (b/empty-border :bottom bgap :top tgap :left lgap :right rgap)
@@ -244,16 +243,15 @@
            :text txt
            :focusable? true
            :halign halign
-           ;; :font font
            :tip tip
            :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
-                    :mouse-entered (fn [e] (c/config! e :border (newBorder focus-color)   :background mouse-in  :cursor :hand))
-                    :mouse-exited  (fn [e] (c/config! e :border (newBorder unfocus-color) :background mouse-out))
-                    :focus-gained  (fn [e] (c/config! e :border (newBorder focus-color)   :background mouse-in  :cursor :hand))
-                    :focus-lost    (fn [e] (c/config! e :border (newBorder unfocus-color) :background mouse-out))
+                    :mouse-entered (fn [e] (c/config! e :border (newBorder underline-focus) :background bg-hover :cursor :hand))
+                    :mouse-exited  (fn [e] (c/config! e :border (newBorder underline)       :background bg))
+                    :focus-gained  (fn [e] (c/config! e :border (newBorder underline-focus) :background bg-hover :cursor :hand))
+                    :focus-lost    (fn [e] (c/config! e :border (newBorder underline)       :background bg))
                     :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gtool/switch-focus))))]
-           :background mouse-out
-           :border (newBorder unfocus-color)
+           :background bg
+           :border (newBorder underline)
            args)))
 
 
@@ -446,13 +444,15 @@
              font-size
              border-color-focus
              border-color-unfocus
+             background
              char-limit
              start-underline
              args]
       :or {placeholder ""
            font-size 14
-           border-color-focus   (gtool/get-color :decorate :focus-gained)
-           border-color-unfocus (gtool/get-color :decorate :focus-lost)
+           border-color-focus   face/c-underline-on-focus
+           border-color-unfocus face/c-underline
+           background           face/c-input-bg
            border [10 10 5 5 2]
            char-limit 0
            start-underline nil
@@ -467,7 +467,7 @@
     (apply c/text
            :text (if (empty? val) placeholder (if (string? val) val (str val)))
            ;; :font (gtool/getFont font-size)
-           :background (gtool/get-color :background :input)
+           :background background
            :border (newBorder (rift start-underline border-color-unfocus))
            :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
            :listen [:focus-gained (fn [e]
@@ -582,10 +582,9 @@
    "
   [title component
    & {:keys [font-color]
-      :or {font-color "#000"}}] 
+      :or {font-color face/c-input-header}}] 
   (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "5px[]5px"]
                         :items [[(c/label :text title
-                                          ;; :font (gtool/getFont 13)
                                           :foreground font-color ) "align l"]
                                 [component]]))
 
@@ -647,8 +646,8 @@
              border-color-focus
              border-color-unfocus]
       :or {border [10 10 5 5 2]
-           border-color-focus   (gtool/get-color :decorate :focus-gained)
-           border-color-unfocus (gtool/get-color :decorate :focus-lost)}}]
+           border-color-focus   face/c-underline-on-focus
+           border-color-unfocus face/c-underline}}]
   (let [newBorder (fn [underline-color]
                     (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
                                        (b/line-border :bottom (nth border 4) :color underline-color)))]
@@ -685,8 +684,8 @@
          editable? true
          enabled? true
          store-orginal false
-         border-color-focus   (gtool/get-color :decorate :focus-gained)
-         border-color-unfocus (gtool/get-color :decorate :focus-lost)
+         border-color-focus   face/c-underline-on-focus
+         border-color-unfocus face/c-underline
          onClick (fn [e])
          debug false}}]
   (swap! local-changes (fn [storage] (assoc storage store-id val)))
@@ -1081,7 +1080,8 @@
                  onClick
                  over-func
                  background
-                 left-color
+                 foreground
+                 c-left
                  left-gap]
           :or {expand :auto
                border (b/compound-border (b/empty-border :left 3))
@@ -1092,8 +1092,9 @@
                id :none
                onClick nil
                over-func :none
-               background (gtool/get-comp :button-expand :background)
-               left-color "#fff"
+               background face/c-compos-background
+               foreground face/c-foreground
+               c-left     face/c-compos-background
                left-gap 0}}]
     (let [atom-inside-btns (atom nil)
           inside-btns (if (nil? inside-btns) nil inside-btns) ;; check if nill
@@ -1103,10 +1104,10 @@
           title (c/label
                  :border (b/compound-border
                           (b/empty-border :left 10)
-                          (b/line-border :left left-gap :color left-color))
+                          (b/line-border :left left-gap :color c-left))
                  :text txt
                  :font (gs/getFont :bold)
-                 :foreground "#030D1C"
+                 :foreground foreground
                  :background (Color. 0 0 0 0))
           listen (fn [func] [:mouse-entered gtool/hand-hover-on
                              :mouse-clicked (fn [e] (func e))
@@ -1185,35 +1186,33 @@
    "
   (fn [title
        & {:keys [onClick
-                 left
-                 left-color
-                 hover-color
+                 s-left
+                 c-left
+                 c-focus
                  cursor
                  width
                  args]
           :or {onClick (fn [e] (println "Clicked: " title))
-               left 6
-               left-color "#fff"
                cursor :hand
-               hover-color "#f7f7f7"
+               s-left 6
+               c-left  face/c-compos-background
+               c-focus face/c-on-focus
                width 200 
                args []}}]
     (apply c/label
            :text (str title)
-           :background "#fff"
-           :foreground "#030D1C"
+           :background face/c-compos-background
+           :foreground face/c-foreground
            :size  [width :by 25]
            :cursor cursor
-           ;; :font (gtool/getFont 12 :name "Ubuntu Regular")
            :focusable? true
            :border (b/compound-border (b/empty-border :left 10)
-                                      (b/line-border :left left :color left-color))
+                                      (b/line-border  :left s-left :color c-left))
            :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
                     :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
                     :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
-                    :focus-gained  (fn [e] (c/config! e :background ;; (gtool/get-comp :button-expand-child :background-hover)
-                                                      hover-color))
-                    :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand-child :background)))
+                    :focus-gained  (fn [e] (c/config! e :background c-focus))
+                    :focus-lost    (fn [e] (c/config! e :background face/c-compos-background))
                     :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gtool/switch-focus))))]
            args)))
 
@@ -1533,7 +1532,7 @@
            bg
            fg
            bg-hover
-           border-c]
+           ]
     :or {id :none
          buttons []
          offset 4
@@ -1541,10 +1540,10 @@
          font-size 13
          icon-size 27
          btn-border [4 4 10 10 1]
-         bg "#fff"
-         fg "#000"
-         bg-hover "#e2fbde"
-         border-c "#bbb"}}]
+         bg       face/c-compos-background
+         fg       face/c-foreground
+         bg-hover face/c-menu-bar-on-focus
+         }}]
   (let [btn (fn [txt ico tip onClick & args]
               (let [[t b l r br] btn-border]
                 (c/label
@@ -1555,8 +1554,7 @@
                  :background bg
                  :foreground fg
                  :focusable? true
-                 :border (b/compound-border (b/empty-border :left l :right r :top t :bottom b)
-                                            (b/line-border :thickness br :color border-c))
+                 :border (b/empty-border :left l :right r :top t :bottom b)
                  :listen [:mouse-entered (fn [e] (c/config! e :background bg-hover :foreground fg :cursor :hand))
                           :mouse-exited  (fn [e] (c/config! e :background bg :foreground fg))
                           :mouse-clicked onClick
@@ -1716,7 +1714,7 @@
               :constraints ["wrap 1" "10px[grow, fill]10px" "10px[fill]10px"]
               :id :message-view-box
               :items [[(c/label :text header
-                                ;; :font (gtool/getFont 18)
+                                :font (gs/getFont :bold)
                                 :border (b/empty-border :left 5 :right 5))]
                       [(hr 1 "#999" [0 0 0 5])]
                       [(multiline-text

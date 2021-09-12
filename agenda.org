@@ -99,6 +99,14 @@
    - [X] - If display do not exist then editable
    - [X] - fix alert window
    - [ ] - Changes in theme again can not saving to file
+     
+** TODO [#1] /Feature/. Interaction files
+   - [ ] =interaction.clj=
+     implement file with simple proxy function where every funciton is just wrapper
+     with spec and good to read docs.
+   - [ ] =faces.clj=
+     Finish moving to new customization style
+
 ** TODO [#1] /Bug/. Loggin panel not compile                         :@Aleks:
 ** TODO [#1] /Bug/. DB Visualizer editing                      :@Aleks:@Serhii:
    1. [ ] Cannot edit table =view=
@@ -172,15 +180,16 @@
    - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [ ] Make refreshing for jarman, when theme was selected
 * Backend
-** TODO [#1] REST!                                                   :@Julia:
-   DEADLINE: <2021-09-12 niedz.>
-   deWorkaholization stages: 
-   - [ ] Watch interesting film.
-   - [ ] Go outside house(send selfy for approvement)
-   - [ ] Read something interesting.
-   - [ ] Find something interesting.
-   - [ ] Also love your Project Manager <3
-
+** PROCESSING [#1] /Feature/. defvar expanding
+   - [ ] Allow defvar declaration for all the places
+   - [ ] Fix defvar spec. 
+   - [ ] Save config in place in =.jarman= file
+   - [ ] GUI for listing all registred config's variable
+   - [ ] Debug for all variables
+   - [ ] Debug for one variables
+   - [ ] /Feature/. Pin special key where you can put special lambda gui element
+     which be edit this variable.
+   
 ** PROCESSING [#1] /Feature/. Rewrite plugin system                   :@Serhii:
    DEADLINE: <2021-09-09 Thu>
    - [ ] Add ~:deps~ key into ~package~
@@ -195,6 +204,34 @@
      - [X] GUI Theme manager
    - [X] Rename PandaPackage to PandaExtension
 
+** TODO [#1] REST!                                                   :@Julia:
+   DEADLINE: <2021-09-12 niedz.>
+   deWorkaholization stages: 
+   - [ ] Watch interesting film.
+   - [ ] Go outside house(send selfy for approvement)
+   - [ ] Read something interesting.
+   - [ ] Find something interesting.
+   - [ ] Also love your Project Manager <3
+
+** TODO [#3] /Feature/. Support Org file                              :@Serhii:
+   - [-] Create library for printing directly to org file [2/3]
+     - [X] Printing lib
+     - [X] printing by level
+     - [ ] Move out to different places in one moment [0/2]
+       #+begin_src clojure
+	 (print-header
+	  {:out [] :text "some text"}
+	  (some operations))
+       #+end_src
+       - [ ] file
+       - [ ] print
+   - [ ] Add parsing library
+** TODO [#1] defvar managment                                :@Aleks:@Serhii:
+   After app loading, we have some values in system variables, divided by group name,
+   
+   - [ ] Create GUI which allow controlling and changing variables inside gui. 
+   - [ ] Make persistant function, which automatically wrote customized variable
+     back to =.jarman=, (also mean parsing file) 
 ** PLANNED [#2] Service Period. sort contract list    :@Julia:@Serhii:
    - [ ] sorting contract by date
    - [ ] colorize contract by active-nonactive depend on current date
@@ -284,20 +321,7 @@
 ** PLANNED [#3] Versioning data structure             :@Julia:@Aleks:@Serhii:
 ** PLANNED [#3] sql_tools | debug                                   :@Serhii:
     - [ ] pretty printing for sql syntax
-** PLANNED [#3] defvar managment                             :@Aleks:@Serhii:
-   After app loading, we have some values in system variables, divided by group name,
-   
-   - [ ] Create GUI which allow controlling and changing variables inside gui. 
-   - [ ] Make persistant function, which automatically wrote customized variable
-     back to =.jarman=, (also mean parsing file) 
 ** PLANNED [#3] Package Manager upgrade                              :@Julia:
-** PLANNED [#3] /Feature/. Support Org file                           :@Serhii:
-   - [ ] Create library for printing directly to org file
-   - [ ] Create parser library
-** DONE [#1] Update manager                                         :@Serhii:
-   CLOSED: [2021-09-05 Sun 15:43]
-   - [X] updata manager lib and log
-   - [X] update manager GUI 
 * Infrastructure
 * Documentations
 ** DONE [#3] Create jarman Vocabluary                               :@Serhii:
@@ -313,4 +337,6 @@
      - strategy and aims   
 
        
+   
+
    

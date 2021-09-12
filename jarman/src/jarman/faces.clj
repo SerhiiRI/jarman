@@ -8,6 +8,7 @@
 ;;; UI elemnt colors
 ;;; Global styles
 (define-face c-foreground)
+(define-face c-caret)
 (define-face c-layout-background)
 (define-face c-compos-background)
 (define-face c-on-focus)
@@ -29,6 +30,18 @@
 
 (define-face c-menu-bar-on-focus)
 (define-face c-tab-active)
+
+(define-face c-icon-btn-focus)
+
+;; Table
+(define-face c-table-select-row-fg)
+(define-face c-table-select-row-bg)
+(define-face c-table-select-cell)
+
+;; Table header
+(define-face c-table-header-fg)
+(define-face c-table-header-bg)
+(define-face c-table-header-border)
 
 (define-face c-input-bg)
 (define-face c-input-header)

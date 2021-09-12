@@ -74,7 +74,7 @@
                        :background face/c-layout-background
                        :items (gtool/join-mig-items array))]
       ;; (println tabs)
-      ;;(state/set-state :jarman-views-service (vs/new-views-service tabs-space views-space))
+      ;;(state/set-state :jarman-views-service (vs/new-views-service tabs-space views-space))p
       (gvs/start views-space tabs-space)
       (mig-panel
        :id :operation-space
@@ -182,7 +182,28 @@
   ;; all extension's are up and compiled.
   ;; please do not remove Jarman-Ligth out
   ;; from integrated into jarman ns's.
-  (do-load-theme (state/state :theme-name)))
+  (do-load-theme "Jarman Light")
+  (print-header
+   "Load selected theme"
+   (do-load-theme (state/state :theme-name))
+   (print-line "apply default global style")
+   (gs/load-style)
+   (print-line "apply global backgrounds faces for layouts")
+   (gs/update-layouts-background face/c-layout-background)
+   (print-line "apply global backgrounds faces for components")
+   (gs/update-compos-background  face/c-compos-background)
+   (print-line "apply global foreground for all elements")
+   (gs/update-foreground         face/c-foreground)
+   (print-line "apply global caret foreground for all elements")
+   (gs/update-caret              face/c-caret)
+   (print-line "apply global table faces")
+   (gs/update-table :c-select-fg   face/c-table-select-row-fg
+                    :c-select-bg   face/c-table-select-row-bg
+                    :c-focus-cell face/c-table-select-cell)
+   (print-line "apply global table header faces")
+   (gs/update-table-header :c-fg     face/c-table-header-fg
+                           :c-bg     face/c-table-header-bg
+                           :c-border face/c-table-header-border)))
 ;; after swing component was builded
 (defn load-level-1
   "Description:
@@ -270,22 +291,13 @@
 (defn load-level-4
   "Description:
     Load main menu." []
-  (print-header
+  (print-header 
    "Load .jarman"
    (dot-jarman-load)
    (print-list-not-loaded))
   (print-header
    "Load Extensions"
    (do-load-extensions))
-  (print-header
-   "Load default theme `Jarman Light`"
-   (do-load-theme "Jarman Light")
-   (print-line "apply global backgrounds faces for layouts")
-   (gs/update-layouts-background face/c-layout-background)
-   (print-line "apply global backgrounds faces for components")
-   (gs/update-compos-background  face/c-compos-background)
-   (print-line "apply global foreground for all elements")
-   (gs/update-foreground         face/c-foreground))
   (print-header
    "Clean main menu"
    (menu/clean-main-menu))
@@ -295,7 +307,6 @@
   (print-header
    "Load static main menu"
    (load-static-main-menu)))
-
 
 
 ;; ┌─────────────┐

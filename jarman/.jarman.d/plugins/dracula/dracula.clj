@@ -1,3 +1,5 @@
+;; -*- mode: clojure; mode: rainbow;  mode: yafolding; -*-
+;; add-file-local-variable-prop-line -> mode -> some mode
 (ns plugin.dracula.dracula)
 (require '[jarman.plugin.plugin :refer [register-custom-theme-plugin]])
 (require '[jarman.gui.faces-system :refer [custom-theme-set-faces]])
@@ -17,6 +19,7 @@
    "green-light"        "#50fa7b"
    "green-strong"       "#5fff87"
    "orange-light"       "#ffb86c"
+   "orange-light-2"     "#ffc58d"
    "orange-strong"      "#ffaf5f"
    "magenta-light"      "#ff79c6"
    "magenta-strong"     "#ff87d7"
@@ -49,6 +52,58 @@
   `(do
      ~@(map (fn [[colr hex]] (list 'def (symbol colr) hex)) (seq dracula-color-scheme))
      ~@body))
+
+(register-custom-theme-plugin
+  :name "Dracula"
+  :description "Dracula theme"
+  :loader
+  (with-dracula-colors
+    (custom-theme-set-faces
+     '( ;; -- FACE BINDINGS --
+       c-foreground         orange-strong
+       c-caret              c-foreground
+       c-layout-background  bg3-strong
+       c-compos-background  bg2-light
+       c-on-focus           hightlight-light
+
+       c-main-menu-bg       hightlight-strong
+       c-main-menu-vhr      c-main-menu-bg
+
+       cvv-button-expand    expand-btn-colors
+       
+       c-btn-bg             hightlight-strong
+       c-btn-bg-focus       hightlight-light
+       c-btn-foreground     white
+
+       c-underline          bg4-strong
+       c-underline-on-focus orange-strong
+       c-underline-on-mouse orange-strong
+
+       c-slider-bg          c-layout-background
+       c-slider-underline   c-layout-background
+       c-slider-underline-on-focus orange-strong
+
+       c-menu-bar-on-focus  c-on-focus
+       c-tab-active         c-on-focus
+
+       c-icon-btn-focus     c-compos-background
+
+       ;; table
+       c-table-select-row-fg c-layout-background
+       c-table-select-row-bg orange-light-2
+       c-table-select-cell   c-layout-background
+
+       ;; table header
+       c-table-header-bg     hightlight-strong
+       c-table-header-fg     orange-light
+       c-table-header-border c-layout-background
+       
+       c-input-bg           c-compos-background
+       c-input-header       c-foreground
+       
+       s-underline          underline-size
+       ))))
+
 
 ;;;;;;;;;;;;;;;;;;;;
 ;;; REGISTRATION ;;;
@@ -102,44 +157,6 @@
 ;; But better aproach is use a `custom-theme-set-faces`
 ;; which also control and test some variable's, also
 ;; make some logs
-
-(register-custom-theme-plugin
-  :name "Dracula"
-  :description "Dracula theme"
-  :loader
-  (with-dracula-colors
-    (custom-theme-set-faces
-     '( ;; -- FACE BINDINGS --
-       c-foreground         orange-strong
-       c-layout-background  bg3-strong
-       c-compos-background  bg2-light
-       c-on-focus           hightlight-light
-
-       c-main-menu-bg       hightlight-strong
-       c-main-menu-vhr      c-main-menu-bg
-
-       cvv-button-expand    expand-btn-colors
-       
-       c-btn-bg             hightlight-strong
-       c-btn-bg-focus       hightlight-light
-       c-btn-foreground     white
-
-       c-underline          hightlight-strong
-       c-underline-on-focus orange-strong
-       c-underline-on-mouse orange-strong
-
-       c-slider-bg          c-layout-background
-       c-slider-underline   c-layout-background
-       c-slider-underline-on-focus orange-strong
-
-       c-menu-bar-on-focus  c-on-focus
-       c-tab-active         c-on-focus
-       
-       c-input-bg           c-compos-background
-       c-input-header       c-foreground
-       
-       s-underline          underline-size
-       ))))
 
 
 ;; First example

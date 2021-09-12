@@ -8,11 +8,13 @@
   (:import (javax.swing.text SimpleAttributeSet)
            (javax.swing.plaf ColorUIResource)
            (javax.swing UIManager)
+           (javax.swing BorderFactory)
            (java.awt Font)
            (java.awt Color)
            (java.io File)
            (java.nio.file Files)
-           (java.awt GraphicsEnvironment)))
+           (java.awt GraphicsEnvironment)
+           ))
 
 (defn- ubuntu-font [font] (str "./resources/fonts/ubuntu/" font))
 (def fonts {:plain    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-R.ttf")))  14.0)
@@ -54,14 +56,14 @@
 
 (defn- jcolor [red green blue]
   (Color. red green blue))
-(defn color-hex
+(defn hex-color
   "Description:
     Convert hex color in string and create obj color."
   [hex] (apply jcolor (hex-to-rgb hex)))
 
 (defn- juiresource [red green blue]
   (ColorUIResource. (Color. red green blue)))
-(defn bg-hex
+(defn resrc-hex-color
   "Description:
     Convert hex color in string and create obj color for background."
   [hex]
@@ -94,25 +96,110 @@
   [compos suffix]
   (doall (map #(str % suffix) compos)))
 
+;; (comment
+;;   (UIManager/put "ScrollBar" (resrc-hex-color "#fff"))
+;;   (UIManager/put "ScrollBar.thumb" (hex-color "#000"))
+;;   (UIManager/put "ScrollBar.trackHighlightForeground" (hex-color "#000"))
+;;   (UIManager/put "ScrollBar.border" (hex-color "#000"))
+;;   (UIManager/put "ScrollBar.width" (Integer. 12))
+;;   (UIManager/put "ScrollBar.squareButtons" false)
+;;   (UIManager/put "ScrollBar.allowsAbsolutePositioning" true)
+;;   (UIManager/put "Table.highlight" (hex-color "#0f0"))
+;;   (UIManager/put "Table.highlight" (resrc-hex-color "#0f0")))
+
+;; (UIManager/put "Table.selectionBackground" (hex-color "#000")) ;; work
+;; (UIManager/put "Table.selectionForeground" (hex-color "#fff")) ;; work
+;; (UIManager/put "TableHeader.background"    (hex-color "#000")) ;; work
+;; (UIManager/put "TableHeader.foreground"    (hex-color "#fff")) ;; work
+;; (UIManager/put "TableHeader.cellBorder"    (BorderFactory/createEmptyBorder 3 3 3 3)) ;; work
+
+;; (UIManager/put "Table.scrollPaneBorder" (BorderFactory/createLineBorder (hex-color "#fff"))) ;; dont work
+
+;; (comment
+;;   (UIManager/put "ScrollBar.thumbHeight" (Integer. 0))
+;;   (UIManager/put "ScrollBar.thumbDarkShadow" (resrc-hex-color "#000"))
+;;   (UIManager/put "ScrollBar.thumbShadow" (resrc-hex-color "#000"))
+;;   (UIManager/put "ScrollBar.thumbHighlight" (resrc-hex-color "#000"))
+;;   (UIManager/put "ScrollBar.trackForeground" (resrc-hex-color "#000"))
+;;   (UIManager/put "ScrollBar.trackHighlight" (resrc-hex-color "#000"))
+;;   (UIManager/put "ScrollBar.foreground" (resrc-hex-color "#000"))
+;;   (UIManager/put "ScrollBar.shadow" (resrc-hex-color "#000"))
+;;   (UIManager/put "ScrollBar.highlight" (resrc-hex-color "#000")))
+(defn update-table-header
+  [& {:keys [c-fg
+             c-bg
+             c-border
+             tgap
+             lgap
+             bgap
+             rgap
+             tgap-in
+             lgap-in
+             bgap-in
+             rgap-in]
+      :or {c-fg "#000"
+           c-bg "#ccc"
+           c-border "#fff"
+           tgap 0
+           lgap 0
+           bgap 0
+           rgap 1
+           tgap-in 2
+           lgap-in 2
+           bgap-in 2
+           rgap-in 2}}]
+  (UIManager/put "TableHeader.foreground" (hex-color c-fg))
+  (UIManager/put "TableHeader.background" (hex-color c-bg))
+  (UIManager/put "TableHeader.cellBorder" (BorderFactory/createCompoundBorder
+                                           (BorderFactory/createMatteBorder tgap lgap bgap rgap (hex-color c-border))
+                                           (BorderFactory/createEmptyBorder tgap-in lgap-in bgap-in rgap-in))))
+
+(defn update-table
+  [& {:keys [c-select-fg
+             c-select-bg
+             c-focus-cell
+             tgap
+             lgap
+             bgap
+             rgap]
+      :or {c-select-fg  "#000"
+           c-select-bg  "#d9ecff"
+           c-focus-cell "#000"
+           tgap 3
+           lgap 3
+           bgap 3
+           rgap 3}}]
+  (UIManager/put "Table.selectionForeground"      (hex-color c-select-fg))
+  (UIManager/put "Table.selectionBackground"      (hex-color c-select-bg))
+  (UIManager/put "Table.focusCellHighlightBorder" (BorderFactory/createLineBorder (hex-color c-focus-cell))))
+
+(update-table)
+(update-table-header)
+
 (defn update-fonts
   ([]                (update-fonts (:plain fonts) (compo-list-suffix (all-compos) ".font")))
   ([font]            (update-fonts font (compo-list-suffix (all-compos) ".font")))
   ([font compo-list] (doall (map #(UIManager/put % font) compo-list))))
 
 (defn update-layouts-background
-  ([]                (update-layouts-background (bg-hex "#efefef") (compo-list-suffix (layouts-list) ".background")))
-  ([background]      (update-layouts-background (bg-hex background) (compo-list-suffix (layouts-list) ".background")))
+  ([]                (update-layouts-background (resrc-hex-color "#efefef") (compo-list-suffix (layouts-list) ".background")))
+  ([background]      (update-layouts-background (resrc-hex-color background) (compo-list-suffix (layouts-list) ".background")))
   ([background compo-list] (doall (map #(UIManager/put % background) compo-list))))
 
 (defn update-compos-background
-  ([]                (update-compos-background (bg-hex "#ffffff") (compo-list-suffix (compos-list) ".background")))
-  ([background]      (update-compos-background (bg-hex background) (compo-list-suffix (compos-list) ".background")))
+  ([]                (update-compos-background (resrc-hex-color "#ffffff") (compo-list-suffix (compos-list) ".background")))
+  ([background]      (update-compos-background (resrc-hex-color background) (compo-list-suffix (compos-list) ".background")))
   ([background compo-list] (doall (map #(UIManager/put % background) compo-list))))
 
 (defn update-foreground
-  ([]                (update-foreground (color-hex "#020020") (compo-list-suffix (all-compos) ".foreground")))
-  ([foreground]      (update-foreground (color-hex foreground) (compo-list-suffix (all-compos) ".foreground")))
+  ([]                (update-foreground (hex-color "#020020") (compo-list-suffix (all-compos) ".foreground")))
+  ([foreground]      (update-foreground (hex-color foreground) (compo-list-suffix (all-compos) ".foreground")))
   ([foreground compo-list] (doall (map #(UIManager/put % foreground) compo-list))))
+
+(defn update-caret
+  ([]                 (update-caret (hex-color "#020020") (compo-list-suffix (all-compos) ".caretForeground")))
+  ([caret]            (update-caret (hex-color caret) (compo-list-suffix (all-compos) ".caretForeground")))
+  ([caret compo-list] (doall (map #(UIManager/put % caret) compo-list))))
 
 (defn getFont
   ([] fonts)
@@ -130,7 +217,10 @@
   (update-fonts)
   (update-layouts-background)
   (update-compos-background)
-  (update-foreground))
+  (update-foreground)
+  (update-table-header)
+  (update-table)
+  (update-caret))
 
 ;; ┌───────────────┐
 ;; │               │

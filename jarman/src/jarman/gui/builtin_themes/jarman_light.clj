@@ -40,6 +40,8 @@
    "pomegranate"      "#c0392b"
 
    "gray"              "#cccccc"
+   "gray-dark"         "#bbbbbb"
+   "gray-dark-2"       "#aaaaaa"
    "gray-light"        "#eeeeee"
    "gray-light-2"      "#efefef"
    "gray-light-3"      "#f7f7f7"
@@ -79,6 +81,7 @@
     (jarman.gui.faces-system/custom-theme-set-faces
      '( ;; -- Theme binder --
        c-foreground         jarman-super-dark
+       c-caret              jarman-blue-dark
        c-layout-background  gray-light-2
        c-compos-background  white
        c-on-focus           jarman-blue-light
@@ -102,6 +105,18 @@
 
        c-menu-bar-on-focus  jarman-blue-light
        c-tab-active         gray-super-light
+
+       c-icon-btn-focus     gray
+
+       ;; table
+       c-table-select-row-fg jarman-super-dark
+       c-table-select-row-bg jarman-blue-light
+       c-table-select-cell   jarman-super-dark
+
+       ;; table header
+       c-table-header-bg     gray
+       c-table-header-fg     jarman-super-dark
+       c-table-header-border white
        
        c-input-bg           white
        c-input-header       jarman-super-dark

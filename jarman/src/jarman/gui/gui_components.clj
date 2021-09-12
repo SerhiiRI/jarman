@@ -141,7 +141,7 @@
            border-color (gtool/get-comp :header-basic :border-color)
            border-size (gtool/get-comp :header-basic :border-size)
            underline-color (gtool/get-comp :header-basic :underline-color)
-            underline-size (gtool/get-comp :header-basic :underline-size)
+           underline-size (gtool/get-comp :header-basic :underline-size)
            border (fn [size color usize ucolor] (b/compound-border  (b/line-border :thickness size :color color) (b/line-border :bottom usize :color ucolor)))
            ;; font-size (gtool/get-comp :header-basic :font-size)
            ;; font-style (keyword (first (gtool/get-comp :header-basic :font-style)))
@@ -313,7 +313,7 @@
                                (gtool/hand-hover-on e)
                                (c/config! e
                                           :icon (ico-fn icon-on)
-                                          :border (border-fn "#ddd")))
+                                          :border (border-fn face/c-icon-btn-focus)))
               :mouse-exited  (fn [e]
                                (c/config! e
                                           :icon (ico-fn ico-off)
@@ -826,10 +826,10 @@
 (defn expand-form-panel
   "Description:
      Create panel who can hide inside components. 
-     Inside :user-data is function to hide/show panel ((get (config e :user-data) :hide-show))
+     Inside :user-data is function to hide/show panel ((get (config e :user-data) :hide-btn))
    Example:
      (expand-form-panel parent (component or components))"
-  [view-layout comps
+  [view-layout compos
    & {:keys [args 
              min-w
              w
@@ -843,8 +843,10 @@
              icon-hide
              text-open
              text-hide
-             focus-color
-             unfocus-color]
+             c-focus
+             c-bg
+             c-bg-hide
+             c-fg]
       :or {args []
            min-w 250
            w 250
@@ -858,53 +860,53 @@
            icon-hide nil
            text-open "hide"
            text-hide "..."
-           focus-color (gtool/get-color :decorate :focus-gained-dark)
-           unfocus-color "#fff"}}]
-  (let [hidden-comp (atom nil)
-        min-w (if (< max-w min-w) max-w min-w)
+           c-focus   face/c-on-focus
+           c-bg      face/c-compos-background
+           c-bg-hide face/c-layout-background
+           c-fg      face/c-foreground}}]
+  (let [min-w (if (< max-w min-w) max-w min-w)
         w (if (< max-w w) max-w min-w)
         hsize (str lgap "px[" min-w ":" w ":" max-w ", grow,fill]" rgap "px")
-        ;; hsize (if (< max-w w) (str lgap "px[" min-w ":" w ":" w ", grow, fill]" rgap "px") (str lgap "px[" min-w ":" w ":" max-w ", grow,fill]" rgap "px"))
         form-space-open ["wrap 1" hsize (str tgap "px[fill]0px" vrules bgap "px")]
-        form-space-hide ["" "0px[grow, fill]0px" "0px[grow, fill]0px"]
+        form-space-hide ["" "0px[20, fill]0px" "0px[grow, fill]0px"]
         form-space (apply smig/mig-panel :constraints form-space-open args)
-        onClick (fn [e]
+        hide-btn (c/label)
+        onClick (fn [_]
                   (let [inside (u/children form-space)]
-                    (if (nil? @hidden-comp)
+                    (if (< 1 (count inside))
                       (do
+                        ;;(println "\nHide")
                         (c/config! form-space :constraints form-space-hide)
-                        (c/config! e :text text-hide :valign :top :halign :center :icon nil ;; :font (gtool/getFont 18 :bold)
-                                   :background "#eee")
-                        (reset! hidden-comp (drop 1 inside))
-                        (doall (map #(.remove form-space %) (reverse (drop 1 (range (count inside))))))
+                        (c/config! form-space :items [[hide-btn]])
+                        (c/config! hide-btn   :text text-hide :valign :top :halign :center :icon nil :background c-bg-hide)
                         (.revalidate view-layout))
                       (do
+                        ;;(println "\nShow")
                         (c/config! form-space :constraints form-space-open)
-                        (c/config! e :text text-open :halign :left ;; :font (gtool/getFont 15)
-                                   :background "#fff")
-                        (doall (map #(.add form-space %) @hidden-comp))
-                        (reset! hidden-comp nil)
+                        (c/config! hide-btn   :text text-open :halign :left :icon icon-open :background c-bg)
+                        (c/config! form-space :items (gtool/join-mig-items hide-btn compos))
                         (.revalidate view-layout)))))
-        hide-show (c/label :text text-open
-                           :icon icon-open
-                           :focusable? true
-                           :background "#fff" ;;
-                           :foreground blue-color ;;"#bbb"
-                           ;; :font (gtool/getFont 15)
-                           :border (b/empty-border :left 2 :right 2)
-                           :listen [:focus-gained (fn [e] (c/config! e :foreground focus-color))
-                                    :focus-lost   (fn [e] (c/config! e :foreground unfocus-color))
-                                    :mouse-entered gtool/hand-hover-on
-                                    :mouse-clicked onClick
-                                    :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))])]
-    (c/config! form-space :user-data {:hide-show (fn [](onClick hide-show))})
-    (c/config! form-space :items (gtool/join-mig-items hide-show comps))))
+        hide-btn (c/config! hide-btn
+                            :text text-open
+                            :icon icon-open
+                            :valign :center
+                            :focusable? true
+                            :background c-bg
+                            :foreground c-fg
+                            :border (b/empty-border :left 2 :right 2)
+                            :listen [:focus-gained (fn [e] (c/config! e :foreground c-focus))
+                                     :focus-lost   (fn [e] (c/config! e :foreground c-bg))
+                                     :mouse-entered (fn [e] (gtool/hand-hover-on e))
+                                     :mouse-clicked onClick
+                                     :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))])]
+    (c/config! form-space :user-data {:hide-btn (fn [](onClick hide-btn))})
+    (c/config! form-space :items (gtool/join-mig-items hide-btn compos))))
 
 
 (def input-password
   "Description:
     Text component converted to password input component, placeholder is default value.
- Example:
+  Example:
     ((def input-password :placeholder \"Password\" :style [:halign :center])"
   (fn [& {:keys [placeholder
                  border
@@ -925,7 +927,7 @@
           fn-assoc        (fn [e key v] (assoc-in (c/config e :user-data) [key] v))
           newBorder       (fn [underline-color]
                             (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
-                                             (b/line-border :bottom (nth border 4) :color underline-color)))]
+                                               (b/line-border :bottom (nth border 4) :color underline-color)))]
       (apply c/text
              :text placeholder
              ;; :font (gtool/getFont font-size)
@@ -967,7 +969,7 @@
 (def state-input-password
   "Description:
     Text component converted to state password input component.
- Example:
+  Example:
     (state-input-password {:state! state! :dispatch! dispatch! :action :update :path [:a :b]})"
   (fn [{dispatch! :dispatch!
         action    :action
@@ -991,7 +993,7 @@
           fn-assoc        (fn [e k v] (assoc-in (c/config e :user-data) [k] v))
           newBorder       (fn [underline-color]
                             (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
-                                             (b/line-border :bottom (nth border 4) :color underline-color)))]
+                                               (b/line-border :bottom (nth border 4) :color underline-color)))]
       (apply c/text
              :text placeholder
              ;; :font (gtool/getFont font-size)
@@ -1136,28 +1138,28 @@
                                 [icon  :east]]))]
       (if (nil? onClick)
         (let [onClick (fn [e]
-                       (if-not (nil? @atom-inside-btns)
-                         (if (= (count (u/children mig)) 1)
-                           (do ;;  Add inside buttons to mig with expand button
-                             (c/config! icon :icon ico-hover)
-                             (doall (map (fn [btn]
-                                           (.add mig btn))
-                                         @atom-inside-btns))
-                             ;;(gtool/set-focus (first @atom-inside-btns))
-                             ;;(gtool/switch-focus)
-                             ;;(println "OPENN")
-                             (.revalidate mig) 
-                             (.repaint mig)
-                             (c/config! mig :user-data "HEYY" ;;(into user-data {:expanded? true})
-                                        ))
-                           (do ;;  Remove inside buttons form mig without expand button
-                             (c/config! icon :icon ico)
-                             ;;(println  "CLOOSEEE")
-                             (doall (map #(.remove mig %) (reverse (drop 1 (range (count (u/children mig)))))))
-                             (.revalidate mig)
-                             (.repaint mig)
-                             (c/config! mig :user-data "HEyy-NOO" ;;(into user-data {:expanded? false})
-                                        )))))]
+                        (if-not (nil? @atom-inside-btns)
+                          (if (= (count (u/children mig)) 1)
+                            (do ;;  Add inside buttons to mig with expand button
+                              (c/config! icon :icon ico-hover)
+                              (doall (map (fn [btn]
+                                            (.add mig btn))
+                                          @atom-inside-btns))
+                              ;;(gtool/set-focus (first @atom-inside-btns))
+                              ;;(gtool/switch-focus)
+                              ;;(println "OPENN")
+                              (.revalidate mig) 
+                              (.repaint mig)
+                              (c/config! mig :user-data "HEYY" ;;(into user-data {:expanded? true})
+                                         ))
+                            (do ;;  Remove inside buttons form mig without expand button
+                              (c/config! icon :icon ico)
+                              ;;(println  "CLOOSEEE")
+                              (doall (map #(.remove mig %) (reverse (drop 1 (range (count (u/children mig)))))))
+                              (.revalidate mig)
+                              (.repaint mig)
+                              (c/config! mig :user-data "HEyy-NOO" ;;(into user-data {:expanded? false})
+                                         )))))]
           (do
             (reset! atom-inside-btns inside-btns)
             (c/config! mig
@@ -1244,9 +1246,9 @@
                                      (button-expand-child "Don't touch me."
                                                           :onClick (fn [e]
                                                                      (c/config! egg1
-                                                                              :text (c/value (label-img "egg.gif" 150 130)))
+                                                                                :text (c/value (label-img "egg.gif" 150 130)))
                                                                      (c/config! egg2
-                                                                              :text (c/value (label-img "egg.gif" 150 130))))))
+                                                                                :text (c/value (label-img "egg.gif" 150 130))))))
                       egg2]))))
 
 (def view (fn [] (egg)))

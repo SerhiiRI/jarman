@@ -1,6 +1,7 @@
 (ns jarman.gui.gui-migrid
   (:use seesaw.mig)
-  (:require [seesaw.core   :as c]
+  (:require [jarman.faces  :as face]
+            [seesaw.core   :as c]
             [seesaw.border :as b]
             [jarman.tools.lang :refer :all]
             [jarman.gui.gui-tools      :as gtool]))
@@ -41,7 +42,8 @@
                          (str tgap (if (string? tgap) "" "px")
                               vrules
                               bgap (if (string? bgap) "" "px"))]
-          :items items
+           :items items
+           :background face/c-layout-background
           :border (b/line-border :thickness (first debug) :color (second debug))
           args)))
 

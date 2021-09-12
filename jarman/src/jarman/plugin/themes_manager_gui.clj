@@ -83,7 +83,7 @@
 
 (defn info [s]
   {:pre [(string? s)]}
-  (seesaw.core/label :halign :left :background "#fff" :foreground "#074a4f" :text s :font (gtool/getFont 16 :bold) :border (b/empty-border :thickness 15)))
+  (seesaw.core/label :halign :left :foreground "#074a4f" :text s :font (gs/getFont :bold) :border (b/empty-border :thickness 15)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -122,7 +122,6 @@
 (defn theme-manager-panel []
   (seesaw.mig/mig-panel
    :constraints ["wrap 1" "0px[grow, fill]0px" "0px[]0px"]
-   :background "#fff"
    :items
    (gtool/join-mig-items
     (-> (startup-components)

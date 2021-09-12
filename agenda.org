@@ -324,8 +324,6 @@
 ** PLANNED [#3] Package Manager upgrade                              :@Julia:
 * Infrastructure
 * Documentations
-** DONE [#3] Create jarman Vocabluary                               :@Serhii:
-   CLOSED: [2021-09-09 Thu 18:25]
 ** PLANNED [#3] create jarman manifest file                         :@Serhii:
    - Note taken on [2021-09-02 чт 19:01] 
      After making first release of Jarman and finishing plugin system write

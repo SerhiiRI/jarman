@@ -49,7 +49,22 @@
                            (.add JLP itm (new Integer idx))))
         JLP))))
 
-
+(defn- new-frame
+  [title items size undecorated?]
+  (seesaw.core/frame
+   :title title
+   :resizable? true
+   :undecorated? undecorated?
+   :size [(first size) :by (second size)]
+   :minimum-size [600 :by 400]
+   :content (state/state :app)
+   ;;    :on-close :exit
+   :listen [:component-resized (fn [e]
+                                 ;;  (println e)
+                                 (let [w (.getWidth (.getSize (.getContentPane (to-root e))))
+                                       h (.getHeight (.getSize (.getContentPane (to-root e))))]
+                                   (reset! (state/state :atom-app-size) [w h]))
+                                 (.revalidate (to-widget e)))]))
 
 (def build
   (fn [& {:keys [title
@@ -64,23 +79,18 @@
       (do
         (state/set-state :app (base set-items))
         (state/set-state :alert-manager (gas/message-server-creator (state/state :app)))
-        (let [jframe (seesaw.core/frame
-                      :title title
-                      :resizable? true
-                      :undecorated? undecorated?
-                      :size [(first size) :by (second size)]
-                      :minimum-size [600 :by 400]
-                      :content (state/state :app)
-                ;;    :on-close :exit
-                      :listen [:component-resized (fn [e]
-                                                ;;  (println e)
-                                                    (let [w (.getWidth (.getSize (.getContentPane (to-root e))))
-                                                          h (.getHeight (.getSize (.getContentPane (to-root e))))]
-                                                      (reset! (state/state :atom-app-size) [w h]))
-                                                    (.revalidate (to-widget e)))])]
-          (-> (doto jframe (.setLocationRelativeTo nil) pack! show!))
-          (config! jframe  :icon (stool/image-scale icon/calendar1-64-png)
-                   :size [(first size) :by (second size)]))))))
+        (if (and (state/state :soft-restart)
+                 (not (nil? (state/state :frame))))
+          (do
+            (config! (state/state :frame) :content (state/state :app))
+            (config! (state/state :frame) :size [(first size) :by (second size)]))
+          (do
+            (state/set-state :frame (new-frame title items size undecorated?))
+            (let [jframe (state/state :frame)]
+              (-> (doto jframe (.setLocationRelativeTo nil) pack! show!))
+              (config! jframe  :icon (stool/image-scale icon/calendar1-64-png)
+                       :size [(first size) :by (second size)]))))
+        ))))
 
 
 (defn extend-frame-title 

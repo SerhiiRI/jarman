@@ -5,13 +5,15 @@
         seesaw.border)
   (:import (java.awt.event MouseEvent))
   (:require
+   [jarman.faces  :as face]
    [jarman.tools.lang :refer :all]
    [seesaw.core :as c]
    [jarman.resource-lib.icon-library :as icon]
    [seesaw.util :as u]
    [jarman.tools.swing :as stool]
    [jarman.gui.gui-components :as gcomp]
-   [jarman.gui.gui-tools :as gtool]))
+   [jarman.gui.gui-tools      :as gtool]
+   [jarman.logic.state        :as state]))
 
 ;; ┌───────────────────────────┐
 ;; │                           │
@@ -53,6 +55,14 @@
 (defn stop-watching []
   (remove-watch state :tabs-bar)
   (remove-watch state :view-space))
+
+(defn soft-restar
+  "Description:
+    Reload app into old frame."
+  []
+  (stop-watching)
+  (state/set-state :soft-restart true)
+  ((state/state :startup)))
 
 (defn- action-handler
   "Description:
@@ -139,7 +149,7 @@
         m     (get-in (state!) [:views view-id-k])]
     (horizontal-panel
      :background (if (= view-id-k (:active (state!)))
-                   "#fff"
+                   face/c-tab-active
                    nil)
      :items [(label ;; tab title
               :text   (:title m)

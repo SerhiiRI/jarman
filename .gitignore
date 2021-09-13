@@ -24,6 +24,7 @@ installer/*.exe
 .git-credentials
 *.tex
 docs/public/site
+*.log
 
 jarman/.vscode/settings.json
 jarman/.lsp/sqlite.db

@@ -129,6 +129,7 @@
    - [ ] - Select font
    - [ ] - Using selected font
    - [ ] - View with avaliable fonts    
+** TOREVIEW [#2] Bug. Use system font's for linux                   :@Serhii:
 ** PLANNED [#3] Make diagram from DB Visualiser                        :@Julia:
    - [ ] Visualize relation between tables
    - [ ] Save table location in DB visualiser into configurations
@@ -180,6 +181,10 @@
    - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [ ] Make refreshing for jarman, when theme was selected
 * Backend
+** TODO [#2] /Feature/. IDE split out-environment [0/2]               :@Serhii:
+   - [ ] Auto tail reverting logs buffer
+   - [ ] Integrate local toolkit for emacs.
+     - [ ] Open log buffer.
 ** PROCESSING [#1] /Feature/. defvar expanding
    - [ ] Allow defvar declaration for all the places
    - [ ] Fix defvar spec. 
@@ -190,8 +195,8 @@
    - [ ] /Feature/. Pin special key where you can put special lambda gui element
      which be edit this variable.
    
-** TOREVIEW [#1] /Feature/. Rewrite plugin system                     :@Serhii:
-   DEADLINE: <2021-09-09 Thu>
+** DONE [#1] /Feature/. Rewrite plugin system                         :@Serhii:
+   CLOSED: [2021-09-13 pon. 04:36] DEADLINE: <2021-09-09 Thu>
    - [X] Add ~:deps~ key into ~package~
      - [X] create package compiling sequence 
    - [X] View plugin
@@ -232,6 +237,7 @@
    - [ ] Create GUI which allow controlling and changing variables inside gui. 
    - [ ] Make persistant function, which automatically wrote customized variable
      back to =.jarman=, (also mean parsing file) 
+** PLANNED [#3] Package Manager upgrade                              :@Julia:
 ** PLANNED [#2] Service Period. sort contract list    :@Julia:@Serhii:
    - [ ] sorting contract by date
    - [ ] colorize contract by active-nonactive depend on current date
@@ -252,7 +258,6 @@
    - [ ] - Import custom defview
 ** PLANNED [#2] Scroll to selected in table                          :@Aleks:
    - [ ] - Scroll to selected in table
-** PLANNED [#2] Mapping and demapping toolkit for confgen           :@Serhii:
 ** PLANNED [#2] Ekka todo#1 chages                    :@Julia:@Aleks:@Serhii:
 *** Підприємець
     -   ЄДРПОУ - 10 цифр довжина з переду нулями
@@ -321,7 +326,6 @@
 ** PLANNED [#3] Versioning data structure             :@Julia:@Aleks:@Serhii:
 ** PLANNED [#3] sql_tools | debug                                   :@Serhii:
     - [ ] pretty printing for sql syntax
-** PLANNED [#3] Package Manager upgrade                              :@Julia:
 * Infrastructure
 * Documentations
 ** PLANNED [#3] create jarman manifest file                         :@Serhii:

@@ -365,9 +365,9 @@
 (defn create-expand-btns--confgen
   "Discription:
      Return list of button expand chlide with configurations parts."
-  [colors-fn]
+  [colors-fn lvl offset]
   (let [[color-bg color-hover] (if (fn? colors-fn)
-                                 (nth (colors-fn 0) 0)
+                                 (second (colors-fn lvl))
                                  ["f7f7f7" "f7f7f7"])
         current-theme (str (first (cm/get-in-value [:themes :theme_config.edn :selected-theme])) ".edn")
         config-file-list-as-keyword (map #(first %) (cm/get-in-segment []))
@@ -376,15 +376,7 @@
                    (and (= :file (get map-part :type))
                         (= :edit (get map-part :display))))
                 config-file-list-as-keyword)
-        restore-button (gcomp/button-expand-child
-                        (gtool/get-lang-btns :restore-last-configuration)
-                        :onClick (fn [e]
-                                   (if-not (nil? (cm/restore-config))
-                                     ((state/state :alert-manager)
-                                      :set {:header "Success!"
-                                            :body (gtool/get-lang-alerts
-                                                   :restore-configuration-ok)}
-                                      5))))
+        
         coll (reverse
               (conj
                (map
@@ -394,8 +386,8 @@
                         view-id (last path)]
                     (gcomp/button-expand-child
                      title
-                     :left 6
-                     :hover-color color-hover
+                     :left-offset offset
+                     :c-focus     color-hover
                      :onClick (fn [e]
                                 (gvs/add-view
                                  :view-id view-id
@@ -416,8 +408,8 @@
                      view-id :theme_config.edn]
                  (gcomp/button-expand-child
                   title
-                  :left 6
-                  :hover-color color-hover
+                  :left-offset offset
+                  :c-focus     color-hover
                   :onClick (fn [e]
                              (gvs/add-view
                               :view-id view-id
@@ -436,16 +428,16 @@
                      view-id :current-theme]
                  (gcomp/button-expand-child
                   title
-                  :left 6
-                  :hover-color color-hover
+                  :left-offset offset
+                  :c-focus     color-hover
                   :onClick (fn [e]
                              (gvs/add-view
                               :view-id view-id
                               :title title
                               :render-fn (fn [] (create-view--confgen
-                                                    path
-                                                    :message-ok (fn [head body]
-                                                                  ((state/state :alert-manager)
-                                                                   :set {:header head :body body}
-                                                                   ))))))))))]
+                                                 path
+                                                 :message-ok (fn [head body]
+                                                               ((state/state :alert-manager)
+                                                                :set {:header head :body body}
+                                                                ))))))))))]
     coll))

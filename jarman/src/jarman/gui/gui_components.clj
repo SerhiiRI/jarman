@@ -231,9 +231,9 @@
                  halign :center
                  bg              face/c-btn-bg
                  bg-hover        face/c-btn-bg-focus
-                 underline-focus face/c-underline-on-focus
-                 underline       face/c-underline
-                 underline-size  face/s-underline
+                 underline-focus face/c-btn-underline-on-focus
+                 underline       face/c-btn-underline
+                 underline-size  face/s-btn-underline
                  flip-border     false
                  }}]
   (let [newBorder (fn [underline-color]
@@ -293,12 +293,13 @@
 
 
 (defn button-icon
-  [{:keys [icon-on icon-off size func tip margin frame-hover]
+  [{:keys [icon-on icon-off size func tip margin frame-hover c-border-focus]
     :or   {icon-on icon/question-64-png
            size 30
            func (fn [e])
            margin [0 0 0 0]
-           frame-hover true}}]
+           frame-hover true
+           c-border-focus face/c-icon-btn-focus}}]
   (let [ico-off (rift icon-off icon-on)
         ico-fn (fn [i](jarman.tools.swing/image-scale i size))
         [t b l r] margin
@@ -313,7 +314,7 @@
                                (gtool/hand-hover-on e)
                                (c/config! e
                                           :icon (ico-fn icon-on)
-                                          :border (border-fn face/c-icon-btn-focus)))
+                                          :border (border-fn c-border-focus)))
               :mouse-exited  (fn [e]
                                (c/config! e
                                           :icon (ico-fn ico-off)
@@ -1089,14 +1090,14 @@
                border (b/compound-border (b/empty-border :left 3))
                vsize 35
                min-height 200
-               ico  (stool/image-scale icon/plus-blue-64-png 25)
+               ico       (stool/image-scale icon/plus-blue-64-png 25)
                ico-hover (stool/image-scale icon/minus-grey-64-png 20)
                id :none
                onClick nil
                over-func :none
-               background face/c-compos-background
-               foreground face/c-foreground
-               c-left     face/c-compos-background
+               background face/c-btn-expand-bg
+               foreground face/c-btn-expand-fg
+               c-left     face/c-btn-expand-offset
                left-gap 0}}]
     (let [atom-inside-btns (atom nil)
           inside-btns (if (nil? inside-btns) nil inside-btns) ;; check if nill
@@ -1188,33 +1189,37 @@
    "
   (fn [title
        & {:keys [onClick
-                 s-left
+                 left-offset
                  c-left
                  c-focus
+                 background
+                 foreground
                  cursor
                  width
                  args]
           :or {onClick (fn [e] (println "Clicked: " title))
                cursor :hand
-               s-left 6
-               c-left  face/c-compos-background
-               c-focus face/c-on-focus
+               left-offset 6
+               c-left     face/c-main-menu-bg
+               c-focus    face/c-on-focus
+               background face/c-compos-background
+               foreground face/c-foreground
                width 200 
                args []}}]
     (apply c/label
            :text (str title)
-           :background face/c-compos-background
-           :foreground face/c-foreground
+           :background background
+           :foreground foreground
            :size  [width :by 25]
            :cursor cursor
            :focusable? true
            :border (b/compound-border (b/empty-border :left 10)
-                                      (b/line-border  :left s-left :color c-left))
+                                      (b/line-border  :left left-offset :color c-left))
            :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
                     :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
                     :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
                     :focus-gained  (fn [e] (c/config! e :background c-focus))
-                    :focus-lost    (fn [e] (c/config! e :background face/c-compos-background))
+                    :focus-lost    (fn [e] (c/config! e :background background))
                     :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gtool/switch-focus))))]
            args)))
 

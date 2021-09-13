@@ -13,7 +13,8 @@
    [jarman.tools.swing :as stool]
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-tools      :as gtool]
-   [jarman.logic.state        :as state]))
+   [jarman.logic.state        :as state]
+   [jarman.tools.org          :refer :all]))
 
 ;; ┌───────────────────────────┐
 ;; │                           │
@@ -60,9 +61,13 @@
   "Description:
     Reload app into old frame."
   []
-  (stop-watching)
-  (state/set-state :soft-restart true)
-  ((state/state :startup)))
+  (try
+    (do
+      (print-line "\nSoft Restart")
+      (stop-watching)
+      (state/set-state :soft-restart true)
+      ((state/state :startup)))
+    (catch Exception e (print-line (str "Soft restart failed:\n" (.getMessage e) "\n")))))
 
 (defn- action-handler
   "Description:

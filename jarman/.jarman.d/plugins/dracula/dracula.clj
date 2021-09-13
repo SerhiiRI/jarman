@@ -43,9 +43,10 @@
    "fg4-light"          "#b6b6b2"
    "fg4-strong"         "#b2b2b2"
 
-   "underline-size"     2
-   "expand-btn-colors" [["#303030" "#44475a"]
-                        ["#272824" "#373844"]]})
+   "underline-size"        2
+   "underline-tabbar-size" 1
+   "expand-btn-colors" [["#303030" "#505050"]
+                        ["#202f2f" "#303f3f"]]})
 
 (defmacro ^:private with-dracula-colors
   [& body]
@@ -53,55 +54,92 @@
      ~@(map (fn [[colr hex]] (list 'def (symbol colr) hex)) (seq dracula-color-scheme))
      ~@body))
 
+
 (register-custom-theme-plugin
   :name "Dracula"
   :description "Dracula theme"
   :loader
   (with-dracula-colors
     (custom-theme-set-faces
-     '( ;; -- FACE BINDINGS --
-       c-foreground         orange-strong
-       c-caret              c-foreground
-       c-layout-background  bg3-strong
-       c-compos-background  bg2-light
-       c-on-focus           hightlight-light
+     '( ;; -- Theme binder --
+       ;; Default styles !!! Do not using in code, do not add new here !!!
+       c-foreground                orange-strong
+       c-caret                     orange-light-2
 
-       c-main-menu-bg       hightlight-strong
-       c-main-menu-vhr      c-main-menu-bg
-
-       cvv-button-expand    expand-btn-colors
+       c-layout-background         bg2-light
+       c-layout-background-light   bg3-light
        
-       c-btn-bg             hightlight-strong
-       c-btn-bg-focus       hightlight-light
-       c-btn-foreground     white
+       c-compos-background         bg4-light
+       c-compos-background-light   bg3-strong
+       c-compos-background-dark    bg4-strong
 
-       c-underline          bg4-strong
-       c-underline-on-focus orange-strong
-       c-underline-on-mouse orange-strong
+       c-background-detail         c-layout-background
+       
+       c-on-focus                  hightlight-light
+       c-on-focus-light            bg3-light
+       c-on-focus-dark             c-on-focus-light
+       c-on-focus-detail           c-layout-background
+       
+       c-underline                 bg2-light
+       c-underline-detail          c-layout-background
+       c-underline-light           bg3-light
+       c-underline-on-focus        orange-strong
+       c-underline-on-focus-light  orange-strong
+       s-underline                 underline-size
+       
+       cvv-button-expand        expand-btn-colors ;; expand button lvls colors
+       
+       ;;----------------------------------
+       ;;Custom elements  !!! Do not repeat in code! Create new per component !!!
+       
+       ;; main menu
+       c-main-menu-bg        c-layout-background-light
+       c-main-menu-vhr       c-main-menu-bg       
 
-       c-slider-bg          c-layout-background
-       c-slider-underline   c-layout-background
-       c-slider-underline-on-focus orange-strong
+       ;; menu bars
+       c-icon-btn-focus      c-on-focus-dark
+       c-menu-bar-on-focus   c-on-focus
+       
+       ;; basic button
+       c-btn-bg              c-compos-background-dark
+       c-btn-bg-focus        c-on-focus
+       c-btn-foreground      c-foreground
+       c-btn-underline       c-underline
+       c-btn-underline-on-focus c-underline-on-focus
+       s-btn-underline       s-underline
+       
+       ;; slider menu
+       c-slider-bg                 c-layout-background
+       c-slider-fg                 c-foreground
+       c-slider-bg-on-focus        c-compos-background
+       c-slider-underline          c-underline-detail
+       c-slider-underline-on-focus c-underline-on-focus-light
 
-       c-menu-bar-on-focus  c-on-focus
-       c-tab-active         c-on-focus
-
-       c-icon-btn-focus     c-compos-background
-
+       ;; view service
+       c-tab-active          c-on-focus-light
+       c-tabbar-bg           c-background-detail
+       c-tab-underline       c-underline-light
+       s-tab-underline       underline-tabbar-size
+       
        ;; table
-       c-table-select-row-fg c-layout-background
-       c-table-select-row-bg orange-light-2
-       c-table-select-cell   c-layout-background
+       c-table-select-row-fg c-foreground
+       c-table-select-row-bg c-on-focus
+       c-table-select-cell   c-foreground
 
        ;; table header
-       c-table-header-bg     hightlight-strong
-       c-table-header-fg     orange-light
-       c-table-header-border c-layout-background
-       
-       c-input-bg           c-compos-background
-       c-input-header       c-foreground
-       
-       s-underline          underline-size
+       c-table-header-bg     c-compos-background-light
+       c-table-header-fg     c-foreground
+       c-table-header-border c-compos-background
+
+       ;; inputs
+       c-input-bg            c-compos-background
+       c-input-header        c-foreground
+
+       ;; expand button
+       c-btn-expand-bg       c-compos-background
+       c-btn-expand-fg       c-foreground
+       c-btn-expand-offset   c-compos-background
+
        ))))
 
 

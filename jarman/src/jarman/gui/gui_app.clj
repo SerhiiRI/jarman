@@ -66,8 +66,9 @@
     (let [tabs-space (mig-panel
                       :constraints ["" "0px[fill]0px" "0px[]0px"]
                       :id :app-tabs-space
-                      :background face/c-layout-background
-                      :items (gtool/join-mig-items tabs))
+                      :background face/c-tabbar-bg
+                      :items (gtool/join-mig-items tabs)
+                      :border (b/line-border :bottom face/s-tab-underline :color face/c-tab-underline))
           views-space (mig-panel
                        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
                        :id :app-functional-space 
@@ -182,12 +183,16 @@
   ;; all extension's are up and compiled.
   ;; please do not remove Jarman-Ligth out
   ;; from integrated into jarman ns's.
-  (do-load-theme "Jarman Light")
+  (if (nil? (state/state :theme-first-load))
+    (do (do-load-theme "Jarman Light")
+        (state/set-state :theme-first-load true)
+        (print-header "First theme loaded")))
   (print-header
    "Load selected theme"
-   (do-load-theme (state/state :theme-name))
+   (try
+    (do-load-theme (state/state :theme-name))
+    (catch Exception e (print-line (str "\n[ ! ] Theme loading can not complete. Some value faild.\n"))))
    (print-line "apply default global style")
-   (gs/load-style)
    (print-line "apply global backgrounds faces for layouts")
    (gs/update-layouts-background face/c-layout-background)
    (print-line "apply global backgrounds faces for components")
@@ -199,7 +204,7 @@
    (print-line "apply global table faces")
    (gs/update-table :c-select-fg   face/c-table-select-row-fg
                     :c-select-bg   face/c-table-select-row-bg
-                    :c-focus-cell face/c-table-select-cell)
+                    :c-focus-cell  face/c-table-select-cell)
    (print-line "apply global table header faces")
    (gs/update-table-header :c-fg     face/c-table-header-fg
                            :c-bg     face/c-table-header-bg
@@ -339,3 +344,8 @@
                              :else (do (fn [])))))))
 
 ((state/state :startup))
+;; (state/set-state :soft-restart false)
+
+;; (state/set-state :theme-name "Jarman Light")
+;; (state/state :theme-name)x0
+

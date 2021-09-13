@@ -107,14 +107,14 @@
                [(theme-content theme)
                 (gcomp/button-basic "Apply theme"
                                     :onClick (fn [_] (try-catch-alert
-                                                     (plugin/do-load-theme
-                                                      (:theme-name theme))
-                                                     (state/set-state :theme-name (:theme-name theme))
-                                                     (gvs/soft-restar)
-                                                     ((state/state :alert-manager)               
-                                                      :set {:header "Theme manager"
-                                                            :body   (format "Theme `%s` successfully applyed"
-                                                                            (:theme-name theme))} 7))))])))
+                                                      (plugin/do-load-theme
+                                                       (:theme-name theme))
+                                                      (state/set-state :theme-name (:theme-name theme))
+                                                      (gvs/soft-restar)
+                                                      ((state/state :alert-manager)               
+                                                       :set {:header "Theme manager"
+                                                             :body   (format "Theme `%s` successfully applyed"
+                                                                             (:theme-name theme))} 7))))])))
     (conj items
           (info "Empty theme list")
           (info "-- empty --"))))

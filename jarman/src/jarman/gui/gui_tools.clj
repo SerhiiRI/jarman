@@ -298,11 +298,11 @@
                  top-offset]
           :or {onClick (fn [e])
                top-offset 0}}]
-    (let [bg-color          face/c-layout-background
-          bg-color-hover    face/c-slider-bg
-          c-underline-focus face/c-slider-underline-on-focus
+    (let [bg-color          face/c-slider-bg
+          c-foreground      face/c-slider-fg
+          bg-color-hover    face/c-slider-bg-on-focus
           c-underline       face/c-slider-underline
-          c-foreground      face/c-foreground
+          c-underline-focus face/c-slider-underline-on-focus
           y (if (> (* size order) 0) (+ top-offset (- (+ (* 2 order) (* size order)) (* 2 (* 1 order)))) (+ top-offset (* size order)))
           icon (label :halign :center
                       :icon ico

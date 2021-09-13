@@ -44,14 +44,15 @@
 ;;    ["#e7e7e7" "#e7e7e7"]
 ;;    ["#dddddd" "#dddddd"]])
 
-(defn- expand-colors []
-  (if (empty? face/cvv-button-expand)
-    [["#f7f7f7" "#fafafa"]
-     ["#f0f6fa" "#f0f6fa"]
-     ["#ebf7ff" "#ebf7ff"]
-     ["#daeaf5" "#daeaf5"]
-     ["#bfd3e0" "#bfd3e0"]]
-    face/cvv-button-expand))
+(def expand-colors
+  (fn []
+   (if (empty? face/cvv-button-expand)
+     [["#f7f7f7" "#fafafa"]
+      ["#f0f6fa" "#f0f6fa"]
+      ["#ebf7ff" "#ebf7ff"]
+      ["#daeaf5" "#daeaf5"]
+      ["#bfd3e0" "#bfd3e0"]]
+     face/cvv-button-expand)))
 
 
 (defn- repeat-colors
@@ -73,8 +74,8 @@
       (print-line (format "pin plugin %s to menu"(.return-title v)))
       (gcomp/button-expand-child
        (str k)
-       :left (+ (* (dec lvl) 3) 6)
-       :hover-color (second (nth (get-colors (dec lvl)) (dec lvl)))
+       :left-offset (+ (* (dec lvl) 3) 6)
+       :c-focus     (second (nth (get-colors (dec lvl)) (dec lvl)))
        :onClick (fn [e]
                   (gvs/add-view
                    :view-id (str "auto-plugin" (.return-title v))
@@ -101,8 +102,8 @@
       ((:fn v))
       (gcomp/button-expand-child
        (str k)
-       :left (+ (* (dec lvl) 3) 6)
-       :hover-color (second (nth (get-colors (dec lvl)) (dec lvl)))
+       :left-offset (+ (* (dec lvl) 3) 6)
+       :c-focus (second (nth (get-colors (dec lvl)) (dec lvl)))
        :onClick
        (if-not (nil? (:fn v))
          (if (= :invoke (:action v))
@@ -187,7 +188,7 @@
     (gtool/get-lang-btns :settings)
    {(gtool/get-lang-btns :settings) {:key    "settings"
                                      :action :list
-                                     :fn     (fn [] (cg/create-expand-btns--confgen get-colors))}}}
+                                     :fn     (fn [] (cg/create-expand-btns--confgen get-colors 1 12))}}}
    "Debug Items"
    {"Popup window" {:key        "popup-window"
                     :action     :invoke

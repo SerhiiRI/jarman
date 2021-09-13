@@ -2,7 +2,6 @@
   (:use seesaw.mig)
   (:require [seesaw.core   :as c]
             [seesaw.border :as b]
-            [jarman.faces  :as face]
             [jarman.logic.state :as state]
             [jarman.tools.lang :refer :all])
   (:import (javax.swing.text SimpleAttributeSet)
@@ -125,6 +124,9 @@
 ;;   (UIManager/put "ScrollBar.foreground" (resrc-hex-color "#000"))
 ;;   (UIManager/put "ScrollBar.shadow" (resrc-hex-color "#000"))
 ;;   (UIManager/put "ScrollBar.highlight" (resrc-hex-color "#000")))
+(defn- update-scrollbar []
+  (UIManager/put "ScrollBar.width" (Integer. 12)))
+
 (defn update-table-header
   [& {:keys [c-fg
              c-bg
@@ -214,6 +216,7 @@
   "Description:
     Load global style."
   []
+  (update-scrollbar)
   (update-fonts)
   (update-layouts-background)
   (update-compos-background)
@@ -229,22 +232,55 @@
 ;; └───────────────┘
 (defn- render-demo
   []
-  (mig-panel
-   :constraints ["" "[50%, center]" "[50%, center]"]
-   :items [[(c/label :text "Demo 1")]
-           [(c/label :text "Demo 2")]]))
+  (let [mig (mig-panel
+             :constraints ["" "[50%, center]" "[50%, center]"]
+             :background  (Color. 0 0 0)
+             :items [[(c/label :text "Demo 1")]
+                     [(c/label :text "Demo 2")]])]
+    mig))
+
+
+(import java.awt.MouseInfo)
+(defn get-mouse-pos
+  "Description:
+     Return mouse position on screen, x and y.
+  Example:
+     (get-mouse-pos) => [800.0 600.0]"
+  []
+  (let [mouse-pos (.getLocation (java.awt.MouseInfo/getPointerInfo))
+        screen-x  (.getX mouse-pos)
+        screen-y  (.getY mouse-pos)]
+    [screen-x screen-y]))
 
 (defn style-demo
   []  
-  (load-style)
-  (-> (doto (seesaw.core/frame
-             :title "Style demo"
-             :minimum-size [500 :by 500]
-             :size [500 :by 500]
-             :content (render-demo))
-        (.setLocationRelativeTo nil) c/pack! c/show!)))
-  
-;;(style-demo)
+  ;;(load-style)
+  (let [offset-x (atom 0)
+        offset-y (atom 0)
+        frame (seesaw.core/frame
+               :title "Style demo"
+               :minimum-size [500 :by 500]
+               :size [500 :by 500]
+               :content (render-demo))
+        frame (c/config!
+               frame :listen [:mouse-pressed
+                              (fn [e]
+                                (let [[start-x start-y] (get-mouse-pos)]
+                                  (reset! offset-x (- start-x (.getX frame)))
+                                  (reset! offset-y (- start-y (.getY frame)))))
+                              
+                              :mouse-dragged
+                              (fn [e]
+                                (let [[new-x new-y] (get-mouse-pos)]
+                                  (.setLocation frame (- new-x @offset-x)(- new-y @offset-y))))])]
+    (doto
+        frame
+      (.setUndecorated true)
+      (.setOpacity 0.7)
+      (.setLocationRelativeTo nil) c/pack! c/show!)))
+
+
+;; (style-demo)
 
 
 

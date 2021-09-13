@@ -25,3 +25,31 @@ Archived entries from file /home/serhii/programs/jarman/agenda.org
   :ARCHIVE_CATEGORY: agenda
   :ARCHIVE_TODO: DONE
   :END:
+
+* DONE [#2] /Feature/. Load fonts from jarman resources         :@Julia:@Aleks:
+  CLOSED: [2021-09-13 Mon 13:04]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-09-13 Mon 13:04
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Frontend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+
+* DONE Base components and views                             :@Aleks:@Serhii:
+  CLOSED: [2021-09-13 Mon 13:06]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-09-13 Mon 13:06
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Frontend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+  - [X] Select list with atom to state save
+  - [X] Input text with atom to state save
+  - [X] Input text-area with atom to state save
+  - [X] Input password with atom to state save
+  - [X] scrollbox - pre-configurated scrollable with speedup on mouse scroll and border nil
+  - [X] Empty frame as base window for quick testing components
+  - [X] Popup box allways on top with exit button
+  - [X] Popup dialog with block background

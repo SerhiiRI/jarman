@@ -20,7 +20,7 @@
     - [ ] =Select all=, is like "checkbox" =[V]=
     - [ ] Pay icon. (hrywna) + (dolar)
     - [ ] До лупи додати кінець, одноколірна.
-*** TODO Upgrade UI Elements                                  :@Julia:@Aleks:
+*** TODO Upgrade UI Elements                                         :@Aleks:
     :PROPERTIES:
     :CUSTOM_ID: alert-boxes-replacement
     :END:
@@ -95,11 +95,6 @@
    - [ ] removing unnessesary borders. 
    - [X] removing unnessesary font override
    
-** PROCESSING [#2] /Bug/. Confgen fix                                  :@Aleks:
-   - [X] - If display do not exist then editable
-   - [X] - fix alert window
-   - [ ] - Changes in theme again can not saving to file
-     
 ** TODO [#1] /Feature/. Interaction files
    - [ ] =interaction.clj=
      implement file with simple proxy function where every funciton is just wrapper
@@ -107,20 +102,12 @@
    - [ ] =faces.clj=
      Finish moving to new customization style
 
-** TODO [#1] /Bug/. Loggin panel not compile                         :@Aleks:
+** TOREVIEW [#1] /Bug/. Loggin panel not compile                       :@Aleks:
 ** TODO [#1] /Bug/. DB Visualizer editing                      :@Aleks:@Serhii:
    1. [ ] Cannot edit table =view=
    2. [ ] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
    3. [ ] Cannot edit metadata of table 
 ** TODO [#2] /Feature/. Implement Faces                                :@Aleks:
-** TODO [#2] /Check/. Check theme covering the GUI. Fix style :@Julia:@Aleks:@Serhii:
-     @Morfeu5z and @Julia47 , and I if you want, must create a group meeting
-     on which we try to resolve problems:
-      
-   - [ ] find were style in system not getting from config. 
-   - [ ] create low priority issue with icons which must be redraw
-   - [ ] unification design in some places.      
-      
 ** TODO [#2] /Feature/. Load fonts from jarman resources      :@Julia:@Aleks:
    Inside resources/fonts is an drirectory with JetBrainsMono font.
    We need to use somehow this fonts.
@@ -130,16 +117,16 @@
    - [ ] - Using selected font
    - [ ] - View with avaliable fonts    
 ** TOREVIEW [#2] Bug. Use system font's for linux                   :@Serhii:
-** PLANNED [#3] Make diagram from DB Visualiser                        :@Julia:
+** PLANNED Make diagram from DB Visualiser
    - [ ] Visualize relation between tables
    - [ ] Save table location in DB visualiser into configurations
-** PLANNED [#2] Table Controller Forms                                 :@Aleks:
-** PLANNED [#3] Config Generator Upgrade and Fix                       :@Aleks:
+** PLANNED Table Controller Forms
+** PLANNED Config Generator Upgrade and Fix
    - [ ] - block expand (there is to many parameters, we need to hide them as subconfig with title)
    - [ ] - message on save success
    - [ ] - message on save failed
    - [X] - fixed alert box permeation   
-** PLANNED [#3] Base components and views                      :@Aleks:@Serhii:
+** PLANNED Base components and views                         :@Aleks:@Serhii:
    - [ ] Popup dialog with auto size
    - [ ] Popup box with auto size
    - [X] Select list with atom to state save
@@ -150,13 +137,13 @@
    - [X] Empty frame as base window for quick testing components
    - [X] Popup box allways on top with exit button
    - [X] Popup dialog with block background
-** PLANNED [#3] Clobal event on key pressed                     :@Julia:@Aleks:
+** PLANNED Clobal event on key pressed                        :@Julia:@Aleks:
    - [X] Proxy for KeyEventDispacher for add global event on key pressed
    - [X] add and remove own KeyEventDispacher
    - [X] tutorial point
    - [ ] try add more KeyEventDispachers
    - [ ] lock repeating event on hold key
-** PLANNED [#2] DB Visualiser, finishing                :@Julia:@Aleks:@Serhii:
+** PLANNED DB Visualiser, finishing                   :@Julia:@Aleks:@Serhii:
    - [ ] React on profile from session user. @SerhiiRI 
    - [ ] Add button for ~delete table~ , ~create table~
    - [ ] Fix changes output , because now look bad
@@ -164,12 +151,12 @@
    - [ ] If table contain id-field, make button with dialog box. @SerhiiRI generate list of table can be related to current editable table  
    - [ ] Make ~:component-type~, ~:field~ , ~:field-qualified~ not editable even by admin. 
    - [ ] Add buttons ~remove column~, ~add column~
-** PLANNED [#3] DB Visualiser: Table adding form                       :@Julia:
-** PLANNED /Feature/. Update Manager                                   :@Julia:
+** PLANNED DB Visualiser: Table adding form                          :@Julia:
+** PLANNED /Feature/. Update Manager
    - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [ ] Show popup with hard program restart
    - [ ] Button for reading log file /update-manager-log.org/
-** PLANNED /Feature/. Extension Manager                        :@Julia:@Serhii:
+** PLANNED /Feature/. Extension Manager
    - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [ ] Show extension file-tree. Alow editing file throw the through the jarman
    - [ ] Show whole information about package, from file =package=, when you click on
@@ -177,11 +164,11 @@
    - [ ] Enable/Disable extension
    - [ ] Extention searching/install template, because repository we currently doesnt have
    - [ ] Button for reading log file /extension-manager-log.org/
-** PLANNED /Feature/. Theme Manager                                    :@Julia:
+** PLANNED /Feature/. Theme Manager
    - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [ ] Make refreshing for jarman, when theme was selected
 * Backend
-** TODO [#2] /Feature/. IDE split out-environment [0/2]               :@Serhii:
+** TODO [#2] /Feature/. Emacs IDE split out-environment [0/2]         :@Serhii:
    - [ ] Auto tail reverting logs buffer
    - [ ] Integrate local toolkit for emacs.
      - [ ] Open log buffer.
@@ -195,8 +182,8 @@
    - [ ] /Feature/. Pin special key where you can put special lambda gui element
      which be edit this variable.
    
-** DONE [#1] /Feature/. Rewrite plugin system                         :@Serhii:
-   CLOSED: [2021-09-13 pon. 04:36] DEADLINE: <2021-09-09 Thu>
+** PROCESSING [#1] /Feature/. Rewrite plugin system                   :@Serhii:
+   DEADLINE: <2021-09-09 Thu>
    - [X] Add ~:deps~ key into ~package~
      - [X] create package compiling sequence 
    - [X] View plugin
@@ -208,6 +195,7 @@
      - [X] Registration function
      - [X] GUI Theme manager
    - [X] Rename PandaPackage to PandaExtension
+   - [ ] Languages support 
 
 ** TODO [#1] REST!                                                   :@Julia:
    DEADLINE: <2021-09-12 niedz.>
@@ -323,7 +311,7 @@
 ** PLANNED [#3] Rewrite test for SSQL toolkit                :@Julia:@Serhii:
    Current testable API too old. API standard was reimplemented.
    And strongly need to rewrite test cases for oll things query.
-** PLANNED [#3] Versioning data structure             :@Julia:@Aleks:@Serhii:
+** PLANNED [#3] Versioning data structure
 ** PLANNED [#3] sql_tools | debug                                   :@Serhii:
     - [ ] pretty printing for sql syntax
 * Infrastructure

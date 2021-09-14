@@ -144,7 +144,7 @@
    - [ ] - message on save success
    - [ ] - message on save failed
    - [X] - fixed alert box permeation   
-* Backend
+* Backendb
 ** TODO [#1] Одужуй!                                                 :@Julia:
 ** DONE [#1] REST!                                                   :@Julia:
    CLOSED: [2021-09-13 Mon 20:57] DEADLINE: <2021-09-12 niedz.>

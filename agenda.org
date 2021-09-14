@@ -144,17 +144,8 @@
    - [ ] - message on save success
    - [ ] - message on save failed
    - [X] - fixed alert box permeation   
-* Backendb
+* Backend
 ** TODO [#1] Одужуй!                                                 :@Julia:
-** DONE [#1] REST!                                                   :@Julia:
-   CLOSED: [2021-09-13 Mon 20:57] DEADLINE: <2021-09-12 niedz.>
-   deWorkaholization stages: 
-   - [X] Watch interesting film.
-   - [X] Go outside house(send selfy for approvement)
-   - [X] Read something interesting.
-   - [X] Find something interesting.
-   - [X] Also love your Project Manager <3
-
 ** PROCESSING [#1] /Feature/. Rewrite plugin system                   :@Serhii:
    DEADLINE: <2021-09-09 Thu>
    - [X] Add ~:deps~ key into ~package~

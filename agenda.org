@@ -145,6 +145,16 @@
    - [ ] - message on save failed
    - [X] - fixed alert box permeation   
 * Backend
+** TODO [#1] Одужуй!                                                 :@Julia:
+** DONE [#1] REST!                                                   :@Julia:
+   CLOSED: [2021-09-13 Mon 20:57] DEADLINE: <2021-09-12 niedz.>
+   deWorkaholization stages: 
+   - [X] Watch interesting film.
+   - [X] Go outside house(send selfy for approvement)
+   - [X] Read something interesting.
+   - [X] Find something interesting.
+   - [X] Also love your Project Manager <3
+
 ** PROCESSING [#1] /Feature/. Rewrite plugin system                   :@Serhii:
    DEADLINE: <2021-09-09 Thu>
    - [X] Add ~:deps~ key into ~package~
@@ -167,6 +177,8 @@
        (lang :accept)
        (lang :dracula :theme-name)
      #+end_src
+   - [ ] do not load plugin if those being loaded before
+     suppose it be some checkable variable
 
 ** PROCESSING [#1] /Feature/. defvar expanding                        :@Serhii:
    - [ ] Allow defvar declaration for all the places
@@ -178,10 +190,9 @@
    - [ ] /Feature/. Pin special key where you can put special lambda gui element
      which be edit this variable.
    
-** TODO [#1] defvar managment                                :@Aleks:@Serhii:
+** TODO [#1] defvar managment                                       :@Serhii:
    After app loading, we have some values in system variables, divided by group name,
    
-   - [ ] Create GUI which allow controlling and changing variables inside gui. 
    - [ ] Make persistant function, which automatically wrote customized variable
      back to =.jarman=, (also mean parsing file) 
 ** TODO [#1] /Feature/. Faces, show values for all faces              :@Serhii:
@@ -190,15 +201,6 @@
    - [ ] Auto tail reverting logs buffer
    - [ ] Integrate local toolkit for emacs.
      - [ ] Open log buffer.
-** TODO [#1] REST!                                                   :@Julia:
-   DEADLINE: <2021-09-12 niedz.>
-   deWorkaholization stages: 
-   - [ ] Watch interesting film.
-   - [ ] Go outside house(send selfy for approvement)
-   - [ ] Read something interesting.
-   - [ ] Find something interesting.
-   - [ ] Also love your Project Manager <3
-
 ** TODO [#3] /Feature/. Support Org file                              :@Serhii:
    - [-] Create library for printing directly to org file [2/3]
      - [X] Printing lib
@@ -212,7 +214,7 @@
        - [ ] file
        - [ ] print
    - [ ] Add parsing library
-** PLANNED Service Period. sort contract list                        :@Julia:
+** PLANNED Service Period. sort contract list                       :@Serhii:
    - [ ] sorting contract by date
    - [ ] colorize contract by active-nonactive depend on current date
 ** PLANNED Permission systems                                        :@Aleks:

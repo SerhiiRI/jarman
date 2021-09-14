@@ -7,6 +7,7 @@
             [jarman.tools.org :refer :all]
             [jarman.plugin.extension-manager-gui :as extension-manager]
             [jarman.plugin.themes-manager-gui :as themes-manager]
+            [jarman.config.vars-listing-gui   :as vars-listing]
             [jarman.gui.gui-components :as gcomp]
             [jarman.gui.gui-tools      :as gtool]
             [jarman.logic.state        :as state]
@@ -182,7 +183,9 @@
     "Extension manager" {:key "extension-manager"
                          :fn extension-manager/extension-manager-panel}
     "Themes manager" {:key "themes-manager"
-                         :fn themes-manager/theme-manager-panel}
+                      :fn themes-manager/theme-manager-panel}
+    "Var listing" {:key "vars-listing-panel"
+                   :fn vars-listing/vars-listing-panel}
     "DB Visualizer" {:key "db-visualizer"
                      :fn    dbv/create-view--db-view}
     (gtool/get-lang-btns :settings)

@@ -32,6 +32,8 @@
   (deref jarman-plugin-list))
 
 (defvar user-menu {}
+  :name "Buisness menu"
+  :doc "Left side user menu"
   :type clojure.lang.PersistentArrayMap
   :group :plugin-system)
 

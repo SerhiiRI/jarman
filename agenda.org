@@ -169,22 +169,19 @@
      #+end_src
 
 ** PROCESSING [#1] /Feature/. defvar expanding                        :@Serhii:
-   - [ ] Allow defvar declaration for all the places
-   - [ ] Fix defvar spec. 
+   - [X] Allow defvar declaration for all the places
+   - [X] Fix defvar spec. 
    - [ ] Save config in place in =.jarman= file
-   - [ ] GUI for listing all registred config's variable
-   - [ ] Debug for all variables
-   - [ ] Debug for one variables
-   - [ ] /Feature/. Pin special key where you can put special lambda gui element
-     which be edit this variable.
+   - [X] GUI for listing all registred config's variable
+   - [X] Debug for all variables
+   - [X] Debug for one variables
    
 ** TODO [#1] defvar managment                                :@Aleks:@Serhii:
    After app loading, we have some values in system variables, divided by group name,
    
-   - [ ] Create GUI which allow controlling and changing variables inside gui. 
+   - [X] Create GUI which allow controlling and changing variables inside gui. 
    - [ ] Make persistant function, which automatically wrote customized variable
      back to =.jarman=, (also mean parsing file) 
-** TODO [#1] /Feature/. Faces, show values for all faces              :@Serhii:
 ** TODO [#1] /Bug/. Throw exception when .jarman fialed               :@Serhii:
 ** TODO [#2] /Feature/. Emacs IDE split out-environment [0/2]         :@Serhii:
    - [ ] Auto tail reverting logs buffer

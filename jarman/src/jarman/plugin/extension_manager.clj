@@ -87,7 +87,7 @@
 
 (defprotocol IPluginLoader
   (do-load [this]))
-(defrecord PandaExtension [name description extension-path version authors license keywords url dependencies loading-seq]
+(defrecord PandaExtension [name description extension-path version authors license keywords url dependencies loading-seq language]
   IPluginLoader
   (do-load [this]
     (print-header

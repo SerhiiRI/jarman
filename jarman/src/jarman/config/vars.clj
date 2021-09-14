@@ -40,7 +40,22 @@
 ;;; DEFVAR, SETQ ;;;
 ;;;;;;;;;;;;;;;;;;;;
 
-(defmacro defvar [variable-name default-value & {:as params}]
+(defmacro defvar
+  "Description
+    Define system variable.
+  Example
+    ;; Short declaration
+     (defvar some-string-var \"value\")
+    ;; Full declaration
+     (defvar some-string-var \"value\"
+       :name \"Optinal variable name for presentation in view\"
+       :doc \"Some optinal information about var\"
+       :type java.lang.String
+       :group :global)"
+  [variable-name default-value & {:as params}]
+  (assert (not (contains? params :link)) (format "Define variable `%s`. Option `:link` is system" (name variable-name)))
+  (assert (not (contains? params :ns)) (format "Define variable `%s`. Option `:ns` is system" (name variable-name)))
+  (assert (not (contains? params :loaded)) (format "Define variable `%s`. Option `:loaded` is system" (name variable-name)))
   `(do
      (def ~variable-name (jarman-ref ~default-value (keyword (symbol (var ~variable-name)))))
      (swap!

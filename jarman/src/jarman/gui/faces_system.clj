@@ -14,7 +14,7 @@
       (swap! faces-storage conj ~face-variable-ref)
       ~face-variable-ref)))
 
-;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;
 ;;; HELPERS ;;;
 ;;;;;;;;;;;;;;;
 
@@ -24,10 +24,11 @@
    (when (seq (deref faces-storage))
      (doall (map #(print-line (format "- %s" (str (symbol %)))) (seq (deref faces-storage)))))))
 
-;; (defn- output-faces [msg faces-list]
-;;   (when (seq faces-list)
-;;     (println (format "** %s" msg))
-;;     (doall (map #(println (format "  - %s" (str (symbol %)))) (seq faces-list)))))
+(defn faces-list-out-all-with-values []
+  (print-header
+   "All registered faces:"
+   (when (seq (deref faces-storage))
+     (doall (map #(print-line (format "- %s - ~%s~" (str (symbol %)) (str (var-get %)))) (seq (deref faces-storage)))))))
 
 (defn- output-faces [msg faces-list]
   (when (seq faces-list)

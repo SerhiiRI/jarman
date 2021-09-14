@@ -1,0 +1,167 @@
+* Lesson 1
+___________________________________________________
+*Lesson 1:*
+ _Topic:_
+  /TODO list, schedule, styling and code in block/
+
+** Task demo
+*** DONE Start new org file for tutorial
+   CLOSED: [2021-09-14 wto 12:13]
+*** DONE Some body once told me...
+   CLOSED: [2021-09-14 wto 12:38]
+Its an begin text from truck from Shrek movie. Here is YT truck: [[https://youtu.be/engvN0hY8Bo][All Stars "Shrek"]]
+*** DONE Happy Pepe frog is my soul. 
+   CLOSED: [2021-09-14 wto 12:38]
+And here is my [[https://c.tenor.com/rCY3koHdiTwAAAAM/ok-hand-pepe.gif][Pepe]] soul. 
+*** TODO Time task
+   SCHEDULED: <2021-09-15 śro>
+   
+** Keybainding shortcuts
+*** Basic shortcuts
+   C-c a a      Open week agenda
+   C-c C-t      Task DONE
+   M-S-Return   Add new TODO
+   S-Tab        fold/unfold all
+
+*** Claendar navigation
+   C-c .	Prompt for active date
+   C-c !	Prompt for inactive date
+   C-c C-d	Enter a DEADLINE date
+   C-c C-s	Enter a SCHEDULED date
+   Shift-RIGHT	Go forward a day
+   Shift-LEFT	Go backward a day
+   Shift-UP	Go to previous week
+   Shift-DOWN	Go to next week
+   <	Scroll calendar back 1 month
+   >	Scroll calendar forward 1 month
+   .	Go to Today
+
+*** Calendar hacks
+    15          Date of current month
+    Tue         Date of nearest day specified
+    HH:MM	Enter a time
+    +2d ( or w, m, y)	Data + start now
+    ++2d (or w, m, y)	Data + start existing data
+    +3tue	Third Tuesday of the month
+   
+** Add more TODOs to agenda
+#+NAME: Add some code in block
+#+BEGIN_SRC emacs-lisp
+  (setq org-agenda-files 
+	(list "~/org/work.org"
+	      "~/org/school.org" 
+	      "~/org/home.org"))
+#+END_SRC
+
+** Styling
+  Styling is nothing else as special symbols around text:
+  For example I added space between text and special mark becouse then styling won't work.
+   * some text *    it will be *bold*
+   / some text /    it will be /italic/
+   _ some text _    it will be _underline_
+   = some text =    it will be =verbatim=
+   ~ some text ~    it will be ~code~
+   + some text +    it will be +strike through+
+     
+* Lesson 2
+____________________________________________________
+*Lesson 2:*
+  _Topic:_
+   /Tables/
+
+** Creating table
+  | Some header of table 1 | Some header of table 2 |
+  | And now I press TAB    | And Tab again          |
+  
+*** C-c | I invoked fn for creating table, default 5x2
+  |   |   |   |   |   |
+  |---+---+---+---+---|
+  |   |   |   |   |   |
+  
+*** Tab 4x4 manual
+  | X | A | B | C |
+  |---+---+---+---|
+  | 1 |   |   |   |
+  | 2 |   | X |   |
+  | 3 |   |   |   |
+  
+*** X, A, B, C   auto table, select and use C-c |
+  | X | A | B | C |
+
+  
+** Table editing 
+
+*** Moving row/coll
+    If you stay on A, you can move this row or coll using M-arrow
+    | A | B | C |
+    | 1 | 2 | 3 |
+    | a | b | c |
+
+*** Inserting/Removing
+    Stay on B and try press S-M-arrow
+    Up or Left will remove row/coll
+    Down or Right will add row/coll
+    | A |   | B | C |
+    | 1 |   | 2 | 3 |
+    | a |   | b | c |
+
+*** Some hiding if to long?
+    Hide long text. So how can I show it?
+    C-c ` display text and allow for editing in another buffor.
+    For save after edit C-c C-c. There will be writed.
+    | <10>       | <5>   |
+    |------------+-------|
+    | Some body once told me... | Happy pepe is my soul. |
+    
+*** Grouping
+    | X |   | X |
+    |---+---+---|
+    | X | O |   |
+    |---+---+---|
+    | O |   |   |
+    
+*** Calculations
+    | Student  |     Maths | Physics | Mean |
+    |----------+-----------+---------+------|
+    | Bertrand |        13 |      09 |   11 |
+    | Henri    |        15 |      14 | 14.5 |
+    | Arnold   |        18 |      13 | 15.5 |
+    |----------+-----------+---------+------|
+    | Means    | 15.333333 |      12 |      |
+    #+TBLFM: $4=vmean($2..$3)::@5$2=vmean(@2$2..@4$2)::@5$3=vmean(@2$3..@4$3)
+
+*** Interactive
+    | Student  |     Maths | Physics |      Mean |
+    |----------+-----------+---------+-----------|
+    | Bertrand |        13 |      09 |        11 |
+    | Henri    |        15 |      14 |      14.5 |
+    | Arnold   |        18 |      13 |      15.5 |
+    |----------+-----------+---------+-----------|
+    | Means    | 15.333333 |      12 | 27.333333 |
+    #+TBLFM: $4=vmean($2..$3)::@5$2=vmean(@2$2..@4$2)::@5$3=vmean(@2$3..@4$3)::@5$4=(@5$2+ @5$3)
+
+*** Lisp in table
+    Awsome feature, code in formula
+    | FName | LName | EMail               |
+    |-------+-------+---------------------|
+    | Aleks | Es    | Aleks.Es@tteam.com  |
+    | Pepe  | Frog  | Pepe.Frog@tteam.com |
+    #+TBLFM: $3='(concat $1 "." $2 "@tteam.com")
+
+    | A | B | sume |
+    |---+---+------|
+    | 1 | 2 |    3 |
+    #+TBLFM: $3='(+ (string-to-number $1) (string-to-number $2))
+
+    | A | B | A > B? |
+    |---+---+--------|
+    | 1 | 2 | false  |
+    | 3 | 2 | true   |
+    #+TBLFM: $3='(if (> (string-to-number $1) (string-to-number $2)) "true" "false")
+    
+** Shortcuts
+*** Basic shortcuts
+    C-c |   Table creator
+    Tab     Next cell
+    S-Tab   Back cell
+    S-RET   Next row

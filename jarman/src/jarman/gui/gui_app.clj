@@ -9,24 +9,25 @@
            (jarman.jarmanjcomp DateTime)
            (java.awt Color Component)
            (java.awt Dimension))
-  (:require [jarman.gui.faces]
+  (:require [jarman.faces :as face]
             [jarman.tools.lang :refer :all]
             [clojure.string    :as string]
             [seesaw.swingx  :as swingx]
             [seesaw.core       :as c]
             [seesaw.util       :as u]
             [seesaw.border     :as b]
-            ;; resource 
+            ;; resource
+            [jarman.gui.gui-style             :as gs]
             [jarman.resource-lib.icon-library :as icon]
             [clojure.pprint :as pp]
             ;; logic
             [jarman.config.config-manager    :as cm]
-            [jarman.config.dot-jarman        :as dot-jarman]
-            [jarman.config.dot-jarman-param  :as dot-jarman-param]
+            
             [jarman.gui.gui-views-service    :as gvs]
             [jarman.gui.gui-alerts-service   :as gas]
             [jarman.gui.gui-components       :as gcomp]
             [jarman.gui.gui-tools            :as gtool]
+            [jarman.tools.org                :refer :all]
             ;; deverloper tools 
             [jarman.config.init              :as iinit]
             [jarman.logic.state              :as state]
@@ -40,6 +41,7 @@
             ;; [jarman.managment.data           :as managment-data]
             [jarman.plugin.extension-manager :refer [do-load-extensions]]
             [jarman.plugin.plugin            :refer [do-load-theme]]
+            [jarman.config.vars              :refer [setq print-list-not-loaded]]
             [jarman.config.dot-jarman        :refer [dot-jarman-load]]
             [jarman.gui.builtin-themes.jarman-light]))
 
@@ -64,20 +66,23 @@
     (let [tabs-space (mig-panel
                       :constraints ["" "0px[fill]0px" "0px[]0px"]
                       :id :app-tabs-space
-                      :items (gtool/join-mig-items tabs))
+                      :background face/c-tabbar-bg
+                      :items (gtool/join-mig-items tabs)
+                      :border (b/line-border :bottom face/s-tab-underline :color face/c-tab-underline))
           views-space (mig-panel
                        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
-                       :id :app-functional-space
-                       :background (new Color 0 0 0 0)
+                       :id :app-functional-space 
+                       :background face/c-layout-background
                        :items (gtool/join-mig-items array))]
       ;; (println tabs)
-      ;;(state/set-state :jarman-views-service (vs/new-views-service tabs-space views-space))
+      ;;(state/set-state :jarman-views-service (vs/new-views-service tabs-space views-space))p
       (gvs/start views-space tabs-space)
       (mig-panel
        :id :operation-space
        ;; :background "#eee"
        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[28, shrink 0]0px[grow, fill]0px"]
        ;; :border (line-border :left 1 :color "#999")
+       :background face/c-layout-background
        :items [[(gcomp/min-scrollbox tabs-space :args [:vscroll :never])]
                [views-space]]))))
 
@@ -91,8 +96,8 @@
   (fn []
     (let [root (mig-panel
                 :id :expand-menu-space
-                :background "#fff"
-                :border (b/line-border :left 4 :right 4 :color "#fff")
+                :background face/c-main-menu-bg
+                :border (b/line-border :left 4 :right 4 :color face/c-main-menu-vhr)
                 :constraints ["wrap 1" "0px[200::, fill, grow]0px" "0px[fill]0px"])
           render-fn (fn [] (let [comps (gtool/join-mig-items
                                         (rift (state/state [:main-menu])
@@ -113,16 +118,15 @@
       Main space for app inside JLayeredPane. There is menu with expand btns and space for tables with tab btns."
   (fn [& {:keys [margin-left]
           :or {margin-left 0}}]
-    (let [bg-color "#eee"
-          vhr-color "#999"]
-      (mig-panel
-       :id :rebound-layer
-       :constraints [""
-                     "0px[shrink 0, fill]0px[grow, fill]0px"
-                     "0px[grow, fill]0px"]
-       :border (b/line-border :left margin-left :color bg-color)
-       :items [[(jarmanapp--main-tree)]
-               [(jarmanapp--main-view-space [] [])]]))))
+    (mig-panel
+     :id :rebound-layer
+     :constraints [""
+                   "0px[shrink 0, fill]0px[grow, fill]0px"
+                   "0px[grow, fill]0px"]
+     :border (b/line-border :left margin-left :color face/c-layout-background)
+     :background face/c-layout-background
+     :items [[(jarmanapp--main-tree)]
+             [(jarmanapp--main-view-space [] [])]])))
 
 
 ;; ┌────────────────┐
@@ -154,6 +158,16 @@
 ;; │             │
 ;; └─────────────┘
 
+;;; Quick log
+;; (defmacro ^:private log
+;;   ([msg]
+;;    `(println (format "** %s" ~msg)))
+;;   ([action msg]
+;;    `(do
+;;      (println (format "*** %s" ~msg))
+;;      ~action)))
+
+
 ;; before central swing-component build
 (defn- load-level-0
   "Description:
@@ -161,19 +175,52 @@
   []
   ;; (managment-data/on-app-start)
   (cm/swapp)
-  (dot-jarman/dot-jarman-load)
-  (dot-jarman-param/print-list-not-loaded))
+  (dot-jarman-load)
+  (print-list-not-loaded)
+  ;; ----------------------------------
+  ;; Warning! 
+  ;; This theme loaded before
+  ;; all extension's are up and compiled.
+  ;; please do not remove Jarman-Ligth out
+  ;; from integrated into jarman ns's.
+  (if (nil? (state/state :theme-first-load))
+    (do (do-load-theme "Jarman Light")
+        (state/set-state :theme-first-load true)
+        (print-header "First theme loaded")))
+  (print-header
+   "Load selected theme"
+   (try
+    (do-load-theme (state/state :theme-name))
+    (catch Exception e (print-line (str "\n[ ! ] Theme loading can not complete. Some value faild.\n"))))
+   (print-line "apply default global style")
+   (print-line "apply global backgrounds faces for layouts")
+   (gs/update-layouts-background face/c-layout-background)
+   (print-line "apply global backgrounds faces for components")
+   (gs/update-compos-background  face/c-compos-background)
+   (print-line "apply global foreground for all elements")
+   (gs/update-foreground         face/c-foreground)
+   (print-line "apply global caret foreground for all elements")
+   (gs/update-caret              face/c-caret)
+   (print-line "apply global table faces")
+   (gs/update-table :c-select-fg   face/c-table-select-row-fg
+                    :c-select-bg   face/c-table-select-row-bg
+                    :c-focus-cell  face/c-table-select-cell)
+   (print-line "apply global table header faces")
+   (gs/update-table-header :c-fg     face/c-table-header-fg
+                           :c-bg     face/c-table-header-bg
+                           :c-border face/c-table-header-border)))
 ;; after swing component was builded
 (defn load-level-1
   "Description:
     Check last position and remember x y"
   [relative-pos]
-  (try
-    (reset! relative-pos [(.x (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))
-                          (.y (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))])
-    (.dispose (seesaw.core/to-frame (state/state :app)))
-    (catch Exception e nil ;;(println "Last pos is nil")
-           )))
+  (if (= false (state/state :soft-restart))
+      (try
+        (reset! relative-pos [(.x (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))
+                              (.y (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))])
+        (.dispose (seesaw.core/to-frame (state/state :app)))
+        (catch Exception e nil ;;(println "Last pos is nil")
+               ))))
 
 
 (defn load-level-2
@@ -201,8 +248,13 @@
                             :title "Restart"
                             :fn    (fn [e]
                                      (gvs/stop-watching)
+                                     (state/set-state :soft-restart false)
                                      ((state/state :startup)))}
 
+                           {:icon  icon/ban-blue-64-png
+                            :title "Soft Restart"
+                            :fn    (fn [e] (gvs/soft-restar))}
+                           
                            {:icon  icon/key-blue-64-png
                             :title "Change work mode"
                             :fn    (fn [e]
@@ -220,12 +272,15 @@
                             :title "Logout"
                             :fn    (fn [e]
                                      ((state/state :invoke-login-panel))
+                                     (state/set-state :soft-restart nil)
                                      (.dispose (c/to-frame e))
                                      )}
 
                            {:icon  icon/enter-64-png
                             :title "Close app"
-                            :fn    (fn [e] (.dispose (c/to-frame e)))}])
+                            :fn    (fn [e]
+                                     (state/set-state :soft-restart nil)
+                                     (.dispose (c/to-frame e)))}])
              [(gcomp/fake-focus :vgap top-offset :hgap img-scale)]))))
 
 
@@ -240,18 +295,28 @@
 
 (defn load-level-4
   "Description:
-    Load main menu."
-  []
-  (dot-jarman-load)
-  (do-load-extensions)
-  (do-load-theme "Jarman Light")
-  (menu/clean-main-menu)
-  (load-plugins-to-main-menu)
-  (load-static-main-menu))
+    Load main menu." []
+  (print-header 
+   "Load .jarman"
+   (dot-jarman-load)
+   (print-list-not-loaded))
+  (print-header
+   "Load Extensions"
+   (do-load-extensions))
+  (print-header
+   "Clean main menu"
+   (menu/clean-main-menu))
+  (print-header
+   "Load view plugin into main menu"
+   (load-plugins-to-main-menu))
+  (print-header
+   "Load static main menu"
+   (load-static-main-menu)))
+
 
 ;; ┌─────────────┐
 ;; │             │
-;; │ App starter │
+;; │ app starter │
 ;; │             │
 ;; └─────────────┘
 
@@ -279,4 +344,8 @@
                              :else (do (fn [])))))))
 
 ((state/state :startup))
+;; (state/set-state :soft-restart false)
+
+;; (state/set-state :theme-name "Jarman Light")
+;; (state/state :theme-name)x0
 

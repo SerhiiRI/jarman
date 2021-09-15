@@ -2,9 +2,12 @@
   (:require [jarman.tools.lang :refer :all]
             [clojure.string :as string]
             [seesaw.core    :as c]
+            [jarman.faces   :as face]
             [jarman.tools.update-manager-gui :as update-manager]
+            [jarman.tools.org :refer :all]
             [jarman.plugin.extension-manager-gui :as extension-manager]
             [jarman.plugin.themes-manager-gui :as themes-manager]
+            [jarman.config.vars-listing-gui   :as vars-listing]
             [jarman.gui.gui-components :as gcomp]
             [jarman.gui.gui-tools      :as gtool]
             [jarman.logic.state        :as state]
@@ -42,12 +45,15 @@
 ;;    ["#e7e7e7" "#e7e7e7"]
 ;;    ["#dddddd" "#dddddd"]])
 
-(defn- expand-colors []
-  [["#f7f7f7" "#fafafa"]
-   ["#f0f6fa" "#f0f6fa"]
-   ["#ebf7ff" "#ebf7ff"]
-   ["#daeaf5" "#daeaf5"]
-   ["#bfd3e0" "#bfd3e0"]])
+(def expand-colors
+  (fn []
+   (if (empty? face/cvv-button-expand)
+     [["#f7f7f7" "#fafafa"]
+      ["#f0f6fa" "#f0f6fa"]
+      ["#ebf7ff" "#ebf7ff"]
+      ["#daeaf5" "#daeaf5"]
+      ["#bfd3e0" "#bfd3e0"]]
+     face/cvv-button-expand)))
 
 
 (defn- repeat-colors
@@ -65,17 +71,19 @@
 (defn- part-plugin
   [k v lvl]
   (if (session/allow-permission? (.return-permission v))
-    (gcomp/button-expand-child
-     (str k)
-     :left (+ (* (dec lvl) 3) 6)
-     :hover-color (second (nth (get-colors (dec lvl)) (dec lvl)))
-     :onClick (fn [e]
-                (gvs/add-view
-                 :view-id (str "auto-plugin" (.return-title v))
-                 :title k
-                 :render-fn (.return-entry v))))
-    ;; or return nil
-    nil))
+    (do
+      (print-line (format "pin plugin %s to menu"(.return-title v)))
+      (gcomp/button-expand-child
+       (str k)
+       :left-offset (+ (* (dec lvl) 3) 6)
+       :c-focus     (second (nth (get-colors (dec lvl)) (dec lvl)))
+       :onClick (fn [e]
+                  (gvs/add-view
+                   :view-id (str "auto-plugin" (.return-title v))
+                   :title k
+                   :render-fn (.return-entry v)))))
+    (do (print-line (format "permission denied for View plugin '%s'" (.return-title v)))
+        nil)))
 
 (defn- part-expand [bulid-expand-by-map k v lvl]
   (let [depper (filter-nil (bulid-expand-by-map v :lvl (inc lvl)))]
@@ -85,6 +93,7 @@
        (str k)
        depper
        :background (first (nth (get-colors lvl) lvl))
+       :c-left     (first (nth (get-colors lvl) lvl))
        :left-gap   (* lvl 3)))))
 
 (defn- part-button [k v lvl]
@@ -94,8 +103,8 @@
       ((:fn v))
       (gcomp/button-expand-child
        (str k)
-       :left (+ (* (dec lvl) 3) 6)
-       :hover-color (second (nth (get-colors (dec lvl)) (dec lvl)))
+       :left-offset (+ (* (dec lvl) 3) 6)
+       :c-focus (second (nth (get-colors (dec lvl)) (dec lvl)))
        :onClick
        (if-not (nil? (:fn v))
          (if (= :invoke (:action v))
@@ -105,9 +114,9 @@
               :view-id (str "auto-menu-" (:key v))
               :title k
               :render-fn (:fn v))))
-         (fn [e] (println "\nProblem with fn in " k v)))))
+         (fn [e] (print-line (str "\nProblem with fn in " k v))))))
     ;; or return nil
-    (do (println (format "Permission denied for plugin '%s'" k))
+    (do (print-line (format "permission denied for '%s'" k))
       nil)))
 
 ;;((state/state :startup))
@@ -174,13 +183,15 @@
     "Extension manager" {:key "extension-manager"
                          :fn extension-manager/extension-manager-panel}
     "Themes manager" {:key "themes-manager"
-                         :fn themes-manager/theme-manager-panel}
+                      :fn themes-manager/theme-manager-panel}
+    "Var listing" {:key "vars-listing-panel"
+                   :fn vars-listing/vars-listing-panel}
     "DB Visualizer" {:key "db-visualizer"
                      :fn    dbv/create-view--db-view}
     (gtool/get-lang-btns :settings)
    {(gtool/get-lang-btns :settings) {:key    "settings"
                                      :action :list
-                                     :fn     (fn [] (cg/create-expand-btns--confgen get-colors))}}}
+                                     :fn     (fn [] (cg/create-expand-btns--confgen get-colors 1 12))}}}
    "Debug Items"
    {"Popup window" {:key        "popup-window"
                     :action     :invoke

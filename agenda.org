@@ -9,7 +9,7 @@
 #+STARTUP: overview
 
 * Frontend
-** PROCESSING [#2] Frontend refactorization
+** PROCESSING [#1] Frontend refactorization
    DEADLINE: <2021-09-15 Wed>
 *** TODO Icons                                                       :@Julia:
     - [ ] Plus icon. Replace =plus= icon, make add width, and make only one color. And =minus= do little bit higher, also =x= icon
@@ -20,7 +20,7 @@
     - [ ] =Select all=, is like "checkbox" =[V]=
     - [ ] Pay icon. (hrywna) + (dolar)
     - [ ] До лупи додати кінець, одноколірна.
-*** TODO Upgrade UI Elements                                  :@Julia:@Aleks:
+*** TODO Upgrade UI Elements                                         :@Aleks:
     :PROPERTIES:
     :CUSTOM_ID: alert-boxes-replacement
     :END:
@@ -77,114 +77,79 @@
       - [ ] For Service Months use ths format style notation "01-01-2020 - 04-01-2021,  100 zl", money also in pastel green.
     - [ ] Julia call it *insert-space*, is section where we adding new service contract. Rewrite whole panel, but keep logic as we create before.
     - [ ] After you click on one month, you can edit all service contract month payments. You can edit, only if month wasn't payed. Rewrite Julia view, on your implementation. I think better be when all those month fields be in one line.
-** PROCESSING [#2] /Feature/. Jarman Theme Light Style  :@Julia:@Aleks:@Serhii:
+** PROCESSING [#1] /Feature/. Jarman Theme Light Style  :@Julia:@Aleks:@Serhii:
    DEADLINE: <2021-09-16 Thu>
-   - [ ] rewrite styles config
+   - [X] rewrite styles config
    - [ ] unifing styles in UI
-   - [ ] removing unnessesary borders.
    - [X] global font
    - [X] global background
    - [X] global foreground
    - [X] removing unnessesary font override         
-** PROCESSING [#2] Database Visualizer                               :@Aleks:
-   - [X] global font
-   - [X] global background
-   - [X] global foreground
-   - [ ] rewrite styles config, 
-   - [ ] unifing styles in UI
-   - [ ] removing unnessesary borders. 
-   - [X] removing unnessesary font override
-   
-** PROCESSING [#2] /Bug/. Confgen fix                                  :@Aleks:
-   - [X] - If display do not exist then editable
-   - [X] - fix alert window
-   - [ ] - Changes in theme again can not saving to file
-** TODO [#1] /Bug/. Loggin panel not compile                         :@Aleks:
-** TODO [#1] /Bug/. DB Visualizer editing                      :@Aleks:@Serhii:
+** PROCESSING [#1] /Feature/. Interaction files                        :@Aleks:
+   :PROPERTIES:
+   :CUSTOM_ID: interaction-function-set
+   :END:
+   - [ ] =interaction.clj=
+     implement file with simple proxy function where every funciton is just wrapper
+     with spec and good to read docs.
+     - [ ] add function =open file in tab=
+   - [ ] =faces.clj=
+     Finish moving to new customization style
+
+** PROCESSING [#1] /Feature/. Implement Faces                          :@Aleks:
+** TOREVIEW [#1] /Bug/. Loggin panel not compile                       :@Aleks:
+   - [ ] check offline startup
+** TODO [#2] /Bug/. DB Visualizer editing                      :@Aleks:@Serhii:
    1. [ ] Cannot edit table =view=
    2. [ ] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
    3. [ ] Cannot edit metadata of table 
-** TODO [#2] /Feature/. Implement Faces                                :@Aleks:
-** TODO [#2] /Check/. Check theme covering the GUI. Fix style :@Julia:@Aleks:@Serhii:
-     @Morfeu5z and @Julia47 , and I if you want, must create a group meeting
-     on which we try to resolve problems:
-      
-   - [ ] find were style in system not getting from config. 
-   - [ ] create low priority issue with icons which must be redraw
-   - [ ] unification design in some places.      
-      
-** TODO [#2] /Feature/. Load fonts from jarman resources      :@Julia:@Aleks:
-   Inside resources/fonts is an drirectory with JetBrainsMono font.
-   We need to use somehow this fonts.
-
-   - [ ] - Create fontlist inside resources/fonts
-   - [ ] - Select font
-   - [ ] - Using selected font
-   - [ ] - View with avaliable fonts    
-** PLANNED [#3] Make diagram from DB Visualiser                        :@Julia:
-   - [ ] Visualize relation between tables
-   - [ ] Save table location in DB visualiser into configurations
-** PLANNED [#2] Table Controller Forms                                 :@Aleks:
-** PLANNED [#3] Config Generator Upgrade and Fix                       :@Aleks:
-   - [ ] - block expand (there is to many parameters, we need to hide them as subconfig with title)
-   - [ ] - message on save success
-   - [ ] - message on save failed
-   - [X] - fixed alert box permeation   
-** PLANNED [#3] Base components and views                      :@Aleks:@Serhii:
-   - [ ] Popup dialog with auto size
-   - [ ] Popup box with auto size
-   - [X] Select list with atom to state save
-   - [X] Input text with atom to state save
-   - [X] Input text-area with atom to state save
-   - [X] Input password with atom to state save
-   - [X] scrollbox - pre-configurated scrollable with speedup on mouse scroll and border nil
-   - [X] Empty frame as base window for quick testing components
-   - [X] Popup box allways on top with exit button
-   - [X] Popup dialog with block background
-** PLANNED [#3] Clobal event on key pressed                     :@Julia:@Aleks:
+** TODO [#3] /Bug/. Use system font's for linux                       :@Serhii:
+** TODO /Feature/. Update Manager                                      :@Aleks:
+   - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
+   - [ ] Show popup with hard program restart
+   - [ ] Button for reading log file /update-manager-log.org/
+     - [ ] Open file interaction
+** TODO /Feature/. Extension Manager [0/6]                             :@Aleks:
+   - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
+   - [ ] Show extension file-tree. Alow editing file through the jarman [0/2]
+     Related to [[#interaction-function-set]] use interaction to open file in tab
+     - [ ] GUI part of tree file-view for package folder
+     - [ ] Open file interaction 
+   - [ ] Show whole information about package, from file /PandaPackage/ entity, when you click on
+     special expand segment.
+   - [ ] =Enable/Disable= extension
+     - [ ] replace param in =.jarman=.
+   - [ ] Extention searching/install template, because repository we currently doesnt have
+     You will managed plugins as list of PandaPackage records.
+   - [ ] Button for reading log file /extension-manager-log.org/
+     - [ ] Open file interaction
+** TODO /Feature/. Theme Manager                                       :@Aleks:
+   - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
+   - [X] Make refreshing for jarman, when theme was selected
+   - [ ] Button for reading log file /update-manager-log.org/
+     - [ ] Open file interaction
+** PLANNED /Feature/. Global event on key pressed             :@Julia:@Aleks:
    - [X] Proxy for KeyEventDispacher for add global event on key pressed
    - [X] add and remove own KeyEventDispacher
    - [X] tutorial point
    - [ ] try add more KeyEventDispachers
    - [ ] lock repeating event on hold key
-** PLANNED [#2] DB Visualiser, finishing                :@Julia:@Aleks:@Serhii:
-   - [ ] React on profile from session user. @SerhiiRI 
-   - [ ] Add button for ~delete table~ , ~create table~
-   - [ ] Fix changes output , because now look bad
-   - [ ] Change ~textfield~ on type depending component, mean for boolean ~chackbox~ componetnt , etc. 
-   - [ ] If table contain id-field, make button with dialog box. @SerhiiRI generate list of table can be related to current editable table  
-   - [ ] Make ~:component-type~, ~:field~ , ~:field-qualified~ not editable even by admin. 
-   - [ ] Add buttons ~remove column~, ~add column~
-** PLANNED [#3] DB Visualiser: Table adding form                       :@Julia:
-** PLANNED /Feature/. Update Manager                                   :@Julia:
-   - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
-   - [ ] Show popup with hard program restart
-   - [ ] Button for reading log file /update-manager-log.org/
-** PLANNED /Feature/. Extension Manager                        :@Julia:@Serhii:
-   - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
-   - [ ] Show extension file-tree. Alow editing file throw the through the jarman
-   - [ ] Show whole information about package, from file =package=, when you click on
-     special expand segment
-   - [ ] Enable/Disable extension
-   - [ ] Extention searching/install template, because repository we currently doesnt have
-   - [ ] Button for reading log file /extension-manager-log.org/
-** PLANNED /Feature/. Theme Manager                                    :@Julia:
-   - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
-   - [ ] Make refreshing for jarman, when theme was selected
+** PLANNED Make diagram from DB Visualiser
+   - [ ] Visualize relation between tables
+   - [ ] Save table location in DB visualiser into configurations
+** PLANNED Scroll to selected in table                               :@Aleks:
+   - [ ] Scroll to selected in table     
+** Config Generator Upgrade and Fix
+   - [ ] - block expand (there is to many parameters, we need to hide them as subconfig with title)
+   - [ ] - message on save success
+   - [ ] - message on save failed
+   - [X] - fixed alert box permeation   
 * Backend
-** TODO [#1] REST!                                                   :@Julia:
-   DEADLINE: <2021-09-12 niedz.>
-   deWorkaholization stages: 
-   - [ ] Watch interesting film.
-   - [ ] Go outside house(send selfy for approvement)
-   - [ ] Read something interesting.
-   - [ ] Find something interesting.
-   - [ ] Also love your Project Manager <3
-
+** TODO [#1] Одужуй!                                                 :@Julia:
 ** PROCESSING [#1] /Feature/. Rewrite plugin system                   :@Serhii:
    DEADLINE: <2021-09-09 Thu>
-   - [ ] Add ~:deps~ key into ~package~
-     - [ ] create package compiling sequence 
+   - [X] Add ~:deps~ key into ~package~
+     - [X] create package compiling sequence 
    - [X] View plugin
      - [X] Registration function.
        - [X] Remove duplications of loaded plugins
@@ -194,11 +159,54 @@
      - [X] Registration function
      - [X] GUI Theme manager
    - [X] Rename PandaPackage to PandaExtension
+   - [ ] Languages support
+     [[file:jarman/src/jarman/gui/gui_tools.clj::208][lang in system]]
+     #+begin_src clojure
+       ;; src/jarman/gui/gui_tools.clj:208
+       (defvar selected-lang :ua)
+       ;; 
+       (lang :accept)
+       (lang :dracula :theme-name)
+     #+end_src
+   - [ ] do not load plugin if those being loaded before
+     suppose it be some checkable variable
 
-** PLANNED [#2] Service Period. sort contract list    :@Julia:@Serhii:
+** PROCESSING [#1] /Feature/. defvar expanding                        :@Serhii:
+   - [X] Allow defvar declaration for all the places
+   - [X] Fix defvar spec. 
+   - [ ] Save config in place in =.jarman= file
+   - [X] GUI for listing all registred config's variable
+   - [X] Debug for all variables
+   - [X] Debug for one variables
+   
+** TODO [#1] defvar managment                                       :@Serhii:
+   After app loading, we have some values in system variables, divided by group name,
+   
+   - [X] Create GUI which allow controlling and changing variables inside gui. 
+   - [ ] Make persistant function, which automatically wrote customized variable
+     back to =.jarman=, (also mean parsing file) 
+** TODO [#1] /Bug/. Throw exception when .jarman fialed               :@Serhii:
+** TODO [#2] /Feature/. Emacs IDE split out-environment [0/2]         :@Serhii:
+   - [ ] Auto tail reverting logs buffer
+   - [ ] Integrate local toolkit for emacs.
+     - [ ] Open log buffer.
+** TODO [#3] /Feature/. Support Org file                              :@Serhii:
+   - [-] Create library for printing directly to org file [2/3]
+     - [X] Printing lib
+     - [X] printing by level
+     - [ ] Move out to different places in one moment [0/2]
+       #+begin_src clojure
+	 (print-header
+	  {:out [] :text "some text"}
+	  (some operations))
+       #+end_src
+       - [ ] file
+       - [ ] print
+   - [ ] Add parsing library
+** PLANNED Service Period. sort contract list                       :@Serhii:
    - [ ] sorting contract by date
    - [ ] colorize contract by active-nonactive depend on current date
-** PLANNED [#2] Permission systems                                   :@Aleks:
+** PLANNED Permission systems                                        :@Aleks:
 
    #+begin_src clojure
      (session/test-persmission [:user :admin]) ;; => true
@@ -208,15 +216,7 @@
    - [ ] Create permission system 
    - [ ] Make hide some element when user not in component persmission list
    - [ ] add function to get permission from session, or function which TEST something in session, for example
-** PLANNED [#2] Export doc as function                               :@Aleks:
-   - [X] - Popup window
-   - [X] - Create function which invoke dialog box with export options
-   - [ ] - Make spinner and notify if export is done
-   - [ ] - Import custom defview
-** PLANNED [#2] Scroll to selected in table                          :@Aleks:
-   - [ ] - Scroll to selected in table
-** PLANNED [#2] Mapping and demapping toolkit for confgen           :@Serhii:
-** PLANNED [#2] Ekka todo#1 chages                    :@Julia:@Aleks:@Serhii:
+** PLANNED Ekka todo#1 chages                         :@Julia:@Aleks:@Serhii:
 *** Підприємець
     -   ЄДРПОУ - 10 цифр довжина з переду нулями
     -   Форма власності - комбобокс
@@ -260,48 +260,21 @@
        
 *** Акт виконаних робіт
 	-   створити
-** PLANNED [#3] Add history of state                                :@Serhii:
+** PLANNED Add history of state                                :@Serhii:
    - [ ] safe history
    - [ ] restore state
    - [ ] ~redo/undo~ only test
-** PLANNED [#3] encrypt business files                              :@Serhii:
+** PLANNED encrypt business files                              :@Serhii:
    - [ ] create crypo toolkit
    - [ ] create key-storage
-** PLANNED [#3] make URL clojure loader                      :@Julia:@Serhii:
-   - [ ] create crypo toolkit
-   - [ ] create key-storage     
-** PLANNED [#3] Forms as quick table layout for component            :@Aleks:
-   - [ ] Create tutorial how to use forms component
-   - [ ] Create own component where send as args vector with comonents in vector
-     #+begin_example
-     [ [(label)(label)] ;; row 1 
-     [(label)(label)] ] ;; row 2
-     #+end_example
-
-** PLANNED [#3] Rewrite test for SSQL toolkit                :@Julia:@Serhii:
+** PLANNED Rewrite test for SSQL toolkit                :@Julia:@Serhii:
    Current testable API too old. API standard was reimplemented.
    And strongly need to rewrite test cases for oll things query.
-** PLANNED [#3] Versioning data structure             :@Julia:@Aleks:@Serhii:
-** PLANNED [#3] sql_tools | debug                                   :@Serhii:
+** PLANNED Versioning data structure                                :@Serhii:
+** PLANNED sql_tools | debug                                   :@Serhii:
     - [ ] pretty printing for sql syntax
-** PLANNED [#3] defvar managment                             :@Aleks:@Serhii:
-   After app loading, we have some values in system variables, divided by group name,
-   
-   - [ ] Create GUI which allow controlling and changing variables inside gui. 
-   - [ ] Make persistant function, which automatically wrote customized variable
-     back to =.jarman=, (also mean parsing file) 
-** PLANNED [#3] Package Manager upgrade                              :@Julia:
-** PLANNED [#3] /Feature/. Support Org file                           :@Serhii:
-   - [ ] Create library for printing directly to org file
-   - [ ] Create parser library
-** DONE [#1] Update manager                                         :@Serhii:
-   CLOSED: [2021-09-05 Sun 15:43]
-   - [X] updata manager lib and log
-   - [X] update manager GUI 
 * Infrastructure
 * Documentations
-** DONE [#3] Create jarman Vocabluary                               :@Serhii:
-   CLOSED: [2021-09-09 Thu 18:25]
 ** PLANNED [#3] create jarman manifest file                         :@Serhii:
    - Note taken on [2021-09-02 чт 19:01] 
      After making first release of Jarman and finishing plugin system write
@@ -313,4 +286,6 @@
      - strategy and aims   
 
        
+   
+
    

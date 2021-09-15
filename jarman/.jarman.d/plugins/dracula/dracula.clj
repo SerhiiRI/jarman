@@ -1,3 +1,5 @@
+;; -*- mode: clojure; mode: rainbow;  mode: yafolding; -*-
+;; add-file-local-variable-prop-line -> mode -> some mode
 (ns plugin.dracula.dracula)
 (require '[jarman.plugin.plugin :refer [register-custom-theme-plugin]])
 (require '[jarman.gui.faces-system :refer [custom-theme-set-faces]])
@@ -17,6 +19,7 @@
    "green-light"        "#50fa7b"
    "green-strong"       "#5fff87"
    "orange-light"       "#ffb86c"
+   "orange-light-2"     "#ffc58d"
    "orange-strong"      "#ffaf5f"
    "magenta-light"      "#ff79c6"
    "magenta-strong"     "#ff87d7"
@@ -38,13 +41,107 @@
    "fg3-light"          "#ccccc7"
    "fg3-strong"         "#c6c6c6"
    "fg4-light"          "#b6b6b2"
-   "fg4-strong"         "#b2b2b2"})
+   "fg4-strong"         "#b2b2b2"
+
+   "underline-size"        2
+   "underline-tabbar-size" 1
+   "expand-btn-colors" [["#303030" "#505050"]
+                        ["#202f2f" "#303f3f"]]})
 
 (defmacro ^:private with-dracula-colors
   [& body]
   `(do
      ~@(map (fn [[colr hex]] (list 'def (symbol colr) hex)) (seq dracula-color-scheme))
      ~@body))
+
+
+(register-custom-theme-plugin
+  :name "Dracula"
+  :description "Dracula theme"
+  :loader
+  (with-dracula-colors
+    (custom-theme-set-faces
+     '( ;; -- Theme binder --
+       ;; Default styles !!! Do not using in code, do not add new here !!!
+       c-foreground                orange-strong
+       c-caret                     orange-light-2
+
+       c-layout-background         bg2-light
+       c-layout-background-light   bg3-light
+       
+       c-compos-background         bg4-light
+       c-compos-background-light   bg3-strong
+       c-compos-background-dark    bg4-strong
+
+       c-background-detail         c-layout-background
+       
+       c-on-focus                  hightlight-light
+       c-on-focus-light            bg3-light
+       c-on-focus-dark             c-on-focus-light
+       c-on-focus-detail           c-layout-background
+       
+       c-underline                 bg2-light
+       c-underline-detail          c-layout-background
+       c-underline-light           bg3-light
+       c-underline-on-focus        orange-strong
+       c-underline-on-focus-light  orange-strong
+       s-underline                 underline-size
+       
+       cvv-button-expand        expand-btn-colors ;; expand button lvls colors
+       
+       ;;----------------------------------
+       ;;Custom elements  !!! Do not repeat in code! Create new per component !!!
+       
+       ;; main menu
+       c-main-menu-bg        c-layout-background-light
+       c-main-menu-vhr       c-main-menu-bg       
+
+       ;; menu bars
+       c-icon-btn-focus      c-on-focus-dark
+       c-menu-bar-on-focus   c-on-focus
+       
+       ;; basic button
+       c-btn-bg              c-compos-background-dark
+       c-btn-bg-focus        c-on-focus
+       c-btn-foreground      c-foreground
+       c-btn-underline       c-underline
+       c-btn-underline-on-focus c-underline-on-focus
+       s-btn-underline       s-underline
+       
+       ;; slider menu
+       c-slider-bg                 c-layout-background
+       c-slider-fg                 c-foreground
+       c-slider-bg-on-focus        c-compos-background
+       c-slider-underline          c-underline-detail
+       c-slider-underline-on-focus c-underline-on-focus-light
+
+       ;; view service
+       c-tab-active          c-on-focus-light
+       c-tabbar-bg           c-background-detail
+       c-tab-underline       c-underline-light
+       s-tab-underline       underline-tabbar-size
+       
+       ;; table
+       c-table-select-row-fg c-foreground
+       c-table-select-row-bg c-on-focus
+       c-table-select-cell   c-foreground
+
+       ;; table header
+       c-table-header-bg     c-compos-background-light
+       c-table-header-fg     c-foreground
+       c-table-header-border c-compos-background
+
+       ;; inputs
+       c-input-bg            c-compos-background
+       c-input-header        c-foreground
+
+       ;; expand button
+       c-btn-expand-bg       c-compos-background
+       c-btn-expand-fg       c-foreground
+       c-btn-expand-offset   c-compos-background
+
+       ))))
+
 
 ;;;;;;;;;;;;;;;;;;;;
 ;;; REGISTRATION ;;;
@@ -99,13 +196,17 @@
 ;; which also control and test some variable's, also
 ;; make some logs
 
-(register-custom-theme-plugin
- :name "Dracula"
- :description "Dracula theme"
- :loader
- (with-dracula-colors
-   (custom-theme-set-faces
-    '(;; -- FACE BINDINGS --
-      underscore-panel     blue-light
-      button-border-top    yellow-light
-      button-border-bottom underscore-panel))))
+
+;; First example
+(comment
+  (register-custom-theme-plugin
+  :name "Dracula"
+  :description "Dracula theme"
+  :loader
+  (with-dracula-colors
+    (custom-theme-set-faces
+     '( ;; -- FACE BINDINGS --
+       underscore-panel     blue-light
+       button-border-top    yellow-light
+       button-border-bottom underscore-panel))))
+ )

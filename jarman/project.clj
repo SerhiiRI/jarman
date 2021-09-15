@@ -9,10 +9,6 @@
                  [fr.opensagres.xdocreport/fr.opensagres.xdocreport.document.odt "1.0.3"]
                  [fr.opensagres.xdocreport/fr.opensagres.xdocreport.document.ods "1.0.3"]
                  [com.github.vlsi.mxgraph/jgraphx "4.2.2"]
-                 ;; [jgraphx/jgraphx "3.4.1.3"]
-                 ;; [jgraphx/jgraphx "1.8.0.3"]
-                 ;; [jgraphx/jgraphx "4.2.2"]
-                 ;; [org.odftoolkit/odfdom-java "0.8.7"]
                  ;; [org.odftoolkit/odfdom-java "0.9.0-RC1"]
                  ;; [org.odftoolkit/simple-odf "0.9.0-RC1"]
                  [datascript/datascript "1.2.1"]
@@ -21,7 +17,8 @@
                  [org.clojure/java.jdbc "0.7.10"]
                  [me.raynes/fs "1.4.6"]
                  [mysql/mysql-connector-java "5.1.6"]
-                 [instaparse "1.4.10"]]
+                 [instaparse "1.4.10"]
+                 [rewrite-clj "1.0.682-alpha"]]
   ;;:main ^:skip-aot jarman.core
   :main jarman.core
   :aot [jarman.core]
@@ -33,6 +30,9 @@
   :uberjar-name "jarman-standalone.jar"
   :java-source-paths ["src/java"]
   :javac-options     ["-Xlint:unchecked"]
+  :jvm-options ["-Dswing.aatext=true"
+                "-Dawt.useSystemAAFontSettings=on"
+                "-Dsun.java2d.xrender=true"]
   :profiles {:user
              {:plugins [[lein-launch4j "0.1.2"]]
               :launch4j-install-dir "../installer"

@@ -9,7 +9,7 @@
    [me.raynes.fs :as gfs]
    ;; local functionality
    [jarman.tools.config-manager :as cm]
-   [jarman.config.dot-jarman-param :refer [defvar]]
+   [jarman.config.vars :refer [defvar]]
    [jarman.tools.lang :refer [in?]]
    [jarman.tools.fs :as fs]
    ;; environtemnt variables
@@ -72,9 +72,9 @@
    (io/file           "." ".jarman")])
 
 (def ^:private dot-jarman-data-paths-list
-  "list of all `.jarman.data.clj` file paths in system"
-  [(io/file env/user-home ".jarman.data.clj")
-   (io/file           "." ".jarman.data.clj")])
+  "list of all `.jarman.data` file paths in system"
+  [(io/file env/user-home ".jarman.data")
+   (io/file           "." ".jarman.data")])
 
 (def ^:private jarman-executable "Jarman.exe")
 
@@ -85,6 +85,7 @@
 ;; Struktura danych opisująca jeden package
 (defrecord PandaPackage [file name version artifacts uri])
 (defvar jarman-update-repository-list ["ftp://jarman:dupa@trashpanda-team.ddns.net"]
+  :doc "List of update reposiotries"
   :type clojure.lang.PersistentList
   :group :update-system)
 
@@ -395,7 +396,7 @@
 ;; |   +-- b.txt
 ;; |   \-- c.txt
 ;; +-- .jarman
-;; +-- .jarman.data.clj
+;; +-- .jarman.data
 ;; +-- Jarman.exe
 ;; \-- plugins
 ;;     +-- a
@@ -487,7 +488,7 @@
         transact-jarman-plugins-dir   (transact-file "plugins")
         transact-jarman-configs-dir   (transact-file "config")
         transact-jarman-dot-file      (transact-file ".jarman")
-        transact-jarman-dot-data-file (transact-file ".jarman.data.clj")
+        transact-jarman-dot-data-file (transact-file ".jarman.data")
         transact-jarman-executable    (transact-file "Jarman.exe")
 
         ;; destination directories
@@ -558,13 +559,13 @@
         transact-jarman-plugins-dir   (transact-file "plugins")
         transact-jarman-configs-dir   (transact-file "config")
         transact-jarman-dot-file      (transact-file ".jarman")
-        transact-jarman-dot-data-file (transact-file ".jarman.data.clj")
+        transact-jarman-dot-data-file (transact-file ".jarman.data")
         transact-jarman-executable    (transact-file "Jarman.exe")
         ;; original source files
         plugins-dir (clojure.java.io/file "./.jarman.d/plugins")
         configs-dir (clojure.java.io/file "./.jarman.d/config")
         jarman-dot  (clojure.java.io/file ".jarman")
-        jarman-data (clojure.java.io/file "src/jarman/managment/.jarman.data.clj")
+        jarman-data (clojure.java.io/file "src/jarman/managment/.jarman.data")
         jarman-executable (clojure.java.io/file "Jarman.exe")]
 
     (println (format "* Bulding PandaPackage (%s)" (quick-timestamp)))

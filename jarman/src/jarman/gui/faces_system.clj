@@ -1,4 +1,5 @@
 (ns jarman.gui.faces-system)
+(require '[jarman.tools.org :refer :all])
 
 ;;;;;;;;;;;;
 ;;; CORE ;;;
@@ -13,22 +14,31 @@
       (swap! faces-storage conj ~face-variable-ref)
       ~face-variable-ref)))
 
-;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;
 ;;; HELPERS ;;;
 ;;;;;;;;;;;;;;;
 
 (defn faces-list-out-all []
-  (println "All registered faces:")
-  (when (seq (deref faces-storage))
-    (doall (map #(println (format " %s" (str (symbol %)))) (seq (deref faces-storage))))))
+  (print-header
+   "All registered faces:"
+   (when (seq (deref faces-storage))
+     (doall (map #(print-line (format "- %s" (str (symbol %)))) (seq (deref faces-storage)))))))
+
+(defn faces-list-out-all-with-values []
+  (print-header
+   "All registered faces:"
+   (when (seq (deref faces-storage))
+     (doall (map #(print-line (format "- %s - ~%s~" (str (symbol %)) (str (var-get %)))) (seq (deref faces-storage)))))))
 
 (defn- output-faces [msg faces-list]
   (when (seq faces-list)
-    (println (format "** %s" msg))
-    (doall (map #(println (format "  - %s" (str (symbol %)))) (seq faces-list)))))
+    (print-header
+     msg
+     (doall (map #(print-line (format "- %s" (str (symbol %)))) (seq faces-list))))))
 
-(defn- prepare-bind-variable-set [variable-list]
-  (let [faces-ns 'jarman.gui.faces]
+(defn prepare-bind-variable-set [variable-list]
+  ;; Hard NAMESPACE to faces
+  (let [faces-ns 'jarman.faces]
    (reduce
     (fn [{:keys [faces-variable-used faces-face-value-var-list]}
         [face-variable face-value]]

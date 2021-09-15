@@ -1,4 +1,7 @@
-(ns jarman.gui.builtin-themes.jarman-light)
+;; -*- mode: clojure; mode: rainbow;  mode: yafolding; -*-
+;; add-file-local-variable-prop-line -> mode -> some mode
+
+(ns jarman.gui.builtin-themes.jarman-ligth)
 (require 'jarman.plugin.plugin)
 (require 'jarman.gui.faces-system)
 
@@ -34,7 +37,29 @@
    "pumpkin"          "#d35400"
 
    "alizarin"         "#e74c3c"
-   "pomegranate"      "#c0392b"})
+   "pomegranate"      "#c0392b"
+
+   "gray"              "#cccccc"
+   "gray-dark"         "#bbbbbb"
+   "gray-dark-2"       "#aaaaaa"
+   "gray-dark-light"   "#dddddd"
+   "gray-light"        "#eeeeee"
+   "gray-light-2"      "#efefef"
+   "gray-light-3"      "#f7f7f7"
+   "gray-super-light"  "#fefefe"
+   "white"             "#ffffff"
+   "jarman-blue"       "#96c1ea"
+   "jarman-blue-dark"  "#29295e"
+   "jarman-blue-light" "#d9ecff"
+   "jarman-super-dark" "#020020"
+
+   "underline-size"          2
+   "underline-tabbar-size"   1
+   "expand-btn-colors" [["#f7f7f7" "#fafafa"]
+                        ["#f0f6fa" "#f0f6fa"]
+                        ["#ebf7ff" "#ebf7ff"]
+                        ["#daeaf5" "#daeaf5"]
+                        ["#bfd3e0" "#bfd3e0"]]})
 
 ;;;;;;;;;;;;;;
 ;;; HELPER ;;;
@@ -51,17 +76,103 @@
 ;;;;;;;;;;;;;;;;;;;;
 
 (jarman.plugin.plugin/register-custom-theme-plugin
- :name "Jarman Light"
- :description "Built-in jarman default light theme"
- :loader
- (with-jarman-ligth-vars
-   (jarman.gui.faces-system/custom-theme-set-faces
-    '( ;; -- Theme binder -- 
-      underscore-panel     clouds
-      button-border-top    underscore-panel
-      button-border-bottom underscore-panel
-      ;;button-border-left   silver
-      ))))
+  :name "Jarman Light"
+  :description "Built-in jarman default light theme"
+  :loader
+  (with-jarman-ligth-vars
+    (jarman.gui.faces-system/custom-theme-set-faces
+     '( ;; -- Theme binder --
+       ;; Default styles  !!! Do not using in code, do not add new here !!!
+       c-foreground               jarman-super-dark
+       c-caret                    jarman-blue-dark
 
+       c-layout-background        gray-light-2
+       c-layout-background-light  gray-light-3
+       
+       c-compos-background        white
+       c-compos-background-dark   gray
+       c-compos-background-light  gray-super-light
+       
+       c-background-detail        c-layout-background
+       
+       c-on-focus                 jarman-blue-light
+       c-on-focus-light           gray-super-light
+       c-on-focus-dark            gray-dark-light
+       c-on-focus-detail          c-layout-background
+        
+       c-underline                gray
+       c-underline-detail         c-layout-background
+       c-underline-light          gray-light-3
+       c-underline-on-focus       jarman-blue
+       c-underline-on-focus-light jarman-blue-light
+       s-underline                underline-size
+       
+       cvv-button-expand        expand-btn-colors ;; expand button lvls colors
+       
+       ;;----------------------------------
+       ;;Custom elements  !!! Do not repeat in code! Create new per component !!!
+       
+       ;; main menu
+       c-main-menu-bg        c-layout-background-light
+       c-main-menu-vhr       c-main-menu-bg       
 
+       ;; menu bars
+       c-icon-btn-focus      c-on-focus-dark
+       c-menu-bar-on-focus   c-on-focus
+       
+       ;; button
+       c-btn-bg              c-compos-background-light
+       c-btn-bg-focus        c-on-focus
+       c-btn-foreground      c-foreground
+       c-btn-underline       c-underline
+       c-btn-underline-on-focus c-underline-on-focus
+       s-btn-underline       s-underline
+       
+       ;; slider menu
+       c-slider-bg                 c-layout-background
+       c-slider-fg                 c-foreground
+       c-slider-bg-on-focus        c-compos-background
+       c-slider-underline          c-underline-detail
+       c-slider-underline-on-focus c-underline-on-focus-light
 
+       ;; view service
+       c-tab-active          c-on-focus-light
+       c-tabbar-bg           c-background-detail
+       c-tab-underline       c-underline-light
+       s-tab-underline       underline-tabbar-size
+      
+       ;; table
+       c-table-select-row-fg c-foreground
+       c-table-select-row-bg c-on-focus
+       c-table-select-cell   c-foreground
+
+       ;; table header
+       c-table-header-bg     c-compos-background-dark
+       c-table-header-fg     c-foreground
+       c-table-header-border c-compos-background
+
+       ;; inputs
+       c-input-bg            c-compos-background
+       c-input-header        c-foreground
+ 
+       ;; expand button
+       c-btn-expand-bg       c-compos-background
+       c-btn-expand-fg       c-foreground
+       c-btn-expand-offset   c-compos-background
+       
+       ))))
+
+ ;; First example
+  (comment
+    (jarman.plugin.plugin/register-custom-theme-plugin
+     :name "Jarman Light"
+     :description "Built-in jarman default light theme"
+     :loader
+     (with-jarman-light-vars
+       (jarman.gui.faces-system/custom-theme-set-faces
+        '( ;; -- Theme binder -- 
+          underscore-panel     clouds
+          button-border-top    underscore-panel
+          button-border-bottom underscore-panel
+          ;;button-border-left   silver
+          )))))

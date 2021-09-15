@@ -19,6 +19,8 @@
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-tools :as gtool]
    [jarman.plugin.plugin :as plugin]
+   [jarman.gui.gui-style :as gs]
+   [jarman.gui.gui-views-service :as gvs]
    ;; [jarman.tools.lang :refer [in?]]
    ;; [jarman.tools.fs :as fs]
    ;; [jarman.plugin.extension-manager :as extension-manager]
@@ -81,7 +83,7 @@
 
 (defn info [s]
   {:pre [(string? s)]}
-  (seesaw.core/label :halign :left :background "#fff" :foreground "#074a4f" :text s :font (gtool/getFont 16 :bold) :border (b/empty-border :thickness 15)))
+  (seesaw.core/label :halign :left :foreground "#074a4f" :text s :font (gs/getFont :bold) :border (b/empty-border :thickness 15)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -105,12 +107,14 @@
                [(theme-content theme)
                 (gcomp/button-basic "Apply theme"
                                     :onClick (fn [_] (try-catch-alert
-                                                     (plugin/do-load-theme
-                                                      (:theme-name theme))
-                                                     ((state/state :alert-manager)               
-                                                      :set {:header "Theme manager"
-                                                            :body   (format "Theme `%s` successfully applyed"
-                                                                            (:theme-name theme))} 7))))])))
+                                                      (plugin/do-load-theme
+                                                       (:theme-name theme))
+                                                      (state/set-state :theme-name (:theme-name theme))
+                                                      (gvs/soft-restar)
+                                                      ((state/state :alert-manager)               
+                                                       :set {:header "Theme manager"
+                                                             :body   (format "Theme `%s` successfully applyed"
+                                                                             (:theme-name theme))} 7))))])))
     (conj items
           (info "Empty theme list")
           (info "-- empty --"))))
@@ -118,7 +122,6 @@
 (defn theme-manager-panel []
   (seesaw.mig/mig-panel
    :constraints ["wrap 1" "0px[grow, fill]0px" "0px[]0px"]
-   :background "#fff"
    :items
    (gtool/join-mig-items
     (-> (startup-components)

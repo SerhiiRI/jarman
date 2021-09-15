@@ -38,4 +38,4 @@
     - =C:\\P.. F..\\Jarman\\= - is main folder where =Jarman.exe=, and related binary or another application must be located. 
     - =${USERHOME}\.jarman.d= - directory must contain all needed plugin, configurations, backups and any file dumps.
     - =${USERHOME}\.jarman= - central configuration file, which help to set some behavior pattern for jarman
-    - =${USERHOME}\.jarman.data.clj= - in this file we define all configuraiton to database that up whole jarman buisness logic infrastructure. 
+    - =${USERHOME}\.jarman.data= - in this file we define all configuraiton to database that up whole jarman buisness logic infrastructure. 

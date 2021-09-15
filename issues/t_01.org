@@ -1,4 +1,4 @@
-* Cannot compile .jarman.data.clj
+* Cannot compile .jarman.data
 
   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut at leo eros. Ut hendrerit imperdiet mollis. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Curabitur consequat magna risus, sed vestibulum mauris porttitor in. Mauris quis aliquet eros. Pellentesque euismod augue at porttitor mollis. Duis vulputate sem vitae efficitur condimentum. Curabitur auctor porttitor rutrum. Phasellus tempus odio vel quam pharetra, vestibulum viverra nibh pellentesque. Suspendisse luctus est ac facilisis egestas. Integer sit amet ultricies leo. Maecenas ante leo, finibus in sollicitudin at, varius sed sapien. Vestibulum sit amet ornare diam.
 
@@ -10,7 +10,7 @@
 
   Sed sodales eros quis nibh elementum pretium quis vel urna. Sed lacinia mi porttitor odio porta, id consectetur justo tincidunt. Nunc eu efficitur nisl, sit amet efficitur felis. Suspendisse potenti. Nulla nec elit a odio iaculis pellentesque. Ut varius sed turpis sed aliquet. Praesent suscipit lacus a condimentum ultrices. Praesent elementum eros eget risus lacinia elementum vel eu odio.
 
-* Cannot compile .jarman.data.clj
+* Cannot compile .jarman.data
 
   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut at leo eros. Ut hendrerit imperdiet mollis. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Curabitur consequat magna risus, sed vestibulum mauris porttitor in. Mauris quis aliquet eros. Pellentesque euismod augue at porttitor mollis. Duis vulputate sem vitae efficitur condimentum. Curabitur auctor porttitor rutrum. Phasellus tempus odio vel quam pharetra, vestibulum viverra nibh pellentesque. Suspendisse luctus est ac facilisis egestas. Integer sit amet ultricies leo. Maecenas ante leo, finibus in sollicitudin at, varius sed sapien. Vestibulum sit amet ornare diam.
 

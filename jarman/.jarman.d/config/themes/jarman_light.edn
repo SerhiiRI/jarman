@@ -1,3 +1,4 @@
+;;; -*- yafolding-mode
 {:name "Jarman Light",
  :autor "Trashpanda-Team",
  :display :edit,

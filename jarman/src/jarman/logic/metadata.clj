@@ -168,7 +168,6 @@
             "varchar"     [column-type-input] ;; i - mean simple text input
             nil)))))
 
-;; `TODO` edd field to doc
 (defn- get-table-meta
   "Description:
     Get meta information about table by hame, and construct meta information to GUI
@@ -406,8 +405,9 @@
   Example
   (id-tables)
   => {:seal 13 :user 2 ...}"
-  [metadata] (apply hash-map (flatten (map (fn [table-map] [(keyword (:table_name table-map))
-                                                    (:id table-map)]) metadata))))
+  [metadata]
+  (apply hash-map (flatten (map (fn [table-map] [(keyword (:table_name table-map))
+                                                (:id table-map)]) metadata))))
 
 (defn- serializer-cols
   "Description
@@ -419,17 +419,17 @@
                                                   ((first (vals (first v))) (id-tables metadata)) (if (nil? v) [] v))))
                                        {} column))) columns)))
 
-(defn generate-data [metadata](vec (map (fn [table-map]
-                                          (let [columns ((comp :columns :prop) table-map)
-                                                id (:id table-map)
-                                                f-columns (serializer-cols columns metadata)]
-                                            (println (:column/table_name (first f-columns)))
-                                    (conj
-                                     {:db/id       (* -1 id)
-                                      :id          (:id table-map)
-                                      :table_name  (:table_name table-map)
-                                      :table       ((comp :table :prop) table-map)
-                                      :columns     f-columns}))) metadata)))
+(defn generate-data [metadata]
+  (vec (map (fn [table-map]
+              (let [columns ((comp :columns :prop) table-map)
+                    id (:id table-map)
+                    f-columns (serializer-cols columns metadata)]                                            
+                (conj
+                 {:db/id       (* -1 id)
+                  :id          (:id table-map)
+                  :table_name  (:table_name table-map)
+                  :table       ((comp :table :prop) table-map)
+                  :columns     f-columns}))) metadata)))
 
 (def schema
   "Description

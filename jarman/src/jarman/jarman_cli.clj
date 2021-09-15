@@ -26,9 +26,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 (def data-cli-options
   [["-i" "--info" "Println all statistics about file, version of metadata, tables, etc"]
-   [nil "--install-schemas" "Create all server infrastructure from `.jarman.data.clj`"]
-   [nil "--delete-schemes" "Delete schemas `.jarman.data.clj` by declarted metadata"]
-   [nil "--update-metadata" "Push meta from file to database `.jarman.data.clj`"]
+   [nil "--install-schemas" "Create all server infrastructure from `.jarman.data`"]
+   [nil "--delete-schemes" "Delete schemas `.jarman.data` by declarted metadata"]
+   [nil "--update-metadata" "Push meta from file to database `.jarman.data`"]
    ["-h" "--help"]])
 (defn data-cli [& args]
   (let [cli-opt (parse-opts args data-cli-options)

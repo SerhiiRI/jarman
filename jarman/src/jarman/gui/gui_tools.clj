@@ -1,29 +1,26 @@
-;; 
-;; Compilation: dev_tool.clj -> metadata.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
-;; 
 (ns jarman.gui.gui-tools
   (:use seesaw.core
         seesaw.border
         seesaw.dev
         seesaw.mig)
   (:require
+   [jarman.faces :as face]
    [seesaw.core                      :as c]
    [jarman.tools.swing               :as stool]
    [clojure.string                   :as string]
    [jarman.logic.state               :as state]
-   [jarman.gui.gui-style             :as gs]
    [jarman.config.config-manager     :as cm]
    [jarman.resource-lib.icon-library :as icon]
+   [jarman.gui.gui-style             :as gs]
    [jarman.tools.lang                :refer :all]
    ))
-
-(gs/load-style)
 
 (import javax.swing.JLayeredPane)
 (import java.awt.Color)
 (import java.awt.MouseInfo)
 (import java.awt.event.MouseListener)
 
+(gs/load-style)
 
 (def jarman-focus-now (atom nil))
 
@@ -301,35 +298,34 @@
                  top-offset]
           :or {onClick (fn [e])
                top-offset 0}}]
-    (let [bg-color "#eee"
-          color-hover-margin "#bbb"
-          bg-color-hover "#d9ecff"
-          bg-color-hover "#fafafa"
+    (let [bg-color          face/c-slider-bg
+          c-foreground      face/c-slider-fg
+          bg-color-hover    face/c-slider-bg-on-focus
+          c-underline       face/c-slider-underline
+          c-underline-focus face/c-slider-underline-on-focus
           y (if (> (* size order) 0) (+ top-offset (- (+ (* 2 order) (* size order)) (* 2 (* 1 order)))) (+ top-offset (* size order)))
           icon (label :halign :center
                       :icon ico
                       :size [size :by size])
-          title (label ;; :halign :center
-                 :text txt)
+          title (label :text txt
+                       :foreground c-foreground)
           mig (mig-panel
                :constraints ["" (str "0px[" size "]15px[grow, fill]0px") (str "0px[" size "]0px")]
                :bounds [0 y size size]
                :background bg-color
                :focusable? true
-               :border  (line-border :bottom 2 :color "#eee")
+               :border  (line-border :bottom 2 :color c-underline)
                :items (join-mig-items icon))]
       (let [onEnter (fn [e] (config! e
                                      :cursor :hand
-                                                            ;; :border  (line-border :bottom 3 :color "#999")
                                      :background bg-color-hover
-                                                            ;; :bounds [0 y (+ (.getWidth (config title :preferred-size)) size 100) size]
+                                     :border     (line-border :bottom 2 :color c-underline-focus)
                                      :bounds [0 y (+ (.getWidth (select (.getParent mig) [:#expand-menu-space])) size) size])
-                                             ;; (println (config title :preferred-size))
                       (.add mig title)
                       (.revalidate mig))
             onExit (fn [e] (config! e
                                     :bounds [0 y size size]
-                                                            ;; :border  (line-border :bottom 2 :color "#eee")
+                                    :border     (line-border :bottom 2 :color c-underline)
                                     :background bg-color)
                      (.remove mig 1)
                      (.revalidate mig))]

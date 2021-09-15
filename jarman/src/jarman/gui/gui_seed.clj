@@ -34,11 +34,9 @@
      (config! (select (state/state :app) [:#rebound-layer]) :bounds [0 0 (first new-state) (second new-state)])
      (.repaint (to-frame (state/state :app))))))
 
-
 (def base
   "Description:
-       Create panel for absolute position elements.
-   "
+       Create panel for absolute position elements.  "
   (fn [items]
     (let [JLP (new JLayeredPane)
           layer (atom 10)]
@@ -48,7 +46,6 @@
                            (swap! layer inc)
                            (.add JLP itm (new Integer idx))))
         JLP))))
-
 
 
 (def build

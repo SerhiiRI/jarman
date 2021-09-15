@@ -1352,16 +1352,13 @@
                               :columns [(field :field :file_name :constructor-var :file-name :component-type [:text])
                                         (field :field :file :constructor-var :file  :component-type [:blob])])
              (field-composite :field :ftp_file :component-type [:comp-ftp] :constructor #'jarman.logic.composite-components/map->FtpFile
-                              :columns [(field :field :ftp_login :constructor-var :login :component-type [:text])
-                                        (field :field :ftp_password :constructor-var :password :component-type [:text])
-                                        (field :field :ftp_file_name :constructor-var :file-name :component-type [:text])
+                              :columns [(field :field :ftp_file_name :constructor-var :file-name :component-type [:text])
                                         (field :field :ftp_file_path :constructor-var :file-path :component-type [:text])])])}
           ;;(first (getset! :seal))
           ))
 
   (def ftp-composite-field (nth (return-columns-composite-wrapp s) 2))
 
-  (.group ftp-composite-field {:seal.ftp_login "some" :seal.ftp_password "one"})
   (.group ftp-composite-field {:seal.ftp_file_name "one"})
 
   (.find-field-by-comp-var s :file-name :seal.loc_file)

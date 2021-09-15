@@ -136,6 +136,7 @@
   (if (some? (:id document-map))
     (-download-to-storaget-document-jdbc document-map)))
 
+
 ;; (storage/document-templates-spit "some file with space.txt" "suka")
 ;; (storage/document-templates-list)
 ;; (storage/document-templates-clean)
@@ -301,12 +302,12 @@
                          (if (and (some? maybe-stream) (instance? java.io.FileInputStream maybe-stream))
                            (.close maybe-stream))) col-list))))))
 
-(defn- select-blob!
+(defn select-blob!
   "Description
     Allow getting :blob documents directly from db
   
-  Example
-    (select-blob! {:table_name :documents
+    Example
+    (select-blob! {:table_nae :documents
                    :column-list [[:id :null] [:table_name :string] [:name :string] [:document :blob] [:prop :string]]
                    :doc-column [[:document {:document-name :table_name :document-place \"/home/serhii\"}]]
                    :where [:= :id 18]})
@@ -343,7 +344,7 @@
         (fn [& args]
           (dosync (alter temporary-result #(conj % (apply array-map (mapcat (comp vector) (:column sql-select-query-map) args))))))]
     (try (while (.next res-set)
-           (doall(for [[document
+           (doall (for [[document
                         {:keys [document-name  document-place]
                          :or   {document-place env/user-home}}]
                        (:doc-column query-map)
@@ -415,13 +416,19 @@
                  :values {:id 1,
                           :table_name "some-table"
                           :name "Export month operations"
-                          :document "./tmp.txt"
+                          :document "/home/julia/test.txt"
                           :prop (pr-str {})}})
   ;; query
   (select-blob! {:table_name :documents
-               :column-list [[:id :null] [:table_name :string] [:name :string] [:document :blob] [:prop :string]]
-               :doc-column [[:document {:document-name :table_name :document-place "/home/serhii"}]]
-                 :where [:= :id 18]}))
+                 :column-list [[:id :null] [:table_name :string] [:name :string] [:document :blob] [:prop :string]]
+                 :doc-column [[:document {:document-name :table_name :document-place "/home/julia/a"}]]
+                 :where [:= :id 1]})
+
+  (select-blob! {:table_name :seal
+                 :column-list [[:file_name :string]
+                               [:file :blob]]
+                 :doc-column [[:file {:document-name :file_name :document-place "/home/julia/a"}]]
+                 :where [:= :id 79]}))
 
 
 (defn convert-to-jdbc-types [component-type]

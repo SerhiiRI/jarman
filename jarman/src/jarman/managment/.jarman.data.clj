@@ -154,9 +154,7 @@
                        :columns [(field :field :file_name :constructor-var :file-name :component-type [:text])
                                  (field :field :file :constructor-var :file  :component-type [:blob])])
       (field-composite :field :ftp_file :component-type [:comp-ftp] :constructor #'jarman.logic.composite-components/map->FtpFile
-                       :columns [(field :field :ftp_login :constructor-var :login :component-type [:text])
-                                 (field :field :ftp_password :constructor-var :password :component-type [:text])
-                                 (field :field :ftp_file_name :constructor-var :file-name :component-type [:text])
+                       :columns [(field :field :ftp_file_name :constructor-var :file-name :component-type [:text])
                                  (field :field :ftp_file_path :constructor-var :file-path :component-type [:text])])])}
    ;; ----------------------------------------------------
    {:table_name "repair_reasons",
@@ -217,6 +215,7 @@
                            :key-table :service_contract
                            :foreign-keys [{:id_service_contract :service_contract}
                                           {:delete :cascade, :update :cascade}])])}])
+
 
 ;;;;;;;;;;;;;;
 ;;; Events ;;;

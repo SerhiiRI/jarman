@@ -24,7 +24,8 @@
    ;; [jarman.tools.fs :as fs]
    [jarman.plugin.extension-manager :as extension-manager]
    ;; environtemnt variables
-   [jarman.config.environment :as env])
+   [jarman.config.environment :as env]
+   [jarman.interaction        :as i])
   (:import (java.io IOException FileNotFoundException)))
 
 
@@ -38,15 +39,11 @@
      ;;          {:current-temperature {:value 25 :unit :celsius}})
      (do ~@body)
      (catch clojure.lang.ExceptionInfo e#
-       ((state/state :alert-manager)               
-        :set {:header "Plagin Manager"
-              :body   (.getMessage e#)}  7)
+       (i/warning "Plagin Manager" (.getMessage e#) :time 7)
        ;; (c/alert (str "Update Manager effrror: " (.getMessage e#) " Type:" (name (:type (ex-data e#)))))
        )
      (catch Exception e#
-       ((state/state :alert-manager)               
-        :set {:header "Plagin Manager"
-              :body   (.getMessage e#)}  7)
+       (i/warning "Plagin Manager" (.getMessage e#) :time 7)
        ;; (c/alert (str "Update Manager Main error: " (.getMessage e#)))
        )))
 
@@ -103,11 +100,10 @@
                [(extension-content ext)
                 (gcomp/button-basic "Reload"
                                     :onClick (fn [_] (try-catch-alert
-                                                     (extension-manager/do-load-extensions ext)
-                                                     ((state/state :alert-manager)               
-                                                      :set {:header "Extension manager"
-                                                            :body   (format "Extension `%s` successfully reloaded"
-                                                                            (:name ext))} 7))))])))
+                                                      (extension-manager/do-load-extensions ext)
+                                                      (i/info "Extension manager"
+                                                              (format "Extension `%s` successfully reloaded"
+                                                                            (:name ext)) :time 7))))])))
     (conj items
           (info "Installed extentions:")
           (info "-- empty --"))))

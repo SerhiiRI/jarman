@@ -20,7 +20,8 @@
    [jarman.gui.gui-components :as gcomp]
    [jarman.logic.sql-tool :refer [select! update! insert! delete!]]
    [jarman.logic.metadata :as mt]
-   [jarman.logic.state :as state]))
+   [jarman.logic.state :as state]
+   [jarman.interaction :as i]))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Variables ;;;
@@ -386,7 +387,7 @@
   []
   #break (let [data (*view-loader-chain-fn*)]
            (if (empty? data)
-             ((state/state :alert-manager) :set {:header "Error" :body "Problem with tables. Data not found in DB"} 5)
+             (i/warning "Error" "Problem with tables. Data not found in DB")
              (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
                (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))
            (return-structure-tree (deref user-menu))))

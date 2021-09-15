@@ -26,7 +26,8 @@
    ;; [jarman.tools.fs :as fs]
    ;; [jarman.plugin.extension-manager :as extension-manager]
    ;; environtemnt variables
-   [jarman.config.environment :as env])
+   [jarman.config.environment :as env]
+   [jarman.interaction :as i])
   (:import (java.io IOException FileNotFoundException)))
 
 
@@ -41,15 +42,11 @@
      ;;          {:current-temperature {:value 25 :unit :celsius}})
      (do ~@body)
      (catch clojure.lang.ExceptionInfo e#
-       ((state/state :alert-manager)               
-        :set {:header "Plagin Manager"
-              :body   (.getMessage e#)}  7)
+       (i/warning "Plagin Manager" (.getMessage e#) :time 7)
        ;; (c/alert (str "Update Manager effrror: " (.getMessage e#) " Type:" (name (:type (ex-data e#)))))
        )
      (catch Exception e#
-       ((state/state :alert-manager)               
-        :set {:header "Plagin Manager"
-              :body   (.getMessage e#)}  7)
+       (i/warning "Plagin Manager" (.getMessage e#) :time 7)
        ;; (c/alert (str "Update Manager Main error: " (.getMessage e#)))
        )))
 
@@ -173,9 +170,9 @@
      (gtool/join-mig-items
       [(gcomp/menu-bar
         {:justify-end true
-         :buttons [[" List by \"Variable Group\" " icon/download-grey1-64-png
+         :buttons [[" List by \"Variable Group\" " nil
                     (fn [e] (c/config! panel :items (gtool/join-mig-items (view-grouped-by-group))))]
-                   [" List by \"Loaded variables\" " icon/download-grey1-64-png
+                   [" List by \"Loaded variables\" " nil
                     (fn [e] (c/config! panel :items (gtool/join-mig-items (view-grouped-by-loaded))))]]})
        panel]))))
 

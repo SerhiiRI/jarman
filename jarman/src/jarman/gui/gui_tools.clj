@@ -82,14 +82,19 @@
 (defn htmling
   "Description
      Build word wrap html
+   Example:
+     (htmling \"Some text\" :center)
    "
   [body & args] 
-  (string/join ["<html><body style='width: 100%; overflow-wrap: break-word;'>" 
-                (cond
-                  (in? args :justify) (format "<p align= \"justify\">%s</p>" body)
-                  (in? args :center)  (format "<p align= \"center\">%s</p>" body)
-                  :else  body)
-                "</body><html>"]))
+  (let [wrap-template-on  "width: 100%; overflow-wrap: break-word; "
+        wrap-template-off "overflow: hidden; white-space: nowrap; text-overflow: ellipsis; "
+        wrapping (if (in? args :no-wrap) wrap-template-off wrap-template-on)]
+    (string/join [(str "<html><body style='" wrapping  "'>") 
+                  (cond
+                    (in? args :justify) (format "<p align= \"justify\">%s</p>" body)
+                    (in? args :center)  (format "<p align= \"center\">%s</p>" body)
+                    :else  body)
+                  "</body><html>"])))
 
 ;; (macroexpand-1 `(textarea "ala am kota" :border (line-border :thickness 1 :color "#a23")))
 

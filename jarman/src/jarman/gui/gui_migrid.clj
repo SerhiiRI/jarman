@@ -44,8 +44,7 @@
                               bgap (if (string? bgap) "" "px"))]
            :items items
            :background face/c-layout-background
-          :border (b/line-border :thickness (first debug) :color (second debug))
-          args)))
+           args)))
 
 
 

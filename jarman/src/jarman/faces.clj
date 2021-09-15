@@ -16,8 +16,13 @@
 (define-face c-compos-background)
 (define-face c-compos-background-light)
 (define-face c-compos-background-dark)
+(define-face c-compos-background-darker)
 
 (define-face c-background-detail)
+
+(define-face c-border)
+(define-face c-border-warning)
+(define-face c-border-danger)
 
 (define-face c-on-focus)
 (define-face c-on-focus-dark)
@@ -85,6 +90,19 @@
 (define-face c-btn-expand-bg)
 (define-face c-btn-expand-fg)
 (define-face c-btn-expand-offset)
+
+;; Alert popup
+(define-face c-alert-bg)
+(define-face c-alert-fg)
+(define-face c-alert-alert-border)
+(define-face c-alert-warning-border)
+(define-face c-alert-danger-border)
+(define-face c-alert-timelife)
+
+;; Popup box
+(define-face c-popup-body-background)
+(define-face c-popup-head-background)
+(define-face c-popup-border)
 
 ;; [underscore-panel
 ;;  button-border-bottom

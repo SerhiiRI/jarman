@@ -24,7 +24,8 @@
    [jarman.tools.fs :as fs]
    [jarman.tools.update-manager :as update-manager]
    ;; environtemnt variables
-   [jarman.config.environment :as env])
+   [jarman.config.environment :as env]
+   [jarman.interaction :as i])
   (:import (java.io IOException FileNotFoundException)))
 
 
@@ -38,15 +39,11 @@
      ;;          {:current-temperature {:value 25 :unit :celsius}})
      (do ~@body)
      (catch clojure.lang.ExceptionInfo e#
-       ((state/state :alert-manager)               
-        :set {:header "Update Manager Error"
-              :body   (.getMessage e#)}  7)
+       (i/warning "Update Manager Error" (.getMessage e#) :time 7)
        ;; (c/alert (str "Update Manager effrror: " (.getMessage e#) " Type:" (name (:type (ex-data e#)))))
        )
      (catch Exception e#
-       ((state/state :alert-manager)               
-        :set {:header "Update Manager Error"
-              :body   (.getMessage e#)}  7)
+       (i/warning "Update Manager Error" (.getMessage e#) :time 7)
        ;; (c/alert (str "Update Manager Main error: " (.getMessage e#)))
        )))
 
@@ -100,9 +97,7 @@
           (gcomp/button-basic "Clean Environment"
                               :onClick (fn [_] (try-catch-alert
                                                (update-manager/procedure-clean-env)
-                                               ((state/state :alert-manager)
-                                                :set {:header "Update Manager"
-                                                      :body   "Local Jarman configuraion was deleted"} 7))))])))
+                                               (i/info "Update Manager" "Local Jarman configuraion was deleted" :time 7))))])))
 
 
 (defn supply-content-to-install  [items package]
@@ -115,17 +110,13 @@
             (gcomp/button-basic "Install"
                                 :onClick (fn [_] (try-catch-alert
                                                  (update-manager/procedure-update package)
-                                                 ((state/state :alert-manager)
-                                                  :set {:header "Update Manager"
-                                                        :body   (format "Jarman %s installed successfully"
-                                                                        (:version package))} 7))))
+                                                 (i/info "Update Manager" (format "Jarman %s installed successfully"
+                                                                                     (:version package)) :time 7))))
             (gcomp/button-basic "Download"
                                 :onClick (fn [_] (try-catch-alert
                                                  (update-manager/download-package package)
-                                                 ((state/state :alert-manager)               
-                                                  :set {:header "Update Manager"
-                                                        :body   (format "Package %s was downloaded"
-                                                                        (:file package))}  7))))]))
+                                                 (i/info "Update Manager" (format "Package %s was downloaded"
+                                                                                  (:file package)) :time 7))))]))
     items))
 
 (defn supply-content-all-package [items package-list]
@@ -138,19 +129,17 @@
                [(package-content pkg)
                 (gcomp/button-basic (if (= (:version pkg) update-manager/*program-vers*) "Reinstall" "Downgrade")
                                     :onClick (fn [_] (try-catch-alert
-                                                     (update-manager/procedure-update pkg)
-                                                     ((state/state :alert-manager)
-                                                      :set {:header "Update Manager"
-                                                            :body   (format "Downgrade from %s to %s version was successfully"
-                                                                            update-manager/*program-vers*
-                                                                            (:version pkg))} 7))))
+                                                      (update-manager/procedure-update pkg)
+                                                      (i/info "Update Manager"
+                                                              (format "Downgrade from %s to %s version was successfully"
+                                                                      update-manager/*program-vers*
+                                                                      (:version pkg)) :time 7))))
                 (gcomp/button-basic "Download"
                                     :onClick (fn [_] (try-catch-alert
                                                      (update-manager/download-package pkg)
-                                                     ((state/state :alert-manager)               
-                                                      :set {:header "Update Manager"
-                                                            :body   (format "Package %s was downloaded"
-                                                                            (:file pkg))}  7))))])))
+                                                     (i/info "Update Manager"
+                                                              (format "Package %s was downloaded"
+                                                                      (:file pkg)) :time 7))))])))
     (conj items
           (info "Available packages:")
           (info "-- empty --"))))

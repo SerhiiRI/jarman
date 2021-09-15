@@ -43,7 +43,8 @@
             [jarman.plugin.plugin            :refer [do-load-theme]]
             [jarman.config.vars              :refer [setq print-list-not-loaded]]
             [jarman.config.dot-jarman        :refer [dot-jarman-load]]
-            [jarman.gui.builtin-themes.jarman-light]))
+            [jarman.gui.builtin-themes.jarman-light]
+            [jarman.interaction              :as i]))
 
  
 ;; ┌──────────────────────────┐
@@ -236,7 +237,7 @@
              (menu/menu-slider img-scale top-offset
                           [{:icon  icon/I-64-png
                             :title "Message Store"
-                            :fn    (fn [e] ((state/state :alert-manager) :show))}
+                            :fn    (fn [e] (i/show-alerts-history))}
                            
                            {:icon  icon/refresh-blue1-64-png
                             :title "Reload active view"
@@ -261,7 +262,7 @@
                                      (cond (= "user"      (session/get-user-permission)) (session/set-user-permission "admin")
                                            (= "admin"     (session/get-user-permission)) (session/set-user-permission "developer")
                                            (= "developer" (session/get-user-permission)) (session/set-user-permission "user"))
-                                     ((state/state :alert-manager) :set {:header "Work mode" :body (str "Switched to: " (session/get-user-permission))}  5)
+                                     (i/warning "Work mode" (str "Switched to: " (session/get-user-permission)))
                                      (gseed/extend-frame-title (str ", " (session/get-user-login) "@" (session/get-user-permission))))}
                            
                            ;; {:icon  icon/download-blue-64-png
@@ -344,8 +345,11 @@
                              :else (do (fn [])))))))
 
 ((state/state :startup))
-;; (state/set-state :soft-restart false)
 
-;; (state/set-state :theme-name "Jarman Light")
-;; (state/state :theme-name)x0
+(comment
+  (state/set-state :soft-restart false)q
+  (state/set-state :theme-name "Jarman Light")
+  (state/state :theme-name)
+  (i/info "Info" "Test")
+  )
 

@@ -18,7 +18,8 @@
             [jarman.gui.gui-config-generator :as cg]
             [jarman.gui.popup                :as popup]
             [jarman.tools.swing              :as stool]
-            [jarman.gui.gui-editors          :as gedit]))
+            [jarman.gui.gui-editors          :as gedit]
+            [jarman.interaction :as i]))
 
 
 ;; (defn- expand-colors []
@@ -201,10 +202,9 @@
     "Alert"        {:key        "test-aletr"
                     :action     :invoke
                     :permission [:developer]
-                    :fn         (fn [e] ((state/state :alert-manager)
-                                         :set {:header "Czym jest Lorem Ipsum?"
-                                               :body "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."}
-                                         5))}
+                    :fn         (fn [e]
+                                  (i/info "Czym jest Lorem Ipsum?"
+                                          "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}
     
     "Select table"   {:key        "select-table"
                       :action     :invoke

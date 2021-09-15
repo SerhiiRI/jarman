@@ -20,11 +20,11 @@
     - [ ] =Select all=, is like "checkbox" =[V]=
     - [ ] Pay icon. (hrywna) + (dolar)
     - [ ] До лупи додати кінець, одноколірна.
-*** TODO Upgrade UI Elements                                         :@Aleks:
+*** TOREVIEW Upgrade UI Elements                                     :@Aleks:
     :PROPERTIES:
     :CUSTOM_ID: alert-boxes-replacement
     :END:
-    - [ ] to ~(state/state :alert-manager)~
+    - [x] to ~(state/state :alert-manager)~
       #+begin_src clojure
 	((state/state :alert-manager)
 	 :set {:status :warning
@@ -96,7 +96,7 @@
    - [ ] =faces.clj=
      Finish moving to new customization style
 
-** PROCESSING [#1] /Feature/. Implement Faces                          :@Aleks:
+** TOREVIEW [#1] /Feature/. Implement Faces                            :@Aleks:
 ** TOREVIEW [#1] /Bug/. Loggin panel not compile                       :@Aleks:
    - [ ] check offline startup
 ** TODO [#2] /Bug/. DB Visualizer editing                      :@Aleks:@Serhii:

@@ -1557,7 +1557,7 @@
                  ;; :font (gtool/getFont font-size)
                  :text txt
                  :tip tip
-                 :icon (stool/image-scale ico icon-size)
+                 :icon (if ico (stool/image-scale ico icon-size) nil) 
                  :background bg
                  :foreground fg
                  :focusable? true
@@ -1629,8 +1629,7 @@
                                                        (.getParent (seesaw.core/to-widget e)))
                                                       :items [[(multi-panel panels cmpts-atom table-name title num)]])
                                            (c/config! (.getParent (.getParent (seesaw.core/to-widget e)))
-                                                      :items [[(multi-panel panels cmpts-atom table-name title (+ num 1))]]))
-                                         ((state/state :alert-manager) :set {:header "Error" :body "All fields must be entered and must be longer than 3 chars"} 5)))]]})
+                                                      :items [[(multi-panel panels cmpts-atom table-name title (+ num 1))]]))))]]})
         btn-back (first (.getComponents btn-panel))
         btn-next (second (.getComponents btn-panel))]
    ;; (c/config! btn-panel :bounds [0 0 0 0])

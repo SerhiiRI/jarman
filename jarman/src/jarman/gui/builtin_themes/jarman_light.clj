@@ -55,6 +55,7 @@
 
    "underline-size"          2
    "underline-tabbar-size"   1
+   "timelife-alert-popup"    3
    "expand-btn-colors" [["#f7f7f7" "#fafafa"]
                         ["#f0f6fa" "#f0f6fa"]
                         ["#ebf7ff" "#ebf7ff"]
@@ -90,10 +91,15 @@
        c-layout-background-light  gray-light-3
        
        c-compos-background        white
-       c-compos-background-dark   gray
        c-compos-background-light  gray-super-light
+       c-compos-background-dark   gray
+       c-compos-background-darker gray-dark-light
        
        c-background-detail        c-layout-background
+
+       c-border                   jarman-blue-light
+       c-border-warning           sun-flower
+       c-border-danger            alizarin
        
        c-on-focus                 jarman-blue-light
        c-on-focus-light           gray-super-light
@@ -159,7 +165,19 @@
        c-btn-expand-bg       c-compos-background
        c-btn-expand-fg       c-foreground
        c-btn-expand-offset   c-compos-background
-       
+
+       ;; alert
+       c-alert-bg             c-compos-background-light
+       c-alert-fg             c-foreground
+       c-alert-alert-border   c-border
+       c-alert-warning-border c-border-warning
+       c-alert-danger-border  c-border-danger
+       c-alert-timelife       timelife-alert-popup
+
+       ;; Popup box
+       c-popup-body-background c-compos-background
+       c-popup-head-background c-compos-background-darker
+       c-popup-border          c-border
        ))))
 
  ;; First example

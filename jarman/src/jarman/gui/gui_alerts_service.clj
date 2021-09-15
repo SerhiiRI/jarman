@@ -2,352 +2,348 @@
   (:import (java.awt Color))
   (:use seesaw.dev
         seesaw.mig)
-  (:require [seesaw.core                      :as c]
+  (:require [jarman.faces                     :as face]
+            [seesaw.core                      :as c]
             [seesaw.border                    :as b]
-            [jarman.faces                     :as face]
             [jarman.tools.swing               :as stool]
             [jarman.gui.gui-style             :as gs]
             [jarman.gui.gui-tools             :as gtool]
             [jarman.gui.gui-components        :as gcomp]
+            [jarman.gui.popup                 :as popup]
             [jarman.logic.state               :as state]
             [clojure.string                   :as string]
             [jarman.resource-lib.icon-library :as icon]
+            [jarman.gui.gui-migrid            :as gmg]
             [jarman.tools.lang                :refer :all]))
 
+;; ┌─────────────────┐
+;; │                 │
+;; │ State mechanism │
+;; │                 │
+;; └─────────────────┘
 
-;; Defrecord for elements in alerts-storage
-;; [{:id 0 :data {:header "Some header" :body "Message" :btns [(btn1) (btn2)]} :component (c/label :text \"Hello world! \") :timelife 3}]
-(defrecord Alert [id data component timelife visible])
+(def state  (atom {}))
+(def state! (fn [& prop]
+              (cond (= :atom (first prop)) state
+                    :else (deref state))))
 
-
-(defn build-ico
+(defn- action-handler
   "Description:
-      Icon for message box. Create component with icon.
-   Example:
-      (build-ico icon/alert-64-png)
-   Needed:
-      Import jarman.dev-tools
-      Function need stool/image-scale function for scalling icon"
-  [ic] (c/label :icon (stool/image-scale ic 28)
-                :background (new Color 0 0 0 0)
-                :border (b/empty-border :left 3 :right 3)))
+    Invoke fn using dispatch!.
+  Example:
+    (@state {:action :test})"
+  [state action-m]
+  (case (:action action-m)
+    :add-missing      (assoc-in state (:path action-m) nil)
+    :test             (do (println "\nTest:n") state)
+    :new-alerts-box   (assoc-in state [:alerts-box]     (:box   action-m))
+    :store-new-alerts (assoc-in state [:alerts-storage (keyword (str "index-" (:alert-index state)))] (:alert action-m))
+    :clear-history    (assoc-in state [:alerts-storage] {})
+    :inc-index        (assoc-in state [:alert-index] (inc (:alert-index (state!))))
+    :clear-index      (assoc-in state [:alert-index] 0)))
 
-(defn build-header
+
+(defn- create-disptcher [atom-var]
+  (fn [action-m]
+    (swap! atom-var (fn [state] (action-handler state action-m)))))
+
+(def dispatch! (create-disptcher state))
+
+(defn- create-state-template
   "Description:
-      Header text for message box. Create component with header text.
-   Example:
-      (build-header 'Information')
-   "
-  [txt] (c/label :text txt
+    "
+  [] (reset! state {:alerts-storage {}
+                    :alerts-box     nil
+                    :box-w          300
+                    :watching-path  :atom-app-size
+                    :alert-index    0}))
+
+
+;; ┌──────────────────────────┐
+;; │                          │
+;; │ Alerts service mechanism │
+;; │                          │
+;; └──────────────────────────┘
+(defn- refresh-box []
+  (.revalidate (:alerts-box (state!)))
+  (.repaint (state/state :app)))
+
+(defn- refresh-box-bounds []
+  (let [offset-x 10
+        offset-y 0
+        watch-path (:watching-path (state!))]
+    (c/config! (:alerts-box (state!))
+               :bounds [(- (first @(state/state watch-path)) (:box-w (state!)) offset-x)
+                        (+ 0 offset-y)
+                        (:box-w (state!))
+                        (second @(state/state watch-path))]))
+  (c/move! (:alerts-box (state!)) :to-front)
+  (refresh-box))
+
+(defn- watch-frame-size []
+  (let [watch-path (:watching-path (state!))]
+    (add-watch (state/state watch-path) :refresh-alerts-box-bounds
+     (fn [key atom old-state new-state]
+       (refresh-box-bounds)))))
+
+(defn- alerts-box-top-bar
+  "Top bar create empty space.
+   For this trick, alerts can be displaing on bottom."
+  []
+  ;; (c/label :text "Message Service" :background face/c-compos-background-dark)
+  (c/label))
+
+(defn- new-alerts-box []
+  (let [mig (mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "5px[grow, bottom]0px[fill]5px"]
+                       :opaque? false
+                       :bounds [50 0 (:box-w (state!)) 300]
+                       :background (Color. 0 0 0 0)
+                       :items [[(alerts-box-top-bar)]])]
+    mig))
+
+(defn- rm-alerts-box
+  "Description:
+    Remove alerts box from JLayeredPane"
+  [] (try
+       (if-not (nil? (:alerts-box (state!)))
+         (.remove (state/state :app) (:alerts-box (state!))))
+       (catch Exception e (str "Do not found alerts box"))))
+
+
+(defn- clear-alerts-box []
+  (c/config!   (:alerts-box (state!)) :items [[(alerts-box-top-bar)]])
+  (refresh-box))
+
+
+
+(defn- include-alert-box
+  [& {:keys [soft]
+      :or {soft false}}]
+  ;; Remove old alerts box
+  (if-not soft
+    (try
+      (if-not (empty? (:alerts-box (state!))) (rm-alerts-box))
+      (catch Exception e (str "Do not found alerts box"))))
+
+  ;; New alerts box
+  (if-not soft
+    (dispatch! {:action :new-alerts-box
+                :box    (new-alerts-box)}))
+  (.add (state/state :app) (:alerts-box (state!)) (Integer. 999))
+  (refresh-box))
+
+
+
+;; ┌──────────────────────┐
+;; │                      │
+;; │ Start new alerts box │
+;; │                      │
+;; └──────────────────────┘
+
+(defn start
+  "Description:
+     Clear state atom and set new state template.
+  Example:
+     "
+  [& {:keys [soft]
+      :or {soft false}}]
+  (if-not soft (create-state-template))
+  (include-alert-box)
+  (remove-watch (state/get-atom) (:watching-path (state!)))
+  (refresh-box-bounds)
+  (watch-frame-size))
+
+
+;; ┌──────────────────┐
+;; │                  │
+;; │ Alerts templates │
+;; │                  │
+;; └──────────────────┘
+
+(defn add-to-alerts-box [item]
+  (.add (:alerts-box (state!)) item)
+  (refresh-box))
+
+(defn- icon-label
+  [ic-off ic-on size]
+  (c/label :icon (stool/image-scale ic-off size)
+           :border (b/empty-border :rigth 8 :left 8 :top 3 :bottom 3)
+           :listen [:mouse-entered (fn [e]
+                                     (gtool/hand-hover-on e)
+                                     (c/config! e :icon (stool/image-scale ic-on  size)))
+                    :mouse-exited  (fn [e]
+                                     (c/config! e :icon (stool/image-scale ic-off size)))]))
+
+(defn- alert-skeleton
+  [header body [c-border c-bg icon1 s-icon-1]]
+  (let [padding  5
+        s-border 2
+        s-icon-2 22
+        offset   (+ (* padding 2) (* s-border 2) (+ s-icon-2 5))]
+    (let [close-icon (icon-label icon/x-grey-64-png icon/x-blue1-64-png s-icon-2)]
+      (gmg/migrid
+       :v (format "[::%s, fill]" (- (:box-w (state!)) offset)) "[20, fill]0px[fill]"
+       {:args [:border (b/compound-border
+                        (b/empty-border :thickness padding)
+                        (b/line-border  :thickness s-border :color c-border))
+               :background c-bg
+               :user-data close-icon]}
+       [(c/label :text header
                  :font (gs/getFont :bold)
-                 :background (new Color 0 0 0 0)))
+                 :icon (stool/image-scale icon1 s-icon-1)
+                 :size [(- (:box-w (state!)) offset) :by 20])
 
-(defn build-body
+        (gmg/migrid :> :f {:args [:background c-bg]}
+                    [(c/label :size   [(- (:box-w (state!)) offset) :by 30]
+                              :text   body)
+                     close-icon])]))))
+
+(defn- alert-type-src
+  [type key]
+  (get-in {:alert   {:border face/c-alert-alert-border   :bg face/c-alert-bg :icon icon/I-64-png          :s-icon 28}          
+           :warning {:border face/c-alert-warning-border :bg face/c-alert-bg :icon icon/csv-64-png        :s-icon 28}        
+           :danger  {:border face/c-alert-danger-border  :bg face/c-alert-bg :icon icon/alert-red-512-png :s-icon 3}}
+          [type key]))
+
+(defn- alert-type [type]
+  [(alert-type-src type :border) (alert-type-src type :bg) (alert-type-src type :icon) (alert-type-src type :s-icon)])
+
+
+(defn- open-in-popup
+  [type header body s-popup expand]
+  (let [pop (popup/build-popup {:size s-popup
+                                :comp-fn   (fn [] (gmg/migrid
+                                                   :v :center :fg {:gap [10]}
+                                                   (concat [(gtool/htmling body)
+                                                            (if (fn? expand) (expand) [])])))
+                                :title     header
+                                :args [:border (b/line-border :thickness 2 :color (alert-type-src type :border))]})]
+    (c/move! pop :to-front)
+    pop))
+
+(defn- template [type header body timelife s-popup expand actions]
+  (let [mig (cond
+              (= type :alert)   (alert-skeleton header body (alert-type type))
+              (= type :warning) (alert-skeleton header body (alert-type type))  ;; TODO: New warning icon
+              (= type :danger)  (alert-skeleton header body (alert-type type)))] ;; TODO: New danger icon
+    (let [close-icon (c/config mig :user-data)
+          close-fn   (fn [e] (.remove (:alerts-box (state!)) mig) (refresh-box))]
+      (c/config! close-icon :listen [:mouse-clicked close-fn])
+      (.start (Thread. (fn [] (if (> timelife 0) (do (Thread/sleep (* 1000 timelife)) (close-fn 0)))))))
+    (c/config! mig
+               :listen [:mouse-clicked
+                        (fn [e]
+                          (open-in-popup type header body s-popup expand)
+                          (refresh-box))])
+    mig))
+
+(defn alert
   "Description:
-      Body text for message box. Create component with message.
-   Example:
-      (build-body 'My message')
-   "
-  [txt] (c/label :text txt 
-                 :background (new Color 0 0 0 0)
-                 :border (b/empty-border :left 5 :right 5 :bottom 2)))
+    Invoke alert popup.
+    Types keys:
+      :alert
+      :warning
+      :danger
+  Example:
+    Basic example:  (alert \"Information\" \"Some message\" :type :alert :time 3)
+    Same but short: (alert \"Information\" \"Some message\")
+    Without timer   (alert \"Information\" \"Some message\" :type :danger :time 0)
 
-
-(defn build-bottom-ico-btn
-  "Description:
-      Icon btn for message box. Create component with icon btn on bottom.
-   Layered should be atom.
-   Example:
-      (build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png 23 (fn [e] (alert 'Wiadomosc')))
-   Needed:
-      Import jarman.dev-tools
-      Function need stool/image-scale function for scalling icon
-      Function need hand-hover-on function for hand mouse effect
-   "
-  [ic ic-h layered-pane & args] (c/label :icon (stool/image-scale ic (if (> (count args) 0) (first args) 28))
-                                    :background (new Color 0 0 0 0)
-                                    :border (b/empty-border :left 3 :right 3)
-                                    :listen [:mouse-entered (fn [e] (do
-                                                                      (c/config! e :icon (stool/image-scale ic-h (if (> (count args) 0) (first args) 28)) :cursor :hand)
-                                                                      (.repaint layered-pane)))
-                                             :mouse-exited (fn [e] (do
-                                                                     (c/config! e :icon (stool/image-scale ic (if (> (count args) 0) (first args) 28)))
-                                                                     (.repaint layered-pane)))
-                                             :mouse-clicked (if (> (count args) 1) (second args) (fn [e]))]))
-
-
-
-
-(def message
-  "Description:
-      Template for messages. Using in Jlayered-pane.
-      X icon remove and rebound displayed message.
-      Loop icon display whole message.
-   Example:
-      (message alerts-controller) and next fn will be send to message-server-creator and then will looks like that (fn [{:header 'Hello' :body 'World!'}] (magic))
-   Needed:
-      Import jarman.gui-tools
-      Function need build-ico for message icon
-      Function need build-header for message header
-      Function need build-body for message body
-      Function need build-bottom-ico-btn for functional icon buttons on bottom
-      Function need view-selected-message for show whole message
-   "
-  (fn [data]
-   ;;  (println "Invoked alert")
-    (let [font-c "#000"
-          bg-c "#fff"
-          header (rift (:header data) "Information")
-         ;;  header (if (= (contains? data :header) true) (:header data) "Information")
-          body   (rift (:body data) "Template of information...")
-         ;;  body   (if (= (contains? data :body) true) (:body data) "Template of information...")
-          layered-pane ((state/state :alert-manager) :get-space)
-          close [(build-bottom-ico-btn icon/loupe-grey-64-png icon/loupe-blue1-64-png layered-pane 23
-                                       (fn [e] (gcomp/popup-info-window header body layered-pane)))
-                 (build-bottom-ico-btn icon/x-grey-64-png icon/x-blue1-64-png layered-pane 23
-                                       (fn [e] (let [to-del (.getParent (.getParent (seesaw.core/to-widget e)))] ((state/state :alert-manager) :rm-obj to-del))))]
-          [t b l r] (try
-                      (map #(Integer/parseInt %) (rift (gtool/get-comp :message-box :border-size)))
-                      (catch Exception e [1 1 1 1]))]
-
-      (mig-panel
-       :id :alert-box
-       :constraints ["wrap 1" "0px[fill, grow]0px" "0px[20]0px[30]0px[20]0px"]
-       :background face/c-compos-background
-       :border (b/line-border :top t :bottom b :left l :right r :color (rift (gtool/get-comp :message-box :border-color) "#fff"))
-       :bounds [680 480 300 75]
-       :items [[(c/flow-panel
-                 :align :left
-                 :background (new Color 0 0 0 0)
-                 :items [(build-ico icon/alert-64-png)
-                         (build-header (gtool/str-cutter header))])]
-               [(build-body (gtool/str-cutter body))]
-               [(c/flow-panel
-                 :align :right
-                 :background (new Color 0 0 0 1)
-                 :items (if (= (contains? data :btns) true) (concat close (get data :btns)) close))]]
-       :listen [:mouse-entered (fn [e])]))))
+    If you want to add some special content set to key :expand some fn:
+      (alert \"Information\" \"Some message\" :expand (fn [] (make-some-component)))
+  
+    If you want to add some quick action buttons set to key :actions
+    vector with map description buttons like [{:title \"Apply\" :icon nil :func (fn [e] (do-some))} ...]
+      (alert \"Information\" \"Some message\" :actions [{:title \"Apply\" :icon nil :func (fn [e] (do-some))}])"
+  [header body
+   & {:keys [type time s-popup expand actions]
+      :or   {type :alert
+             time 3
+             s-popup [300 320]
+             actions []
+             expand  nil}}]
+  (dispatch! {:action :inc-index})
+  (dispatch! {:action :store-new-alerts
+              :alert  {:header  header
+                       :body    body
+                       :s-popup s-popup
+                       :expand  expand
+                       :type    type}})
+  (add-to-alerts-box (template type header body time s-popup expand actions)))
 
 
 
-(def alerts-rebounds-f
-  "Description:
-      Rebound message components and resize them.
-   Needed:
-      Function need get-elements-in-layered-by-id function for get all same element (here message boxs)
-      Function need getHeight function for quick getting height size
-   "
-  (fn [e] (let [list-of-alerts (gtool/get-elements-in-layered-by-id e "alert-box")
-                bound-x (if list-of-alerts (- (.getWidth (c/to-root (seesaw.core/to-widget e))) (.getWidth (first list-of-alerts)) 20) 0)
-                height 120]
-            (if list-of-alerts (doseq [[n elem] (map-indexed #(vector %1 %2) list-of-alerts)]
-                                 (c/config! elem :bounds [bound-x (- (- (.getHeight (c/to-root (seesaw.core/to-widget e))) height) (* 80 n)) 300 75]))))))
+;; ┌──────────────────┐
+;; │                  │
+;; │  History panel   │
+;; │                  │
+;; └──────────────────┘
+
+(defn- history-part
+  [type header body s-popup expand]
+  (gmg/migrid
+   :>
+   (let [c-bg       (alert-type-src type :background)
+         c-bg-focus (alert-type-src :alert :border)]
+     (c/label :text (gtool/htmling (str "<b>" header "</b> " body) :no-wrap)
+              :icon (stool/image-scale (alert-type-src type :icon) (alert-type-src type :s-icon))
+              :background c-bg
+              :border (b/compound-border
+                       (b/empty-border :thickness 5)
+                       (b/line-border :left 5 :color (alert-type-src type :border)))
+              :listen [:mouse-entered (fn [e]
+                                        (gtool/hand-hover-on e)
+                                        (c/config! e :background c-bg-focus))
+                       :mouse-exited  (fn [e]
+                                        (c/config! e :background c-bg))
+                       :mouse-clicked (fn [e]
+                                        (open-in-popup type header body s-popup expand))]))))
+
+(defn- alerts-history-list []
+  (doall
+   (reverse
+    (map
+     (fn [[k m]]
+       (history-part (:type m) (:header m) (:body m) (:s-popup m) (:expand m)))
+     (:alerts-storage (state!))))))
+
+(defn- clear-alerts-history []
+  (dispatch! {:action :clear-history})
+  (dispatch! {:action :clear-index}))
+
+(defn history-in-popup
+  []
+  (let [history-box (gmg/migrid
+                     :v 
+                     (alerts-history-list))]
+    (popup/build-popup
+     {:size [350 400]
+      :comp-fn   (fn [] (gmg/migrid :v :a :gf
+                                    [(gcomp/min-scrollbox history-box)
+                                     (gcomp/button-basic "Clear"
+                                                         :flip-border true
+                                                         :onClick (fn [e]
+                                                                    (clear-alerts-history)
+                                                                    (c/config! history-box :items [])))]))
+      :title     "Alerts History"
+      :args [:border (b/line-border :thickness 2 :color (alert-type-src type :border))]})))
 
 
+(comment
+ (start)
+ (clear-alerts-box)
+ (alert "Information" "Hello. It's a new popup alerts.")
+ (alert "Warning!" "Some code can crashing."  :type :warning)
+ (alert "Red alert!" "Some code can crashing. It's the end of world!" :type :danger)
 
-(defn refresh-alerts
-  "Description:
-      Functrion refreshing message on JLayeredPane (GUI).
-   Example:
-      ;; Just refresh messages
-      (refresh-alerts layered-pane alerts-storage)
-      ;; Refresh messages and remove element by ID
-      (refresh-alerts layered-pane alerts-storage :all-alerts)
-   Needed:
-      Function need alerts-rebounds-f for set correct possition
-   "
-  ([layered-pane alerts-storage] (do
-                                    ;;  Remove alerts
-                                    (doall (map (fn [item] (if (identical? (c/config item :id) :alert-box) (.remove layered-pane item))) (seesaw.util/children layered-pane)))
-                                    ;; Add alerts
-                                    (doall (map (fn [item] (if (= (:visible item) true) (.add layered-pane (:component item) (new Integer 15)))) @alerts-storage))
-                                    ;;  Rebounds message space
-                                    (alerts-rebounds-f layered-pane)
-                                    ;;  Repainting app
-                                    (.repaint layered-pane)))
-  ([layered-pane alerts-storage id-to-remove] (do
-                                                 ;;  Remove alerts
-                                                 (doall (map (fn [i] (if (or (identical? (c/config i :id) :alert-box)
-                                                                             (identical? (c/config i :id) id-to-remove))
-                                                                       (.remove layered-pane i))) (seesaw.util/children layered-pane)))
-                                                 ;; Add alerts
-                                                 (doall (map (fn [item] (if (= (:visible item) true) (.add layered-pane (:component item) (new Integer 15)))) @alerts-storage))
-                                                 ;;  Rebounds message space
-                                                 (alerts-rebounds-f layered-pane)
-                                                 ;;  Repainting app
-                                                 (.repaint layered-pane))))
+ (alert "Interaction" "Click OK if you are human." :type :warning :s-popup [300 150]
+        :expand (fn [] (gmg/migrid
+                        :v :center :bottom
+                        (gmg/migrid
+                         :> :f {:gap [10]}
+                         [(gcomp/button-basic "I'm a human")
+                          (gcomp/button-basic "Kill all humans!")]))))
 
-(defn rmAlert
-  "Description:
-       Remove message by id from storage.
-   Example: 
-       (rmAlert 0 storage)
-   "
-  [id alerts-storage layered-pane] (do
-                                      (swap! alerts-storage #(vec (map (fn [item] (if (= (get item :id) id) (assoc item :visible false) item)) %)))
-                                      (refresh-alerts layered-pane alerts-storage)))
-
-
-(defn rmAlertObj
-  "Description:
-       Set message inactive in storage. Function search same object to localizate correct message.
-       Function refreshing GUI.
-   Example: 
-       (rmAlertObj object storage message-box)
-   Needed:
-      Function need refresh-alerts function to refresh GUI.
-   "
-  [obj alerts-storage layered-pane] (do
-                                      ;;  Change visible to flase in correct record
-                                       (swap! alerts-storage #(vec (map (fn [item] (if (identical? (get item :component) obj) (assoc item :visible false) item)) %)))
-                                       (refresh-alerts layered-pane alerts-storage)))
-
-
-(defn rmallAlert
-  "Description:
-      Remove all message from storage.
-      Function refreshing GUI.
-   Example: 
-       (rmallAlert storage)
-   Needed:
-      Function need refresh-alerts function to refresh GUI.
-   "
-  [alerts-storage layered-pane] (do (reset! alerts-storage [])
-                                     (refresh-alerts layered-pane alerts-storage)))
-
-
-(defn addAlert
-  "Description:
-      Add new alert to storage and return ID.
-   Example:
-      (addAlert {:header 'Hello' :body 'World'} (some-widget) 5 alert-storage)
-   "
-  [data component timelife alerts-storage]
-  (let [id (+ (if (= (last @alerts-storage) nil) -1 (:id (last @alerts-storage))) 1)]
-    (swap! alerts-storage #(conj % (Alert. id data component timelife true)))
-    id))
-
-
-
-(defn addAlertTimeout
-  "Description:
-       Add message to storage and return id of this alert. Message will be inactive automaticly after timeout (in sec).
-   Example: 
-       (addAlertTimeout {:header 'Hello' :body 'World!'} (some-widget) 3 storage) 
-       => in storage [... {:id 0 :data {:header 'Hello' :body 'World!'} :component (c/label :text 'Hello World!') :timelife 3 storage}]
-   Needed:
-      Function need addAlert and rmAlert functions to work.
-   "
-  [data component timelife alerts-storage layered-pane]
-  (.start (Thread. (fn [] (let [id (addAlert data component timelife alerts-storage)]
-                            (if (> timelife 0) (do
-                                                 (Thread/sleep (* 1000 timelife))
-                                                 (rmAlert id alerts-storage layered-pane))))))))
-
-
-(defn history-alert
-  "Description:
-      Template for message in all-messeges-window.
-   Example:
-      (history-alert {:header 'Hello' :body 'World!'})
-   "
-  [data layered-pane size]
-  (let [w (first size)
-        h (last size)
-        bg-c     face/c-compos-background
-        hover-c  face/c-on-focus
-        bord     (b/empty-border :left 5)
-        header   (if (= (contains? data :header) true) (get data :header) "Information")
-        body     (if (= (contains? data :body) true) (get data :body) "Template of information...")
-        comp-header (c/label :size [w :by h] :background (new Color 0 0 0 0) :border bord :text header :font (gs/getFont :bold))
-        comp-body   (c/label :size [w :by h] :background (new Color 0 0 0 0) :border bord :text body)
-        comp        (mig-panel
-                     :focusable? true
-                     :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill]0px"]
-                     :background bg-c
-                     :border (b/line-border :bottom 2 :color "#333")
-                     :items [[comp-header] [comp-body]])
-        onClick     (fn [e] (gcomp/popup-info-window header body layered-pane))
-        comp        (c/config! comp
-                               :listen [:mouse-clicked (fn [e] (onClick e))
-                                        :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
-                                        :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
-                                        :focus-gained  (fn [e] (c/config! comp :background hover-c :cursor :hand))
-                                        :focus-lost    (fn [e] (c/config! comp :background bg-c))
-                                        :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))])]
-    comp))
-
-
-(defn all-messages-window
-  "Description:
-      Function creating window with all active and hidden message. Argument layered-pane should be JLayeredPane.
-   Example:
-      (layered-pane alerts-storage)
-   Needed:
-      Function need history-alert function for create message component inside.
-      Function need rmallAlert function for clean history.
-      Function need refresh-alerts function for GUI refresh with removing all-message-window element.
-   "
-  [layered-pane alerts-storage]
-  (let [w     330
-        h     400
-        ico-size 30
-        btn-bg-c "#fff"
-        btn-bg-c-hover "#ddd"
-        items  (reverse (map (fn [item] (history-alert (get item :data) layered-pane [w 30])) @alerts-storage))
-        container (mig-panel
-                   :constraints ["wrap 1" "0px[grow, fill]0px[fill]0px" "0px[grow, top]0px[fill]0px"]
-                   :id :all-alerts
-                   :items [[(gcomp/scrollbox
-                             (c/vertical-panel :items items)
-                             :args [:hscroll :never
-                                    :border nil
-                                    :listen [:mouse-motion (fn [e] (.repaint (c/select (c/to-root e) [:#all-alerts])))
-                                             :mouse-wheel-moved (fn [e] (.repaint (c/select (c/to-root e) [:#all-alerts])))]])]
-                           [(gcomp/button-basic
-                             "Clear all message" 
-                             :flip-border true
-                             :onClick (fn [e]
-                                        (rmallAlert alerts-storage layered-pane);;  remove all history
-                                        (refresh-alerts layered-pane alerts-storage :all-alerts);;  refresh GUI with remove element with id :all-alertsts
-                                        (.dispose (c/to-frame e)))
-                             :args [:icon (stool/image-scale icon/basket-blue1-64-png ico-size)])]])]
-    (gcomp/popup-window {:view container :window-title "Alerts history" :size [w h] :relative layered-pane})))
-
-
-(defn message-server-creator
-  "Description:
-      Alerts on JLayeredPane. Service creating storage for message and can controll GUI elements.
-   Example: 
-      (def alert-service (message-server-creator my-main-app-gui)) #Server is active
-      (alert-service :set {:header 'Hello' :body 'World' :btns [(button :text 'Click me')]} message-fn 5)
-   Needed:
-      Function need addAletrTimeout
-      Function need rmAlert
-      Function need rmAlertObj
-      Function need rmallAlert
-      Function need refresh-alerts
-      Function need all-message-window
-   "
-  [layered-pane]
-  (let [alerts-storage (atom [])]
-    (add-watch alerts-storage :refresh
-               (fn [key atom old-state new-state]
-                 (cond
-                   (> (count @alerts-storage) 0) (refresh-alerts layered-pane alerts-storage)
-                   :else (.repaint layered-pane))))
-    (fn [action & param]
-      (cond
-        (= action :get-space)     layered-pane
-        (= action :set)           (let [[data timelife] param] (addAlertTimeout data (message data) timelife alerts-storage layered-pane))
-        (= action :message)       (let [[alerts-controller] param] (message alerts-controller))
-        (= action :rm)            (let [[id] param] (rmAlert id alerts-storage layered-pane))
-        (= action :rm-obj)        (let [[obj] param] (rmAlertObj obj alerts-storage layered-pane))
-        (= action :clear)         (rmallAlert alerts-storage layered-pane)
-        (= action :count-all)     (count @alerts-storage)
-        (= action :count-active)  (count (filter (fn [item] (if (= (get item :visible) true) item)) @alerts-storage))
-        (= action :count-hidden)  (count (filter (fn [item] (if (= (get item :visible) false) item)) @alerts-storage))
-        (= action :show)          (do (refresh-alerts layered-pane alerts-storage :all-alerts) (all-messages-window layered-pane alerts-storage))
-        (= action :hide)          (refresh-alerts layered-pane alerts-storage :all-alerts)))))
-
-(state/set-state :alert-manager nil)
+ (history-in-popup)
+ (:alerts-storage (state!))
+ )

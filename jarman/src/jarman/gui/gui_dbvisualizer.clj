@@ -30,7 +30,8 @@
             [jarman.logic.state :as state]
             [jarman.plugin.plugin :as plug]
             [jarman.logic.view-manager :as vmg]
-            [jarman.logic.session :as session]))
+            [jarman.logic.session :as session]
+            [jarman.interaction :as i]))
 
 (def dark-grey-color "#676d71")
 (def blue-color "#256599")
@@ -434,8 +435,7 @@
        (println "reloadinvoker" invoker-id)
        (if-not (nil? invoker-id) (((state/state :jarman-views-service) :reload) invoker-id))
        (((state/state :jarman-views-service) :reload))
-       ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :success) :body (gtool/get-lang-alerts :changes-saved)} 
-        5)))))
+       (i/info (gtool/get-lang-alerts :success) (gtool/get-lang-alerts :changes-saved))))))
 
 
 (defn table-editor--element--btn-show-changes
@@ -974,8 +974,8 @@
                                                                                                  new-meta (assoc-in meta [:prop :table :bounds] xy)]
                                                                                              (mt/update-meta new-meta)))))
                                                                                      (state/state :dbv-bounds)))
-                                                                             ((state/state :alert-manager) :set {:header (gtool/get-lang-alerts :success)
-                                                                                                                 :body   (gtool/get-lang-alerts :changes-saved)}  5)
+                                                                             (i/info (gtool/get-lang-alerts :success)
+                                                                                     (gtool/get-lang-alerts :changes-saved))
                                                                              (state/set-state :dbv-bounds {}))]
                            ["Reset view"   icon/max-64-png              "" (fn [e]
                                                                              (state/set-state :dbv-bounds {})

@@ -4,7 +4,8 @@
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]
    [jarman.tools.org  :refer :all]
-   [jarman.config.vars :refer [defvar]])
+   [jarman.config.vars :refer [defvar]]
+   [jarman.plugin.extension-manager :as extension-manager])
   (:import (java.io IOException FileNotFoundException)))
 
 ;;;;;;;;;;;;
@@ -21,9 +22,9 @@
 ;;; DEBUG HEADER ;;;
 ;;;;;;;;;;;;;;;;;;;;
 
-(def ^{:private true} *debug* (ref false))
-(defn debug-enable [] (dosync (ref-set *debug* true)))
-(defn debug-disable [] (dosync (ref-set *debug* false)))
+(def ^{:private true} debug (ref false))
+(defn debug-enable [] (dosync (ref-set debug true)))
+(defn debug-disable [] (dosync (ref-set debug false)))
 (debug-enable)
 (debug-disable)
 
@@ -49,7 +50,7 @@
 
 (debug-enable)
 (def language-supported)
-
+(filter :language (extension-manager/extension-storage-list-get))
 
 (def ^:private _language (ref {}))
 (defn ^:private _into_language [plugin-language-edn]
@@ -81,7 +82,7 @@
   (let [d "<null>"
         p (into [(deref language-selected)] translation-path)
         l (get-in @_language p d)]
-    (when (deref *debug*)
+    (when (deref debug)
       (print-header
        (format "Debug translation in `%s`" (eval `(str *ns*)))
        (print-line (format  "translation-path %s => '%s' " (str p) l))))

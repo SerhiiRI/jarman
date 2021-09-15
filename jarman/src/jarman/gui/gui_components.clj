@@ -29,7 +29,6 @@
 ;; │ Basic components   │
 ;; │                    │________________________________________
 ;; └────────────────────�                                     
-
 (def dark-grey-color "#676d71")
 (def blue-color "#256599")
 (def light-light-grey-color "#e1e1e1")
@@ -1486,8 +1485,8 @@
   [{func :func
     val  :val}]
   (let [default-path (str jarman.config.environment/user-home "/Documents")
-        input-text (state-input-text {:func func
-                                      :val  (rift val default-path)})
+        input-text   (state-input-text {:func func
+                                        :val  (rift val default-path)})
         icon (button-basic ""
               :onClick (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
                                  (c/config! input-text :text (rift new-path default-path))))
@@ -1497,12 +1496,13 @@
                :items [[icon] [input-text]])]
     panel))
 
-
+;; to do chooser dir not file
 (defn status-input-file
   "Description:
      File choser, button with icon, when path is selected it changes background color"
   [{func :func
-    val  :val}]
+    val  :val
+    mode :mode}]
   (let [val            (if (empty? val) "" val)
         ico-to-choose  (jarman.tools.swing/image-scale icon/enter-64-png 30)
         ico-chosen     (jarman.tools.swing/image-scale icon/agree-blue-64-png 30)
@@ -1513,6 +1513,7 @@
                            :tgap 4 :bgap 4 :lgap 0 :rgap 0
                            :onClick (fn [e] 
                                       (let [new-path (chooser/choose-file
+                                                      :selection-mode (if mode :dirs-only :files-only)
                                                       :suggested-name val
                                                       :success-fn  (fn [fc file] (.getAbsolutePath file)))]
 
@@ -1588,8 +1589,7 @@
             d-inp (:description @cmpts-atom)]
         (if (or (= f-inp "") (= f-inp "field") (= f-inp nil) (< (count f-inp) 4)
                 (= r-inp "") (= r-inp "representation") (= r-inp nil) (< (count f-inp) 4)
-                (= d-inp "") (= d-inp "description") (= d-inp nil) (< (count f-inp) 4)
-                ) false true))
+                (= d-inp "") (= d-inp "description") (= d-inp nil) (< (count f-inp) 4)) false true))
     1 (let [cmp-inp (:component-type @cmpts-atom)
             col-inp (:column-type @cmpts-atom)]
         (if (or (= cmp-inp nil) 

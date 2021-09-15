@@ -145,6 +145,7 @@
    - [ ] - message on save failed
    - [X] - fixed alert box permeation   
 * Backend
+** TODO [#1] Одужуй!                                                 :@Julia:
 ** PROCESSING [#1] /Feature/. Rewrite plugin system                   :@Serhii:
    DEADLINE: <2021-09-09 Thu>
    - [X] Add ~:deps~ key into ~package~
@@ -167,6 +168,8 @@
        (lang :accept)
        (lang :dracula :theme-name)
      #+end_src
+   - [ ] do not load plugin if those being loaded before
+     suppose it be some checkable variable
 
 ** PROCESSING [#1] /Feature/. defvar expanding                        :@Serhii:
    - [X] Allow defvar declaration for all the places
@@ -176,7 +179,7 @@
    - [X] Debug for all variables
    - [X] Debug for one variables
    
-** TODO [#1] defvar managment                                :@Aleks:@Serhii:
+** TODO [#1] defvar managment                                       :@Serhii:
    After app loading, we have some values in system variables, divided by group name,
    
    - [X] Create GUI which allow controlling and changing variables inside gui. 
@@ -187,15 +190,6 @@
    - [ ] Auto tail reverting logs buffer
    - [ ] Integrate local toolkit for emacs.
      - [ ] Open log buffer.
-** TODO [#1] REST!                                                   :@Julia:
-   DEADLINE: <2021-09-12 niedz.>
-   deWorkaholization stages: 
-   - [ ] Watch interesting film.
-   - [ ] Go outside house(send selfy for approvement)
-   - [ ] Read something interesting.
-   - [ ] Find something interesting.
-   - [ ] Also love your Project Manager <3
-
 ** TODO [#3] /Feature/. Support Org file                              :@Serhii:
    - [-] Create library for printing directly to org file [2/3]
      - [X] Printing lib
@@ -209,7 +203,7 @@
        - [ ] file
        - [ ] print
    - [ ] Add parsing library
-** PLANNED Service Period. sort contract list                        :@Julia:
+** PLANNED Service Period. sort contract list                       :@Serhii:
    - [ ] sorting contract by date
    - [ ] colorize contract by active-nonactive depend on current date
 ** PLANNED Permission systems                                        :@Aleks:

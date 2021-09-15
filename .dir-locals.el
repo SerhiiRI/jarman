@@ -1,4 +1,5 @@
-((nil . ((org-publish-project-alist
+((nil . (;; (eval . (progn (load "c:/programs/Gitel/tools.el")))
+	 (org-publish-project-alist
 	  . (("agenda-org"
               :base-directory "~/programs/jarman"
 	      :base-extension "org"
@@ -21,4 +22,6 @@
 	      :publishing-directory "/ssh:root@trashpanda-team.ddns.net:/var/www/html/agenda/style")	
 	     ;; CHANGELOG
 	     ("agenda-all" :components ("agenda-org" "agenda-issues-org" "agenda-org-style")))))))
+
+
 

@@ -25,7 +25,7 @@
   (out-line "#+end_example"))
 
 (defn out-src [lang s]
-  (out-line (cl-format nil "#+begin_src %s" (str lang)))
+  (out-line (cl-format nil "#+begin_src ~A" (str lang)))
   (binding [jarman.tools.org/*level* (inc jarman.tools.org/*level*)]
     (doall
      (for [line (split-newline s)]

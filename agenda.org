@@ -23,7 +23,8 @@
     - [ ] Warning icon as yellow triangle with an exclamation mark
     - [ ] Danger icon, now existing icon alert-red-512.png, we need 64 and 128 too
     - [ ] Save icon as floppy disk (it is more universal symbol)
-*** TOREVIEW Upgrade UI Elements                                     :@Aleks:
+*** DONE Upgrade UI Elements                                         :@Aleks:
+    CLOSED: [2021-09-16 czw. 04:38]
     :PROPERTIES:
     :CUSTOM_ID: alert-boxes-replacement
     :END:

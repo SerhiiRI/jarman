@@ -20,8 +20,6 @@
 (import java.awt.MouseInfo)
 (import java.awt.event.MouseListener)
 
-(gs/load-style)
-
 (def jarman-focus-now (atom nil))
 
 (defn set-focus

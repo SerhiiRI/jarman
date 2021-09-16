@@ -114,8 +114,9 @@
        s-underline                underline-size
        
        ;; Icon color
-       c-icon                     jarman-blue
-       c-icon-focus               c-caret
+       c-icon                     c-foreground
+       c-icon-focus               belize-hole
+       c-icon-close-focus         c-border-danger
        c-icon-info                c-border
        c-icon-warning             c-border-warning
        c-icon-danger              c-border-danger

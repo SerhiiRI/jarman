@@ -96,6 +96,7 @@
        ;; Icon color
        c-icon                     c-foreground
        c-icon-focus               c-caret
+       c-icon-close-focus         c-border-danger
        c-icon-info                cyan-light
        c-icon-warning             c-border-warning
        c-icon-danger              c-border-danger

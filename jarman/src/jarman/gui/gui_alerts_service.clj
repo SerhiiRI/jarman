@@ -334,7 +334,7 @@
                                                                     (clear-alerts-history)
                                                                     (c/config! history-box :items [])))]))
       :title     "Alerts History"
-      :title-icon (gs/icon GoogleMaterialDesignIcons/HISTORY)
+      :title-icon (gs/icon GoogleMaterialDesignIcons/HISTORY face/c-foreground)
       :args [:border (b/line-border :thickness 2 :color (alert-type-src type :border))]})))
 
 

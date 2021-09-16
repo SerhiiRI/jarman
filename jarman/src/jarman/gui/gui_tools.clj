@@ -29,8 +29,19 @@
 (defn set-focus-if-nil
   [object] (if (nil? @jarman-focus-now) (reset! jarman-focus-now object)))
 (defn switch-focus
-  [] (if-not (nil? @jarman-focus-now) (do (.requestFocus @jarman-focus-now)
-                                          (reset! jarman-focus-now nil))))
+  [& {:keys [obj time]
+      :or   {obj nil
+             time 0}}]
+  (if-not (nil? obj) (set-focus obj))
+  (if (> time 0)
+    (timelife time (fn []
+                     (if-not (nil? @jarman-focus-now)
+                       (.requestFocus @jarman-focus-now)
+                       (reset! jarman-focus-now nil))))
+    (if-not (nil? @jarman-focus-now)
+      (.requestFocus @jarman-focus-now)
+      (reset! jarman-focus-now nil))))
+
 ;; ┌─────────────────────────┐
 ;; │                         │
 ;; │ Quick gui functions     │

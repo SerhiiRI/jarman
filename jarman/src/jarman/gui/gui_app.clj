@@ -204,17 +204,17 @@
         (do-load-theme "Jarman Light")
         (state/set-state :theme-first-load true)
         (print-header "First theme loaded")))
-  
+
+  (println "\n")
   (print-header
-   "Load selected theme"
-   (try
-    (do-load-theme (state/state :theme-name))
-    (catch Exception e (print-line (str "\n[ ! ] Theme loading can not complete. Some value faild.\n"))))
-   
-   (print-line "apply default global style") 
+   "Apply selected theme" 
+   (do-load-theme (state/state :theme-name))) ;; TODO: Alerts tmp storage with invoke later
+
+  (println "\n")
+  (print-header
+   "apply default global style" 
    (gs/load-style))
 
-   ;; 
    (if (= false (state/state :soft-restart))
      (try
        (reset! relative-pos [(.x (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))
@@ -340,6 +340,7 @@
 ((state/state :startup))
 
 (comment
+  
   (state/set-state :soft-restart false)
   (state/set-state :theme-name "Jarman Light")
   (state/state :theme-name)

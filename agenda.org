@@ -13,16 +13,17 @@
    DEADLINE: <2021-09-15 śro>
 *** TODO Alerts upgrade                                              :@Aleks:
     - [ ] /Feature/. warning alert, which notify user about update
-    - [ ] /Feature/. TMP storage. invoking alerts with some deletay.
+    - [ ] /Feature/. TMP storage. invoking alerts after some event like loaded app.
     - [ ] /Feature/. Success alert type.
 *** TODO Repair expand button [0/2]                                  :@Aleks:
     - [ ] Rainbow margin
     - [ ] Separate last element in inside expand
-*** TOREVIEW New icons as fonts [4/6]                                :@Aleks:
+*** TOREVIEW New icons as fonts [5/7]                                :@Aleks:
     - [X] New fn for icon return (~gui-style/icon GoogleMaterialDesignIcons/some-icon "#000" 30)~
     - [X] Demo to quick startup in gui_style.clj
     - [X] Set new feature to alert system
     - [X] Set demo alerts (access: developer, buttons will show in main menu)
+    - [X] New face for close icon, listen event mouse entered
     - [ ] Set new feature to menu bars
     - [ ] Set new feature to other if needed
 *** TODO Main view & Styling                                         :@Aleks:
@@ -76,13 +77,7 @@
     - [ ] Julia call it *insert-space*, is section where we adding new service contract. Rewrite whole panel, but keep logic as we create before.
     - [ ] After you click on one month, you can edit all service contract month payments. You can edit, only if month wasn't payed. Rewrite Julia view, on your implementation. I think better be when all those month fields be in one line.
 *** PLANNED Main menu as hide/show section                           :@Aleks:
-*** PLANNED Icons - Fix size in all icons
-    Sometimes one icon is bigger than secon with same scalling
-    - [ ] add debug frame for displaing all icon with same scalling [0/2]
-      - [ ] display inline for visual comparison
-      - [ ] display in list with names
-    - [ ] Fixed [0/1]
-      - [ ] Review
+
 ** PROCESSING [#1] /Feature/. Jarman Theme Light Style  :@Julia:@Aleks:@Serhii:
    DEADLINE: <2021-09-16 Thu>
    - [X] rewrite styles config

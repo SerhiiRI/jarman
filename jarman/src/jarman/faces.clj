@@ -36,6 +36,13 @@
 (define-face c-underline-on-focus-light)
 (define-face s-underline)
 
+;; Icon color
+(define-face c-icon)
+(define-face c-icon-focus)
+(define-face c-icon-close-focus)
+(define-face c-icon-info)
+(define-face c-icon-warning)
+(define-face c-icon-danger)
 
 ;;----------------------------------
 ;;Custom elements
@@ -103,13 +110,6 @@
 (define-face c-popup-body-background)
 (define-face c-popup-head-background)
 (define-face c-popup-border)
-
-;; Icon color
-(define-face c-icon)
-(define-face c-icon-focus)
-(define-face c-icon-info)
-(define-face c-icon-warning)
-(define-face c-icon-danger)
 
 ;; [underscore-panel
 ;;  button-border-bottom

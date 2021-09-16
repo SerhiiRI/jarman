@@ -45,25 +45,26 @@
       :or   {icon nil
              c-bg "#eee"
              args []}}]
-  (gmg/hmig
-   :hrules "[grow]0px[fill]"
-   :lgap 10
-   :args (concat [:background face/c-popup-head-background] args) ;; set header bg
-   :items (gtool/join-mig-items
-           (c/label :text title :icon (if icon icon)
-                    :font (gs/getFont :bold))
-           (c/label ;;:text "Close"
-            :icon (gs/icon GoogleMaterialDesignIcons/CLOSE)
-            :halign :right
-            :border (b/empty-border :thickness 5)
-            :listen [:mouse-entered (fn [e]
-                                      (gtool/hand-hover-on e)
-                                      (c/config! e :icon (gs/icon GoogleMaterialDesignIcons/CLOSE face/c-icon-focus)))
-                     :mouse-exited  (fn [e]
-                                      (c/config! e :icon (gs/icon GoogleMaterialDesignIcons/CLOSE)))
-                     :mouse-clicked (fn [e]
-                                      (.remove (jlp) root)
-                                      (.repaint (jlp)))]))))
+  (let [header (gmg/hmig
+                :hrules "[grow]0px[fill]"
+                :lgap 10
+                :args (concat [:background face/c-popup-head-background] args) ;; set header bg
+                :items (gtool/join-mig-items
+                        (c/label :text title :icon (if icon icon)
+                                 :font (gs/getFont :bold))
+                        (c/label ;;:text "Close"
+                         :icon (gs/icon GoogleMaterialDesignIcons/HIGHLIGHT_OFF)
+                         :halign :right
+                         :border (b/empty-border :thickness 5)
+                         :listen [:mouse-entered (fn [e]
+                                                   (gtool/hand-hover-on e)
+                                                   (c/config! e :icon (gs/icon GoogleMaterialDesignIcons/HIGHLIGHT_OFF face/c-icon-close-focus)))
+                                  :mouse-exited  (fn [e]
+                                                   (c/config! e :icon (gs/icon GoogleMaterialDesignIcons/HIGHLIGHT_OFF)))
+                                  :mouse-clicked (fn [e]
+                                                   (.remove (jlp) root)
+                                                   (.repaint (jlp)))])))]
+    header))
 
 (defn- popup [{:keys [render-fn title size c-border title-icon args]
                :or {render-fn (fn [] (c/label))
@@ -146,6 +147,7 @@
                     :c-border c-border
                     :args args})]
     (.add (jlp) pop (new Integer 10))
+    (c/move! pop :to-front)
     pop))
 
 (defn set-demo [] (build-popup {:comp-fn compo :title "Demo"}))

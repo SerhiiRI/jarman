@@ -171,9 +171,9 @@
      (gtool/join-mig-items
       [(gcomp/menu-bar
         {:justify-end true
-         :buttons [[" List by \"Variable Group\" " nil
+         :buttons [[" List by \"Variable Group\" " (gs/icon GoogleMaterialDesignIcons/APPS)
                     (fn [e] (c/config! panel :items (gtool/join-mig-items (view-grouped-by-group))))]
-                   [" List by \"Loaded variables\" " nil
+                   [" List by \"Loaded variables\" " (gs/icon GoogleMaterialDesignIcons/ARCHIVE)
                     (fn [e] (c/config! panel :items (gtool/join-mig-items (view-grouped-by-loaded))))]]})
        panel]))))
 

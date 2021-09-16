@@ -175,18 +175,15 @@
     Load configuration"
   []
   ;; (managment-data/on-app-start)
-  
   (print-header 
    "Swapp"
    (cm/swapp))
   (dot-jarman-load)
   (print-list-not-loaded)
-  
   (print-header 
    "Load .jarman"
    (dot-jarman-load)
    (print-list-not-loaded))
-  
   (print-header
    "Load Extensions"
    (do-load-extensions)))
@@ -300,15 +297,12 @@
 (defn load-level-4
   "Description:
     Load main menu." []
-  (println)
   (print-header
    "Clean main menu"
    (menu/clean-main-menu))
-  (println)
   (print-header
    "Load view plugin into main menu"
    (load-plugins-to-main-menu))
-  (println)
   (print-header
    "Load static main menu"
    (load-static-main-menu)))

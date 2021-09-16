@@ -1,5 +1,7 @@
 (ns jarman.interaction)
 (require '[jarman.gui.gui-alerts-service :as gas])
+(require '[jarman.tools.org :refer :all])
+(require '[clojure.pprint :refer [cl-format]])
 
 
 ;; ┌──────────────────┐
@@ -18,8 +20,10 @@
              s-popup [300 320]
              actions []
              expand  nil}}]
-  (println "\n" header body type time s-popup expand actions)
-  (gas/alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
+  (print-header
+   "Ivoke info frame"
+   (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions))
+   (gas/alert header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
 
 (defn warning
   "Description:
@@ -32,7 +36,9 @@
              s-popup [300 320]
              actions []
              expand  nil}}]
-  (println "\n" header body type time s-popup expand actions)
+  (print-header
+   "Ivoke warning frame"
+   (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
   (gas/alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
 
 (defn danger
@@ -46,16 +52,18 @@
              s-popup [300 320]
              actions []
              expand  nil}}]
-  (println "\n" header body type time s-popup expand actions)
+  (print-header
+   "Ivoke danger frame"
+   (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
   (gas/alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
 
 (defn show-alerts-history [] (gas/history-in-popup))
 
 ;; Using alerts
 (comment
-  (info    "Test 1" "Info    box")
+  (info    "Test 1" "Info box")
   (warning "Test 2" "Warning box")
-  (danger  "Test 3" "Danger  box")
+  (danger  "Test 3" "Danger box")
   (warning "Interaction" "Devil robot say:" :s-popup [300 150]
            :expand (fn [] (jarman.gui.gui-components/button-basic "Kill all humans!")))
   (show-alerts-history))

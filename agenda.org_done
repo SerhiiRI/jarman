@@ -80,3 +80,53 @@ Archived entries from file /home/serhii/programs/jarman/agenda.org
   - [X] Find something interesting.
   - [X] Also love your Project Manager <3
 
+
+* DONE Upgrade UI Elements                                           :@Aleks:
+  CLOSED: [2021-09-16 czw. 04:38]
+  :PROPERTIES:
+  :CUSTOM_ID: alert-boxes-replacement
+  :ARCHIVE_TIME: 2021-09-16 Thu 20:37
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Frontend/Frontend refactorization
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+  - [x] to ~(state/state :alert-manager)~
+    #+begin_src clojure
+      ((state/state :alert-manager)
+       :set {:status :warning
+	     :header "Update Manager"
+	     :body   "Local Jarman configuraion was deleted"} 7)
+    #+end_src
+    add =:status= key, with options
+    - =:warning=, that colorify alert box in /Yellow/ or /Orange/ box
+    - =:info= - colorify alert box in /Blue/ (default color, and default option if =:status= not set)
+    - =:error= - colorify alert box in /Red/.
+  - [x] New interface
+    #+begin_src clojure
+      (jarman.interaction/info    "Test 1" "Info box")
+      (jarman.interaction/warning "Test 1" "Info box")
+      (jarman.interaction/danger  "Test 1" "Info box")
+      (jarman.gui.gui-alerts-service/alert "Test 1" "Info box")
+    #+end_src
+      
+
+* TOREVIEW Icons [1/11]                                              :@Julia:
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-09-16 Thu 20:37
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Frontend/Frontend refactorization
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: TOREVIEW
+  :END:
+  - [ ] Plus icon. Replace =plus= icon, make add width, and make only one color. And =minus= do little bit higher, also =x= icon
+  - [ ] refresh-reload icons, increase arrow, and make some distance between each other. Only one color
+  - [ ] Left/Right direction one arrow. like =->= and =<-=
+  - [X] =odt export= file icon
+  - [ ] logout icon.
+  - [ ] =Select all=, is like "checkbox" =[V]=
+  - [ ] Pay icon. (hrywna) + (dolar)
+  - [ ] До лупи додати кінець, одноколірна.
+  - [ ] Warning icon as yellow triangle with an exclamation mark
+  - [ ] Danger icon, now existing icon alert-red-512.png, we need 64 and 128 too
+  - [ ] Save icon as floppy disk (it is more universal symbol)

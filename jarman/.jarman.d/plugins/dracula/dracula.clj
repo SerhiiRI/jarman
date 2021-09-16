@@ -93,6 +93,13 @@
        c-underline-on-focus-light  orange-strong
        s-underline                 underline-size
        
+       ;; Icon color
+       c-icon                     c-foreground
+       c-icon-focus               c-caret
+       c-icon-info                cyan-light
+       c-icon-warning             c-border-warning
+       c-icon-danger              c-border-danger
+       
        cvv-button-expand        expand-btn-colors ;; expand button lvls colors
        
        ;;----------------------------------
@@ -158,6 +165,7 @@
        c-popup-body-background c-compos-background
        c-popup-head-background c-compos-background-darker
        c-popup-border          c-border
+       
        ))))
 
 

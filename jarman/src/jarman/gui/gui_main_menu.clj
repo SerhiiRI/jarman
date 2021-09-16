@@ -199,12 +199,24 @@
                     :permission [:developer]
                     :fn         (fn [e] (gcomp/popup-window {:relative (state/state :app)}))}
     
-    "Alert"        {:key        "test-aletr"
-                    :action     :invoke
-                    :permission [:developer]
-                    :fn         (fn [e]
-                                  (i/info "Czym jest Lorem Ipsum?"
-                                          "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}
+    "Alerts"        {"Info" {:key        "test-info"
+                             :action     :invoke
+                             :permission [:developer]
+                             :fn         (fn [e]
+                                           (i/info "Czym jest Lorem Ipsum?"
+                                                   "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}
+                     "Warning" {:key        "test-warning"
+                                :action     :invoke
+                                :permission [:developer]
+                                :fn         (fn [e]
+                                              (i/warning "Czym jest Lorem Ipsum?"
+                                                      "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}
+                     "Danger" {:key        "test-danger"
+                               :action     :invoke
+                               :permission [:developer]
+                               :fn         (fn [e]
+                                             (i/danger "Czym jest Lorem Ipsum?"
+                                                     "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}}
     
     "Select table"   {:key        "select-table"
                       :action     :invoke

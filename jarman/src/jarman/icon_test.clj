@@ -12,7 +12,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (IconFontSwing/register (GoogleMaterialDesignIcons/getIconFont))
-(def icon (IconFontSwing/buildIcon GoogleMaterialDesignIcons/GAMEPAD 40 (Color. 0 150 0)))
+(def gamepad (IconFontSwing/buildIcon GoogleMaterialDesignIcons/GAMEPAD 40 (Color. 0 150 0)))
 ;; JLabel label = new JLabel(icon);
 
 (comment
@@ -20,6 +20,13 @@
       c/pack!
       c/show!))
 
+(defmacro icon
+  ([icon-symbol]
+   `(icon-function ~icon-symbol 20))
+  ([icon-symbol size]
+   `(icon-function ~(symbol "GoogleMaterialDesignIcons" (name icon-symbol)) ~size)))
+
+(icon GAMEPAD 10)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; BUT IF YOU REGISTRATE CUSTOM FONT DO NEXT ;;;

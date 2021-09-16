@@ -1,5 +1,6 @@
 (ns jarman.gui.gui-alerts-service
-  (:import (java.awt Color))
+  (:import (java.awt Color)
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons))
   (:use seesaw.dev
         seesaw.mig)
   (:require [jarman.faces                     :as face]
@@ -114,8 +115,6 @@
   (c/config!   (:alerts-box (state!)) :items [[(alerts-box-top-bar)]])
   (refresh-box))
 
-
-
 (defn- include-alert-box
   [& {:keys [soft]
       :or {soft false}}]
@@ -166,21 +165,23 @@
 
 (defn- icon-label
   [ic-off ic-on size]
-  (c/label :icon (stool/image-scale ic-off size)
+  (c/label :icon ic-off
            :border (b/empty-border :rigth 8 :left 8 :top 3 :bottom 3)
            :listen [:mouse-entered (fn [e]
                                      (gtool/hand-hover-on e)
-                                     (c/config! e :icon (stool/image-scale ic-on  size)))
+                                     (c/config! e :icon ic-on))
                     :mouse-exited  (fn [e]
-                                     (c/config! e :icon (stool/image-scale ic-off size)))]))
+                                     (c/config! e :icon ic-off))]))
 
 (defn- alert-skeleton
-  [header body [c-border c-bg icon1 s-icon-1]]
+  [header body [c-border c-bg icon]]
   (let [padding  5
         s-border 2
         s-icon-2 22
         offset   (+ (* padding 2) (* s-border 2) (+ s-icon-2 5))]
-    (let [close-icon (icon-label icon/x-grey-64-png icon/x-blue1-64-png s-icon-2)]
+    (let [close-icon (icon-label (gs/icon GoogleMaterialDesignIcons/CLOSE)
+                                 (gs/icon GoogleMaterialDesignIcons/CLOSE face/c-icon-focus)
+                                 s-icon-2)]
       (gmg/migrid
        :v (format "[::%s, fill]" (- (:box-w (state!)) offset)) "[20, fill]0px[fill]"
        {:args [:border (b/compound-border
@@ -190,7 +191,7 @@
                :user-data close-icon]}
        [(c/label :text header
                  :font (gs/getFont :bold)
-                 :icon (stool/image-scale icon1 s-icon-1)
+                 :icon icon
                  :size [(- (:box-w (state!)) offset) :by 20])
 
         (gmg/migrid :> :f {:args [:background c-bg]}
@@ -200,13 +201,19 @@
 
 (defn- alert-type-src
   [type key]
-  (get-in {:alert   {:border face/c-alert-alert-border   :bg face/c-alert-bg :icon icon/I-64-png          :s-icon 28}          
-           :warning {:border face/c-alert-warning-border :bg face/c-alert-bg :icon icon/csv-64-png        :s-icon 28}        
-           :danger  {:border face/c-alert-danger-border  :bg face/c-alert-bg :icon icon/alert-red-512-png :s-icon 3}}
+  (get-in {:alert   {:border face/c-alert-alert-border
+                     :bg face/c-alert-bg
+                     :icon (gs/icon GoogleMaterialDesignIcons/INFO face/c-icon-info)}          
+           :warning {:border face/c-alert-warning-border
+                     :bg face/c-alert-bg
+                     :icon (gs/icon GoogleMaterialDesignIcons/REPORT_PROBLEM face/c-icon-warning)}        
+           :danger  {:border face/c-alert-danger-border
+                     :bg face/c-alert-bg
+                     :icon (gs/icon GoogleMaterialDesignIcons/REPORT face/c-icon-danger)}}
           [type key]))
 
 (defn- alert-type [type]
-  [(alert-type-src type :border) (alert-type-src type :bg) (alert-type-src type :icon) (alert-type-src type :s-icon)])
+  [(alert-type-src type :border) (alert-type-src type :bg) (alert-type-src type :icon)])
 
 
 (defn- open-in-popup
@@ -216,7 +223,8 @@
                                                    :v :center :fg {:gap [10]}
                                                    (concat [(gtool/htmling body)
                                                             (if (fn? expand) (expand) [])])))
-                                :title     header
+                                :title      header
+                                :title-icon (alert-type-src type :icon)
                                 :args [:border (b/line-border :thickness 2 :color (alert-type-src type :border))]})]
     (c/move! pop :to-front)
     pop))
@@ -286,7 +294,7 @@
    (let [c-bg       (alert-type-src type :background)
          c-bg-focus (alert-type-src :alert :border)]
      (c/label :text (gtool/htmling (str "<b>" header "</b> " body) :no-wrap)
-              :icon (stool/image-scale (alert-type-src type :icon) (alert-type-src type :s-icon))
+              :icon (alert-type-src type :icon)
               :background c-bg
               :border (b/compound-border
                        (b/empty-border :thickness 5)
@@ -326,6 +334,7 @@
                                                                     (clear-alerts-history)
                                                                     (c/config! history-box :items [])))]))
       :title     "Alerts History"
+      :title-icon (gs/icon GoogleMaterialDesignIcons/HISTORY)
       :args [:border (b/line-border :thickness 2 :color (alert-type-src type :border))]})))
 
 

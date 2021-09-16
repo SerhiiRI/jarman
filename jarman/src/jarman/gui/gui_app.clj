@@ -209,7 +209,9 @@
    (print-line "apply global table header faces")
    (gs/update-table-header :c-fg     face/c-table-header-fg
                            :c-bg     face/c-table-header-bg
-                           :c-border face/c-table-header-border)))
+                           :c-border face/c-table-header-border)
+   (print-line "apply global icon color")
+   (gs/update-icon face/c-icon)))
 ;; after swing component was builded
 (defn load-level-1
   "Description:

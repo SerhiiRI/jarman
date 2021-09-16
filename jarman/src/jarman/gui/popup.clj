@@ -20,7 +20,8 @@
    [jarman.tools.swing               :as stool])
   (:import javax.swing.JLayeredPane
            java.awt.PointerInfo
-           (java.awt.event MouseEvent)))
+           (java.awt.event MouseEvent)
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
 ;; (def popup-state (atom (new JLayeredPane)))
 
@@ -41,7 +42,7 @@
 (defn- popup-bar
   [root title
    & {:keys [icon c-bg args]
-      :or   {icon jarman.resource-lib.icon-library/I-64-png
+      :or   {icon nil
              c-bg "#eee"
              args []}}]
   (gmg/hmig
@@ -49,26 +50,27 @@
    :lgap 10
    :args (concat [:background face/c-popup-head-background] args) ;; set header bg
    :items (gtool/join-mig-items
-           (c/label :text title :icon (if icon (stool/image-scale icon 20))
+           (c/label :text title :icon (if icon icon)
                     :font (gs/getFont :bold))
            (c/label ;;:text "Close"
-            :icon (stool/image-scale icon/x-grey-64-png 20)
+            :icon (gs/icon GoogleMaterialDesignIcons/CLOSE)
             :halign :right
             :border (b/empty-border :thickness 5)
             :listen [:mouse-entered (fn [e]
                                       (gtool/hand-hover-on e)
-                                      (c/config! e :icon (stool/image-scale icon/x-blue1-64-png 20)))
+                                      (c/config! e :icon (gs/icon GoogleMaterialDesignIcons/CLOSE face/c-icon-focus)))
                      :mouse-exited  (fn [e]
-                                      (c/config! e :icon (stool/image-scale icon/x-grey-64-png 20)))
+                                      (c/config! e :icon (gs/icon GoogleMaterialDesignIcons/CLOSE)))
                      :mouse-clicked (fn [e]
                                       (.remove (jlp) root)
                                       (.repaint (jlp)))]))))
 
-(defn- popup [{:keys [render-fn title size c-border args]
+(defn- popup [{:keys [render-fn title size c-border title-icon args]
                :or {render-fn (fn [] (c/label))
                     title ""
                     size [400 300]
                     c-border face/c-popup-border
+                    title-icon nil
                     args []}}]
   (let [last-x (atom 0)
         last-y (atom 0)
@@ -109,7 +111,7 @@
                              
                              :mouse-released (fn [e] (.repaint (jlp)))])
     
-    (.add root (popup-bar root title :c-bg c-border))
+    (.add root (popup-bar root title :c-bg c-border :icon title-icon))
     (.add root (render-fn))
     root))
 
@@ -130,14 +132,16 @@
 ;; (-> (doto build (.setLocationRelativeTo nil) c/pack! c/show!))
 
 (defn build-popup
-  [{:keys [comp-fn title size c-border args]
+  [{:keys [comp-fn title title-icon size c-border args]
     :or {comp-fn compo
          title ""
+         title-icon nil
          size [400 300]
          c-border "#ccc"
          args []}}]
   (let [pop (popup {:render-fn comp-fn
                     :title title
+                    :title-icon title-icon
                     :size size
                     :c-border c-border
                     :args args})]

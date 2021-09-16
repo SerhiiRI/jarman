@@ -13,6 +13,10 @@
            (java.io File)
            (java.nio.file Files)
            (java.awt GraphicsEnvironment)
+           (jiconfont IconFont DefaultIconCode)           
+           (jiconfont.swing IconFontSwing)
+           (java.io InputStream)
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
            ))
 
 (defn- ubuntu-font [font] (str "./resources/fonts/ubuntu/" font))
@@ -212,6 +216,15 @@
 
 (state/set-state :theme-name "Jarman Light")
 
+;; Icon default style
+(state/set-state :icon-color "#000")
+(state/set-state :icon-size  20)
+(defn update-icon
+  ([color] (update-icon color (state/state :icon-size)))
+  ([color size]
+   (state/set-state :icon-color color)
+   (state/set-state :icon-size  size)))
+
 (defn load-style
   "Description:
     Load global style."
@@ -225,6 +238,32 @@
   (update-table)
   (update-caret))
 
+
+;; ┌───────────────────────────┐
+;; │                           │
+;; │        Font icons         │
+;; │                           │
+;; └───────────────────────────┘
+(IconFontSwing/register (GoogleMaterialDesignIcons/getIconFont))
+(defn icon
+  "Description:
+     Icon font wraper.
+   Example:
+     (icon GoogleMaterialDesignIcons/EDIT)"
+  ([ico]       (icon ico (state/state :icon-color) (state/state :icon-size)))
+  ([ico color] (icon ico color (state/state :icon-size)))
+  ([ico color size]
+   (IconFontSwing/buildIcon ico size (hex-color color))))
+
+;; Demo
+(comment
+  (-> (c/frame :minimum-size [200 :by 200]
+               :content (c/label :icon (icon GoogleMaterialDesignIcons/EDIT)))
+      c/pack!
+      c/show!))
+
+
+
 ;; ┌───────────────┐
 ;; │               │
 ;; │     DEMO      │
@@ -234,9 +273,9 @@
   []
   (let [mig (mig-panel
              :constraints ["" "[50%, center]" "[50%, center]"]
-             :background  (Color. 0 0 0)
-             :items [[(c/label :text "Demo 1")]
-                     [(c/label :text "Demo 2")]])]
+             :background  (hex-color "#9cb")
+             :items [[(c/label :text "Demo 1" :icon (icon GoogleMaterialDesignIcons/SAVE))]
+                     [(c/label :text "Demo 2" :icon (icon GoogleMaterialDesignIcons/CLOSE "#f00" 30))]])]
     mig))
 
 
@@ -279,9 +318,6 @@
       (.setOpacity 0.7)
       (.setLocationRelativeTo nil) c/pack! c/show!)))
 
-
-;; (style-demo)
-
-
-
-
+(comment
+  (style-demo)
+  )

@@ -104,6 +104,13 @@
 (define-face c-popup-head-background)
 (define-face c-popup-border)
 
+;; Icon color
+(define-face c-icon)
+(define-face c-icon-focus)
+(define-face c-icon-info)
+(define-face c-icon-warning)
+(define-face c-icon-danger)
+
 ;; [underscore-panel
 ;;  button-border-bottom
 ;;  button-border-top

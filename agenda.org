@@ -11,7 +11,10 @@
 * Frontend
 ** PROCESSING [#1] Frontend refactorization
    DEADLINE: <2021-09-15 śro>
-*** TODO Icons                                                       :@Julia:
+*** TODO Repair expand button [0/2]                                  :@Aleks:
+    - [ ] Rainbow margin
+    - [ ] Separate last element in inside expand
+*** TOREVIEW Icons [1/11]                                            :@Julia:
     - [ ] Plus icon. Replace =plus= icon, make add width, and make only one color. And =minus= do little bit higher, also =x= icon
     - [ ] refresh-reload icons, increase arrow, and make some distance between each other. Only one color
     - [ ] Left/Right direction one arrow. like =->= and =<-=
@@ -23,6 +26,13 @@
     - [ ] Warning icon as yellow triangle with an exclamation mark
     - [ ] Danger icon, now existing icon alert-red-512.png, we need 64 and 128 too
     - [ ] Save icon as floppy disk (it is more universal symbol)
+*** TOREVIEW New icons as fonts [4/6]                                :@Aleks:
+    - [X] New fn for icon return (~gui-style/icon GoogleMaterialDesignIcons/some-icon "#000" 30)~
+    - [X] Demo to quick startup in gui_style.clj
+    - [X] Set new feature to alert system
+    - [X] Set demo alerts (access: developer, buttons will show in main menu)
+    - [ ] Set new feature to menu bars
+    - [ ] Set new feature to other if needed
 *** DONE Upgrade UI Elements                                         :@Aleks:
     CLOSED: [2021-09-16 czw. 04:38]
     :PROPERTIES:

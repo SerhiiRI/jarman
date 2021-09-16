@@ -38,6 +38,7 @@
 
 (defmacro print-header [header & body]
   `(binding [jarman.tools.org/*level* (inc jarman.tools.org/*level*)]
+     (if (= *level* 1) (println))
      (jarman.tools.org/out-header ~header)
      (do ~@body)))
 

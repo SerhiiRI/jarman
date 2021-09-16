@@ -28,7 +28,8 @@
    ;; environtemnt variables
    [jarman.config.environment :as env]
    [jarman.interaction :as i])
-  (:import (java.io IOException FileNotFoundException)))
+  (:import (java.io IOException FileNotFoundException)
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
 
 

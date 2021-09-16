@@ -175,18 +175,18 @@
     Load configuration"
   []
   ;; (managment-data/on-app-start)
-  (println "\n")
+  
   (print-header 
    "Swapp"
    (cm/swapp))
   (dot-jarman-load)
   (print-list-not-loaded)
-  (println "\n")
+  
   (print-header 
    "Load .jarman"
    (dot-jarman-load)
    (print-list-not-loaded))
-  (println "\n")
+  
   (print-header
    "Load Extensions"
    (do-load-extensions)))
@@ -203,17 +203,17 @@
   ;; please do not remove Jarman-Ligth out
   ;; from integrated into jarman ns's.
   (if (nil? (state/state :theme-first-load))
-    (do (println "\n")
+    (do 
         (do-load-theme "Jarman Light")
         (state/set-state :theme-first-load true)
         (print-header "First theme loaded")))
-  (println "\n")
+  
   (print-header
    "Load selected theme"
    (try
     (do-load-theme (state/state :theme-name))
     (catch Exception e (print-line (str "\n[ ! ] Theme loading can not complete. Some value faild.\n"))))
-   (println "\n")
+   
    (print-line "apply default global style") 
    (gs/load-style))
 
@@ -300,15 +300,15 @@
 (defn load-level-4
   "Description:
     Load main menu." []
-  (println "\n")
+  (println)
   (print-header
    "Clean main menu"
    (menu/clean-main-menu))
-  (println "\n")
+  (println)
   (print-header
    "Load view plugin into main menu"
    (load-plugins-to-main-menu))
-  (println "\n")
+  (println)
   (print-header
    "Load static main menu"
    (load-static-main-menu)))

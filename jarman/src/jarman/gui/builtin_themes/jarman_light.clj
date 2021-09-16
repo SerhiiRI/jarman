@@ -114,7 +114,7 @@
        s-underline                underline-size
        
        ;; Icon color
-       c-icon                     c-foreground
+       c-icon                     jarman-blue
        c-icon-focus               c-caret
        c-icon-info                c-border
        c-icon-warning             c-border-warning

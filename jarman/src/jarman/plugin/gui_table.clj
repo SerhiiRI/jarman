@@ -48,7 +48,6 @@
   (fn [listener-fn]
     (let [table-model (table-model)
           TT (swingx/table-x :model table-model :border (seesaw.border/empty-border))]
-      (if (empty? (table-model)) (println "EMPTY DB:"))
       (c/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (c/selection TT)))))
       (c/config! TT :horizontal-scroll-enabled? true)
       (c/config! TT :show-grid? false)
@@ -63,8 +62,6 @@
     (if (and view table-list)
       (let [model-columns (gui-table-model-columns table-list view)
             table-model (gui-table-model model-columns (:select toolkit-map))]
-
-        (println "TABLE_MODEL______" (table-model) )
         {:table-model table-model
          :table (gui-table table-model)}))))
 

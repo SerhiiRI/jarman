@@ -31,6 +31,7 @@
    [jarman.plugin.data-toolkit :as query-toolkit]
    [jarman.plugin.gui-table :as gtable]
    [jarman.plugin.plugin]
+   [jarman.interaction :as i]
    ;; locals 
    [plugin.table.composite-components :as ccomp])
   (:import
@@ -270,12 +271,9 @@
                                     (try
                                       ((doc/prepare-export-file
                                         (:->table-name plugin-config) doc-model) id (:file-path model-changes))
-                                      ((state/state :alert-manager)               
-                                       :set {:header (gtool/get-lang-alerts :success)
-                                             :body (gtool/get-lang-alerts :export-doc-ok)}  7)
-                                      (catch Exception e ((state/state :alert-manager)
-                                                          :set {:header (gtool/get-lang-alerts :faild)
-                                                                :body (gtool/get-lang-alerts :export-doc-faild)}  7))))
+                                      (i/info (gtool/get-lang-alerts :success) (gtool/get-lang-alerts :export-doc-ok))
+                                      (catch Exception e
+                                        (i/warning (gtool/get-lang-alerts :failed) (gtool/get-lang-alerts :export-doc-failed)))))
                          :args [:halign :left])])
                      (:->documents plugin-config)))
                    (c/label))
@@ -341,18 +339,14 @@
             fcomps-colmns  (get grouped-model true)
             sm-colmns      (get grouped-model nil) 
             id-insert      (if (empty? sm-colmns)
-                             (do ((state/state :alert-manager)               
-                                  :set {:header (gtool/get-lang-alerts :success)
-                                        :body   "Model can not be empty, please enter at least one simple field"}  7))
+                             (do (i/info (gtool/get-lang-alerts :success)  "Model can not be empty, please enter at least one simple field"))
                              (:generated_key
                               (try (jdbc/execute! @jarman.logic.connection/*connection*
                                                   ((:insert-expression plugin-toolkit)
                                                    (ungrouping-model (state!) (apply hash-map
                                                                                      (apply concat sm-colmns))))
                                                   {:return-keys true})
-                                   (catch Exception e ((state/state :alert-manager)               
-                                                       :set {:header (gtool/get-lang-alerts :error)
-                                                             :body (.getMessage e)} 7)))))]
+                                   (catch Exception e (i/warning (gtool/get-lang-alerts :error) (.getMessage e))))))]
         (if-not (nil? id-insert)
           (update-comp-col state! id-insert fcomps-colmns))
         (println "INSERT MODEL CHANGES ___" model-changes ">>>" id-insert)))))

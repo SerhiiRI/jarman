@@ -49,13 +49,12 @@
 (def expand-colors
   (fn []
    (if (empty? face/cvv-button-expand)
-     [["#f7f7f7" "#fafafa"]
-      ["#f0f6fa" "#f0f6fa"]
-      ["#ebf7ff" "#ebf7ff"]
-      ["#daeaf5" "#daeaf5"]
-      ["#bfd3e0" "#bfd3e0"]]
+     [["#f7f7f7" "#fafafa" "#000"]
+      ["#f0f6fa" "#f0f6fa" "#000"]
+      ["#ebf7ff" "#ebf7ff" "#000"]
+      ["#daeaf5" "#daeaf5" "#000"]
+      ["#bfd3e0" "#bfd3e0" "#000"]]
      face/cvv-button-expand)))
-
 
 (defn- repeat-colors
   [colors-fn loop]
@@ -94,7 +93,7 @@
        (str k)
        depper
        :background (first (nth (get-colors lvl) lvl))
-       :c-left     (first (nth (get-colors lvl) lvl))
+       :c-left     (first (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
        :left-gap   (* lvl 3)))))
 
 (defn- part-button [k v lvl]
@@ -106,6 +105,8 @@
        (str k)
        :left-offset (+ (* (dec lvl) 3) 6)
        :c-focus (second (nth (get-colors (dec lvl)) (dec lvl)))
+       :c-left  (first (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
+       :background (last (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
        :onClick
        (if-not (nil? (:fn v))
          (if (= :invoke (:action v))

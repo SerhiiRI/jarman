@@ -387,7 +387,9 @@
   []
   #break (let [data (*view-loader-chain-fn*)]
            (if (empty? data)
-             (i/warning "Error" "Problem with tables. Data not found in DB")
+             (i/danger "Error" "Problem with tables. Data not found in DB
+                                <br><br><b>Module:</b> view-manager
+                                    <br><b>Fn:</b> do-view-load")
              (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
                (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))
            (return-structure-tree (deref user-menu))))

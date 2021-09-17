@@ -22,30 +22,27 @@
            ))
 
 (defn- ubuntu-font [font] (str "./resources/fonts/ubuntu/" font))
-(def fonts {:plain    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-R.ttf")))  14.0)
-            :bold     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-B.ttf")))  14.0)
-            :bold-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-BI.ttf"))) 14.0)
-            :italic   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-RI.ttf"))) 14.0)
-            :light    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-L.ttf")))  14.0)
-            :light-i  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-LI.ttf"))) 14.0)
-            :medium   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-M.ttf")))  14.0)
-            :medium-i (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-MI.ttf"))) 14.0)
-            
-            :mono     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-R.ttf")))  14.0)
-            :mono-b   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-B.ttf")))  14.0)
-            :mono-bi  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-BI.ttf"))) 14.0)
-            :mono-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-RI.ttf"))) 14.0)
+(defn fonts []
+  {:plain    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-R.ttf")))  (float face/s-foreground))
+   :bold     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-B.ttf")))  (float face/s-foreground))
+   :bold-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-BI.ttf"))) (float face/s-foreground))
+   :italic   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-RI.ttf"))) (float face/s-foreground))
+   :light    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-L.ttf")))  (float face/s-foreground))
+   :light-i  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-LI.ttf"))) (float face/s-foreground))
+   :medium   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-M.ttf")))  (float face/s-foreground))
+   :medium-i (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-MI.ttf"))) (float face/s-foreground))
+   
+   :mono     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-R.ttf")))  (float face/s-foreground))
+   :mono-b   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-B.ttf")))  (float face/s-foreground))
+   :mono-bi  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-BI.ttf"))) (float face/s-foreground))
+   :mono-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-RI.ttf"))) (float face/s-foreground))
 
-            :thin      (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-Th.ttf"))) 14.0)
-            :condensed (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-C.ttf")))  14.0)})
-
-(state/set-state :fonts fonts)
+   :thin      (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-Th.ttf"))) (float face/s-foreground))
+   :condensed (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-C.ttf")))  (float face/s-foreground))})
 
 (defn- register-fonts []
   (doall (map (fn [[name-k font]] (.registerFont (GraphicsEnvironment/getLocalGraphicsEnvironment) font))
-              fonts)))
-(register-fonts)
-
+              (fonts))))
 
 (defn hex-to-rgb 
   "Description:
@@ -183,9 +180,11 @@
 
 
 (defn update-fonts
-  ([]                (update-fonts (:plain fonts) (compo-list-suffix (all-compos) ".font")))
+  ([]                (update-fonts (:plain (fonts)) (compo-list-suffix (all-compos) ".font")))
   ([font]            (update-fonts font (compo-list-suffix (all-compos) ".font")))
-  ([font compo-list] (doall (map #(UIManager/put % font) compo-list))))
+  ([font compo-list] (do
+                       (register-fonts)
+                       (doall (map #(UIManager/put % font) compo-list)))))
 
 (defn update-layouts-background
   ([]                (update-layouts-background (resrc-hex-color face/c-layout-background) (compo-list-suffix (layouts-list) ".background")))
@@ -208,11 +207,11 @@
   ([caret compo-list] (doall (map #(UIManager/put % caret) compo-list))))
 
 (defn getFont
-  ([] fonts)
+  ([] (fonts))
   ([sizeorfont] (if (keyword? sizeorfont)
-                  (sizeorfont fonts)
+                  (sizeorfont (fonts))
                   (getFont :plain sizeorfont)))
-  ([font size] (.deriveFont (font fonts) (float size))))
+  ([font size] (.deriveFont (font (fonts)) (float size))))
 
 (state/set-state :theme-name "Jarman Light")
 

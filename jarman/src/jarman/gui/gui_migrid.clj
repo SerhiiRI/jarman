@@ -18,7 +18,7 @@
              hrules
              debug
              args]
-      :or {items [[(c/label)]]
+      :or {items []
            wrap 0
            lgap 0
            rgap 0
@@ -116,9 +116,10 @@
                 (keyword? vtemp) (get templates vtemp)
                 (int?     vtemp) (str "[" vtemp ":" vtemp "%:100%, fill]")
                 :else            (:a   templates))
-      :items (gtool/join-mig-items
-              (if (or (= vtemp :bottom) (= htemp :right)) (c/label) [])
-              (if (sequential? items) items [items]))
+      :items (if (and (sequential? items) (empty? items) (not (nil? items))) []
+               (gtool/join-mig-items
+                (if (or (= vtemp :bottom) (= htemp :right)) (c/label) [])
+                (if (sequential? items) items [items])))
       :gap gap
       :tgap tgap
       :bgap bgap

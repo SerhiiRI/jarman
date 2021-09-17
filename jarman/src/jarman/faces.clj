@@ -8,6 +8,7 @@
 ;;; UI elemnt colors
 ;;; Global default styles
 (define-face c-foreground)
+(define-face s-foreground)
 (define-face c-caret)
 
 (define-face c-layout-background)
@@ -38,6 +39,7 @@
 
 ;; Icon color
 (define-face c-icon)
+(define-face s-icon)
 (define-face c-icon-focus)
 (define-face c-icon-close-focus)
 (define-face c-icon-info)

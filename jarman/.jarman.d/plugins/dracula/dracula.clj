@@ -43,11 +43,14 @@
    "fg4-light"          "#b6b6b2"
    "fg4-strong"         "#b2b2b2"
 
+   
+   "font-size"             14.0
+   "icon-size"             20
    "underline-size"        2
    "underline-tabbar-size" 1
    "timelife-alert-popup"  3
-   "expand-btn-colors" [["#303030" "#505050"]
-                        ["#202f2f" "#303f3f"]]})
+   "expand-btn-colors" [["#303030" "#505050" "#616161"]
+                        ["#556b2f" "#667c3f" "#778d4f"]]})
 
 (defmacro ^:private with-dracula-colors
   [& body]
@@ -65,6 +68,7 @@
      '( ;; -- Theme binder --
        ;; Default styles !!! Do not using in code, do not add new here !!!
        c-foreground                orange-strong
+       s-foreground                font-size
        c-caret                     orange-light-2
 
        c-layout-background         bg2-light
@@ -95,6 +99,7 @@
        
        ;; Icon color
        c-icon                     c-foreground
+       s-icon                     icon-size
        c-icon-focus               c-caret
        c-icon-close-focus         c-border-danger
        c-icon-info                cyan-light

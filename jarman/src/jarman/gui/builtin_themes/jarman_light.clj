@@ -53,14 +53,17 @@
    "jarman-blue-light" "#d9ecff"
    "jarman-super-dark" "#020020"
 
+   "font-size"               14.0
+   "icon-size"               20
    "underline-size"          2
    "underline-tabbar-size"   1
    "timelife-alert-popup"    3
-   "expand-btn-colors" [["#f7f7f7" "#fafafa"]
-                        ["#f0f6fa" "#f0f6fa"]
-                        ["#ebf7ff" "#ebf7ff"]
-                        ["#daeaf5" "#daeaf5"]
-                        ["#bfd3e0" "#bfd3e0"]]})
+   "expand-btn-colors" [;;["#f7f7f7" "#fafafa" "#000"]
+                        ["#ececec" "#ececec" "#f7f7f7"]
+                        ["#e0e0e0" "#e0e0e0" "#efefef"]
+                        ["#ccc" "#ccc" "#ddd"]
+                        ["#bbb" "#bbb" "#ccc"]
+                        ]})
 
 ;;;;;;;;;;;;;;
 ;;; HELPER ;;;
@@ -85,6 +88,7 @@
      '( ;; -- Theme binder --
        ;; Default styles  !!! Do not using in code, do not add new here !!!
        c-foreground               jarman-super-dark
+       s-foreground               font-size
        c-caret                    jarman-blue-dark
 
        c-layout-background        gray-light-2
@@ -115,6 +119,7 @@
        
        ;; Icon color
        c-icon                     c-foreground
+       s-icon                     icon-size
        c-icon-focus               belize-hole
        c-icon-close-focus         c-border-danger
        c-icon-info                c-border

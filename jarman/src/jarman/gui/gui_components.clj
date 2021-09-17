@@ -1104,9 +1104,7 @@
           inside-btns (if (sequential? (first inside-btns)) (first inside-btns) inside-btns) ;; check if list in list
           ico (if (or (= :always expand) (not (nil? inside-btns))) ico nil)
           title (c/label
-                 :border (b/compound-border
-                          (b/empty-border :left 10)
-                          (b/line-border :left left-gap :color c-left))
+                 :border (b/line-border :left left-gap :color background)
                  :text txt
                  :font (gs/getFont :bold)
                  :foreground foreground
@@ -1135,39 +1133,29 @@
                         :border border
                         :size [min-height :by vsize]
                         :items [[title :west]
-                                [icon  :east]]))]
+                                [icon  :east]]))
+          expand-box (gmg/migrid :v "[200, fill]" {:args [:border (b/line-border :left 3 :color background)]} [])]
       (if (nil? onClick)
         (let [onClick (fn [e]
-                        (if-not (nil? @atom-inside-btns)
-                          (if (= (count (u/children mig)) 1)
+                        (if-not (nil? inside-btns)
+                          (if (= 0 (count (u/children expand-box)))
                             (do ;;  Add inside buttons to mig with expand button
                               (c/config! icon :icon ico-hover)
-                              (doall (map (fn [btn]
-                                            (.add mig btn))
-                                          @atom-inside-btns))
-                              ;;(gtool/set-focus (first @atom-inside-btns))
-                              ;;(gtool/switch-focus)
-                              ;;(println "OPENN")
-                              (.revalidate mig) 
-                              (.repaint mig)
-                              (c/config! mig :user-data "HEYY" ;;(into user-data {:expanded? true})
-                                         ))
+                              (c/config! expand-box :items (gtool/join-mig-items inside-btns))
+                              (.revalidate mig)
+                              (.repaint mig))
                             (do ;;  Remove inside buttons form mig without expand button
                               (c/config! icon :icon ico)
-                              ;;(println  "CLOOSEEE")
-                              (doall (map #(.remove mig %) (reverse (drop 1 (range (count (u/children mig)))))))
+                              (c/config! expand-box :items [])
                               (.revalidate mig)
-                              (.repaint mig)
-                              (c/config! mig :user-data "HEyy-NOO" ;;(into user-data {:expanded? false})
-                                         )))))]
+                              (.repaint mig)))))]
           (do
-            (reset! atom-inside-btns inside-btns)
+            ;; (reset! atom-inside-btns inside-btns)
             (c/config! mig
                        :id id
                        ;;:user-data (if-not (nil? @atom-inside-btns) "YEEESS" "NOOO")
-                       :items [[(expand-btn onClick)]])))
-        (c/config! mig :id id :items [[(expand-btn onClick)]])))))
-
+                       :items [[(expand-btn onClick)] [expand-box]])))
+        (c/config! mig :id id :items [[(expand-btn onClick)] [expand-box]])))))
 
 
 (defn expand-input
@@ -1191,6 +1179,7 @@
                  left-offset
                  c-left
                  c-focus
+                 c-fg-focus
                  background
                  foreground
                  cursor
@@ -1201,6 +1190,7 @@
                left-offset 6
                c-left     face/c-main-menu-bg
                c-focus    face/c-on-focus
+               c-fg-focus face/c-foreground
                background face/c-compos-background
                foreground face/c-foreground
                width 200 
@@ -1212,13 +1202,12 @@
            :size  [width :by 25]
            :cursor cursor
            :focusable? true
-           :border (b/compound-border (b/empty-border :left 10)
-                                      (b/line-border  :left left-offset :color c-left))
+           :border (b/empty-border :left 5)
            :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
                     :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
                     :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
-                    :focus-gained  (fn [e] (c/config! e :background c-focus))
-                    :focus-lost    (fn [e] (c/config! e :background background))
+                    :focus-gained  (fn [e] (c/config! e :background c-focus    :foreground c-fg-focus))
+                    :focus-lost    (fn [e] (c/config! e :background background :foreground face/c-foreground))
                     :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gtool/switch-focus))))]
            args)))
 

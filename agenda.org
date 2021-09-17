@@ -9,6 +9,24 @@
 #+STARTUP: overview
 
 * Frontend
+** PROCESSING [#1] /Feature/. Interaction files                        :@Aleks:
+   :PROPERTIES:
+   :CUSTOM_ID: interaction-function-set
+   :END:
+   - [-] =interaction.clj= [1/5]
+     implement file with simple proxy function where every funciton is just wrapper
+     with spec and good to read docs.
+     - [ ] add function =open file in tab= as arg will be file path
+     - [X] invoke alert [info warning danger]
+     - [ ] Hard restart. Recompiling plugin and clean-up global state
+       - [ ] Write doc
+     - [ ] Soft restart. Reaload gui
+       - [ ] Write doc
+     - [ ] Restart. The same as hard without state.
+       - [ ] Write doc
+   - [ ] =faces.clj=
+     Finish moving to new customization style
+
 ** PROCESSING [#1] Frontend refactorization
    DEADLINE: <2021-09-15 śro>
 *** TODO Alerts upgrade                                              :@Aleks:
@@ -59,7 +77,7 @@
 	- [ ] Better colors for levels in expand button in ~Jarman Light~
 	- [ ] Better colors for levels in expand button in ~Dracula~
 
-*** TODO Table.clj                                                   :@Aleks:
+*** TODO Table.clj [3/4]                                             :@Aleks:
     - [X] remove 1pixel black border for right table.
     - [ ] text "hide" replace on julia (not created at that moment) left arrow, and background fill with one gray color, as "tab", or left section in table.clj, where components is.
     - [X] make icon smaller, on 10-20%
@@ -79,31 +97,12 @@
 *** PLANNED Main menu as hide/show section                           :@Aleks:
 
 ** PROCESSING [#1] /Feature/. Jarman Theme Light Style  :@Julia:@Aleks:@Serhii:
-   DEADLINE: <2021-09-16 Thu>
    - [X] rewrite styles config
    - [ ] unifing styles in UI
    - [X] global font
    - [X] global background
    - [X] global foreground
    - [X] removing unnessesary font override         
-** PROCESSING [#1] /Feature/. Interaction files                        :@Aleks:
-   :PROPERTIES:
-   :CUSTOM_ID: interaction-function-set
-   :END:
-   - [-] =interaction.clj= [1/2]
-     implement file with simple proxy function where every funciton is just wrapper
-     with spec and good to read docs.
-     - [ ] add function =open file in tab= as arg will be file path
-     - [X] invoke alert [info warning danger]
-     - [ ] Hard restart. Recompiling plugin and clean-up global state
-       - [ ] Write doc
-     - [ ] Soft restart. Reaload gui
-       - [ ] Write doc
-     - [ ] Restart. The same as hard without state.
-       - [ ] Write doc
-   - [ ] =faces.clj=
-     Finish moving to new customization style
-
 ** TOREVIEW [#1] /Feature/. Implement Faces                            :@Aleks:
 ** TOREVIEW [#1] /Bug/. Loggin panel not compile                       :@Aleks:
    - [ ] check offline startup

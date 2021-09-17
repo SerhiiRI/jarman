@@ -288,12 +288,12 @@
 ;; └──────────────────┘
 
 (defn- history-part
-  [type header body s-popup expand]
+  [type header body s-popup expand w]
   (gmg/migrid
    :>
    (let [c-bg       (alert-type-src type :background)
          c-bg-focus (alert-type-src :alert :border)]
-     (c/label :text (gtool/htmling (str "<b>" header "</b> " body) :no-wrap)
+     (c/label :text (gtool/htmling (gtool/str-cutter (str "<b>" header "</b> " body) (/ w 7)) :no-wrap)
               :icon (alert-type-src type :icon)
               :background c-bg
               :border (b/compound-border
@@ -307,12 +307,12 @@
                        :mouse-clicked (fn [e]
                                         (open-in-popup type header body s-popup expand))]))))
 
-(defn- alerts-history-list []
+(defn- alerts-history-list [w]
   (doall
    (reverse
     (map
      (fn [[k m]]
-       (history-part (:type m) (:header m) (:body m) (:s-popup m) (:expand m)))
+       (history-part (:type m) (:header m) (:body m) (:s-popup m) (:expand m) w))
      (:alerts-storage (state!))))))
 
 (defn- clear-alerts-history []
@@ -321,11 +321,11 @@
 
 (defn history-in-popup
   []
-  (let [history-box (gmg/migrid
-                     :v 
-                     (alerts-history-list))]
+  (let [w 350
+        h 400
+        history-box (gmg/migrid :v (alerts-history-list w))]
     (popup/build-popup
-     {:size [350 400]
+     {:size [w h]
       :comp-fn   (fn [] (gmg/migrid :v :a :gf
                                     [(gcomp/min-scrollbox history-box)
                                      (gcomp/button-basic "Clear"

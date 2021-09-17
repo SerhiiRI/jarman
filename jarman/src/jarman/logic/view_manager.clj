@@ -390,13 +390,9 @@
   []
    (let [data (*view-loader-chain-fn*)]
            (if (empty? data)
-<<<<<<< HEAD
              (i/danger "Error" "Problem with tables. Data not found in DB
                                 <br><br><b>Module:</b> view-manager
                                     <br><b>Fn:</b> do-view-load")
-=======
-             (i/warning "Error" "Problem with load tables from view.clj. Data not found in DB, or connection is invalid in file")
->>>>>>> 87b415daa159660aa2baaf8081dc48093bf028fa
              (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
                (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))
            (return-structure-tree (deref user-menu))))

@@ -25,7 +25,8 @@
    ;; [jarman.tools.fs :as fs]
    ;; [jarman.plugin.extension-manager :as extension-manager]
    ;; environtemnt variables
-   [jarman.config.environment :as env])
+   [jarman.config.environment :as env]
+   [jarman.interaction        :as i])
   (:import (java.io IOException FileNotFoundException)))
 
 
@@ -40,15 +41,11 @@
      ;;          {:current-temperature {:value 25 :unit :celsius}})
      (do ~@body)
      (catch clojure.lang.ExceptionInfo e#
-       ((state/state :alert-manager)               
-        :set {:header "Plagin Manager"
-              :body   (.getMessage e#)}  7)
+       (i/warning "Plagin Manager" (.getMessage e#) :time 7)
        ;; (c/alert (str "Update Manager effrror: " (.getMessage e#) " Type:" (name (:type (ex-data e#)))))
        )
      (catch Exception e#
-       ((state/state :alert-manager)               
-        :set {:header "Plagin Manager"
-              :body   (.getMessage e#)}  7)
+       (i/warning "Plagin Manager" (.getMessage e#) :time 7)
        ;; (c/alert (str "Update Manager Main error: " (.getMessage e#)))
        )))
 
@@ -107,14 +104,8 @@
                [(theme-content theme)
                 (gcomp/button-basic "Apply theme"
                                     :onClick (fn [_] (try-catch-alert
-                                                      (plugin/do-load-theme
-                                                       (:theme-name theme))
                                                       (state/set-state :theme-name (:theme-name theme))
-                                                      (gvs/soft-restar)
-                                                      ((state/state :alert-manager)               
-                                                       :set {:header "Theme manager"
-                                                             :body   (format "Theme `%s` successfully applyed"
-                                                                             (:theme-name theme))} 7))))])))
+                                                      (gvs/soft-restar))))])))
     (conj items
           (info "Empty theme list")
           (info "-- empty --"))))

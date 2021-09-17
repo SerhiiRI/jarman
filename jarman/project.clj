@@ -9,6 +9,8 @@
                  [fr.opensagres.xdocreport/fr.opensagres.xdocreport.document.odt "1.0.3"]
                  [fr.opensagres.xdocreport/fr.opensagres.xdocreport.document.ods "1.0.3"]
                  [com.github.vlsi.mxgraph/jgraphx "4.2.2"]
+                 [com.github.jiconfont/jiconfont-swing "1.0.1"]
+                 [com.github.jiconfont/jiconfont-google_material_design_icons "2.2.0.2"]
                  ;; [org.odftoolkit/odfdom-java "0.9.0-RC1"]
                  ;; [org.odftoolkit/simple-odf "0.9.0-RC1"]
                  [datascript/datascript "1.2.1"]

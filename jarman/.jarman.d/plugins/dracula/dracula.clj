@@ -45,6 +45,7 @@
 
    "underline-size"        2
    "underline-tabbar-size" 1
+   "timelife-alert-popup"  3
    "expand-btn-colors" [["#303030" "#505050"]
                         ["#202f2f" "#303f3f"]]})
 
@@ -72,8 +73,13 @@
        c-compos-background         bg4-light
        c-compos-background-light   bg3-strong
        c-compos-background-dark    bg4-strong
+       c-compos-background-darker  hightlight-strong
 
        c-background-detail         c-layout-background
+       
+       c-border                    hightlight-strong
+       c-border-warning            orange-light
+       c-border-danger             red-light
        
        c-on-focus                  hightlight-light
        c-on-focus-light            bg3-light
@@ -86,6 +92,14 @@
        c-underline-on-focus        orange-strong
        c-underline-on-focus-light  orange-strong
        s-underline                 underline-size
+       
+       ;; Icon color
+       c-icon                     c-foreground
+       c-icon-focus               c-caret
+       c-icon-close-focus         c-border-danger
+       c-icon-info                cyan-light
+       c-icon-warning             c-border-warning
+       c-icon-danger              c-border-danger
        
        cvv-button-expand        expand-btn-colors ;; expand button lvls colors
        
@@ -140,6 +154,19 @@
        c-btn-expand-fg       c-foreground
        c-btn-expand-offset   c-compos-background
 
+       ;; alert
+       c-alert-bg             c-compos-background-light
+       c-alert-fg             c-foreground
+       c-alert-alert-border   c-border
+       c-alert-warning-border c-border-warning
+       c-alert-danger-border  c-border-danger
+       c-alert-timelife       timelife-alert-popup
+
+       ;; Popup box
+       c-popup-body-background c-compos-background
+       c-popup-head-background c-compos-background-darker
+       c-popup-border          c-border
+       
        ))))
 
 

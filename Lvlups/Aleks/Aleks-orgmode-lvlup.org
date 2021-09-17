@@ -2,7 +2,7 @@
 ___________________________________________________
 *Lesson 1:*
  _Topic:_
-  /TODO list, schedule, styling and code in block/
+  /TODO list, schedule, styling and code in block/, shortcut
 
 ** Task demo
 *** DONE Start new org file for tutorial
@@ -22,8 +22,15 @@ And here is my [[https://c.tenor.com/rCY3koHdiTwAAAAM/ok-hand-pepe.gif][Pepe]] s
    C-c C-t      Task DONE
    M-S-Return   Add new TODO
    S-Tab        fold/unfold all
+   
+*** Agenda
+    C-c a          Agenda menu and tips
+    M-S-left/right Header lvl
+    M-up/down      Header jump up/down
+    C-c C-x C-a    Archive task
+    S-up/down      Priorytet up/down
 
-*** Claendar navigation
+*** Cleandar navigation
    C-c .	Prompt for active date
    C-c !	Prompt for inactive date
    C-c C-d	Enter a DEADLINE date
@@ -35,6 +42,7 @@ And here is my [[https://c.tenor.com/rCY3koHdiTwAAAAM/ok-hand-pepe.gif][Pepe]] s
    <	Scroll calendar back 1 month
    >	Scroll calendar forward 1 month
    .	Go to Today
+   S-left/right change date prev/next
 
 *** Calendar hacks
     15          Date of current month
@@ -88,7 +96,6 @@ ____________________________________________________
 *** X, A, B, C   auto table, select and use C-c |
   | X | A | B | C |
 
-  
 ** Table editing 
 
 *** Moving row/coll
@@ -165,3 +172,4 @@ ____________________________________________________
     Tab     Next cell
     S-Tab   Back cell
     S-RET   Next row
+

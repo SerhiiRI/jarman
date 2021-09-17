@@ -58,12 +58,13 @@
    :minimum-size [600 :by 400]
    :content (state/state :app)
    ;;    :on-close :exit
-   :listen [:component-resized (fn [e]
-                                 ;;  (println e)
-                                 (let [w (.getWidth (.getSize (.getContentPane (to-root e))))
-                                       h (.getHeight (.getSize (.getContentPane (to-root e))))]
-                                   (reset! (state/state :atom-app-size) [w h]))
-                                 (.revalidate (to-widget e)))]))
+   :listen [:component-resized
+            (fn [e]
+              ;;  (println e)
+              (let [w (.getWidth (.getSize (.getContentPane (to-root e))))
+                    h (.getHeight (.getSize (.getContentPane (to-root e))))]
+                (reset! (state/state :atom-app-size) [w h]))
+              (.revalidate (to-widget e)))]))
 
 (def build
   (fn [& {:keys [title
@@ -77,7 +78,7 @@
     (let [set-items (if-not (sequential? items) (list items) items)]
       (do
         (state/set-state :app (base set-items))
-        (state/set-state :alert-manager (gas/message-server-creator (state/state :app)))
+        (gas/start :soft (state/state :soft-restart))
         (if (and (state/state :soft-restart)
                  (not (nil? (state/state :frame))))
           (do

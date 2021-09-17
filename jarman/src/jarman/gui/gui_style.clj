@@ -3,7 +3,9 @@
   (:require [seesaw.core   :as c]
             [seesaw.border :as b]
             [jarman.logic.state :as state]
-            [jarman.tools.lang :refer :all])
+            [jarman.tools.lang :refer :all]
+            [jarman.gui.builtin-themes.jarman-light]
+            [jarman.faces :as face])
   (:import (javax.swing.text SimpleAttributeSet)
            (javax.swing.plaf ColorUIResource)
            (javax.swing UIManager)
@@ -13,6 +15,10 @@
            (java.io File)
            (java.nio.file Files)
            (java.awt GraphicsEnvironment)
+           (jiconfont IconFont DefaultIconCode)           
+           (jiconfont.swing IconFontSwing)
+           (java.io InputStream)
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
            ))
 
 (defn- ubuntu-font [font] (str "./resources/fonts/ubuntu/" font))
@@ -139,9 +145,9 @@
              lgap-in
              bgap-in
              rgap-in]
-      :or {c-fg "#000"
-           c-bg "#ccc"
-           c-border "#fff"
+      :or {c-fg face/c-table-header-fg
+           c-bg face/c-table-header-bg
+           c-border face/c-table-header-border
            tgap 0
            lgap 0
            bgap 0
@@ -164,9 +170,9 @@
              lgap
              bgap
              rgap]
-      :or {c-select-fg  "#000"
-           c-select-bg  "#d9ecff"
-           c-focus-cell "#000"
+      :or {c-select-fg  face/c-table-select-row-fg
+           c-select-bg  face/c-table-select-row-bg
+           c-focus-cell face/c-table-select-cell
            tgap 3
            lgap 3
            bgap 3
@@ -175,8 +181,6 @@
   (UIManager/put "Table.selectionBackground"      (hex-color c-select-bg))
   (UIManager/put "Table.focusCellHighlightBorder" (BorderFactory/createLineBorder (hex-color c-focus-cell))))
 
-(update-table)
-(update-table-header)
 
 (defn update-fonts
   ([]                (update-fonts (:plain fonts) (compo-list-suffix (all-compos) ".font")))
@@ -184,22 +188,22 @@
   ([font compo-list] (doall (map #(UIManager/put % font) compo-list))))
 
 (defn update-layouts-background
-  ([]                (update-layouts-background (resrc-hex-color "#efefef") (compo-list-suffix (layouts-list) ".background")))
+  ([]                (update-layouts-background (resrc-hex-color face/c-layout-background) (compo-list-suffix (layouts-list) ".background")))
   ([background]      (update-layouts-background (resrc-hex-color background) (compo-list-suffix (layouts-list) ".background")))
   ([background compo-list] (doall (map #(UIManager/put % background) compo-list))))
 
 (defn update-compos-background
-  ([]                (update-compos-background (resrc-hex-color "#ffffff") (compo-list-suffix (compos-list) ".background")))
+  ([]                (update-compos-background (resrc-hex-color face/c-compos-background) (compo-list-suffix (compos-list) ".background")))
   ([background]      (update-compos-background (resrc-hex-color background) (compo-list-suffix (compos-list) ".background")))
   ([background compo-list] (doall (map #(UIManager/put % background) compo-list))))
 
 (defn update-foreground
-  ([]                (update-foreground (hex-color "#020020") (compo-list-suffix (all-compos) ".foreground")))
+  ([]                (update-foreground (hex-color face/c-foreground) (compo-list-suffix (all-compos) ".foreground")))
   ([foreground]      (update-foreground (hex-color foreground) (compo-list-suffix (all-compos) ".foreground")))
   ([foreground compo-list] (doall (map #(UIManager/put % foreground) compo-list))))
 
 (defn update-caret
-  ([]                 (update-caret (hex-color "#020020") (compo-list-suffix (all-compos) ".caretForeground")))
+  ([]                 (update-caret (hex-color face/c-caret) (compo-list-suffix (all-compos) ".caretForeground")))
   ([caret]            (update-caret (hex-color caret) (compo-list-suffix (all-compos) ".caretForeground")))
   ([caret compo-list] (doall (map #(UIManager/put % caret) compo-list))))
 
@@ -216,14 +220,41 @@
   "Description:
     Load global style."
   []
-  (update-scrollbar)
   (update-fonts)
+  (update-foreground)
+  (update-caret)
   (update-layouts-background)
   (update-compos-background)
-  (update-foreground)
+  (update-scrollbar)
   (update-table-header)
   (update-table)
-  (update-caret))
+  )
+
+
+;; ┌───────────────────────────┐
+;; │                           │
+;; │        Font icons         │
+;; │                           │
+;; └───────────────────────────┘
+(IconFontSwing/register (GoogleMaterialDesignIcons/getIconFont))
+(defn icon
+  "Description:
+     Icon font wraper.
+   Example:
+     (icon GoogleMaterialDesignIcons/EDIT)"
+  ([ico]       (icon ico face/c-icon 20))
+  ([ico color] (icon ico color 20))
+  ([ico color size]
+   (IconFontSwing/buildIcon ico size (hex-color color))))
+
+;; Demo
+(comment
+  (-> (c/frame :minimum-size [200 :by 200]
+               :content (c/label :icon (icon GoogleMaterialDesignIcons/EDIT)))
+      c/pack!
+      c/show!))
+
+
 
 ;; ┌───────────────┐
 ;; │               │
@@ -234,9 +265,9 @@
   []
   (let [mig (mig-panel
              :constraints ["" "[50%, center]" "[50%, center]"]
-             :background  (Color. 0 0 0)
-             :items [[(c/label :text "Demo 1")]
-                     [(c/label :text "Demo 2")]])]
+             :background  (hex-color "#9cb")
+             :items [[(c/label :text "Demo 1" :icon (icon GoogleMaterialDesignIcons/SAVE))]
+                     [(c/label :text "Demo 2" :icon (icon GoogleMaterialDesignIcons/CLOSE "#f00" 30))]])]
     mig))
 
 
@@ -279,9 +310,6 @@
       (.setOpacity 0.7)
       (.setLocationRelativeTo nil) c/pack! c/show!)))
 
-
-;; (style-demo)
-
-
-
-
+(comment
+  (style-demo)
+  )

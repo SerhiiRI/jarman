@@ -10,55 +10,54 @@
 
 * Frontend
 ** PROCESSING [#1] Frontend refactorization
-   DEADLINE: <2021-09-15 Wed>
-*** TODO Icons                                                       :@Julia:
-    - [ ] Plus icon. Replace =plus= icon, make add width, and make only one color. And =minus= do little bit higher, also =x= icon
-    - [ ] refresh-reload icons, increase arrow, and make some distance between each other. Only one color
-    - [ ] Left/Right direction one arrow. like =->= and =<-=
-    - [X] =odt export= file icon
-    - [ ] logout icon.
-    - [ ] =Select all=, is like "checkbox" =[V]=
-    - [ ] Pay icon. (hrywna) + (dolar)
-    - [ ] До лупи додати кінець, одноколірна.
-*** TODO Upgrade UI Elements                                         :@Aleks:
-    :PROPERTIES:
-    :CUSTOM_ID: alert-boxes-replacement
-    :END:
-    - [ ] to ~(state/state :alert-manager)~
-      #+begin_src clojure
-	((state/state :alert-manager)
-	 :set {:status :warning
-	       :header "Update Manager"
-	       :body   "Local Jarman configuraion was deleted"} 7)
-      #+end_src
-      add =:status= key, with options
-      - =:warning=, that colorify alert box in /Yellow/ or /Orange/ box
-      - =:info= - colorify alert box in /Blue/ (default color, and default option if =:status= not set)
-      - =:error= - colorify alert box in /Red/.
-      
-*** TODO Main view                                                   :@Aleks:
-    - [X] On tabs replace non-active tab on more brighter color.
-    - [X] ON tabs replace ~x~ icon on one color.
-    - [-] change slider menu [3/4]
+   DEADLINE: <2021-09-15 śro>
+*** TODO Alerts upgrade                                              :@Aleks:
+    - [ ] /Feature/. warning alert, which notify user about update
+    - [ ] /Feature/. TMP storage. invoking alerts after some event like loaded app.
+    - [ ] /Feature/. Success alert type.
+*** TODO Repair expand button [0/2]                                  :@Aleks:
+    - [ ] Rainbow margin
+    - [ ] Separate last element in inside expand
+*** TOREVIEW New icons as fonts [5/7]                                :@Aleks:
+    - [X] New fn for icon return (~gui-style/icon GoogleMaterialDesignIcons/some-icon "#000" 30)~
+    - [X] Demo to quick startup in gui_style.clj
+    - [X] Set new feature to alert system
+    - [X] Set demo alerts (access: developer, buttons will show in main menu)
+    - [X] New face for close icon, listen event mouse entered
+    - [ ] Set new feature to menu bars
+    - [ ] Set new feature to other if needed
+*** TODO Main view & Styling                                         :@Aleks:
+    - [X] Gui View Service [2/2]
+      - [X] On tabs replace non-active tab on more brighter color.
+      - [X] ON tabs replace ~x~ icon on one color.
+    - [X] Default styling [4/4]
+      - [X] Font. Set global Font's for all GUI components, becuase all plugins also must inherit those.
+      - [X] Background. Set global background for all components.
+      - [X] Foreground. Set global background for all components.
+      - [X] Set default scrollbar size.
+    - [-] change slider menu [3/5]
+      - [ ] enable/disable slider menu in ~.jarman~ configuraion.
+      - [ ] slider menu size, put this option to ~theme faces~
       - [X] to ~close-app~ also add ~logout~
       - [X] remove ~Change work mode~, and add optino to ~.jarman~ which will be add "key icon" to slider menu.
-      - [ ] create slider menu ~.jarman~ configuraion.
       - [X] Remove ~Db visuliser~ from left bar.
-    - [X] Font. Select automaticaly Font's for all GUI components, becuase all plugins also must inherit those.
-    - [-] Menu bar [6/8]
-      - [ ] increase slider menu size, and put this option to ~.jarman~ or ~.jarman.d/config~ directory, for you taste.
+    - [-] Main Menu [5/7]
+      - [ ] main menu size, put this option to theme faces
       - [ ] Add documentation how to correctly pin some components to menus. Also add more information to the Exceptions
 	When i pin my panel, i get exception
 	#+begin_example
 	Gui view service: Cannot rerender :view-spaceWrong number of args (0) passed to: jarman.gui.gui-main-menu/default-menu-items/fn--28447
 	#+end_example
 	This is missunderstandable, please make throw some Exeption
-      - [X] Levels. Add spaces inside expand buttons groups.
-      - [X] For levels in expand button please choose at least Six color levels, and repeat if user create level 7 or 8.
-      - [X] For levels choose rainbow colors but make it little bit more pastel.
+      - [X] Levels. Add spaces inside expand buttons groups. Expand in expand.
+      - [X] Repeat colors for levels in expand button
       - [X] Change all black font's on closelly to black. Use some *dark-gray*, with blue-direction - ~#030D1C~ as example.
       - [X] Also for expand buttons use bold ubuntu fonts (looks little crappy).
       - [X] Chnage ordering items in menubar. At first place user must saw all buisness tables, and next any other *setting* or *db visualizer* etc.
+    - [ ] Cooperative theme standarization [0/1]
+      - [ ] Main menu [0/2]
+	- [ ] Better colors for levels in expand button in ~Jarman Light~
+	- [ ] Better colors for levels in expand button in ~Dracula~
 
 *** TODO Table.clj                                                   :@Aleks:
     - [X] remove 1pixel black border for right table.
@@ -77,6 +76,8 @@
       - [ ] For Service Months use ths format style notation "01-01-2020 - 04-01-2021,  100 zl", money also in pastel green.
     - [ ] Julia call it *insert-space*, is section where we adding new service contract. Rewrite whole panel, but keep logic as we create before.
     - [ ] After you click on one month, you can edit all service contract month payments. You can edit, only if month wasn't payed. Rewrite Julia view, on your implementation. I think better be when all those month fields be in one line.
+*** PLANNED Main menu as hide/show section                           :@Aleks:
+
 ** PROCESSING [#1] /Feature/. Jarman Theme Light Style  :@Julia:@Aleks:@Serhii:
    DEADLINE: <2021-09-16 Thu>
    - [X] rewrite styles config
@@ -89,14 +90,21 @@
    :PROPERTIES:
    :CUSTOM_ID: interaction-function-set
    :END:
-   - [ ] =interaction.clj=
+   - [-] =interaction.clj= [1/2]
      implement file with simple proxy function where every funciton is just wrapper
      with spec and good to read docs.
-     - [ ] add function =open file in tab=
+     - [ ] add function =open file in tab= as arg will be file path
+     - [X] invoke alert [info warning danger]
+     - [ ] Hard restart. Recompiling plugin and clean-up global state
+       - [ ] Write doc
+     - [ ] Soft restart. Reaload gui
+       - [ ] Write doc
+     - [ ] Restart. The same as hard without state.
+       - [ ] Write doc
    - [ ] =faces.clj=
      Finish moving to new customization style
 
-** PROCESSING [#1] /Feature/. Implement Faces                          :@Aleks:
+** TOREVIEW [#1] /Feature/. Implement Faces                            :@Aleks:
 ** TOREVIEW [#1] /Bug/. Loggin panel not compile                       :@Aleks:
    - [ ] check offline startup
 ** TODO [#2] /Bug/. DB Visualizer editing                      :@Aleks:@Serhii:
@@ -168,8 +176,6 @@
        (lang :accept)
        (lang :dracula :theme-name)
      #+end_src
-   - [ ] do not load plugin if those being loaded before
-     suppose it be some checkable variable
 
 ** PROCESSING [#1] /Feature/. defvar expanding                        :@Serhii:
    - [X] Allow defvar declaration for all the places

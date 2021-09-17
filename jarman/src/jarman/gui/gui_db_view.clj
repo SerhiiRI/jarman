@@ -1,6 +1,3 @@
-;; 
-;; Compilation: dev_tool.clj -> metadata.clj -> gui_tools.clj -> gui_alerts_service.clj -> gui_app.clj
-;; 
 (ns jarman.gui.gui-app
   (:use seesaw.core
         seesaw.border

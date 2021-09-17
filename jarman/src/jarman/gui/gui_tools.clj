@@ -20,8 +20,6 @@
 (import java.awt.MouseInfo)
 (import java.awt.event.MouseListener)
 
-(gs/load-style)
-
 (def jarman-focus-now (atom nil))
 
 (defn set-focus
@@ -31,8 +29,19 @@
 (defn set-focus-if-nil
   [object] (if (nil? @jarman-focus-now) (reset! jarman-focus-now object)))
 (defn switch-focus
-  [] (if-not (nil? @jarman-focus-now) (do (.requestFocus @jarman-focus-now)
-                                          (reset! jarman-focus-now nil))))
+  [& {:keys [obj time]
+      :or   {obj nil
+             time 0}}]
+  (if-not (nil? obj) (set-focus obj))
+  (if (> time 0)
+    (timelife time (fn []
+                     (if-not (nil? @jarman-focus-now)
+                       (.requestFocus @jarman-focus-now)
+                       (reset! jarman-focus-now nil))))
+    (if-not (nil? @jarman-focus-now)
+      (.requestFocus @jarman-focus-now)
+      (reset! jarman-focus-now nil))))
+
 ;; ┌─────────────────────────┐
 ;; │                         │
 ;; │ Quick gui functions     │
@@ -81,14 +90,19 @@
 (defn htmling
   "Description
      Build word wrap html
+   Example:
+     (htmling \"Some text\" :center)
    "
   [body & args] 
-  (string/join ["<html><body style='width: 100%; overflow-wrap: break-word;'>" 
-                (cond
-                  (in? args :justify) (format "<p align= \"justify\">%s</p>" body)
-                  (in? args :center)  (format "<p align= \"center\">%s</p>" body)
-                  :else  body)
-                "</body><html>"]))
+  (let [wrap-template-on  "width: 100%; overflow-wrap: break-word; "
+        wrap-template-off "overflow: hidden; white-space: nowrap; text-overflow: ellipsis; "
+        wrapping (if (in? args :no-wrap) wrap-template-off wrap-template-on)]
+    (string/join [(str "<html><body style='" wrapping  "'>") 
+                  (cond
+                    (in? args :justify) (format "<p align= \"justify\">%s</p>" body)
+                    (in? args :center)  (format "<p align= \"center\">%s</p>" body)
+                    :else  body)
+                  "</body><html>"])))
 
 ;; (macroexpand-1 `(textarea "ala am kota" :border (line-border :thickness 1 :color "#a23")))
 

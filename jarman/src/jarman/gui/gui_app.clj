@@ -43,7 +43,8 @@
             [jarman.plugin.plugin            :refer [do-load-theme]]
             [jarman.config.vars              :refer [setq print-list-not-loaded]]
             [jarman.config.dot-jarman        :refer [dot-jarman-load]]
-            [jarman.gui.builtin-themes.jarman-light]))
+            [jarman.gui.builtin-themes.jarman-light]
+            [jarman.interaction              :as i]))
 
  
 ;; ┌──────────────────────────┐
@@ -174,9 +175,24 @@
     Load configuration"
   []
   ;; (managment-data/on-app-start)
-  (cm/swapp)
+  (print-header 
+   "Swapp"
+   (cm/swapp))
   (dot-jarman-load)
   (print-list-not-loaded)
+  (print-header 
+   "Load .jarman"
+   (dot-jarman-load)
+   (print-list-not-loaded))
+  (print-header
+   "Load Extensions"
+   (do-load-extensions)))
+
+;; after swing component was builded
+(defn load-level-1
+  "Description:
+    Check last position and remember x y"
+  [relative-pos]
   ;; ----------------------------------
   ;; Warning! 
   ;; This theme loaded before
@@ -184,43 +200,28 @@
   ;; please do not remove Jarman-Ligth out
   ;; from integrated into jarman ns's.
   (if (nil? (state/state :theme-first-load))
-    (do (do-load-theme "Jarman Light")
+    (do 
+        (do-load-theme "Jarman Light")
         (state/set-state :theme-first-load true)
         (print-header "First theme loaded")))
+
+  (println "\n")
   (print-header
-   "Load selected theme"
-   (try
-    (do-load-theme (state/state :theme-name))
-    (catch Exception e (print-line (str "\n[ ! ] Theme loading can not complete. Some value faild.\n"))))
-   (print-line "apply default global style")
-   (print-line "apply global backgrounds faces for layouts")
-   (gs/update-layouts-background face/c-layout-background)
-   (print-line "apply global backgrounds faces for components")
-   (gs/update-compos-background  face/c-compos-background)
-   (print-line "apply global foreground for all elements")
-   (gs/update-foreground         face/c-foreground)
-   (print-line "apply global caret foreground for all elements")
-   (gs/update-caret              face/c-caret)
-   (print-line "apply global table faces")
-   (gs/update-table :c-select-fg   face/c-table-select-row-fg
-                    :c-select-bg   face/c-table-select-row-bg
-                    :c-focus-cell  face/c-table-select-cell)
-   (print-line "apply global table header faces")
-   (gs/update-table-header :c-fg     face/c-table-header-fg
-                           :c-bg     face/c-table-header-bg
-                           :c-border face/c-table-header-border)))
-;; after swing component was builded
-(defn load-level-1
-  "Description:
-    Check last position and remember x y"
-  [relative-pos]
-  (if (= false (state/state :soft-restart))
-      (try
-        (reset! relative-pos [(.x (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))
-                              (.y (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))])
-        (.dispose (seesaw.core/to-frame (state/state :app)))
-        (catch Exception e nil ;;(println "Last pos is nil")
-               ))))
+   "Apply selected theme" 
+   (do-load-theme (state/state :theme-name))) ;; TODO: Alerts tmp storage with invoke later
+
+  (println "\n")
+  (print-header
+   "apply default global style" 
+   (gs/load-style))
+
+   (if (= false (state/state :soft-restart))
+     (try
+       (reset! relative-pos [(.x (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))
+                             (.y (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))])
+       (.dispose (seesaw.core/to-frame (state/state :app)))
+       (catch Exception e nil ;;(println "Last pos is nil")
+              ))))
 
 
 (defn load-level-2
@@ -236,7 +237,7 @@
              (menu/menu-slider img-scale top-offset
                           [{:icon  icon/I-64-png
                             :title "Message Store"
-                            :fn    (fn [e] ((state/state :alert-manager) :show))}
+                            :fn    (fn [e] (i/show-alerts-history))}
                            
                            {:icon  icon/refresh-blue1-64-png
                             :title "Reload active view"
@@ -261,7 +262,7 @@
                                      (cond (= "user"      (session/get-user-permission)) (session/set-user-permission "admin")
                                            (= "admin"     (session/get-user-permission)) (session/set-user-permission "developer")
                                            (= "developer" (session/get-user-permission)) (session/set-user-permission "user"))
-                                     ((state/state :alert-manager) :set {:header "Work mode" :body (str "Switched to: " (session/get-user-permission))}  5)
+                                     (i/warning "Work mode" (str "Switched to: " (session/get-user-permission)))
                                      (gseed/extend-frame-title (str ", " (session/get-user-login) "@" (session/get-user-permission))))}
                            
                            ;; {:icon  icon/download-blue-64-png
@@ -296,13 +297,6 @@
 (defn load-level-4
   "Description:
     Load main menu." []
-  (print-header 
-   "Load .jarman"
-   (dot-jarman-load)
-   (print-list-not-loaded))
-  (print-header
-   "Load Extensions"
-   (do-load-extensions))
   (print-header
    "Clean main menu"
    (menu/clean-main-menu))
@@ -325,7 +319,7 @@
     Run or restart jarman main app"
   (fn []
     (let [relative-pos (atom nil)]
-      (load-level-0)
+      (if-not (= true (state/state :soft-restart)) (load-level-0))
       (load-level-1 relative-pos)
       (load-level-2)
       (load-level-3 relative-pos)
@@ -344,8 +338,12 @@
                              :else (do (fn [])))))))
 
 ((state/state :startup))
-;; (state/set-state :soft-restart false)
 
-;; (state/set-state :theme-name "Jarman Light")
-;; (state/state :theme-name)x0
+(comment
+  
+  (state/set-state :soft-restart false)
+  (state/set-state :theme-name "Jarman Light")
+  (state/state :theme-name)
+  (i/info "Info" "Test")
+  )
 

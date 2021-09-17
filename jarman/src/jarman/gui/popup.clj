@@ -4,6 +4,7 @@
         seesaw.mig
         seesaw.font)
   (:require
+   [jarman.faces :as face]
    [seesaw.core :as c]
    [seesaw.border :as b]
    [clojure.string :as string]
@@ -13,10 +14,14 @@
    [jarman.resource-lib.icon-library :as icon]
    [jarman.logic.state :as state]
    [jarman.gui.gui-components :as gcomp]
-   [jarman.gui.gui-migrid     :as gmg])
+   [jarman.gui.gui-migrid     :as gmg]
+   [jarman.gui.gui-style      :as gs]
+   [jarman.resource-lib.icon-library :as icon]
+   [jarman.tools.swing               :as stool])
   (:import javax.swing.JLayeredPane
            java.awt.PointerInfo
-           (java.awt.event MouseEvent)))
+           (java.awt.event MouseEvent)
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
 ;; (def popup-state (atom (new JLayeredPane)))
 
@@ -34,25 +39,40 @@
         h (.getHeight frame-size)]
     [w h]))
 
-(defn- popup-bar [root title]
-  (gmg/hmig
-   :hrules "[grow]0px[fill]"
-   :lgap 10
-   :items (gtool/join-mig-items
-           (c/label :text title :font (gtool/getFont 10))
-           (c/label ;;:text "Close"
-            :icon (jarman.tools.swing/image-scale jarman.resource-lib.icon-library/x-blue1-64-png 20)
-            :halign :right
-            :border (b/empty-border :thickness 5)
-            :listen [:mouse-entered gtool/hand-hover-on
-                     :mouse-clicked (fn [e]
-                                      (.remove (jlp) root)
-                                      (.repaint (jlp)))]))))
+(defn- popup-bar
+  [root title
+   & {:keys [icon c-bg args]
+      :or   {icon nil
+             c-bg "#eee"
+             args []}}]
+  (let [header (gmg/hmig
+                :hrules "[grow]0px[fill]"
+                :lgap 10
+                :args (concat [:background face/c-popup-head-background] args) ;; set header bg
+                :items (gtool/join-mig-items
+                        (c/label :text title :icon (if icon icon)
+                                 :font (gs/getFont :bold))
+                        (c/label ;;:text "Close"
+                         :icon (gs/icon GoogleMaterialDesignIcons/HIGHLIGHT_OFF)
+                         :halign :right
+                         :border (b/empty-border :thickness 5)
+                         :listen [:mouse-entered (fn [e]
+                                                   (gtool/hand-hover-on e)
+                                                   (c/config! e :icon (gs/icon GoogleMaterialDesignIcons/HIGHLIGHT_OFF face/c-icon-close-focus)))
+                                  :mouse-exited  (fn [e]
+                                                   (c/config! e :icon (gs/icon GoogleMaterialDesignIcons/HIGHLIGHT_OFF)))
+                                  :mouse-clicked (fn [e]
+                                                   (.remove (jlp) root)
+                                                   (.repaint (jlp)))])))]
+    header))
 
-(defn- popup [{:keys [render-fn title size]
+(defn- popup [{:keys [render-fn title size c-border title-icon args]
                :or {render-fn (fn [] (c/label))
                     title ""
-                    size [400 300]}}]
+                    size [400 300]
+                    c-border face/c-popup-border
+                    title-icon nil
+                    args []}}]
   (let [last-x (atom 0)
         last-y (atom 0)
         [frame-w frame-h] (frame-wh)
@@ -60,11 +80,13 @@
         [x y] [(- (/ frame-w 2) (/ body-w 2))
                (- (/ frame-h 2) (/ body-h 2))]
         bounds [x y body-w body-h]
-        br "#aaa"
         
-        root (mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill, fill]0px[fill, grow]0px"]
-                        :bounds bounds
-                        :border (b/line-border :thickness 1 :color br))]
+        root (apply mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "0px[fill, fill]0px[fill, grow]0px"]
+                    :bounds bounds
+                    :border (b/line-border :thickness 1 :color c-border)
+                    :background face/c-popup-body-background
+                    args)]
+    
     (c/config! root :listen [:mouse-clicked
                              (fn [e]
                                (if (= (.getButton e) MouseEvent/BUTTON2)
@@ -89,7 +111,8 @@
                                  (c/config! (c/to-widget e) :bounds [(+ old-x move-x) (+ old-y move-y) :* :*])))
                              
                              :mouse-released (fn [e] (.repaint (jlp)))])
-    (.add root (popup-bar root title))
+    
+    (.add root (popup-bar root title :c-bg c-border :icon title-icon))
     (.add root (render-fn))
     root))
 
@@ -110,14 +133,22 @@
 ;; (-> (doto build (.setLocationRelativeTo nil) c/pack! c/show!))
 
 (defn build-popup
-  [{:keys [comp-fn title size]
+  [{:keys [comp-fn title title-icon size c-border args]
     :or {comp-fn compo
          title ""
-         size [400 300]}}]
-  (.add (jlp) (popup {:render-fn comp-fn
-                      :title title
-                      :size size})
-        (new Integer 10)))
+         title-icon nil
+         size [400 300]
+         c-border "#ccc"
+         args []}}]
+  (let [pop (popup {:render-fn comp-fn
+                    :title title
+                    :title-icon title-icon
+                    :size size
+                    :c-border c-border
+                    :args args})]
+    (.add (jlp) pop (new Integer 10))
+    (c/move! pop :to-front)
+    pop))
 
 (defn set-demo [] (build-popup {:comp-fn compo :title "Demo"}))
 

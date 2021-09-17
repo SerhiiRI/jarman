@@ -21,7 +21,7 @@
             [jarman.gui.gui-seed          :as gseed]
             [jarman.gui.gui-editors       :as gedit]
             [jarman.gui.gui-views-service :as gvs]
-
+            [jarman.interaction :as i]
             ;; deverloper tools 
             [jarman.tools.lang :refer :all]))
 
@@ -396,9 +396,7 @@
                                               (fn [] (create-view--confgen
                                                       path
                                                       :message-ok (fn [head body]
-                                                                    ((state/state :alert-manager)
-                                                                     :set {:header head :body body}
-                                                                     5))))
+                                                                    (i/info head body) :time 5)))
                                               (catch Exception e (gedit/popup-config-editor
                                                                   path
                                                                   (get (cm/get-in-segment path))))))))))
@@ -417,12 +415,7 @@
                               :render-fn (fn [] (create-view--confgen
                                                  path
                                                  :message-ok (fn [head body]
-                                                               ((state/state :alert-manager)
-                                                                :set {:header head :body body}
-                                                                (((state/state :alert-manager)
-                                                                  :message)
-                                                                 (state/state :alert-manager))
-                                                                5))))))))
+                                                               (i/info head body :time 5))))))))
                (let [path [:themes :current-theme] ;; Themes config
                      title (rift (:name (cm/get-in-segment path)) "NIL")
                      view-id :current-theme]
@@ -437,7 +430,5 @@
                               :render-fn (fn [] (create-view--confgen
                                                  path
                                                  :message-ok (fn [head body]
-                                                               ((state/state :alert-manager)
-                                                                :set {:header head :body body}
-                                                                ))))))))))]
+                                                               (i/info head body))))))))))]
     coll))

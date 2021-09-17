@@ -54,6 +54,30 @@
 ;;; AWT/Swing helpers ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; LITTLE BIT DEPRECATED
+;; (defn ^sun.awt.image.ToolkitImage image-scale
+;;   "Function scale image by percent size.
+;;   Return `sun.awt.image.ToolkitImage` type.
+
+;;   Example:
+;;     (image-scale \"/path/to/photo\" 100)
+
+;;   See more:
+;;     javadoc `sun.awt.image.ToolkitImage`
+;;     javadoc `sun.awt.Image`"
+;;   ([image-path]
+;;    {:pre [(not (empty? image-path))]}
+;;    (seesaw.icon/icon (clojure.java.io/file image-path)))
+;;   ([image-path percent]
+;;    {:pre [(not (empty? image-path))]}
+;;    (let [image (.getImage (seesaw.icon/icon (clojure.java.io/file image-path)))
+;;          scaler (comp int #(Math/ceil %) #(* % (/ percent 100.0)))]
+;;      (doto (javax.swing.ImageIcon.)
+;;        (.setImage (.getScaledInstance image
+;;                          (scaler (.getWidth image))
+;;                          (scaler (.getHeight image))
+;;                          java.awt.Image/SCALE_SMOOTH))))))
+
 (defn ^sun.awt.image.ToolkitImage image-scale
   "Function scale image by percent size.
   Return `sun.awt.image.ToolkitImage` type.
@@ -65,17 +89,17 @@
     javadoc `sun.awt.image.ToolkitImage`
     javadoc `sun.awt.Image`"
   ([image-path]
-   {:pre [(not (empty? image-path))]}
-   (seesaw.icon/icon (clojure.java.io/file image-path)))
+   (if (instance? javax.swing.ImageIcon image-path) image-path
+     (seesaw.icon/icon (clojure.java.io/file image-path))))
   ([image-path percent]
-   {:pre [(not (empty? image-path))]}
-   (let [image (.getImage (seesaw.icon/icon (clojure.java.io/file image-path)))
-         scaler (comp int #(Math/ceil %) #(* % (/ percent 100.0)))]
-     (doto (javax.swing.ImageIcon.)
-       (.setImage (.getScaledInstance image
-                         (scaler (.getWidth image))
-                         (scaler (.getHeight image))
-                         java.awt.Image/SCALE_SMOOTH))))))
+   (if (instance? javax.swing.ImageIcon image-path) image-path
+    (let [image (.getImage (seesaw.icon/icon (clojure.java.io/file image-path)))
+          scaler (comp int #(Math/ceil %) #(* % (/ percent 100.0)))]
+      (doto (javax.swing.ImageIcon.)
+        (.setImage (.getScaledInstance image
+                                       (scaler (.getWidth image))
+                                       (scaler (.getHeight image))
+                                       java.awt.Image/SCALE_SMOOTH)))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

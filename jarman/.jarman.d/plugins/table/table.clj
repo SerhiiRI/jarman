@@ -196,7 +196,9 @@
                              ;;list-repr  {:permission.permission_name Permission name, :permission.configuration Configuration}
                              (into {} (map (fn [[field-qualified representation]]
                                              {representation (field-qualified model-colmns)}) list-repr))))
-        build-expand-fn  (fn [id scale] (show-table-in-expand  
+        build-expand-fn  (fn [id scale]
+                           (println "ID::::" id)
+                           (show-table-in-expand  
                                          (model-to-repre dialog-tables
                                                          (first (dialog-select {:where [:= dialog-model-id id]}))) scale))
         scale            1.4
@@ -207,9 +209,8 @@
                           :listen [:mouse-clicked
                                    (fn [e] (popup/build-popup
                                             {:title "Show columns"
-                                             :comp-fn (fn []
-                                                        (gcomp/min-scrollbox 
-                                                         (build-expand-fn (field-qualified (:model-changes (state!))) scale)))}))])
+                                             :comp-fn (fn [] (gcomp/min-scrollbox 
+                                                              (build-expand-fn (field-qualified (:model-changes (state!))) scale)))}))])
         update-changes (fn [val]
                          (dispatch!   
                           {:action :update-changes

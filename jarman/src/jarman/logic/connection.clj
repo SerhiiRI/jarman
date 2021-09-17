@@ -144,12 +144,18 @@
     :user "jarman",
     :password "dupa"}
    :dell
-   {:dbtype "mysql",
-    :host "trashpanda-team.ddns.net",
-    :port 3307,
+    {:dbtype "mysql",
+    :host "localhost",
+    :port 3306,
     :dbname "jarman",
     :user "root",
-    :password "misiePysie69"}
+    :password ""}
+   ;; {:dbtype "mysql",
+   ;;  :host "trashpanda-team.ddns.net",
+   ;;  :port 3307,
+   ;;  :dbname "jarman",
+   ;;  :user "root",
+   ;;  :password "misiePysie69"}
    :dell-test
    {:dbtype "mysql",
     :host "trashpanda-team.ddns.net",

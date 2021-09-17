@@ -31,7 +31,7 @@
 
 (defn- popup-table [table-fn id]
   (let [dialog (c/custom-dialog :modal? true :width 600 :height 400 :title "Select component")
-        table (table-fn (fn [table-model] (do (println "TABLE MODEL>>>>>>>    " table-model) (c/return-from-dialog dialog table-model))))
+        table (table-fn (fn [table-model] (println "RETURN TABLE" table-model)(c/return-from-dialog dialog table-model)))
         key-p (seesaw.mig/mig-panel
                :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px[grow, fill]0px"]
                ;;  :border (sborder/line-border :color "#888" :bottom 1 :top 1 :left 1 :right 1)

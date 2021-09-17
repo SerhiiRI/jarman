@@ -53,7 +53,7 @@
     by table-name and name of column. The first label with data will be
     the data-string that the user choose last. For this we use last-id."
   [item-list item-getter id-getter & [selected-id]]
-  (let [selected-element (atom nil)
+  (let [selected-element (atom {})
         dialog (seesaw.core/custom-dialog :modal? true :width 600 :height 400 :title "Select component")
         dialog-content (seesaw.mig/mig-panel
                         :background "#fff"
@@ -61,7 +61,7 @@
                         :items (gtool/join-mig-items
                                 (seesaw.mig/mig-panel
                                  :background "#fff"
-                                 :constraints ["wrap 1" "0px [fill, grow]0px" "0px[]0px"]
+                                 :constraints ["wrap 1" "0px[fill, grow]0px" "0px[]0px"]
                                  :items
                                  (gtool/join-mig-items
                                   (if (empty? item-list)
@@ -75,8 +75,7 @@
                                                        return-function
                                                        selected?)]
                                              (if selected?
-                                               (swap! selected-element (fn [e] item))
-                                               item)))
+                                               (swap! selected-element {:id (id-getter m) :item item})) item))
                                          item-list))))))
         dialog-content-scroll (gcomp/min-scrollbox
                                ;;seesaw.core/scrollable
@@ -84,24 +83,19 @@
                                :hscroll :never :border nil)]
     (seesaw.core/config! dialog :content dialog-content-scroll :title "Chooser")
     ;; seesaw.core/scroll!  -> use this func to component (Jlabel, JPanel, etc) !! not to scrollable 
-    (seesaw.core/listen dialog :window-activated (fn [e] (do (seesaw.core/scroll! dialog-content :to [:point 0
-                                                                                                      (let [y (.y (.getLocation @selected-element))
-                                                                                                            y (+ y (/ y 5))] y)])
-                                                             ;; why don't work focus? !!!!!!
-                                                             (.requestFocus @selected-element))))
+    (if-not (nil? selected-id)
+      (seesaw.core/listen dialog :window-activated (fn [e] (do (seesaw.core/scroll! dialog-content :to [:point 0
+                                                                                                        (let [y (.y (.getLocation (:item @selected-element)))
+                                                                                                              y (+ y (/ y 5))] y)])
+                                                                       ;; why don't work focus? !!!!!!
+                                                                       (.requestFocus @selected-element)))))
     (seesaw.core/show! dialog)))
 
-;; (dialog-bigstring
-;;  (fn [] (db/query (select! {:table_name :repair_reasons
-;;                            :column [:#as_is :repair_reasons.description :repair_reasons.id]})))
-;;  (fn [m] (:repair_reasons.description m))
-;;  (fn [m] (:repair_reasons.id m))
-;;  30)
 
 (defn dialog-toolkit [configuration toolkit-map]
-  (let [query     (:select toolkit-map)
-        get-item  (fn [m] ((:item-column configuration) m))
-        get-id    (fn [m] (:model-id toolkit-map))]
+  (let [query     (:select toolkit-map) 
+        get-item  (fn [m] ((:item-columns configuration) m))
+        get-id    (fn [m]  (:model-id toolkit-map))]
     (into toolkit-map
           {:dialog (fn [id] (dialog-bigstring-component (query) get-item get-id id))})))
 

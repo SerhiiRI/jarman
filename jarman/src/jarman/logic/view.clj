@@ -1,4 +1,6 @@
-{:host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman"}
+
+{:host "localhost", :port 3306, :dbname "jarman"}
+;; {:host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman"}
 
 (in-ns 'jarman.logic.view-manager)
 
@@ -286,6 +288,7 @@
    :plug-place [:#tables-view-plugin]
    :tables [:enterpreneur]
    :view-columns [:enterpreneur.ssreou
+                  :enterpreneur.name
                   :enterpreneur.ownership_form
                   :enterpreneur.vat_certificate
                   :enterpreneur.individual_tax_number
@@ -295,6 +298,7 @@
                   :enterpreneur.physical_address
                   :enterpreneur.contacts_information]
    :model-insert [:enterpreneur.ssreou
+                  :enterpreneur.name
                   :enterpreneur.ownership_form
                   :enterpreneur.vat_certificate
                   :enterpreneur.individual_tax_number
@@ -313,6 +317,7 @@
     [:#as_is
      :enterpreneur.id
      :enterpreneur.ssreou
+     :enterpreneur.name
      :enterpreneur.ownership_form
      :enterpreneur.vat_certificate
      :enterpreneur.individual_tax_number
@@ -327,6 +332,7 @@
    :permission [:admin :user :developer]
    :tables [:enterpreneur]
    :view-columns [:enterpreneur.ssreou
+                  :enterpreneur.name
                   :enterpreneur.ownership_form
                   :enterpreneur.vat_certificate
                   :enterpreneur.individual_tax_number
@@ -341,6 +347,7 @@
     [:#as_is
      :enterpreneur.id
      :enterpreneur.ssreou
+     :enterpreneur.name
      :enterpreneur.ownership_form
      :enterpreneur.vat_certificate
      :enterpreneur.individual_tax_number
@@ -599,7 +606,7 @@
    :buttons []
    :query
    {:table_name :repair_contract,
-    :inner-join
+    :left-join
     [:repair_contract->cache_register
      :cache_register->point_of_sale
      :point_of_sale->enterpreneur
@@ -686,7 +693,7 @@
                   :repair_contract.cache_register_register_date]
    :query
    {:table_name :repair_contract,
-    :inner-join
+    :left-join
     [:repair_contract->cache_register
      :cache_register->point_of_sale
      :point_of_sale->enterpreneur
@@ -779,7 +786,7 @@
    :query
    {:table_name :repair_nature_of_problem,
     :column
-    [:repair_nature_of_problem.id
+    [:#as_is :repair_nature_of_problem.id
      :repair_nature_of_problem.description]}))
 
 (defview
@@ -808,7 +815,7 @@
    :repair_reasons.description
    :query
    {:table_name :repair_reasons,
-    :column [:repair_reasons.id :repair_reasons.description]}))
+    :column [:#as_is :repair_reasons.id :repair_reasons.description]}))
 
 (defview
   repair_technical_issue
@@ -838,7 +845,7 @@
    :query
    {:table_name :repair_technical_issue,
     :column
-    [:repair_technical_issue.id
+    [:#as_is :repair_technical_issue.id
      :repair_technical_issue.description]}))
 
 (defview
@@ -866,9 +873,7 @@
      :seal.site_name
      :seal.site_url
      :seal.file_name
-     :seal.file
-     :seal.ftp_login
-     :seal.ftp_password
+     :seal.file     
      :seal.ftp_file_name
      :seal.ftp_file_path]})
   (dialog-table
@@ -889,8 +894,6 @@
      :seal.site_url
      :seal.file_name
      :seal.file
-     :seal.ftp_login
-     :seal.ftp_password
      :seal.ftp_file_name
      :seal.ftp_file_path]}))
 

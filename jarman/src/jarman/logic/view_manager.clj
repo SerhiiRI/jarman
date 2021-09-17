@@ -131,7 +131,7 @@
                         add-full-path-cfg)])) [] plugin-list))))
 
 (defmacro defview [table-name & body]
-  #break (let [cfg-list (defview-prepare-config table-name body)]
+   (let [cfg-list (defview-prepare-config table-name body)]
     `(do
        ~@(for [{:keys [plugin-name plugin-config-path] :as cfg} cfg-list]
            (if-let [{:keys [plugin-toolkit-fn plugin-test-spec-fn plugin-entry-fn]}
@@ -358,8 +358,11 @@
                     :dbtype :user :password
                     :useUnicode :characterEncoding)]
     (if-not (empty? data)
-      (if (= (first data) con) data))))
+      data
+      ;; (if (= (first data) con) data)   TO DO,  this line for check connection (first map in view.clj)
+      )))
 
+;;(loader-from-view-clj)
 ;; (put-table-view-to-db (loader-from-view-clj (db/connection-get)))
 
 (defn- load-data-recur [data loaders]
@@ -385,11 +388,15 @@
   make-loader chain. deserialize view, and execute every
   defview."
   []
-  #break (let [data (*view-loader-chain-fn*)]
+   (let [data (*view-loader-chain-fn*)]
            (if (empty? data)
+<<<<<<< HEAD
              (i/danger "Error" "Problem with tables. Data not found in DB
                                 <br><br><b>Module:</b> view-manager
                                     <br><b>Fn:</b> do-view-load")
+=======
+             (i/warning "Error" "Problem with load tables from view.clj. Data not found in DB, or connection is invalid in file")
+>>>>>>> 87b415daa159660aa2baaf8081dc48093bf028fa
              (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
                (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))
            (return-structure-tree (deref user-menu))))

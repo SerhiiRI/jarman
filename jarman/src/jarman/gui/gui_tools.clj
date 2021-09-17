@@ -49,7 +49,6 @@
 ;; └─────────────────────────┘
 
 (defn opacity-color [] (new Color 0 0 0 0))
-
 (defn getWidth  [obj] (.width (.getSize obj)))
 (defn getHeight [obj] (.height (.getSize obj)))
 (defn getSize   [obj] (let [size (.getSize obj)] [(.width size) (.height size)]))
@@ -186,7 +185,6 @@
                    (> (count txt) max-len) (string/join  "" [(subs txt 0 max-len) "..."])
                    :else txt)))
 
-
 (defn get-user-data
   "Description:
       Get data in map from :user-data inside seesaw components. 
@@ -234,7 +232,6 @@
 (def get-lang-infos  (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :infos] path))))
 (def get-lang-btns   (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :buttons] path))))
 (def get-lang-alerts (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :alerts] path))))
-
 
 (defn convert-key-to-title
   "Description:

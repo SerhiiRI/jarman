@@ -31,6 +31,7 @@
    [jarman.plugin.data-toolkit :as query-toolkit]
    [jarman.plugin.gui-table :as gtable]
    [jarman.plugin.plugin]
+   [jarman.interaction :as i]
    ;; locals 
    [plugin.table.composite-components :as ccomp])
   (:import
@@ -196,7 +197,9 @@
                              ;;list-repr  {:permission.permission_name Permission name, :permission.configuration Configuration}
                              (into {} (map (fn [[field-qualified representation]]
                                              {representation (field-qualified model-colmns)}) list-repr))))
-        build-expand-fn  (fn [id scale] (show-table-in-expand  
+        build-expand-fn  (fn [id scale]
+                           (println "ID::::" id)
+                           (show-table-in-expand  
                                          (model-to-repre dialog-tables
                                                          (first (dialog-select {:where [:= dialog-model-id id]}))) scale))
         scale            1.4
@@ -207,9 +210,8 @@
                           :listen [:mouse-clicked
                                    (fn [e] (popup/build-popup
                                             {:title "Show columns"
-                                             :comp-fn (fn []
-                                                        (gcomp/min-scrollbox 
-                                                         (build-expand-fn (field-qualified (:model-changes (state!))) scale)))}))])
+                                             :comp-fn (fn [] (gcomp/min-scrollbox 
+                                                              (build-expand-fn (field-qualified (:model-changes (state!))) scale)))}))])
         update-changes (fn [val]
                          (dispatch!   
                           {:action :update-changes
@@ -269,12 +271,9 @@
                                     (try
                                       ((doc/prepare-export-file
                                         (:->table-name plugin-config) doc-model) id (:file-path model-changes))
-                                      ((state/state :alert-manager)               
-                                       :set {:header (gtool/get-lang-alerts :success)
-                                             :body (gtool/get-lang-alerts :export-doc-ok)}  7)
-                                      (catch Exception e ((state/state :alert-manager)
-                                                          :set {:header (gtool/get-lang-alerts :faild)
-                                                                :body (gtool/get-lang-alerts :export-doc-faild)}  7))))
+                                      (i/info (gtool/get-lang-alerts :success) (gtool/get-lang-alerts :export-doc-ok))
+                                      (catch Exception e
+                                        (i/warning (gtool/get-lang-alerts :failed) (gtool/get-lang-alerts :export-doc-failed)))))
                          :args [:halign :left])])
                      (:->documents plugin-config)))
                    (c/label))
@@ -340,18 +339,14 @@
             fcomps-colmns  (get grouped-model true)
             sm-colmns      (get grouped-model nil) 
             id-insert      (if (empty? sm-colmns)
-                             (do ((state/state :alert-manager)               
-                                  :set {:header (gtool/get-lang-alerts :success)
-                                        :body   "Model can not be empty, please enter at least one simple field"}  7))
+                             (do (i/info (gtool/get-lang-alerts :success)  "Model can not be empty, please enter at least one simple field"))
                              (:generated_key
                               (try (jdbc/execute! @jarman.logic.connection/*connection*
                                                   ((:insert-expression plugin-toolkit)
                                                    (ungrouping-model (state!) (apply hash-map
                                                                                      (apply concat sm-colmns))))
                                                   {:return-keys true})
-                                   (catch Exception e ((state/state :alert-manager)               
-                                                       :set {:header (gtool/get-lang-alerts :error)
-                                                             :body (.getMessage e)} 7)))))]
+                                   (catch Exception e (i/warning (gtool/get-lang-alerts :error) (.getMessage e))))))]
         (if-not (nil? id-insert)
           (update-comp-col state! id-insert fcomps-colmns))
         (println "INSERT MODEL CHANGES ___" model-changes ">>>" id-insert)))))

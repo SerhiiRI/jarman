@@ -46,7 +46,8 @@
 
 (defn- gui-table [table-model]
   (fn [listener-fn]
-    (let [TT (swingx/table-x :model (table-model) :border (seesaw.border/empty-border))]
+    (let [table-model (table-model)
+          TT (swingx/table-x :model table-model :border (seesaw.border/empty-border))]
       (c/listen TT :selection (fn [e] (listener-fn (seesaw.table/value-at TT (c/selection TT)))))
       (c/config! TT :horizontal-scroll-enabled? true)
       (c/config! TT :show-grid? false)
@@ -60,14 +61,12 @@
     ;; (println "\nView table\n" view)
     (if (and view table-list)
       (let [model-columns (gui-table-model-columns table-list view)
-            table-model (gui-table-model model-columns (:select toolkit-map))
-            ;; x (println "\ntable-model " (table-model))
-            ]
+            table-model (gui-table-model model-columns (:select toolkit-map))]
         {:table-model table-model
          :table (gui-table table-model)}))))
 
 
-(gui-table-model-columns ["user" "permission"]
-                         [:user.id :user.login :user.password :user.first_name :user.last_name :permission.id :permission.permission_name :permission.configuration])
+(comment (gui-table-model-columns ["user" "permission"]
+                                  [:user.id :user.login :user.password :user.first_name :user.last_name :permission.id :permission.permission_name :permission.configuration]))
 
 

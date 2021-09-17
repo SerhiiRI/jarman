@@ -1392,7 +1392,7 @@
   (def s-e (first (db/query (select! 
                              {:table_name :seal,
                               :column
-                              [:#as_is :seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove :seal.site_name :seal.site_url :seal.file_name :seal.file :seal.ftp_login :seal.ftp_password :seal.ftp_file_name :seal.ftp_file_path]}))))
+                              [:#as_is :seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove :seal.site_name :seal.site_url :seal.file_name :seal.file  :seal.ftp_file_name :seal.ftp_file_path]}))))
   (.ungroup s (.group s s-e))
   
   (.ungroup s (.group s {:text "ff"}))

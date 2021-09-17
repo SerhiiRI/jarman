@@ -152,6 +152,8 @@
    - [ ] - message on save failed
    - [X] - fixed alert box permeation   
 * Backend
+** TODO [#2] check all steps of loading tables                      :@Serhii:
+*** in file view-manager.clj, markup TO DO,  add messages(println), if we need
 ** TODO [#1] Одужуй!                                                 :@Julia:
 ** PROCESSING [#1] /Feature/. Rewrite plugin system                   :@Serhii:
    DEADLINE: <2021-09-09 Thu>

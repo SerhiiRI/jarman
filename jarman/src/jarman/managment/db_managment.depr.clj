@@ -183,10 +183,10 @@
 (comment
   (db/connection-set
    {:dbtype "mysql",
-    :host  "trashpanda-team.ddns.net",
-    :port 3307,
-    :dbname "jarman-test",
+    :host  "localhost",
+    :port 3306,
+    :dbname "jarman",
     :user "root",
-    :password "1234"})
+    :password ""})
   (db/connection-get))
 

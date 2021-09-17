@@ -58,11 +58,10 @@
    "underline-size"          2
    "underline-tabbar-size"   1
    "timelife-alert-popup"    3
-   "expand-btn-colors" [;;["#f7f7f7" "#fafafa" "#000"]
-                        ["#ececec" "#ececec" "#f7f7f7"]
+   "expand-btn-colors" [["#ececec" "#ececec" "#f7f7f7"]
                         ["#e0e0e0" "#e0e0e0" "#efefef"]
-                        ["#ccc" "#ccc" "#ddd"]
-                        ["#bbb" "#bbb" "#ccc"]
+                        ["#d5d5d5" "#d5d5d5" "#dfdfdf"]
+                        ["#c5c5c5" "#c5c5c5" "#cfcfcf"]
                         ]})
 
 ;;;;;;;;;;;;;;

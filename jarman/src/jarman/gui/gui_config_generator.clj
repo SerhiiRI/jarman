@@ -11,6 +11,7 @@
             [jarman.logic.session :as session]
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
+            [jarman.gui.gui-style :as gs]
             ;; logics
             [jarman.config.config-manager :as cm]
             [jarman.gui.gui-tools         :as gtool]
@@ -23,7 +24,9 @@
             [jarman.gui.gui-views-service :as gvs]
             [jarman.interaction :as i]
             ;; deverloper tools 
-            [jarman.tools.lang :refer :all]))
+            [jarman.tools.lang :refer :all])
+  (:import
+   (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
 ;; ┌─────────────────────────┐
 ;; │                         │
@@ -327,13 +330,13 @@
                                                    (str @local-changes)
                                                    (state/state :app))))
                                :flip-border true
-                               :args [:icon (stool/image-scale icon/loupe-blue-64-png 25)])
+                               :args [:icon  (gs/icon GoogleMaterialDesignIcons/SEARCH)])
                               (if (= "developer" (session/get-user-permission))
                                 (gcomp/button-basic
                                  ""
                                  :onClick (fn [e] (gedit/view-config-editor start-key map-part))
                                  :flip-border true
-                                 :args [:icon (stool/image-scale icon/json1-64-png 25)])
+                                 :args [:icon (stool/image-scale (gs/icon GoogleMaterialDesignIcons/DESCRIPTION) 25)])
                                 () ;; Empty if can not have access
                                 )))))]
                ;; (println "Config complete")

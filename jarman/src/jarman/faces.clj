@@ -113,7 +113,7 @@
 (define-face c-popup-head-background)
 (define-face c-popup-border)
 
-;; [underscore-panel
-;;  button-border-bottom
-;;  button-border-top
-;;  button-border-right]
+(comment [underscore-panel
+          button-border-bottom
+          button-border-top
+          button-border-right])

@@ -12,9 +12,13 @@
    [jarman.plugin.data-toolkit :as query-toolkit]
    [jarman.plugins.table :as ptable]
    [jarman.resource-lib.icon-library :as icon]
+   [jarman.faces                     :as face]
+   [jarman.gui.gui-style             :as gs]
    [jarman.logic.sql-tool :refer [select! update! insert! delete!]]
    [jarman.logic.connection :as db]
-   [jarman.gui.gui-editors :as gedit]))
+   [jarman.gui.gui-editors :as gedit])
+  (:import
+   (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 ;; name
 ;;login
 ;;status (admin ...
@@ -53,13 +57,13 @@
           input-space  (seesaw.core/border-panel :border (b/empty-border :left 20))
           btn-panel    (gcomp/menu-bar
                         {:buttons [[" Add user"
-                                    icon/plus-blue-64-png
+                                    (gs/icon GoogleMaterialDesignIcons/ADD face/c-icon)
                                     (fn [e] )]
                                    [" Delete user"
-                                    icon/basket-blue1-64-png
+                                    (gs/icon GoogleMaterialDesignIcons/DELETE face/c-icon)
                                     (fn [e] )]
                                    [" Save user"
-                                    icon/agree1-blue-64-png
+                                    (gs/icon GoogleMaterialDesignIcons/DONE face/c-icon)
                                     (fn [e] )]]})
           field-fn         (fn [key-vec] (gcomp/state-input-text {:func (swap-field key-vec) :val ""}
                                                                  :args [:columns 25 :text (get-in (:model @state) key-vec)]))

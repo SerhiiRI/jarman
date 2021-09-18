@@ -6,6 +6,8 @@
   (:require [clojure.string :as string]
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
+            [jarman.gui.gui-style :as gs]
+            [jarman.faces         :as face]
             ;; logics
             [jarman.gui.gui-tools :as gtool]
             [jarman.gui.gui-alerts-service :as gas]
@@ -17,7 +19,8 @@
             [jarman.gui.popup :as popup]
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
             )
-  (:import javax.swing.JLayeredPane))
+  (:import javax.swing.JLayeredPane
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
 ;;  (get-color :jarman :bar)
 
@@ -88,9 +91,8 @@
             (state/set-state :frame (new-frame title items size undecorated?))
             (let [jframe (state/state :frame)]
               (-> (doto jframe (.setLocationRelativeTo nil) pack! show!))
-              (config! jframe  :icon (stool/image-scale icon/calendar1-64-png)
-                       :size [(first size) :by (second size)]))))
-        ))))
+              (config! jframe  :icon  (gs/icon GoogleMaterialDesignIcons/DATE_RANGE face/c-icon)
+                       :size [(first size) :by (second size)]))))))))
 
 
 (defn extend-frame-title 

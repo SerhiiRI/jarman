@@ -240,5 +240,4 @@
      '( ;; -- FACE BINDINGS --
        underscore-panel     blue-light
        button-border-top    yellow-light
-       button-border-bottom underscore-panel))))
- )
+       button-border-bottom underscore-panel)))))

@@ -17,6 +17,8 @@
    [jarman.tools.lang :refer :all]
    [jarman.tools.swing :as stool]
    [jarman.resource-lib.icon-library :as icon]
+   [jarman.faces              :as face]
+   [jarman.gui.gui-style      :as gs]
    [jarman.gui.gui-tools      :as gtool]
    [jarman.gui.gui-editors    :as gedit]
    [jarman.gui.gui-components :as gcomp]
@@ -37,7 +39,9 @@
   (:import
    (java.awt Dimension BorderLayout)
    (java.util Date)
-   (java.text SimpleDateFormat)))
+   (java.text SimpleDateFormat)
+   (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; helper functions ;;;
@@ -574,6 +578,7 @@
                              (button-fn (:title btn-model) (get (:actions plugin-config) (:action btn-model)))) [])))
                   (filter-nil))))))
 
+
 ;; ┌──────────────┐
 ;; │              │
 ;; │ Form Builder │
@@ -595,21 +600,21 @@
 (defn- custom-icon-bar
   [state! dispatch!
    & {:keys [more-front]}]
-  (let [icos [{:icon-off icon/eraser-blue-64-png
-               :icon-on  icon/eraser-blue-64-png
+  (let [icos [{:icon-off (gs/icon GoogleMaterialDesignIcons/CLEAR_ALL face/c-icon)
+               :icon-on  (gs/icon GoogleMaterialDesignIcons/CLEAR_ALL face/c-icon)
                :tip      "Clear state and form"
                :func     (fn [e]
                            ;; TO DO, try to fix, panel rentr two times, because we must change key :model for rerender
                            (let [model  (:model (state!))]
                              (dispatch! {:action :clear-state})
                              (dispatch! {:action :state-update :path [:model] :value model})))}
-              {:icon-on  icon/loupe-blue1-64-png
+              {:icon-on  (gs/icon GoogleMaterialDesignIcons/SEARCH face/c-icon) 
                :tip      "Display state"
                :func     (fn [e] (gcomp/popup-info-window
                                   "Changes"
                                   (str (:model-changes (state!)))
                                   (state/state :app)))}
-              {:icon-on  icon/refresh-blue-64-png
+              {:icon-on  (gs/icon GoogleMaterialDesignIcons/AUTORENEW face/c-icon)
                :tip      "Refresh table"
                :func     (fn [e] ((:table-render (state!))))}]
         icos (if (nil? more-front) icos (concat more-front icos))]
@@ -645,11 +650,11 @@
           active-buttons (:active-buttons plugin-config)
           return-button  (if (empty? (:model (state!)))
                            []
-                           [{:icon-off icon/pen-blue-64-png
-                             :icon-on  icon/pen-blue-64-png
+                           [{:icon-off (gs/icon GoogleMaterialDesignIcons/MODE_EDIT face/c-icon)
+                             :icon-on  (gs/icon GoogleMaterialDesignIcons/MODE_EDIT face/c-icon)
                              :tip      "Return to insert"
                              :func     (fn [e]
-                                         (dispatch!  {:action :refresh-state :value true})
+                                         (dispatch! {:action :refresh-state :value true})
                                          ((:table-render (state!))))}])
           components (filter-nil
                       (flatten
@@ -703,14 +708,14 @@
                        main-layout
                        :items [[(create-expand
                                  state!
-                                 dispatch! ;;heyyy
+                                 dispatch! 
                                  (fn []
                                    [(gcomp/min-scrollbox
                                      (gcomp/expand-form-panel
                                       main-layout
                                       [(create-header state!)
                                        (build-input-form state! dispatch!)]
-                                      :icon-open (stool/image-scale icon/left-blue-64-png 20)) 
+                                      :icon-open (gs/icon GoogleMaterialDesignIcons/ARROW_BACK face/c-icon)) 
                                      :hscroll :never)]))]
                                [table-container]])]
       (table-render)

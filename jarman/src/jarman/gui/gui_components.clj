@@ -2,12 +2,14 @@
   (:use seesaw.dev
         seesaw.mig)
   (:require [jarman.resource-lib.icon-library :as icon]
+            [jarman.gui.gui-style             :as gs]
             [jarman.faces  :as face]
             [seesaw.core   :as c]
             [seesaw.border :as b]
             [seesaw.util   :as u]
             [seesaw.mig    :as smig]
             [seesaw.rsyntax]
+            [jarman.faces :as face]
             [jarman.tools.swing    :as stool]
             [jarman.logic.state    :as state]
             [jarman.tools.lang     :refer :all]
@@ -20,7 +22,8 @@
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
   (:import (java.awt Color)
            (java.awt Dimension)
-           (jarman.jarmanjcomp CustomScrollBar)))
+           (jarman.jarmanjcomp CustomScrollBar)
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
 (jarman.config.config-manager/swapp)
 
@@ -293,7 +296,7 @@
 
 (defn button-icon
   [{:keys [icon-on icon-off size func tip margin frame-hover c-border-focus]
-    :or   {icon-on icon/question-64-png
+    :or   {icon-on (gs/icon GoogleMaterialDesignIcons/HELP  face/c-icon)
            size 30
            func (fn [e])
            margin [0 0 0 0]
@@ -1089,8 +1092,8 @@
                border (b/compound-border (b/empty-border :left 3))
                vsize 35
                min-height 200
-               ico       (stool/image-scale icon/plus-blue-64-png 25)
-               ico-hover (stool/image-scale icon/minus-grey-64-png 20)
+               ico       (gs/icon GoogleMaterialDesignIcons/ADD face/c-icon 25)
+               ico-hover (gs/icon GoogleMaterialDesignIcons/REMOVE face/c-icon 20)
                id :none
                onClick nil
                over-func :none
@@ -1466,7 +1469,7 @@
               ""
               :onClick (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
                                  (c/config! input-text :text (rift new-path default-path))))
-              :args [:icon (jarman.tools.swing/image-scale icon/enter-64-png 30)])
+              :args [:icon (gs/icon GoogleMaterialDesignIcons/ATTACHMENT face/c-icon 30)])
         panel (smig/mig-panel
                :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[fill]0px"]
                :items [[icon] [input-text]])]
@@ -1483,7 +1486,7 @@
         icon (button-basic ""
               :onClick (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
                                  (c/config! input-text :text (rift new-path default-path))))
-              :args [:icon (jarman.tools.swing/image-scale icon/enter-64-png 30)])
+              :args [:icon (gs/icon GoogleMaterialDesignIcons/ATTACHMENT face/c-icon 30)])
         panel (smig/mig-panel
                :constraints ["" "0px[fill]0px[grow, fill]0px" "0px[fill]0px"]
                :items [[icon] [input-text]])]
@@ -1497,8 +1500,8 @@
     val  :val
     mode :mode}]
   (let [val            (if (empty? val) "" val)
-        ico-to-choose  (jarman.tools.swing/image-scale icon/enter-64-png 30)
-        ico-chosen     (jarman.tools.swing/image-scale icon/agree-blue-64-png 30)
+        ico-to-choose  (gs/icon GoogleMaterialDesignIcons/ATTACHMENT face/c-icon 17)
+        ico-chosen     (gs/icon GoogleMaterialDesignIcons/INSERT_DRIVE_FILE face/c-icon 17)
         icon-chooser   (fn [compn path] (if-not (empty? path)
                                           (c/config! compn :icon ico-chosen :tip path)
                                           (c/config! compn :icon ico-to-choose :tip "")))
@@ -1604,7 +1607,7 @@
   (let [btn-panel (menu-bar
                    {:id :db-viewer--component--menu-bar
                     :buttons [["Back"
-                               icon/left-blue-64-png
+                               (gs/icon GoogleMaterialDesignIcons/ARROW_BACK face/c-icon)
                                (fn [e]
                                  (if (= num 0)
                                    (c/config!
@@ -1614,7 +1617,7 @@
                                     (.getParent (.getParent (seesaw.core/to-widget e)))
                                     :items [[(multi-panel panels cmpts-atom table-name title (- num 1))]])))]
                               ["Next"
-                               icon/right-blue-64-png 
+                               (gs/icon GoogleMaterialDesignIcons/ARROW_FORWARD face/c-icon)
                                (fn [e] (if (validate-fields cmpts-atom num)
                                          (if
                                              (=  num (- (count panels) 1))

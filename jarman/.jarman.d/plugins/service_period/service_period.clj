@@ -12,8 +12,11 @@
    [jarman.plugin.spec :as spec]
    [jarman.plugin.data-toolkit :as query-toolkit]
    [jarman.resource-lib.icon-library :as icon]
+   [jarman.gui.gui-style :as gs]
    [jarman.plugin.plugin]
-   [plugin.service-period.service-period-library :as req]))
+   [plugin.service-period.service-period-library :as req])
+  (:import
+   (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPER FUNCTIONS ;;;  
@@ -131,10 +134,10 @@
   (let [btn-panel (gcomp/menu-bar
                    {:justify-end true
                     :buttons [[" Back"
-                               icon/left-blue-64-png
+                               (gs/icon GoogleMaterialDesignIcons/ARROW_BACK)
                                (fn [e] (back-to-main-panel state))]
                               [" Save"
-                               icon/agree1-blue-64-png
+                               (gs/icon GoogleMaterialDesignIcons/DONE)
                                (fn [e] (update-money-per-month state))]
                               [" Export ODT"
                                icon/odt-64-png
@@ -304,18 +307,18 @@
         insert-space       (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "0px[top]0px"])
         btn-panel          (gcomp/menu-bar
                             {:buttons [[" Add cotract"
-                                        icon/plus-64-png
+                                        (gs/icon GoogleMaterialDesignIcons/ARROW_BACK)
                                         (fn [e] (do (seesaw.core/config! insert-space :items [[(seesaw.core/vertical-panel :items (list (seesaw.core/label :text "Some informotion about plugin ...........")))]
                                                                                               [(add-contract-panel state)]])))]
                                        [" Select all"
-                                        icon/plus-64-png
+                                        (gs/icon GoogleMaterialDesignIcons/DONE_ALL)
                                         (fn [e] (bln-checkboxes-fn true)
                                           (refresh-data-and-panel state))]
                                        [" Refresh"
-                                        icon/refresh-blue-64-png
+                                        (gs/icon GoogleMaterialDesignIcons/AUTORENEW)
                                         (fn [e] (bln-checkboxes-fn false) (refresh-data-and-panel state))]
                                        [" Pay"
-                                        icon/connection-blue1-64-png
+                                        (gs/icon GoogleMaterialDesignIcons/ATTACH_MONEY)
                                         (fn [e] (update-contracts state))]]})
         exp-panel          (seesaw.core/vertical-panel)
         view-space         (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "0px[top]0px"]

@@ -3,14 +3,17 @@
         seesaw.mig
         seesaw.dev
         seesaw.border)
-  (:import (java.awt.event MouseEvent))
+  (:import (java.awt.event MouseEvent)
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons))
   (:require
    [jarman.faces  :as face]
    [jarman.tools.lang :refer :all]
    [seesaw.core :as c]
    [jarman.resource-lib.icon-library :as icon]
-   [seesaw.util :as u]
-   [jarman.tools.swing :as stool]
+   [jarman.gui.gui-style             :as gs]
+   [jarman.faces                     :as face]
+   [seesaw.util                      :as u]
+   [jarman.tools.swing        :as stool]
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-tools      :as gtool]
    [jarman.logic.state        :as state]
@@ -45,8 +48,7 @@
                (c/config! root :items (render-fn))
                ((:repaint (state!))))
              (catch Exception e (println "\n" (str "Gui view service: Cannot rerender " id (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
-                    ))
-           ))))))
+                    ))))))))
 
 
 (def state     (atom {}))
@@ -171,7 +173,7 @@
                                         ;; (c/move!   e :to-front)
                                         )])
              (label ;; close icon
-              :icon (jarman.tools.swing/image-scale icon/x-grey-64-png 15)
+              :icon (gs/icon GoogleMaterialDesignIcons/CLOSE face/c-icon 15)
               :halign :center
               :size [vsize :by vsize]
               :listen [:mouse-entered (fn [e](c/config! e :cursor :hand))

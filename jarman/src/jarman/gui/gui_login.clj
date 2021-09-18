@@ -1,11 +1,13 @@
 (ns jarman.gui.gui-login
-  (:import (java.awt Dimension))
+  (:import (java.awt Dimension)
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons))
   (:require [seesaw.core               :as c]
             [seesaw.border             :as b]
             [seesaw.util               :as u]
             [clojure.string            :as string]
             [jarman.config.config-manager     :as cm]
             [jarman.resource-lib.icon-library :as icon]
+            [jarman.faces              :as face]
             [jarman.tools.swing        :as stool]
             [jarman.gui.gui-app        :as app] ;; Need for startup by state
             [jarman.logic.system-login :as system-login]
@@ -14,6 +16,7 @@
             [jarman.gui.gui-migrid     :as gmg]
             [jarman.logic.connection   :as conn]
             [jarman.logic.state        :as state]
+            [jarman.gui.gui-style      :as gs]
             [jarman.tools.lang :refer :all]))
 
 
@@ -152,7 +155,7 @@
    :mouse-out "#eee"
    :tgap 6
    :bgap 6
-   :args [:icon (stool/image-scale icon/user-blue1-64-png 30)]))
+   :args [:icon (gs/icon GoogleMaterialDesignIcons/PERSON face/c-icon)]))
 
 
 (defn- about-panel
@@ -292,10 +295,10 @@
                  (do (c/config! compo :border (err-underline compo false))   0)))
               ;;(do (println "\nTry validate user") 0)
 
-              (let [compo (gtool/gud v-password :val-compo)]
-               (if (=  (c/text compo) "")
-                 (do (c/config! compo :border (err-underline compo true)) 1)
-                 (do (c/config! compo :border (err-underline compo false)) 0)))
+              ;; (let [compo (gtool/gud v-password :val-compo)]
+              ;;  (if (=  (c/text compo) "")
+              ;;    (do (c/config! compo :border (err-underline compo true)) 1)
+              ;;    (do (c/config! compo :border (err-underline compo false)) 0)))
               ;; (do (println "\nTry validate passwd") 0)
               ))
     true false))
@@ -648,9 +651,9 @@
      :v :right :bottom
      {:gap [5 5 5 5] :args [:background "#fff" :visible? show]}
      [(if log
-        (icon-template icon/I-grey-64-png isize (fn [e] (c/alert (str log))))
+        (icon-template (fn [e] (gs/icon GoogleMaterialDesignIcons/INFO face/c-icon) (c/alert (str log))))
         [])
-      (icon-template icon/settings-64-png isize
+      (icon-template (gs/icon GoogleMaterialDesignIcons/SETTINGS face/c-icon) isize
                           (fn [e] (c/config!
                                    (c/to-frame e)
                                    :content (configuration-panel state! dispatch! config-k))))])))
@@ -701,7 +704,7 @@
       :wrap 1
       :args [:background "#fff"]
       :items [[(c/label
-                :icon (stool/image-scale icon/pen-128-png 34)
+                :icon (gs/icon GoogleMaterialDesignIcons/STORAGE face/c-icon)
                 :halign :center)]])
      :empty))
 
@@ -822,9 +825,8 @@
     Bottom bar with icons whos invoking info panel, exit apa, etc"
   [state! dispatch!]
   (gmg/migrid :> :right {:gap [10 20]}
-                [(icon-template icon/I-64-png     40 (fn [e] (c/config! (c/to-frame e) :content (info-panel state! dispatch!))))
-                 (icon-template icon/enter-64-png 40 (fn [e] (.dispose (c/to-frame e))))
-                 ]))
+                [(icon-template (gs/icon GoogleMaterialDesignIcons/INFO face/c-icon) 40 (fn [e] (c/config! (c/to-frame e) :content (info-panel state! dispatch!))))
+                 (icon-template (gs/icon GoogleMaterialDesignIcons/EXIT_TO_APP face/c-icon) 40 (fn [e] (.dispose (c/to-frame e))))]))
 
 (defn- login-inputs
   "Description:
@@ -836,14 +838,13 @@
    [(gmg/migrid
      :> "[fill]10px[200:, fill]" :f
      {:tgap 5}
-     [(c/label :icon (stool/image-scale icon/user-blue1-64-png 40))
+     [(c/label :icon (stool/image-scale (gs/icon GoogleMaterialDesignIcons/PERSON face/c-icon) 40))
       (let [nf (login-input dispatch!)]
         (new-focus dispatch! nf) nf)])
-    
     (gmg/migrid
      :> "[fill]10px[200:, fill]" :f
      {:gap [10 15 0 0]}
-     [(c/label :icon (stool/image-scale icon/key-blue-64-png 40))
+     [(c/label :icon (stool/image-scale (gs/icon GoogleMaterialDesignIcons/VPN_KEY face/c-icon) 40))
       (passwd-input dispatch!)])]))
 
 

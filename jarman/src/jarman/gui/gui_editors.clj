@@ -9,12 +9,16 @@
             [jarman.config.config-manager :as cm]
             [jarman.gui.gui-style         :as gs]
             [jarman.gui.gui-components    :as gcomp]
+            [jarman.gui.gui-style         :as gs]
+            [jarman.faces                 :as face]
             [jarman.gui.gui-views-service :as gvs]
             [jarman.logic.state           :as state]
             [jarman.logic.metadata        :as mt]
             [jarman.gui.gui-tools         :as gtool]
             [jarman.gui.gui-migrid        :as gmg]
-            [jarman.tools.lang            :refer :all]))
+            [jarman.tools.lang            :refer :all])
+    (:import
+     (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
 
 ;; ┌────────────────────�
@@ -113,7 +117,7 @@
                            [(gcomp/menu-bar
                              {:justify-end true
                               :buttons [[""
-                                         icon/up-blue2-64-png
+                                         (gs/icon GoogleMaterialDesignIcons/EXPAND_LESS face/c-icon)
                                          "Increase font"
                                          (fn [e]
                                            (c/config!
@@ -122,7 +126,7 @@
                                                    (do (reset! f-size (+ 2 @f-size))
                                                        @f-size))))]
                                         [""
-                                         icon/down-blue2-64-png
+                                         (gs/icon GoogleMaterialDesignIcons/EXPAND_MORE face/c-icon)
                                          "Decrease font"
                                          (fn [e]
                                            (c/config!
@@ -131,17 +135,17 @@
                                                    (do (reset! f-size (- @f-size 2))
                                                        @f-size))))]
                                         (if debug
-                                          ["" icon/loupe-blue-64-png "Show changes" (fn [e] (gcomp/popup-info-window
+                                          ["" (gs/icon GoogleMaterialDesignIcons/SEARCH face/c-icon) "Show changes" (fn [e] (gcomp/popup-info-window
                                                                                              "Changes"
                                                                                              (second (first @local-changes))
                                                                                              (c/to-frame e)))]
                                           nil)
-                                        ["" icon/agree-blue-64-png "Save" (fn [e]
+                                        ["" (gs/icon GoogleMaterialDesignIcons/DONE face/c-icon) "Save" (fn [e]
                                                                             (c/config! info-label :text "Saved")
                                                                             ((:saved-content (c/config code :user-data)))
                                                                             (save-fn {:state local-changes :label info-label :code code}))]
                                         (if dispose
-                                          ["" icon/enter-64-png "Leave" (fn [e] (.dispose (c/to-frame e)))]
+                                          ["" (gs/icon GoogleMaterialDesignIcons/EXIT_TO_APP face/c-icon) "Leave" (fn [e] (.dispose (c/to-frame e)))]
                                           nil)]})]])]
                         [(gcomp/scrollbox code)]
                         [info-label]])]

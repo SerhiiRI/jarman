@@ -90,13 +90,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; UI Composititon ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
-
-
-
 ;; (defn supply-currently-loaded [items theme]
 ;;   (concat items
 ;;           [(info "Group view")]))
-
 (defn supply-content-all-vars [items vars-list]
   (if (seq vars-list)
     (into items

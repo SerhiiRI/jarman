@@ -48,7 +48,9 @@
    "gray-light-3"      "#f7f7f7"
    "gray-super-light"  "#fefefe"
    "white"             "#ffffff"
-   "jarman-blue"       "#96c1ea"
+   "jarman-blue"       "#6c82c2"
+
+   "jarman-blue-green" "#2c7375"
    "jarman-blue-dark"  "#29295e"
    "jarman-blue-light" "#d9ecff"
    "jarman-super-dark" "#020020"
@@ -62,8 +64,7 @@
                         ["#ececec" "#ececec" "#f7f7f7"]
                         ["#e0e0e0" "#e0e0e0" "#efefef"]
                         ["#ccc" "#ccc" "#ddd"]
-                        ["#bbb" "#bbb" "#ccc"]
-                        ]})
+                        ["#bbb" "#bbb" "#ccc"]]})
 
 ;;;;;;;;;;;;;;
 ;;; HELPER ;;;
@@ -87,7 +88,7 @@
     (jarman.gui.faces-system/custom-theme-set-faces
      '( ;; -- Theme binder --
        ;; Default styles  !!! Do not using in code, do not add new here !!!
-       c-foreground               jarman-super-dark
+       c-foreground               jarman-blue
        s-foreground               font-size
        c-caret                    jarman-blue-dark
 

@@ -29,7 +29,7 @@
        :type :param,
        :display :edit,
        :component :text,
-       :value "127.0.0.1"},
+       :value "localhost"},
       :port
       {:name "Port",
        :doc
@@ -43,19 +43,19 @@
        :type :param,
        :display :edit,
        :component :text,
-       :value "localdb"},
+       :value "jarman"},
       :user
       {:name "User login",
        :type :param,
        :display :edit,
        :component :text,
-       :value "jarman"},
+       :value "root"},
       :password
       {:name "User password",
        :type :param,
        :display :edit,
        :component :text,
-       :value "dupa"}}},
+       :value ""}}},
     :jarman--trashpanda-team_ddns_net--3306
     {:name "Dell",
      :type :block,

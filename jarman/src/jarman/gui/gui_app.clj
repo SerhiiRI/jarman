@@ -4,6 +4,7 @@
         seesaw.mig
         seesaw.font)
   (:import (javax.swing JLayeredPane JLabel JTable JComboBox DefaultCellEditor JCheckBox)
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
            (javax.swing.table TableCellRenderer TableColumn)
            (java.awt.event MouseEvent)
            (jarman.jarmanjcomp DateTime)
@@ -19,10 +20,10 @@
             ;; resource
             [jarman.gui.gui-style             :as gs]
             [jarman.resource-lib.icon-library :as icon]
+            [jarman.gui.gui-style :as gs]
             [clojure.pprint :as pp]
             ;; logic
-            [jarman.config.config-manager    :as cm]
-            
+            [jarman.config.config-manager    :as cm]            
             [jarman.gui.gui-views-service    :as gvs]
             [jarman.gui.gui-alerts-service   :as gas]
             [jarman.gui.gui-components       :as gcomp]
@@ -235,28 +236,27 @@
             (concat ;; items for jlp
              [[(jarmanapp :margin-left img-scale) 0]]
              (menu/menu-slider img-scale top-offset
-                          [{:icon  icon/I-64-png
+                          [{:icon  (gs/icon GoogleMaterialDesignIcons/INFO face/c-icon)
                             :title "Message Store"
                             :fn    (fn [e] (i/show-alerts-history))}
                            
-                           {:icon  icon/refresh-blue1-64-png
+                           {:icon  (gs/icon GoogleMaterialDesignIcons/UPDATE face/c-icon)
                             :title "Reload active view"
                             :fn    (fn [e] (try
                                              (gvs/reload-view)
                                              (catch Exception e (str "Can not reload. Storage is empty."))))}
 
-                           {:icon  icon/refresh-blue-64-png
+                           {:icon  (gs/icon GoogleMaterialDesignIcons/CACHED face/c-icon)
+                            :title "Soft Restart"
+                            :fn    (fn [e] (gvs/soft-restar))}
+                           {:icon  (gs/icon GoogleMaterialDesignIcons/REFRESH face/c-icon)
                             :title "Restart"
                             :fn    (fn [e]
                                      (gvs/stop-watching)
                                      (state/set-state :soft-restart false)
                                      ((state/state :startup)))}
-
-                           {:icon  icon/ban-blue-64-png
-                            :title "Soft Restart"
-                            :fn    (fn [e] (gvs/soft-restar))}
                            
-                           {:icon  icon/key-blue-64-png
+                           {:icon  (gs/icon GoogleMaterialDesignIcons/VPN_KEY face/c-icon)
                             :title "Change work mode"
                             :fn    (fn [e]
                                      (cond (= "user"      (session/get-user-permission)) (session/set-user-permission "admin")
@@ -269,15 +269,13 @@
                            ;;  :title "Update"
                            ;;  :fn    (fn [e] (println "Check update"))}
                            
-                           {:icon  icon/user-blue1-64-png
+                           {:icon  (gs/icon GoogleMaterialDesignIcons/PERSON face/c-icon)
                             :title "Logout"
                             :fn    (fn [e]
                                      ((state/state :invoke-login-panel))
                                      (state/set-state :soft-restart nil)
-                                     (.dispose (c/to-frame e))
-                                     )}
-
-                           {:icon  icon/enter-64-png
+                                     (.dispose (c/to-frame e)))}
+                           {:icon  (gs/icon GoogleMaterialDesignIcons/EXIT_TO_APP face/c-icon)
                             :title "Close app"
                             :fn    (fn [e]
                                      (state/set-state :soft-restart nil)
@@ -340,10 +338,8 @@
 ((state/state :startup))
 
 (comment
-  
   (state/set-state :soft-restart false)
   (state/set-state :theme-name "Jarman Light")
   (state/state :theme-name)
-  (i/info "Info" "Test")
-  )
+  (i/info "Info" "Test"))
 

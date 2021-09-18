@@ -5,12 +5,15 @@
         seesaw.font)
   (:import (javax.swing JLayeredPane)
            (jarman.jarmanjcomp DateTime)
-           (java.awt.event MouseEvent))  
+           (java.awt.event MouseEvent)
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons))  
   (:require [seesaw.core :as c]
             [seesaw.border :as b]
             [clojure.string :as string]
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
+            [jarman.gui.gui-style             :as gs]
+            [jarman.faces :as face]
             [jarman.config.config-manager :as cm]           
             ;; logics
             [seesaw.util :as u]
@@ -200,7 +203,7 @@
               (gcomp/menu-bar
                {:id :db-viewer--component--menu-bar
                 :buttons [["Delete"
-                           icon/basket-blue1-64-png
+                           (gs/icon GoogleMaterialDesignIcons/DELETE face/c-icon)
                            ""
                            (fn [e]
                              ;; TODO: Delete column with ask
@@ -415,8 +418,8 @@
   (gtool/table-editor--component--bar-btn
    :edit-view-save-btn
    (gtool/get-lang-btns :save)
-   icon/agree-grey-64-png
-   icon/agree-blue-64-png
+   (gs/icon GoogleMaterialDesignIcons/DONE face/c-icon)
+   (gs/icon GoogleMaterialDesignIcons/DONE face/c-icon)
    (fn [e]
      (let [new-table-meta (atom table)]
        (doall
@@ -445,8 +448,8 @@
     (gtool/table-editor--component--bar-btn
      :edit-view-back-btn
      (gtool/get-lang-btns :show-changes)
-     icon/refresh-grey-64-png
-     icon/refresh-blue-64-png
+     (gs/icon GoogleMaterialDesignIcons/AUTORENEW face/c-icon)
+     (gs/icon GoogleMaterialDesignIcons/AUTORENEW face/c-icon)
      (fn [e] (gcomp/popup-window
               {:window-title (gtool/get-lang-btns :show-changes)
                :size [w h]
@@ -460,7 +463,7 @@
                            path-groups (group-by second (map (fn [x] (conj (subvec (first x) 1) (second x))) @local-changes))]
                        ;; (println @local-changes)
                        ;; (println path-groups)
-                       (.add bpnl (gcomp/menu-bar {:buttons [["Close" icon/enter-64-png (fn [e] (.dispose (c/to-frame e)))]]}))
+                       (.add bpnl (gcomp/menu-bar {:buttons [["Close" (gs/icon GoogleMaterialDesignIcons/EXIT_TO_APP face/c-icon) (fn [e] (.dispose (c/to-frame e)))]]}))
                        (doall
                         (map
                          (fn [[group-name paths]]
@@ -515,8 +518,8 @@
   (gtool/table-editor--component--bar-btn
    :open-code-editor-for-table
    "Editor"
-   icon/json1-64-png
-   icon/json1-64-png
+   (gs/icon GoogleMaterialDesignIcons/DESCRIPTION face/c-icon)
+   (gs/icon GoogleMaterialDesignIcons/DESCRIPTION face/c-icon)
    (fn [e]
      (c/label) ;; TODO
      ;; (gcomp/view-metadata-editor
@@ -677,14 +680,14 @@
                                                                            (rm-menu e)))))]))
           items (gtool/join-mig-items
                  ;; Popup menu buttons
-                 (btn "Edit table" icon/pen-blue-64-png
+                 (btn "Edit table" (gs/icon GoogleMaterialDesignIcons/EDIT face/c-icon)
                       (fn [e] (do (rm-menu e)
                                   (add-to-view-service--table-editor table-id meta))))
-                 (btn "Delete table" icon/basket-blue1-64-png (fn [e]))
-                 (btn "Show relations" icon/refresh-connection-blue-64-png (fn [e]))
+                 (btn "Delete table"  (gs/icon GoogleMaterialDesignIcons/DELETE face/c-icon) (fn [e]))
+                 (btn "Show relations"  (gs/icon GoogleMaterialDesignIcons/AUTORENEW face/c-icon) (fn [e]))
                  (if (session/allow-permission? [:developer])
                    (btn "Metadata"
-                        icon/json-64-png
+                        (gs/icon GoogleMaterialDesignIcons/DESCRIPTION face/c-icon)
                         (fn [e]
                           (do (rm-menu e)
                               ;; (gcomp/view-metadata-editor (keyword (:table_name (first selected-tab))))
@@ -692,7 +695,7 @@
                    [])
                  (if (session/allow-permission? [:developer])
                    (btn "Defview"
-                        icon/pen-64-png
+                        (gs/icon GoogleMaterialDesignIcons/EDIT face/c-icon)
                         (fn [e]
                           (do (rm-menu e)
                               ((get (state/state :defview-editors) (keyword (:table_name (first selected-tab)))) e))))
@@ -720,9 +723,9 @@
 
                    :icon (cond
                            (= (:type data) "connection")
-                           (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (:height data)) 1))
+                           (gs/icon GoogleMaterialDesignIcons/SWAP_HORIZ face/c-icon (/ (+ 8 (:height data)) 1))
                            (= (:type data) "key")
-                           (stool/image-scale icon/refresh-connection-blue-64-png (/ (+ 8 (:height data)) 1))
+                           (gs/icon GoogleMaterialDesignIcons/SWAP_HORIZ face/c-icon (/ (+ 8 (:height data)) 1))
                            :else nil)
                    
                    :background (cond
@@ -961,8 +964,8 @@
       :constraints ["wrap 1" "0px[grow, fill]0px" "5px[fill]5px[grow, fill]0px"]
       :items [[(gcomp/menu-bar
                 {:id :db-viewer--component--menu-bar
-                 :buttons [["Show all relation" icon/refresh-connection-grey-64-png "" (fn [e])]
-                           ["Save view"    icon/agree-grey-64-png       "" (fn [e] (doall
+                 :buttons [["Show all relation" (gs/icon GoogleMaterialDesignIcons/AUTORENEW face/c-icon) "" (fn [e])]
+                           ["Save view" (gs/icon GoogleMaterialDesignIcons/DONE face/c-icon) "" (fn [e] (doall
                                                                                     (map
                                                                                      (fn [save-xy]
                                                                                        (if-not (and (nil? (first  save-xy))
@@ -977,10 +980,10 @@
                                                                              (i/info (gtool/get-lang-alerts :success)
                                                                                      (gtool/get-lang-alerts :changes-saved))
                                                                              (state/set-state :dbv-bounds {}))]
-                           ["Reset view"   icon/max-64-png              "" (fn [e]
+                           ["Reset view" (gs/icon GoogleMaterialDesignIcons/VIEW_QUILT face/c-icon) "" (fn [e]
                                                                              (state/set-state :dbv-bounds {})
                                                                              (((state/state :jarman-views-service) :reload)))]
-                           ["Reloade view" icon/refresh-grey-64-png     "" (fn [e] (((state/state :jarman-views-service) :reload)))]]})]
+                           ["Reloade view" (gs/icon GoogleMaterialDesignIcons/AUTORENEW face/c-icon) "" (fn [e] (((state/state :jarman-views-service) :reload)))]]})]
               [rootJLP]]))))
 
 

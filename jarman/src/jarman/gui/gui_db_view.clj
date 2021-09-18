@@ -3,8 +3,11 @@
         seesaw.border
         seesaw.dev
         seesaw.mig)
+  (:import  (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons))
   (:require [clojure.string                   :as string]
             [jarman.resource-lib.icon-library :as icon]
+            [jarman.gui.gui-style             :as gs]
+            [jarman.faces :as face]
             [jarman.gui.gui-tools             :as gtool]
             [jarman.tools.swing               :as stool]
             [jarman.gui.gui-alerts-service    :refer :all]))
@@ -159,9 +162,9 @@
               :background (new Color 0 0 0 0)
               :border (line-border :thickness 1 :color border-c)
               :constraints ["wrap 1" "0px[150, fill]0px" "0px[30px, fill]0px"]
-              :items [[(btn "Edit table" icon/pen-blue-64-png)]
-                      [(btn "Delete table" icon/basket-blue1-64-png)]
-                      [(btn "Show relations" icon/refresh-connection-blue-64-png)]])))
+              :items [[(btn "Edit table" (gs/icon GoogleMaterialDesignIcons/EDIT face/c-icon))]
+                      [(btn "Delete table" (gs/icon GoogleMaterialDesignIcons/DELETE face/c-icon))]
+                      [(btn "Show relations" (gs/icon GoogleMaterialDesignIcons/SYNC face/c-icon))]])))
 
 
 (defn set-col-as-row

@@ -19,7 +19,11 @@
            (jiconfont.swing IconFontSwing)
            (java.io InputStream)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
-           ))
+           (javax.swing JLayeredPane)
+           
+           (javax.sound.sampled AudioInputStream) 
+           (javax.sound.sampled AudioSystem)            
+           (javax.sound.sampled Clip)))
 
 (defn- ubuntu-font [font] (str "./resources/fonts/ubuntu/" font))
 (defn fonts []
@@ -312,3 +316,140 @@
 (comment
   (style-demo)
   )
+
+
+
+;; ┌───────────────┐
+;; │               │
+;; │     GIFT      │
+;; │               │
+;; └───────────────┘
+(defn- move-in-time-x [root obj x y w h x-step f-x delay]
+  (.start
+   (Thread.
+    (fn []
+      (do
+        (Thread/sleep (* 1000 delay))
+        (c/config! obj :bounds [x y w h])
+        (.repaint root)
+        (if (> x-step 0)
+          (if (< (.getX (c/config obj :bounds)) f-x)
+            (move-in-time-x root obj (+ x x-step) y w h x-step f-x delay))
+          (if (> (.getX (c/config obj :bounds)) f-x)
+           (move-in-time-x root obj (+ x x-step) y w h x-step f-x delay)))
+        )))))
+
+(defn- move-in-time-y [root obj x y w h y-step f-y delay]
+  (.start
+   (Thread.
+    (fn []
+      (do
+        (Thread/sleep (* 1000 delay))
+        (c/config! obj :bounds [x y w h])
+        (.repaint root)
+        (if (> y-step 0)
+         (if (< (.getY (c/config obj :bounds)) f-y)
+           (move-in-time-y root obj x (+ y y-step) w h y-step f-y delay))
+         (if (> (.getY (c/config obj :bounds)) f-y)
+           (move-in-time-y root obj x (+ y y-step) w h y-step f-y delay)))
+        )))))
+
+(def label-img
+  (fn [file-path w h]
+    (let [img (clojure.java.io/file (str "icons/imgs/" file-path))
+          gif (c/label :text (str "<html> <img width=\"" w "\" height=\"" h "\" src=\"file:" img "\">"))]
+      gif)))
+
+
+(defn shooting-stars []
+  (if (or (= false (state/state :shooting-stars)) (nil? (state/state :shooting-stars)))
+    (let [JLP (state/state :app)
+          dub1 (label-img "egg.gif" 150 130)
+          dub2 (label-img "egg.gif" 150 130)
+          dub3 (label-img "egg.gif" 150 130)
+          dub4 (label-img "egg.gif" 150 130)
+          dub5 (label-img "egg.gif" 150 130)
+          dub6 (label-img "egg.gif" 150 130)
+          hb  (label-img "hb.gif"  300 150)
+          cake  (label-img "cake.gif"  200 200)]
+      (state/set-state :shooting-stars true)
+      ;; dub pepe
+      (move-in-time-x JLP dub1
+                      -150
+                      (- (second @(state/state :atom-app-size)) 130)
+                      150 130 5
+                      (- (/ (first @(state/state :atom-app-size)) 2) 250)
+                      0.05)
+      (timelife 1 #(move-in-time-x JLP dub2
+                                   -150
+                                   (- (second @(state/state :atom-app-size)) 130)
+                                   150 130 5
+                                   (- (/ (first @(state/state :atom-app-size)) 2) 350)
+                                   0.05))
+      (timelife 2 #(move-in-time-x JLP dub3
+                                   -150
+                                   (- (second @(state/state :atom-app-size)) 130)
+                                   150 130 5
+                                   (- (/ (first @(state/state :atom-app-size)) 2) 450)
+                                   0.05))
+      
+      (move-in-time-x JLP dub4
+                      (first @(state/state :atom-app-size))
+                      (- (second @(state/state :atom-app-size)) 130)
+                      150 130 -5
+                      (+ (/ (first @(state/state :atom-app-size)) 2) 100)
+                      0.05)
+      (timelife 1 #(move-in-time-x JLP dub5
+                                   (first @(state/state :atom-app-size))
+                                   (- (second @(state/state :atom-app-size)) 130)
+                                   150 130 -5
+                                   (+ (/ (first @(state/state :atom-app-size)) 2) 200)
+                                   0.05))
+      (timelife 2 #(move-in-time-x JLP dub6
+                                   (first @(state/state :atom-app-size))
+                                   (- (second @(state/state :atom-app-size)) 130)
+                                   150 130 -5
+                                   (+ (/ (first @(state/state :atom-app-size)) 2) 300)
+                                   0.05))
+      
+      (timelife 2 #(move-in-time-y JLP hb
+                                   (- (/ (first @(state/state :atom-app-size)) 2) 150)
+                                   -150
+                                   300 150 5
+                                   -20
+                                   0.05))
+      (timelife 3 #(move-in-time-y JLP cake
+                                   (- (/ (first @(state/state :atom-app-size)) 2) 100)
+                                   (second @(state/state :atom-app-size))
+                                   200 200 -5
+                                   (- (second @(state/state :atom-app-size)) 200)
+                                   0.08))
+      ;; run pepe
+      (.add JLP dub1 (Integer. 1002))
+      (.add JLP dub2 (Integer. 1003))
+      (.add JLP dub3 (Integer. 1004))
+      (.add JLP dub4 (Integer. 1005))
+      (.add JLP dub5 (Integer. 1006))
+      (.add JLP dub6 (Integer. 1007))
+      (.add JLP hb (Integer. 1000))
+      (.add JLP cake (Integer. 1001))
+      (let [audioIn (AudioSystem/getAudioInputStream (File. "/home/aleks/github/jarman/jarman/icons/imgs/stars.wav"))
+            clip    (javax.sound.sampled.AudioSystem/getClip)]
+        (.open clip audioIn)
+        (.start clip))
+      (timelife 33 #(do
+                      (.remove JLP dub1)
+                      (.remove JLP dub2)
+                      (.remove JLP dub3)
+                      (.remove JLP dub4)
+                      (.remove JLP dub5)
+                      (.remove JLP dub6)
+                      (.remove JLP hb)
+                      (.remove JLP cake)
+                      (state/set-state :shooting-stars false)
+                      (.revalidate JLP)
+                      (.repaint JLP)))
+      (.revalidate JLP)
+      (.repaint JLP))))
+
+;; ((state/state :startup))

@@ -281,7 +281,12 @@
                             :title "Close app"
                             :fn    (fn [e]
                                      (state/set-state :soft-restart nil)
-                                     (.dispose (c/to-frame e)))}])
+                                     (.dispose (c/to-frame e)))}
+
+                           {:icon  icon/question-64-png
+                            :title "Stars"
+                            :fn    (fn [e] (gs/shooting-stars))}
+                           ])
              [(gcomp/fake-focus :vgap top-offset :hgap img-scale)]))))
 
 

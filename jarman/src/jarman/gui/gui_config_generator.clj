@@ -369,9 +369,9 @@
   "Discription:
      Return list of button expand chlide with configurations parts."
   [colors-fn lvl offset]
-  (let [[color-bg color-hover] (if (fn? colors-fn)
-                                 (second (colors-fn lvl))
-                                 ["f7f7f7" "f7f7f7"])
+  (let [[color-bg color-hover child-bg] (if (fn? colors-fn)
+                                          (second (colors-fn lvl))
+                                          ["f7f7f7" "f7f7f7" "f7f7f7"])
         current-theme (str (first (cm/get-in-value [:themes :theme_config.edn :selected-theme])) ".edn")
         config-file-list-as-keyword (map #(first %) (cm/get-in-segment []))
         config-file-list-as-keyword-to-display
@@ -391,6 +391,7 @@
                      title
                      :left-offset offset
                      :c-focus     color-hover
+                     :background  child-bg
                      :onClick (fn [e]
                                 (gvs/add-view
                                  :view-id view-id
@@ -411,6 +412,7 @@
                   title
                   :left-offset offset
                   :c-focus     color-hover
+                  :background  child-bg
                   :onClick (fn [e]
                              (gvs/add-view
                               :view-id view-id
@@ -426,6 +428,7 @@
                   title
                   :left-offset offset
                   :c-focus     color-hover
+                  :background  child-bg
                   :onClick (fn [e]
                              (gvs/add-view
                               :view-id view-id

@@ -1087,7 +1087,7 @@
                  background
                  foreground
                  c-left
-                 left-gap]
+                 left-offset]
           :or {expand :auto
                border (b/compound-border (b/empty-border :left 3))
                vsize 35
@@ -1100,14 +1100,16 @@
                background face/c-btn-expand-bg
                foreground face/c-btn-expand-fg
                c-left     face/c-btn-expand-offset
-               left-gap 0}}]
+               left-offset 0}}]
     (let [atom-inside-btns (atom nil)
           inside-btns (if (nil? inside-btns) nil inside-btns) ;; check if nill
           inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns)) ;; check if not in list
           inside-btns (if (sequential? (first inside-btns)) (first inside-btns) inside-btns) ;; check if list in list
           ico (if (or (= :always expand) (not (nil? inside-btns))) ico nil)
           title (c/label
-                 :border (b/line-border :left left-gap :color background)
+                 :border (b/compound-border
+                          (b/line-border  :left left-offset :color background)
+                          (b/empty-border :left 10))
                  :text txt
                  :font (gs/getFont :bold)
                  :foreground foreground
@@ -1205,7 +1207,9 @@
            :size  [width :by 25]
            :cursor cursor
            :focusable? true
-           :border (b/empty-border :left 5)
+           :border (b/compound-border 
+                    (b/empty-border :left left-offset)
+                    (b/line-border  :left 6 :color c-focus))
            :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
                     :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
                     :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))

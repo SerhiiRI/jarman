@@ -337,7 +337,8 @@
 
 ((state/state :startup))
 
-(comment
+
+(comment  
   (state/set-state :soft-restart false)
   (state/set-state :theme-name "Jarman Light")
   (state/state :theme-name)

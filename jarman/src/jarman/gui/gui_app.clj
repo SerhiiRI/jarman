@@ -269,7 +269,7 @@
                            ;;  :title "Update"
                            ;;  :fn    (fn [e] (println "Check update"))}
                            
-                           {:icon  (gs/icon GoogleMaterialDesignIcons/PERSON face/c-icon)
+                           {:icon  (gs/icon GoogleMaterialDesignIcons/PERSON face/c-icon )
                             :title "Logout"
                             :fn    (fn [e]
                                      ((state/state :invoke-login-panel))
@@ -281,8 +281,8 @@
                                      (state/set-state :soft-restart nil)
                                      (.dispose (c/to-frame e)))}
 
-                           {:icon  icon/question-64-png
-                            :title "Stars"
+                           {:icon  (gs/icon GoogleMaterialDesignIcons/STARS face/c-icon)
+                            :title "Shooting Stars"
                             :fn    (fn [e] (gs/shooting-stars))}
                            ])
              [(gcomp/fake-focus :vgap top-offset :hgap img-scale)]))))

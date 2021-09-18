@@ -433,7 +433,7 @@
       (.add JLP dub6 (Integer. 1007))
       (.add JLP hb (Integer. 1000))
       (.add JLP cake (Integer. 1001))
-      (let [audioIn (AudioSystem/getAudioInputStream (File. "/home/aleks/github/jarman/jarman/icons/imgs/stars.wav"))
+      (let [audioIn (AudioSystem/getAudioInputStream (clojure.java.io/file "./icons/imgs/stars.wav"))
             clip    (javax.sound.sampled.AudioSystem/getClip)]
         (.open clip audioIn)
         (.start clip))

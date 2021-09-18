@@ -1,5 +1,7 @@
 (ns jarman.interaction)
 (require '[jarman.gui.gui-alerts-service :as gas])
+(require '[jarman.gui.gui-views-service  :as gvs])
+(require '[jarman.gui.gui-editors        :as gedit])
 (require '[jarman.tools.org :refer :all])
 (require '[clojure.pprint :refer [cl-format]])
 
@@ -67,3 +69,27 @@
   (warning "Interaction" "Devil robot say:" :s-popup [300 150]
            :expand (fn [] (jarman.gui.gui-components/button-basic "Kill all humans!")))
   (show-alerts-history))
+
+
+
+;; ┌──────────────────┐
+;; │                  │
+;; │  File editor     │
+;; │                  │
+;; └──────────────────┘
+
+
+(defn editor
+  "Description:
+    Set path to directory and file name
+  Example:
+    (editor \"./test\" \"test-file\")"
+  [directory-path file-name]
+  (gvs/add-view
+   :view-id   (keyword (str "editor" file-name))
+   :title     (str "Edit:  " file-name)
+   :render-fn (fn [] (gedit/text-file-editor directory-path file-name))))
+
+(comment
+  (editor "./test" "test-file.txt")
+  ) 

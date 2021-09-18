@@ -140,10 +140,13 @@
                                                                                              (second (first @local-changes))
                                                                                              (c/to-frame e)))]
                                           nil)
-                                        ["" (gs/icon GoogleMaterialDesignIcons/DONE face/c-icon) "Save" (fn [e]
-                                                                            (c/config! info-label :text "Saved")
-                                                                            ((:saved-content (c/config code :user-data)))
-                                                                            (save-fn {:state local-changes :label info-label :code code}))]
+                                        [""
+                                         (gs/icon GoogleMaterialDesignIcons/DONE face/c-icon)
+                                         "Save"
+                                         (fn [e]
+                                           (c/config! info-label :text "Saved")
+                                           ((:saved-content (c/config code :user-data)))
+                                           (save-fn {:state local-changes :label info-label :code code}))]
                                         (if dispose
                                           ["" (gs/icon GoogleMaterialDesignIcons/EXIT_TO_APP face/c-icon) "Leave" (fn [e] (.dispose (c/to-frame e)))]
                                           nil)]})]])]
@@ -289,3 +292,33 @@
      code)))
 
   
+(defn text-file-editor
+  [directory-path file-name]
+  (let [file-path (str directory-path "/" file-name)]
+    (gmg/migrid :v :a :a
+                (code-editor
+                 {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
+                         :background "#fff"]
+                  :val (slurp file-path)
+                  :title (str "Edit: " file-name)
+                  :save-fn (fn [props]
+                             (try
+                               ;;(println "\nTo save:\n" (:code-tester @(:state props)))
+                               (spit file-path (:code-tester @(:state props))) 
+                               (catch Exception e (c/config!
+                                                   (:label props)
+                                                   :text "Some error: Can not save."))))}))))
+
+
+(comment
+  (let [frame (seesaw.core/frame
+               :title "Demo"
+               :minimum-size [500 :by 500]
+               :size [500 :by 500]
+               :content (text-file-editor "./test" "test-file.txt"))
+        ]
+    (doto
+        frame
+      (.setLocationRelativeTo nil) c/pack! c/show!))
+  )
+

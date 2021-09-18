@@ -254,6 +254,11 @@
                                            :view (gedit/code-editor
                                                   {:dispose true
                                                    :val "(fn [x] (println \"Nice ass\" x)"})}))}
+
+    "File editor" {:key        "demo-file-editor"
+                   :action     :invoke
+                   :permission [:developer]
+                   :fn (fn [e] (i/editor "./test" "test-file.txt"))}
     
     "Popup demo" {:key        "popup-demo"
                   :action     :invoke

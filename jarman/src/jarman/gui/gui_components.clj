@@ -1559,10 +1559,10 @@
                  :foreground fg
                  :focusable? true
                  :border (b/empty-border :left l :right r :top t :bottom b)
-                 :listen [:mouse-entered (fn [e] (c/config! e :background bg-hover :foreground fg :cursor :hand))
-                          :mouse-exited  (fn [e] (c/config! e :background bg :foreground fg))
+                 :listen [:mouse-entered (fn [e] (c/config! e :background bg-hover :cursor :hand) (.repaint (c/to-root e)))
+                          :mouse-exited  (fn [e] (c/config! e :background bg))
                           :mouse-clicked onClick
-                          :focus-gained  (fn [e] (c/config! e :background bg-hover  :cursor :hand))
+                          :focus-gained  (fn [e] (c/config! e :background bg-hover :cursor :hand) (.repaint (c/to-root e)))
                           :focus-lost    (fn [e] (c/config! e :background bg))
                           :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))])))]
     (mig-panel

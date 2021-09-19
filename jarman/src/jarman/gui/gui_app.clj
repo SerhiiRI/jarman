@@ -43,6 +43,7 @@
             [jarman.plugin.extension-manager :refer [do-load-extensions]]
             [jarman.plugin.plugin            :refer [do-load-theme]]
             [jarman.config.vars              :refer [setq print-list-not-loaded]]
+            [jarman.config.conf-language     :refer [do-load-language]]
             [jarman.config.dot-jarman        :refer [dot-jarman-load]]
             [jarman.gui.builtin-themes.jarman-light]
             [jarman.interaction              :as i]))
@@ -177,17 +178,18 @@
   []
   ;; (managment-data/on-app-start)
   (print-header 
-   "Swapp"
+   "DEPRECATED SOON | Load old configuraions "
    (cm/swapp))
-  (dot-jarman-load)
-  (print-list-not-loaded)
   (print-header 
    "Load .jarman"
    (dot-jarman-load)
    (print-list-not-loaded))
   (print-header
    "Load Extensions"
-   (do-load-extensions)))
+   (do-load-extensions))
+  (print-header
+   "Load Languages"
+   (do-load-language)))
 
 ;; after swing component was builded
 (defn load-level-1
@@ -205,13 +207,9 @@
         (do-load-theme "Jarman Light")
         (state/set-state :theme-first-load true)
         (print-header "First theme loaded")))
-
-  (println "\n")
   (print-header
    "Apply selected theme" 
    (do-load-theme (state/state :theme-name))) ;; TODO: Alerts tmp storage with invoke later
-
-  (println "\n")
   (print-header
    "apply default global style" 
    (gs/load-style))

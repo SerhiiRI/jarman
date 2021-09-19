@@ -26,7 +26,7 @@
        - [ ] Write doc
    - [ ] =faces.clj=
      Finish moving to new customization style
-
+     
 ** PROCESSING [#1] Frontend refactorization
    DEADLINE: <2021-09-15 śro>
 *** TODO Alerts upgrade                                              :@Aleks:
@@ -192,7 +192,8 @@
    - [X] Create GUI which allow controlling and changing variables inside gui. 
    - [ ] Make persistant function, which automatically wrote customized variable
      back to =.jarman=, (also mean parsing file) 
-** TODO [#1] /Bug/. Throw exception when .jarman fialed               :@Serhii:
+** DONE [#1] /Bug/. Throw exception when .jarman fialed               :@Serhii:
+   CLOSED: [2021-09-18 Sat 20:37]
 ** TODO [#2] /Feature/. Emacs IDE split out-environment [0/2]         :@Serhii:
    - [ ] Auto tail reverting logs buffer
    - [ ] Integrate local toolkit for emacs.

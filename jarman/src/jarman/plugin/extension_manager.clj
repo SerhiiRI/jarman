@@ -78,12 +78,25 @@
                        (create-log-file)
                        (clojure.java.io/writer *debug-file-name* :append true))
                      *out*)]
-     (do
-       ~@body)))
+     (do ~@body)))
 
-;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;
 ;;; PandaExtension ;;;
-;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;
+
+(defn assert-sources [^String extension-name file-list]
+  (doall
+   (doseq [file file-list]
+     (when-not (.exists file)
+       (throw (FileNotFoundException.
+               (format "Extension `%s`. Loading sequnce `%s` not exist" extension-name (str file))))))))
+
+(defn assert-languages [^String extension-name file-list]
+  (doall
+   (doseq [file file-list]
+     (when-not (.exists file)
+       (throw (FileNotFoundException.
+               (format "Extension `%s`. Language file `%s` not exist" extension-name (str file))))))))
 
 (defprotocol IPluginLoader
   (do-load [this]))
@@ -92,27 +105,29 @@
   (do-load [this]
     (print-header
      (format "load ~%s~" name)
+     ;; Testing language and sources files
+     (print-line "testing translation files")
+     (assert-sources name loading-seq)
+     (print-line "testing extension source files")
+     (assert-languages name language)
+     ;; Compiling source files
      (doall
-      (doseq [loading-file loading-seq
-              :let [f (io/file extension-path (format "%s.clj" (str loading-file)))]]
-        (if (.exists f)
-          (do
-            (print-header
-             (format "compiling ~%s~" (str f))
-             (let [file-output (with-out-str (load-file (str f)))]
-               (if (not-empty file-output)
-                 (do
-                   (print-line "plugin compiling output")
-                   (print-example file-output))))))
-          (throw (FileNotFoundException.
-                  (format "Extension `%s`. Loading sequnce `%s` not exist"
-                          name loading-file)))))))))
+      (doseq [f loading-seq]
+        (print-header
+         (format "compiling ~%s~" (str f))
+         (let [file-output (with-out-str (load-file (str f)))]
+           (if (not-empty file-output)
+             (do
+               (print-line "plugin compiling output")
+               (print-example file-output))))))))))
+
 (defn constructPandaExtension [name description path extension-m]
   (-> extension-m
       (assoc  :name name)
       (assoc  :description description)
       (assoc  :extension-path path)
-      ;; (update :dependencies path)
+      (update :loading-seq (partial mapv (fn [symb] (io/file path (format "%s.clj" (str symb))))))
+      (update :language    (partial mapv (fn [symb] (io/file path (format "%s.edn" (str symb))))))
       map->PandaExtension))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -150,8 +165,6 @@
                     (clojure.string/join
                      ", " (map str jarman-extensions-dir-list)))))))
 
-;; (extension-storage-list-get)
-;; (extension-storage-list-load)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; COMPILE WITH DEPENDENCIEST ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -180,9 +193,9 @@
              extension-locked
              extension-list]}]
   (print-line "Extension loading debug")
-  (print-line (cl-format nil "loaded [~{~a~^,~}]" (map :name extension-loaded)))
-  (print-line (cl-format nil "locked [~{~a~^,~}]" (map :name extension-locked)))
-  (print-line (cl-format nil "waiter [~{~a~^,~}]" (map :name extension-list)))
+  (print-line (cl-format nil "loaded (~{~a~^,~})" (map :name extension-loaded)))
+  (print-line (cl-format nil "locked (~{~a~^,~})" (map :name extension-locked)))
+  (print-line (cl-format nil "waiter (~{~a~^,~})" (map :name extension-list)))
   (when (seq extension-list)
     (let [[extension & rest-extensions] extension-list]
       (if (seq (:dependencies extension))
@@ -202,7 +215,7 @@
              :extension-list   (replace-on-first (first (:dependencies extension)) extension-list))))
         (do
           ;; COMPILE EXTENSION
-          (do-load extension)
+          (.do-load extension)
           ;; RECUR (EXTENSION . REST-EXTENSION)
           ;; WITH REST-EXTENSION
           (compile-with-deps
@@ -228,7 +241,7 @@
    (with-out-debug-file
      (print-header
       (format "Reload extensions (%s)" (quick-timestamp))
-      (doall (map do-load panda-extensions))))))
+      (doall (map (fn [e] (.do-load e)) panda-extensions))))))
 
 (comment
   (extension-storage-list-load)

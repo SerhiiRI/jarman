@@ -58,9 +58,6 @@
   (if-let [file (first (filter #(.exists %) jarman-paths-list))]
     (try (load-file (str file))
          (catch Exception e (println (.getMessage e))))
-   ;; (ioerr (load-file (str file))
-   ;;        (fn [e] (print-line "Error! Cannot open `.jarman` config file"))
-   ;;        (fn [e] (print-line "Error! Reading exception for `.jarman`. Maybe declaration or code in is corrupted")))
    (throw (FileNotFoundException.
            (format "No one file [%s] doesn't exists"
                    (clojure.string/join

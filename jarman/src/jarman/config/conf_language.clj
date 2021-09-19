@@ -1,4 +1,4 @@
-(ns jarman.config.conf-langauge
+(ns jarman.config.conf-language
   (:require
    [clojure.java.io :as io]
    [jarman.config.environment :as env]
@@ -12,21 +12,34 @@
 ;;; VARS ;;;
 ;;;;;;;;;;;;
 
+(def ^:private _language
+  "Variable which store
+  On first level keys 
+  :_global - central translation file
+  :dracula - plugin translations
+  ... all another key represent plugins"
+  (ref {}))
+
 (defvar language-selected :en
   :name "Language"
   :doc "Define translation language to jarman"
   :type String
   :group :view-params)
 
+(defvar language-supported [:en ]
+  :name "Supported Languages"
+  :doc "Define supported language inside jarman"
+  :type clojure.lang.PersistentVector
+  :group :view-params)
+
+
 ;;;;;;;;;;;;;;;;;;;;
 ;;; DEBUG HEADER ;;;
 ;;;;;;;;;;;;;;;;;;;;
 
-(def ^{:private true} debug (ref false))
-(defn debug-enable [] (dosync (ref-set debug true)))
+(def ^{:private true}  debug (ref false))
+(defn debug-enable  [] (dosync (ref-set debug true)))
 (defn debug-disable [] (dosync (ref-set debug false)))
-(debug-enable)
-(debug-disable)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -48,21 +61,24 @@
      (throw (FileNotFoundException.
                "Any of \"config\" folder wasn't register in computer")))))
 
-(debug-enable)
-(def language-supported)
-(filter :language (extension-manager/extension-storage-list-get))
-
-(def ^:private _language (ref {}))
-(defn ^:private _into_language [plugin-language-edn]
-  (deep-merge-with #(second %&) {:a {:a 1}} {:a {:a 2 :b 2}})
-  (deep-merge-with second {:a 1} {:b 1}))
-
-
 (defn do-load-language []
-  (dosync (ref-set _language (read-string (slurp (str (get-language-file))))))
-  true)
+  (let [extensions-with-translations (filter (comp seq :language) (extension-manager/extension-storage-list-get))
+        central-language-file (get-language-file)]
+    (dosync
+     (print-line (format "loadin central language file ~%s~" (str central-language-file)))
+     (ref-set _language {:_global (read-string (slurp (str central-language-file)))})
+     (doall
+      ;; swapping translations from all langun
+      (doseq [ext extensions-with-translations]
+        ;; if plugin contain languages files
+        (print-line (format "Loading languages from extension ~%s~" (:name ext)))
+        (alter _language assoc (keyword (:name ext))
+               (reduce (fn [acc-m lang-file]
+                         (print-line (format "merge file ~%s~ " (str lang-file)))
+                         (deep-merge-with #(second %&) acc-m (read-string (slurp (str lang-file)))))
+                       {}
+                       (:language ext))))))) true)
 
-(do-load-language)
 
 ;;;;;;;;;;;;;;;;
 ;;; LOGISTIC ;;;
@@ -77,10 +93,12 @@
     (lang)
       ;;=> return all map in some language
     (lang :buttons :accept)
-      ;;=> return some translation by path. "
+      ;;=> return some translation by path.
+  See also
+    `plang`"
   [& translation-path]
   (let [d "<null>"
-        p (into [(deref language-selected)] translation-path)
+        p (into [:_global (deref language-selected)] translation-path)
         l (get-in @_language p d)]
     (when (deref debug)
       (print-header
@@ -96,9 +114,26 @@
     (plang :aaa)
       ;;=> return all map in some language for plugin `aaa`
     (plang :aaa :buttons :accept)
-      ;;=> return some translation by path. with context of `aaa` "
+      ;;=> return some translation by path. with context of `aaa`
+  See also
+    `lang`"
   [plugin & translation-path]
-  (apply lang (deref language-selected) plugin (deref language-selected) translation-path))
+  (let [d "<null>"
+        p (into [plugin (deref language-selected)] translation-path)
+        l (get-in @_language p d)]
+    (when (deref debug)
+      (print-header
+       (format "Debug translation in `%s`" (eval `(str *ns*)))
+       (print-line (format  "translation-path %s => '%s' " (str p) l))))
+    l))
 
-(debug-enable)
-(plang :aaa :accept)
+(comment
+  (debug-enable)
+  (do-load-language)
+  (lang :themes :name)
+  ;; => ":themes"
+  (plang :aaa :accept-button)
+  ;; => "bliat"
+  (debug-disable))
+
+

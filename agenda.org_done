@@ -130,3 +130,46 @@ Archived entries from file /home/serhii/programs/jarman/agenda.org
   - [ ] Warning icon as yellow triangle with an exclamation mark
   - [ ] Danger icon, now existing icon alert-red-512.png, we need 64 and 128 too
   - [ ] Save icon as floppy disk (it is more universal symbol)
+
+* DONE [#3] /Bug/. Use system font's for linux                        :@Serhii:
+  CLOSED: [2021-09-20 pon. 04:35]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-09-20 pon. 04:36
+  :ARCHIVE_FILE: c:/programs/GitHub/jarman/agenda.org
+  :ARCHIVE_OLPATH: Frontend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+
+* DONE [#1] /Bug/. Loggin panel not compile                            :@Aleks:
+  CLOSED: [2021-09-20 pon. 04:35]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-09-20 pon. 04:36
+  :ARCHIVE_FILE: c:/programs/GitHub/jarman/agenda.org
+  :ARCHIVE_OLPATH: Frontend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+  - [X] check offline startup
+
+* DONE [#1] /Feature/. Implement Faces                                 :@Aleks:
+  CLOSED: [2021-09-20 pon. 04:35]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-09-20 pon. 04:36
+  :ARCHIVE_FILE: c:/programs/GitHub/jarman/agenda.org
+  :ARCHIVE_OLPATH: Frontend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+
+* Config Generator Upgrade and Fix
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-09-20 pon. 04:36
+  :ARCHIVE_FILE: c:/programs/GitHub/jarman/agenda.org
+  :ARCHIVE_OLPATH: Frontend
+  :ARCHIVE_CATEGORY: agenda
+  :END:
+  - [ ] - block expand (there is to many parameters, we need to hide them as subconfig with title)
+  - [ ] - message on save success
+  - [ ] - message on save failed
+  - [X] - fixed alert box permeation   

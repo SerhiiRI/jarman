@@ -48,7 +48,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;
 
 (def ^:dynamic *debug-to-file* false)
-(def ^:dynamic *debug-file-name* "extension-manager-log.org")
+(def ^:dynamic *debug-file-name* "extension.log.org")
 
 (defvar jarman-extension-list '(aaa)
   :type clojure.lang.PersistentList

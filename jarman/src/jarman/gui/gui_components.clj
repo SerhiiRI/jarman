@@ -1763,3 +1763,47 @@
   ;;    {:window-title "Popup for debug"
   ;;     :view mig}))
   )
+
+(defn doom
+  ([] (doom (rift (state/state :doom-compo) [])))
+  ([compo]
+   (if-not (state/state :doom)
+     (let [JLP   (state/state :app)
+           fsize @(state/state :atom-app-size)
+           w     (first fsize)
+           h     (/ (second fsize) 3)
+           panel (c/vertical-panel
+                  :border (b/line-border :left 2 :bottom 2 :right 2 :color "#000")
+                  :bounds [0 0 w h] 
+                  :items [compo])]
+       (state/set-state :doom-compo compo)
+       (state/set-state :doom panel)
+       (.add JLP panel (Integer. 1010))
+       (.revalidate JLP)
+       (.repaint JLP))
+     (if (state/state :doom) (.setVisible (state/state :doom) true)))))
+
+(defn doom-hide [] (.setVisible (state/state :doom) false))
+
+(defn doom-rm []
+  (let [JLP  (state/state :app)
+        doom (state/state :doom)]
+    (if doom
+      (try
+        (.remove JLP doom)
+        (state/rm-state :doom-compo)
+        (state/rm-state :doom)
+        (.revalidate JLP)
+        (.repaint JLP)
+        ))))
+
+(comment
+  (doom (let [w 220 h 220]
+         (gmg/migrid
+          :> 
+          [(label-img "ricardo.gif" w h)
+           (label-img "ricardo.gif" w h)
+           (label-img "ricardo.gif" w h)])))
+
+  (doom-rm)
+  )

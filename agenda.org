@@ -28,7 +28,6 @@
      Finish moving to new customization style
      
 ** PROCESSING [#1] Frontend refactorization
-   DEADLINE: <2021-09-15 śro>
 *** TODO Alerts upgrade                                              :@Aleks:
     - [ ] /Feature/. warning alert, which notify user about update
     - [ ] /Feature/. TMP storage. invoking alerts after some event like loaded app.

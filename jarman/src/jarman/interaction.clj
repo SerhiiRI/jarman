@@ -2,6 +2,7 @@
 (require '[jarman.gui.gui-alerts-service :as gas])
 (require '[jarman.gui.gui-views-service  :as gvs])
 (require '[jarman.gui.gui-editors        :as gedit])
+(require '[jarman.gui.gui-components     :as gcomp])
 (require '[jarman.tools.org :refer :all])
 (require '[clojure.pprint :refer [cl-format]])
 
@@ -93,3 +94,32 @@
 (comment
   (editor "./test/test-file.txt")
   ) 
+
+
+;; ┌──────────────────┐
+;; │                  │
+;; │  File editor     │
+;; │                  │
+;; └──────────────────┘
+
+
+(defn open-doom
+  "Description:
+    Open doom or open dom and add new component inside"
+  ([] (gcomp/doom))
+  ([compo] (gcomp/doom compo)))
+
+(defn hide-doom
+  "Hide doom without deleting last component"
+  [] (gcomp/doom-hide))
+
+(defn rm-doom
+  "Close doom and remove component inside"
+  [] (gcomp/doom-rm))
+
+(comment
+  (open-doom (seesaw.core/label :text "Pepe Dance"))
+  (hide-doom)
+  (open-doom)
+  (rm-doom)
+  )

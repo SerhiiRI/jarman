@@ -39,6 +39,7 @@
             [jarman.gui.gui-config-generator :as cg]
             [jarman.gui.popup                :as popup]
             [jarman.gui.gui-main-menu        :as menu]
+            [jarman.gui.gui-migrid           :as gmg]
             ;; [jarman.managment.data           :as managment-data]
             [jarman.plugin.extension-manager :refer [do-load-extensions]]
             [jarman.plugin.plugin            :refer [do-load-theme]]
@@ -251,6 +252,8 @@
                             :title "Restart"
                             :fn    (fn [e]
                                      (gvs/stop-watching)
+                                     (state/rm-state :doom)
+                                     (state/rm-state :doom-compo)
                                      (state/set-state :soft-restart false)
                                      ((state/state :startup)))}
                            
@@ -282,6 +285,21 @@
                            {:icon  (gs/icon GoogleMaterialDesignIcons/STARS face/c-icon)
                             :title "Shooting Stars"
                             :fn    (fn [e] (gs/shooting-stars))}
+
+                           {:icon  (gs/icon GoogleMaterialDesignIcons/BUG_REPORT face/c-icon)
+                            :title "Doom"
+                            :fn    (fn [e]
+                                     (if (state/state :doom)
+                                       (i/rm-doom)
+                                       (let [h (/ (second @(state/state :atom-app-size)) 2) w h]
+                                           (i/open-doom
+                                            (gmg/migrid
+                                             :v :center :bottom
+                                             [(c/label :text "RICARDOOM" :font (gs/getFont 30))
+                                              (gmg/migrid
+                                               :> :f [(gcomp/label-img "rc.gif" w h)
+                                                      (gcomp/label-img "rc.gif" w h)
+                                                      (gcomp/label-img "rc.gif" w h)])])))))} 
                            ])
              [(gcomp/fake-focus :vgap top-offset :hgap img-scale)]))))
 

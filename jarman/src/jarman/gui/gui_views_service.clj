@@ -68,6 +68,8 @@
       (print-line "\nSoft Restart")
       (stop-watching)
       (state/set-state :soft-restart true)
+      (state/rm-state :doom)
+      (state/rm-state :doom-compo)
       ((state/state :startup)))
     (catch Exception e (print-line (str "Soft restart failed:\n" (.getMessage e) "\n")))))
 

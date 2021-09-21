@@ -132,6 +132,7 @@
            save-fn
            debug
            dispose
+           syntax
            file-format
            args]
     :or {local-changes (atom {})
@@ -143,6 +144,7 @@
          save-fn (fn [state] (println "Additional save"))
          debug false
          dispose false
+         syntax nil
          file-format nil
          args {}}}]
   (let [f-size (atom font-size)
@@ -152,6 +154,7 @@
                          :label info-label
                          :file-format file-format
                          :local-changes local-changes
+                         :syntax syntax
                          :store-id store-id
                          :val val}) 
         editor (gmg/hmig
@@ -347,23 +350,25 @@
 
   
 (defn text-file-editor
-  [file-path]
-  (let [file (clojure.string/split (last (clojure.string/split "./test/test-file.txt" #"/")) #"\.")
-        file-name (first file)
-        file-format (if (= 2 (count file)) (second file) nil)]
-    (gmg/migrid :v :a :a
-                (code-editor
-                 {:args [;;:border (b/line-border :top 1 :left 1 :color "#eee")
-                         :background "#fff"]
-                  :val (slurp file-path)
-                  :title (str "Edit: " (clojure.string/join "." file))
-                  :save-fn (fn [props]
-                             (try
-                               ;;(println "\nTo save:\n" (:code-tester @(:state props)))
-                               (spit file-path (:code-tester @(:state props))) 
-                               (catch Exception e (c/config!
-                                                   (:label props)
-                                                   :text "Some error: Can not save."))))}))))
+  ([file-path] (text-file-editor file-path nil))
+  ([file-path syntax]
+   (let [file (clojure.string/split (last (clojure.string/split "./test/test-file.txt" #"/")) #"\.")
+         file-name (first file)
+         file-format (if (= 2 (count file)) (second file) nil)]
+     (gmg/migrid :v :a :a
+                 (code-editor
+                  {:args [ ;;:border (b/line-border :top 1 :left 1 :color "#eee")
+                          :background "#fff"]
+                   :val (slurp file-path)
+                   :title (str "Edit: " (clojure.string/join "." file))
+                   :syntax syntax
+                   :save-fn (fn [props]
+                              (try
+                                ;;(println "\nTo save:\n" (:code-tester @(:state props)))
+                                (spit file-path (:code-tester @(:state props))) 
+                                (catch Exception e (c/config!
+                                                    (:label props)
+                                                    :text "Some error: Can not save."))))})))))
 
 
 (comment

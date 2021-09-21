@@ -59,18 +59,33 @@
   (remove-watch state :tabs-bar)
   (remove-watch state :view-space))
 
-(defn soft-restar
+(defn restart
   "Description:
-    Reload app into old frame."
+    Restart app without cleaning global state
+    All loading lvls will be invoked
+    App will sturtup again with creating new frame"
+  []
+  (print-line "\nRestart")
+  (stop-watching)
+  (state/rm-state  :doom)
+  (state/rm-state  :doom-compo)
+  (state/set-state :soft-restart false)
+  ((state/state    :startup)))
+
+(defn soft-restart
+  "Description:
+    Restart app without rebuild frame and global state
+    Soft restart do not invoke loding lvl-0 (plugins will not recompiling)
+    Theme will be loaded again"
   []
   (try
     (do
       (print-line "\nSoft Restart")
       (stop-watching)
       (state/set-state :soft-restart true)
-      (state/rm-state :doom)
-      (state/rm-state :doom-compo)
-      ((state/state :startup)))
+      (state/rm-state  :doom)
+      (state/rm-state  :doom-compo)
+      ((state/state    :startup)))
     (catch Exception e (print-line (str "Soft restart failed:\n" (.getMessage e) "\n")))))
 
 (defn- action-handler

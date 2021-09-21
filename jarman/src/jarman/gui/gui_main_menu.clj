@@ -75,7 +75,6 @@
       (print-line (format "pin plugin %s to menu"(.return-title v)))
       (gcomp/button-expand-child
        (str k)
-       :left-offset (+ (* lvl 3) 6)
        :c-focus     (second (nth (get-colors (dec lvl)) (dec lvl)))
        :c-left      (first  (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
        :background  (last   (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
@@ -94,7 +93,7 @@
       (gcomp/button-expand
        (str k)
        depper
-       :left-offset (* lvl 3)
+       :lvl lvl
        :background (first (nth (get-colors lvl) lvl))
        :c-left     (first (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))))))
 
@@ -105,7 +104,7 @@
       ((:fn v))
       (gcomp/button-expand-child
        (str k)
-       :left-offset (+ (* lvl 3) 6)
+       :lvl         lvl
        :c-focus     (second (nth (get-colors (dec lvl)) (dec lvl)))
        :c-left      (first  (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
        :background  (last   (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
@@ -195,7 +194,7 @@
     (gtool/get-lang-btns :settings)
    {(gtool/get-lang-btns :settings) {:key    "settings"
                                      :action :list
-                                     :fn     (fn [] (cg/create-expand-btns--confgen get-colors 2 12))}}}
+                                     :fn     (fn [] (cg/create-expand-btns--confgen get-colors 2))}}}
    "Debug Items"
    {"Popup window" {:key        "popup-window"
                     :action     :invoke

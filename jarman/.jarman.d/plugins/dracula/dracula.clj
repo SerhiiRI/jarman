@@ -84,6 +84,7 @@
        c-border                    hightlight-strong
        c-border-warning            orange-light
        c-border-danger             red-light
+       c-border-success            green-light
        
        c-on-focus                  hightlight-light
        c-on-focus-light            bg3-light
@@ -105,6 +106,7 @@
        c-icon-info                cyan-light
        c-icon-warning             c-border-warning
        c-icon-danger              c-border-danger
+       c-icon-success             c-border-success
        
        cvv-button-expand        expand-btn-colors ;; expand button lvls colors
        
@@ -166,6 +168,7 @@
        c-alert-warning-border c-border-warning
        c-alert-danger-border  c-border-danger
        c-alert-timelife       timelife-alert-popup
+       c-alert-success-border c-border-success
 
        ;; Popup box
        c-popup-body-background c-compos-background

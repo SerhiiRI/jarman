@@ -20,7 +20,6 @@
    [jarman.gui.gui-tools :as gtool]
    [jarman.plugin.plugin :as plugin]
    [jarman.gui.gui-style :as gs]
-   [jarman.gui.gui-views-service :as gvs]
    ;; [jarman.tools.lang :refer [in?]]
    ;; [jarman.tools.fs :as fs]
    ;; [jarman.plugin.extension-manager :as extension-manager]
@@ -105,7 +104,7 @@
                 (gcomp/button-basic "Apply theme"
                                     :onClick (fn [_] (try-catch-alert
                                                       (state/set-state :theme-name (:theme-name theme))
-                                                      (gvs/soft-restar))))])))
+                                                      (i/soft-restart))))])))
     (conj items
           (info "Empty theme list")
           (info "-- empty --"))))

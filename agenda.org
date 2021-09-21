@@ -13,17 +13,21 @@
    :PROPERTIES:
    :CUSTOM_ID: interaction-function-set
    :END:
-   - [-] =interaction.clj= [1/5]
+   - [-] =interaction.clj= [4/5]
      implement file with simple proxy function where every funciton is just wrapper
      with spec and good to read docs.
-     - [ ] add function =open file in tab= as arg will be file path
+     - [-] add function =open file in tab= as arg will be file path [3/4]
+       - [X] Open file
+       - [X] Auto syntax by extension file
+       - [X] Manual syntax set
+       - [ ] Change syntax in runtime with combobx
      - [X] invoke alert [info warning danger]
-     - [ ] Hard restart. Recompiling plugin and clean-up global state
-       - [ ] Write doc
-     - [ ] Soft restart. Reaload gui
-       - [ ] Write doc
-     - [ ] Restart. The same as hard without state.
-       - [ ] Write doc
+     - [X] Hard restart. Recompiling plugin and clean-up global state
+       - [X] Write doc
+     - [X] Soft restart. Reaload gui
+       - [X] Write doc
+     - [X] Restart. The same as hard without state.
+       - [X] Write doc
    - [ ] =faces.clj=
      Finish moving to new customization style
      
@@ -31,10 +35,10 @@
 *** TODO Alerts upgrade                                              :@Aleks:
     - [ ] /Feature/. warning alert, which notify user about update
     - [ ] /Feature/. TMP storage. invoking alerts after some event like loaded app.
-    - [ ] /Feature/. Success alert type.
-*** TODO Repair expand button [0/2]                                  :@Aleks:
-    - [ ] Rainbow margin
-    - [ ] Separate last element in inside expand
+    - [X] /Feature/. Success alert type.
+*** TODO Repair expand button [2/2]                                  :@Aleks:
+    - [X] Rainbow margin -> Space margin
+    - [X] Separate last element in inside expand
 *** TOREVIEW New icons as fonts [5/7]                                :@Aleks:
     - [X] New fn for icon return (~gui-style/icon GoogleMaterialDesignIcons/some-icon "#000" 30)~
     - [X] Demo to quick startup in gui_style.clj

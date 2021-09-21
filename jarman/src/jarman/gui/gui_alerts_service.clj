@@ -209,7 +209,10 @@
                      :icon (gs/icon GoogleMaterialDesignIcons/REPORT_PROBLEM face/c-icon-warning)}        
            :danger  {:border face/c-alert-danger-border
                      :bg face/c-alert-bg
-                     :icon (gs/icon GoogleMaterialDesignIcons/REPORT face/c-icon-danger)}}
+                     :icon (gs/icon GoogleMaterialDesignIcons/REPORT face/c-icon-danger)}
+           :success {:border face/c-alert-success-border
+                     :bg face/c-alert-bg
+                     :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE face/c-icon-success)}}
           [type key]))
 
 (defn- alert-type [type]
@@ -230,10 +233,7 @@
     pop))
 
 (defn- template [type header body timelife s-popup expand actions]
-  (let [mig (cond
-              (= type :alert)   (alert-skeleton header body (alert-type type))
-              (= type :warning) (alert-skeleton header body (alert-type type))  ;; TODO: New warning icon
-              (= type :danger)  (alert-skeleton header body (alert-type type)))] ;; TODO: New danger icon
+  (let [mig (alert-skeleton header body (alert-type type))] ;; TODO: New danger icon
     (let [close-icon (c/config mig :user-data)
           close-fn   (fn [e] (.remove (:alerts-box (state!)) mig) (refresh-box))]
       (c/config! close-icon :listen [:mouse-clicked close-fn])

@@ -218,6 +218,12 @@
                                :permission [:developer]
                                :fn         (fn [e]
                                              (i/danger "Czym jest Lorem Ipsum?"
+                                                       "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}
+                     "Success" {:key       "test-success"
+                               :action     :invoke
+                               :permission [:developer]
+                               :fn         (fn [e]
+                                             (i/success "Czym jest Lorem Ipsum?"
                                                      "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}}
     
     "Select table"   {:key        "select-table"

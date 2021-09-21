@@ -37,7 +37,7 @@
             [jarman.logic.view-manager       :as vmg]
             [jarman.gui.gui-dbvisualizer     :as dbv]
             [jarman.gui.gui-config-generator :as cg]
-            [jarman.gui.popup                :as popup]
+            [Jarman.gui.popup                :as popup]
             [jarman.gui.gui-main-menu        :as menu]
             [jarman.gui.gui-migrid           :as gmg]
             ;; [jarman.managment.data           :as managment-data]

@@ -110,6 +110,7 @@
 (define-face c-alert-danger-border)
 (define-face c-alert-timelife)
 (define-face c-alert-success-border)
+(define-face c-alert-history-focus)
 
 ;; Popup box
 (define-face c-popup-body-background)

@@ -83,13 +83,13 @@
   "Description:
     Set path to directory and file name
   Example:
-    (editor \"./test\" \"test-file\")"
-  [directory-path file-name]
-  (gvs/add-view
-   :view-id   (keyword (str "editor" file-name))
-   :title     (str "Edit:  " file-name)
-   :render-fn (fn [] (gedit/text-file-editor directory-path file-name))))
+    (editor \"./test/test-file\")"
+  ([file-path] (let [file-name (last (clojure.string/split "./test/test-file.txt" #"/"))]
+                 (gvs/add-view
+                  :view-id   (keyword (str "editor" file-name))
+                  :title     (str "Edit:  " file-name)
+                  :render-fn (fn [] (gedit/text-file-editor file-path))))))
 
 (comment
-  (editor "./test" "test-file.txt")
+  (editor "./test/test-file.txt")
   ) 

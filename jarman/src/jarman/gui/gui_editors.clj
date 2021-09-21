@@ -27,6 +27,52 @@
 ;; │                    │________________________________________
 ;; └────────────────────�                                     
 
+(defn find-syntax [file-format]
+  (let [key (keyword (rift file-format "clj"))]
+    (rift (key {:js   :javascript
+                :bat  :bat
+                :clj  :clojure
+                :css  :css
+                :c    :c
+                :java :java
+                :py   :python
+                :php  :php
+                :none :perl
+                :cpp  :cpp
+                :json :json
+                :xml  :xml
+                :html :html
+                :txt  :html
+                ;; :none :lua
+                ;; :none :properties
+                ;; :none :scala
+                ;; :none :actionscript
+                ;; :none :dtd
+                ;; :none :lisp
+                ;; :none :htaccess
+                ;; :none :latex
+                ;; :none :cs
+                ;; :none :delphi
+                ;; :none :unix
+                ;; :none :makefile
+                ;; :none :jsp
+                ;; :none :sql
+                ;; :none :sas
+                ;; :none :plain
+                ;; :none :nsis
+                ;; :none :mxml
+                ;; :none :d
+                ;; :none :tcl
+                ;; :none :asm
+                ;; :none :bbcode
+                ;; :none :ruby
+                ;; :none :fortran
+                ;; :none :groovy
+                ;; :none :dart
+                ;; :none :vb
+                })
+          :clojure)))
+
 (defn code-area
   "Description:
     Some text area but with syntax styling.
@@ -40,16 +86,19 @@
            store-id
            local-changes
            syntax
+           file-format
            label
            args]
     :or {val ""
          store-id :code
          local-changes (atom {})
-         syntax :clojure
+         syntax nil
+         file-format nil
          label nil
          args []}}]
   (swap! local-changes (fn [state] (assoc state store-id val)))
-  (let [content (atom val)]
+  (let [content    (atom val)
+        use-syntax (if syntax syntax (find-syntax file-format))]
     (apply
      seesaw.rsyntax/text-area
      :text val
@@ -83,6 +132,7 @@
            save-fn
            debug
            dispose
+           file-format
            args]
     :or {local-changes (atom {})
          store-id :code-tester
@@ -93,12 +143,14 @@
          save-fn (fn [state] (println "Additional save"))
          debug false
          dispose false
+         file-format nil
          args {}}}]
   (let [f-size (atom font-size)
         info-label (c/label)
         code (code-area {:args [:font (gs/getFont @f-size)
                                 :border (b/empty-border :left 10 :right 10)]
                          :label info-label
+                         :file-format file-format
                          :local-changes local-changes
                          :store-id store-id
                          :val val}) 
@@ -117,7 +169,7 @@
                            [(gcomp/menu-bar
                              {:justify-end true
                               :buttons [[""
-                                         (gs/icon GoogleMaterialDesignIcons/EXPAND_LESS face/c-icon)
+                                         (gs/icon GoogleMaterialDesignIcons/ZOOM_IN face/c-icon 25)
                                          "Increase font"
                                          (fn [e]
                                            (c/config!
@@ -126,7 +178,7 @@
                                                    (do (reset! f-size (+ 2 @f-size))
                                                        @f-size))))]
                                         [""
-                                         (gs/icon GoogleMaterialDesignIcons/EXPAND_MORE face/c-icon)
+                                         (gs/icon GoogleMaterialDesignIcons/ZOOM_OUT face/c-icon 25)
                                          "Decrease font"
                                          (fn [e]
                                            (c/config!
@@ -135,13 +187,15 @@
                                                    (do (reset! f-size (- @f-size 2))
                                                        @f-size))))]
                                         (if debug
-                                          ["" (gs/icon GoogleMaterialDesignIcons/SEARCH face/c-icon) "Show changes" (fn [e] (gcomp/popup-info-window
-                                                                                             "Changes"
-                                                                                             (second (first @local-changes))
-                                                                                             (c/to-frame e)))]
+                                          ["" (gs/icon GoogleMaterialDesignIcons/SEARCH face/c-icon 25)
+                                           "Show changes"
+                                           (fn [e] (gcomp/popup-info-window
+                                                    "Changes"
+                                                    (second (first @local-changes))
+                                                    (c/to-frame e)))]
                                           nil)
                                         [""
-                                         (gs/icon GoogleMaterialDesignIcons/DONE face/c-icon)
+                                         (gs/icon GoogleMaterialDesignIcons/SAVE face/c-icon)
                                          "Save"
                                          (fn [e]
                                            (c/config! info-label :text "Saved")
@@ -293,14 +347,16 @@
 
   
 (defn text-file-editor
-  [directory-path file-name]
-  (let [file-path (str directory-path "/" file-name)]
+  [file-path]
+  (let [file (clojure.string/split (last (clojure.string/split "./test/test-file.txt" #"/")) #"\.")
+        file-name (first file)
+        file-format (if (= 2 (count file)) (second file) nil)]
     (gmg/migrid :v :a :a
                 (code-editor
-                 {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
+                 {:args [;;:border (b/line-border :top 1 :left 1 :color "#eee")
                          :background "#fff"]
                   :val (slurp file-path)
-                  :title (str "Edit: " file-name)
+                  :title (str "Edit: " (clojure.string/join "." file))
                   :save-fn (fn [props]
                              (try
                                ;;(println "\nTo save:\n" (:code-tester @(:state props)))
@@ -315,7 +371,7 @@
                :title "Demo"
                :minimum-size [500 :by 500]
                :size [500 :by 500]
-               :content (text-file-editor "./test" "test-file.txt"))
+               :content (text-file-editor "./test/test-file.txt"))
         ]
     (doto
         frame

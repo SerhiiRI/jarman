@@ -144,6 +144,7 @@
 ** PLANNED Make diagram from DB Visualiser
    - [ ] Visualize relation between tables
    - [ ] Save table location in DB visualiser into configurations
+** PLANNED Debug space like doom popup but on bottom                 :@Aleks:
 ** PLANNED Scroll to selected in table                               :@Aleks:
    - [ ] Scroll to selected in table     
 ** Config Generator Upgrade and Fix

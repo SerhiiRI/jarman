@@ -258,7 +258,7 @@
     "File editor" {:key        "demo-file-editor"
                    :action     :invoke
                    :permission [:developer]
-                   :fn (fn [e] (i/editor "./test" "test-file.txt"))}
+                   :fn (fn [e] (i/editor "./test/test-file.txt"))}
     
     "Popup demo" {:key        "popup-demo"
                   :action     :invoke

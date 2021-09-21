@@ -26,7 +26,7 @@
        - [ ] Write doc
    - [ ] =faces.clj=
      Finish moving to new customization style
-
+     
 ** PROCESSING [#1] Frontend refactorization
    DEADLINE: <2021-09-15 śro>
 *** TODO Alerts upgrade                                              :@Aleks:
@@ -103,20 +103,16 @@
    - [X] global background
    - [X] global foreground
    - [X] removing unnessesary font override         
-** TOREVIEW [#1] /Feature/. Implement Faces                            :@Aleks:
-** TOREVIEW [#1] /Bug/. Loggin panel not compile                       :@Aleks:
-   - [ ] check offline startup
 ** TODO [#2] /Bug/. DB Visualizer editing                      :@Aleks:@Serhii:
    1. [ ] Cannot edit table =view=
    2. [ ] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
    3. [ ] Cannot edit metadata of table 
-** TODO [#3] /Bug/. Use system font's for linux                       :@Serhii:
-** TODO /Feature/. Update Manager                                      :@Aleks:
+** TODO [#3] /Feature/. Update Manager                                 :@Aleks:
    - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [ ] Show popup with hard program restart
    - [ ] Button for reading log file /update-manager-log.org/
      - [ ] Open file interaction
-** TODO /Feature/. Extension Manager [0/6]                             :@Aleks:
+** TODO [#3] /Feature/. Extension Manager [0/6]                        :@Aleks:
    - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [ ] Show extension file-tree. Alow editing file through the jarman [0/2]
      Related to [[#interaction-function-set]] use interaction to open file in tab
@@ -130,11 +126,17 @@
      You will managed plugins as list of PandaPackage records.
    - [ ] Button for reading log file /extension-manager-log.org/
      - [ ] Open file interaction
-** TODO /Feature/. Theme Manager                                       :@Aleks:
+** TODO [#3] /Feature/. Theme Manager                                  :@Aleks:
    - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [X] Make refreshing for jarman, when theme was selected
    - [ ] Button for reading log file /update-manager-log.org/
      - [ ] Open file interaction
+** TODO [#3] /Feature/. Licenses [0/2]                         :@Aleks:@Serhii:
+   Related to [[Register licence mechanics]] issue.  
+   - [ ] insert licence GUI menu
+   - [ ] Make template (put into some tmp file or place) [0/3]
+     - [ ] Alert which making hard logout from system, and inform about computer count
+     - [ ] Alert which inform on startup that licence is going to end
 ** PLANNED /Feature/. Global event on key pressed             :@Julia:@Aleks:
    - [X] Proxy for KeyEventDispacher for add global event on key pressed
    - [X] add and remove own KeyEventDispacher
@@ -147,53 +149,38 @@
 ** PLANNED Debug space like doom popup but on bottom                 :@Aleks:
 ** PLANNED Scroll to selected in table                               :@Aleks:
    - [ ] Scroll to selected in table     
-** Config Generator Upgrade and Fix
-   - [ ] - block expand (there is to many parameters, we need to hide them as subconfig with title)
-   - [ ] - message on save success
-   - [ ] - message on save failed
-   - [X] - fixed alert box permeation   
 * Backend
-** TODO [#2] check all steps of loading tables                      :@Serhii:
-*** in file view-manager.clj, markup TO DO,  add messages(println), if we need
-** TODO [#1] Одужуй!                                                 :@Julia:
-** PROCESSING [#1] /Feature/. Rewrite plugin system                   :@Serhii:
-   DEADLINE: <2021-09-09 Thu>
-   - [X] Add ~:deps~ key into ~package~
-     - [X] create package compiling sequence 
-   - [X] View plugin
-     - [X] Registration function.
-       - [X] Remove duplications of loaded plugins
-   - [X] Theme plugin [3/3]
-     with relation to [[themes plugin system]]
-     - [X] Theme declaration
-     - [X] Registration function
-     - [X] GUI Theme manager
-   - [X] Rename PandaPackage to PandaExtension
-   - [ ] Languages support
-     [[file:jarman/src/jarman/gui/gui_tools.clj::208][lang in system]]
-     #+begin_src clojure
-       ;; src/jarman/gui/gui_tools.clj:208
-       (defvar selected-lang :ua)
-       ;; 
-       (lang :accept)
-       (lang :dracula :theme-name)
-     #+end_src
-
-** PROCESSING [#1] /Feature/. defvar expanding                        :@Serhii:
+** PROCESSING [#1] defvar managment                                 :@Serhii:
+   After app loading, we have some values in system variables, divided by group name,
    - [X] Allow defvar declaration for all the places
    - [X] Fix defvar spec. 
    - [ ] Save config in place in =.jarman= file
    - [X] GUI for listing all registred config's variable
    - [X] Debug for all variables
    - [X] Debug for one variables
-   
-** TODO [#1] defvar managment                                       :@Serhii:
-   After app loading, we have some values in system variables, divided by group name,
-   
-   - [X] Create GUI which allow controlling and changing variables inside gui. 
-   - [ ] Make persistant function, which automatically wrote customized variable
-     back to =.jarman=, (also mean parsing file) 
-** TODO [#1] /Bug/. Throw exception when .jarman fialed               :@Serhii:
+** TODO [#1] Одужуй!                                                 :@Julia:
+** TODO [#1] Permission system                                       :@Julia:
+   - [ ] Rewrie user session object
+     - [ ] keep licence file in session.
+     - [ ] Make testing on permission
+   - [ ] Add into /left-bar menu/, /left-menu/ functionlity that test user permission before
+     render
+** TODO [#3] Register licence mechanics                             :@Serhii:
+   - [ ] Create =register-licence-file= functionality
+   - [ ] decrypt/uncrypt by system RSA keys
+   - [X] Checking login user in system, limited by the licence
+** TODO [#3] In load circle integrate setting variable :@Julia:@Aleks:@Serhii:
+   in some load-level add manual setted variable for some systme things, that shouldn't be 
+   memberd in =.jarman=. Or thay must have some deault values which be rewrited by the 
+   =.jarman= loader.
+   #+begin_src clojure
+     ...
+     (setq language-system :en)
+     (setq supported-language [:en :pl :ua])
+     ...
+   #+end_src
+** TODO [#2] check all steps of loading tables                      :@Serhii:
+   in file view-manager.clj, markup TO DO,  add messages(println), if we need
 ** TODO [#2] /Feature/. Emacs IDE split out-environment [0/2]         :@Serhii:
    - [ ] Auto tail reverting logs buffer
    - [ ] Integrate local toolkit for emacs.
@@ -281,6 +268,31 @@
 ** PLANNED Versioning data structure                                :@Serhii:
 ** PLANNED sql_tools | debug                                   :@Serhii:
     - [ ] pretty printing for sql syntax
+** DONE [#1] /Bug/. Throw exception when .jarman fialed               :@Serhii:
+   CLOSED: [2021-09-18 Sat 20:37]
+** DONE [#1] /Feature/. Rewrite plugin system                         :@Serhii:
+   CLOSED: [2021-09-20 pon. 04:29] DEADLINE: <2021-09-09 Thu>
+   - [X] Add ~:deps~ key into ~package~
+     - [X] create package compiling sequence 
+   - [X] View plugin
+     - [X] Registration function.
+       - [X] Remove duplications of loaded plugins
+   - [X] Theme plugin [3/3]
+     with relation to [[themes plugin system]]
+     - [X] Theme declaration
+     - [X] Registration function
+     - [X] GUI Theme manager
+   - [X] Rename PandaPackage to PandaExtension
+   - [X] Languages support
+     [[file:jarman/src/jarman/gui/gui_tools.clj::208][lang in system]]
+     #+begin_src clojure
+       ;; src/jarman/gui/gui_tools.clj:208
+       (defvar selected-lang :ua)
+       ;; 
+       (lang :accept)
+       (lang :dracula :theme-name)
+     #+end_src
+
 * Infrastructure
 * Documentations
 ** PLANNED [#3] create jarman manifest file                         :@Serhii:
@@ -296,4 +308,5 @@
        
    
 
+   
    

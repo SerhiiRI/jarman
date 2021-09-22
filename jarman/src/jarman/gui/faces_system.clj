@@ -43,9 +43,23 @@
     (fn [{:keys [faces-variable-used faces-face-value-var-list]}
         [face-variable face-value]]
       (if-let [face-var-ref ((deref faces-storage) (intern faces-ns face-variable))]
-        (let [face-val-ref (if ((deref faces-storage) (intern faces-ns face-value))
-                             (intern faces-ns face-value)
-                             (resolve face-value))]
+        (let [face-val-ref (if-not (symbol? face-value)
+                             (throw (ex-info (format "Error when bind Face `%s`. Value `%s` should be a symbol"
+                                                     (name face-variable)
+                                                     (name face-value))
+                                             {:type :undefinied-face-variable-type
+                                              :var face-variable
+                                              :value face-value}))
+                                   (if ((deref faces-storage) (intern faces-ns face-value))
+                                     (intern faces-ns face-value)
+                                     (if-let [maybe-nil-variable-reference (resolve face-value)]
+                                       maybe-nil-variable-reference
+                                       (throw (ex-info (format "Error when bind Face `%s`. Unresolved face value `%s`"
+                                                               (name face-variable)
+                                                               (name face-value))
+                                                       {:type :undefinied-face-variable
+                                                        :var face-variable
+                                                        :value face-value})))))]
           {:faces-variable-used       (conj faces-variable-used face-var-ref)
            :faces-face-value-var-list (conj faces-face-value-var-list [face-var-ref face-val-ref])})
         (throw (ex-info (format "Undefienied face `%s`. Face not exist in system" (name face-variable))

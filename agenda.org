@@ -9,6 +9,8 @@
 #+STARTUP: overview
 
 * Frontend
+** TODO [#3] Switch into new language system                         :@Julia:
+   - [ ] Just use language getter functions.
 ** PROCESSING [#1] /Feature/. Interaction files                        :@Aleks:
    :PROPERTIES:
    :CUSTOM_ID: interaction-function-set
@@ -99,7 +101,7 @@
     - [ ] After you click on one month, you can edit all service contract month payments. You can edit, only if month wasn't payed. Rewrite Julia view, on your implementation. I think better be when all those month fields be in one line.
 *** PLANNED Main menu as hide/show section                           :@Aleks:
 
-** PROCESSING [#1] /Feature/. Jarman Theme Light Style  :@Julia:@Aleks:@Serhii:
+** PROCESSING [#1] /Feature/. Jarman Theme Light Style
    - [X] rewrite styles config
    - [ ] unifing styles in UI
    - [X] global font

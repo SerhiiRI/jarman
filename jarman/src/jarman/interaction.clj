@@ -106,7 +106,7 @@
     (editor \"./test/test-file\")"
   ([file-path] (editor file-path nil))
   ([file-path syntax]
-   (let [file-name (last (clojure.string/split "./test/test-file.txt" #"/"))]
+   (let [file-name (last (clojure.string/split file-path #"/"))]
      (gvs/add-view
       :view-id   (keyword (str "editor" file-name))
       :title     (str "Edit:  " file-name)

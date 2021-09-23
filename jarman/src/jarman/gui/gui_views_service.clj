@@ -285,3 +285,5 @@
                            :value  compo})
                (if display? (c/config! (:space (state!)) :items [[compo]]))
                ((:repaint (state!))))))))))
+
+(defn get-view-space [] (:space (state!)))

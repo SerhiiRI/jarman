@@ -264,6 +264,11 @@
                    :action     :invoke
                    :permission [:developer]
                    :fn (fn [e] (i/editor "./test/test-file.txt"))}
+
+    "File editor clj" {:key        "demo-file-editor-clj"
+                   :action     :invoke
+                   :permission [:developer]
+                   :fn (fn [e] (i/editor "./test/test-file.clj"))}
     
     "Popup demo" {:key        "popup-demo"
                   :action     :invoke

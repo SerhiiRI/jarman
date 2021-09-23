@@ -27,51 +27,58 @@
 ;; │                    │________________________________________
 ;; └────────────────────�                                     
 
-(defn find-syntax [file-format]
-  (let [key (keyword (rift file-format "clj"))]
-    (rift (key {:js   :javascript
-                :bat  :bat
-                :clj  :clojure
-                :css  :css
-                :c    :c
-                :java :java
-                :py   :python
-                :php  :php
-                :none :perl
-                :cpp  :cpp
-                :json :json
-                :xml  :xml
-                :html :html
-                :txt  :html
-                ;; :none :lua
-                ;; :none :properties
-                ;; :none :scala
-                ;; :none :actionscript
-                ;; :none :dtd
-                ;; :none :lisp
-                ;; :none :htaccess
-                ;; :none :latex
-                ;; :none :cs
-                ;; :none :delphi
-                ;; :none :unix
-                ;; :none :makefile
-                ;; :none :jsp
-                ;; :none :sql
-                ;; :none :sas
-                ;; :none :plain
-                ;; :none :nsis
-                ;; :none :mxml
-                ;; :none :d
-                ;; :none :tcl
-                ;; :none :asm
-                ;; :none :bbcode
-                ;; :none :ruby
-                ;; :none :fortran
-                ;; :none :groovy
-                ;; :none :dart
-                ;; :none :vb
-                })
-          :clojure)))
+(defn find-syntax
+  ([] (find-syntax nil true))
+  ([file-format] (find-syntax file-format false))
+  ([file-format return-list]
+   (let [key (keyword (rift file-format :clj))
+         syntaxs {:js   :javascript
+                  :bat  :bat
+                  :clj  :clojure
+                  :css  :css
+                  :c    :c
+                  :java :java
+                  :py   :python
+                  :php  :php
+                  :none :perl
+                  :cpp  :cpp
+                  :json :json
+                  :xml  :xml
+                  :html :html
+                  :txt  :html
+                  ;; :none :lua
+                  ;; :none :properties
+                  ;; :none :scala
+                  ;; :none :actionscript
+                  ;; :none :dtd
+                  ;; :none :lisp
+                  ;; :none :htaccess
+                  ;; :none :latex
+                  ;; :none :cs
+                  ;; :none :delphi
+                  ;; :none :unix
+                  ;; :none :makefile
+                  ;; :none :jsp
+                  ;; :none :sql
+                  ;; :none :sas
+                  ;; :none :plain
+                  ;; :none :nsis
+                  ;; :none :mxml
+                  ;; :none :d
+                  ;; :none :tcl
+                  ;; :none :asm
+                  ;; :none :bbcode
+                  ;; :none :ruby
+                  ;; :none :fortran
+                  ;; :none :groovy
+                  ;; :none :dart
+                  ;; :none :vb
+                  }]
+     (if return-list
+       (vec (map #(second %) syntaxs))
+       (rift (key syntaxs) :clojure)))))
+
+;;(find-syntax)
 
 (defn code-area
   "Description:
@@ -154,7 +161,7 @@
                          :label info-label
                          :file-format file-format
                          :local-changes local-changes
-                         :syntax syntax
+                         :syntax (find-syntax syntax)
                          :store-id store-id
                          :val val}) 
         editor (gmg/hmig
@@ -169,6 +176,14 @@
                                      :border (b/compound-border (b/line-border :bottom 1 :color "#eee")
                                                                 (b/empty-border :left 10))
                                      :font (gs/getFont :bold title-font-size))]
+                           [(gmg/migrid :v "[200, fill]" :center {:args [:background face/c-compos-background]}
+                             (c/combobox :model  (concat [(find-syntax syntax)] (filter #(not (= % (find-syntax syntax)))(find-syntax)))
+                                         :listen [:mouse-motion (fn [e] (.repaint (gvs/get-view-space)))
+                                                  :item-state-changed
+                                                  (fn [e] 
+                                                    (let [new-v (c/config e :selected-item)]
+                                                      (try
+                                                        (c/config! code :syntax new-v))))]))]
                            [(gcomp/menu-bar
                              {:justify-end true
                               :buttons [[""
@@ -352,7 +367,7 @@
 (defn text-file-editor
   ([file-path] (text-file-editor file-path nil))
   ([file-path syntax]
-   (let [file (clojure.string/split (last (clojure.string/split "./test/test-file.txt" #"/")) #"\.")
+   (let [file (clojure.string/split (last (clojure.string/split file-path #"/")) #"\.")
          file-name (first file)
          file-format (if (= 2 (count file)) (second file) nil)]
      (gmg/migrid :v :a :a
@@ -361,7 +376,7 @@
                           :background "#fff"]
                    :val (slurp file-path)
                    :title (str "Edit: " (clojure.string/join "." file))
-                   :syntax syntax
+                   :syntax (rift syntax (keyword file-format))
                    :save-fn (fn [props]
                               (try
                                 ;;(println "\nTo save:\n" (:code-tester @(:state props)))

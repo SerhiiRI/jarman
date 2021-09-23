@@ -11,18 +11,18 @@
 * Frontend
 ** TODO [#3] Switch into new language system                         :@Julia:
    - [ ] Just use language getter functions.
-** PROCESSING [#1] /Feature/. Interaction files                        :@Aleks:
+** PROCESSING [#1] /Feature/. Interaction files [2/3]                :@Aleks:
    :PROPERTIES:
    :CUSTOM_ID: interaction-function-set
    :END:
-   - [-] =interaction.clj= [4/5]
+   - [X] =interaction.clj= [5/5]
      implement file with simple proxy function where every funciton is just wrapper
      with spec and good to read docs.
-     - [-] add function =open file in tab= as arg will be file path [3/4]
+     - [X] add function =open file in tab= as arg will be file path [4/4]
        - [X] Open file
        - [X] Auto syntax by extension file
        - [X] Manual syntax set
-       - [ ] Change syntax in runtime with combobx
+       - [X] Change syntax in runtime with combobx
      - [X] invoke alert [info warning danger]
      - [X] Hard restart. Recompiling plugin and clean-up global state
        - [X] Write doc
@@ -30,26 +30,31 @@
        - [X] Write doc
      - [X] Restart. The same as hard without state.
        - [X] Write doc
+   - [X] Doom debugger [4/4]
+     - [X] Container on bottom
+     - [X] Resize in runtime
+     - [X] Open/New, Hide, Close
+     - [X] Ricardo inside
    - [ ] =faces.clj=
      Finish moving to new customization style
      
-** PROCESSING [#1] Frontend refactorization
-*** TODO Alerts upgrade                                              :@Aleks:
+** PROCESSING [#1] Frontend refactorization [2/8]
+*** TODO Alerts upgrade [1/3]                                        :@Aleks:
+    - [X] /Feature/. Success alert type.
     - [ ] /Feature/. warning alert, which notify user about update
     - [ ] /Feature/. TMP storage. invoking alerts after some event like loaded app.
-    - [X] /Feature/. Success alert type.
 *** TODO Repair expand button [2/2]                                  :@Aleks:
     - [X] Rainbow margin -> Space margin
     - [X] Separate last element in inside expand
-*** TOREVIEW New icons as fonts [5/7]                                :@Aleks:
+*** TOREVIEW New icons as fonts [7/7]                                :@Aleks:
     - [X] New fn for icon return (~gui-style/icon GoogleMaterialDesignIcons/some-icon "#000" 30)~
     - [X] Demo to quick startup in gui_style.clj
     - [X] Set new feature to alert system
     - [X] Set demo alerts (access: developer, buttons will show in main menu)
     - [X] New face for close icon, listen event mouse entered
-    - [ ] Set new feature to menu bars
-    - [ ] Set new feature to other if needed
-*** TODO Main view & Styling                                         :@Aleks:
+    - [X] Set new feature to menu bars
+    - [X] Set new feature to other if needed
+*** TODO Main view & Styling [2/4]                                   :@Aleks:
     - [X] Gui View Service [2/2]
       - [X] On tabs replace non-active tab on more brighter color.
       - [X] ON tabs replace ~x~ icon on one color.
@@ -77,7 +82,7 @@
       - [X] Change all black font's on closelly to black. Use some *dark-gray*, with blue-direction - ~#030D1C~ as example.
       - [X] Also for expand buttons use bold ubuntu fonts (looks little crappy).
       - [X] Chnage ordering items in menubar. At first place user must saw all buisness tables, and next any other *setting* or *db visualizer* etc.
-    - [ ] Cooperative theme standarization [0/1]
+*** TOREVIEW Cooperative theme standarization [0/1]
       - [ ] Main menu [0/2]
 	- [ ] Better colors for levels in expand button in ~Jarman Light~
 	- [ ] Better colors for levels in expand button in ~Dracula~
@@ -88,7 +93,7 @@
     - [X] make icon smaller, on 10-20%
     - [X] Move Table title to left side (nope, on center looks better), and colorize in "ocean blue" color, julia use it in login panel.
 
-*** TODO Service Periods plugins                                     :@Aleks:
+*** TODO Service Periods plugins [0/3]                               :@Aleks:
     - [ ] Expand buttons [0/7]
       - [ ] Buttons must be resizable, and scaled to window width.
       - [ ] Not hide expanded button, when checkbox was clicked. Julia add coments inside plugin, about this issue (find "TODO" mark)

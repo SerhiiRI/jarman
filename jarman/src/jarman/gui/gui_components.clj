@@ -1084,10 +1084,10 @@
                  id
                  onClick
                  over-func
+                 lvl
                  background
                  foreground
-                 c-left
-                 left-offset]
+                 c-left]
           :or {expand :auto
                border (b/compound-border (b/empty-border :left 3))
                vsize 35
@@ -1097,10 +1097,10 @@
                id :none
                onClick nil
                over-func :none
+               lvl 1
                background face/c-btn-expand-bg
                foreground face/c-btn-expand-fg
-               c-left     face/c-btn-expand-offset
-               left-offset 0}}]
+               c-left     face/c-btn-expand-offset}}]
     (let [atom-inside-btns (atom nil)
           inside-btns (if (nil? inside-btns) nil inside-btns) ;; check if nill
           inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns)) ;; check if not in list
@@ -1108,7 +1108,7 @@
           ico (if (or (= :always expand) (not (nil? inside-btns))) ico nil)
           title (c/label
                  :border (b/compound-border
-                          (b/line-border  :left left-offset :color background)
+                          ;; (b/line-border  :left left-offset :color background)
                           (b/empty-border :left 10))
                  :text txt
                  :font (gs/getFont :bold)
@@ -1124,22 +1124,17 @@
                 :halign :center
                 :background (Color. 0 0 0 0)
                 :icon ico)
-          mig (mig-panel :constraints ["wrap 1" (str "0px[" min-height ":, fill]0px") "0px[fill]0px"]
-                         :background background)
+          mig  (gmg/migrid :v {:args [:background background]} [])
           user-data  {:atom-expanded-items atom-inside-btns
                       :title-fn (fn [new-title] (c/config! title :text new-title))}
           expand-btn (fn [func]
                        (c/config! title :listen (if (= :none over-func) (listen func) [:mouse-clicked over-func
                                                                                        :mouse-entered gtool/hand-hover-on]))
                        (c/config! icon :listen (listen func))
-                       (c/border-panel
-                        :focusable? true
-                        :background background
-                        :border border
-                        :size [min-height :by vsize]
-                        :items [[title :west]
-                                [icon  :east]]))
-          expand-box (gmg/migrid :v "[200, fill]" {:args [:border (b/line-border :left 3 :color background)]} [])]
+                       (gmg/migrid :> :gf {:args [:background background :focusable? true
+                                                  :border (b/line-border :left (* lvl 6) :color face/c-main-menu-bg)]}
+                                   [title icon]))
+          expand-box (gmg/migrid :v "[grow, fill]" [])]
       (if (nil? onClick)
         (let [onClick (fn [e]
                         (if-not (nil? inside-btns)
@@ -1181,23 +1176,23 @@
    "
   (fn [title
        & {:keys [onClick
-                 left-offset
                  c-left
                  c-focus
                  c-fg-focus
                  background
                  foreground
                  cursor
+                 lvl
                  width
                  args]
           :or {onClick (fn [e] (println "Clicked: " title))
                cursor :hand
-               left-offset 6
                c-left     face/c-main-menu-bg
                c-focus    face/c-on-focus
                c-fg-focus face/c-foreground
                background face/c-compos-background
                foreground face/c-foreground
+               lvl 1
                width 200 
                args []}}]
     (apply c/label
@@ -1208,8 +1203,9 @@
            :cursor cursor
            :focusable? true
            :border (b/compound-border 
-                    (b/empty-border :left left-offset)
-                    (b/line-border  :left 6 :color c-focus))
+                    (b/empty-border :left 10)
+                    (b/line-border  :left (* lvl 6) :color face/c-main-menu-bg)
+                    )
            :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
                     :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
                     :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
@@ -1762,4 +1758,48 @@
   ;;   (popup-window
   ;;    {:window-title "Popup for debug"
   ;;     :view mig}))
+  )
+
+(defn doom
+  ([] (doom (rift (state/state :doom-compo) [])))
+  ([compo]
+   (if-not (state/state :doom)
+     (let [JLP   (state/state :app)
+           fsize @(state/state :atom-app-size)
+           w     (first fsize)
+           h     (/ (second fsize) 3)
+           panel (c/vertical-panel
+                  :border (b/line-border :left 2 :bottom 2 :right 2 :color "#000")
+                  :bounds [0 0 w h] 
+                  :items [compo])]
+       (state/set-state :doom-compo compo)
+       (state/set-state :doom panel)
+       (.add JLP panel (Integer. 1010))
+       (.revalidate JLP)
+       (.repaint JLP))
+     (if (state/state :doom) (.setVisible (state/state :doom) true)))))
+
+(defn doom-hide [] (.setVisible (state/state :doom) false))
+
+(defn doom-rm []
+  (let [JLP  (state/state :app)
+        doom (state/state :doom)]
+    (if doom
+      (try
+        (.remove JLP doom)
+        (state/rm-state :doom-compo)
+        (state/rm-state :doom)
+        (.revalidate JLP)
+        (.repaint JLP)
+        ))))
+
+(comment
+  (doom (let [w 220 h 220]
+         (gmg/migrid
+          :> 
+          [(label-img "ricardo.gif" w h)
+           (label-img "ricardo.gif" w h)
+           (label-img "ricardo.gif" w h)])))
+
+  (doom-rm)
   )

@@ -39,6 +39,7 @@
             [jarman.gui.gui-config-generator :as cg]
             [jarman.gui.popup                :as popup]
             [jarman.gui.gui-main-menu        :as menu]
+            [jarman.gui.gui-migrid           :as gmg]
             ;; [jarman.managment.data           :as managment-data]
             [jarman.plugin.extension-manager :refer [do-load-extensions]]
             [jarman.plugin.plugin            :refer [do-load-theme]]
@@ -214,13 +215,13 @@
    "apply default global style" 
    (gs/load-style))
 
-   (if (= false (state/state :soft-restart))
-     (try
-       (reset! relative-pos [(.x (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))
-                             (.y (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))])
-       (.dispose (seesaw.core/to-frame (state/state :app)))
-       (catch Exception e nil ;;(println "Last pos is nil")
-              ))))
+  (if (= false (state/state :soft-restart))
+    (try
+      (reset! relative-pos [(.x (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))
+                            (.y (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))])
+      (.dispose (seesaw.core/to-frame (state/state :app)))
+      (catch Exception e nil ;;(println "Last pos is nil")
+             ))))
 
 
 (defn load-level-2
@@ -241,18 +242,23 @@
                            {:icon  (gs/icon GoogleMaterialDesignIcons/UPDATE face/c-icon)
                             :title "Reload active view"
                             :fn    (fn [e] (try
-                                             (gvs/reload-view)
+                                             (i/reload-view)
                                              (catch Exception e (str "Can not reload. Storage is empty."))))}
 
                            {:icon  (gs/icon GoogleMaterialDesignIcons/CACHED face/c-icon)
                             :title "Soft Restart"
-                            :fn    (fn [e] (gvs/soft-restar))}
+                            :fn    (fn [e] (i/soft-restart))}
+                           
                            {:icon  (gs/icon GoogleMaterialDesignIcons/REFRESH face/c-icon)
                             :title "Restart"
+                            :fn    (fn [e] (i/restart))}
+
+                           {:icon  (gs/icon GoogleMaterialDesignIcons/LIST face/c-icon)
+                            :title "Reload main menu"
                             :fn    (fn [e]
-                                     (gvs/stop-watching)
-                                     (state/set-state :soft-restart false)
-                                     ((state/state :startup)))}
+                                     (menu/clean-main-menu)
+                                     (load-plugins-to-main-menu)
+                                     (load-static-main-menu))}
                            
                            {:icon  (gs/icon GoogleMaterialDesignIcons/VPN_KEY face/c-icon)
                             :title "Change work mode"
@@ -262,7 +268,7 @@
                                            (= "developer" (session/get-user-permission)) (session/set-user-permission "user"))
                                      (i/warning "Work mode" (str "Switched to: " (session/get-user-permission)))
                                      (gseed/extend-frame-title (str ", " (session/get-user-login) "@" (session/get-user-permission))))}
-                           
+                            
                            ;; {:icon  icon/download-blue-64-png
                            ;;  :title "Update"
                            ;;  :fn    (fn [e] (println "Check update"))}
@@ -282,6 +288,21 @@
                            {:icon  (gs/icon GoogleMaterialDesignIcons/STARS face/c-icon)
                             :title "Shooting Stars"
                             :fn    (fn [e] (gs/shooting-stars))}
+
+                           {:icon  (gs/icon GoogleMaterialDesignIcons/BUG_REPORT face/c-icon)
+                            :title "Doom"
+                            :fn    (fn [e]
+                                     (if (state/state :doom)
+                                       (i/rm-doom)
+                                       (let [h (/ (second @(state/state :atom-app-size)) 2) w h]
+                                           (i/open-doom
+                                            (gmg/migrid
+                                             :v :center :bottom
+                                             [(c/label :text "RICARDOOM" :font (gs/getFont 30))
+                                              (gmg/migrid
+                                               :> :f [(gcomp/label-img "rc.gif" w h)
+                                                      (gcomp/label-img "rc.gif" w h)
+                                                      (gcomp/label-img "rc.gif" w h)])])))))} 
                            ])
              [(gcomp/fake-focus :vgap top-offset :hgap img-scale)]))))
 
@@ -324,7 +345,12 @@
       (load-level-1 relative-pos)
       (load-level-2)
       (load-level-3 relative-pos)
-      (load-level-4))))
+      (load-level-4)
+      (c/config! (c/to-frame (state/state :app))
+                 :size [(first @(state/state :atom-app-size))
+                        :by
+                        (+ 37 (second @(state/state :atom-app-size)))]))))
+
 
 (state/set-state
  :startup

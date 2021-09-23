@@ -23,10 +23,10 @@
 (defvar language-selected :en
   :name "Language"
   :doc "Define translation language to jarman"
-  :type String
+  :type clojure.lang.Keyword
   :group :view-params)
 
-(defvar language-supported [:en ]
+(defvar language-supported [:en :pl :ua]
   :name "Supported Languages"
   :doc "Define supported language inside jarman"
   :type clojure.lang.PersistentVector
@@ -59,7 +59,7 @@
        (throw (FileNotFoundException.
                (format "Language file `%s` wasn't not found" (str (io/file loading-path lang-file-name))))))
      (throw (FileNotFoundException.
-               "Any of \"config\" folder wasn't register in computer")))))
+             "Any of \"config\" folder wasn't register in computer")))))
 
 (defn do-load-language []
   (let [extensions-with-translations (filter (comp seq :language) (extension-manager/extension-storage-list-get))

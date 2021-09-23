@@ -199,7 +199,7 @@
                               :text   body)
                      close-icon])]))))
 
-(defn- alert-type-src
+(defn- alert-type-src ;; TODO: Alert info bugging, do not loaded correct colors after changing theme
   [type key]
   (get-in {:alert   {:border face/c-alert-alert-border
                      :bg face/c-alert-bg
@@ -209,7 +209,10 @@
                      :icon (gs/icon GoogleMaterialDesignIcons/REPORT_PROBLEM face/c-icon-warning)}        
            :danger  {:border face/c-alert-danger-border
                      :bg face/c-alert-bg
-                     :icon (gs/icon GoogleMaterialDesignIcons/REPORT face/c-icon-danger)}}
+                     :icon (gs/icon GoogleMaterialDesignIcons/REPORT face/c-icon-danger)}
+           :success {:border face/c-alert-success-border
+                     :bg face/c-alert-bg
+                     :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE face/c-icon-success)}}
           [type key]))
 
 (defn- alert-type [type]
@@ -230,10 +233,7 @@
     pop))
 
 (defn- template [type header body timelife s-popup expand actions]
-  (let [mig (cond
-              (= type :alert)   (alert-skeleton header body (alert-type type))
-              (= type :warning) (alert-skeleton header body (alert-type type))  ;; TODO: New warning icon
-              (= type :danger)  (alert-skeleton header body (alert-type type)))] ;; TODO: New danger icon
+  (let [mig (alert-skeleton header body (alert-type type))]
     (let [close-icon (c/config mig :user-data)
           close-fn   (fn [e] (.remove (:alerts-box (state!)) mig) (refresh-box))]
       (c/config! close-icon :listen [:mouse-clicked close-fn])
@@ -292,7 +292,7 @@
   (gmg/migrid
    :>
    (let [c-bg       (alert-type-src type :background)
-         c-bg-focus (alert-type-src :alert :border)]
+         c-bg-focus face/c-alert-history-focus]
      (c/label :text (gtool/htmling (gtool/str-cutter (str "<b>" header "</b> " body) (/ w 7)) :no-wrap)
               :icon (alert-type-src type :icon)
               :background c-bg
@@ -326,13 +326,14 @@
         history-box (gmg/migrid :v (alerts-history-list w))]
     (popup/build-popup
      {:size [w h]
-      :comp-fn   (fn [] (gmg/migrid :v :a :gf
-                                    [(gcomp/min-scrollbox history-box)
-                                     (gcomp/button-basic "Clear"
-                                                         :flip-border true
-                                                         :onClick (fn [e]
-                                                                    (clear-alerts-history)
-                                                                    (c/config! history-box :items [])))]))
+      :comp-fn   (fn [] (gmg/migrid
+                         :v :a :gf
+                         [(gcomp/min-scrollbox history-box)
+                          (gcomp/button-basic "Clear"
+                                              :flip-border true
+                                              :onClick (fn [e]
+                                                         (clear-alerts-history)
+                                                         (c/config! history-box :items [])))]))
       :title     "Alerts History"
       :title-icon (gs/icon GoogleMaterialDesignIcons/HISTORY face/c-foreground)
       :args [:border (b/line-border :thickness 2 :color (alert-type-src type :border))]})))

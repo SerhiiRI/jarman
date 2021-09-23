@@ -368,7 +368,7 @@
 (defn create-expand-btns--confgen
   "Discription:
      Return list of button expand chlide with configurations parts."
-  [colors-fn lvl offset]
+  [colors-fn lvl]
   (let [[color-bg color-hover child-bg] (if (fn? colors-fn)
                                           (second (colors-fn lvl))
                                           ["f7f7f7" "f7f7f7" "f7f7f7"])
@@ -389,7 +389,7 @@
                         view-id (last path)]
                     (gcomp/button-expand-child
                      title
-                     :left-offset offset
+                     :lvl         lvl
                      :c-focus     color-hover
                      :background  child-bg
                      :onClick (fn [e]
@@ -410,7 +410,7 @@
                      view-id :theme_config.edn]
                  (gcomp/button-expand-child
                   title
-                  :left-offset offset
+                  :lvl         lvl
                   :c-focus     color-hover
                   :background  child-bg
                   :onClick (fn [e]
@@ -426,7 +426,7 @@
                      view-id :current-theme]
                  (gcomp/button-expand-child
                   title
-                  :left-offset offset
+                  :lvl         lvl
                   :c-focus     color-hover
                   :background  child-bg
                   :onClick (fn [e]

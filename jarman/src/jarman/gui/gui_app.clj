@@ -21,7 +21,7 @@
             [jarman.gui.gui-style             :as gs]
             [jarman.resource-lib.icon-library :as icon]
             [jarman.gui.gui-style :as gs]
-            [clojure.pprint :as pp]q
+            [clojure.pprint :as pp]
             ;; logic
             [jarman.config.config-manager    :as cm]            
             [jarman.gui.gui-views-service    :as gvs]

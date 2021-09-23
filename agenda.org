@@ -9,11 +9,11 @@
 #+STARTUP: overview
 
 * Frontend
-** TOREVIEW [#1] /Feature/. Interaction files [3/3]                  :@Aleks:
+** TOREVIEW [#1] /Feature/. Interaction files [2/3]                    :@Aleks:
    :PROPERTIES:
    :CUSTOM_ID: interaction-function-set
    :END:
-   - [X] =interaction.clj= [5/5]
+   - [-] =interaction.clj= [4/5]
      implement file with simple proxy function where every funciton is just wrapper
      with spec and good to read docs.
      - [X] add function =open file in tab= as arg will be file path [4/4]
@@ -22,8 +22,8 @@
        - [X] Manual syntax set
        - [X] Change syntax in runtime with combobx
      - [X] invoke alert [info warning danger]
-     - [X] Hard restart. Recompiling plugin and clean-up global state
-       - [X] Write doc
+     - [ ] Hard restart. Recompiling plugin and clean-up global state
+       - [ ] Write doc
      - [X] Soft restart. Reaload gui
        - [X] Write doc
      - [X] Restart. The same as hard without state.
@@ -59,9 +59,9 @@
     - [X] /Feature/. Success alert type.
     - [X] /Feature/. TMP storage. invoking alerts after some event like loaded app.
     - [ ] /Feature/. warning alert, which notify user about update
-*** TOREVIEW Table.clj [3/4]                                         :@Aleks:
+*** TODO Table.clj [3/4]                                             :@Aleks:
     - [X] remove 1pixel black border for right table.
-    - [ ] (expand-panel?) text "hide" replace on julia (not created at that moment) left arrow, and background fill with one gray color, as "tab", or left section in table.clj, where components is.
+    - [ ] rewrite expand panel
     - [X] make icon smaller, on 10-20%
     - [X] Move Table title to left side (nope, on center looks better), and colorize in "ocean blue" color, julia use it in login panel.
 *** TODO Main view & Styling [2/4]                                   :@Aleks:
@@ -93,6 +93,7 @@
       - [X] Change all black font's on closelly to black. Use some *dark-gray*, with blue-direction - ~#030D1C~ as example.
       - [X] Also for expand buttons use bold ubuntu fonts (looks little crappy).
       - [X] Chnage ordering items in menubar. At first place user must saw all buisness tables, and next any other *setting* or *db visualizer* etc.
+*** PLANNED Rewrite expand panel
 *** PLANNED Service Periods plugins [0/3]                            :@Aleks:
     - [ ] Expand buttons [0/7]
       - [ ] Buttons must be resizable, and scaled to window width.

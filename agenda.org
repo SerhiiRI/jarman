@@ -9,9 +9,7 @@
 #+STARTUP: overview
 
 * Frontend
-** TODO [#3] Switch into new language system                         :@Julia:
-   - [ ] Just use language getter functions.
-** PROCESSING [#1] /Feature/. Interaction files [2/3]                :@Aleks:
+** TOREVIEW [#1] /Feature/. Interaction files [3/3]                  :@Aleks:
    :PROPERTIES:
    :CUSTOM_ID: interaction-function-set
    :END:
@@ -35,15 +33,18 @@
      - [X] Resize in runtime
      - [X] Open/New, Hide, Close
      - [X] Ricardo inside
-   - [ ] =faces.clj=
+   - [X] =faces.clj=
      Finish moving to new customization style
      
-** PROCESSING [#1] Frontend refactorization [2/8]
-*** TODO Alerts upgrade [1/3]                                        :@Aleks:
-    - [X] /Feature/. Success alert type.
-    - [ ] /Feature/. warning alert, which notify user about update
-    - [ ] /Feature/. TMP storage. invoking alerts after some event like loaded app.
-*** TODO Repair expand button [2/2]                                  :@Aleks:
+** PROCESSING [#1] /Feature/. Jarman Theme Light Style [5/6]
+   - [X] rewrite styles config
+   - [X] global font
+   - [X] global background
+   - [X] global foreground
+   - [X] removing unnessesary font override         
+   - [ ] unifing styles in UI
+** PROCESSING [#1] Frontend refactorization [0/8]
+*** TOREVIEW Repair expand button [2/2]                              :@Aleks:
     - [X] Rainbow margin -> Space margin
     - [X] Separate last element in inside expand
 *** TOREVIEW New icons as fonts [7/7]                                :@Aleks:
@@ -54,6 +55,15 @@
     - [X] New face for close icon, listen event mouse entered
     - [X] Set new feature to menu bars
     - [X] Set new feature to other if needed
+*** TODO Alerts upgrade [2/3]                                        :@Aleks:
+    - [X] /Feature/. Success alert type.
+    - [X] /Feature/. TMP storage. invoking alerts after some event like loaded app.
+    - [ ] /Feature/. warning alert, which notify user about update
+*** TOREVIEW Table.clj [3/4]                                         :@Aleks:
+    - [X] remove 1pixel black border for right table.
+    - [ ] (expand-panel?) text "hide" replace on julia (not created at that moment) left arrow, and background fill with one gray color, as "tab", or left section in table.clj, where components is.
+    - [X] make icon smaller, on 10-20%
+    - [X] Move Table title to left side (nope, on center looks better), and colorize in "ocean blue" color, julia use it in login panel.
 *** TODO Main view & Styling [2/4]                                   :@Aleks:
     - [X] Gui View Service [2/2]
       - [X] On tabs replace non-active tab on more brighter color.
@@ -69,8 +79,9 @@
       - [X] to ~close-app~ also add ~logout~
       - [X] remove ~Change work mode~, and add optino to ~.jarman~ which will be add "key icon" to slider menu.
       - [X] Remove ~Db visuliser~ from left bar.
-    - [-] Main Menu [5/7]
+    - [-] Main Menu [5/8]
       - [ ] main menu size, put this option to theme faces
+      - [ ] Main menu as hide/show section
       - [ ] Add documentation how to correctly pin some components to menus. Also add more information to the Exceptions
 	When i pin my panel, i get exception
 	#+begin_example
@@ -82,18 +93,7 @@
       - [X] Change all black font's on closelly to black. Use some *dark-gray*, with blue-direction - ~#030D1C~ as example.
       - [X] Also for expand buttons use bold ubuntu fonts (looks little crappy).
       - [X] Chnage ordering items in menubar. At first place user must saw all buisness tables, and next any other *setting* or *db visualizer* etc.
-*** TOREVIEW Cooperative theme standarization [0/1]
-      - [ ] Main menu [0/2]
-	- [ ] Better colors for levels in expand button in ~Jarman Light~
-	- [ ] Better colors for levels in expand button in ~Dracula~
-
-*** TODO Table.clj [3/4]                                             :@Aleks:
-    - [X] remove 1pixel black border for right table.
-    - [ ] text "hide" replace on julia (not created at that moment) left arrow, and background fill with one gray color, as "tab", or left section in table.clj, where components is.
-    - [X] make icon smaller, on 10-20%
-    - [X] Move Table title to left side (nope, on center looks better), and colorize in "ocean blue" color, julia use it in login panel.
-
-*** TODO Service Periods plugins [0/3]                               :@Aleks:
+*** PLANNED Service Periods plugins [0/3]                            :@Aleks:
     - [ ] Expand buttons [0/7]
       - [ ] Buttons must be resizable, and scaled to window width.
       - [ ] Not hide expanded button, when checkbox was clicked. Julia add coments inside plugin, about this issue (find "TODO" mark)
@@ -104,19 +104,17 @@
       - [ ] For Service Months use ths format style notation "01-01-2020 - 04-01-2021,  100 zl", money also in pastel green.
     - [ ] Julia call it *insert-space*, is section where we adding new service contract. Rewrite whole panel, but keep logic as we create before.
     - [ ] After you click on one month, you can edit all service contract month payments. You can edit, only if month wasn't payed. Rewrite Julia view, on your implementation. I think better be when all those month fields be in one line.
-*** PLANNED Main menu as hide/show section                           :@Aleks:
+*** PLANNED Cooperative theme standarization [0/1]
+    - [ ] Main menu [0/2]
+      - [ ] Better colors for levels in expand button in ~Jarman Light~
+      - [ ] Better colors for levels in expand button in ~Dracula~
 
-** PROCESSING [#1] /Feature/. Jarman Theme Light Style
-   - [X] rewrite styles config
-   - [ ] unifing styles in UI
-   - [X] global font
-   - [X] global background
-   - [X] global foreground
-   - [X] removing unnessesary font override         
 ** TODO [#2] /Bug/. DB Visualizer editing                      :@Aleks:@Serhii:
    1. [ ] Cannot edit table =view=
    2. [ ] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
    3. [ ] Cannot edit metadata of table 
+** TODO [#2] Switch into new language system                         :@Julia:
+   - [ ] Just use language getter functions.
 ** TODO [#3] /Feature/. Update Manager                                 :@Aleks:
    - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [ ] Show popup with hard program restart

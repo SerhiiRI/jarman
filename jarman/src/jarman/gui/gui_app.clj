@@ -21,7 +21,7 @@
             [jarman.gui.gui-style             :as gs]
             [jarman.resource-lib.icon-library :as icon]
             [jarman.gui.gui-style :as gs]
-            [clojure.pprint :as pp]
+            [clojure.pprint :as pp]q
             ;; logic
             [jarman.config.config-manager    :as cm]            
             [jarman.gui.gui-views-service    :as gvs]
@@ -327,7 +327,8 @@
    (load-plugins-to-main-menu))
   (print-header
    "Load static main menu"
-   (load-static-main-menu)))
+   (load-static-main-menu))
+  (i/show-delay-alerts))
 
 
 ;; ┌─────────────┐

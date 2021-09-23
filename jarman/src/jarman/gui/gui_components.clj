@@ -1760,6 +1760,15 @@
   ;;     :view mig}))
   )
 
+(defn doom-wather [root]
+  (add-watch (state/state :atom-app-size) :doom-watcher
+             (fn [key atom old-state new-state]
+               (let [w (first @atom) 
+                     h (/ (second @atom) 3)
+                     x 0
+                     y (- (second @atom) h)]
+                 (c/config! root :bounds [x y w h])))))
+
 (defn doom
   ([] (doom (rift (state/state :doom-compo) [])))
   ([compo]
@@ -1769,14 +1778,15 @@
            w     (first fsize)
            h     (/ (second fsize) 3)
            panel (c/vertical-panel
-                  :border (b/line-border :left 2 :bottom 2 :right 2 :color "#000")
-                  :bounds [0 0 w h] 
+                  :border (b/line-border :left 2 :top 2 :right 2 :color "#000")
+                  :bounds [0 (- (second fsize) h) w h] 
                   :items [compo])]
        (state/set-state :doom-compo compo)
        (state/set-state :doom panel)
        (.add JLP panel (Integer. 1010))
        (.revalidate JLP)
-       (.repaint JLP))
+       (.repaint JLP)
+       (doom-wather panel))
      (if (state/state :doom) (.setVisible (state/state :doom) true)))))
 
 (defn doom-hide [] (.setVisible (state/state :doom) false))
@@ -1786,6 +1796,7 @@
         doom (state/state :doom)]
     (if doom
       (try
+        (remove-watch (state/state :atom-app-size) :doom-watcher)
         (.remove JLP doom)
         (state/rm-state :doom-compo)
         (state/rm-state :doom)

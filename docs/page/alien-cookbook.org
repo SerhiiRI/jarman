@@ -1,0 +1,33 @@
+* ReGex
+** Java 
+*** GetSet space remove 
+    #+begin_src clojure
+      #"(?<=\{)\n\s+((?:return|this)[^;]+;)\n\s+(?=\})"
+    #+end_src
+
+    #+begin_src java 
+      // transform three line
+      public ProgramDofinansowania getProgramDofinansowania() {
+	  return programDofinansowania;
+      }
+      // into one
+      public ProgramDofinansowania getProgramDofinansowania() {return programDofinansowania;}
+    #+end_src
+* Common Lisp Formatter
+** Fitt text 
+  #+begin_src common-lisp
+    (format nil "|~vA|"       10 "Test") ; Left align text in a table cell
+    (format nil "|~v:@<~A~>|" 10 "Test") ; Center text in a table
+    (format nil "|~v@A|"      10 "Test") ; Right align text in a table cell
+  
+  #+end_src
+
+  #+begin_example
+    Out(1):
+    "|Test      |"
+    Out(2):
+    "|   Test   |"
+    Out(3):
+    "|      Test|"
+  #+end_example
+

@@ -327,7 +327,8 @@
    (load-plugins-to-main-menu))
   (print-header
    "Load static main menu"
-   (load-static-main-menu)))
+   (load-static-main-menu))
+  (i/show-delay-alerts))
 
 
 ;; ┌─────────────┐

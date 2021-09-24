@@ -41,7 +41,17 @@
     :store-new-alerts (assoc-in state [:alerts-storage (keyword (str "index-" (:alert-index state)))] (:alert action-m))
     :clear-history    (assoc-in state [:alerts-storage] {})
     :inc-index        (assoc-in state [:alert-index] (inc (:alert-index (state!))))
-    :clear-index      (assoc-in state [:alert-index] 0)))
+    :clear-index      (assoc-in state [:alert-index] 0)
+    :store-in-temp    (do
+                        (state/set-state
+                        :temp-alerts-storage
+                        (let [state (state/state :temp-alerts-storage)
+                              idx   (count state)]
+                          (assoc-in state [(keyword (str "temp-index-" idx))] (:alert action-m))))
+                        state)
+    :clear-temp       (do
+                        (state/set-state :temp-alerts-storage {})
+                        state)))
 
 
 (defn- create-disptcher [atom-var]
@@ -276,10 +286,57 @@
                        :body    body
                        :s-popup s-popup
                        :expand  expand
-                       :type    type}})
+                       :type    type
+                       :time    time
+                       :actions actions}})
   (add-to-alerts-box (template type header body time s-popup expand actions)))
 
 
+;; ┌──────────────────┐
+;; │                  │
+;; │   TEMP Alerts    │
+;; │                  │
+;; └──────────────────┘
+
+(defn temp-alert
+  [header body
+   & {:keys [type time s-popup expand actions]
+      :or   {type :alert
+             time 3
+             s-popup [300 320]
+             actions []
+             expand  nil}}]
+  (dispatch! {:action :store-in-temp
+              :alert  {:header  header
+                       :body    body
+                       :s-popup s-popup
+                       :expand  expand
+                       :type    type
+                       :time    time
+                       :actions actions}}))
+
+(defn load-temp-alerts
+  []
+  (doall
+   (map (fn [[k m]]
+          (println "\n" k m)
+          (alert (:header m) (:body    m)
+                 :s-popup    (:s-popup m)
+                 :type       (:type    m)
+                 :time       (:time    m)
+                 :expand     (:expand  m)
+                 :actions    (:actions m))
+          )
+        (state/state :temp-alerts-storage)))
+  (dispatch! {:action :clear-temp}))
+
+(comment
+  (temp-alert "TEMP1" "It'a an TEMP alert invoking later.")
+  (temp-alert "TEMP2" "It'a an TEMP alert invoking later.")
+  (temp-alert "TEMP3" "It'a an TEMP alert invoking later.")
+  (load-temp-alerts)
+  (:temp-alerts-storage (state!))
+  )
 
 ;; ┌──────────────────┐
 ;; │                  │

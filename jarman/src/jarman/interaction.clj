@@ -192,7 +192,7 @@
     Restart app with cleaning global state
     All loading lvls will be invoked
     App will sturtup again with creating new frame"
-  [] (println "\nHard Restrat will be soon"))
+  [] (gvs/hard-restart))
 
 
 (defn reload-view

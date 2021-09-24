@@ -224,7 +224,11 @@
                                :permission [:developer]
                                :fn         (fn [e]
                                              (i/success "Czym jest Lorem Ipsum?"
-                                                     "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}}
+                                                        "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}
+                     "Update" {:key       "test-update"
+                               :action     :invoke
+                               :permission [:developer]
+                               :fn         (fn [e] (jarman.tools.update-manager-gui/alert-update-available))}}
     
     "Select table"   {:key        "select-table"
                       :action     :invoke

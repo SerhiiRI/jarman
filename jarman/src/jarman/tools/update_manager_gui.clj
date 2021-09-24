@@ -1,6 +1,7 @@
 (ns jarman.tools.update-manager-gui
   (:require
    ;; swing tools
+   [jarman.faces  :as face]
    [seesaw.core   :as c]
    [seesaw.table  :as table]
    [seesaw.dev :as sdev]
@@ -8,6 +9,8 @@
    [seesaw.swingx  :as swingx]
    [seesaw.chooser :as chooser]
    [seesaw.border  :as b]
+   [jarman.gui.gui-style :as gs]
+   [jarman.gui.gui-views-service :as gvs]
    ;; clojure lib
    [clojure.string :as string]
    [clojure.pprint :refer [cl-format]]
@@ -26,7 +29,8 @@
    ;; environtemnt variables
    [jarman.config.environment :as env]
    [jarman.interaction :as i])
-  (:import (java.io IOException FileNotFoundException)))
+  (:import (java.io IOException FileNotFoundException)
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -162,6 +166,18 @@
                                                     (supply-content-info)
                                                     (supply-content-to-install package-to-update)
                                                     (supply-content-all-package package-list))))))
+
+(defn alert-update-available []
+  (i/warning "Updates are avaliable!" [{:title "Check updates"
+                                        :func (fn [api]
+                                                (gvs/add-view
+                                                 :view-id  :update-manager
+                                                 :title    "Update manager"
+                                                 :render-fn update-manager-panel)
+                                                ((:rm-alert api)))}
+                                       {:title "Later"
+                                        :func (fn [api] ((:rm-alert api)))}]
+             :time 0))
 
 (comment
   (-> (c/frame :content (update-manager-panel))

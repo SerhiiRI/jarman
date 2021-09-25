@@ -162,6 +162,18 @@
 ** PLANNED Scroll to selected in table                               :@Aleks:
    - [ ] Scroll to selected in table     
 * Backend
+** TODO [#3] /Feature/. Macro for declaring some resource              :@Julia:
+   Create ~define-resource~ macro for definision of file
+   #+begin_src clojure
+     (define-resource jarman
+       (io/file "."           ".jarman")
+       (io/file env/user-home ".jarman"))
+     ;;=>
+     (def jarman-file-list
+       (io/file "."           ".jarman")
+       (io/file env/user-home ".jarman"))
+     (defn get-jarman [] (first-exist jarman-dot-file-list))
+   #+end_src
 ** TODO [#3] alert-try
 ** TODO [#1] Одужуй!                                                 :@Julia:
 ** TODO [#1] Permission system                                       :@Julia:
@@ -175,22 +187,8 @@
    - [ ] Create =register-licence-file= functionality
    - [ ] decrypt/uncrypt by system RSA keys
    - [X] Checking login user in system, limited by the licence
-** TODO [#3] In load circle integrate setting variable :@Julia:@Aleks:@Serhii:
-   in some load-level add manual setted variable for some systme things, that shouldn't be 
-   memberd in =.jarman=. Or thay must have some deault values which be rewrited by the 
-   =.jarman= loader.
-   #+begin_src clojure
-     ...
-     (setq language-system :en)
-     (setq supported-language [:en :pl :ua])
-     ...
-   #+end_src
 ** TODO [#2] check all steps of loading tables                      :@Serhii:
    in file view-manager.clj, markup TO DO,  add messages(println), if we need
-** TODO [#2] /Feature/. Emacs IDE split out-environment [0/2]         :@Serhii:
-   - [ ] Auto tail reverting logs buffer
-   - [ ] Integrate local toolkit for emacs.
-     - [ ] Open log buffer.
 ** TODO [#3] /Feature/. Support Org file                              :@Serhii:
    - [-] Create library for printing directly to org file [2/3]
      - [X] Printing lib
@@ -207,16 +205,10 @@
 ** PLANNED Service Period. sort contract list                       :@Serhii:
    - [ ] sorting contract by date
    - [ ] colorize contract by active-nonactive depend on current date
-** PLANNED Permission systems                                        :@Aleks:
-
-   #+begin_src clojure
-     (session/test-persmission [:user :admin]) ;; => true
-   #+end_src
-   - [X] Render menu buttons by permission and hide empty expand
-   - [X] Check permision for popup menu in DB Visualizer. Metadata and defview editor.
-   - [ ] Create permission system 
-   - [ ] Make hide some element when user not in component persmission list
-   - [ ] add function to get permission from session, or function which TEST something in session, for example
+** PLANNED /Feature/. Emacs IDE split out-environment [0/2]           :@Serhii:
+   - [ ] Auto tail reverting logs buffer
+   - [ ] Integrate local toolkit for emacs.
+     - [ ] Open log buffer.
 ** PLANNED Ekka todo#1 chages                         :@Julia:@Aleks:@Serhii:
 *** Підприємець
     -   ЄДРПОУ - 10 цифр довжина з переду нулями
@@ -308,6 +300,17 @@
        (lang :dracula :theme-name)
      #+end_src
 
+** DONE [#3] In load circle integrate setting variable :@Julia:@Aleks:@Serhii:
+   CLOSED: [2021-09-25 Sat 18:55]
+   in some load-level add manual setted variable for some systme things, that shouldn't be 
+   memberd in =.jarman=. Or thay must have some deault values which be rewrited by the 
+   =.jarman= loader.
+   #+begin_src clojure
+     ...
+     (setq language-system :en)
+     (setq supported-language [:en :pl :ua])
+     ...
+   #+end_src
 * Infrastructure
 * Documentations
 ** PLANNED [#3] create jarman manifest file                         :@Serhii:

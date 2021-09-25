@@ -192,11 +192,10 @@
        c-alert-success-border c-border-success
        c-alert-history-focus  c-on-focus-light
 
-       ;; Popup box
+       ;; popup box
        c-popup-body-background c-compos-background
        c-popup-head-background c-compos-background-darker
        c-popup-border          c-border
-
        ))))
 
  ;; First example

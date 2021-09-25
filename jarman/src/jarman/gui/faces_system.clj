@@ -22,13 +22,15 @@
   (print-header
    "All registered faces:"
    (when (seq (deref faces-storage))
-     (doall (map #(print-line (format "- %s" (str (symbol %)))) (seq (deref faces-storage)))))))
+     (doall (map #(print-line (format "- %s" (str (symbol %)))) (seq (deref faces-storage))))))
+  true)
 
 (defn faces-list-out-all-with-values []
   (print-header
    "All registered faces:"
    (when (seq (deref faces-storage))
-     (doall (map #(print-line (format "- %s - ~%s~" (str (symbol %)) (str (var-get %)))) (seq (deref faces-storage)))))))
+     (doall (map #(print-line (format "- %s - ~%s~" (str (symbol %)) (str (var-get %)))) (seq (deref faces-storage))))))
+  true)
 
 (defn- output-faces [msg faces-list]
   (when (seq faces-list)

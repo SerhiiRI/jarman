@@ -1,5 +1,5 @@
 (ns jarman.faces)
-(require '[jarman.gui.faces-system :refer [define-face]])
+(require '[jarman.gui.faces-system :refer [define-face faces-list-out-all faces-list-out-all-with-values]])
 
 ;; s-...   size
 ;; c-...   color
@@ -117,7 +117,6 @@
 (define-face c-popup-head-background)
 (define-face c-popup-border)
 
-(comment [underscore-panel
-          button-border-bottom
-          button-border-top
-          button-border-right])
+(comment
+  (faces-list-out-all)
+  (faces-list-out-all-with-values))

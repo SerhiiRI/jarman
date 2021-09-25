@@ -35,6 +35,7 @@
    "bg3-light"          "#464752"
    "bg3-strong"         "#262626"
    "bg4-light"          "#565761"
+   "bg4-medium"         "#616161"
    "bg4-strong"         "#444444"
    "fg2-light"          "#e2e2dc"
    "fg2-strong"         "#e4e4e4"
@@ -42,8 +43,6 @@
    "fg3-strong"         "#c6c6c6"
    "fg4-light"          "#b6b6b2"
    "fg4-strong"         "#b2b2b2"
-
-   
    "font-size"             14.0
    "icon-size"             20
    "underline-size"        2
@@ -160,6 +159,13 @@
        c-btn-expand-bg       c-compos-background
        c-btn-expand-fg       c-foreground
        c-btn-expand-offset   c-compos-background
+
+       ;; expand item in iputs
+       c-item-expand-left    bg4-strong
+       c-item-expand-right   bg4-medium
+ 
+       ;; min-scrollbox
+       c-min-scrollbox-bg    bg4-medium
 
        ;; alert
        c-alert-bg             c-compos-background-light

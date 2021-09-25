@@ -113,7 +113,7 @@
   [component
    & {:keys [args]
       :or {args []}}]
-  (let [scr (CustomScrollBar/myScrollPane component)
+  (let [scr (CustomScrollBar/myScrollPane component face/c-min-scrollbox-bg)
         get-key (fn [x] (first (first x)))
         get-val (fn [x] (second (first x)))]
     (if-not (empty? args)
@@ -1166,7 +1166,7 @@
                  panel
                  :min-height 220
                  :over-func onClick
-                 :background "#dddddd"))
+                 :background face/c-btn-expand-bg))
 
 (def button-expand-child
   "Description

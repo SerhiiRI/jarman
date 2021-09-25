@@ -29,17 +29,17 @@ public class CustomScrollBar {
         cmp.setBackground(Color.decode("#eeeeee"));
         JFrame f = new JFrame();
         f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        f.getContentPane().add(myScrollPane(cmp));
+        f.getContentPane().add(myScrollPane(cmp, "#cccccc"));
         f.setSize(320, 240);
         f.setVisible(true);
     }
 
-    public static JScrollPane myScrollPane(JComponent cmp) {
+    public static JScrollPane myScrollPane(JComponent cmp, String clr) {
         JScrollPane scrollPane = new JScrollPane(cmp);
         scrollPane.setComponentZOrder(scrollPane.getVerticalScrollBar(), 0);
         scrollPane.setComponentZOrder(scrollPane.getViewport(), 1);
         scrollPane.getVerticalScrollBar().setOpaque(false);
-        scrollPane.getVerticalScrollBar().setUI(new MyScrollBarUI());
+        scrollPane.getVerticalScrollBar().setUI(new MyScrollBarUI(clr));
         scrollPane.setLayout(new ScrollPaneLayout() {
             @Override
             public void layoutContainer(Container parent) {
@@ -74,6 +74,10 @@ public class CustomScrollBar {
 
     static class MyScrollBarUI extends BasicScrollBarUI {
         private final Dimension d = new Dimension();
+	public String clr;
+	public MyScrollBarUI(String clr){
+	    this.clr = clr;
+	}
 
         @Override
         protected JButton createDecreaseButton(int orientation) {
@@ -109,16 +113,16 @@ public class CustomScrollBar {
             if (!sb.isEnabled() || r.width > r.height) {
                 return;
             } else if (isDragging) {
-                color = (Color.decode("#cccccc"));
+                color = (Color.decode(this.clr));
             } else if (isThumbRollover()) {
-                color = (Color.decode("#cdcdcd"));
+                color = (Color.decode(this.clr));
             } else {
-                color = (Color.decode("#cccccc"));
+                color = (Color.decode(this.clr));
             }
 	    sb.setBorder(new EmptyBorder(0, 8, 0, 0));
             g2.setPaint(color);
             g2.fillRoundRect(r.x, r.y, r.width, r.height, 0, 0);
-            g2.setPaint(Color.decode("#cccccc"));
+            g2.setPaint(Color.decode(this.clr));
             g2.drawRoundRect(r.x, r.y, r.width, r.height, 0, 0);
             g2.dispose();
         }

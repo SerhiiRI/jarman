@@ -6,6 +6,17 @@
 ;; cvv-...  colors in vectors like [[#aaa #bbb] [#ccc #ddd]]
 
 ;;; UI elemnt colors
+;;; Base color-palette
+(define-face c-white)
+(define-face c-black)
+(define-face c-red)
+(define-face c-orange)
+(define-face c-yellow)
+(define-face c-green)
+(define-face c-light-blue)
+(define-face c-strong-blue)
+(define-face c-purple)
+
 ;;; Global default styles
 (define-face c-foreground)
 (define-face s-foreground)
@@ -101,6 +112,13 @@
 (define-face c-btn-expand-bg)
 (define-face c-btn-expand-fg)
 (define-face c-btn-expand-offset)
+
+;; item-expand in inputs
+(define-face c-item-expand-left)
+(define-face c-item-expand-right)
+
+;; min-scrollbox
+(define-face c-min-scrollbox-bg)
 
 ;; Alert popup
 (define-face c-alert-bg)

@@ -3,6 +3,7 @@
    [clojure.string :as s]
    [jarman.gui.gui-tools :as gtool]
    [jarman.gui.gui-components :as gcomp]
+   [jarman.faces              :as face]
    [jarman.logic.composite-components :as ccomp]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -10,7 +11,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn build-main-panel [data-vec]
   (seesaw.mig/mig-panel
-   :background  "#e4e4e4"
+   :background  face/c-compos-background-darker
    :constraints ["wrap 2" "10px[95:, fill, grow]10px" "10px[]10px"]
    :items data-vec))
 
@@ -38,7 +39,7 @@
         f-url    (gcomp/state-input-text {:func (fn [e] (func e :link))
                                           :val  (:link val)})]
     (seesaw.mig/mig-panel
-     :background  "#e4e4e4"
+     :background  face/c-compos-background-darker
      :constraints ["wrap 1" "10px[95:, fill, grow]10px" "10px[]10px"]
      :items [[(f-label "text:")] [f-title] [(f-label "url:")] [f-url]])))
 

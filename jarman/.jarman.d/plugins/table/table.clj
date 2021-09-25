@@ -166,8 +166,8 @@
                       (let [l (seesaw.core/label :background color :text text
                                                  :font (gtool/getFont :size font-size) :border border)]
                         (.add mig l)))]
-    (doall (map (fn [[k v]] (do (col-label "#E2FBDE" (name k))
-                                (col-label "#fff" (str v)))) model-data))
+    (doall (map (fn [[k v]] (do (col-label face/c-item-expand-left (name k))
+                                (col-label face/c-item-expand-right (str v)))) model-data))
     (.repaint mig) mig))
 
 (defn refresh-panel
@@ -593,8 +593,8 @@
                 :text (:representation (.return-table (:meta-obj (:plugin-toolkit (state!))))) 
                 :halign :center
                 :font (gtool/getFont 15 :bold)
-                :foreground "#2c7375"
-                :border (b/compound-border (b/line-border :bottom 1 :color "#2c7375")
+                :foreground face/c-foreground
+                :border (b/compound-border (b/line-border :bottom 1 :color face/c-underline)
                                            (b/empty-border :top 10)))]))
 
 (defn- custom-icon-bar
@@ -881,6 +881,7 @@
                  :title \"Upload document\"}
                {:form-model :model-update...}...]"
     :doc "This is an vector of optional buttons which do some logic bainded by acition key, discribed in `:action`"}]])
+
 
 
 

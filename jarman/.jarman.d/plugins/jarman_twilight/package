@@ -1,9 +1,0 @@
-;; -*- mode: Clojure;-*-
-(define-package "jarman_twilight" "Is jurman bright twilight theme"
-  :version     "0.1"
-  :authors     '(("Serhii Riznychuk" "serhii.riznychuk@gmail.com"))
-  :license     '("EPL-2.0" "https://www.eclipse.org/legal/epl-2.0/")
-  :keywords    '("theme")
-  :url         '("https://github.com/emacs-dashboard/emacs-dashboard")
-  :loading-seq '(jarman_twilight))
-

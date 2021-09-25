@@ -48,8 +48,7 @@
    "gray-light-3"      "#f7f7f7"
    "gray-super-light"  "#fefefe"
    "white"             "#ffffff"
-   "jarman-blue"       "#6c82c2"
-
+   "jarman-blue"       "#3a81c3"
    "jarman-blue-green" "#2c7375"
    "jarman-blue-dark"  "#29295e"
    "jarman-blue-light" "#d9ecff"
@@ -176,6 +175,9 @@
        ;; inputs
        c-input-bg            c-compos-background
        c-input-header        c-foreground
+
+       ;; min-scrollbox
+       c-min-scrollbox-bg    gray
  
        ;; expand button
        c-btn-expand-bg       c-compos-background

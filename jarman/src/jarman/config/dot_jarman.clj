@@ -9,7 +9,7 @@
    [jarman.tools.lang :refer :all]
    [jarman.tools.org  :refer :all]
    [jarman.config.environment :as env]
-   [jarman.config.vars :refer [setq defvar print-list-not-loaded]]))
+   [jarman.config.vars :refer [setq defvar print-list-not-loaded variable-config-list]]))
 
 (def jarman ".jarman")
 (def jarman-paths-list [(io/file env/user-home jarman)

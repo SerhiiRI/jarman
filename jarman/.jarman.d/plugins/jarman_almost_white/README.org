@@ -1,0 +1,8 @@
+* README
+
+  you have few versions with different color schemes, but main color in every theme is white.
+
+* Installation!
+
+  put all the files in ~.jarman.d/plugins/<plugin-name>~, and note about it to =.jarman= variable
+

@@ -1,0 +1,8 @@
+;; -*- mode: Clojure;-*-
+(define-package "jarman_almost_white" "Classical almost-white theme for Jarman"
+  :version     "0.1"
+  :authors     '(("Julia Burmych" "julia.burmich@gmail.com"))
+  :license     '("EPL-2.0" "https://www.eclipse.org/legal/epl-2.0/")
+  :keywords    '("theme")
+  :url         '("")
+  :loading-seq '(jarman_almost_white))

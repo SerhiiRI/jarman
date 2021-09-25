@@ -1,6 +1,6 @@
 (ns jarman.external)
-(require '[jarman.config.conf-language])
-
+(require 'jarman.config.conf-language)
+(require 'jarman.config.vars)
 
 (defn plang
   "Documentation
@@ -31,6 +31,29 @@
   [& translation-path]
   (apply jarman.config.conf-language/lang translation-path))
 
+(defmacro defvar
+  "Description
+    Define system variable.
+  Example
+    ;; Short declaration
+     (defvar some-string-var \"value\")
+    ;; Full declaration
+     (defvar some-string-var \"value\"
+       :name \"Optinal variable name for presentation in view\"
+       :doc \"Some optinal information about var\"
+       :type java.lang.String
+       :group :global)"
+  [variable-name default-value & params]
+  `(jarman.config.vars/defvar ~variable-name ~default-value
+     ~@params))
+
+(defmacro setq [& var-list]
+  `(jarman.config.vars/setq
+    ~@var-list))
+
+(defmacro setj [& var-list]
+  `(jarman.config.vars/setj
+    ~@var-list))
 
 (comment
   (jarman.config.conf-language/debug-enable)

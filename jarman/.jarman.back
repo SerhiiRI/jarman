@@ -1,0 +1,55 @@
+;; -*- mode: Clojure;-*-
+
+;; This is Main configuration `.jarman` file. Declare in it any machine or app-specyfic configurations
+;; Set global variables, by using `setq` macro and power of jarman customizing system
+
+;; 1. Declare variable in any place you want in system
+;;    Attribute `:type` and `:group` aren't required, but
+;;    specifing may help you in debug moment
+;;
+;;    => (defvar some-global-variable nil 
+;;          :type clojure.lang.PersistentArrayMap
+;;          :group :logical-group)
+;;
+;; 2. In `.jarman` set previosly declared in code variable
+;;
+;;    => (setq some-global-variable {:some-value {:a 1}})
+
+(require 'jarman.logic.view-manager)
+(require 'jarman.tools.update-manager)
+(require '[jarman.config.vars :refer [setq]])
+
+(setq jarman.logic.view-manager/user-menu
+      {"Admin space"
+       {"User table"                [:user :table :user]
+        "Permission edit"           [:permission :table :permission]
+	"ULLL"                       [:permission :fff :fff]}
+       "Sale structure"
+       {"Enterpreneur"              [:enterpreneur :table :enterpreneur]
+        "Point of sale group"       [:point_of_sale_group :table :point_of_sale_group]
+        "Point of sale group links" [:point_of_sale_group_links :table :point_of_sale_group_links],
+        "Point of sale"             [:point_of_sale :table :point_of_sale]}
+       "Repair contract"
+       {"Repair contract"           [:repair_contract :table :repair_contract]
+        "Repair reasons"            [:repair_reasons :table :repair_reasons]
+        "Repair technical issue"    [:repair_technical_issue :table :repair_technical_issue]
+        "Repair nature of problem"  [:repair_nature_of_problem :table :repair_nature_of_problem]
+        "Cache register"            [:cache_register :table :cache_register]
+        "Seal"                      [:seal :table :seal]}
+       "Service contract"
+       {"Service Periods"           [:service_contract :service-period :service_contract]
+        "Service contract"          [:service_contract :table :service_contract]
+        "Service contract month"    [:service_contract_month :table :service_contract_month]}})
+
+(setq jarman.plugin.extension-manager/jarman-extension-list
+      '(;; test plugins
+        aaa dialog_test
+        ;; reall plugins
+        table service_period dialog_bigstring dialog_table 
+        ;; theme plugins
+        dracula))
+
+(setq jarman.tools.update-manager/jarman-update-repository-list
+      ["ftp://jarman:dupa@trashpanda-team.ddns.net"
+       "/home/serhii/programs/jarman/jarman/test-repository"])
+

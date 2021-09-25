@@ -4,7 +4,6 @@
 #+PRIORITIES: 1 3 2
 #+PROPERTY: session *EL* 
 #+PROPERTY: cache yes
-# #+ARCHIVE: ::* Archived
 #+ARCHIVE: %s_done::
 #+STARTUP: overview
 
@@ -163,14 +162,7 @@
 ** PLANNED Scroll to selected in table                               :@Aleks:
    - [ ] Scroll to selected in table     
 * Backend
-** PROCESSING [#1] defvar managment                                 :@Serhii:
-   After app loading, we have some values in system variables, divided by group name,
-   - [X] Allow defvar declaration for all the places
-   - [X] Fix defvar spec. 
-   - [ ] Save config in place in =.jarman= file
-   - [X] GUI for listing all registred config's variable
-   - [X] Debug for all variables
-   - [X] Debug for one variables
+** TODO [#3] alert-try
 ** TODO [#1] Одужуй!                                                 :@Julia:
 ** TODO [#1] Permission system                                       :@Julia:
    - [ ] Rewrie user session object
@@ -178,6 +170,7 @@
      - [ ] Make testing on permission
    - [ ] Add into /left-bar menu/, /left-menu/ functionlity that test user permission before
      render
+
 ** TODO [#3] Register licence mechanics                             :@Serhii:
    - [ ] Create =register-licence-file= functionality
    - [ ] decrypt/uncrypt by system RSA keys
@@ -281,6 +274,15 @@
 ** PLANNED Versioning data structure                                :@Serhii:
 ** PLANNED sql_tools | debug                                   :@Serhii:
     - [ ] pretty printing for sql syntax
+** DONE [#1] defvar managment                                       :@Serhii:
+   CLOSED: [2021-09-25 Sat 14:46]
+   After app loading, we have some values in system variables, divided by group name,
+   - [X] Allow defvar declaration for all the places
+   - [X] Fix defvar spec. 
+   - [X] Save config in place in =.jarman= file
+   - [X] GUI for listing all registred config's variable
+   - [X] Debug for all variables
+   - [X] Debug for one variables
 ** DONE [#1] /Bug/. Throw exception when .jarman fialed               :@Serhii:
    CLOSED: [2021-09-18 Sat 20:37]
 ** DONE [#1] /Feature/. Rewrite plugin system                         :@Serhii:

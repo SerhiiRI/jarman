@@ -1,5 +1,9 @@
 (ns jarman.config.environment
-  (:gen-class))
+  (:gen-class)
+  (:import (java.io IOException FileNotFoundException))
+  (:require [clojure.string :as s]
+            [clojure.java.io :as io]
+            [clojure.pprint :refer [cl-format]]))
 
 ;;; PROPERTIES ;;;
 (def java-version (System/getProperty "java.version"))
@@ -37,42 +41,58 @@
 
 ;;; ENV VARIABLES ;;;
 (def path (System/getenv "path"))
+(def plugin-folder-name "plugins")
+(def config-folder-name "config")
+(def resource-folder ".jarman.d")
+(def dot-jarman      ".jarman")
+(def dot-jarman-data ".jarman.data")
+
+;;; TODO MACRO
+(def jarman-plugins-dir-list
+  "List of all plugins directory in client filesystem"
+  [(io/file user-home resource-folder plugin-folder-name)
+   (io/file       "." resource-folder plugin-folder-name)])
+
+(def jarman-configs-dir-list
+  "list of all configururations directory in client filesystem"
+  [(io/file user-home resource-folder config-folder-name)
+   (io/file       "." resource-folder config-folder-name)])
+
+(def jarman-resource-dir-list
+  "list of all configururations directory in client filesystem"
+  [(io/file       "." resource-folder)
+   (io/file user-home resource-folder)])
+
+(def dot-jarman-paths-list
+  "list of all `.jarman` file paths in system"
+  [(io/file user-home dot-jarman)
+   (io/file       "." dot-jarman)])
+
+(def dot-jarman-data-paths-list
+  "list of all `.jarman.data` file paths in system"
+  [(io/file user-home dot-jarman-data)
+   (io/file       "." dot-jarman-data)
+   (io/file       "." "src" "jarman" "managment" dot-jarman-data)])
+
+(def jarman-executable
+  (io/file "." "Jarman.exe"))
+
+;;; GET FIRS EXSISTING PATH 
+(defn first-exist [jarman-file-list]
+  (if-let [file (first (filter #(.exists %) jarman-file-list))] file
+    (throw (FileNotFoundException.
+            (cl-format nil "No one file hasn't been found ~{`~A`~^, ~}"
+                       (map str jarman-file-list))))))
+
+(defn get-plugin-dir []        (first-exist jarman-plugins-dir-list))
+(defn get-config-dir []        (first-exist jarman-configs-dir-list))
+(defn get-resource-dir []      (first-exist jarman-resource-dir-list))
+(defn get-jarman []            (first-exist dot-jarman-paths-list))
+(defn get-jarman-data []       (first-exist dot-jarman-data-paths-list))
+(defn get-jarman-executable [] jarman-executable)
 
 ;;; RESOURCES
 (comment
-  (def plugin-folder-name "plugins")
-  (def config-folder-name "config")
-  (def jarman-resource-folder ".jarman.d")
-  (def ^:private jarman-plugins-dir-list
-    "List of all plugins directory in client filesystem"
-    [(io/file env/user-home config.environment plugin-folder-name)
-     (io/file           "." config.environment plugin-folder-name)])
-
-  (def ^:private jarman-configs-dir-list
-    "list of all configururations directory in client filesystem"
-    [(io/file env/user-home config.environment config-folder-name)
-     (io/file           "." config.environment config-folder-name)])
-
-  (def ^:private dot-jarman-paths-list
-    "list of all `.jarman` file paths in system"
-    [(io/file env/user-home ".jarman")
-     (io/file           "." ".jarman")])
-
-  (def ^:private dot-jarman-data-paths-list
-    "list of all `.jarman.data` file paths in system"
-    [(io/file env/user-home ".jarman.data")
-     (io/file           "." ".jarman.data")
-     (io/file           "." "src" "jarman" "managment" jarman-data)])
-
-  (def ^:private jarman-executable
-    (io/file "." "Jarman.exe"))
-  
   "update.log.org"
   "extension.log.org"
-  "log.org"
-
-  (defn first-exist [jarman-file-list]
-    (if-let [file (first (filter #(.exists %) jarman-data-all))]
-     (binding [*ns* (find-ns 'jarman.managment.data)] 
-       (load-file (str file)))
-     (throw (FileNotFoundException. "Not found '.jarman.data' file.")))))
+  "log.org")

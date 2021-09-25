@@ -12,7 +12,6 @@
    [clojure.string :as string]
    [clojure.pprint :refer [cl-format]]
    [clojure.java.io :as io]
-   ;; packages 
    ;; local functionality
    [jarman.logic.state :as state]
    [jarman.tools.config-manager :as cm]
@@ -20,9 +19,6 @@
    [jarman.gui.gui-tools :as gtool]
    [jarman.plugin.plugin :as plugin]
    [jarman.gui.gui-style :as gs]
-   ;; [jarman.tools.lang :refer [in?]]
-   ;; [jarman.tools.fs :as fs]
-   ;; [jarman.plugin.extension-manager :as extension-manager]
    ;; environtemnt variables
    [jarman.config.environment :as env]
    [jarman.interaction        :as i])
@@ -70,7 +66,7 @@
     (.setRowMargin 10)
     (.setRowHeight 35)
     (.setIntercellSpacing (java.awt.Dimension. 10 0))
-    (setColumnWidth :column 0 :size 130)
+    (setColumnWidth :column 0 :size 240)
     (setColumnWidth :column 1 :size 1000)
     ;; (setColumnWidth :column 3 :size 600)
     (.setRowSelectionAllowed false)

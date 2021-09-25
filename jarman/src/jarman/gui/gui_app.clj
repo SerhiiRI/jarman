@@ -239,18 +239,22 @@
                             :title "Message Store"
                             :fn    (fn [e] (i/show-alerts-history))}
                            
-                           {:icon  (gs/icon GoogleMaterialDesignIcons/UPDATE face/c-icon)
+                           {:icon  (gs/icon GoogleMaterialDesignIcons/DASHBOARD face/c-icon)
                             :title "Reload active view"
                             :fn    (fn [e] (try
                                              (i/reload-view)
                                              (catch Exception e (str "Can not reload. Storage is empty."))))}
 
-                           {:icon  (gs/icon GoogleMaterialDesignIcons/CACHED face/c-icon)
+                           {:icon  (gs/icon GoogleMaterialDesignIcons/REFRESH face/c-icon)
                             :title "Soft Restart"
                             :fn    (fn [e] (i/soft-restart))}
                            
-                           {:icon  (gs/icon GoogleMaterialDesignIcons/REFRESH face/c-icon)
+                           {:icon  (gs/icon GoogleMaterialDesignIcons/CACHED face/c-icon)
                             :title "Restart"
+                            :fn    (fn [e] (i/restart))}
+
+                           {:icon  (gs/icon GoogleMaterialDesignIcons/SETTINGS_BACKUP_RESTORE face/c-icon)
+                            :title "Hard Restart"
                             :fn    (fn [e] (i/restart))}
 
                            {:icon  (gs/icon GoogleMaterialDesignIcons/LIST face/c-icon)
@@ -327,7 +331,8 @@
    (load-plugins-to-main-menu))
   (print-header
    "Load static main menu"
-   (load-static-main-menu)))
+   (load-static-main-menu))
+  (i/show-delay-alerts))
 
 
 ;; ┌─────────────┐

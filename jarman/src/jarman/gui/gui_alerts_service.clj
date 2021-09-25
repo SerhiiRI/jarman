@@ -41,7 +41,17 @@
     :store-new-alerts (assoc-in state [:alerts-storage (keyword (str "index-" (:alert-index state)))] (:alert action-m))
     :clear-history    (assoc-in state [:alerts-storage] {})
     :inc-index        (assoc-in state [:alert-index] (inc (:alert-index (state!))))
-    :clear-index      (assoc-in state [:alert-index] 0)))
+    :clear-index      (assoc-in state [:alert-index] 0)
+    :store-in-temp    (do
+                        (state/set-state
+                        :temp-alerts-storage
+                        (let [state (state/state :temp-alerts-storage)
+                              idx   (count state)]
+                          (assoc-in state [(keyword (str "temp-index-" idx))] (:alert action-m))))
+                        state)
+    :clear-temp       (do
+                        (state/set-state :temp-alerts-storage {})
+                        state)))
 
 
 (defn- create-disptcher [atom-var]
@@ -181,23 +191,38 @@
         offset   (+ (* padding 2) (* s-border 2) (+ s-icon-2 5))]
     (let [close-icon (icon-label (gs/icon GoogleMaterialDesignIcons/CLOSE)
                                  (gs/icon GoogleMaterialDesignIcons/CLOSE face/c-icon-focus)
-                                 s-icon-2)]
-      (gmg/migrid
-       :v (format "[::%s, fill]" (- (:box-w (state!)) offset)) "[20, fill]0px[fill]"
-       {:args [:border (b/compound-border
-                        (b/empty-border :thickness padding)
-                        (b/line-border  :thickness s-border :color c-border))
-               :background c-bg
-               :user-data close-icon]}
-       [(c/label :text header
-                 :font (gs/getFont :bold)
-                 :icon icon
-                 :size [(- (:box-w (state!)) offset) :by 20])
+                                 s-icon-2)
+          frame   (gmg/migrid
+                   :v (format "[::%s, fill]" (- (:box-w (state!)) offset)) "[20, fill]0px[fill]"
+                   {:args [:border (b/compound-border
+                                    (b/empty-border :thickness padding)
+                                    (b/line-border  :thickness s-border :color c-border))
+                           :background c-bg
+                           :user-data close-icon]}
+                   [])
+          api {:alert frame :alerts-box (:alerts-box (state!)) :rm-alert (fn [] (.remove (:alerts-box (state!)) frame) (refresh-box))}
+          content [(gmg/migrid
+                    :> :gf {:args [:background c-bg]}
+                    [(c/label :text header
+                              :font (gs/getFont :bold)
+                              :icon icon
+                              :size [(- (:box-w (state!)) offset) :by 20])
+                     close-icon])
 
-        (gmg/migrid :> :f {:args [:background c-bg]}
-                    [(c/label :size   [(- (:box-w (state!)) offset) :by 30]
-                              :text   body)
-                     close-icon])]))))
+                   (gmg/migrid :> {:gap [5] :args [:background c-bg]}
+                               (vec (cond (string? body) [(c/label :size [(- (:box-w (state!)) offset) :by 30]
+                                                                   :text body)]
+                                          (fn?     body) [(body api)]
+                                          (vector? body) (doall
+                                                          (vec (map
+                                                                (fn [m]
+                                                                  (cond (map? m) (gcomp/button-slim
+                                                                                  (:title m) :onClick (fn [e] ((:func m) api)))
+                                                                        (fn?  m) (m api)
+                                                                        :else (c/label)))
+                                                                body)))
+                                          :else [])))]]
+      (c/config! frame :items (gtool/join-mig-items content)))))
 
 (defn- alert-type-src ;; TODO: Alert info bugging, do not loaded correct colors after changing theme
   [type key]
@@ -224,7 +249,7 @@
   (let [pop (popup/build-popup {:size s-popup
                                 :comp-fn   (fn [] (gmg/migrid
                                                    :v :center :fg {:gap [10]}
-                                                   (concat [(gtool/htmling body)
+                                                   (concat [(if (string? body) (gtool/htmling body)(gtool/htmling header))
                                                             (if (fn? expand) (expand) [])])))
                                 :title      header
                                 :title-icon (alert-type-src type :icon)
@@ -262,7 +287,14 @@
   
     If you want to add some quick action buttons set to key :actions
     vector with map description buttons like [{:title \"Apply\" :icon nil :func (fn [e] (do-some))} ...]
-      (alert \"Information\" \"Some message\" :actions [{:title \"Apply\" :icon nil :func (fn [e] (do-some))}])"
+      (alert \"Information\" \"Some message\" :actions [{:title \"Apply\" :icon nil :func (fn [e] (do-some))}])
+
+    Quick button      Insted body set vector with map as (alert \"My alert\" {:title \"My Alert\" :func (fn [api] ((:rm-alert api)))})
+  
+    Own components    Insted body set vector with fns rendering components
+                      Example: (alert \"My alert\" [(fn [api] (My-close-btn :onClick ((:rm-alert api))))])
+
+    You can mixing map and fns in vector"
   [header body
    & {:keys [type time s-popup expand actions]
       :or   {type :alert
@@ -276,10 +308,57 @@
                        :body    body
                        :s-popup s-popup
                        :expand  expand
-                       :type    type}})
+                       :type    type
+                       :time    time
+                       :actions actions}})
   (add-to-alerts-box (template type header body time s-popup expand actions)))
 
 
+;; ┌──────────────────┐
+;; │                  │
+;; │   TEMP Alerts    │
+;; │                  │
+;; └──────────────────┘
+
+(defn temp-alert
+  [header body
+   & {:keys [type time s-popup expand actions]
+      :or   {type :alert
+             time 3
+             s-popup [300 320]
+             actions []
+             expand  nil}}]
+  (dispatch! {:action :store-in-temp
+              :alert  {:header  header
+                       :body    body
+                       :s-popup s-popup
+                       :expand  expand
+                       :type    type
+                       :time    time
+                       :actions actions}}))
+
+(defn load-temp-alerts
+  []
+  (doall
+   (map (fn [[k m]]
+          (println "\n" k m)
+          (alert (:header m) (:body    m)
+                 :s-popup    (:s-popup m)
+                 :type       (:type    m)
+                 :time       (:time    m)
+                 :expand     (:expand  m)
+                 :actions    (:actions m))
+          )
+        (state/state :temp-alerts-storage)))
+  (dispatch! {:action :clear-temp}))
+
+(comment
+  (temp-alert "TEMP1" "It'a an TEMP alert invoking later.")
+  (temp-alert "TEMP2" "It'a an TEMP alert invoking later.")
+  (temp-alert "TEMP3" "It'a an TEMP alert invoking later.")
+  (load-temp-alerts)
+  (:temp-alerts-storage (state!))
+  )
 
 ;; ┌──────────────────┐
 ;; │                  │

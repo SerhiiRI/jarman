@@ -16,9 +16,7 @@
 
 (def ^:dynamic *config-root*
   (str
-   (storage/return-first-exists
-    [(io/file "." ".jarman.d" "config")
-     (io/file env/user-home ".jarman.d" "config")])))
+   (env/get-config-dir)))
 (def ^:dynamic *config-themes* "themes")
 (def ^:dynamic *config-language* "language.edn")
 (def ^:dynamic *config-files* [[:init.edn] [:resource.edn] [:database.edn] [(keyword *config-themes*) :theme_config.edn] [(keyword *config-themes*) :jarman_light.edn]])
@@ -406,6 +404,4 @@
        (update-in [:pl] fill-text)
        ((partial save-cfg-to-file-pp lang-file)))
    (swapp-language)))
-
-
 

@@ -2,10 +2,10 @@
   (:gen-class)
   (:import (java.io IOException FileNotFoundException))
   (:require [clojure.string :as s]
-            [jarman.tools.lang :refer :all]
-            [jarman.config.environment :as env]
+            [clojure.java.io :as io]
             [me.raynes.fs :as fs]
-            [clojure.java.io :as io]))
+            [jarman.tools.lang :refer :all]
+            [jarman.config.environment :as env]))
 
 
 (defn return-first-exists [file-list]

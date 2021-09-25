@@ -4,25 +4,22 @@
 #+PRIORITIES: 1 3 2
 #+PROPERTY: session *EL* 
 #+PROPERTY: cache yes
-# #+ARCHIVE: ::* Archived
 #+ARCHIVE: %s_done::
 #+STARTUP: overview
 
 * Frontend
-** TODO [#3] Switch into new language system                         :@Julia:
-   - [ ] Just use language getter functions.
-** PROCESSING [#1] /Feature/. Interaction files                        :@Aleks:
+** TOREVIEW [#1] /Feature/. Interaction files [3/3]                  :@Aleks:
    :PROPERTIES:
    :CUSTOM_ID: interaction-function-set
    :END:
-   - [-] =interaction.clj= [4/5]
+   - [X] =interaction.clj= [5/5]
      implement file with simple proxy function where every funciton is just wrapper
      with spec and good to read docs.
-     - [-] add function =open file in tab= as arg will be file path [3/4]
+     - [X] add function =open file in tab= as arg will be file path [4/4]
        - [X] Open file
        - [X] Auto syntax by extension file
        - [X] Manual syntax set
-       - [ ] Change syntax in runtime with combobx
+       - [X] Change syntax in runtime with combobx
      - [X] invoke alert [info warning danger]
      - [X] Hard restart. Recompiling plugin and clean-up global state
        - [X] Write doc
@@ -30,26 +27,47 @@
        - [X] Write doc
      - [X] Restart. The same as hard without state.
        - [X] Write doc
-   - [ ] =faces.clj=
+   - [X] Doom debugger [4/4]
+     - [X] Container on bottom
+     - [X] Resize in runtime
+     - [X] Open/New, Hide, Close
+     - [X] Ricardo inside
+   - [X] =faces.clj=
      Finish moving to new customization style
      
-** PROCESSING [#1] Frontend refactorization
-*** TODO Alerts upgrade                                              :@Aleks:
-    - [ ] /Feature/. warning alert, which notify user about update
-    - [ ] /Feature/. TMP storage. invoking alerts after some event like loaded app.
-    - [X] /Feature/. Success alert type.
-*** TODO Repair expand button [2/2]                                  :@Aleks:
+** PROCESSING [#1] /Feature/. Jarman Theme Light Style [5/6]
+   - [X] rewrite styles config
+   - [X] global font
+   - [X] global background
+   - [X] global foreground
+   - [X] removing unnessesary font override         
+   - [ ] unifing styles in UI
+** PROCESSING [#1] Frontend refactorization [0/8]
+*** TOREVIEW Repair expand button [2/2]                              :@Aleks:
     - [X] Rainbow margin -> Space margin
     - [X] Separate last element in inside expand
-*** TOREVIEW New icons as fonts [5/7]                                :@Aleks:
+*** TOREVIEW New icons as fonts [7/7]                                :@Aleks:
     - [X] New fn for icon return (~gui-style/icon GoogleMaterialDesignIcons/some-icon "#000" 30)~
     - [X] Demo to quick startup in gui_style.clj
     - [X] Set new feature to alert system
     - [X] Set demo alerts (access: developer, buttons will show in main menu)
     - [X] New face for close icon, listen event mouse entered
-    - [ ] Set new feature to menu bars
-    - [ ] Set new feature to other if needed
-*** TODO Main view & Styling                                         :@Aleks:
+    - [X] Set new feature to menu bars
+    - [X] Set new feature to other if needed
+*** TODO Alerts upgrade [4/5]                                        :@Aleks:
+    - [X] /Feature/. Success alert type.
+    - [X] /Feature/. TMP storage. invoking alerts after some event like loaded app.
+    - [X] /Feature/. Add simple button to alerts insted body
+    - [X] /Feature/. Add vector with fns rendering components insted body
+    - [-] /Feature/. warning alert, which notify user about update
+      - [X] Button with update manager invoking
+      - [ ] Check update
+*** TODO Table.clj [3/4]                                             :@Aleks:
+    - [X] remove 1pixel black border for right table.
+    - [ ] rewrite expand panel
+    - [X] make icon smaller, on 10-20%
+    - [X] Move Table title to left side (nope, on center looks better), and colorize in "ocean blue" color, julia use it in login panel.
+*** TODO Main view & Styling [2/4]                                   :@Aleks:
     - [X] Gui View Service [2/2]
       - [X] On tabs replace non-active tab on more brighter color.
       - [X] ON tabs replace ~x~ icon on one color.
@@ -64,8 +82,9 @@
       - [X] to ~close-app~ also add ~logout~
       - [X] remove ~Change work mode~, and add optino to ~.jarman~ which will be add "key icon" to slider menu.
       - [X] Remove ~Db visuliser~ from left bar.
-    - [-] Main Menu [5/7]
+    - [-] Main Menu [5/8]
       - [ ] main menu size, put this option to theme faces
+      - [ ] Main menu as hide/show section
       - [ ] Add documentation how to correctly pin some components to menus. Also add more information to the Exceptions
 	When i pin my panel, i get exception
 	#+begin_example
@@ -77,18 +96,8 @@
       - [X] Change all black font's on closelly to black. Use some *dark-gray*, with blue-direction - ~#030D1C~ as example.
       - [X] Also for expand buttons use bold ubuntu fonts (looks little crappy).
       - [X] Chnage ordering items in menubar. At first place user must saw all buisness tables, and next any other *setting* or *db visualizer* etc.
-    - [ ] Cooperative theme standarization [0/1]
-      - [ ] Main menu [0/2]
-	- [ ] Better colors for levels in expand button in ~Jarman Light~
-	- [ ] Better colors for levels in expand button in ~Dracula~
-
-*** TODO Table.clj [3/4]                                             :@Aleks:
-    - [X] remove 1pixel black border for right table.
-    - [ ] text "hide" replace on julia (not created at that moment) left arrow, and background fill with one gray color, as "tab", or left section in table.clj, where components is.
-    - [X] make icon smaller, on 10-20%
-    - [X] Move Table title to left side (nope, on center looks better), and colorize in "ocean blue" color, julia use it in login panel.
-
-*** TODO Service Periods plugins                                     :@Aleks:
+*** PLANNED Rewrite expand panel
+*** PLANNED Service Periods plugins [0/3]                            :@Aleks:
     - [ ] Expand buttons [0/7]
       - [ ] Buttons must be resizable, and scaled to window width.
       - [ ] Not hide expanded button, when checkbox was clicked. Julia add coments inside plugin, about this issue (find "TODO" mark)
@@ -99,19 +108,17 @@
       - [ ] For Service Months use ths format style notation "01-01-2020 - 04-01-2021,  100 zl", money also in pastel green.
     - [ ] Julia call it *insert-space*, is section where we adding new service contract. Rewrite whole panel, but keep logic as we create before.
     - [ ] After you click on one month, you can edit all service contract month payments. You can edit, only if month wasn't payed. Rewrite Julia view, on your implementation. I think better be when all those month fields be in one line.
-*** PLANNED Main menu as hide/show section                           :@Aleks:
+*** PLANNED Cooperative theme standarization [0/1]
+    - [ ] Main menu [0/2]
+      - [ ] Better colors for levels in expand button in ~Jarman Light~
+      - [ ] Better colors for levels in expand button in ~Dracula~
 
-** PROCESSING [#1] /Feature/. Jarman Theme Light Style
-   - [X] rewrite styles config
-   - [ ] unifing styles in UI
-   - [X] global font
-   - [X] global background
-   - [X] global foreground
-   - [X] removing unnessesary font override         
 ** TODO [#2] /Bug/. DB Visualizer editing                      :@Aleks:@Serhii:
    1. [ ] Cannot edit table =view=
    2. [ ] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
    3. [ ] Cannot edit metadata of table 
+** TODO [#2] Switch into new language system                         :@Julia:
+   - [ ] Just use language getter functions.
 ** TODO [#3] /Feature/. Update Manager                                 :@Aleks:
    - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [ ] Show popup with hard program restart
@@ -155,14 +162,19 @@
 ** PLANNED Scroll to selected in table                               :@Aleks:
    - [ ] Scroll to selected in table     
 * Backend
-** PROCESSING [#1] defvar managment                                 :@Serhii:
-   After app loading, we have some values in system variables, divided by group name,
-   - [X] Allow defvar declaration for all the places
-   - [X] Fix defvar spec. 
-   - [ ] Save config in place in =.jarman= file
-   - [X] GUI for listing all registred config's variable
-   - [X] Debug for all variables
-   - [X] Debug for one variables
+** TODO [#3] /Feature/. Macro for declaring some resource              :@Julia:
+   Create ~define-resource~ macro for definision of file
+   #+begin_src clojure
+     (define-resource jarman
+       (io/file "."           ".jarman")
+       (io/file env/user-home ".jarman"))
+     ;;=>
+     (def jarman-file-list
+       (io/file "."           ".jarman")
+       (io/file env/user-home ".jarman"))
+     (defn get-jarman [] (first-exist jarman-dot-file-list))
+   #+end_src
+** TODO [#3] alert-try
 ** TODO [#1] Одужуй!                                                 :@Julia:
 ** TODO [#1] Permission system                                       :@Julia:
    - [ ] Rewrie user session object
@@ -170,26 +182,13 @@
      - [ ] Make testing on permission
    - [ ] Add into /left-bar menu/, /left-menu/ functionlity that test user permission before
      render
+
 ** TODO [#3] Register licence mechanics                             :@Serhii:
    - [ ] Create =register-licence-file= functionality
    - [ ] decrypt/uncrypt by system RSA keys
    - [X] Checking login user in system, limited by the licence
-** TODO [#3] In load circle integrate setting variable :@Julia:@Aleks:@Serhii:
-   in some load-level add manual setted variable for some systme things, that shouldn't be 
-   memberd in =.jarman=. Or thay must have some deault values which be rewrited by the 
-   =.jarman= loader.
-   #+begin_src clojure
-     ...
-     (setq language-system :en)
-     (setq supported-language [:en :pl :ua])
-     ...
-   #+end_src
 ** TODO [#2] check all steps of loading tables                      :@Serhii:
    in file view-manager.clj, markup TO DO,  add messages(println), if we need
-** TODO [#2] /Feature/. Emacs IDE split out-environment [0/2]         :@Serhii:
-   - [ ] Auto tail reverting logs buffer
-   - [ ] Integrate local toolkit for emacs.
-     - [ ] Open log buffer.
 ** TODO [#3] /Feature/. Support Org file                              :@Serhii:
    - [-] Create library for printing directly to org file [2/3]
      - [X] Printing lib
@@ -206,16 +205,10 @@
 ** PLANNED Service Period. sort contract list                       :@Serhii:
    - [ ] sorting contract by date
    - [ ] colorize contract by active-nonactive depend on current date
-** PLANNED Permission systems                                        :@Aleks:
-
-   #+begin_src clojure
-     (session/test-persmission [:user :admin]) ;; => true
-   #+end_src
-   - [X] Render menu buttons by permission and hide empty expand
-   - [X] Check permision for popup menu in DB Visualizer. Metadata and defview editor.
-   - [ ] Create permission system 
-   - [ ] Make hide some element when user not in component persmission list
-   - [ ] add function to get permission from session, or function which TEST something in session, for example
+** PLANNED /Feature/. Emacs IDE split out-environment [0/2]           :@Serhii:
+   - [ ] Auto tail reverting logs buffer
+   - [ ] Integrate local toolkit for emacs.
+     - [ ] Open log buffer.
 ** PLANNED Ekka todo#1 chages                         :@Julia:@Aleks:@Serhii:
 *** Підприємець
     -   ЄДРПОУ - 10 цифр довжина з переду нулями
@@ -273,6 +266,15 @@
 ** PLANNED Versioning data structure                                :@Serhii:
 ** PLANNED sql_tools | debug                                   :@Serhii:
     - [ ] pretty printing for sql syntax
+** DONE [#1] defvar managment                                       :@Serhii:
+   CLOSED: [2021-09-25 Sat 14:46]
+   After app loading, we have some values in system variables, divided by group name,
+   - [X] Allow defvar declaration for all the places
+   - [X] Fix defvar spec. 
+   - [X] Save config in place in =.jarman= file
+   - [X] GUI for listing all registred config's variable
+   - [X] Debug for all variables
+   - [X] Debug for one variables
 ** DONE [#1] /Bug/. Throw exception when .jarman fialed               :@Serhii:
    CLOSED: [2021-09-18 Sat 20:37]
 ** DONE [#1] /Feature/. Rewrite plugin system                         :@Serhii:
@@ -298,6 +300,17 @@
        (lang :dracula :theme-name)
      #+end_src
 
+** DONE [#3] In load circle integrate setting variable :@Julia:@Aleks:@Serhii:
+   CLOSED: [2021-09-25 Sat 18:55]
+   in some load-level add manual setted variable for some systme things, that shouldn't be 
+   memberd in =.jarman=. Or thay must have some deault values which be rewrited by the 
+   =.jarman= loader.
+   #+begin_src clojure
+     ...
+     (setq language-system :en)
+     (setq supported-language [:en :pl :ua])
+     ...
+   #+end_src
 * Infrastructure
 * Documentations
 ** PLANNED [#3] create jarman manifest file                         :@Serhii:

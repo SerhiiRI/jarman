@@ -88,6 +88,28 @@
       ((state/state    :startup)))
     (catch Exception e (print-line (str "Soft restart failed:\n" (.getMessage e) "\n")))))
 
+(defn hard-restart
+  "Description:
+    Restart app with cleaning global state
+    All loading lvls will be invoked
+    App will sturtup again with creating new frame"
+  []
+  (try
+    (do
+      (print-line "\nHard Restart")
+      (stop-watching)
+      (state/set-state :theme-name "Jarman Light")
+      (state/set-state :theme-first-load true)
+      (state/set-state :soft-restart true)
+      (state/rm-state  :doom)
+      (state/rm-state  :doom-compo)
+      (state/rm-state  :shooting-stars)
+      (state/rm-state  :soft-restart)
+      (.dispose (state/state :frame))
+      (state/rm-state  :frame)
+      ((state/state    :startup)))
+    (catch Exception e (print-line (str "Hard restart failed:\n" (.getMessage e) "\n")))))
+
 (defn- action-handler
   "Description:
     Invoke fn using dispatch!.
@@ -285,3 +307,5 @@
                            :value  compo})
                (if display? (c/config! (:space (state!)) :items [[compo]]))
                ((:repaint (state!))))))))))
+
+(defn get-view-space [] (:space (state!)))

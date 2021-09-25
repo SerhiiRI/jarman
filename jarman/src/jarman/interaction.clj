@@ -77,6 +77,22 @@
    (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
   (gas/alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
 
+(defn delay-alert
+  [header body
+   & {:keys [type time s-popup expand actions]
+      :or   {type :alert
+             time 3
+             s-popup [300 320]
+             actions []
+             expand  nil}}]
+  (gas/temp-alert header body
+                  :s-popup s-popup
+                  :expand  expand
+                  :type    type
+                  :time    time
+                  :actions actions))
+
+(defn show-delay-alerts [] (gas/load-temp-alerts))
 
 (defn show-alerts-history [] (gas/history-in-popup))
 
@@ -88,7 +104,12 @@
   (success "Test 4" "Success box")
   (warning "Interaction" "Devil robot say:" :s-popup [300 150]
            :expand (fn [] (jarman.gui.gui-components/button-basic "Kill all humans!")))
-  (show-alerts-history))
+  (show-alerts-history)
+
+  (delay-alert "TEMP1" "It'a an TEMP alert invoking later.")
+  (delay-alert "TEMP2" "It'a an TEMP alert invoking later.")
+  (show-delay-alerts)
+  )
 
 
 
@@ -106,7 +127,7 @@
     (editor \"./test/test-file\")"
   ([file-path] (editor file-path nil))
   ([file-path syntax]
-   (let [file-name (last (clojure.string/split "./test/test-file.txt" #"/"))]
+   (let [file-name (last (clojure.string/split file-path #"/"))]
      (gvs/add-view
       :view-id   (keyword (str "editor" file-name))
       :title     (str "Edit:  " file-name)
@@ -171,7 +192,7 @@
     Restart app with cleaning global state
     All loading lvls will be invoked
     App will sturtup again with creating new frame"
-  [] (println "\nHard Restrat will be soon"))
+  [] (gvs/hard-restart))
 
 
 (defn reload-view

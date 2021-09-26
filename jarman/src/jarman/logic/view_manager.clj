@@ -299,7 +299,14 @@
   (let [result-vec (atom {})
         f (fn [[[k v] & _] path]
             (if (vector? v)
-              (swap! result-vec assoc-in path (plugin-link v))))]
+              ;; @julia
+              (do (let [plugin (plugin-link v)]
+                    (if true
+                      ;; chnage to predicate (.return-permission plugin)
+                      (swap! result-vec assoc-in path (plugin-link v))
+                      (print-line (format
+                                   "Permission plugin by path =%s= not allowed"
+                                   (str path))))))))]
     (recur-walk-throw m f [])
     @result-vec))
 

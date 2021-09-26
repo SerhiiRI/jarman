@@ -149,6 +149,8 @@
    - [ ] Make template (put into some tmp file or place) [0/3]
      - [ ] Alert which making hard logout from system, and inform about computer count
      - [ ] Alert which inform on startup that licence is going to end
+** TODO [#2] /Feature/. Create configurations panel                   :@Serhii:
+   - [ ] Language select box
 ** PLANNED /Feature/. Global event on key pressed             :@Julia:@Aleks:
    - [X] Proxy for KeyEventDispacher for add global event on key pressed
    - [X] add and remove own KeyEventDispacher
@@ -162,6 +164,16 @@
 ** PLANNED Scroll to selected in table                               :@Aleks:
    - [ ] Scroll to selected in table     
 * Backend
+** PROCESSING [#1] Permission system                                 :@Julia:
+   - [-] Rewrie user session object
+     - [ ] keep licence file in session.
+     - [X] Make testing on permission
+   - [X] Add into /left-bar menu/, /left-menu/ functionlity that test user permission before
+     render
+   - [ ] View plugins permission system 
+
+** TODO [#1] Move dialog plugins into the /table.clj/                  :@Julia:
+** TODO [#1] Одужуй!                                                 :@Julia:
 ** TODO [#3] /Feature/. Macro for declaring some resource              :@Julia:
    Create ~define-resource~ macro for definision of file
    #+begin_src clojure
@@ -174,39 +186,21 @@
        (io/file env/user-home ".jarman"))
      (defn get-jarman [] (first-exist jarman-dot-file-list))
    #+end_src
-** TODO [#3] alert-try
-** TODO [#1] Одужуй!                                                 :@Julia:
-** TODO [#1] Permission system                                       :@Julia:
-   - [ ] Rewrie user session object
-     - [ ] keep licence file in session.
-     - [ ] Make testing on permission
-   - [ ] Add into /left-bar menu/, /left-menu/ functionlity that test user permission before
-     render
-
+   - [ ] fix update manager, because it strongly depend on old variable
+   - [ ] plugin manager
+   - [ ] dot jarman
+   - [ ] data.clj in managment
 ** TODO [#3] Register licence mechanics                             :@Serhii:
    - [ ] Create =register-licence-file= functionality
    - [ ] decrypt/uncrypt by system RSA keys
    - [X] Checking login user in system, limited by the licence
 ** TODO [#2] check all steps of loading tables                      :@Serhii:
    in file view-manager.clj, markup TO DO,  add messages(println), if we need
-** TODO [#3] /Feature/. Support Org file                              :@Serhii:
-   - [-] Create library for printing directly to org file [2/3]
-     - [X] Printing lib
-     - [X] printing by level
-     - [ ] Move out to different places in one moment [0/2]
-       #+begin_src clojure
-	 (print-header
-	  {:out [] :text "some text"}
-	  (some operations))
-       #+end_src
-       - [ ] file
-       - [ ] print
-   - [ ] Add parsing library
 ** PLANNED Service Period. sort contract list                       :@Serhii:
    - [ ] sorting contract by date
    - [ ] colorize contract by active-nonactive depend on current date
-** PLANNED /Feature/. Emacs IDE split out-environment [0/2]           :@Serhii:
-   - [ ] Auto tail reverting logs buffer
+** PLANNED /Feature/. Emacs IDE split out-environment [1/2]           :@Serhii:
+   - [X] Auto tail reverting logs buffer
    - [ ] Integrate local toolkit for emacs.
      - [ ] Open log buffer.
 ** PLANNED Ekka todo#1 chages                         :@Julia:@Aleks:@Serhii:
@@ -253,10 +247,6 @@
        
 *** Акт виконаних робіт
 	-   створити
-** PLANNED Add history of state                                :@Serhii:
-   - [ ] safe history
-   - [ ] restore state
-   - [ ] ~redo/undo~ only test
 ** PLANNED encrypt business files                              :@Serhii:
    - [ ] create crypo toolkit
    - [ ] create key-storage
@@ -266,6 +256,14 @@
 ** PLANNED Versioning data structure                                :@Serhii:
 ** PLANNED sql_tools | debug                                   :@Serhii:
     - [ ] pretty printing for sql syntax
+** DONE [#3] /Feature/. Support Org file                              :@Serhii:
+   CLOSED: [2021-09-26 Sun 19:33]
+   - [X] Create library for printing directly to org file [3/3]
+     - [X] Printing lib
+     - [X] printing by level
+     - [X] Move out to different places in one moment [2/2]
+       - [X] file
+       - [X] print
 ** DONE [#1] defvar managment                                       :@Serhii:
    CLOSED: [2021-09-25 Sat 14:46]
    After app loading, we have some values in system variables, divided by group name,

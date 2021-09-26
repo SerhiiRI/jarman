@@ -32,8 +32,9 @@
    [jarman.plugin.spec :as spec]
    [jarman.plugin.data-toolkit :as query-toolkit]
    [jarman.plugin.gui-table :as gtable]
-   [jarman.plugin.plugin]
+   ;; external toolkit
    [jarman.interaction :as i]
+   [jarman.external :refer [register-custom-view-plugin]]
    ;; locals 
    [plugin.table.composite-components :as ccomp])
   (:import
@@ -41,7 +42,6 @@
    (java.util Date)
    (java.text SimpleDateFormat)
    (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; helper functions ;;;
@@ -811,7 +811,7 @@
 ;;;;;;;;;;;;
 ;;; BIND ;;;
 ;;;;;;;;;;;;
-(jarman.plugin.plugin/register-custom-view-plugin
+(register-custom-view-plugin
  :name 'table
  :description "Plugin allow to editing One table from database"
  :entry table-entry

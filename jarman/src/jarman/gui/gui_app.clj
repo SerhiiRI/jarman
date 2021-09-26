@@ -47,7 +47,8 @@
             [jarman.config.conf-language     :refer [do-load-language]]
             [jarman.config.dot-jarman        :refer [dot-jarman-load]]
             [jarman.gui.builtin-themes.jarman-light]
-            [jarman.interaction              :as i]))
+            [jarman.interaction              :as i]
+            [jarman.external                 :as e]))
 
  
 ;; ┌──────────────────────────┐

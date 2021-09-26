@@ -1,6 +1,9 @@
 (ns jarman.external)
 (require 'jarman.config.conf-language)
 (require 'jarman.config.vars)
+(require 'jarman.plugin.plugin)
+(require 'jarman.tools.org)
+(require 'jarman.gui.faces-system)
 
 (defn plang
   "Documentation
@@ -64,3 +67,28 @@
   ;; => "bliat"
   )
   
+(defn register-custom-view-plugin [& args]
+  (apply jarman.plugin.plugin/register-custom-view-plugin args))
+
+(defn register-custom-theme-plugin [& args]
+  (apply jarman.plugin.plugin/register-custom-theme-plugin args))
+
+(defmacro print-line [s]
+  `(jarman.tools.org/print-line ~s))
+(defmacro print-multiline [s]
+  `(jarman.tools.org/print-multiline ~s))
+(defmacro print-example [s]
+  `(jarman.tools.org/print-example ~s))
+(defmacro print-error [e]
+  `(jarman.tools.org/print-error ~e))
+
+(defmacro out-update [& body]
+  `(jarman.tools.org/out-update
+    ~@body))
+(defmacro out-extension [& body]
+  `(jarman.tools.org/out-extension
+    ~@body))
+
+(defn custom-theme-set-faces [variable-list]
+  (jarman.gui.faces-system/custom-theme-set-faces variable-list))
+

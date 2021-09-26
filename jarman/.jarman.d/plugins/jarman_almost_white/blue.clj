@@ -1,8 +1,10 @@
 ;; -*- mode: clojure; mode: rainbow;  mode: yafolding; -*-
 (ns plugin.jarman-almost-white.blue)
-(require '[plugin.jarman-almost-white.jarman-almost-white :refer [with-colors theme-binder]])
-(require '[jarman.plugin.plugin :refer [register-custom-theme-plugin]])
-(require '[jarman.gui.faces-system :refer [custom-theme-set-faces]])
+(require '[plugin.jarman-almost-white.jarman-almost-white :refer
+           [with-colors theme-binder]])
+(require '[jarman.external :refer
+           [register-custom-theme-plugin
+            custom-theme-set-faces]])
 
 (def ^:private blue-scheme
   {"black"              "#29295e"

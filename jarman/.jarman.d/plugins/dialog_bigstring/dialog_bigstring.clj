@@ -11,11 +11,11 @@
    [jarman.gui.gui-components :as gcomp]
    [jarman.plugin.spec :as spec]
    [jarman.plugin.data-toolkit :as query-toolkit]
-   [jarman.plugin.plugin :refer :all]
    ;; remove on production
    [jarman.logic.connection :as db]
-   [jarman.logic.sql-tool :refer [select!]]))
-(require 'jarman.plugin.plugin)
+   [jarman.logic.sql-tool :refer [select!]]
+   ;; external
+   [jarman.external :refer [register-custom-view-plugin]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; plugin SPEC patters ;;;
@@ -109,7 +109,7 @@
 ;;; BIND ;;;
 ;;;;;;;;;;;;
 
-(jarman.plugin.plugin/register-custom-view-plugin
+(register-custom-view-plugin
  :name 'dialog-bigstring 
  :description "Dialog for selecting some ONE item by ONE column in `:query` model"
  :entry dialog-bigstring-entry

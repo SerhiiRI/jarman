@@ -13,8 +13,9 @@
    [jarman.plugin.data-toolkit :as query-toolkit]
    [jarman.resource-lib.icon-library :as icon]
    [jarman.gui.gui-style :as gs]
-   [jarman.plugin.plugin]
-   [plugin.service-period.service-period-library :as req])
+   [plugin.service-period.service-period-library :as req]
+   ;; external
+   [jarman.external :refer [register-custom-view-plugin]])
   (:import
    (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
@@ -367,7 +368,7 @@
 ;;; BIND ;;;
 ;;;;;;;;;;;;
 
-(jarman.plugin.plugin/register-custom-view-plugin
+(register-custom-view-plugin
  :name 'service-period
  :description "Plugin for service contracts of enterpreneurs"
  :entry service-period-entry

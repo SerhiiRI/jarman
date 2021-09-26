@@ -28,6 +28,9 @@
 #+begin_src clojure
   (cl-format nil "List: ~{`~A`~^, ~}" ["one" 2 "three"])
   ;; => "List: `one`, `2`, `three`"
+  (cl-format nil "~{ + ~{~A~^ - ~} ~%~}" (seq {:some 1 :vvds 2 :dfsa "fdkasl"}))
+  ;; => " + :some - 1 \n + :vvds - 2 \n + :dfsa - fdkasl \n"
 #+end_src
+
 * 
 

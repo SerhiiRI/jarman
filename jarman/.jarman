@@ -18,12 +18,14 @@
 (require 'jarman.logic.view-manager)
 (require 'jarman.tools.update-manager)
 (require 'jarman.plugin.extension-manager)
+(require 'jarman.config.conf-language)
 (require '[jarman.config.vars :refer [setq variable-config-list]])
 
 (variable-config-list
  ;; This section will be fild automatically
  ;; This setting's discribe setted by the user
  ;; variable
+ jarman.config.conf-language/language-selected :pl
  )
 
 (setq jarman.logic.view-manager/user-menu

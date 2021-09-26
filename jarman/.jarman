@@ -54,9 +54,7 @@
         ;; reall plugins
         table service_period dialog_bigstring dialog_table 
         ;; theme plugins
-        dracula
-        ;; jarman_almost_white
-        ))
+        dracula jarman_almost_white))
 
 (setq jarman.tools.update-manager/jarman-update-repository-list
       ["ftp://jarman:dupa@trashpanda-team.ddns.net"

@@ -1,42 +1,8 @@
 ;; -*- mode: clojure; mode: rainbow;  mode: yafolding; -*-
 ;; add-file-local-variable-prop-line -> mode -> some mode
 (ns plugin.jarman-almost-white.jarman-almost-white)
-(require '[jarman.plugin.plugin :refer [register-custom-theme-plugin]])
-(require '[jarman.gui.faces-system :refer [custom-theme-set-faces]])
 
-(def ^:private grey-scheme
-  {"black"              "#333333"
-   "white"              "#ffffff"
-   "grey-light"         "#eeeeee"
-   "grey-strong"        "#dddddd"
-   "cyan-light"         "#E2FBDE"
-   "orange-light"       "#fda50f" 
-   "red-strong"         "#ff0000"
-   "font-size"             14.0
-   "icon-size"             20
-   "underline-size"        2
-   "underline-tabbar-size" 1
-   "timelife-alert-popup"  3
-   "expand-btn-colors" [["#dddddd" "#dddddd" "#eeeeee"]
-                        ["#cccccc" "#bcbcbc" "#bbbbbb"]]})
-
-(def ^:private blue-scheme
-  {"black"              "#29295e"
-   "white"              "#ffffff"
-   "grey-light"         "#eef3f7"
-   "grey-strong"        "#dce7ef"
-   "cyan-light"         "#E2FBDE"
-   "orange-light"       "#2aa1ae"  
-   "red-strong"         "#ff0000"
-   "font-size"             14.0
-   "icon-size"             20
-   "underline-size"        2
-   "underline-tabbar-size" 1
-   "timelife-alert-popup"  3
-   "expand-btn-colors" [["#dce7ef" "#dce7ef" "#eef3f7"]
-                        ["#cbdbe7" "#bacfdf" "#b9cfdf"]]})
-
-(def theme-faces
+(def theme-binder
   '( ;; -- Theme binder --
        ;; base color-palette
        c-white                     white
@@ -162,27 +128,9 @@
        c-popup-head-background c-compos-background-darker
        c-popup-border          c-border))
 
-(defmacro ^:private with-colors
+(defmacro with-colors
   [color-scheme & body]
   `(do
      ~@(map (fn [[colr hex]] (list 'def (symbol colr) hex)) (seq (eval `~color-scheme)))
      ~@body))
-
-(register-custom-theme-plugin
- :name "Almost White Grey"
- :description  "Jarman Almost White with Grey theme"
- :loader
- (with-colors grey-scheme
-   (custom-theme-set-faces theme-faces)))
-
-(do
- (jarman.plugin.plugin/do-load-theme "Jarman Almost White with Blue")
- (jarman.gui.faces-system/faces-list-out-all-with-values))
-
-(register-custom-theme-plugin
- :name "Almost White Blue"
- :description  "Jarman Almost White with Blue theme"
- :loader
- (with-colors blue-scheme
-   (custom-theme-set-faces theme-faces)))
 

@@ -46,6 +46,7 @@
 (def resource-folder ".jarman.d")
 (def dot-jarman      ".jarman")
 (def dot-jarman-data ".jarman.data")
+(def jarman-exe      "Jarman.exe")
 
 ;;; TODO MACRO
 (def jarman-plugins-dir-list
@@ -75,7 +76,7 @@
    (io/file       "." "src" "jarman" "managment" dot-jarman-data)])
 
 (def jarman-executable
-  (io/file "." "Jarman.exe"))
+  (io/file "." jarman-exe))
 
 ;;; GET FIRS EXSISTING PATH 
 (defn first-exist [jarman-file-list]

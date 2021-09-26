@@ -2,6 +2,19 @@
 (require '[clojure.pprint  :refer [cl-format]])
 (require '[clojure.string  :refer [split]])
 (require '[clojure.java.io :as io])
+(import '(clojure.lang ExceptionInfo))
+
+;;;;;;;;;;;;;;;
+;;; HELPERS ;;;
+;;;;;;;;;;;;;;;
+
+(defn quick-timestamp []
+  (.format (java.text.SimpleDateFormat. "YYYY-MM-dd HH:mm") (java.util.Date.)))
+
+
+;;;;;;;;;;;;;;;;;;;
+;;; LOG STREAMS ;;;
+;;;;;;;;;;;;;;;;;;;
 
 (defn- create-log-file [log-file log-title]
   (let [log-file-f (do
@@ -80,6 +93,11 @@
        (out-line line))))
   (out-line "#+end_src"))
 
+(defn out-multiline [s]
+  (doall
+   (for [line (split-newline s)]
+     (jarman.tools.org/out-line line))))
+
 ;;;;;;;;;;;;;;;;;
 ;;; FUNCTIONS ;;;
 ;;;;;;;;;;;;;;;;;
@@ -90,14 +108,18 @@
      (jarman.tools.org/out-header ~header)
      (do ~@body)))
 
-(defmacro print-line [s]
-  `(jarman.tools.org/out-line ~s))
+(defmacro print-line
+  ([] `(jarman.tools.org/out-line ""))
+  ([s] `(jarman.tools.org/out-line ~s)))
 
 (defmacro print-example [s]
   `(jarman.tools.org/out-example ~s))
 
 (defmacro print-src [lang s]
   `(jarman.tools.org/out-src ~lang ~s))
+
+(defmacro print-multiline [s]
+  `(jarman.tools.org/out-multiline ~s))
 
 ;;;;;;;;;;;;;;;;;;;;
 ;;; CODE EXAMPLE ;;;
@@ -133,7 +155,24 @@
           "third level"
           (print-line "Another code example")
           (print-src "clojure" (slurp "src/jarman/faces.clj"))
-          (print-line "The end")))))))
-  )
+          (print-line "The end"))))))))
 
 
+;;; ERROR MESSAGE ;;;
+
+(defmulti print-error (fn [exception] (class exception)))
+(defmethod print-error ExceptionInfo [e]
+  (print-header
+   (format "ERROR %s (%s)" (.getMessage e) (quick-timestamp))
+   (print-line "Ex-info:")
+   (print-multiline
+    (cl-format nil "~{~{~A~^ - ~} ~%~}" (seq (ex-data e))))
+   (print-line "Stack trace:")
+   (print-example
+    (with-out-str (clojure.stacktrace/print-stack-trace e 5)))))
+(defmethod print-error :default [e]
+  (print-header
+   (format "ERROR %s (%s)" (.getMessage e) (quick-timestamp))
+   (print-line "Stack trace:")
+   (print-example
+    (with-out-str (clojure.stacktrace/print-stack-trace e 5)))))

@@ -162,16 +162,6 @@
 ;; │             │
 ;; └─────────────┘
 
-;;; Quick log
-;; (defmacro ^:private log
-;;   ([msg]
-;;    `(println (format "** %s" ~msg)))
-;;   ([action msg]
-;;    `(do
-;;      (println (format "*** %s" ~msg))
-;;      ~action)))
-
-
 ;; before central swing-component build
 (defn- load-level-0
   "Description:
@@ -179,15 +169,16 @@
   []
   ;; (managment-data/on-app-start)
   (print-header 
-   "DEPRECATED SOON | Load old configuraions "
+   "DEPRECATED Load old configuraions "
    (cm/swapp))
   (print-header 
    "Load .jarman"
    (dot-jarman-load)
    (print-list-not-loaded))
-  (print-header
-   "Load Extensions"
-   (do-load-extensions))
+  (out-extension
+   (print-header
+    "Load Extensions"
+    (do-load-extensions)))
   (print-header
    "Load Languages"
    (do-load-language)))

@@ -2,8 +2,8 @@
   (:require [jarman.config.environment :as env]
             [jarman.tools.lang :refer :all]
             [clojure.spec.alpha :as s]
-            [clojure.java.io :as io]))
-(require '[jarman.tools.org :refer :all])
+            [clojure.java.io :as io]
+            [jarman.tools.org :refer :all]))
 
 (declare register-custom-view-plugin)
 (declare register-custom-theme-plugin)

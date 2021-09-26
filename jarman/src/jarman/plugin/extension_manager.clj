@@ -63,9 +63,6 @@
 ;;; HELPERS ;;; 
 ;;;;;;;;;;;;;;;
 
-(defn ^:private quick-timestamp []
-  (.format (java.text.SimpleDateFormat. "YYYY-MM-dd HH:mm") (java.util.Date.)))
-
 (defn ^:private create-log-file []
   (if (not (.exists (clojure.java.io/file *debug-file-name*)))
     (spit *debug-file-name*

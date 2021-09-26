@@ -25,7 +25,8 @@
    [jarman.plugin.extension-manager :as extension-manager]
    ;; environtemnt variables
    [jarman.config.environment :as env]
-   [jarman.interaction        :as i])
+   [jarman.interaction        :as i]
+   [jarman.tools.org :refer :all])
   (:import (java.io IOException FileNotFoundException)))
 
 
@@ -35,23 +36,20 @@
 
 (defmacro try-catch-alert [& body]
   `(try
-     ;; (ex-info "The ice cream has melted!" 
-     ;;          {:current-temperature {:value 25 :unit :celsius}})
      (do ~@body)
      (catch clojure.lang.ExceptionInfo e#
-       (i/warning "Plagin Manager" (.getMessage e#) :time 7)
-       ;; (c/alert (str "Update Manager effrror: " (.getMessage e#) " Type:" (name (:type (ex-data e#)))))
-       )
+       (do
+         (print-error e#)
+         (i/danger "Plugin error" (.getMessage e#) :time 7)))
      (catch Exception e#
-       (i/warning "Plagin Manager" (.getMessage e#) :time 7)
-       ;; (c/alert (str "Update Manager Main error: " (.getMessage e#)))
-       )))
+       (do
+         (print-error e#)
+         (i/danger "Plugin error" (.getMessage e#) :time 7)))))
 
 (defn setColumnWidth [^javax.swing.JTable table & {:keys [column size]}]
   (let [^javax.swing.table.TableColumnModel column-model (.getColumnModel table)
         ^javax.swing.table.TableColumn      table-column (.getColumn column-model column)]
     (.setPreferredWidth table-column size)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; UI COMPONENTS ;;;

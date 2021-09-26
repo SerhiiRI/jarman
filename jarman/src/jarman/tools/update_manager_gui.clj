@@ -28,7 +28,8 @@
    [jarman.tools.update-manager :as update-manager]
    ;; environtemnt variables
    [jarman.config.environment :as env]
-   [jarman.interaction :as i])
+   [jarman.interaction :as i]
+   [jarman.tools.org :refer :all])
   (:import (java.io IOException FileNotFoundException)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
@@ -39,23 +40,22 @@
 
 (defmacro try-catch-alert [& body]
   `(try
-     ;; (ex-info "The ice cream has melted!" 
-     ;;          {:current-temperature {:value 25 :unit :celsius}})
      (do ~@body)
      (catch clojure.lang.ExceptionInfo e#
-       (i/warning "Update Manager Error" (.getMessage e#) :time 7)
-       ;; (c/alert (str "Update Manager effrror: " (.getMessage e#) " Type:" (name (:type (ex-data e#)))))
-       )
+       (do
+         (out-update
+          (print-error e#))
+         (i/danger "Update error" (.getMessage e#) :time 7)))
      (catch Exception e#
-       (i/warning "Update Manager Error" (.getMessage e#) :time 7)
-       ;; (c/alert (str "Update Manager Main error: " (.getMessage e#)))
-       )))
+       (do
+         (out-update
+          (print-error e#))
+         (i/danger "Update error" (.getMessage e#) :time 7)))))
 
 (defn setColumnWidth [^javax.swing.JTable table & {:keys [column size]}]
   (let [^javax.swing.table.TableColumnModel column-model (.getColumnModel table)
         ^javax.swing.table.TableColumn      table-column (.getColumn column-model column)]
     (.setPreferredWidth table-column size)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; UI COMPONENTS ;;;
@@ -85,7 +85,6 @@
 (defn info [s]
   {:pre [(string? s)]}
   (seesaw.core/label :halign :left :background "#fff" :foreground "#074a4f" :text s :font (gtool/getFont 16 :bold) :border (b/empty-border :thickness 15)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; UI Composititon ;;;
@@ -159,13 +158,14 @@
 (defn update-manager-panel []
   (let [package-list package-list-chache
         package-to-update (update-manager/max-version package-list)]
-    (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[]0px"]
-                          :background "#fff"
-                          :items
-                          (gtool/join-mig-items (-> (startup-components)
-                                                    (supply-content-info)
-                                                    (supply-content-to-install package-to-update)
-                                                    (supply-content-all-package package-list))))))
+    (out-update
+     (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[]0px"]
+                           :background "#fff"
+                           :items
+                           (gtool/join-mig-items (-> (startup-components)
+                                                     (supply-content-info)
+                                                     (supply-content-to-install package-to-update)
+                                                     (supply-content-all-package package-list)))))))
 
 (defn alert-update-available []
   (i/warning "Updates are avaliable!" [{:title "Check updates"

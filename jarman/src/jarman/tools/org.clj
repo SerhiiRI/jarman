@@ -121,6 +121,29 @@
 (defmacro print-multiline [s]
   `(jarman.tools.org/out-multiline ~s))
 
+;;;;;;;;;;;;;;;;;;;;;
+;;; ERROR MESSAGE ;;;
+;;;;;;;;;;;;;;;;;;;;;
+
+(defmulti print-error (fn [exception] (class exception)))
+(defmethod print-error String [e]
+  (format "ERROR (%s) %s" (quick-timestamp) (.getMessage e)))
+(defmethod print-error ExceptionInfo [e]
+  (print-header
+   (format "ERROR %s (%s)" (.getMessage e) (quick-timestamp))
+   (print-line "Ex-info:")
+   (print-multiline
+    (cl-format nil "~{~{~A~^ - ~} ~%~}" (seq (ex-data e))))
+   (print-line "Stack trace:")
+   (print-example
+    (with-out-str (clojure.stacktrace/print-stack-trace e 5)))))
+(defmethod print-error :default [e]
+  (print-header
+   (format "ERROR %s (%s)" (.getMessage e) (quick-timestamp))
+   (print-line "Stack trace:")
+   (print-example
+    (with-out-str (clojure.stacktrace/print-stack-trace e 5)))))
+
 ;;;;;;;;;;;;;;;;;;;;
 ;;; CODE EXAMPLE ;;;
 ;;;;;;;;;;;;;;;;;;;;
@@ -157,22 +180,3 @@
           (print-src "clojure" (slurp "src/jarman/faces.clj"))
           (print-line "The end"))))))))
 
-
-;;; ERROR MESSAGE ;;;
-
-(defmulti print-error (fn [exception] (class exception)))
-(defmethod print-error ExceptionInfo [e]
-  (print-header
-   (format "ERROR %s (%s)" (.getMessage e) (quick-timestamp))
-   (print-line "Ex-info:")
-   (print-multiline
-    (cl-format nil "~{~{~A~^ - ~} ~%~}" (seq (ex-data e))))
-   (print-line "Stack trace:")
-   (print-example
-    (with-out-str (clojure.stacktrace/print-stack-trace e 5)))))
-(defmethod print-error :default [e]
-  (print-header
-   (format "ERROR %s (%s)" (.getMessage e) (quick-timestamp))
-   (print-line "Stack trace:")
-   (print-example
-    (with-out-str (clojure.stacktrace/print-stack-trace e 5)))))

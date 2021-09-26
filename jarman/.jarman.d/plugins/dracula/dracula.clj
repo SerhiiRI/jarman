@@ -1,8 +1,9 @@
 ;; -*- mode: clojure; mode: rainbow;  mode: yafolding; -*-
 ;; add-file-local-variable-prop-line -> mode -> some mode
 (ns plugin.dracula.dracula)
-(require '[jarman.plugin.plugin :refer [register-custom-theme-plugin]])
-(require '[jarman.gui.faces-system :refer [custom-theme-set-faces]])
+(require '[jarman.external :refer
+           [register-custom-theme-plugin
+            custom-theme-set-faces]])
 
 (def ^:private dracula-color-scheme
   {"black"              "#282a36"

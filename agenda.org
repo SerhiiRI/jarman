@@ -149,8 +149,12 @@
    - [ ] Make template (put into some tmp file or place) [0/3]
      - [ ] Alert which making hard logout from system, and inform about computer count
      - [ ] Alert which inform on startup that licence is going to end
-** TODO [#2] /Feature/. Create configurations panel                   :@Serhii:
+** TODO [#2] /Feature/. Create configurations panel
    - [ ] Language select box
+** TODO [#3] /Feature/. On exit event [0/3]                    :@Aleks:@Serhii:
+   - [ ] Create event when close 
+   - [ ] Remove suuid :@Serhii:
+   - [ ] Autoclse log stream's :@Serhii:
 ** PLANNED /Feature/. Global event on key pressed             :@Julia:@Aleks:
    - [X] Proxy for KeyEventDispacher for add global event on key pressed
    - [X] add and remove own KeyEventDispacher
@@ -256,14 +260,6 @@
 ** PLANNED Versioning data structure                                :@Serhii:
 ** PLANNED sql_tools | debug                                   :@Serhii:
     - [ ] pretty printing for sql syntax
-** DONE [#3] /Feature/. Support Org file                              :@Serhii:
-   CLOSED: [2021-09-26 Sun 19:33]
-   - [X] Create library for printing directly to org file [3/3]
-     - [X] Printing lib
-     - [X] printing by level
-     - [X] Move out to different places in one moment [2/2]
-       - [X] file
-       - [X] print
 ** DONE [#1] defvar managment                                       :@Serhii:
    CLOSED: [2021-09-25 Sat 14:46]
    After app loading, we have some values in system variables, divided by group name,
@@ -298,6 +294,14 @@
        (lang :dracula :theme-name)
      #+end_src
 
+** DONE [#3] /Feature/. Support Org file                              :@Serhii:
+   CLOSED: [2021-09-26 Sun 19:33]
+   - [X] Create library for printing directly to org file [3/3]
+     - [X] Printing lib
+     - [X] printing by level
+     - [X] Move out to different places in one moment [2/2]
+       - [X] file
+       - [X] print
 ** DONE [#3] In load circle integrate setting variable :@Julia:@Aleks:@Serhii:
    CLOSED: [2021-09-25 Sat 18:55]
    in some load-level add manual setted variable for some systme things, that shouldn't be 

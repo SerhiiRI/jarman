@@ -52,9 +52,9 @@
 
 (setq jarman.plugin.extension-manager/jarman-extension-list
       '(;; test plugins
-        aaa dialog_test
+        aaa
         ;; reall plugins
-        table service_period dialog_bigstring dialog_table 
+        table service_period
         ;; theme plugins
         dracula jarman_almost_white))
 

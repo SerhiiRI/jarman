@@ -7,5 +7,5 @@
   :dependencies '("aaa")
   :keywords     '("table" "view")
   :url          '("https://github.com/emacs-dashboard/emacs-dashboard")
-  :loading-seq  '(composite_components table))
+  :loading-seq  '(composite_components dialog_bigstring dialog_table table))
 

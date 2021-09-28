@@ -5,6 +5,7 @@
    [seesaw.table  :as table]
    [seesaw.dev :as sdev]
    [seesaw.mig :as smig]
+   [jarman.faces  :as face]
    [seesaw.swingx  :as swingx]
    [seesaw.chooser :as chooser]
    [seesaw.border  :as b]
@@ -79,7 +80,7 @@
 
 (defn info [s]
   {:pre [(string? s)]}
-  (seesaw.core/label :halign :left :background "#fff" :foreground "#074a4f" :text s :font (gtool/getFont 16 :bold) :border (b/empty-border :thickness 15)))
+  (seesaw.core/label :halign :left :background face/c-background-detail :foreground face/c-foreground-title :text s :font (gtool/getFont 16 :bold) :border (b/empty-border :thickness 15)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -111,7 +112,7 @@
 (defn extension-manager-panel []
   (seesaw.mig/mig-panel
    :constraints ["wrap 1" "0px[grow, fill]0px" "0px[]0px"]
-   :background "#fff"
+   :background face/c-background-detail
    :items
    (gtool/join-mig-items
     (-> (startup-components)

@@ -7,6 +7,7 @@
    [seesaw.mig :as smig]
    [seesaw.swingx  :as swingx]
    [seesaw.chooser :as chooser]
+   [jarman.faces :as face]
    [seesaw.border  :as b]
    ;; clojure lib
    [clojure.string :as string]
@@ -75,7 +76,7 @@
 
 (defn info [s]
   {:pre [(string? s)]}
-  (seesaw.core/label :halign :left :foreground "#074a4f" :text s :font (gs/getFont :bold) :border (b/empty-border :thickness 15)))
+  (seesaw.core/label :halign :left :foreground face/c-foreground-title :text s :font (gs/getFont :bold) :border (b/empty-border :thickness 15)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;

@@ -158,7 +158,7 @@
   "Description:
      c/select button who table-editor--component--column-picker, can work with another same buttons"
   [txt func]
-  (let [color "#eee";; (gtool/get-color :group-buttons :background)
+  (let [color face/c-main-menu-bg
         color-hover (gtool/get-color :group-buttons :background-hover)
         color-clicked (gtool/get-color :group-buttons :clicked)
         bg-btn (atom color)
@@ -237,7 +237,7 @@
                               :store-id (join-vec column [param])
                               :val (get column param)
                               :enabled? enabled)
-                             :background gcomp/light-light-grey-color))
+                             :background face/c-main-menu-bg))
                           :else
                           (c/config! (gcomp/inpose-label (gtool/convert-key-to-title (str param))
                                                        (gcomp/input-text-with-atom
@@ -247,11 +247,11 @@
                                                          :enabled? enabled})
                                                        :font-color dark-grey-color
                                                        :vtop 10)
-                                   :background gcomp/light-light-grey-color)))]
+                                   :background face/c-main-menu-bg)))]
     (mig-panel ;; Editable parameters list
      :constraints ["wrap 1" "20px[250:,fill]5px" "0px[fill]0px"]
      :preferred-size [910 :by 360]
-     :background gcomp/light-light-grey-color
+     :background face/c-main-menu-bg
      :items (gtool/join-mig-items
              (filter
               #(not (nil? %))
@@ -295,8 +295,7 @@
 
 (defn panel-for-input
   [name description comp-key cmpts-atom]
-  (let [check (c/checkbox :text name :background gcomp/light-light-grey-color ;; :font (gtool/getFont 12)
-                          )
+  (let [check (c/checkbox :text name :background face/c-main-menu-bg)
         sel-comp-type (DateTime/getBar (into-array ["date" "time" "date-time"
                                                     "simple-number" "float-number"
                                                     "boolean" "linking-table"
@@ -308,10 +307,10 @@
     (mig-panel
      :constraints ["wrap 1" "0px[grow, left]0px" "0px[]px"]
      ;;:preferred-size [900 :by 400]
-     :background gcomp/light-light-grey-color
+     :background face/c-main-menu-bg
      :items [[(mig-panel
                :constraints ["wrap 1" "20px[250:, fill, grow, left]0px" "10px[]10px"]
-               :background gcomp/light-light-grey-color
+               :background face/c-main-menu-bg
                :items [[(c/label :text description
                                :foreground dark-grey-color
                              ;;  :font (gtool/getFont 14)
@@ -729,10 +728,10 @@
                            :else nil)
                    
                    :background (cond
-                                 (= (:type data) "header")     gcomp/light-light-grey-color
-                                 (= (:type data) "key")        "#e2fbde"
-                                 (= (:type data) "connection") "#e2fbde"
-                                 :else "#fff")
+                                 (= (:type data) "header")     face/c-main-menu-bg
+                                 (= (:type data) "key")        face/c-item-expand-right;;"#e2fbde"
+                                 (= (:type data) "connection") face/c-item-expand-right;;"#e2fbde"
+                                 :else face/c-compos-background)
                    
                    :font (cond
                            (= (:type data) "header")     (gs/getFont :bold)
@@ -741,8 +740,8 @@
                            :else "#fff")
                    
                    :foreground (cond
-                                 (= (get data :type) "header") gcomp/blue-color
-                                 :else "#000")
+                                 (= (get data :type) "header") face/c-foreground-title
+                                 :else face/c-foreground)
                    
                    :border (cond
                              (= (get data :type) "header") (b/compound-border (b/empty-border :thickness 4))
@@ -825,7 +824,7 @@
   [bounds table-meta meta JLP]
   (let [bg-c "#fff"
         line-size-hover 2  ;; zwiekszenie bordera dla eventu najechania mysza
-        border-c "#aaa"
+        border-c face/c-on-focus-light
         border (b/line-border :thickness 1 :color border-c)
         border-hover (b/line-border :thickness line-size-hover :color "#000")
         x (nth bounds 0)

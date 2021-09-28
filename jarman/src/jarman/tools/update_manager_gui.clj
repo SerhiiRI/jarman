@@ -9,6 +9,7 @@
    [seesaw.swingx  :as swingx]
    [seesaw.chooser :as chooser]
    [seesaw.border  :as b]
+   [jarman.faces :as face]
    [jarman.gui.gui-style :as gs]
    [jarman.gui.gui-views-service :as gvs]
    ;; clojure lib
@@ -84,7 +85,8 @@
 
 (defn info [s]
   {:pre [(string? s)]}
-  (seesaw.core/label :halign :left :background "#fff" :foreground "#074a4f" :text s :font (gtool/getFont 16 :bold) :border (b/empty-border :thickness 15)))
+  (seesaw.core/label :halign :left :background face/c-background-detail
+                     :foreground face/c-foreground-title :text s :font (gtool/getFont 16 :bold) :border (b/empty-border :thickness 15)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; UI Composititon ;;;
@@ -160,7 +162,7 @@
         package-to-update (update-manager/max-version package-list)]
     (out-update
      (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[]0px"]
-                           :background "#fff"
+                           :background face/c-background-detail
                            :items
                            (gtool/join-mig-items (-> (startup-components)
                                                      (supply-content-info)

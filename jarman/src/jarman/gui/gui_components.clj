@@ -864,7 +864,7 @@
            text-open "hide"
            text-hide "..."
            c-focus   face/c-on-focus
-           c-bg      face/c-compos-background
+           c-bg      face/c-table-header-bg
            c-bg-hide face/c-layout-background
            c-fg      face/c-foreground}}]
   (let [min-w (if (< max-w min-w) max-w min-w)

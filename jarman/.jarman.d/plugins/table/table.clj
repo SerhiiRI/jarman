@@ -593,7 +593,7 @@
                 :text (:representation (.return-table (:meta-obj (:plugin-toolkit (state!))))) 
                 :halign :center
                 :font (gtool/getFont 15 :bold)
-                :foreground face/c-foreground
+                :foreground face/c-foreground-title
                 :border (b/compound-border (b/line-border :bottom 1 :color face/c-underline)
                                            (b/empty-border :top 10)))]))
 

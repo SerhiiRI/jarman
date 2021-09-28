@@ -56,7 +56,6 @@
 ;; │ App layout and GUI build │
 ;; │                          │
 ;; └──────────────────────────┘
-
 (def jarmanapp--main-view-space
   "Description:
       Vertical layout for tabs and table on right part of app. 
@@ -72,8 +71,9 @@
                       :constraints ["" "0px[fill]0px" "0px[]0px"]
                       :id :app-tabs-space
                       :background face/c-tabbar-bg
-                      :items (gtool/join-mig-items tabs)
-                      :border (b/line-border :bottom face/s-tab-underline :color face/c-tab-underline))
+                      ;;:items (gtool/join-mig-items tabs)
+                     ;; :border (b/line-border :bottom face/s-tab-underline :color face/c-tab-underline)
+                      )
           views-space (mig-panel
                        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
                        :id :app-functional-space 

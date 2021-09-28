@@ -10,7 +10,7 @@
             [jarman.faces              :as face]
             [jarman.tools.swing        :as stool]
             [jarman.gui.gui-app        :as app] ;; Need for startup by state
-            [jarman.logic.system-login :as system-login]
+            [jarman.logic.session      :as session]
             [jarman.gui.gui-tools      :as gtool]
             [jarman.gui.gui-components :as gcomp]
             [jarman.gui.gui-migrid     :as gmg]
@@ -490,9 +490,8 @@
         login  (:login  (state!))
         passwd (:passwd (state!))]
     ;;(println "\nLogin:" login passwd)
-    (let [login-fn (system-login/login config)] 
+    (let [login-fn (session/login config)]
       (if (fn? login-fn)
-
         (do
           ;;(println "\nConfig ok")
           (let [user-m (try

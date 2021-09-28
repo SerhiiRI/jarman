@@ -21,7 +21,6 @@
             [jarman.gui.gui-editors          :as gedit]
             [jarman.interaction :as i]))
 
-
 ;; (defn- expand-colors []
 ;;   [["#eeeeee" "#f7f7f7"]
 ;;    ["#d3ebe7" "#e9f5f3"]
@@ -182,15 +181,19 @@
 
    "Administration"
    {"Update manager" {:key "update-manager"
+                      :permission :admin-update
                       :fn update-manager/update-manager-panel}
     "Extension manager" {:key "extension-manager"
+                         :permission :admin-extension
                          :fn extension-manager/extension-manager-panel}
     "Themes manager" {:key "themes-manager"
                       :fn themes-manager/theme-manager-panel}
     "Var listing" {:key "vars-listing-panel"
+                   :permission :developer
                    :fn vars-listing/vars-listing-panel}
     "DB Visualizer" {:key "db-visualizer"
-                     :fn    dbv/create-view--db-view}
+                     :permission :admin-dataedit
+                     :fn dbv/create-view--db-view}
     (gtool/get-lang-btns :settings)
    {(gtool/get-lang-btns :settings) {:key    "settings"
                                      :action :list
@@ -198,48 +201,48 @@
    "Debug Items"
    {"Popup window" {:key        "popup-window"
                     :action     :invoke
-                    :permission [:developer]
+                    :permission :developer
                     :fn         (fn [e] (gcomp/popup-window {:relative (state/state :app)}))}
     
     "Alerts"        {"Info" {:key        "test-info"
                              :action     :invoke
-                             :permission [:developer]
+                             :permission :developer
                              :fn         (fn [e]
                                            (i/info "Czym jest Lorem Ipsum?"
                                                    "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}
                      "Warning" {:key        "test-warning"
                                 :action     :invoke
-                                :permission [:developer]
+                                :permission :developer
                                 :fn         (fn [e]
                                               (i/warning "Czym jest Lorem Ipsum?"
                                                       "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}
                      "Danger" {:key        "test-danger"
                                :action     :invoke
-                               :permission [:developer]
+                               :permission :developer
                                :fn         (fn [e]
                                              (i/danger "Czym jest Lorem Ipsum?"
                                                        "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}
                      "Success" {:key       "test-success"
                                :action     :invoke
-                               :permission [:developer]
+                               :permission :developer
                                :fn         (fn [e]
                                              (i/success "Czym jest Lorem Ipsum?"
                                                         "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}
                      "Update" {:key       "test-update"
                                :action     :invoke
-                               :permission [:developer]
+                               :permission :developer
                                :fn         (fn [e] (jarman.tools.update-manager-gui/alert-update-available))}}
     
     "Select table"   {:key        "select-table"
                       :action     :invoke
-                      :permission [:developer]
+                      :permission :developer
                       :fn         (fn [e] (gcomp/popup-window
                                            {:view (gcomp/select-box-table-list {})
                                             :relative (state/state :app) :size [250 40]}))}
     
     "Text multiline" {:key        "text-multiline"
                       :action     :invoke
-                      :permission [:developer]
+                      :permission :developer
                       :fn         (fn [e]
                                     (gcomp/popup-window
                                      {:window-title "Text multiline"
@@ -254,7 +257,7 @@
     
     "Rsyntax code editor" {:key        "rsyntax-code-editor"
                            :action     :invoke
-                           :permission [:developer]
+                           :permission :developer
                            :fn         (fn [e]
                                          (gcomp/popup-window
                                           {:window-title "Code editor"
@@ -266,22 +269,22 @@
 
     "File editor" {:key        "demo-file-editor"
                    :action     :invoke
-                   :permission [:developer]
+                   :permission :developer
                    :fn (fn [e] (i/editor "./test/test-file.txt"))}
 
     "File editor clj" {:key        "demo-file-editor-clj"
                    :action     :invoke
-                   :permission [:developer]
+                   :permission :developer
                    :fn (fn [e] (i/editor "./test/test-file.clj"))}
     
     "Popup demo" {:key        "popup-demo"
                   :action     :invoke
-                  :permission [:developer]
+                  :permission :developer
                   :fn         (fn [e] (popup/set-demo))}
     
     "Popup demo 2" {:key        "popup-demo 2"
                     :action     :invoke
-                    :permission [:developer]
+                    :permission :developer
                     :fn         (fn [e]
                                   (popup/build-popup
                                    {:comp-fn (fn []

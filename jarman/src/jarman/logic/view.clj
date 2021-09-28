@@ -1,4 +1,3 @@
-
 {:host "localhost", :port 3306, :dbname "jarman"}
 ;; {:host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman"}
 
@@ -19,7 +18,7 @@
    :view-columns [:permission.permission_name :permission.configuration]
    :model-insert [:permission.permission_name :permission.configuration]
    :active-buttons [:insert :update :delete :clear :changes]
-   :permission [:user :developer]
+   :permission :ekka-all
    :actions []
    :buttons []
    :query
@@ -32,7 +31,6 @@
   (dialog-table
    :id :permission-table
    :name "permission dialog"
-   :permission [:admin :user :developer]
    :tables [:permission]
    :view-columns [:permission.permission_name :permission.configuration]
    :query
@@ -114,7 +112,7 @@
 (defview service_contract
   (service-period
    :id :service_contract
-   :permission [:admin :developer :user]
+   :permission :ekka-all
    :name "service_contract"
    :plug-place [:#tables-view-plugin]))
 
@@ -154,7 +152,7 @@
                   :cache_register.modem_serial_number
                   :cache_register.modem_phone_number]
    :active-buttons [:insert :update :delete :clear :changes]
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :dialog {:cache_register.id_point_of_sale
             [:point_of_sale :dialog-table :point_of_sale-table]}
    :actions []
@@ -267,7 +265,7 @@
                   :documents.document
                   :documents.prop]
    :active-buttons [:insert :update :delete :clear :changes]
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :actions []
    :buttons []
    :query
@@ -308,7 +306,7 @@
                   :enterpreneur.physical_address
                   :enterpreneur.contacts_information]
    :active-buttons [:insert :update :delete :clear :changes]
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :actions []
    :buttons []
    :query
@@ -329,7 +327,6 @@
   (dialog-table
    :id :enterpreneur-table
    :name "enterpreneur dialog"
-   :permission [:admin :user :developer]
    :tables [:enterpreneur]
    :view-columns [:enterpreneur.ssreou
                   :enterpreneur.name
@@ -373,7 +370,7 @@
                   :point_of_sale.physical_address
                   :point_of_sale.telefons]
    :active-buttons [:insert :update :delete :clear :changes]
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :dialog {:point_of_sale.id_enterpreneur
             [:enterpreneur :dialog-table :enterpreneur-table]}
    :actions []
@@ -438,7 +435,7 @@
    :view-columns [:point_of_sale_group.group_name :point_of_sale_group.information]
    :model-insert [:point_of_sale_group.group_name :point_of_sale_group.information]
    :active-buttons [:insert :update :delete :clear :changes]
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :actions []
    :buttons []
    :query
@@ -451,7 +448,7 @@
   (dialog-table
    :id :point_of_sale_group-table
    :name "point_of_sale_group dialog"
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :tables [:point_of_sale_group]
    :view-columns [:point_of_sale_group.group_name :point_of_sale_group.information]
    :query
@@ -477,7 +474,7 @@
    :model-insert [:point_of_sale_group_links.id_point_of_sale_group
                   :point_of_sale_group_links.id_point_of_sale]
    :active-buttons [:insert :update :delete :clear :changes]
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :dialog {:point_of_sale_group_links.id_point_of_sale_group
             [:point_of_sale_group :dialog-table :point_of_sale_group-table],
             :point_of_sale_group_links.id_point_of_sale
@@ -516,7 +513,7 @@
   (dialog-table
    :id :point_of_sale_group_links-table
    :name "point_of_sale_group_links dialog"
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :tables [:point_of_sale_group_links
             :point_of_sale_group
             :point_of_sale
@@ -585,7 +582,7 @@
                   :repair_contract.repair_date
                   :repair_contract.cache_register_register_date]
    :active-buttons [:insert :update :delete :clear :changes]
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :dialog {:repair_contract.id_cache_register
             [:cache_register :dialog-table :cache_register-table],
             :repair_contract.id_old_seal
@@ -673,7 +670,6 @@
   (dialog-table
    :id :repair_contract-table
    :name "repair_contract dialog"
-   :permission [:admin :user :developer]
    :tables [:repair_contract
             :cache_register
             :point_of_sale
@@ -768,7 +764,7 @@
    :view-columns [:repair_nature_of_problem.description]
    :model-insert [:repair_nature_of_problem.description]
    :active-buttons [:insert :update :delete :clear :changes]
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :actions []
    :buttons []
    :query
@@ -780,7 +776,7 @@
   (dialog-bigstring
    :id :repair_nature_of_problem-bigstring
    :name "repair_nature_of_problem dialog"
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :item-columns
    :repair_nature_of_problem.description
    :query
@@ -799,7 +795,7 @@
    :view-columns [:repair_reasons.description]
    :model-insert [:repair_reasons.description]
    :active-buttons [:insert :update :delete :clear :changes]
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :dialog {}
    :actions []
    :buttons []
@@ -827,7 +823,7 @@
    :view-columns [:repair_technical_issue.description]
    :model-insert [:repair_technical_issue.description]
    :active-buttons [:insert :update :delete :clear :changes]
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :actions []
    :buttons []
    :query
@@ -858,7 +854,7 @@
    :view-columns [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove]
    :model-insert [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove :seal.site :seal.loc_file :seal.ftp_file]
    :active-buttons [:insert :update :delete :clear :changes]
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :dialog {}
    :actions []
    :buttons []
@@ -879,7 +875,7 @@
   (dialog-table
    :id :seal-table
    :name "seal dialog"
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :tables [:seal]
    :view-columns [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove]
    :query
@@ -911,7 +907,7 @@
                   :service_contract.contract_start_term
                   :service_contract.contract_end_term]
    :active-buttons [:insert :update :delete :clear :changes]
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :dialog {:service_contract.id_enterpreneur
             [:enterpreneur :dialog-table :enterpreneur-table]}
    :actions []
@@ -938,7 +934,6 @@
   (dialog-table
    :id :service_contract-table
    :name "service_contract dialog"
-   :permission [:admin :user :developer]
    :tables [:service_contract :enterpreneur]
    :view-columns [:service_contract.id_enterpreneur
                   :service_contract.contract_start_term
@@ -981,7 +976,7 @@
                   :service_contract_month.money_per_month
                   :service_contract_month.was_payed]
    :active-buttons [:insert :update :delete :clear :changes]
-   :permission [:admin :user :developer]
+   :permission :ekka-all
    :dialog {:service_contract_month.id_service_contract
             [:service_contract :dialog-table :service_contract-table]}
    :actions []

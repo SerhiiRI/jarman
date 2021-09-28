@@ -6,7 +6,7 @@
 
 (s/def :jarman.plugin.spec/keyword    keyword?)
 (s/def :jarman.plugin.spec/keyword-list (s/and sequential? #(every? keyword? %)))
-(s/def :jarman.plugin.spec/permission :jarman.plugin.spec/keyword-list)
+(s/def :jarman.plugin.spec/permission :jarman.plugin.spec/keyword)
 (s/def :jarman.plugin.spec/plug-place :jarman.plugin.spec/keyword-list)
 (s/def :jarman.plugin.spec/name       string?)
 

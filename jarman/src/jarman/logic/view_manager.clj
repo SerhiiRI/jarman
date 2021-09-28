@@ -111,7 +111,7 @@
   [table-name body]
   (let [add-id         (key-setter :id         #(keyword (gensym "plugin-")))
         add-table-name (key-setter :table_name (keyword table-name))
-        add-permission (key-setter :permission [:user])
+        add-permission (key-setter :permission :ekka-all)
         eval-action    (fn [m] (update-in m [:actions] eval))
         k-table-name (keyword table-name)]
     (let [[global-cfg plugin-list] (sort-parameters-plugins body)]
@@ -302,7 +302,8 @@
               ;; @julia
               (do (let [plugin (plugin-link v)]
                     (if true
-                      ;; chnage to predicate (.return-permission plugin)
+                      ;; TO DO - fix this, func in main menu fn part-plugin
+                      ;; chnage to predicate (.return-permission plugin) 
                       (swap! result-vec assoc-in path (plugin-link v))
                       (print-line (format
                                    "Permission plugin by path =%s= not allowed"

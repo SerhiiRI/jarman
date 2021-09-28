@@ -23,7 +23,7 @@
 
    "emerald"          "#2ecc71"
    "nephritis"        "#27ae60"
-
+   "cyan-light"       "#E2FBDE"
    "peter-river"      "#2492db"
    "belize-hole"      "#0a74b9"
 
@@ -39,19 +39,19 @@
    "alizarin"         "#e74c3c"
    "pomegranate"      "#c0392b"
 
-   "gray"              "#cccccc"
+   "gray"              "#C7C9D1"
    "gray-dark"         "#bbbbbb"
    "gray-dark-2"       "#aaaaaa"
    "gray-dark-light"   "#dddddd"
-   "gray-light"        "#eeeeee"
-   "gray-light-2"      "#efefef"
-   "gray-light-3"      "#f7f7f7"
+   "gray-light-2"      "#e8e9ec"
+   "gray-light-3"      "#f8f9fb"
    "gray-super-light"  "#fefefe"
    "white"             "#ffffff"
-   "jarman-blue"       "#3a81c3"
+   "jarman-blue"       "#3d85c6"
    "jarman-blue-green" "#2c7375"
-   "jarman-blue-dark"  "#29295e"
-   "jarman-blue-light" "#d9ecff"
+   "jarman-blue-dark"  "#206494"
+   "jarman-blue-light" "#96c1ea"
+   "jarman-blue-strong""#0a2436"
    "jarman-super-dark" "#020020"
 
    "font-size"               14.0
@@ -59,7 +59,8 @@
    "underline-size"          2
    "underline-tabbar-size"   1
    "timelife-alert-popup"    3
-   "expand-btn-colors" [["#ececec" "#ececec" "#f7f7f7"]
+   "expand-btn-colors" [["#e8e9ec""#e8e9ec" "#f1f1f3"]
+                       ;; ["#ececec" "#ececec" "#f7f7f7"]
                         ["#e0e0e0" "#e0e0e0" "#efefef"]
                         ["#d5d5d5" "#d5d5d5" "#dfdfdf"]
                         ["#c5c5c5" "#c5c5c5" "#cfcfcf"]
@@ -86,8 +87,20 @@
   (with-jarman-ligth-vars
     (jarman.gui.faces-system/custom-theme-set-faces
      '( ;; -- Theme binder --
+       ;; Default colors
+       c-white                     clouds
+       c-black                     jarman-blue-strong
+       c-red                       pomegranate
+       c-orange                    carrot
+       c-yellow                    sun-flower
+       c-green                     green-sea
+       c-light-blue                jarman-blue
+       c-strong-blue               jarman-blue-dark
+       c-purple                    wisteria
+       
        ;; Default styles  !!! Do not using in code, do not add new here !!!
-       c-foreground               jarman-blue
+       c-foreground               jarman-blue-strong
+       c-foreground-title         jarman-blue-strong
        s-foreground               font-size
        c-caret                    jarman-blue-dark
 
@@ -114,12 +127,12 @@
        c-underline                gray
        c-underline-detail         c-layout-background
        c-underline-light          gray-light-3
-       c-underline-on-focus       jarman-blue
+       c-underline-on-focus       jarman-blue-light
        c-underline-on-focus-light jarman-blue-light
        s-underline                underline-size
        
        ;; Icon color
-       c-icon                     c-foreground
+       c-icon                     jarman-blue-dark
        s-icon                     icon-size
        c-icon-focus               belize-hole
        c-icon-close-focus         c-border-danger
@@ -176,12 +189,16 @@
        c-input-bg            c-compos-background
        c-input-header        c-foreground
 
+       ;; expand item in iputs
+       c-item-expand-left    c-compos-background-darker
+       c-item-expand-right   cyan-light
+
        ;; min-scrollbox
        c-min-scrollbox-bg    gray
  
        ;; expand button
        c-btn-expand-bg       c-compos-background
-       c-btn-expand-fg       c-foreground
+       c-btn-expand-fg       c-foreground-title
        c-btn-expand-offset   c-compos-background
 
        ;; alert

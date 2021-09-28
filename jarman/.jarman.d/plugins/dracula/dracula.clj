@@ -6,11 +6,14 @@
             custom-theme-set-faces]])
 
 (def ^:private dracula-color-scheme
-  {"black"              "#282a36"
+  {"black-strong"       "#20222b"
+   "black-darker"       "#282a36"
+   "black-medium"       "#242630"
+   "black-light"        "#393c4b"
    "white"              "#ffffff"
    "white-strong"       "#f8f8f2"
    "hightlight-light"   "#44475a"
-   "hightlight-strong"  "#303030"
+   "hightlight-strong"  "#323444"
    "blue-light"         "#6272a4"
    "blue-strong"        "#5f5faf"
    "blue2-light"        "#0189cc" 
@@ -30,27 +33,16 @@
    "red-strong"         "#ff8787"
    "yellow-light"       "#f1fa8c"
    "yellow-strong"      "#ffff87"
-   ;; "Other" colors
-   "bg2-light"          "#373844"
-   "bg2-strong"         "#121212"
-   "bg3-light"          "#464752"
-   "bg3-strong"         "#262626"
-   "bg4-light"          "#565761"
-   "bg4-medium"         "#616161"
-   "bg4-strong"         "#444444"
-   "fg2-light"          "#e2e2dc"
-   "fg2-strong"         "#e4e4e4"
-   "fg3-light"          "#ccccc7"
-   "fg3-strong"         "#c6c6c6"
-   "fg4-light"          "#b6b6b2"
-   "fg4-strong"         "#b2b2b2"
    "font-size"             14.0
    "icon-size"             20
    "underline-size"        2
    "underline-tabbar-size" 1
    "timelife-alert-popup"  3
-   "expand-btn-colors" [["#303030" "#505050" "#616161"]
-                        ["#556b2f" "#667c3f" "#778d4f"]]})
+   "expand-btn-colors" [["#282a36" "#393c4b" "#242630"]
+                        ["#20222b" "#44475a" "#1B1C24"]
+;;                        ["#44475a" "#5f5faf" "#6272a4"]
+                       ;; ["#556b2f" "#667c3f" "#778d4f"]
+                        ]})
 
 (defmacro ^:private with-dracula-colors
   [& body]
@@ -66,40 +58,52 @@
   (with-dracula-colors
     (custom-theme-set-faces
      '( ;; -- Theme binder --
-       ;; Default styles !!! Do not using in code, do not add new here !!!
-       c-foreground                orange-strong
-       s-foreground                font-size
-       c-caret                     orange-light-2
-
-       c-layout-background         bg2-light
-       c-layout-background-light   bg3-light
+       ;; base color-palette
+       c-white                     white
+       c-black                     black-strong
+       c-red                       red-strong
+       c-orange                    orange-strong
+       c-yellow                    yellow-strong
+       c-green                     green-strong
+       c-light-blue                blue2-light
+       c-strong-blue               blue-strong
+       c-purple                    purple-strong
        
-       c-compos-background         bg4-light
-       c-compos-background-light   bg3-strong
-       c-compos-background-dark    bg4-strong
+       ;; Default styles !!! Do not using in code, do not add new here !!!
+       c-foreground                white
+       c-foreground-title          purple-light
+       s-foreground                font-size
+       c-caret                     yellow-light
+
+       c-layout-background         black-strong
+       c-layout-background-light   hightlight-strong
+       
+       c-compos-background         hightlight-light 
+       c-compos-background-light   hightlight-light 
+       c-compos-background-dark    black-darker
        c-compos-background-darker  hightlight-strong
 
-       c-background-detail         c-layout-background
+       c-background-detail         black-medium
        
        c-border                    hightlight-strong
        c-border-warning            orange-light
        c-border-danger             red-light
        c-border-success            green-light
        
-       c-on-focus                  hightlight-light
-       c-on-focus-light            bg3-light
+       c-on-focus                  hightlight-strong
+       c-on-focus-light            black-light
        c-on-focus-dark             c-on-focus-light
-       c-on-focus-detail           c-layout-background
+       c-on-focus-detail           black-strong
        
-       c-underline                 bg2-light
-       c-underline-detail          c-layout-background
-       c-underline-light           bg3-light
-       c-underline-on-focus        orange-strong
-       c-underline-on-focus-light  orange-strong
+       c-underline                 black-strong
+       c-underline-detail          black-strong
+       c-underline-light           hightlight-light 
+       c-underline-on-focus        green-strong
+       c-underline-on-focus-light  green-strong
        s-underline                 underline-size
        
        ;; Icon color
-       c-icon                     c-foreground
+       c-icon                     magenta-strong
        s-icon                     icon-size
        c-icon-focus               c-caret
        c-icon-close-focus         c-border-danger
@@ -122,7 +126,7 @@
        c-menu-bar-on-focus   c-on-focus
        
        ;; basic button
-       c-btn-bg              c-compos-background-dark
+       c-btn-bg              black-darker
        c-btn-bg-focus        c-on-focus
        c-btn-foreground      c-foreground
        c-btn-underline       c-underline
@@ -130,15 +134,15 @@
        s-btn-underline       s-underline
        
        ;; slider menu
-       c-slider-bg                 c-layout-background
+       c-slider-bg                 black-strong
        c-slider-fg                 c-foreground
        c-slider-bg-on-focus        c-compos-background
-       c-slider-underline          c-underline-detail
+       c-slider-underline          black-strong
        c-slider-underline-on-focus c-underline-on-focus-light
 
        ;; view service
        c-tab-active          c-on-focus-light
-       c-tabbar-bg           c-background-detail
+       c-tabbar-bg           c-layout-background
        c-tab-underline       c-underline-light
        s-tab-underline       underline-tabbar-size
        
@@ -148,7 +152,7 @@
        c-table-select-cell   c-foreground
 
        ;; table header
-       c-table-header-bg     c-compos-background-light
+       c-table-header-bg     black-strong
        c-table-header-fg     c-foreground
        c-table-header-border c-compos-background
 
@@ -158,15 +162,15 @@
 
        ;; expand button
        c-btn-expand-bg       c-compos-background
-       c-btn-expand-fg       c-foreground
+       c-btn-expand-fg       c-foreground-title
        c-btn-expand-offset   c-compos-background
 
        ;; expand item in iputs
-       c-item-expand-left    bg4-strong
-       c-item-expand-right   bg4-medium
+       c-item-expand-left    c-compos-background-darker
+       c-item-expand-right   blue-light
  
        ;; min-scrollbox
-       c-min-scrollbox-bg    bg4-medium
+       c-min-scrollbox-bg    c-compos-background-darker
 
        ;; alert
        c-alert-bg             c-compos-background-light
@@ -181,9 +185,7 @@
        ;; Popup box
        c-popup-body-background c-compos-background
        c-popup-head-background c-compos-background-darker
-       c-popup-border          c-border
-       
-       ))))
+       c-popup-border          c-border))))
 
 
 ;;;;;;;;;;;;;;;;;;;;

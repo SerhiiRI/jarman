@@ -12,7 +12,13 @@
    "grey-light"         "#eeeeee"
    "grey-strong"        "#dddddd"
    "cyan-light"         "#E2FBDE"
-   "orange-light"       "#fda50f"
+   "yellow"             "#f1fa8c"
+   "green"              "#00ff00"
+   "blue-light"         "#3d85c6"
+   "blue-dark"          "#206494"
+   "purple"             "#5f5faf"
+   "hightlight"         "#fda50f"
+   "orange"             "#ffb86c"
    "red-strong"         "#ff0000"
    "font-size"             14.0
    "icon-size"             20

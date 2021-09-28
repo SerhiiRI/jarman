@@ -19,6 +19,7 @@
 
 ;;; Global default styles
 (define-face c-foreground)
+(define-face c-foreground-title)
 (define-face s-foreground)
 (define-face c-caret)
 

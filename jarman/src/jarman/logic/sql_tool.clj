@@ -1414,6 +1414,5 @@
   (format "SHOW COLUMNS FROM %s" (name value)))
 
 (defn drop-table [database-table]
-  {:pre [(string? database-table)]}
-  (format "DROP TABLE IF EXISTS `%s`" database-table))
+  (format "DROP TABLE IF EXISTS `%s`" (name database-table)))
 

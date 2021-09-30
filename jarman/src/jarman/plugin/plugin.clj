@@ -3,10 +3,17 @@
             [jarman.tools.lang :refer :all]
             [clojure.spec.alpha :as s]
             [clojure.java.io :as io]
-            [jarman.tools.org :refer :all]))
+            [jarman.tools.org :refer :all]
+            [jarman.config.vars :refer [defvar setj setq]]))
 
 (declare register-custom-view-plugin)
 (declare register-custom-theme-plugin)
+
+(defvar theme-selected "Jarman Light"
+  :name "Theme"
+  :doc  "Select loading theme"
+  :type java.lang.String
+  :group :view-params)
 
 ;;;;;;;;;;;;;;;
 ;;; HELPERS ;;;
@@ -132,7 +139,10 @@
     (print-header
      (format "Choose `%s` theme" theme-name)
      ((:theme-loader-fn theme))
-     (swap! selected-theme (fn [_]theme)))))
+     (swap! selected-theme (fn [_]theme))
+     (setq jarman.plugin.plugin/theme-selected theme-name)
+     (setj jarman.plugin.plugin/theme-selected theme-name)
+     nil)))
 
 (comment
   (system-ThemePlugin-list-get)

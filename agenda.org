@@ -179,7 +179,6 @@
    - [X] Add into /left-bar menu/, /left-menu/ functionlity that test user permission before
      render
    - [X] View plugins permission system 
-
 ** TODO [#1] Одужуй!                                                 :@Julia:
 ** TODO [#3] /Feature/. Macro for declaring some resource              :@Julia:
    Create ~define-resource~ macro for definision of file
@@ -203,6 +202,8 @@
    - [X] Checking login user in system, limited by the licence
 ** TODO [#2] check all steps of loading tables                      :@Serhii:
    in file view-manager.clj, markup TO DO,  add messages(println), if we need
+** TODO [#1] Pizdets
+   - [ ] Switching onto honey
 ** PLANNED Service Period. sort contract list                       :@Serhii:
    - [ ] sorting contract by date
    - [ ] colorize contract by active-nonactive depend on current date
@@ -335,3 +336,5 @@
 
    
    
+
+

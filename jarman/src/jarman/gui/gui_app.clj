@@ -42,7 +42,7 @@
             [jarman.gui.gui-migrid           :as gmg]
             ;; [jarman.managment.data           :as managment-data]
             [jarman.plugin.extension-manager :refer [do-load-extensions]]
-            [jarman.plugin.plugin            :refer [do-load-theme]]
+            [jarman.plugin.plugin            :refer [do-load-theme theme-selected]]
             [jarman.config.vars              :refer [setq print-list-not-loaded]]
             [jarman.config.conf-language     :refer [do-load-language]]
             [jarman.config.dot-jarman        :refer [dot-jarman-load]]
@@ -196,10 +196,11 @@
   ;; please do not remove Jarman-Ligth out
   ;; from integrated into jarman ns's.
   (if (nil? (state/state :theme-first-load))
-    (do 
-        (do-load-theme "Jarman Light")
-        (state/set-state :theme-first-load true)
-        (print-header "First theme loaded")))
+    (do
+      (do-load-theme (deref theme-selected))
+      ;; (do-load-theme "Jarman Light")
+      (state/set-state :theme-first-load true)
+      (print-header "First theme loaded")))
   (print-header
    "Apply selected theme" 
    (do-load-theme (state/state :theme-name))) ;; TODO: Alerts tmp storage with invoke later
@@ -362,7 +363,6 @@
                              :else (do (fn [])))))))
 
 ((state/state :startup))
-
 
 (comment  
   (state/set-state :soft-restart false)

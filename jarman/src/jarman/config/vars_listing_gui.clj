@@ -35,6 +35,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPER FUNCTIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defmacro try-catch-alert [& body]
   `(try
      ;; (ex-info "The ice cream has melted!" 
@@ -54,6 +55,13 @@
         ^javax.swing.table.TableColumn      table-column (.getColumn column-model column)]
     (.setPreferredWidth table-column size)))
 
+(defn var-string-value [variable]
+  (let [len-const 100
+        variable-str (str (deref (clojure.core/var-get (:link variable))))]
+    (if (< len-const (.length variable-str))
+      (str (apply str (take len-const variable-str)) "...")
+      variable-str)))
+
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; UI COMPONENTS ;;;
 ;;;;;;;;;;;;;;;;;;;;;
@@ -64,17 +72,15 @@
        :show-horizontal-lines? nil
        :show-vertical-lines? nil
        :model (table/table-model :columns [{:key :name}
-                                           {:key :loaded}
-                                           {:key :ns}
-                                           {:key :doc}]
+                                           {:key :value}]
                                  :rows [var-desc]))
     (.setRowMargin 10)
     (.setRowHeight 35)
     (.setIntercellSpacing (java.awt.Dimension. 10 0))
     (setColumnWidth :column 0 :size 270)
-    (setColumnWidth :column 1 :size 200)
-    (setColumnWidth :column 2 :size 400)
-    (setColumnWidth :column 3 :size 1000)
+    (setColumnWidth :column 1 :size 800)
+    ;; (setColumnWidth :column 2 :size 400)
+    ;; (setColumnWidth :column 3 :size 1000)
     ;; (setColumnWidth :column 3 :size 600)
     (.setRowSelectionAllowed false)
     ;; (.setAutoResizeMode javax.swing.JTable/AUTO_RESIZE_LAST_COLUMN)
@@ -83,7 +89,6 @@
 (defn info [s]
   {:pre [(string? s)]}
   (seesaw.core/label :halign :left :foreground face/c-foreground-title :text s :font (gs/getFont :bold) :border (b/empty-border :thickness 15)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; UI Composititon ;;;
@@ -119,9 +124,11 @@
 
 (defn transform-var [v]
   (-> v
-      (update :name #(if (nil? %) (name (symbol (get v :link))) %))
+      ;; (update :name #(if (nil? %) (name (symbol (get v :link))) %))
+      (update :name (fn [_](name (symbol (get v :link)))))
       (update :ns name)
-      (update :loaded #(if % "loaded" "not used"))))
+      (update :loaded #(if % "loaded" "not used"))
+      (assoc  :value (var-string-value v))))
 
 (defn get-grouped-by-group-vars []
   (sort-by first
@@ -131,7 +138,7 @@
 
 (defn get-grouped-by-loaded-vars []
   (sort-by first
-           (group-by #(if (:loaded (second %))
+           (group-by #(if (= (:loaded (second %)) "loaded")
                         "Loaded"
                         "Not loaded")
                      (map (fn [[var-kwd v]] (vector var-kwd (transform-var v)))
@@ -175,4 +182,6 @@
   (-> (c/frame :content (vars-listing-panel))
       c/pack!
       c/show!))
+
+
 

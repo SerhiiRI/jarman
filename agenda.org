@@ -8,7 +8,7 @@
 #+STARTUP: overview
 
 * Frontend
-** TOREVIEW [#1] /Feature/. Interaction files [3/3]                  :@Aleks:
+** TOREVIEW [#1] /Feature/. Interaction files [3/3]                   :@Serhii:
    :PROPERTIES:
    :CUSTOM_ID: interaction-function-set
    :END:
@@ -36,6 +36,7 @@
      Finish moving to new customization style
      
 ** PROCESSING [#1] /Feature/. Jarman Theme Light Style [5/6]
+   DEADLINE: <2021-10-08 pt.>
    - [X] rewrite styles config
    - [X] global font
    - [X] global background
@@ -43,6 +44,7 @@
    - [X] removing unnessesary font override         
    - [ ] unifing styles in UI
 ** PROCESSING [#1] Frontend refactorization [0/8]
+   DEADLINE: <2021-10-08 pt.>
 *** TOREVIEW Repair expand button [2/2]                              :@Aleks:
     - [X] Rainbow margin -> Space margin
     - [X] Separate last element in inside expand
@@ -113,48 +115,50 @@
       - [ ] Better colors for levels in expand button in ~Jarman Light~
       - [ ] Better colors for levels in expand button in ~Dracula~
 
+** PROCESSING [#3] /Feature/. On exit event [0/1]              :@Aleks:@Serhii:
+   - [ ] Create event when close 
+     - [ ] Remove suuid :@Serhii:
+     - [ ] Autoclse log stream's :@Serhii:
 ** TODO [#2] /Bug/. DB Visualizer editing                      :@Aleks:@Serhii:
+   DEADLINE: <2021-10-08 pt.>
    1. [ ] Cannot edit table =view=
    2. [ ] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
    3. [ ] Cannot edit metadata of table 
 ** TODO [#2] Switch into new language system                         :@Julia:
+   DEADLINE: <2021-10-13 śr.>
    - [ ] Just use language getter functions.
-** TODO [#3] /Feature/. Update Manager                                 :@Aleks:
-   - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
-   - [ ] Show popup with hard program restart
-   - [ ] Button for reading log file /update-manager-log.org/
-     - [ ] Open file interaction
-** TODO [#3] /Feature/. Extension Manager [0/6]                        :@Aleks:
-   - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
-   - [ ] Show extension file-tree. Alow editing file through the jarman [0/2]
-     Related to [[#interaction-function-set]] use interaction to open file in tab
-     - [ ] GUI part of tree file-view for package folder
-     - [ ] Open file interaction 
-   - [ ] Show whole information about package, from file /PandaPackage/ entity, when you click on
-     special expand segment.
-   - [ ] =Enable/Disable= extension
-     - [ ] replace param in =.jarman=.
-   - [ ] Extention searching/install template, because repository we currently doesnt have
-     You will managed plugins as list of PandaPackage records.
-   - [ ] Button for reading log file /extension-manager-log.org/
-     - [ ] Open file interaction
-** TODO [#3] /Feature/. Theme Manager                                  :@Aleks:
+** TODO [#3] /Feature/. Theme Manager                                  :@Serhii:
+   DEADLINE: <2021-10-02 sob.>
    - [ ] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [X] Make refreshing for jarman, when theme was selected
-   - [ ] Button for reading log file /update-manager-log.org/
-     - [ ] Open file interaction
+   - [ ] set info about selected theme into the .jarman
+
 ** TODO [#3] /Feature/. Licenses [0/2]                         :@Aleks:@Serhii:
+   DEADLINE: <2021-10-13 śr.>
    Related to [[Register licence mechanics]] issue.  
    - [ ] insert licence GUI menu
    - [ ] Make template (put into some tmp file or place) [0/3]
      - [ ] Alert which making hard logout from system, and inform about computer count
      - [ ] Alert which inform on startup that licence is going to end
 ** TODO [#2] /Feature/. Create configurations panel
+   DEADLINE: <2021-10-13 śr.>
    - [ ] Language select box
-** TODO [#3] /Feature/. On exit event [0/3]                    :@Aleks:@Serhii:
-   - [ ] Create event when close 
-   - [ ] Remove suuid :@Serhii:
-   - [ ] Autoclse log stream's :@Serhii:
+** TODO [#3] /Feature/. Update Manager                                 :@Aleks:
+   DEADLINE: <2021-10-13 śr.>
+   - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
+   - [ ] Show popup with hard program restart
+** PLANNED /Feature/. Extension Manager [1/5]                          :@Aleks:
+   - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
+   - [ ] *FUTURE* Show extension file-tree. Alow editing file through the jarman [0/2]
+     Related to [[#interaction-function-set]] use interaction to open file in tab
+     - [ ] *FUTURE* GUI part of tree file-view for package folder
+     - [ ] *FUTURE* Open file interaction 
+   - [ ] *FUTURE* Show whole information about package, from file /PandaPackage/ entity, when you click on
+     special expand segment.
+   - [ ] *FUTURE* =Enable/Disable= extension
+     - [ ] *FUTURE* replace param in =.jarman=.
+   - [ ] *FUTURE* Extention searching/install template, because repository we currently doesnt have
+     You will managed plugins as list of PandaPackage records.
 ** PLANNED /Feature/. Global event on key pressed             :@Julia:@Aleks:
    - [X] Proxy for KeyEventDispacher for add global event on key pressed
    - [X] add and remove own KeyEventDispacher
@@ -168,15 +172,14 @@
 ** PLANNED Scroll to selected in table                               :@Aleks:
    - [ ] Scroll to selected in table     
 * Backend
-** PROCESSING [#1] Permission system                                 :@Julia:
+** PROCESSING [#1] Permission system                                :@Serhii:
    - [-] Rewrie user session object
      - [ ] keep licence file in session.
      - [X] Make testing on permission
    - [X] Add into /left-bar menu/, /left-menu/ functionlity that test user permission before
      render
-   - [ ] View plugins permission system 
+   - [X] View plugins permission system 
 
-** TODO [#1] Move dialog plugins into the /table.clj/                  :@Julia:
 ** TODO [#1] Одужуй!                                                 :@Julia:
 ** TODO [#3] /Feature/. Macro for declaring some resource              :@Julia:
    Create ~define-resource~ macro for definision of file
@@ -260,6 +263,8 @@
 ** PLANNED Versioning data structure                                :@Serhii:
 ** PLANNED sql_tools | debug                                   :@Serhii:
     - [ ] pretty printing for sql syntax
+** DONE [#1] Move dialog plugins into the /table.clj/                  :@Julia:
+   CLOSED: [2021-09-30 czw. 06:13]
 ** DONE [#1] defvar managment                                       :@Serhii:
    CLOSED: [2021-09-25 Sat 14:46]
    After app loading, we have some values in system variables, divided by group name,

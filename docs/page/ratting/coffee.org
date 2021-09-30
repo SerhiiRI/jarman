@@ -1,0 +1,44 @@
+#+TITLE: Agenda
+#+PRIORITIES: 1 5 4
+#+STARTUP: overview
+
+* [#2] Lavazza Dek Intenso bezkofeinowa kawa mielona
+  [[file:Lavazza-Dek-Intenso-bezkofeinowa-kawa-mielona-250g.jfif][Dek Intenso image]]
+  Mieszanka mielonej kawy bezkofeinowej o intensywnym aromacie i smaku. Lavazza Dek Intenso charakteryzuje się nutami drewna i tytoniu. Pozostawia delikatny karmelowy posmak. Idealna dla tych, którzy kochają bogatą kawę o trwałym aromacie.
+  Lavazza stosuje naturalną i selektywną metodę bezkofeinową, która wykorzystuje właściwości dwutlenku węgla. Naturalna, ponieważ opiera się na działaniu związku obecnego w powietrzu, którym oddychamy. Selektywna, ponieważ pozostawia wszystkie właściwości kawy bez zmian.
+  Profil aromatyczny: nuty drzewne i tytoniowe,
+  Intensywność: 5 na 10,
+  Skład: Arabika i Robusta: Ameryka Południowa, Azja Wschodnia
+
+* Lavazza Crema e Gusto Dolce
+  [[file:Lavazza-Crema-e-Gusto-Dolce-250g-kawa-mielona.jfif][Gusto Dolce image]]
+  Lavazza Crema e Gusto Dolce (Delicato) 250g to mieszanka ziaren Arabiki z Ameryki Południowej oraz Robusty z Azji. Połączenie delikatnej robusty z orientalną azjatycką nutą daje efekt delikatnej słodkiej kawy o aromacie waniliowym. Kawa słabo palona i wyjątkowo delikatnie mielona, o wysokim poziomie zawartości kofeiny - 1,9%.
+  Skład: 50% Arabica, 50% Robusta,
+  Stopieñ palenia: Jasny,
+  Zawartość kofeiny: Wysoka.
+  
+* Lavazza Espresso Crema e Gusto
+  [[file:Lavazza-Espresso-Crema-e-Gusto-250g-kawa-mielona.jfif][Espresso Crema e Gusto image]]
+  Mieszanka azjatyckiej i afrykañskiej Robusty 80% i brazylijskiej Arabiki 20%. Niezwykle intensywna i mocno palona z dużą zawartością kofeiny.
+  Skład: 20% Arabica, 80% Robusta
+  Stopieñ palenia: średni
+  Zawartość kofeiny: wysoka
+  Intensywność: 8 na 10
+  Profil aromatyczny: drewno i tytoñ
+  
+* Lavazza Qualita Rossa
+  [[file:Lavazza-Qualita-Rossa-250g-Wloska-kawa-mielona.jfif][Rossa image]]
+  Lavazza Qualita Rossa to popularna na całym świecie kompozycja składająca się głównie z brazylijskiej arabiki i afrykañskiej robusty. Idealna do przyrządzenia cappuccino, latte i innych kaw mieszanych z mlekiem. Charakteryzuje się pełnym i łagodnym smakiem o czekoladowym aromacie. Nie może jej zabraknąć w biurze, restauracji, kawiarni i domu cieszy się powszechnym uznaniem
+  Dedykowana do kawiarek.
+  Skład:70% Arabica, 30% Robusta
+  Stopieñ palenia: Średni
+  Zawartość kofeiny: Wysoka
+
+* Vergnano Gran Aroma
+  [[file:Vergnano-Gran-Aroma-250g-kawa-mielona.jfif][Gran Aroma image]]
+  Caffe Vergnano Gran Aroma to dobrze zrównoważona mieszanka arabiki (60%) i robusty (40%). Idealna mieszanka dla wszystkich, którzy oprócz mocnej kawy o intensywnym smaku cenią sobie jej kremową konsystencję oraz przyjemny czekoladowy posmak. Dobrze nadaje się do ekspresów przelewowych i wszelkich innych sposobów parzenia.
+  Skład: 60% arabika, 40% robusta
+  Zawartość kofeiny: wysoka
+  Palenie: średnie
+
+

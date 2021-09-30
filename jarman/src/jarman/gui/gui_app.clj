@@ -199,12 +199,13 @@
   (if (nil? (state/state :theme-first-load))
     (do
       (do-load-theme (deref theme-selected))
-      ;; (do-load-theme "Jarman Light")
       (state/set-state :theme-first-load true)
-      (print-header "First theme loaded")))
-  (print-header
-   "Apply selected theme" 
-   (do-load-theme (state/state :theme-name))) ;; TODO: Alerts tmp storage with invoke later
+      (print-header "First theme loaded"))
+
+    (print-header
+     "Apply selected theme" 
+     (do-load-theme (state/state :theme-name))))
+  
   (print-header
    "apply default global style" 
    (gs/load-style))

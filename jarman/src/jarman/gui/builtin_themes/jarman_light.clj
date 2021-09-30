@@ -114,7 +114,7 @@
        
        c-background-detail        c-layout-background
 
-       c-border                   c-underline-on-focus
+       c-border                   jarman-blue-light
        c-border-warning           sun-flower
        c-border-danger            alizarin
        c-border-success           emerald
@@ -127,7 +127,7 @@
        c-underline                gray
        c-underline-detail         c-layout-background
        c-underline-light          gray-light-3
-       c-underline-on-focus       jarman-blue-light
+       c-underline-on-focus       c-border
        c-underline-on-focus-light jarman-blue-light
        s-underline                underline-size
        

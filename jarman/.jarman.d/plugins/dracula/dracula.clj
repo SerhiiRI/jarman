@@ -181,6 +181,8 @@
        c-alert-timelife       timelife-alert-popup
        c-alert-success-border c-border-success
        c-alert-history-focus  c-on-focus-light
+       c-alert-btn-bg         c-layout-background-light
+       c-alert-btn-bg-focus   c-layout-background
        
        ;; Popup box
        c-popup-body-background c-compos-background

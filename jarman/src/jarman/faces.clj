@@ -130,6 +130,8 @@
 (define-face c-alert-timelife)
 (define-face c-alert-success-border)
 (define-face c-alert-history-focus)
+(define-face c-alert-btn-bg)
+(define-face c-alert-btn-bg-focus)
 
 ;; Popup box
 (define-face c-popup-body-background)

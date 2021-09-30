@@ -12,6 +12,7 @@
    [jarman.faces :as face]
    [jarman.gui.gui-style :as gs]
    [jarman.gui.gui-views-service :as gvs]
+   [jarman.gui.gui-migrid        :as gmg]
    ;; clojure lib
    [clojure.string :as string]
    [clojure.pprint :refer [cl-format]]
@@ -169,19 +170,48 @@
                                                      (supply-content-to-install package-to-update)
                                                      (supply-content-all-package package-list)))))))
 
-(defn alert-update-available []
-  (i/warning "Updates are avaliable!" [{:title "Check updates"
-                                        :func (fn [api]
-                                                (gvs/add-view
-                                                 :view-id  :update-manager
-                                                 :title    "Update manager"
-                                                 :render-fn update-manager-panel)
-                                                ((:rm-alert api)))}
-                                       {:title "Later"
-                                        :func (fn [api] ((:rm-alert api)))}]
-             :time 0))
+(defn alert-update-available
+  ([] (alert-update-available nil))
+  ([update-info]
+   (i/warning "Updates are avaliable!" ;; TODO: Add dynamic language
+              [{:title "Check updates"
+                :func (fn [api]
+                        (gvs/add-view
+                         :view-id  :update-manager
+                         :title    "Update manager"
+                         :render-fn update-manager-panel)
+                        ((:rm-alert api)))}
+               {:title "Later"
+                :func (fn [api] ((:rm-alert api)))}]
+              :expand (if update-info
+                        (fn [] (gmg/migrid
+                                :v :f :f {:gap [10 0]}
+                                [(gcomp/min-scrollbox
+                                  (c/label
+                                   :text
+                                   (gtool/htmling
+                                    (str
+                                     "<table>"
+                                     "<tr><td>Name</td><td>" (:name      update-info)
+                                     "<tr><td>File</td><td>" (:file      update-info)
+                                     "<tr><td>Ver</td><td>"  (:version   update-info)
+                                     "<tr><td>Type</td><td>" (:artifacts update-info)
+                                     "</table>"))))]))
+                        nil)
+              :time 0)))
+
+(defn check-update
+  ([] (check-update :basic))
+  ([mode]
+   (let [update-info (update-manager/check-package-for-update)]
+     (if update-info
+       (alert-update-available update-info)
+       (if (= mode :silent)
+         (print-header "System is updated. No avaliable updates.")
+         (i/success "System is updated" "No avaliable updates.")))))) ;; TODO: Set dynamic lang
 
 (comment
+  (check-update)
   (-> (c/frame :content (update-manager-panel))
       c/pack!
       c/show!))

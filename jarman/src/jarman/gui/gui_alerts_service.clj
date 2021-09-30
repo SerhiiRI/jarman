@@ -1,6 +1,7 @@
 (ns jarman.gui.gui-alerts-service
   (:import (java.awt Color)
-           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons))
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
+           (java.awt.event MouseEvent))
   (:use seesaw.dev
         seesaw.mig)
   (:require [jarman.faces                     :as face]
@@ -217,7 +218,10 @@
                                                           (vec (map
                                                                 (fn [m]
                                                                   (cond (map? m) (gcomp/button-slim
-                                                                                  (:title m) :onClick (fn [e] ((:func m) api)))
+                                                                                  (:title m)
+                                                                                  :onClick (fn [e] ((:func m) api))
+                                                                                  :bg       face/c-alert-btn-bg
+                                                                                  :bg-hover face/c-alert-btn-bg-focus)
                                                                         (fn?  m) (m api)
                                                                         :else (c/label)))
                                                                 body)))
@@ -248,8 +252,10 @@
   [type header body s-popup expand]
   (let [pop (popup/build-popup {:size s-popup
                                 :comp-fn   (fn [] (gmg/migrid
-                                                   :v :center :fg {:gap [10]}
-                                                   (concat [(if (string? body) (gtool/htmling body)(gtool/htmling header))
+                                                   :v "[grow, fill]" :fg {:gap [10]}
+                                                   (concat [(gmg/migrid
+                                                             :v :center
+                                                             (if (string? body) (gtool/htmling body)(gtool/htmling header)))
                                                             (if (fn? expand) (expand) [])])))
                                 :title      header
                                 :title-icon (alert-type-src type :icon)
@@ -258,16 +264,19 @@
     pop))
 
 (defn- template [type header body timelife s-popup expand actions]
-  (let [mig (alert-skeleton header body (alert-type type))]
-    (let [close-icon (c/config mig :user-data)
+  (let [mig (alert-skeleton header body (alert-type type))
+        close-icon (c/config mig :user-data)
           close-fn   (fn [e] (.remove (:alerts-box (state!)) mig) (refresh-box))]
-      (c/config! close-icon :listen [:mouse-clicked close-fn])
-      (.start (Thread. (fn [] (if (> timelife 0) (do (Thread/sleep (* 1000 timelife)) (close-fn 0)))))))
+    (c/config! close-icon :listen [:mouse-clicked close-fn])
+    (.start (Thread. (fn [] (if (> timelife 0) (do (Thread/sleep (* 1000 timelife)) (close-fn 0))))))
     (c/config! mig
                :listen [:mouse-clicked
                         (fn [e]
-                          (open-in-popup type header body s-popup expand)
-                          (refresh-box))])
+                          (if (= (.getButton e) MouseEvent/BUTTON2)
+                            (close-fn 0)
+                            (do
+                              (open-in-popup type header body s-popup expand)
+                              (refresh-box))))])
     mig))
 
 (defn alert
@@ -281,7 +290,7 @@
     Basic example:  (alert \"Information\" \"Some message\" :type :alert :time 3)
     Same but short: (alert \"Information\" \"Some message\")
     Without timer   (alert \"Information\" \"Some message\" :type :danger :time 0)
-
+  
     If you want to add some special content set to key :expand some fn:
       (alert \"Information\" \"Some message\" :expand (fn [] (make-some-component)))
   
@@ -372,7 +381,7 @@
    :>
    (let [c-bg       (alert-type-src type :background)
          c-bg-focus face/c-alert-history-focus]
-     (c/label :text (gtool/htmling (gtool/str-cutter (str "<b>" header "</b> " body) (/ w 7)) :no-wrap)
+     (c/label :text (gtool/htmling (gtool/str-cutter (str "<b>" header "</b> " (if (string? body) body "")) (/ w 7)) :no-wrap)
               :icon (alert-type-src type :icon)
               :background c-bg
               :border (b/compound-border

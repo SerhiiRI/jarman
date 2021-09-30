@@ -261,9 +261,13 @@
   [txt
    & {:keys [onClick 
              underline-size
+             bg
+             bg-hover
              args]
       :or {onClick (fn [e])
            underline-size 0
+           bg       face/c-btn-bg
+           bg-hover face/c-btn-bg-focus
            args []}}]
   (button-basic
    txt
@@ -272,6 +276,8 @@
    :bgap 5
    :underline-size underline-size
    :halign :left
+   :bg   bg
+   :bg-hover bg-hover
    :args args))
 
 

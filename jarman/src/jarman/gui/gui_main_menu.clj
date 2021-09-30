@@ -231,7 +231,7 @@
                      "Update" {:key       "test-update"
                                :action     :invoke
                                :permission :developer
-                               :fn         (fn [e] (jarman.tools.update-manager-gui/alert-update-available))}}
+                               :fn         (fn [e] (jarman.tools.update-manager-gui/check-update))}}
     
     "Select table"   {:key        "select-table"
                       :action     :invoke

@@ -123,6 +123,8 @@
        c-alert-warning-border      c-border-warning
        c-alert-danger-border       c-border-danger
        c-alert-timelife            timelife-alert-popup
+       c-alert-btn-bg              c-layout-background-light
+       c-alert-btn-bg-focus        c-caret
 
        ;; Popup box
        c-popup-body-background     c-compos-background

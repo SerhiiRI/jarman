@@ -48,7 +48,8 @@
             [jarman.config.dot-jarman        :refer [dot-jarman-load]]
             [jarman.gui.builtin-themes.jarman-light]
             [jarman.interaction              :as i]
-            [jarman.external                 :as e]))
+            [jarman.external                 :as e]
+            [jarman.tools.update-manager-gui :as umg]))
 
  
 ;; ┌──────────────────────────┐
@@ -325,7 +326,10 @@
   (print-header
    "Load static main menu"
    (load-static-main-menu))
-  (i/show-delay-alerts))
+  (i/show-delay-alerts)
+  (print-header
+   "Check updates")
+  (umg/check-update :silent))
 
 
 ;; ┌─────────────┐

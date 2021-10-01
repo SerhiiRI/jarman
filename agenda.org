@@ -179,8 +179,7 @@
    - [X] Add into /left-bar menu/, /left-menu/ functionlity that test user permission before
      render
    - [X] View plugins permission system 
-** TODO [#1] Одужуй!                                                 :@Julia:
-** TODO [#3] /Feature/. Macro for declaring some resource              :@Julia:
+** TODO [#3] /Feature/. Macro for declaring some resource              :@Aleks:
    Create ~define-resource~ macro for definision of file
    #+begin_src clojure
      (define-resource jarman
@@ -264,29 +263,17 @@
 ** PLANNED Versioning data structure                                :@Serhii:
 ** PLANNED sql_tools | debug                                   :@Serhii:
     - [ ] pretty printing for sql syntax
-** DONE [#1] Move dialog plugins into the /table.clj/                  :@Julia:
-   CLOSED: [2021-09-30 czw. 06:13]
-** DONE [#1] defvar managment                                       :@Serhii:
-   CLOSED: [2021-09-25 Sat 14:46]
-   After app loading, we have some values in system variables, divided by group name,
-   - [X] Allow defvar declaration for all the places
-   - [X] Fix defvar spec. 
-   - [X] Save config in place in =.jarman= file
-   - [X] GUI for listing all registred config's variable
-   - [X] Debug for all variables
-   - [X] Debug for one variables
-** DONE [#1] /Bug/. Throw exception when .jarman fialed               :@Serhii:
-   CLOSED: [2021-09-18 Sat 20:37]
-** DONE [#1] /Feature/. Rewrite plugin system                         :@Serhii:
-   CLOSED: [2021-09-20 pon. 04:29] DEADLINE: <2021-09-09 Thu>
+** PLANNED /Feature/. Rewrite plugin system                           :@Serhii:
+   DEADLINE: <2021-09-09 Thu>
    - [X] Add ~:deps~ key into ~package~
      - [X] create package compiling sequence 
    - [X] View plugin
      - [X] Registration function.
        - [X] Remove duplications of loaded plugins
-   - [X] Theme plugin [3/3]
+   - [-] Theme plugin [3/4]
      with relation to [[themes plugin system]]
      - [X] Theme declaration
+     - [ ] Merge two theme face lists
      - [X] Registration function
      - [X] GUI Theme manager
    - [X] Rename PandaPackage to PandaExtension
@@ -300,6 +287,21 @@
        (lang :dracula :theme-name)
      #+end_src
 
+** DONE [#1] Одужуй!                                                 :@Julia:
+   CLOSED: [2021-10-01 pt. 04:49]
+** DONE [#1] Move dialog plugins into the /table.clj/                  :@Julia:
+   CLOSED: [2021-09-30 czw. 06:13]
+** DONE [#1] defvar managment                                       :@Serhii:
+   CLOSED: [2021-09-25 Sat 14:46]
+   After app loading, we have some values in system variables, divided by group name,
+   - [X] Allow defvar declaration for all the places
+   - [X] Fix defvar spec. 
+   - [X] Save config in place in =.jarman= file
+   - [X] GUI for listing all registred config's variable
+   - [X] Debug for all variables
+   - [X] Debug for one variables
+** DONE [#1] /Bug/. Throw exception when .jarman fialed               :@Serhii:
+   CLOSED: [2021-09-18 Sat 20:37]
 ** DONE [#3] /Feature/. Support Org file                              :@Serhii:
    CLOSED: [2021-09-26 Sun 19:33]
    - [X] Create library for printing directly to org file [3/3]

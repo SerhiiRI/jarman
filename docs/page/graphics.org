@@ -1,0 +1,64 @@
+* Configurations
+  Packages to install: ~plantuml~, and ~gnuplot~.
+  Also you need to install the ~gnuplot~ cli in your machine 
+  #+begin_src emacs-lisp
+    (add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
+    (org-babel-do-load-languages
+     'org-babel-load-languages
+     '((ditaa    . t)
+       (plantuml . t)
+       (gnuplot  . t)))
+    (setq org-ditaa-jar-path    "/home/serhii/.config/bin/ditaa.jar"
+	  org-plantuml-jar-path "/home/serhii/.config/bin/plantuml.jar")
+  #+end_src
+
+* Ditaa
+
+  #+begin_src ditaa :file ./ditaa1.png
+    +--------+   +-------+    +-------+
+    |        | --+ ditaa +--> |       |
+    |  Text  |   +-------+    |diagram|
+    |Document|   |!magic!|    |       |
+    |     {d}|   |       |    |       |
+    +---+----+   +-------+    +-------+
+	:                         ^
+	|       Lots of work      |
+	+-------------------------+
+  #+end_src
+
+  #+RESULTS:
+  [[file:./ditaa1.png]]
+
+* Plantuml
+  
+  #+begin_src plantuml :file plantuml1.png
+   title Authentication Sequence
+
+   Alice->Bob: Authentication Request
+   note right of Bob: Bob thinks about it
+   Bob->Alice: Authentication Response
+  #+end_src
+
+  #+RESULTS:
+  [[file:plantuml1.png]]
+
+* Gnuplot
+
+  #+tblname: data-table
+  | x | y1 | y2 |
+  |---+----+----|
+  | 0 |  3 |  6 |
+  | 1 |  4 |  7 |
+  | 2 |  5 |  8 |
+
+  #+begin_src gnuplot :var data=data-table :file gnuplot1.png
+    f(x)=x**2
+    g(x)=x**3
+    h(x)=sqrt(x)
+    plot f(x),g(x),h(x)
+  #+end_src
+
+  #+RESULTS:
+  [[file:gnuplot1.png]]
+
+

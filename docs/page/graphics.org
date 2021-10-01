@@ -2,6 +2,7 @@
   Packages to install: ~plantuml~, and ~gnuplot~.
   Also you need to install the ~gnuplot~ cli in your machine 
   #+begin_src emacs-lisp
+    (add-hook 'artist-mode-hook (lambda () (setq indent-tabs-mode nil)))
     (add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
     (org-babel-do-load-languages
      'org-babel-load-languages

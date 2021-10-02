@@ -13,7 +13,6 @@
     (setq org-ditaa-jar-path    "/home/serhii/.config/bin/ditaa.jar"
 	  org-plantuml-jar-path "/home/serhii/.config/bin/plantuml.jar")
   #+end_src
-
 ** Shortcuts
 
    ~C-c C-c~ - eval some source code block   
@@ -36,10 +35,8 @@
 
   #+RESULTS:
   [[file:./ditaa1.png]]
-
 * Plantuml
-
-** colors
+** Colors
 
   #+begin_src plantuml :file colors.png
    @startuml
@@ -55,9 +52,6 @@
    note right of Bob: Bob thinks about it
    Bob->Alice: Authentication Response
   #+end_src
-
-  #+RESULTS:
-  [[file:plantuml1.png]]
 
 ** Mindmap
   #+begin_src plantuml :file mindmap.png
@@ -77,9 +71,6 @@
     @endmindmap
   #+end_src
 
-  #+RESULTS:
-  [[file:mindmap.png]]
-
   #+begin_src text
     @startgantt
     [Prototype design] lasts 15 days
@@ -92,7 +83,6 @@
     [T5 (2 weeks)] lasts 2 weeks
     @endgantt
   #+end_src
-
 * Gnuplot
 
   #+tblname: data-table
@@ -109,7 +99,5 @@
     plot f(x),g(x),h(x)
   #+end_src
 
-  #+RESULTS:
-  [[file:gnuplot1.png]]
 
 

@@ -31,6 +31,3 @@
   (cl-format nil "~{ + ~{~A~^ - ~} ~%~}" (seq {:some 1 :vvds 2 :dfsa "fdkasl"}))
   ;; => " + :some - 1 \n + :vvds - 2 \n + :dfsa - fdkasl \n"
 #+end_src
-
-* 
-

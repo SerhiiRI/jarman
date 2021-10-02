@@ -141,7 +141,7 @@
        c-icon-danger              c-border-danger
        c-icon-success             c-border-success
        
-       cvv-button-expand        expand-btn-colors ;; expand button lvls colors
+       cvv-button-expand          expand-btn-colors ;; expand button lvls colors
        
        ;;----------------------------------
        ;;Custom elements  !!! Do not repeat in code! Create new per component !!!
@@ -170,8 +170,8 @@
        c-slider-underline-on-focus c-underline-on-focus-light
 
        ;; view service
-       c-tab-active          c-on-focus-light
-       c-tabbar-bg           c-background-detail
+       c-tab-active          c-background-detail
+       c-tabbar-bg           c-on-focus-light
        c-tab-underline       c-underline-light
        s-tab-underline       underline-tabbar-size
       
@@ -181,7 +181,7 @@
        c-table-select-cell   c-foreground
 
        ;; table header
-       c-table-header-bg     c-compos-background-dark
+       c-table-header-bg     c-background-detail
        c-table-header-fg     c-foreground
        c-table-header-border c-compos-background
 

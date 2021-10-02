@@ -141,8 +141,8 @@
        c-slider-underline-on-focus c-underline-on-focus-light
 
        ;; view service
-       c-tab-active          c-on-focus-light
-       c-tabbar-bg           c-layout-background
+       c-tab-active          c-layout-background
+       c-tabbar-bg           c-on-focus-light
        c-tab-underline       c-underline-light
        s-tab-underline       underline-tabbar-size
        

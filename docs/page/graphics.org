@@ -2,6 +2,7 @@
   Packages to install: ~plantuml~, and ~gnuplot~.
   Also you need to install the ~gnuplot~ cli in your machine 
   #+begin_src emacs-lisp
+    (setq org-confirm-babel-evaluate nil)
     (add-hook 'artist-mode-hook (lambda () (setq indent-tabs-mode nil)))
     (add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
     (org-babel-do-load-languages
@@ -12,6 +13,12 @@
     (setq org-ditaa-jar-path    "/home/serhii/.config/bin/ditaa.jar"
 	  org-plantuml-jar-path "/home/serhii/.config/bin/plantuml.jar")
   #+end_src
+
+** Shortcuts
+
+   ~C-c C-c~ - eval some source code block   
+   ~C-c C-x C-v~ - show/hide inline images
+   ~C-c '~ - edit some source code
 
 * Ditaa
 
@@ -52,7 +59,6 @@
   #+RESULTS:
   [[file:plantuml1.png]]
 
-  
 ** Mindmap
   #+begin_src plantuml :file mindmap.png
       @startmindmap
@@ -86,7 +92,7 @@
     [T5 (2 weeks)] lasts 2 weeks
     @endgantt
   #+end_src
-  
+
 * Gnuplot
 
   #+tblname: data-table

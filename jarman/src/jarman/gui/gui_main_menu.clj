@@ -1,24 +1,24 @@
 (ns jarman.gui.gui-main-menu
-  (:require [jarman.tools.lang :refer :all]
-            [clojure.string :as string]
+  (:require [clojure.string :as string]
             [seesaw.core    :as c]
             [jarman.faces   :as face]
-            [jarman.tools.update-manager-gui :as update-manager]
-            [jarman.tools.org :refer :all]
-            [jarman.plugin.extension-manager-gui :as extension-manager]
-            [jarman.plugin.themes-manager-gui :as themes-manager]
-            [jarman.config.vars-listing-gui   :as vars-listing]
-            [jarman.gui.gui-components :as gcomp]
-            [jarman.gui.gui-tools      :as gtool]
-            [jarman.logic.state        :as state]
-            [jarman.logic.session      :as session]
-            [jarman.logic.view-manager       :as vmg]
-            [jarman.gui.gui-views-service    :as gvs]
-            [jarman.gui.gui-dbvisualizer     :as dbv]
-            [jarman.gui.gui-config-generator :as cg]
-            [jarman.gui.popup                :as popup]
-            [jarman.tools.swing              :as stool]
-            [jarman.gui.gui-editors          :as gedit]
+            [jarman.tools.org  :refer :all]
+            [jarman.tools.lang :refer :all]
+            [jarman.tools.swing  :as stool]
+            [jarman.logic.state                :as state]
+            [jarman.logic.session              :as session]
+            [jarman.logic.view-manager         :as vmg]
+            [jarman.gui.gui-views-service      :as gvs]
+            [jarman.gui.gui-dbvisualizer       :as dbv]
+            [jarman.gui.gui-config-generator   :as cg]
+            [jarman.gui.gui-update-manager     :as update-manager]
+            [jarman.gui.gui-extension-manager  :as extension-manager]
+            [jarman.gui.gui-themes-manager     :as themes-manager]
+            [jarman.gui.gui-vars-listing       :as vars-listing]
+            [jarman.gui.gui-components         :as gcomp]
+            [jarman.gui.gui-tools              :as gtool]
+            [jarman.gui.popup                  :as popup]
+            [jarman.gui.gui-editors            :as gedit]
             [jarman.interaction :as i]))
 
 ;; (defn- expand-colors []
@@ -231,7 +231,7 @@
                      "Update" {:key       "test-update"
                                :action     :invoke
                                :permission :developer
-                               :fn         (fn [e] (jarman.tools.update-manager-gui/check-update))}}
+                               :fn         (fn [e] (update-manager/check-update))}}
     
     "Select table"   {:key        "select-table"
                       :action     :invoke

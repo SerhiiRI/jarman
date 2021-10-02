@@ -1,4 +1,4 @@
-(ns jarman.tools.update-manager-gui
+(ns jarman.gui.gui-update-manager
   (:require
    ;; swing tools
    [jarman.faces  :as face]

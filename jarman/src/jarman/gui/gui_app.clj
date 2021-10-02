@@ -10,46 +10,42 @@
            (jarman.jarmanjcomp DateTime)
            (java.awt Color Component)
            (java.awt Dimension))
-  (:require [jarman.faces :as face]
-            [jarman.tools.lang :refer :all]
-            [clojure.string    :as string]
-            [seesaw.swingx  :as swingx]
+  (:require [clojure.string    :as string]
+            [seesaw.swingx     :as swingx]
             [seesaw.core       :as c]
             [seesaw.util       :as u]
             [seesaw.border     :as b]
-            ;; resource
-            [jarman.gui.gui-style             :as gs]
-            [jarman.resource-lib.icon-library :as icon]
-            [jarman.gui.gui-style :as gs]
-            [clojure.pprint :as pp]
+            ;; external funcionality
+            [jarman.faces                    :as face]
+            [jarman.interaction              :as i]
+            [jarman.external                 :as e]
             ;; logic
-            [jarman.config.config-manager    :as cm]            
-            [jarman.gui.gui-views-service    :as gvs]
-            [jarman.gui.gui-alerts-service   :as gas]
-            [jarman.gui.gui-components       :as gcomp]
-            [jarman.gui.gui-tools            :as gtool]
-            [jarman.tools.org                :refer :all]
-            ;; deverloper tools 
-            [jarman.config.init              :as iinit]
             [jarman.logic.state              :as state]
-            [jarman.gui.gui-seed             :as gseed]
             [jarman.logic.session            :as session]
             [jarman.logic.view-manager       :as vmg]
-            [jarman.gui.gui-dbvisualizer     :as dbv]
-            [jarman.gui.gui-config-generator :as cg]
-            [jarman.gui.popup                :as popup]
-            [jarman.gui.gui-main-menu        :as menu]
-            [jarman.gui.gui-migrid           :as gmg]
-            ;; [jarman.managment.data           :as managment-data]
             [jarman.plugin.extension-manager :refer [do-load-extensions]]
             [jarman.plugin.plugin            :refer [do-load-theme theme-selected]]
             [jarman.config.vars              :refer [setq print-list-not-loaded]]
             [jarman.config.conf-language     :refer [do-load-language]]
             [jarman.config.dot-jarman        :refer [dot-jarman-load]]
+            [jarman.config.config-manager    :as cm]
+            [jarman.config.init              :as iinit]
+            [jarman.tools.org                :refer :all]
+            [jarman.tools.lang               :refer :all]
+            ;; gui 
             [jarman.gui.builtin-themes.jarman-light]
-            [jarman.interaction              :as i]
-            [jarman.external                 :as e]
-            [jarman.tools.update-manager-gui :as umg]))
+            [jarman.gui.gui-views-service    :as gvs]
+            [jarman.gui.gui-alerts-service   :as gas]
+            [jarman.gui.gui-config-generator :as cg]
+            [jarman.gui.gui-update-manager   :as umg]
+            [jarman.gui.gui-components       :as gcomp]
+            [jarman.gui.gui-tools            :as gtool]
+            [jarman.gui.gui-style            :as gs]
+            [jarman.gui.gui-dbvisualizer     :as dbv]
+            [jarman.gui.gui-seed             :as gseed]
+            [jarman.gui.gui-main-menu        :as menu]
+            [jarman.gui.gui-migrid           :as gmg]
+            [jarman.gui.popup                :as popup]))
 
  
 ;; ┌──────────────────────────┐

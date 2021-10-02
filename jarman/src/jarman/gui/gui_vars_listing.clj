@@ -1,4 +1,4 @@
-(ns jarman.config.vars-listing-gui
+(ns jarman.gui.gui-vars-listing
   (:require
    ;; swing tools
    [seesaw.core   :as c]
@@ -23,9 +23,6 @@
    [jarman.gui.gui-views-service :as gvs]
    [jarman.resource-lib.icon-library :as icon]
    [jarman.config.vars :as vars]
-   ;; [jarman.tools.lang :refer [in?]]
-   ;; [jarman.tools.fs :as fs]
-   ;; [jarman.plugin.extension-manager :as extension-manager]
    ;; environtemnt variables
    [jarman.config.environment :as env]
    [jarman.interaction :as i])

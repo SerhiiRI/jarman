@@ -1,4 +1,4 @@
-(ns jarman.plugin.themes-manager-gui
+(ns jarman.gui.gui-themes-manager
   (:require
    ;; swing tools
    [seesaw.core   :as c]

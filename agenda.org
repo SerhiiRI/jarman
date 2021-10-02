@@ -7,6 +7,41 @@
 #+ARCHIVE: %s_done::
 #+STARTUP: overview
 
+* Aims
+ #+begin_src plantuml :file issues/ghant_features.png
+   @startgantt
+   scale 800 width
+   Project starts 2021-10-02
+   [Permission] starts 2021-10-02
+   [Permission] is colored in LawnGreen/MediumSeaGreen
+   [Permission] ends 2021-10-08
+   [Permission] is 70% completed
+   [Licenses] starts 2021-10-02
+   [Licenses] is colored in LawnGreen/MediumSeaGreen
+   [Licenses] ends 2021-10-09
+   [GUI] starts 2021-10-02
+   [GUI] is 80% completed
+   [GUI] is colored in LawnGreen/MediumSeaGreen
+   [GUI] ends 2021-10-13
+   [Exports] starts 2021-10-13
+   [Exports] is colored in LawnGreen/MediumSeaGreen
+   [Exports] ends 2021-10-21
+   [Ekka] starts 2021-10-10
+   [Ekka] is colored in Crimson/DarkRed
+   [Ekka] ends at [Exports]'s end 
+   [Unit test] as [U] starts 2021-10-14
+   [Unit test] is colored in LightSeaGreen/MediumTurquoise
+   [Unit test] ends 2021-10-31
+   [CI/CD] as [C] lasts 2 day
+   [CI/CD] is colored in LightSeaGreen/MediumTurquoise
+   [C] starts at [U]'s end
+   @endgantt
+ #+end_src
+
+ #+RESULTS:
+ [[file:issues/ghant_features.png]]
+
+
 * Frontend
 ** TOREVIEW [#1] /Feature/. Interaction files [3/3]                   :@Serhii:
    :PROPERTIES:
@@ -124,7 +159,7 @@
    1. [ ] Cannot edit table =view=
    2. [ ] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
    3. [ ] Cannot edit metadata of table 
-** TODO [#2] Switch into new language system                         :@Julia:
+** TODO [#2] Switch into new language system                         :@Aleks:
    DEADLINE: <2021-10-13 śr.>
    - [ ] Just use language getter functions.
 ** TODO [#3] /Feature/. Theme Manager [3/3]                           :@Serhii:
@@ -260,9 +295,6 @@
 ** PLANNED Rewrite test for SSQL toolkit                :@Julia:@Serhii:
    Current testable API too old. API standard was reimplemented.
    And strongly need to rewrite test cases for oll things query.
-** PLANNED Versioning data structure                                :@Serhii:
-** PLANNED sql_tools | debug                                   :@Serhii:
-    - [ ] pretty printing for sql syntax
 ** PLANNED /Feature/. Rewrite plugin system                           :@Serhii:
    DEADLINE: <2021-09-09 Thu>
    - [X] Add ~:deps~ key into ~package~

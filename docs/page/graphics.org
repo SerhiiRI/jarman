@@ -31,7 +31,16 @@
   [[file:./ditaa1.png]]
 
 * Plantuml
-  
+
+** colors
+
+  #+begin_src plantuml :file colors.png
+   @startuml
+   colors
+   @enduml
+  #+end_src
+   
+** Sample
   #+begin_src plantuml :file plantuml1.png
    title Authentication Sequence
 
@@ -43,6 +52,41 @@
   #+RESULTS:
   [[file:plantuml1.png]]
 
+  
+** Mindmap
+  #+begin_src plantuml :file mindmap.png
+      @startmindmap
+      ,* Debian
+      ,** Ubuntu
+      ,*** Linux Mint
+      ,*** Kubuntu
+      ,*** Lubuntu
+      ,*** KDE Neon
+      ,** LMDE
+      ,** SolydXK
+      ,** SteamOS
+      ,** Raspbian with a very long name
+      ,*** <s>Raspmbc</s> => OSMC
+      ,*** <s>Raspyfi</s> => Volumio	
+    @endmindmap
+  #+end_src
+
+  #+RESULTS:
+  [[file:mindmap.png]]
+
+  #+begin_src text
+    @startgantt
+    [Prototype design] lasts 15 days
+    [Test prototype] lasts 10 days
+    -- All example --
+    [Task 1 (1 day)] lasts 1 day
+    [T2 (5 days)] lasts 5 days
+    [T3 (1 week)] lasts 1 week
+    [T4 (1 week and 4 days)] lasts 1 week and 4 days
+    [T5 (2 weeks)] lasts 2 weeks
+    @endgantt
+  #+end_src
+  
 * Gnuplot
 
   #+tblname: data-table

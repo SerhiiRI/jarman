@@ -1,5 +1,5 @@
 #+TITLE: Agenda
-#+TODO: PLANNED(s) TODO(t) PROCESSING(p) TOREVIEW(r) | DONE(d)
+#+TODO: TOREVIEW(r) PROCESSING(p) TODO(t) PLANNED(s) | DONE(d)
 #+TAGS: @Julia(j) @Aleks(a) @Serhii(s)
 #+PRIORITIES: 1 3 2
 #+PROPERTY: session *EL* 
@@ -8,6 +8,11 @@
 #+STARTUP: overview
 
 * Aims
+** Shortcuts
+ Open link file ~C-c C-o~
+ [[file:docs/page/graphics.org][Shortucts]]
+
+** Release Roadmap
  #+begin_src plantuml :file issues/ghant_features.png
    @startgantt
    scale 800 width
@@ -39,7 +44,7 @@
  #+end_src
 
  #+RESULTS:
- [[file:issues/ghant_features.png]]
+ 9[[file:issues/ghant_features.png]]
 
 
 * Frontend
@@ -78,27 +83,20 @@
    - [X] global foreground
    - [X] removing unnessesary font override         
    - [ ] unifing styles in UI
-** PROCESSING [#1] Frontend refactorization [0/8]
+** PROCESSING [#1] Frontend refactorization [4/7]
    DEADLINE: <2021-10-08 pt.>
-*** TOREVIEW Repair expand button [2/2]                              :@Aleks:
-    - [X] Rainbow margin -> Space margin
-    - [X] Separate last element in inside expand
-*** TOREVIEW New icons as fonts [7/7]                                :@Aleks:
-    - [X] New fn for icon return (~gui-style/icon GoogleMaterialDesignIcons/some-icon "#000" 30)~
-    - [X] Demo to quick startup in gui_style.clj
-    - [X] Set new feature to alert system
-    - [X] Set demo alerts (access: developer, buttons will show in main menu)
-    - [X] New face for close icon, listen event mouse entered
-    - [X] Set new feature to menu bars
-    - [X] Set new feature to other if needed
-*** TODO Alerts upgrade [5/5]                                        :@Aleks:
-    - [X] /Feature/. Success alert type.
-    - [X] /Feature/. TMP storage. invoking alerts after some event like loaded app.
-    - [X] /Feature/. Add simple button to alerts insted body
-    - [X] /Feature/. Add vector with fns rendering components insted body
-    - [X] /Feature/. warning alert, which notify user about update
-      - [X] Button with update manager invoking
-      - [X] Check update
+*** TODO Service Periods plugins [0/3]                               :@Aleks:
+    - [ ] Expand buttons [0/7]
+      - [ ] Buttons must be resizable, and scaled to window width.
+      - [ ] Not hide expanded button, when checkbox was clicked. Julia add coments inside plugin, about this issue (find "TODO" mark)
+      - [ ] make less color differencess between embaded expand buttons.
+      - [ ] Also in future change `+/-` icons.
+      - [ ] For Enterperneur use this format style "X-kom, 400 zl", money color must be pastel green.
+      - [ ] For Service Contract use this format stlye notation "30-12-2020 - 04-01-2021,  200 zl", money also in green.
+      - [ ] For Service Months use ths format style notation "01-01-2020 - 04-01-2021,  100 zl", money also in pastel green.
+    - [ ] Julia call it *insert-space*, is section where we adding new service contract. Rewrite whole panel, but keep logic as we create before.
+    - [ ] After you click on one month, you can edit all service contract month payments. You can edit, only if month wasn't payed. Rewrite Julia view, on your implementation. I think better be when all those month fields be in one line.
+
 *** TODO Table.clj [3/4]                                             :@Aleks:
     - [X] remove 1pixel black border for right table.
     - [ ] rewrite expand panel
@@ -133,27 +131,39 @@
       - [X] Change all black font's on closelly to black. Use some *dark-gray*, with blue-direction - ~#030D1C~ as example.
       - [X] Also for expand buttons use bold ubuntu fonts (looks little crappy).
       - [X] Chnage ordering items in menubar. At first place user must saw all buisness tables, and next any other *setting* or *db visualizer* etc.
-*** PLANNED Rewrite expand panel
-*** PLANNED Service Periods plugins [0/3]                            :@Aleks:
-    - [ ] Expand buttons [0/7]
-      - [ ] Buttons must be resizable, and scaled to window width.
-      - [ ] Not hide expanded button, when checkbox was clicked. Julia add coments inside plugin, about this issue (find "TODO" mark)
-      - [ ] make less color differencess between embaded expand buttons.
-      - [ ] Also in future change `+/-` icons.
-      - [ ] For Enterperneur use this format style "X-kom, 400 zl", money color must be pastel green.
-      - [ ] For Service Contract use this format stlye notation "30-12-2020 - 04-01-2021,  200 zl", money also in green.
-      - [ ] For Service Months use ths format style notation "01-01-2020 - 04-01-2021,  100 zl", money also in pastel green.
-    - [ ] Julia call it *insert-space*, is section where we adding new service contract. Rewrite whole panel, but keep logic as we create before.
-    - [ ] After you click on one month, you can edit all service contract month payments. You can edit, only if month wasn't payed. Rewrite Julia view, on your implementation. I think better be when all those month fields be in one line.
-*** PLANNED Cooperative theme standarization [0/1]
-    - [ ] Main menu [0/2]
-      - [ ] Better colors for levels in expand button in ~Jarman Light~
-      - [ ] Better colors for levels in expand button in ~Dracula~
+
+*** DONE Repair expand button [2/2]                                  :@Aleks:
+CLOSED: [2021-10-02 sob 11:59]
+    - [X] Rainbow margin -> Space margin
+    - [X] Separate last element in inside expand
+*** DONE New icons as fonts [7/7]                                    :@Aleks:
+CLOSED: [2021-10-02 sob 11:58]
+    - [X] New fn for icon return (~gui-style/icon GoogleMaterialDesignIcons/some-icon "#000" 30)~
+    - [X] Demo to quick startup in gui_style.clj
+    - [X] Set new feature to alert system
+    - [X] Set demo alerts (access: developer, buttons will show in main menu)
+    - [X] New face for close icon, listen event mouse entered
+    - [X] Set new feature to menu bars
+    - [X] Set new feature to other if needed
+*** DONE Alerts upgrade [5/5]                                        :@Aleks:
+CLOSED: [2021-10-02 sob 11:58]
+    - [X] /Feature/. Success alert type.
+    - [X] /Feature/. TMP storage. invoking alerts after some event like loaded app.
+    - [X] /Feature/. Add simple button to alerts insted body
+    - [X] /Feature/. Add vector with fns rendering components insted body
+    - [X] /Feature/. warning alert, which notify user about update
+      - [X] Button with update manager invoking
+      - [X] Check update
+*** DONE Cooperative theme standarization [1/1]
+CLOSED: [2021-10-02 sob 12:00]
+    - [X] Main menu [2/2]
+      - [X] Better colors for levels in expand button in ~Jarman Light~
+      - [X] Better colors for levels in expand button in ~Dracula~
 
 ** PROCESSING [#3] /Feature/. On exit event [0/1]              :@Aleks:@Serhii:
    - [ ] Create event when close 
-     - [ ] Remove suuid :@Serhii:
-     - [ ] Autoclse log stream's :@Serhii:
+     - [ ] Remove suuid /:@Serhii:/
+     - [ ] Autoclose log stream's /:@Serhii:/
 ** TODO [#2] /Bug/. DB Visualizer editing [0/3]                :@Aleks:@Serhii:
    DEADLINE: <2021-10-08 pt.>
    1. [ ] Cannot edit table =view=
@@ -161,33 +171,32 @@
    3. [ ] Cannot edit metadata of table 
 ** TODO [#2] Switch into new language system                         :@Aleks:
    DEADLINE: <2021-10-13 śr.>
-   - [ ] Just use language getter functions.
-** TODO [#3] /Feature/. Theme Manager [3/3]                           :@Serhii:
-   DEADLINE: <2021-10-02 sob.>
-   - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
-   - [X] Make refreshing for jarman, when theme was selected
-   - [X] set info about selected theme into the .jarman
+   - [ ] Just use new language getter functions.
 
-** TODO [#3] /Feature/. Licenses [0/2]                         :@Aleks:@Serhii:
+** TODO [#1] /Feature/. Licenses [0/3]                         :@Aleks:@Serhii:
    DEADLINE: <2021-10-13 śr.>
-   Related to [[Register licence mechanics]] issue.  
+   Related to [[Register licence mechanics]] issue.
+   - [ ] FAQ for licence
    - [ ] insert licence GUI menu
    - [ ] Make template (put into some tmp file or place) [0/2]
      - [ ] Alert which making hard logout from system, and inform about computer count
      - [ ] Alert which inform on startup that licence is going to end
-** TODO [#2] /Feature/. Create configurations panel
+** TODO [#1] /Feature/. Create configurations panel
    DEADLINE: <2021-10-13 śr.>
    - [ ] Language select box
 ** TODO [#3] /Feature/. Update Manager [1/2]                           :@Aleks:
    DEADLINE: <2021-10-13 śr.>
    - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [ ] Show popup with message need hard restart
+** PLANNED Scroll to selected in table                               :@Aleks:
+   - [ ] Scroll to selected in table
+
 ** PLANNED /Feature/. Extension Manager [1/5]                          :@Aleks:
    - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [ ] *FUTURE* Show extension file-tree. Alow editing file through the jarman [0/2]
      Related to [[#interaction-function-set]] use interaction to open file in tab
      - [ ] *FUTURE* GUI part of tree file-view for package folder
-     - [ ] *FUTURE* Open file interaction 
+     - [ ] *FUTURE* Open file interaction
    - [ ] *FUTURE* Show whole information about package, from file /PandaPackage/ entity, when you click on
      special expand segment.
    - [ ] *FUTURE* =Enable/Disable= extension
@@ -203,9 +212,14 @@
 ** PLANNED Make diagram from DB Visualiser
    - [ ] Visualize relation between tables
    - [ ] Save table location in DB visualiser into configurations
-** PLANNED Debug space like doom popup but on bottom                 :@Aleks:
-** PLANNED Scroll to selected in table                               :@Aleks:
-   - [ ] Scroll to selected in table     
+** DONE /Feature/. Theme Manager [3/3]                                :@Serhii:
+   CLOSED: [2021-10-02 sob 12:18] DEADLINE: <2021-10-02 sob.>
+   - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
+   - [X] Make refreshing for jarman, when theme was selected
+   - [X] set info about selected theme into the .jarman
+
+** DONE Debug space like doom popup but on bottom                    :@Aleks:
+CLOSED: [2021-10-02 sob 12:29]
 * Backend
 ** PROCESSING [#1] Permission system                                :@Serhii:
    - [-] Rewrie user session object
@@ -213,7 +227,17 @@
      - [X] Make testing on permission
    - [X] Add into /left-bar menu/, /left-menu/ functionlity that test user permission before
      render
-   - [X] View plugins permission system 
+   - [X] View plugins permission system
+** TODO [#1] /Bug/. Unpin old config system                           :@Serhii:
+   - [ ] Rewrite database connection list.
+     - [ ] Implemnent datalist in .jarman
+     - [ ] Rewrite login panel datalist editor
+   - [ ] Update repository into .jarman
+
+** TODO [#1] Pizdets
+   - [ ] Switching onto honey
+** TODO [#2] check all steps of loading tables                      :@Serhii:
+   in file view-manager.clj, markup TO DO,  add messages(println), if we need
 ** TODO [#3] /Feature/. Macro for declaring some resource              :@Aleks:
    Create ~define-resource~ macro for definision of file
    #+begin_src clojure
@@ -233,72 +257,11 @@
 ** TODO [#3] Register licence mechanics                             :@Serhii:
    - [ ] Create =register-licence-file= functionality
    - [ ] decrypt/uncrypt by system RSA keys
-   - [X] Checking login user in system, limited by the licence
-** TODO [#2] check all steps of loading tables                      :@Serhii:
-   in file view-manager.clj, markup TO DO,  add messages(println), if we need
-** TODO [#1] Pizdets
-   - [ ] Switching onto honey
-** PLANNED Service Period. sort contract list                       :@Serhii:
-   - [ ] sorting contract by date
-   - [ ] colorize contract by active-nonactive depend on current date
-** PLANNED /Feature/. Emacs IDE split out-environment [1/2]           :@Serhii:
-   - [X] Auto tail reverting logs buffer
-   - [ ] Integrate local toolkit for emacs.
-     - [ ] Open log buffer.
-** PLANNED Ekka todo#1 chages                         :@Julia:@Aleks:@Serhii:
-*** Підприємець
-    -   ЄДРПОУ - 10 цифр довжина з переду нулями
-    -   Форма власності - комбобокс
-    -   Номер ПДВ
-     
-*** Point of sale
-    -   Назва торгового обєкту
-     
-*** РРО
-    -   повна назва
-    -   Заводський номер замість серійний
-    -   Десять цифр фіскальний номер
-    -   Працює.непрацює якщо робить нарахування
-    -   Версія -> Версія прошивки
-    -   Ідентифікатор виробника -> Просто виробник назва
-    -   Три поля модему замінити на тип зв'язку GPRS,Ethernet,Wireless.комбобокс. Якщо ГПРС то активний телефонний номер, якщо ні то дай компонент неактивним
-    -   Телефонний номер не модема а РРО
-    
-*** Пломби
-     -   Використана чи ні.
-     
-*** Ремонти
-      -   остання датат контаркуту видалити
-      -   Фіскальний номер
-      -   Дата
-      -   Причина розпломбування - комбо
-      -   Технічна насправність  - список
-      -   Характер насправності  - вибір
-      -   Яка пломба ставиться   - додати
-      -   Час(дата.година) розпломбування апарту
-      
-*** ДОговір сервісного обслуговування
-       -   підприємець
-       -   Сторона підписуванн
-       -   Сторона замовник(директор)
-       -   Список касових апаратів
-       -   Тариф
-       -   Реквізити
-       -   Строк дії договору(дефолт на рік)
-       -   Нарахунок по дням
-       
-*** Акт виконаних робіт
-	-   створити
-** PLANNED encrypt business files                              :@Serhii:
-   - [ ] create crypo toolkit
-   - [ ] create key-storage
-** PLANNED Rewrite test for SSQL toolkit                :@Julia:@Serhii:
-   Current testable API too old. API standard was reimplemented.
-   And strongly need to rewrite test cases for oll things query.
-** PLANNED /Feature/. Rewrite plugin system                           :@Serhii:
+   - [ ] Checking login user in system, limited by the licence
+** TODO [#3] /Feature/. Rewrite plugin system                         :@Serhii:
    DEADLINE: <2021-09-09 Thu>
    - [X] Add ~:deps~ key into ~package~
-     - [X] create package compiling sequence 
+     - [X] create package compiling sequence
    - [X] View plugin
      - [X] Registration function.
        - [X] Remove duplications of loaded plugins
@@ -314,16 +277,73 @@
      #+begin_src clojure
        ;; src/jarman/gui/gui_tools.clj:208
        (defvar selected-lang :ua)
-       ;; 
+       ;;
        (lang :accept)
        (lang :dracula :theme-name)
      #+end_src
 
-** DONE [#1] Одужуй!                                                 :@Julia:
+** PLANNED Service Period. sort contract list                       :@Serhii:
+   - [ ] sorting contract by date
+   - [ ] colorize contract by active-nonactive depend on current date
+** PLANNED /Feature/. Emacs IDE split out-environment [1/2]           :@Serhii:
+   - [X] Auto tail reverting logs buffer
+   - [ ] Integrate local toolkit for emacs.
+     - [ ] Open log buffer.
+** PLANNED Ekka todo#1 chages                         :@Julia:@Aleks:@Serhii:
+*** Підприємець
+    -   ЄДРПОУ - 10 цифр довжина з переду нулями
+    -   Форма власності - комбобокс
+    -   Номер ПДВ
+
+*** Point of sale
+    -   Назва торгового обєкту
+
+*** РРО
+    -   повна назва
+    -   Заводський номер замість серійний
+    -   Десять цифр фіскальний номер
+    -   Працює.непрацює якщо робить нарахування
+    -   Версія -> Версія прошивки
+    -   Ідентифікатор виробника -> Просто виробник назва
+    -   Три поля модему замінити на тип зв'язку GPRS,Ethernet,Wireless.комбобокс. Якщо ГПРС то активний телефонний номер, якщо ні то дай компонент неактивним
+    -   Телефонний номер не модема а РРО
+
+*** Пломби
+     -   Використана чи ні.
+
+*** Ремонти
+      -   остання датат контаркуту видалити
+      -   Фіскальний номер
+      -   Дата
+      -   Причина розпломбування - комбо
+      -   Технічна насправність  - список
+      -   Характер насправності  - вибір
+      -   Яка пломба ставиться   - додати
+      -   Час(дата.година) розпломбування апарту
+
+*** ДОговір сервісного обслуговування
+       -   підприємець
+       -   Сторона підписуванн
+       -   Сторона замовник(директор)
+       -   Список касових апаратів
+       -   Тариф
+       -   Реквізити
+       -   Строк дії договору(дефолт на рік)
+       -   Нарахунок по дням
+
+*** Акт виконаних робіт
+	-   створити
+** PLANNED encrypt business files                              :@Serhii:
+   - [ ] create crypo toolkit
+   - [ ] create key-storage
+** PLANNED Rewrite test for SSQL toolkit                :@Julia:@Serhii:
+   Current testable API too old. API standard was reimplemented.
+   And strongly need to rewrite test cases for oll things query.
+** DONE Одужуй!                                                      :@Julia:
    CLOSED: [2021-10-01 pt. 04:49]
-** DONE [#1] Move dialog plugins into the /table.clj/                  :@Julia:
+** DONE Move dialog plugins into the /table.clj/                       :@Julia:
    CLOSED: [2021-09-30 czw. 06:13]
-** DONE [#1] defvar managment                                       :@Serhii:
+** DONE defvar managment                                            :@Serhii:
    CLOSED: [2021-09-25 Sat 14:46]
    After app loading, we have some values in system variables, divided by group name,
    - [X] Allow defvar declaration for all the places
@@ -332,9 +352,9 @@
    - [X] GUI for listing all registred config's variable
    - [X] Debug for all variables
    - [X] Debug for one variables
-** DONE [#1] /Bug/. Throw exception when .jarman fialed               :@Serhii:
+** DONE /Bug/. Throw exception when .jarman fialed                    :@Serhii:
    CLOSED: [2021-09-18 Sat 20:37]
-** DONE [#3] /Feature/. Support Org file                              :@Serhii:
+** DONE /Feature/. Support Org file                                   :@Serhii:
    CLOSED: [2021-09-26 Sun 19:33]
    - [X] Create library for printing directly to org file [3/3]
      - [X] Printing lib
@@ -342,7 +362,7 @@
      - [X] Move out to different places in one moment [2/2]
        - [X] file
        - [X] print
-** DONE [#3] In load circle integrate setting variable :@Julia:@Aleks:@Serhii:
+** DONE In load circle integrate setting variable     :@Julia:@Aleks:@Serhii:
    CLOSED: [2021-09-25 Sat 18:55]
    in some load-level add manual setted variable for some systme things, that shouldn't be 
    memberd in =.jarman=. Or thay must have some deault values which be rewrited by the 
@@ -353,7 +373,7 @@
      (setq supported-language [:en :pl :ua])
      ...
    #+end_src
-* Infrastructure
+
 * Documentations
 ** PLANNED [#3] create jarman manifest file                         :@Serhii:
    - Note taken on [2021-09-02 чт 19:01] 
@@ -366,9 +386,5 @@
      - strategy and aims   
 
        
-   
 
    
-   
-
-

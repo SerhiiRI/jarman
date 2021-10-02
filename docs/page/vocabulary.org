@@ -1,47 +1,48 @@
 * Vocabulary
 
-  1. Interaction
-     Is simple function API for invoking some GUI elements.  
-  2. Client
-     GUI app
-  3. Composite Column
-     This is type of columns in flat datatabase model, which retrospect some meanfull group.
-     Flatten database column model:
-     #+begin_example
-      (a b c foo_a foo_b foo_c)
-     #+end_example
-     In metadata level you manage those colums as flatt+group
-     #+begin_example
-      (a b c #foo(a b c))
-     #+end_example
-     Some schematic(not reall description of definition)
-     #+begin_src clojure
-       {:columns
-	[:a
-	 :b
-	 :c
-	 :foo {:columns [:a
-			 :b
-			 :c]}]}
-     #+end_src
-  4. Composite Component
-  5. Extension
-     Is special type of plugin system.
-     Every extension /MUST/ have file with name =package=, and SHOULD has =README.org= and another source =.clj= files that must be registered in special loading moment in Jaman. 
-  6. Face
-  7. Face Variable
-  8. File Storage
-     The name of remote file server, on which we send any large data, after client put it to the insert form. 
-     What *important*, File storage also can be a standart SQL server. 
-  9. Metadata
-     Clojure HashMap list which has specific notation, and define some behavior, types, additional data to descrbie some Database tables or columns.
-     For example discribe visible and normal text to colum for GUI user: column /first_name/ as /First Name/. And another parameter, which must help to render view, or be usefull for programming.
-  10. Manager
-      is part of gui, which managed some configuration's, plugin's or another part of jarman, on administration level.
-  11. Session
-  12. Theme
-  13. Theme Plugin
-  14. View
-  15. View Plugin
+  + Client
+    GUI app
+  + Composite Column
+    This is type of columns in flat datatabase model, which retrospect some meanfull group.
+    Flatten database column model:
+    #+begin_example
+     (a b c foo_a foo_b foo_c)
+    #+end_example
+    In metadata level you manage those colums as flatt+group
+    #+begin_example
+     (a b c #foo(a b c))
+    #+end_example
+    Some schematic(not reall description of definition)
+    #+begin_src clojure
+      {:columns
+       [:a
+	:b
+	:c
+	:foo {:columns [:a
+			:b
+			:c]}]}
+    #+end_src
+  + Composite Component
+  + Extension
+    Is special type of plugin system.
+    Every extension /MUST/ have file with name =package=, and SHOULD has =README.org= and another source =.clj= files that must be registered in special loading moment in Jaman. 
+  + Face
+  + Face Variable
+  + File Storage
+    The name of remote file server, on which we send any large data, after client put it to the insert form. 
+    What *important*, File storage also can be a standart SQL server. 
+  + Interaction
+    Is simple function API for invoking some GUI elements.  
+  + Manager
+    is part of gui, which managed some configuration's, plugin's or another part of jarman, on administration level.
+  + Metadata
+    Clojure HashMap list which has specific notation, and define some behavior, types, additional data to descrbie some Database tables or columns.
+    For example discribe visible and normal text to colum for GUI user: column /first_name/ as /First Name/. And another parameter, which must help to render view, or be usefull for programming.
+  + Session
+  + SUUID - (Session User Unique IDintificator), hash-line which kept inside jarman database. It's note about users which currently use jarman client
+  + Theme
+  + Theme Plugin
+  + View
+  + View Plugin
 
     

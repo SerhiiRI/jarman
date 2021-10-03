@@ -3,31 +3,14 @@
    ;; swing tools
    [seesaw.core   :as c]
    [seesaw.table  :as table]
-   [seesaw.dev :as sdev]
-   [seesaw.mig :as smig]
-   [jarman.faces  :as face]
-   [seesaw.swingx  :as swingx]
-   [seesaw.chooser :as chooser]
    [seesaw.border  :as b]
-   ;; clojure lib
-   [clojure.string :as string]
-   [clojure.pprint :refer [cl-format]]
-   [clojure.java.io :as io]
-   ;; packages 
-   [miner.ftp :as ftp]
-   [me.raynes.fs :as gfs]
-   ;; local functionality
-   [jarman.logic.state :as state]
-   [jarman.tools.config-manager :as cm]
+   ;; GUI toolkit
+   [jarman.faces  :as face]
    [jarman.gui.gui-components :as gcomp]
-   [jarman.gui.gui-tools :as gtool]
-   ;; [jarman.tools.lang :refer [in?]]
-   ;; [jarman.tools.fs :as fs]
+   [jarman.gui.gui-tools      :as gtool]
    [jarman.plugin.extension-manager :as extension-manager]
-   ;; environtemnt variables
-   [jarman.config.environment :as env]
-   [jarman.interaction        :as i]
-   [jarman.tools.org :refer :all])
+   [jarman.interaction  :as i]
+   [jarman.tools.org    :refer :all])
   (:import (java.io IOException FileNotFoundException)))
 
 

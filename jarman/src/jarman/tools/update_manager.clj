@@ -9,7 +9,6 @@
    [miner.ftp :as ftp]
    [me.raynes.fs :as gfs]
    ;; local functionality
-   [jarman.tools.config-manager :as cm]
    [jarman.config.vars :refer [defvar]]
    [jarman.tools.lang :refer [in?]]
    [jarman.tools.fs :as fs]

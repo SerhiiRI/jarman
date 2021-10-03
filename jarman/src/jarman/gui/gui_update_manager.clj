@@ -1,37 +1,19 @@
 (ns jarman.gui.gui-update-manager
   (:require
    ;; swing tools
-   [jarman.faces  :as face]
    [seesaw.core   :as c]
    [seesaw.table  :as table]
-   [seesaw.dev :as sdev]
-   [seesaw.mig :as smig]
-   [seesaw.swingx  :as swingx]
-   [seesaw.chooser :as chooser]
    [seesaw.border  :as b]
-   [jarman.faces :as face]
-   [jarman.gui.gui-style :as gs]
-   [jarman.gui.gui-views-service :as gvs]
+   ;; gui
+   [jarman.faces                 :as face]
+   [jarman.gui.gui-components    :as gcomp]
+   [jarman.gui.gui-tools         :as gtool]
    [jarman.gui.gui-migrid        :as gmg]
-   ;; clojure lib
-   [clojure.string :as string]
-   [clojure.pprint :refer [cl-format]]
-   [clojure.java.io :as io]
-   ;; packages 
-   [miner.ftp :as ftp]
-   [me.raynes.fs :as gfs]
-   ;; local functionality
-   [jarman.logic.state :as state]
-   [jarman.tools.config-manager :as cm]
-   [jarman.gui.gui-components :as gcomp]
-   [jarman.gui.gui-tools :as gtool]
-   [jarman.tools.lang :refer [in?]]
-   [jarman.tools.fs :as fs]
-   [jarman.tools.update-manager :as update-manager]
+   [jarman.gui.gui-views-service :as gvs]
    ;; environtemnt variables
-   [jarman.config.environment :as env]
    [jarman.interaction :as i]
-   [jarman.tools.org :refer :all])
+   [jarman.tools.org :refer :all]
+   [jarman.tools.update-manager :as update-manager])
   (:import (java.io IOException FileNotFoundException)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 

@@ -2,29 +2,16 @@
   (:require
    ;; swing tools
    [seesaw.core   :as c]
-   [seesaw.table  :as table]
-   [seesaw.dev :as sdev]
-   [seesaw.mig :as smig]
-   [seesaw.swingx  :as swingx]
-   [seesaw.chooser :as chooser]
-   [jarman.faces :as face]
    [seesaw.border  :as b]
+   [seesaw.table  :as table]
    ;; clojure lib
    [clojure.string :as string]
-   [clojure.pprint :refer [cl-format]]
-   [clojure.java.io :as io]
-   ;; packages 
    ;; local functionality
-   [jarman.logic.state :as state]
-   [jarman.tools.config-manager :as cm]
+   [jarman.faces :as face]
    [jarman.gui.gui-components :as gcomp]
-   [jarman.gui.gui-tools :as gtool]
-   [jarman.gui.gui-style :as gs]
-   [jarman.gui.gui-views-service :as gvs]
-   [jarman.resource-lib.icon-library :as icon]
+   [jarman.gui.gui-tools      :as gtool]
+   [jarman.gui.gui-style      :as gs]
    [jarman.config.vars :as vars]
-   ;; environtemnt variables
-   [jarman.config.environment :as env]
    [jarman.interaction :as i])
   (:import (java.io IOException FileNotFoundException)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))

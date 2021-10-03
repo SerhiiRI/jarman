@@ -188,8 +188,8 @@
        :user-all-select-expression (fn [..] ...),
        :select (fn [..] ...)}"
   [configuration toolkit-map]
-  (where ((query-fn (if (:jdbc-connection configuration) (partial db/query-b (:jdbc-connection configuration)) db/query))
-          (exec-fn  (if (:jdbc-connection configuration) (partial db/exec-b (:jdbc-connection configuration)) db/exec))
+  (where ((query-fn db/query)
+          (exec-fn  db/exec)
           (table-metadata configuration do :table_name do mt/getset! do first)
           (id_column (t-f-tf (:table_name configuration) :id))
           (table-name ((comp :field :table :prop) table-metadata))

@@ -1,5 +1,4 @@
 (ns jarman.logic.connection
-  (:refer-clojure :exclude [update])
   (:require
    ;; clojure
    [clojure.string :as string]
@@ -182,18 +181,4 @@
   (sqlerr (jdbc/execute! @*connection* s)))
 (defn query! [s]
   (sqlerr (jdbc/query @*connection* s)))
-
-;;; with datalist-key 
-(defn exec-b [datalist-key s]
-  (binding [*connection* (ref (datalist-resolve datalist-key))]
-    (eval (jdbc/execute! @*connection* s))))
-(defn query-b [datalist-key s]
-  (binding [*connection* (ref (datalist-resolve datalist-key))]
-    (eval (jdbc/query @*connection* s))))
-(defn exec-b! [datalist-key s]
-  (sqlerr (binding [*connection* (ref (datalist-resolve datalist-key))]
-            (eval (jdbc/execute! @*connection* s)))))
-(defn query-b! [datalist-key s]
-  (sqlerr (binding [*connection* (ref (datalist-resolve datalist-key))]
-            (eval (jdbc/query @*connection* s)))))
 

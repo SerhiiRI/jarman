@@ -13,6 +13,7 @@
    [jarman.resource-lib.icon-library :as icon]
    [jarman.gui.gui-style             :as gs]
    [jarman.tools.lang                :refer :all]
+   [jarman.config.conf-language]
    ))
 
 (import javax.swing.JLayeredPane)
@@ -214,24 +215,25 @@
             (if outlist outlist nil)))
 
 ;; (def current-theme (fn [] (keyword (str (first (cm/get-in-value [:themes :theme_config.edn :selected-theme])) ".edn"))))
+
+;;; A_TODO: cm/get-in-value does not exist
 (defn theme-map [default & coll]
   (cm/get-in-value (into [:themes :current-theme] (vec coll)) default))
 
-(def using-lang (fn [] (->> (cm/get-in-value [:init.edn :lang])
-                            (#(if (nil? %) "en" %))
-                            (#(if (string? %) [%] %))
-                            (first)
-                            (keyword))))
+;;; A_TODO: this doesn't exists anymore, but implemnet in big part of code
+;;; delete it
 (def get-color (partial theme-map "#fff" :color))
 (def get-comp (partial theme-map "#fff" :components))
 (def get-frame (partial theme-map 1000 :frame))
 (def get-font (partial theme-map "Ubuntu" :font))
-(def get-lang (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui] path))))
-(def get-lang-basic  (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :basic] path))))
-(def get-lang-header (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :header] path))))
-(def get-lang-infos  (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :infos] path))))
-(def get-lang-btns   (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :buttons] path))))
-(def get-lang-alerts (fn [& path] (cm/get-in-lang (join-vec [(using-lang) :ui :alerts] path))))
+
+(def get-lang        (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui] path))))
+(def get-lang-basic  (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :basic] path))))
+(def get-lang-header (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :header] path))))
+(def get-lang-infos  (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :infos] path))))
+(def get-lang-btns   (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :buttons] path))))
+(def get-lang-alerts (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :alerts] path))))
+
 
 (defn convert-key-to-title
   "Description:

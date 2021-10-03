@@ -25,7 +25,7 @@
            (jarman.jarmanjcomp CustomScrollBar)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
-(jarman.config.config-manager/swapp)
+(cm/swapp)
 
 ;; ┌────────────────────�
 ;; │                    │

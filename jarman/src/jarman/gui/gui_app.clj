@@ -28,15 +28,12 @@
             [jarman.config.vars              :refer [setq print-list-not-loaded]]
             [jarman.config.conf-language     :refer [do-load-language]]
             [jarman.config.dot-jarman        :refer [dot-jarman-load]]
-            [jarman.config.config-manager    :as cm]
-            [jarman.config.init              :as iinit]
             [jarman.tools.org                :refer :all]
             [jarman.tools.lang               :refer :all]
             ;; gui 
             [jarman.gui.builtin-themes.jarman-light]
             [jarman.gui.gui-views-service    :as gvs]
             [jarman.gui.gui-alerts-service   :as gas]
-            [jarman.gui.gui-config-generator :as cg]
             [jarman.gui.gui-update-manager   :as umg]
             [jarman.gui.gui-components       :as gcomp]
             [jarman.gui.gui-tools            :as gtool]
@@ -165,10 +162,6 @@
   "Description:
     Load configuration"
   []
-  ;; (managment-data/on-app-start)
-  (print-header 
-   "DEPRECATED Load old configuraions "
-   (cm/swapp))
   (print-header 
    "Load .jarman"
    (dot-jarman-load)
@@ -350,18 +343,9 @@
                         :by
                         (+ 37 (second @(state/state :atom-app-size)))]))))
 
-
 (state/set-state
  :startup
- (fn []
-   (cond (= (iinit/validate-configuration-files) true)
-         (invoke-app)
-         :else (cond (= (iinit/restore-backup-configuration) false)
-                     (do (fn []))
-                     :else (do
-                             (= (iinit/validate-configuration-files) true)
-                             (invoke-app)
-                             :else (do (fn [])))))))
+ (fn [] (invoke-app)))
 
 ((state/state :startup))
 

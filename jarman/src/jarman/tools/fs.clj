@@ -1,7 +1,6 @@
 (ns jarman.tools.fs
   (:require [me.raynes.fs :as rafs]
-            [clojure.java.io :as io]
-            [jarman.tools.config-manager :as cm]))
+            [clojure.java.io :as io]))
 
 (defn copy [uri file]
   (with-open

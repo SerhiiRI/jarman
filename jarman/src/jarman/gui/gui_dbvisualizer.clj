@@ -14,7 +14,8 @@
             [jarman.resource-lib.icon-library :as icon]
             [jarman.gui.gui-style             :as gs]
             [jarman.faces :as face]
-            [jarman.config.config-manager :as cm]           
+            ;; [jarman.config.config-manager :as cm]
+
             ;; logics
             [seesaw.util :as u]
             [jarman.gui.gui-tools :as gtool]
@@ -24,7 +25,6 @@
             ;; deverloper tools 
             [jarman.tools.swing :as stool]
             [jarman.config.spec :as sspec]
-            [jarman.config.init :as iinit]
             [jarman.logic.metadata :as mt]
             [jarman.tools.lang :refer :all]
            
@@ -433,7 +433,6 @@
        (mt/do-change
         (mt/apply-table table @new-table-meta)
         table @new-table-meta)
-       (cm/swapp)
        (println "reloadinvoker" invoker-id)
        (if-not (nil? invoker-id) (((state/state :jarman-views-service) :reload) invoker-id))
        (((state/state :jarman-views-service) :reload))

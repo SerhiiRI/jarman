@@ -1,3 +1,4 @@
+;;; DEPRECATED
 (ns jarman.gui.gui-config-generator
   (:use seesaw.dev
         seesaw.mig

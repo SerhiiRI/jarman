@@ -10,7 +10,6 @@
             [jarman.logic.view-manager         :as vmg]
             [jarman.gui.gui-views-service      :as gvs]
             [jarman.gui.gui-dbvisualizer       :as dbv]
-            [jarman.gui.gui-config-generator   :as cg]
             [jarman.gui.gui-update-manager     :as update-manager]
             [jarman.gui.gui-extension-manager  :as extension-manager]
             [jarman.gui.gui-themes-manager     :as themes-manager]
@@ -194,10 +193,7 @@
     "DB Visualizer" {:key "db-visualizer"
                      :permission :admin-dataedit
                      :fn dbv/create-view--db-view}
-    (gtool/get-lang-btns :settings)
-   {(gtool/get-lang-btns :settings) {:key    "settings"
-                                     :action :list
-                                     :fn     (fn [] (cg/create-expand-btns--confgen get-colors 2))}}}
+    (gtool/get-lang-btns :settings)}
    "Debug Items"
    {"Popup window" {:key        "popup-window"
                     :action     :invoke
@@ -291,12 +287,7 @@
                                                (gedit/code-editor
                                                 {:val "(fn [x] (println \"Nice ass\" x)"}))
                                     :title "Code in popup"
-                                    :size [500 400]}))}}
-   ;; (gtool/get-lang-btns :settings)
-   ;; {(gtool/get-lang-btns :settings) {:key    "settings"
-   ;;                                   :action :list
-   ;;                                   :fn     (fn [] (cg/create-expand-btns--confgen get-colors))}}
-   })
+                                    :size [500 400]}))}}})
 
 
 

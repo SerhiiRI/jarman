@@ -6,7 +6,7 @@
             [seesaw.border :as b]
             [seesaw.util   :as u]
             [seesaw.rsyntax]
-            [jarman.config.config-manager :as cm]
+            ;; [jarman.config.config-manager :as cm]
             [jarman.gui.gui-style         :as gs]
             [jarman.gui.gui-components    :as gcomp]
             [jarman.gui.gui-style         :as gs]
@@ -228,58 +228,59 @@
     
     editor))
 
+;; A_TODO: USED IN CONF GENERATOR
+;; (defn popup-config-editor
+;;   "Description:
+;;      Prepared popup window with code editor for selected configuration segment.
+;;    Example:
+;;      (popup-metadata-editor [:init.edn] {:part-of-config {}})
+;;   "
+;;   [config-path config-part]
+;;   (gcomp/popup-window
+;;    {:window-title "Configuration manual editor"
+;;     :view (code-editor
+;;            {:val (with-out-str (clojure.pprint/pprint config-part))
+;;             :title (gtool/convert-key-to-title (first config-path))
+;;             :dispose true
+;;             :save-fn (fn [props]
+;;                        (try
+;;                          (cm/assoc-in-segment config-path (read-string (c/config (:code props) :text)))
+;;                          (let [validate (cm/store-and-back)]
+;;                            (if (:valid? validate)
+;;                              (c/config! (:label props) :text "Saved!")
+;;                              (c/config! (:label props) :text "Validation faild. Can not save.")))
+;;                          (catch Exception e (c/config!
+;;                                              (:label props)
+;;                                              :text "Can not convert to map. Syntax error."))))})})
+;;   (gvs/reload-view :reload))
 
-(defn popup-config-editor
-  "Description:
-     Prepared popup window with code editor for selected configuration segment.
-   Example:
-     (popup-metadata-editor [:init.edn] {:part-of-config {}})
-  "
-  [config-path config-part]
-  (gcomp/popup-window
-   {:window-title "Configuration manual editor"
-    :view (code-editor
-           {:val (with-out-str (clojure.pprint/pprint config-part))
-            :title (gtool/convert-key-to-title (first config-path))
-            :dispose true
-            :save-fn (fn [props]
-                       (try
-                         (cm/assoc-in-segment config-path (read-string (c/config (:code props) :text)))
-                         (let [validate (cm/store-and-back)]
-                           (if (:valid? validate)
-                             (c/config! (:label props) :text "Saved!")
-                             (c/config! (:label props) :text "Validation faild. Can not save.")))
-                         (catch Exception e (c/config!
-                                             (:label props)
-                                             :text "Can not convert to map. Syntax error."))))})})
-  (gvs/reload-view :reload))
-
-(defn view-config-editor
-  "Description:
-     Prepared view with code editor for selected configuration segment.
-   Example:
-     (popup-metadata-editor [:init.edn] {:part-of-config {}})
-  "
-  [config-path config-part]
-  (gvs/add-view
-   :view-id (keyword (str "manual-view-code" (first config-path)))
-   :title (str "Config: " (gtool/convert-key-to-title (first config-path)))
-   :render-fn
-   (fn [] (code-editor
-           {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
-                   :background "#fff"]
-            :val (with-out-str (clojure.pprint/pprint config-part))
-            :title (gtool/convert-key-to-title (first config-path))
-            :save-fn (fn [props]
-                       (try
-                         (cm/assoc-in-segment config-path (read-string (c/config (:code props) :text)))
-                         (let [validate (cm/store-and-back)]
-                           (if (:valid? validate)
-                             (c/config! (:label props) :text "Saved!")
-                             (c/config! (:label props) :text "Validation faild. Can not save.")))
-                         (catch Exception e (c/config!
-                                             (:label props)
-                                             :text "Can not convert to map. Syntax error."))))}))))
+;; A_TODO: USED IN CONF GENERATOR
+;; (defn view-config-editor
+;;   "Description:
+;;      Prepared view with code editor for selected configuration segment.
+;;    Example:
+;;      (popup-metadata-editor [:init.edn] {:part-of-config {}})
+;;   "
+;;   [config-path config-part]
+;;   (gvs/add-view
+;;    :view-id (keyword (str "manual-view-code" (first config-path)))
+;;    :title (str "Config: " (gtool/convert-key-to-title (first config-path)))
+;;    :render-fn
+;;    (fn [] (code-editor
+;;            {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
+;;                    :background "#fff"]
+;;             :val (with-out-str (clojure.pprint/pprint config-part))
+;;             :title (gtool/convert-key-to-title (first config-path))
+;;             :save-fn (fn [props]
+;;                        (try
+;;                          (cm/assoc-in-segment config-path (read-string (c/config (:code props) :text)))
+;;                          (let [validate (cm/store-and-back)]
+;;                            (if (:valid? validate)
+;;                              (c/config! (:label props) :text "Saved!")
+;;                              (c/config! (:label props) :text "Validation faild. Can not save.")))
+;;                          (catch Exception e (c/config!
+;;                                              (:label props)
+;;                                              :text "Can not convert to map. Syntax error."))))}))))
 
 
 (defn popup-metadata-editor

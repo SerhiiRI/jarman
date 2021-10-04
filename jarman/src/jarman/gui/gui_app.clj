@@ -42,7 +42,9 @@
             [jarman.gui.gui-seed             :as gseed]
             [jarman.gui.gui-main-menu        :as menu]
             [jarman.gui.gui-migrid           :as gmg]
-            [jarman.gui.popup                :as popup]))
+            [jarman.gui.popup                :as popup]
+            [jarman.gui.gui-editors          :as gedit]
+            [jarman.gui.gui-calendar         :as calendar]))
 
  
 ;; ┌──────────────────────────┐

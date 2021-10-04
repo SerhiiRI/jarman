@@ -17,6 +17,7 @@
             [jarman.logic.connection   :as conn]
             [jarman.logic.state        :as state]
             [jarman.gui.gui-style      :as gs]
+            [jarman.config.vars        :as vars]
             [jarman.tools.lang :refer :all]))
 
 
@@ -48,6 +49,29 @@
                     ))))))))
 
 
+(defn- config-template
+  []{:jarman--localhost--3306
+   {:dbtype "mysql",
+    :host "127.0.0.1",
+    :port 3306,
+    :dbname "jarman",
+    :user "root",
+    :password "1234"},
+   :jarman--trashpanda-team_ddns_net--3306 ;; raspberry
+   {:dbtype "mysql",
+    :host "trashpanda-team.ddns.net",
+    :port 3306,
+    :dbname "jarman",
+    :user "jarman",
+    :password "dupa"}
+   :jarman--trashpanda-team_ddns_net--3307 ;; dell
+   {:dbtype "mysql",
+    :host "192.168.1.29",
+    :port 3306,
+    :dbname "jarman",
+    :user "root",
+    :password "misiePysie69"}})
+
 (defn- action-handler
   "Description:
     Invoke fn using dispatch!.
@@ -57,13 +81,15 @@
   (case (:action action-m)
     :add-missing  (assoc-in state (:path action-m) nil)
     :test         (do (println "\nTest:n") state)
-    :update-login (assoc-in state [:login]    (:value action-m))
+    :update-login (assoc-in state [:login]  (:value action-m))
     :update-pass  (assoc-in state [:passwd] (:value action-m))
-    :load-connections-configs (assoc-in state [:connections] (:value action-m))
+    :load-db-connections-configs (-> (assoc-in state [:connections] @conn/database-connections-alist)
+                                  (assoc-in [:data-log] {}))
     :update-data-log (assoc-in state (into [:data-log] (:path action-m)) (:value action-m))
     :clear-data-log  (assoc-in state [:data-log] {})
-    :set-current-config (assoc-in state [:current-config] (:value action-m))
-    :update-current-config (assoc-in state [:current-config :value (:param action-m) :value] (:value action-m))
+    :set-current-config  (assoc-in state [:current-config] (get-in state [:connections (:config-k action-m)]))
+    :set-config-template (assoc-in state [:current-config] (:jarman--localhost--3306 (config-template)))
+    :update-current-config (assoc-in state [:current-config (:param action-m)] (:value action-m)) 
     :new-focus (assoc-in state [:current-focus] (:value action-m))
     ))
 
@@ -83,11 +109,6 @@
          :data-log    {}
          :current-config {}
          :focus-compo nil}))
-
-
-(defn- load-connection-configs [dispatch!]
-  (dispatch! {:action :load-connections-configs
-              :value  (conn/datalist-mapper (conn/datalist-get))}))
 
 (defn- new-focus [dispatch! compo]
   ;; (println "\n" "New focus")
@@ -204,55 +225,10 @@
   (keyword (string/replace (str dbname "--" host "--" port) #"\." "_")))
 
 
-(defn- delete-map [config-k]
-  (cm/update-in-value [:database.edn :datalist] (fn [x] (dissoc x config-k)))
+(defn- delete-map [state! config-k]
+  (vars/setq conn/database-connections-alist (dissoc (:connections (state!)) [config-k] (:current-config (state!))))
+  ;;(cm/update-in-value [:database.edn :datalist] (fn [x] (dissoc x config-k)))
   (if (:valid? (cm/store)) "yes"))
-
-(defn- config-template
-  []{:name "Template",
-     :type :block,
-     :display :edit,
-     :value
-     {:dbtype
-      {:name "Connection type",
-       :type :param,
-       :display :none,
-       :component :text,
-       :value "mysql"},
-      :host
-      {:name "Database host",
-       :doc
-       "Enter jarman SQL database server. It may be IP adress, or domain name, where your server in. Not to set port in this input.",
-       :type :param,
-       :display :edit,
-       :component :text,
-       :value "127.0.0.1"},
-      :port
-      {:name "Port",
-       :doc
-       "Port of MariaDB/MySQL server. In most cases is '3306' or '3307'",
-       :type :param,
-       :display :edit,
-       :component :text,
-       :value "3306"},
-      :dbname
-      {:name "Database name",
-       :type :param,
-       :display :edit,
-       :component :text,
-       :value "my_database"},
-      :user
-      {:name "User login",
-       :type :param,
-       :display :edit,
-       :component :text,
-       :value "user"},
-      :password
-      {:name "User password",
-       :type :param,
-       :display :edit,
-       :component :text,
-       :value "password"}}})
 
 
 (defn- err-underline [compo err?]
@@ -310,7 +286,7 @@
   Example:
     (config-to-check-map state! [:a :b]) => {:a 1 :b 2}"
   [state! keys-v]
-  (into {} (doall (map (fn [k] {k (get-in (state!) [:current-config :value k :value])}) keys-v))))
+  (into {} (doall (map (fn [k] {k (get-in (state!) [:current-config k])}) keys-v))))
 
 (defn- try-connect
   [state! update-info-fn]
@@ -320,7 +296,7 @@
       (do
         (update-info-fn (gtool/get-lang-alerts :connection-faild) (colors :red-color))
         false)
-      (let [c-dbname   (get-in (state!) [:current-config :value :dbname :value])
+      (let [c-dbname   (get-in (state!) [:current-config :dbname])
             is-inside? (first (doall (filter #(= c-dbname (:database %)) dbs)))]
         (if is-inside?
           (do
@@ -342,7 +318,7 @@
                    config-k)]
     (if (validate-fields inputs config-k)
       (do
-        (cm/assoc-in-segment [:database.edn :datalist config-k] (:current-config (state!)))  
+        (vars/setq conn/database-connections-alist (assoc-in (:connections (state!)) [config-k] (:current-config (state!))))
         (if (:valid? (cm/store)) "yes"))
       (gtool/get-lang-alerts :incorrect-input-fields))))
 
@@ -358,10 +334,8 @@
   "Description:
     Return input for configuration"
   [state! dispatch! param-k editable?]
-  ;;(println "\nComp param: " param-k)
-  (;;apply
-   gcomp/state-input-text
-   {:val (str (rift (get-in (state!) [:current-config :value param-k :value]) ""))
+  (gcomp/state-input-text
+   {:val (str (rift (get-in (state!) [:current-config param-k]) ""))
     :func (fn [e] (dispatch! {:action :update-current-config
                               :param  param-k
                               :value  (if (= param-k :port)
@@ -387,17 +361,16 @@
      [[(config-label (gtool/get-lang-header param-k))]
       [value-component]])))
 
-
 (defn- db-config-fields
   "Description:
     Return mig panel with db configuration editor.
     It's vertical layout with inputs and functions to save, try connection, delete."
   [state! dispatch! config-k]
-  (let [config-m (get (conn/datalist-get) config-k)
-        c-config-m (if (nil? config-m) (config-template) config-m)]
+  (let [config-m   (config-k (state!))
+        template-k (if (= :empty config-m) :set-config-template :set-current-config)] ;; Set config or default template
     
-    (dispatch! {:action :set-current-config
-                :value  c-config-m})
+    (dispatch! {:action   template-k
+                :config-k config-k})
     (let [inputs [(config-compo state! dispatch! :dbtype :editable? false)
                   (config-compo state! dispatch! :host)
                   (config-compo state! dispatch! :port)
@@ -416,7 +389,7 @@
           btn-del (if (= config-k :empty) []
                       (gcomp/button-basic (gtool/get-lang-btns :remove)
                                           :onClick (fn [e]
-                                                     (if (= "yes" (delete-map config-k))
+                                                     (if (= "yes" (delete-map state! config-k))
                                                        (c/config! (c/to-frame e) :content (login-panel state! dispatch!)))
                                                      )))
           btn-conn (gcomp/button-basic
@@ -433,7 +406,8 @@
           actions (fn []
                     (gmg/migrid
                      :> :a
-                     [btn-save btn-conn btn-del]))
+                     [btn-save btn-conn ;;btn-del
+                      ]))
 
           comps [inputs
                  (actions)
@@ -486,7 +460,7 @@
     Return map about user if loggin is ok.
     Return error message if something goes wrong."
   [state! config-k]
-  (let [config (get-in (state!) [:connections config-k])
+  (let [config (config-k (:connections (state!)))
         login  (:login  (state!))
         passwd (:passwd (state!))]
     ;;(println "\nLogin:" login passwd)
@@ -591,7 +565,7 @@
                 :focusable?     true
                 :items          items)
 
-        onClick  (if (= :empty config-k)
+        onClick  (if (= :empty config-k) ;; Action login when onclick tail
                    (fn [e] (c/config! (c/to-frame e) :content (configuration-panel state! dispatch! :empty)))
                    (fn [e] (try-to-login state! dispatch! (c/to-frame e) config-k)))
         icons    (if (> (count items) 1) [(last items)] nil)
@@ -624,9 +598,9 @@
 
 
 (defn- icon-template
-  [ico isize onClick]
+  [ico onClick]
   (c/label ;; configuration panel
-   :icon (stool/image-scale ico isize)
+   :icon   ico
    :border (b/empty-border :thicness 5)
    :focusable? true
    :listen [:mouse-entered gtool/hand-hover-on
@@ -650,9 +624,9 @@
      :v :right :bottom
      {:gap [5 5 5 5] :args [:background "#fff" :visible? show]}
      [(if log
-        (icon-template (fn [e] (gs/icon GoogleMaterialDesignIcons/INFO face/c-icon) (c/alert (str log))))
+        (icon-template (gs/icon GoogleMaterialDesignIcons/INFO face/c-icon) (c/alert (str log)))
         [])
-      (icon-template (gs/icon GoogleMaterialDesignIcons/SETTINGS face/c-icon) isize
+      (icon-template (gs/icon GoogleMaterialDesignIcons/SETTINGS face/c-icon)
                           (fn [e] (c/config!
                                    (c/to-frame e)
                                    :content (configuration-panel state! dispatch! config-k))))])))
@@ -667,7 +641,7 @@
     (config-tile state! dispatch! :jarman--localhost--3306)"
   [state! dispatch! config-k]
   (let [render-fn (fn []
-                    (let [config (get-in (state!) [:connections config-k])
+                    (let [config (config-k (:connections (state!)))
                           log    (get-in (state!) [:data-log config-k])
                           dbname (:dbname config)
                           host   (:host   config)]
@@ -690,7 +664,6 @@
     (fn [config-k]
       (config-tile state! dispatch! config-k))
     (keys (:connections (state!))))))
-
 
 (defn- tile-add-new-config 
   "Description:
@@ -824,8 +797,8 @@
     Bottom bar with icons whos invoking info panel, exit apa, etc"
   [state! dispatch!]
   (gmg/migrid :> :right {:gap [10 20]}
-                [(icon-template (gs/icon GoogleMaterialDesignIcons/INFO face/c-icon) 40 (fn [e] (c/config! (c/to-frame e) :content (info-panel state! dispatch!))))
-                 (icon-template (gs/icon GoogleMaterialDesignIcons/EXIT_TO_APP face/c-icon) 40 (fn [e] (.dispose (c/to-frame e))))]))
+                [(icon-template (gs/icon GoogleMaterialDesignIcons/INFO face/c-icon) (fn [e] (c/config! (c/to-frame e) :content (info-panel state! dispatch!))))
+                 (icon-template (gs/icon GoogleMaterialDesignIcons/EXIT_TO_APP face/c-icon) (fn [e] (.dispose (c/to-frame e))))]))
 
 (defn- login-inputs
   "Description:
@@ -853,12 +826,7 @@
   Example:
      (login-panel state! dispatch!)"
   [state! dispatch!]
-  
-  (load-connection-configs dispatch!)
-  (dispatch! {:action :clear-data-log})
-
-  
-  
+  (dispatch! {:action :load-db-connections-configs})
   (let [panel (gmg/migrid :v :g :gf
                             [(gmg/migrid
                               :v :center ;; Main content
@@ -866,11 +834,13 @@
                                 :icon (stool/image-scale "icons/imgs/jarman-text.png" 6)
                                 :border (b/empty-border :thickness 20))
                                (login-inputs state! dispatch!)
-                               (all-tails-configs-panel state! dispatch!)])
+                               (all-tails-configs-panel state! dispatch!)
+                               ])
 
                              (login-icons state! dispatch!)])]
     (switch-focus state!)
     panel))
+
 
 
 ;; ┌─────────────────────────────────────┐
@@ -894,7 +864,8 @@
         state! (fn [& prop]
                  (cond (= :atom (first prop)) state
                        :else (deref state)))
-        dispatch! (create-disptcher state)]
+        dispatch! (create-disptcher state)
+        ]
 
     (cm/swapp)
     
@@ -903,7 +874,9 @@
 
 (state/set-state :invoke-login-panel st)
 (st)
-
+;; (:connections @statee)
+;; (:current-config @statee)
+;; @statee
 
 (comment
   Start app window

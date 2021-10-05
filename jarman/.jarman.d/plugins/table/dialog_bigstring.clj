@@ -31,15 +31,15 @@
     create one label for dialog-window with big string and function, which returned on action"
   [txt func selected?]
   (seesaw.core/text
-   :background (if selected? "#B0e0dd" (gtool/get-color :background :button_main))
+   :background (if selected? "#B0e0dd" "#fff")
    :focusable? false
    :multi-line? true
    :wrap-lines? true
    :editable? false
    :listen [:focus-gained   (fn [e] (gtool/hand-hover-on e) (seesaw.core/config! e :background gcomp/light-light-grey-color))
-            :focus-lost     (fn [e] (seesaw.core/config! e :background (gtool/get-color :background :button_main)))
+            :focus-lost     (fn [e] (seesaw.core/config! e :background "#fff"))
             :mouse-entered  (fn [e] (gtool/hand-hover-on e) (seesaw.core/config! e :background gcomp/light-light-grey-color))
-            :mouse-exited   (fn [e] (seesaw.core/config! e :background (gtool/get-color :background :button_main)))
+            :mouse-exited   (fn [e] (seesaw.core/config! e :background "#fff"))
             :mouse-clicked  func
             :key-pressed  (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) func))]
    :text txt

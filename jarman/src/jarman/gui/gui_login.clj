@@ -5,7 +5,6 @@
             [seesaw.border             :as b]
             [seesaw.util               :as u]
             [clojure.string            :as string]
-            [jarman.config.config-manager     :as cm]
             [jarman.resource-lib.icon-library :as icon]
             [jarman.faces              :as face]
             [jarman.tools.swing        :as stool]
@@ -89,7 +88,6 @@
 
     ;; Remove databaseconnection from databaseconnection-list by key.
     :rm-databaseconnection (let [cuted-databaseconfig-list (dissoc (:databaseconnection-list state) (:connection-k action-m))]
-                             (println "\nCUTED: " (:path action-m) cuted-databaseconfig-list)
                              (vars/setq conn/dataconnection-alist cuted-databaseconfig-list)
                              (-> (assoc-in state [:databaseconnection-list] @conn/dataconnection-alist)
                                  (assoc-in [:databaseconnection-error] {})))
@@ -318,7 +316,7 @@
     (if (validate-fields inputs config-k)
       (do
         (vars/setq conn/dataconnection-alist (assoc-in (:databaseconnection-list (state!)) [config-k] (:current-databaseconnection (state!))))
-        (if (:valid? (cm/store)) "yes"))
+        "yes")
       (gtool/get-lang-alerts :incorrect-input-fields))))
 
 
@@ -610,7 +608,7 @@
             :focus-gained (fn [e] (c/config! e :border (b/compound-border
                                                         (b/empty-border :bottom 3)
                                                         (b/line-border :bottom 3
-                                                                       :color (gtool/get-color :decorate :focus-gained))
+                                                                       :color "#96c1ea")
                                                         (b/empty-border :thicness 5))))
             :focus-lost (fn [e] (c/config! e :border (b/empty-border :thicness 5)))
             :mouse-clicked onClick
@@ -868,8 +866,6 @@
                  (cond (= :atom (first prop)) state
                        :else (deref state)))
         dispatch! (create-disptcher state)]
-
-    (cm/swapp)
     
     (if (= res-validation nil)
       (-> (doto (frame-login state! dispatch!) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))))

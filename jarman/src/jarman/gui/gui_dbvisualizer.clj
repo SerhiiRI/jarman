@@ -14,7 +14,6 @@
             [jarman.resource-lib.icon-library :as icon]
             [jarman.gui.gui-style             :as gs]
             [jarman.faces :as face]
-            ;; [jarman.config.config-manager :as cm]
 
             ;; logics
             [seesaw.util :as u]
@@ -24,7 +23,6 @@
             
             ;; deverloper tools 
             [jarman.tools.swing :as stool]
-            [jarman.config.spec :as sspec]
             [jarman.logic.metadata :as mt]
             [jarman.tools.lang :refer :all]
            
@@ -152,15 +150,15 @@
    :font (gs/getFont :bold)
    :foreground dark-grey-color
    :border (b/line-border :bottom 2
-                          :color (gtool/get-color :background :header))))
+                          :color "#ccc"))) ;; TODO: to face
 
 (defn table-editor--component--column-picker-btn
   "Description:
      c/select button who table-editor--component--column-picker, can work with another same buttons"
   [txt func]
   (let [color face/c-main-menu-bg
-        color-hover (gtool/get-color :group-buttons :background-hover)
-        color-clicked (gtool/get-color :group-buttons :clicked)
+        color-hover   "#91c8ff" ;; TODO: face
+        color-clicked "#d9ecff" ;; TODO: face
         bg-btn (atom color)
         id-btn :table-editor--component--column-picker-btn]
     (mig-panel
@@ -193,10 +191,10 @@
   (fn [value]
     (c/text :text value
           ;; :font (gtool/getFont 14)
-          :background (gtool/get-color :background :input)
+          :background face/c-compos-background
           :editable? false
           :border (b/compound-border (b/empty-border :left 10 :right 10 :top 5 :bottom 5)
-                                   (b/line-border :bottom 2 :color (gtool/get-color :decorate :gray-underline))))))
+                                   (b/line-border :bottom 2 :color face/c-underline)))))
 
 (defn delete-column [column]
   (let [btns (c/config!
@@ -398,9 +396,7 @@
 (defn table-editor--component--space-for-column-editor
   "Create right table editor view to editing selected column in left table editor view"
   [column-editor-id] (mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, fill]0px"]
-                                :id (keyword column-editor-id)
-                               ;; :items [[(c/label)]]
-                               ;; :border (line-border :left 4 :color (gtool/get-color :border :dark-gray))
+                                :id (keyword column-editor-id) 
                                 ))
 
 

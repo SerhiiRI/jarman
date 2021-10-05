@@ -14,7 +14,6 @@
    [seesaw.chooser :as chooser]
    ;; Jarman toolkit
    [jarman.logic.connection :as db]
-   [jarman.config.config-manager :as cm]
    [jarman.tools.lang :refer :all :as lang]
    [jarman.gui.gui-tools :refer :all :as gtool]
    [jarman.resource-lib.icon-library :as ico]
@@ -257,7 +256,6 @@
 
 
 ;; (@jarman.gui.gui-seed/startup)
-;; (cm/swapp)
 
 ;; ;; (:->col-meta documents-view)
 

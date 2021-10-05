@@ -9,7 +9,6 @@
    [jarman.tools.swing               :as stool]
    [clojure.string                   :as string]
    [jarman.logic.state               :as state]
-   [jarman.config.config-manager     :as cm]
    [jarman.resource-lib.icon-library :as icon]
    [jarman.gui.gui-style             :as gs]
    [jarman.tools.lang                :refer :all]
@@ -214,19 +213,6 @@
                 outlist (if selected (filter (fn [i] (identical? (config i :id) id)) (seesaw.util/children (.getParent selected))) nil)]
             (if outlist outlist nil)))
 
-;; (def current-theme (fn [] (keyword (str (first (cm/get-in-value [:themes :theme_config.edn :selected-theme])) ".edn"))))
-
-;;; A_TODO: cm/get-in-value does not exist
-(defn theme-map [default & coll]
-  (cm/get-in-value (into [:themes :current-theme] (vec coll)) default))
-
-;;; A_TODO: this doesn't exists anymore, but implemnet in big part of code
-;;; delete it
-(def get-color (partial theme-map "#fff" :color))
-(def get-comp (partial theme-map "#fff" :components))
-(def get-frame (partial theme-map 1000 :frame))
-(def get-font (partial theme-map "Ubuntu" :font))
-
 (def get-lang        (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui] path))))
 (def get-lang-basic  (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :basic] path))))
 (def get-lang-header (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :header] path))))
@@ -279,10 +265,6 @@
     (get-in data path)))
 
 ;; ############# COMPONENTS TODO: need move to gui_components.clj
-
-(defn button-hover
-  ([e] (config! e :background (get-color :background :button_hover_light)))
-  ([e color] (config! e :background color)))
 
 
 (def template-resize

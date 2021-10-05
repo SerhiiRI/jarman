@@ -1,8 +1,15 @@
-* Vocabulary
+#+TITLE: Term Vocabulary
+#+TODO: DEFINE(d) REDEFINE(r) TOREVIEW(t) | DONE(d)
+#+STARTUP: overview
 
-  + Client
+* A
+* B
+* C
+
+  - Client
     GUI app
-  + Composite Column
+
+  - Composite Column
     This is type of columns in flat datatabase model, which retrospect some meanfull group.
     Flatten database column model:
     #+begin_example
@@ -22,27 +29,85 @@
 			:b
 			:c]}]}
     #+end_src
-  + Composite Component
-  + Extension
+
+  - Composite Component
+
+* D
+
+  - DataConnection
+    JDBC connection  
+    #+begin_src clojure
+      {:dbtype "mysql",
+       :host "127.0.0.1",
+       :port 3306,
+       :dbname "jarman",
+       :user "root",
+       :password "1234"}
+    #+end_src
+
+  - DataConnection List 
+    Is sequential list of /DataConnection/. /DataConnection List/ used in =jarman.logic.connection/dataconnection-alist=
+
+* E
+
+  - Extension
     Is special type of plugin system.
     Every extension /MUST/ have file with name =package=, and SHOULD has =README.org= and another source =.clj= files that must be registered in special loading moment in Jaman. 
-  + Face
-  + Face Variable
-  + File Storage
+
+* F
+
+  - Face
+
+  - Face Variable
+
+  - File Storage
     The name of remote file server, on which we send any large data, after client put it to the insert form. 
     What *important*, File storage also can be a standart SQL server. 
-  + Interaction
+
+* G
+* H
+* I
+
+  - Interaction
     Is simple function API for invoking some GUI elements.  
-  + Manager
+
+* J
+* K
+* L
+* M
+
+  - Manager
     is part of gui, which managed some configuration's, plugin's or another part of jarman, on administration level.
-  + Metadata
+
+  - Metadata
     Clojure HashMap list which has specific notation, and define some behavior, types, additional data to descrbie some Database tables or columns.
     For example discribe visible and normal text to colum for GUI user: column /first_name/ as /First Name/. And another parameter, which must help to render view, or be usefull for programming.
-  + Session
-  + SUUID - (Session User Unique IDintificator), hash-line which kept inside jarman database. It's note about users which currently use jarman client
-  + Theme
-  + Theme Plugin
-  + View
-  + View Plugin
 
-    
+* N
+* O
+* P
+* Q
+* R
+* S
+
+  - Session
+
+  - SUUID - (Session User Unique IDintificator), hash-line which kept inside jarman database. It's note about users which currently use jarman client
+
+* T
+
+  - Theme
+
+  - Theme Plugin
+
+* U
+* V
+
+  - View
+
+  - View Plugin
+
+* W
+* X
+* Y
+* Z

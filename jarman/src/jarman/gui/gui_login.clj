@@ -50,46 +50,51 @@
 
 
 (defn- config-template
-  []{:jarman--localhost--3306
-   {:dbtype "mysql",
-    :host "127.0.0.1",
-    :port 3306,
-    :dbname "jarman",
-    :user "root",
-    :password "1234"},
-   :jarman--trashpanda-team_ddns_net--3306 ;; raspberry
-   {:dbtype "mysql",
-    :host "trashpanda-team.ddns.net",
-    :port 3306,
-    :dbname "jarman",
-    :user "jarman",
-    :password "dupa"}
-   :jarman--trashpanda-team_ddns_net--3307 ;; dell
-   {:dbtype "mysql",
-    :host "192.168.1.29",
-    :port 3306,
-    :dbname "jarman",
-    :user "root",
-    :password "misiePysie69"}})
+  []{:dbtype "mysql",
+     :host "127.0.0.1",
+     :port 3306,
+     :dbname "jarman",
+     :user "root",
+     :password "1234"})
 
 (defn- action-handler
   "Description:
-    Invoke fn using dispatch!.
+    Invoke fn using dispatch!. Always return state.
   Example:
     (@state {:action :test})"
   [state action-m]
   (case (:action action-m)
     :add-missing  (assoc-in state (:path action-m) nil)
     :test         (do (println "\nTest:n") state)
+
+    ;; Update login and password from GUI components
     :update-login (assoc-in state [:login]  (:value action-m))
     :update-pass  (assoc-in state [:passwd] (:value action-m))
-    :load-db-connections-configs (-> (assoc-in state [:connections] @conn/database-connections-alist)
-                                  (assoc-in [:data-log] {}))
-    :update-data-log (assoc-in state (into [:data-log] (:path action-m)) (:value action-m))
-    :clear-data-log  (assoc-in state [:data-log] {})
-    :set-current-config  (assoc-in state [:current-config] (get-in state [:connections (:config-k action-m)]))
-    :set-config-template (assoc-in state [:current-config] (:jarman--localhost--3306 (config-template)))
-    :update-current-config (assoc-in state [:current-config (:param action-m)] (:value action-m)) 
+
+    ;; Load list of databaseconnections
+    :load-databaseconnection-list (-> (assoc-in state [:databaseconnection-list] @conn/dataconnection-alist)
+                                  (assoc-in [:databaseconnection-error] {}))
+
+    ;; Set error for tail if cannot login.
+    :update-databaseconnection-error   (assoc-in state (into [:databaseconnection-error] (:path action-m)) (:value action-m))
+
+    ;; Set databaseconnection form list by key. :connection-k is a keyword of databaseconnection.
+    :set-current-databaseconnection    (assoc-in state [:current-databaseconnection] (get-in state [:databaseconnection-list (:connection-k action-m)]))
+
+    ;; Default databaseconnection template.
+    :set-databaseconnection-template   (assoc-in state [:current-databaseconnection] (config-template))
+
+    ;; Config from GUI form. Inside value is new value from gui input. :param point to path for new value.
+    :update-current-databaseconnection (assoc-in state [:current-databaseconnection (:param action-m)] (:value action-m))
+
+    ;; Remove databaseconnection from databaseconnection-list by key.
+    :rm-databaseconnection (let [cuted-databaseconfig-list (dissoc (:databaseconnection-list state) (:connection-k action-m))]
+                             (println "\nCUTED: " (:path action-m) cuted-databaseconfig-list)
+                             (vars/setq conn/dataconnection-alist cuted-databaseconfig-list)
+                             (-> (assoc-in state [:databaseconnection-list] @conn/dataconnection-alist)
+                                 (assoc-in [:databaseconnection-error] {})))
+
+    ;; Hold element for focus. Inside value is component.
     :new-focus (assoc-in state [:current-focus] (:value action-m))
     ))
 
@@ -105,10 +110,11 @@
   []
   (atom {:login       nil
          :passwd      nil
-         :connections {}
-         :data-log    {}
-         :current-config {}
-         :focus-compo nil}))
+         :focus-compo nil
+         :current-databaseconnection {}
+         :databaseconnection-list  {}
+         :databaseconnection-error {}
+         }))
 
 (defn- new-focus [dispatch! compo]
   ;; (println "\n" "New focus")
@@ -224,13 +230,6 @@
   [dbname host port]
   (keyword (string/replace (str dbname "--" host "--" port) #"\." "_")))
 
-
-(defn- delete-map [state! config-k]
-  (vars/setq conn/database-connections-alist (dissoc (:connections (state!)) [config-k] (:current-config (state!))))
-  ;;(cm/update-in-value [:database.edn :datalist] (fn [x] (dissoc x config-k)))
-  (if (:valid? (cm/store)) "yes"))
-
-
 (defn- err-underline [compo err?]
   ((gtool/gud compo :border-fn) (if err? (colors :red-color) (colors :blue-green-color))))
 
@@ -282,11 +281,11 @@
 (defn- config-to-check-map
   "Description:
     Get current configuration from state and marge keys vector with state values.
-    Path to state [:current-config :value key :value]
+    Path to state [:current-databaseconnection :value key :value]
   Example:
     (config-to-check-map state! [:a :b]) => {:a 1 :b 2}"
   [state! keys-v]
-  (into {} (doall (map (fn [k] {k (get-in (state!) [:current-config k])}) keys-v))))
+  (into {} (doall (map (fn [k] {k (get-in (state!) [:current-databaseconnection k])}) keys-v))))
 
 (defn- try-connect
   [state! update-info-fn]
@@ -296,7 +295,7 @@
       (do
         (update-info-fn (gtool/get-lang-alerts :connection-faild) (colors :red-color))
         false)
-      (let [c-dbname   (get-in (state!) [:current-config :dbname])
+      (let [c-dbname   (get-in (state!) [:current-databaseconnection :dbname])
             is-inside? (first (doall (filter #(= c-dbname (:database %)) dbs)))]
         (if is-inside?
           (do
@@ -310,15 +309,15 @@
   "Description:
     Create or save configuration for connection to database."
   [state! dispatch! config-k inputs update-info-fn] 
-  (let [c-config (get-in (state!) [:current-config])
-        config-k (if (= config-k :empty)
-                   (keys-generator (get-in c-config [:value :dbname :value])
-                                   (get-in c-config [:value :host :value])
-                                   (get-in c-config [:value :port :value]))
+  (let [c-config (get-in (state!) [:current-databaseconnection])
+        config-k (if (nil? (get (:databaseconnection-list (state!)) config-k))
+                   (keys-generator (get-in c-config [:dbname])
+                                   (get-in c-config [:host])
+                                   (get-in c-config [:port]))
                    config-k)]
     (if (validate-fields inputs config-k)
       (do
-        (vars/setq conn/database-connections-alist (assoc-in (:connections (state!)) [config-k] (:current-config (state!))))
+        (vars/setq conn/dataconnection-alist (assoc-in (:databaseconnection-list (state!)) [config-k] (:current-databaseconnection (state!))))
         (if (:valid? (cm/store)) "yes"))
       (gtool/get-lang-alerts :incorrect-input-fields))))
 
@@ -332,11 +331,11 @@
 
 (defn- config-input
   "Description:
-    Return input for configuration"
+    Return input for configuration with auto update to state by action hendler."
   [state! dispatch! param-k editable?]
   (gcomp/state-input-text
-   {:val (str (rift (get-in (state!) [:current-config param-k]) ""))
-    :func (fn [e] (dispatch! {:action :update-current-config
+   {:val (str (rift (get-in (state!) [:current-databaseconnection param-k]) ""))
+    :func (fn [e] (dispatch! {:action :update-current-databaseconnection
                               :param  param-k
                               :value  (if (= param-k :port)
                                         (Integer/parseInt (rift (c/text (c/to-widget e)) "3306"))
@@ -366,17 +365,21 @@
     Return mig panel with db configuration editor.
     It's vertical layout with inputs and functions to save, try connection, delete."
   [state! dispatch! config-k]
-  (let [config-m   (config-k (state!))
-        template-k (if (= :empty config-m) :set-config-template :set-current-config)] ;; Set config or default template
-    
-    (dispatch! {:action   template-k
-                :config-k config-k})
+  (let [config-m   (get-in (state!) [:databaseconnection-list config-k])
+        template-k (if (nil? config-m)
+                     :set-databaseconnection-template
+                     :set-current-databaseconnection)] ;; Choose config or default template
+
+    ;; If config-m is nil then load default template
+    ;; becouse config-k do not exist in databaseconnection-list.
+    (dispatch! {:action       template-k
+                :connection-k config-k})
     (let [inputs [(config-compo state! dispatch! :dbtype :editable? false)
                   (config-compo state! dispatch! :host)
                   (config-compo state! dispatch! :port)
                   (config-compo state! dispatch! :dbname)
                   (config-compo state! dispatch! :user)
-                  (config-compo state! dispatch! :password)]
+                  (config-compo state! dispatch! :password)] ;; Prepare databaseconnection inputs
           
           info-lbl (c/label)
           update-info-fn (fn [txt color]
@@ -386,11 +389,12 @@
                                       :text (gtool/htmling txt :center)
                                       :foreground color))
 
-          btn-del (if (= config-k :empty) []
+          btn-del (if (nil? config-m) []
                       (gcomp/button-basic (gtool/get-lang-btns :remove)
                                           :onClick (fn [e]
-                                                     (if (= "yes" (delete-map state! config-k))
-                                                       (c/config! (c/to-frame e) :content (login-panel state! dispatch!)))
+                                                     (dispatch! {:action       :rm-databaseconnection
+                                                                 :connection-k config-k}) 
+                                                     (c/config! (c/to-frame e) :content (login-panel state! dispatch!))
                                                      )))
           btn-conn (gcomp/button-basic
                     (gtool/get-lang-btns :connect)
@@ -406,14 +410,13 @@
           actions (fn []
                     (gmg/migrid
                      :> :a
-                     [btn-save btn-conn ;;btn-del
+                     [btn-save btn-conn btn-del
                       ]))
 
           comps [inputs
                  (actions)
                  info-lbl]]
       comps)))
-
 
 
 ;; ┌─────────────────────────────────────┐
@@ -460,7 +463,7 @@
     Return map about user if loggin is ok.
     Return error message if something goes wrong."
   [state! config-k]
-  (let [config (config-k (:connections (state!)))
+  (let [config (config-k (:databaseconnection-list (state!)))
         login  (:login  (state!))
         passwd (:passwd (state!))]
     ;;(println "\nLogin:" login passwd)
@@ -520,7 +523,7 @@
     Underline border for tile."
   [state! config-k]
   (fn [on]
-    (let [err? (rift (get-in (state!) [:data-log config-k]) nil)]
+    (let [err? (rift (get-in (state!) [:databaseconnection-error config-k]) nil)]
       (b/line-border
        :bottom 4
        :color  (cond
@@ -545,7 +548,7 @@
                 ((state/state :startup)))
             (c/alert (gtool/get-lang-alerts :app-startup-fail))))
         (do ;; set data info about error to state
-          (dispatch! {:action :update-data-log
+          (dispatch! {:action :update-databaseconnection-error
                       :path   [config-k]
                       :value  (name data-log)}))))))
 
@@ -570,7 +573,7 @@
                    (fn [e] (try-to-login state! dispatch! (c/to-frame e) config-k)))
         icons    (if (> (count items) 1) [(last items)] nil)
         items    (if (> (count items) 1) (butlast items) items)
-        data-log (get-in (state!) [:data-log config-k])
+        data-log (get-in (state!) [:databaseconnection-error config-k])
 
         listens [:mouse-entered (fn [e]
                                   (gtool/hand-hover-on vpanel)
@@ -635,14 +638,14 @@
   "Description:
     State component.
     It is one tile with configuration to db.
-    Config will be get from state by id-k from :connections.
+    Config will be get from state by id-k from :databaseconnection-list.
     Component watching state with tiles list and will rerender self items if something will be changed.
   Example:
     (config-tile state! dispatch! :jarman--localhost--3306)"
   [state! dispatch! config-k]
   (let [render-fn (fn []
-                    (let [config (config-k (:connections (state!)))
-                          log    (get-in (state!) [:data-log config-k])
+                    (let [config (config-k (:databaseconnection-list (state!)))
+                          log    (get-in (state!) [:databaseconnection-error config-k])
                           dbname (:dbname config)
                           host   (:host   config)]
                       (list
@@ -663,7 +666,7 @@
    (map
     (fn [config-k]
       (config-tile state! dispatch! config-k))
-    (keys (:connections (state!))))))
+    (keys (:databaseconnection-list (state!))))))
 
 (defn- tile-add-new-config 
   "Description:
@@ -701,8 +704,8 @@
     (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     
-    (set-state-watcher state! dispatch! mig render-fn [:connections] :connections)
-    (set-state-watcher state! dispatch! mig render-fn [:data-log] :connections-data-log)
+    (set-state-watcher state! dispatch! mig render-fn [:databaseconnection-list]  :databaseconnection-tails)
+    (set-state-watcher state! dispatch! mig render-fn [:databaseconnection-error] :databaseconnection-error)
     scr))
 
 
@@ -826,7 +829,7 @@
   Example:
      (login-panel state! dispatch!)"
   [state! dispatch!]
-  (dispatch! {:action :load-db-connections-configs})
+  (dispatch! {:action :load-databaseconnection-list})
   (let [panel (gmg/migrid :v :g :gf
                             [(gmg/migrid
                               :v :center ;; Main content
@@ -864,8 +867,7 @@
         state! (fn [& prop]
                  (cond (= :atom (first prop)) state
                        :else (deref state)))
-        dispatch! (create-disptcher state)
-        ]
+        dispatch! (create-disptcher state)]
 
     (cm/swapp)
     
@@ -874,9 +876,6 @@
 
 (state/set-state :invoke-login-panel st)
 (st)
-;; (:connections @statee)
-;; (:current-config @statee)
-;; @statee
 
 (comment
   Start app window

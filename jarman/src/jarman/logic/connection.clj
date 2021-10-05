@@ -11,7 +11,7 @@
            (java.text SimpleDateFormat)
            (java.sql SQLException)))
 
-(defvar database-connections-alist
+(defvar dataconnection-alist
   {:jarman--localhost--3306
    {:dbtype "mysql",
     :host "127.0.0.1",
@@ -152,7 +152,7 @@
  ;; set selected
  (:jarman--trashpanda-team_ddns_net--3307
   ;;------------
-  (deref database-connections-alist)))
+  (deref dataconnection-alist)))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; JDBC WRAPPERS ;;; 

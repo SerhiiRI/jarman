@@ -1,5 +1,4 @@
 #+TITLE: Term Vocabulary
-#+TODO: DEFINE(d) REDEFINE(r) TOREVIEW(t) | DONE(d)
 #+STARTUP: overview
 
 * A
@@ -35,7 +34,7 @@
 * D
 
   - DataConnection
-    JDBC connection  
+    JDBC connection PersistentMap, definied by jdbc/spec
     #+begin_src clojure
       {:dbtype "mysql",
        :host "127.0.0.1",

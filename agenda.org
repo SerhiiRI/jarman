@@ -86,7 +86,11 @@
    - [ ] unifing styles in UI
 ** PROCESSING [#1] Frontend refactorization [4/7]
    DEADLINE: <2021-10-08 pt.>
-*** TODO Service Periods plugins [0/3]                               :@Aleks:
+*** TODO Service Periods plugins [0/2]                               :@Aleks:
+**** Bugs [0/2]:
+    - [ ] Service Periods and Service contract have same id in gui view service
+    - [ ] Expand with selecting component loses selected data if we click close icon without choose some row
+**** To fixed [0/3]:
     - [ ] Expand buttons [0/7]
       - [ ] Buttons must be resizable, and scaled to window width.
       - [ ] Not hide expanded button, when checkbox was clicked. Julia add coments inside plugin, about this issue (find "TODO" mark)

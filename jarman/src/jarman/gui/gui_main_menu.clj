@@ -192,9 +192,7 @@
                    :fn vars-listing/vars-listing-panel}
     "DB Visualizer" {:key "db-visualizer"
                      :permission :admin-dataedit
-                     :fn dbv/create-view--db-view}
-    ;; (gtool/get-lang-btns :settings)
-    }
+                     :fn dbv/create-view--db-view}}
    "Debug Items"
    {"Popup window" {:key        "popup-window"
                     :action     :invoke

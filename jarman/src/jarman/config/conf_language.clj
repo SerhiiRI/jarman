@@ -5,7 +5,8 @@
    [jarman.tools.lang :refer :all]
    [jarman.tools.org  :refer :all]
    [jarman.config.vars :refer [defvar]]
-   [jarman.plugin.extension-manager :as extension-manager])
+   ;; [jarman.plugin.extension-manager :as extension-manager]
+   )
   (:import (java.io IOException FileNotFoundException)))
 
 ;;;;;;;;;;;;
@@ -32,7 +33,6 @@
   :type clojure.lang.PersistentVector
   :group :view-params)
 
-
 ;;;;;;;;;;;;;;;;;;;;
 ;;; DEBUG HEADER ;;;
 ;;;;;;;;;;;;;;;;;;;;
@@ -40,7 +40,6 @@
 (def ^{:private true}  debug (ref false))
 (defn debug-enable  [] (dosync (ref-set debug true)))
 (defn debug-disable [] (dosync (ref-set debug false)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; CONFIGURATIONS ;;;
@@ -62,22 +61,24 @@
              "Any of \"config\" folder wasn't register in computer")))))
 
 (defn do-load-language []
-  (let [extensions-with-translations (filter (comp seq :language) (extension-manager/extension-storage-list-get))
-        central-language-file (get-language-file)]
-    (dosync
-     (print-line (format "loadin central language file ~%s~" (str central-language-file)))
-     (ref-set _language {:_global (read-string (slurp (str central-language-file)))})
-     (doall
-      ;; swapping translations from all langun
-      (doseq [ext extensions-with-translations]
-        ;; if plugin contain languages files
-        (print-line (format "Loading languages from extension ~%s~" (:name ext)))
-        (alter _language assoc (keyword (:name ext))
-               (reduce (fn [acc-m lang-file]
-                         (print-line (format "merge file ~%s~ " (str lang-file)))
-                         (deep-merge-with #(second %&) acc-m (read-string (slurp (str lang-file)))))
-                       {}
-                       (:language ext))))))) true)
+  (dosync (ref-set _language {:_global (read-string (slurp (str (get-language-file))))}))
+  ;; (let [extensions-with-translations (filter (comp seq :language) (extension-manager/extension-storage-list-get))
+  ;;       central-language-file (get-language-file)]
+  ;;   (dosync
+  ;;    (print-line (format "loadin central language file ~%s~" (str central-language-file)))
+  ;;    (ref-set _language {:_global (read-string (slurp (str central-language-file)))})
+  ;;    (doall
+  ;;     ;; swapping translations from all langun
+  ;;     (doseq [ext extensions-with-translations]
+  ;;       ;; if plugin contain languages files
+  ;;       (print-line (format "Loading languages from extension ~%s~" (:name ext)))
+  ;;       (alter _language assoc (keyword (:name ext))
+  ;;              (reduce (fn [acc-m lang-file]
+  ;;                        (print-line (format "merge file ~%s~ " (str lang-file)))
+  ;;                        (deep-merge-with #(second %&) acc-m (read-string (slurp (str lang-file)))))
+  ;;                      {}
+  ;;                      (:language ext)))))))
+  true)
 
 
 ;;;;;;;;;;;;;;;;

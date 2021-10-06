@@ -6,7 +6,7 @@
    [clojure.spec.alpha :as s]
    ;; jarmans
    [jarman.tools.lang :refer :all]
-   [jarman.config.vars :refer [defvar]])
+   [jarman.config.config-manager :as c])
   (:import (java.util Date)
            (java.text SimpleDateFormat)
            (java.sql SQLException)))
@@ -105,19 +105,6 @@
     (do (println "Not valid map configuration: ")
         (clojure.pprint/pprint connection-map))))
 
-(defn- connection-wrapp
-  "Description
-    Wrapp connection like 
-     {:dbtype \"mysql\",
-      :host \"127.0.0.1\",
-      :port 3306,
-      :dbname \"jarman\",
-      :user \"root\",
-      :password \"1234\"}
-    into additional parameters"
-  [connection-map]
-  (merge connection-map {:useUnicode true :characterEncoding "UTF-8"}))
-
 (defn connection-set
   "Description
     set configuraiton reference variable, but do validation on
@@ -132,7 +119,20 @@
     If validation return `false`, then connection variable not
     totaly set"
   [connection-map]
-  (dosync (ref-set *connection* (connection-wrapp connection-map))))
+  (dosync (ref-set *connection* (merge connection-map {:useUnicode true :characterEncoding "UTF-8"}))))
+
+(defn connection-wrapp
+  "Description
+    Wrapp connection like 
+     {:dbtype \"mysql\",
+      :host \"127.0.0.1\",
+      :port 3306,
+      :dbname \"jarman\",
+      :user \"root\",
+      :password \"1234\"}
+    into additional parameters"
+  [connection-map]
+  (merge connection-map {:useUnicode true :characterEncoding "UTF-8"}))
 
 (defn connection-get
   "Description
@@ -147,10 +147,13 @@
       :password \"1234\"}"
   [] (deref *connection*))
 
+(defn connection-config-get-all []
+  (c/get-in-value [:database.edn :datalist]))
+
 ;;; FOR DEBUG CONNECTION
 (connection-set
  ;; set selected
- (:jarman--trashpanda-team_ddns_net--3307
+ (:dell
   ;;------------
   (deref dataconnection-alist)))
 

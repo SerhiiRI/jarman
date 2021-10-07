@@ -6,7 +6,7 @@
    [clojure.spec.alpha :as s]
    ;; jarmans
    [jarman.tools.lang :refer :all]
-   [jarman.config.config-manager :as c])
+   [jarman.config.vars :refer [defvar]])
   (:import (java.util Date)
            (java.text SimpleDateFormat)
            (java.sql SQLException)))
@@ -147,13 +147,10 @@
       :password \"1234\"}"
   [] (deref *connection*))
 
-(defn connection-config-get-all []
-  (c/get-in-value [:database.edn :datalist]))
-
 ;;; FOR DEBUG CONNECTION
 (connection-set
  ;; set selected
- (:dell
+ (:jarman--trashpanda-team_ddns_net--3307
   ;;------------
   (deref dataconnection-alist)))
 

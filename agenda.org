@@ -101,13 +101,12 @@
       - [ ] For Service Months use ths format style notation "01-01-2020 - 04-01-2021,  100 zl", money also in pastel green.
     - [ ] Julia call it *insert-space*, is section where we adding new service contract. Rewrite whole panel, but keep logic as we create before.
     - [ ] After you click on one month, you can edit all service contract month payments. You can edit, only if month wasn't payed. Rewrite Julia view, on your implementation. I think better be when all those month fields be in one line.
-
 *** TODO Table.clj [3/4]                                             :@Aleks:
     - [X] remove 1pixel black border for right table.
     - [ ] rewrite expand panel
     - [X] make icon smaller, on 10-20%
     - [X] Move Table title to left side (nope, on center looks better), and colorize in "ocean blue" color, julia use it in login panel.
-*** TODO Main view & Styling [2/4]                                   :@Aleks:
+*** TOREVIEW Main view & Styling [4/4]                               :@Aleks:
     - [X] Gui View Service [2/2]
       - [X] On tabs replace non-active tab on more brighter color.
       - [X] ON tabs replace ~x~ icon on one color.
@@ -116,21 +115,11 @@
       - [X] Background. Set global background for all components.
       - [X] Foreground. Set global background for all components.
       - [X] Set default scrollbar size.
-    - [-] change slider menu [3/5]
-      - [ ] enable/disable slider menu in ~.jarman~ configuraion.
-      - [ ] slider menu size, put this option to ~theme faces~
+    - [X] change slider menu [3/3]
       - [X] to ~close-app~ also add ~logout~
       - [X] remove ~Change work mode~, and add optino to ~.jarman~ which will be add "key icon" to slider menu.
       - [X] Remove ~Db visuliser~ from left bar.
-    - [-] Main Menu [5/8]
-      - [ ] main menu size, put this option to theme faces
-      - [ ] Main menu as hide/show section
-      - [ ] Add documentation how to correctly pin some components to menus. Also add more information to the Exceptions
-	When i pin my panel, i get exception
-	#+begin_example
-	Gui view service: Cannot rerender :view-spaceWrong number of args (0) passed to: jarman.gui.gui-main-menu/default-menu-items/fn--28447
-	#+end_example
-	This is missunderstandable, please make throw some Exeption
+    - [X] Main Menu [5/5]
       - [X] Levels. Add spaces inside expand buttons groups. Expand in expand.
       - [X] Repeat colors for levels in expand button
       - [X] Change all black font's on closelly to black. Use some *dark-gray*, with blue-direction - ~#030D1C~ as example.
@@ -174,7 +163,7 @@ CLOSED: [2021-10-02 sob 12:00]
    1. [ ] Cannot edit table =view=
    2. [ ] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
    3. [ ] Cannot edit metadata of table 
-** TODO [#2] Switch into new language system                         :@Aleks:
+** TODO [#2] Switch into new language system [0/1]                   :@Aleks:
    DEADLINE: <2021-10-13 śr.>
    - [ ] Just use new language getter functions.
 
@@ -186,14 +175,43 @@ CLOSED: [2021-10-02 sob 12:00]
    - [ ] Make template (put into some tmp file or place) [0/2]
      - [ ] Alert which making hard logout from system, and inform about computer count
      - [ ] Alert which inform on startup that licence is going to end
-** TODO [#1] /Feature/. Create configurations panel
+** TODO [#1] /Feature/. Create configurations panel [0/1]
    DEADLINE: <2021-10-13 śr.>
    - [ ] Language select box
 ** TODO [#3] /Feature/. Update Manager [1/2]                           :@Aleks:
    DEADLINE: <2021-10-13 śr.>
    - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [ ] Show popup with message need hard restart
-** PLANNED Scroll to selected in table                               :@Aleks:
+** PLANNED Feature. Frontend upgrade [0/4]                           :@Aleks:
+*** Global shortcut (inside state) and focus pointer
+    - [ ] Create storage for key-binding and fns to invoke. Functions should be from interaction.clj. Some like {~:C-r_s~ soft-restart ~:C-s~ save-changes}
+*** Slider menu [0/7]
+    - [ ] Move icon buttons to one transparent vertical layout - SliderBox.
+    - [ ] SliderBox should be on JLayeredPane.
+    - [ ] SliderBox fn hide/show - make shift animation off the screen and back. Update global state with SliderMenu occupied space. Watcher will be updating bounds and size on layouts MainMenu and FnSpace.
+    - [ ] Register shortcut for hide/show in global shortcut (inside state).
+    - [ ] On top mode. FnSpace will be fitted to frame and SliderMenu will be higher on layers and will cover FnSpace.
+    - [ ] Default on start in ~.jarman~ configuraion - hide/show slider menu.
+    - [ ] Default on start in ~.theme~ configuraion  - slider menu size.
+*** Main menu [0/8]
+    - [ ] Pull out main menu to MenuBox and set into JLayeredPane.
+    - [ ] Watcher should changing MainMenu bounds when global state with SliderMenu occupied space will be changed. MainMenu will be properly shifted relative to the SliderMenu.
+    - [ ] Hide/Show just put MainMenu into SliderMenu as icon when should be hiding and remove it from JLayeredPane. Click on icon will back MainMenu into JLayeredPane.
+    - [ ] Slim right border for changing size of MainMenu. Size will be inside global state.
+    - [ ] On top mode. FnSpace will be fitted to frame and MainMenu will be higher on layers and will cover FnSpace. MainMenu will be properly shifted relative to the SliderMenu.
+    - [ ] Default on start in ~.jarman~ configuraion - hide/show main menu.
+    - [ ] Default on start in ~.theme~ configuraion  - main menu size.
+    - [ ] Add documentation how to correctly pin some components to menus. Also add more information to the Exceptions
+	When i pin my panel, i get exception
+	#+begin_example
+	Gui view service: Cannot rerender :view-spaceWrong number of args (0) passed to: jarman.gui.gui-main-menu/default-menu-items/fn--28447
+	#+end_example
+	This is missunderstandable, please make throw some Exeption
+*** FnSpace [0/3]
+    - [ ] If on top mode will be off then FnSpace will be properly shifted relative to the SliderMenu and MainMenu.
+    - [ ] If on top mode will be on then FnSpace will be always fitted to frame.
+    - [ ] Watcher should changing size of FnSpace when global state with size of MainMenu or SliderMenu will be changed. FnSpace will be fitted to components inside app's frame.
+** PLANNED Scroll to selected in table [0/1]                         :@Aleks:
    - [ ] Scroll to selected in table
 
 ** PLANNED /Feature/. Extension Manager [1/5]                          :@Aleks:

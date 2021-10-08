@@ -6,6 +6,95 @@
 
 * Structure
 
+  #+begin_src plantuml :file metadata-structure.png
+    @startmindmap
+    ,* prop
+    ,** table
+    ,** [columns]
+    ,** columns-composite
+    ,*** [columns]
+    @endmindmap
+  #+end_src
+
+  #+RESULTS:
+  [[file:metadata-structure.png]]
+
+  #+begin_src plantuml :file metadata-structure-expand.png
+    @startjson
+    #highlight ":table" / ":field"
+    #highlight ":columns" / "0" / ":field"
+    #highlight ":columns" / "0" / ":field-qualified"
+    #highlight ":columns" / "1" / ":field"
+    #highlight ":columns" / "1" / ":field-qualified"
+    #highlight ":columns-composite" / "0" / ":field"
+    #highlight ":columns-composite" / "0" / ":field-qualified"
+    #highlight ":columns-composite" / "0" / ":columns" / "0" / ":field"
+    #highlight ":columns-composite" / "0" / ":columns" / "0" / ":field-qualified"
+    #highlight ":columns-composite" / "0" / ":columns" / "1" / ":field"
+    #highlight ":columns-composite" / "0" / ":columns" / "1" / ":field-qualified"
+    {
+      ":table": {
+	":field": ":seal",
+	":representation": "Secure Seal",
+	"...": ""
+      },
+      ":columns": [
+	{
+	  ":representation": "Seal number",
+	  ":field": ":seal_number",
+	  ":field-qualified": ":seal.seal_number",
+	  ":column-type": "<color:green>[:varchar-20]",
+	  ":component-type": "<color:green>[:text]",
+	  "...": ""
+	},
+	{
+	  ":representation": "Datetime of USE",
+	  ":field": ":datetime_of_use",
+	  ":field-qualified": ":seal.datetime_of_use",
+	  ":column-type": "<color:green>[:datatime :date]",
+	  ":component-type": "<color:green>[:datatime :text]",
+	  "...": ""
+	},
+	{ "...": "" }
+      ],
+      ":columns-composite": [
+	{
+	  ":representation": "site",
+	  ":field": ":site",
+	  ":field-qualified": ":seal.site",
+	  ":constructor": "<color:magenta> #'(fn [])",
+	  ":columns": [
+	    {
+	      ":representation": "Name",
+	      ":field": ":site_name",
+	      ":field-qualified": ":seal.site_name",
+	      ":column-type": "<color:green>[:varchar-240]",
+	      ":component-type": "<color:green>[:text]",
+	      ":constructor-var": ":text",
+	      "...": ""
+	    },
+	    {
+	      ":representation": "URL",
+	      ":field": "site_url",
+	      ":field-qualified": "seal.site_url",
+	      ":column-type": "<color:green>...",
+	      ":component-type": "<color:green>...",
+	      ":constructor-var": ":link",
+	      "...": ""
+	    },
+	    { "...": "" }
+	  ]
+	},
+	{ "...": "" }
+      ]
+    }
+    @endjson
+  #+end_src
+
+  #+RESULTS:
+  [[file:metadata-structure-expand.png]]
+
+  
   Please open #_CREATE_REF .jarman.data, which contain declaration of metadata for all/partial mentioned tables in database. Metadata not require to cover whole db, is just list of tables which you prefare to managing from the program client side. In this file you can find variable ~metadata-list~ with declared metadata to db tables in one long list.
   Please notice that metadata cannot be created for tables like "metadata" or another bad names, that not allowed, or currently use for system. #_LANG Відповідний warning abount bad naming you can see in runtime. All declarated and validated #_CREATE_REF metadata pushed into ~metadata~ table name in database.
 

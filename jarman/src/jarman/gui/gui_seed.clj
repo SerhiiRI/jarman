@@ -22,7 +22,6 @@
   (:import javax.swing.JLayeredPane
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
-;;  (get-color :jarman :bar)
 
 (def changes-service (atom (cs/new-changes-service)))
 

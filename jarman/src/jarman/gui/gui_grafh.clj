@@ -18,7 +18,6 @@
             [jarman.gui.gui-components :as components]
             [jarman.logic.connection :as c]
             [kaleidocs.merge :refer [merge-doc]]
-            ;; [jarman.config.init :refer [configuration language swapp-all save-all-cofiguration make-backup-configuration]]
             ))
 
 (import '(com.mxgraph.view mxGraph))

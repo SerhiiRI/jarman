@@ -18,12 +18,6 @@
    [jarman.tools.swing :as stool]
    [jarman.tools.org :refer :all]
    [jarman.resource-lib.icon-library :as icon]
-   [jarman.gui.gui-tools      :as gtool]
-   [jarman.gui.gui-editors    :as gedit]
-   [jarman.gui.gui-components :as gcomp]
-   [jarman.gui.gui-migrid     :as gmg]
-   [jarman.gui.gui-calendar   :as calendar]
-   [jarman.gui.popup :as popup]
    [jarman.logic.composite-components :as lcomp]
    [jarman.logic.state :as state]
    [jarman.logic.metadata :as mt]
@@ -38,6 +32,7 @@
    [clojure.string]
    [clojure.pprint :refer [cl-format]]
    [jarman.config.environment :as env]
+   [jarman.config.conf-language :refer [register-new-translation]]
    [jarman.tools.lang :refer :all]
    [jarman.config.vars :refer [defvar]])
   (:import (java.io IOException FileNotFoundException)))
@@ -82,6 +77,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;
 
 (defn assert-sources [^String extension-name file-list]
+  (print-line "testing extension source files")
   (doall
    (doseq [file file-list]
      (when-not (.exists file)
@@ -89,24 +85,35 @@
                (format "Extension `%s`. Loading sequnce `%s` not exist" extension-name (str file))))))))
 
 (defn assert-languages [^String extension-name file-list]
+  (print-line "testing translation files")
   (doall
    (doseq [file file-list]
      (when-not (.exists file)
        (throw (FileNotFoundException.
                (format "Extension `%s`. Language file `%s` not exist" extension-name (str file))))))))
 
+
 (defprotocol IPluginLoader
-  (do-load [this]))
+  (do-load [this])
+  (do-load-translation [this]))
 (defrecord PandaExtension [name description extension-path version authors license keywords url dependencies loading-seq language]
   IPluginLoader
+  (do-load-translation [this]
+    (when (seq language)
+      (print-line (format "loading languages from extension ~%s~" name))
+      (register-new-translation
+       (keyword name)
+       (reduce (fn [acc-m translation-file]
+                 (print-line (format "merge file ~%s~ " (str translation-file)))
+                 (deep-merge-with #(second %&) acc-m (read-string (slurp (str translation-file)))))
+               {} language))))
   (do-load [this]
     (print-header
      (format "load ~%s~" name)
      ;; Testing language and sources files
-     (print-line "testing translation files")
      (assert-sources name loading-seq)
-     (print-line "testing extension source files")
      (assert-languages name language)
+     (.do-load-translation this)
      ;; Compiling source files
      (doall
       (doseq [f loading-seq]
@@ -219,6 +226,8 @@
            :extension-loaded (conj extension-loaded extension)
            :extension-locked (remove-deps (:name extension) extension-locked)
            :extension-list   rest-extensions))))))
+
+
 
 (defn do-load-extensions
   ([]

@@ -6,10 +6,37 @@
    [clojure.spec.alpha :as s]
    ;; jarmans
    [jarman.tools.lang :refer :all]
-   [jarman.config.config-manager :as c])
+   [jarman.config.vars :refer [defvar]])
   (:import (java.util Date)
            (java.text SimpleDateFormat)
            (java.sql SQLException)))
+
+(defvar dataconnection-alist
+  {:jarman--localhost--3306
+   {:dbtype "mysql",
+    :host "127.0.0.1",
+    :port 3306,
+    :dbname "jarman",
+    :user "root",
+    :password "1234"},
+   :jarman--trashpanda-team_ddns_net--3306 ;; raspberry 
+   {:dbtype "mysql",
+    :host "trashpanda-team.ddns.net",
+    :port 3306,
+    :dbname "jarman",
+    :user "jarman",
+    :password "dupa"}
+   :jarman--trashpanda-team_ddns_net--3307 ;; dell
+   {:dbtype "mysql",
+    :host "trashpanda-team.ddns.net",
+    :port 3307,
+    :dbname "jarman",
+    :user "root",
+    :password "misiePysie69"}}
+  :name "Datasources"
+  :doc "Connection map list"
+  :type clojure.lang.PersistentArrayMap
+  :group :database)
 
 ;;; HELPER FUNCION ;;;
 (defn test-connection [db-spec]
@@ -120,82 +147,12 @@
       :password \"1234\"}"
   [] (deref *connection*))
 
-(defn connection-config-get-all []
-  (c/get-in-value [:database.edn :datalist]))
-
 ;;; FOR DEBUG CONNECTION
 (connection-set
  ;; set selected
- (:dell
+ (:jarman--trashpanda-team_ddns_net--3307
   ;;------------
-  {:localhost
-   {:dbtype "mysql",
-    :host "127.0.0.1",
-    :port 3306,
-    :dbname "jarman",
-    :user "root",
-    :password "1234"},
-   :raspberry
-   {:dbtype "mysql",
-    :host "trashpanda-team.ddns.net",
-    :port 3306,
-    :dbname "jarman",
-    :user "jarman",
-    :password "dupa"}
-   :dell
-   {:dbtype "mysql",
-    :host "trashpanda-team.ddns.net",
-    :port 3307,
-    :dbname "jarman",
-    :user "root",
-    :password "misiePysie69"}
-   :dell-test
-   {:dbtype "mysql",
-    :host "trashpanda-team.ddns.net",
-    :port 3307,
-    :dbname "jarman-test",
-    :user "root",
-    :password "1234"}}))
-
-;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Mapper/Converter ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn datalist-get [& [datalist-key]]
-  (-> (if datalist-key
-        (conj [:database.edn :datalist] datalist-key)
-        [:database.edn :datalist])
-   c/get-in-value))
-
-(defn datalist-in? [datalist-key]
-  (in? (keys (c/get-in-value [:database.edn :datalist])) datalist-key))
-
-(defn datalist-params-mapper [param-segment]
-  (->> (seq param-segment)
-       (map (fn [[prm-k {n :name t :type d :display c :component v :value}]]
-              {prm-k v}))
-       (reduce into)))
-
-(defn datalist-mapper [datalist-segment]
-  (->> datalist-segment
-       (map (fn [[k {n :name v :value}]]
-              {k (datalist-params-mapper v)}))
-       (reduce into)))
-
-(defn datalist-update [mapped-datalist]
-  (doall
-   (map #(c/assoc-in-value
-          (vec (concat [:database.edn :datalist] %))
-          (get-in mapped-datalist %)) 
-        (key-paths
-         mapped-datalist))))
-
-(defn datalist-resolve [datalist-key]
-  (second
-   (if (datalist-in? datalist-key)
-     ["CHANGED" (datalist-params-mapper (datalist-get datalist-key))]
-     ["ORIGINAL" (connection-get)])))
-
+  (deref dataconnection-alist)))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; JDBC WRAPPERS ;;; 

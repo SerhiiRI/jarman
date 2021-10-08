@@ -26,7 +26,6 @@
             [jarman.plugin.extension-manager :refer [do-load-extensions]]
             [jarman.plugin.plugin            :refer [do-load-theme theme-selected]]
             [jarman.config.vars              :refer [setq print-list-not-loaded]]
-            [jarman.config.conf-language     :refer [do-load-language]]
             [jarman.config.dot-jarman        :refer [dot-jarman-load]]
             [jarman.tools.org                :refer :all]
             [jarman.tools.lang               :refer :all]
@@ -42,7 +41,9 @@
             [jarman.gui.gui-seed             :as gseed]
             [jarman.gui.gui-main-menu        :as menu]
             [jarman.gui.gui-migrid           :as gmg]
-            [jarman.gui.popup                :as popup]))
+            [jarman.gui.popup                :as popup]
+            [jarman.gui.gui-editors          :as gedit]
+            [jarman.gui.gui-calendar         :as calendar]))
 
  
 ;; ┌──────────────────────────┐
@@ -169,10 +170,7 @@
   (out-extension
    (print-header
     "Load Extensions"
-    (do-load-extensions)))
-  (print-header
-   "Load Languages"
-   (do-load-language)))
+    (do-load-extensions))))
 
 ;; after swing component was builded
 (defn load-level-1

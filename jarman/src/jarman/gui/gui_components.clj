@@ -18,14 +18,11 @@
             [jarman.gui.gui-migrid :as gmg]
             [jarman.gui.gui-style  :as gs]
             [seesaw.chooser        :as chooser]
-            [jarman.config.config-manager :as cm]
             [jarman.gui.gui-tutorials.key-dispacher-tutorial :as key-tut])
   (:import (java.awt Color)
            (java.awt Dimension)
            (jarman.jarmanjcomp CustomScrollBar)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
-
-(cm/swapp)
 
 ;; ┌────────────────────�
 ;; │                    │
@@ -61,8 +58,8 @@
    c/label 
    :focusable? true
    :border (b/line-border :left hgap :top vgap)
-   :listen [:focus-gained (fn [e] (c/config! e :border (b/line-border :left hgap :top vgap :color (gtool/get-comp :fake-focus :background-focus))))
-            :focus-lost   (fn [e] (c/config! e :border (b/line-border :left hgap :top vgap :color (gtool/get-comp :fake-focus :background-unfocus))))]
+   :listen [:focus-gained (fn [e] (c/config! e :border (b/line-border :left hgap :top vgap)))
+            :focus-lost   (fn [e] (c/config! e :border (b/line-border :left hgap :top vgap)))]
    args))
 
 (defn auto-scrollbox
@@ -123,39 +120,6 @@
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
     scr))
-
-
-(defn header-basic
-  [title
-   & {:keys [foreground
-             background
-             border-size
-             border-color
-             border
-             underline-color
-             underline-size
-             ;; font-size
-             ;; font-style
-             ;; font
-             args]
-      :or {foreground (gtool/get-comp :header-basic :foreground)
-           background (gtool/get-comp :header-basic :background)
-           border-color (gtool/get-comp :header-basic :border-color)
-           border-size (gtool/get-comp :header-basic :border-size)
-           underline-color (gtool/get-comp :header-basic :underline-color)
-           underline-size (gtool/get-comp :header-basic :underline-size)
-           border (fn [size color usize ucolor] (b/compound-border  (b/line-border :thickness size :color color) (b/line-border :bottom usize :color ucolor)))
-           ;; font-size (gtool/get-comp :header-basic :font-size)
-           ;; font-style (keyword (first (gtool/get-comp :header-basic :font-style)))
-           ;; font (fn [size style] (gtool/getFont size style))
-           args []}}]
-  (apply c/label
-         :text title
-         ;; :font (font font-size font-style)
-         :foreground foreground
-         :background background
-         :border (border border-size border-color underline-size underline-color)
-         args))
 
 
 (defmacro textarea
@@ -281,25 +245,6 @@
    :args args))
 
 
-;; (defn button-export
-;;   [txt onClick]
-;;   (button-basic txt 
-;;                 :onClick onClick
-;;                 :mouse-in (gtool/get-comp :button-export :mouse-in)
-;;                 :mouse-out (gtool/get-comp :button-export :mouse-out)
-;;                 :unfocus-color (gtool/get-comp :button-export :unfocus-color)))
-
-(defn button-return
-  [txt func]
-  (button-basic txt 
-                :onClick func
-                :mouse-in (gtool/get-comp :button-return :mouse-in)
-                :mouse-out (gtool/get-comp :button-return :mouse-out)
-                :unfocus-color (gtool/get-comp :button-return :unfocus-color)
-                :args [:foreground (gtool/get-comp :button-return :foreground)]))
-
-
-
 (defn button-icon
   [{:keys [icon-on icon-off size func tip margin frame-hover c-border-focus]
     :or   {icon-on (gs/icon GoogleMaterialDesignIcons/HELP  face/c-icon)
@@ -398,8 +343,8 @@
       :or {val ""
            placeholder ""
            font-size 14
-           border-color-focus   (gtool/get-color :decorate :focus-gained)
-           border-color-unfocus (gtool/get-color :decorate :focus-lost)
+           border-color-focus   face/c-underline-on-focus
+           border-color-unfocus face/c-underline
            border [10 10 5 5 2]
            char-limit 0
            args []}}]
@@ -412,8 +357,6 @@
         last-v (atom "")]
     (apply c/text
            :text (if (empty? val) placeholder (if (string? val) val (str val)))
-           ;; :font (gtool/getFont font-size)
-           :background (gtool/get-color :background :input)
            :border (newBorder border-color-unfocus)
            :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
            :listen [:focus-gained (fn [e]
@@ -614,8 +557,8 @@
          local-changes (atom {})
          val ""
          border [10 10 5 5 2]
-         border-color-focus   (gtool/get-color :decorate :focus-gained)
-         border-color-unfocus (gtool/get-color :decorate :focus-lost)
+         border-color-focus   face/c-underline-on-focus
+         border-color-unfocus face/c-underline
          char-limit 0}}]
   (let [newBorder (fn [underline-color]
                     (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
@@ -704,7 +647,7 @@
           :text val
           :foreground (if editable? "#000" "#456fd1")
           :focusable? true
-          :background (if-not editable? (gtool/get-color :background :light-mute) (gtool/get-color :background :input))
+          :background (if-not editable? face/c-layout-background face/c-compos-background)
           :listen [:mouse-clicked onClick
                    :action-performed onClick
                    :mouse-entered (if editable? (fn [e]) (fn [e]
@@ -757,7 +700,7 @@
                ;; :font (gtool/getFont 14)
                :enabled? enabled?
                :editable? editable?
-               :background (gtool/get-color :background :combobox)
+               :background face/c-compos-background ;; TODO: to check
                :listen [:item-state-changed (fn [e] ;;(let [choosed (c/config e :selected-item)])
                                               (let [new-v (c/config e :selected-item)]
                                                 ;; (println "new c/value" new-v)
@@ -803,7 +746,7 @@
                 ;; :font (gtool/getFont 14)
                 :enabled? enabled?
                 :editable? editable?
-                :background (gtool/get-color :background :combobox)
+                :background face/c-compos-background
                 :selected-item start-v
                 :listen [:item-state-changed
                          (fn [e]
@@ -925,8 +868,8 @@
                  style]
           :or   {placeholder "Password"
                  font-size 14
-                 border-color-focus   (gtool/get-color :decorate :focus-gained)
-                 border-color-unfocus (gtool/get-color :decorate :focus-lost)
+                 border-color-focus   face/c-underline-on-focus
+                 border-color-unfocus face/c-underline
                  border [10 10 5 5 2]
                  style []}}]
     (let [allow-clean (atom false)
@@ -940,7 +883,7 @@
       (apply c/text
              :text placeholder
              ;; :font (gtool/getFont font-size)
-             :background (gtool/get-color :background :input)
+             :background face/c-compos-background
              :border (newBorder border-color-unfocus)
              :user-data {:placeholder placeholder :value "" :edit? false :type :password}
              :listen [:focus-gained (fn [e]
@@ -991,8 +934,8 @@
                  style]
           :or   {placeholder "Password"
                  font-size 14
-                 border-color-focus   (gtool/get-color :decorate :focus-gained)
-                 border-color-unfocus (gtool/get-color :decorate :focus-lost)
+                 border-color-focus   face/c-underline-on-focus
+                 border-color-unfocus face/c-underline
                  border [10 10 5 5 2]
                  style []}}]
     (let [allow-clean (atom false)
@@ -1006,7 +949,7 @@
       (apply c/text
              :text placeholder
              ;; :font (gtool/getFont font-size)
-             :background (gtool/get-color :background :input)
+             :background face/c-compos-background
              :border (newBorder border-color-unfocus)
              :user-data {:placeholder placeholder :value "" :edit? false :type :password}
              :listen [:focus-gained (fn [e]
@@ -1122,8 +1065,8 @@
                  :background (Color. 0 0 0 0))
           listen (fn [func] [:mouse-entered gtool/hand-hover-on
                              :mouse-clicked (fn [e] (func e))
-                             :focus-gained  (fn [e] (c/config! e :background (gtool/get-comp :button-expand :background-hover)))
-                             :focus-lost    (fn [e] (c/config! e :background (gtool/get-comp :button-expand :background)))
+                             :focus-gained  (fn [e] (c/config! e :background face/c-underline-on-focus))
+                             :focus-lost    (fn [e] (c/config! e :background face/c-underline))
                              :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (func e)))])
           icon (c/label
                 :size [vsize :by vsize]
@@ -1286,8 +1229,8 @@
                  display nil
                  val ""
                  font-size 14
-                 border-color-focus   (gtool/get-color :decorate :focus-gained)
-                 border-color-unfocus (gtool/get-color :decorate :focus-lost)
+                 border-color-focus   face/c-underline-on-focus
+                 border-color-unfocus face/c-underline
                  border [10 10 5 5 2]
                  char-limit 0
                  local-changes (atom {})
@@ -1300,7 +1243,7 @@
              :text val
              :background "#fff"
              ;; :font (gtool/getFont font-size)
-             :background (gtool/get-color :background :input)
+             :background face/c-compos-background
              :border (newBorder border-color-unfocus)
              :listen [:focus-gained (fn [e] (c/config! e :border (newBorder border-color-focus)))
                       :focus-lost   (fn [e] (c/config! e :border (newBorder border-color-unfocus)))
@@ -1379,8 +1322,8 @@
         :or   {style []
                val "0"
                font-size 14
-               border-color-focus   (gtool/get-color :decorate :focus-gained)
-               border-color-unfocus (gtool/get-color :decorate :focus-lost)
+               border-color-focus   face/c-underline-on-focus
+               border-color-unfocus face/c-underline
                border [10 10 5 5 2]
                char-limit 0
                local-changes (atom {})
@@ -1391,8 +1334,7 @@
           last-v (atom 0)]
       (apply c/text
              :text (if (nil? val) "0" val)
-             ;; :font (gtool/getFont font-size :name (gtool/get-font :regular))
-             :background (gtool/get-color :background :input)
+             :background face/c-compos-background
              :border (newBorder border-color-unfocus)
              :listen [:focus-gained (fn [e] (c/config! e :border (newBorder border-color-focus)))
                       :focus-lost   (fn [e] (c/config! e :border (newBorder border-color-unfocus)))

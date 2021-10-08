@@ -76,16 +76,8 @@
    - [X] =faces.clj=
      Finish moving to new customization style
      
-** DONE [#1] /Feature/. Jarman Theme Light Style [6/6]
-   CLOSED: [2021-10-08 Fri 13:55] DEADLINE: <2021-10-08 pt.>
-   - [X] rewrite styles config
-   - [X] global font
-   - [X] global background
-   - [X] global foreground
-   - [X] removing unnessesary font override         
-   - [X] unifing styles in UI
 ** PROCESSING [#1] Frontend refactorization [4/7]
-   DEADLINE: <2021-10-08 pt.>
+   DEADLINE: <2021-10-13 Wed>
 *** TODO Service Periods plugins [0/2]                               :@Aleks:
 **** Bugs [0/2]:
     - [ ] Service Periods and Service contract have same id in gui view service
@@ -159,14 +151,10 @@ CLOSED: [2021-10-02 sob 12:00]
      - [ ] Remove suuid /:@Serhii:/
      - [ ] Autoclose log stream's /:@Serhii:/
 ** TODO [#2] /Bug/. DB Visualizer editing [0/3]                :@Aleks:@Serhii:
-   DEADLINE: <2021-10-08 pt.>
+   DEADLINE: <2021-10-13 Wed>
    1. [ ] Cannot edit table =view=
    2. [ ] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
    3. [ ] Cannot edit metadata of table 
-** DONE [#2] Switch into new language system [1/1]                   :@Aleks:
-   CLOSED: [2021-10-08 Fri 13:57] DEADLINE: <2021-10-13 śr.>
-   - [X] Just use new language getter functions.
-
 ** TODO [#1] /Feature/. Licenses [0/3]                         :@Aleks:@Serhii:
    DEADLINE: <2021-10-13 śr.>
    Related to [[Register licence mechanics]] issue.
@@ -235,6 +223,18 @@ CLOSED: [2021-10-02 sob 12:00]
 ** PLANNED Make diagram from DB Visualiser
    - [ ] Visualize relation between tables
    - [ ] Save table location in DB visualiser into configurations
+** DONE /Feature/. Jarman Theme Light Style [6/6]
+   CLOSED: [2021-10-08 Fri 13:55] DEADLINE: <2021-10-08 pt.>
+   - [X] rewrite styles config
+   - [X] global font
+   - [X] global background
+   - [X] global foreground
+   - [X] removing unnessesary font override
+   - [X] unifing styles in UI
+** DONE Switch into new language system [1/1]                        :@Aleks:
+   CLOSED: [2021-10-08 Fri 13:57] DEADLINE: <2021-10-13 śr.>
+   - [X] Just use new language getter functions.
+
 ** DONE /Feature/. Theme Manager [3/3]                                :@Serhii:
    CLOSED: [2021-10-02 sob 12:18] DEADLINE: <2021-10-02 sob.>
    - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.

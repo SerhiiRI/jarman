@@ -21,19 +21,19 @@
     Project starts 2021-10-02
     [Permission] starts 2021-10-02
     [Permission] is colored in LawnGreen/MediumSeaGreen
-    [Permission] ends 2021-10-08
+    [Permission] ends 2021-10-10
     [Permission] is 70% completed
     [Licenses] starts 2021-10-02
     [Licenses] is colored in LawnGreen/MediumSeaGreen
-    [Licenses] ends 2021-10-09
+    [Licenses] ends 2021-10-10
     [GUI] starts 2021-10-02
     [GUI] is 80% completed
     [GUI] is colored in LawnGreen/MediumSeaGreen
     [GUI] ends 2021-10-13
-    [Exports] starts 2021-10-13
     [Exports] is colored in LawnGreen/MediumSeaGreen
-    [Exports] ends 2021-10-21
-    [Ekka] starts 2021-10-10
+    [Exports] ends 2021-10-24
+    [Exports] starts at [GUI]'s end
+    [Ekka] starts at [Licenses]'s end
     [Ekka] is colored in Crimson/DarkRed
     [Ekka] ends at [Exports]'s end 
     [Unit test] as [U] starts 2021-10-14
@@ -76,14 +76,14 @@
    - [X] =faces.clj=
      Finish moving to new customization style
      
-** PROCESSING [#1] /Feature/. Jarman Theme Light Style [5/6]
-   DEADLINE: <2021-10-08 pt.>
+** DONE [#1] /Feature/. Jarman Theme Light Style [6/6]
+   CLOSED: [2021-10-08 Fri 13:55] DEADLINE: <2021-10-08 pt.>
    - [X] rewrite styles config
    - [X] global font
    - [X] global background
    - [X] global foreground
    - [X] removing unnessesary font override         
-   - [ ] unifing styles in UI
+   - [X] unifing styles in UI
 ** PROCESSING [#1] Frontend refactorization [4/7]
    DEADLINE: <2021-10-08 pt.>
 *** TODO Service Periods plugins [0/2]                               :@Aleks:
@@ -163,9 +163,9 @@ CLOSED: [2021-10-02 sob 12:00]
    1. [ ] Cannot edit table =view=
    2. [ ] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
    3. [ ] Cannot edit metadata of table 
-** TODO [#2] Switch into new language system [0/1]                   :@Aleks:
-   DEADLINE: <2021-10-13 śr.>
-   - [ ] Just use new language getter functions.
+** DONE [#2] Switch into new language system [1/1]                   :@Aleks:
+   CLOSED: [2021-10-08 Fri 13:57] DEADLINE: <2021-10-13 śr.>
+   - [X] Just use new language getter functions.
 
 ** TODO [#1] /Feature/. Licenses [0/3]                         :@Aleks:@Serhii:
    DEADLINE: <2021-10-13 śr.>

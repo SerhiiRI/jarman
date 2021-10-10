@@ -2,6 +2,7 @@
   (:require
    [jarman.tools.lang         :refer :all] 
    [clojure.spec.alpha        :as s]
+   [seesaw.core               :as c]
    [jarman.gui.gui-tools      :as gtool]
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-migrid     :as gmg]
@@ -9,8 +10,8 @@
    [jarman.logic.sql-tool     :refer [select!]]
    [jarman.logic.connection   :as db]
    [jarman.logic.state        :as state]
-   [jarman.plugin.spec        :as spec]
    [jarman.gui.gui-style      :as gs]
+   [jarman.plugin.spec        :as spec]
    [jarman.interaction        :as i]
    [jarman.plugin.data-toolkit       :as query-toolkit]
    [jarman.resource-lib.icon-library :as icon]
@@ -29,9 +30,11 @@
 (defn- action-handler
   [state action-m]
   (case (:action action-m)
+    ;; ------------------ Default ---------------------
     :add-missing  (assoc-in state (:path action-m) nil)
     :test         (do (println "\nTest:n") state)
-    :update-login (assoc-in state [:login]    (:value action-m))
+    ;; ------------------------------------------------
+    
     ))
 
 (defn- create-disptcher [atom-var]
@@ -57,7 +60,7 @@
 
 (defn- isNumber? [val]
    (if-not (number? (read-string val)) 
-     (i/danger "Error" "Price must be number") ;; TODO: dynamic language
+     (i/danger (gtool/get-lang-header :error) (gtool/get-lang-alerts :price-must-be-number))
      true))
 
 (defn- split-date [date-vec]
@@ -70,24 +73,29 @@
   ([panel content] (doto panel (.removeAll) (.add content) (.revalidate) (.repaint))))
 
 (defn- refresh-data-and-panel [state!]
-  (let [{:keys [insert-space view-space exp-panel]} (state!)]
+  (let [{:keys [new-contract-form
+                plugin-root-layout
+                exp-panel]}
+        (state!)]
     (.removeAll exp-panel)
     (doall
-     (map (fn [[entr srv_cntr]] (.add exp-panel (build-expand-by-map [entr srv_cntr] (seesaw.core/vertical-panel) state!)))
-          (:tree-view ((:select-group-data (:plugin-toolkit (state!)))))))
-    (.removeAll insert-space)
-    (refresh-panel view-space)))
+     (map
+      (fn [[enterpeneuer service_contract_m]]
+        (.add exp-panel (build-expand-by-map [enterpeneuer service_contract_m] state!)))
+      (:tree-view ((:select-group-data (:plugin-toolkit (state!)))))))
+    (.removeAll new-contract-form)
+    (refresh-panel plugin-root-layout)))
   
 (defn- back-to-main-panel
   "Description
-    remove in view-space panel with periods of one contract, add to view-space panel with all contracta (like agenda) "
+    remove in plugin-root-layout panel with periods of one contract, add to plugin-root-layout panel with all contracta (like agenda) "
   [state!]
-  (let [{:keys [view-space insert-space exp-panel btn-panel]} (state!)]
+  (let [{:keys [plugin-root-layout new-contract-form exp-panel btns-menu-bar]} (state!)]
     (swap! (state! :atom) merge {:payments-per-month {}})
-    (.removeAll view-space)
-    (.add view-space btn-panel)
-    (.add view-space insert-space)
-    (.add view-space exp-panel)
+    (.removeAll plugin-root-layout)
+    (.add plugin-root-layout btns-menu-bar)
+    (.add plugin-root-layout new-contract-form)
+    (.add plugin-root-layout exp-panel)
     (refresh-data-and-panel state!)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -95,7 +103,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- comparator-fn
   "Description
-    return fn with preducat for different id-vec ([1] or [1 2] or [1 2 1])"
+    Return fn with preducat for different id-vec ([1] or [1 2] or [1 2 1])
+    It just check if two vectors have same values but onlu for 1, 2 or 3 values inside.
+  Example:
+    ((comparator-fn [1 2 3]) [1 2 3])
+    ;; => true
+    ((comparator-fn [1 2 3]) [1 2 2])
+    ;; => false
+  "
   [id-vec]
   (let [[_e _sc _scm] id-vec]
     (case (count id-vec)
@@ -112,9 +127,13 @@
 
 (defn- checked-box? [id-vec checkboxes]
   (let [cmpr? (comparator-fn id-vec)]
-    (reduce (fn [acc period] (if (cmpr? period)
-                               (and acc (last period))
-                               acc)) true checkboxes)))
+    (reduce
+     (fn [acc period]
+       (if (cmpr? period)
+         (and acc (last period))
+         acc))
+     true
+     checkboxes)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GUI for one Contract;;;
@@ -125,7 +144,8 @@
   [state!]
   (let [update-fn  (:update-service-money (:plugin-toolkit (state!)))]
     (doall (map (fn [[k v]] (update-fn k v)) (:payments-per-month (state!))))
-    (i/info "Messege" "Data was updated"))) ;; TODO: dynamic lang
+    (i/info (gtool/get-lang-header :info)
+            (gtool/get-lang-alerts :updated-data))))
 
 (defn- panel-one-period
   "Description
@@ -159,94 +179,192 @@
   "Description
     return mig-panel with button-bar and panels with all periods of one contract"
   [state! data]
-  (let [btn-panel (gcomp/menu-bar
+  (let [btns-menu-bar (gcomp/menu-bar
                    {:justify-end true
-                    :buttons [["Back" ;; TODO: dynamic lang
+                    :buttons [[(gtool/get-lang-btns :back)
                                (gs/icon GoogleMaterialDesignIcons/ARROW_BACK)
                                (fn [e] (back-to-main-panel state!))]
-                              ["Save" ;; TODO: dynamic lang
+                              [(gtool/get-lang-header :save)
                                (gs/icon GoogleMaterialDesignIcons/DONE)
                                (fn [e] (update-money-per-month state!))]
-                              ["Export ODT" ;; TODO: dynamic lang
+                              [(gtool/get-lang-header :export-odt)
                                icon/odt-64-png
                                (fn [e] )]]})
         panel     (seesaw.mig/mig-panel :constraints ["wrap 1" "15px[]15px" "15px[]15px"]
-                                        :items [[btn-panel]])]
+                                        :items [[btns-menu-bar]])]
     (doall (map (fn [period] (.add panel (panel-one-period state! period))) data)) panel))
 
 (defn- open-periods-contract-fn [state! contract-data]
-  (fn [e] (seesaw.core/config! (:view-space (state!))
+  (fn [e] (seesaw.core/config! (:plugin-root-layout (state!))
                                :items (gtool/join-mig-items
                                        (panel-one-contract-periods state! contract-data)))
-    (refresh-panel (:view-space (state!)))))
+    (refresh-panel (:plugin-root-layout (state!)))))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; EXPAND PANELS ;;;
 ;;;;;;;;;;;;;;;;;;;;;
 
+(defn- check-if-checkbox-should-be-render 
+  "Description
+      Check enterprenuer contracts and subcontracts
+      inside atom :contracts-checkboxs-map are only active contracts
+      and his checkbox state, true or false
+     
+      if path return to bool-or-map nil then
+         contract or subcontract was payed
+         so checbox cannot be rendering
+     
+      if path return to bool-or-map false then
+         contract or subcontract is still active
+         checkbox should be rendering
+     
+      else if inside bool-or-map is map then run recursively
+         fn to check upper rules deeper in map
+     
+      render? return true if inside contract or enterprenuer
+         is some unpayed contract or subcontruct and if will
+         be true then checkbox will be rendering
+  Example:
+     {:a {:b {:c true :d false}}} ;; => true
+     {:a {:b {:c true :d true}}}  ;; => nil
+     {:d false} ;; => true
+     false      ;; => true
+     true       ;; => nil
+     "
+  [bool-or-map]
+  (let [render? (some false?
+                      (flatten
+                       ((fn check-complete [contracts-m]
+                          (cond
+                            (map? contracts-m)
+                            (doall
+                             (map
+                              #(if (map? (second %))
+                                 (check-complete (second %))
+                                 (if (or (= true (second %))
+                                          (nil? (second %))) true false))
+                              contracts-m))
+
+                            (or (nil?  contracts-m)
+                                (true? contracts-m)) true
+                            
+                            (false? contracts-m) [false]
+
+                            :else true))
+                        bool-or-map)))]
+    ;; return step by step example
+    ;; {:d {:a true :b false}} => ((true false)) => flatten (true false) => some false? true
+    ;; {:d {:a true :b true}}  => ((true true))  => flatten (true true)  => some false? nil
+    render?))
+
+(defn- v-to-vmp
+  "Description:
+    vector to vector map path
+   Example
+    [1 2 3] ;; => [:1 :2 :3]"
+  [v] (vec (map #(keyword (str %)) v)))
+
 (defn- build-expand-by-map
   "Description
      Recursion, which build panels (button-expand for enterpeneuer and service contract, child-expand for service periods), using data from db like configuration map"
-  [plugin-m pan state!]
-  (let [{:keys [select-group-data calc-payment-for-enterpreneuer calc-payment-for-service-contr]} (:plugin-toolkit (state!))
-        checkboxes      (:checkboxes (state!))
-        v-pan           (seesaw.core/vertical-panel)
-        mig-hor         (fn [item color id-vec] ;; panel with checkbox and expand-panel
-                          (seesaw.core/border-panel
-                           :background color
-                           :west   (seesaw.core/flow-panel
-                                    :background "#fff"
-                                    :size [25 :by 25]
-                                    :items (list (if (checked-box? id-vec (:tip (state!))) ;; TO DO on click chekbox, panel with one contract repaint, so epand button is closed again, we need way in which we will know expan is closed or open? 
-                                                   (seesaw.core/label)
-                                                   (seesaw.core/checkbox
-                                                    :selected? (checked-box? id-vec @checkboxes)
-                                                    :listen [:mouse-clicked
-                                                             (fn [e] (update-checkboxes
-                                                                      id-vec
-                                                                      (.isSelected (.getComponent e)) checkboxes)
-                                                               (.removeAll pan)
-                                                               (build-expand-by-map plugin-m pan state!)
-                                                               (refresh-panel pan))]
-                                                    :background "#fff"))))
-                           :center (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[:820]0px[]0px" "0px[top]0px"]
-                                                         :background "#cecece"
-                                                         :items [[item]])))
-        scm-start-term    :service_contract_month.service_month_start
-        scm-end-term      :service_contract_month.service_month_end
-        scm-money         :service_contract_month.money_per_month
-        sc-start-term     :service_contract.contract_start_term
-        sc-end-term       :service_contract.contract_end_term
-        entr-name         :enterpreneur.name
-        checked?          (fn [id] (checked-box? id @checkboxes))
+  [plugin-v state!]
+  (let [{:keys [select-group-data
+                calc-payment-for-enterpreneuer
+                calc-payment-for-service-contr]}
+        (:plugin-toolkit (state!))
 
-        exp-panel-sm      (fn [v item] (gcomp/button-expand-child
-                                        (str (split-date [(scm-start-term item) (scm-end-term item)])
-                                             (if  (checked? (:v item)) "" (str " / " (scm-money item) " UAH")))
-                                        :onClick (open-periods-contract-fn state! v)))
-
-        serv-month-exp    (fn [v]  (seesaw.core/vertical-panel ;; panel with all expand-child (all periods) of one contract
-                                    :items (doall (map (fn [item] (mig-hor (exp-panel-sm v item) "#fff" (:v item))) v)))) 
-
-        exp-panel-sc      (fn [k v] (gcomp/button-expand
-                                     (str (split-date [(sc-start-term k) (sc-end-term k)])
-                                          (if (checked-box? (:v k) @checkboxes)
-                                            "" (str " / " (calc-payment-for-service-contr k v) " UAH")))
-                                     (serv-month-exp v)))
+        ;; map with checkboxes state
+        ;; paths are buliding as {:enterpreneur.id {:service_contract.id {:service_contract_month.id false}}}
+        checkboxes-state (:contracts-checkboxs-map (state!))
         
-        exp-panel-entr    (fn [k v] (gcomp/button-expand
-                                     (str (entr-name k) (if (checked-box? (:v k) @checkboxes)
-                                                          "" (str " / "  (calc-payment-for-enterpreneuer k v) " UAH")))
-                                     v-pan))
+        ;; return true if contract is not payed
+        render-checkbox?
+        (fn [some-contract]
+          (let [map-path  (v-to-vmp (:v some-contract))
+                bool-or-map (get-in @checkboxes-state map-path)
+                render? (check-if-checkbox-should-be-render bool-or-map)]
+            (println "\n" (:v some-contract) bool-or-map render?)
+            render?))
         
-        serv-contract-exp (fn [k v] (.add v-pan (mig-hor (exp-panel-sc k v) "#fff" (:v k))))
+        ;; Generate expand button with checkbox or done icon for subcontructs
+        contract-month-expand-btn
+        (fn [subcontracts-l]
+          (doall
+           (map
+            (fn [subcontract]
+              (let [checkbox (render-checkbox? subcontract)
+                    root (gcomp/button-expand-child
+                          (str (split-date [(:service_contract_month.service_month_start subcontract)
+                                            (:service_contract_month.service_month_end   subcontract)])
+                               (if checkbox ""
+                                   (str " / " (:service_contract_month.money_per_month subcontract) " UAH")))
+                          :onClick (open-periods-contract-fn state! subcontracts-l)
+                          :before-title (if checkbox
+                                          (fn [] (c/checkbox))
+                                          (fn [] (c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE))))
+                          :lvl 7
+                          :height 25)]
+                root))
+            subcontracts-l)))
+        
+        ;; Generate expand button with checkbox or done icon for contructs
+        contract-expand-btn (fn [enterprenier-data subcontracts-l]
+                              (let [render-fn (fn [] (contract-month-expand-btn subcontracts-l))
+                                    subcontructs-box (gmg/migrid :v (render-fn))
+                                    checkbox (render-checkbox? enterprenier-data)
+                                    root (gcomp/button-expand
+                                          (str (split-date [(:service_contract.contract_start_term enterprenier-data)
+                                                            (:service_contract.contract_end_term   enterprenier-data)])
+                                               (if checkbox ""
+                                                   (str " / " (calc-payment-for-service-contr enterprenier-data
+                                                                                              subcontracts-l) " UAH")))
+                                          subcontructs-box
+                                          :before-title
+                                          (if checkbox
+                                            (fn [] (c/checkbox
+                                                    :listen
+                                                    [:mouse-clicked
+                                                     (fn [e] (let [selected? (.isSelected (.getComponent e))
+                                                                   contracts-m-path (v-to-vmp (:v enterprenier-data))
+                                                                   contracts-m-part (get-in @checkboxes-state contracts-m-path)
+                                                                   contracts-m-part (into {} (map (fn [[id bool]] {id selected?}) contracts-m-part))]
+                                                              ;; (println "\nCMP" contracts-m-part)
+                                                               (swap! checkboxes-state #(assoc-in
+                                                                                         %
+                                                                                         contracts-m-path
+                                                                                         contracts-m-part))
+                                                               (c/config! subcontructs-box :items (gtool/join-mig-items (render-fn)))))]))
+                                            (fn [] (c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE))))
+                                          :lvl 3)]
+                                root))
+        
+        ;; Generate expand button with checkbox or done icon for enterprenuer
+        enterprenier-expand-btn
+        (fn [enterprenier-data contracts-m]
+          (let [checkbox (render-checkbox? enterprenier-data)
+                root (gcomp/button-expand
+                      (str (:enterpreneur.name enterprenier-data) 
+                           (if checkbox ""
+                               (str " / "  (calc-payment-for-enterpreneuer enterprenier-data contracts-m) " UAH")))
 
-        enterpr-exp       (fn [k v] (.add pan (mig-hor (exp-panel-entr k v) "#fff" (:v k))))]
+                      (map (fn [[enterprenier-data contracts]]
+                             (contract-expand-btn enterprenier-data contracts))
+                           contracts-m) ;; contracts-m => ({subcontract} {subcontract} ...)
+                      :before-title (if checkbox
+                                      (fn [] (c/checkbox))
+                                      (fn [] (c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE))))
+                      :lvl 1)]
+            root))]
     
-    ((fn btn [[k v]] ;; recursion for build all panels
-       (if-not (map? v) (serv-contract-exp k v)
-               (do (enterpr-exp k v)
-                   (doall (map btn v))))) plugin-m) pan))
+    (gmg/migrid
+     :v
+     (let [[enterprenier-data contracts-m-or-subcontracts-l] plugin-v]
+       (if (map? contracts-m-or-subcontracts-l)
+         (enterprenier-expand-btn enterprenier-data contracts-m-or-subcontracts-l)
+         ;; contracts map and enterprenier btn ;; contracts-m-or-subcontracts-l => {{contract data} (subcontracts-list)}
+         )))))
+
+;; :v [1 1 2] =>> :v [:enterpreneur.id :service_contract.id :service_contract_month.id]
 
 ;;;;;;;;;;;;;;;; 
 ;;; REQUIRES ;;; 
@@ -256,48 +374,59 @@
         date2         (seesaw.core/text calndr-end)
         price         (seesaw.core/text price-input)
         entpr         (seesaw.core/selection select-box)
-        enterpreneurs (:all-enterpreneurs (state!))
+        enterpreneurs (:enterpreneurs-list (state!))
         date-to-obj   (fn [data-string] (.parse (java.text.SimpleDateFormat. "dd-MM-YYYY") data-string))
         id-entr       (:id (first (filter (fn [x] (= (:name x) entpr)) enterpreneurs)))]
-    (if-let [alerts (not-empty (cond-> []
-                                 (empty? entpr)
-                                 (conj (fn [] (i/warning "Invalid enterpreneur" "Enterpreneur field must be not empty"))) ;; TODO: dynamic lang
-                                 (or (empty? price) (not (isNumber? price)))
-                                 (conj (fn [] (i/warning "Invalid price" "Price must be number"))) ;; TODO: dynamic lang
-                                 (or (empty? date1) (empty? date2) (req/data-comparator-old-new (date-to-obj date1) (date-to-obj date2)))
-                                 (conj (fn [] (i/warning "Invalid date" "Date fields must be not empty, start day must be older")))))] ;; TODO: dynamic lang
+    (if-let [alerts
+             (not-empty
+              (cond-> []
+                (empty? entpr)
+                (conj (fn [] (i/warning (gtool/get-lang-header :invalid-enterpreneur)
+                                        (gtool/get-lang-alerts :field-is-empty))))
+
+                (or (empty? price) (not (isNumber? price)))
+                (conj (fn [] (i/warning (gtool/get-lang-header :invalid-price)
+                                        (gtool/get-lang-alerts :price-must-be-number))))
+
+                (or (empty? date1) (empty? date2) (req/data-comparator-old-new (date-to-obj date1) (date-to-obj date2)))
+                (conj (fn [] (i/warning (gtool/get-lang-header :invalid-date)
+                                        (gtool/get-lang-alerts :invalid-date-time-interval-info))))))]
       (doall (map (fn [invoke-alert] (invoke-alert)) alerts))
       (let [ins-req (req/insert-all id-entr (date-to-obj date1) (date-to-obj date2) (read-string price))]
         (if ins-req
-          (i/success "Success" "Added service contract") ;; TODO: dynamic lang
-          (i/danger  "Error with sql require" ins-req)))))) ;; TODO: dynamic lang
+          (i/success (gtool/get-lang-header :success)
+                     (gtool/get-lang-alerts :added-service-contract))
+          (i/danger  (gtool/get-lang-header :error-with-sql-require)
+                     ins-req))))))
 
 (defn- update-contracts [state!]
   (let [{:keys [update-service-month select-group-data]} (:plugin-toolkit (state!))
         checkboxes  (doall (filter (fn [item] (= (last item) true)) @(:checkboxes (state!))))]
     (if (empty? checkboxes)
-      (i/warning "Messege" "Please select checkbox for payment") ;; TODO: dynamic lang
+      (i/warning (gtool/get-lang-header :warning)
+                 (gtool/get-lang-alerts :select-checkbox-for-payment))
+                 
       (do (update-service-month checkboxes)
-          (let [{tv  :tree-view
-                 tip :tree-index-paths} (select-group-data)]
-            (swap! (state! :atom) merge {:tip tip :checkboxes  (atom (vec (filter (fn [item] (= (last item) false)) tip)))})
+          (let [tree-index-paths (:tree-index-paths (select-group-data))]
+            (swap! (state! :atom) merge {:tree-index-paths tree-index-paths :checkboxes  (atom (vec (filter (fn [item] (= (last item) false)) tree-index-paths)))})
             (refresh-data-and-panel state!)
-            (i/success "Messege" "Payments are success"))))))  ;; TODO: dynamic lang
+            (i/success (gtool/get-lang-header :success)
+                       (gtool/get-lang-alerts :payments-finished-successfully)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Panels for view ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 (defn- add-contract-panel
   "Description
-    in main-panel with all contracts add to insert-space panel with fields for input data"
+    in main-panel with all contracts add to new-contract-form panel with fields for input data"
   [state!]
-  (let [{:keys [insert-space]}  (state!)
+  (let [{:keys [new-contract-form]}  (state!)
         label-fn      (fn [text] (seesaw.core/label :text text :font (gtool/getFont 16)
                                                     :border (seesaw.border/empty-border :right 8)))
         calndr-start  (calndr/get-calendar (gcomp/input-text :args [:columns 24]))
         calndr-end    (calndr/get-calendar (gcomp/input-text :args [:columns 24]))
         price-input   (gcomp/input-text :args [:columns 16])
-        enterpreneurs (:all-enterpreneurs (state!))
+        enterpreneurs (:enterpreneurs-list (state!))
         select-box    (gcomp/select-box (vec (map (fn [item] (:name item)) enterpreneurs)))] 
     (seesaw.mig/mig-panel :constraints ["wrap 3" "10px[]10px" "10px[]10px"]
                           :items (gtool/join-mig-items
@@ -306,12 +435,12 @@
                                   (seesaw.core/horizontal-panel
                                    :items (list (label-fn "start term:") calndr-start));; TODO: dynamic lang
                                   (gcomp/menu-bar
-                                   {:buttons [["Add";; TODO: dynamic lang
+                                   {:buttons [[(gtool/get-lang-btns :add)
                                                (gs/icon GoogleMaterialDesignIcons/LIBRARY_ADD)
                                                (fn [e] (insert-contract state! calndr-start calndr-end price-input select-box))]
-                                              ["Cancel";; TODO: dynamic lang
+                                              [(gtool/get-lang-btns :cancel)
                                                (gs/icon GoogleMaterialDesignIcons/CLOSE)
-                                               (fn [e] (seesaw.core/config! insert-space :items [[(seesaw.core/label)]]))]]})
+                                               (fn [e] (seesaw.core/config! new-contract-form :items [[(seesaw.core/label)]]))]]})
                                   (seesaw.core/horizontal-panel
                                    :items (list (label-fn "price:    ") price-input));; TODO: dynamic lang
                                   (seesaw.core/horizontal-panel
@@ -319,59 +448,79 @@
 
 (defn- create-period-view
   "Description
-    entry func for build main panel with all enterpreneurs and contracts"
+    Entry func with main panel builder. There are all enterpreneurs and contracts."
   [state! dispatch!]
-  (let [{:keys [select-group-data select-enterpreneurs]} (:plugin-toolkit (state!))
-        {tv  :tree-view
-         tip :tree-index-paths} (select-group-data)
-        checkboxes         (atom (vec (filter (fn [item] (= (last item) false)) tip)))   
-        all-enterpreneurs  (select-enterpreneurs)
-        bln-checkboxes-fn  (fn [bln] (swap! (state! :atom) merge {:checkboxes (atom (vec (map (fn [item] (conj (vec (butlast item)) bln)) @checkboxes)))}))
-        insert-space       (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[fill, grow]0px" "0px[top]0px"])
-        btn-panel          (gcomp/menu-bar
-                            {:buttons [["Add cotract" ;; TODO: dynamic language
+  (let [{:keys [select-group-data
+                select-enterpreneurs]}
+        (:plugin-toolkit (state!))
+        tree-index-paths   (:tree-index-paths (select-group-data)) ;; [:enterpreneur.id :service_contract.id :service_contract_month.id checked-or-not]
+        checkboxes         (atom (vec (filter (fn [item] (= (last item) false)) tree-index-paths)))
+
+        contracts-checkboxs-map (let [smap (atom {})]
+                                  (doall
+                                   (map
+                                    (fn [[enter-id sc-id scm-id tf]]
+                                      (swap! smap #(assoc-in % [(keyword (str enter-id)) (keyword (str sc-id)) (keyword (str scm-id))] tf))
+                                      )
+                                    @checkboxes))
+                                  @smap)
+        
+        enterpreneurs-list (select-enterpreneurs)
+        bln-checkboxes-fn  (fn [bln]
+                             (swap! (state! :atom) merge
+                                    {:checkboxes (atom
+                                                  (vec
+                                                   (map
+                                                    (fn [item]
+                                                      (conj (vec (butlast item)) bln))
+                                                    @checkboxes)))}))
+        new-contract-form (gmg/migrid :v [])
+        btns-menu-bar      (gcomp/menu-bar
+                            {:buttons [[(gtool/get-lang-btns :add-contract)
                                         (gs/icon GoogleMaterialDesignIcons/NOTE_ADD)
-                                        (fn [e] (seesaw.core/config!
-                                                 insert-space
-                                                 :items [[(seesaw.core/vertical-panel
-                                                           :items (list (seesaw.core/label
-                                                                         :text "Some informotion about plugin ...........")))]
-                                                         [(add-contract-panel state!)]]))]
-                                       ["Select all" ;; TODO: dynamic language
+                                        (fn [e] (seesaw.core/config! new-contract-form :items [[(add-contract-panel state!)]]))]
+
+                                       [(gtool/get-lang-btns :select-all)
                                         (gs/icon GoogleMaterialDesignIcons/CHECK_BOX)
                                         (fn [e] (bln-checkboxes-fn true)
                                           (refresh-data-and-panel state!))]
 
-                                       ["Pay" ;; TODO: dynamic language
+                                       [(gtool/get-lang-btns :pay)
                                         (gs/icon GoogleMaterialDesignIcons/MONETIZATION_ON)
                                         (fn [e] (update-contracts state!))]
                                        
-                                       ["Refresh" ;; TODO: dynamic language
+                                       [(gtool/get-lang-btns :refresh)
                                         (gs/icon GoogleMaterialDesignIcons/CACHED)
                                         (fn [e] (bln-checkboxes-fn false) (refresh-data-and-panel state!))]
                                        ]})
         exp-panel          (seesaw.core/vertical-panel)
-        view-space         (gmg/migrid :v [btn-panel insert-space (seesaw.core/border-panel :center exp-panel)])]
+        plugin-root-layout (gmg/migrid :v [btns-menu-bar new-contract-form (seesaw.core/border-panel :center exp-panel)])]
 
-    (let [sup-map {:all-enterpreneurs all-enterpreneurs
-                   :btn-panel         btn-panel
-                   :tip               tip
-                   :view-space        view-space
-                   :exp-panel         exp-panel
-                   :insert-space      insert-space
-                   :checkboxes        checkboxes}]
-      ;;(println "\nSup Map\n" all-enterpreneurs)
+    (let [sup-map {:enterpreneurs-list enterpreneurs-list
+                   :btns-menu-bar      btns-menu-bar
+                   :tree-index-paths   tree-index-paths
+                   :plugin-root-layout plugin-root-layout
+                   :exp-panel          exp-panel
+                   :new-contract-form  new-contract-form
+                   :checkboxes         checkboxes
+                   :contracts-checkboxs-map (atom contracts-checkboxs-map)                 
+                   }]
       (swap! (state! :atom) merge sup-map))
     
     (refresh-data-and-panel state!)
-    (gmg/migrid :> (gcomp/min-scrollbox view-space :border nil))))
+    (gmg/migrid :> (gcomp/min-scrollbox plugin-root-layout :border nil))))
+
+;; :v [1 1 2] =>> :v [:enterpreneur.id :service_contract.id :service_contract_month.id]
+;; (some false? (vals (get-in @(:contracts-checkboxs-map @state) [:2 :2])))
+;; (vec (map #(keyword (str %)) [2 2 1]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Toolkit with SQl funcs ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn service-period-toolkit-pipeline
   "Description
-    add to plugin-toolkit map with al requires to DB"
+    Extending plugin-toolkit map with all requires to DB"
   [configuration]
   {:select-group-data               req/info-grouped-query
 

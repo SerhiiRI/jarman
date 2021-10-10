@@ -257,12 +257,63 @@
     ;; {:d {:a true :b true}}  => ((true true))  => flatten (true true)  => some false? nil
     render?))
 
+(defn- check-checkbox-state
+  "Description
+      
+     "
+  [bool-or-map]
+  (let [checkbox-state ((fn check-complete [contracts-m]
+                          (cond
+                            (map? contracts-m)
+                            (doall
+                             (map
+                              #(if (map? (second %))
+                                 (check-complete (second %))
+                                 (cond (true?   (second %)) :selected
+                                       (false?  (second %)) :unselected
+                                       :else nil))
+                              contracts-m))
+
+                            (nil?  contracts-m) :payed
+                            (true? contracts-m) :selected
+                            
+                            (false? contracts-m) :unselected
+
+                            :else :selected))
+                        bool-or-map)
+        render? (if (sequential? checkbox-state)
+                  (let [some-inside? (some #(or (= :selected %)
+                                                (= :unselected %))
+                                           (flatten checkbox-state))]
+                    (if (nil? some-inside?) :payed some-inside?))
+                  checkbox-state)]
+    render?))
+
+
 (defn- v-to-vmp
   "Description:
     vector to vector map path
    Example
     [1 2 3] ;; => [:1 :2 :3]"
   [v] (vec (map #(keyword (str %)) v)))
+
+(defn- compo-checkbox-subcontract
+  []
+  (c/label :text "O"))
+
+(defn- compo-checkbox-contract
+  [root render-fn some-contract checkboxes-state selected]
+  (c/checkbox :selected? selected
+              :listen [:mouse-clicked
+                       (fn [e] (let [selected? (.isSelected (.getComponent e))
+                                     contracts-m-path (v-to-vmp (:v some-contract))
+                                     contracts-m-part (get-in @checkboxes-state contracts-m-path)
+                                     contracts-m-part (into {} (map (fn [[id bool]] {id selected?}) contracts-m-part))]
+                                 (swap! checkboxes-state #(assoc-in
+                                                           %
+                                                           contracts-m-path
+                                                           contracts-m-part))
+                                 (c/config! root :items (gtool/join-mig-items (render-fn)))))]))
 
 (defn- build-expand-by-map
   "Description
@@ -282,8 +333,9 @@
         (fn [some-contract]
           (let [map-path  (v-to-vmp (:v some-contract))
                 bool-or-map (get-in @checkboxes-state map-path)
-                render? (check-if-checkbox-should-be-render bool-or-map)]
-            (println "\n" (:v some-contract) bool-or-map render?)
+                render? (check-checkbox-state bool-or-map) ;;(check-if-checkbox-should-be-render bool-or-map)
+                ]
+            ;;(println "\n" (:v some-contract) bool-or-map render?)
             render?))
         
         ;; Generate expand button with checkbox or done icon for subcontructs
@@ -296,59 +348,52 @@
                     root (gcomp/button-expand-child
                           (str (split-date [(:service_contract_month.service_month_start subcontract)
                                             (:service_contract_month.service_month_end   subcontract)])
-                               (if checkbox ""
+                               (if (or (= checkbox :selected) (= checkbox :unselected)) ""
                                    (str " / " (:service_contract_month.money_per_month subcontract) " UAH")))
                           :onClick (open-periods-contract-fn state! subcontracts-l)
-                          :before-title (if checkbox
-                                          (fn [] (c/checkbox))
-                                          (fn [] (c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE))))
+                          :before-title (cond (= checkbox :selected)
+                                              (compo-checkbox-subcontract)
+                                              
+                                              (= checkbox :unselected)
+                                              (compo-checkbox-subcontract)
+
+                                              :else
+                                              (fn [] (c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE))))
                           :lvl 7
                           :height 25)]
                 root))
             subcontracts-l)))
         
         ;; Generate expand button with checkbox or done icon for contructs
-        contract-expand-btn (fn [enterprenier-data subcontracts-l]
+        contract-expand-btn (fn [enterprenuer-data subcontracts-l]
                               (let [render-fn (fn [] (contract-month-expand-btn subcontracts-l))
                                     subcontructs-box (gmg/migrid :v (render-fn))
-                                    checkbox (render-checkbox? enterprenier-data)
+                                    checkbox (render-checkbox? enterprenuer-data)
                                     root (gcomp/button-expand
-                                          (str (split-date [(:service_contract.contract_start_term enterprenier-data)
-                                                            (:service_contract.contract_end_term   enterprenier-data)])
-                                               (if checkbox ""
-                                                   (str " / " (calc-payment-for-service-contr enterprenier-data
+                                          (str (split-date [(:service_contract.contract_start_term enterprenuer-data)
+                                                            (:service_contract.contract_end_term   enterprenuer-data)])
+                                               (if-not (= checkbox :payed) ""
+                                                   (str " / " (calc-payment-for-service-contr enterprenuer-data
                                                                                               subcontracts-l) " UAH")))
                                           subcontructs-box
                                           :before-title
-                                          (if checkbox
-                                            (fn [] (c/checkbox
-                                                    :listen
-                                                    [:mouse-clicked
-                                                     (fn [e] (let [selected? (.isSelected (.getComponent e))
-                                                                   contracts-m-path (v-to-vmp (:v enterprenier-data))
-                                                                   contracts-m-part (get-in @checkboxes-state contracts-m-path)
-                                                                   contracts-m-part (into {} (map (fn [[id bool]] {id selected?}) contracts-m-part))]
-                                                              ;; (println "\nCMP" contracts-m-part)
-                                                               (swap! checkboxes-state #(assoc-in
-                                                                                         %
-                                                                                         contracts-m-path
-                                                                                         contracts-m-part))
-                                                               (c/config! subcontructs-box :items (gtool/join-mig-items (render-fn)))))]))
-                                            (fn [] (c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE))))
+                                          (if (= checkbox :payed)
+                                                (fn [] (c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE)))
+                                                (fn [] (compo-checkbox-contract subcontructs-box render-fn enterprenuer-data checkboxes-state false)))
                                           :lvl 3)]
                                 root))
         
         ;; Generate expand button with checkbox or done icon for enterprenuer
         enterprenier-expand-btn
-        (fn [enterprenier-data contracts-m]
-          (let [checkbox (render-checkbox? enterprenier-data)
+        (fn [enterprenuer-data contracts-m]
+          (let [checkbox (render-checkbox? enterprenuer-data)
                 root (gcomp/button-expand
-                      (str (:enterpreneur.name enterprenier-data) 
+                      (str (:enterpreneur.name enterprenuer-data) 
                            (if checkbox ""
-                               (str " / "  (calc-payment-for-enterpreneuer enterprenier-data contracts-m) " UAH")))
+                               (str " / "  (calc-payment-for-enterpreneuer enterprenuer-data contracts-m) " UAH")))
 
-                      (map (fn [[enterprenier-data contracts]]
-                             (contract-expand-btn enterprenier-data contracts))
+                      (map (fn [[enterprenuer-data contracts]]
+                             (contract-expand-btn enterprenuer-data contracts))
                            contracts-m) ;; contracts-m => ({subcontract} {subcontract} ...)
                       :before-title (if checkbox
                                       (fn [] (c/checkbox))
@@ -358,9 +403,9 @@
     
     (gmg/migrid
      :v
-     (let [[enterprenier-data contracts-m-or-subcontracts-l] plugin-v]
+     (let [[enterprenuer-data contracts-m-or-subcontracts-l] plugin-v]
        (if (map? contracts-m-or-subcontracts-l)
-         (enterprenier-expand-btn enterprenier-data contracts-m-or-subcontracts-l)
+         (enterprenier-expand-btn enterprenuer-data contracts-m-or-subcontracts-l)
          ;; contracts map and enterprenier btn ;; contracts-m-or-subcontracts-l => {{contract data} (subcontracts-list)}
          )))))
 

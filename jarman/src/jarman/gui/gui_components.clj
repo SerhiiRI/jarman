@@ -1036,7 +1036,8 @@
                  lvl
                  background
                  foreground
-                 c-left
+                 offset-color
+                 seamless-bg
                  title-icon
                  before-title]
           :or {expand :auto
@@ -1051,7 +1052,8 @@
                lvl 1
                background face/c-btn-expand-bg
                foreground face/c-btn-expand-fg
-               c-left     face/c-btn-expand-offset
+               offset-color face/c-btn-expand-offset
+               seamless-bg true
                title-icon nil
                before-title (fn [] (c/label))}}]
     (let [inside-btns (if (nil? inside-btns) nil inside-btns) ;; check if nill
@@ -1084,9 +1086,9 @@
                                                                                        :mouse-entered gtool/hand-hover-on]))
                        (c/config! icon :listen (listen func))
                        (gmg/migrid :> :fgf {:args [:background background :focusable? true
-                                                  :border (b/line-border :left (* lvl 6) :color face/c-main-menu-bg)]}
+                                                  :border (b/line-border :left (* lvl 6) :color (if seamless-bg background offset-color))]}
                                    [(if (fn? before-title)
-                                      [(before-title)]
+                                      [(let [bt (before-title)] (c/config! bt :background background) bt)]
                                       [(c/label)])
                                     title icon]))
           expand-box (gmg/migrid :v "[grow, fill]" [])]
@@ -1129,7 +1131,7 @@
    "
   (fn [title
        & {:keys [onClick
-                 c-left
+                 offset-color
                  c-focus
                  c-fg-focus
                  background
@@ -1139,10 +1141,11 @@
                  height
                  icon
                  before-title
+                 seamless-bg
                  args]
           :or {onClick (fn [e] (println "Clicked: " title))
                cursor :hand
-               c-left     face/c-main-menu-bg
+               offset-color face/c-btn-expand-offset
                c-focus    face/c-on-focus
                c-fg-focus face/c-foreground
                background face/c-compos-background
@@ -1151,11 +1154,12 @@
                height 30
                icon nil
                before-title (fn [] (c/label))
+               seamless-bg true
                args []}}]
     (gmg/migrid
      :> :fg (format "[%s, fill]" height)
-     {:args [:border (b/line-border :left (* lvl 6) :color face/c-main-menu-bg)]}
-     [(if (fn? before-title) (before-title) (c/label))
+     {:args [:border (b/line-border :left (* lvl 6) :color (if seamless-bg background offset-color))]}
+     [(if (fn? before-title) (let [bt (before-title)] (c/config! bt :background background) bt) (c/label))
       (apply c/label
              :text (str title)
              :background background

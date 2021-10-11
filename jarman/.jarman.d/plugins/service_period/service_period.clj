@@ -58,13 +58,13 @@
       (map (fn [d] (fn-format d)) date)
       (fn-format date))))
 
+(defn- split-date [date-vec]
+  (apply str (interpose " / " (format-date date-vec))))
+
 (defn- isNumber? [val]
    (if-not (number? (read-string val)) 
      (i/danger (gtool/get-lang-header :error) (gtool/get-lang-alerts :price-must-be-number))
      true))
-
-(defn- split-date [date-vec]
-  (apply str (interpose " / " (format-date date-vec))))
 
 (declare build-expand-contracts-for-enteprenuer)
 
@@ -97,43 +97,6 @@
     (.add plugin-root-layout new-contract-form)
     (.add plugin-root-layout exp-panel)
     (refresh-data-and-panel state!)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Logic for checkboxes ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- comparator-fn
-  "Description
-    Return fn with preducat for different id-vec ([1] or [1 2] or [1 2 1])
-    It just check if two vectors have same values but onlu for 1, 2 or 3 values inside.
-  Example:
-    ((comparator-fn [1 2 3]) [1 2 3])
-    ;; => true
-    ((comparator-fn [1 2 3]) [1 2 2])
-    ;; => false
-  "
-  [id-vec]
-  (let [[_e _sc _scm] id-vec]
-    (case (count id-vec)
-      1 (fn [[e]] (= e _e))
-      2 (fn [[e sc]] (and (= e _e) (= sc _sc)))
-      3 (fn [[e sc scm]] (and (= e _e) (= sc _sc) (= scm _scm)))
-      false)))
-
-(defn- update-checkboxes [id-vec check? checkboxes]
-  (let [cmpr? (comparator-fn id-vec)]
-    (reset! checkboxes (reduce (fn [acc period] (if (cmpr? period)
-                                                  (conj acc (assoc period 3 check?))
-                                                  (conj acc period))) [] @checkboxes))))
-
-(defn- checked-box? [id-vec checkboxes]
-  (let [cmpr? (comparator-fn id-vec)]
-    (reduce
-     (fn [acc period]
-       (if (cmpr? period)
-         (and acc (last period))
-         acc))
-     true
-     checkboxes)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GUI for one Contract;;;
@@ -253,8 +216,17 @@
                    ;; check all subcontracts if they are checked or not and change contract checkbox
                    (c/config! root :items (gtool/join-mig-items (render-fn)))
                    (try ;; if enterprenuer expand btn is fold then contarct expand btn do not exist
-                     (c/config! cbox :selected? (not (some false? (vals contract-m))))
-                     (.repaint (c/to-root cbox))
+                     (if (nil? contract-m)
+                       ;; set done icon
+                       (let [expand-header-box (.getParent cbox)
+                             expand-children   (drop 1 (seesaw.util/children expand-header-box))]
+                         (c/config! expand-header-box :items (gtool/join-mig-items
+                                                              (c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE))
+                                                              expand-children)))
+                       ;; checke or uncheck checkbox
+                       (do
+                         (c/config! cbox :selected? (not (some false? (vals contract-m))))
+                         (.repaint (c/to-root cbox))))
                      (catch Exception e ""))))    
     cbox))
 
@@ -283,8 +255,19 @@
     (new-watcher checkboxes-state watcher-id watch-path
                  #(let [contracts-m (get-in @checkboxes-state watch-path)]
                    ;; check all subcontracts if they are checked or not and change contract checkbox
-                   (c/config! cbox :selected? (not (rift (some false? (flatten (doall (map (fn [[contract-id subcontracts]] (vals subcontracts)) contracts-m)))) false)))
-                   (.repaint (c/to-root cbox))))
+                    (let [some-contracts? (flatten (doall (map (fn [[contract-id subcontracts]] (vals subcontracts)) contracts-m)))]
+                                                 (if (or (some false? some-contracts?)
+                                                         (some true?  some-contracts?))
+                                                   ;; checke or uncheck checkbox
+                                                   (do
+                                                     (c/config! cbox :selected? (not (rift (some false? some-contracts?) false)))
+                                                     (.repaint (c/to-root cbox)))
+                                                   ;; set done icon
+                                                   (let [expand-header-box (.getParent cbox)
+                                                         expand-children   (drop 1 (seesaw.util/children expand-header-box))]
+                                                     (c/config! expand-header-box :items (gtool/join-mig-items
+                                                                                          (c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE))
+                                                                                          expand-children)))))))
     cbox))
 
 (defn- build-expand-contracts-for-enteprenuer
@@ -491,39 +474,22 @@
                                   (doall
                                    (map
                                     (fn [[enter-id sc-id scm-id tf]]
-                                      (swap! smap #(assoc-in % [(keyword (str enter-id)) (keyword (str sc-id)) (keyword (str scm-id))] tf))
-                                      )
+                                      (swap! smap #(assoc-in % [(keyword (str enter-id)) (keyword (str sc-id)) (keyword (str scm-id))] tf)))
                                     @checkboxes))
                                   @smap)
         
         enterpreneurs-list (select-enterpreneurs)
-        bln-checkboxes-fn  (fn [bln]
-                             (swap! (state! :atom) merge
-                                    {:checkboxes (atom
-                                                  (vec
-                                                   (map
-                                                    (fn [item]
-                                                      (conj (vec (butlast item)) bln))
-                                                    @checkboxes)))}))
+        
         new-contract-form (gmg/migrid :v [])
         btns-menu-bar      (gcomp/menu-bar
                             {:buttons [[(gtool/get-lang-btns :add-contract)
                                         (gs/icon GoogleMaterialDesignIcons/NOTE_ADD)
                                         (fn [e] (seesaw.core/config! new-contract-form :items [[(add-contract-panel state!)]]))]
 
-                                       [(gtool/get-lang-btns :select-all)
-                                        (gs/icon GoogleMaterialDesignIcons/CHECK_BOX)
-                                        (fn [e] (bln-checkboxes-fn true)
-                                          (refresh-data-and-panel state!))]
-
                                        [(gtool/get-lang-btns :pay)
                                         (gs/icon GoogleMaterialDesignIcons/MONETIZATION_ON)
-                                        (fn [e] (update-contracts state!))]
-                                       
-                                       [(gtool/get-lang-btns :refresh)
-                                        (gs/icon GoogleMaterialDesignIcons/CACHED)
-                                        (fn [e] (bln-checkboxes-fn false) (refresh-data-and-panel state!))]
-                                       ]})
+                                        (fn [e] (update-contracts state!))]]})
+        
         exp-panel          (seesaw.core/vertical-panel)
         plugin-root-layout (gmg/migrid :v [btns-menu-bar new-contract-form (seesaw.core/border-panel :center exp-panel)])]
 
@@ -534,8 +500,9 @@
                    :exp-panel          exp-panel
                    :new-contract-form  new-contract-form
                    :checkboxes         checkboxes
-                   :contracts-checkboxs-map (atom contracts-checkboxs-map)                 
-                   }]
+                   :contracts-checkboxs-map (atom contracts-checkboxs-map)}]
+
+      ;; suplicant state
       (swap! (state! :atom) merge sup-map))
     
     (refresh-data-and-panel state!)

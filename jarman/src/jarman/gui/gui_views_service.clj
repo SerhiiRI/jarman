@@ -25,6 +25,7 @@
 ;; │                           │
 ;; └───────────────────────────┘
 
+;; TODO: view space size controller - I need to add some watcher for resize mig panel (root) in active view space when frame is resizing.
 
 (defn- set-state-watcher
   "Description:

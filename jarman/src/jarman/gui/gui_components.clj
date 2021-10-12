@@ -117,6 +117,14 @@
       (map (fn [[k v]] (c/config! scr k v))
            (apply hash-map args)))    
     (c/config! scr :border (b/line-border :thickness 0))
+    (c/config! scr :listen [:component-resized
+                            (fn [e] (let [parent-w (.getWidth  (.getSize (.getParent scr)))
+                                          parent-h (.getHeight (.getSize (.getParent scr)))]
+                                      ;; (println "\nSize" (c/config (.getParent scr) :id) parent-w parent-h)
+                                      ;; (c/config! scr :size [parent-w :by parent-h])
+                                      ;; (.revalidate (c/to-root scr))
+                                      ;; (.repaint (c/to-root scr))
+                                      ))])
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
     scr))
@@ -360,6 +368,7 @@
            :border (newBorder border-color-unfocus)
            :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
            :listen [:focus-gained (fn [e]
+                                    (.repaint (c/to-root e))
                                     (c/config! e :border (newBorder border-color-focus))
                                     (cond (= (c/value e) placeholder) (c/config! e :text ""))
                                     (c/config! e :user-data (fn-assoc e :edit? true)))

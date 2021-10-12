@@ -1,8 +1,10 @@
 (ns plugins.service-period.service-period
   (:require
+   [jarman.faces              :as face]
    [jarman.tools.lang         :refer :all] 
    [clojure.spec.alpha        :as s]
    [seesaw.core               :as c]
+   [seesaw.border             :as b]
    [jarman.gui.gui-tools      :as gtool]
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-migrid     :as gmg]
@@ -41,12 +43,13 @@
   (fn [action-m]
     (swap! atom-var (fn [state] (action-handler state action-m)))))
 
-(defn- create-state-template [plugin-path global-configuration-getter]
+(defn- create-state-template [plugin-path global-configuration-getter root]
   (reset! state
           {:plugin-path          plugin-path
            :plugin-global-config global-configuration-getter
            :plugin-config        (get-in (global-configuration-getter) (conj plugin-path :config) {})
-           :plugin-toolkit       (get-in (global-configuration-getter) (conj plugin-path :toolkit) {})})
+           :plugin-toolkit       (get-in (global-configuration-getter) (conj plugin-path :toolkit) {})
+           :root                 root})
   state)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -68,35 +71,25 @@
 
 (declare build-expand-contracts-for-enteprenuer)
 
-(defn- refresh-panel
-  ([panel] (doto panel (.revalidate) (.repaint)))
-  ([panel content] (doto panel (.removeAll) (.add content) (.revalidate) (.repaint))))
-
 (defn- refresh-data-and-panel [state!]
-  (let [{:keys [new-contract-form
-                plugin-root-layout
-                exp-panel]}
-        (state!)]
-    (.removeAll exp-panel)
-    (doall
-     (map
-      (fn [[enterpeneuer service_contract_m]]
-        (.add exp-panel (build-expand-contracts-for-enteprenuer [enterpeneuer service_contract_m] state!)))
-      (:tree-view ((:select-group-data (:plugin-toolkit (state!)))))))
-    (.removeAll new-contract-form)
-    (refresh-panel plugin-root-layout)))
+  (let [{:keys [root expand-btns-box]} (state!)]
+    (c/config!
+     expand-btns-box
+     :items (gtool/join-mig-items
+             (doall
+              (map
+               (fn [[enterpeneuer service_contract_m]]
+                 (build-expand-contracts-for-enteprenuer [enterpeneuer service_contract_m] state!))
+               (:tree-view ((:select-group-data (:plugin-toolkit (state!)))))))))
+    (doto root (.revalidate) (.repaint))))
   
 (defn- back-to-main-panel
   "Description
-    remove in plugin-root-layout panel with periods of one contract, add to plugin-root-layout panel with all contracta (like agenda) "
+    remove in root panel with periods of one contract, add to root panel with all contracta (like agenda) "
   [state!]
-  (let [{:keys [plugin-root-layout new-contract-form exp-panel btns-menu-bar]} (state!)]
+  (let [{:keys [root new-contract-form expand-btns-box btns-menu-bar]} (state!)]
     (swap! (state! :atom) merge {:payments-per-month {}})
-    (.removeAll plugin-root-layout)
-    (.add plugin-root-layout btns-menu-bar)
-    (.add plugin-root-layout new-contract-form)
-    (.add plugin-root-layout exp-panel)
-    (refresh-data-and-panel state!)))
+    (c/config! (:root (state!)) :items (gtool/join-mig-items btns-menu-bar new-contract-form (gcomp/min-scrollbox expand-btns-box)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GUI for one Contract;;;
@@ -113,57 +106,75 @@
 (defn- panel-one-period
   "Description
     return mig-panel for one period"
-  [state! model-data]
+  [state! period]
   (let [{id              :service_contract_month.id
-         st-date         :service_contract_month.service_month_start 
+         start-date      :service_contract_month.service_month_start 
          end-date        :service_contract_month.service_month_end
          payment-st      :service_contract_month.was_payed
-         payment         :service_contract_month.money_per_month}  model-data
+         payment         :service_contract_month.money_per_month}  period
+
         label-fn     (fn [text foreground] (seesaw.core/label :text (str text)
                                                               :font (gtool/getFont 16)
                                                               :foreground foreground))
-        caret-fn     (fn [e] (if (isNumber? (seesaw.core/text e))
-                               (if-not (= (read-string (seesaw.core/text e)) payment) 
-                                 (swap! (state! :atom) merge {:payments-per-month (merge (:payments-per-month (state!))
-                                                                                  {id (seesaw.core/text e)})}))))
-        date         (str st-date " / " end-date)
-        status       (if payment-st "It was payed, you cannot change this field" "Waiting for payment")
-        panel        (seesaw.mig/mig-panel :constraints ["wrap 2" "5px[]30px" "10px[]10px"]
-                                           :items [[(label-fn "period:" gcomp/dark-grey-color)]
-                                                   [(label-fn date gcomp/blue-color)]
-                                                   [(label-fn "payment:" gcomp/dark-grey-color)]
-                                                   [(if payment-st (label-fn payment gcomp/blue-color)
-                                                        (gcomp/input-text :args [:columns 7 :text payment
-                                                                                 :listen [:caret-update caret-fn]]))]
-                                                   [(label-fn "payment status:" gcomp/dark-grey-color)]
-                                                   [(label-fn status gcomp/blue-color)]])] panel))
+        
+        caret-fn     (fn [e] ;; (if (isNumber? (seesaw.core/text e))
+                             ;;   (if-not (= (read-string (seesaw.core/text e)) payment) 
+                             ;;     (swap! (state! :atom) merge {:payments-per-month (merge (:payments-per-month (state!))
+                             ;;                                                             {id (seesaw.core/text e)})})))
+                       )
+        
+        date         (str (clojure.string/replace start-date #"-" "/ ") "  -  " (clojure.string/replace end-date #"-" "/ "))
+
+        status-info  (if payment-st "It was payed, you cannot change this field" "Waiting for payment")
+
+        ;; panel        (seesaw.mig/mig-panel :constraints ["wrap 2" "5px[]30px" "10px[]10px"]
+        ;;                                    :items [[(label-fn "period:" gcomp/dark-grey-color)]
+        ;;                                            [(label-fn date gcomp/blue-color)]
+        ;;                                            [(label-fn "payment:" gcomp/dark-grey-color)]
+        ;;                                            [(if payment-st (label-fn payment gcomp/blue-color)
+        ;;                                                 (gcomp/input-text :args [:columns 7 :text payment
+        ;;                                                                          :listen [:caret-update caret-fn]]))]
+        ;;                                            [(label-fn "payment status:" gcomp/dark-grey-color)]
+        ;;                                            [(label-fn status-info gcomp/blue-color)]])
+        panel (gmg/migrid
+               :> :f {:gap [5 5 10 20] :args [:background face/c-compos-background]}
+               [(if payment-st
+                  [(c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE))] [])
+                [(if payment-st (label-fn payment face/c-green)
+                     (gcomp/input-text :args [:columns 7 :text payment
+                                              :listen [:caret-update caret-fn]]))]
+                [(label-fn date face/c-black)]
+                [(label-fn status-info (if payment-st face/c-green face/c-orange))]
+                (if payment-st []
+                    [(gcomp/button-slim (gtool/get-lang-btns :pay)
+                                         :args [:icon (gs/icon GoogleMaterialDesignIcons/MONETIZATION_ON)])])])]
+    panel))
 
 (defn- panel-one-contract-periods
   "Description
     return mig-panel with button-bar and panels with all periods of one contract"
-  [state! data]
+  [state! subcontracts-l]
   (let [btns-menu-bar (gcomp/menu-bar
-                   {:justify-end true
-                    :buttons [[(gtool/get-lang-btns :back)
-                               (gs/icon GoogleMaterialDesignIcons/ARROW_BACK)
-                               (fn [e] (back-to-main-panel state!))]
-                              [(gtool/get-lang-header :save)
-                               (gs/icon GoogleMaterialDesignIcons/DONE)
-                               (fn [e] (update-money-per-month state!))]
-                              [(gtool/get-lang-header :export-odt)
-                               icon/odt-64-png
-                               (fn [e] )]]})
-        panel     (seesaw.mig/mig-panel :constraints ["wrap 1" "15px[]15px" "15px[]15px"]
-                                        :items [[btns-menu-bar]])]
-    (doall (map (fn [period] (.add panel (panel-one-period state! period))) data)) panel))
+                       {:buttons [[(gtool/get-lang-btns :back)
+                                   (gs/icon GoogleMaterialDesignIcons/ARROW_BACK)
+                                   (fn [e] (back-to-main-panel state!))]
+                                  [(gtool/get-lang-btns :save)
+                                   (gs/icon GoogleMaterialDesignIcons/DONE)
+                                   (fn [e] (update-money-per-month state!))]
+                                  [(gtool/get-lang-btns :export-odt)
+                                   icon/odt-64-png
+                                   (fn [e] )]]})
+        
+        subcontracts (gmg/migrid :v 
+                      (doall (map
+                              (fn [period] (panel-one-period state! period))
+                              subcontracts-l)))]
+    
+    (gmg/migrid :v [btns-menu-bar (gcomp/min-scrollbox subcontracts)])))
 
-(defn- open-periods-contract-fn [state! contract-data]
-  (fn [e] (seesaw.core/config! (:plugin-root-layout (state!))
-                               :items (gtool/join-mig-items
-                                       (panel-one-contract-periods state! contract-data)))
-    (refresh-panel (:plugin-root-layout (state!)))))
-
-
+(defn- open-periods-contract-fn [state! subcontracts-l]
+  (fn [e] (c/config! (:root (state!)) :items [[(panel-one-contract-periods state! subcontracts-l)]])
+    (doto (:root (state!)) (.revalidate) (.repaint))))
 
 
 
@@ -387,7 +398,7 @@
         price         (seesaw.core/text price-input)
         entpr         (seesaw.core/selection select-box)
         enterpreneurs (:enterpreneurs-list (state!))
-        date-to-obj   (fn [data-string] (.parse (java.text.SimpleDateFormat. "dd-MM-YYYY") data-string))
+        date-to-obj   (fn [data-string] (.parse (java.text.SimpleDateFormat. "yyyy-MM-dd") data-string)) ;; TODO: date is converting to one day before
         id-entr       (:id (first (filter (fn [x] (= (:name x) entpr)) enterpreneurs)))]
     (if-let [alerts
              (not-empty
@@ -404,12 +415,15 @@
                 (conj (fn [] (i/warning (gtool/get-lang-header :invalid-date)
                                         (gtool/get-lang-alerts :invalid-date-time-interval-info))))))]
       (doall (map (fn [invoke-alert] (invoke-alert)) alerts))
-      (let [ins-req (req/insert-all id-entr (date-to-obj date1) (date-to-obj date2) (read-string price))]
-        (if ins-req
-          (i/success (gtool/get-lang-header :success)
-                     (gtool/get-lang-alerts :added-service-contract))
-          (i/danger  (gtool/get-lang-header :error-with-sql-require)
-                     ins-req))))))
+      (do
+       (println "\nNew: " id-entr date1 date2 price)
+       (println "New: " id-entr (date-to-obj date1) (date-to-obj date2) (read-string price))
+       (let [ins-req (req/insert-all id-entr (date-to-obj date1) (date-to-obj date2) (read-string price))]
+         (if ins-req
+           (i/success (gtool/get-lang-header :success)
+                      (gtool/get-lang-alerts :added-service-contract))
+           (i/danger  (gtool/get-lang-header :error-with-sql-require)
+                      ins-req)))))))
 
 (defn- update-contracts [state!]
   (let [{:keys [update-service-month select-group-data]} (:plugin-toolkit (state!))
@@ -420,7 +434,8 @@
                  
       (do (update-service-month checkboxes)
           (let [tree-index-paths (:tree-index-paths (select-group-data))]
-            (swap! (state! :atom) merge {:tree-index-paths tree-index-paths :checkboxes  (atom (vec (filter (fn [item] (= (last item) false)) tree-index-paths)))})
+            (swap! (state! :atom) merge {:tree-index-paths tree-index-paths
+                                         :checkboxes  (atom (vec (filter (fn [item] (= (last item) false)) tree-index-paths)))})
             (refresh-data-and-panel state!)
             (i/success (gtool/get-lang-header :success)
                        (gtool/get-lang-alerts :payments-finished-successfully)))))))
@@ -435,34 +450,35 @@
     in main-panel with all contracts add to new-contract-form panel with fields for input data"
   [state!]
   (let [{:keys [new-contract-form]}  (state!)
-        label-fn      (fn [text] (seesaw.core/label :text text :font (gtool/getFont 16)
-                                                    :border (seesaw.border/empty-border :right 8)))
+        label-fn      (fn [text] (c/label :text text :font (gtool/getFont 16) :border (b/empty-border :bottom 2)))
         calndr-start  (calndr/get-calendar (gcomp/input-text :args [:columns 24]))
         calndr-end    (calndr/get-calendar (gcomp/input-text :args [:columns 24]))
         price-input   (gcomp/input-text :args [:columns 16])
         enterpreneurs (:enterpreneurs-list (state!))
-        select-box    (gcomp/select-box (vec (map (fn [item] (:name item)) enterpreneurs)))] 
-    (seesaw.mig/mig-panel :constraints ["wrap 3" "10px[]10px" "10px[]10px"]
-                          :items (gtool/join-mig-items
-                                  (seesaw.core/horizontal-panel
-                                   :items (list (label-fn "enterpr:") select-box))  ;;; TO DO change this panel for more dynamic, look on labels, i mean SPACE ("price:      ") ;; TODO: dynamic lang
-                                  (seesaw.core/horizontal-panel
-                                   :items (list (label-fn "start term:") calndr-start));; TODO: dynamic lang
-                                  (gcomp/menu-bar
-                                   {:buttons [[(gtool/get-lang-btns :add)
-                                               (gs/icon GoogleMaterialDesignIcons/LIBRARY_ADD)
-                                               (fn [e] (insert-contract state! calndr-start calndr-end price-input select-box))]
-                                              [(gtool/get-lang-btns :cancel)
-                                               (gs/icon GoogleMaterialDesignIcons/CLOSE)
-                                               (fn [e] (seesaw.core/config! new-contract-form :items [[(seesaw.core/label)]]))]]})
-                                  (seesaw.core/horizontal-panel
-                                   :items (list (label-fn "price:    ") price-input));; TODO: dynamic lang
-                                  (seesaw.core/horizontal-panel
-                                   :items (list (label-fn "end term:  ") calndr-end))))));; TODO: dynamic lang
+        select-box    (gcomp/select-box (vec (map (fn [item] (:name item)) enterpreneurs))) 
+        panel (gmg/migrid
+               :v :f "[75:, fill]"
+               (gcomp/min-scrollbox
+                (gmg/migrid :> "[150, fill]" {:gap [10]}
+                            [(gmg/migrid :v [(label-fn "enterpr:")    select-box])
+                             (gmg/migrid :v [(label-fn "price:")      price-input])
+                             (gmg/migrid :v [(label-fn "start term:") calndr-start])
+                             (gmg/migrid :v [(label-fn "end term:")   calndr-end])
+                            
+                             (gmg/migrid :v
+                                         [(c/label "<html>&nbsp;")
+                                          (gcomp/menu-bar
+                                           {:buttons [["" (gs/icon GoogleMaterialDesignIcons/DONE)
+                                                       (fn [e] (insert-contract state! calndr-start calndr-end price-input select-box))]
+                                                      ["" (gs/icon GoogleMaterialDesignIcons/CLOSE)
+                                                       (fn [e] (c/config! new-contract-form :items []))]]})])])))]
+    (timelife
+     0.1 (fn [] (doto (:root (state!)) (.revalidate) (.repaint))))
+    panel))
 
 (defn- create-period-view
   "Description
-    Entry func with main panel builder. There are all enterpreneurs and contracts."
+    Set to root all contracts expand btns list and subcontracts inside expand"
   [state! dispatch!]
   (let [{:keys [select-group-data
                 select-enterpreneurs]}
@@ -484,29 +500,33 @@
         btns-menu-bar      (gcomp/menu-bar
                             {:buttons [[(gtool/get-lang-btns :add-contract)
                                         (gs/icon GoogleMaterialDesignIcons/NOTE_ADD)
-                                        (fn [e] (seesaw.core/config! new-contract-form :items [[(add-contract-panel state!)]]))]
+                                        (fn [e] (if (> (count (seesaw.util/children new-contract-form)) 0)
+                                                  (seesaw.core/config! new-contract-form :items [])
+                                                  (seesaw.core/config! new-contract-form :items [[(add-contract-panel state!)]])))]
 
                                        [(gtool/get-lang-btns :pay)
                                         (gs/icon GoogleMaterialDesignIcons/MONETIZATION_ON)
-                                        (fn [e] (update-contracts state!))]]})
+                                        (fn [e] (update-contracts state!))]
+                                       
+                                       [(gtool/get-lang-btns :refresh)
+                                        (gs/icon GoogleMaterialDesignIcons/SYNC)
+                                        (fn [e] (refresh-data-and-panel state!))]]})
         
-        exp-panel          (seesaw.core/vertical-panel)
-        plugin-root-layout (gmg/migrid :v [btns-menu-bar new-contract-form (seesaw.core/border-panel :center exp-panel)])]
+        expand-btns-box  (gmg/migrid :v [])]
 
     (let [sup-map {:enterpreneurs-list enterpreneurs-list
                    :btns-menu-bar      btns-menu-bar
                    :tree-index-paths   tree-index-paths
-                   :plugin-root-layout plugin-root-layout
-                   :exp-panel          exp-panel
+                   :expand-btns-box    expand-btns-box
                    :new-contract-form  new-contract-form
                    :checkboxes         checkboxes
                    :contracts-checkboxs-map (atom contracts-checkboxs-map)}]
-
       ;; suplicant state
       (swap! (state! :atom) merge sup-map))
-    
+
     (refresh-data-and-panel state!)
-    (gmg/migrid :> (gcomp/min-scrollbox plugin-root-layout :border nil))))
+    (c/config! (:root (state!)) :items (gtool/join-mig-items btns-menu-bar new-contract-form (gcomp/min-scrollbox expand-btns-box)))
+    ))
 
 ;; :v [1 1 2] =>> :v [:enterpreneur.id :service_contract.id :service_contract_month.id]
 ;; (some false? (vals (get-in @(:contracts-checkboxs-map @state) [:2 :2])))
@@ -542,12 +562,14 @@
 ;;;;;;;;;;;;;
 
 (defn service-period-entry [plugin-path global-configuration-getter]
-  (let [state  (create-state-template plugin-path global-configuration-getter)
+  (let [root   (gmg/migrid :v (c/label :text "Loading..."))
+        state  (create-state-template plugin-path global-configuration-getter root)
         state! (fn [& prop]
                  (cond (= :atom (first prop)) state
                        :else (deref state)))
         dispatch! (create-disptcher state)]
-    (create-period-view state! dispatch!)))
+    (create-period-view state! dispatch!)
+    root))
 
 ;;;;;;;;;;;;
 ;;; BIND ;;;

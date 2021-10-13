@@ -197,10 +197,14 @@
     :excel "Zapisz widok do excela."
     :press-to-search "Wciśnij Ctrl + F by wyszukać rekord."
     :related-popup-table "Wyszukaj w powiązanej tabeli"
+    :you-can-edit-this-position "Możesz edytować tą pozycję."
+    :payment-is-done "Płatność zrealizowana."
     }
    
    :infos
-   {:info-panel-about   [["Trashpanda-Team" "Jesteśmy zespołem przyjaciół programistów mających na celu stworzenie uniwersalnej, a przy tym prostej w obsódze i rozwoju aplikacji. Kodzimy bo lubimy, kodzimy bo możemy, kodzimy by nasi klienci otrzymali to czego potrzebują."]
+   {:payment-done-lock-row "Płatność zrealizowana. Pozycja nie może być już edytowana."
+    :wait-for-pay "Oczekiwanie na płatność."
+    :info-panel-about   [["Trashpanda-Team" "Jesteśmy zespołem przyjaciół programistów mających na celu stworzenie uniwersalnej, a przy tym prostej w obsódze i rozwoju aplikacji. Kodzimy bo lubimy, kodzimy bo możemy, kodzimy by nasi klienci otrzymali to czego potrzebują."]
                          ["Jarman"  "Bazowa wersja aplikacji. Naszym marzeniem jest możliwość dostosowania jej do każdego przypadku, rozszerzając podstawowe funkcje z pomocą dołączanych pluginów oraz konfiguracji."]]
     
     :config-panel-about [["O konfiguracji" "Formatka dla konfiguracji w prosty sposób pozwoli na zapisanie lub edycję połączeń do bazy danych. Na tej podstawie możliwe będzie logowanie do systemu i uruchomienie aplikacji."]]
@@ -418,10 +422,15 @@
   :user-trash-can "Disconnect user from card."
   :excel "Save view to excel."
   :press-to-search "Press Ctrl + F to search record."
-  :related-popup-table "Search inside related table"}
+  :related-popup-table "Search inside related table"
+  :you-can-edit-this-position "You can edit this row."
+  :payment-is-done "Payment complete."
+  }
  
  :infos
- {:info-panel-about   [["Trashpanda-Team"
+ {:payment-done-lock-row "Payment complete. Row can not be changed."
+  :wait-for-pay "Waiting for payment."
+  :info-panel-about   [["Trashpanda-Team"
                         "We are a team of programmer friends who aim to create a universal application that is easy to use and expand. We coding because we like, we coding because we can, we coding becouse our clients need good solutions."]
                        ["Jarman"
                         "The base version of the application. Our dream is to be able to adapt it to each case, extending the basic functions with using plugins and configurations."]]

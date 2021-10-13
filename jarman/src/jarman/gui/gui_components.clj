@@ -219,8 +219,12 @@
            :halign halign
            :tip tip
            :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
-                    :mouse-entered (fn [e] (c/config! e :border (newBorder underline-focus) :background bg-hover :cursor :hand))
-                    :mouse-exited  (fn [e] (c/config! e :border (newBorder underline)       :background bg))
+                    :mouse-entered (fn [e]
+                                     (c/config! e :border (newBorder underline-focus) :background bg-hover :cursor :hand)
+                                     (.repaint (c/to-root e)))
+                    :mouse-exited  (fn [e]
+                                     (c/config! e :border (newBorder underline)       :background bg)
+                                     (.repaint (c/to-root e)))
                     :focus-gained  (fn [e] (c/config! e :border (newBorder underline-focus) :background bg-hover :cursor :hand))
                     :focus-lost    (fn [e] (c/config! e :border (newBorder underline)       :background bg))
                     :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gtool/switch-focus))))]
@@ -347,6 +351,8 @@
              border-color-focus
              border-color-unfocus
              char-limit
+             underline-off
+             halign
              args]
       :or {val ""
            placeholder ""
@@ -355,18 +361,22 @@
            border-color-unfocus face/c-underline
            border [10 10 5 5 2]
            char-limit 0
+           underline-off false
+           halign :left
            args []}}]
   (let [          
         fn-get-data     (fn [e key] (get-in (c/config e :user-data) [key]))
         fn-assoc        (fn [e key val] (assoc-in (c/config e :user-data) [key] val))
-        newBorder (fn [underline-color]
-                    (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
-                                       (b/line-border :bottom (nth border 4) :color underline-color)))
+        newBorder (if underline-off (fn [_] (b/empty-border :thicness 0))
+                    (fn [underline-color]
+                     (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
+                                        (b/line-border :bottom (nth border 4) :color underline-color))))
         last-v (atom "")]
     (apply c/text
            :text (if (empty? val) placeholder (if (string? val) val (str val)))
            :border (newBorder border-color-unfocus)
            :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
+           :halign halign
            :listen [:focus-gained (fn [e]
                                     (.repaint (c/to-root e))
                                     (c/config! e :border (newBorder border-color-focus))

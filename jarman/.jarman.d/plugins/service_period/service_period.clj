@@ -49,6 +49,7 @@
            :plugin-global-config global-configuration-getter
            :plugin-config        (get-in (global-configuration-getter) (conj plugin-path :config) {})
            :plugin-toolkit       (get-in (global-configuration-getter) (conj plugin-path :toolkit) {})
+           :currency             "UAH"
            :root                 root})
   state)
 
@@ -64,10 +65,15 @@
 (defn- split-date [date-vec]
   (apply str (interpose " / " (format-date date-vec))))
 
-(defn- isNumber? [val]
-   (if-not (number? (read-string val)) 
-     (i/danger (gtool/get-lang-header :error) (gtool/get-lang-alerts :price-must-be-number))
-     true))
+;; (defn- isNumber? [val]
+;;    (if-not (number? (read-string val)) 
+;;      (i/danger (gtool/get-lang-header :error) (gtool/get-lang-alerts :price-must-be-number))
+;;      true))
+(defn- isNumber? [val-s]
+  (try
+    (do
+      (float (read-string val-s)))
+    (catch Exception e false)))
 
 (declare build-expand-contracts-for-enteprenuer)
 
@@ -88,69 +94,94 @@
     remove in root panel with periods of one contract, add to root panel with all contracta (like agenda) "
   [state!]
   (let [{:keys [root new-contract-form expand-btns-box btns-menu-bar]} (state!)]
-    (swap! (state! :atom) merge {:payments-per-month {}})
-    (c/config! (:root (state!)) :items (gtool/join-mig-items btns-menu-bar new-contract-form (gcomp/min-scrollbox expand-btns-box)))))
+    (swap! (state! :atom) merge {:payments-per-subcontract {}})
+    (refresh-data-and-panel state!)
+    (c/config! (:root (state!)) :items (gtool/join-mig-items btns-menu-bar new-contract-form (gcomp/min-scrollbox expand-btns-box)))
+    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GUI for one Contract;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- update-money-per-month
+(defn- update-subcontract-price
   "Description
     require to db for update money for one period"
   [state!]
-  (let [update-fn  (:update-service-money (:plugin-toolkit (state!)))]
-    (doall (map (fn [[k v]] (update-fn k v)) (:payments-per-month (state!))))
+  (let [update-fn (:update-service-money (:plugin-toolkit (state!)))]
+    (doall (map (fn [[k v]] (update-fn k v)) (:payments-per-subcontract (state!))))
     (i/info (gtool/get-lang-header :info)
             (gtool/get-lang-alerts :updated-data))))
 
-(defn- panel-one-period
+(defn- panel-subcontract
   "Description
-    return mig-panel for one period"
-  [state! period]
+    return mig-panel for one subcontract"
+  [state! subcontract]
   (let [{id              :service_contract_month.id
          start-date      :service_contract_month.service_month_start 
          end-date        :service_contract_month.service_month_end
          payment-st      :service_contract_month.was_payed
-         payment         :service_contract_month.money_per_month}  period
+         payment         :service_contract_month.money_per_month}  subcontract
 
-        label-fn     (fn [text foreground] (seesaw.core/label :text (str text)
-                                                              :font (gtool/getFont 16)
-                                                              :foreground foreground))
+        label-fn (fn [text foreground]
+                   (seesaw.core/label :text (str text)
+                                      :font (gtool/getFont 16)
+                                      :foreground foreground
+                                      :halign :center))
         
-        caret-fn     (fn [e] ;; (if (isNumber? (seesaw.core/text e))
-                             ;;   (if-not (= (read-string (seesaw.core/text e)) payment) 
-                             ;;     (swap! (state! :atom) merge {:payments-per-month (merge (:payments-per-month (state!))
-                             ;;                                                             {id (seesaw.core/text e)})})))
-                       )
+        caret-fn (fn [e] (let [new-val (isNumber? (c/config e :text))]
+                           (if-not (= false new-val) 
+                             (if-not (= new-val payment) 
+                               (do
+                                 (swap! (state! :atom) #(assoc-in % [:payments-per-subcontract id] (str new-val)))
+                                 (c/config! e :listen [:focus-lost (fn [e] (c/config! e :text (get-in (state!) [:payments-per-subcontract id])))])))
+                             )))
         
-        date         (str (clojure.string/replace start-date #"-" "/ ") "  -  " (clojure.string/replace end-date #"-" "/ "))
+        date     (str (clojure.string/replace start-date #"-" "/ ") "  -  " (clojure.string/replace end-date #"-" "/ "))
 
-        status-info  (if payment-st "It was payed, you cannot change this field" "Waiting for payment")
+        status-info  (if payment-st
+                       (gtool/get-lang-infos :payment-done-lock-row)
+                       (gtool/get-lang-infos :wait-for-pay))
+        panel (gmg/migrid ;; subcontract row
+               :> :f
+               {:gap [5 5 10 20]
+                :args [:background face/c-compos-background
+                       :border (b/line-border :bottom 3 :color face/c-layout-background)
+                       ;; hover row
+                       :listen [:mouse-entered (fn [e] (c/config! e :background face/c-on-focus-dark :cursor :hand))
+                                :mouse-exited  (fn [e] (c/config! e :background face/c-compos-background))]]}
+               [(gmg/migrid ;; icon and value to pay 
+                 :> "[fill]5px[70:, fill]" :g {:gap [0 5]}
+                 [(if payment-st
+                    ;; icon done
+                    [(c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK)
+                              :tip (gtool/get-lang-tip :payment-is-done)
+                              :listen [:mouse-entered (fn [e] (c/config! e :cursor :wait))])]
+                    ;; icon help
+                    [(c/label :icon (gs/icon GoogleMaterialDesignIcons/HELP)
+                              :tip (gtool/get-lang-tip :you-can-edit-this-position)
+                              :listen [:mouse-entered (fn [e] (c/config! e :cursor :wait))])])
 
-        ;; panel        (seesaw.mig/mig-panel :constraints ["wrap 2" "5px[]30px" "10px[]10px"]
-        ;;                                    :items [[(label-fn "period:" gcomp/dark-grey-color)]
-        ;;                                            [(label-fn date gcomp/blue-color)]
-        ;;                                            [(label-fn "payment:" gcomp/dark-grey-color)]
-        ;;                                            [(if payment-st (label-fn payment gcomp/blue-color)
-        ;;                                                 (gcomp/input-text :args [:columns 7 :text payment
-        ;;                                                                          :listen [:caret-update caret-fn]]))]
-        ;;                                            [(label-fn "payment status:" gcomp/dark-grey-color)]
-        ;;                                            [(label-fn status-info gcomp/blue-color)]])
-        panel (gmg/migrid
-               :> :f {:gap [5 5 10 20] :args [:background face/c-compos-background]}
-               [(if payment-st
-                  [(c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE))] [])
-                [(if payment-st (label-fn payment face/c-green)
-                     (gcomp/input-text :args [:columns 7 :text payment
-                                              :listen [:caret-update caret-fn]]))]
-                [(label-fn date face/c-black)]
-                [(label-fn status-info (if payment-st face/c-green face/c-orange))]
-                (if payment-st []
-                    [(gcomp/button-slim (gtool/get-lang-btns :pay)
-                                         :args [:icon (gs/icon GoogleMaterialDesignIcons/MONETIZATION_ON)])])])]
+                  ;; Price
+                  (if payment-st 
+                    ;; price in label
+                    (label-fn payment face/c-foreground)
+                    ;; price in input
+                    (gcomp/input-text
+                     :underline-off true
+                     :halign :center
+                     :args [:text payment :listen [:caret-update caret-fn]]))])
+
+                ;; date
+                (label-fn date face/c-foreground)
+                
+                ;; status
+                (label-fn status-info (if payment-st face/c-green face/c-orange))
+                
+                ;; pay for subcontract button
+                (if payment-st [] [(gcomp/button-slim (gtool/get-lang-btns :pay)    :args [:icon (gs/icon GoogleMaterialDesignIcons/MONETIZATION_ON)])
+                                   (gcomp/button-slim (gtool/get-lang-btns :remove) :args [:icon (gs/icon GoogleMaterialDesignIcons/REMOVE_CIRCLE)])])])]
     panel))
 
-(defn- panel-one-contract-periods
+(defn- panel-one-contract
   "Description
     return mig-panel with button-bar and panels with all periods of one contract"
   [state! subcontracts-l]
@@ -159,23 +190,17 @@
                                    (gs/icon GoogleMaterialDesignIcons/ARROW_BACK)
                                    (fn [e] (back-to-main-panel state!))]
                                   [(gtool/get-lang-btns :save)
-                                   (gs/icon GoogleMaterialDesignIcons/DONE)
-                                   (fn [e] (update-money-per-month state!))]
+                                   (gs/icon GoogleMaterialDesignIcons/SAVE)
+                                   (fn [e] (update-subcontract-price state!))]
                                   [(gtool/get-lang-btns :export-odt)
                                    icon/odt-64-png
                                    (fn [e] )]]})
         
-        subcontracts (gmg/migrid :v 
+        subcontracts (gmg/migrid :v
                       (doall (map
-                              (fn [period] (panel-one-period state! period))
+                              (fn [subcontract] (panel-subcontract state! subcontract))
                               subcontracts-l)))]
-    
-    (gmg/migrid :v [btns-menu-bar (gcomp/min-scrollbox subcontracts)])))
-
-(defn- open-periods-contract-fn [state! subcontracts-l]
-  (fn [e] (c/config! (:root (state!)) :items [[(panel-one-contract-periods state! subcontracts-l)]])
-    (doto (:root (state!)) (.revalidate) (.repaint))))
-
+    (list btns-menu-bar (gcomp/min-scrollbox subcontracts))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;
@@ -232,7 +257,7 @@
                        (let [expand-header-box (.getParent cbox)
                              expand-children   (drop 1 (seesaw.util/children expand-header-box))]
                          (c/config! expand-header-box :items (gtool/join-mig-items
-                                                              (c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE))
+                                                              (c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK))
                                                               expand-children)))
                        ;; checke or uncheck checkbox
                        (do
@@ -277,7 +302,7 @@
                                                    (let [expand-header-box (.getParent cbox)
                                                          expand-children   (drop 1 (seesaw.util/children expand-header-box))]
                                                      (c/config! expand-header-box :items (gtool/join-mig-items
-                                                                                          (c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE))
+                                                                                          (c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK))
                                                                                           expand-children)))))))
     cbox))
 
@@ -311,11 +336,15 @@
                                 (str (split-date [(:service_contract_month.service_month_start subcontract)
                                                   (:service_contract_month.service_month_end   subcontract)])
                                      (if (nil? checkbox-selected? ) ""
-                                         (str " / " (:service_contract_month.money_per_month subcontract) " UAH")))
-                                :onClick (open-periods-contract-fn state! subcontracts-l)
+                                         (str " / " (:service_contract_month.money_per_month subcontract) " " (:currency (state!)))))
+
+                                :onClick (fn [e]
+                                           (c/config! (:root (state!)) :items (gtool/join-mig-items (panel-one-contract state! subcontracts-l)))
+                                           (doto (:root (state!)) (.revalidate) (.repaint)))
+
                                 :before-title (if (nil? checkbox-selected?)
                                                 ;; subcontract was payed, so set icon done
-                                                #(c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE))
+                                                #(c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK))
                                                 ;; checkbox is true or false, so render checkbox
                                                 #(subcontract-checkbox subcontract checkboxes-state checkbox-selected?))
                                 :lvl 7
@@ -341,12 +370,12 @@
                       (str (split-date [(:service_contract.contract_start_term contract)
                                         (:service_contract.contract_end_term   contract)])
                            (if (nil? checkbox-selected?) ""
-                               (str " / " (calc-payment-for-service-contr contract subcontracts-l) " UAH")))
+                               (str " / " (calc-payment-for-service-contr contract subcontracts-l) " " (:currency (state!)))))
                       subcontarcts-box
                       :before-title
                       (if (nil? checkbox-selected?)
                         ;; subcontract was payed, so set icon done
-                        #(c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE))
+                        #(c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK))
                         ;; checkbox is true or false, so render checkbox
                         #(contract-checkbox subcontarcts-box render-fn contract checkboxes-state checkbox-selected?))
                       :lvl 3)]
@@ -370,10 +399,10 @@
                 root (gcomp/button-expand
                       (str (:enterpreneur.name enterprenuer-data) 
                            (if (nil? checkbox-selected?) ""
-                               (str " / "  (calc-payment-for-enterpreneuer enterprenuer-data contracts-m) " UAH")))
+                               (str " / "  (calc-payment-for-enterpreneuer enterprenuer-data contracts-m) " " (:currency (state!))))) ;; TODO: need dynamic currency
                       contarcts-box
                       :before-title (if (nil? checkbox-selected?)
-                                      #(c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK_CIRCLE))
+                                      #(c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK))
                                       #(enterprenuer-checkbox contarcts-box render-fn enterprenuer-data checkboxes-state checkbox-selected?))
                       :lvl 1)]
             root))]
@@ -407,7 +436,7 @@
                 (conj (fn [] (i/warning (gtool/get-lang-header :invalid-enterpreneur)
                                         (gtool/get-lang-alerts :field-is-empty))))
 
-                (or (empty? price) (not (isNumber? price)))
+                (or (empty? price) (= (isNumber? price) false))
                 (conj (fn [] (i/warning (gtool/get-lang-header :invalid-price)
                                         (gtool/get-lang-alerts :price-must-be-number))))
 
@@ -425,22 +454,58 @@
            (i/danger  (gtool/get-lang-header :error-with-sql-require)
                       ins-req)))))))
 
+(defn- return-id-list-of-selected-checkboxes [state!]
+  (doall
+   (filter #(not (nil? %))
+           (flatten
+            (map
+             (fn [[enterprenuer-id contract]]
+               (map
+                (fn [[contract-id subcontracts]]
+                  (map
+                   (fn [[subcontracts-id selected?]]
+                     (if selected? subcontracts-id))
+                   subcontracts))
+                contract))
+             @(:contracts-checkboxs-map (state!)))))))
+
+(defn- cut-selected-subcontracts [state!] ;; TODO: Return map without true positions
+  (doall
+   (filter #(not (nil? %))
+           (flatten
+            (map
+             (fn [[enterprenuer-id contract]]
+               (map
+                (fn [[contract-id subcontracts]]
+                  (map
+                   (fn [[subcontracts-id selected?]]
+                     (if selected? subcontracts-id))
+                   subcontracts))
+                contract))
+             @(:contracts-checkboxs-map (state!)))))))
+
 (defn- update-contracts [state!]
   (let [{:keys [update-service-month select-group-data]} (:plugin-toolkit (state!))
-        checkboxes  (doall (filter (fn [item] (= (last item) true)) @(:checkboxes (state!))))]
+        checkboxes (return-id-list-of-selected-checkboxes state!)]
     (if (empty? checkboxes)
       (i/warning (gtool/get-lang-header :warning)
                  (gtool/get-lang-alerts :select-checkbox-for-payment))
-                 
-      (do (update-service-month checkboxes)
-          (let [tree-index-paths (:tree-index-paths (select-group-data))]
-            (swap! (state! :atom) merge {:tree-index-paths tree-index-paths
-                                         :checkboxes  (atom (vec (filter (fn [item] (= (last item) false)) tree-index-paths)))})
-            (refresh-data-and-panel state!)
-            (i/success (gtool/get-lang-header :success)
-                       (gtool/get-lang-alerts :payments-finished-successfully)))))))
 
-
+      (try
+        (do
+          (update-service-month checkboxes)
+          (i/success (gtool/get-lang-header :success)
+                     (gtool/get-lang-alerts :payments-finished-successfully)))
+        (catch Exception e (i/danger "Faild" "Some excepion")))
+      ;; (do 
+      ;;     ;; (let [tree-index-paths (:tree-index-paths (select-group-data))]
+      ;;     ;;   (swap! (state! :atom) merge {:tree-index-paths tree-index-paths
+      ;;     ;;                                :checkboxes  (atom (vec (filter (fn [item] (= (last item) false)) tree-index-paths)))})
+      ;;     ;;   )
+      ;;     ;; (refresh-data-and-panel state!)
+          
+      ;;     )
+      )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Panels for view ;;;
@@ -562,7 +627,7 @@
 ;;;;;;;;;;;;;
 
 (defn service-period-entry [plugin-path global-configuration-getter]
-  (let [root   (gmg/migrid :v (c/label :text "Loading..."))
+  (let [root   (gmg/migrid :v {:args [:background face/c-layout-background]} (c/label :text "Loading..."))
         state  (create-state-template plugin-path global-configuration-getter root)
         state! (fn [& prop]
                  (cond (= :atom (first prop)) state

@@ -220,7 +220,13 @@
              {:a 2, :b 1, :c -3}])
 
 ;; defn info-grouped-query
-(defn info-grouped-query []
+(defn info-grouped-query
+  "Description:
+     Return 3 atoms:
+       enterprenuer @{:1 {enterprenuer-data}}
+       contracts    @{:1 {:1 {contract-data} :2 {contract-data}}}
+       subcontracts @{:1 {:1 {:1 {subcontract-data}} {:2 {subcontract-data}}}}"
+  []
   (->>
    (db/query
     (select!
@@ -235,19 +241,43 @@
         enterpreneur-cols
         service_contract-cols
         service_contract_month-cols))}))
+   
    (filter #(and (:service_contract.id %) (:service_contract_month.id %)))
+   
    (map #(array-map :enterpreneur (select-keys % enterpreneur-cols)
                     :service_contract (select-keys % service_contract-cols)
                     :service_contract_month (select-keys % service_contract_month-cols)))
-   (group-by-2 [(comp :enterpreneur.id :enterpreneur)
-                (comp :service_contract.id :service_contract)
-                (comp :service_contract_month.id :service_contract_month)]
-               ;; two factorization level
-               :enterpreneur
-               :service_contract
-               ;; lambda on leaf
-               :service_contract_month )))
 
+   ((fn [data]
+      (let [e-atom (atom {})
+            c-atom (atom {})
+            s-atom (atom {})]
+        (doall
+         (map (fn [{e :enterpreneur sc :service_contract scm :service_contract_month}]
+                (let [e-id (keyword (str (:enterpreneur.id e)))
+                      c-id (keyword (str (:service_contract.id sc)))
+                      s-id (keyword (str (:service_contract_month.id scm)))]
+                  (if (empty? (get @e-atom e-id)) (swap! e-atom #(assoc % e-id e)))
+                  (if (empty? (get-in @c-atom [e-id c-id])) (swap! c-atom #(assoc-in % [e-id c-id] (assoc sc :selected? false))))
+                  (if (empty? (get-in @s-atom [e-id c-id s-id])) (swap! s-atom #(assoc-in % [e-id c-id s-id] (assoc scm :selected? false))))))
+              data))
+        {:entrepreneurs-m @e-atom
+         :contracts-m     @c-atom
+         :subcontracts-m  @s-atom})))
+   
+   ;; (group-by-2 [(comp :enterpreneur.id :enterpreneur)
+   ;;              (comp :service_contract.id :service_contract)
+   ;;              (comp :service_contract_month.id :service_contract_month)]
+   ;;             ;; two factorization level
+   ;;             :enterpreneur
+   ;;             :service_contract
+   ;;             ;; lambda on leaf
+   ;;             :service_contract_month )
+   ))
+
+(comment
+  (info-grouped-query)
+  )
 
 ;;; FOR @JULIA
 
@@ -451,7 +481,7 @@
  (db/exec
   (update! {:table_name :service_contract_month
             :set {:service_contract_month.was_payed true}
-            :where (reduce (fn [acc item] (conj acc [:= :id (nth item 2)])) [:or] list-months-id)})))
+            :where (reduce (fn [acc item] (conj acc [:= :id item])) [:or] list-months-id)})))
 
 (defn update-all-service-month-payment [bln]
   (db/exec

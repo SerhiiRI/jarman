@@ -120,8 +120,8 @@
     [new-map swap-map]
     ))
 
-(update-subcontracts-state (:state! @state))
-@(:subcontracts-payment-state @state)
+;; (update-subcontracts-state (:state! @state))
+;; @(:subcontracts-payment-state @state)
 
 (defn- back-to-main-panel
   "Description
@@ -342,19 +342,19 @@
       contract-price 0)))
 
 ;;(:contracts-m @state)
-(defn- select-and-calc-contract-price
+(defn- select-and-calc-contract-price ;; TODO: entre checkbox bugs becouse in contract cannot swap :selected?. Contract watcher do not reacting when contract is unselect.
   [state! contract-path selected?]
   (let [contract-path-to-selected (join-vec contract-path [:selected?])
         contract-path-to-price    (join-vec contract-path [:price])
         price (calculate-contract-price state! contract-path)]
-    (reset! (:contracts-m (state!))
-            (-> @(:contracts-m (state!))
-             (assoc-in contract-path-to-selected selected?)
-             (assoc-in contract-path-to-price price)))
+    (swap! (:contracts-m (state!)) #(merge %
+                                    (-> @(:contracts-m (state!))
+                                        (assoc-in contract-path-to-selected selected?)
+                                        (assoc-in contract-path-to-price price))))
     price))
 
 ;; @(:contracts-m @state)
-;; (get-in @(:contracts-m @state) [:2 :2])
+;; (get-in @(:contracts-m @state) [:1 :3])
 ;; (select-and-calc-contract-price (:state! @state) [:2 :2] true)
 
 (defn- select-all-subcontracts
@@ -377,7 +377,7 @@
   (let [cbox (c/label :icon (i-checkbox checkbox-selected?)
                       :listen [:mouse-clicked
                                (fn [e] ;; SELECT OR UNSELECT ALL SUBCONTRACTS
-                                 (let [self-selected? (not (selected-contract? state! contract-path))]
+                                 (let [self-selected? (not (check-if-contract-selected state! contract-path))]
                                    (select-all-subcontracts state! contract-path self-selected?)
                                    ;;(select-and-calc-contract-price state! contract-path self-selected?)                                   
                                    (c/config! e :icon (i-checkbox self-selected?))))])
@@ -424,11 +424,14 @@
 (defn- all-contracts-payed?
   [state! entrepreneur-path]
   (let [unpayed? (some false? (flatten
-                                  (doall (map
-                                          (fn [[contract-id contract]]
-                                            (let [contract-path (join-vec entrepreneur-path [contract-id])]
-                                              (contract-payed? state! contract-path)))
-                                          (get-in @(:contracts-m (state!)) entrepreneur-path)))))]
+                      (doall (map
+                              (fn [[contract-id contract]]
+                                (let [contract-path (join-vec entrepreneur-path [contract-id])]
+                                  (map
+                                   (fn [[sub-id sub]]
+                                     (if (:service_contract_month.was_payed sub) true false))
+                                   (get-in @(:subcontracts-m (state!)) contract-path))))
+                              (get-in @(:contracts-m (state!)) entrepreneur-path)))))]
     (if (nil? unpayed?) true (not unpayed?))))
 
 
@@ -440,12 +443,19 @@
                       (doall (map
                               (fn [[contract-id contract]]
                                 (let [contract-path (join-vec entrepreneur-path [contract-id])]
-                                  (if (= true (contract-payed? state! contract-path)) true (:selected? contract))))
+                                  (map
+                                   (fn [[sub-id sub]]
+                                     (if (or (:service_contract_month.was_payed sub)
+                                             (:selected? sub))
+                                       true false))
+                                   (get-in @(:subcontracts-m (state!)) contract-path))))
                               (get-in @(:contracts-m (state!)) entrepreneur-path)))))]
     (if (nil? unselected?) true (not unselected?))))
 
-;; (all-contracts-selected? (:state! @state) [:2])
+;; (all-contracts-selected? (:state! @state) [:1])
 ;; (:contracts-m @state)
+;; (get-in @(:subcontracts-m @state) [:1 :1])
+
 
 (defn- select-all-contracts
   [state! entrepreneur-path selected?]
@@ -466,11 +476,6 @@
                                                (let [contract-path (join-vec entrepreneur-path [contract-id])]
                                                  (rift (select-and-calc-contract-price state! contract-path selected?) 0)))
                                              (get-in @(:contracts-m (state!)) entrepreneur-path)))))]
-    (swap! (:entrepreneurs-m (state!))
-           #(-> %
-                (assoc-in entrepreneur-path-to-selected selected?)
-                (assoc-in entrepreneur-path-to-price    all-contract-price)))
-    
     all-contract-price))
 
 (defn- selected-entrepreneur?
@@ -483,7 +488,7 @@
   (let [cbox (c/label :icon (i-checkbox checkbox-selected?)
                       :listen [:mouse-clicked
                                (fn [e] ;; SELECT OR UNSELECT ALL CONTRACTS
-                                 (let [self-selected? (not (selected-entrepreneur? state! entrepreneur-path))]
+                                 (let [self-selected? (not (all-contracts-selected? state! entrepreneur-path))]
                                    (select-all-contracts state! entrepreneur-path self-selected?)
                                    (select-and-calc-all-contracts-price state! entrepreneur-path self-selected?)
                                    (c/config! e :icon (i-checkbox self-selected?))))])
@@ -496,6 +501,7 @@
                  (fn []
                    (let [payed?        (all-contracts-payed?    state! entrepreneur-path)
                          all-selected? (all-contracts-selected? state! entrepreneur-path)]
+                     (println "All selected" all-selected?)
 
                      (let [expand-header-box (.getParent cbox)
                            expand-before-title (first  (seesaw.util/children expand-header-box))
@@ -517,6 +523,9 @@
                                                             expand-other))
                        (.repaint (c/to-root cbox))))))    
     cbox))
+
+;; (all-contracts-selected? (:state! @state) [:1])
+;; (:2 @(:contracts-m @state))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

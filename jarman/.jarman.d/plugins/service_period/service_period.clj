@@ -341,22 +341,6 @@
     (if (or (float? contract-price) (int? contract-price))
       contract-price 0)))
 
-;;(:contracts-m @state)
-(defn- select-and-calc-contract-price ;; TODO: entre checkbox bugs becouse in contract cannot swap :selected?. Contract watcher do not reacting when contract is unselect.
-  [state! contract-path selected?]
-  (let [contract-path-to-selected (join-vec contract-path [:selected?])
-        contract-path-to-price    (join-vec contract-path [:price])
-        price (calculate-contract-price state! contract-path)]
-    (swap! (:contracts-m (state!)) #(merge %
-                                    (-> @(:contracts-m (state!))
-                                        (assoc-in contract-path-to-selected selected?)
-                                        (assoc-in contract-path-to-price price))))
-    price))
-
-;; @(:contracts-m @state)
-;; (get-in @(:contracts-m @state) [:1 :3])
-;; (select-and-calc-contract-price (:state! @state) [:2 :2] true)
-
 (defn- select-all-subcontracts
   [state! contract-path selected?]
   (let [subcontracts-m     (get-in @(:subcontracts-m (state!)) contract-path)
@@ -367,11 +351,6 @@
     (swap! (:subcontracts-m (state!)) #(assoc-in % contract-path new-subcontracts-m))
     new-subcontracts-m))
 
-(defn- selected-contract?
-  [state! contract-path]
-  (let [path-to-contract-checkbox (join-vec contract-path [:selected?])]
-      (if (= true (get-in @(:contracts-m (state!)) path-to-contract-checkbox)) true false)))
-
 (defn- contract-checkbox
   [state! root render-fn render-header contract-path checkbox-selected?]
   (let [cbox (c/label :icon (i-checkbox checkbox-selected?)
@@ -379,7 +358,7 @@
                                (fn [e] ;; SELECT OR UNSELECT ALL SUBCONTRACTS
                                  (let [self-selected? (not (check-if-contract-selected state! contract-path))]
                                    (select-all-subcontracts state! contract-path self-selected?)
-                                   ;;(select-and-calc-contract-price state! contract-path self-selected?)                                   
+                                   (swap! (:contracts-m (state!)) #(assoc-in % (join-vec contract-path [:selected?]) self-selected?))
                                    (c/config! e :icon (i-checkbox self-selected?))))])
         
         watcher-id (keyword (str "contract-" (clojure.string/join "-" contract-path)))]
@@ -389,28 +368,26 @@
     (new-watcher (:subcontracts-m (state!)) watcher-id contract-path
                  (fn []
                    (let [payed?        (contract-payed? state! contract-path)
-                         all-selected? (check-if-contract-selected state! contract-path)]
-                     
+                         all-selected? (check-if-contract-selected state! contract-path)
+                         contract-price (calculate-contract-price state! contract-path)]
+
                      (c/config! root :items (gtool/join-mig-items (render-fn)))
                      (let [expand-header-box (.getParent cbox)
                            expand-before-title (first  (seesaw.util/children expand-header-box))
                            expand-title        (second (seesaw.util/children expand-header-box))
                            expand-other        (drop 2 (seesaw.util/children expand-header-box))]
                        
-                       (c/config! expand-title :text (render-header))
-                       (if payed?
-                         ;; set done icon and refresh expand btn header
-                         (c/config! cbox :icon (gs/icon GoogleMaterialDesignIcons/DONE))
-                         ;; checke or uncheck checkbox
-                         (do
-                           (select-and-calc-contract-price state! contract-path all-selected?)
-                           (c/config! cbox :icon (i-checkbox all-selected?))))
-                       
+                       (c/config! expand-title :text (render-header contract-price))
                        (c/config! expand-header-box :items (gtool/join-mig-items
                                                             expand-before-title
                                                             expand-title
                                                             expand-other))
-                       (.repaint (c/to-root cbox))))))    
+                       (if payed?
+                         ;; set done icon and refresh expand btn header
+                         (c/config! cbox :icon (gs/icon GoogleMaterialDesignIcons/DONE))
+                         ;; checke or uncheck checkbox
+                         (c/config! cbox :icon (i-checkbox all-selected?)))
+                       (.repaint (c/to-root cbox))))))
     cbox))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -421,41 +398,30 @@
 ;; STATE INTERACTIVE TEST
 ;; (let [sw (:subcontracts-m @state)]
 ;;   (swap! sw #(assoc-in % [:1 :3 :207 :service_contract_month.was_payed] false)))
-(defn- all-contracts-payed?
-  [state! entrepreneur-path]
-  (let [unpayed? (some false? (flatten
-                      (doall (map
-                              (fn [[contract-id contract]]
-                                (let [contract-path (join-vec entrepreneur-path [contract-id])]
-                                  (map
-                                   (fn [[sub-id sub]]
-                                     (if (:service_contract_month.was_payed sub) true false))
-                                   (get-in @(:subcontracts-m (state!)) contract-path))))
-                              (get-in @(:contracts-m (state!)) entrepreneur-path)))))]
+(defn- loop-all-contracts
+  [state! entrepreneur-path func]
+  (let [unpayed? (some false? (flatten (doall
+                                        (map
+                                         (fn [[contract-id contract]] (func contract-id contract))
+                                         (get-in @(:contracts-m (state!)) entrepreneur-path)))))]
     (if (nil? unpayed?) true (not unpayed?))))
 
+(defn- all-contracts-payed?
+  [state! entrepreneur-path]
+  (loop-all-contracts state! entrepreneur-path
+                      (fn [contract-id contract]
+                        (let [contract-path (join-vec entrepreneur-path [contract-id])]
+                          (map
+                           (fn [[sub-id sub]] (if (:service_contract_month.was_payed sub) true false))
+                           (get-in @(:subcontracts-m (state!)) contract-path))))))
 
 (defn- all-contracts-selected?
   "Description:
      Return true is all subcontracts for entrepreneur are selected or false if not"
   [state! entrepreneur-path]
-  (let [unselected? (some false? (flatten
-                      (doall (map
-                              (fn [[contract-id contract]]
-                                (let [contract-path (join-vec entrepreneur-path [contract-id])]
-                                  (map
-                                   (fn [[sub-id sub]]
-                                     (if (or (:service_contract_month.was_payed sub)
-                                             (:selected? sub))
-                                       true false))
-                                   (get-in @(:subcontracts-m (state!)) contract-path))))
-                              (get-in @(:contracts-m (state!)) entrepreneur-path)))))]
-    (if (nil? unselected?) true (not unselected?))))
-
-;; (all-contracts-selected? (:state! @state) [:1])
-;; (:contracts-m @state)
-;; (get-in @(:subcontracts-m @state) [:1 :1])
-
+  (loop-all-contracts state! entrepreneur-path
+                      (fn [contract-id contract]
+                        (check-if-contract-selected state! (join-vec entrepreneur-path [contract-id])))))
 
 (defn- select-all-contracts
   [state! entrepreneur-path selected?]
@@ -466,22 +432,13 @@
                     (:selected? contract))))
           (get-in @(:contracts-m (state!)) entrepreneur-path))))
 
-(defn- select-and-calc-all-contracts-price
-  [state! entrepreneur-path selected?]
-  (let [entrepreneur-path-to-selected (join-vec entrepreneur-path [:selected?])
-        entrepreneur-path-to-price    (join-vec entrepreneur-path [:price])
-        all-contract-price (apply + (flatten
-                                     (doall (map
-                                             (fn [[contract-id contract]]
-                                               (let [contract-path (join-vec entrepreneur-path [contract-id])]
-                                                 (rift (select-and-calc-contract-price state! contract-path selected?) 0)))
-                                             (get-in @(:contracts-m (state!)) entrepreneur-path)))))]
-    all-contract-price))
-
-(defn- selected-entrepreneur?
+(defn- calculate-all-contract-price
   [state! entrepreneur-path]
-  (let [path-to-entrepreneur-checkbox (join-vec entrepreneur-path [:selected?])]
-      (if (= true (get-in @(:entrepreneurs-m (state!)) path-to-entrepreneur-checkbox)) true false)))
+  (apply + (flatten (doall
+             (map
+              (fn [[contract-id contract]]
+                (calculate-contract-price state! (join-vec entrepreneur-path [contract-id])))
+              (get-in @(:contracts-m (state!)) entrepreneur-path))))))
 
 (defn- entrepreneur-checkbox
   [state! root render-header entrepreneur-path checkbox-selected?]
@@ -490,32 +447,29 @@
                                (fn [e] ;; SELECT OR UNSELECT ALL CONTRACTS
                                  (let [self-selected? (not (all-contracts-selected? state! entrepreneur-path))]
                                    (select-all-contracts state! entrepreneur-path self-selected?)
-                                   (select-and-calc-all-contracts-price state! entrepreneur-path self-selected?)
                                    (c/config! e :icon (i-checkbox self-selected?))))])
 
         watcher-id (keyword (str "entrepreneur-" (clojure.string/join "-" entrepreneur-path)))]
 
     ;; If in subcontract something will be unchecked or all will be checked then set contract checkbox selected or not
     ;; WATCH IF ALL SUBCONTRACTS SELECTED
-    (new-watcher (:contracts-m (state!)) watcher-id entrepreneur-path
+    (new-watcher (:subcontracts-m (state!)) watcher-id entrepreneur-path
                  (fn []
-                   (let [payed?        (all-contracts-payed?    state! entrepreneur-path)
-                         all-selected? (all-contracts-selected? state! entrepreneur-path)]
-                     (println "All selected" all-selected?)
+                   (let [payed?         (all-contracts-payed?    state! entrepreneur-path)
+                         all-selected?  (all-contracts-selected? state! entrepreneur-path)
+                         contract-price (calculate-all-contract-price state! entrepreneur-path)]
 
                      (let [expand-header-box (.getParent cbox)
                            expand-before-title (first  (seesaw.util/children expand-header-box))
                            expand-title        (second (seesaw.util/children expand-header-box))
                            expand-other        (drop 2 (seesaw.util/children expand-header-box))]
                        
-                       (c/config! expand-title :text (render-header))
+                       (c/config! expand-title :text (render-header contract-price))
                        (if payed?
                          ;; set done icon and refresh expand btn header
                          (c/config! cbox :icon (gs/icon GoogleMaterialDesignIcons/DONE))
                          ;; checke or uncheck checkbox
-                         (do
-                           ;; (select-and-calc-all-contracts-price state! entrepreneur-path all-selected?)
-                           (c/config! cbox :icon (i-checkbox all-selected?))))
+                         (c/config! cbox :icon (i-checkbox all-selected?)))
                        
                        (c/config! expand-header-box :items (gtool/join-mig-items
                                                             expand-before-title
@@ -524,8 +478,7 @@
                        (.repaint (c/to-root cbox))))))    
     cbox))
 
-;; (all-contracts-selected? (:state! @state) [:1])
-;; (:2 @(:contracts-m @state))
+;;(:contracts-m @state)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -569,9 +522,6 @@
         root))
     (get-in @(:subcontracts-m (state!)) contract-path))))
 
-
-;;@(:subcontracts-m @state)
-
 ;;
 ;; CONTRACT
 ;;
@@ -588,17 +538,18 @@
 
             render-fn          #(create-subcontracts-expand-btns state! contract-path)
             subcontarcts-box   (gmg/migrid :v (render-fn))
-            rerender-header #(format "<html> %s &nbsp;&nbsp;<b> %s </b> %s </html>" 
-                                     (str (clojure.string/replace (:service_contract.contract_start_term contract) #"-" "/ ")
-                                          "  -  "
-                                          (clojure.string/replace (:service_contract.contract_end_term   contract) #"-" "/ "))
-                                     (if (contract-payed? state! contract-path) ""
-                                         (str (select-and-calc-contract-price state! contract-path checkbox-selected?) " " (:currency (state!))))
-                                     (if (:debug-mode (state!)) (str " " contract-path) ""))
+            rerender-header (fn [price]
+                              (format "<html> %s &nbsp;&nbsp;<b> %s </b> %s </html>" 
+                                      (str (clojure.string/replace (:service_contract.contract_start_term contract) #"-" "/ ")
+                                           "  -  "
+                                           (clojure.string/replace (:service_contract.contract_end_term   contract) #"-" "/ "))
+                                      (if (contract-payed? state! contract-path) ""
+                                          (str price " " (:currency (state!))))
+                                      (if (:debug-mode (state!)) (str " " contract-path) "")))
             
             ;; Expand button for contract
             root (gcomp/button-expand
-                  (rerender-header)
+                  (rerender-header (calculate-contract-price state! contract-path))
                   subcontarcts-box
                   :before-title
                   (if payed?
@@ -611,7 +562,6 @@
                   :lvl 3)]
         root))
     (get-in @(:contracts-m (state!)) entrepreneur-path))))
-
 
 ;;
 ;; ENTREPRENEUR
@@ -628,13 +578,14 @@
 
         render-fn          #(create-contracts-expand-btns state! entrepreneur-path)
         entrepreneur-box   (gmg/migrid :v (render-fn))
-        rerender-header #(format "<html> %s &nbsp;&nbsp;<b> %s </b> %s </html>" 
-                                 (get-in @(:entrepreneurs-m (state!)) [entrepreneur-id-k :enterpreneur.name])
-                                 (if (all-contracts-payed? state! entrepreneur-path) ""
-                                     (str (select-and-calc-all-contracts-price state! entrepreneur-path checkbox-selected?) " " (:currency (state!))))
-                                 "")
+        rerender-header (fn [price]
+                          (format "<html> %s &nbsp;&nbsp;<b> %s </b> %s </html>" 
+                                  (get-in @(:entrepreneurs-m (state!)) [entrepreneur-id-k :enterpreneur.name])
+                                  (if (all-contracts-payed? state! entrepreneur-path) ""
+                                      (str price " " (:currency (state!))))
+                                  ""))
         root (gcomp/button-expand
-              (rerender-header)
+              (rerender-header (calculate-all-contract-price state! entrepreneur-path))
               entrepreneur-box
               :before-title (if payed?
                               ;; subcontract was payed, so set icon done
@@ -643,12 +594,15 @@
                               #(entrepreneur-checkbox state! entrepreneur-box rerender-header entrepreneur-path checkbox-selected?))
               :lvl 1)]
     root))
-
 ;; :v [1 1 2] =>> :v [:enterpreneur.id :service_contract.id :service_contract_month.id]
 
-;;;;;;;;;;;;;;;; 
-;;; REQUIRES ;;; 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;
+;;; REQUIRES ;;;
+;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn- insert-contract [state! calndr-start calndr-end price-input select-box]
   (let [date1         (seesaw.core/text calndr-start)
         date2         (seesaw.core/text calndr-end)
@@ -742,9 +696,13 @@
                       (gtool/get-lang-alerts :payments-finished-successfully)))
          (catch Exception e (i/danger (gtool/get-lang-header :failed) (str "DB or State problem.\n" (.getMessage e)))))))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Panels for view ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn- add-contract-panel
   "Description
     in main-panel with all contracts add to new-contract-form panel with fields for input data"
@@ -814,9 +772,11 @@
 ;; (some false? (vals (get-in @(:contracts-checkboxs-map @state) [:2 :2])))
 ;; (vec (map #(keyword (str %)) [2 2 1]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Toolkit with SQl funcs ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn service-period-toolkit-pipeline
   "Description

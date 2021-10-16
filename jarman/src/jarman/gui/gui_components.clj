@@ -108,8 +108,9 @@
     (min-scrollbox (mig-panel ...) :hscroll :never)
     ;; => #object[seesaw.core.proxy$javax.swing"
   [component
-   & {:keys [args]
-      :or {args []}}]
+   & {:keys [hscroll-off args]
+      :or {hscroll-off false
+           args []}}]
   (let [scr (CustomScrollBar/myScrollPane component face/c-min-scrollbox-bg)
         get-key (fn [x] (first (first x)))
         get-val (fn [x] (second (first x)))]
@@ -118,13 +119,19 @@
            (apply hash-map args)))    
     (c/config! scr :border (b/line-border :thickness 0))
     (c/config! scr :listen [:component-resized
-                            (fn [e] (let [parent-w (.getWidth  (.getSize (.getParent scr)))
-                                          parent-h (.getHeight (.getSize (.getParent scr)))]
-                                      ;; (println "\nSize" (c/config (.getParent scr) :id) parent-w parent-h)
-                                      ;; (c/config! scr :size [parent-w :by parent-h])
-                                      ;; (.revalidate (c/to-root scr))
-                                      ;; (.repaint (c/to-root scr))
-                                      ))])
+                            (fn [e] (if hscroll-off ;; TODO: height bugging
+                                      (if (= -1 (first @(state/state :atom-app-resize-direction)))
+                                          (let [w (.getWidth  (.getSize scr))
+                                                h (.getHeight (.getSize scr))
+                                                layout (first (seesaw.util/children (second (seesaw.util/children scr))))
+                                                layout-h (.getHeight (.getPreferredSize layout))]
+                                        ;(println layout)
+                                            (c/config! layout :preferred-size [w :by layout-h])
+                                            (.repaint scr)))
+                                      (do (.revalidate scr)
+                                          (.repaint scr))))
+                            :mouse-wheel-moved (fn [e]
+                                                (.repaint (c/to-root e)))])
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
     scr))
@@ -1060,7 +1067,7 @@
                  title-icon
                  before-title]
           :or {expand :auto
-               border (b/compound-border (b/empty-border :left 3))
+               border (b/empty-border :thickness 0)
                vsize 35
                min-height 200
                ico       (gs/icon GoogleMaterialDesignIcons/ADD face/c-icon 25)
@@ -1105,12 +1112,13 @@
                                                                                        :mouse-entered gtool/hand-hover-on]))
                        (c/config! icon :listen (listen func))
                        (gmg/migrid :> :fgf {:args [:background background :focusable? true
-                                                  :border (b/line-border :left (* lvl 6) :color (if seamless-bg background offset-color))]}
+                                                   :border (b/compound-border
+                                                            (b/line-border :left (* lvl 6) :color (if seamless-bg background offset-color)))]}
                                    [(if (fn? before-title)
                                       [(let [bt (before-title)] (c/config! bt :background background) bt)]
                                       [(c/label)])
                                     title icon]))
-          expand-box (gmg/migrid :v "[grow, fill]" [])]
+          expand-box (gmg/migrid :v "[grow, fill]" {:args [:border border]} [])]
       (if (nil? onClick)
         (let [onClick (fn [e]
                         (if-not (nil? inside-btns)

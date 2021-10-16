@@ -210,6 +210,7 @@
    :infos
    {:payment-done-lock-row "Płatność zrealizowana. Pozycja nie może być już edytowana."
     :wait-for-pay "Oczekiwanie na płatność."
+    :no-items     "Brak pozycji"
     :info-panel-about   [["Trashpanda-Team" "Jesteśmy zespołem przyjaciół programistów mających na celu stworzenie uniwersalnej, a przy tym prostej w obsódze i rozwoju aplikacji. Kodzimy bo lubimy, kodzimy bo możemy, kodzimy by nasi klienci otrzymali to czego potrzebują."]
                          ["Jarman"  "Bazowa wersja aplikacji. Naszym marzeniem jest możliwość dostosowania jej do każdego przypadku, rozszerzając podstawowe funkcje z pomocą dołączanych pluginów oraz konfiguracji."]]
     
@@ -442,6 +443,7 @@
  :infos
  {:payment-done-lock-row "Payment complete. Row can not be changed."
   :wait-for-pay "Waiting for payment."
+    :no-items     "No items"
   :info-panel-about   [["Trashpanda-Team"
                         "We are a team of programmer friends who aim to create a universal application that is easy to use and expand. We coding because we like, we coding because we can, we coding becouse our clients need good solutions."]
                        ["Jarman"

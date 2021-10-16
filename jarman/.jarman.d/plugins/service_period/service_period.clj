@@ -36,8 +36,7 @@
     :add-missing  (assoc-in state (:path action-m) nil)
     :test         (do (println "\nTest:n") state)
     ;; ------------------------------------------------
-    
-    ))
+))
 
 (defn- create-disptcher [atom-var]
   (fn [action-m]
@@ -71,14 +70,8 @@
 (defn- split-date [date-vec]
   (apply str (interpose " / " (format-date date-vec))))
 
-;; (defn- isNumber? [val]
-;;    (if-not (number? (read-string val)) 
-;;      (i/danger (gtool/get-lang-header :error) (gtool/get-lang-alerts :price-must-be-number))
-;;      true))
 (defn- isNumber? [val-s]
-  (try
-    (do
-      (float (read-string val-s)))
+  (try (float (read-string val-s))
     (catch Exception e false)))
 
 (declare build-expand-contracts-for-entrepreneur)
@@ -90,35 +83,43 @@
     (reset! entrepreneurs-m (:entrepreneurs-m fresh-data))
     (reset! contracts-m     (:contracts-m     fresh-data))
     (reset! subcontracts-m  (:subcontracts-m  fresh-data))
+    (swap! (state! :atom) #(assoc % :entrepreneurs-list (:entrepreneurs-list fresh-data)))
     
-    (c/config!
-     expand-btns-box
-     :items (gtool/join-mig-items
-             (doall
-              (map
-               (fn [[entrepreneur-id]]
-                 (build-expand-contracts-for-entrepreneur state! entrepreneur-id))
-               @entrepreneurs-m))))
+    (let [items (gtool/join-mig-items
+                 (doall
+                  (map
+                   (fn [[entrepreneur-id]]
+                     (build-expand-contracts-for-entrepreneur state! entrepreneur-id))
+                   @entrepreneurs-m)))]
+      (c/config!
+       expand-btns-box
+       :items (if (empty? items)
+                [[(gmg/migrid :v :center {:gap [25]}
+                              (c/label :text (gtool/get-lang-infos :no-items)
+                                       :font (gs/getFont 16)
+                                       :foreground face/c-icon))]]
+                items)))
     (doto root (.revalidate) (.repaint))))
 
 (defn- update-subcontracts-state
+  "Description:
+     Swap if some prices was changed in DB."
   [state!]
-  (let [new-map       @(:subcontracts-m (state!))
-        contract-path (:path @(:subcontracts-payment-state (state!)))
-        swap-map      ((fn assoc-next [m sps]
-                         (let [[id price] (first sps)
-                               price price
-                               next-sps (drop 1 sps)
-                               path-to-update (join-vec contract-path [(keyword (str id)) :service_contract_month.money_per_month])
-                               next-map (assoc-in m path-to-update price)]
-                           (if (empty? next-sps)
-                             next-map
-                             (assoc-next next-map next-sps))))
-                       new-map (drop 1 (vec @(:subcontracts-payment-state (state!)))))]
-    (reset! (:subcontracts-m (state!)) swap-map)
-    (reset! (:subcontracts-payment-state (state!)) {})
-    [new-map swap-map]
-    ))
+  (if (:db-saved @(:subcontracts-payment-state (state!))) 
+      (let [new-map       @(:subcontracts-m (state!))
+            contract-path (:path @(:subcontracts-payment-state (state!)))
+            swap-map      ((fn assoc-next [m sps]
+                             (let [[id price] (first sps)
+                                   price price
+                                   next-sps (drop 1 sps)
+                                   path-to-update (join-vec contract-path [(keyword (str id)) :service_contract_month.money_per_month])
+                                   next-map (assoc-in m path-to-update price)]
+                               (if (empty? next-sps)
+                                 next-map
+                                 (assoc-next next-map next-sps))))
+                           new-map (vec (:updated-prices @(:subcontracts-payment-state (state!)))))]
+        (reset! (:subcontracts-m (state!)) swap-map)))
+  (reset! (:subcontracts-payment-state (state!)) {:path [] :db-saved false :updated-prices {}}))
 
 (defn- back-to-main-panel
   "Description
@@ -138,18 +139,27 @@
     require to db for update money for one period"
   [state!]
   (let [update-fn (:update-service-money (:plugin-toolkit (state!)))]
-    (doall (map (fn [[id money]] (update-fn id money)) (drop 1 (vec @(:subcontracts-payment-state (state!))))))
+    (doall (map (fn [[id money]] (update-fn id money)) (vec (:updated-prices @(:subcontracts-payment-state (state!))))))
     (i/info (gtool/get-lang-header :info)
-            (gtool/get-lang-alerts :updated-data))))
+            (gtool/get-lang-alerts :updated-data))
+    (swap! (:subcontracts-payment-state (state!)) #(assoc % :db-saved true))))
 
-(defn- text-number-controller [e int-numbers? more-fns]
-  (let [new-val (isNumber? (c/config e :text))
-        new-val (if (and int-numbers? (not (= false new-val))) (int new-val) new-val)]
-    (if-not (= false new-val)
-      (do
-        (more-fns)
-        (c/config! e :listen [:focus-lost (fn [e] (c/config! e :text (str (new-val))))]))
-      (c/config! e :listen [:focus-lost (fn [e] (c/config! e :text "0"))]))))
+(defn- number-input
+  [begin-text only-int? more-fns]
+  (gcomp/input-text
+   :underline-off true
+   :halign :center
+   :args [:text begin-text
+          :listen [:caret-update
+                   (fn [e] (if-not  (= (c/config e :user-data) (c/config e :text))
+                             (let [new-val (isNumber? (c/config e :text))
+                                   new-val (if (and only-int? (not (= false new-val))) (int new-val) new-val)]
+                               (if-not (= false new-val)
+                                 (do
+                                   (more-fns new-val)
+                                   (c/config! e :user-data (str new-val)))))))
+                   
+                   :focus-lost (fn [e] (c/config! e :text (c/config e :user-data)))]]))
 
 (defn- panel-with-subcontract-rows
   "Description
@@ -163,21 +173,18 @@
         (get-in @(:subcontracts-m (state!)) subcontract-path)
         
         subcontract-price-fn #(get-in @(:subcontracts-m (state!)) (join-vec subcontract-path [:service_contract_month.money_per_month]))
-        subcontracts-payment-state (:subcontracts-payment-state (state!))
+        subcontracts-payment-a (:subcontracts-payment-state (state!))
 
-        x (swap! subcontracts-payment-state #(assoc % :path (vec (butlast subcontract-path))))
+        x (reset! (:subcontracts-payment-state (state!)) {:path (vec (butlast subcontract-path))
+                                                          :db-saved false
+                                                          :updated-prices {}})
 
         payment-path  (join-vec subcontract-path)
         
         label-fn (fn [text foreground]
                    (seesaw.core/label :text (str text)
                                       :foreground foreground
-                                      :halign :center))
-        
-        caret-fn (fn [e] (text-number-controller
-                          e false (fn [](let [new-val (isNumber? (c/text e))]
-                                          (if-not (= (str new-val) (subcontract-price-fn)) 
-                                            (swap! subcontracts-payment-state #(assoc % id new-val)))))))
+                                      :halign :center))       
         
         date     (str (clojure.string/replace start-date #"-" "/ ") "  -  " (clojure.string/replace end-date #"-" "/ "))
 
@@ -189,10 +196,7 @@
                                  (b/compound-border
                                   (b/line-border  :bottom 2 :top 2 :color face/c-icon)
                                   (b/line-border :bottom 3 :color face/c-layout-background))
-                                 (b/line-border :bottom 3 :color face/c-layout-background))
-                       ;; hover row
-                       :listen [:mouse-entered (fn [e] (c/config! e :background face/c-on-focus-dark))
-                                :mouse-exited  (fn [e] (c/config! e :background face/c-compos-background))]]}
+                                 (b/line-border :bottom 3 :color face/c-layout-background))]}
                [])
         
         render-fn (fn rerender [is-payed?]
@@ -213,10 +217,7 @@
                          ;; price in label
                          (label-fn (subcontract-price-fn) face/c-foreground)
                          ;; price in input
-                         (gcomp/input-text
-                          :underline-off true
-                          :halign :center
-                          :args [:text (subcontract-price-fn) :listen [:caret-update caret-fn]]))])
+                         (number-input (subcontract-price-fn) false (fn [new-val] (swap! subcontracts-payment-a #(assoc-in % [:updated-prices id] new-val)))))])
 
                      ;; date
                      (label-fn date face/c-foreground)
@@ -511,7 +512,7 @@
                   (format "<html> %s &nbsp;&nbsp;<b> %s </b>%s</html>"
                           (str (clojure.string/replace (:service_contract_month.service_month_start subcontract) #"-" "/ ")
                                "  -  "
-                               (clojure.string/replace (:service_contract_month.service_month_start subcontract) #"-" "/ "))
+                               (last (clojure.string/split (str (:service_contract_month.service_month_end subcontract)) #"-")))
                           (if payed? ""
                               (str (:service_contract_month.money_per_month subcontract) " " (:currency (state!))))
                           (if (:debug-mode (state!)) (str " " subcontract-id) ""))
@@ -564,9 +565,7 @@
                     ;; subcontract was payed, so set icon done
                     #(c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK))
                     ;; checkbox is true or false, so render checkbox
-                    #(contract-checkbox state! subcontarcts-box render-fn rerender-header contract-path checkbox-selected?)
-                    ;;#(c/checkbox)
-                    )
+                    #(contract-checkbox state! subcontarcts-box render-fn rerender-header contract-path checkbox-selected?))
                   :lvl 3)]
         root))
     (get-in @(:contracts-m (state!)) entrepreneur-path))))
@@ -610,8 +609,6 @@
 ;;; REQUIRES ;;;
 ;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn-  date-to-obj ;; TODO: date is converting to one day before
-  [data-string] (.parse (java.text.SimpleDateFormat. "yyyy-MM-dd") data-string))
 
 (defn- add-months
   [data-string add-m]
@@ -620,25 +617,14 @@
 (defn- add-days
   [data-string add-d]
   (str (.plusDays (java.time.LocalDate/parse data-string) add-d)))
-
-(defn- entrepreneurs-list
-  "Description:
-     Return list of vector with entrepreneurs [id name]"
-  [state!]
-  (doall (map (fn [[entrepreneur-id entrepreneur]]
-                  [entrepreneur-id (:enterpreneur.name entrepreneur)])
-                @(:entrepreneurs-m (state!)))))
-
+ 
 (defn- insert-contract [state! calndr-start calndr-end price-input select-box]
   (let [date-start (seesaw.core/text calndr-start)
         date-end   (seesaw.core/text calndr-end)
-        ;; periods-count (try (Integer/parseInt (seesaw.core/text periods-count)) (catch Exception e 0))
         price      (seesaw.core/text price-input)
         selected-entrepreneur (seesaw.core/selection select-box)
-        
-        id-entrepreneur (first (first (filter (fn [v] (= (second v) selected-entrepreneur)) (entrepreneurs-list state!))))
-        ;;date-end (add-days (add-months date-start periods-count) -1)
-        ]
+        id-entrepreneur (first (first (filter (fn [v] (= (second v) selected-entrepreneur)) (:entrepreneurs-list (state!)))))]
+    
     (if-let [alerts
              (not-empty
               (cond-> []
@@ -650,20 +636,17 @@
                 (conj (fn [] (i/warning (gtool/get-lang-header :invalid-price)
                                         (gtool/get-lang-alerts :price-must-be-number))))
 
-                (or (empty? date-start) (empty? date-end) (req/data-comparator-old-new (date-to-obj date-start) (date-to-obj date-end)))
+                (or (empty? date-start) (empty? date-end) (req/data-comparator-old-new (req/date-to-obj date-start) (req/date-to-obj date-end)))
                 (conj (fn [] (i/warning (gtool/get-lang-header :invalid-date)
                                         (gtool/get-lang-alerts :invalid-date-time-interval-info))))))]
       
       (doall (map (fn [invoke-alert] (invoke-alert)) alerts))
-      (do
-       ;; (println "\nNew: " id-entrepreneur date-start date-end price)
-       ;; (println "New: " id-entrepreneur (date-to-obj date-start) (date-to-obj date-end) (read-string price))
-       (let [ins-req (req/insert-all id-entrepreneur (date-to-obj date-start) (date-to-obj date-end) (read-string price))]
-         (if ins-req
-           (i/success (gtool/get-lang-header :success)
-                      (gtool/get-lang-alerts :added-service-contract))
-           (i/danger  (gtool/get-lang-header :error-with-sql-require)
-                      ins-req)))))))
+      (let [ins-req (req/insert-all id-entrepreneur (req/date-to-obj date-start) (req/date-to-obj date-end) (read-string price))]
+        (if ins-req
+          (i/success (gtool/get-lang-header :success)
+                     (gtool/get-lang-alerts :added-service-contract))
+          (i/danger  (gtool/get-lang-header :error-with-sql-require)
+                     ins-req))))))
 
 (defn- cut-selected-subcontracts
   "Description:
@@ -737,11 +720,11 @@
     in main-panel with all contracts add to new-contract-form panel with fields for input data"
   [state!]
   (let [{:keys [new-contract-form]}  (state!)
-        label-fn      (fn [text] (c/label :text text :font (gtool/getFont 16) :border (b/empty-border :bottom 2)))
+        label-fn      (fn [text] (c/label :text text :font (gs/getFont 16) :border (b/empty-border :bottom 2)))
         calndr-start  (calndr/get-calendar (gcomp/input-text :args [:columns 24]))
         calndr-end    (calndr/get-calendar (gcomp/input-text :args [:columns 24]))
         price-input   (gcomp/input-text :args [:columns 16])
-        entrepreneurs-names-list (map #(second %) (entrepreneurs-list state!))
+        entrepreneurs-names-list (map #(second %) (:entrepreneurs-list (state!)))
         select-box    (gcomp/select-box entrepreneurs-names-list)
         panel (gmg/migrid
                :v :f "[75:, fill]"
@@ -759,8 +742,6 @@
                                                       (fn [e] (insert-contract state! calndr-start calndr-end price-input select-box))]
                                                      ["" (gs/icon GoogleMaterialDesignIcons/CLOSE)
                                                       (fn [e] (c/config! new-contract-form :items []))]]})])]))]
-    ;; (timelife
-    ;;  0.1 (fn [] (doto (:root (state!)) (.revalidate) (.repaint))))
     (doto (:root (state!)) (.revalidate) (.repaint))
     panel))
 
@@ -796,15 +777,11 @@
     (refresh-data-and-panel state!)
 
     (c/config! (:root (state!))
-               :items (gtool/join-mig-items btns-menu-bar new-contract-form expand-btns-box)
-               ;; (gtool/join-mig-items btns-menu-bar new-contract-form (gcomp/min-scrollbox expand-btns-box))
-               )))
+               :items (gtool/join-mig-items btns-menu-bar new-contract-form expand-btns-box))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; TODO: SubKontrakty powinny być generowane na podstawie kontraktu, jest funkcja rozbijająca po miesiącach na podstawie daty od i do, jeśli data nie ma pełnych miesięcy to ostatni z subkontraktów jest od daty rozpoczęcia okresu do ostatnich wskazanych dni. Przykładowo od 01-01-2021 do 15-02-2021 da kontrakty od 01-01-2021 do 31-01-2021 i od 01-02-2021 do 15-02-2021.
-
-;; TODO: Można przenieść zawartość atomów z entreprenuers-m contracts-m i subcontracts-m do stateu service-period. Mam na myśli to by nie trzymać ich w osobnych atomach.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

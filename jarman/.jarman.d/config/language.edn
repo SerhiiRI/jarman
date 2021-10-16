@@ -130,6 +130,11 @@
     :invalid-price        "Nieprawidłowa cena"
     :invalid-date         "Nieprawidłowa data"
     :error-with-sql-require "Błąd z zapytniem SQL"
+    :entrepreneur "Przedsiębiorca"
+    :price        "Kwota"
+    :date-start   "Data rozpoczęcia"
+    :date-end     "Data zakończenia"
+    :periods-count "Liczba okresów"
     }
    
    :alerts
@@ -352,6 +357,11 @@
   :invalid-price        "Invalid price"
   :invalid-date         "Nieprawidłowa data"
   :error-with-sql-require "Error with SQL require"
+  :entrepreneur "Entrepreneur"
+  :price        "Price"
+  :date-start   "Start date"
+  :date-end     "End date"
+  :periods-count "Periods count"
   }
 
  :alerts

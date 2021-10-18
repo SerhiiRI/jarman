@@ -300,9 +300,11 @@
   [relative-pos]
   (if-not (nil? @relative-pos)
     (.setLocation (seesaw.core/to-frame (state/state :app)) (first @relative-pos) (second @relative-pos)))
-  
+  ;; TODO TO DEBUG!!!!
+  (session/login {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman", :user "root", :password "misiePysie69", :useUnicode true, :characterEncoding "UTF-8"}
+         "dev" "dev")
   (let [{:keys [login profile-name]} (.get-user (session/session))]
-   (gseed/extend-frame-title (str ", " login "@" profile-name))))
+    (gseed/extend-frame-title (str ", " login "@" profile-name))))
 
 (defn load-level-4
   "Description:

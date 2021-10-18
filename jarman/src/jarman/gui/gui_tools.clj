@@ -219,6 +219,7 @@
 (def get-lang-infos  (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :infos] path))))
 (def get-lang-btns   (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :buttons] path))))
 (def get-lang-alerts (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :alerts] path))))
+(def get-lang-tip    (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :tips] path))))
 
 
 (defn convert-key-to-title

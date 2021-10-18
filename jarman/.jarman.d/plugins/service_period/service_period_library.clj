@@ -70,7 +70,7 @@
       (date-object 2021 11 15))
       => [[\"2021-09-13\" \"2021-09-30\"] [\"2021-10-01\" \"2021-10-31\"] [\"2021-11-01\" \"2021-11-30\"] [\"2021-12-01\" \"2021-12-15\"]]"
   [data-s data-e]
-  (let [formater (java.text.SimpleDateFormat. "dd-MM-YYYY")
+  (let [formater       (java.text.SimpleDateFormat. "YYYY-MM-dd") ;; (java.text.SimpleDateFormat. "dd-MM-YYYY")
         CONST_START    (java.util.Calendar/getInstance)
         CONST_END      (java.util.Calendar/getInstance)
         beginCalendar  (java.util.Calendar/getInstance)
@@ -111,7 +111,6 @@
                         (.format formater (.getTime end-month))]))
         (.add beginCalendar java.util.Calendar/MONTH 1)))
     (deref buffer)))
-
 
 ;;; ---------------------SQL Inserts func---------------------------
 
@@ -220,34 +219,71 @@
              {:a 2, :b 1, :c -3}])
 
 ;; defn info-grouped-query
-(defn info-grouped-query []
-  (->>
-   (db/query
-    (select!
-     {:table_name :enterpreneur,
-      :left-join
-      [:service_contract<-enterpreneur
-       :service_contract_month<-service_contract]
-      :column
-      (vec
-       (concat
-        [:#as_is]
-        enterpreneur-cols
-        service_contract-cols
-        service_contract_month-cols))}))
-   (filter #(and (:service_contract.id %) (:service_contract_month.id %)))
-   (map #(array-map :enterpreneur (select-keys % enterpreneur-cols)
-                    :service_contract (select-keys % service_contract-cols)
-                    :service_contract_month (select-keys % service_contract_month-cols)))
-   (group-by-2 [(comp :enterpreneur.id :enterpreneur)
-                (comp :service_contract.id :service_contract)
-                (comp :service_contract_month.id :service_contract_month)]
-               ;; two factorization level
-               :enterpreneur
-               :service_contract
-               ;; lambda on leaf
-               :service_contract_month )))
+(defn info-grouped-query
+  "Description:
+     Return 3 atoms:
+       enterprenuer @{:1 {enterprenuer-data}}
+       contracts    @{:1 {:1 {contract-data} :2 {contract-data}}}
+       subcontracts @{:1 {:1 {:1 {subcontract-data}} {:2 {subcontract-data}}}}"
+  []
 
+  (let [data (db/query
+              (select!
+               {:table_name :enterpreneur,
+                :left-join
+                [:service_contract<-enterpreneur
+                 :service_contract_month<-service_contract]
+                :column
+                (vec
+                 (concat
+                  [:#as_is]
+                  enterpreneur-cols
+                  service_contract-cols
+                  service_contract_month-cols))}))
+
+        entrepreneurs-list (filter
+                            #(not (nil? (second %)))
+                            (distinct
+                             (map
+                              #(list (:enterpreneur.id %) (:enterpreneur.name %))
+                              data)))]
+    (->> data
+         (filter #(and (:service_contract.id %) (:service_contract_month.id %)))
+         (map #(array-map :enterpreneur (select-keys % enterpreneur-cols)
+                          :service_contract (select-keys % service_contract-cols)
+                          :service_contract_month (select-keys % service_contract_month-cols)))
+
+         ((fn [data]
+            (let [e-atom (atom {})
+                  c-atom (atom {})
+                  s-atom (atom {})]
+              (doall
+               (map (fn [{e :enterpreneur sc :service_contract scm :service_contract_month}]
+                      (let [e-id (keyword (str (:enterpreneur.id e)))
+                            c-id (keyword (str (:service_contract.id sc)))
+                            s-id (keyword (str (:service_contract_month.id scm)))]
+                        (if (empty? (get @e-atom e-id)) (swap! e-atom #(assoc % e-id e)))
+                        (if (empty? (get-in @c-atom [e-id c-id])) (swap! c-atom #(assoc-in % [e-id c-id] (assoc sc :selected? false))))
+                        (if (empty? (get-in @s-atom [e-id c-id s-id])) (swap! s-atom #(assoc-in % [e-id c-id s-id] (assoc scm :selected? false))))))
+                    data))
+              {:entrepreneurs-m @e-atom
+               :contracts-m     @c-atom
+               :subcontracts-m  @s-atom
+               :entrepreneurs-list entrepreneurs-list})))
+         
+         ;; (group-by-2 [(comp :enterpreneur.id :enterpreneur)
+         ;;              (comp :service_contract.id :service_contract)
+         ;;              (comp :service_contract_month.id :service_contract_month)]
+         ;;             ;; two factorization level
+         ;;             :enterpreneur
+         ;;             :service_contract
+         ;;             ;; lambda on leaf
+         ;;             :service_contract_month )
+         )))
+ 
+(comment
+  (info-grouped-query)
+  )
 
 ;;; FOR @JULIA
 
@@ -389,21 +425,19 @@
 
 ;;; INSERTS
 
+(defn  date-to-obj
+  [data-string] (.parse (java.text.SimpleDateFormat. "yyyy-MM-dd") data-string))
+
 (defn insert-service_contract [id_enterpreneur contract_start_term contract_end_term]
   {:pre [(instance? java.util.Date contract_start_term) (instance? java.util.Date contract_end_term)]}
-  (let [formater (java.text.SimpleDateFormat. "YYYY-MM-dd")]
-    (:generated_key
-     (clojure.java.jdbc/execute! (db/connection-get)
-      (insert! {:table_name :service_contract
-                :set {:id_enterpreneur id_enterpreneur
-                      :contract_start_term (.format formater contract_start_term)
-                      :contract_end_term   (.format formater contract_end_term)}})  {:return-keys ["id"]}
-      ))
-      ;; (insert! {:table_name :service_contract
-      ;;           :set {:id_enterpreneur id_enterpreneur
-      ;;                 :contract_start_term (.format formater contract_start_term)
-      ;;                 :contract_end_term   (.format formater contract_end_term)}})
-      ))
+  (let [formater (java.text.SimpleDateFormat. "yyyy-MM-dd")]
+    (let [contract-id (:generated_key
+                       (clojure.java.jdbc/execute! (db/connection-get)
+                                                   (insert! {:table_name :service_contract
+                                                             :set {:id_enterpreneur id_enterpreneur
+                                                                   :contract_start_term (.format formater contract_start_term)
+                                                                   :contract_end_term   (.format formater contract_end_term)}})  {:return-keys ["id"]}))]
+      contract-id)))
 
 (defn insert-service_contract_month [service_contract_id start-date end-date money_per_month]
   "Template
@@ -411,14 +445,14 @@
               :column-list [:id_service_contract :service_month_start :service_month_end :money_per_month :was_payed]
               :values [[1 \"2021-09-13\" \"2021-09-30\" 400] [1 \"2021-10-01\" \"2021-10-31\" 400]]})"
   {:pre [(instance? java.util.Date start-date) (instance? java.util.Date end-date)]}
-  (let [date-list (get-date-pairs start-date end-date)
+  (let [date-list (doto (get-date-pairs start-date end-date) println)
         sql-require (insert! {:table_name :service_contract_month
                               :column-list [:id_service_contract :service_month_start :service_month_end :money_per_month :was_payed]
                               :values (mapv (fn [[start-date end-date]]
                                               (vector service_contract_id start-date end-date money_per_month false)) date-list)})]
     (try 
       (do (db/exec sql-require) true)
-      (catch Exception e sql-require))))
+      (catch Exception e (println "Error: " sql-require)))))
 
 (defn insert-all [id_enterpreneur contract_start_term contract_end_term money_per_month]
   {:pre [(some? id_enterpreneur)
@@ -436,6 +470,9 @@
      money_per_month)
     (println "Service month not been created for enterprenier with '%d' id" id_enterpreneur)))
 
+;; (get-date-pairs (date-to-obj "2021-01-01") (date-to-obj "2021-02-01"))
+;; (insert-service_contract 1 (date-object 2021 1 1) (date-object 2021 2 1))
+;; (insert-service_contract_month 1 (date-to-obj "2021-01-01") (date-to-obj "2021-02-01") 400)
 
 (comment 
   (insert-service_contract_month 1 (date-object 2021 8  13) (date-object 2021 11 15) 400)
@@ -451,7 +488,7 @@
  (db/exec
   (update! {:table_name :service_contract_month
             :set {:service_contract_month.was_payed true}
-            :where (reduce (fn [acc item] (conj acc [:= :id (nth item 2)])) [:or] list-months-id)})))
+            :where (reduce (fn [acc item] (conj acc [:= :id item])) [:or] list-months-id)})))
 
 (defn update-all-service-month-payment [bln]
   (db/exec

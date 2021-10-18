@@ -81,6 +81,7 @@
   {:buttons
    {:yes "Tak"
     :no "Nie"
+    :add "Dodaj"
     :cancel "Anuluj"
     :remove "Usuń"
     :show-changes "Wyświetl zmiany"
@@ -103,7 +104,39 @@
     :save-and-reload "Zapisz i przeładuj"
     :login "Login"
     :password "Hasło"
-    :back-to-login-panel "Wróć do panelu logowania"},
+    :back-to-login-panel "Wróć do panelu logowania"
+    :add-contract "Dodaj kontrakt"
+    :select-all "Zaznacz wszystko"
+    :pay "Płatność"
+    :refresh "Odśwież"
+    :export-odt "Zapisz jako .odt"},
+   
+   :header
+   {:login-db-config-editor "Konfiguracja połącznia z bazą danych."
+    :dbtype "Typ połączenia"
+    :host   "Host"
+    :port   "Port"
+    :dbname "Baza danych"
+    :user   "Użytkownik bazy"
+    :password "Hasło do bazy"
+    :contact  "Kontakt"
+    :faq      "FAQ"
+    :error    "Błąd"
+    :warning  "Uwaga"
+    :info     "Powiadomienie"
+    :success  "Sukces!"
+    :failed   "Niepowodzenie!"
+    :invalid-enterpreneur "Nieprawidłowy przedsiębiorca"
+    :invalid-price        "Nieprawidłowa cena"
+    :invalid-date         "Nieprawidłowa data"
+    :error-with-sql-require "Błąd z zapytniem SQL"
+    :entrepreneur "Przedsiębiorca"
+    :price        "Kwota"
+    :date-start   "Data rozpoczęcia"
+    :date-end     "Data zakończenia"
+    :periods-count "Liczba okresów"
+    }
+   
    :alerts
    {:success "Sukces!"
     :changes-saved "Zapisano zmiany"
@@ -111,8 +144,7 @@
     :column-saved-message "Zapisano zmiany w kolumnach."
     :column-save-failed-message "Wszystkie pola muszą być wypełnione i posiadać co najmniej 3 znaki."
     :save-changes? "Czy chcesz zapisać zmiany?"
-    :changes-saved-but-need-reload
-    "Zapisano zmiany! Będą one widoczne po restarcie aplikacji."
+    :changes-saved-but-need-reload "Zapisano zmiany! Będą one widoczne po restarcie aplikacji."
     :delete-element? "Czy napewno chcesz usunąć element?"
     :testing-connection "Testowanie połączenia z bazą danych."
     :information "Informacja"
@@ -131,7 +163,16 @@
     :Unknown-database "Nieznana baza danych."
     :check-connection "Sprawdź połączenie."
     :incorrect-input-fields "Nie wszystkie pola są prawidłowo wypełnione!"
-    :app-startup-fail "Wystąpił błąd aplikacji. Funkcja startująca nie została załadowana."},
+    :app-startup-fail "Wystąpił błąd aplikacji. Funkcja startująca nie została załadowana."
+    :price-must-be-number "Cena musi być liczbą!"
+    :field-is-empty "Pole jest puste!"
+    :invalid-date-time-interval-info "Pole z datą nie może pozostać puste. Data początkowa musi być wcześniejsza niż data zakończenia."
+    :added-service-contract "Pomyślnie dodano nowy kontrakt."
+    :select-checkbox-for-payment "Proszę zaznaczyć checkbox z płatnością."
+    :payments-finished-successfully "Płatności zakończone powodzeniem."
+    :updated-data "Zaktualizowano dane." 
+    },
+   
    :basic
    {:description "Opis",
     :yes "Tak",
@@ -151,6 +192,7 @@
     :in "Wejście"
     :configuration "Konfiguracja"
     :db-conn-config "Konfiguracja DB"},
+   
    :tips
    {:save "Zapisz zmiany.",
     :clean "Wyczyść pola powyżej.",
@@ -161,19 +203,15 @@
     :excel "Zapisz widok do excela."
     :press-to-search "Wciśnij Ctrl + F by wyszukać rekord."
     :related-popup-table "Wyszukaj w powiązanej tabeli"
+    :you-can-edit-this-position "Możesz edytować tą pozycję."
+    :payment-is-done "Płatność zrealizowana."
     }
-   :header
-   {:login-db-config-editor "Konfiguracja połącznia z bazą danych."
-    :dbtype "Typ połączenia"
-    :host   "Host"
-    :port   "Port"
-    :dbname "Baza danych"
-    :user   "Użytkownik bazy"
-    :password "Hasło do bazy"
-    :contact  "Kontakt"
-    :faq      "FAQ"}
+   
    :infos
-   {:info-panel-about   [["Trashpanda-Team" "Jesteśmy zespołem przyjaciół programistów mających na celu stworzenie uniwersalnej, a przy tym prostej w obsódze i rozwoju aplikacji. Kodzimy bo lubimy, kodzimy bo możemy, kodzimy by nasi klienci otrzymali to czego potrzebują."]
+   {:payment-done-lock-row "Płatność zrealizowana. Pozycja nie może być już edytowana."
+    :wait-for-pay "Oczekiwanie na płatność."
+    :no-items     "Brak pozycji"
+    :info-panel-about   [["Trashpanda-Team" "Jesteśmy zespołem przyjaciół programistów mających na celu stworzenie uniwersalnej, a przy tym prostej w obsódze i rozwoju aplikacji. Kodzimy bo lubimy, kodzimy bo możemy, kodzimy by nasi klienci otrzymali to czego potrzebują."]
                          ["Jarman"  "Bazowa wersja aplikacji. Naszym marzeniem jest możliwość dostosowania jej do każdego przypadku, rozszerzając podstawowe funkcje z pomocą dołączanych pluginów oraz konfiguracji."]]
     
     :config-panel-about [["O konfiguracji" "Formatka dla konfiguracji w prosty sposób pozwoli na zapisanie lub edycję połączeń do bazy danych. Na tej podstawie możliwe będzie logowanie do systemu i uruchomienie aplikacji."]]
@@ -271,6 +309,7 @@
  {:remove "Remove"
   :yes "Yes"
   :no "No"
+  :add "Add"
   :cancel "Cancel"
   :show-changes "Show changes"
   :export-to-excel "Export to Excel"
@@ -293,7 +332,38 @@
   :save-and-reload "Save and reload"
   :login "Login"
   :password "Password"
-  :back-to-login-panel "Return to login panel"}
+  :back-to-login-panel "Return to login panel"
+  :add-contract "Add contract"
+  :select-all "Select all"
+  :pay "Pay"
+  :refresh "Refresh"
+  :export-odt "Export to .odt"}
+  
+ :header
+ {:login-db-config-editor "Configuration of DB connection."
+  :dbtype "Connection type"
+  :host   "Host"
+  :port   "Port"
+  :dbname "Database"
+  :user   "DB user"
+  :password "DB password"
+  :contact  "Contact"
+  :faq      "FAQ"
+  :error    "Error"
+  :warning  "Warning"
+  :info     "Information"
+  :success  "Success!"
+  :failed   "Niepowodzenie!"
+  :invalid-enterpreneur "Invalid enterpreneur"
+  :invalid-price        "Invalid price"
+  :invalid-date         "Nieprawidłowa data"
+  :error-with-sql-require "Error with SQL require"
+  :entrepreneur "Entrepreneur"
+  :price        "Price"
+  :date-start   "Start date"
+  :date-end     "End date"
+  :periods-count "Periods count"
+  }
 
  :alerts
  {:success "Success!"
@@ -325,7 +395,15 @@
   :Unknown-database "Unknown database."
   :check-connection "Check connection."
   :incorrect-input-fields "Not all fields are correct!"
-  :app-startup-fail "Aplication error. Startup function was not loaded."}
+  :app-startup-fail "Aplication error. Startup function was not loaded."
+  :price-must-be-number "Price must be a number!"
+  :field-is-empty "Field is empty!"
+  :invalid-date-time-interval-info "Fields with date cannot be empty. Start day must be earlier than end date."
+  :added-service-contract "Successfully added new service contract."
+  :select-checkbox-for-payment "Please select checkbox with payment."
+  :payments-finished-successfully "Payments are finished successfully."
+  :updated-data "Updated data."
+  }
 
  :basic
  {:description "Description"
@@ -357,21 +435,16 @@
   :user-trash-can "Disconnect user from card."
   :excel "Save view to excel."
   :press-to-search "Press Ctrl + F to search record."
-  :related-popup-table "Search inside related table"}
+  :related-popup-table "Search inside related table"
+  :you-can-edit-this-position "You can edit this row."
+  :payment-is-done "Payment complete."
+  }
  
- :header
- {:login-db-config-editor "Configuration of DB connection."
-  :dbtype "Connection type"
-  :host   "Host"
-  :port   "Port"
-  :dbname "Database"
-  :user   "DB user"
-  :password "DB password"
-  :contact  "Contact"
-  :faq      "FAQ"}
-
  :infos
- {:info-panel-about   [["Trashpanda-Team"
+ {:payment-done-lock-row "Payment complete. Row can not be changed."
+  :wait-for-pay "Waiting for payment."
+    :no-items     "No items"
+  :info-panel-about   [["Trashpanda-Team"
                         "We are a team of programmer friends who aim to create a universal application that is easy to use and expand. We coding because we like, we coding because we can, we coding becouse our clients need good solutions."]
                        ["Jarman"
                         "The base version of the application. Our dream is to be able to adapt it to each case, extending the basic functions with using plugins and configurations."]]

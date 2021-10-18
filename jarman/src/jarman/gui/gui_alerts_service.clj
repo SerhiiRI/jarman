@@ -77,8 +77,29 @@
 ;; │                          │
 ;; └──────────────────────────┘
 (defn- refresh-box []
-  (.revalidate (:alerts-box (state!)))
-  (.repaint (state/state :app)))
+  (do
+    (.revalidate (:alerts-box (state!)))
+    (.repaint (state/state :app))))
+
+;; (defn- refresh-box-bounds []
+;;   (let [offset-x 10
+;;         offset-y 0
+;;         watch-path (:watching-path (state!))]
+;;     (c/config! (:alerts-box (state!))
+;;                :bounds [(- (first @(state/state watch-path)) (:box-w (state!)) offset-x)
+;;                         (+ 0 offset-y)
+;;                         (:box-w (state!))
+;;                         (second @(state/state watch-path))]))
+;;   (c/move! (:alerts-box (state!)) :to-front)
+;;   (refresh-box))
+
+(defn- calc-alerts-h
+  [offset]
+  (let [alerts-h (apply + (doall
+                   (map
+                    #(+ offset (.getHeight (.getSize %)))
+                    (seesaw.util/children (:alerts-box (state!))))))]
+    alerts-h))
 
 (defn- refresh-box-bounds []
   (let [offset-x 10
@@ -86,9 +107,10 @@
         watch-path (:watching-path (state!))]
     (c/config! (:alerts-box (state!))
                :bounds [(- (first @(state/state watch-path)) (:box-w (state!)) offset-x)
-                        (+ 0 offset-y)
+                        (- (+ (second @(state/state watch-path))) (calc-alerts-h 5))
                         (:box-w (state!))
-                        (second @(state/state watch-path))]))
+                        (calc-alerts-h 5)
+                        ]))
   (c/move! (:alerts-box (state!)) :to-front)
   (refresh-box))
 
@@ -106,10 +128,11 @@
   (c/label))
 
 (defn- new-alerts-box []
-  (let [mig (mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "5px[grow, bottom]0px[fill]5px"]
+  (let [mig (mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, bottom]0px[fill]5px"]
                        :opaque? false
                        :bounds [50 0 (:box-w (state!)) 300]
                        :background (Color. 0 0 0 0)
+                       ;;:border (b/line-border :thickness 1 :color "#fff")
                        :items [[(alerts-box-top-bar)]])]
     mig))
 
@@ -124,7 +147,7 @@
 
 (defn- clear-alerts-box []
   (c/config!   (:alerts-box (state!)) :items [[(alerts-box-top-bar)]])
-  (refresh-box))
+  (refresh-box-bounds))
 
 (defn- include-alert-box
   [& {:keys [soft]
@@ -139,8 +162,7 @@
   (if-not soft
     (dispatch! {:action :new-alerts-box
                 :box    (new-alerts-box)}))
-  (.add (state/state :app) (:alerts-box (state!)) (Integer. 999))
-  (refresh-box))
+  (.add (state/state :app) (:alerts-box (state!)) (Integer. 999)))
 
 
 
@@ -172,7 +194,14 @@
 
 (defn add-to-alerts-box [item]
   (.add (:alerts-box (state!)) item)
-  (refresh-box))
+  (refresh-box)
+  (timelife 0.2 #(refresh-box-bounds)))
+
+;; (jarman.interaction/info "T" "T" :time 0)
+;; (jarman.interaction/info "T" "T" :time 2)
+;; (count (seesaw.util/children (:alerts-box (state!))))
+;; (c/config (:alerts-box (state!)) :bounds)
+;; (refresh-box-bounds)
 
 (defn- icon-label
   [ic-off ic-on size]
@@ -201,7 +230,7 @@
                            :background c-bg
                            :user-data close-icon]}
                    [])
-          api {:alert frame :alerts-box (:alerts-box (state!)) :rm-alert (fn [] (.remove (:alerts-box (state!)) frame) (refresh-box))}
+          api {:alert frame :alerts-box (:alerts-box (state!)) :rm-alert (fn [] (.remove (:alerts-box (state!)) frame) (refresh-box-bounds))}
           content [(gmg/migrid
                     :> :gf {:args [:background c-bg]}
                     [(c/label :text header
@@ -266,7 +295,7 @@
 (defn- template [type header body timelife s-popup expand actions]
   (let [mig (alert-skeleton header body (alert-type type))
         close-icon (c/config mig :user-data)
-          close-fn   (fn [e] (.remove (:alerts-box (state!)) mig) (refresh-box))]
+        close-fn   (fn [e] (.remove (:alerts-box (state!)) mig) (refresh-box-bounds))]
     (c/config! close-icon :listen [:mouse-clicked close-fn])
     (.start (Thread. (fn [] (if (> timelife 0) (do (Thread/sleep (* 1000 timelife)) (close-fn 0))))))
     (c/config! mig
@@ -389,11 +418,14 @@
                        (b/line-border :left 5 :color (alert-type-src type :border)))
               :listen [:mouse-entered (fn [e]
                                         (gtool/hand-hover-on e)
-                                        (c/config! e :background c-bg-focus))
+                                        (c/config! e :background c-bg-focus)
+                                        (.repaint (c/to-root e)))
                        :mouse-exited  (fn [e]
-                                        (c/config! e :background c-bg))
+                                        (c/config! e :background c-bg)
+                                        (.repaint (c/to-root e)))
                        :mouse-clicked (fn [e]
-                                        (open-in-popup type header body s-popup expand))]))))
+                                        (open-in-popup type header body s-popup expand)
+                                        (.repaint (c/to-root e)))]))))
 
 (defn- alerts-history-list [w]
   (doall

@@ -73,9 +73,10 @@
       (print-line (format "pin plugin %s to menu"(.return-title v)))
       (gcomp/button-expand-child
        (str k)
-       :c-focus     (second (nth (get-colors (dec lvl)) (dec lvl)))
-       :c-left      (first  (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
-       :background  (last   (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
+       :c-focus      (second (nth (get-colors (dec lvl)) (dec lvl)))
+       ;; :offset-color (first  (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
+       :background   (last   (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
+       :seamless-bg false
        :onClick (fn [e]
                   (gvs/add-view
                    :view-id (str "auto-plugin" (.return-title v))
@@ -92,8 +93,10 @@
        (str k)
        depper
        :lvl lvl
-       :background (first (nth (get-colors lvl) lvl))
-       :c-left     (first (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))))))
+       :seamless-bg false
+       :background   (first (nth (get-colors lvl) lvl))
+       ;; :offset-color (first (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
+       ))))
 
 (defn- part-button [k v lvl]
   (if (or (nil? (:permission v))
@@ -103,9 +106,10 @@
       (gcomp/button-expand-child
        (str k)
        :lvl         lvl
-       :c-focus     (second (nth (get-colors (dec lvl)) (dec lvl)))
-       :c-left      (first  (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
-       :background  (last   (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
+       :c-focus      (second (nth (get-colors (dec lvl)) (dec lvl)))
+       ;; :offset-color (first  (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
+       :background   (last   (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
+       :seamless-bg false
        :onClick
        (if-not (nil? (:fn v))
          (if (= :invoke (:action v))
@@ -113,7 +117,7 @@
            (fn [e]
              (gvs/add-view
               :view-id (str "auto-menu-" (:key v))
-              :title k
+              :title k 
               :render-fn (:fn v))))
          (fn [e] (print-line (str "\nProblem with fn in " k v))))))
     ;; or return nil

@@ -108,8 +108,9 @@
     (min-scrollbox (mig-panel ...) :hscroll :never)
     ;; => #object[seesaw.core.proxy$javax.swing"
   [component
-   & {:keys [args]
-      :or {args []}}]
+   & {:keys [hscroll-off args]
+      :or {hscroll-off false
+           args []}}]
   (let [scr (CustomScrollBar/myScrollPane component face/c-min-scrollbox-bg)
         get-key (fn [x] (first (first x)))
         get-val (fn [x] (second (first x)))]
@@ -117,6 +118,20 @@
       (map (fn [[k v]] (c/config! scr k v))
            (apply hash-map args)))    
     (c/config! scr :border (b/line-border :thickness 0))
+    (c/config! scr :listen [:component-resized
+                            (fn [e] (if hscroll-off ;; TODO: height bugging
+                                      (if (= -1 (first @(state/state :atom-app-resize-direction)))
+                                          (let [w (.getWidth  (.getSize scr))
+                                                h (.getHeight (.getSize scr))
+                                                layout (first (seesaw.util/children (second (seesaw.util/children scr))))
+                                                layout-h (.getHeight (.getPreferredSize layout))]
+                                        ;(println layout)
+                                            (c/config! layout :preferred-size [w :by layout-h])
+                                            (.repaint scr)))
+                                      (do (.revalidate scr)
+                                          (.repaint scr))))
+                            :mouse-wheel-moved (fn [e]
+                                                (.repaint (c/to-root e)))])
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
     scr))
@@ -211,8 +226,12 @@
            :halign halign
            :tip tip
            :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
-                    :mouse-entered (fn [e] (c/config! e :border (newBorder underline-focus) :background bg-hover :cursor :hand))
-                    :mouse-exited  (fn [e] (c/config! e :border (newBorder underline)       :background bg))
+                    :mouse-entered (fn [e]
+                                     (c/config! e :border (newBorder underline-focus) :background bg-hover :cursor :hand)
+                                     (.repaint (c/to-root e)))
+                    :mouse-exited  (fn [e]
+                                     (c/config! e :border (newBorder underline)       :background bg)
+                                     (.repaint (c/to-root e)))
                     :focus-gained  (fn [e] (c/config! e :border (newBorder underline-focus) :background bg-hover :cursor :hand))
                     :focus-lost    (fn [e] (c/config! e :border (newBorder underline)       :background bg))
                     :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gtool/switch-focus))))]
@@ -339,6 +358,8 @@
              border-color-focus
              border-color-unfocus
              char-limit
+             underline-off
+             halign
              args]
       :or {val ""
            placeholder ""
@@ -347,19 +368,24 @@
            border-color-unfocus face/c-underline
            border [10 10 5 5 2]
            char-limit 0
+           underline-off false
+           halign :left
            args []}}]
   (let [          
         fn-get-data     (fn [e key] (get-in (c/config e :user-data) [key]))
         fn-assoc        (fn [e key val] (assoc-in (c/config e :user-data) [key] val))
-        newBorder (fn [underline-color]
-                    (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
-                                       (b/line-border :bottom (nth border 4) :color underline-color)))
+        newBorder (if underline-off (fn [_] (b/empty-border :thicness 0))
+                    (fn [underline-color]
+                     (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
+                                        (b/line-border :bottom (nth border 4) :color underline-color))))
         last-v (atom "")]
     (apply c/text
            :text (if (empty? val) placeholder (if (string? val) val (str val)))
            :border (newBorder border-color-unfocus)
            :user-data {:placeholder placeholder :value "" :edit? false :type :input :border-fn newBorder}
+           :halign halign
            :listen [:focus-gained (fn [e]
+                                    (.repaint (c/to-root e))
                                     (c/config! e :border (newBorder border-color-focus))
                                     (cond (= (c/value e) placeholder) (c/config! e :text ""))
                                     (c/config! e :user-data (fn-assoc e :edit? true)))
@@ -1036,9 +1062,12 @@
                  lvl
                  background
                  foreground
-                 c-left]
+                 offset-color
+                 seamless-bg
+                 title-icon
+                 before-title]
           :or {expand :auto
-               border (b/compound-border (b/empty-border :left 3))
+               border (b/empty-border :thickness 0)
                vsize 35
                min-height 200
                ico       (gs/icon GoogleMaterialDesignIcons/ADD face/c-icon 25)
@@ -1049,13 +1078,16 @@
                lvl 1
                background face/c-btn-expand-bg
                foreground face/c-btn-expand-fg
-               c-left     face/c-btn-expand-offset}}]
-    (let [atom-inside-btns (atom nil)
-          inside-btns (if (nil? inside-btns) nil inside-btns) ;; check if nill
+               offset-color face/c-btn-expand-offset
+               seamless-bg true
+               title-icon nil
+               before-title (fn [] (c/label))}}]
+    (let [inside-btns (if (nil? inside-btns) nil inside-btns) ;; check if nill
           inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns)) ;; check if not in list
           inside-btns (if (sequential? (first inside-btns)) (first inside-btns) inside-btns) ;; check if list in list
           ico (if (or (= :always expand) (not (nil? inside-btns))) ico nil)
           title (c/label
+                 :icon title-icon
                  :border (b/compound-border
                           ;; (b/line-border  :left left-offset :color background)
                           (b/empty-border :left 10))
@@ -1074,16 +1106,19 @@
                 :background (Color. 0 0 0 0)
                 :icon ico)
           mig  (gmg/migrid :v {:args [:background background]} [])
-          user-data  {:atom-expanded-items atom-inside-btns
-                      :title-fn (fn [new-title] (c/config! title :text new-title))}
+          user-data  {:title-fn (fn [new-title] (c/config! title :text new-title))}
           expand-btn (fn [func]
                        (c/config! title :listen (if (= :none over-func) (listen func) [:mouse-clicked over-func
                                                                                        :mouse-entered gtool/hand-hover-on]))
                        (c/config! icon :listen (listen func))
-                       (gmg/migrid :> :gf {:args [:background background :focusable? true
-                                                  :border (b/line-border :left (* lvl 6) :color face/c-main-menu-bg)]}
-                                   [title icon]))
-          expand-box (gmg/migrid :v "[grow, fill]" [])]
+                       (gmg/migrid :> :fgf {:args [:background background :focusable? true
+                                                   :border (b/compound-border
+                                                            (b/line-border :left (* lvl 6) :color (if seamless-bg background offset-color)))]}
+                                   [(if (fn? before-title)
+                                      [(let [bt (before-title)] (c/config! bt :background background) bt)]
+                                      [(c/label)])
+                                    title icon]))
+          expand-box (gmg/migrid :v "[grow, fill]" {:args [:border border]} [])]
       (if (nil? onClick)
         (let [onClick (fn [e]
                         (if-not (nil? inside-btns)
@@ -1091,18 +1126,16 @@
                             (do ;;  Add inside buttons to mig with expand button
                               (c/config! icon :icon ico-hover)
                               (c/config! expand-box :items (gtool/join-mig-items inside-btns))
-                              (.revalidate mig)
-                              (.repaint mig))
+                              (.revalidate (c/to-root e))
+                              (.repaint (c/to-root e)))
                             (do ;;  Remove inside buttons form mig without expand button
                               (c/config! icon :icon ico)
                               (c/config! expand-box :items [])
-                              (.revalidate mig)
-                              (.repaint mig)))))]
+                              (.revalidate (c/to-root e))
+                              (.repaint (c/to-root e))))))]
           (do
-            ;; (reset! atom-inside-btns inside-btns)
             (c/config! mig
                        :id id
-                       ;;:user-data (if-not (nil? @atom-inside-btns) "YEEESS" "NOOO")
                        :items [[(expand-btn onClick)] [expand-box]])))
         (c/config! mig :id id :items [[(expand-btn onClick)] [expand-box]])))))
 
@@ -1125,43 +1158,51 @@
    "
   (fn [title
        & {:keys [onClick
-                 c-left
+                 offset-color
                  c-focus
                  c-fg-focus
                  background
                  foreground
                  cursor
                  lvl
-                 width
+                 height
+                 icon
+                 before-title
+                 seamless-bg
                  args]
           :or {onClick (fn [e] (println "Clicked: " title))
                cursor :hand
-               c-left     face/c-main-menu-bg
+               offset-color face/c-btn-expand-offset
                c-focus    face/c-on-focus
                c-fg-focus face/c-foreground
                background face/c-compos-background
                foreground face/c-foreground
                lvl 1
-               width 200 
+               height 30
+               icon nil
+               before-title (fn [] (c/label))
+               seamless-bg true
                args []}}]
-    (apply c/label
-           :text (str title)
-           :background background
-           :foreground foreground
-           :size  [width :by 25]
-           :cursor cursor
-           :focusable? true
-           :border (b/compound-border 
-                    (b/empty-border :left 10)
-                    (b/line-border  :left (* lvl 6) :color face/c-main-menu-bg)
-                    )
-           :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
-                    :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
-                    :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
-                    :focus-gained  (fn [e] (c/config! e :background c-focus    :foreground c-fg-focus))
-                    :focus-lost    (fn [e] (c/config! e :background background :foreground face/c-foreground))
-                    :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gtool/switch-focus))))]
-           args)))
+    (gmg/migrid
+     :> :fg (format "[%s, fill]" height)
+     {:args [:border (b/line-border :left (* lvl 6) :color (if seamless-bg background offset-color))]}
+     [(if (fn? before-title) (let [bt (before-title)] (c/config! bt :background background) bt) (c/label))
+      (apply c/label
+             :text (str title)
+             :background background
+             :foreground foreground
+             :cursor cursor
+             :focusable? true
+             :border (b/empty-border :left 10)
+             :icon icon
+             :listen [:mouse-clicked (fn [e] (do (onClick e) (gtool/switch-focus)))
+                      :mouse-entered (fn [e] (.requestFocus (c/to-widget e)))
+                      :mouse-exited  (fn [e] (.requestFocus (c/to-root e)))
+                      :focus-gained  (fn [e] (c/config! e :background c-focus    :foreground c-fg-focus))
+                      :focus-lost    (fn [e] (c/config! e :background background :foreground face/c-foreground))
+                      :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (do (onClick e) (gtool/switch-focus))))]
+             args)])))
+
 
 ;; ┌────────────────────┐
 ;; │                    │

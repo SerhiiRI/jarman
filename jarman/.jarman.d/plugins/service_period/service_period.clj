@@ -49,7 +49,7 @@
            :plugin-global-config global-configuration-getter
            :plugin-config        (get-in (global-configuration-getter) (conj plugin-path :config) {})
            :plugin-toolkit       (get-in (global-configuration-getter) (conj plugin-path :toolkit) {})
-           :entrepreneurs-m      (atom {})
+           :enterprises-m      (atom {})
            :contracts-m          (atom {})
            :subcontracts-m       (atom {})
            :currency             "UAH"
@@ -74,23 +74,23 @@
   (try (float (read-string val-s))
     (catch Exception e false)))
 
-(declare build-expand-contracts-for-entrepreneur)
+(declare build-expand-contracts-for-enterprise)
 
 (defn- refresh-data-and-panel [state!]
-  (let [{:keys [root expand-btns-box entrepreneurs-m contracts-m subcontracts-m]} (state!)
+  (let [{:keys [root expand-btns-box enterprises-m contracts-m subcontracts-m]} (state!)
         fresh-data ((:download-data-map (:plugin-toolkit (state!))))]
 
-    (reset! entrepreneurs-m (:entrepreneurs-m fresh-data))
+    (reset! enterprises-m (:enterprises-m fresh-data))
     (reset! contracts-m     (:contracts-m     fresh-data))
     (reset! subcontracts-m  (:subcontracts-m  fresh-data))
-    (swap! (state! :atom) #(assoc % :entrepreneurs-list (:entrepreneurs-list fresh-data)))
+    (swap! (state! :atom) #(assoc % :enterprises-list (:enterprises-list fresh-data)))
     
     (let [items (gtool/join-mig-items
                  (doall
                   (map
-                   (fn [[entrepreneur-id]]
-                     (build-expand-contracts-for-entrepreneur state! entrepreneur-id))
-                   @entrepreneurs-m)))]
+                   (fn [[enterprise-id]]
+                     (build-expand-contracts-for-enterprise state! enterprise-id))
+                   @enterprises-m)))]
       (c/config!
        expand-btns-box
        :items (if (empty? items)
@@ -470,72 +470,72 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-;;  CHECKBOXES FOR ENTREPRENEUR
+;;  CHECKBOXES FOR ENTERPRISE
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; STATE INTERACTIVE TEST
 ;; (let [sw (:subcontracts-m @state)]
 ;;   (swap! sw #(assoc-in % [:1 :3 :207 :service_contract_month.was_payed] false)))
 (defn- loop-all-contracts
-  [state! entrepreneur-path func]
+  [state! enterprise-path func]
   (let [unpayed? (some false? (flatten (doall
                                         (map
                                          (fn [[contract-id contract]] (func contract-id contract))
-                                         (get-in @(:contracts-m (state!)) entrepreneur-path)))))]
+                                         (get-in @(:contracts-m (state!)) enterprise-path)))))]
     (if (nil? unpayed?) true (not unpayed?))))
 
 (defn- all-contracts-payed?
-  [state! entrepreneur-path]
-  (loop-all-contracts state! entrepreneur-path
+  [state! enterprise-path]
+  (loop-all-contracts state! enterprise-path
                       (fn [contract-id contract]
-                        (let [contract-path (join-vec entrepreneur-path [contract-id])]
+                        (let [contract-path (join-vec enterprise-path [contract-id])]
                           (map
                            (fn [[sub-id sub]] (if (:service_contract_month.was_payed sub) true false))
                            (get-in @(:subcontracts-m (state!)) contract-path))))))
 
 (defn- all-contracts-selected?
   "Description:
-     Return true is all subcontracts for entrepreneur are selected or false if not"
-  [state! entrepreneur-path]
-  (loop-all-contracts state! entrepreneur-path
+     Return true is all subcontracts for enterprise are selected or false if not"
+  [state! enterprise-path]
+  (loop-all-contracts state! enterprise-path
                       (fn [contract-id contract]
-                        (check-if-contract-selected state! (join-vec entrepreneur-path [contract-id])))))
+                        (check-if-contract-selected state! (join-vec enterprise-path [contract-id])))))
 
 (defn- select-all-contracts
-  [state! entrepreneur-path selected?]
+  [state! enterprise-path selected?]
   (doall (map
           (fn [[contract-id contract]]
-            (let [contract-path (join-vec entrepreneur-path [contract-id])]
+            (let [contract-path (join-vec enterprise-path [contract-id])]
               (rift (select-all-subcontracts state! contract-path selected?)
                     (:selected? contract))))
-          (get-in @(:contracts-m (state!)) entrepreneur-path))))
+          (get-in @(:contracts-m (state!)) enterprise-path))))
 
 (defn- calculate-all-contract-price
-  [state! entrepreneur-path]
+  [state! enterprise-path]
   (apply + (flatten (doall
              (map
               (fn [[contract-id contract]]
-                (calculate-contract-price state! (join-vec entrepreneur-path [contract-id])))
-              (get-in @(:contracts-m (state!)) entrepreneur-path))))))
+                (calculate-contract-price state! (join-vec enterprise-path [contract-id])))
+              (get-in @(:contracts-m (state!)) enterprise-path))))))
 
-(defn- entrepreneur-checkbox
-  [state! root render-header entrepreneur-path checkbox-selected?]
+(defn- enterprise-checkbox
+  [state! root render-header enterprise-path checkbox-selected?]
   (let [cbox (c/label :icon (i-checkbox checkbox-selected?)
                       :listen [:mouse-clicked
                                (fn [e] ;; SELECT OR UNSELECT ALL CONTRACTS
-                                 (let [self-selected? (not (all-contracts-selected? state! entrepreneur-path))]
-                                   (select-all-contracts state! entrepreneur-path self-selected?)
+                                 (let [self-selected? (not (all-contracts-selected? state! enterprise-path))]
+                                   (select-all-contracts state! enterprise-path self-selected?)
                                    (c/config! e :icon (i-checkbox self-selected?))))])
 
-        watcher-id (keyword (str "entrepreneur-" (clojure.string/join "-" entrepreneur-path)))]
+        watcher-id (keyword (str "enterprise-" (clojure.string/join "-" enterprise-path)))]
 
     ;; If in subcontract something will be unchecked or all will be checked then set contract checkbox selected or not
     ;; WATCH IF ALL SUBCONTRACTS SELECTED
-    (new-watcher (:subcontracts-m (state!)) watcher-id entrepreneur-path
+    (new-watcher (:subcontracts-m (state!)) watcher-id enterprise-path
                  (fn []
-                   (let [payed?         (all-contracts-payed?    state! entrepreneur-path)
-                         all-selected?  (all-contracts-selected? state! entrepreneur-path)
-                         contract-price (calculate-all-contract-price state! entrepreneur-path)]
+                   (let [payed?         (all-contracts-payed?    state! enterprise-path)
+                         all-selected?  (all-contracts-selected? state! enterprise-path)
+                         contract-price (calculate-all-contract-price state! enterprise-path)]
 
                      (let [expand-header-box (.getParent cbox)
                            expand-before-title (first  (seesaw.util/children expand-header-box))
@@ -602,12 +602,12 @@
 ;; CONTRACT
 ;;
 (defn- create-contracts-expand-btns
-  [state! entrepreneur-path]
+  [state! enterprise-path]
   (doall
    (map
     (fn [[contract-id contract]]
       (let [contract-id        (keyword (str (:service_contract.id contract)))
-            contract-path      (join-vec entrepreneur-path [contract-id])
+            contract-path      (join-vec enterprise-path [contract-id])
             subcontracts-m     (get-in @(:subcontracts-m (state!)) contract-path)
             payed?             (contract-payed? state! contract-path)
             checkbox-selected? (if payed? false (check-if-contract-selected state! contract-path))
@@ -635,38 +635,38 @@
                     #(contract-checkbox state! subcontarcts-box render-fn rerender-header contract-path checkbox-selected?))
                   :lvl 3)]
         root))
-    (get-in @(:contracts-m (state!)) entrepreneur-path))))
+    (get-in @(:contracts-m (state!)) enterprise-path))))
 
 ;;
-;; ENTREPRENEUR
+;; ENTERPRISE
 ;;
-(defn- build-expand-contracts-for-entrepreneur
+(defn- build-expand-contracts-for-enterprise
   "Description
-     Recursion, which build panels (button-expand for entrepreneur and service contract, child-expand for service periods), using data from db like configuration map
+     Recursion, which build panels (button-expand for enterprise and service contract, child-expand for service periods), using data from db like configuration map
   Example:
-     (build-expand-contracts-for-enteprenuer [{entrepreneur-data} {contracts}] state!)"
-  [state! entrepreneur-id-k]
-  (let [entrepreneur-path  [entrepreneur-id-k]
-        payed?             (all-contracts-payed? state! entrepreneur-path)
-        checkbox-selected? (all-contracts-selected? state! entrepreneur-path)
+     (build-expand-contracts-for-enteprenuer [{enterprise-data} {contracts}] state!)"
+  [state! enterprise-id-k]
+  (let [enterprise-path  [enterprise-id-k]
+        payed?             (all-contracts-payed? state! enterprise-path)
+        checkbox-selected? (all-contracts-selected? state! enterprise-path)
 
-        render-fn          #(create-contracts-expand-btns state! entrepreneur-path)
-        entrepreneur-box   (gmg/migrid :v (render-fn))
+        render-fn          #(create-contracts-expand-btns state! enterprise-path)
+        enterprise-box   (gmg/migrid :v (render-fn))
         rerender-header (fn [price]
                           (format "<html> %s &nbsp;&nbsp;<b> %s </b> %s </html>" 
-                                  (get-in @(:entrepreneurs-m (state!)) [entrepreneur-id-k :enterprise.name])
-                                  (if (all-contracts-payed? state! entrepreneur-path) ""
+                                  (get-in @(:enterprises-m (state!)) [enterprise-id-k :enterprise.name])
+                                  (if (all-contracts-payed? state! enterprise-path) ""
                                       (str price " " (:currency (state!))))
                                   ""))
         root (gcomp/button-expand
-              (rerender-header (calculate-all-contract-price state! entrepreneur-path))
-              entrepreneur-box
+              (rerender-header (calculate-all-contract-price state! enterprise-path))
+              enterprise-box
               :border (b/line-border :bottom 1 :color face/c-layout-background)
               :before-title (if payed?
                               ;; subcontract was payed, so set icon done
                               #(c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK))
                               ;; checkbox is true or false, so render checkbox
-                              #(entrepreneur-checkbox state! entrepreneur-box rerender-header entrepreneur-path checkbox-selected?))
+                              #(enterprise-checkbox state! enterprise-box rerender-header enterprise-path checkbox-selected?))
               :lvl 1)]
     root))
 ;; :v [1 1 2] =>> :v [:enterprise.id :service_contract.id :service_contract_month.id]
@@ -690,13 +690,13 @@
   (let [date-start (seesaw.core/text calndr-start)
         date-end   (seesaw.core/text calndr-end)
         price      (seesaw.core/text price-input)
-        selected-entrepreneur (seesaw.core/selection select-box)
-        id-entrepreneur (first (first (filter (fn [v] (= (second v) selected-entrepreneur)) (:entrepreneurs-list (state!)))))]
+        selected-enterprise (seesaw.core/selection select-box)
+        id-enterprise (first (first (filter (fn [v] (= (second v) selected-enterprise)) (:enterprises-list (state!)))))]
     
     (if-let [alerts
              (not-empty
               (cond-> []
-                (empty? selected-entrepreneur)
+                (empty? selected-enterprise)
                 (conj (fn [] (i/warning (gtool/get-lang-header :invalid-enterprise)
                                         (gtool/get-lang-alerts :field-is-empty))))
 
@@ -709,7 +709,7 @@
                                         (gtool/get-lang-alerts :invalid-date-time-interval-info))))))]
       
       (doall (map (fn [invoke-alert] (invoke-alert)) alerts))
-      (let [ins-req (req/insert-all id-entrepreneur (req/date-to-obj date-start) (req/date-to-obj date-end) (read-string price))]
+      (let [ins-req (req/insert-all id-enterprise (req/date-to-obj date-start) (req/date-to-obj date-end) (read-string price))]
         (if ins-req
           (do
             (i/success (gtool/get-lang-header :success)
@@ -733,13 +733,13 @@
         calndr-start  (calndr/get-calendar (gcomp/input-text :args [:columns 24]))
         calndr-end    (calndr/get-calendar (gcomp/input-text :args [:columns 24]))
         price-input   (gcomp/input-text :args [:columns 16])
-        entrepreneurs-names-list (map #(second %) (:entrepreneurs-list (state!)))
-        select-box    (gcomp/select-box entrepreneurs-names-list)
+        enterprises-names-list (map #(second %) (:enterprises-list (state!)))
+        select-box    (gcomp/select-box enterprises-names-list)
         panel (gmg/migrid
                :v :f "[75:, fill]"
                (gcomp/min-scrollbox
                 (gmg/migrid :> "[150, fill]" {:gap [10]}
-                            [(gmg/migrid :v [(label-fn (gtool/get-lang-header :entrepreneur)) select-box])
+                            [(gmg/migrid :v [(label-fn (gtool/get-lang-header :enterprise)) select-box])
                              (gmg/migrid :v [(label-fn (gtool/get-lang-header :price))        price-input])
                              (gmg/migrid :v [(label-fn (gtool/get-lang-header :date-start))   calndr-start])
                              (gmg/migrid :v [(label-fn (gtool/get-lang-header :date-end))     calndr-end])
@@ -839,7 +839,7 @@
 
 (register-custom-view-plugin
  :name 'service-period
- :description "Plugin for service contracts of entrepreneur"
+ :description "Plugin for service contracts of enterprise"
  :entry service-period-entry
  :toolkit service-period-toolkit-pipeline
  :spec-list [])

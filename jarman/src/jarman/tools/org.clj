@@ -127,7 +127,7 @@
 
 (defmulti print-error (fn [exception] (class exception)))
 (defmethod print-error String [e]
-  (format "ERROR (%s) %s" (quick-timestamp) (.getMessage e)))
+  (print-line (format "ERROR (%s) %s" (quick-timestamp) e)))
 (defmethod print-error ExceptionInfo [e]
   (print-header
    (format "ERROR %s (%s)" (.getMessage e) (quick-timestamp))

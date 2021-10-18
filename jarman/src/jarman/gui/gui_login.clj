@@ -1,23 +1,24 @@
 (ns jarman.gui.gui-login
   (:import (java.awt Dimension)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons))
-  (:require [seesaw.core               :as c]
+  (:require [clojure.string            :as string]
+            [seesaw.core               :as c]
             [seesaw.border             :as b]
             [seesaw.util               :as u]
-            [clojure.string            :as string]
             [jarman.resource-lib.icon-library :as icon]
             [jarman.faces              :as face]
-            [jarman.tools.swing        :as stool]
+            [jarman.config.vars        :as vars]
             [jarman.gui.gui-app        :as app] ;; Need for startup by state
-            [jarman.logic.session      :as session]
             [jarman.gui.gui-tools      :as gtool]
             [jarman.gui.gui-components :as gcomp]
             [jarman.gui.gui-migrid     :as gmg]
+            [jarman.gui.gui-style      :as gs]
             [jarman.logic.connection   :as conn]
             [jarman.logic.state        :as state]
-            [jarman.gui.gui-style      :as gs]
-            [jarman.config.vars        :as vars]
-            [jarman.tools.lang :refer :all]))
+            [jarman.logic.session      :as session]
+            [jarman.tools.swing        :as stool]
+            [jarman.tools.lang :refer :all]
+            [jarman.tools.org  :refer :all]))
 
 
 ;; ┌───────────────┐
@@ -455,7 +456,24 @@
 ;; │                                     │
 ;; └─────────────────────────────────────┘
 
-(defn- check-access
+(defn- login
+  "Description:
+    Check if configuration and login data are correct.
+    Return map about user if loggin is ok.
+    Return error message if something goes wrong."
+  [databaseconnection-m login-s password-s]
+  {:pre [(map? databaseconnection-m) (string? login-s) (string? password-s)]}
+  (try
+    (session/login databaseconnection-m login-s password-s)
+    (catch Exception e
+      (print-error "gui_login.clj:" (.getMessage e))
+      (.printStackTrace e)
+      (str "gui_login.clj: " (.getMessage e)))
+    (catch clojure.lang.ExceptionInfo e
+      (print-error e)
+      (rift (gtool/get-lang (:translation (ex-data e))) (.getMessage e)))))
+
+#_(defn- check-access
   "Description:
     Check if configuration and login data are correct.
     Return map about user if loggin is ok.
@@ -470,6 +488,7 @@
         (do
           ;;(println "\nConfig ok")
           (let [user-m (try
+                         (session/login "dev" "dev")
                          (login-fn login passwd)
                          (catch Exception e
                            (let [exc (str (.getMessage e))
@@ -490,8 +509,10 @@
           :else
           (gtool/get-lang-alerts :something-went-wrong))))))
 
-
-
+(let [k :a
+      {dupa k} {:a 1}]
+  dupa
+  )
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
 ;; │        Configurations tiles         │
@@ -531,14 +552,85 @@
                  err?  (colors :red-color)
                  :else (colors :light-grey-color))))))
 
+;; ARGUMENTS
+;; +--------------1-+                                
+;; |{:type mysql...}|-----\                                    +-3-----------
+;; +----------------+     |     +---------------2-+ (if erorr) | ExceptionInfo.
+;; |login: user     |-----+---->| (session/login) |----------->| <msg>
+;; +----------------+     |     +-----------------+            | {:type :no-connection...
+;; |passwd: 1234    |-----/           | (if ok)                |  :translation [...]}
+;; +----------------+                 | this object            +---------------
+;;             +---------------3-+    | redefine (session)
+;;             | #<Obj Session>  |<---/ function which 
+;;             +-----------------+      return (Session.)
+;;                                      object
+
+(try-to-login
+ (fn []
+   {:login "dev",
+    :passwd "dev_",
+    :focus-compo nil,
+    :current-databaseconnection {},
+    :databaseconnection-error {}
+    :databaseconnection-list
+    {:jarman--trashpanda-team_ddns_net--3307
+     {:dbtype "mysql",
+      :host "trashpanda-team.ddns.net",
+      :port 3307,
+      :dbname "jarman",
+      :user "root",
+      :password "misiePysie69"}}})
+ (constantly true)
+ nil
+ :jarman--trashpanda-team_ddns_net--3307)
+
+
 (defn- try-to-login
   "Description:
-    Check access by config, login and password.
-    Return error to state or close login and run jarman."
-  [state! dispatch! frame config-k]
-  (let [data-log (check-access state! config-k)]
-    ;;(println "\nData log\n" data-log)
-    (if-not (= :empty config-k)
+     Run `jarman.logic.session/login` function inside. That function
+    create Session object which can be accesed by the `session` function
+    from the same ns.
+     If `login` function eval successfully - close login-panel and run jarman.
+     If `login` function return Exception, make error-print and dispatch action
+
+  Params
+  `databaseconnection-id-k` is key from `databaseconnection-list`
+     ;; => ':jarman--localhost--3306'"
+  [state! dispatch! frame databaseconnection-id-k]
+  (clojure.pprint/pprint (state!))
+  (let [[dataconnection-m login-s passw-s]
+        [(get-in (state!) [:databaseconnection-list databaseconnection-id-k])
+         (get-in (state!) [:login] nil)
+         (get-in (state!) [:passwd] nil)]]
+    (try
+      ;; -------------
+      (session/login dataconnection-m login-s passw-s)
+      (if (fn? (state/state :startup))
+        (do (.dispose frame) ((state/state :startup)))
+        (c/alert (gtool/get-lang-alerts :app-startup-fail)))
+      ;; -------------
+      (catch Exception e
+        ;; 
+        ;; THIS IS UNEXPECTABLE ERROR,
+        ;; AS SPANISH INQUISITION.
+        ;; 
+        (print-error (str "gui_login.clj: " (.getMessage e)))
+        (.printStackTrace e)
+        (dispatch! {:action :update-databaseconnection-error
+                    :path   [databaseconnection-id-k]
+                    :value  (str "gui_login.clj: " (.getMessage e))}))
+      ;; -------------
+      (catch clojure.lang.ExceptionInfo e
+        ;; 
+        ;; THATS NORMAL ERRORS, RETURNED FROM
+        ;; LOGIN IF SOMETHING GOING WRONG
+        ;;
+        (print-error e)
+        (dispatch! {:action :update-databaseconnection-error
+                    :path   [databaseconnection-id-k]
+                    :value  (rift (gtool/get-lang (:translation (ex-data e))) (.getMessage e))})))
+    
+    #_(if-not (= :empty databaseconnection-id-k)
       (if (map? (rift data-log nil))
         (do ;; close login panel and run jarman
           (if (fn? (state/state :startup))
@@ -547,7 +639,7 @@
             (c/alert (gtool/get-lang-alerts :app-startup-fail))))
         (do ;; set data info about error to state
           (dispatch! {:action :update-databaseconnection-error
-                      :path   [config-k]
+                      :path   [databaseconnection-id-k]
                       :value  (name data-log)}))))))
 
 (defn- tail-vpanel-template
@@ -572,7 +664,7 @@
         icons    (if (> (count items) 1) [(last items)] nil)
         items    (if (> (count items) 1) (butlast items) items)
         data-log (get-in (state!) [:databaseconnection-error config-k])
-
+        
         listens [:mouse-entered (fn [e]
                                   (gtool/hand-hover-on vpanel)
                                   (c/config! vpanel :border (border-fn true))
@@ -619,8 +711,7 @@
     Tools icons for tiles with access configs.
     Icons are invokers for new view like configuration manager or error info panel."
   [state! dispatch! config-k log]
-  (let [isize 32
-        show (if log true false)]
+  (let [isize 32 show (if log true false)]
     (gmg/migrid
      :v :right :bottom
      {:gap [5 5 5 5] :args [:background "#fff" :visible? show]}
@@ -706,8 +797,6 @@
     (set-state-watcher state! dispatch! mig render-fn [:databaseconnection-error] :databaseconnection-error)
     scr))
 
-
-
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
 ;; │            Info panel               │
@@ -733,10 +822,11 @@
    :icon   (stool/image-scale "icons/imgs/trashpanda2-stars-blue-1024.png" 47)))
 
 
-;;;;;;;;;;;;;;;
-;;
-;; Info view
-;;
+;; ┌─────────────────────────────────────┐
+;; │                                     │
+;; │            Info view                │
+;; │                                     │
+;; └─────────────────────────────────────┘
 
 (defn- info-panel
   "Description:
@@ -820,7 +910,6 @@
      [(c/label :icon (stool/image-scale (gs/icon GoogleMaterialDesignIcons/VPN_KEY face/c-icon) 40))
       (passwd-input dispatch!)])]))
 
-
 (defn login-panel 
   "Description:
      Build and return to frame form for login panel.
@@ -837,7 +926,7 @@
                                (login-inputs state! dispatch!)
                                (all-tails-configs-panel state! dispatch!)
                                ])
-
+                             
                              (login-icons state! dispatch!)])]
     (switch-focus state!)
     panel))
@@ -852,12 +941,12 @@
 
 (defn- frame-login [state! dispatch!]
   (c/frame :title "Jarman-login"
-         :undecorated? false
-         :resizable? false
-         :minimum-size [800 :by 620]
-         :icon (stool/image-scale
-                icon/calendar1-64-png) 
-         :content (login-panel state! dispatch!)))
+           :undecorated? false
+           :resizable? false
+           :minimum-size [800 :by 620]
+           :icon (stool/image-scale
+                  icon/calendar1-64-png) 
+           :content (login-panel state! dispatch!)))
 
 (defn- st []
   (let [res-validation nil ;;(validation)

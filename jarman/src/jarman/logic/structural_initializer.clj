@@ -10,7 +10,7 @@
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]))
 
-(def *system-tables* ["documents" "permission" "user" "metadata" "view"])
+(def *system-tables* ["documents" "profile" "user" "metadata" "view" "system_session" "system_props"])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SYSTEM TABLES SCHEMA ;;;
@@ -22,13 +22,24 @@
                   :columns [{:table_name [:varchar-100 :default :null]}
                             {:prop [:text :default :null]}]}))
 
-(def permission-cols [:permission_name :configuration])
-(def permission
-  (create-table! {:table_name :permission
-                  :columns [{:permission_name [:varchar-20 :default :null]}
+(def system-session-cols [:suuid])
+(def system-session
+  (create-table! {:table_name :system_session
+                  :columns [{:suuid [:varchar-400 :default :null]}]}))
+
+(def system-props-cols [:name :value])
+(def system-props
+  (create-table! {:table_name :system_props
+                  :columns [{:name [:varchar-256 :default :null]}
+                            {:value [:text :default :null]}]}))
+
+(def profile-cols [:name :configuration])
+(def profile
+  (create-table! {:table_name :profile
+                  :columns [{:name [:varchar-20 :default :null]}
                             {:configuration [:tinytext :nnull :default "\"{}\""]}]}))
 
-(def user-cols [:login :password :first_name :last_name :id_permission :configuration])
+(def user-cols [:login :password :first_name :last_name :id_profile :configuration])
 (def user
   (create-table! {:table_name :user
                   :columns [{:login [:varchar-100 :nnull]}
@@ -36,8 +47,8 @@
                             {:first_name [:varchar-100 :nnull]}
                             {:last_name [:varchar-100 :nnull]}
                             {:configuration [:text :nnull :default "'{}'"]}
-                            {:id_permission [:bigint-120-unsigned :nnull]}]
-                  :foreign-keys [{:id_permission :permission} {:delete :cascade :update :cascade}]}))
+                            {:id_profile [:bigint-120-unsigned :nnull]}]
+                  :foreign-keys [{:id_profile :profile} {:delete :cascade :update :cascade}]}))
 
 (def view-cols [:table_name :view])
 (def view
@@ -56,29 +67,32 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; VALIDATOR MECHANISM ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn verify-table-columns [table table-columns]
   (if-let [column-list (not-empty (map :field (db/query (show-table-columns table))))]
     (reduce #(and %1 (in? column-list %2)) true (mapv name table-columns))))
 
 (defn verify-tables []
   (verify-table-columns :user user-cols)
-  (verify-table-columns :permission permission-cols)
+  (verify-table-columns :profile profile-cols)
   (verify-table-columns :documents documents-cols)
   (verify-table-columns :metadata metadata-cols)
-  (verify-table-columns :view view-cols))
+  (verify-table-columns :view view-cols)
+  (verify-table-columns :system_session system-session-cols)
+  (verify-table-columns :system_props system-props-cols))
 
-(defn test-permission []
-  (letfn [(on-pred-permission [permission_name pred]
-            (if-let [permission-m (not-empty (db/query (select! {:table_name :permission :where [:= :permission_name (name permission_name)]})))]
-              (pred permission-m)))]
-    (and (on-pred-permission :admin some?)
-       (on-pred-permission :developer some?)
-       (on-pred-permission :user some?))))
+(defn test-profile []
+  (letfn [(on-pred-profile [profile_name pred]
+            (if-let [profile-m (not-empty (db/query (select! {:table_name :profile :where [:= :name (name profile_name)]})))]
+              (pred profile-m)))]
+    (and (on-pred-profile :admin some?)
+       (on-pred-profile :developer some?)
+       (on-pred-profile :user some?))))
 
 (defn test-user []
-  (letfn [(on-test-exist [permission_name pred]
-            (if-let [permission-m (not-empty (db/query (select! {:table_name :user :where [:= :login (name permission_name)]})))]
-              (pred permission-m)))]
+  (letfn [(on-test-exist [profile_name pred]
+            (if-let [profile-m (not-empty (db/query (select! {:table_name :user :where [:= :login (name profile_name)]})))]
+              (pred profile-m)))]
     (and (on-test-exist :adm some?)
        (on-test-exist :dev some?)
        (on-test-exist :user some?))))
@@ -94,44 +108,37 @@
                                     :column [:id :table_name]
                                     :where (concat [:or] sql-test)})))))))
 
-;; (defn test-permission [permission_name pred]
-;;   (if-let [permission-m (not-empty (db/query (select :permission :where [:= :permission_name (name permission_name)])))]
-;;     (pred permission-m)))
-;; ( (on-pred-permission :admin some?)
-;;      (on-pred-permission :developer some?)
-;;      (on-pred-permission :user some?))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; FILL DATA FOR TABLE ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn fill-permission []
-  (db/exec (delete! {:table_name :permission}))
+(defn fill-profile []
+  (db/exec (delete! {:table_name :profile}))
   (db/exec
-   (insert! {:table_name :permission
-             :column-list [:permission_name :configuration]
-             :values [["admin" "{}"]
-                      ["user" "{}"]
-                      ["developer" "{}"]]})))
+   (insert! {:table_name :profile
+             :column-list [:name :configuration]
+             :values [["admin" "{:groups [:admin]}"]
+                      ["user" "{:groups [:user]}"]
+                      ["developer" "{:groups [:dev]}"]]})))
 
 (defn fill-user []
-  (if-let [perm (first (db/query (select! {:table_name :permission :column [:id] :where [:= :permission_name "admin"]})))]
+  (if-let [perm (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "admin"]})))]
     (if (empty? (db/query (select! {:table_name :user :where [:= :login "admin"]})))
       (db/exec
        (insert! {:table_name :user
-                 :column-list [:login :password :first_name :last_name :id_permission :configuration]
+                 :column-list [:login :password :first_name :last_name :id_profile :configuration]
                  :values [["admin" "admin" "admin" "admin" (:id perm) "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}"]]}))))
-  (if-let [perm (first (db/query (select! {:table_name :permission :column [:id] :where [:= :permission_name "developer"]})))]
+  (if-let [perm (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "developer"]})))]
     (if (empty? (db/query (select! {:table_name :user :where [:= :login "dev"]})))
       (db/exec
        (insert! {:table_name :user
-                 :column-list [:login :password :first_name :last_name :id_permission :configuration]
+                 :column-list [:login :password :first_name :last_name :id_profile :configuration]
                  :values [["dev" "dev" "dev" "dev" (:id perm) "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}"]]}))))
-  (if-let [perm (first (db/query (select! {:table_name :permission :column [:id] :where [:= :permission_name "user"]})))]
+  (if-let [perm (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "user"]})))]
     (if (empty? (db/query (select! {:table_name :user :where [:= :login "user"]})))
       (db/exec
        (insert! {:table_name :user
-                 :column-list [:login :password :first_name :last_name :id_permission :configuration]
+                 :column-list [:login :password :first_name :last_name :id_profile :configuration]
                  :values [["user" "user" "user" "user" (:id perm) "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}"]]})))))
 
 (defn fill-metadata []
@@ -141,7 +148,7 @@
   ;; for make it uncoment section belove
   ;; map db/exec
   [(drop-table :user) user
-   (drop-table :permission) permission
+   (drop-table :profile) profile
    (drop-table :view) view
    (drop-table :metadata) metadata
    (drop-table :documents) documents])
@@ -178,12 +185,12 @@
 (defn verify-table-exists [table-name table-list]
   (in? table-list (name table-name)))
 
-(defn procedure-test-permission [tables-list]
-  (if (verify-table-exists :permission tables-list)
-    (if (verify-table-columns :permission permission-cols)
-      (if (test-permission) true (do (fill-permission) true))
-      {:valid? false :output "Permission table not compatible with Jarman" :table :permission})
-    (do (db/exec permission) (fill-permission) true)))
+(defn procedure-test-profile [tables-list]
+  (if (verify-table-exists :profile tables-list)
+    (if (verify-table-columns :profile profile-cols)
+      (if (test-profile) true (do (fill-profile) true))
+      {:valid? false :output "Profile table not compatible with Jarman" :table :profile})
+    (do (db/exec profile) (fill-profile) true)))
 
 (defn procedure-test-user [tables-list]
   (if (verify-table-exists :user tables-list)
@@ -212,31 +219,48 @@
       true {:valid? false :output "View table not compatible with Jarman" :table :view})
     (do (db/exec view) true)))
 
+(defn procedure-test-system-session [tables-list]
+  (if (verify-table-exists :system_session tables-list)
+    (if (verify-table-columns :system_session system-session-cols)
+      true {:valid? false :output "System table not compatible with Jarman" :table :system_session})
+    (do (db/exec system-session) true)))
+
+(defn procedure-test-system-props [tables-list]
+  (if (verify-table-exists :system_props tables-list)
+    (if (verify-table-columns :system_props system-props-cols)
+      true {:valid? false :output "System table not compatible with Jarman" :table :system_props})
+    (do (db/exec system-session) true)))
+
 (defn procedure-create-all-structure []
-  (db/exec permission) (fill-permission) 
+  (db/exec profile)    (fill-profile) 
   (db/exec user)       (fill-user)
   (db/exec metadata)   ;; (fill-metadata) 
   (db/exec documents)
-  (db/exec view))
+  (db/exec view)
+  (db/exec system-session)
+  (db/exec system-props))
 
 (defn procedure-delete-all-structure []
   (db/exec (drop-table :user))
-  (db/exec (drop-table :permission))
+  (db/exec (drop-table :profile))
   (db/exec (drop-table :metadata))
   (db/exec (drop-table :documents))
-  (db/exec (drop-table :view)))
+  (db/exec (drop-table :view))
+  (db/exec (drop-table :system_session))
+  (db/exec (drop-table :system_props)))
 
-;; (procedure-test-all)
 (defn procedure-test-all []
   ;; if some tables exist?
   (if-let [tables-list (not-empty (mapv (comp second first) (db/query (show-tables))))]
     ;; if table exists
     (filter map?
-     [(procedure-test-permission tables-list)
-      (procedure-test-user tables-list)
-      (procedure-test-metadata tables-list)
-      (procedure-test-documents tables-list)
-      (procedure-test-view tables-list)])
+            [(procedure-test-system-session tables-list)
+             (procedure-test-system-props tables-list)
+             (procedure-test-profile tables-list)
+             (procedure-test-user tables-list)
+             (procedure-test-metadata tables-list)
+             (procedure-test-documents tables-list)
+             (procedure-test-view tables-list)])
     ;; create whole jarman infrastructure
     (procedure-create-all-structure)))
 

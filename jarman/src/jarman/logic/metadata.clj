@@ -356,7 +356,7 @@
       (update! {:table_name table :set (serialize (dissoc m :id)) :where [:= :id (:id m)]})
       (insert! {:table_name table
                 :column-list [:table_name :prop]
-                :values (vals (serialize m))}))))
+                :values (vals (serialize (dissoc m :id)))}))))
 
 (defn show-tables-not-meta []
   (not-allowed-rules ["view" "metatable" "meta*"] (map (comp second first) (db/query "SHOW TABLES"))))
@@ -370,7 +370,6 @@
       (db/exec (update-sql-by-id-template "metadata" metadata))
       (let [metadata (assoc-in metadata [:id] (get-in (first meta) [:id] nil))]
        (db/exec (update-sql-by-id-template "metadata" metadata))))))
-
 
 (defn do-create-meta-database []
   (doall

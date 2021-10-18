@@ -5,120 +5,147 @@
    [clojure.spec.alpha :as s]
    [jarman.logic.connection :as c]
    [jarman.logic.sql-tool :refer [select!]]
-   [jarman.tools.lang :refer :all]))
+   [jarman.tools.lang :refer :all]
+   [jarman.tools.org  :refer :all]))
 
-(s/def ::ne-string (every-pred string? not-empty))
-(s/def ::str-without-space (s/and ::ne-string #(not (string/includes? % " "))))
-(s/def :user/user.id number?)
-(s/def :user/user.login ::str-without-space)
-(s/def :user/user.first_name ::str-without-space)
-(s/def :user/user.last_name ::str-without-space)
-(s/def :user/user.configuration map?)
-(s/def :user/permission.prmission_name ::str-without-space)
-(s/def :user/permission.configuration map?)
+;; (s/def ::ne-string (every-pred string? not-empty))
+;; (s/def ::str-without-space (s/and ::ne-string #(not (string/includes? % " "))))
+;; (s/def :user/user.id number?)
+;; (s/def :user/user.login ::str-without-space)
+;; (s/def :user/user.first_name ::str-without-space)
+;; (s/def :user/user.last_name ::str-without-space)
+;; (s/def :user/user.configuration map?)
+;; (s/def :user/profile.name ::str-without-space)
+;; (s/def :user/profile.configuration map?)
+;; (s/def ::user
+;;   (s/keys :req-un [:user/user.id
+;;                    :user/user.login
+;;                    :user/user.first_name
+;;                    :user/user.last_name
+;;                    :user/user.configuration
+;;                    :permission/profile.name
+;;                    :permission/profile.configuration]))
+(def group-list [:admin-update :admin-extension :admin-dataedit :developer :ekka-all])
 
-(s/def ::user
-  (s/keys :req-un [:user/user.id
-                   :user/user.login
-                   :user/user.first_name
-                   :user/user.last_name
-                   :user/user.configuration
-                   :permission/permission.permission_name
-                   :permission/permission.configuration]))
-
-(defprotocol CheckData
-  (allow-permission? [this group]))
-
-(defprotocol GetData
-  (get-permission [this])
-  (get-login [this])
-  (get-user-configuration [this])
-  (get-permission-configuration [this]))
-
-(defprotocol SetData
-  (set-permission [this permission]))
-
-(defrecord User [id login first-name last-name
-                 user-configuration permission-name
-                 permission-configuration]
-  CheckData
+(defprotocol IPermissionActor
+  (allow-permission? [this group])
+  (allow-groups      [this]))
+(defprotocol IUserInfo
+  (info [this])
+  (config [this]))
+(defrecord User
+    [id
+     login
+     first-name
+     last-name
+     user-configuration
+     profile-name
+     profile-configuration]
+  IPermissionActor
   (allow-permission? [this group]
-    (if-not (nil? permission-configuration)
-      (in? (:groups permission-configuration) group)))
-  GetData
-  (get-permission [this]
-    (if-not (nil? permission-name)
-      permission-name "user"))
-  (get-login [this]
-    (if-not (nil? login)
-      login "user"))
-  (get-user-configuration [this]
-    (if-not (nil? user-configuration)
-      user-configuration {}))
-  (get-permission-configuration [this]
-    (if-not (nil? permission-configuration)
-      permission-configuration {}))
-  SetData
-  (set-permission [this permission] (set! (. this permission-name) permission)))
+    (in? (:groups profile-configuration) group))
+  (allow-groups [this]
+    (get profile-configuration :groups []))
+  IUserInfo
+  (info [this]
+    {:login login :first-name first-name :last-name last-name :profile-name profile-name })
+  (config [this]
+    user-configuration))
 
-(defn test-user [m]
-  (s/valid? ::user m))
+(defrecord License [tenant tenant-id creation-date expiration-date limitation])
+(defrecord SessionParams [m])
 
-(def ^{:private true} user (atom (User. nil nil nil nil nil nil nil)))
+;; +-1------+    +-2---------+    +-3-----+
+;; |SQL User|--->|SQL License|--->|Session|
+;; +--------+    +-----------+    +-------+
+;;                                  |
+;; +-4.1-------------+	    public  |
+;; | (defn login []) |<-------------+
+;; +-----------------+		    |
+;; 				    |
+;; +-4.2---------------+    public  |
+;; | (defn session []) |<-----------+
+;; +-------------------+
 
-(defn user-set
-  [m]
-  (if (and (map? m) (test-user m))
-    (do (reset! user (->User (:user.id m)
-                             (:user.login m)
-                             (:user.last_name m)
-                             (:user.first_name m)
-                             (:user.configuration m)
-                             (:permission.permission_name m)
-                             (:permission.configuration m))) m) nil))
+(defprotocol ISessionGetter
+  (get-user    [this])
+  (get-license [this])
+  (get-params  [this]))
+(deftype Session [^User user ^License license ^SessionParams params]
+  ;; (set-permission [this permission] (set! (. this permission-name) permission))
+  ISessionGetter
+  (get-user    [this] user)
+  (get-license [this] license)
+  (get-params  [this] params)
 
-(defn user-get [] @user)
-(defn get-user-permission [] (.get-permission @user))
-(defn get-user-login [] (.get-login @user))
-(defn get-user-configuration [] (.get-user-configuration @user))
-(defn get-permission-configuration [] (.get-permission-configuration @user))
-(defn allow-permission? [coll] (.allow-permission? @user coll))
-(defn set-user-permission [permission] (.set-user-permission @user permission))
+  IPermissionActor
+  (allow-permission? [this group]
+    (.allow-permission? (.get-user this) group))
+  (allow-groups [this]
+    (.allow-groups (.get-user this))))
 
-(defn login-user [user-login user-password]
-  (let [u (->
-           (c/query
-            (select! {:table_name :user
-                      :column [:#as_is
-                               :user.id
-                               :user.login
-                               :user.last_name
-                               :user.first_name
-                               :user.configuration
-                               :permission.permission_name
-                               :permission.configuration]
-                      :inner-join [:user->permission]
-                      :where [:and
-                              [:= :login user-login]
-                              [:= :password user-password]]}))
-           first)]
-    (if (empty? u)
-      :user-not-found
-      (-> u
-        (update-in [:user.configuration] read-string)
-        (update-in [:permission.configuration] read-string)
-        (user-set)))))
+(defn build-session [m]
+  (if m
+    (let [
+         {:keys [tenant tenant-id creation-date expiration-date limitation]}
+         {:tenant "ekka" :tenant-id "ekka-010313" :limitation {}}]
+     (Session.
+      (User. (:user.id m)
+             (:user.login m)
+             (:user.first_name m)
+             (:user.last_name m)
+             (:user.configuration m)
+             (:profile.name m)
+             (:profile.configuration m))
+      (License. tenant tenant-id creation-date expiration-date limitation)
+      (SessionParams. {})))
+    (throw (ex-info "incorrect login or password "
+                    {:type :incorrect-login-or-password
+                     :translation [:alerts :incorrect-login-or-pass]}))))
 
-(login-user "dev" "dev")
+(defn session [] nil)
+(defn login [connection login password]
+  (if-not (c/connection-validate connection)
+    (ex-info "bad connection settings, please carefully checkout your connections"
+             {:type :not-valid-connection
+              :translation [:alerts :configuration-incorrect]}))
+  (if-not (c/test-connection connection)
+    (ex-info "cannot connect to remote database"
+             {:type :no-connection-to-database
+              :translation [:alerts :connection-problem]}))
+  (c/connection-set connection)
+  (let [builded-session
+        (->  
+         (c/query
+          (select!
+           {:table_name :user
+            :column
+            [:#as_is
+             :user.id
+             :user.login
+             :user.last_name
+             :user.first_name
+             :user.configuration
+             :profile.name
+             :profile.configuration]
+            :inner-join [:user->profile]
+            :where
+            [:and [:= :login login] [:= :password password]]}))
+         (first)
+         (update-existing-in [:user.configuration]    read-string)
+         (update-existing-in [:profile.configuration] read-string)
+         (build-session))]
+    (defn session []
+      builded-session)
+    (session)))
 
 (comment
-  (user-set {:user.id 2 :user.login "admin", :user.last_name "admin", :user.first_name "admin", :user.configuration {:ftp {:login "jarman", :password "dupa" :host "trashpanda-team.ddns.net"}}, :permission.permission_name "admin", :permission.configuration {}})
-  (user-get))
+  (try
+    (.get-user (login {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman", :user "root", :password "misiePysie69", :useUnicode true, :characterEncoding "UTF-8"}
+                      "dev" "dev"))
+    (catch clojure.lang.ExceptionInfo e
+      (print-error (.getMessage e))
+      (ex-data e))))
 
-(defn login [connection]
-  (if (c/connection-validate connection)
-    (if (c/test-connection connection)
-      (do (c/connection-set connection)
-          login-user)
-      :no-connection-to-database)
-    :not-valid-connection))
+
+

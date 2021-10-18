@@ -653,5 +653,65 @@
            wrapp-functor-list)))
 
 
+(defn update-existing
+  "Updates a value in a map given a key and a function, if and only if the key
+  exists in the map. See: `clojure.core/update`."
+  {:arglists '([m k f & args])
+   :added    "1.1.0"}
+  ([m k f]
+   (if-let [kv (find m k)] (assoc m k (f (val kv))) m))
+  ([m k f x]
+   (if-let [kv (find m k)] (assoc m k (f (val kv) x)) m))
+  ([m k f x y]
+   (if-let [kv (find m k)] (assoc m k (f (val kv) x y)) m))
+  ([m k f x y z]
+   (if-let [kv (find m k)] (assoc m k (f (val kv) x y z)) m))
+  ([m k f x y z & more]
+   (if-let [kv (find m k)] (assoc m k (apply f (val kv) x y z more)) m)))
 
+(defn update-existing-in
+  "Updates a value in a nested associative structure, if and only if the key
+  path exists. See: `clojure.core/update-in`."
+  {:added "1.3.0"}
+  [m ks f & args]
+  (let [up (fn up [m ks f args]
+             (let [[k & ks] ks]
+               (if-let [kv (find m k)]
+                 (if ks
+                   (assoc m k (up (val kv) ks f args))
+                   (assoc m k (apply f (val kv) args)))
+                 m)))]
+    (up m ks f args)))
 
+(defn find-first
+  "Finds the first item in a collection that matches a predicate. Returns a
+  transducer when no collection is provided."
+  ([pred]
+   (fn [rf]
+     (fn
+       ([] (rf))
+       ([result] (rf result))
+       ([result x]
+        (if (pred x)
+          (ensure-reduced (rf result x))
+          result)))))
+  ([pred coll]
+   (reduce (fn [_ x] (if (pred x) (reduced x))) nil coll)))
+
+(defn dissoc-in
+  "Dissociate a value in a nested associative structure, identified by a sequence
+  of keys. Any collections left empty by the operation will be dissociated from
+  their containing structures."
+  ([m ks]
+   (if-let [[k & ks] (seq ks)]
+     (if (seq ks)
+       (let [v (dissoc-in (get m k) ks)]
+         (if (empty? v)
+           (dissoc m k)
+           (assoc m k v)))
+       (dissoc m k))
+     m))
+  ([m ks & kss]
+   (if-let [[ks' & kss] (seq kss)]
+     (recur (dissoc-in m ks) ks' kss)
+     (dissoc-in m ks))))

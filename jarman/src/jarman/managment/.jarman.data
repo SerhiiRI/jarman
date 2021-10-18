@@ -48,12 +48,12 @@
       (field :field :document :component-type [:blob])
       (field :field :prop :component-type [:textarea])])}
    ;; ----------------------------------------------------
-   {:table_name "permission",
+   {:table_name "profile",
     :prop
     (prop
-     :table (table :field :permission :representation "Permission")
+     :table (table :field :profile :representation "Profile")
      :columns
-     [(field :field :permission_name :column-type [:varchar-20 :default :null] :component-type [:text])
+     [(field :field :name :column-type [:varchar-20 :default :null] :component-type [:text])
       (field :field :configuration :column-type [:tinytext :nnull :default "'{}'"] :component-type [:textarea])])}
    ;; ----------------------------------------------------
    {:table_name "user",
@@ -66,13 +66,13 @@
       (field :field :first_name :component-type [:text])
       (field :field :last_name :component-type [:text])
       (field :field :configuration :component-type [:prop])
-      (field-link :field :id_permission :component-type [:link]
-                  :foreign-keys [{:id_permission :permission} {:delete :cascade, :update :cascade}] :key-table :permission)])}
+      (field-link :field :id_profile :component-type [:link]
+                  :foreign-keys [{:id_profile :profile} {:delete :cascade, :update :cascade}] :key-table :profile)])}
    ;; ----------------------------------------------------
-   {:table_name "enterpreneur",
+   {:table_name "enterprise",
     :prop
     (prop
-     :table (table :field :enterpreneur :representation "Enterpreneur"),
+     :table (table :field :enterprise :representation "Enterprise"),
      :columns
      [(field :field :ssreou :representation "number of SSREOU" :component-type [:text])
       (field :field :name :component-type [:text])
@@ -90,8 +90,8 @@
     (prop
      :table (table :field :point_of_sale :representation "point_of_sale"),
      :columns
-     [(field-link :field :id_enterpreneur :component-type [:link]
-                  :foreign-keys [{:id_enterpreneur :enterpreneur} {:update :cascade}] :key-table :enterpreneur)
+     [(field-link :field :id_enterprise :component-type [:link]
+                  :foreign-keys [{:id_enterprise :enterprise} {:update :cascade}] :key-table :enterprise)
       (field :field :name :component-type [:text])
       (field :field :physical_address :component-type [:text])
       (field :field :telefons :component-type [:text])])}
@@ -196,9 +196,9 @@
     :prop
     (prop
      :table (table :field "service_contract" :representation "Service contracts"),
-     :columns [(field-link :field :id_enterpreneur :component-type [:link]
-                           :key-table :enterpreneur
-                           :foreign-keys [{:id_enterpreneur :enterpreneur}
+     :columns [(field-link :field :id_enterprise :component-type [:link]
+                           :key-table :enterprise
+                           :foreign-keys [{:id_enterprise :enterprise}
                                           {:delete :cascade, :update :cascade}])
                (field :field :contract_start_term :component-type [:date])
                (field :field :contract_end_term :component-type [:date])])}

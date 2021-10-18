@@ -245,15 +245,17 @@
                                      (menu/clean-main-menu)
                                      (load-plugins-to-main-menu)
                                      (load-static-main-menu))}
-                           
-                           {:icon  (gs/icon GoogleMaterialDesignIcons/VPN_KEY face/c-icon)
-                            :title "Change work mode"
-                            :fn    (fn [e]
-                                     (cond (= "user"      (session/get-user-permission)) (session/set-user-permission "admin")
-                                           (= "admin"     (session/get-user-permission)) (session/set-user-permission "developer")
-                                           (= "developer" (session/get-user-permission)) (session/set-user-permission "user"))
-                                     (i/warning "Work mode" (str "Switched to: " (session/get-user-permission)))
-                                     (gseed/extend-frame-title (str ", " (session/get-user-login) "@" (session/get-user-permission))))}
+
+                           ;; TODO DISABLE FOR ALL 
+                           ;; {:icon  (gs/icon GoogleMaterialDesignIcons/VPN_KEY face/c-icon)
+                           ;;  :title "Change work mode"
+                           ;;  :fn    (fn [e]
+                                     
+                           ;;           (cond (= "user"      (session/get-user-permission)) (session/set-user-permission "admin")
+                           ;;                 (= "admin"     (session/get-user-permission)) (session/set-user-permission "developer")
+                           ;;                 (= "developer" (session/get-user-permission)) (session/set-user-permission "user"))
+                           ;;           (i/warning "Work mode" (str "Switched to: " (session/get-user-permission)))
+                           ;;           (gseed/extend-frame-title (str ", " (session/get-user-login) "@" (session/get-user-permission))))}
                             
                            ;; {:icon  icon/download-blue-64-png
                            ;;  :title "Update"
@@ -292,15 +294,15 @@
                            ])
              [(gcomp/fake-focus :vgap top-offset :hgap img-scale)]))))
 
-
-
 (defn load-level-3
   "Description:
     Try display frame in same place when reloading. Next set to frame login@permission."
   [relative-pos]
   (if-not (nil? @relative-pos)
     (.setLocation (seesaw.core/to-frame (state/state :app)) (first @relative-pos) (second @relative-pos)))
-  (gseed/extend-frame-title (str ", " (session/get-user-login) "@" (session/get-user-permission))))
+  
+  (let [{:keys [login profile-name]} (.get-user (session/session))]
+   (gseed/extend-frame-title (str ", " login "@" profile-name))))
 
 (defn load-level-4
   "Description:

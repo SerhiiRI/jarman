@@ -540,13 +540,15 @@
                                        :items (gtool/join-mig-items
                                                [(table-editor--element--header-view (str "Edit table: \"" table-name "\""))]
                                                (cond
-                                                 (session/allow-permission? [:developer])
+                                                 true
+                                                 ;; TODO FIX THAT TO REALL PERMISIONS
+                                                 ;; (.allow-permission? (session/session) [:developer])
                                                  (list [(table-editor--element--btn-save local-changes table invoker-id)]
                                                        [(table-editor--element--btn-show-changes local-changes table)]
                                                        [(table-editor--element--btn-open-code-editor table)])
-                                                 (session/allow-permission? [:admin])
-                                                 (list [(table-editor--element--btn-save local-changes table invoker-id)]
-                                                       [(table-editor--element--btn-show-changes local-changes table)])
+                                                 ;; (.allow-permission? (session/session) [:admin])
+                                                 ;; (list [(table-editor--element--btn-save local-changes table invoker-id)]
+                                                 ;;       [(table-editor--element--btn-show-changes local-changes table)])
                                                  :else [])))]]
                           [[(gcomp/min-scrollbox ;; Scroll section bottom title and button save/reload bar
                              (mig-panel
@@ -623,7 +625,7 @@
         :view-id view-id
         :title (str "Edit: " (get-in table [:prop :table :representation]))
         :tab-tip (str "Edit panel with \"" (get-in table [:prop :table :representation]) "\" table.")
-        :component-fn (fn [] (create-view--table-editor view-id (session/get-user-permission) table-id invoker-id meta))
+        :component-fn (fn [] (create-view--table-editor view-id (.allow-groups (session/session)) table-id invoker-id meta))
         :scrollable? false)))))
 
 
@@ -679,7 +681,7 @@
                                   (add-to-view-service--table-editor table-id meta))))
                  (btn "Delete table"  (gs/icon GoogleMaterialDesignIcons/DELETE face/c-icon) (fn [e]))
                  (btn "Show relations"  (gs/icon GoogleMaterialDesignIcons/AUTORENEW face/c-icon) (fn [e]))
-                 (if (session/allow-permission? [:developer])
+                 (if (.allow-permission? (session/session) [:developer])
                    (btn "Metadata"
                         (gs/icon GoogleMaterialDesignIcons/DESCRIPTION face/c-icon)
                         (fn [e]
@@ -687,7 +689,7 @@
                               ;; (gcomp/view-metadata-editor (keyword (:table_name (first selected-tab))))
                               )))
                    [])
-                 (if (session/allow-permission? [:developer])
+                 (if (.allow-permission? (session/session) [:developer])
                    (btn "Defview"
                         (gs/icon GoogleMaterialDesignIcons/EDIT face/c-icon)
                         (fn [e]

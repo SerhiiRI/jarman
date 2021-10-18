@@ -68,7 +68,7 @@
 
 (defn- part-plugin
   [k v lvl]
-  (if (session/allow-permission? (.return-permission v))
+  (if (.allow-permission? (session/session) (.return-permission v))
     (do
       (print-line (format "pin plugin %s to menu"(.return-title v)))
       (gcomp/button-expand-child
@@ -97,7 +97,7 @@
 
 (defn- part-button [k v lvl]
   (if (or (nil? (:permission v))
-          (session/allow-permission? (:permission v)))
+         (.allow-permission? (session/session) (:permission v)))
     (if (= :list (:action v))
       ((:fn v))
       (gcomp/button-expand-child

@@ -122,7 +122,7 @@
    :id :cache_register
    :name "cache_register"
    :plug-place [:#tables-view-plugin]
-   :tables [:cache_register :point_of_sale :enterpreneur]
+   :tables [:cache_register :point_of_sale :enterprise]
    :view-columns [:cache_register.id_point_of_sale
                   :cache_register.name
                   :cache_register.serial_number
@@ -160,7 +160,7 @@
    :query
    {:table_name :cache_register,
     :inner-join
-    [:cache_register->point_of_sale :point_of_sale->enterpreneur],
+    [:cache_register->point_of_sale :point_of_sale->enterprise],
     :column
     [:#as_is
      :cache_register.id
@@ -179,25 +179,25 @@
      :cache_register.modem_serial_number
      :cache_register.modem_phone_number
      :point_of_sale.id
-     :point_of_sale.id_enterpreneur
+     :point_of_sale.id_enterprise
      :point_of_sale.name
      :point_of_sale.physical_address
      :point_of_sale.telefons
-     :enterpreneur.id
-     :enterpreneur.ssreou
-     :enterpreneur.ownership_form
-     :enterpreneur.vat_certificate
-     :enterpreneur.individual_tax_number
-     :enterpreneur.director
-     :enterpreneur.accountant
-     :enterpreneur.legal_address
-     :enterpreneur.physical_address
-     :enterpreneur.contacts_information]})
+     :enterprise.id
+     :enterprise.ssreou
+     :enterprise.ownership_form
+     :enterprise.vat_certificate
+     :enterprise.individual_tax_number
+     :enterprise.director
+     :enterprise.accountant
+     :enterprise.legal_address
+     :enterprise.physical_address
+     :enterprise.contacts_information]})
   (dialog-table
    :id :cache_register-table
    :name "cache_register dialog"
    :permission [:admin :user :developer]
-   :tables [:cache_register :point_of_sale :enterpreneur]
+   :tables [:cache_register :point_of_sale :enterprise]
    :view-columns [:cache_register.id_point_of_sale
                   :cache_register.name
                   :cache_register.serial_number
@@ -215,7 +215,7 @@
    :query
    {:table_name :cache_register,
     :inner-join
-    [:cache_register->point_of_sale :point_of_sale->enterpreneur],
+    [:cache_register->point_of_sale :point_of_sale->enterprise],
     :column
     [:#as_is
      :cache_register.id
@@ -234,20 +234,20 @@
      :cache_register.modem_serial_number
      :cache_register.modem_phone_number
      :point_of_sale.id
-     :point_of_sale.id_enterpreneur
+     :point_of_sale.id_enterprise
      :point_of_sale.name
      :point_of_sale.physical_address
      :point_of_sale.telefons
-     :enterpreneur.id
-     :enterpreneur.ssreou
-     :enterpreneur.ownership_form
-     :enterpreneur.vat_certificate
-     :enterpreneur.individual_tax_number
-     :enterpreneur.director
-     :enterpreneur.accountant
-     :enterpreneur.legal_address
-     :enterpreneur.physical_address
-     :enterpreneur.contacts_information]}))
+     :enterprise.id
+     :enterprise.ssreou
+     :enterprise.ownership_form
+     :enterprise.vat_certificate
+     :enterprise.individual_tax_number
+     :enterprise.director
+     :enterprise.accountant
+     :enterprise.legal_address
+     :enterprise.physical_address
+     :enterprise.contacts_information]}))
 
 (defview
   documents
@@ -279,80 +279,80 @@
      :documents.prop]}))
 
 (defview
-  enterpreneur
+  enterprise
   (table
-   :id :enterpreneur
-   :name "enterpreneur"
+   :id :enterprise
+   :name "enterprise"
    :plug-place [:#tables-view-plugin]
-   :tables [:enterpreneur]
-   :view-columns [:enterpreneur.ssreou
-                  :enterpreneur.name
-                  :enterpreneur.ownership_form
-                  :enterpreneur.vat_certificate
-                  :enterpreneur.individual_tax_number
-                  :enterpreneur.director
-                  :enterpreneur.accountant
-                  :enterpreneur.legal_address
-                  :enterpreneur.physical_address
-                  :enterpreneur.contacts_information]
-   :model-insert [:enterpreneur.ssreou
-                  :enterpreneur.name
-                  :enterpreneur.ownership_form
-                  :enterpreneur.vat_certificate
-                  :enterpreneur.individual_tax_number
-                  :enterpreneur.director
-                  :enterpreneur.accountant
-                  :enterpreneur.legal_address
-                  :enterpreneur.physical_address
-                  :enterpreneur.contacts_information]
+   :tables [:enterprise]
+   :view-columns [:enterprise.ssreou
+                  :enterprise.name
+                  :enterprise.ownership_form
+                  :enterprise.vat_certificate
+                  :enterprise.individual_tax_number
+                  :enterprise.director
+                  :enterprise.accountant
+                  :enterprise.legal_address
+                  :enterprise.physical_address
+                  :enterprise.contacts_information]
+   :model-insert [:enterprise.ssreou
+                  :enterprise.name
+                  :enterprise.ownership_form
+                  :enterprise.vat_certificate
+                  :enterprise.individual_tax_number
+                  :enterprise.director
+                  :enterprise.accountant
+                  :enterprise.legal_address
+                  :enterprise.physical_address
+                  :enterprise.contacts_information]
    :active-buttons [:insert :update :delete :clear :changes]
    :permission :ekka-all
    :actions []
    :buttons []
    :query
-   {:table_name :enterpreneur,
+   {:table_name :enterprise,
     :column
     [:#as_is
-     :enterpreneur.id
-     :enterpreneur.ssreou
-     :enterpreneur.name
-     :enterpreneur.ownership_form
-     :enterpreneur.vat_certificate
-     :enterpreneur.individual_tax_number
-     :enterpreneur.director
-     :enterpreneur.accountant
-     :enterpreneur.legal_address
-     :enterpreneur.physical_address
-     :enterpreneur.contacts_information]})
+     :enterprise.id
+     :enterprise.ssreou
+     :enterprise.name
+     :enterprise.ownership_form
+     :enterprise.vat_certificate
+     :enterprise.individual_tax_number
+     :enterprise.director
+     :enterprise.accountant
+     :enterprise.legal_address
+     :enterprise.physical_address
+     :enterprise.contacts_information]})
   (dialog-table
-   :id :enterpreneur-table
-   :name "enterpreneur dialog"
-   :tables [:enterpreneur]
-   :view-columns [:enterpreneur.ssreou
-                  :enterpreneur.name
-                  :enterpreneur.ownership_form
-                  :enterpreneur.vat_certificate
-                  :enterpreneur.individual_tax_number
-                  :enterpreneur.director
-                  :enterpreneur.accountant
-                  :enterpreneur.legal_address
-                  :enterpreneur.physical_address
-                  :enterpreneur.contacts_information]
+   :id :enterprise-table
+   :name "enterprise dialog"
+   :tables [:enterprise]
+   :view-columns [:enterprise.ssreou
+                  :enterprise.name
+                  :enterprise.ownership_form
+                  :enterprise.vat_certificate
+                  :enterprise.individual_tax_number
+                  :enterprise.director
+                  :enterprise.accountant
+                  :enterprise.legal_address
+                  :enterprise.physical_address
+                  :enterprise.contacts_information]
    :query
-   {:table_name :enterpreneur,
+   {:table_name :enterprise,
     :column
     [:#as_is
-     :enterpreneur.id
-     :enterpreneur.ssreou
-     :enterpreneur.name
-     :enterpreneur.ownership_form
-     :enterpreneur.vat_certificate
-     :enterpreneur.individual_tax_number
-     :enterpreneur.director
-     :enterpreneur.accountant
-     :enterpreneur.legal_address
-     :enterpreneur.physical_address
-     :enterpreneur.contacts_information]}))
+     :enterprise.id
+     :enterprise.ssreou
+     :enterprise.name
+     :enterprise.ownership_form
+     :enterprise.vat_certificate
+     :enterprise.individual_tax_number
+     :enterprise.director
+     :enterprise.accountant
+     :enterprise.legal_address
+     :enterprise.physical_address
+     :enterprise.contacts_information]}))
 
 (defview
   point_of_sale
@@ -360,70 +360,70 @@
    :id :point_of_sale
    :name "point_of_sale"
    :plug-place [:#tables-view-plugin]
-   :tables [:point_of_sale :enterpreneur]
-   :view-columns [:point_of_sale.id_enterpreneur
+   :tables [:point_of_sale :enterprise]
+   :view-columns [:point_of_sale.id_enterprise
                   :point_of_sale.name
                   :point_of_sale.physical_address
                   :point_of_sale.telefons]
-   :model-insert [:point_of_sale.id_enterpreneur
+   :model-insert [:point_of_sale.id_enterprise
                   :point_of_sale.name
                   :point_of_sale.physical_address
                   :point_of_sale.telefons]
    :active-buttons [:insert :update :delete :clear :changes]
    :permission :ekka-all
-   :dialog {:point_of_sale.id_enterpreneur
-            [:enterpreneur :dialog-table :enterpreneur-table]}
+   :dialog {:point_of_sale.id_enterprise
+            [:enterprise :dialog-table :enterprise-table]}
    :actions []
    :buttons []
    :query
    {:table_name :point_of_sale,
-    :inner-join [:point_of_sale->enterpreneur],
+    :inner-join [:point_of_sale->enterprise],
     :column
     [:#as_is
      :point_of_sale.id
-     :point_of_sale.id_enterpreneur
+     :point_of_sale.id_enterprise
      :point_of_sale.name
      :point_of_sale.physical_address
      :point_of_sale.telefons
-     :enterpreneur.id
-     :enterpreneur.ssreou
-     :enterpreneur.ownership_form
-     :enterpreneur.vat_certificate
-     :enterpreneur.individual_tax_number
-     :enterpreneur.director
-     :enterpreneur.accountant
-     :enterpreneur.legal_address
-     :enterpreneur.physical_address
-     :enterpreneur.contacts_information]})
+     :enterprise.id
+     :enterprise.ssreou
+     :enterprise.ownership_form
+     :enterprise.vat_certificate
+     :enterprise.individual_tax_number
+     :enterprise.director
+     :enterprise.accountant
+     :enterprise.legal_address
+     :enterprise.physical_address
+     :enterprise.contacts_information]})
   (dialog-table
    :id :point_of_sale-table
    :name "point_of_sale dialog"
    :permission [:admin :user :developer]
-   :tables [:point_of_sale :enterpreneur]
-   :view-columns [:point_of_sale.id_enterpreneur
+   :tables [:point_of_sale :enterprise]
+   :view-columns [:point_of_sale.id_enterprise
                   :point_of_sale.name
                   :point_of_sale.physical_address
                   :point_of_sale.telefons]
    :query
    {:table_name :point_of_sale,
-    :inner-join [:point_of_sale->enterpreneur],
+    :inner-join [:point_of_sale->enterprise],
     :column
     [:#as_is
      :point_of_sale.id
-     :point_of_sale.id_enterpreneur
+     :point_of_sale.id_enterprise
      :point_of_sale.name
      :point_of_sale.physical_address
      :point_of_sale.telefons
-     :enterpreneur.id
-     :enterpreneur.ssreou
-     :enterpreneur.ownership_form
-     :enterpreneur.vat_certificate
-     :enterpreneur.individual_tax_number
-     :enterpreneur.director
-     :enterpreneur.accountant
-     :enterpreneur.legal_address
-     :enterpreneur.physical_address
-     :enterpreneur.contacts_information]}))
+     :enterprise.id
+     :enterprise.ssreou
+     :enterprise.ownership_form
+     :enterprise.vat_certificate
+     :enterprise.individual_tax_number
+     :enterprise.director
+     :enterprise.accountant
+     :enterprise.legal_address
+     :enterprise.physical_address
+     :enterprise.contacts_information]}))
 
 (defview
   point_of_sale_group
@@ -468,7 +468,7 @@
    :tables [:point_of_sale_group_links
             :point_of_sale_group
             :point_of_sale
-            :enterpreneur]
+            :enterprise]
    :view-columns [:point_of_sale_group_links.id_point_of_sale_group
                   :point_of_sale_group_links.id_point_of_sale]
    :model-insert [:point_of_sale_group_links.id_point_of_sale_group
@@ -486,7 +486,7 @@
     :inner-join
     [:point_of_sale_group_links->point_of_sale_group
      :point_of_sale_group_links->point_of_sale
-     :point_of_sale->enterpreneur],
+     :point_of_sale->enterprise],
     :column
     [:#as_is
      :point_of_sale_group_links.id
@@ -496,20 +496,20 @@
      :point_of_sale_group.group_name
      :point_of_sale_group.information
      :point_of_sale.id
-     :point_of_sale.id_enterpreneur
+     :point_of_sale.id_enterprise
      :point_of_sale.name
      :point_of_sale.physical_address
      :point_of_sale.telefons
-     :enterpreneur.id
-     :enterpreneur.ssreou
-     :enterpreneur.ownership_form
-     :enterpreneur.vat_certificate
-     :enterpreneur.individual_tax_number
-     :enterpreneur.director
-     :enterpreneur.accountant
-     :enterpreneur.legal_address
-     :enterpreneur.physical_address
-     :enterpreneur.contacts_information]})
+     :enterprise.id
+     :enterprise.ssreou
+     :enterprise.ownership_form
+     :enterprise.vat_certificate
+     :enterprise.individual_tax_number
+     :enterprise.director
+     :enterprise.accountant
+     :enterprise.legal_address
+     :enterprise.physical_address
+     :enterprise.contacts_information]})
   (dialog-table
    :id :point_of_sale_group_links-table
    :name "point_of_sale_group_links dialog"
@@ -517,7 +517,7 @@
    :tables [:point_of_sale_group_links
             :point_of_sale_group
             :point_of_sale
-            :enterpreneur]
+            :enterprise]
    :view-columns [:point_of_sale_group_links.id_point_of_sale_group
                   :point_of_sale_group_links.id_point_of_sale]
    :query
@@ -525,7 +525,7 @@
     :inner-join
     [:point_of_sale_group_links->point_of_sale_group
      :point_of_sale_group_links->point_of_sale
-     :point_of_sale->enterpreneur],
+     :point_of_sale->enterprise],
     :column
     [:#as_is
      :point_of_sale_group_links.id
@@ -535,20 +535,20 @@
      :point_of_sale_group.group_name
      :point_of_sale_group.information
      :point_of_sale.id
-     :point_of_sale.id_enterpreneur
+     :point_of_sale.id_enterprise
      :point_of_sale.name
      :point_of_sale.physical_address
      :point_of_sale.telefons
-     :enterpreneur.id
-     :enterpreneur.ssreou
-     :enterpreneur.ownership_form
-     :enterpreneur.vat_certificate
-     :enterpreneur.individual_tax_number
-     :enterpreneur.director
-     :enterpreneur.accountant
-     :enterpreneur.legal_address
-     :enterpreneur.physical_address
-     :enterpreneur.contacts_information]}))
+     :enterprise.id
+     :enterprise.ssreou
+     :enterprise.ownership_form
+     :enterprise.vat_certificate
+     :enterprise.individual_tax_number
+     :enterprise.director
+     :enterprise.accountant
+     :enterprise.legal_address
+     :enterprise.physical_address
+     :enterprise.contacts_information]}))
 
 (defview
   repair_contract
@@ -559,7 +559,7 @@
    :tables [:repair_contract
             :cache_register
             :point_of_sale
-            :enterpreneur
+            :enterprise
             :old_seal
             :new_seal
             :repair_reasons
@@ -606,7 +606,7 @@
     :left-join
     [:repair_contract->cache_register
      :cache_register->point_of_sale
-     :point_of_sale->enterpreneur
+     :point_of_sale->enterprise
      :repair_contract.id_old_seal->seal*old_seal.id
      :repair_contract.id_new_seal->seal*new_seal.id
      :repair_contract->repair_reasons
@@ -639,20 +639,20 @@
      :cache_register.modem_serial_number
      :cache_register.modem_phone_number
      :point_of_sale.id
-     :point_of_sale.id_enterpreneur
+     :point_of_sale.id_enterprise
      :point_of_sale.name
      :point_of_sale.physical_address
      :point_of_sale.telefons
-     :enterpreneur.id
-     :enterpreneur.ssreou
-     :enterpreneur.ownership_form
-     :enterpreneur.vat_certificate
-     :enterpreneur.individual_tax_number
-     :enterpreneur.director
-     :enterpreneur.accountant
-     :enterpreneur.legal_address
-     :enterpreneur.physical_address
-     :enterpreneur.contacts_information
+     :enterprise.id
+     :enterprise.ssreou
+     :enterprise.ownership_form
+     :enterprise.vat_certificate
+     :enterprise.individual_tax_number
+     :enterprise.director
+     :enterprise.accountant
+     :enterprise.legal_address
+     :enterprise.physical_address
+     :enterprise.contacts_information
      :old_seal.id
      :old_seal.seal_number
      :old_seal.datetime_of_use
@@ -673,7 +673,7 @@
    :tables [:repair_contract
             :cache_register
             :point_of_sale
-            :enterpreneur
+            :enterprise
             :old_seal
             :new_seal
             :repair_reasons
@@ -692,7 +692,7 @@
     :left-join
     [:repair_contract->cache_register
      :cache_register->point_of_sale
-     :point_of_sale->enterpreneur
+     :point_of_sale->enterprise
      :repair_contract.id_old_seal->seal.id
      :repair_contract.id_new_seal->seal.id
      :repair_contract->repair_reasons
@@ -725,20 +725,20 @@
      :cache_register.modem_serial_number
      :cache_register.modem_phone_number
      :point_of_sale.id
-     :point_of_sale.id_enterpreneur
+     :point_of_sale.id_enterprise
      :point_of_sale.name
      :point_of_sale.physical_address
      :point_of_sale.telefons
-     :enterpreneur.id
-     :enterpreneur.ssreou
-     :enterpreneur.ownership_form
-     :enterpreneur.vat_certificate
-     :enterpreneur.individual_tax_number
-     :enterpreneur.director
-     :enterpreneur.accountant
-     :enterpreneur.legal_address
-     :enterpreneur.physical_address
-     :enterpreneur.contacts_information
+     :enterprise.id
+     :enterprise.ssreou
+     :enterprise.ownership_form
+     :enterprise.vat_certificate
+     :enterprise.individual_tax_number
+     :enterprise.director
+     :enterprise.accountant
+     :enterprise.legal_address
+     :enterprise.physical_address
+     :enterprise.contacts_information
      :old_seal.id
      :old_seal.seal_number
      :old_seal.datetime_of_use
@@ -899,64 +899,64 @@
    :id :service_contract
    :name "service_contract"
    :plug-place [:#tables-view-plugin]
-   :tables [:service_contract :enterpreneur]
-   :view-columns [:service_contract.id_enterpreneur
+   :tables [:service_contract :enterprise]
+   :view-columns [:service_contract.id_enterprise
                   :service_contract.contract_start_term
                   :service_contract.contract_end_term]
-   :model-insert [:service_contract.id_enterpreneur
+   :model-insert [:service_contract.id_enterprise
                   :service_contract.contract_start_term
                   :service_contract.contract_end_term]
    :active-buttons [:insert :update :delete :clear :changes]
    :permission :ekka-all
-   :dialog {:service_contract.id_enterpreneur
-            [:enterpreneur :dialog-table :enterpreneur-table]}
+   :dialog {:service_contract.id_enterprise
+            [:enterprise :dialog-table :enterprise-table]}
    :actions []
    :buttons []
    :query
    {:table_name :service_contract,
-    :inner-join [:service_contract->enterpreneur],
+    :inner-join [:service_contract->enterprise],
     :column
     [:#as_is
      :service_contract.id
-     :service_contract.id_enterpreneur
+     :service_contract.id_enterprise
      :service_contract.contract_start_term
      :service_contract.contract_end_term
-     :enterpreneur.id
-     :enterpreneur.ssreou
-     :enterpreneur.ownership_form
-     :enterpreneur.vat_certificate
-     :enterpreneur.individual_tax_number
-     :enterpreneur.director
-     :enterpreneur.accountant
-     :enterpreneur.legal_address
-     :enterpreneur.physical_address
-     :enterpreneur.contacts_information]})
+     :enterprise.id
+     :enterprise.ssreou
+     :enterprise.ownership_form
+     :enterprise.vat_certificate
+     :enterprise.individual_tax_number
+     :enterprise.director
+     :enterprise.accountant
+     :enterprise.legal_address
+     :enterprise.physical_address
+     :enterprise.contacts_information]})
   (dialog-table
    :id :service_contract-table
    :name "service_contract dialog"
-   :tables [:service_contract :enterpreneur]
-   :view-columns [:service_contract.id_enterpreneur
+   :tables [:service_contract :enterprise]
+   :view-columns [:service_contract.id_enterprise
                   :service_contract.contract_start_term
                   :service_contract.contract_end_term]
    :query
    {:table_name :service_contract,
-    :inner-join [:service_contract->enterpreneur],
+    :inner-join [:service_contract->enterprise],
     :column
     [:#as_is
      :service_contract.id
-     :service_contract.id_enterpreneur
+     :service_contract.id_enterprise
      :service_contract.contract_start_term
      :service_contract.contract_end_term
-     :enterpreneur.id
-     :enterpreneur.ssreou
-     :enterpreneur.ownership_form
-     :enterpreneur.vat_certificate
-     :enterpreneur.individual_tax_number
-     :enterpreneur.director
-     :enterpreneur.accountant
-     :enterpreneur.legal_address
-     :enterpreneur.physical_address
-     :enterpreneur.contacts_information]}))
+     :enterprise.id
+     :enterprise.ssreou
+     :enterprise.ownership_form
+     :enterprise.vat_certificate
+     :enterprise.individual_tax_number
+     :enterprise.director
+     :enterprise.accountant
+     :enterprise.legal_address
+     :enterprise.physical_address
+     :enterprise.contacts_information]}))
 
 (defview
   service_contract_month
@@ -964,7 +964,7 @@
    :id :service_contract_month
    :name "service_contract_month"
    :plug-place [:#tables-view-plugin]
-   :tables [:service_contract_month :service_contract :enterpreneur]
+   :tables [:service_contract_month :service_contract :enterprise]
    :view-columns [:service_contract_month.id_service_contract
                   :service_contract_month.service_month_start
                   :service_contract_month.service_month_end
@@ -985,7 +985,7 @@
    {:table_name :service_contract_month,
     :inner-join
     [:service_contract_month->service_contract
-     :service_contract->enterpreneur],
+     :service_contract->enterprise],
     :column
     [:#as_is
      :service_contract_month.id
@@ -995,24 +995,24 @@
      :service_contract_month.money_per_month
      :service_contract_month.was_payed
      :service_contract.id
-     :service_contract.id_enterpreneur
+     :service_contract.id_enterprise
      :service_contract.contract_start_term
      :service_contract.contract_end_term
-     :enterpreneur.id
-     :enterpreneur.ssreou
-     :enterpreneur.ownership_form
-     :enterpreneur.vat_certificate
-     :enterpreneur.individual_tax_number
-     :enterpreneur.director
-     :enterpreneur.accountant
-     :enterpreneur.legal_address
-     :enterpreneur.physical_address
-     :enterpreneur.contacts_information]})
+     :enterprise.id
+     :enterprise.ssreou
+     :enterprise.ownership_form
+     :enterprise.vat_certificate
+     :enterprise.individual_tax_number
+     :enterprise.director
+     :enterprise.accountant
+     :enterprise.legal_address
+     :enterprise.physical_address
+     :enterprise.contacts_information]})
   (dialog-table
    :id :service_contract_month-table
    :name "service_contract_month dialog"
    :permission [:admin :user :developer]
-   :tables [:service_contract_month :service_contract :enterpreneur]
+   :tables [:service_contract_month :service_contract :enterprise]
    :view-columns [:service_contract_month.id_service_contract
                   :service_contract_month.service_month_start
                   :service_contract_month.service_month_end
@@ -1022,7 +1022,7 @@
    {:table_name :service_contract_month,
     :inner-join
     [:service_contract_month->service_contract
-     :service_contract->enterpreneur],
+     :service_contract->enterprise],
     :column
     [:#as_is
      :service_contract_month.id
@@ -1032,17 +1032,17 @@
      :service_contract_month.money_per_month
      :service_contract_month.was_payed
      :service_contract.id
-     :service_contract.id_enterpreneur
+     :service_contract.id_enterprise
      :service_contract.contract_start_term
      :service_contract.contract_end_term
      :service_contract.money_per_month
-     :enterpreneur.id
-     :enterpreneur.ssreou
-     :enterpreneur.ownership_form
-     :enterpreneur.vat_certificate
-     :enterpreneur.individual_tax_number
-     :enterpreneur.director
-     :enterpreneur.accountant
-     :enterpreneur.legal_address
-     :enterpreneur.physical_address
-     :enterpreneur.contacts_information]}))
+     :enterprise.id
+     :enterprise.ssreou
+     :enterprise.ownership_form
+     :enterprise.vat_certificate
+     :enterprise.individual_tax_number
+     :enterprise.director
+     :enterprise.accountant
+     :enterprise.legal_address
+     :enterprise.physical_address
+     :enterprise.contacts_information]}))

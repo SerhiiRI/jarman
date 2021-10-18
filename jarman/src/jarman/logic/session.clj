@@ -4,9 +4,10 @@
    [clojure.java.jdbc :as jdbc]
    [clojure.spec.alpha :as s]
    [jarman.logic.connection :as c]
-   [jarman.logic.sql-tool :refer [select!]]
+   [jarman.logic.sql-tool :refer [select! insert! update!]]
    [jarman.tools.lang :refer :all]
-   [jarman.tools.org  :refer :all]))
+   [jarman.tools.org  :refer :all])
+  (:import [java.util Base64]))
 
 ;; (s/def ::ne-string (every-pred string? not-empty))
 ;; (s/def ::str-without-space (s/and ::ne-string #(not (string/includes? % " "))))
@@ -26,7 +27,6 @@
 ;;                    :permission/profile.name
 ;;                    :permission/profile.configuration]))
 (def group-list [:admin-update :admin-extension :admin-dataedit :developer :ekka-all])
-
 (defprotocol IPermissionActor
   (allow-permission? [this group])
   (allow-groups      [this]))
@@ -52,6 +52,26 @@
   (config [this]
     user-configuration))
 
+(defn decrypt-license [s]
+  (if s 
+    (let [decoder (fn decode [to-decode]
+                    (String. (.decode (Base64/getDecoder) to-decode)))]
+      (try
+        (read-string (decoder s))
+        (catch Exception e
+          (print-error e)
+          (ex-info "broken license decription, maybe license hash was changed"
+                   {:type :broken-license
+                    :translation [:alerts :broken-license-hash]}))))
+    (throw (ex-info "not found registered license"
+                    {:type :license-not-found
+                     :translation [:alerts :license-not-found]}))))
+
+;; (c/exec
+;;  (insert!
+;;   {:table_name :system_props
+;;    :column-list [:name :value]
+;;    :values [["contact-person" "Julia Burmich"]]}))
 (defrecord License [tenant tenant-id creation-date expiration-date limitation])
 (defrecord SessionParams [m])
 
@@ -84,24 +104,49 @@
   (allow-groups [this]
     (.allow-groups (.get-user this))))
 
+(defn build-user [login password]
+  (where
+   ((m (-> {:table_name :user
+            :column [:#as_is :user.id :user.login :user.last_name :user.first_name
+                     :user.configuration :profile.name :profile.configuration]
+            :inner-join [:user->profile]
+            :where [:and [:= :login login] [:= :password password]]}
+           select! c/query first
+           (update-existing-in [:user.configuration]    read-string)
+           (update-existing-in [:profile.configuration] read-string))))
+   (if m
+     (User. (:user.id m) (:user.login m)
+            (:user.first_name m) (:user.last_name m)
+            (:user.configuration m)(:profile.name m)
+            (:profile.configuration m))
+     (throw (ex-info "incorrect login or password "
+                     {:type :incorrect-login-or-password
+                      :translation [:alerts :incorrect-login-or-pass]})))))
+
+(defn build-license []
+  (where
+   ((m (-> {:table_name :system_props
+            :column [:value]
+            :where [:and [:= :name "license"]]}
+           select! c/query first :value decrypt-license)))
+   (if m
+     (License. (:tenant m) (:tenant-id m) (:creation-date m) (:expiration-date m) (:limitation m))
+     (throw (ex-info "not found registered license"
+                     {:type :license-not-found
+                      :translation [:alerts :license-not-found]})))))
+
+(defn build-session-param []
+  (->> {:table_name :system_props
+        :column [:name :value]
+        :where [:<> :name "license"]}
+       select! c/query (mapv (comp vec vals)) (into {}) (SessionParams.)))
+
 (defn build-session [m]
-  (if m
-    (let [
-         {:keys [tenant tenant-id creation-date expiration-date limitation]}
-         {:tenant "ekka" :tenant-id "ekka-010313" :limitation {}}]
-     (Session.
-      (User. (:user.id m)
-             (:user.login m)
-             (:user.first_name m)
-             (:user.last_name m)
-             (:user.configuration m)
-             (:profile.name m)
-             (:profile.configuration m))
-      (License. tenant tenant-id creation-date expiration-date limitation)
-      (SessionParams. {})))
-    (throw (ex-info "incorrect login or password "
-                    {:type :incorrect-login-or-password
-                     :translation [:alerts :incorrect-login-or-pass]}))))
+  (if (and m (every? map? [(:user m) (:license m) (:params m)]))
+    (Session. (:user m) (:license m) (:params m))
+    (throw (ex-info "session map is empty, this error you shuldn't see, please contact to tech support"
+                    {:type :session-map-is-empty
+                     :translation [:alerts :undefinied-login-error]}))))
 
 (defn session [] nil)
 (defn login [connection login password]
@@ -116,25 +161,10 @@
   (c/connection-set connection)
   (let [builded-session
         (->  
-         (c/query
-          (select!
-           {:table_name :user
-            :column
-            [:#as_is
-             :user.id
-             :user.login
-             :user.last_name
-             :user.first_name
-             :user.configuration
-             :profile.name
-             :profile.configuration]
-            :inner-join [:user->profile]
-            :where
-            [:and [:= :login login] [:= :password password]]}))
-         (first)
-         (update-existing-in [:user.configuration]    read-string)
-         (update-existing-in [:profile.configuration] read-string)
-         (build-session))]
+         {:user    (build-user login password)
+          :license (build-license)
+          :params  (build-session-param)}
+         build-session)]
     (defn session []
       builded-session)
     (session)))

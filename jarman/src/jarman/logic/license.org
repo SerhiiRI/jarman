@@ -1,0 +1,82 @@
+* What is jarman License
+
+  #+name: namespace
+  #+begin_src clojure :results silent
+    (ns jarman.logic.license-org
+      (:require
+       [clojure.string :as string]
+       [clojure.java.jdbc :as jdbc]
+       [clojure.spec.alpha :as s]
+       [jarman.logic.connection :as c]
+       [jarman.logic.sql-tool :refer [select! insert! update!]]
+       [jarman.tools.lang :refer :all]
+       [jarman.tools.org  :refer :all])
+      (:import [java.util Base64]))
+
+    (defn encode [to-encode]
+      (.encodeToString (Base64/getEncoder) (.getBytes to-encode)))
+    (defn decode [to-decode]
+      (String. (.decode (Base64/getDecoder) to-decode)))
+  #+end_src
+
+  #+begin_src clojure :results value 
+    (defn decrypt-license [s]
+      (if s 
+	(let [decoder (fn decode [to-decode]
+			(String. (.decode (Base64/getDecoder) to-decode)))]
+	  (try
+	    (read-string (decoder s))
+	    (catch Exception e
+	      (print-error e)
+	      (ex-info "broken license decription, maybe license hash was changed"
+		       {:type :broken-license
+			:translation [:alerts :broken-license-hash]}))))
+	(throw (ex-info "not found registered license"
+			{:type :license-not-found
+			 :translation [:alerts :license-not-found]}))))
+
+    (-> {:table_name :system_props
+	 :column [:value]
+	 :where [:and [:= :name "license"]]}
+	select! c/query first :value decrypt-license)
+  #+end_src
+
+  #+RESULTS:
+  : #'jarman.logic.license-org/decrypt-license{:tenant "ekka", :tenant-id "ekka-1239fldfdsalfj", :creation-date "10-01-2021", :expiration-date "10-09-2021", :limitation {:computer-count 10}}
+
+  Create new
+  #+begin_src clojure :results value 
+    (c/exec
+     (insert!
+      {:table_name :system_props
+       :column-list [:name :value]
+       :values [["license"
+		 (encode (pr-str {:tenant "ekka"
+				  :tenant-id "ekka-1239fldfdsalfj"
+				  :creation-date "10-01-2021"
+				  :expiration-date "10-09-2021"
+				  :limitation {:computer-count 10}}))]]}))
+
+    (-> {:table_name :system_props
+	 :column [:value]
+	 :where [:and [:= :name "license"]]}
+	select! c/query first :value decrypt-license)
+  #+end_src
+
+  Update
+  #+begin_src clojure :results value 
+    (c/exec
+     (update!
+      {:table_name :system_props
+       :where [:= :name "license" ]
+       :set {:value (encode (pr-str {:tenant "ekka"
+				     :tenant-id "ekka-1239fldfdsalfj"
+				     :creation-date "10-01-2021"
+				     :expiration-date "10-09-2021"
+				     :limitation {:computer-count 10}}))}}))
+
+    (-> {:table_name :system_props
+	 :column [:value]
+	 :where [:and [:= :name "license"]]}
+	select! c/query first :value decrypt-license)
+  #+end_src

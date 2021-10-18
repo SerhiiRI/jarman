@@ -654,7 +654,7 @@
         entrepreneur-box   (gmg/migrid :v (render-fn))
         rerender-header (fn [price]
                           (format "<html> %s &nbsp;&nbsp;<b> %s </b> %s </html>" 
-                                  (get-in @(:entrepreneurs-m (state!)) [entrepreneur-id-k :enterpreneur.name])
+                                  (get-in @(:entrepreneurs-m (state!)) [entrepreneur-id-k :enterprise.name])
                                   (if (all-contracts-payed? state! entrepreneur-path) ""
                                       (str price " " (:currency (state!))))
                                   ""))
@@ -669,7 +669,7 @@
                               #(entrepreneur-checkbox state! entrepreneur-box rerender-header entrepreneur-path checkbox-selected?))
               :lvl 1)]
     root))
-;; :v [1 1 2] =>> :v [:enterpreneur.id :service_contract.id :service_contract_month.id]
+;; :v [1 1 2] =>> :v [:enterprise.id :service_contract.id :service_contract_month.id]
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -697,7 +697,7 @@
              (not-empty
               (cond-> []
                 (empty? selected-entrepreneur)
-                (conj (fn [] (i/warning (gtool/get-lang-header :invalid-enterpreneur)
+                (conj (fn [] (i/warning (gtool/get-lang-header :invalid-enterprise)
                                         (gtool/get-lang-alerts :field-is-empty))))
 
                 (or (empty? price) (= (isNumber? price) false))
@@ -797,7 +797,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-;; :v [1 1 2] =>> :v [:enterpreneur.id :service_contract.id :service_contract_month.id]
+;; :v [1 1 2] =>> :v [:enterprise.id :service_contract.id :service_contract_month.id]
 ;; (some false? (vals (get-in @(:contracts-checkboxs-map @state) [:2 :2])))
 ;; (vec (map #(keyword (str %)) [2 2 1]))
 

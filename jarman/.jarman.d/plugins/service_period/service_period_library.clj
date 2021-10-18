@@ -118,8 +118,8 @@
 ;; clean-up keys
 ;; -------------
 ;; (select-keys {} [:id :was_payed :service_month_start :money_per_month :service_month_end :id_service_contract])
-;; (select-keys {} [:service_contract.id :service_contract.id_enterpreneur :service_contract.contract_start_term :service_contract.contract_end_term])
-;; (select-keys {} [:enterpreneur.id :enterpreneur.name :enterpreneur.ssreou :enterpreneur.ownership_form :enterpreneur.vat_certificate :enterpreneur.individual_tax_number :enterpreneur.director :enterpreneur.accountant :enterpreneur.legal_address :enterpreneur.physical_address :enterpreneur.contacts_information])
+;; (select-keys {} [:service_contract.id :service_contract.id_enterprise :service_contract.contract_start_term :service_contract.contract_end_term])
+;; (select-keys {} [:enterprise.id :enterprise.name :enterprise.ssreou :enterprise.ownership_form :enterprise.vat_certificate :enterprise.individual_tax_number :enterprise.director :enterprise.accountant :enterprise.legal_address :enterprise.physical_address :enterprise.contacts_information])
 
 ;; -----------
 ;; all columns
@@ -127,21 +127,21 @@
 #_[:#as_is
 
    ;; enterpr
-   :enterpreneur.id
-   :enterpreneur.name
-   :enterpreneur.ssreou
-   :enterpreneur.ownership_form
-   :enterpreneur.vat_certificate
-   :enterpreneur.individual_tax_number
-   :enterpreneur.director
-   :enterpreneur.accountant
-   :enterpreneur.legal_address
-   :enterpreneur.physical_address
-   :enterpreneur.contacts_information
+   :enterprise.id
+   :enterprise.name
+   :enterprise.ssreou
+   :enterprise.ownership_form
+   :enterprise.vat_certificate
+   :enterprise.individual_tax_number
+   :enterprise.director
+   :enterprise.accountant
+   :enterprise.legal_address
+   :enterprise.physical_address
+   :enterprise.contacts_information
 
    ;; contract
    :service_contract.id
-   :service_contract.id_enterpreneur
+   :service_contract.id_enterprise
    :service_contract.contract_start_term
    :service_contract.contract_end_term
 
@@ -153,18 +153,18 @@
    :service_contract_month.money_per_month
    :service_contract_month.was_payed]
 
-(def enterpreneur-cols
-  [:enterpreneur.id
-   :enterpreneur.name
-   :enterpreneur.ssreou
-   :enterpreneur.ownership_form
-   :enterpreneur.vat_certificate
-   :enterpreneur.individual_tax_number
-   :enterpreneur.director
-   :enterpreneur.accountant
-   :enterpreneur.legal_address
-   :enterpreneur.physical_address
-   :enterpreneur.contacts_information])
+(def enterprise-cols
+  [:enterprise.id
+   :enterprise.name
+   :enterprise.ssreou
+   :enterprise.ownership_form
+   :enterprise.vat_certificate
+   :enterprise.individual_tax_number
+   :enterprise.director
+   :enterprise.accountant
+   :enterprise.legal_address
+   :enterprise.physical_address
+   :enterprise.contacts_information])
 (def service_contract-cols
   [:service_contract.id
    :service_contract.contract_start_term
@@ -229,15 +229,15 @@
 
   (let [data (db/query
               (select!
-               {:table_name :enterpreneur,
+               {:table_name :enterprise,
                 :left-join
-                [:service_contract<-enterpreneur
+                [:service_contract<-enterprise
                  :service_contract_month<-service_contract]
                 :column
                 (vec
                  (concat
                   [:#as_is]
-                  enterpreneur-cols
+                  enterprise-cols
                   service_contract-cols
                   service_contract_month-cols))}))
 
@@ -245,11 +245,11 @@
                             #(not (nil? (second %)))
                             (distinct
                              (map
-                              #(list (:enterpreneur.id %) (:enterpreneur.name %))
+                              #(list (:enterprise.id %) (:enterprise.name %))
                               data)))]
     (->> data
          (filter #(and (:service_contract.id %) (:service_contract_month.id %)))
-         (map #(array-map :enterpreneur (select-keys % enterpreneur-cols)
+         (map #(array-map :enterprise (select-keys % enterprise-cols)
                           :service_contract (select-keys % service_contract-cols)
                           :service_contract_month (select-keys % service_contract_month-cols)))
 
@@ -258,8 +258,8 @@
                   c-atom (atom {})
                   s-atom (atom {})]
               (doall
-               (map (fn [{e :enterpreneur sc :service_contract scm :service_contract_month}]
-                      (let [e-id (keyword (str (:enterpreneur.id e)))
+               (map (fn [{e :enterprise sc :service_contract scm :service_contract_month}]
+                      (let [e-id (keyword (str (:enterprise.id e)))
                             c-id (keyword (str (:service_contract.id sc)))
                             s-id (keyword (str (:service_contract_month.id scm)))]
                         (if (empty? (get @e-atom e-id)) (swap! e-atom #(assoc % e-id e)))
@@ -271,11 +271,11 @@
                :subcontracts-m  @s-atom
                :entrepreneurs-list entrepreneurs-list})))
          
-         ;; (group-by-2 [(comp :enterpreneur.id :enterpreneur)
+         ;; (group-by-2 [(comp :enterprise.id :enterprise)
          ;;              (comp :service_contract.id :service_contract)
          ;;              (comp :service_contract_month.id :service_contract_month)]
          ;;             ;; two factorization level
-         ;;             :enterpreneur
+         ;;             :enterprise
          ;;             :service_contract
          ;;             ;; lambda on leaf
          ;;             :service_contract_month )
@@ -309,7 +309,7 @@
 (def grouped-query (info-grouped-query))
 (let [{rl :raw-list tip :tree-index-paths ti :tree-index tv :tree-view} grouped-query]
   ;; (map #(conj % false )tip)
-  ;; {:per-enterpreneur (mapv (fn [[enter sc-m]]
+  ;; {:per-enterprise (mapv (fn [[enter sc-m]]
   ;;                            (calculate-payment-for-enterpreneuer enter sc-m)) (seq tv))
   ;;  :per-contracts (mapv (fn [[enter sc-m]]
   ;;                         (mapv (fn [[sc-m scm-m]] (calculate-payment-for-service_contract sc-m scm-m)) (seq sc-m))) (seq tv))}
@@ -317,28 +317,28 @@
 
 
 ;;; INFO SELECTS ;;;
-#_(defn info-for-enterpreneur [enterpreneur_id]
-  {:pre [(number? enterpreneur_id)]}
+#_(defn info-for-enterprise [enterprise_id]
+  {:pre [(number? enterprise_id)]}
   (db/query
    (select!
     {:table_name :service_contract_month,
      :inner-join
      [:service_contract_month->service_contract
-      :service_contract->enterpreneur],
+      :service_contract->enterprise],
      :column
      [:#as_is
       ;; enterpr
-      :enterpreneur.id
-      :enterpreneur.name
-      ;; :enterpreneur.ssreou
-      ;; :enterpreneur.ownership_form
-      ;; :enterpreneur.vat_certificate
-      ;; :enterpreneur.individual_tax_number
-      ;; :enterpreneur.director
-      ;; :enterpreneur.accountant
-      ;; :enterpreneur.legal_address
-      ;; :enterpreneur.physical_address
-      ;; :enterpreneur.contacts_information
+      :enterprise.id
+      :enterprise.name
+      ;; :enterprise.ssreou
+      ;; :enterprise.ownership_form
+      ;; :enterprise.vat_certificate
+      ;; :enterprise.individual_tax_number
+      ;; :enterprise.director
+      ;; :enterprise.accountant
+      ;; :enterprise.legal_address
+      ;; :enterprise.physical_address
+      ;; :enterprise.contacts_information
       ;; contract
       :service_contract.id
       :service_contract.contract_start_term
@@ -349,7 +349,7 @@
       :service_contract_month.service_month_end
       :service_contract_month.money_per_month
       :service_contract_month.was_payed]
-     :where [:= :enterpreneur.id enterpreneur_id]})))
+     :where [:= :enterprise.id enterprise_id]})))
 
 #_(defn info-for-service_contract [service_contract_id]
   {:pre [(number? service_contract_id)]}
@@ -371,37 +371,37 @@
       :service_contract_month.was_payed]
      :where [:= :service_contract.id service_contract_id]})))
 
-#_(defn get-paiment-for-enterpreneur [enterpreneur_id]
-  {:pre [(number? enterpreneur_id)]}
+#_(defn get-paiment-for-enterprise [enterprise_id]
+  {:pre [(number? enterprise_id)]}
   (reduce
    (fn [acc x] (+ acc (:service_contract_month.money_per_month x))) 0       
    (db/query (select! {:table_name :service_contract_month,
                        :inner-join
                        [:service_contract_month->service_contract
-                        :service_contract->enterpreneur],
+                        :service_contract->enterprise],
                        :column
                        [:#as_is
                         :service_contract_month.money_per_month
                         :service_contract.id
-                        :enterpreneur.id]
-                       :where [:= :enterpreneur.id enterpreneur_id]}))))
+                        :enterprise.id]
+                       :where [:= :enterprise.id enterprise_id]}))))
 
 ;;; PAYMENT SELECTS
 
-#_(defn get-payment-for-enterpreneur [enterpreneur_id]
-  {:pre [(number? enterpreneur_id)]}
+#_(defn get-payment-for-enterprise [enterprise_id]
+  {:pre [(number? enterprise_id)]}
   (reduce
    (fn [acc x] (+ acc (:service_contract_month.money_per_month x))) 0       
    (db/query (select! {:table_name :service_contract_month,
                        :inner-join
                        [:service_contract_month->service_contract
-                        :service_contract->enterpreneur],
+                        :service_contract->enterprise],
                        :column
                        [:#as_is
                         :service_contract_month.money_per_month
                         :service_contract.id
-                        :enterpreneur.id]
-                       :where [:= :enterpreneur.id enterpreneur_id]}))))
+                        :enterprise.id]
+                       :where [:= :enterprise.id enterprise_id]}))))
 
 #_(defn get-payment-for-service_contract [service_contract_id]
   {:pre [(number? service_contract_id)]}
@@ -410,17 +410,17 @@
    (db/query (select! {:table_name :service_contract_month,
                        :inner-join
                        [:service_contract_month->service_contract
-                        :service_contract->enterpreneur],
+                        :service_contract->enterprise],
                        :column
                        [:#as_is
                         :service_contract_month.money_per_month
                         :service_contract.id
-                        :enterpreneur.id]
+                        :enterprise.id]
                        :where [:= :service_contract.id service_contract_id]}))))
 
 
 (comment
-  (get-payment-for-enterpreneur 1)
+  (get-payment-for-enterprise 1)
   (get-payment-for-service_contract 1))
 
 ;;; INSERTS
@@ -428,13 +428,13 @@
 (defn  date-to-obj
   [data-string] (.parse (java.text.SimpleDateFormat. "yyyy-MM-dd") data-string))
 
-(defn insert-service_contract [id_enterpreneur contract_start_term contract_end_term]
+(defn insert-service_contract [id_enterprise contract_start_term contract_end_term]
   {:pre [(instance? java.util.Date contract_start_term) (instance? java.util.Date contract_end_term)]}
   (let [formater (java.text.SimpleDateFormat. "yyyy-MM-dd")]
     (let [contract-id (:generated_key
                        (clojure.java.jdbc/execute! (db/connection-get)
                                                    (insert! {:table_name :service_contract
-                                                             :set {:id_enterpreneur id_enterpreneur
+                                                             :set {:id_enterprise id_enterprise
                                                                    :contract_start_term (.format formater contract_start_term)
                                                                    :contract_end_term   (.format formater contract_end_term)}})  {:return-keys ["id"]}))]
       contract-id)))
@@ -454,13 +454,13 @@
       (do (db/exec sql-require) true)
       (catch Exception e (println "Error: " sql-require)))))
 
-(defn insert-all [id_enterpreneur contract_start_term contract_end_term money_per_month]
-  {:pre [(some? id_enterpreneur)
+(defn insert-all [id_enterprise contract_start_term contract_end_term money_per_month]
+  {:pre [(some? id_enterprise)
          (some? money_per_month)
          (instance? java.util.Date contract_start_term)
          (instance? java.util.Date contract_end_term)]}
   (println "INSEERRTT")
-  (if-let [service_contract_id (insert-service_contract id_enterpreneur
+  (if-let [service_contract_id (insert-service_contract id_enterprise
                                                         contract_start_term
                                                         contract_end_term)]
     (insert-service_contract_month
@@ -468,7 +468,7 @@
      contract_start_term
      contract_end_term
      money_per_month)
-    (println "Service month not been created for enterprenier with '%d' id" id_enterpreneur)))
+    (println "Service month not been created for enterprenier with '%d' id" id_enterprise)))
 
 ;; (get-date-pairs (date-to-obj "2021-01-01") (date-to-obj "2021-02-01"))
 ;; (insert-service_contract 1 (date-object 2021 1 1) (date-object 2021 2 1))

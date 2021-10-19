@@ -266,10 +266,10 @@
                         (if (empty? (get-in @c-atom [e-id c-id])) (swap! c-atom #(assoc-in % [e-id c-id] (assoc sc :selected? false))))
                         (if (empty? (get-in @s-atom [e-id c-id s-id])) (swap! s-atom #(assoc-in % [e-id c-id s-id] (assoc scm :selected? false))))))
                     data))
-              {:entrepreneurs-m @e-atom
+              {:enterprises-m   @e-atom
                :contracts-m     @c-atom
                :subcontracts-m  @s-atom
-               :entrepreneurs-list entrepreneurs-list})))
+               :enterprises-list entrepreneurs-list})))
          
          ;; (group-by-2 [(comp :enterprise.id :enterprise)
          ;;              (comp :service_contract.id :service_contract)

@@ -49,7 +49,7 @@
            :plugin-global-config global-configuration-getter
            :plugin-config        (get-in (global-configuration-getter) (conj plugin-path :config) {})
            :plugin-toolkit       (get-in (global-configuration-getter) (conj plugin-path :toolkit) {})
-           :enterprises-m      (atom {})
+           :enterprises-m        (atom {})
            :contracts-m          (atom {})
            :subcontracts-m       (atom {})
            :currency             "UAH"
@@ -80,7 +80,7 @@
   (let [{:keys [root expand-btns-box enterprises-m contracts-m subcontracts-m]} (state!)
         fresh-data ((:download-data-map (:plugin-toolkit (state!))))]
 
-    (reset! enterprises-m (:enterprises-m fresh-data))
+    (reset! enterprises-m   (:enterprises-m   fresh-data))
     (reset! contracts-m     (:contracts-m     fresh-data))
     (reset! subcontracts-m  (:subcontracts-m  fresh-data))
     (swap! (state! :atom) #(assoc % :enterprises-list (:enterprises-list fresh-data)))
@@ -235,6 +235,44 @@
                    
                    :focus-lost (fn [e] (c/config! e :text (c/config e :user-data)))]]))
 
+;; => #<Atom@1a21bbb3: 
+;;      {:1
+;;       {:enterprise.director "Ivan Ivankow",
+;;        :enterprise.individual_tax_number "3323392190",
+;;        :enterprise.accountant "Anastasia Wewbytska",
+;;        :enterprise.contacts_information "306690666",
+;;        :enterprise.vat_certificate "EKCA31232",
+;;        :enterprise.physical_address "B1",
+;;        :enterprise.ssreou "32432432",
+;;        :enterprise.ownership_form "LTD",
+;;        :enterprise.id 1,
+;;        :enterprise.legal_address "A1",
+;;        :enterprise.name "Biedronka"
+
+(defn- info-bar
+  [state! contract-path]
+  (let [enterprise-id (first contract-path)
+        enterprise    (enterprise-id @(:enterprises-m (state!)))
+        label-fn      (fn [txt & {:keys [bold]}] (c/label :text txt :font (if bold (gs/getFont :bold) (gs/getFont))))
+        gmg-template    "[120, fill]0px[fill]"
+        gmg-template-2  "[150, fill]0px[fill]"
+        panel (gmg/migrid
+               :> "[300, fill]" {:gap [5 5 10 5] :args [:border (b/line-border :top 10 :bottom 10 :color face/c-layout-background)
+                                                        :background face/c-compos-background-light]}
+               [(gmg/migrid :v [(gmg/migrid :> gmg-template {:gap [5]}
+                                            [(label-fn (gtool/get-lang-header :enterprise))
+                                             (label-fn (:enterprise.name enterprise) :bold true)])
+                                (gmg/migrid :> gmg-template {:gap [5]}
+                                            [(label-fn  (gtool/get-lang-header :director))
+                                             (label-fn  (:enterprise.director enterprise) :bold true)])])
+                (gmg/migrid :v [(gmg/migrid :> gmg-template-2 {:gap [5]}
+                                            [(label-fn "Contacts information")
+                                             (label-fn (:enterprise.contacts_information enterprise) :bold true)])
+                                (gmg/migrid :> gmg-template-2 {:gap [5]}
+                                            [(label-fn "VAT Certificate")
+                                             (label-fn (:enterprise.vat_certificate enterprise) :bold true)])])])]
+    panel))
+
 (defn- panel-with-subcontract-rows
   "Description
     return mig-panel for one subcontract"
@@ -336,7 +374,7 @@
                                 (let [subcontract-path (join-vec contract-path [subcontract-id])]
                                     (panel-with-subcontract-rows state! subcontract-path (= subcontract-path clicked-sub-path))))
                               (get-in @(:subcontracts-m (state!)) contract-path))))]
-    (list btns-menu-bar (gcomp/min-scrollbox subcontracts))))
+    (list btns-menu-bar (info-bar state! contract-path) (gcomp/min-scrollbox subcontracts))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;

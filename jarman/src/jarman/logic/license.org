@@ -1,82 +1,47 @@
+* Debug Licenses
+
+  #+name: debug-licenses
+  #+startup: shrink
+  | tenant | tenant-id | creation-date | expiration-date | limitation           |
+  |--------+-----------+---------------+-----------------+----------------------|
+  |        | <3>       | <l11>         | <l11>           | <l5>                 |
+  | EKKA   | EKKA-1    | 10-01-2021    | 10-09-2021      | {:computer-count 10} |
+
+  #+name: debug-licenses-raw
+  #+header: :var elist=debug-licenses
+  #+header: :results value silent
+  #+begin_src emacs-lisp 
+    (prin1-to-string elist)
+  #+end_src
+
 * What is jarman License
 
-  #+name: namespace
-  #+begin_src clojure :results silent
-    (ns jarman.logic.license-org
-      (:require
-       [clojure.string :as string]
-       [clojure.java.jdbc :as jdbc]
-       [clojure.spec.alpha :as s]
-       [jarman.logic.connection :as c]
-       [jarman.logic.sql-tool :refer [select! insert! update!]]
-       [jarman.tools.lang :refer :all]
-       [jarman.tools.org  :refer :all])
-      (:import [java.util Base64]))
+  Obtain selected in database license. License manually encrypted, and you need ~jarman.logic.session/decrypt-license~ function to decrypt it, and next you can managing it.
 
-    (defn encode [to-encode]
-      (.encodeToString (Base64/getEncoder) (.getBytes to-encode)))
-    (defn decode [to-decode]
-      (String. (.decode (Base64/getDecoder) to-decode)))
+  #+name: out-selected-license
+  #+header: :results output
+  #+begin_src clojure
+    (->> (load-license)
+	 (decrypt-license)
+	 (rename-keys)
+	 (cl-format *out* "<license params>~%~{  ~{~A~^~20T~} ~%~}</license params>"))
+  #+end_src
+  #+RESULTS: out-selected-license
+  : <license params>
+  :   tenant            ekka 
+  :   id tenant         ekka-1239fldfdsalfj 
+  :   creation date     10-01-2021 
+  :   expiration date   10-09-2021 
+  :   limitation        {:computer-count 10} 
+  : </license params>
+
+    
+  #+name: select-license
+  #+header: :var id=0
+  #+begin_src clojure :results output
+    (create-license)
+    <<out-selected-license>>
   #+end_src
 
-  #+begin_src clojure :results value 
-    (defn decrypt-license [s]
-      (if s 
-	(let [decoder (fn decode [to-decode]
-			(String. (.decode (Base64/getDecoder) to-decode)))]
-	  (try
-	    (read-string (decoder s))
-	    (catch Exception e
-	      (print-error e)
-	      (ex-info "broken license decription, maybe license hash was changed"
-		       {:type :broken-license
-			:translation [:alerts :broken-license-hash]}))))
-	(throw (ex-info "not found registered license"
-			{:type :license-not-found
-			 :translation [:alerts :license-not-found]}))))
 
-    (-> {:table_name :system_props
-	 :column [:value]
-	 :where [:and [:= :name "license"]]}
-	select! c/query first :value decrypt-license)
-  #+end_src
-
-  #+RESULTS:
-  : #'jarman.logic.license-org/decrypt-license{:tenant "ekka", :tenant-id "ekka-1239fldfdsalfj", :creation-date "10-01-2021", :expiration-date "10-09-2021", :limitation {:computer-count 10}}
-
-  Create new
-  #+begin_src clojure :results value 
-    (c/exec
-     (insert!
-      {:table_name :system_props
-       :column-list [:name :value]
-       :values [["license"
-		 (encode (pr-str {:tenant "ekka"
-				  :tenant-id "ekka-1239fldfdsalfj"
-				  :creation-date "10-01-2021"
-				  :expiration-date "10-09-2021"
-				  :limitation {:computer-count 10}}))]]}))
-
-    (-> {:table_name :system_props
-	 :column [:value]
-	 :where [:and [:= :name "license"]]}
-	select! c/query first :value decrypt-license)
-  #+end_src
-
-  Update
-  #+begin_src clojure :results value 
-    (c/exec
-     (update!
-      {:table_name :system_props
-       :where [:= :name "license" ]
-       :set {:value (encode (pr-str {:tenant "ekka"
-				     :tenant-id "ekka-1239fldfdsalfj"
-				     :creation-date "10-01-2021"
-				     :expiration-date "10-09-2021"
-				     :limitation {:computer-count 10}}))}}))
-
-    (-> {:table_name :system_props
-	 :column [:value]
-	 :where [:and [:= :name "license"]]}
-	select! c/query first :value decrypt-license)
-  #+end_src
+  #+CALL: factorial(n=5) :exports results

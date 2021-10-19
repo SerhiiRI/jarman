@@ -3,11 +3,13 @@
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]
    [clojure.spec.alpha :as s]
+   [clojure.pprint :refer [cl-format]]
    [jarman.logic.connection :as c]
    [jarman.logic.sql-tool :refer [select! insert! update!]]
    [jarman.tools.lang :refer :all]
    [jarman.tools.org  :refer :all])
   (:import [java.util Base64]))
+
 
 ;; (s/def ::ne-string (every-pred string? not-empty))
 ;; (s/def ::str-without-space (s/and ::ne-string #(not (string/includes? % " "))))
@@ -51,42 +53,8 @@
     {:login login :first-name first-name :last-name last-name :profile-name profile-name })
   (config [this]
     user-configuration))
-
-(defn decrypt-license [s]
-  (if s 
-    (let [decoder (fn decode [to-decode]
-                    (String. (.decode (Base64/getDecoder) to-decode)))]
-      (try
-        (read-string (decoder s))
-        (catch Exception e
-          (print-error e)
-          (ex-info "broken license decription, maybe license hash was changed"
-                   {:type :broken-license
-                    :translation [:alerts :broken-license-hash]}))))
-    (throw (ex-info "not found registered license"
-                    {:type :license-not-found
-                     :translation [:alerts :license-not-found]}))))
-
-;; (c/exec
-;;  (insert!
-;;   {:table_name :system_props
-;;    :column-list [:name :value]
-;;    :values [["contact-person" "Julia Burmich"]]}))
 (defrecord License [tenant tenant-id creation-date expiration-date limitation])
 (defrecord SessionParams [m])
-
-;; +-1------+    +-2---------+    +-3-----+
-;; |SQL User|--->|SQL License|--->|Session|
-;; +--------+    +-----------+    +-------+
-;;                                  |
-;; +-4.1-------------+	    public  |
-;; | (defn login []) |<-------------+
-;; +-----------------+		    |
-;; 				    |
-;; +-4.2---------------+    public  |
-;; | (defn session []) |<-----------+
-;; +-------------------+
-
 (defprotocol ISessionGetter
   (get-user    [this])
   (get-license [this])
@@ -103,6 +71,55 @@
     (.allow-permission? (.get-user this) group))
   (allow-groups [this]
     (.allow-groups (.get-user this))))
+
+
+(defn encode [to-encode]
+  (.encodeToString (Base64/getEncoder) (.getBytes to-encode)))
+(defn decode [to-decode]
+  (String. (.decode (Base64/getDecoder) to-decode)))
+(defn decrypt-license [s]
+  (if s 
+    (let [decoder (fn decode [to-decode]
+                    (String. (.decode (Base64/getDecoder) to-decode)))]
+      (try
+        (read-string (decoder s))
+        (catch Exception e
+          (print-error e)
+          (ex-info "broken license decription, maybe license hash was changed"
+                   {:type :broken-license
+                    :translation [:alerts :broken-license-hash]}))))
+    (throw (ex-info "not found registered license"
+                    {:type :license-not-found
+                     :translation [:alerts :license-not-found]}))))
+(defn load-license []
+  (->> {:table_name :system_props
+        :column [:value]
+        :where [:and [:= :name "license"]]}
+       select! c/query first :value))
+(defn encrypt-license [m]
+  (encode (pr-str m)))
+(defn rename-keys [m]
+  (clojure.set/rename-keys
+   m {:tenant "tenant", :tenant-id "id tenant", :creation-date "creation date",
+      :expiration-date "expiration date", :limitation "limitation"}))
+(defn license-to-map [col]
+ (->>
+  ;; (list "EKKA" "EKKA-2" "10-09-2018" "10-09-2020" "{:computer-count 10}")
+  col
+  (apply ->License)
+  (into {})))
+(defn group-by-tenant-id [licenses-m]
+  (->> licenses-m
+   (group-by :tenant-id)
+   (map (fn [[k v]] (vector k (first v))))
+   (into {})))
+(defn create-license [m]
+  (if-let [existing-profile (load-license)]
+    (c/exec (update! {:table_name :system_props :set {:name "license" :value (encrypt-license m)} :where [:= :name "license"]}))
+    (c/exec (insert! {:table_name :system_props :column-list [:name :value] :values ["license" (encrypt-license m)]}))))
+
+
+
 
 (defn build-user [login password]
   (where
@@ -125,10 +142,7 @@
 
 (defn build-license []
   (where
-   ((m (-> {:table_name :system_props
-            :column [:value]
-            :where [:and [:= :name "license"]]}
-           select! c/query first :value decrypt-license)))
+   ((m (-> (load-license) decrypt-license)))
    (if m
      (License. (:tenant m) (:tenant-id m) (:creation-date m) (:expiration-date m) (:limitation m))
      (throw (ex-info "not found registered license"

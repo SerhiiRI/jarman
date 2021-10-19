@@ -114,9 +114,11 @@
    (map (fn [[k v]] (vector k (first v))))
    (into {})))
 (defn create-license [m]
-  (if-let [existing-profile (load-license)]
-    (c/exec (update! {:table_name :system_props :set {:name "license" :value (encrypt-license m)} :where [:= :name "license"]}))
-    (c/exec (insert! {:table_name :system_props :column-list [:name :value] :values ["license" (encrypt-license m)]}))))
+  (if m
+   (if-let [existing-profile (load-license)]
+     (c/exec (update! {:table_name :system_props :set {:name "license" :value (encrypt-license m)} :where [:= :name "license"]}))
+     (c/exec (insert! {:table_name :system_props :column-list [:name :value] :values ["license" (encrypt-license m)]})))
+   (println "Not selected license to update")))
 
 
 

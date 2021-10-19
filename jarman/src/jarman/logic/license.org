@@ -17,6 +17,7 @@
 * What is jarman License
 
   Obtain selected in database license. License manually encrypted, and you need ~jarman.logic.session/decrypt-license~ function to decrypt it, and next you can managing it.
+  #+header: :ns jarman.logic.session
   #+header: :results output
   #+name: out-selected-license
   #+begin_src clojure

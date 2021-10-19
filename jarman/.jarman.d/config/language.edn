@@ -135,7 +135,10 @@
     :date-start   "Data rozpoczęcia"
     :date-end     "Data zakończenia"
     :periods-count "Liczba okresów"
-    :director     "Dyrektor"
+    :director      "Dyrektor"
+    :VAT-Certificate "Kod VAT"
+    :contacts-info   "Kontakt"
+    :physical_address "Adres"
     }
    
    :alerts
@@ -365,6 +368,9 @@
   :date-end     "End date"
   :periods-count "Periods count"
   :director    "Director"
+  :VAT-Certificate "VAT Certificate"
+  :contacts-info   "Contact"
+  :physical_address "Address"
   }
 
  :alerts

@@ -44,7 +44,7 @@
 
 (defn- create-state-template [plugin-path global-configuration-getter root state!]
   (reset! state
-          {:debug-mode           true
+          {:debug-mode           false ;; Add to tree info about path
            :plugin-path          plugin-path
            :plugin-global-config global-configuration-getter
            :plugin-config        (get-in (global-configuration-getter) (conj plugin-path :config) {})
@@ -76,7 +76,10 @@
 
 (declare build-expand-contracts-for-enterprise)
 
-(defn- refresh-data-and-panel [state!]
+(defn- refresh-data-and-panel
+  "Description:
+     Load data again and rerender panel with contracts."
+  [state!]
   (let [{:keys [root expand-btns-box enterprises-m contracts-m subcontracts-m]} (state!)
         fresh-data ((:download-data-map (:plugin-toolkit (state!))))]
 
@@ -145,6 +148,9 @@
   (map #(Integer/parseInt (name (last %))) paths))
 
 (defn- subcontract-payment-done
+  "Description:
+     Update payment done in state and DB.
+  "
   [state!
    & {:keys [subcontract-path]
       :or {subcontract-path nil}}]
@@ -160,7 +166,7 @@
         (do
           ;; Set payed in DB
           (req/update-service-month-to-payed selected-ids)
-          (println selected-paths)
+          ;;(println selected-paths)
           (if (nil? subcontract-path)
             (pay-for-selected-subcontracts state! selected-paths)
             (pay-for-pointed-subcontracts  state! subcontract-path))
@@ -178,31 +184,30 @@
 
 (defn- update-subcontracts-state
   "Description:
-     Swap if some prices was changed in DB."
+     Swap subcontracts state if some prices was changed in DB."
   [state!]
-  (if (:db-saved @(:subcontracts-payment-state (state!))) 
-      (let [new-map       @(:subcontracts-m (state!))
-            contract-path (:path @(:subcontracts-payment-state (state!)))
-            swap-map      ((fn assoc-next [m sps]
-                             (let [[id price] (first sps)
-                                   price price
-                                   next-sps (drop 1 sps)
-                                   path-to-update (join-vec contract-path [(keyword (str id)) :service_contract_month.money_per_month])
-                                   next-map (assoc-in m path-to-update price)]
-                               (if (empty? next-sps)
-                                 next-map
-                                 (assoc-next next-map next-sps))))
-                           new-map (vec (:updated-prices @(:subcontracts-payment-state (state!)))))]
-        (reset! (:subcontracts-m (state!)) swap-map)))
-  (reset! (:subcontracts-payment-state (state!)) {:path [] :db-saved false :updated-prices {}}))
+  (let [new-map @(:subcontracts-m (state!))
+        contract-path (:path @(:subcontracts-payment-state (state!)))
+        swap-map      ((fn assoc-next [m sps]
+                         (let [[id price] (first sps)
+                               price price
+                               next-sps (drop 1 sps)
+                               path-to-update (join-vec contract-path [(keyword (str id)) :service_contract_month.money_per_month])
+                               next-map (assoc-in m path-to-update price)]
+                           (if (empty? next-sps)
+                             next-map
+                             (assoc-next next-map next-sps))))
+                       new-map (vec (:updated-prices @(:subcontracts-payment-state (state!)))))]
+    (reset! (:subcontracts-m (state!)) swap-map))
+  (swap! (:subcontracts-payment-state (state!)) #(assoc-in % [:updated-prices] {})))
 
 (defn- back-to-main-panel
   "Description
-    remove in root panel with periods of one contract, add to root panel with all contracta (like agenda) "
+     Load contracts panel with subcontracts list using updated state."
   [state!]
   (let [{:keys [root new-contract-form expand-btns-box btns-menu-bar]} (state!)]
     (c/config! (:root (state!)) :items (gtool/join-mig-items btns-menu-bar new-contract-form (gcomp/min-scrollbox expand-btns-box)))
-    (update-subcontracts-state state!)))
+    (reset! (:subcontracts-payment-state (state!)) {:path [] :db-saved false :updated-prices {}})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GUI for one Contract;;;
@@ -210,13 +215,13 @@
 
 (defn- update-subcontract-price
   "Description
-    require to db for update money for one period"
+     Update data about subcontracts price in DB."
   [state!]
   (let [update-fn (:update-service-money (:plugin-toolkit (state!)))]
     (doall (map (fn [[id money]] (update-fn id money)) (vec (:updated-prices @(:subcontracts-payment-state (state!))))))
     (i/info (gtool/get-lang-header :info)
             (gtool/get-lang-alerts :updated-data))
-    (swap! (:subcontracts-payment-state (state!)) #(assoc % :db-saved true))))
+    (update-subcontracts-state state!)))
 
 (defn- number-input
   [begin-text only-int? more-fns]
@@ -235,42 +240,81 @@
                    
                    :focus-lost (fn [e] (c/config! e :text (c/config e :user-data)))]]))
 
-;; => #<Atom@1a21bbb3: 
-;;      {:1
-;;       {:enterprise.director "Ivan Ivankow",
-;;        :enterprise.individual_tax_number "3323392190",
-;;        :enterprise.accountant "Anastasia Wewbytska",
-;;        :enterprise.contacts_information "306690666",
-;;        :enterprise.vat_certificate "EKCA31232",
-;;        :enterprise.physical_address "B1",
-;;        :enterprise.ssreou "32432432",
-;;        :enterprise.ownership_form "LTD",
-;;        :enterprise.id 1,
-;;        :enterprise.legal_address "A1",
-;;        :enterprise.name "Biedronka"
+(defn- calculate-contract-price
+  "Description:
+     Using :subcontracts-m atom in state, get info about prices and calculate.
+     Get only prices of not payed subcontracts."
+  [state! contract-path]
+  (let [subcontracts-m (get-in @(:subcontracts-m (state!)) contract-path)
+        contract-price (apply + (flatten
+                                 (doall (map
+                                         (fn [[subcontract-id subcontract]]
+                                           (if (:service_contract_month.was_payed subcontract) 0
+                                               (try
+                                                 (+ 0 (:service_contract_month.money_per_month subcontract))
+                                                 (catch Exception e 0))))
+                                         (get-in @(:subcontracts-m (state!)) contract-path)))))]
+    (if (or (float? contract-price) (int? contract-price))
+      contract-price 0)))
+
+(defn- info-bar-params
+  "Description:
+     Data for info bar for contract view. Add some more, it's not any problem.
+     Rule is [title, info, title, info, ...]"
+  [enterprise contract-price date-start date-end currency]
+  [(gtool/get-lang-header :enterprise)
+   (:enterprise.name enterprise)
+   (gtool/get-lang-header :VAT-Certificate)
+   (:enterprise.vat_certificate enterprise)
+   (gtool/get-lang-header :director)
+   (:enterprise.director enterprise)
+   (gtool/get-lang-header :date-start)
+   date-start
+   (gtool/get-lang-header :date-end)
+   date-end
+   (gtool/get-lang-header :price)
+   (str contract-price " " currency)])
+
+(defn- info-bar-template
+  "Description:
+     Create info bar content in columns. Default 3 columns."
+  [state! enterprise contract-price date-start date-end collumns-count]
+  (let [font-size 15
+        cc (* 2 collumns-count)
+        collumns-v (map (fn [idx](gmg/migrid :v :f {:gap (if (not (even? idx)) [5 5 5 40] [5])} [])) (take cc (range)))
+        counter    (atom 0)
+        label-fn   (fn [txt & {:keys [bold]}]
+                     (c/label :text txt :font (if bold (gs/getFont :bold font-size) (gs/getFont font-size))))]
+    (doall
+     (map
+      (fn [info]
+        (.add (nth collumns-v @counter) (label-fn info :bold (not (even? @counter))))
+        (if (> (+ 1 @counter) (- cc 1)) (reset! counter 0) (swap! counter #(inc %))))
+      (info-bar-params enterprise contract-price date-start date-end (:currency (state!)))))
+    collumns-v))
 
 (defn- info-bar
+  "Description:
+     Create info bar for contract view. "
   [state! contract-path]
   (let [enterprise-id (first contract-path)
         enterprise    (enterprise-id @(:enterprises-m (state!)))
-        label-fn      (fn [txt & {:keys [bold]}] (c/label :text txt :font (if bold (gs/getFont :bold) (gs/getFont))))
-        gmg-template    "[120, fill]0px[fill]"
-        gmg-template-2  "[150, fill]0px[fill]"
+        contract      (get-in @(:contracts-m (state!)) contract-path)
+        render-fn     (fn [] (info-bar-template
+                              state!
+                              enterprise
+                              (calculate-contract-price state! contract-path)
+                              (clojure.string/replace (:service_contract.contract_start_term contract) #"-" "/ ")
+                              (clojure.string/replace (:service_contract.contract_end_term contract)   #"-" "/ ")
+                              3))
         panel (gmg/migrid
-               :> "[300, fill]" {:gap [5 5 10 5] :args [:border (b/line-border :top 10 :bottom 10 :color face/c-layout-background)
-                                                        :background face/c-compos-background-light]}
-               [(gmg/migrid :v [(gmg/migrid :> gmg-template {:gap [5]}
-                                            [(label-fn (gtool/get-lang-header :enterprise))
-                                             (label-fn (:enterprise.name enterprise) :bold true)])
-                                (gmg/migrid :> gmg-template {:gap [5]}
-                                            [(label-fn  (gtool/get-lang-header :director))
-                                             (label-fn  (:enterprise.director enterprise) :bold true)])])
-                (gmg/migrid :v [(gmg/migrid :> gmg-template-2 {:gap [5]}
-                                            [(label-fn "Contacts information")
-                                             (label-fn (:enterprise.contacts_information enterprise) :bold true)])
-                                (gmg/migrid :> gmg-template-2 {:gap [5]}
-                                            [(label-fn "VAT Certificate")
-                                             (label-fn (:enterprise.vat_certificate enterprise) :bold true)])])])]
+               :> "[10:, fill]" {:gap [15] :args [:border (b/line-border :top 10 :bottom 10 :color face/c-layout-background)
+                                                         :background face/c-compos-background-light]}
+               (render-fn))] 
+    (add-watch (:subcontracts-m (state!)) :contract-view
+             (fn [key atom old-m new-m]
+               (c/config! panel :items (gtool/join-mig-items (render-fn)))
+               (.repaint panel)))
     panel))
 
 (defn- panel-with-subcontract-rows
@@ -288,7 +332,6 @@
         subcontracts-payment-a (:subcontracts-payment-state (state!))
 
         x (reset! (:subcontracts-payment-state (state!)) {:path (vec (butlast subcontract-path))
-                                                          :db-saved false
                                                           :updated-prices {}})
 
         payment-path  (join-vec subcontract-path)
@@ -329,7 +372,10 @@
                          ;; price in label
                          (label-fn (subcontract-price-fn) face/c-foreground)
                          ;; price in input
-                         (number-input (subcontract-price-fn) false (fn [new-val] (swap! subcontracts-payment-a #(assoc-in % [:updated-prices id] new-val)))))])
+                         (number-input (subcontract-price-fn)
+                                       false
+                                       (fn [new-val]
+                                         (swap! subcontracts-payment-a #(assoc-in % [:updated-prices id] new-val)))))])
 
                      ;; date
                      (label-fn date face/c-foreground)
@@ -362,7 +408,9 @@
                                   
                                   [(gtool/get-lang-btns :save)
                                    (gs/icon GoogleMaterialDesignIcons/SAVE)
-                                   (fn [e] (update-subcontract-price state!))]
+                                   (fn [e]
+                                     (.requestFocus (c/to-widget e))
+                                     (update-subcontract-price state!))]
                                   
                                   [(gtool/get-lang-btns :export-odt)
                                    icon/odt-64-png
@@ -443,19 +491,6 @@
                                      true (:selected? subcontract)))
                                  (get-in @(:subcontracts-m (state!)) contract-path)))))]
     (if (nil? selected?) true (not selected?))))
-
-(defn- calculate-contract-price [state! contract-path]
-  (let [subcontracts-m (get-in @(:subcontracts-m (state!)) contract-path)
-        contract-price (apply + (flatten
-                                 (doall (map
-                                         (fn [[subcontract-id subcontract]]
-                                           (if (:service_contract_month.was_payed subcontract) 0
-                                               (try
-                                                 (+ 0 (:service_contract_month.money_per_month subcontract))
-                                                 (catch Exception e 0))))
-                                         (get-in @(:subcontracts-m (state!)) contract-path)))))]
-    (if (or (float? contract-price) (int? contract-price))
-      contract-price 0)))
 
 (defn- select-all-subcontracts
   [state! contract-path selected?]
@@ -822,17 +857,11 @@
 
     ;; download new data from DB and rerender root panel for contracts
     (refresh-data-and-panel state!)
-
     (c/config! (:root (state!))
                :items (gtool/join-mig-items btns-menu-bar new-contract-form (gcomp/min-scrollbox
                                                                              expand-btns-box
                                                                              :hscroll-off false)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; TODO: SubKontrakty powinny być generowane na podstawie kontraktu, jest funkcja rozbijająca po miesiącach na podstawie daty od i do, jeśli data nie ma pełnych miesięcy to ostatni z subkontraktów jest od daty rozpoczęcia okresu do ostatnich wskazanych dni. Przykładowo od 01-01-2021 do 15-02-2021 da kontrakty od 01-01-2021 do 31-01-2021 i od 01-02-2021 do 15-02-2021.
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 ;; :v [1 1 2] =>> :v [:enterprise.id :service_contract.id :service_contract_month.id]

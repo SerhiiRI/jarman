@@ -70,16 +70,27 @@
     FROM `user`
     INNER JOIN `profile` ON `user`.`id_profile`=`profile`.`id`;
   #+end_src
-  #+RESULTS: user-query
+  
+  #+NAME: users-db
   | user.id | user.login | user.password | user.last_name | user.first_name | user.id_profile | user.configuration                                                          |
   |---------+------------+---------------+----------------+-----------------+-----------------+-----------------------------------------------------------------------------|
+  |         |            |               |                |                 |                 | <10>                                                                        |
   |       1 | admin      | admin         | admin          | admin           |               1 | {:ftp {:login "jarman", :password "dupa" :host "trashpanda-team.ddns.net"}} |
   |       2 | dev        | dev           | dev            | dev             |               3 | {:ftp {:login "jarman", :password "dupa" :host "trashpanda-team.ddns.net"}} |
   |       3 | user       | user          | user           | user            |               2 | {:ftp {:login "jarman", :password "dupa" :host "trashpanda-team.ddns.net"}} |
+  |       4 | test       | test          | test           | test            |               1 | {:ftp {:login "jarman", :password "dupa" :host "trashpanda-team.ddns.net"}} |
 
+  #+begin_src clojure :var tab1=users-db :results output
+    (println tab1)
+  #+end_src
+
+  #+begin_src python :var tab1=users-db :results value raw
+    return tab1
+  #+end_src
+  
   Create users, and profiles
   #+name: user-raw
-  #+begin_src emacs-lisp :var elist=user-query :results value silent
+  #+begin_src emacs-lisp :var elist=users-db :results value silent
     (prin1-to-string elist)
   #+end_src
   #+begin_src clojure :var elist=user-raw :results output
@@ -89,7 +100,7 @@
 	     {:ftp {:login "jarman"
 		    :password "dupa"
 		    :host "trashpanda-team.ddns.net"}}} :dev {})))
-    
+
     (defn update-users []
       (for [[id login password lname fname id_prof cfg] (read-string elist)]
 	(if-let [existing-profile (first (db/query (select! {:table_name :user :where [:= :id id]})))]
@@ -103,16 +114,28 @@
 	  (db/exec (insert! {:table_name :user
 			     :column-list [:login :password :first_name :last_name :id_profile :configuration]
 			     :values [[login password lname fname id_prof cfg]]})))))
-    
+
     (time
      (do
        (println "create users")
        (update-users)))
   #+end_src
+
+  #+RESULTS:
+  : create users
+  : "Elapsed time: 0.599059 msecs"
+
   #+begin_src clojure :ns ekka.fish :results value :hlines yes
     (map vals (db/query (select! {:table_name :user})))
   #+end_src
-  
+
+  #+RESULTS:
+  | 1 | admin | admin | admin | admin | {:ftp {:login "jarman", :password "dupa", :host "trashpanda-team.ddns.net"}} | 1 |
+  | 2 | dev   | dev   | dev   | dev   | {:ftp {:login "jarman", :password "dupa", :host "trashpanda-team.ddns.net"}} | 3 |
+  | 3 | user  | user  | user  | user  | {:ftp {:login "jarman", :password "dupa", :host "trashpanda-team.ddns.net"}} | 2 |
+  | 4 | test  | test  | test  | test  | {:ftp {:login "jarman", :password "dupa" :host "trashpanda-team.ddns.net"}}  | 1 |
+
+
 * Enterprises
 
   #+startup: shrink

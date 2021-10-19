@@ -21,9 +21,9 @@
   #+name: out-selected-license
   #+begin_src clojure
     (->> (load-license)
-	 (decrypt-license)
-	 (rename-keys)
-	 (cl-format *out* "<license params>~%~{  ~{~A~^~20T~} ~%~}</license params>"))
+	     (decrypt-license)
+	     (rename-keys)
+	     (cl-format *out* "<license params>~%~{  ~{~A~^~20T~} ~%~}</license params>"))
   #+end_src
   #+RESULTS: out-selected-license
   : <license params>
@@ -35,8 +35,7 @@
   : </license params>
 
   Select license by the ~tenant-id~. 
-  #+header: :ns jarman.logic.session
-  #+header: :var tennat-id="EKKA-2"
+  #+header: :var tennat-id="EKKA-1"
   #+header: :var licenses-list=debug-licenses-raw
   #+header: :results output 
   #+name: choose-license
@@ -51,11 +50,20 @@
   #+RESULTS: choose-license
   : <license params>
   :   tenant            EKKA 
-  :   id tenant         EKKA-2 
-  :   creation date     10-01-2019 
-  :   expiration date   1-11-2022 
-  :   limitation        {:computer-count 3} 
+  :   id tenant         EKKA-1 
+  :   creation date     10-01-2021 
+  :   expiration date   10-09-2021 
+  :   limitation        {:computer-count 10} 
   : </license params>
 
   Quickly change license in one procedural call
-  #+CALL: choose-license(tennat-id="EKKA-2")
+  #+CALL: choose-license(tennat-id="PASICH-1")
+
+  #+RESULTS:
+  : <license params>
+  :   tenant            PASICH 
+  :   id tenant         PASICH-1 
+  :   creation date     01-10-2021 
+  :   expiration date   01-06-2022 
+  :   limitation        {:computer-count 5} 
+  : </license params>

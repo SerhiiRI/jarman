@@ -1271,7 +1271,7 @@
                             (= true (all-contracts-selected? test-state! [:2])))]])
               (concat [[:select-all-contracts_&_:all-contracts-selected?<unselected>
                         (do (select-all-contracts test-state! [:2] false)
-                            (= true (all-contracts-selected? test-state! [:2])))]])
+                            (= false (all-contracts-selected? test-state! [:2])))]])
               )
           lite-testing(map #(do (println "TEST: " (if (second %) "OK" "FAILD") " - " (first %)) (second %)) testing)]
       (if full testing lite-testing))))

@@ -1276,6 +1276,8 @@
           lite-testing(map #(do (println "TEST: " (if (second %) "OK" "FAILD") " - " (first %)) (second %)) testing)]
       (if full testing lite-testing))))
 
+;; (run-tests)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Toolkit with SQl funcs ;;;

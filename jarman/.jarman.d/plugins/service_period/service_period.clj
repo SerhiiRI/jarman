@@ -44,7 +44,7 @@
 
 (defn- create-state-template [plugin-path global-configuration-getter root state!]
   (reset! state
-          {:debug-mode           false ;; Add to tree info about path
+          {:debug-mode           true ;; Add to tree info about path
            :plugin-path          plugin-path
            :plugin-global-config global-configuration-getter
            :plugin-config        (get-in (global-configuration-getter) (conj plugin-path :config) {})
@@ -427,13 +427,6 @@
 ;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- v-to-vmp
-  "Description:
-    vector to vector map path
-   Example
-    [1 2 3] ;; => [:1 :2 :3]"
-  [v] (vec (map #(keyword (str %)) v)))
-
 (defn- new-watcher [some-atom watcher-id watch-path action]
   (add-watch some-atom watcher-id
              (fn [key atom old-m new-m]
@@ -450,6 +443,10 @@
     (gs/icon GoogleMaterialDesignIcons/CHECK_BOX)
     (gs/icon GoogleMaterialDesignIcons/CHECK_BOX_OUTLINE_BLANK)))
 
+(defn- select-checkbox-for-subcontract
+  [state! subcontract-path select?]
+  (swap! (:subcontracts-m (state!)) #(assoc-in % (join-vec subcontract-path [:selected?]) select?)))
+
 (defn- subcontract-checkbox ;; OK
   [state! subcontract-path checkbox-selected?]
   (c/label :icon (i-checkbox checkbox-selected?)
@@ -460,7 +457,7 @@
                               (.repaint (c/to-widget e))
                               
                               ;; select or unselect subcontract. Path return true or false
-                              (swap! (:subcontracts-m (state!)) #(assoc-in % selected-path self-selected?))))]))
+                              (select-checkbox-for-subcontract state! subcontract-path self-selected?)))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -547,6 +544,8 @@
 ;; (let [sw (:subcontracts-m @state)]
 ;;   (swap! sw #(assoc-in % [:1 :3 :207 :service_contract_month.was_payed] false)))
 (defn- loop-all-contracts
+  "Description:
+     Base fn for creating another fn"
   [state! enterprise-path func]
   (let [unpayed? (some false? (flatten (doall
                                         (map
@@ -747,14 +746,6 @@
 ;;; REQUIRES ;;;
 ;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn- add-months
-  [data-string add-m]
-  (str (.plusMonths (java.time.LocalDate/parse data-string) add-m)))
-
-(defn- add-days
-  [data-string add-d]
-  (str (.plusDays (java.time.LocalDate/parse data-string) add-d)))
  
 (defn- insert-contract [state! calndr-start calndr-end price-input select-box]
   (let [date-start (seesaw.core/text calndr-start)
@@ -865,6 +856,426 @@
 ;; (some false? (vals (get-in @(:contracts-checkboxs-map @state) [:2 :2])))
 ;; (vec (map #(keyword (str %)) [2 2 1]))
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; TESTS
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def test-enterprises-m
+ {:1
+  {:enterprise.director "Ivan Ivankow",
+   :enterprise.individual_tax_number "3323392190",
+   :enterprise.accountant "Anastasia Wewbytska",
+   :enterprise.contacts_information "306690666",
+   :enterprise.vat_certificate "EKCA31232",
+   :enterprise.physical_address "B1",
+   :enterprise.ssreou "32432432",
+   :enterprise.ownership_form "LTD",
+   :enterprise.id 1,
+   :enterprise.legal_address "A1",
+   :enterprise.name "Biedronka"},
+  :3
+  {:enterprise.director "Vasyl Mayni",
+   :enterprise.individual_tax_number "2131248412",
+   :enterprise.accountant "Aleksand",
+   :enterprise.contacts_information "306690666",
+   :enterprise.vat_certificate "UKCP12394",
+   :enterprise.physical_address "B2",
+   :enterprise.ssreou "11134534",
+   :enterprise.ownership_form "PP",
+   :enterprise.id 3,
+   :enterprise.legal_address "A2",
+   :enterprise.name "some shop"},
+  :2
+  {:enterprise.director "Vasyl Mayni",
+   :enterprise.individual_tax_number "2312931424",
+   :enterprise.accountant "Aleksand",
+   :enterprise.contacts_information "306690666",
+   :enterprise.vat_certificate "EKCP12344",
+   :enterprise.physical_address "B2",
+   :enterprise.ssreou "23155555",
+   :enterprise.ownership_form "PP",
+   :enterprise.id 2,
+   :enterprise.legal_address "A2",
+   :enterprise.name "KFC"}})
+
+(def test-contracts-m
+  {:1
+   {:21
+    {:service_contract.id 21,
+     :service_contract.contract_start_term
+     #inst "2021-10-15T22:00:00.000-00:00",
+     :service_contract.contract_end_term
+     #inst "2021-12-30T23:00:00.000-00:00",
+     :selected? false},
+    :23
+    {:service_contract.id 23,
+     :service_contract.contract_start_term
+     #inst "2021-10-31T23:00:00.000-00:00",
+     :service_contract.contract_end_term
+     #inst "2022-10-30T23:00:00.000-00:00",
+     :selected? false}},
+   :3
+   {:22
+    {:service_contract.id 22,
+     :service_contract.contract_start_term
+     #inst "2021-10-15T22:00:00.000-00:00",
+     :service_contract.contract_end_term
+     #inst "2021-10-30T22:00:00.000-00:00",
+     :selected? false}},
+   :2
+   {:24
+    {:service_contract.id 24,
+     :service_contract.contract_start_term
+     #inst "2021-10-31T23:00:00.000-00:00",
+     :service_contract.contract_end_term
+     #inst "2021-12-30T23:00:00.000-00:00",
+     :selected? false},
+    :25
+    {:service_contract.id 25,
+     :service_contract.contract_start_term
+     #inst "2021-10-18T22:00:00.000-00:00",
+     :service_contract.contract_end_term
+     #inst "2021-11-18T23:00:00.000-00:00",
+     :selected? false}}})
+
+(def test-subcontracts-m
+ {:1
+  {:21
+   {:1021
+    {:service_contract_month.id 1021,
+     :service_contract_month.service_month_start
+     #inst "2021-10-15T22:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2021-10-30T22:00:00.000-00:00",
+     :service_contract_month.money_per_month 150.0,
+     :service_contract_month.was_payed true,
+     :selected? false},
+    :1022
+    {:service_contract_month.id 1022,
+     :service_contract_month.service_month_start
+     #inst "2021-10-31T23:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2021-11-29T23:00:00.000-00:00",
+     :service_contract_month.money_per_month 100.0,
+     :service_contract_month.was_payed false,
+     :selected? false},
+    :1023
+    {:service_contract_month.id 1023,
+     :service_contract_month.service_month_start
+     #inst "2021-11-30T23:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2021-12-30T23:00:00.000-00:00",
+     :service_contract_month.money_per_month 300.0,
+     :service_contract_month.was_payed false,
+     :selected? false}},
+   :23
+   {:1025
+    {:service_contract_month.id 1025,
+     :service_contract_month.service_month_start
+     #inst "2021-10-31T23:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2021-11-29T23:00:00.000-00:00",
+     :service_contract_month.money_per_month 10.0,
+     :service_contract_month.was_payed true,
+     :selected? false},
+    :1029
+    {:service_contract_month.id 1029,
+     :service_contract_month.service_month_start
+     #inst "2022-02-28T23:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2022-03-30T22:00:00.000-00:00",
+     :service_contract_month.money_per_month 10.0,
+     :service_contract_month.was_payed true,
+     :selected? false},
+    :1031
+    {:service_contract_month.id 1031,
+     :service_contract_month.service_month_start
+     #inst "2022-04-30T22:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2022-05-30T22:00:00.000-00:00",
+     :service_contract_month.money_per_month 10.0,
+     :service_contract_month.was_payed false,
+     :selected? false},
+    :1027
+    {:service_contract_month.id 1027,
+     :service_contract_month.service_month_start
+     #inst "2020-12-31T23:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2022-01-30T23:00:00.000-00:00",
+     :service_contract_month.money_per_month 10.0,
+     :service_contract_month.was_payed false,
+     :selected? false},
+    :1030
+    {:service_contract_month.id 1030,
+     :service_contract_month.service_month_start
+     #inst "2022-03-31T22:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2022-04-29T22:00:00.000-00:00",
+     :service_contract_month.money_per_month 10.0,
+     :service_contract_month.was_payed false,
+     :selected? false},
+    :1026
+    {:service_contract_month.id 1026,
+     :service_contract_month.service_month_start
+     #inst "2021-11-30T23:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2021-12-30T23:00:00.000-00:00",
+     :service_contract_month.money_per_month 10.0,
+     :service_contract_month.was_payed false,
+     :selected? false},
+    :1036
+    {:service_contract_month.id 1036,
+     :service_contract_month.service_month_start
+     #inst "2022-09-30T22:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2022-10-30T23:00:00.000-00:00",
+     :service_contract_month.money_per_month 10.0,
+     :service_contract_month.was_payed false,
+     :selected? false},
+    :1032
+    {:service_contract_month.id 1032,
+     :service_contract_month.service_month_start
+     #inst "2022-05-31T22:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2022-06-29T22:00:00.000-00:00",
+     :service_contract_month.money_per_month 10.0,
+     :service_contract_month.was_payed false,
+     :selected? false},
+    :1028
+    {:service_contract_month.id 1028,
+     :service_contract_month.service_month_start
+     #inst "2022-01-31T23:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2022-02-27T23:00:00.000-00:00",
+     :service_contract_month.money_per_month 10.0,
+     :service_contract_month.was_payed false,
+     :selected? false},
+    :1033
+    {:service_contract_month.id 1033,
+     :service_contract_month.service_month_start
+     #inst "2022-06-30T22:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2022-07-30T22:00:00.000-00:00",
+     :service_contract_month.money_per_month 10.0,
+     :service_contract_month.was_payed false,
+     :selected? false},
+    :1035
+    {:service_contract_month.id 1035,
+     :service_contract_month.service_month_start
+     #inst "2022-08-31T22:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2022-09-29T22:00:00.000-00:00",
+     :service_contract_month.money_per_month 10.0,
+     :service_contract_month.was_payed false,
+     :selected? false},
+    :1034
+    {:service_contract_month.id 1034,
+     :service_contract_month.service_month_start
+     #inst "2022-07-31T22:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2022-08-30T22:00:00.000-00:00",
+     :service_contract_month.money_per_month 10.0,
+     :service_contract_month.was_payed false,
+     :selected? false}}},
+  :3
+  {:22
+   {:1024
+    {:service_contract_month.id 1024,
+     :service_contract_month.service_month_start
+     #inst "2021-10-15T22:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2021-10-30T22:00:00.000-00:00",
+     :service_contract_month.money_per_month 50.0,
+     :service_contract_month.was_payed true,
+     :selected? false}}},
+  :2
+  {:24
+   {:1037
+    {:service_contract_month.id 1037,
+     :service_contract_month.service_month_start
+     #inst "2021-10-31T23:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2021-11-29T23:00:00.000-00:00",
+     :service_contract_month.money_per_month 10.0,
+     :service_contract_month.was_payed true,
+     :selected? false},
+    :1038
+    {:service_contract_month.id 1038,
+     :service_contract_month.service_month_start
+     #inst "2021-11-30T23:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2021-12-30T23:00:00.000-00:00",
+     :service_contract_month.money_per_month 10.0,
+     :service_contract_month.was_payed true,
+     :selected? false}},
+   :25
+   {:1039
+    {:service_contract_month.id 1039,
+     :service_contract_month.service_month_start
+     #inst "2021-10-18T22:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2021-10-30T22:00:00.000-00:00",
+     :service_contract_month.money_per_month 20.0,
+     :service_contract_month.was_payed false,
+     :selected? false},
+    :1040
+    {:service_contract_month.id 1040,
+     :service_contract_month.service_month_start
+     #inst "2021-10-31T23:00:00.000-00:00",
+     :service_contract_month.service_month_end
+     #inst "2021-11-18T23:00:00.000-00:00",
+     :service_contract_month.money_per_month 20.0,
+     :service_contract_month.was_payed false,
+     :selected? false}}}})
+
+(def ok-subcontracts-all-selected-select
+  {:1021
+   {:service_contract_month.id 1021,
+    :service_contract_month.service_month_start
+    #inst "2021-10-15T22:00:00.000-00:00",
+    :service_contract_month.service_month_end
+    #inst "2021-10-30T22:00:00.000-00:00",
+    :service_contract_month.money_per_month 150.0,
+    :service_contract_month.was_payed true,
+    :selected? true},
+   :1022
+   {:service_contract_month.id 1022,
+    :service_contract_month.service_month_start
+    #inst "2021-10-31T23:00:00.000-00:00",
+    :service_contract_month.service_month_end
+    #inst "2021-11-29T23:00:00.000-00:00",
+    :service_contract_month.money_per_month 100.0,
+    :service_contract_month.was_payed false,
+    :selected? true},
+   :1023
+   {:service_contract_month.id 1023,
+    :service_contract_month.service_month_start
+    #inst "2021-11-30T23:00:00.000-00:00",
+    :service_contract_month.service_month_end
+    #inst "2021-12-30T23:00:00.000-00:00",
+    :service_contract_month.money_per_month 300.0,
+    :service_contract_month.was_payed false,
+    :selected? true}})
+
+(def ok-subcontracts-all-selected-unselect
+  {:1021
+   {:service_contract_month.id 1021,
+    :service_contract_month.service_month_start
+    #inst "2021-10-15T22:00:00.000-00:00",
+    :service_contract_month.service_month_end
+    #inst "2021-10-30T22:00:00.000-00:00",
+    :service_contract_month.money_per_month 150.0,
+    :service_contract_month.was_payed true,
+    :selected? false},
+   :1022
+   {:service_contract_month.id 1022,
+    :service_contract_month.service_month_start
+    #inst "2021-10-31T23:00:00.000-00:00",
+    :service_contract_month.service_month_end
+    #inst "2021-11-29T23:00:00.000-00:00",
+    :service_contract_month.money_per_month 100.0,
+    :service_contract_month.was_payed false,
+    :selected? false},
+   :1023
+   {:service_contract_month.id 1023,
+    :service_contract_month.service_month_start
+    #inst "2021-11-30T23:00:00.000-00:00",
+    :service_contract_month.service_month_end
+    #inst "2021-12-30T23:00:00.000-00:00",
+    :service_contract_month.money_per_month 300.0,
+    :service_contract_month.was_payed false,
+    :selected? false}})
+
+(def ok-subcontract-selected
+  {:service_contract_month.id 1022,
+   :service_contract_month.service_month_start
+   #inst "2021-10-31T23:00:00.000-00:00",
+   :service_contract_month.service_month_end
+   #inst "2021-11-29T23:00:00.000-00:00",
+   :service_contract_month.money_per_month 100.0,
+   :service_contract_month.was_payed false,
+   :selected? true})
+
+(defn- initial-test-state-template [test-state]
+  (reset!
+   test-state
+   {:enterprises-m        (atom {})
+    :contracts-m          (atom {})
+    :subcontracts-m       (atom {})
+    :currency             "UAH"
+    :subcontracts-payment-state (atom {})}))
+
+(defn- initialize-test-state [state!]
+  (reset! (:enterprises-m  (state!)) test-enterprises-m)
+  (reset! (:contracts-m    (state!)) test-contracts-m)
+  (reset! (:subcontracts-m (state!)) test-subcontracts-m))
+
+(defn run-tests [& {:keys [full] :or {full false}}]
+  (println "\nInitialize Tests:")
+  (let [test-state  (atom {})
+        test-state! #(deref test-state)]
+    (initial-test-state-template test-state)
+    (initialize-test-state test-state!)
+    (let [testing
+          (-> []
+              (concat [[:calculate-contract-price<nopay>     (= 400.0 (calculate-contract-price test-state! [:1 :21]))]])
+              (concat [[:calculate-contract-price<payed>     (= 0     (calculate-contract-price test-state! [:3 :22]))]])
+              
+              (concat [[:calculate-all-contract-price<nopay> (= 40.0  (calculate-all-contract-price test-state! [:2]))]])
+              (concat [[:calculate-all-contract-price<payed> (= 0     (calculate-all-contract-price test-state! [:3]))]])
+              
+              (concat [[:select-all-subcontracts<select>     (= (select-all-subcontracts test-state! [:1 :21] true)
+                                                                ok-subcontracts-all-selected-select)]])
+              (concat [[:select-all-subcontracts<unselect>   (= (select-all-subcontracts test-state! [:1 :21] false)
+                                                                ok-subcontracts-all-selected-unselect)]])
+
+              (concat [[:calculate-all-contract-price<500> (= 500.0 (calculate-all-contract-price test-state! [:1]))]])
+
+              (concat [[:check-if-contract-selected<selected>
+                        (= true (check-if-contract-selected test-state! [:3 :2]))]])
+              (concat [[:check-if-contract-selected<notselected>
+                        (= false (check-if-contract-selected test-state! [:1 :21]))]])
+              
+              (concat [[:select-checkbox-for-subcontract<doselect>
+                        (do (select-checkbox-for-subcontract test-state! [:1 :21 :1022] true)
+                            (= ok-subcontract-selected (get-in @(:subcontracts-m (test-state!)) [:1 :21 :1022])))]])
+              (concat [[:select-checkbox-for-subcontract<unselect>
+                        (do (select-checkbox-for-subcontract test-state! [:1 :21 :1022] false)
+                            (= false (get-in @(:subcontracts-m (test-state!)) [:1 :21 :1022 :selected?])))]])
+              
+              (concat [[:listing-all-selected-checkboxes-path
+                        (do (select-checkbox-for-subcontract test-state! [:1 :21 :1022] true)
+                            (= [:1 :21 :1022] (first (listing-all-selected-checkboxes-path test-state!))))]])
+
+              (concat [[:pay-for-pointed-subcontracts
+                        (do (pay-for-pointed-subcontracts test-state! [:1 :21 :1022])
+                            (get-in @(:subcontracts-m (test-state!)) [:1 :21 :1022 :service_contract_month.was_payed]))]])
+
+              (concat [[:pay-for-selected-subcontracts
+                        (do (pay-for-selected-subcontracts test-state! [[:1 :21 :1023] [:1 :23 :1031]])
+                            (and (get-in @(:subcontracts-m (test-state!)) [:1 :21 :1023 :service_contract_month.was_payed])
+                                 (get-in @(:subcontracts-m (test-state!)) [:1 :23 :1031 :service_contract_month.was_payed])))]])
+              
+              (concat [[:contract-payed?<true>  (= true  (contract-payed? test-state! [:1 :21]))]])
+              (concat [[:contract-payed?<false> (= false (contract-payed? test-state! [:2 :25]))]])
+
+              (concat [[:all-contracts-payed?<true>  (= true  (all-contracts-payed? test-state! [:3]))]])
+              (concat [[:all-contracts-payed?<false> (= false (all-contracts-payed? test-state! [:1]))]])
+
+              (concat [[:select-all-contracts_&_:all-contracts-selected?<selected>
+                        (do (select-all-contracts test-state! [:2] true)
+                            (= true (all-contracts-selected? test-state! [:2])))]])
+              (concat [[:select-all-contracts_&_:all-contracts-selected?<unselected>
+                        (do (select-all-contracts test-state! [:2] false)
+                            (= true (all-contracts-selected? test-state! [:2])))]])
+              )
+          lite-testing(map #(do (println "TEST: " (if (second %) "OK" "FAILD") " - " (first %)) (second %)) testing)]
+      (if full testing lite-testing))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Toolkit with SQl funcs ;;;
@@ -885,17 +1296,19 @@
 ;;;;;;;;;;;;;
 
 (defn service-period-entry [plugin-path global-configuration-getter]
-  (let [root   (gmg/migrid :v {:args [:background face/c-layout-background
-                                      ;; :border (b/line-border :thickness 1 :color "#fff")
-                                      ]}
-                           (c/label :text "Loading..."))
-        state! (fn [& prop]
-                 (cond (= :atom (first prop)) state
-                       :else (deref state)))
-        state  (create-state-template plugin-path global-configuration-getter root state!)
-        dispatch! (create-disptcher state)]
-    (create-period-view state! dispatch!)
-    root))
+  (if (some false? (run-tests))
+    (gmg/migrid :v :center :center (c/label :text (gtool/get-lang-alerts :tests-failed)))
+    (let [root   (gmg/migrid :v {:args [:background face/c-layout-background
+                                        ;; :border (b/line-border :thickness 1 :color "#fff")
+                                        ]}
+                             (c/label :text "Loading..."))
+          state! (fn [& prop]
+                   (cond (= :atom (first prop)) state
+                         :else (deref state)))
+          state  (create-state-template plugin-path global-configuration-getter root state!)
+          dispatch! (create-disptcher state)]
+      (create-period-view state! dispatch!)
+      root)))
 
 ;;;;;;;;;;;;
 ;;; BIND ;;;
@@ -907,372 +1320,3 @@
  :entry service-period-entry
  :toolkit service-period-toolkit-pipeline
  :spec-list [])
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; TESTS
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; (def test-enterprises-m
-;;  {:1
-;;   {:enterprise.director "Ivan Ivankow",
-;;    :enterprise.individual_tax_number "3323392190",
-;;    :enterprise.accountant "Anastasia Wewbytska",
-;;    :enterprise.contacts_information "306690666",
-;;    :enterprise.vat_certificate "EKCA31232",
-;;    :enterprise.physical_address "B1",
-;;    :enterprise.ssreou "32432432",
-;;    :enterprise.ownership_form "LTD",
-;;    :enterprise.id 1,
-;;    :enterprise.legal_address "A1",
-;;    :enterprise.name "Biedronka"},
-;;   :3
-;;   {:enterprise.director "Vasyl Mayni",
-;;    :enterprise.individual_tax_number "2131248412",
-;;    :enterprise.accountant "Aleksand",
-;;    :enterprise.contacts_information "306690666",
-;;    :enterprise.vat_certificate "UKCP12394",
-;;    :enterprise.physical_address "B2",
-;;    :enterprise.ssreou "11134534",
-;;    :enterprise.ownership_form "PP",
-;;    :enterprise.id 3,
-;;    :enterprise.legal_address "A2",
-;;    :enterprise.name "some shop"},
-;;   :2
-;;   {:enterprise.director "Vasyl Mayni",
-;;    :enterprise.individual_tax_number "2312931424",
-;;    :enterprise.accountant "Aleksand",
-;;    :enterprise.contacts_information "306690666",
-;;    :enterprise.vat_certificate "EKCP12344",
-;;    :enterprise.physical_address "B2",
-;;    :enterprise.ssreou "23155555",
-;;    :enterprise.ownership_form "PP",
-;;    :enterprise.id 2,
-;;    :enterprise.legal_address "A2",
-;;    :enterprise.name "KFC"}})
-
-;; (def test-contracts-m
-;;   {:1
-;;    {:21
-;;     {:service_contract.id 21,
-;;      :service_contract.contract_start_term
-;;      #inst "2021-10-15T22:00:00.000-00:00",
-;;      :service_contract.contract_end_term
-;;      #inst "2021-12-30T23:00:00.000-00:00",
-;;      :selected? false},
-;;     :23
-;;     {:service_contract.id 23,
-;;      :service_contract.contract_start_term
-;;      #inst "2021-10-31T23:00:00.000-00:00",
-;;      :service_contract.contract_end_term
-;;      #inst "2022-10-30T23:00:00.000-00:00",
-;;      :selected? false}},
-;;    :3
-;;    {:22
-;;     {:service_contract.id 22,
-;;      :service_contract.contract_start_term
-;;      #inst "2021-10-15T22:00:00.000-00:00",
-;;      :service_contract.contract_end_term
-;;      #inst "2021-10-30T22:00:00.000-00:00",
-;;      :selected? false}},
-;;    :2
-;;    {:24
-;;     {:service_contract.id 24,
-;;      :service_contract.contract_start_term
-;;      #inst "2021-10-31T23:00:00.000-00:00",
-;;      :service_contract.contract_end_term
-;;      #inst "2021-12-30T23:00:00.000-00:00",
-;;      :selected? false},
-;;     :25
-;;     {:service_contract.id 25,
-;;      :service_contract.contract_start_term
-;;      #inst "2021-10-18T22:00:00.000-00:00",
-;;      :service_contract.contract_end_term
-;;      #inst "2021-11-18T23:00:00.000-00:00",
-;;      :selected? false}}})
-
-;; (def test-subcontracts-m
-;;  {:1
-;;   {:21
-;;    {:1021
-;;     {:service_contract_month.id 1021,
-;;      :service_contract_month.service_month_start
-;;      #inst "2021-10-15T22:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2021-10-30T22:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 150.0,
-;;      :service_contract_month.was_payed true,
-;;      :selected? false},
-;;     :1022
-;;     {:service_contract_month.id 1022,
-;;      :service_contract_month.service_month_start
-;;      #inst "2021-10-31T23:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2021-11-29T23:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 100.0,
-;;      :service_contract_month.was_payed false,
-;;      :selected? false},
-;;     :1023
-;;     {:service_contract_month.id 1023,
-;;      :service_contract_month.service_month_start
-;;      #inst "2021-11-30T23:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2021-12-30T23:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 300.0,
-;;      :service_contract_month.was_payed false,
-;;      :selected? false}},
-;;    :23
-;;    {:1025
-;;     {:service_contract_month.id 1025,
-;;      :service_contract_month.service_month_start
-;;      #inst "2021-10-31T23:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2021-11-29T23:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 10.0,
-;;      :service_contract_month.was_payed true,
-;;      :selected? false},
-;;     :1029
-;;     {:service_contract_month.id 1029,
-;;      :service_contract_month.service_month_start
-;;      #inst "2022-02-28T23:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2022-03-30T22:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 10.0,
-;;      :service_contract_month.was_payed true,
-;;      :selected? false},
-;;     :1031
-;;     {:service_contract_month.id 1031,
-;;      :service_contract_month.service_month_start
-;;      #inst "2022-04-30T22:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2022-05-30T22:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 10.0,
-;;      :service_contract_month.was_payed false,
-;;      :selected? false},
-;;     :1027
-;;     {:service_contract_month.id 1027,
-;;      :service_contract_month.service_month_start
-;;      #inst "2020-12-31T23:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2022-01-30T23:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 10.0,
-;;      :service_contract_month.was_payed false,
-;;      :selected? false},
-;;     :1030
-;;     {:service_contract_month.id 1030,
-;;      :service_contract_month.service_month_start
-;;      #inst "2022-03-31T22:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2022-04-29T22:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 10.0,
-;;      :service_contract_month.was_payed false,
-;;      :selected? false},
-;;     :1026
-;;     {:service_contract_month.id 1026,
-;;      :service_contract_month.service_month_start
-;;      #inst "2021-11-30T23:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2021-12-30T23:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 10.0,
-;;      :service_contract_month.was_payed false,
-;;      :selected? false},
-;;     :1036
-;;     {:service_contract_month.id 1036,
-;;      :service_contract_month.service_month_start
-;;      #inst "2022-09-30T22:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2022-10-30T23:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 10.0,
-;;      :service_contract_month.was_payed false,
-;;      :selected? false},
-;;     :1032
-;;     {:service_contract_month.id 1032,
-;;      :service_contract_month.service_month_start
-;;      #inst "2022-05-31T22:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2022-06-29T22:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 10.0,
-;;      :service_contract_month.was_payed false,
-;;      :selected? false},
-;;     :1028
-;;     {:service_contract_month.id 1028,
-;;      :service_contract_month.service_month_start
-;;      #inst "2022-01-31T23:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2022-02-27T23:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 10.0,
-;;      :service_contract_month.was_payed false,
-;;      :selected? false},
-;;     :1033
-;;     {:service_contract_month.id 1033,
-;;      :service_contract_month.service_month_start
-;;      #inst "2022-06-30T22:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2022-07-30T22:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 10.0,
-;;      :service_contract_month.was_payed false,
-;;      :selected? false},
-;;     :1035
-;;     {:service_contract_month.id 1035,
-;;      :service_contract_month.service_month_start
-;;      #inst "2022-08-31T22:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2022-09-29T22:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 10.0,
-;;      :service_contract_month.was_payed false,
-;;      :selected? false},
-;;     :1034
-;;     {:service_contract_month.id 1034,
-;;      :service_contract_month.service_month_start
-;;      #inst "2022-07-31T22:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2022-08-30T22:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 10.0,
-;;      :service_contract_month.was_payed false,
-;;      :selected? false}}},
-;;   :3
-;;   {:22
-;;    {:1024
-;;     {:service_contract_month.id 1024,
-;;      :service_contract_month.service_month_start
-;;      #inst "2021-10-15T22:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2021-10-30T22:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 50.0,
-;;      :service_contract_month.was_payed true,
-;;      :selected? false}}},
-;;   :2
-;;   {:24
-;;    {:1037
-;;     {:service_contract_month.id 1037,
-;;      :service_contract_month.service_month_start
-;;      #inst "2021-10-31T23:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2021-11-29T23:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 10.0,
-;;      :service_contract_month.was_payed true,
-;;      :selected? false},
-;;     :1038
-;;     {:service_contract_month.id 1038,
-;;      :service_contract_month.service_month_start
-;;      #inst "2021-11-30T23:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2021-12-30T23:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 10.0,
-;;      :service_contract_month.was_payed true,
-;;      :selected? false}},
-;;    :25
-;;    {:1039
-;;     {:service_contract_month.id 1039,
-;;      :service_contract_month.service_month_start
-;;      #inst "2021-10-18T22:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2021-10-30T22:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 20.0,
-;;      :service_contract_month.was_payed false,
-;;      :selected? false},
-;;     :1040
-;;     {:service_contract_month.id 1040,
-;;      :service_contract_month.service_month_start
-;;      #inst "2021-10-31T23:00:00.000-00:00",
-;;      :service_contract_month.service_month_end
-;;      #inst "2021-11-18T23:00:00.000-00:00",
-;;      :service_contract_month.money_per_month 20.0,
-;;      :service_contract_month.was_payed false,
-;;      :selected? false}}}})
-
-;; (def ok-subcontracts-all-selected-select
-;;   {:1021
-;;    {:service_contract_month.id 1021,
-;;     :service_contract_month.service_month_start
-;;     #inst "2021-10-15T22:00:00.000-00:00",
-;;     :service_contract_month.service_month_end
-;;     #inst "2021-10-30T22:00:00.000-00:00",
-;;     :service_contract_month.money_per_month 150.0,
-;;     :service_contract_month.was_payed true,
-;;     :selected? true},
-;;    :1022
-;;    {:service_contract_month.id 1022,
-;;     :service_contract_month.service_month_start
-;;     #inst "2021-10-31T23:00:00.000-00:00",
-;;     :service_contract_month.service_month_end
-;;     #inst "2021-11-29T23:00:00.000-00:00",
-;;     :service_contract_month.money_per_month 100.0,
-;;     :service_contract_month.was_payed false,
-;;     :selected? true},
-;;    :1023
-;;    {:service_contract_month.id 1023,
-;;     :service_contract_month.service_month_start
-;;     #inst "2021-11-30T23:00:00.000-00:00",
-;;     :service_contract_month.service_month_end
-;;     #inst "2021-12-30T23:00:00.000-00:00",
-;;     :service_contract_month.money_per_month 300.0,
-;;     :service_contract_month.was_payed false,
-;;     :selected? true}})
-
-;; (def ok-subcontracts-all-selected-unselect
-;;   {:1021
-;;    {:service_contract_month.id 1021,
-;;     :service_contract_month.service_month_start
-;;     #inst "2021-10-15T22:00:00.000-00:00",
-;;     :service_contract_month.service_month_end
-;;     #inst "2021-10-30T22:00:00.000-00:00",
-;;     :service_contract_month.money_per_month 150.0,
-;;     :service_contract_month.was_payed true,
-;;     :selected? false},
-;;    :1022
-;;    {:service_contract_month.id 1022,
-;;     :service_contract_month.service_month_start
-;;     #inst "2021-10-31T23:00:00.000-00:00",
-;;     :service_contract_month.service_month_end
-;;     #inst "2021-11-29T23:00:00.000-00:00",
-;;     :service_contract_month.money_per_month 100.0,
-;;     :service_contract_month.was_payed false,
-;;     :selected? false},
-;;    :1023
-;;    {:service_contract_month.id 1023,
-;;     :service_contract_month.service_month_start
-;;     #inst "2021-11-30T23:00:00.000-00:00",
-;;     :service_contract_month.service_month_end
-;;     #inst "2021-12-30T23:00:00.000-00:00",
-;;     :service_contract_month.money_per_month 300.0,
-;;     :service_contract_month.was_payed false,
-;;     :selected? false}})
-
-;; (defn- initial-test-state-template [state]
-;;   (reset!
-;;    state
-;;    {:enterprises-m        (atom {})
-;;     :contracts-m          (atom {})
-;;     :subcontracts-m       (atom {})
-;;     :currency             "UAH"
-;;     :subcontracts-payment-state (atom {})}))
-
-;; (defn initialize-test-state [state!]
-;;   (reset! (:enterprises-m  (state!)) test-enterprises-m)
-;;   (reset! (:contracts-m    (state!)) test-contracts-m)
-;;   (reset! (:subcontracts-m (state!)) test-subcontracts-m))
-
-;; (defn run-tests []
-;;   (println "\nInitialize Tests:")
-;;   (let [test-state  (atom {})
-;;         test-state! (deref test-state)]
-;;     (initial-test-state-template test-state)
-;;     (initialize-test-state test-state!)
-;;     (->>
-;;      (-> []
-;;          (concat [[:calculate-contract-price<nopay>     (= 400.0 (calculate-contract-price test-state! [:1 :21]))]])
-;;          (concat [[:calculate-contract-price<payed>     (= 0     (calculate-contract-price test-state! [:3 :22]))]])
-;;          (concat [[:calculate-all-contract-price<nopay> (= 40.0  (calculate-all-contract-price test-state! [:2]))]])
-;;          (concat [[:calculate-all-contract-price<payed> (= 0     (calculate-all-contract-price test-state! [:3]))]])
-;;          (concat [[:select-all-subcontracts<select>     (= (select-all-subcontracts test-state! [:1 :21] true)  ok-subcontracts-all-selected-select)]])
-;;          (concat [[:select-all-subcontracts<unselect>   (= (select-all-subcontracts test-state! [:1 :21] false) ok-subcontracts-all-selected-unselect)]])
-;;          (concat [[:check-if-contract-selected<selected>    (= true (check-if-contract-selected test-state! [:3 :2]))]])
-;;          (concat [[:check-if-contract-selected<notselected> (= false (check-if-contract-selected test-state! [:1 :21]))]]))
-;;      (map #(do (println "TEST: " (if (second %) "OK" "FAILD") " - " (first %)) (second %))))))
-
-;;(run-tests)
-
-

@@ -55,6 +55,14 @@
         cd2 (doto (java.util.Calendar/getInstance) (.setTime d2))]
     (.before cd2 cd1)))
 
+(defn- add-months
+  [data-string add-m]
+  (str (.plusMonths (java.time.LocalDate/parse data-string) add-m)))
+
+(defn- add-days
+  [data-string add-d]
+  (str (.plusDays (java.time.LocalDate/parse data-string) add-d)))
+
 #_(sort-by
    identity
    data-comparator-new-old

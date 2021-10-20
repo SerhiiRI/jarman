@@ -174,7 +174,8 @@
     :added-service-contract "Pomyślnie dodano nowy kontrakt."
     :select-checkbox-for-payment "Proszę zaznaczyć checkbox z płatnością."
     :payments-finished-successfully "Płatności zakończone powodzeniem."
-    :updated-data "Zaktualizowano dane." 
+    :updated-data "Zaktualizowano dane."
+    :tests-failed "Ładowanie zakończone niepowodzeniem <Tests failed>"
     },
    
    :basic
@@ -411,6 +412,7 @@
   :select-checkbox-for-payment "Please select checkbox with payment."
   :payments-finished-successfully "Payments are finished successfully."
   :updated-data "Updated data."
+    :tests-failed "Loading failed <Tests failed>"
   }
 
  :basic

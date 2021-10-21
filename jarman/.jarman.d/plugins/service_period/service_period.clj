@@ -1214,8 +1214,8 @@
   (reset! (:contracts-m    (state!)) test-contracts-m)
   (reset! (:subcontracts-m (state!)) test-subcontracts-m))
 
-(defn run-tests [& {:keys [full] :or {full false}}]
-  (println "\nInitialize Tests:")
+(defn run-tests [& {:keys [full printit] :or {full false printit false}}]
+  (if printit (println "\nInitialize Tests:"))
   (let [test-state  (atom {})
         test-state! #(deref test-state)]
     (initial-test-state-template test-state)
@@ -1273,7 +1273,7 @@
                         (do (select-all-contracts test-state! [:2] false)
                             (= false (all-contracts-selected? test-state! [:2])))]])
               )
-          lite-testing(map #(do (println "TEST: " (if (second %) "OK" "FAILD") " - " (first %)) (second %)) testing)]
+          lite-testing (map #(do (if printit (println "TEST: " (if (second %) "OK" "FAILD") " - " (first %))) (second %)) testing)]
       (if full testing lite-testing))))
 
 ;; (run-tests)

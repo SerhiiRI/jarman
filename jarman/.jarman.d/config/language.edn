@@ -79,38 +79,44 @@
    :database {}},
   :ui
   {:buttons
-   {:yes "Tak"
-    :no "Nie"
-    :add "Dodaj"
-    :cancel "Anuluj"
-    :remove "Usuń"
-    :show-changes "Wyświetl zmiany"
-    :export-to-excel "Exportuj do Excela"
-    :export "Exportuj"
+   {:no      "Nie"
+    :yes     "Tak"
+    :add     "Dodaj"
+    :pay     "Płatność"
+    :back    "Cofnij"
+    :save    "Zapisz"
+    :login   "Login"
+    :cancel  "Anuluj"
+    :remove  "Usuń"
+    :export  "Exportuj"
+    :goback  "Wróć"
+    :search  "Szukaj"
+    :sign-in "Zaloguj"
+    :logout  "Wyloguj"
     :connect "Połącz"
-    :settings "Ustawienia"
-    :save "Zapisz"
-    :search "Szukaj"
-    :register "Rejestr"
-    :back "Cofnij"
-    :goback "Wróć"
-    :restore-last-configuration "Przywróć ostatnią konfigurację"
-    :disconnect "Odłącz"
-    :rfid-cards "Karty RFID"
-    :clean-filters "Wyczyść filtrowanie"
-    :clean-inputs "Wyczyść pola"
     :workers "Pracownicy"
-    :test-connection "Testuj połączenie"
-    :save-and-reload "Zapisz i przeładuj"
-    :login "Login"
-    :password "Hasło"
-    :back-to-login-panel "Wróć do panelu logowania"
-    :add-contract "Dodaj kontrakt"
-    :select-all "Zaznacz wszystko"
-    :pay "Płatność"
     :refresh "Odśwież"
-    :export-odt "Zapisz jako .odt"},
-   
+    :settings        "Ustawienia"
+    :password        "Hasło"
+    :register        "Rejestr"
+    :close-app       "Zamknij aplikację"
+    :export-odt      "Zapisz jako .odt"
+    :disconnect      "Odłącz"
+    :select-all      "Zaznacz wszystko"
+    :rfid-cards      "Karty RFID"
+    :clean-inputs    "Wyczyść pola"
+    :add-contract    "Dodaj kontrakt"
+    :show-changes    "Wyświetl zmiany"
+    :clean-filters   "Wyczyść filtrowanie"
+    :export-to-excel "Exportuj do Excela"
+    :save-and-reload "Zapisz i przeładuj"
+    :test-connection "Testuj połączenie"
+    :messages-history "Historia powiadomień"
+    :back-to-login-panel        "Wróć do panelu logowania"
+    :restore-last-configuration "Przywróć ostatnią konfigurację"
+    :reload-active-view "Przeładuj otwarty widok"
+    },
+  
    :header
    {:login-db-config-editor "Konfiguracja połącznia z bazą danych."
     :dbtype "Typ połączenia"
@@ -139,6 +145,9 @@
     :VAT-Certificate "Kod VAT"
     :contacts-info   "Kontakt"
     :physical_address "Adres"
+    :config-panel-title "Konfiguracje"
+    :select-language    "Wybór języka"
+    :choose-language    "Wybierz język"
     }
    
    :alerts
@@ -342,7 +351,13 @@
   :select-all "Select all"
   :pay "Pay"
   :refresh "Refresh"
-  :export-odt "Export to .odt"}
+  :export-odt "Export to .odt"
+  :close-app  "Close App"
+  :logout     "Logout"
+  :sign-in    "Login"
+  :messages-history "Message history"
+  :reload-active-view "Reload opened view"
+  }
   
  :header
  {:login-db-config-editor "Configuration of DB connection."
@@ -372,6 +387,9 @@
   :VAT-Certificate "VAT Certificate"
   :contacts-info   "Contact"
   :physical_address "Address"
+  :config-panel-title "Configurations"
+  :select-language    "Language selection"
+  :choose-language    "Choose language"
   }
 
  :alerts

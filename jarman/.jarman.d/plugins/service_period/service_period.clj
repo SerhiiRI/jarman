@@ -29,7 +29,7 @@
 
 (def state (atom {}))
 
-(defn- action-handler
+(defn action-handler
   [state action-m]
   (case (:action action-m)
     ;; ------------------ Default ---------------------
@@ -38,11 +38,11 @@
     ;; ------------------------------------------------
 ))
 
-(defn- create-disptcher [atom-var]
+(defn create-disptcher [atom-var]
   (fn [action-m]
     (swap! atom-var (fn [state] (action-handler state action-m)))))
 
-(defn- create-state-template [plugin-path global-configuration-getter root state!]
+(defn create-state-template [plugin-path global-configuration-getter root state!]
   (reset! state
           {:debug-mode           true ;; Add to tree info about path
            :plugin-path          plugin-path
@@ -61,13 +61,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPER FUNCTIONS ;;;  
 ;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- isNumber? [val-s]
+(defn isNumber? [val-s]
   (try (float (read-string val-s))
     (catch Exception e false)))
 
 (declare build-expand-contracts-for-enterprise)
 
-(defn- refresh-data-and-panel
+(defn refresh-data-and-panel
   "Description:
      Load data again and rerender panel with contracts."
   [state!]
@@ -101,7 +101,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- listing-all-selected-checkboxes-path
+(defn listing-all-selected-checkboxes-path
   [state!]
   (filter #(not (empty? %))
    (apply concat (doall (map
@@ -114,12 +114,12 @@
 ;; (listing-all-selected-checkboxes-path (:state! @state))
 ;; (:subcontracts-m @state)
 
-(defn- pay-for-pointed-subcontracts
+(defn pay-for-pointed-subcontracts
   [state! subcontract-path]
   (let [assoc-path (join-vec subcontract-path [:service_contract_month.was_payed])]
     (swap! (:subcontracts-m (state!)) #(assoc-in % assoc-path true))))
 
-(defn- pay-for-selected-subcontracts
+(defn pay-for-selected-subcontracts
   "Description:
      Set payed to subcontracts by paths list
   Example:
@@ -134,11 +134,11 @@
 ;; (pay-for-pointed-subcontracts (:state! @state) [:1 :21 :1021])
 ;; (pay-for-selected-subcontracts (:state! @state) [[:2 :24 :1037] [:2 :24 :1038]] :payed? false)
 
-(defn- paths-to-id
+(defn paths-to-id
   [paths]
   (map #(Integer/parseInt (name (last %))) paths))
 
-(defn- subcontract-payment-done
+(defn subcontract-payment-done
   "Description:
      Update payment done in state and DB.
   "
@@ -173,7 +173,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- update-subcontracts-state
+(defn update-subcontracts-state
   "Description:
      Swap subcontracts state if some prices was changed in DB."
   [state!]
@@ -192,7 +192,7 @@
     (reset! (:subcontracts-m (state!)) swap-map))
   (swap! (:subcontracts-payment-state (state!)) #(assoc-in % [:updated-prices] {})))
 
-(defn- back-to-main-panel
+(defn back-to-main-panel
   "Description
      Load contracts panel with subcontracts list using updated state."
   [state!]
@@ -204,7 +204,7 @@
 ;;; GUI for one Contract;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- update-subcontract-price
+(defn update-subcontract-price
   "Description
      Update data about subcontracts price in DB."
   [state!]
@@ -214,7 +214,7 @@
             (gtool/get-lang-alerts :updated-data))
     (update-subcontracts-state state!)))
 
-(defn- number-input
+(defn number-input
   [begin-text only-int? more-fns]
   (gcomp/input-text
    :underline-off true
@@ -231,7 +231,7 @@
                    
                    :focus-lost (fn [e] (c/config! e :text (c/config e :user-data)))]]))
 
-(defn- calculate-contract-price
+(defn calculate-contract-price
   "Description:
      Using :subcontracts-m atom in state, get info about prices and calculate.
      Get only prices of not payed subcontracts."
@@ -254,7 +254,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- info-bar-params
+(defn info-bar-params
   "Description:
      Data for info bar for contract view. Add some more, it's not any problem.
      Rule is [title, info, title, info, ...]"
@@ -272,7 +272,7 @@
    (gtool/get-lang-header :price)
    (str contract-price " " currency)])
 
-(defn- info-bar-template
+(defn info-bar-template
   "Description:
      Create info bar content in columns. Default 3 columns."
   [state! enterprise contract-price date-start date-end collumns-count]
@@ -290,7 +290,7 @@
       (info-bar-params enterprise contract-price date-start date-end (:currency (state!)))))
     collumns-v))
 
-(defn- info-bar
+(defn info-bar
   "Description:
      Create info bar for contract view. "
   [state! contract-path]
@@ -314,7 +314,7 @@
                (.repaint panel)))
     (gcomp/min-scrollbox panel)))
 
-(defn- panel-with-subcontract-rows
+(defn panel-with-subcontract-rows
   "Description
     return mig-panel for one subcontract"
   [state! subcontract-path clicked-sub?]
@@ -394,7 +394,7 @@
     (c/config! panel :items (gtool/join-mig-items (render-fn payment-st)))
     panel))
 
-(defn- display-contract
+(defn display-contract
   "Description
     return mig-panel with button-bar and panels with all periods of one contract"
   [state! contract-path clicked-sub-path]
@@ -427,7 +427,7 @@
 ;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- new-watcher [some-atom watcher-id watch-path action]
+(defn new-watcher [some-atom watcher-id watch-path action]
   (add-watch some-atom watcher-id
              (fn [key atom old-m new-m]
                (let [[left right same] (clojure.data/diff (get-in new-m watch-path) (get-in old-m watch-path))]
@@ -438,16 +438,16 @@
                      (catch Exception e "";; (println (str "service_period/new-watcher:\n" (.getMessage e)))
                             )))))))
 
-(defn- i-checkbox [checkbox-selected?]
+(defn i-checkbox [checkbox-selected?]
   (if checkbox-selected?
     (gs/icon GoogleMaterialDesignIcons/CHECK_BOX)
     (gs/icon GoogleMaterialDesignIcons/CHECK_BOX_OUTLINE_BLANK)))
 
-(defn- select-checkbox-for-subcontract
+(defn select-checkbox-for-subcontract
   [state! subcontract-path select?]
   (swap! (:subcontracts-m (state!)) #(assoc-in % (join-vec subcontract-path [:selected?]) select?)))
 
-(defn- subcontract-checkbox ;; OK
+(defn subcontract-checkbox ;; OK
   [state! subcontract-path checkbox-selected?]
   (c/label :icon (i-checkbox checkbox-selected?)
            :listen [:mouse-clicked
@@ -465,7 +465,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- contract-payed?
+(defn contract-payed?
   [state! contract-path]
   (let [unpayed? (some false?
                      (flatten
@@ -475,7 +475,7 @@
                               (get-in @(:subcontracts-m (state!)) contract-path)))))]
     (if (nil? unpayed?) true (not unpayed?))))
 
-(defn- check-if-contract-selected
+(defn check-if-contract-selected
   [state! contract-path]
   (let [selected? (some false?
                         (flatten
@@ -486,7 +486,7 @@
                                  (get-in @(:subcontracts-m (state!)) contract-path)))))]
     (if (nil? selected?) true (not selected?))))
 
-(defn- select-all-subcontracts
+(defn select-all-subcontracts
   [state! contract-path selected?]
   (let [subcontracts-m     (get-in @(:subcontracts-m (state!)) contract-path)
         new-subcontracts-m (into {} (map
@@ -496,7 +496,7 @@
     (swap! (:subcontracts-m (state!)) #(assoc-in % contract-path new-subcontracts-m))
     new-subcontracts-m))
 
-(defn- contract-checkbox
+(defn contract-checkbox
   [state! root render-fn render-header contract-path checkbox-selected?]
   (let [cbox (c/label :icon (i-checkbox checkbox-selected?)
                       :listen [:mouse-clicked
@@ -543,7 +543,7 @@
 ;; STATE INTERACTIVE TEST
 ;; (let [sw (:subcontracts-m @state)]
 ;;   (swap! sw #(assoc-in % [:1 :3 :207 :service_contract_month.was_payed] false)))
-(defn- loop-all-contracts
+(defn loop-all-contracts
   "Description:
      Base fn for creating another fn"
   [state! enterprise-path func]
@@ -553,7 +553,7 @@
                                          (get-in @(:contracts-m (state!)) enterprise-path)))))]
     (if (nil? unpayed?) true (not unpayed?))))
 
-(defn- all-contracts-payed?
+(defn all-contracts-payed?
   [state! enterprise-path]
   (loop-all-contracts state! enterprise-path
                       (fn [contract-id contract]
@@ -562,7 +562,7 @@
                            (fn [[sub-id sub]] (if (:service_contract_month.was_payed sub) true false))
                            (get-in @(:subcontracts-m (state!)) contract-path))))))
 
-(defn- all-contracts-selected?
+(defn all-contracts-selected?
   "Description:
      Return true is all subcontracts for enterprise are selected or false if not"
   [state! enterprise-path]
@@ -570,7 +570,7 @@
                       (fn [contract-id contract]
                         (check-if-contract-selected state! (join-vec enterprise-path [contract-id])))))
 
-(defn- select-all-contracts
+(defn select-all-contracts
   [state! enterprise-path selected?]
   (doall (map
           (fn [[contract-id contract]]
@@ -579,7 +579,7 @@
                     (:selected? contract))))
           (get-in @(:contracts-m (state!)) enterprise-path))))
 
-(defn- calculate-all-contract-price
+(defn calculate-all-contract-price
   [state! enterprise-path]
   (apply + (flatten (doall
              (map
@@ -587,7 +587,7 @@
                 (calculate-contract-price state! (join-vec enterprise-path [contract-id])))
               (get-in @(:contracts-m (state!)) enterprise-path))))))
 
-(defn- enterprise-checkbox
+(defn enterprise-checkbox
   [state! root render-header enterprise-path checkbox-selected?]
   (let [cbox (c/label :icon (i-checkbox checkbox-selected?)
                       :listen [:mouse-clicked
@@ -631,7 +631,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- create-subcontracts-expand-btns
+(defn create-subcontracts-expand-btns
   "Description:
     Button for one subcontract.
     contract-path ;; => [:1 :2]"
@@ -670,7 +670,7 @@
 ;;
 ;; CONTRACT
 ;;
-(defn- create-contracts-expand-btns
+(defn create-contracts-expand-btns
   [state! enterprise-path]
   (doall
    (map
@@ -709,7 +709,7 @@
 ;;
 ;; ENTERPRISE
 ;;
-(defn- build-expand-contracts-for-enterprise
+(defn build-expand-contracts-for-enterprise
   "Description
      Recursion, which build panels (button-expand for enterprise and service contract, child-expand for service periods), using data from db like configuration map
   Example:
@@ -747,7 +747,7 @@
 ;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
  
-(defn- insert-contract [state! calndr-start calndr-end price-input select-box]
+(defn insert-contract [state! calndr-start calndr-end price-input select-box]
   (let [date-start (seesaw.core/text calndr-start)
         date-end   (seesaw.core/text calndr-end)
         price      (seesaw.core/text price-input)
@@ -785,7 +785,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- add-contract-panel
+(defn add-contract-panel
   "Description
     in main-panel with all contracts add to new-contract-form panel with fields for input data"
   [state!]
@@ -815,7 +815,7 @@
     (doto (:root (state!)) (.revalidate) (.repaint))
     panel))
 
-(defn- create-period-view
+(defn create-period-view
   "Description
     Set to root all contracts expand btns list and subcontracts inside expand"
   [state! dispatch!]
@@ -1200,7 +1200,7 @@
    :service_contract_month.was_payed false,
    :selected? true})
 
-(defn- initial-test-state-template [test-state]
+(defn initial-test-state-template [test-state]
   (reset!
    test-state
    {:enterprises-m        (atom {})
@@ -1209,7 +1209,7 @@
     :currency             "UAH"
     :subcontracts-payment-state (atom {})}))
 
-(defn- initialize-test-state [state!]
+(defn initialize-test-state [state!]
   (reset! (:enterprises-m  (state!)) test-enterprises-m)
   (reset! (:contracts-m    (state!)) test-contracts-m)
   (reset! (:subcontracts-m (state!)) test-subcontracts-m))

@@ -1065,7 +1065,8 @@
                  offset-color
                  seamless-bg
                  title-icon
-                 before-title]
+                 before-title
+                 font]
           :or {expand :auto
                border (b/empty-border :thickness 0)
                vsize 35
@@ -1081,7 +1082,8 @@
                offset-color face/c-btn-expand-offset
                seamless-bg true
                title-icon nil
-               before-title (fn [] (c/label))}}]
+               before-title (fn [] (c/label))
+               font (gs/getFont :bold)}}]
     (let [inside-btns (if (nil? inside-btns) nil inside-btns) ;; check if nill
           inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns)) ;; check if not in list
           inside-btns (if (sequential? (first inside-btns)) (first inside-btns) inside-btns) ;; check if list in list
@@ -1092,7 +1094,7 @@
                           ;; (b/line-border  :left left-offset :color background)
                           (b/empty-border :left 10))
                  :text txt
-                 :font (gs/getFont :bold)
+                 :font font
                  :foreground foreground
                  :background (Color. 0 0 0 0))
           listen (fn [func] [:mouse-entered gtool/hand-hover-on
@@ -1133,10 +1135,11 @@
                               (c/config! expand-box :items [])
                               (.revalidate (c/to-root e))
                               (.repaint (c/to-root e))))))]
-          (do
-            (c/config! mig
-                       :id id
-                       :items [[(expand-btn onClick)] [expand-box]])))
+          (let [exbtn (c/config! mig
+                                 :id id
+                                 :items [[(expand-btn onClick)] [expand-box]])]
+            (if (= expand :always) (timelife 0.02 #((onClick exbtn))))
+            exbtn))
         (c/config! mig :id id :items [[(expand-btn onClick)] [expand-box]])))))
 
 

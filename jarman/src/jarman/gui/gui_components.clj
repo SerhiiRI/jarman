@@ -65,17 +65,19 @@
 (defn auto-scrollbox
   [component & args]
   (let [scr (apply c/scrollable component :border nil args)
-        scr (c/config! scr :listen [:property-change
-                                  (fn [e] (c/invoke-later (try
-                                                          (let [get-root (fn [e] (.getParent (.getParent (.getParent (.getSource e)))))
-                                                                vbar 40
-                                                                w (- (.getWidth (get-root e)) vbar)
-                                                                h (+ 50 vbar (.getHeight (c/config e :preferred-size)))]
-                                                            (c/config! component :size [w :by h]))
-                                                          (catch Exception e (str "Auto scroll cannot get parent")))))])]
+        scr (c/config!
+             scr
+             :listen [:property-change
+                      (fn [e] (c/invoke-later (try
+                                                (let [get-root (fn [e] (.getParent (.getParent (.getParent (.getSource e)))))
+                                                      vbar 0
+                                                      w (- (.getWidth (get-root e)) vbar)
+                                                      h (+ vbar (.getHeight (c/config e :preferred-size)))]
+                                                  (c/config! component :size [w :by h]))
+                                                (catch Exception e (str "Auto scroll cannot get parent")))))])]
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. 12 0))
-    (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
+    (.setUnitIncrement (.getHorizontalScrollBar scr) 0)
     (.setPreferredSize (.getHorizontalScrollBar scr) (java.awt.Dimension. 0 12))
     scr))
 
@@ -99,7 +101,6 @@
     (.setPreferredSize (.getHorizontalScrollBar scr) (java.awt.Dimension. 0 hbar-size))
     scr))
 
-
 (defn min-scrollbox
   "Description
     this func get some pane (like mig-panel etc..)
@@ -108,8 +109,9 @@
     (min-scrollbox (mig-panel ...) :hscroll :never)
     ;; => #object[seesaw.core.proxy$javax.swing"
   [component
-   & {:keys [hscroll-off args]
+   & {:keys [hscroll-off vscroll-hide args]
       :or {hscroll-off false
+           vscroll-hide false
            args []}}]
   (let [scr (CustomScrollBar/myScrollPane component face/c-min-scrollbox-bg)
         get-key (fn [x] (first (first x)))
@@ -117,18 +119,19 @@
     (if-not (empty? args)
       (map (fn [[k v]] (c/config! scr k v))
            (apply hash-map args)))    
-    (c/config! scr :border (b/line-border :thickness 0))
+    (c/config! scr :border (b/line-border :thickness 0) :vscroll (if vscroll-hide :never :always))
+    ;; (c/config! scr :preferred-size [500 :by 1000])
     (c/config! scr :listen [:component-resized
                             (fn [e] (if hscroll-off ;; TODO: height bugging
                                       (if (= -1 (first @(state/state :atom-app-resize-direction)))
-                                          (let [w (.getWidth  (.getSize scr))
-                                                h (.getHeight (.getSize scr))
-                                                layout (first (seesaw.util/children (second (seesaw.util/children scr))))
-                                                layout-h (.getHeight (.getPreferredSize layout))]
+                                        (let [w (.getWidth  (.getSize scr))
+                                              h (.getHeight (.getSize scr))
+                                              layout (first (seesaw.util/children (second (seesaw.util/children scr))))
+                                              layout-h (.getHeight (.getPreferredSize layout))]
                                         ;(println layout)
-                                            (c/config! layout :maximum-size [w :by 100000000])
-                                            (c/config! layout :preferred-size [w :by (.getHeight (.getPreferredSize layout))])
-                                            (.repaint scr)))
+                                          (c/config! layout :maximum-size [w :by 100000000])
+                                          (c/config! layout :preferred-size [w :by (.getHeight (.getPreferredSize layout))])
+                                          (.repaint scr)))
                                       (do (.revalidate scr)
                                           (.repaint scr))))
                             :mouse-wheel-moved (fn [e]
@@ -1059,6 +1062,7 @@
                  ico-hover
                  id
                  onClick
+                 onClickPlus
                  over-func
                  lvl
                  background
@@ -1068,7 +1072,7 @@
                  title-icon
                  before-title
                  font]
-          :or {expand :auto
+          :or {expand false
                border (b/empty-border :thickness 0)
                vsize 35
                min-height 200
@@ -1076,6 +1080,7 @@
                ico-hover (gs/icon GoogleMaterialDesignIcons/REMOVE face/c-icon 20)
                id :none
                onClick nil
+               onClickPlus nil
                over-func :none
                lvl 1
                background face/c-btn-expand-bg
@@ -1088,7 +1093,7 @@
     (let [inside-btns (if (nil? inside-btns) nil inside-btns) ;; check if nill
           inside-btns (if (seqable? inside-btns) inside-btns (list inside-btns)) ;; check if not in list
           inside-btns (if (sequential? (first inside-btns)) (first inside-btns) inside-btns) ;; check if list in list
-          ico (if (or (= :always expand) (not (nil? inside-btns))) ico nil)
+          ;;ico (if (or (= :always expand) (not (nil? inside-btns))) ico nil)
           title (c/label
                  :icon title-icon
                  :border (b/compound-border
@@ -1107,7 +1112,7 @@
                 :size [vsize :by vsize]
                 :halign :center
                 :background (Color. 0 0 0 0)
-                :icon ico)
+                :icon (if expand ico ico-hover))
           mig  (gmg/migrid :v {:args [:background background]} [])
           user-data  {:title-fn (fn [new-title] (c/config! title :text new-title))}
           expand-btn (fn [func]
@@ -1121,25 +1126,27 @@
                                       [(let [bt (before-title)] (c/config! bt :background background) bt)]
                                       [(c/label)])
                                     title icon]))
-          expand-box (gmg/migrid :v "[grow, fill]" {:args [:border border]} [])]
+          expand-box (gmg/migrid :v "[grow, fill]" {:args [:border border]} (if expand inside-btns []))]
       (if (nil? onClick)
         (let [onClick (fn [e]
+                        (reset! (state/state :atom-app-size) @(state/state :atom-app-size))
                         (if-not (nil? inside-btns)
                           (if (= 0 (count (u/children expand-box)))
                             (do ;;  Add inside buttons to mig with expand button
                               (c/config! icon :icon ico-hover)
                               (c/config! expand-box :items (gtool/join-mig-items inside-btns))
-                              (.revalidate (c/to-root e))
+                              ;;(.revalidate (c/to-root e))
+                              (if (fn? onClickPlus) (onClickPlus e))
                               (.repaint (c/to-root e)))
                             (do ;;  Remove inside buttons form mig without expand button
                               (c/config! icon :icon ico)
                               (c/config! expand-box :items [])
-                              (.revalidate (c/to-root e))
+                              (if (fn? onClickPlus) (onClickPlus e))
+                              ;;(.revalidate (c/to-root e))
                               (.repaint (c/to-root e))))))]
           (let [exbtn (c/config! mig
                                  :id id
                                  :items [[(expand-btn onClick)] [expand-box]])]
-            (if (= expand :always) (timelife 0.02 #((onClick exbtn))))
             exbtn))
         (c/config! mig :id id :items [[(expand-btn onClick)] [expand-box]])))))
 

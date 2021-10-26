@@ -43,9 +43,11 @@
 (defn var-string-value [variable]
   (let [len-const 100
         variable-str (str (deref (clojure.core/var-get (:link variable))))]
-    (if (< len-const (.length variable-str))
-      (str (apply str (take len-const variable-str)) "...")
-      variable-str)))
+    ;; (if (< len-const (.length variable-str))
+    ;;   (str (apply str (take len-const variable-str)) "...")
+    ;;   variable-str)
+    variable-str
+    ))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; UI COMPONENTS ;;;
@@ -63,13 +65,12 @@
 ;;           [(info "Group view")]))
 
 (defn var-content [var]
-  (gcomp/min-scrollbox
-   (gmg/migrid
-      :> "[200:200:200, fill]10px[50::, fill]"
-      {:gap [10] :args [:border (b/line-border :top 2 :color face/c-layout-background)]}
-      [(c/label :text (gtool/str-cutter (str (get var :name)) 25)
-                :tip (str (gtool/get-lang-basic :variable) ": " (get var :name)))
-       (c/label :text (str (get var :value)) :tip "Shift + Scroll")])))
+  (gmg/migrid
+   :> "[200:200:200, fill]10px[50::, fill]" "[shrink 0]"
+   {:gap [10] :args [:border (b/line-border :top 2 :color face/c-layout-background)]}
+   [(c/label :text (gtool/str-cutter (str (get var :name)) 25)
+             :tip (str (gtool/get-lang-basic :variable) ": " (get var :name)))
+    (c/label :text (str (get var :value)))]))
 
 (defn supply-content-all-vars [items vars-list]
   (if (seq vars-list)
@@ -87,12 +88,12 @@
                (concat acc
                        [(gcomp/button-expand
                          group-name
-                         [(gmg/migrid
-                           :v {:args [:border (b/line-border :bottom 1 :color face/c-icon)]}
-                           (map (comp var-content second) var-list))
-                          :hscroll-off true]
+                         (gmg/migrid
+                          :v {:args [:border (b/line-border :bottom 0 :color face/c-icon)]}
+                          (doall (map (comp var-content second) var-list)))
                          :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/SETTINGS))
-                         :expand :always)]))
+                         ;; :expand :always
+                         )]))
              [] vars-groups))
     (conj items
           (info "Variables cannot be empty. Jarman error"))))
@@ -148,12 +149,16 @@
     (gmg/migrid
      :v (gtool/join-mig-items
          [(gcomp/menu-bar
-           {:justify-end true
+           {;;:justify-end true
             :buttons [[" List by \"Variable Group\" " (gs/icon GoogleMaterialDesignIcons/APPS)
-                       (fn [e] (c/config! panel :items (gtool/join-mig-items (view-grouped-by-group))))]
+                       (fn [e]
+                         (c/config! panel :items (gtool/join-mig-items (view-grouped-by-group)))
+                         (.repaint (c/to-root (c/to-widget e))))]
                       [" List by \"Loaded variables\" " (gs/icon GoogleMaterialDesignIcons/ARCHIVE)
-                       (fn [e] (c/config! panel :items (gtool/join-mig-items (view-grouped-by-loaded))))]]})
-          panel]))))
+                       (fn [e]
+                         (c/config! panel :items (gtool/join-mig-items (view-grouped-by-loaded)))
+                         (.repaint (c/to-root (c/to-widget e))))]]})
+          (gcomp/min-scrollbox panel)]))))
 
 (comment
   (-> (c/frame :content (vars-listing-panel))

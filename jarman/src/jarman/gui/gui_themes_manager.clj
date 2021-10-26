@@ -108,7 +108,8 @@
                                                       (i/soft-restart)))
                                     :underline-size 0)]))))
                 :hscroll-off true)]
-              :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/FORMAT_PAINT)))])
+              :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/FORMAT_PAINT))
+              :expand :always)])
     (conj items
           (info "Empty theme list")
           (info "-- empty --"))))

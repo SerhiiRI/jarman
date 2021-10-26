@@ -11,6 +11,7 @@
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-tools      :as gtool]
    [jarman.gui.gui-style      :as gs]
+   [jarman.gui.gui-migrid     :as gmg]
    [jarman.config.vars :as vars]
    [jarman.interaction :as i])
   (:import (java.io IOException FileNotFoundException)
@@ -50,26 +51,6 @@
 ;;; UI COMPONENTS ;;;
 ;;;;;;;;;;;;;;;;;;;;;
 
-(defn- var-content [var-desc]
-  (doto
-      (c/table
-       :show-horizontal-lines? nil
-       :show-vertical-lines? nil
-       :model (table/table-model :columns [{:key :name}
-                                           {:key :value}]
-                                 :rows [var-desc]))
-    (.setRowMargin 10)
-    (.setRowHeight 35)
-    (.setIntercellSpacing (java.awt.Dimension. 10 0))
-    (setColumnWidth :column 0 :size 270)
-    (setColumnWidth :column 1 :size 800)
-    ;; (setColumnWidth :column 2 :size 400)
-    ;; (setColumnWidth :column 3 :size 1000)
-    ;; (setColumnWidth :column 3 :size 600)
-    (.setRowSelectionAllowed false)
-    ;; (.setAutoResizeMode javax.swing.JTable/AUTO_RESIZE_LAST_COLUMN)
-    ))
-
 (defn info [s]
   {:pre [(string? s)]}
   (seesaw.core/label :halign :left :foreground face/c-foreground-title :text s :font (gs/getFont :bold) :border (b/empty-border :thickness 15)))
@@ -80,13 +61,21 @@
 ;; (defn supply-currently-loaded [items theme]
 ;;   (concat items
 ;;           [(info "Group view")]))
+
+(defn var-content [var]
+  (gcomp/min-scrollbox
+   (gmg/migrid
+      :> "[200:200:200, fill]10px[50::, fill]"
+      {:gap [10] :args [:border (b/line-border :top 2 :color face/c-layout-background)]}
+      [(c/label :text (gtool/str-cutter (str (get var :name)) 25)
+                :tip (str (gtool/get-lang-basic :variable) ": " (get var :name)))
+       (c/label :text (str (get var :value)) :tip "Shift + Scroll")])))
+
 (defn supply-content-all-vars [items vars-list]
   (if (seq vars-list)
     (into items
           (for [v vars-list]
-            (c/horizontal-panel
-             :items 
-             [(var-content v)])))
+            (gmg/migrid :v (var-content v))))
     (conj items
           (info "Variables cannot be empty. Jarman error"))))
 
@@ -96,8 +85,14 @@
      items
      (reduce (fn [acc [group-name var-list]]
                (concat acc
-                       [(info group-name)]
-                       (map (comp var-content second) var-list)))
+                       [(gcomp/button-expand
+                         group-name
+                         [(gmg/migrid
+                           :v {:args [:border (b/line-border :bottom 1 :color face/c-icon)]}
+                           (map (comp var-content second) var-list))
+                          :hscroll-off true]
+                         :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/SETTINGS))
+                         :expand :always)]))
              [] vars-groups))
     (conj items
           (info "Variables cannot be empty. Jarman error"))))
@@ -149,18 +144,16 @@
 ;; Przyznaje siê ¿e moje wlasne pieklo to migi
 ;; - I can no frear bro.. but that thing '"wrap 1" "0px[grow, fill]0px"', scare me
 (defn vars-listing-panel []
-  (let [panel (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[]0px"] :items (view-grouped-by-group))]
-    (seesaw.mig/mig-panel
-     :constraints ["wrap 1" "0px[grow, fill]0px" "0px[]0px"]
-     :items
-     (gtool/join-mig-items
-      [(gcomp/menu-bar
-        {:justify-end true
-         :buttons [[" List by \"Variable Group\" " (gs/icon GoogleMaterialDesignIcons/APPS)
-                    (fn [e] (c/config! panel :items (gtool/join-mig-items (view-grouped-by-group))))]
-                   [" List by \"Loaded variables\" " (gs/icon GoogleMaterialDesignIcons/ARCHIVE)
-                    (fn [e] (c/config! panel :items (gtool/join-mig-items (view-grouped-by-loaded))))]]})
-       panel]))))
+  (let [panel (gmg/migrid :v {:gap [5 0]} (view-grouped-by-group))]
+    (gmg/migrid
+     :v (gtool/join-mig-items
+         [(gcomp/menu-bar
+           {:justify-end true
+            :buttons [[" List by \"Variable Group\" " (gs/icon GoogleMaterialDesignIcons/APPS)
+                       (fn [e] (c/config! panel :items (gtool/join-mig-items (view-grouped-by-group))))]
+                      [" List by \"Loaded variables\" " (gs/icon GoogleMaterialDesignIcons/ARCHIVE)
+                       (fn [e] (c/config! panel :items (gtool/join-mig-items (view-grouped-by-loaded))))]]})
+          panel]))))
 
 (comment
   (-> (c/frame :content (vars-listing-panel))

@@ -183,20 +183,20 @@
                  :fn      (fn [e] )}}}}
 
    "Administration"
-   {"Update manager" {:key (gtool/get-lang-btns :update-manager)
-                      :permission :admin-update
-                      :fn update-manager/update-manager-panel}
-    "Extension manager" {:key (gtool/get-lang-btns :extension-manager)
-                         :permission :admin-extension
-                         :fn extension-manager/extension-manager-panel}
-    "Themes manager" {:key (gtool/get-lang-btns :theme-manager)
-                      :fn themes-manager/theme-manager-panel}
-    "Var listing" {:key (gtool/get-lang-btns :var-list-panel)
-                   :permission :developer
-                   :fn vars-listing/vars-listing-panel}
-    "DB Visualizer" {:key (gtool/get-lang-btns :db-visualizer)
-                     :permission :admin-dataedit
-                     :fn dbv/create-view--db-view}}
+   {(gtool/get-lang-btns :update-manager)    {:key (gtool/get-lang-btns :update-manager)
+                                              :permission :admin-update
+                                              :fn update-manager/update-manager-panel}
+    (gtool/get-lang-btns :extension-manager) {:key (gtool/get-lang-btns :extension-manager)
+                                              :permission :admin-extension
+                                              :fn extension-manager/extension-manager-panel}
+    (gtool/get-lang-btns :theme-manager)     {:key (gtool/get-lang-btns :theme-manager)
+                                              :fn themes-manager/theme-manager-panel}
+    (gtool/get-lang-btns :var-list-panel)    {:key (gtool/get-lang-btns :var-list-panel)
+                                              :permission :developer
+                                              :fn vars-listing/vars-listing-panel}
+    (gtool/get-lang-btns :db-visualizer)     {:key (gtool/get-lang-btns :db-visualizer)
+                                              :permission :admin-dataedit
+                                              :fn dbv/create-view--db-view}}
    "Debug Items"
    {"Popup window" {:key        "popup-window"
                     :action     :invoke

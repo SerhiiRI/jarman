@@ -68,7 +68,7 @@
     (gcomp/min-scrollbox
      (gmg/migrid
       :> "[150:150:150, fill]10px[50::, fill]"
-      {:gap [10] :args [:border (b/line-border :bottom 2 :color face/c-layout-background)]}
+      {:gap [10] :args [:border (b/line-border :top 2 :color face/c-layout-background)]}
       [(c/label :text (gtool/str-cutter (str (get ext :name)) 20)
                 :tip (str (gtool/get-lang-basic :extension) ": " (get ext :name)))
        (c/label :text (str (get ext :version)))
@@ -87,7 +87,7 @@
                  (for [ext extension-list]
                    (ext-info
                     ext
-                    (gmg/migrid :> "[100::, fill]" {:args [:border (b/line-border :bottom 2 :color face/c-layout-background)]}
+                    (gmg/migrid :> "[100::, fill]" {:args [:border (b/line-border :top 2 :color face/c-layout-background)]}
                      (gcomp/button-basic (gtool/get-lang-btns :reload)
                                          :onClick (fn [_] (try-catch-alert
                                                            (extension-manager/do-load-extensions ext)
@@ -105,10 +105,8 @@
 (extension-manager/extension-storage-list-load)
 
 (defn extension-manager-panel []
-  (seesaw.mig/mig-panel
-   :constraints ["wrap 1" "0px[grow, fill]0px" "0px[]0px"]
-   :background face/c-background-detail
-   :items
+  (gmg/migrid
+   :v {:gap [5 0]}
    (gtool/join-mig-items
     (-> (startup-components)
         (supply-content-all-extensions (extension-manager/extension-storage-list-get))))))

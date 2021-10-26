@@ -80,7 +80,7 @@
     (gcomp/min-scrollbox
      (gmg/migrid
       :> "[150:150:150, fill]10px[50::, fill]"
-      {:gap [10]}
+      {:gap [10] :args [:border (b/line-border :top 2 :color face/c-layout-background)]}
       [(c/label :text (gtool/str-cutter (str (get package :file)) 20)
                 :tip (str (gtool/get-lang-basic :package) ": " (get package :file)))
        (c/label :text (str (get package :version)))
@@ -99,12 +99,14 @@
             :> :gf {:args [:background face/c-compos-background :border (b/line-border :bottom 1 :color face/c-icon)]}
             [(package-info
               package
-              (gcomp/button-basic (gtool/get-lang-btns :clean-environment)
-                                  :onClick (fn [_] (try-catch-alert
-                                                    (update-manager/procedure-clean-env)
-                                                    (i/info (gtool/get-lang-header :update-manager)
-                                                            (gtool/get-lang-alerts :config-deleted) :time 7)))
-                                  :underline-size 0))]))
+              (gmg/migrid
+               :> :f {:args [:border (b/line-border :top 2 :color face/c-layout-background)]}
+               (gcomp/button-basic (gtool/get-lang-btns :clean-environment)
+                                   :onClick (fn [_] (try-catch-alert
+                                                     (update-manager/procedure-clean-env)
+                                                     (i/info (gtool/get-lang-header :update-manager)
+                                                             (gtool/get-lang-alerts :config-deleted) :time 7)))
+                                   :underline-size 0)))]))
          ;; :font (gs/getFont :bold 16)
          :expand :always
          :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/SETTINGS)))))
@@ -122,7 +124,7 @@
              (package-info
               package
               (gmg/migrid
-               :> "[90::, fill]"
+               :> "[90::, fill]" {:args [:border (b/line-border :top 2 :color face/c-layout-background)]}
                [(gcomp/button-basic (gtool/get-lang-btns :install)
                                     :onClick (fn [_] (try-catch-alert
                                                       (update-manager/procedure-update package)
@@ -156,7 +158,7 @@
                    (package-info
                     pkg
                     (gmg/migrid
-                     :> "[90::, fill]"
+                     :> "[90::, fill]" {:args [:border (b/line-border :top 2 :color face/c-layout-background)]}
                      [(gcomp/button-basic (if (= (:version pkg) update-manager/*program-vers*)
                                             (gtool/get-lang-btns :reinstall)
                                             (gtool/get-lang-btns :downgrade))

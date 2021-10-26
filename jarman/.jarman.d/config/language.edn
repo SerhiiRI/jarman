@@ -51,6 +51,7 @@
     :var-list-panel     "Lista zmiennych"
     :db-visualizer      "DB Visualizer"
     :update-manager     "Menedżer aktualizacji"
+    :apply              "Zastosuj"
     },
    
    :header
@@ -96,6 +97,8 @@
     :system-updated     "System jest aktualny"
     :extension-manager  "Menedżer rozszerzeń"
     :installed-extentions "Zainstalowane rozszerzenia"
+    :loaded-theme       "Załadowana skórka"
+    :choose-theme       "Wybierz skórkę"
     }
    
    :alerts
@@ -164,6 +167,7 @@
     :version        "Wersja"
     :package        "Paczka"
     :source         "Źródło"
+    :theme          "Skórka"
     },
    
    :tips
@@ -269,6 +273,7 @@
     :db-visualizer      "DB Visualizer"
     :update-manager     "Update manager"
     :reload             "Reload"
+    :apply              "Apply"
     }
    
    :header
@@ -315,6 +320,8 @@
     :downgrade-success  "Downgrade from %s to %s version was successfully"
     :extension-manager  "Extension manager"
     :installed-extentions "Installed extentions"
+    :loaded-theme        "Loaded theme"
+    :choose-theme        "Choose theme"
     }
 
    :alerts
@@ -386,6 +393,7 @@
     :version        "Version"
     :package        "Package"
     :source         "Source"
+    :theme          "Theme"
     }
    
    :tips

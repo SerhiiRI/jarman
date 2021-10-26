@@ -17,6 +17,7 @@
             [jarman.gui.gui-tools            :as gtool]
             [jarman.gui.gui-style            :as gs]
             [jarman.gui.gui-migrid           :as gmg]
+            [seesaw.chooser                  :as chooser]
             [jarman.config.vars :refer [setj]])
   (:import
    (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
@@ -73,7 +74,68 @@
              (c/label)))
     panel))
 
+(defn- display-btn-upload [root]
+  (gcomp/button-basic
+   (gtool/get-lang-btns :install)
+   :tgap 2
+   :bgap 2
+   :underline-size 0
+   :args [:icon (gs/icon GoogleMaterialDesignIcons/MOVE_TO_INBOX)]
+   :onClick (fn [e]
+              (if-not (empty? (:license-file @state))
+                (do
+                  (swap! state #(assoc % :license-file nil))
+                  (i/success (gtool/get-lang-header :success)
+                             (gtool/get-lang-alerts :new-license-instaled)
+                             :time 3))
+                (i/warning (gtool/get-lang-header :file-no-choose)
+                           (gtool/get-lang-alerts :choose-file-and-try-again)
+                           :time 4))
+              ;;(c/config! root :items (gtool/join-mig-items (butlast (u/children root))))
+              (.repaint (c/to-root root)))))
+
+(defn- file-exp []
+  (gmg/migrid
+   :> "[fill]5px[220::, fill]" {:gap [0 20]}
+   (let [default-path (str jarman.config.environment/user-home "/Documents")
+         input (c/text :text default-path :border nil)
+         icon  (c/label :icon (gs/icon GoogleMaterialDesignIcons/FIND_IN_PAGE face/c-icon 25)
+                        :listen [:mouse-entered gtool/hand-hover-on
+                                 :mouse-clicked
+                                 (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
+                                           (swap! state #(assoc % :license-file (rift new-path default-path)))
+                                           (c/config! input :text (rift new-path default-path))))])]
+     [icon input])))
+
+(defn- license-panel []
+  (let [panel (gmg/migrid
+               :> :fgf {:gap [5 30] ;; :args [:border (b/line-border :bottom 1 :color face/c-icon)]
+                        } [])
+        selected-lang-fn #(deref jarman.config.conf-language/language-selected)]
+    (c/config!
+     panel
+     :items (gtool/join-mig-items
+             (c/label :text (str (gtool/get-lang-header :upload-license) ": "))
+             (file-exp)
+             (display-btn-upload panel)))
+    panel))
+
+(defn- all-licenses-panel []
+  (let [panel (gmg/migrid
+               :v {:gap [5] :args [:border (b/line-border :bottom 1 :color face/c-icon)]}
+               [(gmg/migrid :> {:args [:border (b/line-border :bottom 2 :top 2 :color face/c-compos-background-darker)]} [(c/label :text "License code") (c/label :text "Start")(c/label :text "End")])
+                (gmg/migrid :> [(c/label :text "Licencja 1") (c/label :text "2021/ 01/ 01")(c/label :text "2021/ 12/ 31")])
+                (gmg/migrid :> [(c/label :text "Licencja 2") (c/label :text "2021/ 01/ 01")(c/label :text "2021/ 12/ 31")])
+                (gmg/migrid :> [(c/label :text "Licencja 3") (c/label :text "2021/ 01/ 01")(c/label :text "2021/ 12/ 31")])])]
+    panel))
+
 (defn config-panel []
   (gmg/migrid
-   :v {:gap [5 10]}
-   [(gcomp/button-expand (gtool/get-lang-header :select-language) (language-selection-panel))]))
+   :v {:gap [5 0]}
+   [(gcomp/button-expand (gtool/get-lang-header :select-language) (language-selection-panel)
+                         :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/TRANSLATE)))
+    
+    (gcomp/button-expand (gtool/get-lang-header :licenses)
+                         (gmg/migrid :v [(license-panel)
+                                         (all-licenses-panel)])
+                         :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/VERIFIED_USER)))]))

@@ -99,6 +99,9 @@
     :installed-extentions "Zainstalowane rozszerzenia"
     :loaded-theme       "Załadowana skórka"
     :choose-theme       "Wybierz skórkę"
+    :licenses           "Licencje"
+    :upload-license     "Dodaj nową licencję"
+    :file-no-choose      "Nie wybrano pliku"
     }
    
    :alerts
@@ -142,6 +145,8 @@
     :no-updates         "Nie znaleziono dostępnych aktualizacji."
     :downgrade-success  "Downgrade z wersji %s do %s przebiegł pomyślnie."
     :reloaded-extension "Rozszerzenie `%s` przeładowano pomyślnie."
+    :new-license-instaled "Nowa licencja jest gotowa do użytku."
+    :choose-file-and-try-again "Proszę wybrać właściwy plik i spróbować raz jeszcze."
     },
    
    :basic
@@ -323,6 +328,9 @@
     :installed-extentions "Installed extentions"
     :loaded-theme        "Loaded theme"
     :choose-theme        "Choose theme"
+    :licenses            "Licenses"
+    :upload-license      "Upload new license"
+    :file-no-choose      "No file selected"
     }
 
    :alerts
@@ -369,6 +377,8 @@
     :config-deleted "Local Jarman configuraion was deleted"
     :no-updates     "No avaliable updates."
     :reloaded-extension "Extension `%s` successfully reloaded."
+    :new-license-instaled "New license is already prepared to using"
+    :choose-file-and-try-again "Please choose file and try again."
     }
 
    :basic

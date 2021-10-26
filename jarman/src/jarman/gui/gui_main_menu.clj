@@ -18,6 +18,7 @@
             [jarman.gui.gui-tools              :as gtool]
             [jarman.gui.popup                  :as popup]
             [jarman.gui.gui-editors            :as gedit]
+            [jarman.gui.gui-config-panel       :as gcp]
             [jarman.interaction :as i]))
 
 ;; (defn- expand-colors []
@@ -183,7 +184,9 @@
                  :fn      (fn [e] )}}}}
 
    "Administration"
-   {(gtool/get-lang-btns :update-manager)    {:key (gtool/get-lang-btns :update-manager)
+   {(gtool/get-lang-btns :settings)          {:key (gtool/get-lang-btns :settings)
+                                              :fn  gcp/config-panel}
+    (gtool/get-lang-btns :update-manager)    {:key (gtool/get-lang-btns :update-manager)
                                               :permission :admin-update
                                               :fn update-manager/update-manager-panel}
     (gtool/get-lang-btns :extension-manager) {:key (gtool/get-lang-btns :extension-manager)

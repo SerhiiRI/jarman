@@ -14,7 +14,8 @@
    ;; environtemnt variables
    [jarman.interaction :as i]
    [jarman.tools.org :refer :all]
-   [jarman.tools.update-manager :as update-manager])
+   [jarman.tools.update-manager :as update-manager]
+   [jarman.gui.popup   :as popup])
   (:import (java.io IOException FileNotFoundException)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
@@ -84,7 +85,11 @@
       [(c/label :text (gtool/str-cutter (str (get package :file)) 20)
                 :tip (str (gtool/get-lang-basic :package) ": " (get package :file)))
        (c/label :text (str (get package :version)))
-       (c/label :text (str (get package :uri)) :tip "Shift + Scroll")]))
+       (c/label :text (str (get package :uri))
+                :listen [:mouse-clicked (fn [e] (popup/build-popup
+                                                 {:title   (get package :file)
+                                                  :size    [600 300]
+                                                  :comp-fn (fn [] (c/label :text (gtool/htmling (str (get package :uri)))))}))])]))
     buttons)))
 
 (defn supply-content-info [items]

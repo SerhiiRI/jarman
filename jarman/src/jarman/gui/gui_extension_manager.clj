@@ -12,7 +12,8 @@
    [jarman.interaction  :as i]
    [jarman.tools.org    :refer :all]
    [jarman.gui.gui-migrid :as gmg]
-   [jarman.gui.gui-style  :as gs])
+   [jarman.gui.gui-style  :as gs]
+   [jarman.gui.popup      :as popup])
   (:import (java.io IOException FileNotFoundException)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
@@ -72,7 +73,11 @@
       [(c/label :text (gtool/str-cutter (str (get ext :name)) 20)
                 :tip (str (gtool/get-lang-basic :extension) ": " (get ext :name)))
        (c/label :text (str (get ext :version)))
-       (c/label :text (str (get ext :description)) :tip "Shift + Scroll")]))
+       (c/label :text (str (get ext :description))
+                :listen [:mouse-clicked (fn [e] (popup/build-popup
+                                                 {:title   (get ext :name)
+                                                  :size    [600 300]
+                                                  :comp-fn (fn [] (c/label :text (gtool/htmling (str (get ext :description)))))}))])]))
     buttons)))
 
 (defn supply-content-all-extensions [items extension-list]

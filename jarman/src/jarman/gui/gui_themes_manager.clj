@@ -15,7 +15,8 @@
    [jarman.logic.state :as state]
    [jarman.interaction :as i]
    [jarman.tools.org :refer :all]
-   [jarman.plugin.plugin :as plugin])
+   [jarman.plugin.plugin :as plugin]
+   [jarman.gui.popup      :as popup])
   (:import (java.io IOException FileNotFoundException)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
@@ -75,7 +76,11 @@
      {:gap [10] :args [:border (b/line-border :top 2 :color face/c-layout-background)]}
      [(c/label :text (gtool/str-cutter (str (get theme :theme-name)) 20)
                :tip (str (gtool/get-lang-basic :theme) ": " (get theme :theme-name)))
-      (c/label :text (str (get theme :theme-description)) :tip "Shift + Scroll")])
+      (c/label :text (str (get theme :theme-description))
+               :listen [:mouse-clicked (fn [e] (popup/build-popup
+                                                 {:title   (get theme :theme-name)
+                                                  :size    [600 300]
+                                                  :comp-fn (fn [] (c/label :text (gtool/htmling (str (get theme :theme-description)))))}))])])
     buttons)))
 
 (defn supply-currently-loaded [items theme]

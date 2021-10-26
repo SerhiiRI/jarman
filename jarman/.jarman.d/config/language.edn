@@ -168,6 +168,7 @@
     :package        "Paczka"
     :source         "Źródło"
     :theme          "Skórka"
+    :variable       "Zmienna"
     },
    
    :tips
@@ -394,6 +395,7 @@
     :package        "Package"
     :source         "Source"
     :theme          "Theme"
+    :variable       "Variable"
     }
    
    :tips

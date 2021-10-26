@@ -13,7 +13,8 @@
    [jarman.gui.gui-style      :as gs]
    [jarman.gui.gui-migrid     :as gmg]
    [jarman.config.vars :as vars]
-   [jarman.interaction :as i])
+   [jarman.interaction :as i]
+   [jarman.gui.popup   :as popup])
   (:import (java.io IOException FileNotFoundException)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
@@ -66,11 +67,15 @@
 
 (defn var-content [var]
   (gmg/migrid
-   :> "[200:200:200, fill]10px[50::, fill]" "[shrink 0]"
+   :> "[200:200:200, fill]10px[50::, fill]"
    {:gap [10] :args [:border (b/line-border :top 2 :color face/c-layout-background)]}
    [(c/label :text (gtool/str-cutter (str (get var :name)) 25)
              :tip (str (gtool/get-lang-basic :variable) ": " (get var :name)))
-    (c/label :text (str (get var :value)))]))
+    (c/label :text (str (get var :value))
+             :listen [:mouse-clicked (fn [e] (popup/build-popup
+                                              {:title   (get var :name)
+                                               :size    [600 300]
+                                               :comp-fn (fn [] (c/label :text (gtool/htmling (str (get var :value)))))}))])]))
 
 (defn supply-content-all-vars [items vars-list]
   (if (seq vars-list)
@@ -145,7 +150,7 @@
 ;; Przyznaje siê ¿e moje wlasne pieklo to migi
 ;; - I can no frear bro.. but that thing '"wrap 1" "0px[grow, fill]0px"', scare me
 (defn vars-listing-panel []
-  (let [panel (gmg/migrid :v {:gap [5 0]} (view-grouped-by-group))]
+  (let [panel (gmg/migrid :v :a "[shrink 0]"{:gap [5 0]} (view-grouped-by-group))]
     (gmg/migrid
      :v (gtool/join-mig-items
          [(gcomp/menu-bar

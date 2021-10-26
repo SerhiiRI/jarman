@@ -14,6 +14,7 @@
     :export  "Exportuj"
     :goback  "Wróć"
     :search  "Szukaj"
+    :reload  "Przeładuj"
     :sign-in "Zaloguj"
     :logout  "Wyloguj"
     :connect "Połącz"
@@ -93,6 +94,8 @@
     :pusty              "Pusto"
     :update-error       "Błąd aktualizacji"
     :system-updated     "System jest aktualny"
+    :extension-manager  "Menedżer rozszerzeń"
+    :installed-extentions "Zainstalowane rozszerzenia"
     }
    
    :alerts
@@ -135,6 +138,7 @@
     :config-deleted     "Lokalna konfiguracja Jarman została usunięta."
     :no-updates         "Nie znaleziono dostępnych aktualizacji."
     :downgrade-success  "Downgrade z wersji %s do %s przebiegł pomyślnie."
+    :reloaded-extension "Rozszerzenie `%s` przeładowano pomyślnie."
     },
    
    :basic
@@ -154,8 +158,13 @@
     :parameters "Parametry",
     :no "Nie",
     :in "Wejście"
-    :configuration "Konfiguracja"
-    :db-conn-config "Konfiguracja DB"},
+    :configuration  "Konfiguracja"
+    :db-conn-config "Konfiguracja DB"
+    :extension      "Rozszerzenie"
+    :version        "Wersja"
+    :package        "Paczka"
+    :source         "Źródło"
+    },
    
    :tips
    {:save "Zapisz zmiany.",
@@ -259,6 +268,7 @@
     :var-list-panel     "Vars list"
     :db-visualizer      "DB Visualizer"
     :update-manager     "Update manager"
+    :reload             "Reload"
     }
    
    :header
@@ -303,6 +313,8 @@
     :update-error       "Update error"
     :system-updated     "System is updated"
     :downgrade-success  "Downgrade from %s to %s version was successfully"
+    :extension-manager  "Extension manager"
+    :installed-extentions "Installed extentions"
     }
 
    :alerts
@@ -348,6 +360,7 @@
     :package-downloaded "Package %s was downloaded"
     :config-deleted "Local Jarman configuraion was deleted"
     :no-updates     "No avaliable updates."
+    :reloaded-extension "Extension `%s` successfully reloaded."
     }
 
    :basic
@@ -369,6 +382,10 @@
     :in "Entrance"
     :configuration "Configuration"
     :db-conn-config "DB Configuration"
+    :extension      "Extension"
+    :version        "Version"
+    :package        "Package"
+    :source         "Source"
     }
    
    :tips

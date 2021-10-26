@@ -44,7 +44,8 @@
             [jarman.gui.popup                :as popup]
             [jarman.gui.gui-editors          :as gedit]
             [jarman.gui.gui-calendar         :as calendar]
-            [jarman.gui.gui-config-panel     :as gcp]))
+            ;; [jarman.gui.gui-config-panel     :as gcp]
+            ))
 
  
 ;; ┌──────────────────────────┐
@@ -269,12 +270,12 @@
                                      (state/set-state :soft-restart nil)
                                      (.dispose (c/to-frame e)))}
 
-                           {:icon  (gs/icon GoogleMaterialDesignIcons/SETTINGS face/c-icon)
-                            :title (gtool/get-lang-btns :settings)
-                            :fn    (fn [e] (gvs/add-view
-                                            :view-id :app-settings
-                                            :title (gtool/get-lang-btns :settings)
-                                            :render-fn #(gcp/config-panel)))}
+                           ;; {:icon  (gs/icon GoogleMaterialDesignIcons/SETTINGS face/c-icon)
+                           ;;  :title (gtool/get-lang-btns :settings)
+                           ;;  :fn    (fn [e] (gvs/add-view
+                           ;;                  :view-id :app-settings
+                           ;;                  :title (gtool/get-lang-btns :settings)
+                           ;;                  :render-fn #(gcp/config-panel)))}
                            
                            {:icon  (gs/icon GoogleMaterialDesignIcons/EXIT_TO_APP face/c-icon)
                             :title (gtool/get-lang-btns :close-app)

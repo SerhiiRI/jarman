@@ -10,8 +10,11 @@
    [jarman.gui.gui-tools      :as gtool]
    [jarman.plugin.extension-manager :as extension-manager]
    [jarman.interaction  :as i]
-   [jarman.tools.org    :refer :all])
-  (:import (java.io IOException FileNotFoundException)))
+   [jarman.tools.org    :refer :all]
+   [jarman.gui.gui-migrid :as gmg]
+   [jarman.gui.gui-style  :as gs])
+  (:import (java.io IOException FileNotFoundException)
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -24,11 +27,11 @@
      (catch clojure.lang.ExceptionInfo e#
        (do
          (print-error e#)
-         (i/danger "Plugin error" (.getMessage e#) :time 7)))
+         (i/danger (gtool/get-lang-header :update-error) (.getMessage e#) :time 7)))
      (catch Exception e#
        (do
          (print-error e#)
-         (i/danger "Plugin error" (.getMessage e#) :time 7)))))
+         (i/danger (gtool/get-lang-header :update-error) (.getMessage e#) :time 7)))))
 
 (defn setColumnWidth [^javax.swing.JTable table & {:keys [column size]}]
   (let [^javax.swing.table.TableColumnModel column-model (.getColumnModel table)
@@ -38,28 +41,6 @@
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; UI COMPONENTS ;;;
 ;;;;;;;;;;;;;;;;;;;;;
-
-(defn extension-content [extension]
-  (doto
-      (c/table
-       :show-horizontal-lines? nil
-       :show-vertical-lines? nil
-       :model (table/table-model :columns [{:key :name}
-                                           {:key :version}
-                                           {:key :description}
-                                           ;; {:key :url}
-                                           ]
-                                 :rows [extension]))
-    (.setRowMargin 10)
-    (.setRowHeight 35)
-    (.setIntercellSpacing (java.awt.Dimension. 10 0))
-    (setColumnWidth :column 0 :size 130)
-    (setColumnWidth :column 1 :size 30)
-    (setColumnWidth :column 2 :size 600)
-    ;; (setColumnWidth :column 3 :size 600)
-    (.setRowSelectionAllowed false)
-    ;; (.setAutoResizeMode javax.swing.JTable/AUTO_RESIZE_LAST_COLUMN)
-    ))
 
 (defn info [s]
   {:pre [(string? s)]}
@@ -72,22 +53,53 @@
 
 (defn startup-components [] [])
 
+(defn manager-headers []
+  (gmg/migrid
+   :> "[150:150:150, fill]10px[50::, fill]"
+   {:gap [10] :args [:background face/c-layout-background]}
+   [(c/label :text (gtool/get-lang-basic :extension))
+    (c/label :text (gtool/get-lang-basic :version))
+    (c/label :text (gtool/get-lang-basic :description))]))
+
+(defn ext-info [ext buttons]
+  (gmg/migrid
+   :> :gf {:args [:background face/c-compos-background]}
+   (gtool/join-mig-items
+    (gcomp/min-scrollbox
+     (gmg/migrid
+      :> "[150:150:150, fill]10px[50::, fill]"
+      {:gap [10] :args [:border (b/line-border :bottom 2 :color face/c-layout-background)]}
+      [(c/label :text (gtool/str-cutter (str (get ext :name)) 20)
+                :tip (str (gtool/get-lang-basic :extension) ": " (get ext :name)))
+       (c/label :text (str (get ext :version)))
+       (c/label :text (str (get ext :description)) :tip "Shift + Scroll")]))
+    buttons)))
+
 (defn supply-content-all-extensions [items extension-list]
   (if (seq extension-list)
     (concat items
-            [(info "Installed plugins:")]
-            (for [ext extension-list]
-              (c/horizontal-panel
-               :items 
-               [(extension-content ext)
-                (gcomp/button-basic "Reload"
-                                    :onClick (fn [_] (try-catch-alert
-                                                      (extension-manager/do-load-extensions ext)
-                                                      (i/info "Extension manager"
-                                                              (format "Extension `%s` successfully reloaded"
-                                                                            (:name ext)) :time 7))))])))
+            [(gcomp/button-expand
+              (gtool/get-lang-header :installed-extentions)
+              [(manager-headers)
+               (gcomp/min-scrollbox
+                (gmg/migrid
+                 :v {:args [:border (b/line-border :bottom 1 :color face/c-icon)]}
+                 (for [ext extension-list]
+                   (ext-info
+                    ext
+                    (gmg/migrid :> "[100::, fill]" {:args [:border (b/line-border :bottom 2 :color face/c-layout-background)]}
+                     (gcomp/button-basic (gtool/get-lang-btns :reload)
+                                         :onClick (fn [_] (try-catch-alert
+                                                           (extension-manager/do-load-extensions ext)
+                                                           (i/info (gtool/get-lang-header :extension-manager)
+                                                                   (format (gtool/get-lang-alerts :reloaded-extension)
+                                                                           (:name ext)) :time 7)))
+                                         :underline-size 0)))))
+                :hscroll-off true)]              
+              :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/WIDGETS))
+              :expand :always)])
     (conj items
-          (info "Installed extentions:")
+          (info (gtool/get-lang-header :installed-extentions))
           (info "-- empty --"))))
 
 (extension-manager/extension-storage-list-load)

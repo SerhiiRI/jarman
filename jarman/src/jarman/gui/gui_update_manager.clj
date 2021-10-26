@@ -69,7 +69,9 @@
   (gmg/migrid
    :> "[150:150:150, fill]10px[50::, fill]"
    {:gap [10] :args [:background face/c-layout-background]}
-   [(c/label :text "Paczka") (c/label :text "Wersja") (c/label :text "Źródło")]))
+   [(c/label :text (gtool/get-lang-basic :package))
+    (c/label :text (gtool/get-lang-basic :version))
+    (c/label :text (gtool/get-lang-basic :source))]))
 
 (defn package-info [package buttons]
   (gmg/migrid
@@ -79,9 +81,10 @@
      (gmg/migrid
       :> "[150:150:150, fill]10px[50::, fill]"
       {:gap [10]}
-      [(c/label :text (str (get package :file)))
+      [(c/label :text (gtool/str-cutter (str (get package :file)) 20)
+                :tip (str (gtool/get-lang-basic :package) ": " (get package :file)))
        (c/label :text (str (get package :version)))
-       (c/label :text (str (get package :uri)))]))
+       (c/label :text (str (get package :uri)) :tip "Shift + Scroll")]))
     buttons)))
 
 (defn supply-content-info [items]
@@ -170,7 +173,8 @@
                                                             (i/info (gtool/get-lang-header :update-manager)
                                                                     (format (gtool/get-lang-alerts :package-downloaded)
                                                                             (:file pkg)) :time 7)))
-                                          :underline-size 0)])))))]
+                                          :underline-size 0)]))))
+                :hscroll-off true)]
               :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/WIDGETS)))])
     (conj items
           (info (gtool/get-lang-header :available-packages))

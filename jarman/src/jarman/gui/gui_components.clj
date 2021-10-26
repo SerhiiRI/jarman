@@ -126,7 +126,8 @@
                                                 layout (first (seesaw.util/children (second (seesaw.util/children scr))))
                                                 layout-h (.getHeight (.getPreferredSize layout))]
                                         ;(println layout)
-                                            (c/config! layout :preferred-size [w :by layout-h])
+                                            (c/config! layout :maximum-size [w :by 100000000])
+                                            (c/config! layout :preferred-size [w :by (.getHeight (.getPreferredSize layout))])
                                             (.repaint scr)))
                                       (do (.revalidate scr)
                                           (.repaint scr))))

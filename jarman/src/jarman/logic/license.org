@@ -1,5 +1,8 @@
-* Declared Licenses
+* Offitial Licenses Database
 
+  #+begin_src clojure :results silent
+    (ns jarman.logic.session)
+  #+end_src
   #+startup: shrink
   #+name: debug-licenses
   | tenant | tenant-id | creation-date | expiration-date | limitation           |
@@ -9,15 +12,51 @@
   | EKKA   | EKKA-2    | 10-01-2019    | 01-11-2022      | {:computer-count 3}  |
   | PASICH | PASICH-1  | 01-10-2021    | 01-06-2022      | {:computer-count 5}  |
 
-  #+name: debug-licenses-raw
+  #+name: licenses-list-raw
   #+begin_src emacs-lisp :var elist=debug-licenses :results value silent
     (prin1-to-string (cdr elist))
   #+end_src
 
+  #+header: :results silent
+  #+header: :var licenses-list=licenses-list-raw
+  #+name: licenses-m
+  #+begin_src clojure
+    (def licenses-m
+      (->> (read-string licenses-list)
+	   (map license-to-map)
+	   (group-by-tenant-id)))
+  #+end_src
+  
+* Managment
+
+  
+  #+header: :var tennat-id="EKKA-1"
+  #+name: make-license-file
+  #+begin_src clojure :noweb yes :results file
+    ;; <<licenses-m>>
+    (spit-license-file (get licenses-m tennat-id nil))
+  #+end_src
+
+  #+RESULTS: make-license-file
+  [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE EKKA 2021-10-27]]
+
+
+  #+begin_src clojure :results raws
+    (list-licenses-files)
+  #+end_src
+
+  #+RESULTS:
+  | tenant | tenant-id | creation-date | expiration-date | file-path                 |
+  | EKKA   | EKKA-1    |    10-01-2021 |      10-09-2021 | [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE EKKA 2021-10-27][LICENSE EKKA 2021-10-27]]   |
+  | PASICH | PASICH-1  |    01-10-2021 |      01-06-2022 | [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE PASICH 2021-10-27][LICENSE PASICH 2021-10-27]] |
+
+
 * What is jarman License
 
+ 
+
   Obtain selected in database license. License manually encrypted, and you need ~jarman.logic.session/decrypt-license~ function to decrypt it, and next you can managing it.
-  #+header: :ns jarman.logic.session
+
   #+header: :results output
   #+name: out-selected-license
   #+begin_src clojure
@@ -26,37 +65,21 @@
 	 (rename-keys)
 	 (cl-format *out* "<license params>~%~{  ~{~A~^~20T~} ~%~}</license params>"))
   #+end_src
-  #+RESULTS: out-selected-license
-  : <license params>
-  :   tenant            EKKA 
-  :   id tenant         EKKA-2 
-  :   creation date     10-01-2019 
-  :   expiration date   1-11-2022 
-  :   limitation        {:computer-count 3} 
-  : </license params>
+  
+  Manually Apply license by the ~tenant-id~. 
 
-  Select license by the ~tenant-id~. 
-  #+header: :ns jarman.logic.session
   #+header: :var tennat-id="EKKA-2"
-  #+header: :var licenses-list=debug-licenses-raw
   #+header: :results output 
   #+name: choose-license
   #+begin_src clojure :noweb yes
-    (def licenses-m
-     (->> (read-string licenses-list)
-	  (map license-to-map)
-	  (group-by-tenant-id)))
-    (create-license (get licenses-m tennat-id nil))
+    ;; (ns jarman.logic.session)
+    <<licenses-m>>
+    (set-license (get licenses-m tennat-id nil))
     <<out-selected-license>>
   #+end_src
   #+RESULTS: choose-license
-  : <license params>
-  :   tenant            EKKA 
-  :   id tenant         EKKA-2 
-  :   creation date     10-01-2019 
-  :   expiration date   1-11-2022 
-  :   limitation        {:computer-count 3} 
-  : </license params>
+  : class clojure.lang.Compiler$CompilerException
 
   Quickly change license in one procedural call
-  #+CALL: choose-license(tennat-id="EKKA-2")
+  #+CALL: choose-license(tennat-id="PASICH-1")
+

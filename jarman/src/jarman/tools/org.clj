@@ -2,6 +2,7 @@
 (require '[clojure.pprint  :refer [cl-format]])
 (require '[clojure.string  :refer [split]])
 (require '[clojure.java.io :as io])
+(require '[jarman.config.environment :as env])
 (import '(clojure.lang ExceptionInfo))
 
 ;;;;;;;;;;;;;;;
@@ -30,9 +31,9 @@
 ;; (def updt (agent (clojure.java.io/writer "update.log.org" :append true)))
 ;; (def extn (agent (clojure.java.io/writer "extension.log.org" :append true)))
 ;; (def app  (agent (clojure.java.io/writer "app.log.org" :append true)))
-(def updt (create-log-file "update.log.org" "Update log"))
-(def extn (create-log-file "extension.log.org" "Extension log"))
-(def app  (create-log-file "app.log.org" "App log"))
+(def updt (create-log-file env/update-log-org     "Update log"))
+(def extn (create-log-file env/extension-log-org  "Extension log"))
+(def app  (create-log-file env/app-log-org        "App log"))
 (def repl (agent *out*))
 (def ^:dynamic *out-writers* #{repl app})
 

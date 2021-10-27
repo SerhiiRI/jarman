@@ -4,8 +4,10 @@
    [clojure.java.jdbc :as jdbc]
    [clojure.spec.alpha :as s]
    [clojure.pprint :refer [cl-format]]
+   [clojure.java.io :as io]
    [jarman.logic.connection :as c]
    [jarman.logic.sql-tool :refer [select! insert! update!]]
+   [jarman.logic.security :refer [encrypt-local decrypt-local]]
    [jarman.tools.lang :refer :all]
    [jarman.tools.org  :refer :all]
    [jarman.gui.gui-tools :as gtool])
@@ -73,24 +75,16 @@
   (allow-groups [this]
     (.allow-groups (.get-user this))))
 
-(gtool/get-lang-header :update-error)
-
-(defn encode [to-encode]
-  (.encodeToString (Base64/getEncoder) (.getBytes to-encode)))
-(defn decode [to-decode]
-  (String. (.decode (Base64/getDecoder) to-decode)))
 (defn decrypt-license [s]
   (if s 
-    (let [decoder (fn decode [to-decode]
-                    (String. (.decode (Base64/getDecoder) to-decode)))]
-      (try
-        (read-string (decoder s))
-        (catch Exception e
-          (print-error e)
-          (ex-info (gtool/get-lang-license :broken-license)
-                   {:type :broken-license
-                    :translation [:alerts :broken-license-hash]}))))
-    (throw (ex-info (gtool/get-lang-license :no-registered-license)
+    (try
+      (read-string (decrypt-local s))
+      (catch Exception e
+        (print-error e)
+        (ex-info "broken license decription, maybe license hash was changed"
+                 {:type :broken-license
+                  :translation [:alerts :broken-license-hash]})))
+    (throw (ex-info "not found registered license"
                     {:type :license-not-found
                      :translation [:alerts :license-not-found]}))))
 (defn load-license []
@@ -99,7 +93,7 @@
         :where [:and [:= :name "license"]]}
        select! c/query first :value))
 (defn encrypt-license [m]
-  (encode (pr-str m)))
+  (encrypt-local (pr-str m)))
 (defn rename-keys [m]
   (clojure.set/rename-keys
    m {:tenant "tenant", :tenant-id "id tenant", :creation-date "creation date",
@@ -115,14 +109,41 @@
    (group-by :tenant-id)
    (map (fn [[k v]] (vector k (first v))))
    (into {})))
-(defn create-license [m]
+(defn- select-license-keys [m]
+  (select-keys m '(:tenant :tenant-id :creation-date :expiration-date :limitation)))
+(defn spit-license-file [m]
+  (let [{:keys [tenant]} m
+        creation-date (first (split #" " (quick-timestamp)))
+        path (format "licenses/LICENSE %s %s" tenant creation-date)]
+    (spit path (encrypt-license m))
+    (symbol (.getAbsolutePath (io/file path)))))
+
+(spit-license-file
+ (->>
+  (list "EKKA" "EKKA-2" "10-09-2018" "10-09-2020" "{:computer-count 10}")
+  (apply ->License)
+  (into {})))
+
+
+(defn slurp-license-file [license-file-path]
+  (decrypt-license (slurp license-file-path)))
+(defn set-license [m]
   (if m
-   (if-let [existing-profile (load-license)]
-     (c/exec (update! {:table_name :system_props :set {:name "license" :value (encrypt-license m)} :where [:= :name "license"]}))
-     (c/exec (insert! {:table_name :system_props :column-list [:name :value] :values ["license" (encrypt-license m)]})))
+    (let [m (select-license-keys m)]
+     (if-let [existing-profile (load-license)]
+       (c/exec (update! {:table_name :system_props :set {:name "license" :value (encrypt-license m)} :where [:= :name "license"]}))
+       (c/exec (insert! {:table_name :system_props :column-list [:name :value] :values ["license" (encrypt-license m)]}))))
    (println "Not selected license to update")))
-
-
+(defn list-licenses-files []
+  (let [files (->> (file-seq (io/file "licenses/"))
+                   (filter #(.isFile %)))]
+    (conj 
+     (for [f files
+           :let [l (slurp-license-file (.getAbsolutePath f))
+                 fabsl (.getAbsolutePath f)
+                 fname (.getName f)]]
+       (conj (vec (vals (select-keys l '(:tenant :tenant-id :creation-date :expiration-date)))) (format "[[file:%s][%s]]" fabsl fname)))
+     (conj (mapv name '(:tenant :tenant-id :creation-date :expiration-date)) "file-path"))))
 
 
 (defn build-user [login password]
@@ -194,6 +215,5 @@
     (catch clojure.lang.ExceptionInfo e
       (print-error (.getMessage e))
       (ex-data e))))
-
 
 

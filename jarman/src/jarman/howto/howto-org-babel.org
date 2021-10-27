@@ -1,0 +1,230 @@
+* Clojure
+  :PROPERTIES:
+  :header-args:clojure: :var howto-dir="./src/jarman/howto/"
+  :END:
+** TODO Factorizing
+   #+begin_src clojure
+     (def ^:dynamic *verbose-compile* false)
+     (defn group-pairs [data]
+       (assert (= 0 (mod (count data) 2))
+	 "Must contain even number of elements to create pairs")
+       (loop [acc [] [k v & rest] data]
+	 (let [acc (conj acc [k v])]
+	   ;(println rest acc)
+	   (if (empty? rest)
+	     acc
+	     (recur acc rest)))))
+     
+     (defn compare-vectors [v1 v2]
+       (loop [v1 v1 v2 v2]
+	 (cond
+	   (and (empty? v1) (empty? v2)) 0
+	   (empty? v1) -1
+	   (empty? v2) 1
+     
+	   (and (nil? (first v1)) (nil? (first v2))) (recur (rest v1) (rest v2))
+	   (nil? (first v1)) -1
+	   (nil? (first v2)) 1
+	   ; TODO use comparator instead
+	   (< (first v1) (first v2)) -1
+	   (> (first v1) (first v2)) 1
+	   :else (recur (rest v1) (rest v2)))))
+     
+     (defn ->num [x]
+       (cond
+	 (integer? x) x
+	 (float? x) x
+	 (ratio? x) (float x)
+	 (number? x) (float x)))
+     
+     (defn as-num [s]
+       (cond
+	 (coll? s) (map ->num s)
+	 :else (->num s)))
+     
+     (defn group-ordered
+       ""
+       [data columns]
+       (->> data
+	 (group-by
+	   (fn [item] (mapv #(get item %) columns)))
+	 (sort
+	   (fn [[k1 v1] [k2 v2]]
+	     (compare-vectors (as-num k1) (as-num k2))))))
+     
+     ;-------------------------------------------------------
+     (defmacro factor-group [data bindings & body]
+       (try
+	 (assert (= (count data) 2) "'data' must be a vector of 2 elements ")
+	 (let
+	   [ bindings (group-pairs bindings)
+	     [group-data source-data] data
+	     res-form
+	     `(as-> ~source-data ~'$
+	       (group-ordered ~'$ [~@(mapv second bindings)])
+	       (map
+		 (fn [[~'group [~'first-item :as ~group-data]]]
+		   (let [~@(mapcat (fn [[val src]] `[~val (get ~'first-item ~src)]) bindings)]
+		     ~@body))
+		 ~'$))]
+	   (when *verbose-compile*
+	     (println "========== factor-group ==============")
+	     (pprint res-form)
+	     (println "========== factor-group ==============")
+	     (pprint (clojure.walk/macroexpand-all res-form)))
+	   res-form)
+	 (catch java.lang.AssertionError e
+	   (throw (Exception. "Incorrect arguments to factor-group" e)))))
+   #+end_src
+** lib clostache
+   #+begin_src clojure :results output :wrap src java
+     (ns babel.clostash
+       (:require 
+	[clostache.parser :as c]
+	[clojure.pprint   :refer [pprint cl-format]]
+	[clojure.string   :as s]
+	[clojure.java.io  :as io]
+	[me.raynes.fs     :as rafs]))
+     
+     
+     (defn up-first-case [s] (s/replace-first s #"." #(s/upper-case %)))
+     (defn entity []
+       (let [imports ["java.util.list" "java.util.ArrayList"]
+	     field-list [["String" "testField1"] ["Integer" "testField2"]]
+	     package-path "com.unism"
+	     class-name "TestClass"] 
+	 (-> {:package    package-path
+	      :imports    imports
+	      :class      class-name
+	      :classUPPER (s/upper-case class-name)}
+	     (assoc :fieldList 
+		    (for [[ftype fname] field-list]
+		      {:fieldType       ftype
+		       :fieldName       fname
+		       :fieldNameUPPER (s/upper-case fname)}))
+	     (assoc :getterSetterFieldList
+		    (for [[ftype fname] field-list]
+		      {:fieldType      ftype      
+		       :fieldName      fname
+		       :fieldNameCap (up-first-case fname)})))))
+     
+     
+     (print (c/render (slurp (io/file howto-dir "resourse/" "clostash1.java"))
+		      (entity)))
+   #+end_src
+
+   #+RESULTS:
+   #+begin_src java
+   com.unism;
+
+   import pl.atmoterm.seposs.utils.BaseData;
+   import ucore.BaseAuditedEntity;
+
+   import javax.persistence.Column;
+   import javax.persistence.Entity;
+   import javax.persistence.Table;
+
+   import java.util.list;
+   import java.util.ArrayList;
+
+   import java.math.BigDecimal;
+   import java.util.Collection;
+   import java.util.List;
+   import java.util.Set;
+   import java.util.Date;
+
+   @Entity
+   @Table(name = "DAT_TESTCLASS")
+   public class TestClass extends BaseAuditedEntity{
+
+      @Column(name = "TESTFIELD1")
+      private String testField1;
+      @Column(name = "TESTFIELD2")
+      private Integer testField2;
+
+      public TestClass() {}
+
+      public String getTestField1() {return testField1;}
+      public void setTestField1(String testField1) {this.testField1 = testField1;}
+
+      public Integer getTestField2() {return testField2;}
+      public void setTestField2(Integer testField2) {this.testField2 = testField2;}
+
+   }
+   #+end_src
+
+
+
+** lib incanter
+  #+begin_src clojure :results file :file incanter1.png
+    (ns babel.clostash
+      (:use [incanter core stats datasets charts io pdf]))
+    
+    (def hist (histogram (sample-normal 1000)))
+    (save hist (str howto-dir "incanter1.png"))
+  #+end_src
+
+  #+RESULTS:
+  [[file:incanter1.png]]
+
+** lib quil
+  #+begin_src clojure :results file :file "quil1.png"
+    (ns my.core
+      (:require [quil.core :as q :include-macros true]))
+     
+    (defn draw []
+      (q/camera 150 150 150 0 0 0 0 0 1)
+      (q/box 100)
+      (q/save (str ;; dir
+		   "quil1.png"))
+					    ; stop sketch after saving image
+					    ; otherwise it will show save dialog
+					    ; on every iteration
+      (q/exit))
+     
+    (q/defsketch my
+      :host "host"
+      :size [500 500]
+      :renderer :p3d
+      :draw draw)
+  #+end_src
+
+* Python 
+** lib mathplot
+   #+begin_src python :results file
+     import matplotlib, numpy
+     matplotlib.use('Agg')
+     import matplotlib.pyplot as plt
+     
+     fig=plt.figure(figsize=(4,2))
+     x=numpy.linspace(-15,15)
+     plt.plot(numpy.sin(x)/x)
+     fig.tight_layout()
+     plt.savefig('python-matplot-fig.png')
+     return 'python-matplot-fig.png' # return filename to org-mode
+   #+end_src
+   #+RESULTS:
+   [[file:python-matplot-fig.png]]
+
+** lib json
+   #+begin_src python :results pp
+     import json
+     
+     def read_json(file_path: str):
+       with open(file_path, encoding='utf-8') as f:
+	 return json.load(f)
+     
+     def json_keys(json_dict):
+       return [str(key_val) for key_val in json_dict.keys()]
+     
+     # All inventory
+     summary = read_json('./resourse/test.json')
+     
+     return ("Sumarycznie", len(summary),
+	     # "Keys", "/".join(json_keys(summary[0]))
+	     )
+   #+end_src
+   #+RESULTS:
+   : ('Sumarycznie', 66)
+
+   

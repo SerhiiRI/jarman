@@ -22,16 +22,16 @@
     [Permission] starts 2021-10-02
     [Permission] is colored in LawnGreen/MediumSeaGreen
     [Permission] ends 2021-10-10
-    [Permission] is 70% completed
+    [Permission] is 100% completed
     [Licenses] starts 2021-10-02
     [Licenses] is colored in LawnGreen/MediumSeaGreen
-    [Licenses] ends 2021-10-10
+    [Licenses] ends 2021-10-24
     [GUI] starts 2021-10-02
-    [GUI] is 80% completed
+    [GUI] is 100% completed
     [GUI] is colored in LawnGreen/MediumSeaGreen
-    [GUI] ends 2021-10-13
+    [GUI] ends 2021-10-25
     [Exports] is colored in LawnGreen/MediumSeaGreen
-    [Exports] ends 2021-10-24
+    [Exports] ends 2021-10-30
     [Exports] starts at [GUI]'s end
     [Ekka] starts at [Licenses]'s end
     [Ekka] is colored in Crimson/DarkRed

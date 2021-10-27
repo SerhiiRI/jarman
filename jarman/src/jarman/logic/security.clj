@@ -96,10 +96,10 @@
  (defn encrypt-local [message]
    (wlet
     (encrypt message public-key)
-    ((public-key (pem-string->pub-key env/security-public-key)))))
+    ((public-key (pem-string->pub-key security-public-key)))))
 
  (defn decrypt-local [message]
    (wlet
     (decrypt message private-key)
-    ((private-key (.getPrivate (pem-string->key-pair env/security-private-key)))))))
+    ((private-key (.getPrivate (pem-string->key-pair security-private-key)))))))
 

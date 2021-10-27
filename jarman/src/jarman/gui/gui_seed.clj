@@ -65,10 +65,20 @@
             (fn [e]
               ;;  (println e)
               (let [w (.getWidth (.getSize (.getContentPane (to-root e))))
-                    h (.getHeight (.getSize (.getContentPane (to-root e))))]
-                (let [[oldw oldh] @(state/state :atom-app-size)]
-                  (reset! (state/state :atom-app-resize-direction) [(if (<= oldw w) 1 -1) (if (<= oldh h) 1 -1)]))
-                (reset! (state/state :atom-app-size) [w h]))
+                    h (.getHeight (.getSize (.getContentPane (to-root e))))
+                    [oldw oldh] @(state/state :atom-app-size)]
+                ;; Resize direction
+                (reset! (state/state :atom-app-resize-direction) [(if (<= oldw w) 1 -1) (if (<= oldh h) 1 -1)])
+                ;; Frame size
+                (reset! (state/state :atom-app-size) [w h])
+                ;; Extended on resize
+                (doall (map (fn [[k func]]
+                              (try
+                                (func)
+                                (catch Exception e
+                                  (do ;;(println "cannot run " k)
+                                      (state/set-state :on-frame-resize-fns-v (dissoc (state/state :on-frame-resize-fns-v) k))))))
+                            (state/state :on-frame-resize-fns-v))))
               (.revalidate (to-widget e)))]))
 
 (def build

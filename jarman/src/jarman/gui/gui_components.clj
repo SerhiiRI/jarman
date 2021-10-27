@@ -1112,7 +1112,7 @@
                 :size [vsize :by vsize]
                 :halign :center
                 :background (Color. 0 0 0 0)
-                :icon (if expand ico ico-hover))
+                :icon (if expand ico-hover ico))
           mig  (gmg/migrid :v {:args [:background background]} [])
           user-data  {:title-fn (fn [new-title] (c/config! title :text new-title))}
           expand-btn (fn [func]

@@ -76,7 +76,7 @@
                        :background face/c-layout-background
                        :items (gtool/join-mig-items array))]
       ;; (println tabs)
-      ;;(state/set-state :jarman-views-service (vs/new-views-service tabs-space views-space))p
+      (state/set-state :views-space views-space)
       (gvs/start views-space tabs-space)
       (mig-panel
        :id :operation-space

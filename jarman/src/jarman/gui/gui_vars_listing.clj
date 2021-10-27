@@ -14,7 +14,8 @@
    [jarman.gui.gui-migrid     :as gmg]
    [jarman.config.vars :as vars]
    [jarman.interaction :as i]
-   [jarman.gui.popup   :as popup])
+   [jarman.gui.popup   :as popup]
+   [jarman.logic.state :as state])
   (:import (java.io IOException FileNotFoundException)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
@@ -150,20 +151,31 @@
 ;; Przyznaje siê ¿e moje wlasne pieklo to migi
 ;; - I can no frear bro.. but that thing '"wrap 1" "0px[grow, fill]0px"', scare me
 (defn vars-listing-panel []
-  (let [panel (gmg/migrid :v :a "[shrink 0]"{:gap [5 0]} (view-grouped-by-group))]
+  (let [panel (gmg/migrid :v :a "[shrink 0]" {:gap [5 0]} (view-grouped-by-group))]
     (gmg/migrid
-     :v (gtool/join-mig-items
-         [(gcomp/menu-bar
-           {;;:justify-end true
-            :buttons [[" List by \"Variable Group\" " (gs/icon GoogleMaterialDesignIcons/APPS)
-                       (fn [e]
-                         (c/config! panel :items (gtool/join-mig-items (view-grouped-by-group)))
-                         (.repaint (c/to-root (c/to-widget e))))]
-                      [" List by \"Loaded variables\" " (gs/icon GoogleMaterialDesignIcons/ARCHIVE)
-                       (fn [e]
-                         (c/config! panel :items (gtool/join-mig-items (view-grouped-by-loaded)))
-                         (.repaint (c/to-root (c/to-widget e))))]]})
-          (gcomp/min-scrollbox panel)]))))
+     :v [(gcomp/menu-bar
+          {;;:justify-end true
+           :buttons [[" List by \"Variable Group\" " (gs/icon GoogleMaterialDesignIcons/APPS)
+                      (fn [e]
+                        (c/config! panel :items (gtool/join-mig-items (view-grouped-by-group)))
+                        (.repaint (c/to-root (c/to-widget e))))]
+                     [" List by \"Loaded variables\" " (gs/icon GoogleMaterialDesignIcons/ARCHIVE)
+                      (fn [e]
+                        (c/config! panel :items (gtool/join-mig-items (view-grouped-by-loaded)))
+                        (.repaint (c/to-root (c/to-widget e))))]]})
+         
+         (let [scr (gcomp/min-scrollbox panel)]
+           (c/config! scr
+                      :opaque? false
+                      :listen [:mouse-wheel-moved (fn [e] (c/invoke-later (.repaint (c/to-widget e))))])
+           ;; Lock hscroll on resize.
+           (if (empty? (state/state :on-frame-resize-fns-v))
+             (state/set-state :on-frame-resize-fns-v {:vars-listing (fn [](gmg/migrid-resizer (state/state :views-space) panel))})
+             (state/set-state :on-frame-resize-fns-v
+                              (assoc (state/state :on-frame-resize-fns-v)
+                                     :vars-listing
+                                     (fn [] (gmg/migrid-resizer (state/state :views-space) panel)))))
+           scr)])))
 
 (comment
   (-> (c/frame :content (vars-listing-panel))

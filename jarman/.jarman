@@ -26,7 +26,7 @@
  ;; This setting's discribe setted by the user
  ;; variable
  jarman.config.conf-language/language-selected :pl
- jarman.plugin.plugin/theme-selected "Dracula"
+ jarman.plugin.plugin/theme-selected "Jarman Light"
  )
 
 (setq jarman.logic.view-manager/user-menu
@@ -35,7 +35,7 @@
         "Permission edit"           [:permission :table :permission]
 	"ULLL"                      [:permission :fff :fff]}
        "Sale structure"
-       {"Enterpreneur"              [:enterpreneur :table :enterpreneur]
+       {"Enterprise"                [:enterprise :table :enterprise]
         "Point of sale group"       [:point_of_sale_group :table :point_of_sale_group]
         "Point of sale group links" [:point_of_sale_group_links :table :point_of_sale_group_links],
         "Point of sale"             [:point_of_sale :table :point_of_sale]}

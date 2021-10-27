@@ -43,7 +43,8 @@
             [jarman.gui.gui-migrid           :as gmg]
             [jarman.gui.popup                :as popup]
             [jarman.gui.gui-editors          :as gedit]
-            [jarman.gui.gui-calendar         :as calendar]))
+            [jarman.gui.gui-calendar         :as calendar]
+            ))
 
  
 ;; ┌──────────────────────────┐
@@ -218,11 +219,11 @@
              [[(jarmanapp :margin-left img-scale) 0]]
              (menu/menu-slider img-scale top-offset
                           [{:icon  (gs/icon GoogleMaterialDesignIcons/INFO face/c-icon)
-                            :title "Message Store"
+                            :title (gtool/get-lang-btns :messages-history)
                             :fn    (fn [e] (i/show-alerts-history))}
                            
                            {:icon  (gs/icon GoogleMaterialDesignIcons/DASHBOARD face/c-icon)
-                            :title "Reload active view"
+                            :title (gtool/get-lang-btns :reload-active-view)
                             :fn    (fn [e] (try
                                              (i/reload-view)
                                              (catch Exception e (str "Can not reload. Storage is empty."))))}
@@ -245,28 +246,38 @@
                                      (menu/clean-main-menu)
                                      (load-plugins-to-main-menu)
                                      (load-static-main-menu))}
-                           
-                           {:icon  (gs/icon GoogleMaterialDesignIcons/VPN_KEY face/c-icon)
-                            :title "Change work mode"
-                            :fn    (fn [e]
-                                     (cond (= "user"      (session/get-user-permission)) (session/set-user-permission "admin")
-                                           (= "admin"     (session/get-user-permission)) (session/set-user-permission "developer")
-                                           (= "developer" (session/get-user-permission)) (session/set-user-permission "user"))
-                                     (i/warning "Work mode" (str "Switched to: " (session/get-user-permission)))
-                                     (gseed/extend-frame-title (str ", " (session/get-user-login) "@" (session/get-user-permission))))}
+
+                           ;; TODO DISABLE FOR ALL 
+                           ;; {:icon  (gs/icon GoogleMaterialDesignIcons/VPN_KEY face/c-icon)
+                           ;;  :title "Change work mode"
+                           ;;  :fn    (fn [e]
+                                     
+                           ;;           (cond (= "user"      (session/get-user-permission)) (session/set-user-permission "admin")
+                           ;;                 (= "admin"     (session/get-user-permission)) (session/set-user-permission "developer")
+                           ;;                 (= "developer" (session/get-user-permission)) (session/set-user-permission "user"))
+                           ;;           (i/warning "Work mode" (str "Switched to: " (session/get-user-permission)))
+                           ;;           (gseed/extend-frame-title (str ", " (session/get-user-login) "@" (session/get-user-permission))))}
                             
                            ;; {:icon  icon/download-blue-64-png
                            ;;  :title "Update"
                            ;;  :fn    (fn [e] (println "Check update"))}
                            
                            {:icon  (gs/icon GoogleMaterialDesignIcons/PERSON face/c-icon )
-                            :title "Logout"
+                            :title (gtool/get-lang-btns :logout)
                             :fn    (fn [e]
                                      ((state/state :invoke-login-panel))
                                      (state/set-state :soft-restart nil)
                                      (.dispose (c/to-frame e)))}
+
+                           ;; {:icon  (gs/icon GoogleMaterialDesignIcons/SETTINGS face/c-icon)
+                           ;;  :title (gtool/get-lang-btns :settings)
+                           ;;  :fn    (fn [e] (gvs/add-view
+                           ;;                  :view-id :app-settings
+                           ;;                  :title (gtool/get-lang-btns :settings)
+                           ;;                  :render-fn #(gcp/config-panel)))}
+                           
                            {:icon  (gs/icon GoogleMaterialDesignIcons/EXIT_TO_APP face/c-icon)
-                            :title "Close app"
+                            :title (gtool/get-lang-btns :close-app)
                             :fn    (fn [e]
                                      (state/set-state :soft-restart nil)
                                      (.dispose (c/to-frame e)))}
@@ -292,15 +303,17 @@
                            ])
              [(gcomp/fake-focus :vgap top-offset :hgap img-scale)]))))
 
-
-
 (defn load-level-3
   "Description:
     Try display frame in same place when reloading. Next set to frame login@permission."
   [relative-pos]
   (if-not (nil? @relative-pos)
     (.setLocation (seesaw.core/to-frame (state/state :app)) (first @relative-pos) (second @relative-pos)))
-  (gseed/extend-frame-title (str ", " (session/get-user-login) "@" (session/get-user-permission))))
+  ;; TODO TO DEBUG!!!!
+  (session/login {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman", :user "root", :password "misiePysie69", :useUnicode true, :characterEncoding "UTF-8"}
+         "dev" "dev")
+  (let [{:keys [login profile-name]} (.get-user (session/session))]
+    (gseed/extend-frame-title (str ", " login "@" profile-name))))
 
 (defn load-level-4
   "Description:

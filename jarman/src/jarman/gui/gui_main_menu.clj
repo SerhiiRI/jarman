@@ -18,6 +18,7 @@
             [jarman.gui.gui-tools              :as gtool]
             [jarman.gui.popup                  :as popup]
             [jarman.gui.gui-editors            :as gedit]
+            [jarman.gui.gui-config-panel       :as gcp]
             [jarman.interaction :as i]))
 
 ;; (defn- expand-colors []
@@ -68,14 +69,15 @@
 
 (defn- part-plugin
   [k v lvl]
-  (if (session/allow-permission? (.return-permission v))
+  (if (.allow-permission? (session/session) (.return-permission v))
     (do
       (print-line (format "pin plugin %s to menu"(.return-title v)))
       (gcomp/button-expand-child
        (str k)
-       :c-focus     (second (nth (get-colors (dec lvl)) (dec lvl)))
-       :c-left      (first  (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
-       :background  (last   (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
+       :c-focus      (second (nth (get-colors (dec lvl)) (dec lvl)))
+       ;; :offset-color (first  (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
+       :background   (last   (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
+       :seamless-bg false
        :onClick (fn [e]
                   (gvs/add-view
                    :view-id (str "auto-plugin" (.return-title v))
@@ -92,20 +94,23 @@
        (str k)
        depper
        :lvl lvl
-       :background (first (nth (get-colors lvl) lvl))
-       :c-left     (first (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))))))
+       :seamless-bg false
+       :background   (first (nth (get-colors lvl) lvl))
+       ;; :offset-color (first (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
+       ))))
 
 (defn- part-button [k v lvl]
   (if (or (nil? (:permission v))
-          (session/allow-permission? (:permission v)))
+         (.allow-permission? (session/session) (:permission v)))
     (if (= :list (:action v))
       ((:fn v))
       (gcomp/button-expand-child
        (str k)
        :lvl         lvl
-       :c-focus     (second (nth (get-colors (dec lvl)) (dec lvl)))
-       :c-left      (first  (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
-       :background  (last   (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
+       :c-focus      (second (nth (get-colors (dec lvl)) (dec lvl)))
+       ;; :offset-color (first  (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
+       :background   (last   (nth (get-colors lvl) (if (= 0 lvl) lvl (dec lvl))))
+       :seamless-bg false
        :onClick
        (if-not (nil? (:fn v))
          (if (= :invoke (:action v))
@@ -113,7 +118,7 @@
            (fn [e]
              (gvs/add-view
               :view-id (str "auto-menu-" (:key v))
-              :title k
+              :title k 
               :render-fn (:fn v))))
          (fn [e] (print-line (str "\nProblem with fn in " k v))))))
     ;; or return nil
@@ -179,20 +184,22 @@
                  :fn      (fn [e] )}}}}
 
    "Administration"
-   {"Update manager" {:key "update-manager"
-                      :permission :admin-update
-                      :fn update-manager/update-manager-panel}
-    "Extension manager" {:key "extension-manager"
-                         :permission :admin-extension
-                         :fn extension-manager/extension-manager-panel}
-    "Themes manager" {:key "themes-manager"
-                      :fn themes-manager/theme-manager-panel}
-    "Var listing" {:key "vars-listing-panel"
-                   :permission :developer
-                   :fn vars-listing/vars-listing-panel}
-    "DB Visualizer" {:key "db-visualizer"
-                     :permission :admin-dataedit
-                     :fn dbv/create-view--db-view}}
+   {(gtool/get-lang-btns :settings)          {:key (gtool/get-lang-btns :settings)
+                                              :fn  gcp/config-panel}
+    (gtool/get-lang-btns :update-manager)    {:key (gtool/get-lang-btns :update-manager)
+                                              :permission :admin-update
+                                              :fn update-manager/update-manager-panel}
+    (gtool/get-lang-btns :extension-manager) {:key (gtool/get-lang-btns :extension-manager)
+                                              :permission :admin-extension
+                                              :fn extension-manager/extension-manager-panel}
+    (gtool/get-lang-btns :theme-manager)     {:key (gtool/get-lang-btns :theme-manager)
+                                              :fn themes-manager/theme-manager-panel}
+    (gtool/get-lang-btns :var-list-panel)    {:key (gtool/get-lang-btns :var-list-panel)
+                                              :permission :developer
+                                              :fn vars-listing/vars-listing-panel}
+    (gtool/get-lang-btns :db-visualizer)     {:key (gtool/get-lang-btns :db-visualizer)
+                                              :permission :admin-dataedit
+                                              :fn dbv/create-view--db-view}}
    "Debug Items"
    {"Popup window" {:key        "popup-window"
                     :action     :invoke

@@ -43,7 +43,10 @@
                               vrules
                               bgap (if (string? bgap) "" "px"))]
            :items items
-           :background face/c-layout-background
+           :background (gtool/opacity-color) ;;face/c-layout-background
+           :listen [:mouse-motion (fn [e]
+                                    ;;(.revalidate (c/to-root e))
+                                    (.repaint (c/to-root e)))]
            args)))
 
 

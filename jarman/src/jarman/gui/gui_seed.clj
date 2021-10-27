@@ -26,6 +26,7 @@
 (def changes-service (atom (cs/new-changes-service)))
 
 (state/set-state :atom-app-size (atom [1200 700]))
+(state/set-state :atom-app-resize-direction (atom [1 1]))
 (state/set-state :app nil)
 
 (add-watch
@@ -65,6 +66,8 @@
               ;;  (println e)
               (let [w (.getWidth (.getSize (.getContentPane (to-root e))))
                     h (.getHeight (.getSize (.getContentPane (to-root e))))]
+                (let [[oldw oldh] @(state/state :atom-app-size)]
+                  (reset! (state/state :atom-app-resize-direction) [(if (<= oldw w) 1 -1) (if (<= oldh h) 1 -1)]))
                 (reset! (state/state :atom-app-size) [w h]))
               (.revalidate (to-widget e)))]))
 

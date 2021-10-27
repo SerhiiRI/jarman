@@ -163,7 +163,7 @@
        ;; expand button
        c-btn-expand-bg       c-compos-background
        c-btn-expand-fg       c-foreground-title
-       c-btn-expand-offset   c-compos-background
+       c-btn-expand-offset   c-main-menu-bg
 
        ;; expand item in iputs
        c-item-expand-left    c-compos-background-darker

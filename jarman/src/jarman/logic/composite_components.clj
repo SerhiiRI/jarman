@@ -3,14 +3,14 @@
             [me.raynes.fs :as fs]
             [jarman.logic.connection :as db]
             [jarman.logic.sql-tool :refer [show-tables]]
-            [jarman.logic.session :refer [get-user-configuration]]
+            [jarman.logic.session :as session]
             [jarman.logic.document-manager :refer [update-blob! select-blob!]]))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; FTP FUNCTIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;
 (defn get-configuration []
-  (let [conf (:ftp (get-user-configuration))]
+  (let [conf (:ftp (.config (.get-user (session/session))))]
     (if (empty? conf)
       "ftp://jarman:dupa@trashpanda-team.ddns.net"
       (str "ftp://" (:login conf) ":" (:password conf) "@" (:host conf) ))))

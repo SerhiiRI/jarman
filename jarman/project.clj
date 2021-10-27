@@ -1,26 +1,28 @@
 (defproject jarman "0.0.1"
   :description "Jarman"
   :license {:name "EPL-2.0" :url "https://www.eclipse.org/legal/epl-2.0/"}
-  :dependencies [[org.clojure/clojure "1.10.1"]
-                 [org.clojure/tools.cli "1.0.194"]
-                 [seesaw "1.5.0"]
-                 [org.clojars.mjdowney/excel-clj "1.2.0"]
-                 [com.velisco/clj-ftp "0.3.12"]
-                 [fr.opensagres.xdocreport/fr.opensagres.xdocreport.document.odt "1.0.3"]
-                 [fr.opensagres.xdocreport/fr.opensagres.xdocreport.document.ods "1.0.3"]
-                 [com.github.vlsi.mxgraph/jgraphx "4.2.2"]
-                 [com.github.jiconfont/jiconfont-swing "1.0.1"]
-                 [com.github.jiconfont/jiconfont-google_material_design_icons "2.2.0.2"]
-                 ;; [org.odftoolkit/odfdom-java "0.9.0-RC1"]
-                 ;; [org.odftoolkit/simple-odf "0.9.0-RC1"]
-                 [datascript/datascript "1.2.1"]
-                 [datascript-transit/datascript-transit "0.3.0"]
-                 [kaleidocs/merge "0.3.0"]
+  :dependencies [;; core
+                 [org.clojure/clojure "1.10.1"]
                  [org.clojure/java.jdbc "0.7.10"]
+                 [org.clojure/tools.cli "1.0.194"]
+                 ;; gui
+                 [com.github.jiconfont/jiconfont-google_material_design_icons "2.2.0.2"]
+                 [com.github.jiconfont/jiconfont-swing "1.0.1"]
+                 [com.github.vlsi.mxgraph/jgraphx "4.2.2"]
+                 [seesaw "1.5.0"]
+                 ;; other 
+                 [buddy/buddy-core "1.10.1"]
+                 [instaparse "1.4.10"]
+                 [kaleidocs/merge "0.3.0"]
                  [me.raynes/fs "1.4.6"]
                  [mysql/mysql-connector-java "5.1.6"]
-                 [instaparse "1.4.10"]
-                 [rewrite-clj "1.0.682-alpha"]]
+                 [rewrite-clj "1.0.682-alpha"]
+                 [com.velisco/clj-ftp "0.3.12"]
+                 [datascript-transit/datascript-transit "0.3.0"]
+                 [datascript/datascript "1.2.1"]
+                 [org.clojars.mjdowney/excel-clj "1.2.0"]
+                 [fr.opensagres.xdocreport/fr.opensagres.xdocreport.document.ods "1.0.3"]
+                 [fr.opensagres.xdocreport/fr.opensagres.xdocreport.document.odt "1.0.3"]]
   ;;:main ^:skip-aot jarman.core
   :main jarman.core
   :aot [jarman.core]

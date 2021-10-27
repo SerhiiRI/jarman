@@ -11,8 +11,10 @@
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-tools      :as gtool]
    [jarman.gui.gui-style      :as gs]
+   [jarman.gui.gui-migrid     :as gmg]
    [jarman.config.vars :as vars]
-   [jarman.interaction :as i])
+   [jarman.interaction :as i]
+   [jarman.gui.popup   :as popup])
   (:import (java.io IOException FileNotFoundException)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
@@ -42,33 +44,15 @@
 (defn var-string-value [variable]
   (let [len-const 100
         variable-str (str (deref (clojure.core/var-get (:link variable))))]
-    (if (< len-const (.length variable-str))
-      (str (apply str (take len-const variable-str)) "...")
-      variable-str)))
+    ;; (if (< len-const (.length variable-str))
+    ;;   (str (apply str (take len-const variable-str)) "...")
+    ;;   variable-str)
+    variable-str
+    ))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; UI COMPONENTS ;;;
 ;;;;;;;;;;;;;;;;;;;;;
-
-(defn- var-content [var-desc]
-  (doto
-      (c/table
-       :show-horizontal-lines? nil
-       :show-vertical-lines? nil
-       :model (table/table-model :columns [{:key :name}
-                                           {:key :value}]
-                                 :rows [var-desc]))
-    (.setRowMargin 10)
-    (.setRowHeight 35)
-    (.setIntercellSpacing (java.awt.Dimension. 10 0))
-    (setColumnWidth :column 0 :size 270)
-    (setColumnWidth :column 1 :size 800)
-    ;; (setColumnWidth :column 2 :size 400)
-    ;; (setColumnWidth :column 3 :size 1000)
-    ;; (setColumnWidth :column 3 :size 600)
-    (.setRowSelectionAllowed false)
-    ;; (.setAutoResizeMode javax.swing.JTable/AUTO_RESIZE_LAST_COLUMN)
-    ))
 
 (defn info [s]
   {:pre [(string? s)]}
@@ -80,13 +64,24 @@
 ;; (defn supply-currently-loaded [items theme]
 ;;   (concat items
 ;;           [(info "Group view")]))
+
+(defn var-content [var]
+  (gmg/migrid
+   :> "[200:200:200, fill]10px[50::, fill]"
+   {:gap [10] :args [:border (b/line-border :top 2 :color face/c-layout-background)]}
+   [(c/label :text (gtool/str-cutter (str (get var :name)) 25)
+             :tip (str (gtool/get-lang-basic :variable) ": " (get var :name)))
+    (c/label :text (str (get var :value))
+             :listen [:mouse-clicked (fn [e] (popup/build-popup
+                                              {:title   (get var :name)
+                                               :size    [600 300]
+                                               :comp-fn (fn [] (c/label :text (gtool/htmling (str (get var :value)))))}))])]))
+
 (defn supply-content-all-vars [items vars-list]
   (if (seq vars-list)
     (into items
           (for [v vars-list]
-            (c/horizontal-panel
-             :items 
-             [(var-content v)])))
+            (gmg/migrid :v (var-content v))))
     (conj items
           (info "Variables cannot be empty. Jarman error"))))
 
@@ -96,8 +91,14 @@
      items
      (reduce (fn [acc [group-name var-list]]
                (concat acc
-                       [(info group-name)]
-                       (map (comp var-content second) var-list)))
+                       [(gcomp/button-expand
+                         group-name
+                         (gmg/migrid
+                          :v {:args [:border (b/line-border :bottom 0 :color face/c-icon)]}
+                          (doall (map (comp var-content second) var-list)))
+                         :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/SETTINGS))
+                         ;; :expand :always
+                         )]))
              [] vars-groups))
     (conj items
           (info "Variables cannot be empty. Jarman error"))))
@@ -149,18 +150,20 @@
 ;; Przyznaje siê ¿e moje wlasne pieklo to migi
 ;; - I can no frear bro.. but that thing '"wrap 1" "0px[grow, fill]0px"', scare me
 (defn vars-listing-panel []
-  (let [panel (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[]0px"] :items (view-grouped-by-group))]
-    (seesaw.mig/mig-panel
-     :constraints ["wrap 1" "0px[grow, fill]0px" "0px[]0px"]
-     :items
-     (gtool/join-mig-items
-      [(gcomp/menu-bar
-        {:justify-end true
-         :buttons [[" List by \"Variable Group\" " (gs/icon GoogleMaterialDesignIcons/APPS)
-                    (fn [e] (c/config! panel :items (gtool/join-mig-items (view-grouped-by-group))))]
-                   [" List by \"Loaded variables\" " (gs/icon GoogleMaterialDesignIcons/ARCHIVE)
-                    (fn [e] (c/config! panel :items (gtool/join-mig-items (view-grouped-by-loaded))))]]})
-       panel]))))
+  (let [panel (gmg/migrid :v :a "[shrink 0]"{:gap [5 0]} (view-grouped-by-group))]
+    (gmg/migrid
+     :v (gtool/join-mig-items
+         [(gcomp/menu-bar
+           {;;:justify-end true
+            :buttons [[" List by \"Variable Group\" " (gs/icon GoogleMaterialDesignIcons/APPS)
+                       (fn [e]
+                         (c/config! panel :items (gtool/join-mig-items (view-grouped-by-group)))
+                         (.repaint (c/to-root (c/to-widget e))))]
+                      [" List by \"Loaded variables\" " (gs/icon GoogleMaterialDesignIcons/ARCHIVE)
+                       (fn [e]
+                         (c/config! panel :items (gtool/join-mig-items (view-grouped-by-loaded)))
+                         (.repaint (c/to-root (c/to-widget e))))]]})
+          (gcomp/min-scrollbox panel)]))))
 
 (comment
   (-> (c/frame :content (vars-listing-panel))

@@ -1,0 +1,238 @@
+* Clojure configuration
+  #+begin_src clojure :results silent
+    (ns ekka.fish
+      (:require [jarman.logic.connection :as db]
+		[jarman.logic.sql-tool :refer [select! update! insert! delete!]]))
+  #+end_src
+* Profiles
+
+  #+name: profiles-query
+  #+header: :engine mysql
+  #+header: :dbhost trashpanda-team.ddns.net
+  #+header: :dbuser root
+  #+header: :dbport 3307
+  #+header: :dbpassword misiePysie69
+  #+header: :database jarman
+  #+begin_src sql
+    SELECT
+    profile.id AS `profile.id`,
+    profile.name AS `profile.name`,
+    profile.configuration AS `profile.configuration`
+    FROM `profile`;
+  #+end_src
+  #+startup: shrink
+  #+name: profiles
+  | profile.id | profile.name | profile.configuration                                                           |
+  |------------+--------------+---------------------------------------------------------------------------------|
+  |          1 | admin        | {:groups [:admin-update :admin-extension :admin-dataedit :developer :ekka-all]} |
+  |          2 | user         | {:groups [:admin-update :admin-extension :admin-dataedit :developer :ekka-all]} |
+  |          3 | developer    | {:groups [:admin-update :admin-extension :admin-dataedit :developer :ekka-all]} |
+  
+  #+name: profiles-raw
+  #+begin_src emacs-lisp :var elist=profiles :results value silent
+    (prin1-to-string elist)
+  #+end_src
+  #+begin_src clojure :ns ekka.fish :var elist=profiles-raw :results value raw
+    (defn update-profiles []
+      (for [[id name cfg] (read-string elist)]
+	(if-let [existing-profile (first (db/query (select! {:table_name :profile :where [:= :id id]})))]
+	  (db/exec (update! {:table_name :profile :set {:name name :configuration cfg} :where [:= :id (:id existing-profile)]}))
+	  (db/exec (insert! {:table_name :profile :column-list [:name :configuration] :values [name cfg]})))))
+    (update-profiles)
+  #+end_src
+  #+begin_src clojure :ns ekka.fish :results value :hlines yes
+    (concat
+     [[":id" ":name" ":configuration"]]
+     (map vals (db/query (select! {:table_name :profile}))))
+  #+end_src
+  
+* User
+
+  #+name: user-query
+  #+header: :engine mysql
+  #+header: :dbhost trashpanda-team.ddns.net
+  #+header: :dbuser root
+  #+header: :dbport 3307
+  #+header: :dbpassword misiePysie69
+  #+header: :database jarman
+  #+begin_src sql
+    -- SELECT * FROM permission
+    SELECT
+    user.id AS `user.id`,
+    user.login AS `user.login`,
+    user.password AS `user.password`,
+    user.last_name AS `user.last_name`,
+    user.first_name AS `user.first_name`,
+    user.id_profile AS `user.id_profile`,
+    user.configuration AS `user.configuration`
+    -- profile.name AS `profile.name`
+    -- profile.configuration AS `profile.configuration`
+    FROM `user`
+    INNER JOIN `profile` ON `user`.`id_profile`=`profile`.`id`;
+  #+end_src
+  
+  #+NAME: users-db
+  | user.id | user.login | user.password | user.last_name | user.first_name | user.id_profile | user.configuration                                                          |
+  |---------+------------+---------------+----------------+-----------------+-----------------+-----------------------------------------------------------------------------|
+  |         |            |               |                |                 |                 | <10>                                                                        |
+  |       1 | admin      | admin         | admin          | admin           |               1 | {:ftp {:login "jarman", :password "dupa" :host "trashpanda-team.ddns.net"}} |
+  |       2 | dev        | dev           | dev            | dev             |               3 | {:ftp {:login "jarman", :password "dupa" :host "trashpanda-team.ddns.net"}} |
+  |       3 | user       | user          | user           | user            |               2 | {:ftp {:login "jarman", :password "dupa" :host "trashpanda-team.ddns.net"}} |
+  |       4 | test       | test          | test           | test            |               1 | {:ftp {:login "jarman", :password "dupa" :host "trashpanda-team.ddns.net"}} |
+
+  #+begin_src clojure :var tab1=users-db :results output
+    (println tab1)
+  #+end_src
+
+  #+begin_src python :var tab1=users-db :results value raw
+    return tab1
+  #+end_src
+  
+  Create users, and profiles
+  #+name: user-raw
+  #+begin_src emacs-lisp :var elist=users-db :results value silent
+    (prin1-to-string elist)
+  #+end_src
+  #+begin_src clojure :var elist=user-raw :results output
+    (def user-config
+      (pr-str
+       (get {:dev
+	     {:ftp {:login "jarman"
+		    :password "dupa"
+		    :host "trashpanda-team.ddns.net"}}} :dev {})))
+
+    (defn update-users []
+      (for [[id login password lname fname id_prof cfg] (read-string elist)]
+	(if-let [existing-profile (first (db/query (select! {:table_name :user :where [:= :id id]})))]
+	  (db/exec (update! {:table_name :user
+			     :set {:user.login login
+				   :user.password password,
+				   :user.last_name lname,
+				   :user.first_name fname,
+				   :user.id_profile id_prof
+				   :user.configuration user-config} :where [:= :user.id id]}))
+	  (db/exec (insert! {:table_name :user
+			     :column-list [:login :password :first_name :last_name :id_profile :configuration]
+			     :values [[login password lname fname id_prof cfg]]})))))
+
+    (time
+     (do
+       (println "create users")
+       (update-users)))
+  #+end_src
+
+  #+RESULTS:
+  : create users
+  : "Elapsed time: 0.599059 msecs"
+
+  #+begin_src clojure :ns ekka.fish :results value :hlines yes
+    (map vals (db/query (select! {:table_name :user})))
+  #+end_src
+
+  #+RESULTS:
+  | 1 | admin | admin | admin | admin | {:ftp {:login "jarman", :password "dupa", :host "trashpanda-team.ddns.net"}} | 1 |
+  | 2 | dev   | dev   | dev   | dev   | {:ftp {:login "jarman", :password "dupa", :host "trashpanda-team.ddns.net"}} | 3 |
+  | 3 | user  | user  | user  | user  | {:ftp {:login "jarman", :password "dupa", :host "trashpanda-team.ddns.net"}} | 2 |
+  | 4 | test  | test  | test  | test  | {:ftp {:login "jarman", :password "dupa" :host "trashpanda-team.ddns.net"}}  | 1 |
+
+
+* Enterprises
+
+  #+startup: shrink
+  #+name: enterprise
+  | id |   ssreou | name      | ownership_form | vat_certificate | individual_tax_number | director     | accountant          | legal_address | physical_address | contacts_information |
+  |----+----------+-----------+----------------+-----------------+-----------------------+--------------+---------------------+---------------+------------------+----------------------|
+  |    |          |           |           <r3> | <4>             |                   <3> | <5>          | <5>                 | <3>           | <l4>             | <l12>                |
+  |  1 | 32432432 | Biedronka |            LTD | EKCA31232       |            3323392190 | Ivan Ivankow | Anastasia Wewbytska | A1            | B1               | +306690666           |
+  |  2 | 23155555 | KFC       |             PP | EKCP12344       |            2312931424 | Vasyl Mayni  | Aleksand            | A2            | B2               | +306690666           |
+  |  3 | 11134534 | some shop |             PP | UKCP12394       |            2131248412 | Vasyl Mayni  | Aleksand            | A2            | B2               | +306690666           |
+
+  #+name: enterprise-raw
+  #+begin_src emacs-lisp :var elist=enterprise :results value silent
+    (prin1-to-string (cdr elist))
+  #+end_src
+  #+begin_src clojure :ns ekka.fish :var elist=enterprise-raw :results value raw
+    (vals (db/query (select! {:table_name :enterprise})))
+    (defn create-enterprises []
+      (db/exec
+       (insert! {:table_name :enterprise
+		 :column-list [:id :ssreou :name :ownership_form :vat_certificate :individual_tax_number :director :accountant :legal_address :physical_address :contacts_information]
+		 :values (read-string elist)})))
+    (create-enterprises)
+  #+end_src
+  #+begin_src clojure :ns ekka.fish :results value silent
+    (map vals (db/query (select! {:table_name :enterprise})))
+  #+end_src
+
+* Service Contract
+
+  
+  #+startup: shrink
+  #+name: service_contract
+  | id | id_enterpreneur | contract_start_term | contract_end_term |
+  |----+-----------------+---------------------+-------------------|
+  |    |             <3> |                <11> |              <11> |
+  | 21 |               1 |          2021-10-16 |        2021-12-31 |
+  | 22 |               3 |          2021-10-16 |        2021-10-31 |
+  | 23 |               1 |          2021-11-01 |        2022-10-31 |
+  | 24 |               2 |          2021-11-01 |        2021-12-31 |
+
+  #+name: service_contract-raw
+  #+begin_src emacs-lisp :var elist=service_contract :results value silent
+    (prin1-to-string (cdr elist))
+  #+end_src
+  #+begin_src clojure :ns ekka.fish :var elist=service_contract-raw :results value silent
+    (defn create-service_contract []
+      (db/exec
+       (insert! {:table_name :service_contract
+		 :column-list [:id :id_enterprise :contract_start_term :contract_end_term]
+		 :values (vec (read-string elist))})))
+    (create-service_contract)
+  #+end_src
+  #+begin_src clojure :ns ekka.fish :results value silent
+    (map vals (db/query (select! {:table_name :service_contract})))
+  #+end_src
+
+* Service Contract Month
+  
+  #+startup: shrink
+  #+name: service_contract_month
+  |   id | service_month_start | service_month_end | money_per_month | was_payed | id_service_contract |
+  |------+---------------------+-------------------+-----------------+-----------+---------------------|
+  |      |        <c11>        |       <c11>       |             <5> |       <2> | <l3>                |
+  | 1021 |     2021-10-16      |    2021-10-31     |           150.0 |         1 | 21                  |
+  | 1022 |     2021-11-01      |    2021-11-30     |           300.0 |         0 | 21                  |
+  | 1023 |     2021-12-01      |    2021-12-31     |           300.0 |         0 | 21                  |
+  | 1024 |     2021-10-16      |    2021-10-31     |            50.0 |         1 | 22                  |
+  | 1025 |     2021-11-01      |    2021-11-30     |            10.0 |         1 | 23                  |
+  | 1026 |     2021-12-01      |    2021-12-31     |            10.0 |         0 | 23                  |
+  | 1027 |     2021-01-01      |    2022-01-31     |            10.0 |         0 | 23                  |
+  | 1028 |     2022-02-01      |    2022-02-28     |            10.0 |         0 | 23                  |
+  | 1029 |     2022-03-01      |    2022-03-31     |            10.0 |         1 | 23                  |
+  | 1030 |     2022-04-01      |    2022-04-30     |            10.0 |         0 | 23                  |
+  | 1031 |     2022-05-01      |    2022-05-31     |            10.0 |         0 | 23                  |
+  | 1032 |     2022-06-01      |    2022-06-30     |            10.0 |         0 | 23                  |
+  | 1033 |     2022-07-01      |    2022-07-31     |            10.0 |         0 | 23                  |
+  | 1034 |     2022-08-01      |    2022-08-31     |            10.0 |         0 | 23                  |
+  | 1035 |     2022-09-01      |    2022-09-30     |            10.0 |         0 | 23                  |
+  | 1036 |     2022-10-01      |    2022-10-31     |            10.0 |         0 | 23                  |
+  | 1037 |     2021-11-01      |    2021-11-30     |            10.0 |         0 | 24                  |
+  | 1038 |     2021-12-01      |    2021-12-31     |            10.0 |         1 | 24                  |
+
+
+  #+name: service_contract_month-raw
+  #+begin_src emacs-lisp :var elist=service_contract_month :results value silent
+    (prin1-to-string (cdr elist))
+  #+end_src
+  #+begin_src clojure :ns ekka.fish :var elist=service_contract_month-raw :results value silent
+    (defn create-service_contract_month []
+      (db/exec
+       (insert! {:table_name :service_contract_month
+		 :column-list [:id :service_month_start :service_month_end :money_per_month :was_payed :id_service_contract]
+		 :values (vec (read-string elist))})))
+    (create-service_contract_month)
+  #+end_src
+  #+begin_src clojure :ns ekka.fish :results value silent
+    (map vals (db/query (select! {:table_name :service_contract_month})))
+  #+end_src
+

@@ -164,17 +164,15 @@
                         (c/config! panel :items (gtool/join-mig-items (view-grouped-by-loaded)))
                         (.repaint (c/to-root (c/to-widget e))))]]})
          
-         (let [scr (gcomp/min-scrollbox panel)]
+         (let [scr (gcomp/min-scrollbox panel)
+               fn-to-resize (fn [](gmg/migrid-resizer (state/state :views-space) panel :gap [5 0]))]
            (c/config! scr
                       :opaque? false
                       :listen [:mouse-wheel-moved (fn [e] (c/invoke-later (.repaint (c/to-widget e))))])
            ;; Lock hscroll on resize.
            (if (empty? (state/state :on-frame-resize-fns-v))
-             (state/set-state :on-frame-resize-fns-v {:vars-listing (fn [](gmg/migrid-resizer (state/state :views-space) panel))})
-             (state/set-state :on-frame-resize-fns-v
-                              (assoc (state/state :on-frame-resize-fns-v)
-                                     :vars-listing
-                                     (fn [] (gmg/migrid-resizer (state/state :views-space) panel)))))
+             (state/set-state :on-frame-resize-fns-v {:vars-listing fn-to-resize})
+             (state/set-state :on-frame-resize-fns-v (assoc (state/state :on-frame-resize-fns-v) :vars-listing fn-to-resize)))
            scr)])))
 
 (comment

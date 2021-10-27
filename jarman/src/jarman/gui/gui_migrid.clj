@@ -134,11 +134,18 @@
                 :args args)]
      panel)))
 
+(defn- migrid-resizer-templates [template gaps width]
+  (get {:vertical ["wrap 1"
+                   (str (nth gaps 2) "px[::" width ", grow, fill]" (nth gaps 3) "px")
+                   (str (nth gaps 0) "px[fill]" (nth gaps 1) "px")]}
+       template))
+
 (defn migrid-resizer [root target
-                      & {:keys [wrap template]
-                         :or {wrap 1 template :vertical}}]
-  (let [templates {:vertical ["wrap 1" (str "0px[::" (.getWidth (.getSize root)) ", grow, fill]0px") "[fill]"]}]
-    (c/config! target :constraints (get templates template)))
+                      & {:keys [wrap template gap]
+                         :or {wrap 1 template :vertical gap [0]}}]
+  (let [gaps (gtool/gapser gap)
+        choosed-template (migrid-resizer-templates template gaps (.getWidth (.getSize root)))]
+    (c/config! target :constraints choosed-template))
   (.revalidate target)
   (.repaint (c/to-root target)))
 

@@ -312,7 +312,9 @@
              (fn [key atom old-m new-m]
                (c/config! panel :items (gtool/join-mig-items (render-fn)))
                (.repaint panel)))
-    (gcomp/min-scrollbox panel)))
+
+    ;; Extra migrid for lock info bar height
+    (gmg/migrid :v :a "[100::, fill]"(gcomp/min-scrollbox panel))))
 
 (defn panel-with-subcontract-rows
   "Description
@@ -846,9 +848,21 @@
     ;; download new data from DB and rerender root panel for contracts
     (refresh-data-and-panel state!)
     (c/config! (:root (state!))
-               :items (gtool/join-mig-items btns-menu-bar new-contract-form (gcomp/min-scrollbox
-                                                                             expand-btns-box
-                                                                             :hscroll-off false)))))
+               :items (gtool/join-mig-items
+                       btns-menu-bar
+                       new-contract-form
+                       (let [scr (gcomp/min-scrollbox expand-btns-box)]
+                         (c/config! scr
+                                    :opaque? false
+                                    :listen [:mouse-wheel-moved (fn [e] (c/invoke-later (.repaint (c/to-widget e))))])
+                         ;; Lock hscroll on resize.
+                         (if (empty? (state/state :on-frame-resize-fns-v))
+                           (state/set-state :on-frame-resize-fns-v {:vars-listing (fn [](gmg/migrid-resizer (state/state :views-space) expand-btns-box))})
+                           (state/set-state :on-frame-resize-fns-v
+                                            (assoc (state/state :on-frame-resize-fns-v)
+                                                   :vars-listing
+                                                   (fn [] (gmg/migrid-resizer (state/state :views-space) expand-btns-box)))))
+                         scr)))))
 
 
 

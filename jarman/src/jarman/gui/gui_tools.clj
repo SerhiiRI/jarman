@@ -185,6 +185,13 @@
                    (> (count txt) max-len) (string/join  "" [(subs txt 0 max-len) "..."])
                    :else txt)))
 
+(defn gapser [gap]
+  (cond
+    (= 1 (count gap)) (let [tblr (first gap)] [tblr tblr tblr tblr])
+    (= 2 (count gap)) (let [tb (first gap) lr (last gap)] [tb tb lr lr])
+    (= 4 (count gap)) gap
+    :else [0 0 0 0]))
+
 (defn get-user-data
   "Description:
       Get data in map from :user-data inside seesaw components. 

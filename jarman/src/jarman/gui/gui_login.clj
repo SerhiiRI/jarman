@@ -452,69 +452,6 @@
 
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
-;; │          Logic operation            │
-;; │                                     │
-;; └─────────────────────────────────────┘
-
-(defn- login
-  "Description:
-    Check if configuration and login data are correct.
-    Return map about user if loggin is ok.
-    Return error message if something goes wrong."
-  [databaseconnection-m login-s password-s]
-  {:pre [(map? databaseconnection-m) (string? login-s) (string? password-s)]}
-  (try
-    (session/login databaseconnection-m login-s password-s)
-    (catch Exception e
-      (print-error "gui_login.clj:" (.getMessage e))
-      (.printStackTrace e)
-      (str "gui_login.clj: " (.getMessage e)))
-    (catch clojure.lang.ExceptionInfo e
-      (print-error e)
-      (rift (gtool/get-lang (:translation (ex-data e))) (.getMessage e)))))
-
-#_(defn- check-access
-  "Description:
-    Check if configuration and login data are correct.
-    Return map about user if loggin is ok.
-    Return error message if something goes wrong."
-  [state! config-k]
-  (let [config (config-k (:databaseconnection-list (state!)))
-        login  (:login  (state!))
-        passwd (:passwd (state!))]
-    ;;(println "\nLogin:" login passwd)
-    (let [login-fn (session/login config)]
-      (if (fn? login-fn)
-        (do
-          ;;(println "\nConfig ok")
-          (let [user-m (try
-                         (session/login "dev" "dev")
-                         (login-fn login passwd)
-                         (catch Exception e
-                           (let [exc (str (.getMessage e))
-                                 exc-type (keyword (string/join "-" (butlast (string/split "Unknown database 'pepeland'" #" "))))]
-                             (println "gui_login.clj: Exception in check-access:\n" exc)
-                             (rift (gtool/get-lang-alerts exc-type) exc))))]
-            ;;(println "\nCheck login");;
-            (cond
-              (map? user-m) user-m
-              (string? user-m) user-m
-              :else (gtool/get-lang-alerts :incorrect-login-or-pass))))
-
-        (case login-fn
-          :no-connection-to-database
-          (gtool/get-lang-alerts :connection-problem)
-          :not-valid-connection
-          (gtool/get-lang-alerts :configuration-incorrect)
-          :else
-          (gtool/get-lang-alerts :something-went-wrong))))))
-
-(let [k :a
-      {dupa k} {:a 1}]
-  dupa
-  )
-;; ┌─────────────────────────────────────┐
-;; │                                     │
 ;; │        Configurations tiles         │
 ;; │                                     │
 ;; └─────────────────────────────────────┘
@@ -565,24 +502,24 @@
 ;;             +-----------------+      return (Session.)
 ;;                                      object
 
-(try-to-login
- (fn []
-   {:login "dev",
-    :passwd "dev_",
-    :focus-compo nil,
-    :current-databaseconnection {},
-    :databaseconnection-error {}
-    :databaseconnection-list
-    {:jarman--trashpanda-team_ddns_net--3307
-     {:dbtype "mysql",
-      :host "trashpanda-team.ddns.net",
-      :port 3307,
-      :dbname "jarman",
-      :user "root",
-      :password "misiePysie69"}}})
- (constantly true)
- nil
- :jarman--trashpanda-team_ddns_net--3307)
+;; (try-to-login
+;;  (fn []
+;;    {:login "dev",
+;;     :passwd "dev_",
+;;     :focus-compo nil,
+;;     :current-databaseconnection {},
+;;     :databaseconnection-error {}
+;;     :databaseconnection-list
+;;     {:jarman--trashpanda-team_ddns_net--3307
+;;      {:dbtype "mysql",
+;;       :host "trashpanda-team.ddns.net",
+;;       :port 3307,
+;;       :dbname "jarman",
+;;       :user "root",
+;;       :password "misiePysie69"}}})
+;;  (constantly true)
+;;  nil
+;;  :jarman--trashpanda-team_ddns_net--3307)
 
 
 (defn- try-to-login

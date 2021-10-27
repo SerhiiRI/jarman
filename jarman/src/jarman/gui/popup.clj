@@ -66,6 +66,32 @@
                                                    (.repaint (jlp)))])))]
     header))
 
+
+(defn- close-on-click [jlp root]
+  (fn [e]
+    (if (= (.getButton e) MouseEvent/BUTTON2)
+      (do (.remove (jlp) root)
+          (.repaint (jlp))))))
+
+(defn- start-mouse-pos [last-x last-y root]
+  (fn [e]
+    (c/config! e :cursor :move)
+    (let [[start-x start-y] (gtool/get-mouse-pos)]
+      (reset! last-x start-x)
+      (reset! last-y start-y)
+      (c/move! root :to-front))))
+
+(defn- drag-panel [last-x last-y root]
+  (fn [e]
+    (let [old-bounds (c/config root :bounds)
+          [old-x old-y] [(.getX old-bounds) (.getY old-bounds)]
+          [new-x new-y] (gtool/get-mouse-pos)
+          move-x  (if (= 0 @last-x) 0 (- new-x @last-x))
+          move-y  (if (= 0 @last-y) 0 (- new-y @last-y))]
+      (reset! last-x new-x)
+      (reset! last-y new-y)
+      (c/config! root :bounds [(+ old-x move-x) (+ old-y move-y) :* :*]))))
+
 (defn- popup [{:keys [render-fn title size c-border title-icon args]
                :or {render-fn (fn [] (c/label))
                     title ""
@@ -85,34 +111,21 @@
                     :bounds bounds
                     :border (b/line-border :thickness 1 :color c-border)
                     :background face/c-popup-body-background
-                    args)]
+                    args)
+        mc (close-on-click jlp root)
+        mp (start-mouse-pos last-x last-y root)
+        md (drag-panel last-x last-y root)
+        mr (fn [e] (c/config! e :cursor :default) (.repaint (jlp)))
+
+        bar (popup-bar root title :c-bg c-border :icon title-icon)]
     
-    (c/config! root :listen [:mouse-clicked
-                             (fn [e]
-                               (if (= (.getButton e) MouseEvent/BUTTON2)
-                                 (do (.remove (jlp) root)
-                                     (.repaint (jlp)))))
-                             
-                             :mouse-pressed
-                             (fn [e]
-                               (let [[start-x start-y] (gtool/get-mouse-pos)]
-                                 (reset! last-x start-x)
-                                 (reset! last-y start-y)
-                                 (c/move! (c/to-widget e) :to-front)))
-                             
-                             :mouse-dragged (fn [e]
-                               (let [old-bounds (c/config (c/to-widget e) :bounds)
-                                     [old-x old-y] [(.getX old-bounds) (.getY old-bounds)]
-                                     [new-x new-y] (gtool/get-mouse-pos)
-                                     move-x  (if (= 0 @last-x) 0 (- new-x @last-x))
-                                     move-y  (if (= 0 @last-y) 0 (- new-y @last-y))]
-                                 (reset! last-x new-x)
-                                 (reset! last-y new-y)
-                                 (c/config! (c/to-widget e) :bounds [(+ old-x move-x) (+ old-y move-y) :* :*])))
-                             
-                             :mouse-released (fn [e] (.repaint (jlp)))])
+    (doall (map #(c/config! % :listen [:mouse-clicked mc
+                                       :mouse-pressed mp
+                                       :mouse-dragged md
+                                       :mouse-released mr])
+                [root bar]))
     
-    (.add root (popup-bar root title :c-bg c-border :icon title-icon))
+    (.add root bar)
     (.add root (render-fn))
     root))
 

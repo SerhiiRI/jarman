@@ -26,7 +26,7 @@
  ;; This setting's discribe setted by the user
  ;; variable
  jarman.config.conf-language/language-selected :pl
- jarman.plugin.plugin/theme-selected "Dracula"
+ jarman.plugin.plugin/theme-selected "Jarman Light"
  )
 
 (setq jarman.logic.view-manager/user-menu

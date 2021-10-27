@@ -10,10 +10,12 @@
    [jarman.gui.gui-tools         :as gtool]
    [jarman.gui.gui-migrid        :as gmg]
    [jarman.gui.gui-views-service :as gvs]
+   [jarman.gui.gui-style         :as gs]
    ;; environtemnt variables
    [jarman.interaction :as i]
    [jarman.tools.org :refer :all]
-   [jarman.tools.update-manager :as update-manager])
+   [jarman.tools.update-manager :as update-manager]
+   [jarman.gui.popup   :as popup])
   (:import (java.io IOException FileNotFoundException)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
@@ -29,12 +31,12 @@
        (do
          (out-update
           (print-error e#))
-         (i/danger "Update error" (.getMessage e#) :time 7)))
+         (i/danger (gtool/get-lang-header :update-error) (.getMessage e#) :time 7)))
      (catch Exception e#
        (do
          (out-update
           (print-error e#))
-         (i/danger "Update error" (.getMessage e#) :time 7)))))
+         (i/danger (gtool/get-lang-header :update-error) (.getMessage e#) :time 7)))))
 
 (defn setColumnWidth [^javax.swing.JTable table & {:keys [column size]}]
   (let [^javax.swing.table.TableColumnModel column-model (.getColumnModel table)
@@ -45,92 +47,145 @@
 ;;; UI COMPONENTS ;;;
 ;;;;;;;;;;;;;;;;;;;;;
 
-(defn package-content [package]
-  (doto
-      (c/table
-       :show-horizontal-lines? nil
-       :show-vertical-lines? nil
-       :model (table/table-model :columns [{:key :file, :text "Package"}
-                                           ;; {:key :name, :text "name"}
-                                           {:key :version, :text "Version"}
-                                           ;; {:key :artifacts, :text "artifacts"}
-                                           {:key :uri, :text "Repository URI"}]
-                                 :rows [package]))
-    (.setRowMargin 10)
-    (.setRowHeight 35)
-    (.setIntercellSpacing (java.awt.Dimension. 10 0))
-    (setColumnWidth :column 0 :size 130)
-    (setColumnWidth :column 1 :size 30)
-    (setColumnWidth :column 2 :size 600)
-    (.setRowSelectionAllowed false)
-    ;; (.setAutoResizeMode javax.swing.JTable/AUTO_RESIZE_LAST_COLUMN)
-    ))
 
 (defn info [s]
   {:pre [(string? s)]}
-  (seesaw.core/label :halign :left :background face/c-background-detail
-                     :foreground face/c-foreground-title :text s :font (gtool/getFont 16 :bold) :border (b/empty-border :thickness 15)))
+  (gmg/migrid
+   :> "[30%::, fill]" {:gap [10]}
+   (seesaw.core/label
+    :halign :left
+    :background face/c-background-detail
+    :foreground face/c-icon
+    :text s
+    :font (gtool/getFont 16 :bold)
+    :border (b/empty-border :left 5))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; UI Composititon ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn startup-components [] [])
+
+(defn manager-headers []
+  (gmg/migrid
+   :> "[150:150:150, fill]10px[50::, fill]"
+   {:gap [10] :args [:background face/c-layout-background]}
+   [(c/label :text (gtool/get-lang-basic :package))
+    (c/label :text (gtool/get-lang-basic :version))
+    (c/label :text (gtool/get-lang-basic :source))]))
+
+(defn package-info [package buttons]
+  (gmg/migrid
+   :> :gf {:args [:background face/c-compos-background]}
+   (gtool/join-mig-items
+    (gcomp/min-scrollbox
+     (gmg/migrid
+      :> "[150:150:150, fill]10px[50::, fill]"
+      {:gap [10] :args [:border (b/line-border :top 2 :color face/c-layout-background)]}
+      [(c/label :text (gtool/str-cutter (str (get package :file)) 20)
+                :tip (str (gtool/get-lang-basic :package) ": " (get package :file)))
+       (c/label :text (str (get package :version)))
+       (c/label :text (str (get package :uri))
+                :listen [:mouse-clicked (fn [e] (popup/build-popup
+                                                 {:title   (get package :file)
+                                                  :size    [600 300]
+                                                  :comp-fn (fn [] (c/label :text (gtool/htmling (str (get package :uri)))))}))])]))
+    buttons)))
+
 (defn supply-content-info [items]
   (conj items
-        (info "System information:")
-        (c/horizontal-panel
-         :items
-         [(package-content (update-manager/->PandaPackage "Current Version" update-manager/*program-name* update-manager/*program-vers* nil nil))
-          (gcomp/button-basic "Clean Environment"
-                              :onClick (fn [_] (try-catch-alert
-                                               (update-manager/procedure-clean-env)
-                                               (i/info "Update Manager" "Local Jarman configuraion was deleted" :time 7))))])))
+        ;;(info (gtool/get-lang-header :system-information))
+        (gcomp/button-expand
+         (gtool/get-lang-header :system-information)
+         (let [package (update-manager/->PandaPackage (gtool/get-lang-header :current-version)
+                                                      update-manager/*program-name*
+                                                      update-manager/*program-vers* nil nil)]
+           (gmg/migrid
+            :> :gf {:args [:background face/c-compos-background :border (b/line-border :bottom 1 :color face/c-icon)]}
+            [(package-info
+              package
+              (gmg/migrid
+               :> :f {:args [:border (b/line-border :top 2 :color face/c-layout-background)]}
+               (gcomp/button-basic (gtool/get-lang-btns :clean-environment)
+                                   :onClick (fn [_] (try-catch-alert
+                                                     (update-manager/procedure-clean-env)
+                                                     (i/info (gtool/get-lang-header :update-manager)
+                                                             (gtool/get-lang-alerts :config-deleted) :time 7)))
+                                   :underline-size 0)))]))
+         ;; :font (gs/getFont :bold 16)
+         :expand :always
+         :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/SETTINGS)))))
 
 
 (defn supply-content-to-install  [items package]
   (if package
     (conj items
-          (info "Package to install:")
-          (c/horizontal-panel
-           :items 
-           [(package-content package)
-            (gcomp/button-basic "Install"
-                                :onClick (fn [_] (try-catch-alert
-                                                 (update-manager/procedure-update package)
-                                                 (i/info "Update Manager" (format "Jarman %s installed successfully"
-                                                                                     (:version package)) :time 7))))
-            (gcomp/button-basic "Download"
-                                :onClick (fn [_] (try-catch-alert
-                                                 (update-manager/download-package package)
-                                                 (i/info "Update Manager" (format "Package %s was downloaded"
-                                                                                  (:file package)) :time 7))))]))
+          ;;(info (gtool/get-lang-header :packages-to-install))
+          (gcomp/button-expand
+           (gtool/get-lang-header :packages-to-install)
+           (gmg/migrid
+            :v {:args [:border (b/line-border :bottom 1 :color face/c-icon)]}
+            [(manager-headers)
+             (package-info
+              package
+              (gmg/migrid
+               :> "[90::, fill]" {:args [:border (b/line-border :top 2 :color face/c-layout-background)]}
+               [(gcomp/button-basic (gtool/get-lang-btns :install)
+                                    :onClick (fn [_] (try-catch-alert
+                                                      (update-manager/procedure-update package)
+                                                      (i/info (gtool/get-lang-header :update-manager)
+                                                              (format (gtool/get-lang-alerts :plugin-installed)
+                                                                      (:version package)) :time 7)))
+                                    :underline-size 0)
+                (gcomp/button-basic (gtool/get-lang-btns :download)
+                                    :onClick (fn [_] (try-catch-alert
+                                                      (update-manager/download-package package)
+                                                      (i/info (gtool/get-lang-header :update-manager)
+                                                              (format (gtool/get-lang-alerts :package-downloaded)
+                                                                      (:file package)) :time 7)))
+                                    :underline-size 0)]))])
+           :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/MOVE_TO_INBOX))
+           ))
     items))
+
 
 (defn supply-content-all-package [items package-list]
   (if (seq package-list)
     (concat items
-            [(info "Available packages:")]
-            (for [pkg package-list]
-              (c/horizontal-panel
-               :items 
-               [(package-content pkg)
-                (gcomp/button-basic (if (= (:version pkg) update-manager/*program-vers*) "Reinstall" "Downgrade")
-                                    :onClick (fn [_] (try-catch-alert
-                                                      (update-manager/procedure-update pkg)
-                                                      (i/info "Update Manager"
-                                                              (format "Downgrade from %s to %s version was successfully"
-                                                                      update-manager/*program-vers*
-                                                                      (:version pkg)) :time 7))))
-                (gcomp/button-basic "Download"
-                                    :onClick (fn [_] (try-catch-alert
-                                                     (update-manager/download-package pkg)
-                                                     (i/info "Update Manager"
-                                                              (format "Package %s was downloaded"
-                                                                      (:file pkg)) :time 7))))])))
+           ;; [(info (gtool/get-lang-header :available-packages))]
+            [(gcomp/button-expand
+              (gtool/get-lang-header :available-packages)
+              [(manager-headers)
+               (gcomp/min-scrollbox
+                (gmg/migrid
+                 :v {:args [:border (b/line-border :bottom 1 :color face/c-icon)]}
+                 (for [pkg package-list]
+                   (package-info
+                    pkg
+                    (gmg/migrid
+                     :> "[90::, fill]" {:args [:border (b/line-border :top 2 :color face/c-layout-background)]}
+                     [(gcomp/button-basic (if (= (:version pkg) update-manager/*program-vers*)
+                                            (gtool/get-lang-btns :reinstall)
+                                            (gtool/get-lang-btns :downgrade))
+                                          :onClick (fn [_] (try-catch-alert
+                                                            (update-manager/procedure-update pkg)
+                                                            (i/info (gtool/get-lang-header :update-manager)
+                                                                    (format (gtool/get-lang-alerts :downgrade-success)
+                                                                            update-manager/*program-vers*
+                                                                            (:version pkg)) :time 7)))
+                                          :underline-size 0)
+                      (gcomp/button-basic (gtool/get-lang-btns :download)
+                                          :onClick (fn [_] (try-catch-alert
+                                                            (update-manager/download-package pkg)
+                                                            (i/info (gtool/get-lang-header :update-manager)
+                                                                    (format (gtool/get-lang-alerts :package-downloaded)
+                                                                            (:file pkg)) :time 7)))
+                                          :underline-size 0)]))))
+                :hscroll-off true)]
+              :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/WIDGETS)))])
     (conj items
-          (info "Available packages:")
-          (info "-- empty --"))))
+          (info (gtool/get-lang-header :available-packages))
+          (info (format "-- %s --" (gtool/get-lang-header :available-packages))))))
 
 ;; (def package-list-chache (update-manager/get-filtered-packages update-manager/*repositories*))
 
@@ -144,26 +199,25 @@
   (let [package-list package-list-chache
         package-to-update (update-manager/max-version package-list)]
     (out-update
-     (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[]0px"]
-                           :background face/c-background-detail
-                           :items
-                           (gtool/join-mig-items (-> (startup-components)
-                                                     (supply-content-info)
-                                                     (supply-content-to-install package-to-update)
-                                                     (supply-content-all-package package-list)))))))
+     (gmg/migrid
+      :v {:gap [5 0]}
+      (gtool/join-mig-items (-> (startup-components)
+                                (supply-content-info)
+                                (supply-content-to-install package-to-update)
+                                (supply-content-all-package package-list)))))))
 
 (defn alert-update-available
   ([] (alert-update-available nil))
   ([update-info]
-   (i/warning "Updates are avaliable!" ;; TODO: Add dynamic language
-              [{:title "Check updates"
+   (i/warning (gtool/get-lang-header :avaliable-updates)
+              [{:title (gtool/get-lang-btns :check-updates)
                 :func (fn [api]
                         (gvs/add-view
                          :view-id  :update-manager
-                         :title    "Update manager"
+                         :title    (gtool/get-lang-header :update-manager)
                          :render-fn update-manager-panel)
                         ((:rm-alert api)))}
-               {:title "Later"
+               {:title (gtool/get-lang-btns :later)
                 :func (fn [api] ((:rm-alert api)))}]
               :expand (if update-info
                         (fn [] (gmg/migrid
@@ -190,7 +244,8 @@
        (alert-update-available update-info)
        (if (= mode :silent)
          (print-header "System is updated. No avaliable updates.")
-         (i/success "System is updated" "No avaliable updates.")))))) ;; TODO: Set dynamic lang
+         (i/success (gtool/get-lang-header :system-updated)
+                    (gtool/get-lang-alerts :no-updates)))))))
 
 (comment
   (check-update)

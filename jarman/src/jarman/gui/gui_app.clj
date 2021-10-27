@@ -43,7 +43,8 @@
             [jarman.gui.gui-migrid           :as gmg]
             [jarman.gui.popup                :as popup]
             [jarman.gui.gui-editors          :as gedit]
-            [jarman.gui.gui-calendar         :as calendar]))
+            [jarman.gui.gui-calendar         :as calendar]
+            ))
 
  
 ;; ┌──────────────────────────┐
@@ -218,11 +219,11 @@
              [[(jarmanapp :margin-left img-scale) 0]]
              (menu/menu-slider img-scale top-offset
                           [{:icon  (gs/icon GoogleMaterialDesignIcons/INFO face/c-icon)
-                            :title "Message Store"
+                            :title (gtool/get-lang-btns :messages-history)
                             :fn    (fn [e] (i/show-alerts-history))}
                            
                            {:icon  (gs/icon GoogleMaterialDesignIcons/DASHBOARD face/c-icon)
-                            :title "Reload active view"
+                            :title (gtool/get-lang-btns :reload-active-view)
                             :fn    (fn [e] (try
                                              (i/reload-view)
                                              (catch Exception e (str "Can not reload. Storage is empty."))))}
@@ -262,13 +263,21 @@
                            ;;  :fn    (fn [e] (println "Check update"))}
                            
                            {:icon  (gs/icon GoogleMaterialDesignIcons/PERSON face/c-icon )
-                            :title "Logout"
+                            :title (gtool/get-lang-btns :logout)
                             :fn    (fn [e]
                                      ((state/state :invoke-login-panel))
                                      (state/set-state :soft-restart nil)
                                      (.dispose (c/to-frame e)))}
+
+                           ;; {:icon  (gs/icon GoogleMaterialDesignIcons/SETTINGS face/c-icon)
+                           ;;  :title (gtool/get-lang-btns :settings)
+                           ;;  :fn    (fn [e] (gvs/add-view
+                           ;;                  :view-id :app-settings
+                           ;;                  :title (gtool/get-lang-btns :settings)
+                           ;;                  :render-fn #(gcp/config-panel)))}
+                           
                            {:icon  (gs/icon GoogleMaterialDesignIcons/EXIT_TO_APP face/c-icon)
-                            :title "Close app"
+                            :title (gtool/get-lang-btns :close-app)
                             :fn    (fn [e]
                                      (state/set-state :soft-restart nil)
                                      (.dispose (c/to-frame e)))}

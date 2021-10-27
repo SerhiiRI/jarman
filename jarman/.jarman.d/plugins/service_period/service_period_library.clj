@@ -55,6 +55,14 @@
         cd2 (doto (java.util.Calendar/getInstance) (.setTime d2))]
     (.before cd2 cd1)))
 
+(defn- add-months
+  [data-string add-m]
+  (str (.plusMonths (java.time.LocalDate/parse data-string) add-m)))
+
+(defn- add-days
+  [data-string add-d]
+  (str (.plusDays (java.time.LocalDate/parse data-string) add-d)))
+
 #_(sort-by
    identity
    data-comparator-new-old
@@ -266,10 +274,10 @@
                         (if (empty? (get-in @c-atom [e-id c-id])) (swap! c-atom #(assoc-in % [e-id c-id] (assoc sc :selected? false))))
                         (if (empty? (get-in @s-atom [e-id c-id s-id])) (swap! s-atom #(assoc-in % [e-id c-id s-id] (assoc scm :selected? false))))))
                     data))
-              {:entrepreneurs-m @e-atom
+              {:enterprises-m   @e-atom
                :contracts-m     @c-atom
                :subcontracts-m  @s-atom
-               :entrepreneurs-list entrepreneurs-list})))
+               :enterprises-list entrepreneurs-list})))
          
          ;; (group-by-2 [(comp :enterprise.id :enterprise)
          ;;              (comp :service_contract.id :service_contract)

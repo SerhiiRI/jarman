@@ -78,22 +78,26 @@
      
 ** PROCESSING [#1] Frontend refactorization [4/7]
    DEADLINE: <2021-10-13 Wed>
-*** TODO Service Periods plugins [0/2]                               :@Aleks:
+*** PROCESSING Service Periods plugins [0/2]                         :@Aleks:
 **** Bugs [0/2]:
     - [ ] Service Periods and Service contract have same id in gui view service
     - [ ] Expand with selecting component loses selected data if we click close icon without choose some row
 **** To fixed [0/3]:
-    - [ ] Expand buttons [0/7]
-      - [ ] Buttons must be resizable, and scaled to window width.
-      - [ ] Not hide expanded button, when checkbox was clicked. Julia add coments inside plugin, about this issue (find "TODO" mark)
-      - [ ] make less color differencess between embaded expand buttons.
-      - [ ] Also in future change `+/-` icons.
-      - [ ] For Enterperneur use this format style "X-kom, 400 zl", money color must be pastel green.
-      - [ ] For Service Contract use this format stlye notation "30-12-2020 - 04-01-2021,  200 zl", money also in green.
-      - [ ] For Service Months use ths format style notation "01-01-2020 - 04-01-2021,  100 zl", money also in pastel green.
-    - [ ] Julia call it *insert-space*, is section where we adding new service contract. Rewrite whole panel, but keep logic as we create before.
-    - [ ] After you click on one month, you can edit all service contract month payments. You can edit, only if month wasn't payed. Rewrite Julia view, on your implementation. I think better be when all those month fields be in one line.
-*** TODO Table.clj [3/4]                                             :@Aleks:
+    - [-] Expand buttons [3/5]
+      - [X] Buttons must be resizable, and scaled to window width. Yes but no. Little big problem. Scrollable make problems when we resize with to smaller. It's topic for another time and task.
+      - [ ] Also in future change `+/-` icons. ~What?~
+      - [-] Cosmetics [1/4]
+	- [X] For Enterperneur use this format style "X-kom, 400 zl", money color must be pastel green.
+	- [ ] For Service Contract (contract) use this format stlye notation "30-12-2020 - 04-01-2021,  200 zl", money also in green. More readalbe will be ~2021/ 05/ 01 - 2021/ 07/ 31, 300$~
+	- [ ] For Service Months (subcontract) use ths format style notation "01-01-2020 - 04-01-2021,  100 zl", money also in pastel green. More readalbe will be ~2021/ 05/ 01 - 31, 100$~
+	- [ ] Discuss what and how should be displayed as info in expand btns and info bar.
+      - [X] Not hide expanded button, when checkbox was clicked. Julia add coments inside plugin, about this issue (find "TODO" mark)
+      - [X] make less color differencess between embaded expand buttons. Used theme face.
+    - [X] Julia call it *insert-space*, is section where we adding new service contract. Rewrite whole panel, but keep logic as we create before.
+    - [X] After you click on one month, you can edit all service contract month payments. You can edit, only if month wasn't payed. Rewrite Julia view, on your implementation. I think better be when all those month fields be in one line. ~You can pay for single subcontact too. One by one.~
+    - [X] Prices are updated when state with checkboxes (atom :subcontracts-m) will be changed. So we have refresh checkboxes and prices in runtime.
+    - [ ] Added few tests.
+*** PROCESSING Table.clj [3/4]                                       :@Aleks:
     - [X] remove 1pixel black border for right table.
     - [ ] rewrite expand panel
     - [X] make icon smaller, on 10-20%
@@ -146,15 +150,6 @@ CLOSED: [2021-10-02 sob 12:00]
       - [X] Better colors for levels in expand button in ~Jarman Light~
       - [X] Better colors for levels in expand button in ~Dracula~
 
-** PROCESSING [#3] /Feature/. On exit event [0/1]              :@Aleks:@Serhii:
-   - [ ] Create event when close 
-     - [ ] Remove suuid /:@Serhii:/
-     - [ ] Autoclose log stream's /:@Serhii:/
-** TODO [#2] /Bug/. DB Visualizer editing [0/3]                :@Aleks:@Serhii:
-   DEADLINE: <2021-10-13 Wed>
-   1. [ ] Cannot edit table =view=
-   2. [ ] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
-   3. [ ] Cannot edit metadata of table 
 ** TODO [#1] /Feature/. Licenses [0/3]                         :@Aleks:@Serhii:
    DEADLINE: <2021-10-13 śr.>
    Related to [[Register licence mechanics]] issue.
@@ -166,10 +161,20 @@ CLOSED: [2021-10-02 sob 12:00]
 ** TODO [#1] /Feature/. Create configurations panel [0/1]
    DEADLINE: <2021-10-13 śr.>
    - [ ] Language select box
+** TODO [#2] /Rewrite/. DB Visualizer editing [0/3]            :@Aleks:@Serhii:
+   DEADLINE: <2021-10-13 Wed>
+   Old fns must be rewrite to new standards:
+   1. [ ] Cannot edit table =view=
+   2. [ ] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
+   3. [ ] Cannot edit metadata of table 
 ** TODO [#3] /Feature/. Update Manager [1/2]                           :@Aleks:
    DEADLINE: <2021-10-13 śr.>
    - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [ ] Show popup with message need hard restart
+** PLANNED [#3] /Feature/. On exit event [0/1]                 :@Aleks:@Serhii:
+   - [ ] Create event when close 
+     - [ ] Remove suuid /:@Serhii:/
+     - [ ] Autoclose log stream's /:@Serhii:/
 ** PLANNED Feature. Frontend upgrade [0/4]                           :@Aleks:
 *** Global shortcut (inside state) and focus pointer
     - [ ] Create storage for key-binding and fns to invoke. Functions should be from interaction.clj. Some like {~:C-r_s~ soft-restart ~:C-s~ save-changes}

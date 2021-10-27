@@ -9,7 +9,8 @@
    [jarman.logic.sql-tool :refer [select! insert! update!]]
    [jarman.logic.security :refer [encrypt-local decrypt-local]]
    [jarman.tools.lang :refer :all]
-   [jarman.tools.org  :refer :all])
+   [jarman.tools.org  :refer :all]
+   [jarman.gui.gui-tools :as gtool])
   (:import [java.util Base64]))
 
 
@@ -160,7 +161,7 @@
             (:user.first_name m) (:user.last_name m)
             (:user.configuration m)(:profile.name m)
             (:profile.configuration m))
-     (throw (ex-info "incorrect login or password "
+     (throw (ex-info (gtool/get-lang-license :incorrect-login-pass)
                      {:type :incorrect-login-or-password
                       :translation [:alerts :incorrect-login-or-pass]})))))
 
@@ -169,7 +170,7 @@
    ((m (-> (load-license) decrypt-license)))
    (if m
      (License. (:tenant m) (:tenant-id m) (:creation-date m) (:expiration-date m) (:limitation m))
-     (throw (ex-info "not found registered license"
+     (throw (ex-info (gtool/get-lang-license :no-registered-license)
                      {:type :license-not-found
                       :translation [:alerts :license-not-found]})))))
 
@@ -182,18 +183,18 @@
 (defn build-session [m]
   (if (and m (every? map? [(:user m) (:license m) (:params m)]))
     (Session. (:user m) (:license m) (:params m))
-    (throw (ex-info "session map is empty, this error you shuldn't see, please contact to tech support"
+    (throw (ex-info (gtool/get-lang-license :empty-session-map)
                     {:type :session-map-is-empty
                      :translation [:alerts :undefinied-login-error]}))))
 
 (defn session [] nil)
 (defn login [connection login password]
   (if-not (c/connection-validate connection)
-    (ex-info "bad connection settings, please carefully checkout your connections"
+    (ex-info (gtool/get-lang-license :bad-connection-settings)
              {:type :not-valid-connection
               :translation [:alerts :configuration-incorrect]}))
   (if-not (c/test-connection connection)
-    (ex-info "cannot connect to remote database"
+    (ex-info (gtool/get-lang-license :cannot-connect-db)
              {:type :no-connection-to-database
               :translation [:alerts :connection-problem]}))
   (c/connection-set connection)

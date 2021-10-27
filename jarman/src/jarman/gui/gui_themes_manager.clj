@@ -15,8 +15,10 @@
    [jarman.logic.state :as state]
    [jarman.interaction :as i]
    [jarman.tools.org :refer :all]
-   [jarman.plugin.plugin :as plugin])
-  (:import (java.io IOException FileNotFoundException)))
+   [jarman.plugin.plugin :as plugin]
+   [jarman.gui.popup      :as popup])
+  (:import (java.io IOException FileNotFoundException)
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
 
 
@@ -47,26 +49,6 @@
 ;;; UI COMPONENTS ;;;
 ;;;;;;;;;;;;;;;;;;;;;
 
-(defn- theme-content [theme]
-  (doto
-      (c/table
-       :show-horizontal-lines? nil
-       :show-vertical-lines? nil
-       :model (table/table-model :columns [{:key :theme-name}
-                                           {:key :theme-description}
-                                           ;; {:key :url}
-                                           ]
-                                 :rows [theme]))
-    (.setRowMargin 10)
-    (.setRowHeight 35)
-    (.setIntercellSpacing (java.awt.Dimension. 10 0))
-    (setColumnWidth :column 0 :size 240)
-    (setColumnWidth :column 1 :size 1000)
-    ;; (setColumnWidth :column 3 :size 600)
-    (.setRowSelectionAllowed false)
-    ;; (.setAutoResizeMode javax.swing.JTable/AUTO_RESIZE_LAST_COLUMN)
-    ))
-
 (defn info [s]
   {:pre [(string? s)]}
   (seesaw.core/label :halign :left :foreground face/c-foreground-title :text s :font (gs/getFont :bold) :border (b/empty-border :thickness 15)))
@@ -78,31 +60,68 @@
 
 (defn startup-components [] [])
 
+(defn manager-headers []
+  (gmg/migrid
+   :> "[150:150:150, fill]10px[50::, fill]"
+   {:gap [10] :args [:background face/c-layout-background]}
+   [(c/label :text (gtool/get-lang-basic :theme))
+    (c/label :text (gtool/get-lang-basic :description))]))
+
+(defn theme-info [theme buttons]
+  (gmg/migrid
+   :> :gf {:args [:background face/c-compos-background]}
+   (gtool/join-mig-items
+    (gmg/migrid
+     :> "[150:150:150, fill]10px[50::, fill]"
+     {:gap [10] :args [:border (b/line-border :top 2 :color face/c-layout-background)]}
+     [(c/label :text (gtool/str-cutter (str (get theme :theme-name)) 20)
+               :tip (str (gtool/get-lang-basic :theme) ": " (get theme :theme-name)))
+      (c/label :text (str (get theme :theme-description))
+               :listen [:mouse-clicked (fn [e] (popup/build-popup
+                                                 {:title   (get theme :theme-name)
+                                                  :size    [600 300]
+                                                  :comp-fn (fn [] (c/label :text (gtool/htmling (str (get theme :theme-description)))))}))])])
+    buttons)))
+
 (defn supply-currently-loaded [items theme]
   (concat items
-          [(info "Currently loaded")]
-          [(theme-content theme)]))
+          [(gcomp/button-expand
+            (gtool/get-lang-header :loaded-theme)
+            (gmg/migrid
+             :> :gf {:args [:background face/c-compos-background :border (b/line-border :bottom 1 :color face/c-icon)]}
+             [(theme-info (doto theme println) [])])
+            :expand :always
+            :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/SETTINGS)))]))
 
 (defn supply-content-all-themes [items theme-list]
   (if (seq theme-list)
     (concat items
-            [(info "Choose theme")]
-            (for [theme theme-list]
-              (c/horizontal-panel
-               :items 
-               [(theme-content theme)
-                (gcomp/button-basic "Apply theme"
+            [(gcomp/button-expand
+              (gtool/get-lang-header :choose-theme)
+              [(manager-headers)
+               (gcomp/min-scrollbox
+                (gmg/migrid
+                 :v {:args [:border (b/line-border :bottom 1 :color face/c-icon)]}
+                 (for [thm theme-list]
+                   (theme-info
+                    thm
+                    (gmg/migrid
+                     :> "[100::, fill]" {:args [:border (b/line-border :top 2 :color face/c-layout-background)]}
+                     [(gcomp/button-basic (gtool/get-lang-btns :apply)
                                     :onClick (fn [_] (try-catch-alert
-                                                      (state/set-state :theme-name (:theme-name theme))
-                                                      (i/soft-restart))))])))
+                                                      (state/set-state :theme-name (:theme-name thm))
+                                                      (i/soft-restart)))
+                                    :underline-size 0)]))))
+                :hscroll-off true)]
+              :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/FORMAT_PAINT))
+              :expand :always)])
     (conj items
           (info "Empty theme list")
           (info "-- empty --"))))
 
 (defn theme-manager-panel []
-  (seesaw.mig/mig-panel
-   :constraints ["wrap 1" "0px[grow, fill]0px" "0px[]0px"]
-   :items
+  (gmg/migrid
+   :v {:gap [5 0]}
    (gtool/join-mig-items
     (-> (startup-components)
         (supply-currently-loaded (plugin/selected-theme-get))

@@ -122,7 +122,7 @@
 
 (defn- switch-focus
   ([state!]
-   (timelife 0.2 (fn []
+   (timelife 0.01 (fn []
                    (let [to-focus (:current-focus (state!))]
                      (if to-focus (.requestFocus to-focus))))))
   ([state! dispatch! compo]
@@ -386,7 +386,9 @@
                                       :font (gtool/getFont 14)
                                       :halign :center
                                       :text (gtool/htmling txt :center)
-                                      :foreground color))
+                                      :foreground color)
+                           ;;(.revalidate (c/to-root info-lbl))
+                           (.repaint (c/to-root info-lbl)))
 
           btn-del (if (nil? config-m) []
                       (gcomp/button-basic (gtool/get-lang-btns :remove)
@@ -726,6 +728,7 @@
              :gap [10 10 10 10]
              :items (render-fn))
         scr (c/scrollable mig :maximum-size [600 :by 190])]
+    (c/config! scr :listen [:mouse-wheel-moved (fn [e] (.repaint (c/to-frame e)))])
     (.setBorder scr nil)
     (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)

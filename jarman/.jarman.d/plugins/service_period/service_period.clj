@@ -851,18 +851,8 @@
                :items (gtool/join-mig-items
                        btns-menu-bar
                        new-contract-form
-                       (let [scr (gcomp/min-scrollbox expand-btns-box)]
-                         (c/config! scr
-                                    :opaque? false
-                                    :listen [:mouse-wheel-moved (fn [e] (c/invoke-later (.repaint (c/to-widget e))))])
-                         ;; Lock hscroll on resize.
-                         (if (empty? (state/state :on-frame-resize-fns-v))
-                           (state/set-state :on-frame-resize-fns-v {:vars-listing (fn [](gmg/migrid-resizer (state/state :views-space) expand-btns-box))})
-                           (state/set-state :on-frame-resize-fns-v
-                                            (assoc (state/state :on-frame-resize-fns-v)
-                                                   :vars-listing
-                                                   (fn [] (gmg/migrid-resizer (state/state :views-space) expand-btns-box)))))
-                         scr)))))
+                       (gcomp/min-scrollbox expand-btns-box)))
+    (gmg/migrid-resizer (state/state :views-space) expand-btns-box :service-period)))
 
 
 

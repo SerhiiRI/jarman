@@ -119,7 +119,11 @@
     (if-not (empty? args)
       (map (fn [[k v]] (c/config! scr k v))
            (apply hash-map args)))    
-    (c/config! scr :border (b/line-border :thickness 0) :vscroll (if vscroll-hide :never :always))
+    (c/config! scr
+               :border (b/line-border :thickness 0)
+               :vscroll (if vscroll-hide :never :always)
+               :opaque? false
+               :listen [:mouse-wheel-moved (fn [e] (c/invoke-later (.repaint (c/to-root e))))])
     ;; (c/config! scr :preferred-size [500 :by 1000])
     (c/config! scr :listen [:component-resized
                             (fn [e] (if hscroll-off ;; TODO: height bugging
@@ -133,9 +137,7 @@
                                           (c/config! layout :preferred-size [w :by (.getHeight (.getPreferredSize layout))])
                                           (.repaint scr)))
                                       (do (.revalidate scr)
-                                          (.repaint scr))))
-                            :mouse-wheel-moved (fn [e]
-                                                (.repaint (c/to-root e)))])
+                                          (.repaint scr))))])
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
     scr))
@@ -294,7 +296,8 @@
               :mouse-exited  (fn [e]
                                (c/config! e
                                           :icon (ico-fn ico-off)
-                                          :border (border-fn (gtool/opacity-color))))
+                                          :border (border-fn (gtool/opacity-color)))
+                               (.repaint (c/to-root e)))
               :mouse-clicked func])))
 
 
@@ -469,6 +472,18 @@
                                           (c/config! e :user-data (fn-assoc e :value (if (= placeholder @last-v) "" @last-v)))
                                           (func e)))))]
            args)))
+
+(defn jcheckbox [& {:keys [nochecked-icon checked-icon text]
+                    :or {nochecked-icon (gs/icon GoogleMaterialDesignIcons/CHECK_BOX_OUTLINE_BLANK)
+                         checked-icon   (gs/icon GoogleMaterialDesignIcons/CHECK_BOX)
+                         text ""}}]
+  (let [check-box (c/label :text text :icon nochecked-icon :user-data false)]
+    (c/config! check-box :listen [:mouse-clicked
+                                  (fn [e] (let [checked? (c/config check-box :user-data)]
+                                            (c/config! check-box
+                                                       :user-data (not checked?)
+                                                       :icon (if (not checked?) checked-icon nochecked-icon)))
+                                    (.repaint (c/to-root check-box)))])))
 
 (defn input-checkbox
   [& {:keys [txt

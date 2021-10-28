@@ -4,7 +4,8 @@
             [seesaw.core   :as c]
             [seesaw.border :as b]
             [jarman.tools.lang :refer :all]
-            [jarman.gui.gui-tools      :as gtool]))
+            [jarman.gui.gui-tools     :as gtool]
+            [jarman.logic.state       :as state]))
 
 (defn hmig
   [& {:keys [items
@@ -46,7 +47,7 @@
            :background (gtool/opacity-color) ;;face/c-layout-background
            :listen [:mouse-motion (fn [e]
                                     ;;(.revalidate (c/to-root e))
-                                    (.repaint (c/to-root e))
+                                    ;; (.repaint (c/to-root e))
                                     ;;(.repaint (c/to-widget e))
                                     )]
            args)))
@@ -140,16 +141,20 @@
                    (str (nth gaps 0) "px[fill]" (nth gaps 1) "px")]}
        template))
 
-(defn migrid-resizer [root target
+(defn migrid-resizer [root target id-k
                       & {:keys [wrap template gap]
                          :or {wrap 1 template :vertical gap [0]}}]
-  (let [gaps (gtool/gapser gap)
-        choosed-template (migrid-resizer-templates template gaps (.getWidth (.getSize root)))]
-    (c/config! target :constraints choosed-template))
-  (.revalidate target)
-  (.repaint (c/to-root target)))
+  (let [watch-resize-fn
+        (fn []
+          (let [gaps (gtool/gapser gap)
+                choosed-template (migrid-resizer-templates template gaps (.getWidth (.getSize root)))]
+            (c/config! target :constraints choosed-template))
+          (.revalidate target)
+          (.repaint (c/to-root target)))]
 
-
+    (if (empty? (state/state :on-frame-resize-fns-v))
+      (state/set-state :on-frame-resize-fns-v {id-k watch-resize-fn})
+      (state/set-state :on-frame-resize-fns-v (assoc (state/state :on-frame-resize-fns-v) id-k watch-resize-fn)))))
 
 
 ;; Demo
@@ -213,3 +218,4 @@
 ;;        (.setLocationRelativeTo nil) c/pack! c/show!)))
 
 ;; (migrid-demo-2)
+

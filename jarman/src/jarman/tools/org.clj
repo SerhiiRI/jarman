@@ -137,13 +137,13 @@
     (cl-format nil "~{~{~A~^ - ~} ~%~}" (seq (ex-data e))))
    (print-line "Stack trace:")
    (print-example
-    (with-out-str (clojure.stacktrace/print-stack-trace e 5)))))
+    (with-out-str (clojure.stacktrace/print-stack-trace e 10)))))
 (defmethod print-error :default [e]
   (print-header
    (format "ERROR %s (%s)" (.getMessage e) (quick-timestamp))
    (print-line "Stack trace:")
    (print-example
-    (with-out-str (clojure.stacktrace/print-stack-trace e 5)))))
+    (with-out-str (clojure.stacktrace/print-stack-trace e 25)))))
 
 ;;;;;;;;;;;;;;;;;;;;
 ;;; CODE EXAMPLE ;;;

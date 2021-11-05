@@ -7,9 +7,10 @@
   #+name: debug-licenses
   | tenant | tenant-id | creation-date | expiration-date | limitation           |
   |--------+-----------+---------------+-----------------+----------------------|
-  |        | <3>       | <l11>         | <l11>           | <l5>                 |
+  |        |           | <l11>         | <l11>           | <l5>                 |
   | EKKA   | EKKA-1    | 10-01-2021    | 10-09-2021      | {:computer-count 10} |
-  | EKKA   | EKKA-2    | 10-01-2019    | 01-11-2022      | {:computer-count 3}  |
+  | EKKA   | EKKA-2    | 10-01-2021    | 30-11-2021      | {:computer-count 10} |
+  | EKKA   | EKKA-3    | 10-01-2021    | 10-11-2022      | {:computer-count 10} |
   | PASICH | PASICH-1  | 01-10-2021    | 01-06-2022      | {:computer-count 5}  |
 
   #+name: licenses-list-raw
@@ -17,10 +18,9 @@
     (prin1-to-string (cdr elist))
   #+end_src
 
-  #+header: :results silent
   #+header: :var licenses-list=licenses-list-raw
-  #+name: licenses-m
-  #+begin_src clojure
+  #+name: licenses-m 
+  #+begin_src clojure :results silent
     (def licenses-m
       (->> (read-string licenses-list)
 	   (map license-to-map)
@@ -30,7 +30,7 @@
 * Managment
 
   
-  #+header: :var tennat-id="EKKA-1"
+  #+header: :var tennat-id="EKKA-2"
   #+name: make-license-file
   #+begin_src clojure :noweb yes :results file
     ;; <<licenses-m>>
@@ -38,17 +38,20 @@
   #+end_src
 
   #+RESULTS: make-license-file
-  [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE EKKA 2021-10-27]]
+  [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE_EKKA-2_2021-10-31]]
 
 
-  #+begin_src clojure :results raws
+  #+begin_src clojure :results value
     (list-licenses-files)
   #+end_src
-
   #+RESULTS:
-  | tenant | tenant-id | creation-date | expiration-date | file-path                 |
-  | EKKA   | EKKA-1    |    10-01-2021 |      10-09-2021 | [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE EKKA 2021-10-27][LICENSE EKKA 2021-10-27]]   |
-  | PASICH | PASICH-1  |    01-10-2021 |      01-06-2022 | [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE PASICH 2021-10-27][LICENSE PASICH 2021-10-27]] |
+  | tenant | tenant-id | creation-date | expiration-date | file-path                   |
+  |--------+-----------+---------------+-----------------+-----------------------------|
+  | EKKA   | EKKA-2    |    10-01-2019 |      01-11-2022 | [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE_EKKA_2021-10-31][LICENSE_EKKA_2021-10-31]]     |
+  | EKKA   | EKKA-1    |    10-01-2021 |      10-09-2021 | [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE_EKKA-1_2021-10-31][LICENSE_EKKA-1_2021-10-31]]   |
+  | EKKA   | EKKA-2    |    10-01-2019 |      01-11-2022 | [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE_EKKA-2_2021-10-31][LICENSE_EKKA-2_2021-10-31]]   |
+  | PASICH | PASICH-1  |    01-10-2021 |      01-06-2022 | [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE_PASICH_2021-10-31][LICENSE_PASICH_2021-10-31]]   |
+  | PASICH | PASICH-1  |    01-10-2021 |      01-06-2022 | [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE_PASICH-1_2021-10-31][LICENSE_PASICH-1_2021-10-31]] |
 
 
 * What is jarman License
@@ -57,29 +60,50 @@
 
   Obtain selected in database license. License manually encrypted, and you need ~jarman.logic.session/decrypt-license~ function to decrypt it, and next you can managing it.
 
-  #+header: :results output
   #+name: out-selected-license
-  #+begin_src clojure
+  #+begin_src clojure :results output
     (->> (load-license)
 	 (decrypt-license)
 	 (rename-keys)
-	 (cl-format *out* "<license params>~%~{  ~{~A~^~20T~} ~%~}</license params>"))
+ 	 (cl-format *out* "<license params>~%~{  ~{~A~^~20T~} ~%~}</license params>"))
   #+end_src
+
+  #+RESULTS: out-selected-license
+  : <license params>
+  :   tenant            EKKA 
+  :   id tenant         EKKA-1 
+  :   creation date     10-01-2021 
+  :   expiration date   10-09-2021 
+  :   limitation        {:computer-count 10} 
+  : </license params>
   
   Manually Apply license by the ~tenant-id~. 
 
-  #+header: :var tennat-id="EKKA-2"
-  #+header: :results output 
-  #+name: choose-license
-  #+begin_src clojure :noweb yes
+  #+name: choose-license 
+  #+begin_src clojure :noweb yes :var tennat-id="EKKA-2" :results output
     ;; (ns jarman.logic.session)
-    <<licenses-m>>
+    ;; <<licenses-m>>
     (set-license (get licenses-m tennat-id nil))
     <<out-selected-license>>
   #+end_src
-  #+RESULTS: choose-license
-  : class clojure.lang.Compiler$CompilerException
 
+  #+RESULTS: choose-license
+  : <license params>
+  :   tenant            EKKA 
+  :   id tenant         EKKA-2 
+  :   creation date     10-01-2021 
+  :   expiration date   30-11-2021 
+  :   limitation        {:computer-count 10} 
+  : </license params>
+
+  #+begin_src clojure :results silent
+    (login {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman", :user "root", :password "misiePysie69", :useUnicode true, :characterEncoding "UTF-8"}
+	   "dev" "dev")
+    (gui-check-license)
+  #+end_src
+  
   Quickly change license in one procedural call
   #+CALL: choose-license(tennat-id="PASICH-1")
+
+
 

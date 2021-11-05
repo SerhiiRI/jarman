@@ -330,7 +330,10 @@
   (i/show-delay-alerts)
   (print-header
    "Check updates")
-  (umg/check-update :silent))
+  (umg/check-update :silent)
+  (print-header
+   "Check license"
+   (session/gui-check-license)))
 
 
 ;; ┌─────────────┐

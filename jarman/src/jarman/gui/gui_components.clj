@@ -1811,6 +1811,5 @@
           [(label-img "ricardo.gif" w h)
            (label-img "ricardo.gif" w h)
            (label-img "ricardo.gif" w h)])))
+  (doom-rm))
 
-  (doom-rm)
-  )

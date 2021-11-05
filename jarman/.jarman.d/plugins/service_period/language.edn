@@ -1,0 +1,65 @@
+{:pl
+ {:ui
+  {:buttons
+   {:pay          "Płatność"
+    :add-contract "Dodaj kontrakt"}
+   
+   :header
+   {:VAT-Certificate "Kod VAT"
+    :director "Dyrektor"
+    :enterprise "Przedsiębiorca"
+    :date-end "Data zakończenia"
+    :date-start "Data rozpoczęcia"
+    :price "Kwota"
+    :invalid-date "Nieprawidłowa data"
+    :invalid-enterpreneur "Nieprawidłowy przedsiębiorca"
+    :invalid-price "Nieprawidłowa cena"
+    :periods-count "Liczba okresów"}
+   
+   :alerts
+   {:added-service-contract "Pomyślnie dodano nowy kontrakt."
+    :select-checkbox-for-payment "Proszę zaznaczyć checkbox z płatnością."
+    :payments-finished-successfully "Płatności zakończone powodzeniem."
+    :updated-data "Zaktualizowano dane."
+    :price-must-be-number "Cena musi być liczbą!"}
+
+   :tips
+   {:payment-is-done "Płatność zrealizowana."
+    :you-can-edit-this-position "Możesz edytować tą pozycję."}
+   
+   :infos
+   {:payment-done-lock-row "Płatność zrealizowana. Pozycja nie może być już edytowana."
+    :wait-for-pay "Oczekiwanie na płatność."}}}
+ 
+ :en
+ {:ui
+  {:buttons
+   {:pay          "Payment"
+    :add-contract "Add contract"}
+   
+   :header
+   {:VAT-Certificate      "VAT Certificate"
+    :director             "Director"
+    :date-start           "Start date"
+    :date-end             "End date"
+    :enterprise           "Enterprise"
+    :price                "Price"
+    :invalid-enterpreneur "Invalid enterpreneur"
+    :invalid-price        "Invalid price"
+    :invalid-date         "Nieprawidłowa data"
+    :periods-count        "Periods count"}
+
+   :alerts
+   {:added-service-contract          "Successfully added new service contract."
+    :select-checkbox-for-payment     "Please select checkbox with payment."
+    :payments-finished-successfully  "Payments are finished successfully."
+    :updated-data                    "Updated data."
+    :price-must-be-number            "Price must be a number!"}
+
+   :tips
+   {:payment-is-done                "Payment complete."
+    :you-can-edit-this-position     "You can edit this row."}
+   
+   :infos
+   {:payment-done-lock-row   "Payment complete. Row can not be changed."
+    :wait-for-pay            "Waiting for payment."}}}}

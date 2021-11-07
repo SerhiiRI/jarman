@@ -17,5 +17,9 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install dependencies
       run: lein deps
+    - name: Generate font lib
+      run: make project/gen-font-lib
+    - name: Generate icons lib
+      run: make project/gen-icon-lib
     - name: Run tests
       run: lein test

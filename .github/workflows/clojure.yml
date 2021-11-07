@@ -13,6 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Move to project directory
+      run: cd jarman
     - name: Install dependencies
       run: lein deps
     - name: Run tests

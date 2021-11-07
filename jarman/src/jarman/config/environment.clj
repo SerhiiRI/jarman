@@ -50,7 +50,7 @@
 (def user-name (System/getProperty "user.name"))
 (def user-home (System/getProperty "user.home"))
 (def user-dir (System/getProperty "user.dir"))
-(def hostname (s/trim (:out (clojure.java.shell/sh "hostname"))))
+;; (def hostname (s/trim (:out (clojure.java.shell/sh "hostname"))))
 
 ;;;;;;;;;;;;;;
 ;;; JARMAN ;;;

@@ -136,32 +136,40 @@
 (defn- load-license [f]
   (.start (Thread. (fn [] (swap! state (fn [s] (update s :current-license (-> (session/load-license) (session/decrypt-license))))) (f)))))
 (defn- reset-license [f]
-  (.start (Thread. (fn [] (swap! state (fn [s] (update s :current-license :nil))) (f)))))
+  (.start (Thread. (fn [] (swap! state (fn [s] (update s :current-license (constantly nil)))) (f)))))
 
 
 (defn- all-licenses-panel []
   (gmg/migrid
    :v {:gap [5] :args [:border (b/line-border :bottom 1 :color face/c-icon)]}
-   (if (nil? (get-in state [:current-license]))
+   (if (nil? (get-in (deref state) [:current-license]))
      [(gmg/migrid :> {:args [:border (b/line-border :top 2 :color face/c-compos-background-darker)]}
-                [(c/label :text "Your product are not registred, please select license file")])]
-     (let [{:keys [tenant-id creation-date expiration-date]} (get-in state [:current-license])]
-       [(gmg/migrid :> {:args [:border (b/line-border :bottom 2 :top 2 :color face/c-compos-background-darker)]} [(c/label :text "License code") (c/label :text "Start")(c/label :text "End")])
-        (gmg/migrid :> [(c/label :text tenant-id) (c/label :text creation-date)(c/label :text expiration-date)])
-        ;; (gmg/migrid :> [(c/label :text "Licencja 2") (c/label :text "2021/ 01/ 01")(c/label :text "2021/ 12/ 31")])
-        ;; (gmg/migrid :> [(c/label :text "Licencja 3") (c/label :text "2021/ 01/ 01")(c/label :text "2021/ 12/ 31")])
-        ]))))
+                  [(c/label :text "Your product are not registred, please select license file")])]
+     (let [{:keys [tenant-id creation-date expiration-date]} (get-in (deref state) [:current-license])]
+       [(gmg/migrid :> {:args [:border (b/line-border :bottom 2 :top 2 :color face/c-compos-background-darker)]}
+                    [(c/label :text "License code") (c/label :text "Start") (c/label :text "End")])
+        (gmg/migrid :>
+                    [(c/label :text tenant-id)
+                     (c/label :text creation-date)
+                     (c/label :text expiration-date)])]))))
 
-(defn config-panel []
-  (let [license-panel
-        (gmg/migrid :v [(license-panel)
-                        (all-licenses-panel)])]
-   (gmg/migrid
-    :v {:gap [5 0]}
+(defn config-panel-proxy []
+  ;; fixme:aleks - tu musi być asynchroniczny callback
+  ;; zgóry są funkcje 'load-license', 'reset-license', które faktycznie bez zatrzymania ustawią dane.
+  ;; bo jak użytkownik będzie podminieał licencje musisz zmienic wewnętrzny model.
+  (swap! state (fn [s] (update s :current-license (constantly (-> (session/load-license) (session/decrypt-license))))))
+  (gmg/migrid
+   :v {:gap [5 0]}
+   (filter some?
     [(gcomp/button-expand (gtool/get-lang-header :select-language) (language-selection-panel)
                           :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/TRANSLATE)))
-    
-     (gcomp/button-expand (gtool/get-lang-header :licenses)
-                          (gmg/migrid :v [(license-panel)
-                                          (all-licenses-panel)])
-                          :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/VERIFIED_USER)))])))
+     
+     (session/when-permission
+      :admin-update
+      (gcomp/button-expand (gtool/get-lang-header :licenses)
+                           (gmg/migrid :v [(license-panel)
+                                           (all-licenses-panel)])
+                           :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/VERIFIED_USER))))])))
+
+(defn config-panel []
+  (config-panel-proxy))

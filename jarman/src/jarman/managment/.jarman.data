@@ -3,6 +3,7 @@
 (require '[clojure.set :refer [rename-keys]])
 (require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link field-composite prop]])
 (require '[jarman.logic.composite-components])
+(require '[jarman.logic.session])
 
 #_(connection/connection-set
    ;; set selected
@@ -36,6 +37,11 @@
       :dbname "jarman-test",
       :user "root",
       :password "1234"}}))
+
+(jarman.logic.session/permission-groups-add
+ {:ekka-all               {:doc "Allow all elements in Ekka module"}
+  :ekka-servicer          {:doc "Permission for servisant's only"}
+  :ekka-payment-managment {:doc "Permission for all elements in Ekka module"}})
 
 (def metadata-list
   [{:table_name "documents",

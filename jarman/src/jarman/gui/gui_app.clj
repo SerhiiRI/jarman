@@ -37,7 +37,7 @@
             [jarman.gui.gui-components       :as gcomp]
             [jarman.gui.gui-tools            :as gtool]
             [jarman.gui.gui-style            :as gs]
-            [jarman.gui.gui-dbvisualizer     :as dbv]
+            ;; [jarman.gui.gui-dbvisualizer     :as dbv]
             [jarman.gui.gui-seed             :as gseed]
             [jarman.gui.gui-main-menu        :as menu]
             [jarman.gui.gui-migrid           :as gmg]

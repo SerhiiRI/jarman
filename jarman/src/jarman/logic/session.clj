@@ -15,6 +15,36 @@
   (:import [java.util Base64 Date]
            [java.text ParseException SimpleDateFormat]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; PERMISSION SYSTEM ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(let [permission-groups-map (atom {})
+      system-groups {:admin-update     {:doc "Allow making update for jarman"}
+                     :admin-extension  {:doc "Allow installing different type of buisness extenssion on computer"}
+                     :admin-dataedit   {:doc "Allow editing datastructure of buiseness logic and edit metadata."}
+                     :managment        {:doc "For example you have panel to managing licenses" :private true}
+                     :developer        {:doc "Uncategorized Development shit"}
+                     :developer-alpha  {:doc "Permission for developer only. You can see unreleased developer feature"}
+                     :developer-manage {:doc "Stable feature, that must be viewed for developer only"}}]
+  (defn permission-groups-get []
+    (deref permission-groups-map))
+  (defn permission-groups-get-list []
+    (keys (permission-groups-get)))
+  (defn- permission-groups-set [m]
+    (reset! permission-groups-map m ))
+  (defn permission-groups-add [m]
+    {:pre [(map? m)]}
+    (swap! permission-groups-map
+           #(reduce
+             (fn [acc [k-group v-prop]]
+               (if-not (contains? system-groups k-group)
+                 (assoc acc k-group v-prop) acc))
+             % (seq m))))
+  (permission-groups-set system-groups))
+
+
+
 (defprotocol IPermissionActor
   (allow-permission? [this group])
   (allow-groups      [this]))
@@ -28,7 +58,6 @@
   (get-license [this])
   (get-params  [this]))
 
-(def group-list [:admin-update :admin-extension :admin-dataedit :developer :ekka-all])
 (defrecord License [tenant tenant-id creation-date expiration-date limitation])
 (defrecord SessionParams [m])
 (defrecord User [id login first-name last-name user-configuration profile-name profile-configuration]
@@ -145,6 +174,7 @@
 ;;; MANAGMENT ;;;
 ;;;;;;;;;;;;;;;;;
 
+
 (defn build-user [login password]
   (where
    ((m (-> {:table_name :user
@@ -217,13 +247,82 @@
       builded-session)
     (session)))
 
+(defn login-test []
+  (let [builded-session
+    (build-session
+     {:user
+      (let [m {:user.id 2,
+               :user.login "dev",
+               :user.last_name "dev",
+               :user.first_name "dev",
+               :user.configuration
+               {:ftp {:login "jarman",
+                      :password "dupa",
+                      :host "trashpanda-team.ddns.net"}},
+               :profile.name "developer",
+               :profile.configuration
+               {:groups [:admin-update :admin-extension
+                         :admin-dataedit :developer
+                         :ekka-all]}}]
+        (User. (:user.id m) (:user.login m)
+               (:user.first_name m) (:user.last_name m)
+               (:user.configuration m) (:profile.name m)
+               (:profile.configuration m)))
+      :license
+      (let [m {:tenant "EKKA",
+               :tenant-id "EKKA-2",
+               :creation-date "10-01-2021",
+               :expiration-date "30-11-2021",
+               :limitation {:computer-count 10}}]
+        (License. (:tenant m) (:tenant-id m) (:creation-date m) (:expiration-date m) (:limitation m)))
+      :params
+      (SessionParams. {"tennat" "ekka", "contact-person" "Julia Burmich"})})]
+   (defn session []
+     builded-session)))
+
 (comment
+  ;; TMP USER
+  (login-test)
+  ;; TEST LOGIN 
   (try
     (.get-user (login {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman", :user "root", :password "misiePysie69", :useUnicode true, :characterEncoding "UTF-8"}
                       "dev" "dev"))
     (catch clojure.lang.ExceptionInfo e
       (print-error (.getMessage e))
       (ex-data e))))
+
+(defmacro when-permission
+  "Description
+    Eval internal content if user in session have
+    `:developer` permission group. Otherwise return
+    nil
+
+  Example 
+   (when-permission :developer
+     (c/label :text tenant-id))
+
+  See
+   `if-permission`"
+  [permission-group & body]
+  `(when (.allow-permission? (jarman.logic.session/session) ~permission-group)
+     ~@body))
+
+(defmacro if-permission
+  "Description
+    if user contain current permission
+    eval `if-true` block, otherwise `if-false`
+
+  Example 
+   (if-permission :developer
+     (c/label :text tenant-id)
+     (c/label :text \" - \"))
+
+  See
+   `when-permission`"
+  [permission-group if-true if-false]
+  `(if (.allow-permission? (jarman.logic.session/session) ~permission-group)
+     ~if-true
+     ~if-false))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; GUI functions ;;;

@@ -11,9 +11,8 @@
             [seesaw.rsyntax]
             [jarman.faces :as face]
             [jarman.tools.swing    :as stool]
-            [jarman.logic.state    :as state]
             [jarman.tools.lang     :refer :all]
-            [jarman.logic.metadata :as mt]
+            [jarman.logic.state    :as state]
             [jarman.gui.gui-tools  :as gtool]
             [jarman.gui.gui-migrid :as gmg]
             [jarman.gui.gui-style  :as gs]
@@ -786,23 +785,24 @@
                                  new-model (into [selected] without-selected)]
                              (func selected)))])))
 
-
-(defn state-table-list
-  [{dispatch! :dispatch!
-    action    :action
-    path      :path
-    val       :val}]
-  (let [func (fn [selected]
-               (dispatch! {:action action
-                           :path   path
-                           :value  selected}))
-        model-v (vec (map #(get % :table_name) (jarman.logic.metadata/getset)))
-        repres-v model-v
-        start-v (rift val (first model-v))]
-    (dispatch! {:action action
-                :path   path
-                :value  start-v})
-    (state-combo-box func model-v repres-v :start-v start-v)))
+;;; fixme:aleks
+;;;--------------------------
+;; (defn state-table-list
+;;   [{dispatch! :dispatch!
+;;     action    :action
+;;     path      :path
+;;     val       :val}]
+;;   (let [func (fn [selected]
+;;                (dispatch! {:action action
+;;                            :path   path
+;;                            :value  selected}))
+;;         model-v (vec (map #(get % :table_name) (jarman.logic.metadata/getset)))
+;;         repres-v model-v
+;;         start-v (rift val (first model-v))]
+;;     (dispatch! {:action action
+;;                 :path   path
+;;                 :value  start-v})
+;;     (state-combo-box func model-v repres-v :start-v start-v)))
 
 
 (defn expand-form-panel
@@ -1590,66 +1590,67 @@
     2 (let [p-inp (:private? @cmpts-atom)
             e-inp (:editable? @cmpts-atom)]
         (if (or (= p-inp nil) 
-                (= e-inp nil) 
-                ) false true))
+                (= e-inp nil)) false true))
     true))
 
-(defn multi-panel
-  "Description:
-    get vector of panels and return mig-panel in which these panels are replaced on click of arrow
-   Example:
-    (multi-panel [some-panel-1 some-panel-2 some-panel-3] title 0)"
-  [panels cmpts-atom table-name title num]
-  (let [btn-panel (menu-bar
-                   {:id :db-viewer--component--menu-bar
-                    :buttons [["Back"
-                               (gs/icon GoogleMaterialDesignIcons/ARROW_BACK face/c-icon)
-                               (fn [e]
-                                 (if (= num 0)
-                                   (c/config!
-                                    (.getParent (.getParent (seesaw.core/to-widget e)))
-                                    :items [[(multi-panel panels cmpts-atom table-name title num)]])
-                                   (c/config!
-                                    (.getParent (.getParent (seesaw.core/to-widget e)))
-                                    :items [[(multi-panel panels cmpts-atom table-name title (- num 1))]])))]
-                              ["Next"
-                               (gs/icon GoogleMaterialDesignIcons/ARROW_FORWARD face/c-icon)
-                               (fn [e] (if (validate-fields cmpts-atom num)
-                                         (if
-                                             (=  num (- (count panels) 1))
-                                           (c/config! (.getParent
-                                                       (.getParent (seesaw.core/to-widget e)))
-                                                      :items [[(multi-panel panels cmpts-atom table-name title num)]])
-                                           (c/config! (.getParent (.getParent (seesaw.core/to-widget e)))
-                                                      :items [[(multi-panel panels cmpts-atom table-name title (+ num 1))]]))))]]})
-        btn-back (first (.getComponents btn-panel))
-        btn-next (second (.getComponents btn-panel))]
-   ;; (c/config! btn-panel :bounds [0 0 0 0])
-    (c/config! btn-next
-               :border (b/compound-border (b/empty-border :left 0 :right 5 :top 3 :bottom 3) (b/line-border :thickness 1 :color "#bbb")))
-    (c/config! btn-back
-             :border (b/compound-border (b/empty-border :left 0 :right 5 :top 3 :bottom 3) (b/line-border :thickness 1 :color "#bbb"))
-             :visible? (if (= num 0) false true))
-    (if (= num (- (count panels) 1))
-      (c/config! btn-next :text "Save" :listen [:mouse-clicked (fn [e]
-                                                                 ;;(println @cmpts-atom)
-                                                                 (swap! cmpts-atom  assoc :field-qualified (str (:field @cmpts-atom) "." table-name))
-                                                                 ;; (println (:output (mt/validate-one-column
-                                                                 ;;                       @cmpts-atom)))
-                                                                 (if (:valid? (mt/validate-one-column
-                                                                               @cmpts-atom))
-                                                                   ((state/state :alert-manager) :set {:header "Success" :body "Column was added"} 5)
-                                                                   ((state/state :alert-manager) :set {:header "Error" :body "All fields must be entered and must be longer than 3 chars"} 5)))]))
-    (mig-panel
-     :constraints ["wrap 2" "0px[left]0px" "0px[]0px"]
-     :preferred-size [910 :by 360]
-     :background light-light-grey-color
-     :items [[(c/label :border (b/empty-border :right 18))]
-             [btn-panel "align r"]
-             [(c/label :text title
-                     :foreground "#256599"
-                     :border (b/empty-border :left 10)) "span 2"]
-             [(nth panels num) "span 2"]])))
+
+;;; fixme:aleks
+;; (defn multi-panel
+;;   "Description:
+;;     get vector of panels and return mig-panel in which these panels are replaced on click of arrow
+;;    Example:
+;;     (multi-panel [some-panel-1 some-panel-2 some-panel-3] title 0)"
+;;   [panels cmpts-atom table-name title num]
+;;   (let [btn-panel (menu-bar
+;;                    {:id :db-viewer--component--menu-bar
+;;                     :buttons [["Back"
+;;                                (gs/icon GoogleMaterialDesignIcons/ARROW_BACK face/c-icon)
+;;                                (fn [e]
+;;                                  (if (= num 0)
+;;                                    (c/config!
+;;                                     (.getParent (.getParent (seesaw.core/to-widget e)))
+;;                                     :items [[(multi-panel panels cmpts-atom table-name title num)]])
+;;                                    (c/config!
+;;                                     (.getParent (.getParent (seesaw.core/to-widget e)))
+;;                                     :items [[(multi-panel panels cmpts-atom table-name title (- num 1))]])))]
+;;                               ["Next"
+;;                                (gs/icon GoogleMaterialDesignIcons/ARROW_FORWARD face/c-icon)
+;;                                (fn [e] (if (validate-fields cmpts-atom num)
+;;                                          (if
+;;                                              (=  num (- (count panels) 1))
+;;                                            (c/config! (.getParent
+;;                                                        (.getParent (seesaw.core/to-widget e)))
+;;                                                       :items [[(multi-panel panels cmpts-atom table-name title num)]])
+;;                                            (c/config! (.getParent (.getParent (seesaw.core/to-widget e)))
+;;                                                       :items [[(multi-panel panels cmpts-atom table-name title (+ num 1))]]))))]]})
+;;         btn-back (first (.getComponents btn-panel))
+;;         btn-next (second (.getComponents btn-panel))]
+;;    ;; (c/config! btn-panel :bounds [0 0 0 0])
+;;     (c/config! btn-next
+;;                :border (b/compound-border (b/empty-border :left 0 :right 5 :top 3 :bottom 3) (b/line-border :thickness 1 :color "#bbb")))
+;;     (c/config! btn-back
+;;              :border (b/compound-border (b/empty-border :left 0 :right 5 :top 3 :bottom 3) (b/line-border :thickness 1 :color "#bbb"))
+;;              :visible? (if (= num 0) false true))
+;;     (if (= num (- (count panels) 1))
+;;       (c/config! btn-next :text "Save" :listen [:mouse-clicked (fn [e]
+;;                                                                  ;;(println @cmpts-atom)
+;;                                                                  (swap! cmpts-atom  assoc :field-qualified (str (:field @cmpts-atom) "." table-name))
+;;                                                                  ;; (println (:output (mt/validate-one-column
+;;                                                                  ;;                       @cmpts-atom)))
+;;                                                                  (if (:valid? (mt/validate-one-column
+;;                                                                                @cmpts-atom))
+;;                                                                    ((state/state :alert-manager) :set {:header "Success" :body "Column was added"} 5)
+;;                                                                    ((state/state :alert-manager) :set {:header "Error" :body "All fields must be entered and must be longer than 3 chars"} 5)))]))
+;;     (mig-panel
+;;      :constraints ["wrap 2" "0px[left]0px" "0px[]0px"]
+;;      :preferred-size [910 :by 360]
+;;      :background light-light-grey-color
+;;      :items [[(c/label :border (b/empty-border :right 18))]
+;;              [btn-panel "align r"]
+;;              [(c/label :text title
+;;                      :foreground "#256599"
+;;                      :border (b/empty-border :left 10)) "span 2"]
+;;              [(nth panels num) "span 2"]])))
 
 
 (defn- calc-popup-center
@@ -1726,20 +1727,20 @@
 
 
 
-
-(def select-box-table-list
-  "Description:
-     Combobox with all tables.
-   "
-  (fn [{:keys [local-changes store-id val] 
-        :or {local-changes (atom {})
-             store-id :documents.table
-             val nil}}]
-    ;;(println "\ntable-select-box" store-id val)
-    (select-box (vec (map #(get % :table_name) (jarman.logic.metadata/getset)))
-               :store-id store-id
-               :local-changes local-changes
-               :selected-item (rift val ""))))
+;;; fixme:aleks
+;;;----------------------------
+;; (def select-box-table-list
+;;   "Description:
+;;      Combobox with all tables."
+;;   (fn [{:keys [local-changes store-id val] 
+;;         :or {local-changes (atom {})
+;;              store-id :documents.table
+;;              val nil}}]
+;;     ;;(println "\ntable-select-box" store-id val)
+;;     (select-box (vec (map #(get % :table_name) (jarman.logic.metadata/getset)))
+;;                :store-id store-id
+;;                :local-changes local-changes
+;;                :selected-item (rift val ""))))
 
  
 

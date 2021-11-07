@@ -9,7 +9,6 @@
             [jarman.logic.session              :as session]
             [jarman.logic.view-manager         :as vmg]
             [jarman.gui.gui-views-service      :as gvs]
-            [jarman.gui.gui-dbvisualizer       :as dbv]
             [jarman.gui.gui-update-manager     :as update-manager]
             [jarman.gui.gui-extension-manager  :as extension-manager]
             [jarman.gui.gui-themes-manager     :as themes-manager]
@@ -197,9 +196,11 @@
     (gtool/get-lang-btns :var-list-panel)    {:key (gtool/get-lang-btns :var-list-panel)
                                               :permission :developer
                                               :fn vars-listing/vars-listing-panel}
-    (gtool/get-lang-btns :db-visualizer)     {:key (gtool/get-lang-btns :db-visualizer)
-                                              :permission :admin-dataedit
-                                              :fn dbv/create-view--db-view}}
+    ;; CURRENTLY DISSABLED
+    ;; (gtool/get-lang-btns :db-visualizer)     {:key (gtool/get-lang-btns :db-visualizer)
+    ;;                                           :permission :admin-dataedit
+    ;;                                           :fn dbv/create-view--db-view}
+    }
    "Debug Items"
    {"Popup window" {:key        "popup-window"
                     :action     :invoke
@@ -235,12 +236,12 @@
                                :permission :developer
                                :fn         (fn [e] (update-manager/check-update))}}
     
-    "Select table"   {:key        "select-table"
-                      :action     :invoke
-                      :permission :developer
-                      :fn         (fn [e] (gcomp/popup-window
-                                           {:view (gcomp/select-box-table-list {})
-                                            :relative (state/state :app) :size [250 40]}))}
+    ;; "Select table"   {:key        "select-table"
+    ;;                   :action     :invoke
+    ;;                   :permission :developer
+    ;;                   :fn         (fn [e] (gcomp/popup-window
+    ;;                                        {:view (gcomp/select-box-table-list {})
+    ;;                                         :relative (state/state :app) :size [250 40]}))}
     
     "Text multiline" {:key        "text-multiline"
                       :action     :invoke

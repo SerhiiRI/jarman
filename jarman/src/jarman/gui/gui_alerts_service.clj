@@ -4,7 +4,7 @@
            (java.awt.event MouseEvent))
   (:use seesaw.dev
         seesaw.mig)
-  (:require [jarman.faces                     :as face]
+  (:require [clojure.string                   :as string]
             [seesaw.core                      :as c]
             [seesaw.border                    :as b]
             [jarman.tools.swing               :as stool]
@@ -13,7 +13,7 @@
             [jarman.gui.gui-components        :as gcomp]
             [jarman.gui.popup                 :as popup]
             [jarman.logic.state               :as state]
-            [clojure.string                   :as string]
+            [jarman.faces                     :as face]
             [jarman.resource-lib.icon-library :as icon]
             [jarman.gui.gui-migrid            :as gmg]
             [jarman.tools.lang                :refer :all]))

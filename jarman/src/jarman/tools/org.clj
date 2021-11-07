@@ -3,6 +3,7 @@
 (require '[clojure.string  :refer [split]])
 (require '[clojure.java.io :as io])
 (require '[jarman.config.environment :as env])
+(require '[clojure.stacktrace])
 (import '(clojure.lang ExceptionInfo))
 
 ;;;;;;;;;;;;;;;

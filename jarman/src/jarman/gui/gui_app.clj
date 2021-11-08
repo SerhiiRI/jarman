@@ -357,11 +357,15 @@
                         :by
                         (+ 37 (second @(state/state :atom-app-size)))]))))
 
-(state/set-state
- :startup
- (fn [] (invoke-app)))
-
-((state/state :startup))
+(comment
+  ;; --------------
+  (do
+   (state/set-state
+    :startup
+    (fn [] (invoke-app)))
+   ((state/state :startup)))
+  ;; --------------
+  )
 
 (comment  
   (state/set-state :soft-restart false)

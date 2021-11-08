@@ -59,6 +59,10 @@
               :main jarman.jarman-cli
               :jar-name "jarman-cli-lib.jar"
               :uberjar-name "jarman-cli.jar"}
+             :client
+             {:main jarman.gui.gui-login
+              :jar-name "jarman-client-lib.jar"
+              :uberjar-name "jarman-client-standalone.jar"}
              ;; :cider
              ;; {:dependencies [[cider/cider-nrepl "0.26.0"]]
              ;;  :repl-options {:nrepl-middleware

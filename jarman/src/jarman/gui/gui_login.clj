@@ -1,4 +1,5 @@
 (ns jarman.gui.gui-login
+  (:gen-class)
   (:import (java.awt Dimension)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons))
   (:require [clojure.string            :as string]
@@ -928,10 +929,15 @@
     (if (= res-validation nil)
       (-> (doto (frame-login state! dispatch!) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))))
 
-(state/set-state :invoke-login-panel st)
-(st)
+(defn -main [& args]
+  (state/set-state :invoke-login-panel st)
+  (st))
 
 (comment
+  ;; (state/set-state :invoke-login-panel st)
+  ;; (st)
+  (-main)
+  
   Start app window
   (-> (doto (seesaw.core/frame
              :title "DEBUG WINDOW" :undecorated? false

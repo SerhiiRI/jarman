@@ -17,7 +17,7 @@ help:
 	@echo -e "\tproject/gen-font-lib - generating clojure font lib"
 	@echo -e "\tproject/gen-icon-lib - generating clojure icon lib"
 	@echo -e "\tbuild/jarman-cli - building 'jarman-cli' uberjar"
-	@echo -e "\tbuild/jarman - building uberjar for central GUI client"
+	@echo -e "\tbuild/jarman-client - building uberjar for central GUI client"
 	@echo -e "\tjarman-box - build box with jarmna cli and different tools"
 	@echo -e "\thelp - print this message"
 
@@ -31,7 +31,7 @@ build/jarman-cli:
 	lein with-profile cli uberjar
 
 build/jarman-client:
-	lein uberjar
+	lein with-profile client uberjar
 
 jarman-box: build/jarman-cli
 	@bash -e "./bin/build-jarman-cli.sh"

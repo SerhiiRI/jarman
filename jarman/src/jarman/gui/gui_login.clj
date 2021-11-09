@@ -1,5 +1,4 @@
 (ns jarman.gui.gui-login
-  (:gen-class)
   (:import (java.awt Dimension)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons))
   (:require [clojure.string            :as string]
@@ -123,7 +122,7 @@
 
 (defn- switch-focus
   ([state!]
-   (timelife 0.2 (fn []
+   (timelife 0.01 (fn []
                    (let [to-focus (:current-focus (state!))]
                      (if to-focus (.requestFocus to-focus))))))
   ([state! dispatch! compo]
@@ -302,7 +301,7 @@
             (update-info-fn (gtool/get-lang-alerts :success) (colors :blue-green-color))
             true)
           (do
-            (update-info-fn (gtool/get-lang-alerts :unknown-database) (colors :red-color))
+            (update-info-fn (gtool/get-lang-alerts :Unknown-database) (colors :red-color))
             false))))))
 
 (defn- create-config
@@ -387,7 +386,9 @@
                                       :font (gtool/getFont 14)
                                       :halign :center
                                       :text (gtool/htmling txt :center)
-                                      :foreground color))
+                                      :foreground color)
+                           ;;(.revalidate (c/to-root info-lbl))
+                           (.repaint (c/to-root info-lbl)))
 
           btn-del (if (nil? config-m) []
                       (gcomp/button-basic (gtool/get-lang-btns :remove)
@@ -453,69 +454,6 @@
 
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
-;; │          Logic operation            │
-;; │                                     │
-;; └─────────────────────────────────────┘
-
-(defn- login
-  "Description:
-    Check if configuration and login data are correct.
-    Return map about user if loggin is ok.
-    Return error message if something goes wrong."
-  [databaseconnection-m login-s password-s]
-  {:pre [(map? databaseconnection-m) (string? login-s) (string? password-s)]}
-  (try
-    (session/login databaseconnection-m login-s password-s)
-    (catch Exception e
-      (print-error "gui_login.clj:" (.getMessage e))
-      (.printStackTrace e)
-      (str "gui_login.clj: " (.getMessage e)))
-    (catch clojure.lang.ExceptionInfo e
-      (print-error e)
-      (rift (gtool/get-lang (:translation (ex-data e))) (.getMessage e)))))
-
-#_(defn- check-access
-  "Description:
-    Check if configuration and login data are correct.
-    Return map about user if loggin is ok.
-    Return error message if something goes wrong."
-  [state! config-k]
-  (let [config (config-k (:databaseconnection-list (state!)))
-        login  (:login  (state!))
-        passwd (:passwd (state!))]
-    ;;(println "\nLogin:" login passwd)
-    (let [login-fn (session/login config)]
-      (if (fn? login-fn)
-        (do
-          ;;(println "\nConfig ok")
-          (let [user-m (try
-                         (session/login "dev" "dev")
-                         (login-fn login passwd)
-                         (catch Exception e
-                           (let [exc (str (.getMessage e))
-                                 exc-type (keyword (string/join "-" (butlast (string/split "Unknown database 'pepeland'" #" "))))]
-                             (println "gui_login.clj: Exception in check-access:\n" exc)
-                             (rift (gtool/get-lang-alerts exc-type) exc))))]
-            ;;(println "\nCheck login");;
-            (cond
-              (map? user-m) user-m
-              (string? user-m) user-m
-              :else (gtool/get-lang-alerts :incorrect-login-or-pass))))
-
-        (case login-fn
-          :no-connection-to-database
-          (gtool/get-lang-alerts :connection-problem)
-          :not-valid-connection
-          (gtool/get-lang-alerts :configuration-incorrect)
-          :else
-          (gtool/get-lang-alerts :something-went-wrong))))))
-
-(let [k :a
-      {dupa k} {:a 1}]
-  dupa
-  )
-;; ┌─────────────────────────────────────┐
-;; │                                     │
 ;; │        Configurations tiles         │
 ;; │                                     │
 ;; └─────────────────────────────────────┘
@@ -566,7 +504,6 @@
 ;;             +-----------------+      return (Session.)
 ;;                                      object
 
-
 (defn- try-to-login
   "Description:
      Run `jarman.logic.session/login` function inside. That function
@@ -591,16 +528,6 @@
         (do (.dispose frame) ((state/state :startup)))
         (c/alert (gtool/get-lang-alerts :app-startup-fail)))
       ;; -------------
-      (catch clojure.lang.ExceptionInfo e
-        ;; 
-        ;; THATS NORMAL ERRORS, RETURNED FROM
-        ;; LOGIN IF SOMETHING GOING WRONG
-        ;;
-        (print-error e)
-        (dispatch! {:action :update-databaseconnection-error
-                    :path   [databaseconnection-id-k]
-                    :value  (rift (apply gtool/get-lang (:message-body (ex-data e))) (.getMessage e))}))
-      ;; -------------
       (catch Exception e
         ;; 
         ;; THIS IS UNEXPECTABLE ERROR,
@@ -610,7 +537,29 @@
         (.printStackTrace e)
         (dispatch! {:action :update-databaseconnection-error
                     :path   [databaseconnection-id-k]
-                    :value  (str "gui_login.clj: " (.getMessage e))})))))
+                    :value  (str "gui_login.clj: " (.getMessage e))}))
+      ;; -------------
+      (catch clojure.lang.ExceptionInfo e
+        ;; 
+        ;; THATS NORMAL ERRORS, RETURNED FROM
+        ;; LOGIN IF SOMETHING GOING WRONG
+        ;;
+        (print-error e)
+        (dispatch! {:action :update-databaseconnection-error
+                    :path   [databaseconnection-id-k]
+                    :value  (rift (gtool/get-lang (:translation (ex-data e))) (.getMessage e))})))
+    
+    #_(if-not (= :empty databaseconnection-id-k)
+      (if (map? (rift data-log nil))
+        (do ;; close login panel and run jarman
+          (if (fn? (state/state :startup))
+            (do (.dispose frame)
+                ((state/state :startup)))
+            (c/alert (gtool/get-lang-alerts :app-startup-fail))))
+        (do ;; set data info about error to state
+          (dispatch! {:action :update-databaseconnection-error
+                      :path   [databaseconnection-id-k]
+                      :value  (name data-log)}))))))
 
 (defn- tail-vpanel-template
   "Description:
@@ -759,6 +708,7 @@
              :gap [10 10 10 10]
              :items (render-fn))
         scr (c/scrollable mig :maximum-size [600 :by 190])]
+    (c/config! scr :listen [:mouse-wheel-moved (fn [e] (.repaint (c/to-frame e)))])
     (.setBorder scr nil)
     (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
@@ -929,15 +879,10 @@
     (if (= res-validation nil)
       (-> (doto (frame-login state! dispatch!) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))))
 
-(defn -main [& args]
-  (state/set-state :invoke-login-panel st)
-  (st))
+(state/set-state :invoke-login-panel st)
+(st)
 
 (comment
-  ;; (state/set-state :invoke-login-panel st)
-  ;; (st)
-  (-main)
-  
   Start app window
   (-> (doto (seesaw.core/frame
              :title "DEBUG WINDOW" :undecorated? false

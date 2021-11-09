@@ -146,12 +146,9 @@
 ;;; PANEL ;;;
 ;;;;;;;;;;;;;
 
-;; ni chuja nie rozumiem jak tym sie zarzadza.
-;; bier to w swoje lapki ziom.
-;; Przyznaje siê ¿e moje wlasne pieklo to migi
-;; - I can no frear bro.. but that thing '"wrap 1" "0px[grow, fill]0px"', scare me
 (defn vars-listing-panel []
   (let [panel (gmg/migrid :v :a "[shrink 0]" {:gap [5 0]} (view-grouped-by-group))]
+    (gmg/migrid-resizer (state/state :views-space) panel :vars-listing :gap [5 0])
     (gmg/migrid
      :v [(gcomp/menu-bar
           {;;:justify-end true
@@ -163,24 +160,9 @@
                       (fn [e]
                         (c/config! panel :items (gtool/join-mig-items (view-grouped-by-loaded)))
                         (.repaint (c/to-root (c/to-widget e))))]]})
-         
-         (let [scr (gcomp/min-scrollbox panel)]
-           (c/config! scr
-                      :opaque? false
-                      :listen [:mouse-wheel-moved (fn [e] (c/invoke-later (.repaint (c/to-widget e))))])
-           ;; Lock hscroll on resize.
-           (if (empty? (state/state :on-frame-resize-fns-v))
-             (state/set-state :on-frame-resize-fns-v {:vars-listing (fn [](gmg/migrid-resizer (state/state :views-space) panel))})
-             (state/set-state :on-frame-resize-fns-v
-                              (assoc (state/state :on-frame-resize-fns-v)
-                                     :vars-listing
-                                     (fn [] (gmg/migrid-resizer (state/state :views-space) panel)))))
-           scr)])))
+         (gcomp/min-scrollbox panel)])))
 
 (comment
   (-> (c/frame :content (vars-listing-panel))
       c/pack!
       c/show!))
-
-
-

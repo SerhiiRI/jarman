@@ -222,17 +222,16 @@
               :expand (if update-info
                         (fn [] (gmg/migrid
                                 :v :f :f {:gap [10 0]}
-                                [(gcomp/min-scrollbox
-                                  (c/label
-                                   :text
-                                   (gtool/htmling
-                                    (str
-                                     "<table>"
-                                     "<tr><td>Name</td><td>" (:name      update-info)
-                                     "<tr><td>File</td><td>" (:file      update-info)
-                                     "<tr><td>Ver</td><td>"  (:version   update-info)
-                                     "<tr><td>Type</td><td>" (:artifacts update-info)
-                                     "</table>"))))]))
+                                [(c/label
+                                  :text
+                                  (gtool/htmling
+                                   (str
+                                    "<table>"
+                                    "<tr><td>Name</td><td>" (:name      update-info)
+                                    "<tr><td>File</td><td>" (:file      update-info)
+                                    "<tr><td>Ver</td><td>"  (:version   update-info)
+                                    "<tr><td>Type</td><td>" (:artifacts update-info)
+                                    "</table>")))]))
                         nil)
               :time 0)))
 

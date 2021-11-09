@@ -157,15 +157,15 @@
   ([txt fsize]
    (c/label
     :text txt
-    :foreground (colors :blue-green-color)
-    :font       (gtool/getFont fsize :bold))))
+    :foreground face/c-foreground-title
+    :font       (gtool/getFont :bold fsize))))
 
 (defn- label-body
   [txt]
   (gcomp/multiline-text
    {:text txt
-    :foreground (colors :light-grey-color)
-    :font       (gtool/getFont 14 :bold)}))
+    :foreground face/c-foreground
+    :font       (gs/getFont :bold 14)}))
 
 
 (defn- return-to-login
@@ -194,7 +194,7 @@
        :> :a
        (label-header header))
       (gmg/migrid
-       :> :a {:gap [0 10 10 0]}
+       :> :a {:gap [0 10 10 0] :args [:background face/c-layout-background]}
        (label-body body))])
    info-list))
 
@@ -207,10 +207,10 @@
    (map
     (fn [faq-m]
       [(gmg/migrid
-        :> :a
+        :> :a {:args [:background face/c-layout-background]}
         (label-header (str "- " (:question faq-m)) 14))
        (gmg/migrid
-        :> :a {:lgap 10 :bgap 5}
+        :> :a {:lgap 10 :bgap 5 :args [:background face/c-layout-background]}
         (label-body (:answer faq-m)))])
     faq-list)])
 
@@ -344,7 +344,7 @@
 (defn- config-label
   [title]
   (c/label :text       title
-           :foreground (colors :light-grey-color)
+           :foreground face/c-foreground
            :font       (gtool/getFont 14)
            :border     (b/empty-border :bottom 5)))
 
@@ -444,7 +444,7 @@
                    (rift (faq-panel   (gtool/get-lang-infos :config-panel-faq))   [])]))])
         return-btn (return-to-login state! dispatch!)
         panel (gmg/migrid
-               :v :g :fgf
+               :v :g :fgf {:args [:background face/c-layout-background]}
                [(-> (label-header (gtool/convert-txt-to-UP (gtool/get-lang-header :login-db-config-editor)) 20)
                     (c/config! :halign :center :border (b/empty-border :thickness 20)))
                 mig-p
@@ -462,14 +462,14 @@
   (c/label
    :text       txt
    :font       (gtool/getFont fsize)
-   :foreground (colors fcolor-k)
+   :foreground (if (string? fcolor-k) fcolor-k (colors fcolor-k))
    :border     (b/empty-border :top 5 :left 5 :bottom 5)))
 
 (defn- tile-db-name [dbname log]
-  (tile-label dbname 15 (if log :red-color :blue-color)))
+  (tile-label dbname 15 (if log :red-color face/c-foreground-title)))
 
 (defn- tile-host [host log]
-  (tile-label host 12 (if log :red-color :light-grey-color)))
+  (tile-label host 12 (if log :red-color face/c-foreground)))
 
 (defn- tile-error [log]
   (if (empty? log)
@@ -487,9 +487,9 @@
        :color  (cond
                  on    (if err?
                          (colors :light-red-color)
-                         (colors :light-blue-color))
+                         face/c-underline-on-focus)
                  err?  (colors :red-color)
-                 :else (colors :light-grey-color))))))
+                 :else face/c-underline)))))
 
 ;; ARGUMENTS
 ;; +--------------1-+                                
@@ -526,7 +526,7 @@
       (session/login dataconnection-m login-s passw-s)
       (if (fn? (state/state :startup))
         (do (.dispose frame) ((state/state :startup)))
-        (c/alert (gtool/get-lang-alerts :app-startup-fail)))
+        (c/alert (gtool/get-lang-alerts :app-startup-fail) :type :info))
       ;; -------------
       (catch Exception e
         ;; 
@@ -573,7 +573,7 @@
                 :border         (border-fn false)
                 :maximum-size   [120 :by 120]
                 :preferred-size [120 :by 120]
-                :background     "#fff"
+                :background     face/c-compos-background
                 :focusable?     true
                 :items          items)
 
@@ -587,15 +587,19 @@
         listens [:mouse-entered (fn [e]
                                   (gtool/hand-hover-on vpanel)
                                   (c/config! vpanel :border (border-fn true))
-                                  (if icons (c/config! (first icons) :visible? true)))
+                                  (if icons (c/config! (first icons) :visible? true))
+                                  (.repaint (c/to-root e)))
                  :mouse-exited  (fn [e]
                                   (c/config! vpanel :border (border-fn false))
-                                  (if (and icons (empty? data-log)) (c/config! (first icons) :visible? false)))
+                                  (if (and icons (empty? data-log)) (c/config! (first icons) :visible? false))
+                                  (.repaint (c/to-root e)))
                  :focus-gained  (fn [e]
                                   (c/config! vpanel :border (border-fn true))
-                                  (if icons (c/config! (first icons) :visible? true)))
+                                  (if icons (c/config! (first icons) :visible? true))
+                                  (.repaint (c/to-root e)))
                  :focus-lost    (fn [e]
-                                  (c/config! vpanel :border (border-fn false)))]
+                                  (c/config! vpanel :border (border-fn false))
+                                  (.repaint (c/to-root e)))]
         
         actions [:mouse-clicked onClick
                  :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))]]
@@ -619,7 +623,7 @@
             :focus-gained (fn [e] (c/config! e :border (b/compound-border
                                                         (b/empty-border :bottom 3)
                                                         (b/line-border :bottom 3
-                                                                       :color "#96c1ea")
+                                                                       :color face/c-underline-on-focus)
                                                         (b/empty-border :thicness 5)))
                             (.repaint (c/to-root e)))
             :focus-lost (fn [e]
@@ -636,7 +640,7 @@
   (let [isize 32 show (if log true false)]
     (gmg/migrid
      :v :right :bottom
-     {:gap [5 5 5 5] :args [:background "#fff" :visible? show]}
+     {:gap [5 5 5 5] :args [:background face/c-compos-background :visible? show]}
      [(if log
         (icon-template (gs/icon GoogleMaterialDesignIcons/INFO face/c-icon) (c/alert (str log)))
         [])
@@ -688,7 +692,7 @@
      dispatch!
      (gmg/hmig
       :wrap 1
-      :args [:background "#fff"]
+      :args [:background face/c-compos-background]
       :items [[(c/label
                 :icon (gs/icon GoogleMaterialDesignIcons/STORAGE face/c-icon)
                 :halign :center)]])
@@ -757,7 +761,7 @@
    Example:
      (info-panel state! dispatch!)"
   [state! dispatch!]
-  (gmg/migrid :v :a "[grow, fill]0px[fill]"
+  (gmg/migrid :v :a "[grow, fill]0px[fill]" {:args [:background face/c-layout-background]}
    [(gcomp/min-scrollbox
      (gmg/migrid
       :v 70 :fg
@@ -840,7 +844,7 @@
      (login-panel state! dispatch!)"
   [state! dispatch!]
   (dispatch! {:action :load-databaseconnection-list})
-  (let [panel (gmg/migrid :v :g :gf
+  (let [panel (gmg/migrid :v :g :gf {:args [:background face/c-layout-background]}
                             [(gmg/migrid
                               :v :center ;; Main content
                               [(c/label  ;; Jarman logo

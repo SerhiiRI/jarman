@@ -156,6 +156,8 @@
     :source         "Źródło"
     :theme          "Skórka"
     :variable       "Zmienna"
+    :license-code   "Kod licencji"
+    :select-file    "Wybierz plik..."
     },
    
    :tips
@@ -378,6 +380,8 @@
     :source         "Source"
     :theme          "Theme"
     :variable       "Variable"
+    :license-code   "License code"
+    :select-file    "Select file..."
     }
    
    :tips

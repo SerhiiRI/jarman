@@ -23,7 +23,9 @@
   (:import
    (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
-(def state (atom nil))
+(def state (atom {:lang            nil
+                  :license-file    nil
+                  :current-license nil}))
 
 (defn- get-language-map [] {:en "ENG" :uk "UK" :pl "PL"})
 
@@ -75,6 +77,13 @@
              (c/label)))
     panel))
 
+
+(defn- load-license []
+  (.start (Thread. (fn [] (swap! state (fn [s] (update s :current-license (constantly (-> (session/load-license) (session/decrypt-license))))))))))
+(defn- reset-license []
+  (.start (Thread. (fn [] (swap! state (fn [s] (update s :current-license (constantly nil))))))))
+
+
 (defn- display-btn-upload [root]
   (gcomp/button-basic
    (gtool/get-lang-btns :install)
@@ -83,30 +92,42 @@
    :underline-size 0
    :args [:icon (gs/icon GoogleMaterialDesignIcons/MOVE_TO_INBOX)]
    :onClick (fn [e]
-              (let [license-file-path (:license-file @state)]
-                (try
-                 (if-not (empty? license-file-path)
-                   (do
-                     ;; (swap! state #(assoc % :license-file nil))
-                     (session/gui-slurp-and-set-license-file license-file-path)
-                     
-                     (i/success (gtool/get-lang-header :success)
-                                (gtool/get-lang-alerts :new-license-instaled)
-                                :time 3))
-                   (do
-                     (i/warning (gtool/get-lang-header :file-no-choose)
-                                (gtool/get-lang-alerts :choose-file-and-try-again)
-                                :time 4)))
-                 (catch Exception e
-                   (i/danger (apply gtool/get-lang (:translation (ex-data e))) (.getMessage e) :time 10))))
+              (let [default-path (str jarman.config.environment/jarman-home "/licenses")
+                    license-file-path (:license-file @state)]
+                (if (= default-path license-file-path)
+                  (i/warning (gtool/get-lang-header :file-no-choose)
+                             (gtool/get-lang-alerts :choose-file-and-try-again)
+                             :time 4)
+                  (try
+                    (if-not (empty? license-file-path)
+                      (do
+                        ;; (swap! state #(assoc % :license-file nil))
+                        (session/gui-slurp-and-set-license-file license-file-path)
+                        (load-license)
+                        
+                        (i/success (gtool/get-lang-header :success)
+                                   (gtool/get-lang-alerts :new-license-instaled)
+                                   :time 3))
+                      (do
+                        (i/warning (gtool/get-lang-header :file-no-choose)
+                                   (gtool/get-lang-alerts :choose-file-and-try-again)
+                                   :time 4)))
+                    (catch Exception e
+                      (i/danger (apply gtool/get-lang (:translation (ex-data e))) (.getMessage e) :time 10)))))
               ;;(c/config! root :items (gtool/join-mig-items (butlast (u/children root))))
               (.repaint (c/to-root root)))))
+
+(defn split-path [path]
+  (let [linux (string/split path #"/")
+        windo (string/split path #"\\")]
+    (if (> (count linux) (count windo))
+      linux windo)))
 
 (defn- file-exp []
   (gmg/migrid
    :> "[fill]5px[220::, fill]" {:gap [0 20]}
    (let [default-path (str jarman.config.environment/jarman-home "/licenses")
-         input (c/text :text default-path :border nil)
+         input (c/text :text (gtool/get-lang-basic :select-file) :border nil :editable? false :background face/c-compos-background)
          icon  (c/label :icon (gs/icon GoogleMaterialDesignIcons/FIND_IN_PAGE face/c-icon 25)
                         :listen [:mouse-entered gtool/hand-hover-on
                                  :mouse-clicked
@@ -114,8 +135,9 @@
                                                         :dir (.getAbsolutePath (clojure.java.io/file default-path))
                                                         :success-fn  (fn [fc file] (.getAbsolutePath file)))]
                                           (swap! state #(assoc % :license-file (rift new-path default-path)))
-                                          (c/config! input :text (rift new-path default-path))))])]
+                                          (c/config! input :text (rift (last (split-path new-path)) (gtool/get-lang-basic :select-file)))))])]
      [icon input])))
+
 
 (defn- license-panel []
   (let [panel (gmg/migrid
@@ -130,34 +152,35 @@
              (display-btn-upload panel)))
     panel))
 
-;;; TODO: 
-;;; Aleks, siemano kolano, widzisz te dwie funkcje 
-;;; 
-(defn- load-license [f]
-  (.start (Thread. (fn [] (swap! state (fn [s] (update s :current-license (-> (session/load-license) (session/decrypt-license))))) (f)))))
-(defn- reset-license [f]
-  (.start (Thread. (fn [] (swap! state (fn [s] (update s :current-license (constantly nil)))) (f)))))
-
-
 (defn- all-licenses-panel []
-  (gmg/migrid
-   :v {:gap [5] :args [:border (b/line-border :bottom 1 :color face/c-icon)]}
-   (if (nil? (get-in (deref state) [:current-license]))
-     [(gmg/migrid :> {:args [:border (b/line-border :top 2 :color face/c-compos-background-darker)]}
-                  [(c/label :text "Your product are not registred, please select license file")])]
-     (let [{:keys [tenant-id creation-date expiration-date]} (get-in (deref state) [:current-license])]
-       [(gmg/migrid :> {:args [:border (b/line-border :bottom 2 :top 2 :color face/c-compos-background-darker)]}
-                    [(c/label :text "License code") (c/label :text "Start") (c/label :text "End")])
-        (gmg/migrid :>
-                    [(c/label :text tenant-id)
-                     (c/label :text creation-date)
-                     (c/label :text expiration-date)])]))))
+  (let [render-fn (fn []
+                    ;;(println "\nCurrent licence: " (:current-license @state))
+                    (if (nil? (get-in (deref state) [:current-license]))
+                      (gtool/join-mig-items
+                       (gmg/migrid :> :center {:args [:border (b/line-border :top 2 :color face/c-compos-background-darker)]}
+                                   (c/label :text (gtool/get-lang-license :license-not-found))))
+                      
+                      (let [{:keys [tenant-id creation-date expiration-date]} (get-in (deref state) [:current-license])]
+                        (gtool/join-mig-items
+                         (gmg/migrid :> {:args [:border (b/compound-border
+                                                         (b/empty-border :top 2 :bottom 2)
+                                                         (b/line-border :bottom 2 :top 2 :color face/c-compos-background-darker))]}
+                                     [(c/label :text (gtool/get-lang-basic :license-code))
+                                      (c/label :text (gtool/get-lang-basic :date-start))
+                                      (c/label :text (gtool/get-lang-basic :date-end))])
+                         (gmg/migrid :> {:args [:border (b/empty-border :top 2 :bottom 2)]}
+                                     [(c/label :text tenant-id)
+                                      (c/label :text creation-date)
+                                      (c/label :text expiration-date)])))))
+        panel (gmg/migrid
+               :v {:gap [5] :args [:border (b/line-border :bottom 1 :color face/c-icon)]}
+               (render-fn))]
+    (state/new-watcher state panel render-fn [:current-license] :watch-current-license)
+    panel))
 
 (defn config-panel-proxy []
-  ;; fixme:aleks - tu musi być asynchroniczny callback
-  ;; zgóry są funkcje 'load-license', 'reset-license', które faktycznie bez zatrzymania ustawią dane.
-  ;; bo jak użytkownik będzie podminieał licencje musisz zmienic wewnętrzny model.
-  (swap! state (fn [s] (update s :current-license (constantly (-> (session/load-license) (session/decrypt-license))))))
+  ;; (swap! state (fn [s] (update s :current-license (constantly (-> (session/load-license) (session/decrypt-license))))))
+  (load-license)
   (gmg/migrid
    :v {:gap [5 0]}
    (filter some?

@@ -881,12 +881,20 @@
         state! (fn [& prop]
                  (cond (= :atom (first prop)) state
                        :else (deref state)))
-        dispatch! (create-disptcher state)]
+        dispatch!   (create-disptcher state)
+        login-frame (frame-login state! dispatch!)]
+
+    (if (state/state :debug-mode)
+      (timelife 0.1 (fn []
+                    (swap! state #(assoc-in % [:login]  "admin"))
+                    (swap! state #(assoc-in % [:passwd] "admin"))
+                    (try-to-login state! dispatch! login-frame :jarman--trashpanda-team_ddns_net--3307))))
     
     (if (= res-validation nil)
-      (-> (doto (frame-login state! dispatch!) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))))
+      (-> (doto login-frame (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))))
 
 (defn -main [& args]
+  (state/set-state :debug-mode true) ;; Set auto login
   (app/load-level-0)
   (app/load-level-1 nil)
   (state/set-state :inlogin-loaded true)

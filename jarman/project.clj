@@ -1,7 +1,7 @@
 (defproject jarman "0.0.1"
   :description "Jarman"
   :license {:name "EPL-2.0" :url "https://www.eclipse.org/legal/epl-2.0/"}
-  :dependencies [;; core
+   :dependencies [;; core
                  [org.clojure/clojure "1.10.1"]
                  [org.clojure/core.async "1.3.618"]
                  [org.clojure/data.csv "1.0.0"]

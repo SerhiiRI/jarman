@@ -4,7 +4,8 @@
             [seesaw.core   :as c]
             [seesaw.border :as b]
             [jarman.tools.lang :refer :all]
-            [jarman.gui.gui-tools      :as gtool]))
+            [jarman.gui.gui-tools     :as gtool]
+            [jarman.logic.state       :as state]))
 
 (defn hmig
   [& {:keys [items
@@ -46,7 +47,9 @@
            :background (gtool/opacity-color) ;;face/c-layout-background
            :listen [:mouse-motion (fn [e]
                                     ;;(.revalidate (c/to-root e))
-                                    (.repaint (c/to-root e)))]
+                                    ;; (.repaint (c/to-root e))
+                                    ;;(.repaint (c/to-widget e))
+                                    )]
            args)))
 
 
@@ -103,36 +106,55 @@
                     :f      "[fill]"                ;; Just fill, default left top
                     :g      "[::100%, grow, fill]"  ;; Grow and fill to max 100%
                     :jg     "[::100%, grow]"        ;; Just grow
-                    }]
-     (hmig
-      :wrap (cond
-              (or (= :h direction) (= htemp :right))  0
-              (or (= :v direction) (= vtemp :bottom)) 1
-              :else 0)
-      :hrules (cond
-                (string?  htemp) htemp
-                (keyword? htemp) (get templates htemp)
-                (int?     htemp) (str "[" htemp ":" htemp "%:100%, fill]")
-                :else            (:a   templates))
-      :vrules (cond
-                (string?  vtemp) vtemp
-                (keyword? vtemp) (get templates vtemp)
-                (int?     vtemp) (str "[" vtemp ":" vtemp "%:100%, fill]")
-                :else            (:a   templates))
-      :items (if (and (sequential? items) (empty? items) (not (nil? items))) []
-               (gtool/join-mig-items
-                (if (or (= vtemp :bottom) (= htemp :right)) (c/label) [])
-                (if (sequential? items) items [items])))
-      :gap gap
-      :tgap tgap
-      :bgap bgap
-      :lgap lgap
-      :rgap rgap
-      :args args))))
+                    :amax   "[:100%:100%, fill]"
+                    }
+         panel (hmig
+                :wrap (cond
+                        (or (= :h direction) (= htemp :right))  0
+                        (or (= :v direction) (= vtemp :bottom)) 1
+                        :else 0)
+                :hrules (cond
+                          (string?  htemp) htemp
+                          (keyword? htemp) (get templates htemp)
+                          (int?     htemp) (str "[" htemp ":" htemp "%:100%, fill]")
+                          :else            (:a   templates))
+                :vrules (cond
+                          (string?  vtemp) vtemp
+                          (keyword? vtemp) (get templates vtemp)
+                          (int?     vtemp) (str "[" vtemp ":" vtemp "%:100%, fill]")
+                          :else            (:a   templates))
+                :items (if (and (sequential? items) (empty? items) (not (nil? items))) []
+                           (gtool/join-mig-items
+                            (if (or (= vtemp :bottom) (= htemp :right)) (c/label) [])
+                            (if (sequential? items) items [items])))
+                :gap gap
+                :tgap tgap
+                :bgap bgap
+                :lgap lgap
+                :rgap rgap
+                :args args)]
+     panel)))
 
+(defn- migrid-resizer-templates [template gaps width]
+  (get {:vertical ["wrap 1"
+                   (str (nth gaps 2) "px[::" width ", grow, fill]" (nth gaps 3) "px")
+                   (str (nth gaps 0) "px[fill]" (nth gaps 1) "px")]}
+       template))
 
+(defn migrid-resizer [root target id-k
+                      & {:keys [wrap template gap]
+                         :or {wrap 1 template :vertical gap [0]}}]
+  (let [watch-resize-fn
+        (fn []
+          (let [gaps (gtool/gapser gap)
+                choosed-template (migrid-resizer-templates template gaps (.getWidth (.getSize root)))]
+            (c/config! target :constraints choosed-template))
+          (.revalidate target)
+          (.repaint (c/to-root target)))]
 
-
+    (if (empty? (state/state :on-frame-resize-fns-v))
+      (state/set-state :on-frame-resize-fns-v {id-k watch-resize-fn})
+      (state/set-state :on-frame-resize-fns-v (assoc (state/state :on-frame-resize-fns-v) id-k watch-resize-fn)))))
 
 
 ;; Demo
@@ -175,5 +197,25 @@
              :content (render-demo))
         (.setLocationRelativeTo nil) c/pack! c/show!)))
   
-;;(migrid-demo)
+;; (migrid-demo)
+
+;; (def box (migrid :> (jarman.gui.gui-components/button-expand
+;;                                             "Some title"
+;;                                             [(c/label :text "Once told me")
+;;                                              (c/label :text "Once told me")
+;;                                              (c/label :text "Once told me")
+;;                                              (c/label :text "Once told me")
+;;                                              (c/label :text "Once told me")])))
+
+;; (defn migrid-demo-2
+;;   []
+;;   (-> (doto (seesaw.core/frame
+;;             :title "Migrid demo"
+;;             :minimum-size [500 :by 150]
+;;             :size [500 :by 500]
+;;             :content (jarman.gui.gui-components/min-scrollbox box)
+;;             :listen [:component-resized (fn [e] (migrid-resizer (c/to-widget e) box))])
+;;        (.setLocationRelativeTo nil) c/pack! c/show!)))
+
+;; (migrid-demo-2)
 

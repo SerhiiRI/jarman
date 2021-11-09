@@ -1,5 +1,4 @@
 (ns jarman.gui.gui-login
-  (:gen-class)
   (:import (java.awt Dimension)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons))
   (:require [clojure.string            :as string]
@@ -123,7 +122,7 @@
 
 (defn- switch-focus
   ([state!]
-   (timelife 0.2 (fn []
+   (timelife 0.01 (fn []
                    (let [to-focus (:current-focus (state!))]
                      (if to-focus (.requestFocus to-focus))))))
   ([state! dispatch! compo]
@@ -158,15 +157,15 @@
   ([txt fsize]
    (c/label
     :text txt
-    :foreground (colors :blue-green-color)
-    :font       (gtool/getFont fsize :bold))))
+    :foreground face/c-foreground-title
+    :font       (gtool/getFont :bold fsize))))
 
 (defn- label-body
   [txt]
   (gcomp/multiline-text
    {:text txt
-    :foreground (colors :light-grey-color)
-    :font       (gtool/getFont 14 :bold)}))
+    :foreground face/c-foreground
+    :font       (gs/getFont :bold 14)}))
 
 
 (defn- return-to-login
@@ -195,7 +194,7 @@
        :> :a
        (label-header header))
       (gmg/migrid
-       :> :a {:gap [0 10 10 0]}
+       :> :a {:gap [0 10 10 0] :args [:background face/c-layout-background]}
        (label-body body))])
    info-list))
 
@@ -208,10 +207,10 @@
    (map
     (fn [faq-m]
       [(gmg/migrid
-        :> :a
+        :> :a {:args [:background face/c-layout-background]}
         (label-header (str "- " (:question faq-m)) 14))
        (gmg/migrid
-        :> :a {:lgap 10 :bgap 5}
+        :> :a {:lgap 10 :bgap 5 :args [:background face/c-layout-background]}
         (label-body (:answer faq-m)))])
     faq-list)])
 
@@ -302,7 +301,7 @@
             (update-info-fn (gtool/get-lang-alerts :success) (colors :blue-green-color))
             true)
           (do
-            (update-info-fn (gtool/get-lang-alerts :unknown-database) (colors :red-color))
+            (update-info-fn (gtool/get-lang-alerts :Unknown-database) (colors :red-color))
             false))))))
 
 (defn- create-config
@@ -345,7 +344,7 @@
 (defn- config-label
   [title]
   (c/label :text       title
-           :foreground (colors :light-grey-color)
+           :foreground face/c-foreground
            :font       (gtool/getFont 14)
            :border     (b/empty-border :bottom 5)))
 
@@ -387,7 +386,9 @@
                                       :font (gtool/getFont 14)
                                       :halign :center
                                       :text (gtool/htmling txt :center)
-                                      :foreground color))
+                                      :foreground color)
+                           ;;(.revalidate (c/to-root info-lbl))
+                           (.repaint (c/to-root info-lbl)))
 
           btn-del (if (nil? config-m) []
                       (gcomp/button-basic (gtool/get-lang-btns :remove)
@@ -443,7 +444,7 @@
                    (rift (faq-panel   (gtool/get-lang-infos :config-panel-faq))   [])]))])
         return-btn (return-to-login state! dispatch!)
         panel (gmg/migrid
-               :v :g :fgf
+               :v :g :fgf {:args [:background face/c-layout-background]}
                [(-> (label-header (gtool/convert-txt-to-UP (gtool/get-lang-header :login-db-config-editor)) 20)
                     (c/config! :halign :center :border (b/empty-border :thickness 20)))
                 mig-p
@@ -451,69 +452,6 @@
     (switch-focus state! dispatch! return-btn)
     panel))
 
-;; ┌─────────────────────────────────────┐
-;; │                                     │
-;; │          Logic operation            │
-;; │                                     │
-;; └─────────────────────────────────────┘
-
-(defn- login
-  "Description:
-    Check if configuration and login data are correct.
-    Return map about user if loggin is ok.
-    Return error message if something goes wrong."
-  [databaseconnection-m login-s password-s]
-  {:pre [(map? databaseconnection-m) (string? login-s) (string? password-s)]}
-  (try
-    (session/login databaseconnection-m login-s password-s)
-    (catch Exception e
-      (print-error "gui_login.clj:" (.getMessage e))
-      (.printStackTrace e)
-      (str "gui_login.clj: " (.getMessage e)))
-    (catch clojure.lang.ExceptionInfo e
-      (print-error e)
-      (rift (gtool/get-lang (:translation (ex-data e))) (.getMessage e)))))
-
-#_(defn- check-access
-  "Description:
-    Check if configuration and login data are correct.
-    Return map about user if loggin is ok.
-    Return error message if something goes wrong."
-  [state! config-k]
-  (let [config (config-k (:databaseconnection-list (state!)))
-        login  (:login  (state!))
-        passwd (:passwd (state!))]
-    ;;(println "\nLogin:" login passwd)
-    (let [login-fn (session/login config)]
-      (if (fn? login-fn)
-        (do
-          ;;(println "\nConfig ok")
-          (let [user-m (try
-                         (session/login "dev" "dev")
-                         (login-fn login passwd)
-                         (catch Exception e
-                           (let [exc (str (.getMessage e))
-                                 exc-type (keyword (string/join "-" (butlast (string/split "Unknown database 'pepeland'" #" "))))]
-                             (println "gui_login.clj: Exception in check-access:\n" exc)
-                             (rift (gtool/get-lang-alerts exc-type) exc))))]
-            ;;(println "\nCheck login");;
-            (cond
-              (map? user-m) user-m
-              (string? user-m) user-m
-              :else (gtool/get-lang-alerts :incorrect-login-or-pass))))
-
-        (case login-fn
-          :no-connection-to-database
-          (gtool/get-lang-alerts :connection-problem)
-          :not-valid-connection
-          (gtool/get-lang-alerts :configuration-incorrect)
-          :else
-          (gtool/get-lang-alerts :something-went-wrong))))))
-
-(let [k :a
-      {dupa k} {:a 1}]
-  dupa
-  )
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
 ;; │        Configurations tiles         │
@@ -524,14 +462,14 @@
   (c/label
    :text       txt
    :font       (gtool/getFont fsize)
-   :foreground (colors fcolor-k)
+   :foreground (if (string? fcolor-k) fcolor-k (colors fcolor-k))
    :border     (b/empty-border :top 5 :left 5 :bottom 5)))
 
 (defn- tile-db-name [dbname log]
-  (tile-label dbname 15 (if log :red-color :blue-color)))
+  (tile-label dbname 15 (if log :red-color face/c-foreground-title)))
 
 (defn- tile-host [host log]
-  (tile-label host 12 (if log :red-color :light-grey-color)))
+  (tile-label host 12 (if log :red-color face/c-foreground)))
 
 (defn- tile-error [log]
   (if (empty? log)
@@ -549,9 +487,9 @@
        :color  (cond
                  on    (if err?
                          (colors :light-red-color)
-                         (colors :light-blue-color))
+                         face/c-underline-on-focus)
                  err?  (colors :red-color)
-                 :else (colors :light-grey-color))))))
+                 :else face/c-underline)))))
 
 ;; ARGUMENTS
 ;; +--------------1-+                                
@@ -565,7 +503,6 @@
 ;;             | #<Obj Session>  |<---/ function which 
 ;;             +-----------------+      return (Session.)
 ;;                                      object
-
 
 (defn- try-to-login
   "Description:
@@ -589,17 +526,7 @@
       (session/login dataconnection-m login-s passw-s)
       (if (fn? (state/state :startup))
         (do (.dispose frame) ((state/state :startup)))
-        (c/alert (gtool/get-lang-alerts :app-startup-fail)))
-      ;; -------------
-      (catch clojure.lang.ExceptionInfo e
-        ;; 
-        ;; THATS NORMAL ERRORS, RETURNED FROM
-        ;; LOGIN IF SOMETHING GOING WRONG
-        ;;
-        (print-error e)
-        (dispatch! {:action :update-databaseconnection-error
-                    :path   [databaseconnection-id-k]
-                    :value  (rift (apply gtool/get-lang (:message-body (ex-data e))) (.getMessage e))}))
+        (c/alert (gtool/get-lang-alerts :app-startup-fail) :type :info))
       ;; -------------
       (catch Exception e
         ;; 
@@ -610,7 +537,29 @@
         (.printStackTrace e)
         (dispatch! {:action :update-databaseconnection-error
                     :path   [databaseconnection-id-k]
-                    :value  (str "gui_login.clj: " (.getMessage e))})))))
+                    :value  (str "gui_login.clj: " (.getMessage e))}))
+      ;; -------------
+      (catch clojure.lang.ExceptionInfo e
+        ;; 
+        ;; THATS NORMAL ERRORS, RETURNED FROM
+        ;; LOGIN IF SOMETHING GOING WRONG
+        ;;
+        (print-error e)
+        (dispatch! {:action :update-databaseconnection-error
+                    :path   [databaseconnection-id-k]
+                    :value  (rift (gtool/get-lang (:translation (ex-data e))) (.getMessage e))})))
+    
+    #_(if-not (= :empty databaseconnection-id-k)
+      (if (map? (rift data-log nil))
+        (do ;; close login panel and run jarman
+          (if (fn? (state/state :startup))
+            (do (.dispose frame)
+                ((state/state :startup)))
+            (c/alert (gtool/get-lang-alerts :app-startup-fail))))
+        (do ;; set data info about error to state
+          (dispatch! {:action :update-databaseconnection-error
+                      :path   [databaseconnection-id-k]
+                      :value  (name data-log)}))))))
 
 (defn- tail-vpanel-template
   "Description:
@@ -624,7 +573,7 @@
                 :border         (border-fn false)
                 :maximum-size   [120 :by 120]
                 :preferred-size [120 :by 120]
-                :background     "#fff"
+                :background     face/c-compos-background
                 :focusable?     true
                 :items          items)
 
@@ -638,15 +587,19 @@
         listens [:mouse-entered (fn [e]
                                   (gtool/hand-hover-on vpanel)
                                   (c/config! vpanel :border (border-fn true))
-                                  (if icons (c/config! (first icons) :visible? true)))
+                                  (if icons (c/config! (first icons) :visible? true))
+                                  (.repaint (c/to-root e)))
                  :mouse-exited  (fn [e]
                                   (c/config! vpanel :border (border-fn false))
-                                  (if (and icons (empty? data-log)) (c/config! (first icons) :visible? false)))
+                                  (if (and icons (empty? data-log)) (c/config! (first icons) :visible? false))
+                                  (.repaint (c/to-root e)))
                  :focus-gained  (fn [e]
                                   (c/config! vpanel :border (border-fn true))
-                                  (if icons (c/config! (first icons) :visible? true)))
+                                  (if icons (c/config! (first icons) :visible? true))
+                                  (.repaint (c/to-root e)))
                  :focus-lost    (fn [e]
-                                  (c/config! vpanel :border (border-fn false)))]
+                                  (c/config! vpanel :border (border-fn false))
+                                  (.repaint (c/to-root e)))]
         
         actions [:mouse-clicked onClick
                  :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))]]
@@ -670,9 +623,12 @@
             :focus-gained (fn [e] (c/config! e :border (b/compound-border
                                                         (b/empty-border :bottom 3)
                                                         (b/line-border :bottom 3
-                                                                       :color "#96c1ea")
-                                                        (b/empty-border :thicness 5))))
-            :focus-lost (fn [e] (c/config! e :border (b/empty-border :thicness 5)))
+                                                                       :color face/c-underline-on-focus)
+                                                        (b/empty-border :thicness 5)))
+                            (.repaint (c/to-root e)))
+            :focus-lost (fn [e]
+                          (c/config! e :border (b/empty-border :thicness 5))
+                          (.repaint (c/to-root e)))
             :mouse-clicked onClick
             :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))]))
 
@@ -684,7 +640,7 @@
   (let [isize 32 show (if log true false)]
     (gmg/migrid
      :v :right :bottom
-     {:gap [5 5 5 5] :args [:background "#fff" :visible? show]}
+     {:gap [5 5 5 5] :args [:background face/c-compos-background :visible? show]}
      [(if log
         (icon-template (gs/icon GoogleMaterialDesignIcons/INFO face/c-icon) (c/alert (str log)))
         [])
@@ -694,7 +650,7 @@
                                    :content (configuration-panel state! dispatch! config-k))))])))
 
 (defn- config-tile
-  "Description:
+ "Description:
     State component.
     It is one tile with configuration to db.
     Config will be get from state by id-k from :databaseconnection-list.
@@ -736,7 +692,7 @@
      dispatch!
      (gmg/hmig
       :wrap 1
-      :args [:background "#fff"]
+      :args [:background face/c-compos-background]
       :items [[(c/label
                 :icon (gs/icon GoogleMaterialDesignIcons/STORAGE face/c-icon)
                 :halign :center)]])
@@ -759,6 +715,7 @@
              :gap [10 10 10 10]
              :items (render-fn))
         scr (c/scrollable mig :maximum-size [600 :by 190])]
+    (c/config! scr :listen [:mouse-wheel-moved (fn [e] (.repaint (c/to-frame e)))])
     (.setBorder scr nil)
     (.setPreferredSize (.getVerticalScrollBar scr) (Dimension. 0 0))
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
@@ -804,7 +761,7 @@
    Example:
      (info-panel state! dispatch!)"
   [state! dispatch!]
-  (gmg/migrid :v :a "[grow, fill]0px[fill]"
+  (gmg/migrid :v :a "[grow, fill]0px[fill]" {:args [:background face/c-layout-background]}
    [(gcomp/min-scrollbox
      (gmg/migrid
       :v 70 :fg
@@ -887,7 +844,7 @@
      (login-panel state! dispatch!)"
   [state! dispatch!]
   (dispatch! {:action :load-databaseconnection-list})
-  (let [panel (gmg/migrid :v :g :gf
+  (let [panel (gmg/migrid :v :g :gf {:args [:background face/c-layout-background]}
                             [(gmg/migrid
                               :v :center ;; Main content
                               [(c/label  ;; Jarman logo
@@ -902,7 +859,7 @@
     panel))
 
 
-
+ 
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
 ;; │          Building lvl               │
@@ -930,6 +887,9 @@
       (-> (doto (frame-login state! dispatch!) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))))
 
 (defn -main [& args]
+  (app/load-level-0)
+  (app/load-level-1 nil)
+  (state/set-state :inlogin-loaded true)
   (state/set-state :invoke-login-panel st)
   (st))
 

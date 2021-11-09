@@ -66,18 +66,17 @@
   (gmg/migrid
    :> :gf {:args [:background face/c-compos-background]}
    (gtool/join-mig-items
-    (gcomp/min-scrollbox
-     (gmg/migrid
-      :> "[150:150:150, fill]10px[50::, fill]"
-      {:gap [10] :args [:border (b/line-border :top 2 :color face/c-layout-background)]}
-      [(c/label :text (gtool/str-cutter (str (get ext :name)) 20)
-                :tip (str (gtool/get-lang-basic :extension) ": " (get ext :name)))
-       (c/label :text (str (get ext :version)))
-       (c/label :text (str (get ext :description))
-                :listen [:mouse-clicked (fn [e] (popup/build-popup
-                                                 {:title   (get ext :name)
-                                                  :size    [600 300]
-                                                  :comp-fn (fn [] (c/label :text (gtool/htmling (str (get ext :description)))))}))])]))
+    (gmg/migrid
+     :> "[150:150:150, fill]10px[50::, fill]"
+     {:gap [10] :args [:border (b/line-border :top 2 :color face/c-layout-background)]}
+     [(c/label :text (gtool/str-cutter (str (get ext :name)) 20)
+               :tip (str (gtool/get-lang-basic :extension) ": " (get ext :name)))
+      (c/label :text (str (get ext :version)))
+      (c/label :text (str (get ext :description))
+               :listen [:mouse-clicked (fn [e] (popup/build-popup
+                                                {:title   (get ext :name)
+                                                 :size    [600 300]
+                                                 :comp-fn (fn [] (c/label :text (gtool/htmling (str (get ext :description)))))}))])])
     buttons)))
 
 (defn supply-content-all-extensions [items extension-list]

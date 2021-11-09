@@ -14,7 +14,8 @@
    [jarman.gui.gui-migrid     :as gmg]
    [jarman.config.vars :as vars]
    [jarman.interaction :as i]
-   [jarman.gui.popup   :as popup])
+   [jarman.gui.popup   :as popup]
+   [jarman.logic.state :as state])
   (:import (java.io IOException FileNotFoundException)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
@@ -145,30 +146,23 @@
 ;;; PANEL ;;;
 ;;;;;;;;;;;;;
 
-;; ni chuja nie rozumiem jak tym sie zarzadza.
-;; bier to w swoje lapki ziom.
-;; Przyznaje siê ¿e moje wlasne pieklo to migi
-;; - I can no frear bro.. but that thing '"wrap 1" "0px[grow, fill]0px"', scare me
 (defn vars-listing-panel []
-  (let [panel (gmg/migrid :v :a "[shrink 0]"{:gap [5 0]} (view-grouped-by-group))]
+  (let [panel (gmg/migrid :v :a "[shrink 0]" {:gap [5 0]} (view-grouped-by-group))]
+    (gmg/migrid-resizer (state/state :views-space) panel :vars-listing :gap [5 0])
     (gmg/migrid
-     :v (gtool/join-mig-items
-         [(gcomp/menu-bar
-           {;;:justify-end true
-            :buttons [[" List by \"Variable Group\" " (gs/icon GoogleMaterialDesignIcons/APPS)
-                       (fn [e]
-                         (c/config! panel :items (gtool/join-mig-items (view-grouped-by-group)))
-                         (.repaint (c/to-root (c/to-widget e))))]
-                      [" List by \"Loaded variables\" " (gs/icon GoogleMaterialDesignIcons/ARCHIVE)
-                       (fn [e]
-                         (c/config! panel :items (gtool/join-mig-items (view-grouped-by-loaded)))
-                         (.repaint (c/to-root (c/to-widget e))))]]})
-          (gcomp/min-scrollbox panel)]))))
+     :v [(gcomp/menu-bar
+          {;;:justify-end true
+           :buttons [[" List by \"Variable Group\" " (gs/icon GoogleMaterialDesignIcons/APPS)
+                      (fn [e]
+                        (c/config! panel :items (gtool/join-mig-items (view-grouped-by-group)))
+                        (.repaint (c/to-root (c/to-widget e))))]
+                     [" List by \"Loaded variables\" " (gs/icon GoogleMaterialDesignIcons/ARCHIVE)
+                      (fn [e]
+                        (c/config! panel :items (gtool/join-mig-items (view-grouped-by-loaded)))
+                        (.repaint (c/to-root (c/to-widget e))))]]})
+         (gcomp/min-scrollbox panel)])))
 
 (comment
   (-> (c/frame :content (vars-listing-panel))
       c/pack!
       c/show!))
-
-
-

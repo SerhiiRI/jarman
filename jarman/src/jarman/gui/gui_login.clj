@@ -646,7 +646,7 @@
                                    :content (configuration-panel state! dispatch! config-k))))])))
 
 (defn- config-tile
- exit "Description:
+ "Description:
     State component.
     It is one tile with configuration to db.
     Config will be get from state by id-k from :databaseconnection-list.

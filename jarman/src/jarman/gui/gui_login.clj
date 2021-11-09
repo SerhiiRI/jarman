@@ -620,8 +620,11 @@
                                                         (b/empty-border :bottom 3)
                                                         (b/line-border :bottom 3
                                                                        :color "#96c1ea")
-                                                        (b/empty-border :thicness 5))))
-            :focus-lost (fn [e] (c/config! e :border (b/empty-border :thicness 5)))
+                                                        (b/empty-border :thicness 5)))
+                            (.repaint (c/to-root e)))
+            :focus-lost (fn [e]
+                          (c/config! e :border (b/empty-border :thicness 5))
+                          (.repaint (c/to-root e)))
             :mouse-clicked onClick
             :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))]))
 
@@ -643,7 +646,7 @@
                                    :content (configuration-panel state! dispatch! config-k))))])))
 
 (defn- config-tile
-  "Description:
+ exit "Description:
     State component.
     It is one tile with configuration to db.
     Config will be get from state by id-k from :databaseconnection-list.
@@ -852,7 +855,7 @@
     panel))
 
 
-
+ 
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
 ;; │          Building lvl               │
@@ -879,10 +882,18 @@
     (if (= res-validation nil)
       (-> (doto (frame-login state! dispatch!) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))))
 
-(state/set-state :invoke-login-panel st)
-(st)
+(defn -main [& args]
+  (app/load-level-0)
+  (app/load-level-1 nil)
+  (state/set-state :inlogin-loaded true)
+  (state/set-state :invoke-login-panel st)
+  (st))
 
 (comment
+  ;; (state/set-state :invoke-login-panel st)
+  ;; (st)
+  (-main)
+  
   Start app window
   (-> (doto (seesaw.core/frame
              :title "DEBUG WINDOW" :undecorated? false

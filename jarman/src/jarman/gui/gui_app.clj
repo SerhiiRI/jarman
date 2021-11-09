@@ -160,7 +160,7 @@
 ;; └─────────────┘
 
 ;; before central swing-component build
-(defn- load-level-0
+(defn load-level-0
   "Description:
     Load configuration"
   []
@@ -347,8 +347,11 @@
     Run or restart jarman main app"
   (fn []
     (let [relative-pos (atom nil)]
-      (if-not (= true (state/state :soft-restart)) (load-level-0))
-      (load-level-1 relative-pos)
+      (if (state/state :inlogin-loaded)
+        (state/set-state :inlogin-loaded false)
+        (do
+          (if (false? (state/state :soft-restart)) (load-level-0))
+          (load-level-1 relative-pos)))
       (load-level-2)
       (load-level-3 relative-pos)
       (load-level-4)
@@ -356,6 +359,8 @@
                  :size [(first @(state/state :atom-app-size))
                         :by
                         (+ 37 (second @(state/state :atom-app-size)))]))))
+
+(state/set-state :startup (fn [] (invoke-app)))
 
 (comment
   ;; --------------

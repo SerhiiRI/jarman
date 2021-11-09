@@ -1,4 +1,5 @@
 (ns jarman.gui.gui-login
+  (:gen-class)
   (:import (java.awt Dimension)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons))
   (:require [clojure.string            :as string]
@@ -301,7 +302,7 @@
             (update-info-fn (gtool/get-lang-alerts :success) (colors :blue-green-color))
             true)
           (do
-            (update-info-fn (gtool/get-lang-alerts :Unknown-database) (colors :red-color))
+            (update-info-fn (gtool/get-lang-alerts :unknown-database) (colors :red-color))
             false))))))
 
 (defn- create-config
@@ -565,25 +566,6 @@
 ;;             +-----------------+      return (Session.)
 ;;                                      object
 
-(try-to-login
- (fn []
-   {:login "dev",
-    :passwd "dev_",
-    :focus-compo nil,
-    :current-databaseconnection {},
-    :databaseconnection-error {}
-    :databaseconnection-list
-    {:jarman--trashpanda-team_ddns_net--3307
-     {:dbtype "mysql",
-      :host "trashpanda-team.ddns.net",
-      :port 3307,
-      :dbname "jarman",
-      :user "root",
-      :password "misiePysie69"}}})
- (constantly true)
- nil
- :jarman--trashpanda-team_ddns_net--3307)
-
 
 (defn- try-to-login
   "Description:
@@ -609,6 +591,16 @@
         (do (.dispose frame) ((state/state :startup)))
         (c/alert (gtool/get-lang-alerts :app-startup-fail)))
       ;; -------------
+      (catch clojure.lang.ExceptionInfo e
+        ;; 
+        ;; THATS NORMAL ERRORS, RETURNED FROM
+        ;; LOGIN IF SOMETHING GOING WRONG
+        ;;
+        (print-error e)
+        (dispatch! {:action :update-databaseconnection-error
+                    :path   [databaseconnection-id-k]
+                    :value  (rift (apply gtool/get-lang (:message-body (ex-data e))) (.getMessage e))}))
+      ;; -------------
       (catch Exception e
         ;; 
         ;; THIS IS UNEXPECTABLE ERROR,
@@ -618,29 +610,7 @@
         (.printStackTrace e)
         (dispatch! {:action :update-databaseconnection-error
                     :path   [databaseconnection-id-k]
-                    :value  (str "gui_login.clj: " (.getMessage e))}))
-      ;; -------------
-      (catch clojure.lang.ExceptionInfo e
-        ;; 
-        ;; THATS NORMAL ERRORS, RETURNED FROM
-        ;; LOGIN IF SOMETHING GOING WRONG
-        ;;
-        (print-error e)
-        (dispatch! {:action :update-databaseconnection-error
-                    :path   [databaseconnection-id-k]
-                    :value  (rift (gtool/get-lang (:translation (ex-data e))) (.getMessage e))})))
-    
-    #_(if-not (= :empty databaseconnection-id-k)
-      (if (map? (rift data-log nil))
-        (do ;; close login panel and run jarman
-          (if (fn? (state/state :startup))
-            (do (.dispose frame)
-                ((state/state :startup)))
-            (c/alert (gtool/get-lang-alerts :app-startup-fail))))
-        (do ;; set data info about error to state
-          (dispatch! {:action :update-databaseconnection-error
-                      :path   [databaseconnection-id-k]
-                      :value  (name data-log)}))))))
+                    :value  (str "gui_login.clj: " (.getMessage e))})))))
 
 (defn- tail-vpanel-template
   "Description:
@@ -959,10 +929,15 @@
     (if (= res-validation nil)
       (-> (doto (frame-login state! dispatch!) (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))))
 
-(state/set-state :invoke-login-panel st)
-(st)
+(defn -main [& args]
+  (state/set-state :invoke-login-panel st)
+  (st))
 
 (comment
+  ;; (state/set-state :invoke-login-panel st)
+  ;; (st)
+  (-main)
+  
   Start app window
   (-> (doto (seesaw.core/frame
              :title "DEBUG WINDOW" :undecorated? false

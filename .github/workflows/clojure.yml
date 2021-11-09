@@ -1,0 +1,25 @@
+name: Clojure CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: jarman
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: lein deps
+    - name: Generate font lib
+      run: make project/gen-font-lib
+    - name: Generate icons lib
+      run: make project/gen-icon-lib
+    - name: Run tests
+      run: lein test

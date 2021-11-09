@@ -151,7 +151,7 @@
                        [(last subcontract-path)])]
     (if (empty? selected-ids)
       (i/warning (gtool/get-lang-header :warning)
-                 (gtool/get-lang-alerts :select-checkbox-for-payment))
+                 (gtool/get-plang-alerts :service_period :select-checkbox-for-payment))
 
       (try
         (do
@@ -163,7 +163,7 @@
             (pay-for-pointed-subcontracts  state! subcontract-path))
           ;; Update state
           (i/success (gtool/get-lang-header :success)
-                     (gtool/get-lang-alerts :payments-finished-successfully))
+                     (gtool/get-plang-alerts :service_period :payments-finished-successfully))
           true)
         (catch Exception e (i/danger (gtool/get-lang-header :failed) (str "DB or State problem.\n" (.getMessage e))))))))
 
@@ -211,7 +211,7 @@
   (let [update-fn (:update-service-money (:plugin-toolkit (state!)))]
     (doall (map (fn [[id money]] (update-fn id money)) (vec (:updated-prices @(:subcontracts-payment-state (state!))))))
     (i/info (gtool/get-lang-header :info)
-            (gtool/get-lang-alerts :updated-data))
+            (gtool/get-plang-alerts :service_period :updated-data))
     (update-subcontracts-state state!)))
 
 (defn number-input
@@ -259,17 +259,17 @@
      Data for info bar for contract view. Add some more, it's not any problem.
      Rule is [title, info, title, info, ...]"
   [enterprise contract-price date-start date-end currency]
-  [(gtool/get-lang-header :enterprise)
+  [(gtool/get-plang-header :service_period :enterprise)
    (:enterprise.name enterprise)
-   (gtool/get-lang-header :VAT-Certificate)
+   (gtool/get-plang-header :service_period :VAT-Certificate)
    (:enterprise.vat_certificate enterprise)
-   (gtool/get-lang-header :director)
+   (gtool/get-plang-header :service_period :director)
    (:enterprise.director enterprise)
-   (gtool/get-lang-header :date-start)
+   (gtool/get-plang-header :service_period :date-start)
    date-start
-   (gtool/get-lang-header :date-end)
+   (gtool/get-plang-header :service_period :date-end)
    date-end
-   (gtool/get-lang-header :price)
+   (gtool/get-plang-header :service_period :price)
    (str contract-price " " currency)])
 
 (defn info-bar-template
@@ -357,11 +357,11 @@
                       [(if is-payed?
                          ;; icon done
                          [(c/label :icon (gs/icon GoogleMaterialDesignIcons/CHECK)
-                                   :tip (gtool/get-lang-tip :payment-is-done)
+                                   :tip (gtool/get-plang-tip :service_period :payment-is-done)
                                    :listen [:mouse-entered (fn [e] (c/config! e :cursor :hand))])]
                          ;; icon help
                          [(c/label :icon (gs/icon GoogleMaterialDesignIcons/HELP)
-                                   :tip (gtool/get-lang-tip :you-can-edit-this-position)
+                                   :tip (gtool/get-plang-tip :service_period :you-can-edit-this-position)
                                    :listen [:mouse-entered (fn [e] (c/config! e :cursor :hand))])])
 
                        ;; Price
@@ -379,13 +379,13 @@
                      
                      ;; status
                      (label-fn (if is-payed?
-                                 (gtool/get-lang-infos :payment-done-lock-row)
-                                 (gtool/get-lang-infos :wait-for-pay))
+                                 (gtool/get-plang-infos :service_period :payment-done-lock-row)
+                                 (gtool/get-plang-infos :service_period :wait-for-pay))
                                (if is-payed? face/c-green face/c-orange))
                      
                      ;; pay for subcontract button
                      (if is-payed? [] [(gcomp/button-slim
-                                        (gtool/get-lang-btns :pay)
+                                        (gtool/get-plang-btns :service_period :pay)
                                         :args [:icon (gs/icon GoogleMaterialDesignIcons/MONETIZATION_ON)]
                                         :onClick (fn [e]
                                                    (-> (subcontract-payment-done state! :subcontract-path subcontract-path)
@@ -758,25 +758,25 @@
              (not-empty
               (cond-> []
                 (empty? selected-enterprise)
-                (conj (fn [] (i/warning (gtool/get-lang-header :invalid-enterprise)
-                                        (gtool/get-lang-alerts :field-is-empty))))
+                (conj (fn [] (i/warning (gtool/get-plang-header :service_period :invalid-enterprise)
+                                       (gtool/get-lang-alerts :field-is-empty))))
 
                 (or (empty? price) (= (isNumber? price) false))
-                (conj (fn [] (i/warning (gtool/get-lang-header :invalid-price)
-                                        (gtool/get-lang-alerts :price-must-be-number))))
+                (conj (fn [] (i/warning (gtool/get-plang-header :service_period :invalid-price)
+                                        (gtool/get-plang-alerts :service_period :price-must-be-number))))
 
                 (or (empty? date-start) (empty? date-end) (req/data-comparator-old-new (req/date-to-obj date-start) (req/date-to-obj date-end)))
-                (conj (fn [] (i/warning (gtool/get-lang-header :invalid-date)
-                                        (gtool/get-lang-alerts :invalid-date-time-interval-info))))))]
+                (conj (fn [] (i/warning (gtool/get-plang-header :service_period :invalid-date)
+                                       (gtool/get-plang-alerts :service_period :invalid-date-time-interval-info))))))]
       
       (doall (map (fn [invoke-alert] (invoke-alert)) alerts))
       (let [ins-req (req/insert-all id-enterprise (req/date-to-obj date-start) (req/date-to-obj date-end) (read-string price))]
         (if ins-req
           (do
             (i/success (gtool/get-lang-header :success)
-                       (gtool/get-lang-alerts :added-service-contract))
+                       (gtool/get-plang-alerts :service_period :added-service-contract))
             (refresh-data-and-panel state!))
-          (i/danger  (gtool/get-lang-header :error-with-sql-require)
+          (i/danger  (gtool/get-lang-header :error-sql-query)
                      ins-req))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -800,10 +800,10 @@
                :v :f "[75:, fill]"
                (gcomp/min-scrollbox
                 (gmg/migrid :> "[150, fill]" {:gap [10]}
-                            [(gmg/migrid :v [(label-fn (gtool/get-lang-header :enterprise)) select-box])
-                             (gmg/migrid :v [(label-fn (gtool/get-lang-header :price))        price-input])
-                             (gmg/migrid :v [(label-fn (gtool/get-lang-header :date-start))   calndr-start])
-                             (gmg/migrid :v [(label-fn (gtool/get-lang-header :date-end))     calndr-end])
+                            [(gmg/migrid :v [(label-fn (gtool/get-plang-header :service_period :enterprise))   select-box])
+                             (gmg/migrid :v [(label-fn (gtool/get-plang-header :service_period :price))        price-input])
+                             (gmg/migrid :v [(label-fn (gtool/get-plang-header :service_period :date-start))   calndr-start])
+                             (gmg/migrid :v [(label-fn (gtool/get-plang-header :service_period :date-end))     calndr-end])
                             
                              (gmg/migrid :v
                                          [(c/label "<html>&nbsp;")
@@ -821,13 +821,13 @@
   [state! dispatch!]
   (let [new-contract-form (gmg/migrid :v [])
         btns-menu-bar      (gcomp/menu-bar
-                            {:buttons [[(gtool/get-lang-btns :add-contract)
+                            {:buttons [[(gtool/get-plang-btns :service_period :add-contract)
                                         (gs/icon GoogleMaterialDesignIcons/NOTE_ADD)
                                         (fn [e] (if (> (count (seesaw.util/children new-contract-form)) 0)
                                                   (seesaw.core/config! new-contract-form :items [])
                                                   (seesaw.core/config! new-contract-form :items [[(add-contract-panel state!)]])))]
 
-                                       [(gtool/get-lang-btns :pay)
+                                       [(gtool/get-plang-btns :service_period :pay)
                                         (gs/icon GoogleMaterialDesignIcons/MONETIZATION_ON)
                                         (fn [e] (subcontract-payment-done state!))]
                                        

@@ -2,6 +2,8 @@
 (require '[clojure.pprint  :refer [cl-format]])
 (require '[clojure.string  :refer [split]])
 (require '[clojure.java.io :as io])
+(require '[jarman.config.environment :as env])
+(require '[clojure.stacktrace])
 (import '(clojure.lang ExceptionInfo))
 
 ;;;;;;;;;;;;;;;
@@ -30,9 +32,9 @@
 ;; (def updt (agent (clojure.java.io/writer "update.log.org" :append true)))
 ;; (def extn (agent (clojure.java.io/writer "extension.log.org" :append true)))
 ;; (def app  (agent (clojure.java.io/writer "app.log.org" :append true)))
-(def updt (create-log-file "update.log.org" "Update log"))
-(def extn (create-log-file "extension.log.org" "Extension log"))
-(def app  (create-log-file "app.log.org" "App log"))
+(def updt (create-log-file env/update-log-org     "Update log"))
+(def extn (create-log-file env/extension-log-org  "Extension log"))
+(def app  (create-log-file env/app-log-org        "App log"))
 (def repl (agent *out*))
 (def ^:dynamic *out-writers* #{repl app})
 
@@ -136,13 +138,13 @@
     (cl-format nil "~{~{~A~^ - ~} ~%~}" (seq (ex-data e))))
    (print-line "Stack trace:")
    (print-example
-    (with-out-str (clojure.stacktrace/print-stack-trace e 5)))))
+    (with-out-str (clojure.stacktrace/print-stack-trace e 10)))))
 (defmethod print-error :default [e]
   (print-header
    (format "ERROR %s (%s)" (.getMessage e) (quick-timestamp))
    (print-line "Stack trace:")
    (print-example
-    (with-out-str (clojure.stacktrace/print-stack-trace e 5)))))
+    (with-out-str (clojure.stacktrace/print-stack-trace e 25)))))
 
 ;;;;;;;;;;;;;;;;;;;;
 ;;; CODE EXAMPLE ;;;

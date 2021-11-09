@@ -213,15 +213,23 @@
                 outlist (if selected (filter (fn [i] (identical? (config i :id) id)) (seesaw.util/children (.getParent selected))) nil)]
             (if outlist outlist nil)))
 
-(def get-lang         (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui]          path))))
-(def get-lang-basic   (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :basic]   path))))
-(def get-lang-header  (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :header]  path))))
-(def get-lang-infos   (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :infos]   path))))
-(def get-lang-btns    (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :buttons] path))))
-(def get-lang-alerts  (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :alerts]  path))))
-(def get-lang-tip     (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :tips]    path))))
-(def get-lang-license (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :license] path))))
+(def get-lang          (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui]          path))))
+(def get-lang-basic    (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :basic]   path))))
+(def get-lang-header   (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :header]  path))))
+(def get-lang-infos    (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :infos]   path))))
+(def get-lang-btns     (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :buttons] path))))
+(def get-lang-alerts   (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :alerts]  path))))
+(def get-lang-tip      (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :tips]    path))))
+(def get-lang-license  (fn [& path] (apply jarman.config.conf-language/lang (concat [:ui :license] path))))
 
+(def get-plang         (fn [plugin & path] (apply jarman.config.conf-language/plang plugin (concat [:ui]          path))))
+(def get-plang-basic   (fn [plugin & path] (apply jarman.config.conf-language/plang plugin (concat [:ui :basic]   path))))
+(def get-plang-header  (fn [plugin & path] (apply jarman.config.conf-language/plang plugin (concat [:ui :header]  path))))
+(def get-plang-infos   (fn [plugin & path] (apply jarman.config.conf-language/plang plugin (concat [:ui :infos]   path))))
+(def get-plang-btns    (fn [plugin & path] (apply jarman.config.conf-language/plang plugin (concat [:ui :buttons] path))))
+(def get-plang-alerts  (fn [plugin & path] (apply jarman.config.conf-language/plang plugin (concat [:ui :alerts]  path))))
+(def get-plang-tip     (fn [plugin & path] (apply jarman.config.conf-language/plang plugin (concat [:ui :tips]    path))))
+(def get-plang-license (fn [plugin & path] (apply jarman.config.conf-language/plang plugin (concat [:ui :license] path))))
 
 (defn convert-key-to-title
   "Description:

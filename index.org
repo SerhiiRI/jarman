@@ -1,0 +1,20 @@
+/Issues/
++ [[file+emacs:./agenda.org][Agenda]]
+  - [[file+emacs:./issues][Resource folder]]
++ [[file+emacs:./agenda.org_done][Agenda archive]]
+
+/Documentations/
+Those section contain links to some documents 
++ docs/internal
+  - [[file+emacs:./docs/internal/howto-clojure.clj][Aleks Clojure]]
+  - [[file+emacs:./docs/internal/howto-orgmode.org][Aleks Org Mode]]
+  - [[file+emacs:./docs/internal/howto-graphics.org][Graphics]]
+  - [[file+emacs:./docs/internal/howto-regex-cl-format.org][Alien Cookbook]]
++ docs/manuals
+  - TODO 
+
+/Managment/
++ Database Test
+  - [[file+emacs:./jarman/src/jarman/managment/ekka.fish.org][ekka fish]]
++ Environment managment 
+  - [[file+emacs:./jarman/src/jarman/logic/license.org][Licenses]]

@@ -37,7 +37,7 @@
             [jarman.gui.gui-components       :as gcomp]
             [jarman.gui.gui-tools            :as gtool]
             [jarman.gui.gui-style            :as gs]
-            [jarman.gui.gui-dbvisualizer     :as dbv]
+            ;; [jarman.gui.gui-dbvisualizer     :as dbv]
             [jarman.gui.gui-seed             :as gseed]
             [jarman.gui.gui-main-menu        :as menu]
             [jarman.gui.gui-migrid           :as gmg]
@@ -330,7 +330,10 @@
   (i/show-delay-alerts)
   (print-header
    "Check updates")
-  (umg/check-update :silent))
+  (umg/check-update :silent)
+  (print-header
+   "Check license"
+   (session/gui-check-license)))
 
 
 ;; ┌─────────────┐
@@ -354,11 +357,15 @@
                         :by
                         (+ 37 (second @(state/state :atom-app-size)))]))))
 
-(state/set-state
- :startup
- (fn [] (invoke-app)))
-
-((state/state :startup))
+(comment
+  ;; --------------
+  (do
+   (state/set-state
+    :startup
+    (fn [] (invoke-app)))
+   ((state/state :startup)))
+  ;; --------------
+  )
 
 (comment  
   (state/set-state :soft-restart false)

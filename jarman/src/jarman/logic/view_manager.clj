@@ -237,12 +237,12 @@
 ;;;;;;;;;;;;;;;;;;
 
 (defprotocol IPluginQuery
-  (return-path [this])
-  (return-entry [this])
+  (return-path       [this])
+  (return-entry      [this])
   (return-permission [this])
-  (return-title [this])
-  (return-config [this])
-  (exists? [this]))
+  (return-title      [this])
+  (return-config     [this])
+  (exists?           [this]))
 
 (defrecord PluginLink [plugin-path]
   IPluginQuery

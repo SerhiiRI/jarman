@@ -4,7 +4,6 @@
    {:no      "Nie"
     :yes     "Tak"
     :add     "Dodaj"
-    :pay     "Płatność"
     :back    "Cofnij"
     :save    "Zapisz"
     :later   "Później"
@@ -30,7 +29,6 @@
     :select-all      "Zaznacz wszystko"
     :rfid-cards      "Karty RFID"
     :clean-inputs    "Wyczyść pola"
-    :add-contract    "Dodaj kontrakt"
     :show-changes    "Wyświetl zmiany"
     :clean-filters   "Wyczyść filtrowanie"
     :export-to-excel "Exportuj do Excela"
@@ -55,99 +53,83 @@
     },
    
    :header
-   {:login-db-config-editor "Konfiguracja połącznia z bazą danych."
-    :dbtype "Typ połączenia"
-    :host   "Host"
-    :port   "Port"
-    :dbname "Baza danych"
-    :user   "Użytkownik bazy"
-    :password "Hasło do bazy"
-    :contact  "Kontakt"
-    :faq      "FAQ"
-    :error    "Błąd"
-    :warning  "Uwaga"
-    :info     "Powiadomienie"
-    :success  "Sukces!"
-    :failed   "Niepowodzenie!"
-    :invalid-enterpreneur "Nieprawidłowy przedsiębiorca"
-    :invalid-price        "Nieprawidłowa cena"
-    :invalid-date         "Nieprawidłowa data"
-    :error-with-sql-require "Błąd z zapytniem SQL"
-    :enterprise   "Przedsiębiorca"
-    :price        "Kwota"
-    :date-start   "Data rozpoczęcia"
-    :date-end     "Data zakończenia"
-    :periods-count "Liczba okresów"
-    :director      "Dyrektor"
-    :VAT-Certificate "Kod VAT"
-    :contacts-info   "Kontakt"
-    :physical_address "Adres"
-    :config-panel-title "Konfiguracje"
-    :select-language    "Wybór języka"
-    :choose-language    "Wybierz język"
-    :need-reload        "Potrzebne przeładowanie"
-    :avaliable-updates  "Aktualizacje są dostępne!"
-    :update-manager     "Menedżer aktualizacji"
-    :system-information "Informacje o systemie"
-    :packages-to-install "Pakiety do instalacji"
-    :available-packages "Dostępne pakiety"
-    :current-version    "Obecna wersja"
-    :pusty              "Pusto"
-    :update-error       "Błąd aktualizacji"
-    :system-updated     "System jest aktualny"
-    :extension-manager  "Menedżer rozszerzeń"
-    :installed-extentions "Zainstalowane rozszerzenia"
-    :loaded-theme       "Załadowana skórka"
-    :choose-theme       "Wybierz skórkę"
-    :licenses           "Licencje"
-    :upload-license     "Dodaj nową licencję"
-    :file-no-choose      "Nie wybrano pliku"
-    }
+   {:available-packages "Dostępne pakiety",
+    :avaliable-updates "Aktualizacje są dostępne!",
+    :choose-language "Wybierz język",
+    :choose-theme "Wybierz skórkę",
+    :config-panel-title "Konfiguracje",
+    :contact "Kontakt",
+    :contacts-info "Kontakt",
+    :current-version "Obecna wersja",
+    :dbname "Baza danych",
+    :dbtype "Typ połączenia",
+    :error "Błąd",
+    :error-sql-query "Błąd SQL",
+    :extension-manager "Menedżer rozszerzeń",
+    :failed "Niepowodzenie!",
+    :faq "FAQ",
+    :file-no-choose "Nie wybrano pliku",
+    :host "Host",
+    :info "Powiadomienie",
+    :installed-extentions "Zainstalowane rozszerzenia",
+    :licenses "Licencje",
+    :loaded-theme "Załadowana skórka",
+    :login-db-config-editor "Konfiguracja połącznia z bazą danych.",
+    :need-reload "Potrzebne przeładowanie",
+    :packages-to-install "Pakiety do instalacji",
+    :password "Hasło do bazy",
+    :physical_address "Adres",
+    :port "Port",
+    :pusty "Pusto",
+    :select-language "Wybór języka",
+    :success "Sukces!",
+    :system-information "Informacje o systemie",
+    :system-updated "System jest aktualny",
+    :update-error "Błąd aktualizacji",
+    :update-manager "Menedżer aktualizacji",
+    :upload-license "Dodaj nową licencję",
+    :user "Użytkownik bazy",
+    :warning "Uwaga"}
    
    :alerts
-   {:success "Sukces!"
-    :changes-saved "Zapisano zmiany"
-    :changes-saved-failed "Zapisanie zmian nie powiodło się"
-    :column-saved-message "Zapisano zmiany w kolumnach."
-    :column-save-failed-message "Wszystkie pola muszą być wypełnione i posiadać co najmniej 3 znaki."
-    :save-changes? "Czy chcesz zapisać zmiany?"
-    :changes-saved-but-need-reload "Zapisano zmiany. By je zastosować zrestartuj aplikację."
-    :delete-element? "Czy napewno chcesz usunąć element?"
-    :testing-connection "Testowanie połączenia z bazą danych."
-    :information "Informacja"
-    :write-enter-search "Wpisz frazę i kliknij - ENTER - by wyszukać w tabeli."
-    :connected-to-database "Nawiązano połączenie z bazą danych."
-    :connection-error "Błąd połączenia, sprawdz konfigurację."
-    :connection-problem "Problem z połączeniem. Nie można połączyć się z bazą danych."
-    :connection-faild "Połączenie nie powiodło się."
-    :unsaved-changes-title "Nie zapisano zmian!"
-    :unsaved-changes-body "Wprowadzono zmiany w konfiguracji, które nie zostały zapisane. Czy zamknąć okno mimo to?"
-    :restore-configuration-ok "Przywrócono konfiguracje! Proszę bądź ostrożny następnym razem."
-    :configuration-corrupted "Konfiguracja jest uszkodzona. Spróbuj przywrócić wcześniejszą wersję."
-    :configuration-incorrect "Konfiguracja jest błędna. Proszę sprawdź parametry połączenia."
-    :incorrect-login-or-pass "Nieprawidłowy login lub hasło. Upewnij się czy posiadasz dobre dane logowania."
-    :something-went-wrong "Coś poszło nie tak. Nieokreślony błąd."
-    :Unknown-database "Nieznana baza danych."
-    :check-connection "Sprawdź połączenie."
-    :incorrect-input-fields "Nie wszystkie pola są prawidłowo wypełnione!"
-    :app-startup-fail "Wystąpił błąd aplikacji. Funkcja startująca nie została załadowana."
-    :price-must-be-number "Cena musi być liczbą!"
-    :field-is-empty "Pole jest puste!"
-    :invalid-date-time-interval-info "Pole z datą nie może pozostać puste. Data początkowa musi być wcześniejsza niż data zakończenia."
-    :added-service-contract "Pomyślnie dodano nowy kontrakt."
-    :select-checkbox-for-payment "Proszę zaznaczyć checkbox z płatnością."
-    :payments-finished-successfully "Płatności zakończone powodzeniem."
-    :updated-data "Zaktualizowano dane."
-    :tests-failed "Ładowanie zakończone niepowodzeniem <Tests failed>"
-    :plugin-installed "Jarman %s zainstalowany pomyślnie."
-    :package-downloaded "Paczka %s została pobrana."
-    :config-deleted     "Lokalna konfiguracja Jarman została usunięta."
-    :no-updates         "Nie znaleziono dostępnych aktualizacji."
-    :downgrade-success  "Downgrade z wersji %s do %s przebiegł pomyślnie."
-    :reloaded-extension "Rozszerzenie `%s` przeładowano pomyślnie."
-    :new-license-instaled "Nowa licencja jest gotowa do użytku."
-    :choose-file-and-try-again "Proszę wybrać właściwy plik i spróbować raz jeszcze."
-    },
+   {:app-startup-fail "Wystąpił błąd aplikacji. Funkcja startująca nie została załadowana.",
+    :changes-saved "Zapisano zmiany",
+    :changes-saved-but-need-reload "Zapisano zmiany. By je zastosować zrestartuj aplikację.",
+    :changes-saved-failed "Zapisanie zmian nie powiodło się",
+    :check-connection "Sprawdź połączenie.",
+    :choose-file-and-try-again "Proszę wybrać właściwy plik i spróbować raz jeszcze.",
+    :column-save-failed-message "Wszystkie pola muszą być wypełnione i posiadać co najmniej 3 znaki.",
+    :column-saved-message "Zapisano zmiany w kolumnach.",
+    :config-deleted "Lokalna konfiguracja Jarman została usunięta.",
+    :configuration-corrupted "Konfiguracja jest uszkodzona. Spróbuj przywrócić wcześniejszą wersję.",
+    :configuration-incorrect "Konfiguracja jest błędna. Proszę sprawdź parametry połączenia.",
+    :connected-to-database "Nawiązano połączenie z bazą danych.",
+    :connection-error "Błąd połączenia, sprawdz konfigurację.",
+    :connection-faild "Połączenie nie powiodło się.",
+    :connection-problem "Problem z połączeniem. Nie można połączyć się z bazą danych.",
+    :delete-element? "Czy napewno chcesz usunąć element?",
+    :downgrade-success "Downgrade z wersji %s do %s przebiegł pomyślnie.",
+    :error-parsing-license "Bląd parsowania pliku licencji",
+    :field-is-empty "Pole jest puste!",
+    :incorrect-input-fields "Nie wszystkie pola są prawidłowo wypełnione!",
+    :incorrect-login-or-pass "Nieprawidłowy login lub hasło. Upewnij się czy posiadasz dobre dane logowania.",
+    :information "Informacja",
+    :invalid-date-time-interval-info "Pole z datą nie może pozostać puste. Data początkowa musi być wcześniejsza niż data zakończenia.",
+    :new-license-instaled "Nowa licencja jest gotowa do użytku.",
+    :no-updates "Nie znaleziono dostępnych aktualizacji.",
+    :package-downloaded "Paczka %s została pobrana.",
+    :plugin-installed "Jarman %s zainstalowany pomyślnie.",
+    :reloaded-extension "Rozszerzenie `%s` przeładowano pomyślnie.",
+    :restore-configuration-ok "Przywrócono konfiguracje! Proszę bądź ostrożny następnym razem.",
+    :save-changes? "Czy chcesz zapisać zmiany?",
+    :something-went-wrong "Coś poszło nie tak. Nieokreślony błąd.",
+    :success "Sukces!",
+    :testing-connection "Testowanie połączenia z bazą danych.",
+    :tests-failed "Ładowanie zakończone niepowodzeniem <Tests failed>",
+    :unknown-database "Nieznana baza danych.",
+    :unsaved-changes-body "Wprowadzono zmiany w konfiguracji, które nie zostały zapisane. Czy zamknąć okno mimo to?",
+    :unsaved-changes-title "Nie zapisano zmian!",
+    :write-enter-search "Wpisz frazę i kliknij - ENTER - by wyszukać w tabeli."},
    
    :basic
    {:description "Opis",
@@ -185,15 +167,10 @@
     :user-trash-can "Odłącz użytkownika od karty.",
     :excel "Zapisz widok do excela."
     :press-to-search "Wciśnij Ctrl + F by wyszukać rekord."
-    :related-popup-table "Wyszukaj w powiązanej tabeli"
-    :you-can-edit-this-position "Możesz edytować tą pozycję."
-    :payment-is-done "Płatność zrealizowana."
-    }
+    :related-popup-table "Wyszukaj w powiązanej tabeli"}
    
    :infos
-   {:payment-done-lock-row "Płatność zrealizowana. Pozycja nie może być już edytowana."
-    :wait-for-pay "Oczekiwanie na płatność."
-    :no-items     "Brak pozycji"
+   {:no-items     "Brak pozycji"
     :info-panel-about   [["Trashpanda-Team" "Jesteśmy zespołem przyjaciół programistów mających na celu stworzenie uniwersalnej, a przy tym prostej w obsódze i rozwoju aplikacji. Kodzimy bo lubimy, kodzimy bo możemy, kodzimy by nasi klienci otrzymali to czego potrzebują."]
                          ["Jarman"  "Bazowa wersja aplikacji. Naszym marzeniem jest możliwość dostosowania jej do każdego przypadku, rozszerzając podstawowe funkcje z pomocą dołączanych pluginów oraz konfiguracji."]]
     
@@ -209,8 +186,7 @@
               "contact.tteam@gmail.com"]}
 
    :license
-   {
-    :tenant                  "najemca"
+   {:tenant                  "najemca"
     :license                 "licencja"
     :id-tenant               "id najemcy"
     :limitation              "ograniczenie"
@@ -219,11 +195,26 @@
     :broken-license          "Uszkodzone szyfrowanie licencji. Być może hash license został zmieniony."
     :empty-session-map       "Mapa sesji jest pusta, jeśli widzisz ten błąd powinieneś się skontaktować z pomocą techniczną."
     :cannot-connect-db       "Nie można podłączyć zdalnej bazy danych."
-    :incorrect-login-pass    "Nieprawidłowy login lub hasło."
-    :no-registered-license   "Nie znaleziono zarejestrowanej licencji."
+    :license-not-found       "Produkt jest niezarejestrowany"
     :bad-connection-settings "Błąd połączenia, proszę sprawdzić konfigurację."
-    }
-   }},
+    :license-expire-day-30 "Licencja wygaśnie za %d dzień"
+    :license-expire-day-15 "No cześć) jestem twoim sumieniem... i podobno zapomniałeś o coś"
+    :license-expire-day-14 "A witam! to komunikat od głodnego i zmęczonego programisty, który siedział dniami i nocami przed tym systemem. Zlituj się i zaplać mi"
+    :license-expire-day-13 "Gdzie mój szmalec Lebowski!"
+    :license-expire-day-12 "Zgloszę do policji (=__=) !"
+    :license-expire-day-11 "A wiesz co? Masz piękne oczy. Zaplać mi"
+    :license-expire-day-10 "Programista który mnie napisał ma chorom curkę"
+    :license-expire-day-9 "Tylko dla cbie okazja, kup licencje, i w gratisie dostaniesz Wódeczkę"
+    :license-expire-day-8 "Wiesz gdzie trafiają osoby, które nie placą za program? Do piekla. Zastanów się"
+    :license-expire-day-7 "Mocny jesteś! Wiesz że teraz ja mam kontrole nad komputerem? I mam twój email. Chcesz codziennie dostawać pokrojony tekst piosenek Jastina Bibbera?"
+    :license-expire-day-6 "Poddaje się..."
+    :license-expire-day-5 "KUP MNIE!!!"
+    :license-expire-day-4 "Spokojnie, jak zobaczysz czterych mężczyzn w dresach - to działu marketingu po kasę"
+    :license-expire-day-3 "Powiem twojej żonie/mężu że widziałem ciebie z innym(inną). He-he-he-he"
+    :license-expire-day-2 "Daje ci ostatni szans. Dwa dni do końca licencji!"
+    :license-expire-day-1 "Jeden dzień do końca licencji. A wiesz że Trashpanda team bierze urlop na tydzień od jutro :) "
+    :license-expire-day-0 "Poczekam aż zanim wrócisz z kwiatami i przeprosinami, lubie tulipany"
+    :license-outdated     "haha, już nie masz mocy tu, licencja wygasła, skórzany worku!"}}},
  
  :en
  {:ui
@@ -255,9 +246,7 @@
     :login "Login"
     :password "Password"
     :back-to-login-panel "Return to login panel"
-    :add-contract "Add contract"
     :select-all "Select all"
-    :pay "Pay"
     :refresh "Refresh"
     :export-odt "Export to .odt"
     :close-app  "Close App"
@@ -287,8 +276,8 @@
     :dbtype "Connection type"
     :host   "Host"
     :port   "Port"
-    :dbname "Database"
-    :user   "DB user"
+    :database "Database"
+    :user   "User"
     :password "DB password"
     :contact  "Contact"
     :faq      "FAQ"
@@ -297,17 +286,7 @@
     :info     "Information"
     :success  "Success!"
     :failed   "Niepowodzenie!"
-    :invalid-enterpreneur "Invalid enterpreneur"
-    :invalid-price        "Invalid price"
-    :invalid-date         "Nieprawidłowa data"
-    :error-with-sql-require "Error with SQL require"
-    :enterprise   "Enterprise"
-    :price        "Price"
-    :date-start   "Start date"
-    :date-end     "End date"
-    :periods-count "Periods count"
-    :director    "Director"
-    :VAT-Certificate "VAT Certificate"
+    :error-sql-query "SQL query error"
     :contacts-info   "Contact"
     :physical_address "Address"
     :config-panel-title "Configurations"
@@ -330,57 +309,50 @@
     :choose-theme        "Choose theme"
     :licenses            "Licenses"
     :upload-license      "Upload new license"
-    :file-no-choose      "No file selected"
-    }
+    :file-no-choose      "No file selected"}
 
    :alerts
-   {:success "Success!"
-    :faild "! Faild !"
-    :changes-saved "Saved changes!"
-    :changes-saved-failed "Can not saving changes."
-    :column-saved-message "Saved changes in columns."
-    :column-save-failed "Can not save the column parameters."
-    :column-save-failed-message "All fields must be entered and must be longer than 3 chars."
-    :save-changes? "Do you want to save changes?"
-    :changes-saved-but-need-reload "Saved changes. To apply restart app."
-    :delete-element? "Are you sure you want to remove item?"
-    :testing-connection "Testing a database connection."
-    :information "Information"
-    :write-enter-search "Enter the phrase and click - Enter - to search in the table."
-    :connected-to-database "Connected to database."
-    :connection-error "Failed connection with database."
-    :connection-problem "Connection problem. Can not connect to DB."
-    :connection-faild "Connection faild."
-    :unsaved-changes-title "Unsaved changes!"
-    :unsaved-changes-body "Configuration changes have been made but not saved. Should I close the window anyway?"
-    :export-doc-ok "Successfully exported the document."
-    :export-doc-faild "An error was encountered during export. Action failed."
-    :restore-configuration-ok "Configurations restored! Please be careful next time."
-    :configuration-corrupted "The configuration is corrupted. Try to roll back to an earlier version."
-    :configuration-incorrect "Configuration is incorrect. Please check connection parameters."
-    :incorrect-login-or-pass "Incorrect login or password. Please check if your login informations are correct."
-    :something-went-wrong "Something went wrong. Unknow problem."
-    :Unknown-database "Unknown database."
-    :check-connection "Check connection."
-    :incorrect-input-fields "Not all fields are correct!"
-    :app-startup-fail "Aplication error. Startup function was not loaded."
-    :price-must-be-number "Price must be a number!"
-    :field-is-empty "Field is empty!"
-    :invalid-date-time-interval-info "Fields with date cannot be empty. Start day must be earlier than end date."
-    :added-service-contract "Successfully added new service contract."
-    :select-checkbox-for-payment "Please select checkbox with payment."
-    :payments-finished-successfully "Payments are finished successfully."
-    :updated-data "Updated data."
-    :tests-failed "Loading failed <Tests failed>"
-    :plugin-installed "Jarman %s installed successfully"
-    :package-downloaded "Package %s was downloaded"
-    :config-deleted "Local Jarman configuraion was deleted"
-    :no-updates     "No avaliable updates."
-    :reloaded-extension "Extension `%s` successfully reloaded."
-    :new-license-instaled "New license is already prepared to using"
-    :choose-file-and-try-again "Please choose file and try again."
-    }
-
+   {:app-startup-fail "Aplication error. Startup function was not loaded.",
+    :changes-saved "Saved changes!",
+    :changes-saved-but-need-reload "Saved changes. To apply restart app.",
+    :changes-saved-failed "Can not saving changes.",
+    :check-connection "Check connection.",
+    :choose-file-and-try-again "Please choose file and try again.",
+    :column-save-failed "Can not save the column parameters.",
+    :column-save-failed-message "All fields must be entered and must be longer than 3 chars.",
+    :column-saved-message "Saved changes in columns.",
+    :config-deleted "Local Jarman configuraion was deleted",
+    :configuration-corrupted "The configuration is corrupted. Try to roll back to an earlier version.",
+    :configuration-incorrect "Configuration is incorrect. Please check connection parameters.",
+    :connected-to-database "Connected to database.",
+    :connection-error "Failed connection with database.",
+    :connection-faild "Connection faild.",
+    :connection-problem "Connection problem. Can not connect to Database.",
+    :delete-element? "Are you sure you want to remove item?",
+    :error-parsing-license "Error passing license"
+    :export-doc-faild "An error was encountered during export. Action failed.",
+    :export-doc-ok "Successfully exported the document.",
+    :faild "! Faild !",
+    :field-is-empty "Field is empty!",
+    :incorrect-input-fields "Not all fields are correct!",
+    :incorrect-login-or-pass "Incorrect login or password. Please check if your login informations are correct.",
+    :information "Information",
+    :invalid-date-time-interval-info "Fields with date cannot be empty. Start day must be earlier than end date.",
+    :new-license-instaled "New license is already prepared to using",
+    :no-updates "No avaliable updates.",
+    :package-downloaded "Package %s was downloaded",
+    :plugin-installed "Jarman %s installed successfully",
+    :reloaded-extension "Extension `%s` successfully reloaded.",
+    :restore-configuration-ok "Configurations restored! Please be careful next time.",
+    :save-changes? "Do you want to save changes?",
+    :something-went-wrong "Something went wrong. Unknow problem.",
+    :success "Success!",
+    :testing-connection "Testing a database connection.",
+    :tests-failed "Loading failed <Tests failed>",
+    :unknown-database "Unknown database.",
+    :unsaved-changes-body "Configuration changes have been made but not saved. Should I close the window anyway?",
+    :unsaved-changes-title "Unsaved changes!",
+    :write-enter-search "Enter the phrase and click - Enter - to search in the table."}
    :basic
    {:description "Description"
     :yes "Yes"
@@ -417,15 +389,10 @@
     :user-trash-can "Disconnect user from card."
     :excel "Save view to excel."
     :press-to-search "Press Ctrl + F to search record."
-    :related-popup-table "Search inside related table"
-    :you-can-edit-this-position "You can edit this row."
-    :payment-is-done "Payment complete."
-    }
+    :related-popup-table "Search inside related table"}
    
    :infos
-   {:payment-done-lock-row "Payment complete. Row can not be changed."
-    :wait-for-pay "Waiting for payment."
-    :no-items     "No items"
+   {:no-items     "No items"
     :info-panel-about   [["Trashpanda-Team"
                           "We are a team of programmer friends who aim to create a universal application that is easy to use and expand. We coding because we like, we coding because we can, we coding becouse our clients need good solutions."]
                          ["Jarman"
@@ -443,18 +410,32 @@
     :contact ["http://trashpanda-team.ddns.net"
               "contact.tteam@gmail.com"]}
    :license
-   {
-    :tenant                  "tenant"
+   {:tenant                  "tenant"
     :license                 "license"
     :id-tenant               "id tenant"
     :limitation              "limitation"
     :creation-date           "creation date"
     :expiration-date         "expiration date"
-    :broken-license          "broken license decription, maybe license hash was changed"
-    :empty-session-map       "session map is empty, this error you shuldn't see, please contact to tech support"
-    :cannot-connect-db       "cannot connect to remote database"
-    :incorrect-login-pass    "incorrect login or password "
-    :no-registered-license   "not found registered license"
-    :bad-connection-settings "bad connection settings, please carefully checkout your connections"
-    }
-   }}}
+    :broken-license          "Broken license decription, maybe license hash was changed"
+    :empty-session-map       "Session map is empty, this error you shuldn't see, please contact to tech support"
+    :cannot-connect-db       "Cannot connect to remote database"
+    :license-not-found       "Product are not registred"
+    :bad-connection-settings "Bad connection settings, please carefully checkout your connections"
+    :license-expire-day-30   "License expired after %d days"
+    :license-expire-day-15   "License expired after %d days"
+    :license-expire-day-14   "License expired after %d days"
+    :license-expire-day-13   "License expired after %d days"
+    :license-expire-day-12   "License expired after %d days"
+    :license-expire-day-11   "License expired after %d days"
+    :license-expire-day-10   "License expired after %d days"
+    :license-expire-day-9    "License expired after %d days"
+    :license-expire-day-8    "License expired after %d days"
+    :license-expire-day-7    "License expired after %d days"
+    :license-expire-day-6    "License expired after %d days"
+    :license-expire-day-5    "License expired after %d days"
+    :license-expire-day-4    "License expired after %d days"
+    :license-expire-day-3    "License expired after %d days"
+    :license-expire-day-2    "License expired after %d days"
+    :license-expire-day-1    "License expired after %d days"
+    :license-expire-day-0    "License expired after %d days"
+    :license-outdated        "Your license has expired"}}}}

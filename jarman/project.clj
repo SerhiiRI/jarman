@@ -1,8 +1,12 @@
 (defproject jarman "0.0.1"
   :description "Jarman"
   :license {:name "EPL-2.0" :url "https://www.eclipse.org/legal/epl-2.0/"}
-  :dependencies [;; core
+   :dependencies [;; core
                  [org.clojure/clojure "1.10.1"]
+                 [org.clojure/core.async "1.3.618"]
+                 [org.clojure/data.csv "1.0.0"]
+                 [org.clojure/data.json "2.4.0"]
+                 [org.clojure/data.xml "0.0.8"]
                  [org.clojure/java.jdbc "0.7.10"]
                  [org.clojure/tools.cli "1.0.194"]
                  ;; gui
@@ -19,19 +23,15 @@
                  [com.velisco/clj-ftp "0.3.12"]
                  [datascript-transit/datascript-transit "0.3.0"]
                  [datascript/datascript "1.2.1"]
-                 ;; [org.clojars.mjdowney/excel-clj "1.2.0" ]
+                 [com.github.seancorfield/honeysql "2.1.818"]
                  [fr.opensagres.xdocreport/fr.opensagres.xdocreport.document.ods "1.0.3"]
                  [fr.opensagres.xdocreport/fr.opensagres.xdocreport.document.odt "1.0.3"]
                  ;; tools
-                 ;; [quil "4.0.0-SNAPSHOT-1"]
                  [incanter "1.9.3" :exclusions [org.bouncycastle/bctsp-jdk14
                                                 org.clojure/core.incubator
                                                 mysql/mysql-connector-java]]
                  [instaparse "1.4.10"]
                  [clj-fuzzy "0.4.1"]
-                 [org.clojure/data.csv "1.0.0"]
-                 [org.clojure/data.json "2.4.0"]
-                 [org.clojure/data.xml "0.0.8"]
                  [de.ubercode.clostache/clostache "1.4.0"]]
   ;;:main ^:skip-aot jarman.core
   :main jarman.core
@@ -59,6 +59,10 @@
               :main jarman.jarman-cli
               :jar-name "jarman-cli-lib.jar"
               :uberjar-name "jarman-cli.jar"}
+             :client
+             {:main jarman.gui.gui-login
+              :jar-name "jarman-client-lib.jar"
+              :uberjar-name "jarman-client-standalone.jar"}
              ;; :cider
              ;; {:dependencies [[cider/cider-nrepl "0.26.0"]]
              ;;  :repl-options {:nrepl-middleware

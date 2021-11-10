@@ -156,6 +156,8 @@
     :source         "Źródło"
     :theme          "Skórka"
     :variable       "Zmienna"
+    :license-code   "Kod licencji"
+    :select-file    "Wybierz plik..."
     },
    
    :tips
@@ -197,22 +199,22 @@
     :cannot-connect-db       "Nie można podłączyć zdalnej bazy danych."
     :license-not-found       "Produkt jest niezarejestrowany"
     :bad-connection-settings "Błąd połączenia, proszę sprawdzić konfigurację."
-    :license-expire-day-30 "Licencja wygaśnie za %d dzień"
+    :license-expire-day-30 "Licencja wygaśnie za %d dni"
     :license-expire-day-15 "No cześć) jestem twoim sumieniem... i podobno zapomniałeś o coś"
     :license-expire-day-14 "A witam! to komunikat od głodnego i zmęczonego programisty, który siedział dniami i nocami przed tym systemem. Zlituj się i zaplać mi"
     :license-expire-day-13 "Gdzie mój szmalec Lebowski!"
     :license-expire-day-12 "Zgloszę do policji (=__=) !"
     :license-expire-day-11 "A wiesz co? Masz piękne oczy. Zaplać mi"
-    :license-expire-day-10 "Programista który mnie napisał ma chorom curkę"
-    :license-expire-day-9 "Tylko dla cbie okazja, kup licencje, i w gratisie dostaniesz Wódeczkę"
-    :license-expire-day-8 "Wiesz gdzie trafiają osoby, które nie placą za program? Do piekla. Zastanów się"
+    :license-expire-day-10 "Programista który mnie napisał ma chorom córkę"
+    :license-expire-day-9 "Tylko dla cbie okazja, kup licencje, i w gratisie dostaniesz Wódeczkę!"
+    :license-expire-day-8 "Wiesz gdzie trafiają osoby, które nie placą za program? Do piekła. Zastanów się"
     :license-expire-day-7 "Mocny jesteś! Wiesz że teraz ja mam kontrole nad komputerem? I mam twój email. Chcesz codziennie dostawać pokrojony tekst piosenek Jastina Bibbera?"
     :license-expire-day-6 "Poddaje się..."
     :license-expire-day-5 "KUP MNIE!!!"
     :license-expire-day-4 "Spokojnie, jak zobaczysz czterych mężczyzn w dresach - to działu marketingu po kasę"
-    :license-expire-day-3 "Powiem twojej żonie/mężu że widziałem ciebie z innym(inną). He-he-he-he"
-    :license-expire-day-2 "Daje ci ostatni szans. Dwa dni do końca licencji!"
-    :license-expire-day-1 "Jeden dzień do końca licencji. A wiesz że Trashpanda team bierze urlop na tydzień od jutro :) "
+    :license-expire-day-3 "Powiem twojej żonie/mężowi że widziałem ciebie z innym/inną. He-he-he-he"
+    :license-expire-day-2 "Daje ci ostatnią szans. Dwa dni do końca licencji!"
+    :license-expire-day-1 "Jeden dzień do końca licencji. A wiesz że Trashpanda Team bierze urlop na tydzień od jutro :)?"
     :license-expire-day-0 "Poczekam aż zanim wrócisz z kwiatami i przeprosinami, lubie tulipany"
     :license-outdated     "haha, już nie masz mocy tu, licencja wygasła, skórzany worku!"}}},
  
@@ -378,6 +380,8 @@
     :source         "Source"
     :theme          "Theme"
     :variable       "Variable"
+    :license-code   "License code"
+    :select-file    "Select file..."
     }
    
    :tips
@@ -436,6 +440,6 @@
     :license-expire-day-4    "License expired after %d days"
     :license-expire-day-3    "License expired after %d days"
     :license-expire-day-2    "License expired after %d days"
-    :license-expire-day-1    "License expired after %d days"
+    :license-expire-day-1    "License expired after %d day"
     :license-expire-day-0    "License expired after %d days"
     :license-outdated        "Your license has expired"}}}}

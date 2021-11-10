@@ -298,14 +298,14 @@
         close-fn   (fn [e] (.remove (:alerts-box (state!)) mig) (refresh-box-bounds))]
     (c/config! close-icon :listen [:mouse-clicked close-fn])
     (.start (Thread. (fn [] (if (> timelife 0) (do (Thread/sleep (* 1000 timelife)) (close-fn 0))))))
-    (c/config! mig
-               :listen [:mouse-clicked
-                        (fn [e]
-                          (if (= (.getButton e) MouseEvent/BUTTON2)
-                            (close-fn 0)
-                            (do
-                              (open-in-popup type header body s-popup expand)
-                              (refresh-box))))])
+    (let [onclick (fn [e]
+                    (if (= (.getButton e) MouseEvent/BUTTON2)
+                      (close-fn 0)
+                      (do
+                        (open-in-popup type header body s-popup expand)
+                        (refresh-box))))]
+      (c/config! mig    :listen [:mouse-clicked onclick])
+      (c/config! (first (seesaw.util/children mig)) :listen [:mouse-clicked onclick :mouse-entered gtool/hand-hover-on]))
     mig))
 
 (defn alert

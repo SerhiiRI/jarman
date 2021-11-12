@@ -18,6 +18,8 @@
             [jarman.gui.popup                  :as popup]
             [jarman.gui.gui-editors            :as gedit]
             [jarman.gui.gui-config-panel       :as gcp]
+            [jarman.logic.connection           :as db]
+            [jarman.logic.sql-tool :refer [select! update! insert!]]
             [jarman.interaction :as i]))
 
 ;; (defn- expand-colors []
@@ -150,14 +152,40 @@
 ;; ((get (state/state :defview-editors) (keyword (:table_name (first selected-tab)))) e)
 ;; (state/state :defview-editors)
 
-(defn demo-menu []
-  {"LVL 1" {:key    "lvl 1-1"
-            :action :invoke
-            :fn      (fn [e] )}})
+(defn- pullup-metadata-names
+  "Description:
+     Pull up from DB names of tables as key.
+   Example:
+     (pullup-metadata-names)
+     ;; => (:documents :profile ...)"
+  []
+  (doall
+   (map (fn [m] (keyword (:table_name m)))
+        (db/query
+         (select!
+          {:table_name :metadata
+           :column [:table_name]})))))
 
-(defn default-menu-items []
-  {"Menu demo"
-   {"lvl-1"
+(defn- metadata-editors-in-main-menu
+  "Description:
+     Prepare invokers for metadata editors.
+     Compatibility with main menu map.
+   Example:
+     (metadata-editors-in-main-menu)
+     ;; => {\"documents\" {:key ...}}"
+  []
+  (into {}(doall
+          (map
+           (fn [k]
+             {(str (name k))
+              {:key    (str "edit-metadata-" (str (name k)))
+               :action :invoke
+               :fn      (fn [e] (gedit/view-metadata-editor k))}})
+           (pullup-metadata-names)))))
+
+
+(defn- return-menu-items-demo []
+  {"lvl-1"
     {"lvl-11"
       {:key    "lvl 3-1"
        :action :invoke
@@ -184,7 +212,10 @@
                  :fn      (fn [e] )}
       "lvl-2-2" {:key    "lvl 3-2"
                  :action :invoke
-                 :fn      (fn [e] )}}}}
+                 :fn      (fn [e] )}}}})
+
+(defn default-menu-items []
+  {"Menu demo" (return-menu-items-demo)
 
    "Administration"
    {(gtool/get-lang-btns :settings)          {:key (gtool/get-lang-btns :settings)
@@ -207,7 +238,7 @@
     ;;                                           :fn dbv/create-view--db-view}
     }
 
-   
+   "Metadata Editors" (metadata-editors-in-main-menu)
    
    "Debug Items"
    {"Popup window" {:key        "popup-window"

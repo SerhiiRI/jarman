@@ -144,6 +144,18 @@
              (fn-to-invoke)
              (catch Exception e (println (str "\nException in timelife: " title "\n" (str (.getMessage e)))))))))))))
 
+(defn coll-to-map
+  "Description:
+     Convert collection to map"
+  [some-coll]
+  ((fn vtm [coll m]
+    (if (> (count coll) 1)
+      (do
+        (let [nmap  (into m {(first coll) (second coll)})
+              ncoll (drop 2 coll)]
+          (vtm ncoll nmap)))
+      m)) some-coll {}))
+
 (defn left-merge
   "Description
      Merge for map.

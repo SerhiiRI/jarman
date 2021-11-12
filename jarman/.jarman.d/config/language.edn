@@ -158,6 +158,8 @@
     :variable       "Zmienna"
     :license-code   "Kod licencji"
     :select-file    "Wybierz plik..."
+    :unsaved-changes "Niezapiano zmian"
+    :saved           "Zapisano"
     },
    
    :tips
@@ -382,6 +384,8 @@
     :variable       "Variable"
     :license-code   "License code"
     :select-file    "Select file..."
+    :unsaved-changes "Unsaved changes"
+    :saved           "Saved"
     }
    
    :tips

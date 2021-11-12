@@ -21,7 +21,8 @@
    [jarman.logic.sql-tool :refer [select! update! insert! delete!]]
    [jarman.logic.metadata :as mt]
    [jarman.logic.state :as state]
-   [jarman.interaction :as i]))
+   [jarman.interaction :as i]
+   [jarman.gui.gui-views-service :as gvs]))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Variables ;;;
@@ -424,10 +425,42 @@
   (let [table-name (:table_name view)
         table-view (:view view)
         id-t       (:id (first (db/query (select! {:table_name :view :where [:= :table_name table-name]}))))]   
-    (if (nil? id-t)
+    (if (empty? id-t)
       (db/exec (insert! {:table_name :view :set {:table_name table-name, :view table-view}}))
-      (db/exec (update! {:table_name :view :set {:view table-view} :where [:= :id id-t]})))
-    (loader-from-db)))
+      (db/exec (update! {:table_name :view :set {:view table-view} :where [:= :id id-t]}))) ;; TODO: Serhii: Update crashing: Don't know how to create ISeq from: java.math.BigInteger
+    ;;(loader-from-db)
+    (println "Inserting view: " table-name)))
+
+
+
+(defn- pullup-tables-ids
+  "Description:
+     Pull up from DB names and ids of tables.
+   Example:
+     (pullup-tables-ids)
+     ;; => (:documents :profile ...)"
+  []
+  (into {}(doall
+           (map (fn [m] {(keyword (:table_name m)) (:id m)})
+                (db/query
+                 (select!
+                  {:table_name :metadata
+                   :column [:table_name :id]}))))))
+
+(defn- move-views-to-db []
+  (let [table-views (drop 2 (loader-from-view-clj))]
+   (doall
+    (map (fn [table-view]
+           (let [table-map  (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
+                 table-name (:name table-map)]
+             (view-set {:table_name table-name :view (str table-view) ;; (with-out-str (clojure.pprint/pprint table-view))
+                        })
+             ))
+         table-views))))
+
+;; (loader-from-db)
+;;(view-set {:id 2, :table_name \"user\", :view \"(defview user (table :name \"user\"......))})
+
 
 
 (defn popup-defview-editor
@@ -454,7 +487,7 @@
                                                  :text "Can not convert to map. Syntax error."))))})})))
 
 
-(defn view-defview-editor
+(defn view-defview-editor-old
   "Description:
      Prepared popup window with code editor for defview.
    Example:
@@ -462,11 +495,10 @@
   "
   [table-str]
   (let [dview (view-get table-str)]
-    ((state/state :jarman-views-service)
-     :set-view
+    (gvs/add-view
      :view-id (keyword (str "manual-defview-code" table-str))
      :title (str "Defview: " table-str)
-     :component-fn
+     :render-fn
      (fn [] (gedit/code-editor
              {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
                      :background "#fff"]
@@ -483,8 +515,37 @@
                                                (:label state)
                                                :text "Can not convert to map. Syntax error."))))})))))
 
-
+;; (view-defview-editor "permission")
 ;;(with-out-str (clojure.pprint/pprint (str (read-string (:view (view-get "permission"))))))
+
+(defn view-defview-editor
+  "Description:
+     Prepared popup window with code editor for defview.
+   Example:
+     (popup-defview-editor \"user\")
+  "
+  [table-str]
+  (gvs/add-view
+   :view-id (keyword (str "manual-defview-code" table-str))
+   :title (str "Defview: " table-str)
+   :render-fn
+   (fn [] (gedit/code-editor
+           {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
+                   :background "#fff"]
+            :title (str "Defview: " table-str)
+            :val (with-out-str
+                   (clojure.pprint/pprint
+                    (read-string (binding [jarman.logic.sql-tool/*debug* false]
+                                   (:view (view-get table-str)))))) ;;(:view dview)
+            :save-fn (fn [state]
+                       (try
+                         (view-set {:table_name table-str :view (str (c/config (:code state) :text))})
+                         (c/config! (:label state) :text "Saved!")
+                         (catch Exception e (do (c/config!
+                                                 (:label state)
+                                                 :text "Cannot save.")
+                                                ))))}))))
+;; (view-defview-editor "permission")
 
 ;;(popup-defview-editor "user")
 (defn buttons-list--code-editor-defview

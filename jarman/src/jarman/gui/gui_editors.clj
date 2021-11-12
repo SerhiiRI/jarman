@@ -117,7 +117,7 @@
                               (if-not (nil? label)
                                 (if (= (c/config (c/to-widget e) :text) @content)
                                   (c/config! label :text "")
-                                  (c/config! label :text "Unsaved file..."))))]
+                                  (c/config! label :text (gtool/get-lang-basic :unsaved-changes) :foreground face/c-red))))]
      args)))
 
 ;;(seesaw.dev/show-options (seesaw.rsyntax/text-area))
@@ -215,7 +215,7 @@
                                          (gs/icon GoogleMaterialDesignIcons/SAVE face/c-icon)
                                          "Save"
                                          (fn [e]
-                                           (c/config! info-label :text "Saved")
+                                           (c/config! info-label :text (gtool/get-lang-basic :saved))
                                            ((:saved-content (c/config code :user-data)))
                                            (save-fn {:state local-changes :label info-label :code code}))]
                                         (if dispose
@@ -244,7 +244,7 @@
                 :save-fn (fn [state]
                            (try
                              (mt/update-meta (assoc meta :prop (read-string (c/config (:code state) :text))))
-                             (c/config! (:label state) :text "Saved!")
+                             (c/config! (:label state) :text (gtool/get-lang-basic :saved))
                              (catch Exception e (c/config!
                                                  (:label state)
                                                  :text "Can not convert to map. Syntax error."))))})}))
@@ -270,7 +270,7 @@
               :save-fn (fn [state]
                          (try
                            (mt/update-meta (assoc meta :prop (read-string (c/config (:code state) :text))))
-                           (c/config! (:label state) :text "Saved!")
+                           (c/config! (:label state) :text (gtool/get-lang-basic :saved))
                            (catch Exception e (c/config!
                                                (:label state)
                                                :text "Can not convert to map. Syntax error."))))})))))

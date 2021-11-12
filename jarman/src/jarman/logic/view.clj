@@ -111,9 +111,9 @@
 
 (defview service_contract
   (service-period
-   :id :service_contract
+   :id :service_contract ;; TODO: Must be another ID
    :permission :ekka-all
-   :name "service_contract"
+   :name "service_contract" ;; TODO: Must be another name
    :plug-place [:#tables-view-plugin]))
 
 (defview

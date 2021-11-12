@@ -68,6 +68,12 @@
       (repeat-colors expand-colors (Math/ceil (/ (inc lvl) colors-c)))
       (expand-colors))))
 
+;; ┌────────────────────────────┐
+;; │                            │
+;; │     Main menu builder      │
+;; │                            │
+;; └────────────────────────────┘
+
 (defn- part-plugin
   [k v lvl]
   (if (.allow-permission? (session/session) (.return-permission v))
@@ -146,6 +152,13 @@
            :else (c/label :text "Uncorrect comp"))))
      plugin-m))))
 
+
+;; ┌─────────────────────────────────────┐
+;; │                                     │
+;; │     Metadata and View editors       │
+;; │                                     │
+;; └─────────────────────────────────────┘
+
 ;;(println "\n" (bulid-expand-by-map (example-plugins-map)))
 
 ;; TODO: View editors
@@ -183,6 +196,14 @@
                :fn      (fn [e] (gedit/view-metadata-editor k))}})
            (pullup-metadata-names)))))
 
+
+
+
+;; ┌──────────────────────┐
+;; │                      │
+;; │      Main Menu       │
+;; │                      │
+;; └──────────────────────┘
 
 (defn- return-menu-items-demo []
   {"lvl-1"

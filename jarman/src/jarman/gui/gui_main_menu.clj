@@ -146,6 +146,10 @@
 
 ;;(println "\n" (bulid-expand-by-map (example-plugins-map)))
 
+;; TODO: View editors
+;; ((get (state/state :defview-editors) (keyword (:table_name (first selected-tab)))) e)
+;; (state/state :defview-editors)
+
 (defn demo-menu []
   {"LVL 1" {:key    "lvl 1-1"
             :action :invoke
@@ -196,11 +200,15 @@
     (gtool/get-lang-btns :var-list-panel)    {:key (gtool/get-lang-btns :var-list-panel)
                                               :permission :developer
                                               :fn vars-listing/vars-listing-panel}
+    
     ;; CURRENTLY DISSABLED
     ;; (gtool/get-lang-btns :db-visualizer)     {:key (gtool/get-lang-btns :db-visualizer)
     ;;                                           :permission :admin-dataedit
     ;;                                           :fn dbv/create-view--db-view}
     }
+
+   
+   
    "Debug Items"
    {"Popup window" {:key        "popup-window"
                     :action     :invoke

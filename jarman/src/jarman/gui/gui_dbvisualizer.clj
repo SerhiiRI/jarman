@@ -686,6 +686,7 @@
                         (gs/icon GoogleMaterialDesignIcons/DESCRIPTION face/c-icon)
                         (fn [e]
                           (do (rm-menu e)
+                              ;; TODO: metadata editors
                               ;; (gcomp/view-metadata-editor (keyword (:table_name (first selected-tab))))
                               )))
                    [])
@@ -694,6 +695,7 @@
                         (gs/icon GoogleMaterialDesignIcons/EDIT face/c-icon)
                         (fn [e]
                           (do (rm-menu e)
+                              ;; TODO: view editors
                               ((get (state/state :defview-editors) (keyword (:table_name (first selected-tab)))) e))))
                    []))]
       (c/config! mig

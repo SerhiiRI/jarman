@@ -4,11 +4,14 @@
             [jarman.logic.connection :as db]
             [jarman.logic.sql-tool :refer [show-tables]]
             [jarman.logic.session :as session]
-            [jarman.logic.document-manager :refer [update-blob! select-blob!]]))
+            [jarman.logic.document-manager :refer [update-blob! select-blob!]]
+            [jarman.logic.metadata])
+  (:import  [jarman.logic.metadata FtpFile Link File]))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; FTP FUNCTIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;
+
 (defn get-configuration []
   (let [conf (:ftp (.config (.get-user (session/session))))]
     (if (empty? conf)
@@ -100,7 +103,7 @@
 (defprotocol IStorage
  (load-session-config [this]))
 
-(defrecord FtpFile [file-name file-path]
+(extend-type FtpFile
   RemoteFileLoader
   (upload [this attributes]
     (update-blob!
@@ -108,18 +111,18 @@
       :column-list     (:column-list attributes)
       :values          (conj {:id (:id attributes)}
                              (:values attributes))})
-    (if-not (nil? file-path)
+    (if-not (nil? (.-file-path this))
       (ftp-put-file (get-configuration)
                     (clojure.string/join (java.io.File/separator)
                                          ["jarman" "data" "tables" (:table_name attributes)])
-                    file-path)))
+                    (.-file-path this))))
   (remove-data [this table_name]
-    (ftp-delete-file (get-configuration) (clojure.string/join (java.io.File/separator) ["jarman" "data" "tables" table_name file-name])))
+    (ftp-delete-file (get-configuration) (clojure.string/join (java.io.File/separator) ["jarman" "data" "tables" table_name (.-file-name this)])))
   (download [this attributes]
     (ftp-save-file (get-configuration)
                    (clojure.string/join (java.io.File/separator)
-                                        ["jarman" "data" "tables" (:table_name attributes) file-name])
-                   (str (:local-path attributes) (java.io.File/separator) file-name)))
+                                        ["jarman" "data" "tables" (:table_name attributes) (.-file-name this)])
+                   (str (:local-path attributes) (java.io.File/separator) (.-file-name this))))
   
   ;; IStorage
   ;; (load-session-config [this]
@@ -128,18 +131,11 @@
   ;;     (format "ftp://%s:%s@%s" login, password, host)))
   )
 
-(defn isFtpFile? [^jarman.logic.composite_components.FtpFile e]
-  (instance? jarman.logic.composite_components.FtpFile e))
-
-(defn ftp-file [login password file-name file-path]
-  {:pre [(every? string? (list login password file-name file-path))]}
-  (->FtpFile login password file-name file-path))
-
 ;;;;;;;;;;;;
 ;;; Link ;;;
 ;;;;;;;;;;;;
 ;; (clojure.java.browse/browse-url "http://clojuredocs.org")
-(defrecord Link [text link]
+(extend-type Link
   RemoteFileLoader
   (upload [this attributes]
     (update-blob!
@@ -148,13 +144,10 @@
       :values          (conj {:id (:id attributes)}
                              (:values attributes))})))
 
-(defn isLink? [^jarman.logic.composite_components.Link e]
-  (instance? jarman.logic.composite_components.Link e))
-
 ;;;;;;;;;;;;
 ;;; File ;;;
 ;;;;;;;;;;;;
-(defrecord File [file-name file]
+(extend-type File
   RemoteFileLoader
   (upload [this attributes]
     (update-blob!
@@ -168,16 +161,7 @@
                    :doc-column  [[:file {:document-name :file_name :document-place (:local-path attributes)}]]
                    :where [:= :id (keyword (str (:table_name attributes) ".id"))]})))
 
-(defn isFile? [^jarman.logic.composite_components.File e]
-  (instance? jarman.logic.composite_components.File e))
 
-(def component-list [isFile? isLink? isFtpFile?])
-(def component-files [isFile? isFtpFile?])
-
-(defn isComponent? [val]
-  (some #(% val) component-list))
-(defn isComponentFiles? [val]
-  (some #(% val) component-files))
 
 (comment
   ;; test segment for some link

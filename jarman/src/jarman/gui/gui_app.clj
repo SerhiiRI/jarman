@@ -1,50 +1,54 @@
 (ns jarman.gui.gui-app
-  (:use seesaw.dev
-        seesaw.style
-        seesaw.mig
-        seesaw.font)
-  (:import (javax.swing JLayeredPane JLabel JTable JComboBox DefaultCellEditor JCheckBox)
-           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
-           (javax.swing.table TableCellRenderer TableColumn)
-           (java.awt.event MouseEvent)
-           (jarman.jarmanjcomp DateTime)
-           (java.awt Color Component)
-           (java.awt Dimension))
-  (:require [clojure.string    :as string]
-            [seesaw.swingx     :as swingx]
-            [seesaw.core       :as c]
-            [seesaw.util       :as u]
-            [seesaw.border     :as b]
-            ;; external funcionality
-            [jarman.faces                    :as face]
-            [jarman.interaction              :as i]
-            [jarman.external                 :as e]
-            ;; logic
-            [jarman.logic.state              :as state]
-            [jarman.logic.session            :as session]
-            [jarman.logic.view-manager       :as vmg]
-            [jarman.plugin.extension-manager :refer [do-load-extensions]]
-            [jarman.plugin.plugin            :refer [do-load-theme theme-selected]]
-            [jarman.config.vars              :refer [setq print-list-not-loaded]]
-            [jarman.config.dot-jarman        :refer [dot-jarman-load]]
-            [jarman.tools.org                :refer :all]
-            [jarman.tools.lang               :refer :all]
-            ;; gui 
-            [jarman.gui.builtin-themes.jarman-light]
-            [jarman.gui.gui-views-service    :as gvs]
-            [jarman.gui.gui-alerts-service   :as gas]
-            [jarman.gui.gui-update-manager   :as umg]
-            [jarman.gui.gui-components       :as gcomp]
-            [jarman.gui.gui-tools            :as gtool]
-            [jarman.gui.gui-style            :as gs]
-            ;; [jarman.gui.gui-dbvisualizer     :as dbv]
-            [jarman.gui.gui-seed             :as gseed]
-            [jarman.gui.gui-main-menu        :as menu]
-            [jarman.gui.gui-migrid           :as gmg]
-            [jarman.gui.popup                :as popup]
-            [jarman.gui.gui-editors          :as gedit]
-            [jarman.gui.gui-calendar         :as calendar]
-            ))
+  (:use
+   seesaw.dev
+   seesaw.style
+   seesaw.mig
+   seesaw.font)
+  (:import
+   (javax.swing JLayeredPane JLabel JTable JComboBox DefaultCellEditor JCheckBox)
+   (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
+   (javax.swing.table TableCellRenderer TableColumn)
+   (java.awt.event MouseEvent)
+   (jarman.jarmanjcomp DateTime)
+   (java.awt Color Component)
+   (java.awt Dimension))
+  (:require
+   [clojure.string    :as string]
+   [seesaw.swingx     :as swingx]
+   [seesaw.core       :as c]
+   [seesaw.util       :as u]
+   [seesaw.border     :as b]
+   ;; external funcionality
+   [jarman.faces                    :as face]
+   [jarman.interaction              :as i]
+   [jarman.external                 :as e]
+   ;; logic
+   [jarman.logic.state              :as state]
+   [jarman.logic.session            :as session]
+   [jarman.logic.view-manager       :as vmg]
+   [jarman.plugin.extension-manager :refer [do-load-extensions]]
+   [jarman.plugin.plugin            :refer [do-load-theme theme-selected]]
+   [jarman.config.vars              :refer [setq print-list-not-loaded]]
+   [jarman.config.dot-jarman        :refer [dot-jarman-load]]
+   [jarman.tools.org                :refer :all]
+   [jarman.tools.lang               :refer :all]
+   ;; gui 
+   [jarman.gui.builtin-themes.jarman-light]
+   [jarman.gui.gui-views-service    :as gvs]
+   [jarman.gui.gui-alerts-service   :as gas]
+   [jarman.gui.gui-update-manager   :as umg]
+   [jarman.gui.gui-components       :as gcomp]
+   [jarman.gui.gui-tools            :as gtool]
+   [jarman.gui.gui-style            :as gs]
+   [jarman.gui.gui-events           :as gui-events]
+   ;; [jarman.gui.gui-dbvisualizer     :as dbv]
+   [jarman.gui.gui-seed             :as gseed]
+   [jarman.gui.gui-main-menu        :as menu]
+   [jarman.gui.gui-migrid           :as gmg]
+   [jarman.gui.popup                :as popup]
+   [jarman.gui.gui-editors          :as gedit]
+   [jarman.gui.gui-calendar         :as calendar]
+   ))
 
  
 ;; ┌──────────────────────────┐
@@ -310,8 +314,8 @@
   (if-not (nil? @relative-pos)
     (.setLocation (seesaw.core/to-frame (state/state :app)) (first @relative-pos) (second @relative-pos)))
   ;; TODO TO DEBUG!!!!
-  (session/login {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman", :user "root", :password "misiePysie69", :useUnicode true, :characterEncoding "UTF-8"}
-         "dev" "dev")
+  ;; (session/login {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman", :user "root", :password "misiePysie69", :useUnicode true, :characterEncoding "UTF-8"}
+  ;;        "dev" "dev")
   (let [{:keys [login profile-name]} (.get-user (session/session))]
     (gseed/extend-frame-title (str ", " login "@" profile-name))))
 
@@ -333,7 +337,7 @@
   (umg/check-update :silent)
   (print-header
    "Check license"
-   (session/gui-check-license)))
+   (gui-events/gui-check-license)))
 
 
 ;; ┌─────────────┐

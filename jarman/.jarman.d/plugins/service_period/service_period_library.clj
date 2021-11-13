@@ -314,14 +314,14 @@
 ;;; geting and calculating all of this data
 ;;; try to use this when you recursively render
 ;;; any you want
-(def grouped-query (info-grouped-query))
-(let [{rl :raw-list tip :tree-index-paths ti :tree-index tv :tree-view} grouped-query]
-  ;; (map #(conj % false )tip)
-  ;; {:per-enterprise (mapv (fn [[enter sc-m]]
-  ;;                            (calculate-payment-for-enterpreneuer enter sc-m)) (seq tv))
-  ;;  :per-contracts (mapv (fn [[enter sc-m]]
-  ;;                         (mapv (fn [[sc-m scm-m]] (calculate-payment-for-service_contract sc-m scm-m)) (seq sc-m))) (seq tv))}
-  (first (seq tv)))
+;; (def grouped-query (info-grouped-query))
+;; (let [{rl :raw-list tip :tree-index-paths ti :tree-index tv :tree-view} grouped-query]
+;;   ;; (map #(conj % false )tip)
+;;   ;; {:per-enterprise (mapv (fn [[enter sc-m]]
+;;   ;;                            (calculate-payment-for-enterpreneuer enter sc-m)) (seq tv))
+;;   ;;  :per-contracts (mapv (fn [[enter sc-m]]
+;;   ;;                         (mapv (fn [[sc-m scm-m]] (calculate-payment-for-service_contract sc-m scm-m)) (seq sc-m))) (seq tv))}
+;;   (first (seq tv)))
 
 
 ;;; INFO SELECTS ;;;

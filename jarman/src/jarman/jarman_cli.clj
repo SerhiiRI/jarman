@@ -86,8 +86,8 @@
     (if-let [es (get cli-opt :errors)]
       (doall (for [e es] (println (format "[!] %s" e))))
       (cond 
-        (= k1 :refresh-icons)(do (stool/refresh-icon-lib)(println(format "[ok] library by path %s was generated" stool/*icon-library*)))
-        (= k1 :refresh-fonts)(do (stool/refresh-font-lib)(println(format "[ok] library by path %s was generated" stool/*font-library*)))
+        (= k1 :refresh-icons)(do (stool/refresh-icon-lib) (println(format "[ok] library by path %s was generated" stool/*icon-library*)))
+        (= k1 :refresh-fonts)(do (stool/refresh-font-lib) (println(format "[ok] library by path %s was generated" stool/*font-library*)))
         (= k1 :help)(print-helpr structure-cli-options)
         :else (print-helpr cli-opt)))))
 
@@ -116,7 +116,7 @@
     (let [[action & rest-arguments] args]
       (if action
         (case action
-          "data" (apply data-cli rest-arguments)
+          ;; "data" (apply data-cli rest-arguments)
           "structure" (apply structure-cli rest-arguments)
           ;;          "config"   (exit 0 "[!] config action not yet implemented ")
           ;;          "ftp"      (apply ftp-cli rest-arguments)

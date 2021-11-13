@@ -33,5 +33,8 @@ build/jarman-cli:
 build/jarman-client:
 	lein with-profile client uberjar
 
+test:
+	lein test
+
 jarman-box: build/jarman-cli
 	@bash -e "./bin/build-jarman-cli.sh"

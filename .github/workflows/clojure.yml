@@ -22,4 +22,8 @@ jobs:
     - name: Generate icons lib
       run: make project/gen-icon-lib
     - name: Run tests
-      run: lein test
+      run: make test
+    - name: Build jarman-toolbox
+      run: make jarman-box
+    - name: Build jarman-client
+      run: make build/jarman-client

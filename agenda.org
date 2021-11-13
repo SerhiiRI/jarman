@@ -48,12 +48,6 @@
   
 ** TODO /Bug/. Service Plugin                                          :@Aleks:
    replace /gtool/ on /external.clj/ 
-** TOREVIEW /Bug./ Expand panels
-   After expand panels initilized, icon ~+~ symbol
-   but ~-~ are rendered instead.
-
-   [[file:./issues/agenda/bug_001.png]]
-   
 ** TODO [#1] /Rewrite/. DB Visualizer editing [0/3]            :@Aleks:@Serhii:
    DEADLINE: <2021-10-13 Wed>
    Old fns must be rewrite to new standards:
@@ -118,9 +112,13 @@
    - [X] tutorial point
    - [ ] try add more KeyEventDispachers
    - [ ] lock repeating event on hold key
-** PLANNED Make diagram from DB Visualiser
-   - [ ] Visualize relation between tables
-   - [ ] Save table location in DB visualiser into configurations
+** DONE /Bug./ Expand panels
+   CLOSED: [2021-11-13 Sat 06:08]
+   After expand panels initilized, icon ~+~ symbol
+   but ~-~ are rendered instead.
+
+   [[file:./issues/agenda/bug_001.png]]
+   
 ** DONE [#1] /Feature/. Interaction files [3/3]                       :@Serhii:
    CLOSED: [2021-11-07 Sun 16:45]
    :PROPERTIES:
@@ -265,10 +263,6 @@ CLOSED: [2021-10-02 sob 12:29]
 ** PLANNED Service Period. sort contract list                       :@Serhii:
    - [ ] sorting contract by date
    - [ ] colorize contract by active-nonactive depend on current date
-** PLANNED /Feature/. Emacs IDE split out-environment [1/2]           :@Serhii:
-   - [X] Auto tail reverting logs buffer
-   - [ ] Integrate local toolkit for emacs.
-     - [ ] Open log buffer.
 ** PLANNED Ekka todo#1 chages                         :@Julia:@Aleks:@Serhii:
 *** Підприємець
     -   ЄДРПОУ - 10 цифр довжина з переду нулями
@@ -313,13 +307,14 @@ CLOSED: [2021-10-02 sob 12:29]
 
 *** Акт виконаних робіт
 	-   створити
-** PLANNED encrypt business files                              :@Serhii:
-   - [ ] create crypo toolkit
-   - [ ] create key-storage
 ** PLANNED Rewrite test for SSQL toolkit                :@Julia:@Serhii:
    Current testable API too old. API standard was reimplemented.
    And strongly need to rewrite test cases for oll things query.
-** DONE [#1] Permission system                                      :@Serhii:
+** DONE encrypt business files                                      :@Serhii:
+   CLOSED: [2021-11-13 Sat 06:07]
+   - [X] create crypo toolkit
+   - [X] create key-storage
+** DONE Permission system                                           :@Serhii:
    CLOSED: [2021-11-07 Sun 16:48]
    - [X] Rewrie user session object
      - [X] keep licence file in session.
@@ -327,14 +322,14 @@ CLOSED: [2021-10-02 sob 12:29]
    - [X] Add into /left-bar menu/, /left-menu/ functionlity that test user permission before
      render
    - [X] View plugins permission system
-** DONE [#1] /Bug/. Unpin old config system                           :@Serhii:
+** DONE /Bug/. Unpin old config system                                :@Serhii:
    CLOSED: [2021-11-07 Sun 16:48]
    - [X] Rewrite database connection list.
      - [X] Implemnent datalist in .jarman
      - [X] Rewrite login panel datalist editor
    - [X] Update repository into .jarman
 
-** DONE [#3] /Feature/. Macro for declaring some resource             :@Serhii:
+** DONE /Feature/. Macro for declaring some resource                  :@Serhii:
    CLOSED: [2021-11-07 Sun 16:49]
    Create ~define-resource~ macro for definision of file
    #+begin_src clojure
@@ -351,12 +346,12 @@ CLOSED: [2021-10-02 sob 12:29]
    - [ ] plugin manager
    - [ ] dot jarman
    - [ ] data.clj in managment
-** DONE [#3] Register licence mechanics                             :@Serhii:
+** DONE Register licence mechanics                                  :@Serhii:
    CLOSED: [2021-11-07 Sun 16:49]
    - [X] Create =register-licence-file= functionality
    - [X] decrypt/uncrypt by system RSA keys
    - [X] Checking login user in system, limited by the licence
-** DONE [#3] /Feature/. Rewrite plugin system                         :@Serhii:
+** DONE /Feature/. Rewrite plugin system                              :@Serhii:
    CLOSED: [2021-11-07 Sun 16:49] DEADLINE: <2021-09-09 Thu>
    - [X] Add ~:deps~ key into ~package~
      - [X] create package compiling sequence

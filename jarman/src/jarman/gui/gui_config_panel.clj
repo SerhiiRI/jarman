@@ -186,7 +186,6 @@
    (filter some?
     [(gcomp/button-expand (gtool/get-lang-header :select-language) (language-selection-panel)
                           :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/TRANSLATE)))
-     
      (session/when-permission
       :admin-update
       (gcomp/button-expand (gtool/get-lang-header :licenses)

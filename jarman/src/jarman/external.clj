@@ -18,6 +18,8 @@
     `lang`"
   [plugin & translation-path]
   (apply jarman.config.conf-language/plang plugin translation-path))
+;; (def plang-ui (fn [plugin & lang-path] (apply plang % :ui lang-path )))
+;; (def plang-alerts (fn [plugin & lang-path] (apply plang % :ui :alerts lang-path )))
 
 (defn lang
   "Documentation

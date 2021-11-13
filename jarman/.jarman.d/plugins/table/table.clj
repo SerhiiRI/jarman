@@ -25,7 +25,6 @@
    [jarman.gui.gui-migrid     :as gmg]
    [jarman.gui.gui-calendar   :as calendar]
    [jarman.gui.popup :as popup]
-   [jarman.logic.composite-components :as lcomp]
    [jarman.logic.state :as state]
    [jarman.logic.metadata :as mt]
    [jarman.logic.document-manager :as doc]
@@ -313,7 +312,7 @@
     (group-clms {:seal.loc_file #jarman.logic.composite_components.File{:file-name \"test.txt\", :file \"/home/julia/test.txt\"}....)
     => {true [[:seal.loc_file #jarman.logic...]], nil [[:sea;.seal_number 2324][:seal.site #jarman...]]}
   "
-  (group-by (fn [[k v]] (lcomp/isComponentFiles? v)) data-model))
+  (group-by (fn [[k v]] (mt/isComponentFiles? v)) data-model))
 
 (defn update-comp-col [state! id model-data]
   "Description:
@@ -383,7 +382,7 @@
         to-delete       {column-name
                          (column-name table-model)}]
     (println "Run Delete:" ((:delete plugin-toolkit) to-delete))
-    (doall (map (fn [[k v]] (if (lcomp/isComponentFiles? v) (.remove-data v table_name))) table-model))
+    (doall (map (fn [[k v]] (if (mt/isComponentFiles? v) (.remove-data v table_name))) table-model))
     (dispatch! {:action :refresh-state :value true})
     ((:table-render (state!)))))
 
@@ -490,7 +489,7 @@
         val             (cond
                           (not (nil? (key (:model (state!))))) (key (:model (state!)))
                           (not (nil? (key (:model-changes (state!))))) (key (:model-changes (state!))))
-        val             (if (lcomp/isComponent? val)
+        val             (if (mt/isComponent? val)
                           val (str val))
         func            (fn [e]
                           (dispatch!

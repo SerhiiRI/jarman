@@ -164,7 +164,8 @@
      (throw (ex-info "Cannot build `User` object in session. Select on user-table return nil"
                      {:type :incorrect-login-or-password
                       :message-head [:header :user]
-                      :message-body [:alerts :incorrect-login-or-pass]})))))
+                      :message-body [:alerts :incorrect-login-or-pass]
+                      :attr {:connection (c/connection-get) :login login :password password}})))))
 
 (defn build-license []
   (try (where
@@ -198,6 +199,7 @@
              {:type :not-valid-connection
               :message-head [:header :database]
               :message-body [:alerts :configuration-incorrect]
+              :attr {:connection connection :login login :password password}
               ;; :message-body [:license :bad-connection-settings]
               }))
   (if-not (c/test-connection connection)
@@ -205,6 +207,7 @@
              {:type :no-connection-to-database
               :message-head [:header :database]
               :message-body [:alerts :connection-problem]
+              :attr {:connection connection :login login :password password}
               ;; :message-body [:license :cannot-connect-db]
               }))
   (c/connection-set connection)

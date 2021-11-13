@@ -886,9 +886,13 @@
 
     (if (state/state :debug-mode)
       (timelife 0.2 (fn []
-                    (swap! state #(assoc-in % [:login]  "admin"))
-                    (swap! state #(assoc-in % [:passwd] "admin"))
-                    (try-to-login state! dispatch! login-frame :jarman--trashpanda-team_ddns_net--3307))))
+                      (dosync
+                       (swap! state
+                              (fn [state-m]
+                                (-> state-m
+                                    (assoc-in [:login] "admin")
+                                    (assoc-in [:passwd] "admin")))))
+                      (try-to-login state! dispatch! login-frame :jarman--trashpanda-team_ddns_net--3307))))
     
     (if (= res-validation nil)
       (-> (doto login-frame (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))))

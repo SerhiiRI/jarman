@@ -46,13 +46,15 @@
 
 * Frontend
   
-** TODO /Bug./ Expand panels
+** TODO /Bug/. Service Plugin                                          :@Aleks:
+   replace /gtool/ on /external.clj/ 
+** TOREVIEW /Bug./ Expand panels
    After expand panels initilized, icon ~+~ symbol
    but ~-~ are rendered instead.
 
    [[file:./issues/agenda/bug_001.png]]
    
-** TODO [#2] /Rewrite/. DB Visualizer editing [0/3]            :@Aleks:@Serhii:
+** TODO [#1] /Rewrite/. DB Visualizer editing [0/3]            :@Aleks:@Serhii:
    DEADLINE: <2021-10-13 Wed>
    Old fns must be rewrite to new standards:
    1. [ ] Cannot edit table =view=

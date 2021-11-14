@@ -6,16 +6,21 @@
             [seesaw.border :as b]
             [seesaw.util   :as u]
             [seesaw.rsyntax]
-            [jarman.gui.gui-style         :as gs]
-            [jarman.gui.gui-components    :as gcomp]
-            [jarman.gui.gui-style         :as gs]
-            [jarman.faces                 :as face]
-            [jarman.gui.gui-views-service :as gvs]
-            [jarman.logic.state           :as state]
-            [jarman.logic.metadata        :as mt]
-            [jarman.gui.gui-tools         :as gtool]
-            [jarman.gui.gui-migrid        :as gmg]
-            [jarman.tools.lang            :refer :all])
+            [jarman.gui.gui-style          :as gs]
+            [jarman.gui.gui-components     :as gcomp]
+            [jarman.gui.gui-style          :as gs]
+            [jarman.gui.gui-views-service  :as gvs]
+            [jarman.gui.gui-tools          :as gtool]
+            [jarman.gui.gui-migrid         :as gmg]
+            [jarman.gui.gui-alerts-service :as gas]
+            [jarman.faces                  :as face]
+            [jarman.tools.lang             :refer :all]
+            [jarman.tools.org              :refer :all]
+            [jarman.logic.state            :as state]
+            [jarman.logic.metadata         :as mt]
+            [jarman.logic.sql-tool  :refer [select! update! insert!]]
+            [jarman.logic.connection   :as connection]
+            [jarman.logic.view-manager :as view-manager])
     (:import
      (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
@@ -224,7 +229,6 @@
                         [(gcomp/scrollbox code)]
                         [info-label]])]
     (gtool/set-focus code)
-    
     editor))
 
 (defn popup-metadata-editor
@@ -250,15 +254,40 @@
                                                  :text "Can not convert to map. Syntax error."))))})}))
   (gvs/reload-view))
 
+(defn popup-view-editor
+  "Description:
+     Prepared popup window with code editor for defview.
+   Example:
+     (popup-defview-editor \"user\")"
+  [table-str]
+  (let [dview (view-manager/view-get table-str)]
+    (gcomp/popup-window
+     {:window-title (str "Defview manual table editor: " )
+      :view (code-editor
+             {:val (with-out-str
+                     (clojure.pprint/pprint
+                      (read-string (binding [jarman.logic.sql-tool/*debug* false]
+                                     (:view (view-get table-str)))))) ;;(:view dview)
+              :dispose true
+              :save-fn (fn [state]
+                         (try
+                           (view-manager/view-set (assoc dview :view (c/config (:code state) :text)))
+                           (c/config! (:label state) :text "Saved!")
+                           (catch Exception e (c/config!
+                                               (:label state)
+                                               :text "Can not convert to map. Syntax error."))))})})
+    (gvs/reload-view)))
+
+
 (defn view-metadata-editor
   "Description:
      Prepared component with code editor for selected metadata by table_name as key.
    Example:
-     (view-metadata-editor :user)
-  "
+     (view-metadata-editor :user)"
   [table-keyword]
+  {:pre [(keyword? table-keyword)]}
   (gvs/add-view
-   :view-id (keyword (str "manual-view-code" (name table-keyword)))
+   :view-id (keyword (str "manual-view-metadata-code" (name table-keyword)))
    :title (str "Metadata: " (name table-keyword))
    :render-fn
    (fn [] (let [meta (first (mt/getset! table-keyword))]
@@ -275,6 +304,110 @@
                                                (:label state)
                                                :text "Can not convert to map. Syntax error."))))})))))
 
+
+(defn view-view-editor
+  "Description:
+     Prepared component with code editor for selected view by table_name as key.
+   Example:
+     (view-view-editor :user)"
+  [table-keyword]
+  {:pre [(keyword? table-keyword)]}
+  (if-let [dview (view-manager/view-get (name table-keyword))]
+    (gvs/add-view
+     :view-id (keyword (str "manual-view-view-code" (name table-keyword)))
+     :title (str "View: " (name table-keyword))
+     :render-fn
+     (fn []
+       (code-editor
+        {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
+                :background "#fff"]
+         :title (str "View: " (name table-keyword))
+         :val (with-out-str
+                (clojure.pprint/pprint
+                 (read-string (binding [jarman.logic.sql-tool/*debug* false] (:view dview)))))
+         :save-fn (fn [state]
+                    (try
+                      (view-manager/view-set (assoc dview :view (c/config (:code state) :text)))
+                      ;; (c/config! (:label state) :text "Saved!")
+                      (catch Exception e (c/config!
+                                          (:label state)
+                                          :text "Can not convert to map. Syntax error."))))})))
+    (do
+          (print-line (format "Cannot find Defview for %s" table-keyword))
+          (gas/alert "View" (format "Cannot find Defview for %s" table-keyword) :type :danger :time 8))))
+
+(defn view-view-editor-old
+  "Description:
+     Prepared popup window with code editor for defview.
+   Example:
+     (popup-defview-editor \"user\")
+  "
+  [table-str]
+  (let [dview (view-manager/view-get table-str)]
+    (gvs/add-view
+     :view-id (keyword (str "manual-defview-code" table-str))
+     :title (str "Defview: " table-str)
+     :render-fn
+     (fn [] (code-editor
+             {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
+                     :background "#fff"]
+              :title (str "Defview: " table-str)
+              :val (with-out-str
+                     (clojure.pprint/pprint
+                      (read-string (binding [jarman.logic.sql-tool/*debug* false]
+                                     (:view (view-manager/view-get table-str)))))) ;;(:view dview)
+              :save-fn (fn [state]
+                         (try
+                           (view-manager/view-set (assoc dview :view (c/config (:code state) :text)))
+                           (c/config! (:label state) :text "Saved!")
+                           (catch Exception e (c/config!
+                                               (:label state)
+                                               :text "Can not convert to map. Syntax error."))))})))))
+
+;;(popup-defview-editor "user")
+;; (defn buttons-list--code-editor-defview
+;;   "Description:
+;;      Inject expand button then when pointing id.
+;;    Example:
+;;      (buttons-list--code-editor-defview :#expand-menu-space)
+;;   "
+;;   [plugplace-id]
+;;   (let [table-and-view-coll (db/query
+;;                              (select!
+;;                               {:table_name :view
+;;                                :column [:table_name]}))
+;;         comp (gcomp/button-expand
+;;               "Defviews Editors"
+;;               (doall
+;;                (map
+;;                 (fn [m]
+;;                   (gcomp/button-expand-child
+;;                    (:table_name m)
+;;                    :onClick (fn [e] (view-defview-editor (:table_name m))) ))
+;;                 table-and-view-coll)))]
+;;     (.add (c/select (state/state :app) [:#expand-menu-space]) comp)
+;;     (.revalidate (c/to-root (state/state :app)))))
+
+;; (defn prepare-defview-editors-state
+;;   "Description:
+;;      Prepare state with defview editor fns for view service
+;;      and set to state with :defview-editors key.
+;;      Invoke again to refresh state.
+;;    Example:
+;;      (prepare-defview-editors-state)" []
+;;   (let [table-and-view-coll (db/query
+;;                              (select!
+;;                               {:table_name :view
+;;                                :column [:table_name]}))]
+;;     (doall
+;;      (state/set-state
+;;       :defview-editors
+;;       (into
+;;        {}
+;;        (map
+;;         (fn [m]
+;;           {(keyword (:table_name m)) (fn [e] (view-defview-editor (:table_name m)))})
+;;         table-and-view-coll))))))
 
 
 (defn state-code-area

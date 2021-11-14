@@ -196,7 +196,37 @@
                :fn      (fn [e] (gedit/view-metadata-editor k))}})
            (pullup-metadata-names)))))
 
+;; (pullup-view-names)
+(defn- pullup-view-names
+  "Description:
+     Pull up from DB names of tables as key.
+   Example:
+     (pullup-view-names)
+     ;; => (:documents :profile ...)"
+  []
+  (doall
+   (map (fn [m] (keyword (:table_name m)))
+        (db/query
+         (select!
+          {:table_name :view
+           :column [:table_name]})))))
 
+(defn- view-editors-in-main-menu
+  "Description:
+     Prepare invokers for metadata editors.
+     Compatibility with main menu map.
+   Example:
+     (metadata-editors-in-main-menu)
+     ;; => {\"documents\" {:key ...}}"
+  []
+  (into {}(doall
+          (map
+           (fn [k]
+             {(str (name k))
+              {:key    (str "edit-metadata-" (str (name k)))
+               :action :invoke
+               :fn      (fn [e] (gedit/view-view-editor k))}})
+           (pullup-view-names)))))
 
 
 ;; ┌──────────────────────┐
@@ -260,6 +290,7 @@
     }
 
    "Metadata Editors" (metadata-editors-in-main-menu)
+   "View edit"        (view-editors-in-main-menu)
    
    "Debug Items"
    {"Popup window" {:key        "popup-window"

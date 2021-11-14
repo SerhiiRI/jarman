@@ -16,8 +16,8 @@
    [jarman.config.dot-jarman :refer [dot-jarman-load]]
    ;; --- 
    [jarman.logic.connection :as db]
-   [jarman.gui.gui-editors  :as gedit]
-   [jarman.gui.gui-components :as gcomp]
+   ;; [jarman.gui.gui-editors  :as gedit]
+   ;; [jarman.gui.gui-components :as gcomp
    [jarman.logic.sql-tool :refer [select! update! insert! delete!]]
    [jarman.logic.metadata :as mt]
    [jarman.logic.state :as state]
@@ -340,7 +340,7 @@
                              :view
                              :where [:= :id id-t]
                              :set {:view table-data})))))
-              (+ s 1))
+             (+ s 1))
            (rest data)))))) 0 view-data))
 
 (defn loader-from-db []
@@ -351,13 +351,12 @@
         data (db/query (select! {:table_name :view}))
         sdata (if-not (empty? data)(concat [con req] (map (fn [x] (read-string (:view x))) data)))
         path  "src/jarman/logic/view.clj"]
-    (if-not (empty? data) (do (spit path
-                                  "")
+    (if-not (empty? data) (do (spit path "")
                               (for [s sdata]
                                 (with-open [W (io/writer (io/file path) :append true)]
                                   (.write W (pp-str s))
                                   (.write W env/line-separator)))))))
-
+;; (loader-from-db)
 (defn loader-from-view-clj []
   (let [data 
         (try
@@ -371,8 +370,8 @@
       ;; (if (= (first data) con) data)   TO DO,  this line for check connection (first map in view.clj)
       )))
 
-;;(loader-from-view-clj)
-;; (put-table-view-to-db (loader-from-view-clj (db/connection-get)))
+;; (loader-from-view-clj)
+;; (put-table-view-to-db (loader-from-view-clj))
 
 (defn- load-data-recur [data loaders]
   (if (and (empty? data) (not (empty? loaders)))
@@ -387,11 +386,12 @@
   (fn []
     (global-view-configs-clean)
     (load-data-recur nil loaders)))
- 
 
 (def ^:dynamic *view-loader-chain-fn*
-  (make-loader-chain loader-from-view-clj loader-from-db))
+  ;; (make-loader-chain loader-from-view-clj loader-from-db)
+  (make-loader-chain loader-from-db loader-from-view-clj))
 
+;; (do-view-load)
 (defn do-view-load
   "using in self `*view-loader-chain-fn*`, swapp using
   make-loader chain. deserialize view, and execute every
@@ -406,7 +406,7 @@
                (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))
            (return-structure-tree (deref user-menu))))
 
-(defn- view-get
+(defn view-get
   "Description
     get view from db by table-name
   Example
@@ -416,7 +416,7 @@
   (first (db/query
           (select! {:table_name :view :where [:= :table_name (name table-name)]}))))
 
-(defn- view-set
+(defn view-set
   "Description
     get view-map, write to db, rewrite file view.clj
   Example
@@ -425,27 +425,25 @@
   (let [table-name (:table_name view)
         table-view (:view view)
         id-t       (:id (first (db/query (select! {:table_name :view :where [:= :table_name table-name]}))))]   
-    (if (empty? id-t)
+    (if (nil? id-t)
       (db/exec (insert! {:table_name :view :set {:table_name table-name, :view table-view}}))
       (db/exec (update! {:table_name :view :set {:view table-view} :where [:= :id id-t]}))) ;; TODO: Serhii: Update crashing: Don't know how to create ISeq from: java.math.BigInteger
     ;;(loader-from-db)
     (println "Inserting view: " table-name)))
 
-
-
-(defn- pullup-tables-ids
+(defn- views-table-list
   "Description:
      Pull up from DB names and ids of tables.
    Example:
      (pullup-tables-ids)
      ;; => (:documents :profile ...)"
   []
-  (into {}(doall
-           (map (fn [m] {(keyword (:table_name m)) (:id m)})
-                (db/query
-                 (select!
-                  {:table_name :metadata
-                   :column [:table_name :id]}))))))
+  (into {} (doall
+            (map (fn [m] {(keyword (:table_name m)) (:id m)})
+                 (db/query
+                  (select!
+                   {:table_name :metadata
+                    :column [:table_name :id]}))))))
 
 (defn- move-views-to-db []
   (let [table-views (drop 2 (loader-from-view-clj))]
@@ -454,143 +452,12 @@
            (let [table-map  (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
                  table-name (:name table-map)]
              (view-set {:table_name table-name :view (str table-view) ;; (with-out-str (clojure.pprint/pprint table-view))
-                        })
-             ))
+                        })))
          table-views))))
-
+;; (move-views-to-db)
 ;; (loader-from-db)
-;;(view-set {:id 2, :table_name \"user\", :view \"(defview user (table :name \"user\"......))})
+;; (view-set {:id 2, :table_name \"user\", :view \"(defview user (table :name \"user\"......))})
 
-
-
-(defn popup-defview-editor
-  "Description:
-     Prepared popup window with code editor for defview.
-   Example:
-     (popup-defview-editor \"user\")"
-  [table-str]
-  (let [dview (view-get table-str)]
-      (gcomp/popup-window
-       {:window-title (str "Defview manual table editor: " )
-        :view (gedit/code-editor
-               {:val (with-out-str
-                     (clojure.pprint/pprint
-                      (read-string (binding [jarman.logic.sql-tool/*debug* false]
-                                     (:view (view-get table-str)))))) ;;(:view dview)
-                :dispose true
-                :save-fn (fn [state]
-                           (try
-                             (view-set (assoc dview :view (c/config (:code state) :text)))
-                             (c/config! (:label state) :text "Saved!")
-                             (catch Exception e (c/config!
-                                                 (:label state)
-                                                 :text "Can not convert to map. Syntax error."))))})})))
-
-
-(defn view-defview-editor-old
-  "Description:
-     Prepared popup window with code editor for defview.
-   Example:
-     (popup-defview-editor \"user\")
-  "
-  [table-str]
-  (let [dview (view-get table-str)]
-    (gvs/add-view
-     :view-id (keyword (str "manual-defview-code" table-str))
-     :title (str "Defview: " table-str)
-     :render-fn
-     (fn [] (gedit/code-editor
-             {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
-                     :background "#fff"]
-              :title (str "Defview: " table-str)
-              :val (with-out-str
-                     (clojure.pprint/pprint
-                      (read-string (binding [jarman.logic.sql-tool/*debug* false]
-                                     (:view (view-get table-str)))))) ;;(:view dview)
-              :save-fn (fn [state]
-                         (try
-                           (view-set (assoc dview :view (c/config (:code state) :text)))
-                           (c/config! (:label state) :text "Saved!")
-                           (catch Exception e (c/config!
-                                               (:label state)
-                                               :text "Can not convert to map. Syntax error."))))})))))
-
-;; (view-defview-editor "permission")
-;;(with-out-str (clojure.pprint/pprint (str (read-string (:view (view-get "permission"))))))
-
-(defn view-defview-editor
-  "Description:
-     Prepared popup window with code editor for defview.
-   Example:
-     (popup-defview-editor \"user\")
-  "
-  [table-str]
-  (gvs/add-view
-   :view-id (keyword (str "manual-defview-code" table-str))
-   :title (str "Defview: " table-str)
-   :render-fn
-   (fn [] (gedit/code-editor
-           {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
-                   :background "#fff"]
-            :title (str "Defview: " table-str)
-            :val (with-out-str
-                   (clojure.pprint/pprint
-                    (read-string (binding [jarman.logic.sql-tool/*debug* false]
-                                   (:view (view-get table-str)))))) ;;(:view dview)
-            :save-fn (fn [state]
-                       (try
-                         (view-set {:table_name table-str :view (str (c/config (:code state) :text))})
-                         (c/config! (:label state) :text "Saved!")
-                         (catch Exception e (do (c/config!
-                                                 (:label state)
-                                                 :text "Cannot save.")
-                                                ))))}))))
-;; (view-defview-editor "permission")
-
-;;(popup-defview-editor "user")
-(defn buttons-list--code-editor-defview
-  "Description:
-     Inject expand button then when pointing id.
-   Example:
-     (buttons-list--code-editor-defview :#expand-menu-space)
-  "
-  [plugplace-id]
-  (let [table-and-view-coll (db/query
-                             (select!
-                              {:table_name :view
-                               :column [:table_name]}))
-        comp (gcomp/button-expand
-              "Defviews Editors"
-              (doall
-               (map
-                (fn [m]
-                  (gcomp/button-expand-child
-                   (:table_name m)
-                   :onClick (fn [e] (view-defview-editor (:table_name m))) ))
-                table-and-view-coll)))]
-    (.add (c/select (state/state :app) [:#expand-menu-space]) comp)
-    (.revalidate (c/to-root (state/state :app)))))
-
-(defn prepare-defview-editors-state
-  "Description:
-     Prepare state with defview editor fns for view service
-     and set to state with :defview-editors key.
-     Invoke again to refresh state.
-   Example:
-     (prepare-defview-editors-state)" []
-  (let [table-and-view-coll (db/query
-                             (select!
-                              {:table_name :view
-                               :column [:table_name]}))]
-    (doall
-     (state/set-state
-      :defview-editors
-      (into
-       {}
-       (map
-        (fn [m]
-          {(keyword (:table_name m)) (fn [e] (view-defview-editor (:table_name m)))})
-        table-and-view-coll))))))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; DEBUG SEGMENT ;;;

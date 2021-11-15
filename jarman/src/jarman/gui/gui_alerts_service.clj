@@ -563,9 +563,16 @@
   (warning "Interaction" "Devil robot say:" :s-popup [300 150]
            :expand (fn [] (jarman.gui.gui-components/button-basic "Kill all humans!")))
   (show-alerts-history)
-)
+  )
 
-(defn start-watching [atm]
+
+(defn start-watching-state-alerts
+  "Descriprion:
+     DLC for alerts.
+     If you add to state new alert this watcher invoke it when app will be working.
+   Example:
+     (state/concat-state :state-alerts [[:info \"Header\" \"Body\"]])"
+  [atm]
   (state/set-state :state-alerts [])
   (add-watch atm :state-alerts
              (fn concat-state-fn

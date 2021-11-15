@@ -57,10 +57,16 @@
        ;; => 41
    "
   
-  ([] @atom-state)
+  ([] (deref atom-state))
   ([key] (if (vector? key)
            (get-in @atom-state key)
            (get @atom-state key))))
+
+(defn concat-state
+  "Description:
+     Concat pointed state"
+  [key-k vector-v]
+  (set-state key-k (concat (state key-k) vector-v)))
 
 (defn get-atom []
   atom-state)

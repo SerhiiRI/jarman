@@ -20,7 +20,7 @@
             [jarman.logic.metadata         :as mt]
             [jarman.logic.sql-tool  :refer [select! update! insert!]]
             [jarman.logic.connection   :as connection]
-            [jarman.logic.view-manager :as view-manager])
+            [jarman.logic.view-manager :as vm])
     (:import
      (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
@@ -260,18 +260,18 @@
    Example:
      (popup-defview-editor \"user\")"
   [table-str]
-  (let [dview (view-manager/view-get table-str)]
+  (let [dview (vm/view-get table-str)]
     (gcomp/popup-window
      {:window-title (str "Defview manual table editor: " )
       :view (code-editor
              {:val (with-out-str
                      (clojure.pprint/pprint
                       (read-string (binding [jarman.logic.sql-tool/*debug* false]
-                                     (:view (view-get table-str)))))) ;;(:view dview)
+                                     (:view (vm/view-get table-str)))))) ;;(:view dview)
               :dispose true
               :save-fn (fn [state]
                          (try
-                           (view-manager/view-set (assoc dview :view (c/config (:code state) :text)))
+                           (vm/view-set (assoc dview :view (c/config (:code state) :text)))
                            (c/config! (:label state) :text "Saved!")
                            (catch Exception e (c/config!
                                                (:label state)
@@ -312,7 +312,7 @@
      (view-view-editor :user)"
   [table-keyword]
   {:pre [(keyword? table-keyword)]}
-  (if-let [dview (view-manager/view-get (name table-keyword))]
+  (if-let [dview (vm/view-get (name table-keyword))]
     (gvs/add-view
      :view-id (keyword (str "manual-view-view-code" (name table-keyword)))
      :title (str "View: " (name table-keyword))
@@ -327,7 +327,7 @@
                  (read-string (binding [jarman.logic.sql-tool/*debug* false] (:view dview)))))
          :save-fn (fn [state]
                     (try
-                      (view-manager/view-set (assoc dview :view (c/config (:code state) :text)))
+                      (vm/view-set (assoc dview :view (c/config (:code state) :text)))
                       ;; (c/config! (:label state) :text "Saved!")
                       (catch Exception e (c/config!
                                           (:label state)
@@ -343,7 +343,7 @@
      (popup-defview-editor \"user\")
   "
   [table-str]
-  (let [dview (view-manager/view-get table-str)]
+  (let [dview (vm/view-get table-str)]
     (gvs/add-view
      :view-id (keyword (str "manual-defview-code" table-str))
      :title (str "Defview: " table-str)
@@ -355,10 +355,10 @@
               :val (with-out-str
                      (clojure.pprint/pprint
                       (read-string (binding [jarman.logic.sql-tool/*debug* false]
-                                     (:view (view-manager/view-get table-str)))))) ;;(:view dview)
+                                     (:view (vm/view-get table-str)))))) ;;(:view dview)
               :save-fn (fn [state]
                          (try
-                           (view-manager/view-set (assoc dview :view (c/config (:code state) :text)))
+                           (vm/view-set (assoc dview :view (c/config (:code state) :text)))
                            (c/config! (:label state) :text "Saved!")
                            (catch Exception e (c/config!
                                                (:label state)

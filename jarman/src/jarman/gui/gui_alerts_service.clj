@@ -16,7 +16,9 @@
             [jarman.faces                     :as face]
             [jarman.resource-lib.icon-library :as icon]
             [jarman.gui.gui-migrid            :as gmg]
-            [jarman.tools.lang                :refer :all]))
+            [jarman.tools.lang                :refer :all]
+            [clojure.pprint                   :refer [cl-format]]
+            [jarman.tools.org :refer :all]))
 
 ;; ┌─────────────────┐
 ;; │                 │
@@ -477,3 +479,110 @@
  (history-in-popup)
  (:alerts-storage (state!))
  )
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;  Interactions base
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn info
+  "Description:
+    Wraper.
+    Invoke alert box on Jarman."
+  [header body
+   & {:keys [type time s-popup actions expand]
+      :or   {type :alert
+             time 5
+             s-popup [300 320]
+             actions []
+             expand  nil}}]
+  (print-header
+   "Ivoke info frame"
+   (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions))
+   (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
+
+(defn warning
+  "Description:
+    Wraper.
+    Invoke alert box on Jarman."
+  [header body
+   & {:keys [type time s-popup actions expand]
+      :or   {type :warning
+             time 5
+             s-popup [300 320]
+             actions []
+             expand  nil}}]
+  (print-header
+   "Ivoke warning frame"
+   (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
+  (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
+
+(defn danger
+  "Description:
+    Wraper.
+    Invoke alert box on Jarman."
+  [header body
+   & {:keys [type time s-popup actions expand]
+      :or   {type :danger
+             time 5
+             s-popup [300 320]
+             actions []
+             expand  nil}}]
+  (print-header
+   "Ivoke danger frame"
+   (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
+  (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
+
+
+(defn success
+  "Description:
+    Wraper.
+    Invoke alert box on Jarman."
+  [header body
+   & {:keys [type time s-popup actions expand]
+      :or   {type :success
+             time 5
+             s-popup [300 320]
+             actions []
+             expand  nil}}]
+  (print-header
+   "Ivoke success frame"
+   (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
+  (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
+
+
+;; Using alerts
+(comment
+  (info    "Test 1" "Info box")
+  (warning "Test 2" "Warning box")
+  (danger  "Test 3" "Danger box")
+  (success "Test 4" "Success box")
+  (warning "Interaction" "Devil robot say:" :s-popup [300 150]
+           :expand (fn [] (jarman.gui.gui-components/button-basic "Kill all humans!")))
+  (show-alerts-history)
+)
+
+(defn start-watching [atm]
+  (state/set-state :state-alerts [])
+  (add-watch atm :state-alerts
+             (fn concat-state-fn
+               [id-key state old-m new-m]
+               (let [old-count (count (:state-alerts old-m))
+                     new-count (count (:state-alerts new-m))]
+                 (if-not (= old-count new-count)
+                   (if (> new-count 0)
+                     (state/set-state :state-alerts [])
+                     (doall
+                      (map
+                       (fn [[typ head body]]
+                         (println "\n" typ head body)
+                         (try
+                           (cond (= typ :success) (success head body)
+                                 (= typ :warning) (warning head body)
+                                 (= typ :danger)  (danger  head body)
+                                 :else            (info    head body))
+                           (catch Exception e (str "caught exception: " (.getMessage e)))))
+                       (:state-alerts new-m)))))))))

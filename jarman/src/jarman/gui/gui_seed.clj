@@ -23,8 +23,6 @@
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
 
-(def changes-service (atom (cs/new-changes-service)))
-
 (state/set-state :atom-app-size (atom [1200 700]))
 (state/set-state :atom-app-resize-direction (atom [1 1]))
 (state/set-state :app nil)

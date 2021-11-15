@@ -23,10 +23,7 @@
              s-popup [300 320]
              actions []
              expand  nil}}]
-  (print-header
-   "Ivoke info frame"
-   (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions))
-   (gas/alert header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
+  (gas/alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
 
 (defn warning
   "Description:
@@ -39,9 +36,6 @@
              s-popup [300 320]
              actions []
              expand  nil}}]
-  (print-header
-   "Ivoke warning frame"
-   (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
   (gas/alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
 
 (defn danger
@@ -72,10 +66,8 @@
              s-popup [300 320]
              actions []
              expand  nil}}]
-  (print-header
-   "Ivoke success frame"
-   (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
   (gas/alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
+
 
 (defn delay-alert
   [header body
@@ -91,6 +83,7 @@
                   :type    type
                   :time    time
                   :actions actions))
+
 
 (defn show-delay-alerts [] (gas/load-temp-alerts))
 

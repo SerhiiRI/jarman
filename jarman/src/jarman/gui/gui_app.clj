@@ -150,7 +150,7 @@
 
 (defn load-plugins-to-main-menu []
   (let [plugins-m (vmg/do-view-load)]
-    (vmg/prepare-defview-editors-state)
+    ;;(vmg/prepare-defview-editors-state)
     (menu/add-to-main-tree
      (concat
       (state/state [:main-menu])
@@ -337,7 +337,10 @@
   (umg/check-update :silent)
   (print-header
    "Check license"
-   (gui-events/gui-check-license)))
+   (gui-events/gui-check-license))
+  (print-header
+   "Start watching state alerts"
+   (gas/start-watching (state/get-atom))))
 
 
 ;; ┌─────────────┐

@@ -340,7 +340,7 @@
    (gui-events/gui-check-license))
   (print-header
    "Start watching state alerts"
-   (gas/start-watching (state/get-atom))))
+   (gas/start-watching-state-alerts (state/get-atom))))
 
 
 ;; ┌─────────────┐

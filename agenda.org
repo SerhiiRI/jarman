@@ -48,20 +48,21 @@
   
 ** TODO /Bug/. Service Plugin                                          :@Aleks:
    replace /gtool/ on /external.clj/ 
-** TODO [#1] /Rewrite/. DB Visualizer editing [0/3]            :@Aleks:@Serhii:
+** TODO [#1] /Rewrite/. DB Visualizer editing [2/3]            :@Aleks:@Serhii:
    DEADLINE: <2021-10-13 Wed>
    Old fns must be rewrite to new standards:
-   1. [ ] Cannot edit table =view=
+   1. [X] Cannot edit table view
+   3. [X] Cannot edit metadata of table 
    2. [ ] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
-   3. [ ] Cannot edit metadata of table 
 ** TODO [#3] /Feature/. Update Manager [1/2]                           :@Aleks:
    DEADLINE: <2021-10-13 śr.>
    - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [ ] Show popup with message need hard restart
 ** TODO [#3] /Feature/. On exit event [0/1]                    :@Aleks:@Serhii:
-   - [ ] Create event when close 
+   - [ ] Create event when close [1/3]
      - [ ] Remove suuid /:@Serhii:/
      - [ ] Autoclose log stream's /:@Serhii:/
+     - [X] Override window events
 ** PLANNED Feature. Frontend upgrade [0/4]                           :@Aleks:
 *** Global shortcut (inside state) and focus pointer
     - [ ] Create storage for key-binding and fns to invoke. Functions should be from interaction.clj. Some like {~:C-r_s~ soft-restart ~:C-s~ save-changes}
@@ -168,7 +169,7 @@
     - [X] Julia call it *insert-space*, is section where we adding new service contract. Rewrite whole panel, but keep logic as we create before.
     - [X] After you click on one month, you can edit all service contract month payments. You can edit, only if month wasn't payed. Rewrite Julia view, on your implementation. I think better be when all those month fields be in one line. ~You can pay for single subcontact too. One by one.~
     - [X] Prices are updated when state with checkboxes (atom :subcontracts-m) will be changed. So we have refresh checkboxes and prices in runtime.
-    - [ ] Added few tests.
+    - [X] Added few tests.
 *** DONE Table.clj [3/4]                                             :@Aleks:
     CLOSED: [2021-11-07 Sun 16:45]
     - [X] remove 1pixel black border for right table.

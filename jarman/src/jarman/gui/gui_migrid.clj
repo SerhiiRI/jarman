@@ -219,3 +219,25 @@
 
 ;; (migrid-demo-2)
 
+
+;; Override window listener
+
+;; (import java.awt.event.WindowAdapter)
+;; (import java.awt.event.WindowEvent)
+
+;; (def wc (proxy [java.awt.event.WindowListener] []
+;;           (windowClosing 
+;;             ([^WindowEvent arg0] (println "YEY")))))
+
+;; (def frame (doto (seesaw.core/frame
+;;                :title "On Close Event"
+;;                :minimum-size [500 :by 150]
+;;                :size [500 :by 500]
+;;                :content (c/label :text "DUPA"))
+        
+;;                 (.setLocationRelativeTo nil) c/pack! c/show!))
+
+;; (.addWindowListener frame wc)
+
+;; (migrid-demo-3)
+

@@ -20,7 +20,9 @@
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
             )
   (:import javax.swing.JLayeredPane
-           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
+           (java.awt.event WindowAdapter)
+           (java.awt.event WindowEvent)))
 
 
 (state/set-state :atom-app-size (atom [1200 700]))
@@ -49,35 +51,62 @@
         JLP))))
 
 
+(defn OverridedWindowListener
+  "Description:
+     Actions on window events."
+  [& {:keys [opened closing closed activated deactivated iconified deiconified]
+      :or {opened [] closing [] closed [] activated [] deactivated [] iconified [] deiconified []}}]
+  (proxy [java.awt.event.WindowListener] []
+    (windowOpened  ([^WindowEvent arg0] (do (doall (map #(%) opened))
+                                            (doall (map #(%) (rift (state/state :opened)  []))))))
+    (windowClosing ([^WindowEvent arg0] (do (doall (map #(%) closing))
+                                            (doall (map #(%) (rift (state/state :closing) []))))))
+    (windowClosed  ([^WindowEvent arg0] (do (doall (map #(%) closed))
+                                            (doall (map #(%) (rift (state/state :closed)  []))))))
+    (windowActivated   ([^WindowEvent arg0] (do (doall (map #(%) activated))
+                                                (doall (map #(%) (rift (state/state :activated)   []))))))
+    (windowDeactivated ([^WindowEvent arg0] (do (doall (map #(%) deactivated))
+                                                (doall (map #(%) (rift (state/state :deactivated) []))))))
+    (windowIconified   ([^WindowEvent arg0] (do (doall (map #(%) iconified))
+                                                (doall (map #(%) (rift (state/state :iconified)   []))))))
+    (windowDeiconified ([^WindowEvent arg0] (do (doall (map #(%) deiconified))
+                                                (doall (map #(%) (rift (state/state :deiconified) []))))))
+    ))
+
+;; (state/concat-state :activated [(fn [] (println "Activated"))])
+;; (state/state :activated)
+
 (defn- new-frame
   [title items size undecorated?]
-  (seesaw.core/frame
-   :title title
-   :resizable? true
-   :undecorated? undecorated?
-   :size [(first size) :by (second size)]
-   :minimum-size [600 :by 400]
-   :content (state/state :app)
-   ;;    :on-close :exit
-   :listen [:component-resized
-            (fn [e]
-              ;;  (println e)
-              (let [w (.getWidth (.getSize (.getContentPane (to-root e))))
-                    h (.getHeight (.getSize (.getContentPane (to-root e))))
-                    [oldw oldh] @(state/state :atom-app-size)]
-                ;; Resize direction
-                (reset! (state/state :atom-app-resize-direction) [(if (<= oldw w) 1 -1) (if (<= oldh h) 1 -1)])
-                ;; Frame size
-                (reset! (state/state :atom-app-size) [w h])
-                ;; Extended on resize
-                (doall (map (fn [[k func]]
-                              (try
-                                (func)
-                                (catch Exception e
-                                  (do ;;(println "cannot run " k)
-                                      (state/set-state :on-frame-resize-fns-v (dissoc (state/state :on-frame-resize-fns-v) k))))))
-                            (state/state :on-frame-resize-fns-v))))
-              (.revalidate (to-widget e)))]))
+  (let [nframe (seesaw.core/frame
+                :title title
+                :resizable? true
+                :undecorated? undecorated?
+                :size [(first size) :by (second size)]
+                :minimum-size [600 :by 400]
+                :content (state/state :app)
+                ;;    :on-close :exit
+                :listen [:component-resized
+                         (fn [e]
+                           ;;  (println e)
+                           (let [w (.getWidth (.getSize (.getContentPane (to-root e))))
+                                 h (.getHeight (.getSize (.getContentPane (to-root e))))
+                                 [oldw oldh] @(state/state :atom-app-size)]
+                             ;; Resize direction
+                             (reset! (state/state :atom-app-resize-direction) [(if (<= oldw w) 1 -1) (if (<= oldh h) 1 -1)])
+                             ;; Frame size
+                             (reset! (state/state :atom-app-size) [w h])
+                             ;; Extended on resize
+                             (doall (map (fn [[k func]]
+                                           (try
+                                             (func)
+                                             (catch Exception e
+                                               (do ;;(println "cannot run " k)
+                                                 (state/set-state :on-frame-resize-fns-v (dissoc (state/state :on-frame-resize-fns-v) k))))))
+                                         (state/state :on-frame-resize-fns-v))))
+                           (.revalidate (to-widget e)))])]
+    (.addWindowListener nframe (OverridedWindowListener :closing [(fn [] (println "\nClosing Override") (state/set-state :soft-restart nil) (.dispose nframe))]))
+    nframe))
 
 (def build
   (fn [& {:keys [title

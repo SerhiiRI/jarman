@@ -348,28 +348,36 @@
                     :dbtype :user :password
                     :useUnicode :characterEncoding)
         req (list 'in-ns (quote (quote jarman.logic.view-manager)))
-        data (db/query (select! {:table_name :view}))
-        sdata (if-not (empty? data)(concat [con req] (map (fn [x] (read-string (:view x))) data)))
+        data (map (fn [x] (read-string (:view x))) (db/query (select! {:table_name :view}))) 
+        sdata (if-not (empty? data) (concat [con req] data))
         path  "src/jarman/logic/view.clj"]
-    (if-not (empty? data) (do (spit path "")
-                              (for [s sdata]
-                                (with-open [W (io/writer (io/file path) :append true)]
-                                  (.write W (pp-str s))
-                                  (.write W env/line-separator)))))))
+    (if-not (empty? data)
+      (do (spit path "")
+          (with-open [W (io/writer (io/file path) :append true)]
+            (doall
+             (for [s sdata]
+               (do (.write W (pp-str s))
+                   (.write W env/line-separator)))))))
+    data))
+
 ;; (loader-from-db)
 (defn loader-from-view-clj []
   (let [data 
         (try
           (read-seq-from-file  "src/jarman/logic/view.clj")
           (catch Exception e (print-line (str "caught exception: file not find" (.toString e)))))
-        con (dissoc (db/connection-get)
-                    :dbtype :user :password
-                    :useUnicode :characterEncoding)]
-    (if-not (empty? data)
-      data
-      ;; (if (= (first data) con) data)   TO DO,  this line for check connection (first map in view.clj)
-      )))
+        con-guard (first data)
+        con-data  (dissoc (db/connection-get)
+                          :dbtype :user :password
+                          :useUnicode :characterEncoding)]
+    (assert (= con-guard con-data)
+            (format "Error! View.clj si not related to connected db. guard(%s), connected database(%s)"
+                    (string/join ", " (->> (vals con-guard) (map pr-str)))
+                    (string/join ", " (->> (vals  con-data) (map pr-str)))))
+    (drop 2 data)))
 
+
+;; (loader-from-db)
 ;; (loader-from-view-clj)
 ;; (put-table-view-to-db (loader-from-view-clj))
 
@@ -389,7 +397,11 @@
 
 (def ^:dynamic *view-loader-chain-fn*
   ;; (make-loader-chain loader-from-view-clj loader-from-db)
-  (make-loader-chain loader-from-db loader-from-view-clj))
+  (make-loader-chain loader-from-view-clj loader-from-db))
+
+(binding [*view-loader-chain-fn* (make-loader-chain loader-from-db loader-from-view-clj)
+          *view-loader-chain-fn* (make-loader-chain loader-from-view-clj loader-from-db)]
+ (do-view-load))
 
 ;; (do-view-load)
 (defn do-view-load
@@ -404,10 +416,19 @@
                                 <br><br><b>Module:</b> view-manager
                                     <br><b>Fn:</b> do-view-load"])
              (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
-               (doall (map (fn [x] (eval x)) (subvec (vec data) 2)))))
+               (doall (for [defview-sexpression data]
+                        (try (eval defview-sexpression)
+                             (catch Exception e
+                               (throw
+                                (ex-info (format "Failure compiling (defview `%s`)" (second defview-sexpression))
+                                         {:internal-message (.getMessage e)
+                                          :internal-stacktrace (clojure.stacktrace/print-stack-trace e 20)}))))))))
            (return-structure-tree (deref user-menu))))
 
 ;; (state/set-state :alerts (concat (state/state :alerts) [[:alert "a" "b"]]))
+
+(defn view-clean []
+  (db/exec (delete! {:table_name :view})))
 
 (defn view-get
   "Description
@@ -450,13 +471,17 @@
 
 (defn- move-views-to-db []
   (let [table-views (drop 2 (loader-from-view-clj))]
-   (doall
-    (map (fn [table-view]
-           (let [table-map  (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
-                 table-name (:name table-map)]
-             (view-set {:table_name table-name :view (str table-view) ;; (with-out-str (clojure.pprint/pprint table-view))
-                        })))
-         table-views))))
+    (assert
+     (every? #(= 'defview (first %)) table-views)
+     "Everything(omiting connection map and `in-ns`) in view.clj MUST be only `defview`")
+    (view-clean)
+    (doall
+     (map (fn [table-view]
+            (let [table-map  (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
+                  table-name (:name table-map)]
+              (view-set {:table_name table-name :view (str table-view) ;; (with-out-str (clojure.pprint/pprint table-view))
+                         })))
+          table-views))))
 ;; (move-views-to-db)
 ;; (loader-from-db)
 ;; (view-set {:id 2, :table_name \"user\", :view \"(defview user (table :name \"user\"......))})

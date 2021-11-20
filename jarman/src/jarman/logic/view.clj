@@ -101,86 +101,6 @@
     :permission.configuration]}))
 
 (defview
- service_contract
- (table
-  :id
-  :service_contract
-  :name
-  "service_contract"
-  :plug-place
-  [:#tables-view-plugin]
-  :tables
-  [:service_contract :enterprise]
-  :view-columns
-  [:service_contract.id_enterprise
-   :service_contract.contract_start_term
-   :service_contract.contract_end_term]
-  :model-insert
-  [:service_contract.id_enterprise
-   :service_contract.contract_start_term
-   :service_contract.contract_end_term]
-  :active-buttons
-  [:insert :update :delete :clear :changes]
-  :permission
-  :ekka-all
-  :dialog
-  {:service_contract.id_enterprise
-   [:enterprise :dialog-table :enterprise-table]}
-  :actions
-  []
-  :buttons
-  []
-  :query
-  {:table_name :service_contract,
-   :inner-join [:service_contract->enterprise],
-   :column
-   [:#as_is
-    :service_contract.id
-    :service_contract.id_enterprise
-    :service_contract.contract_start_term
-    :service_contract.contract_end_term
-    :enterprise.id
-    :enterprise.ssreou
-    :enterprise.ownership_form
-    :enterprise.vat_certificate
-    :enterprise.individual_tax_number
-    :enterprise.director
-    :enterprise.accountant
-    :enterprise.legal_address
-    :enterprise.physical_address
-    :enterprise.contacts_information]})
- (dialog-table
-  :id
-  :service_contract-table
-  :name
-  "service_contract dialog"
-  :tables
-  [:service_contract :enterprise]
-  :view-columns
-  [:service_contract.id_enterprise
-   :service_contract.contract_start_term
-   :service_contract.contract_end_term]
-  :query
-  {:table_name :service_contract,
-   :inner-join [:service_contract->enterprise],
-   :column
-   [:#as_is
-    :service_contract.id
-    :service_contract.id_enterprise
-    :service_contract.contract_start_term
-    :service_contract.contract_end_term
-    :enterprise.id
-    :enterprise.ssreou
-    :enterprise.ownership_form
-    :enterprise.vat_certificate
-    :enterprise.individual_tax_number
-    :enterprise.director
-    :enterprise.accountant
-    :enterprise.legal_address
-    :enterprise.physical_address
-    :enterprise.contacts_information]}))
-
-(defview
  cache_register
  (table
   :id
@@ -1118,6 +1038,95 @@
     :seal.file
     :seal.ftp_file_name
     :seal.ftp_file_path]}))
+
+(defview
+ service_contract
+ (service-period
+  :id
+  :service_contract
+  :permission
+  :ekka-all
+  :name
+  "service_contract"
+  :plug-place
+  [:#tables-view-plugin])
+ (table
+  :id
+  :service_contract
+  :name
+  "service_contract"
+  :plug-place
+  [:#tables-view-plugin]
+  :tables
+  [:service_contract :enterprise]
+  :view-columns
+  [:service_contract.id_enterprise
+   :service_contract.contract_start_term
+   :service_contract.contract_end_term]
+  :model-insert
+  [:service_contract.id_enterprise
+   :service_contract.contract_start_term
+   :service_contract.contract_end_term]
+  :active-buttons
+  [:insert :update :delete :clear :changes]
+  :permission
+  :ekka-all
+  :dialog
+  {:service_contract.id_enterprise
+   [:enterprise :dialog-table :enterprise-table]}
+  :actions
+  []
+  :buttons
+  []
+  :query
+  {:table_name :service_contract,
+   :inner-join [:service_contract->enterprise],
+   :column
+   [:#as_is
+    :service_contract.id
+    :service_contract.id_enterprise
+    :service_contract.contract_start_term
+    :service_contract.contract_end_term
+    :enterprise.id
+    :enterprise.ssreou
+    :enterprise.ownership_form
+    :enterprise.vat_certificate
+    :enterprise.individual_tax_number
+    :enterprise.director
+    :enterprise.accountant
+    :enterprise.legal_address
+    :enterprise.physical_address
+    :enterprise.contacts_information]})
+ (dialog-table
+  :id
+  :service_contract-table
+  :name
+  "service_contract dialog"
+  :tables
+  [:service_contract :enterprise]
+  :view-columns
+  [:service_contract.id_enterprise
+   :service_contract.contract_start_term
+   :service_contract.contract_end_term]
+  :query
+  {:table_name :service_contract,
+   :inner-join [:service_contract->enterprise],
+   :column
+   [:#as_is
+    :service_contract.id
+    :service_contract.id_enterprise
+    :service_contract.contract_start_term
+    :service_contract.contract_end_term
+    :enterprise.id
+    :enterprise.ssreou
+    :enterprise.ownership_form
+    :enterprise.vat_certificate
+    :enterprise.individual_tax_number
+    :enterprise.director
+    :enterprise.accountant
+    :enterprise.legal_address
+    :enterprise.physical_address
+    :enterprise.contacts_information]}))
 
 (defview
  service_contract_month

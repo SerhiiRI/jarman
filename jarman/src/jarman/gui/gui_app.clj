@@ -25,7 +25,7 @@
    ;; logic
    [jarman.logic.state              :as state]
    [jarman.logic.session            :as session]
-   [jarman.logic.view-manager       :as vmg]
+   [jarman.logic.view-manager       :as view-manager]
    [jarman.plugin.extension-manager :refer [do-load-extensions]]
    [jarman.plugin.plugin            :refer [do-load-theme theme-selected]]
    [jarman.config.vars              :refer [setq print-list-not-loaded]]
@@ -149,12 +149,17 @@
 
 
 (defn load-plugins-to-main-menu []
-  (let [plugins-m (vmg/do-view-load)]
-    ;;(vmg/prepare-defview-editors-state)
+  (wlet
     (menu/add-to-main-tree
      (concat
       (state/state [:main-menu])
-      (menu/bulid-expand-by-map plugins-m)))))
+      (menu/bulid-expand-by-map view-plugins-menumap)))
+    ((view-plugins-menumap
+      (binding [view-manager/*view-loader-chain-fn*
+                (view-manager/make-loader-chain
+                 view-manager/loader-from-db
+                 view-manager/loader-from-view-clj)]
+        (view-manager/do-view-load))))))
 
 
 ;; ┌─────────────┐

@@ -59,6 +59,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; CONFIG PROCESSOR ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn- sort-parameters-plugins
   "Description
     this func get list of data with different types,
@@ -159,28 +160,6 @@
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; DEBUG SEGMENT ;;; 
 ;;;;;;;;;;;;;;;;;;;;;
-
-;; (defmacro defview-debug [table-name & body]
-;;   (let [cfg-list (defview-prepare-config table-name body)]
-;;     `(list
-;;       ~@(for [{:keys [plugin-name] :as cfg} cfg-list]
-;;           (let [plugin-toolkit-pipeline `~(symbol (format "jarman.plugins.%s/%s-toolkit" plugin-name plugin-name))
-;;                 plugin-test-spec        `~(symbol (format "jarman.plugins.%s/%s-spec-test" plugin-name plugin-name))]
-;;             `(do (~plugin-test-spec ~cfg)
-;;                  {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)}))))))
-
-;; (defmacro defview-debug-map [table-name & body]
-;;   (let [cfg-list (defview-prepare-config table-name body)]
-;;     `(do
-;;        ~(reduce
-;;         (fn [cfg-acc {:keys [plugin-name plugin-config-path] :as cfg}]
-;;           (let [plugin-toolkit-pipeline `~(symbol (format "jarman.plugins.%s/%s-toolkit" plugin-name plugin-name))
-;;                 plugin-test-spec  (eval `~(symbol (format "jarman.plugins.%s/%s-spec-test" plugin-name plugin-name)))]
-;;              (plugin-test-spec cfg)
-;;             `(assoc-in ~cfg-acc [~@plugin-config-path] {:config ~cfg :toolkit (~plugin-toolkit-pipeline ~cfg)})))
-;;         {} cfg-list))))
-
-;;; TEST SEGMENT ;;;
 
 (comment
   (defview permission
@@ -312,36 +291,46 @@
     (recur-walk-throw m f [])
     @result-vec))
 
-(defn- create-header
-  ([item] {:pre [(string? item)]} item)
-  ([item icon] (cond-> {}
-                 item (assoc :item item)
-                 icon (assoc :icon icon))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; loader chain for `defview` ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- put-table-view-to-db [view-data]
-  (((fn [f] (f f))
-    (fn [f]
-      (fn [s data]
-        (if (not (empty? data))
-          ((f f)
-           (do
-             (let [table-name (str (second (first data)))
-                   table-data (str (first data))
-                   id-t (:id (first (db/query
-                                     (select! {:table_name :view :where [:= :table_name table-name]}))))]   
-               (if-not (= s 0)
-                 (if (nil? id-t)
-                   (db/exec (insert! {:table_name :view :set {:table_name table-name, :view table-data}}))
-                   (db/exec (update
-                             :view
-                             :where [:= :id id-t]
-                             :set {:view table-data})))))
-             (+ s 1))
-           (rest data)))))) 0 view-data))
+;; +--(database view table)---------+
+;; | (defview user (table ....      |                               +-------------------...
+;; | (defview permission (table ... |                               | Just simple function
+;; | (defview service_contract (..  |                               | that load defviews from
+;; | ....                           |                               | the simple file view.clj
+;; +--------------------------------+                                \-------------------...-
+;;                                   \    (make-loader-chain          /
+;;                                    \      loader-from-db  ---------
+;;                                    |      loader-from-view-clj ----
+;; +-(view.clj file)----------------+ |      -----+----               \
+;; | {:host "localhost, :port ...}  | |           |                    +------------------..
+;; |                                | |           |                    | Load defview-s from
+;; | (in-ns 'jarman.logi...)        | |           V                    | special `view` table
+;; |                                | |   *view-loader-chain-fn*       | in database
+;; | (defview permission            | |  (define a source for loadi-   +---------------....
+;; |  (table                        | |   ng the defview declaration
+;; |   :id :permission              | |   in the sequence passed in
+;; |   :name "Permis...             | |   `make-loader-chain`)
+;; |   :ot...                       | |       ----+----
+;; |   ...                          | |           |
+;; +--------------------------------+ |           |
+;;                                   \|           V
+;;                                    |     (do-view-load)
+;;                                    |   the function use chain variable
+;;             do-view-load starting  |           |
+;;             to load all defview    |           |
+;;              +---------------------------------+
+;;              |
+;;              V
+;;          evaluation ---(error)---> (ex-info something went wrong
+;;              |
+;;          (success)
+;;         Table plugin's was
+;;         loaded to global view
+;;         plugin storage
+
 
 (defn loader-from-db []
   (let [con (dissoc (db/connection-get)
@@ -370,16 +359,24 @@
         con-data  (dissoc (db/connection-get)
                           :dbtype :user :password
                           :useUnicode :characterEncoding)]
-    (assert (= con-guard con-data)
-            (format "Error! View.clj si not related to connected db. guard(%s), connected database(%s)"
-                    (string/join ", " (->> (vals con-guard) (map pr-str)))
-                    (string/join ", " (->> (vals  con-data) (map pr-str)))))
-    (drop 2 data)))
+    (cond
+      ;; -----------
+      (empty? (drop 2 data))
+      (print-line "View.clj loader. Views is empty")
+      ;; -----------
+      (not= con-guard con-data) 
+      (print-line (format "Error! View.clj si not related to connected db. guard(%s), connected database(%s)"
+                          (string/join ", " (->> (vals con-guard) (map pr-str)))
+                          (string/join ", " (->> (vals  con-data) (map pr-str)))))
+      ;; -----------
+      (not (every? #(= 'defview (first %)) (drop 2 data)))
+      (print-line "Everything(omiting connection map and `in-ns`) in view.clj MUST be only `defview`. File is corrupted")
+      ;; If all the things gone alright
+      :else (drop 2 data))))
 
 
 ;; (loader-from-db)
 ;; (loader-from-view-clj)
-;; (put-table-view-to-db (loader-from-view-clj))
 
 (defn- load-data-recur [data loaders]
   (if (and (empty? data) (not (empty? loaders)))
@@ -399,9 +396,9 @@
   ;; (make-loader-chain loader-from-view-clj loader-from-db)
   (make-loader-chain loader-from-view-clj loader-from-db))
 
-(binding [*view-loader-chain-fn* (make-loader-chain loader-from-db loader-from-view-clj)
-          *view-loader-chain-fn* (make-loader-chain loader-from-view-clj loader-from-db)]
- (do-view-load))
+;; (binding [*view-loader-chain-fn* (make-loader-chain loader-from-db loader-from-view-clj)
+;;           *view-loader-chain-fn* (make-loader-chain loader-from-view-clj loader-from-db)]
+;;  (do-view-load))
 
 ;; (do-view-load)
 (defn do-view-load
@@ -409,21 +406,22 @@
   make-loader chain. deserialize view, and execute every
   defview."
   []
-   (let [data (*view-loader-chain-fn*)]
-           (if (empty? data)
-             (state/concat-state :state-alerts
-              [:danger "Error" "Problem with tables. Data not found in DB
+  (let [data (*view-loader-chain-fn*)]
+    (if (empty? data)
+      (state/concat-state :state-alerts
+                          [:danger "Error" "Problem with tables. Data not found in DB
                                 <br><br><b>Module:</b> view-manager
                                     <br><b>Fn:</b> do-view-load"])
-             (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
-               (doall (for [defview-sexpression data]
-                        (try (eval defview-sexpression)
-                             (catch Exception e
-                               (throw
-                                (ex-info (format "Failure compiling (defview `%s`)" (second defview-sexpression))
-                                         {:internal-message (.getMessage e)
-                                          :internal-stacktrace (clojure.stacktrace/print-stack-trace e 20)}))))))))
-           (return-structure-tree (deref user-menu))))
+      (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
+        (doall (for [defview-sexpression data]
+                 (try (eval defview-sexpression)
+                      (catch Exception e
+                        (throw
+                         (ex-info (format "Failure compiling (defview `%s`)" (second defview-sexpression))
+                                  {:type :view-plugin-error
+                                   :internal-message (.getMessage e)
+                                   :internal-stacktrace (clojure.stacktrace/print-stack-trace e 20)}))))))))
+    (return-structure-tree (deref user-menu))))
 
 ;; (state/set-state :alerts (concat (state/state :alerts) [[:alert "a" "b"]]))
 
@@ -485,7 +483,6 @@
 ;; (move-views-to-db)
 ;; (loader-from-db)
 ;; (view-set {:id 2, :table_name \"user\", :view \"(defview user (table :name \"user\"......))})
-
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; DEBUG SEGMENT ;;;

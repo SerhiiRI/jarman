@@ -57,6 +57,7 @@
           (.close connection)
           (.close stream-f)))))
 
+
 (defn- -insert-document-jdbc [document-map]
  (let [^java.sql.Connection
        connection (clojure.java.jdbc/get-connection (db/connection-get))
@@ -122,6 +123,12 @@
         (finally (try (.close res-set)
                       (catch SQLException e (println e))))) @temporary-result))
 
+;; {:id 3
+;;  :table_name "service_contract"
+;;  :name "Vat za ten rok"
+;;  :document "./some/file.odt"
+;;  :prop {...}}
+
 (defn insert-document [document-map]
   (if (and (:document document-map)
          (.exists (File. (:document document-map))))
@@ -135,6 +142,7 @@
 (defn download-document [document-map]
   (if (some? (:id document-map))
     (-download-to-storaget-document-jdbc document-map)))
+
 
 
 ;; (storage/document-templates-spit "some file with space.txt" "suka")
@@ -453,9 +461,9 @@
 
 (defn get-columns-types [comp-name meta-obj]
   (first (filter (comp not nil?) (map (fn [item] (if (= comp-name (:field-qualified item))
-                                                   (vec (map (fn [column] [(:field-qualified column)
-                                                                           (convert-to-jdbc-types(:component-type column))])
-                                                             (:columns item))) nil)) (.return-columns-composite meta-obj)))))
+                                             (vec (map (fn [column] [(:field-qualified column)
+                                                                    (convert-to-jdbc-types(:component-type column))])
+                                                       (:columns item))) nil)) (.return-columns-composite meta-obj)))))
 
 
 (comment

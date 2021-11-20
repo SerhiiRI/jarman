@@ -1226,6 +1226,10 @@
   (FieldLink. m))
 (defn to-field-composite [field]
   (let [{field-list :fields-list var-list :var-list :as all}
+        ;; {:mapp        { :seal.site_name :text, :seal.site_url :link }
+        ;;  :demapp      { :text :seal.site_name, :link :seal.site_url }
+        ;;  :fields-list [ :seal.site_name :seal.site_url ]
+        ;;  :var-list    [ :text :link ]}
         (reduce (fn [a f]
                   (-> a
                       (update :fields-list conj (:field-qualified f))
@@ -1254,7 +1258,6 @@
                 :else (to-field c))) cols))
 
 (deftype TableMetadata [m]
-
   IFieldSearch
   (find-field [this field-name-kwd]
     (first (wrapp-cols-metadata-types

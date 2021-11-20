@@ -332,6 +332,8 @@
 ;;         plugin storage
 
 
+;;;  LOADERS ;;;
+
 (defn loader-from-db []
   (let [con (dissoc (db/connection-get)
                     :dbtype :user :password
@@ -349,7 +351,6 @@
                    (.write W env/line-separator)))))))
     data))
 
-;; (loader-from-db)
 (defn loader-from-view-clj []
   (let [data 
         (try
@@ -374,9 +375,9 @@
       ;; If all the things gone alright
       :else (drop 2 data))))
 
-
-;; (loader-from-db)
-;; (loader-from-view-clj)
+(comment
+  (loader-from-db)
+  (loader-from-view-clj))
 
 (defn- load-data-recur [data loaders]
   (if (and (empty? data) (not (empty? loaders)))
@@ -396,11 +397,13 @@
   ;; (make-loader-chain loader-from-view-clj loader-from-db)
   (make-loader-chain loader-from-view-clj loader-from-db))
 
-;; (binding [*view-loader-chain-fn* (make-loader-chain loader-from-db loader-from-view-clj)
-;;           *view-loader-chain-fn* (make-loader-chain loader-from-view-clj loader-from-db)]
-;;  (do-view-load))
+(comment
+  (do-view-load)
+  ;; ----
+  (binding [*view-loader-chain-fn* (make-loader-chain loader-from-db loader-from-view-clj)
+            *view-loader-chain-fn* (make-loader-chain loader-from-view-clj loader-from-db)]
+    (do-view-load)))
 
-;; (do-view-load)
 (defn do-view-load
   "using in self `*view-loader-chain-fn*`, swapp using
   make-loader chain. deserialize view, and execute every
@@ -423,7 +426,6 @@
                                    :internal-stacktrace (clojure.stacktrace/print-stack-trace e 20)}))))))))
     (return-structure-tree (deref user-menu))))
 
-;; (state/set-state :alerts (concat (state/state :alerts) [[:alert "a" "b"]]))
 
 (defn view-clean []
   (db/exec (delete! {:table_name :view})))
@@ -480,9 +482,9 @@
               (view-set {:table_name table-name :view (str table-view) ;; (with-out-str (clojure.pprint/pprint table-view))
                          })))
           table-views))))
-;; (move-views-to-db)
-;; (loader-from-db)
-;; (view-set {:id 2, :table_name \"user\", :view \"(defview user (table :name \"user\"......))})
+
+(comment
+  (move-views-to-db))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; DEBUG SEGMENT ;;;

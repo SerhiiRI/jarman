@@ -45,8 +45,8 @@
              (do
                (c/config! root :items (render-fn))
                (.repaint root))
-             (catch Exception e (println "\n" (str "gui_login.clj: Rerender exception in set-state-watcher:\n" (.getMessage e))) ;; If exeption is nil object then is some prolem with nechw component inserting
-                    ))))))))
+             ;; If exeption is nil object then is some prolem with nechw component inserting
+             (catch Exception e (println "\n" (str "gui_login.clj: Rerender exception in set-state-watcher:\n" (.getMessage e)))))))))))
 
 
 (defn- config-template
@@ -129,8 +129,6 @@
    (new-focus dispatch! compo)
    (switch-focus state!)))
 
-
-
 ;; ┌───────────────┐
 ;; │               │
 ;; │  Local comps  │
@@ -148,7 +146,6 @@
       :red-color        "#f01159"
       :light-red-color  "#Ffa07a"
       :back-color       "#c5d3dd"}))
-
 
 (declare login-panel)
 

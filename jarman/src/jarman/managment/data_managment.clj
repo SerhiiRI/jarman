@@ -1,19 +1,21 @@
 (ns jarman.managment.data-managment
   (:require
-   [clojure.data :as data]
+   ;; -----------
+   [clojure.data      :as data]
    [clojure.java.jdbc :as jdbc]   
-   [clojure.string :as string]
-   [clojure.pprint :refer [pprint cl-format]]
-   [jarman.logic.sql-tool :as sql]
-   [jarman.logic.metadata :as metadata]
-   [jarman.config.storage :as storage]
-   [jarman.config.environment :as env]
-   [jarman.logic.structural-initializer :as sinit]
-   [jarman.tools.lang :refer :all]
-   [jarman.logic.connection :as db])
+   [clojure.string    :as string]
+   [clojure.pprint    :refer [pprint cl-format]]
+   ;; -----------
+   [jarman.tools.lang            :refer :all]
+   [jarman.config.storage        :as storage]
+   [jarman.config.environment    :as env]
+   [jarman.logic.sql-tool        :as sql]
+   [jarman.logic.metadata        :as metadata]
+   [jarman.logic.connection      :as db]
+   [jarman.logic.view-manager    :as view-manager]
+   [jarman.logic.structural-initializer :as sinit])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
-
 
 #_(def all-tables [{:id nil,
                   :table_name "documents",
@@ -949,22 +951,34 @@
      (metadata/create-one-meta m (:table_name m)))))
 
 (defn metadata-info [metadata-v]
-  (let [t-off "  "
-        f-off "      "]
+  (let [f-offset #(cl-format nil "~,,v<~A~>" %1 %2)]
     (println "Metadata structure")
     (doall
-     (for [{{tabl :table
-             cols :columns} :prop} metadata-v]
+     (for [{{tabl      :table
+             cols      :columns
+             comp-cols :columns-composite} :prop} metadata-v]
        (do
-         (println (format "%s %s" t-off (keyword (:field tabl))))
-         (println (format "%s  #+TITLE: \"%s\" " t-off (:representation tabl)))
-         (println (format "%s  #+COLUMS: " t-off))
+         (println (f-offset 3 (str (keyword (:field tabl)))))
+         (println (f-offset 3 (format "#+TITLE: \"%s\"" (:representation tabl))))
+         (println (f-offset 3 "#+COLUMS:"))
          (doall
           (for [{field :field
                  repr :representation
                  comp-type :component-type} cols]
-            (println (format "%s %-35s %s" f-off (keyword field) (str comp-type)))
-            )))))nil))
+            (println (format "%-35s %s" (f-offset 6 (str (keyword field))) (str comp-type)))
+            ))
+         (when (seq comp-cols)
+           (println (f-offset 3 "#+COMPOSITE-COLUMNS:"))
+           (doall
+            (for [{field  :field,
+                   constr :constructor
+                   cols   :columns} comp-cols]
+              (do (println (format "%-35s %s" (f-offset 6 (str (keyword field))) (str constr)))
+                  (println (f-offset 6 "#+COLUMS:"))
+                  (doall
+                   (for [{field :field
+                          comp-type :component-type} cols]
+                     (println (format "%-35s %s" (f-offset 9 (str (keyword field))) (str comp-type))))))))))))nil))
 
 (defn database-info []
   (let [table-off "   "
@@ -983,7 +997,29 @@
                                              (str tbl " [system]")
                                              tbl)))))))) nil))
 
+(defn view-info [view-list]
+  (println "Views:")
+  (doall
+   (for [table-view view-list]
+     (let [table-map  (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
+           view-plugins (map (comp str first) (drop 2 table-view))
+           table-name (:name table-map)]
+       (println (cl-format nil "~70<  ~A~;~{~A~^, ~}~>" table-name view-plugins))))) true)
+
+(defn views-persist-into-database [view-list]
+  (let []
+    (assert
+     (every? #(= 'defview (first %)) view-list)
+     "Everything(omiting connection map and `in-ns`) in view.clj MUST be only `defview`")
+    (view-manager/view-clean)
+    (doall
+     (for [table-view view-list]
+          (let [table-map  (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
+                table-name (:name table-map)]
+            (view-manager/view-set {:table_name table-name :view (str table-view)}))))))
+
 (comment
+  (views-persist-into-database)
   (database-info)
   (metadata-info all-tables)
   (database-recreate-metadata-to-db)

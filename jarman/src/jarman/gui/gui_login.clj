@@ -1,4 +1,5 @@
 (ns jarman.gui.gui-login
+  (:gen-class)
   (:import (java.awt Dimension)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons))
   (:require [clojure.string            :as string]

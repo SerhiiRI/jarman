@@ -9,8 +9,7 @@
   "Description:
      Set new state or update existing.
    Example:
-     (set-state :mystate 42)
-   "
+     (set-state :mystate 42)"
   ([coll-map] (if (map? coll-map) (doall (map #(set-state (first %) (second %)) coll-map))))
   ([key val] (if (vector? key)
                (swap! atom-state (fn [current-state] (assoc-in current-state key val)))
@@ -20,16 +19,14 @@
   "Description:
      Remove from state by key.
    Example:
-     (rm-state :mystate)
-   "
+     (rm-state :mystate)"
   ([key] (swap! atom-state (fn [current-state] (dissoc current-state key)))))
 
 (defn clear-state
   "Description:
      Remove all in state.
    Example:
-     (clear-state)
-   "
+     (clear-state)"
   [] (reset! atom-state {}))
 
 (defn check-state
@@ -40,8 +37,7 @@
      (check-state)
        ;; => (:mystate)
      (check-state :mystate)
-       ;; => true
-   "
+       ;; => true"
   ([] (keys @atom-state))
   ([key] (contains? @atom-state key)))
 
@@ -54,9 +50,7 @@
      (state)
        ;; => {:mystate1 41 :mystate2 42}
      (state :mystate1)
-       ;; => 41
-   "
-  
+       ;; => 41"
   ([] (deref atom-state))
   ([key] (if (vector? key)
            (get-in @atom-state key)

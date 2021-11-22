@@ -16,7 +16,6 @@ help:
 	@echo -e "${GREEN}${BOLD}TARGETS${NC}"
 	@echo -e "\tproject/gen-font-lib - generating clojure font lib"
 	@echo -e "\tproject/gen-icon-lib - generating clojure icon lib"
-	@echo -e "\tbuild/jarman-cli - building 'jarman-cli' uberjar"
 	@echo -e "\tbuild/jarman-client - building uberjar for central GUI client"
 	@echo -e "\tjarman-box - build box with jarmna cli and different tools"
 	@echo -e "\thelp - print this message"
@@ -27,11 +26,11 @@ project/gen-font-lib: project.clj
 project/gen-icon-lib: project.clj
 	@lein jarman structure --refresh-icons
 
-build/jarman-cli:
-	lein with-profile cli uberjar
-
 build/jarman-client:
 	lein with-profile client uberjar
+
+build/jarman-client+cli:
+	lein with-profile client+cli uberjar
 
 test:
 	lein test

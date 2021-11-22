@@ -1,7 +1,7 @@
-(defproject jarman "0.0.1"
+(defproject jarman "0.0.2"
   :description "Jarman"
   :license {:name "EPL-2.0" :url "https://www.eclipse.org/legal/epl-2.0/"}
-   :dependencies [;; core
+  :dependencies [;; core
                  [org.clojure/clojure "1.10.1"]
                  [org.clojure/core.async "1.3.618"]
                  [org.clojure/data.csv "1.0.0"]
@@ -34,11 +34,11 @@
                  [clj-fuzzy "0.4.1"]
                  [de.ubercode.clostache/clostache "1.4.0"]]
   ;;:main ^:skip-aot jarman.core
-  :main jarman.core
-  :aot [jarman.core]
+  ;; :main jarman.core
+  ;; :aot [jarman.core]
   :repl-options {:init-ns jarman.core}
   :target-path "target/%s"
-  :aliases  {"jarman" ["run" "-m" "jarman.jarman-cli"]}
+  :aliases  {"jarman" ["run" "-m" "jarman.cli.cli-internal"]}
   :jar-name "jarman.jar"
   ;;:uberjar {:aot :all}
   :uberjar-name "jarman-standalone.jar"
@@ -51,16 +51,24 @@
              {:plugins [[lein-launch4j "0.1.2"]]
               :launch4j-install-dir "../installer"
               :launch4j-config-file "../installer/launch4j.xml"}
-             :cli
-             {:aot [jarman.jarman-cli
-                    jarman.managment.data
-                    jarman.config.storage
-                    jarman.tools.ftp-toolbox]
-              :main jarman.jarman-cli
-              :jar-name "jarman-cli-lib.jar"
-              :uberjar-name "jarman-cli.jar"}
+             ;; :cli
+             ;; {:aot [jarman.jarman-cli
+             ;;        jarman.managment.data
+             ;;        jarman.config.storage
+             ;;        jarman.tools.ftp-toolbox]
+             ;;  :main jarman.jarman-cli
+             ;;  :jar-name "jarman-cli-lib.jar"
+             ;;  :uberjar-name "jarman-cli.jar"}
              :client
              {:main jarman.gui.gui-login
+              :aot [jarman.gui.gui-login]
+              :jar-name "jarman-client-lib.jar"
+              :uberjar-name "jarman-client-standalone.jar"}
+             :client+cli
+             {:main jarman.core
+              ;; :aot [jarman.core]
+              :aot [jarman.core
+                    jarman.gui.gui-login]
               :jar-name "jarman-client-lib.jar"
               :uberjar-name "jarman-client-standalone.jar"}
              ;; :cider

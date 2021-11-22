@@ -124,6 +124,11 @@
    (io/file       "." dot-jarman-data)
    (io/file       "." "src" "jarman" "managment" dot-jarman-data)])
 
+(defresource get-view-clj
+  "list of all `.jarman.data` file paths in system"
+  [(io/file       "." "view.clj")
+   (io/file       "." "src" "jarman" "logic" "view.clj")])
+
 (defn get-jarman-executable
   "Main Jarman executable file" []
   (io/file "." jarman-exe))

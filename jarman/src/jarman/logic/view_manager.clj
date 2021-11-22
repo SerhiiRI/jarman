@@ -21,7 +21,6 @@
    [jarman.logic.sql-tool :refer [select! update! insert! delete!]]
    [jarman.logic.metadata :as mt]
    [jarman.logic.state :as state]
-   [jarman.interaction :as i]
    [jarman.gui.gui-views-service :as gvs]))
 
 ;;;;;;;;;;;;;;;;;
@@ -317,14 +316,14 @@
 ;; |   ...                          | |           |
 ;; +--------------------------------+ |           |
 ;;                                   \|           V
-;;                                    |     (do-view-load)
-;;                                    |   the function use chain variable
-;;             do-view-load starting  |           |
-;;             to load all defview    |           |
+;;                                    \---> (do-view-load)
+;;                                          the function use chain variable
+;;             do-view-load starting              |
+;;             to load all defview                |
 ;;              +---------------------------------+
 ;;              |
 ;;              V
-;;          evaluation ---(error)---> (ex-info something went wrong
+;;          evaluation ---(error)---> (ex-info "something went wrong"..
 ;;              |
 ;;          (success)
 ;;         Table plugin's was
@@ -341,7 +340,8 @@
         req (list 'in-ns (quote (quote jarman.logic.view-manager)))
         data (map (fn [x] (read-string (:view x))) (db/query (select! {:table_name :view}))) 
         sdata (if-not (empty? data) (concat [con req] data))
-        path  "src/jarman/logic/view.clj"]
+        path  (try (str (env/get-view-clj))
+                   (catch Exception e (do (spit "./view.clj" "") "./view.clj"))) ]
     (if-not (empty? data)
       (do (spit path "")
           (with-open [W (io/writer (io/file path) :append true)]
@@ -352,28 +352,29 @@
     data))
 
 (defn loader-from-view-clj []
-  (let [data 
-        (try
-          (read-seq-from-file  "src/jarman/logic/view.clj")
-          (catch Exception e (print-line (str "caught exception: file not find" (.toString e)))))
-        con-guard (first data)
-        con-data  (dissoc (db/connection-get)
-                          :dbtype :user :password
-                          :useUnicode :characterEncoding)]
-    (cond
-      ;; -----------
-      (empty? (drop 2 data))
-      (print-line "View.clj loader. Views is empty")
-      ;; -----------
-      (not= con-guard con-data) 
-      (print-line (format "Error! View.clj si not related to connected db. guard(%s), connected database(%s)"
-                          (string/join ", " (->> (vals con-guard) (map pr-str)))
-                          (string/join ", " (->> (vals  con-data) (map pr-str)))))
-      ;; -----------
-      (not (every? #(= 'defview (first %)) (drop 2 data)))
-      (print-line "Everything(omiting connection map and `in-ns`) in view.clj MUST be only `defview`. File is corrupted")
-      ;; If all the things gone alright
-      :else (drop 2 data))))
+  (if (.exists (env/get-view-clj))
+    (let [data 
+          (try
+            (read-seq-from-file  "src/jarman/logic/view.clj")
+            (catch Exception e (print-line (str "caught exception: file not find" (.toString e)))))
+          con-guard (first data)
+          con-data  (dissoc (db/connection-get)
+                            :dbtype :user :password
+                            :useUnicode :characterEncoding)]
+      (cond
+        ;; -----------
+        (empty? (drop 2 data))
+        (print-line "View.clj loader. Views is empty")
+        ;; -----------
+        (not= con-guard con-data) 
+        (print-line (format "Error! View.clj si not related to connected db. guard(%s), connected database(%s)"
+                            (string/join ", " (->> (vals con-guard) (map pr-str)))
+                            (string/join ", " (->> (vals  con-data) (map pr-str)))))
+        ;; -----------
+        (not (every? #(= 'defview (first %)) (drop 2 data)))
+        (print-line "Everything(omiting connection map and `in-ns`) in view.clj MUST be only `defview`. File is corrupted")
+        ;; If all the things gone alright
+        :else (drop 2 data)))))
 
 (comment
   (loader-from-db)
@@ -395,7 +396,7 @@
 
 (def ^:dynamic *view-loader-chain-fn*
   ;; (make-loader-chain loader-from-view-clj loader-from-db)
-  (make-loader-chain loader-from-view-clj loader-from-db))
+  (make-loader-chain loader-from-db loader-from-view-clj ))
 
 (comment
   (do-view-load)

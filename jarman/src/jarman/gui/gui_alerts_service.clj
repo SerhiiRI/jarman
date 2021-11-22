@@ -176,9 +176,7 @@
 
 (defn start
   "Description:
-     Clear state atom and set new state template.
-  Example:
-     "
+     Clear state atom and set new state template."
   [& {:keys [soft]
       :or {soft false}}]
   (if-not soft (create-state-template))

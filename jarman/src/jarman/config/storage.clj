@@ -56,12 +56,17 @@
      (def ~(symbol (str store-name "-rename")) (make-store-rename store-path#))))
 
 ;; (defstore temporary            (io/file env/java-io-tmpdir  "jarman-tmp"))
-(defstore document-templates   (io/file env/user-home       ".jarman.d" "dump" "documents"))
-(defstore user-config          (io/file env/user-home       ".jarman.d" "backup" "config"))
-(defstore user-metadata        (io/file env/user-home       ".jarman.d" "backup" "metadata"))
+(defstore document-templates (io/file (env/get-resource-dir) "dump" "documents"))
+(defstore backup-metadata    (io/file (env/get-resource-dir) "backup" "metadata"))
+(defstore backup-view        (io/file (env/get-resource-dir) "backup" "view"))
+(defstore backup-db          (io/file (env/get-resource-dir) "backup" "database"))
 
 ;;; Example usage
 (comment
+  (backup-metadata-dir)
+  (backup-metadata-list)
+  (backup-metadata-put "putty" "Waka waka ee e")
+  
   ;; User file management 
   (user-put "some.edn" "temporary")
   (user-rename "chuj.ds" "some.edn")

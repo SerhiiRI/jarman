@@ -27,6 +27,25 @@
                   :license-file    nil
                   :current-license nil}))
 
+(defn row-btn
+  [& {:keys [func icon title]
+      :or {func (fn [e])
+           icon (gs/icon GoogleMaterialDesignIcons/SAVE)
+           title (gtool/get-lang-btns :save)}}]
+  (gcomp/button-basic
+   title
+   :tgap 2
+   :bgap 2
+   :underline-size 0
+   :args [:icon icon]
+   :onClick func))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Language selection
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn- get-language-map [] {:en "ENG" :uk "UK" :pl "PL"})
 
 (defn- get-language-key [lang-s] (first (first (filter #(= (val %) lang-s) (get-language-map)))))
@@ -39,22 +58,17 @@
      (concat [selected] filtered))))
 
 (defn- display-btn-save [root]
-  (gcomp/button-basic
-   (gtool/get-lang-btns :save)
-   :tgap 2
-   :bgap 2
-   :underline-size 0
-   :args [:icon (gs/icon GoogleMaterialDesignIcons/SAVE)]
-   :onClick (fn [e]
-              (if-not (nil? (:lang @state))
-                (do
-                  (setj jarman.config.conf-language/language-selected (:lang @state))
-                  (i/danger (gtool/get-lang-header :need-reload)
-                             [{:title (gtool/get-lang-btns :reload-app)
-                               :func (fn [api] (i/restart))}]
-                             :time 0)))
-              (c/config! root :items (gtool/join-mig-items (butlast (u/children root))))
-              (.repaint (c/to-root root)))))
+  (row-btn :func (fn [e]
+                   (if-not (nil? (:lang @state))
+                     (do
+                       (setj jarman.config.conf-language/language-selected (:lang @state))
+                       (i/danger (gtool/get-lang-header :need-reload)
+                                 [{:title (gtool/get-lang-btns :reload-app)
+                                   :func (fn [api] (i/restart))}]
+                                 :time 0)))
+                   (c/config! root :items (gtool/join-mig-items (butlast (u/children root))))
+                   (.repaint (c/to-root root)))))
+
 
 (defn- language-selection-panel []
   (let [panel (gmg/migrid
@@ -78,6 +92,12 @@
     panel))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Licenses
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn- load-license []
   (.start (Thread. (fn [] (swap! state (fn [s] (update s :current-license (constantly (-> (session/load-license) (session/decrypt-license))))))))))
 (defn- reset-license []
@@ -85,37 +105,34 @@
 
 
 (defn- display-btn-upload [root]
-  (gcomp/button-basic
-   (gtool/get-lang-btns :install)
-   :tgap 2
-   :bgap 2
-   :underline-size 0
-   :args [:icon (gs/icon GoogleMaterialDesignIcons/MOVE_TO_INBOX)]
-   :onClick (fn [e]
-              (let [default-path (str jarman.config.environment/jarman-home "/licenses")
-                    license-file-path (:license-file @state)]
-                (if (= default-path license-file-path)
-                  (i/warning (gtool/get-lang-header :file-no-choose)
-                             (gtool/get-lang-alerts :choose-file-and-try-again)
-                             :time 4)
-                  (try
-                    (if-not (empty? license-file-path)
-                      (do
-                        ;; (swap! state #(assoc % :license-file nil))
-                        (session/gui-slurp-and-set-license-file license-file-path)
-                        (load-license)
-                        
-                        (i/success (gtool/get-lang-header :success)
-                                   (gtool/get-lang-alerts :new-license-instaled)
-                                   :time 3))
-                      (do
-                        (i/warning (gtool/get-lang-header :file-no-choose)
-                                   (gtool/get-lang-alerts :choose-file-and-try-again)
-                                   :time 4)))
-                    (catch Exception e
-                      (i/danger (apply gtool/get-lang (:translation (ex-data e))) (.getMessage e) :time 10)))))
-              ;;(c/config! root :items (gtool/join-mig-items (butlast (u/children root))))
-              (.repaint (c/to-root root)))))
+  (row-btn
+   :title (gtool/get-lang-btns :install)
+   :icon (gs/icon GoogleMaterialDesignIcons/MOVE_TO_INBOX)
+   :func (fn [e]
+           (let [default-path (str jarman.config.environment/jarman-home "/licenses")
+                 license-file-path (:license-file @state)]
+             (if (= default-path license-file-path)
+               (i/warning (gtool/get-lang-header :file-no-choose)
+                          (gtool/get-lang-alerts :choose-file-and-try-again)
+                          :time 4)
+               (try
+                 (if-not (empty? license-file-path)
+                   (do
+                     ;; (swap! state #(assoc % :license-file nil))
+                     (session/gui-slurp-and-set-license-file license-file-path)
+                     (load-license)
+                     
+                     (i/success (gtool/get-lang-header :success)
+                                (gtool/get-lang-alerts :new-license-instaled)
+                                :time 3))
+                   (do
+                     (i/warning (gtool/get-lang-header :file-no-choose)
+                                (gtool/get-lang-alerts :choose-file-and-try-again)
+                                :time 4)))
+                 (catch Exception e
+                   (i/danger (apply gtool/get-lang (:translation (ex-data e))) (.getMessage e) :time 10)))))
+                   ;;(c/config! root :items (gtool/join-mig-items (butlast (u/children root))))
+                   (.repaint (c/to-root root)))))
 
 (defn split-path [path]
   (let [linux (string/split path #"/")
@@ -162,13 +179,13 @@
                       
                       (let [{:keys [tenant-id creation-date expiration-date]} (get-in (deref state) [:current-license])]
                         (gtool/join-mig-items
-                         (gmg/migrid :> {:args [:border (b/compound-border
+                         (gmg/migrid :> {:gap [0 10] :args [:border (b/compound-border
                                                          (b/empty-border :top 2 :bottom 2)
                                                          (b/line-border :bottom 2 :top 2 :color face/c-compos-background-darker))]}
                                      [(c/label :text (gtool/get-lang-basic :license-code))
                                       (c/label :text (gtool/get-lang-basic :date-start))
                                       (c/label :text (gtool/get-lang-basic :date-end))])
-                         (gmg/migrid :> {:args [:border (b/empty-border :top 2 :bottom 2)]}
+                         (gmg/migrid :> {:gap [0 10]:args [:border (b/empty-border :top 2 :bottom 2)]}
                                      [(c/label :text tenant-id)
                                       (c/label :text creation-date)
                                       (c/label :text expiration-date)])))))
@@ -178,6 +195,64 @@
     (state/new-watcher state panel render-fn [:current-license] :watch-current-license)
     panel))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; view.clj or view from DB
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn- viewclj-or-viewdb []
+  (let [selected-src (first (state/state :view-src)) ;; TODO: load info from .jarman
+        panel (gmg/migrid
+               :> {:gap [5 30] :args [:border (b/line-border :bottom 1 :color face/c-icon)]} [])
+        
+        render-fn (fn [] (c/label)
+                    (let [options-vec ["View.clj" "Database"]
+                          radio-group (gcomp/jradiogroup
+                                       options-vec
+                                       (fn [radio box]
+                                         (let [selected-vec (c/config box :user-data)
+                                               selected-idx (.indexOf selected-vec true)
+                                               selected-val (nth options-vec selected-idx)]
+                                           (println selected-val)
+                                           (state/set-state :view-src [selected-idx selected-val])))
+                                       :horizontal true :selected selected-src)
+                          
+                          save-btn (gmg/migrid
+                                    :> :right
+                                    (row-btn :func (fn [e] (println "Saved " (state/state :view-src)))) ;; TODO: save info to .jarman
+                                    )]
+                      [radio-group save-btn]))]
+    (c/config! panel :items (gtool/join-mig-items (render-fn)))
+    panel))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Backup buttons
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; enviroment.clj
+;; storage.clj
+;; gui_events.clj
+
+(defn- backup-vmd []
+  (let [render-fn (fn [] (c/label :text "Comming soon...")) ;; TODO: make backup for view, metadata and db
+        panel (gmg/migrid
+               :v {:gap [5] :args [:border (b/line-border :bottom 1 :color face/c-icon)]}
+               (render-fn))]
+    ;; (state/new-watcher state panel render-fn [:current-license] :watch-current-license)
+    panel))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Dispaly settings section
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn config-panel-proxy []
   ;; (swap! state (fn [s] (update s :current-license (constantly (-> (session/load-license) (session/decrypt-license))))))
   (load-license)
@@ -186,12 +261,19 @@
    (filter some?
     [(gcomp/button-expand (gtool/get-lang-header :select-language) (language-selection-panel)
                           :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/TRANSLATE)))
+
      (session/when-permission
       :admin-update
       (gcomp/button-expand (gtool/get-lang-header :licenses)
                            (gmg/migrid :v [(license-panel)
                                            (all-licenses-panel)])
-                           :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/VERIFIED_USER))))])))
+                           :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/VERIFIED_USER))))
+
+     (gcomp/button-expand "View.clj or ViewDB" (viewclj-or-viewdb)
+                          :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/CODE)))
+
+     (gcomp/button-expand "Backups" (backup-vmd)
+                          :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/STORAGE)))])))
 
 (defn config-panel []
   (config-panel-proxy))

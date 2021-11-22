@@ -484,6 +484,76 @@
                                                        :icon (if (not checked?) checked-icon nochecked-icon)))
                                     (.repaint (c/to-root check-box)))])))
 
+(defn- jradiobox
+  "Description
+     Basic component for radio-group."
+  [& {:keys [nochecked-icon checked-icon text set-selected extra-fn]
+      :or {nochecked-icon (gs/icon GoogleMaterialDesignIcons/CHECK_BOX_OUTLINE_BLANK)
+           checked-icon   (gs/icon GoogleMaterialDesignIcons/CHECK_BOX)
+           text ""}}]
+  (let [check-box (c/label :text text
+                           :icon (if set-selected checked-icon nochecked-icon)
+                           :user-data (if set-selected true false))]
+    (c/config! check-box :listen [:mouse-clicked
+                                  (fn [e] (if-not (c/config e :user-data)
+                                            (let [radio-box     (.getParent (c/to-widget e))
+                                                  radio-buttons (u/children radio-box)]
+                                              (doall (map (fn [rb] (c/config! rb
+                                                                              :icon nochecked-icon
+                                                                              :user-data false))
+                                                          radio-buttons))
+                                              (c/config! check-box :user-data true :icon checked-icon)
+                                              (c/config! radio-box :user-data (doall (vec (map #(if (c/config % :user-data) true false) radio-buttons))))
+                                              (if (fn? extra-fn) (extra-fn e radio-box))
+                                              (.repaint (c/to-root radio-box)))))])))
+
+(defn- jradio-reqursive-tf-vec
+  "Description:
+     Create vector with true and false.
+     If one of radio is selected then set true
+     else set false. Used recursive.
+  Example:
+     (jradio-reqursive-tf-vec [\"a\" \"b\" \"c\"] [] 1 0)
+     ;; => [false true false]"
+  [first-vec second-vec selected-idx i]
+  (if (> (count first-vec) 0)
+    (let [tmp-vec (if (= i selected-idx) (concat second-vec [true]) (concat second-vec [false]))]
+      (jradio-reqursive-tf-vec (drop 1 first-vec) tmp-vec selected-idx (+ i 1)))
+    second-vec))
+
+(defn- jradio-reqursive-radios
+  "Description:
+     Create vector with radio buttons.
+     Similar to jradio-reqursive-tf-vec but in vector
+     is only one selected radio button component
+     root     - is a box for radio buttons
+     extra-fn - custom action on select"
+  [first-vec second-vec selected-idx i root extra-fn]
+  (if (> (count first-vec) 0)
+    (let [torf    (if (= i selected-idx) true false)
+          tmp-vec (concat second-vec [(jradiobox :text (first first-vec)
+                                                 :set-selected torf
+                                                 :extra-fn extra-fn)])]
+      (jradio-reqursive-radios (drop 1 first-vec) tmp-vec selected-idx (+ i 1) root extra-fn))
+    second-vec))
+
+(defn jradiogroup
+  "Description:
+     Create radio group panel.
+     Inside :user-data is vector with selected and not selected like [false true false]
+   Example:
+     (jradiogroup [\"a\" \"b\" \"c\"] (fn [e]) :selected 1)
+     (.indexOf (c/config my-radio-group :user-data) true)
+     ;; => 1"
+  [options-vec oncheck-fn
+   & {:keys [horizontal selected]}]
+  (let [panel (if (= true horizontal) (gmg/migrid :> :f {:rgap 20} []) (gmg/migrid :v []))
+        boxes (jradio-reqursive-radios options-vec [] (if (int? selected) selected 0) 0 panel oncheck-fn)
+        box-tf-vec (if (int? selected)
+                     (jradio-reqursive-tf-vec options-vec [] selected 0)
+                     (doall (vec (map (fn [_] false) options-vec))))]
+    (c/config! panel :items (gtool/join-mig-items boxes) :user-data box-tf-vec)))
+
 (defn input-checkbox
   [& {:keys [txt
              val

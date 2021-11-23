@@ -345,6 +345,7 @@
     (if-not (empty? data)
       (do (spit path "")
           (with-open [W (io/writer (io/file path) :append true)]
+            (print-line "Loading from database")
             (doall
              (for [s sdata]
                (do (.write W (pp-str s))
@@ -361,6 +362,7 @@
           con-data  (dissoc (db/connection-get)
                             :dbtype :user :password
                             :useUnicode :characterEncoding)]
+      (print-line "Loading from view.clj")
       (cond
         ;; -----------
         (empty? (drop 2 data))
@@ -394,9 +396,17 @@
     (global-view-configs-clean)
     (load-data-recur nil loaders)))
 
+(defvar view-src :database
+  :name "Defviews src"
+  :doc  "Source of defviews. View.clj or database [:view.clj :database]."
+  :type clojure.lang.Keyword
+  :group :global)
+
+(state/set-state :view-src (deref view-src))
+
 (def ^:dynamic *view-loader-chain-fn*
-  ;; (make-loader-chain loader-from-view-clj loader-from-db)
-  (make-loader-chain loader-from-db loader-from-view-clj ))
+  ;;(make-loader-chain loader-from-view-clj loader-from-db)
+  (make-loader-chain loader-from-db loader-from-view-clj))
 
 (comment
   (do-view-load)

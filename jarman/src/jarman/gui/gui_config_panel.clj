@@ -25,7 +25,8 @@
 
 (def state (atom {:lang            nil
                   :license-file    nil
-                  :current-license nil}))
+                  :current-license nil
+                  :tmp-view-src    nil}))
 
 (defn row-btn
   [& {:keys [func icon title]
@@ -62,10 +63,7 @@
                    (if-not (nil? (:lang @state))
                      (do
                        (setj jarman.config.conf-language/language-selected (:lang @state))
-                       (i/danger (gtool/get-lang-header :need-reload)
-                                 [{:title (gtool/get-lang-btns :reload-app)
-                                   :func (fn [api] (i/restart))}]
-                                 :time 0)))
+                       (i/restart-alert)))
                    (c/config! root :items (gtool/join-mig-items (butlast (u/children root))))
                    (.repaint (c/to-root root)))))
 
@@ -204,30 +202,37 @@
 
 
 (defn- viewclj-or-viewdb []
-  (let [selected-src (first (state/state :view-src)) ;; TODO: load info from .jarman
-        panel (gmg/migrid
+  (swap! state #(assoc % :tmp-view-src (rift (state/state :view-src) (deref jarman.logic.view-manager/view-src))))
+  (let [panel (gmg/migrid
                :> {:gap [5 30] :args [:border (b/line-border :bottom 1 :color face/c-icon)]} [])
         
         render-fn (fn [] (c/label)
-                    (let [options-vec ["View.clj" "Database"]
+                    (let [options-vec      ["View.clj" "Database"]
+                          options-vec-keys [:view.clj :database]
+                          selected-src     (.indexOf options-vec-keys (:tmp-view-src @state))
+                          
                           radio-group (gcomp/jradiogroup
                                        options-vec
                                        (fn [radio box]
                                          (let [selected-vec (c/config box :user-data)
                                                selected-idx (.indexOf selected-vec true)
-                                               selected-val (nth options-vec selected-idx)]
-                                           (println selected-val)
-                                           (state/set-state :view-src [selected-idx selected-val])))
-                                       :horizontal true :selected selected-src)
+                                               selected-val (nth options-vec-keys selected-idx)]
+                                           ;; (println selected-val)
+                                           (swap! state #(assoc % :tmp-view-src selected-val))))
+                                       :horizontal true
+                                       :selected selected-src)
                           
                           save-btn (gmg/migrid
                                     :> :right
-                                    (row-btn :func (fn [e] (println "Saved " (state/state :view-src)))) ;; TODO: save info to .jarman
-                                    )]
+                                    (row-btn
+                                     :func (fn [e]
+                                             (state/set-state :view-src (:tmp-view-src @state))
+                                             (setj jarman.logic.view-manager/view-src (:tmp-view-src @state))
+                                             (i/success [:alerts :changes-saved] (format (gtool/get-lang-alerts :new-view-src) (:tmp-view-src @state)))
+                                             (i/restart-alert))))]
                       [radio-group save-btn]))]
     (c/config! panel :items (gtool/join-mig-items (render-fn)))
     panel))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

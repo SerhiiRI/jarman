@@ -27,6 +27,7 @@
  ;; variable
  jarman.config.conf-language/language-selected :pl
  jarman.plugin.plugin/theme-selected "Jarman Light"
+ jarman.logic.view-manager/view-src :database
  )
 
 (setq jarman.logic.view-manager/user-menu

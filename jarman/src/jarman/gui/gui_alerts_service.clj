@@ -203,6 +203,23 @@
 ;; (c/config (:alerts-box (state!)) :bounds)
 ;; (refresh-box-bounds)
 
+(defn translate-header [header]
+  (cond
+    (keyword? header) (gtool/get-lang-header header)
+    (vector?  header) (if (= (first header) :plang)
+                        (apply gtool/get-plang header)
+                        (apply gtool/get-lang header))
+    :else (str header)))
+
+
+(defn translate-body [body]
+  (cond
+    (keyword? body) (gtool/get-lang-alerts body)
+    (vector?  body) (if (= (first body) :plang)
+                        (apply gtool/get-plang (drop 1 body))
+                        (apply gtool/get-lang body))
+    :else (str body)))
+
 (defn- icon-label
   [ic-off ic-on size]
   (c/label :icon ic-off
@@ -231,6 +248,9 @@
                            :user-data close-icon]}
                    [])
           api {:alert frame :alerts-box (:alerts-box (state!)) :rm-alert (fn [] (.remove (:alerts-box (state!)) frame) (refresh-box-bounds))}
+
+          return-body (fn [body-text] [(c/label :size [(- (:box-w (state!)) offset) :by 30] :text body-text)])
+          
           content [(gmg/migrid
                     :> :gf {:args [:background c-bg]}
                     [(c/label :text header
@@ -240,22 +260,33 @@
                      close-icon])
 
                    (gmg/migrid :> {:gap [5] :args [:background c-bg]}
-                               (vec (cond (string? body) [(c/label :size [(- (:box-w (state!)) offset) :by 30]
-                                                                   :text body)]
+                               (vec (cond (string? body) (return-body body)
                                           (fn?     body) [(body api)]
-                                          (vector? body) (doall
-                                                          (vec (map
-                                                                (fn [m]
-                                                                  (cond (map? m) (gcomp/button-slim
-                                                                                  (:title m)
-                                                                                  :onClick (fn [e] ((:func m) api))
-                                                                                  :bg       face/c-alert-btn-bg
-                                                                                  :bg-hover face/c-alert-btn-bg-focus)
-                                                                        (fn?  m) (m api)
-                                                                        :else (c/label)))
-                                                                body)))
+
+                                          (and (vector? body) (map? (first body)))
+                                          (doall
+                                           (vec (map
+                                                 (fn [m]
+                                                   (cond (map? m) (gcomp/button-slim
+                                                                   (:title m)
+                                                                   :onClick (fn [e] ((:func m) api))
+                                                                   :bg       face/c-alert-btn-bg
+                                                                   :bg-hover face/c-alert-btn-bg-focus)
+                                                         (fn?  m) (m api)
+                                                         :else (c/label)))
+                                                 body)))
+
+                                          (and (vector? body) (keyword? (first body)))
+                                          (->> (translate-body body)
+                                            (return-body ))
+                                          
+                                          (keyword? body)
+                                          (->> (translate-body body)
+                                            (return-body ))
+                                          
                                           :else [])))]]
       (c/config! frame :items (gtool/join-mig-items content)))))
+
 
 (defn- alert-type-src ;; TODO: Alert info bugging, do not loaded correct colors after changing theme
   [type key]
@@ -340,16 +371,17 @@
              s-popup [300 320]
              actions []
              expand  nil}}]
-  (dispatch! {:action :inc-index})
-  (dispatch! {:action :store-new-alerts
-              :alert  {:header  header
-                       :body    body
-                       :s-popup s-popup
-                       :expand  expand
-                       :type    type
-                       :time    time
-                       :actions actions}})
-  (add-to-alerts-box (template type header body time s-popup expand actions)))
+  (let [header (translate-header header)]
+   (dispatch! {:action :inc-index})
+   (dispatch! {:action :store-new-alerts
+               :alert  {:header  header
+                        :body    body
+                        :s-popup s-popup
+                        :expand  expand
+                        :type    type
+                        :time    time
+                        :actions actions}})
+   (add-to-alerts-box (template type header body time s-popup expand actions))))
 
 
 ;; ┌──────────────────┐
@@ -485,84 +517,119 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 (defn info
   "Description:
     Wraper.
-    Invoke alert box on Jarman."
-  [header body
-   & {:keys [type time s-popup actions expand]
-      :or   {type :alert
-             time 5
-             s-popup [300 320]
-             actions []
-             expand  nil}}]
-  (print-header
-   "Ivoke info frame"
-   (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions))
-   (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
+    Invoke alert box on Jarman.
+  Example:
+    On bottom"
+  ([body] (info :info body))
+  ([header body
+    & {:keys [type time s-popup actions expand]
+       :or   {type :alert
+              time 5
+              s-popup [300 320]
+              actions []
+              expand  nil}}]
+   (print-header
+    "Ivoke info frame"
+    (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions))
+    (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))))
 
 (defn warning
   "Description:
     Wraper.
-    Invoke alert box on Jarman."
-  [header body
-   & {:keys [type time s-popup actions expand]
-      :or   {type :warning
-             time 5
-             s-popup [300 320]
-             actions []
-             expand  nil}}]
-  (print-header
-   "Ivoke warning frame"
-   (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
-  (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
+    Invoke alert box on Jarman.
+  Example:
+    On bottom"
+  ([body] (warning :warning body))
+  ([header body
+    & {:keys [type time s-popup actions expand]
+       :or   {type :warning
+              time 5
+              s-popup [300 320]
+              actions []
+              expand  nil}}]
+   (print-header
+    "Ivoke warning frame"
+    (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
+   (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
 
 (defn danger
   "Description:
     Wraper.
-    Invoke alert box on Jarman."
-  [header body
-   & {:keys [type time s-popup actions expand]
-      :or   {type :danger
-             time 5
-             s-popup [300 320]
-             actions []
-             expand  nil}}]
-  (print-header
-   "Ivoke danger frame"
-   (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
-  (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
-
+    Invoke alert box on Jarman.
+  Example:
+    On bottom"
+  ([body] (danger :danger body))
+  ([header body
+    & {:keys [type time s-popup actions expand]
+       :or   {type :danger
+              time 5
+              s-popup [300 320]
+              actions []
+              expand  nil}}]
+   (print-header
+    "Ivoke danger frame"
+    (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
+   (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
 
 (defn success
   "Description:
     Wraper.
-    Invoke alert box on Jarman."
-  [header body
-   & {:keys [type time s-popup actions expand]
-      :or   {type :success
-             time 5
-             s-popup [300 320]
-             actions []
-             expand  nil}}]
-  (print-header
-   "Ivoke success frame"
-   (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
-  (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
+    Invoke alert box on Jarman.
+  Example:
+    On bottom"
+  ([body] (success :success body))
+  ([header body
+    & {:keys [type time s-popup actions expand]
+       :or   {type :success
+              time 5
+              s-popup [300 320]
+              actions []
+              expand  nil}}]
+   (print-header
+    "Ivoke success frame"
+    (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
+   (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
 
-
-;; Using alerts
+;; Using alerts, alert examples
 (comment
+  ;; use string, key or keypath
   (info    "Test 1" "Info box")
+  (info    "Info box")
+  (info    :success "Info box")
+  (info    :success :changes-saved)
+  (info    :success [:basic :yes])
+  (info    [:buttons :no] [:basic :yes])
+  (info    [:buttons :update-manager] :no-updates)
+
+  ;; Buttons in alert
+  (danger :need-reload
+          [{:title (gtool/get-lang-btns :reload-app)
+            :func (fn [api] (println api))}]
+          :time 10)
+
+  ;; Lang from plugin, first in vec must be :plang
+  (info :warning [:plang :service_period :buttons :pay])
+
+  ;; Template exaples
   (warning "Test 2" "Warning box")
   (danger  "Test 3" "Danger box")
   (success "Test 4" "Success box")
-  (warning "Interaction" "Devil robot say:" :s-popup [300 150]
-           :expand (fn [] (jarman.gui.gui-components/button-basic "Kill all humans!")))
-  (show-alerts-history)
-  )
 
+  ;; Component in popup window
+  (warning "Interaction" "Devil robot say:" :s-popup [300 150]
+           :expand (fn [] (gcomp/button-basic "Kill all humans!")))
+
+  ;; State aletrs
+  (state/concat-state :state-alerts [[:info "Pepe" "The Frog"]])
+  (state/concat-state :state-alerts [[:info :warning :success]])
+  (state/concat-state :state-alerts [[:success :success [:basic :yes]]])
+
+   ;; in state we need header and body
+  (state/concat-state :state-alerts [[:success [:basic :yes]]])
+  )
 
 (defn start-watching-state-alerts
   "Descriprion:
@@ -579,15 +646,18 @@
                      new-count (count (:state-alerts new-m))]
                  (if-not (= old-count new-count)
                    (if (> new-count 0)
-                     (state/set-state :state-alerts [])
-                     (doall
-                      (map
-                       (fn [[typ head body]]
-                         (println "\n" typ head body)
-                         (try
-                           (cond (= typ :success) (success head body)
-                                 (= typ :warning) (warning head body)
-                                 (= typ :danger)  (danger  head body)
-                                 :else            (info    head body))
-                           (catch Exception e (str "caught exception: " (.getMessage e)))))
-                       (:state-alerts new-m)))))))))
+                     (do
+                       (doall
+                        (map
+                         (fn [[typ head body]]
+                           (println "\n" typ head body)
+                           (try
+                             (cond (= typ :success) (success head body)
+                                   (= typ :warning) (warning head body)
+                                   (= typ :danger)  (danger  head body)
+                                   :else            (info    head body))
+                             (catch Exception e (str "caught exception: " (.getMessage e)))))
+                         (:state-alerts new-m)))
+                       (state/set-state :state-alerts [])))))))
+  )
+

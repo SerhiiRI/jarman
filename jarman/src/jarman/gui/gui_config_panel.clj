@@ -267,14 +267,14 @@
                                      :func (fn [e]
                                              (backup-del-fn (last (split-path name)))
                                              (render-panel)))])) 
-                        (backup-list-fn) ;; TODO: sort A-Z
+                        (sort (backup-list-fn)) ;; TODO: sort A-Z
                         ))
             (c/label :text (gtool/get-lang-infos :empty-backup-storage) :border (b/empty-border :left 3) :background face/c-compos-background))
 
       (gmg/migrid
        :> :center {:gap [20 0 0 0]}
-       (gcomp/menu-bar {:buttons [["Create backup" nil (fn [e] (backup-put-fn) (render-panel))]
-                                  ["Clear storage" nil (fn [e] (backup-clean-fn) (render-panel))]]}))])))
+       (gcomp/menu-bar {:buttons [[(gtool/get-lang-btns :create-backup) nil (fn [e] (backup-put-fn) (render-panel))]
+                                  [(gtool/get-lang-btns :clean-backup-storage) nil (fn [e] (backup-clean-fn) (render-panel))]]}))])))
 
 (defn- backup-vmd []
   (let [panel (gmg/migrid :v {:gap [5 30] :args [:border (b/line-border :bottom 1 :color face/c-icon)]} [])
@@ -324,7 +324,8 @@
                                        :horizontal true)]
                       (c/config! backup-panel :items [[(backup-view)]])
                       [radio-group backup-panel]))]
-    
+
+    (swap! state #(assoc % :backup-panel-fn (first options-vec-fns)))
     (c/config! panel :items (gtool/join-mig-items (render-fn)))
     panel))
 

@@ -57,6 +57,8 @@
     :backup-database    "Backup bazy danych"
     :view-src           "Źródło dla view"
     :backups            "Kopia zapasowa"
+    :create-backup      "Stwórz nową kopię"
+    :clean-backup-storage "Wyczyść magazyn kopii zapasowych"
     },
    
    :header
@@ -285,12 +287,14 @@
     :reload             "Reload"
     :apply              "Apply"
     :view.clj           "View.clj"
-    :database           "Baza Danych"
+    :database           "Database"
     :backup-view        "Backup view"
     :backup-metadata    "Backup metadata"
-    :backup-database    "Backup bazy danych"
+    :backup-database    "Backup database"
     :view-src           "View source"
     :backups            "Backups"
+    :create-backup      "Create backup"
+    :clean-backup-storage "Clean backup storage"
     }
    
    :header

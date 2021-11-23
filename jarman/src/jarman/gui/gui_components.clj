@@ -1634,7 +1634,7 @@
                 (c/label
                  ;; :font (gtool/getFont font-size)
                  :text txt
-                 :tip tip
+                 :tip (if (fn? tip) nil tip)
                  :icon (if ico (stool/image-scale ico icon-size) nil) 
                  :background bg
                  :foreground fg

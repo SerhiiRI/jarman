@@ -3,8 +3,46 @@
 (require '[jarman.gui.gui-views-service  :as gvs])
 (require '[jarman.gui.gui-editors        :as gedit])
 (require '[jarman.gui.gui-components     :as gcomp])
+(require '[jarman.gui.gui-tools          :as gtool])
 (require '[jarman.tools.org :refer :all])
 (require '[clojure.pprint :refer [cl-format]])
+
+
+;; ┌──────────────────┐
+;; │                  │
+;; │  App restart     │
+;; │                  │
+;; └──────────────────┘
+
+(defn restart
+  "Description:
+    Restart app without cleaning global state
+    All loading lvls will be invoked
+    App will sturtup again with creating new frame"
+  [] (gvs/restart))
+
+(defn soft-restart
+  "Description:
+    Restart app without rebuild frame and global state
+    Soft restart do not invoke loding lvl-0 (plugins will not recompiling)
+    Theme will be loaded again"
+  [] (gvs/soft-restart))
+
+(defn hard-restart
+  "Description:
+    Restart app with cleaning global state
+    All loading lvls will be invoked
+    App will sturtup again with creating new frame"
+  [] (gvs/hard-restart))
+
+
+(defn reload-view
+  "Description:
+    Reload active view on right app space (next to menu)"
+  [] (try
+       (gvs/reload-view)
+       (catch Exception e (str "Can not reload. Storage is empty."))))
+
 
 
 ;; ┌──────────────────┐
@@ -23,7 +61,7 @@
              s-popup [300 320]
              actions []
              expand  nil}}]
-  (gas/alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
+  (gas/info header body :type type :time time :s-popup s-popup :expand expand :actons actions))
 
 (defn warning
   "Description:
@@ -36,7 +74,7 @@
              s-popup [300 320]
              actions []
              expand  nil}}]
-  (gas/alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
+  (gas/warning header body :type type :time time :s-popup s-popup :expand expand :actons actions))
 
 (defn danger
   "Description:
@@ -52,22 +90,28 @@
   (print-header
    "Ivoke danger frame"
    (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
-  (gas/alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
+  (gas/danger header body :type type :time time :s-popup s-popup :expand expand :actons actions))
 
 
 (defn success
   "Description:
     Wraper.
-    Invoke alert box on Jarman."
-  [header body
-   & {:keys [type time s-popup actions expand]
-      :or   {type :success
-             time 5
-             s-popup [300 320]
-             actions []
-             expand  nil}}]
-  (gas/alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))
+      Invoke alert box on Jarman."
+  ([body] (success :success body))
+  ([header body
+    & {:keys [type time s-popup actions expand]
+       :or   {type :success
+              time 5
+              s-popup [300 320]
+              actions []
+              expand  nil}}]
+   (gas/success header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
 
+(defn restart-alert []
+  (danger :need-reload
+          [{:title (gtool/get-lang-btns :reload-app)
+            :func (fn [api] (restart))}]
+          :time 0))
 
 (defn delay-alert
   [header body
@@ -158,41 +202,5 @@
   (open-doom)
   (rm-doom)
   )
-
-
-;; ┌──────────────────┐
-;; │                  │
-;; │  App restart     │
-;; │                  │
-;; └──────────────────┘
-
-(defn restart
-  "Description:
-    Restart app without cleaning global state
-    All loading lvls will be invoked
-    App will sturtup again with creating new frame"
-  [] (gvs/restart))
-
-(defn soft-restart
-  "Description:
-    Restart app without rebuild frame and global state
-    Soft restart do not invoke loding lvl-0 (plugins will not recompiling)
-    Theme will be loaded again"
-  [] (gvs/soft-restart))
-
-(defn hard-restart
-  "Description:
-    Restart app with cleaning global state
-    All loading lvls will be invoked
-    App will sturtup again with creating new frame"
-  [] (gvs/hard-restart))
-
-
-(defn reload-view
-  "Description:
-    Reload active view on right app space (next to menu)"
-  [] (try
-       (gvs/reload-view)
-       (catch Exception e (str "Can not reload. Storage is empty."))))
 
 

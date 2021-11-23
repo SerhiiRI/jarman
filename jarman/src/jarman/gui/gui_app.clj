@@ -156,9 +156,13 @@
       (menu/bulid-expand-by-map view-plugins-menumap)))
     ((view-plugins-menumap
       (binding [view-manager/*view-loader-chain-fn*
-                (view-manager/make-loader-chain
-                 view-manager/loader-from-db
-                 view-manager/loader-from-view-clj)]
+                (if (= :view.clj (state/state :view-src))
+                    (view-manager/make-loader-chain
+                     view-manager/loader-from-view-clj
+                     view-manager/loader-from-db)
+                    (view-manager/make-loader-chain
+                     view-manager/loader-from-db
+                     view-manager/loader-from-view-clj))]
         (view-manager/do-view-load))))))
 
 

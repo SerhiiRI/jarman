@@ -61,7 +61,7 @@
      Concat pointed state"
   [key-k vector-v]
   (if (or (nil? (state key-k)) (vector? (state key-k)))
-    (set-state key-k (concat (state key-k) vector-v))
+    (set-state key-k (vec (concat (state key-k) vector-v)))
     (println "state/concat-state: is not vector in state"))) ;; TODO: Better exception
 
 (defn get-atom []

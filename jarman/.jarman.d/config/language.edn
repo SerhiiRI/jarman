@@ -129,7 +129,9 @@
     :unknown-database "Nieznana baza danych.",
     :unsaved-changes-body "Wprowadzono zmiany w konfiguracji, które nie zostały zapisane. Czy zamknąć okno mimo to?",
     :unsaved-changes-title "Nie zapisano zmian!",
-    :write-enter-search "Wpisz frazę i kliknij - ENTER - by wyszukać w tabeli."},
+    :write-enter-search "Wpisz frazę i kliknij - ENTER - by wyszukać w tabeli."
+    :new-view-src "Wybrano nowe źródło dla view %s"
+    },
    
    :basic
    {:description "Opis",
@@ -356,7 +358,10 @@
     :unknown-database "Unknown database.",
     :unsaved-changes-body "Configuration changes have been made but not saved. Should I close the window anyway?",
     :unsaved-changes-title "Unsaved changes!",
-    :write-enter-search "Enter the phrase and click - Enter - to search in the table."}
+    :write-enter-search "Enter the phrase and click - Enter - to search in the table."
+    :new-view-src "Selected new source for view %s"
+    }
+   
    :basic
    {:description "Description"
     :yes "Yes"

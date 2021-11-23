@@ -1605,8 +1605,8 @@
       Bar with buttons without background.
       If you used :justify-end true then buttons will by justify to rigth.
    Example:
-      (menu-bar :buttons [[\"title1\" icon1  fn1] [\"title2\" icon2  fn2]])
-      (menu-bar :id :my-id :buttons [[\"title1\"  icon1 fn1] [\"title2\" icon2  fn2]])"
+      (menu-bar {:buttons [[\"title1\" icon1  (fn [e] )] [\"title2\" icon2  (fn [e] )]]})
+      (menu-bar {:id :my-id :buttons [[\"title1\"  icon1 fn1] [\"title2\" icon2  fn2]]})"
   [{:keys [id
            buttons
            offset

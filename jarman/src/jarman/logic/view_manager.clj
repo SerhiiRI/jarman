@@ -400,7 +400,7 @@
   :name "Defviews src"
   :doc  "Source of defviews. View.clj or database [:view.clj :database]."
   :type clojure.lang.Keyword
-  :group :global)
+  :group :view-params)
 
 (state/set-state :view-src (deref view-src))
 
@@ -423,9 +423,9 @@
   (let [data (*view-loader-chain-fn*)]
     (if (empty? data)
       (state/concat-state :state-alerts
-                          [:danger "Error" "Problem with tables. Data not found in DB
+                          [[:danger "Error" "Problem with tables. Data not found in DB
                                 <br><br><b>Module:</b> view-manager
-                                    <br><b>Fn:</b> do-view-load"])
+                                    <br><b>Fn:</b> do-view-load"]])
       (binding [*ns* (find-ns 'jarman.logic.view-manager)] 
         (doall (for [defview-sexpression data]
                  (try (eval defview-sexpression)

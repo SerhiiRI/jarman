@@ -19,6 +19,7 @@
             [jarman.gui.gui-style            :as gs]
             [jarman.gui.gui-migrid           :as gmg]
             [seesaw.chooser                  :as chooser]
+            [jarman.config.storage           :as storage]
             [jarman.config.vars :refer [setj]])
   (:import
    (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
@@ -71,7 +72,7 @@
 (defn- language-selection-panel []
   (let [panel (gmg/migrid
                :> "[fill]10px[200, fill]10px[grow,fill]10px[fill]"
-               {:gap [10 30] :args [:border (b/line-border :bottom 1 :color face/c-icon)]} [])
+               {:gap [5 10 30 30] :args [:border (b/line-border :bottom 1 :color face/c-icon)]} [])
         selected-lang-fn #(deref jarman.config.conf-language/language-selected)]
     (c/config!
      panel
@@ -183,12 +184,12 @@
                                      [(c/label :text (gtool/get-lang-basic :license-code))
                                       (c/label :text (gtool/get-lang-basic :date-start))
                                       (c/label :text (gtool/get-lang-basic :date-end))])
-                         (gmg/migrid :> {:gap [0 10]:args [:border (b/empty-border :top 2 :bottom 2)]}
+                         (gmg/migrid :> {:gap [0 10 10 10]:args [:border (b/empty-border :top 2 :bottom 2)]}
                                      [(c/label :text tenant-id)
                                       (c/label :text creation-date)
                                       (c/label :text expiration-date)])))))
         panel (gmg/migrid
-               :v {:gap [5] :args [:border (b/line-border :bottom 1 :color face/c-icon)]}
+               :v {:gap [5 5 30 30] :args [:border (b/line-border :bottom 1 :color face/c-icon)]}
                (render-fn))]
     (state/new-watcher state panel render-fn [:current-license] :watch-current-license)
     panel))
@@ -203,11 +204,10 @@
 
 (defn- viewclj-or-viewdb []
   (swap! state #(assoc % :tmp-view-src (rift (state/state :view-src) (deref jarman.logic.view-manager/view-src))))
-  (let [panel (gmg/migrid
-               :> {:gap [5 30] :args [:border (b/line-border :bottom 1 :color face/c-icon)]} [])
+  (let [panel (gmg/migrid :> {:gap [5 10 30 30] :args [:border (b/line-border :bottom 1 :color face/c-icon)]} [])
         
         render-fn (fn [] (c/label)
-                    (let [options-vec      ["View.clj" "Database"]
+                    (let [options-vec      [(gtool/get-lang-btns :view.clj) (gtool/get-lang-btns :database)]
                           options-vec-keys [:view.clj :database]
                           selected-src     (.indexOf options-vec-keys (:tmp-view-src @state))
                           
@@ -244,12 +244,88 @@
 ;; storage.clj
 ;; gui_events.clj
 
+(defn- timestamp []
+  (.format (java.text.SimpleDateFormat. "dd-MM-yyyy_HH:mm:ss") (new java.util.Date)))
+
+(defn- backup-panel-template
+  [name backup-panel backup-list-fn backup-put-fn backup-clean-fn backup-del-fn]
+  (let [render-panel (fn []
+                       (c/config! backup-panel :items [[((:backup-panel-fn @state))]])
+                       (.repaint (state/state :views-space)))]
+    (gmg/migrid
+     :v
+     [(rift (doall (map (fn [name]
+                          (gmg/migrid
+                           :> :gf
+                           [(c/label :text name
+                                     :background face/c-compos-background
+                                     :border (b/empty-border :thickness 3)
+                                     :listen [:mouse-entered (fn [e] (c/config! e :background face/c-on-focus))
+                                              :mouse-exited  (fn [e] (c/config! e :background face/c-compos-background))])
+                            (row-btn :title (gtool/get-lang-btns :remove)
+                                     :icon (gs/icon GoogleMaterialDesignIcons/DELETE)
+                                     :func (fn [e]
+                                             (backup-del-fn (last (split-path name)))
+                                             (render-panel)))])) 
+                        (backup-list-fn) ;; TODO: sort A-Z
+                        ))
+            (c/label :text (gtool/get-lang-infos :empty-backup-storage) :border (b/empty-border :left 3) :background face/c-compos-background))
+
+      (gmg/migrid
+       :> :center {:gap [20 0 0 0]}
+       (gcomp/menu-bar {:buttons [["Create backup" nil (fn [e] (backup-put-fn) (render-panel))]
+                                  ["Clear storage" nil (fn [e] (backup-clean-fn) (render-panel))]]}))])))
+
 (defn- backup-vmd []
-  (let [render-fn (fn [] (c/label :text "Comming soon...")) ;; TODO: make backup for view, metadata and db
-        panel (gmg/migrid
-               :v {:gap [5] :args [:border (b/line-border :bottom 1 :color face/c-icon)]}
-               (render-fn))]
-    ;; (state/new-watcher state panel render-fn [:current-license] :watch-current-license)
+  (let [panel (gmg/migrid :v {:gap [5 30] :args [:border (b/line-border :bottom 1 :color face/c-icon)]} [])
+
+        backup-panel (gmg/migrid :v {:gap [10 0]} [])
+
+        backup-view (fn [] (backup-panel-template "View"
+                                                   backup-panel
+                                                   storage/backup-view-list
+                                                   (fn [] (storage/backup-view-put (str "view_" (timestamp) ".clj") "TEST")) ;; TODO: Save correct file
+                                                   storage/backup-view-clean
+                                                   storage/backup-view-delete))
+        backup-viewdb (fn [] (backup-panel-template "Viewdb"
+                                                   backup-panel
+                                                   storage/backup-viewdb-list
+                                                   (fn [] (storage/backup-viewdb-put (str "viewdb_" (timestamp) ".clj") "TEST")) ;; TODO: Save correct file
+                                                   storage/backup-viewdb-clean
+                                                   storage/backup-viewdb-delete))
+        backup-meta  (fn [] (backup-panel-template "Meta"
+                                                   backup-panel
+                                                   storage/backup-metadata-list
+                                                   (fn [] (storage/backup-metadata-put (str "metadata_" (timestamp) ".clj") "TEST")) ;; TODO: Save correct file
+                                                   storage/backup-metadata-clean
+                                                   storage/backup-metadata-delete))
+        backup-db    (fn [] (backup-panel-template "DB"
+                                                   backup-panel
+                                                   storage/backup-db-list
+                                                   (fn [] (storage/backup-db-put (str "db_" (timestamp) ".clj") "TEST")) ;; TODO: Save correct file
+                                                   storage/backup-db-clean
+                                                   storage/backup-db-delete))
+
+        options-vec-fns [backup-view backup-viewdb backup-meta backup-db]
+        
+        render-fn (fn [] 
+                    (let [options-vec     [(gtool/get-lang-btns :backup-view)
+                                           (str (gtool/get-lang-btns :backup-view) "db")
+                                           (gtool/get-lang-btns :backup-metadata)
+                                           (gtool/get-lang-btns :backup-database)]
+                          
+                          radio-group (gcomp/jradiogroup
+                                       options-vec
+                                       (fn [radio box]
+                                         (let [selected-vec (c/config box :user-data)
+                                               selected-idx (.indexOf selected-vec true)]
+                                           (swap! state #(assoc % :backup-panel-fn (nth options-vec-fns selected-idx)))
+                                           (c/config! backup-panel :items [[((nth options-vec-fns selected-idx))]])))
+                                       :horizontal true)]
+                      (c/config! backup-panel :items [[(backup-view)]])
+                      [radio-group backup-panel]))]
+    
+    (c/config! panel :items (gtool/join-mig-items (render-fn)))
     panel))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -261,24 +337,26 @@
 (defn config-panel-proxy []
   ;; (swap! state (fn [s] (update s :current-license (constantly (-> (session/load-license) (session/decrypt-license))))))
   (load-license)
-  (gmg/migrid
-   :v {:gap [5 0]}
-   (filter some?
-    [(gcomp/button-expand (gtool/get-lang-header :select-language) (language-selection-panel)
-                          :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/TRANSLATE)))
+  (let [panel (gmg/migrid
+               :v {:gap [5 0]}
+               (filter some?
+                       [(gcomp/button-expand (gtool/get-lang-header :select-language) (language-selection-panel)
+                                             :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/TRANSLATE)))
 
-     (session/when-permission
-      :admin-update
-      (gcomp/button-expand (gtool/get-lang-header :licenses)
-                           (gmg/migrid :v [(license-panel)
-                                           (all-licenses-panel)])
-                           :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/VERIFIED_USER))))
+                        (session/when-permission
+                         :admin-update
+                         (gcomp/button-expand (gtool/get-lang-header :licenses)
+                                              (gmg/migrid :v [(license-panel)
+                                                              (all-licenses-panel)])
+                                              :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/VERIFIED_USER))))
 
-     (gcomp/button-expand "View.clj or ViewDB" (viewclj-or-viewdb)
-                          :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/CODE)))
+                        (gcomp/button-expand (gtool/get-lang-btns :view-src) (viewclj-or-viewdb)
+                                             :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/CODE)))
 
-     (gcomp/button-expand "Backups" (backup-vmd)
-                          :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/STORAGE)))])))
+                        (gcomp/button-expand (gtool/get-lang-btns :backups) (backup-vmd)
+                                             :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/STORAGE)))]))]
+    (gmg/migrid-resizer (state/state :views-space) panel :backup-vmd :gap [5 0])
+    (gcomp/min-scrollbox panel)))
 
 (defn config-panel []
   (config-panel-proxy))

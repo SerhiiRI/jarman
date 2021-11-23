@@ -50,6 +50,13 @@
     :db-visualizer      "DB Visualizer"
     :update-manager     "Menedżer aktualizacji"
     :apply              "Zastosuj"
+    :view.clj           "View.clj"
+    :database           "Baza Danych"
+    :backup-view        "Backup view"
+    :backup-metadata    "Backup metadata"
+    :backup-database    "Backup bazy danych"
+    :view-src           "Źródło dla view"
+    :backups            "Kopia zapasowa"
     },
    
    :header
@@ -189,7 +196,9 @@
                         :answer   "Być może nieprawidłowo podano dane dla konfiguracji połączenia. Upewnij się, że konfiguracja jest prawidłowa. Jeśli nadal występuje problem, proszę sprawwdź połączenie z serwerem."}]
 
     :contact ["http://trashpanda-team.ddns.net"
-              "contact.tteam@gmail.com"]}
+              "contact.tteam@gmail.com"]
+    :empty-backup-storage "Folder z kopiami zapasowymi jest pusty"
+    }
 
    :license
    {:tenant                  "najemca"
@@ -275,6 +284,13 @@
     :update-manager     "Update manager"
     :reload             "Reload"
     :apply              "Apply"
+    :view.clj           "View.clj"
+    :database           "Baza Danych"
+    :backup-view        "Backup view"
+    :backup-metadata    "Backup metadata"
+    :backup-database    "Backup bazy danych"
+    :view-src           "View source"
+    :backups            "Backups"
     }
    
    :header
@@ -421,7 +437,10 @@
                         :answer   "Perhaps the data for the connection configuration was incorrectly provided. Make sure the configuration is correct. If there is still a problem, please check the connection to the server."}]
 
     :contact ["http://trashpanda-team.ddns.net"
-              "contact.tteam@gmail.com"]}
+              "contact.tteam@gmail.com"]
+    :empty-backup-storage "Backup folder is empty"
+    }
+   
    :license
    {:tenant                  "tenant"
     :license                 "license"

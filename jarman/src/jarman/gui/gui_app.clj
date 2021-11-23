@@ -253,6 +253,11 @@
                             :title "Hard Restart"
                             :fn    (fn [e] (i/restart))}
 
+                           {:icon  (gs/icon GoogleMaterialDesignIcons/LANGUAGE face/c-icon)
+                            :title "Reload language"
+                            :fn    (fn [e] (jarman.config.conf-language/do-load-language)
+                                     (i/success "Reloaded languages"))}
+                           
                            {:icon  (gs/icon GoogleMaterialDesignIcons/LIST face/c-icon)
                             :title "Reload main menu"
                             :fn    (fn [e]

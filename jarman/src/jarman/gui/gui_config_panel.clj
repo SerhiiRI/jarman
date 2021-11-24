@@ -32,7 +32,7 @@
                   :tmp-view-src    nil}))
 
 (defn row-btn
-  [& {:keys [func icon title]
+  [& {:keys [func icon title listen]
       :or {func (fn [e])
            icon (gs/icon GoogleMaterialDesignIcons/SAVE)
            title (gtool/get-lang-btns :save)}}]
@@ -41,7 +41,7 @@
    :tgap 2
    :bgap 2
    :underline-size 0
-   :args [:icon icon]
+   :args (vec (concat [:icon icon] (if (nil? listen) [] [:listen listen])))
    :onClick func))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -281,6 +281,11 @@
       (i/success (str (gtool/get-lang-alerts :create-backup-complete) " - " (last (split-path path)))))
     (catch Exception e (i/warning :create-backup-faild))))
 
+;; TODO: confirm popup for restore, delete, clear
+;; TODO: Restore viewdb
+;; TODO: Backup & restore metadata
+;; TODO: Backup & restore database
+
 (defn- restore-backup-viewdb
   "Description:
      Restore view from viewdb.clj to database"
@@ -297,29 +302,43 @@
      [(rift (doall (map (fn [name]
                           (gmg/migrid
                            :> :gf
-                           [(c/label :text name
-                                     :background face/c-compos-background
-                                     :border (b/empty-border :thickness 3)
-                                     :listen [:mouse-entered (fn [e] (c/config! e :background face/c-on-focus))
-                                              :mouse-exited  (fn [e] (c/config! e :background face/c-compos-background))])
+                           (let [row
+                                 (c/label :text name
+                                          :background face/c-compos-background
+                                          :border (b/empty-border :thickness 3)
+                                          :listen [:mouse-entered (fn [e] (c/config! e :background face/c-on-focus))
+                                                   :mouse-exited  (fn [e] (c/config! e :background face/c-compos-background))])
 
-                            (gmg/migrid
-                             :> :f
-                             [(row-btn :title (gtool/get-lang-btns :restore)
-                                       :icon (gs/icon GoogleMaterialDesignIcons/RESTORE)
-                                       :func (fn [e]
-                                               (c/config! (.getParent (c/to-widget e)) :items [[(c/label :text (gtool/get-lang-btns :restoring))]])
-                                               (timelife 0.1 (fn [] (backup-restore-fn name)
-                                                             (render-panel)
-                                                             (i/success (str (last (split-path name)) " - " (gtool/get-lang-alerts :restore-configuration-ok)))))))
+                                 actions
+                                 (gmg/migrid
+                                  :> :f
+                                  [(row-btn :title (gtool/get-lang-btns :restore)
+                                            :icon (gs/icon GoogleMaterialDesignIcons/RESTORE)
+                                            :func (fn [e]
+                                                    (c/config! (.getParent (c/to-widget e))
+                                                               :items [[(c/label :text (gtool/get-lang-btns :restoring))]])
+                                                    (timelife
+                                                     0.1
+                                                     (fn [] (backup-restore-fn name)
+                                                       (render-panel)
+                                                       (i/success (str (last (split-path name)) " - "
+                                                                       (gtool/get-lang-alerts :restore-configuration-ok))))))
+                                            :listen [:mouse-entered (fn [e] (c/config! row :background face/c-on-focus))
+                                                     :mouse-exited  (fn [e] (c/config! row :background face/c-compos-background))])                                           
 
-                              (row-btn :title (gtool/get-lang-btns :remove)
-                                       :icon (gs/icon GoogleMaterialDesignIcons/DELETE)
-                                       :func (fn [e]
-                                               (c/config! (.getParent (c/to-widget e)) :items [[(c/label :text (gtool/get-lang-btns :removing))]])
-                                               (timelife 0.1 (fn [](backup-del-fn (last (split-path name)))
+                                   (doto (row-btn :title (gtool/get-lang-btns :remove)
+                                                  :icon (gs/icon GoogleMaterialDesignIcons/DELETE)
+                                                  :func (fn [e]
+                                                          (c/config! (.getParent (c/to-widget e))
+                                                                     :items [[(c/label :text (gtool/get-lang-btns :removing))]])
+                                                          (timelife
+                                                           0.1
+                                                           (fn [](backup-del-fn (last (split-path name)))
                                                              (render-panel)
-                                                             (i/warning (format (gtool/get-lang-alerts :removed-backup-ok) (last (split-path name))))))))])]))
+                                                             (i/warning (format (gtool/get-lang-alerts :removed-backup-ok) (last (split-path name)))))))
+                                                  :listen [:mouse-entered (fn [e] (c/config! row :background face/c-on-focus))
+                                                         :mouse-exited  (fn [e] (c/config! row :background face/c-compos-background))]))])]
+                             [row actions])))
                         
                         (reverse (sort (backup-list-fn)))))
             (c/label :text (gtool/get-lang-infos :empty-backup-storage) :border (b/empty-border :left 3) :background face/c-compos-background))

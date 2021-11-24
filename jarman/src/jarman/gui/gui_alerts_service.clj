@@ -31,6 +31,8 @@
               (cond (= :atom (first prop)) state
                     :else (deref state))))
 
+;; TODO: rewrite alerts storage for sorting by id or time
+
 (defn- action-handler
   "Description:
     Invoke fn using dispatch!.

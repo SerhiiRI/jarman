@@ -54,43 +54,46 @@
   "Description:
     Wraper.
     Invoke alert box on Jarman."
-  [header body
-   & {:keys [type time s-popup actions expand]
-      :or   {type :alert
-             time 5
-             s-popup [300 320]
-             actions []
-             expand  nil}}]
-  (gas/info header body :type type :time time :s-popup s-popup :expand expand :actons actions))
+  ([body] (info :info body))
+  ([header body
+    & {:keys [type time s-popup actions expand]
+       :or   {type :alert
+              time 5
+              s-popup [300 320]
+              actions []
+              expand  nil}}]
+   (gas/info header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
 
 (defn warning
   "Description:
     Wraper.
     Invoke alert box on Jarman."
-  [header body
-   & {:keys [type time s-popup actions expand]
-      :or   {type :warning
-             time 5
-             s-popup [300 320]
-             actions []
-             expand  nil}}]
-  (gas/warning header body :type type :time time :s-popup s-popup :expand expand :actons actions))
+  ([body] (warning :warning body))
+  ([header body
+    & {:keys [type time s-popup actions expand]
+       :or   {type :warning
+              time 5
+              s-popup [300 320]
+              actions []
+              expand  nil}}]
+   (gas/warning header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
 
 (defn danger
   "Description:
     Wraper.
     Invoke alert box on Jarman."
-  [header body
-   & {:keys [type time s-popup actions expand]
-      :or   {type :danger
-             time 5
-             s-popup [300 320]
-             actions []
-             expand  nil}}]
-  (print-header
-   "Ivoke danger frame"
-   (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
-  (gas/danger header body :type type :time time :s-popup s-popup :expand expand :actons actions))
+  ([body] (danger :danger body))
+  ([header body
+    & {:keys [type time s-popup actions expand]
+       :or   {type :danger
+              time 5
+              s-popup [300 320]
+              actions []
+              expand  nil}}]
+   (print-header
+    "Ivoke danger frame"
+    (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
+   (gas/danger header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
 
 
 (defn success

@@ -10,6 +10,7 @@
     :login   "Login"
     :cancel  "Anuluj"
     :remove  "Usuń"
+    :removing "Usuwanie"
     :export  "Exportuj"
     :goback  "Wróć"
     :search  "Szukaj"
@@ -59,6 +60,8 @@
     :backups            "Kopia zapasowa"
     :create-backup      "Stwórz nową kopię"
     :clean-backup-storage "Wyczyść magazyn kopii zapasowych"
+    :restore            "Przywróć"
+    :restoring          "Przywracanie"
     },
    
    :header
@@ -130,6 +133,7 @@
     :plugin-installed "Jarman %s zainstalowany pomyślnie.",
     :reloaded-extension "Rozszerzenie `%s` przeładowano pomyślnie.",
     :restore-configuration-ok "Przywrócono konfiguracje! Proszę bądź ostrożny następnym razem.",
+    :removed-backup-ok "Usunięto kopię zapasową %s"
     :save-changes? "Czy chcesz zapisać zmiany?",
     :something-went-wrong "Coś poszło nie tak. Nieokreślony błąd.",
     :success "Sukces!",
@@ -140,6 +144,8 @@
     :unsaved-changes-title "Nie zapisano zmian!",
     :write-enter-search "Wpisz frazę i kliknij - ENTER - by wyszukać w tabeli."
     :new-view-src "Wybrano nowe źródło dla view %s"
+    :create-backup-complete "Kopia zapasowa zostałą wykonana"
+    :create-backup-faild    "Wystąpił błąd podczas tworzenia kopi zapasowej"
     },
    
    :basic
@@ -237,6 +243,7 @@
  {:ui
   {:buttons
    {:remove "Remove"
+    :removing "Removing"
     :yes "Yes"
     :no "No"
     :add "Add"
@@ -295,6 +302,8 @@
     :backups            "Backups"
     :create-backup      "Create backup"
     :clean-backup-storage "Clean backup storage"
+    :restore            "Restore"
+    :restoring          "Restoring"
     }
    
    :header
@@ -370,6 +379,7 @@
     :plugin-installed "Jarman %s installed successfully",
     :reloaded-extension "Extension `%s` successfully reloaded.",
     :restore-configuration-ok "Configurations restored! Please be careful next time.",
+    :removed-backup-ok "Backup removed successful: %s"
     :save-changes? "Do you want to save changes?",
     :something-went-wrong "Something went wrong. Unknow problem.",
     :success "Success!",
@@ -380,6 +390,8 @@
     :unsaved-changes-title "Unsaved changes!",
     :write-enter-search "Enter the phrase and click - Enter - to search in the table."
     :new-view-src "Selected new source for view %s"
+    :create-backup-complete "Created backup"
+    :create-backup-faild    "Backup creating failed"
     }
    
    :basic

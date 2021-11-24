@@ -215,10 +215,14 @@
 (defn translate-body [body]
   (cond
     (keyword? body) (gtool/get-lang-alerts body)
-    (vector?  body) (if (= (first body) :plang)
-                        (apply gtool/get-plang (drop 1 body))
-                        (apply gtool/get-lang body))
-    :else (str body)))
+
+    (and (vector?  body)
+         (keyword? (first body)))
+    (if (= (first body) :plang)
+      (apply gtool/get-plang (drop 1 body))
+      (apply gtool/get-lang body))
+
+    :else body))
 
 (defn- icon-label
   [ic-off ic-on size]
@@ -371,7 +375,8 @@
              s-popup [300 320]
              actions []
              expand  nil}}]
-  (let [header (translate-header header)]
+  (let [header (translate-header header)
+        body (translate-body body)]
    (dispatch! {:action :inc-index})
    (dispatch! {:action :store-new-alerts
                :alert  {:header  header

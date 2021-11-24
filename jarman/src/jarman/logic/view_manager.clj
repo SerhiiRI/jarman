@@ -333,50 +333,53 @@
 
 ;;;  LOADERS ;;;
 
-(defn loader-from-db []
-  (let [con (dissoc (db/connection-get)
-                    :dbtype :user :password
-                    :useUnicode :characterEncoding)
-        req (list 'in-ns (quote (quote jarman.logic.view-manager)))
-        data (map (fn [x] (read-string (:view x))) (db/query (select! {:table_name :view}))) 
-        sdata (if-not (empty? data) (concat [con req] data))
-        path  (try (str (env/get-view-clj))
-                   (catch Exception e (do (spit "./view.clj" "") "./view.clj"))) ]
-    (if-not (empty? data)
-      (do (spit path "")
-          (with-open [W (io/writer (io/file path) :append true)]
-            (print-line "Loading from database")
-            (doall
-             (for [s sdata]
-               (do (.write W (pp-str s))
-                   (.write W env/line-separator)))))))
-    data))
+(defn loader-from-db
+  ([] (loader-from-db nil))
+  ([path](let [con (dissoc (db/connection-get)
+                           :dbtype :user :password
+                           :useUnicode :characterEncoding)
+               req (list 'in-ns (quote (quote jarman.logic.view-manager)))
+               data (map (fn [x] (read-string (:view x))) (db/query (select! {:table_name :view}))) 
+               sdata (if-not (empty? data) (concat [con req] data))
+               path  (if (nil? path)
+                       (try (str (env/get-view-clj))
+                            (catch Exception e (do (spit "./view.clj" "") "./view.clj")))
+                       path)]
+           (println "path" path)
+           (if-not (empty? data)
+             (do (spit path "")
+                 (with-open [W (io/writer (io/file path) :append true)]
+                   (doall
+                    (for [s sdata]
+                      (do (.write W (pp-str s))
+                          (.write W env/line-separator)))))))
+           data)))
 
-(defn loader-from-view-clj []
-  (if (.exists (env/get-view-clj))
-    (let [data 
-          (try
-            (read-seq-from-file  "src/jarman/logic/view.clj")
-            (catch Exception e (print-line (str "caught exception: file not find" (.toString e)))))
-          con-guard (first data)
-          con-data  (dissoc (db/connection-get)
-                            :dbtype :user :password
-                            :useUnicode :characterEncoding)]
-      (print-line "Loading from view.clj")
-      (cond
-        ;; -----------
-        (empty? (drop 2 data))
-        (print-line "View.clj loader. Views is empty")
-        ;; -----------
-        (not= con-guard con-data) 
-        (print-line (format "Error! View.clj si not related to connected db. guard(%s), connected database(%s)"
-                            (string/join ", " (->> (vals con-guard) (map pr-str)))
-                            (string/join ", " (->> (vals  con-data) (map pr-str)))))
-        ;; -----------
-        (not (every? #(= 'defview (first %)) (drop 2 data)))
-        (print-line "Everything(omiting connection map and `in-ns`) in view.clj MUST be only `defview`. File is corrupted")
-        ;; If all the things gone alright
-        :else (drop 2 data)))))
+(defn loader-from-view-clj
+  ([] (loader-from-view-clj nil))
+  ([path] (if (.exists (env/get-view-clj))
+            (let [data 
+                  (try
+                    (read-seq-from-file  (if (nil? path) "src/jarman/logic/view.clj" path))
+                    (catch Exception e (print-line (str "caught exception: file not find" (.toString e)))))
+                  con-guard (first data)
+                  con-data  (dissoc (db/connection-get)
+                                    :dbtype :user :password
+                                    :useUnicode :characterEncoding)]
+              (cond
+                ;; -----------
+                (empty? (drop 2 data))
+                (print-line "View.clj loader. Views is empty")
+                ;; -----------
+                (not= con-guard con-data) 
+                (print-line (format "Error! View.clj si not related to connected db. guard(%s), connected database(%s)"
+                                    (string/join ", " (->> (vals con-guard) (map pr-str)))
+                                    (string/join ", " (->> (vals  con-data) (map pr-str)))))
+                ;; -----------
+                (not (every? #(= 'defview (first %)) (drop 2 data)))
+                (print-line "Everything(omiting connection map and `in-ns`) in view.clj MUST be only `defview`. File is corrupted")
+                ;; If all the things gone alright
+                :else (drop 2 data))))))
 
 (comment
   (loader-from-db)
@@ -480,19 +483,20 @@
                    {:table_name :metadata
                     :column [:table_name :id]}))))))
 
-(defn- move-views-to-db []
-  (let [table-views (drop 2 (loader-from-view-clj))]
-    (assert
-     (every? #(= 'defview (first %)) table-views)
-     "Everything(omiting connection map and `in-ns`) in view.clj MUST be only `defview`")
-    (view-clean)
-    (doall
-     (map (fn [table-view]
-            (let [table-map  (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
-                  table-name (:name table-map)]
-              (view-set {:table_name table-name :view (str table-view) ;; (with-out-str (clojure.pprint/pprint table-view))
-                         })))
-          table-views))))
+(defn move-views-to-db
+  ([] (move-views-to-db nil))
+  ([path] (let [table-views (drop 2 (loader-from-view-clj path))]
+        (assert
+         (every? #(= 'defview (first %)) table-views)
+         "Everything(omiting connection map and `in-ns`) in view.clj MUST be only `defview`")
+        (view-clean)
+        (doall
+         (map (fn [table-view]
+                (let [table-map  (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
+                      table-name (:name table-map)]
+                  (view-set {:table_name table-name :view (str table-view) ;; (with-out-str (clojure.pprint/pprint table-view))
+                             })))
+              table-views)))))
 
 (comment
   (move-views-to-db))

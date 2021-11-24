@@ -20,6 +20,8 @@
             [jarman.gui.gui-migrid           :as gmg]
             [seesaw.chooser                  :as chooser]
             [jarman.config.storage           :as storage]
+            [jarman.config.environment       :as env]
+            [jarman.logic.view-manager       :as view-manager]
             [jarman.config.vars :refer [setj]])
   (:import
    (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
@@ -108,7 +110,7 @@
    :title (gtool/get-lang-btns :install)
    :icon (gs/icon GoogleMaterialDesignIcons/MOVE_TO_INBOX)
    :func (fn [e]
-           (let [default-path (str jarman.config.environment/jarman-home "/licenses")
+           (let [default-path (str env/jarman-home "/licenses")
                  license-file-path (:license-file @state)]
              (if (= default-path license-file-path)
                (i/warning (gtool/get-lang-header :file-no-choose)
@@ -142,7 +144,7 @@
 (defn- file-exp []
   (gmg/migrid
    :> "[fill]5px[220::, fill]" {:gap [0 20]}
-   (let [default-path (str jarman.config.environment/jarman-home "/licenses")
+   (let [default-path (str env/jarman-home "/licenses")
          input (c/text :text (gtool/get-lang-basic :select-file) :border nil :editable? false :background face/c-compos-background)
          icon  (c/label :icon (gs/icon GoogleMaterialDesignIcons/FIND_IN_PAGE face/c-icon 25)
                         :listen [:mouse-entered gtool/hand-hover-on
@@ -247,8 +249,46 @@
 (defn- timestamp []
   (.format (java.text.SimpleDateFormat. "dd-MM-yyyy_HH:mm:ss") (new java.util.Date)))
 
+(defn- create-backup-viewclj
+  "Description:
+     Create copy of file view.clj to backup storage"
+  []
+  (if (.exists (env/get-view-clj))
+    (try
+      (let [path (str (storage/backup-view-dir) "/view_" (timestamp) ".clj")]
+        (clojure.java.io/copy
+         (clojure.java.io/file (str (env/get-view-clj)))
+         (clojure.java.io/file path))
+        (i/success (str (gtool/get-lang-alerts :create-backup-complete) " - " (last (split-path path)))))
+      (catch Exception e (i/warning :create-backup-faild)))))
+
+(defn- restore-backup-viewclj
+  "Description:
+     Restore view.clj from backup"
+  [backup-path]
+  (if (.exists (env/get-view-clj))
+    (clojure.java.io/copy
+     (clojure.java.io/file backup-path)
+     (clojure.java.io/file (str (env/get-view-clj))))))
+
+(defn- create-backup-viewdb
+  "Description:
+     Create copy of view form db to backup storage as view.clj"
+  []
+  (try
+    (let [path (str (storage/backup-view-dir) "/viewdb_" (timestamp) ".clj")]
+      (view-manager/loader-from-db (str (jarman.config.storage/backup-viewdb-dir) "/viewdb_" (timestamp) ".clj"))
+      (i/success (str (gtool/get-lang-alerts :create-backup-complete) " - " (last (split-path path)))))
+    (catch Exception e (i/warning :create-backup-faild))))
+
+(defn- restore-backup-viewdb
+  "Description:
+     Restore view from viewdb.clj to database"
+  [path]
+  (view-manager/move-views-to-db path))
+(view-manager/move-views-to-db (str (jarman.config.storage/backup-viewdb-dir) "/viewdb_bkp"  ".clj"))
 (defn- backup-panel-template
-  [name backup-panel backup-list-fn backup-put-fn backup-clean-fn backup-del-fn]
+  [name backup-panel backup-list-fn backup-put-fn backup-clean-fn backup-del-fn backup-restore-fn]
   (let [render-panel (fn []
                        (c/config! backup-panel :items [[((:backup-panel-fn @state))]])
                        (.repaint (state/state :views-space)))]
@@ -262,19 +302,33 @@
                                      :border (b/empty-border :thickness 3)
                                      :listen [:mouse-entered (fn [e] (c/config! e :background face/c-on-focus))
                                               :mouse-exited  (fn [e] (c/config! e :background face/c-compos-background))])
-                            (row-btn :title (gtool/get-lang-btns :remove)
-                                     :icon (gs/icon GoogleMaterialDesignIcons/DELETE)
-                                     :func (fn [e]
-                                             (backup-del-fn (last (split-path name)))
-                                             (render-panel)))])) 
-                        (sort (backup-list-fn)) ;; TODO: sort A-Z
-                        ))
+
+                            (gmg/migrid
+                             :> :f
+                             [(row-btn :title (gtool/get-lang-btns :restore)
+                                       :icon (gs/icon GoogleMaterialDesignIcons/RESTORE)
+                                       :func (fn [e]
+                                               (c/config! (.getParent (c/to-widget e)) :items [[(c/label :text (gtool/get-lang-btns :restoring))]])
+                                               (timelife 0.1 (fn [] (backup-restore-fn name)
+                                                             (render-panel)
+                                                             (i/success (str (last (split-path name)) " - " (gtool/get-lang-alerts :restore-configuration-ok)))))))
+
+                              (row-btn :title (gtool/get-lang-btns :remove)
+                                       :icon (gs/icon GoogleMaterialDesignIcons/DELETE)
+                                       :func (fn [e]
+                                               (c/config! (.getParent (c/to-widget e)) :items [[(c/label :text (gtool/get-lang-btns :removing))]])
+                                               (timelife 0.1 (fn [](backup-del-fn (last (split-path name)))
+                                                             (render-panel)
+                                                             (i/warning (format (gtool/get-lang-alerts :removed-backup-ok) (last (split-path name))))))))])]))
+                        
+                        (reverse (sort (backup-list-fn)))))
             (c/label :text (gtool/get-lang-infos :empty-backup-storage) :border (b/empty-border :left 3) :background face/c-compos-background))
 
       (gmg/migrid
        :> :center {:gap [20 0 0 0]}
        (gcomp/menu-bar {:buttons [[(gtool/get-lang-btns :create-backup) nil (fn [e] (backup-put-fn) (render-panel))]
                                   [(gtool/get-lang-btns :clean-backup-storage) nil (fn [e] (backup-clean-fn) (render-panel))]]}))])))
+
 
 (defn- backup-vmd []
   (let [panel (gmg/migrid :v {:gap [5 30] :args [:border (b/line-border :bottom 1 :color face/c-icon)]} [])
@@ -284,27 +338,31 @@
         backup-view (fn [] (backup-panel-template "View"
                                                    backup-panel
                                                    storage/backup-view-list
-                                                   (fn [] (storage/backup-view-put (str "view_" (timestamp) ".clj") "TEST")) ;; TODO: Save correct file
+                                                   create-backup-viewclj
                                                    storage/backup-view-clean
-                                                   storage/backup-view-delete))
+                                                   storage/backup-view-delete
+                                                   restore-backup-viewclj))
         backup-viewdb (fn [] (backup-panel-template "Viewdb"
                                                    backup-panel
                                                    storage/backup-viewdb-list
-                                                   (fn [] (storage/backup-viewdb-put (str "viewdb_" (timestamp) ".clj") "TEST")) ;; TODO: Save correct file
+                                                   create-backup-viewdb
                                                    storage/backup-viewdb-clean
-                                                   storage/backup-viewdb-delete))
+                                                   storage/backup-viewdb-delete
+                                                   restore-backup-viewdb))
         backup-meta  (fn [] (backup-panel-template "Meta"
                                                    backup-panel
                                                    storage/backup-metadata-list
                                                    (fn [] (storage/backup-metadata-put (str "metadata_" (timestamp) ".clj") "TEST")) ;; TODO: Save correct file
                                                    storage/backup-metadata-clean
-                                                   storage/backup-metadata-delete))
+                                                   storage/backup-metadata-delete
+                                                   (fn [e])))
         backup-db    (fn [] (backup-panel-template "DB"
                                                    backup-panel
                                                    storage/backup-db-list
                                                    (fn [] (storage/backup-db-put (str "db_" (timestamp) ".clj") "TEST")) ;; TODO: Save correct file
                                                    storage/backup-db-clean
-                                                   storage/backup-db-delete))
+                                                   storage/backup-db-delete
+                                                   (fn [e])))
 
         options-vec-fns [backup-view backup-viewdb backup-meta backup-db]
         

@@ -7,15 +7,6 @@
             [jarman.tools.lang :refer :all]
             [jarman.config.environment :as env]))
 
-
-(defn return-first-exists [file-list]
- (if-let [file (first (filter #(.exists %) file-list))]
-   file
-   (throw (FileNotFoundException.
-           (format "No one file [%s] doesn't exists"
-                   (clojure.string/join
-                    ", " (map str file-list)))))))
-
 ;;; Function 
 (defmacro ioerr
   ([f] `(ioerr ~f
@@ -104,5 +95,4 @@
   (temporary-clean)
   (temporary-rename "temp.txt" "alalal")
   (temporary-dir-path))
-
 

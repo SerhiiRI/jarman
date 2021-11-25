@@ -6,17 +6,29 @@
             [clojure.pprint :refer [cl-format]]))
 
 (defn first-exist
-  "Return first existed in list file, if all of files doesn't exist, then raise FileNotFoundException"
-  [file-list]
+  "Description
+    Return first existed in list file,
+    if all of files doesn't exist, then
+    raise FileNotFoundException
+
+    If you do not want to get exception on
+    retuning resource use opt param `throwable?`
+
+  Example
+    (first-exist [(clojure.io.file \"./\")])         ->  #<File>{\"./\"}
+    (first-exist [])                         -{error}-> FileNotFoundException
+    (first-exist [] :throwable false)        -{error}-> nil"
+  [file-list & {:keys [throwable?] :or {throwable? true}}]
   (if-let [file (first (filter #(.exists %) file-list))] file
-    (throw (FileNotFoundException.
-            (cl-format nil "No one file hasn't been found ~{`~A`~^, ~}"
-                       (map str file-list))))))
+          (if-not throwable? nil
+           (throw (FileNotFoundException.
+                   (cl-format nil "No one file hasn't been found ~{`~A`~^, ~}"
+                              (map str file-list)))))))
 
 (defmacro defresource [resource-name doc sources]
   {:pre [(symbol resource-name )(string? doc) (sequential? sources)]}
-  `(defn ~resource-name ~doc [] (jarman.config.environment/first-exist ~sources)))
-
+  `(defn ~resource-name ~doc [& {:keys [~'throwable?] :or {~'throwable? true}}]
+     (jarman.config.environment/first-exist ~sources :throwable? ~'throwable?)))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; ENV VARIABLES ;;;

@@ -1,5 +1,6 @@
 (ns jarman.gui.gui-config-panel
   (:require [clojure.string     :as string]
+            [clojure.java.io    :as io]
             ;; [clojure.core.async :refer [thread]]
             [seesaw.swingx      :as swingx]
             [seesaw.core        :as c]
@@ -103,7 +104,6 @@
   (.start (Thread. (fn [] (swap! state (fn [s] (update s :current-license (constantly (-> (session/load-license) (session/decrypt-license))))))))))
 (defn- reset-license []
   (.start (Thread. (fn [] (swap! state (fn [s] (update s :current-license (constantly nil))))))))
-
 
 (defn- display-btn-upload [root]
   (row-btn
@@ -246,52 +246,94 @@
 ;; storage.clj
 ;; gui_events.clj
 
+;;; fixme:backup
+;; 
+;; * Ogolne
+;;  - nic tu nie musi dzialać! to templatka! 
+;;  - kiepski UI. Poco checkboxy dla wyboru systemu backupów - ziom zle.
+;;    Bardziej bylo logiczniejszym użycie tabowanego panelu jak w liście
+;;    zminnych śriodowiska
+;;  - dodaj przycisk "stworz nową kopię" i odrazu ukryj go w komentarzu.
+;;  - "wyczyść magazyn kopii zapasowych" - może być no przerób UI i później
+;;    go dodaj. 
+;; 
+;; * View
+;;  - Wogle nie przwiduje restore
+;;  - Żadnego backupu z view.clj! ten plik debugowy!
+;;
+;; * Opis UI
+;;   Widok dla view to tylko wierzy plików,
+;;   najwyrażniej mogą usunąć czy odczytać
+;;     opt - dodajesz po swojej woli. Coś co jest szybko
+;;           w otwieraniu i patrzeniu dla nas samych
+;;
+;;   | view-2021-11-10_2... | opt:delete | opt:open | 
+;;
+;;   Widok dla metadanych 
+;;   | meta-2021-11-10_2... | delete | revert | opt:open |
+;;
+;;   Widok listy dla plików baz danych 
+;;   | data-2021-11-10_2... | delete |
+
+
 (defn- timestamp []
   (.format (java.text.SimpleDateFormat. "dd-MM-yyyy_HH:mm:ss") (new java.util.Date)))
 
-(defn- create-backup-viewclj
+(defn- create-backup-view
   "Description:
      Create copy of file view.clj to backup storage"
   []
-  (if (.exists (env/get-view-clj))
-    (try
-      (let [path (str (storage/backup-view-dir) "/view_" (timestamp) ".clj")]
-        (clojure.java.io/copy
-         (clojure.java.io/file (str (env/get-view-clj)))
-         (clojure.java.io/file path))
-        (i/success (str (gtool/get-lang-alerts :create-backup-complete) " - " (last (split-path path)))))
-      (catch Exception e (i/warning :create-backup-faild)))))
+  (spit (io/file (storage/backup-view-dir) (format "view_%s.clj" (timestamp))) "()")
+  ;; fixme:backup: nie usuwaj ten komentarz, na zdrową glowe zobacze co tu móżna używać.
+  ;; My nie używamy w systemie io/copy. i też (env/get-view-clj) rzuca blęd gdy pliku nie ma
+  ;; a go może i nie być. bo plik view.clj dla debugowania. 
+  ;;
+  ;; (if (.exists (env/get-view-clj))
+  ;;   (try
+  ;;     (let [path (str (storage/backup-view-dir) "/view_" (timestamp) ".clj")]
+  ;;       (clojure.java.io/copy
+  ;;        (clojure.java.io/file (str (env/get-view-clj)))
+  ;;        (clojure.java.io/file path))
+  ;;       (i/success (str (gtool/get-lang-alerts :create-backup-complete) " - " (last (split-path path)))))
+  ;;     (catch Exception e (i/warning :create-backup-faild))))
+  )
 
-(defn- restore-backup-viewclj
-  "Description:
-     Restore view.clj from backup"
-  [backup-path]
-  (if (.exists (env/get-view-clj))
-    (clojure.java.io/copy
-     (clojure.java.io/file backup-path)
-     (clojure.java.io/file (str (env/get-view-clj))))))
+(defn- create-backup-view [] (spit (io/file (storage/backup-view-dir)     (format "view_%s.clj" (timestamp))) "()"))
+(defn- create-backup-meta [] (spit (io/file (storage/backup-metadata-dir) (format "meta_%s.clj" (timestamp))) "()"))
+(defn- create-backup-data [] (spit (io/file (storage/backup-db-dir)       (format "data_%s.clj" (timestamp))) "()"))
 
-(defn- create-backup-viewdb
-  "Description:
-     Create copy of view form db to backup storage as view.clj"
-  []
-  (try
-    (let [path (str (storage/backup-view-dir) "/viewdb_" (timestamp) ".clj")]
-      (view-manager/loader-from-db (str (jarman.config.storage/backup-viewdb-dir) "/viewdb_" (timestamp) ".clj"))
-      (i/success (str (gtool/get-lang-alerts :create-backup-complete) " - " (last (split-path path)))))
-    (catch Exception e (i/warning :create-backup-faild))))
+;;; fixme:backup - nie będzie tego
+;;
+;; (defn- restore-backup-viewclj
+;;   "Description:
+;;      Restore view.clj from backup"
+;;   [backup-path]
+;;   (if (.exists (env/get-view-clj))
+;;     (clojure.java.io/copy
+;;      (clojure.java.io/file backup-path)
+;;      (clojure.java.io/file (str (env/get-view-clj))))))
 
-;; TODO: confirm popup for restore, delete, clear
-;; TODO: Restore viewdb
-;; TODO: Backup & restore metadata
-;; TODO: Backup & restore database
+;;; fixme:backup - to zrobi funkcja wyżej `create-backup-view`
+;;
+;; (defn- create-backup-viewdb
+;;   "Description:
+;;      Create copy of view form db to backup storage as view.clj"
+;;   []
+;;   (try
+;;     (let [path (str (storage/backup-view-dir) "/viewdb_" (timestamp) ".clj")]
+;;       (view-manager/loader-from-db (str (jarman.config.storage/backup-viewdb-dir) "/viewdb_" (timestamp) ".clj"))
+;;       (i/success (str (gtool/get-lang-alerts :create-backup-complete) " - " (last (split-path path)))))
+;;     (catch Exception e (i/warning :create-backup-faild))))
 
-(defn- restore-backup-viewdb
-  "Description:
-     Restore view from viewdb.clj to database"
-  [path]
-  (view-manager/move-views-to-db path))
-(view-manager/move-views-to-db (str (jarman.config.storage/backup-viewdb-dir) "/viewdb_bkp"  ".clj"))
+;;; fixme:backup - żadnego restoru do bazki z pliku! ta opcja wylącznie dla develoeprów
+;;
+;; (defn- restore-backup-viewdb
+;;   "Description:
+;;      Restore view from viewdb.clj to database"
+;;   [path]
+;;   (view-manager/move-views-to-db path))
+
+
 (defn- backup-panel-template
   [name backup-panel backup-list-fn backup-put-fn backup-clean-fn backup-del-fn backup-restore-fn]
   (let [render-panel (fn []
@@ -354,31 +396,33 @@
 
         backup-panel (gmg/migrid :v {:gap [10 0]} [])
 
-        backup-view (fn [] (backup-panel-template "View"
-                                                   backup-panel
-                                                   storage/backup-view-list
-                                                   create-backup-viewclj
-                                                   storage/backup-view-clean
-                                                   storage/backup-view-delete
-                                                   restore-backup-viewclj))
-        backup-viewdb (fn [] (backup-panel-template "Viewdb"
-                                                   backup-panel
-                                                   storage/backup-viewdb-list
-                                                   create-backup-viewdb
-                                                   storage/backup-viewdb-clean
-                                                   storage/backup-viewdb-delete
-                                                   restore-backup-viewdb))
+        ;; fixme:backup - do poprawy. czytaj kometarzy wyżej 
+        ;; 
+        ;; backup-view (fn [] (backup-panel-template "View"
+        ;;                                          backup-panel
+        ;;                                          storage/backup-view-list
+        ;;                                          create-backup-viewclj
+        ;;                                          storage/backup-view-clean
+        ;;                                          storage/backup-view-delete
+        ;;                                          restore-backup-viewclj))
+        ;; backup-viewdb (fn [] (backup-panel-template "Viewdb"
+        ;;                                            backup-panel
+        ;;                                            storage/backup-viewdb-list
+        ;;                                            create-backup-viewdb
+        ;;                                            storage/backup-viewdb-clean
+        ;;                                            storage/backup-viewdb-delete
+        ;;                                            restore-backup-viewdb))
         backup-meta  (fn [] (backup-panel-template "Meta"
                                                    backup-panel
                                                    storage/backup-metadata-list
-                                                   (fn [] (storage/backup-metadata-put (str "metadata_" (timestamp) ".clj") "TEST")) ;; TODO: Save correct file
+                                                   create-backup-meta
                                                    storage/backup-metadata-clean
                                                    storage/backup-metadata-delete
                                                    (fn [e])))
         backup-db    (fn [] (backup-panel-template "DB"
                                                    backup-panel
                                                    storage/backup-db-list
-                                                   (fn [] (storage/backup-db-put (str "db_" (timestamp) ".clj") "TEST")) ;; TODO: Save correct file
+                                                   create-backup-data
                                                    storage/backup-db-clean
                                                    storage/backup-db-delete
                                                    (fn [e])))

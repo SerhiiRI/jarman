@@ -427,7 +427,8 @@
                                                    storage/backup-db-delete
                                                    (fn [e])))
 
-        options-vec-fns [backup-view backup-viewdb backup-meta backup-db]
+        options-vec-fns [;; backup-view backup-viewdb
+                         backup-meta backup-db]
         
         render-fn (fn [] 
                     (let [options-vec     [(gtool/get-lang-btns :backup-view)
@@ -443,7 +444,7 @@
                                            (swap! state #(assoc % :backup-panel-fn (nth options-vec-fns selected-idx)))
                                            (c/config! backup-panel :items [[((nth options-vec-fns selected-idx))]])))
                                        :horizontal true)]
-                      (c/config! backup-panel :items [[(backup-view)]])
+                      ;; (c/config! backup-panel :items [[(backup-view)]])
                       [radio-group backup-panel]))]
 
     (swap! state #(assoc % :backup-panel-fn (first options-vec-fns)))

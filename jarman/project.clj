@@ -33,7 +33,6 @@
                  [instaparse "1.4.10"]
                  [clj-fuzzy "0.4.1"]
                  [de.ubercode.clostache/clostache "1.4.0"]]
-  ;;:main ^:skip-aot jarman.core
   ;; :main jarman.core
   ;; :aot [jarman.core]
   :repl-options {:init-ns jarman.core}
@@ -51,14 +50,6 @@
              {:plugins [[lein-launch4j "0.1.2"]]
               :launch4j-install-dir "../installer"
               :launch4j-config-file "../installer/launch4j.xml"}
-             ;; :cli
-             ;; {:aot [jarman.jarman-cli
-             ;;        jarman.managment.data
-             ;;        jarman.config.storage
-             ;;        jarman.tools.ftp-toolbox]
-             ;;  :main jarman.jarman-cli
-             ;;  :jar-name "jarman-cli-lib.jar"
-             ;;  :uberjar-name "jarman-cli.jar"}
              :client
              {:main jarman.gui.gui-login
               :aot [jarman.gui.gui-login]
@@ -66,7 +57,6 @@
               :uberjar-name "jarman-client-standalone.jar"}
              :client+cli
              {:main jarman.core
-              ;; :aot [jarman.core]
               :aot [jarman.core
                     jarman.gui.gui-login]
               :jar-name "jarman-client-lib.jar"

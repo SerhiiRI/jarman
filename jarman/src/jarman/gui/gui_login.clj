@@ -21,7 +21,6 @@
             [jarman.tools.lang :refer :all]
             [jarman.tools.org  :refer :all]))
 
-
 ;; ┌───────────────┐
 ;; │               │
 ;; │  State init   │

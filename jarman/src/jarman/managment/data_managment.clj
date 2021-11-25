@@ -993,7 +993,7 @@
              (do (println (format "%s%s" chr-off chr))
                  (doall (for [tbl tbls]
                           (println (format "%s%s" table-off
-                                           (if (in? sinit/*system-tables* tbl)
+                                           (if (in? sinit/system-tables tbl)
                                              (str tbl " [system]")
                                              tbl)))))))) nil))
 

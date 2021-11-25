@@ -47,8 +47,7 @@
    [jarman.gui.gui-migrid           :as gmg]
    [jarman.gui.popup                :as popup]
    [jarman.gui.gui-editors          :as gedit]
-   [jarman.gui.gui-calendar         :as calendar]
-   ))
+   [jarman.gui.gui-calendar         :as calendar]))
 
  
 ;; ┌──────────────────────────┐

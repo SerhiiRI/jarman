@@ -26,4 +26,4 @@ jobs:
     - name: Build jarman-toolbox
       run: make jarman-box
     - name: Build jarman-client
-      run: make build/jarman-client
+      run: make build/jarman-client+cli

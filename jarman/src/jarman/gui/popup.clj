@@ -171,8 +171,8 @@
 (defn confirm-popup
   "Description:
      Confirm template"
-  ([message ev-yes] (confirm-popup message ev-yes nil [250 150]))
-  ([message ev-yes ev-no] (confirm-popup message ev-yes ev-no [250 150]))
+  ([message ev-yes] (confirm-popup message ev-yes nil [350 150]))
+  ([message ev-yes ev-no] (confirm-popup message ev-yes ev-no [350 150]))
   ([message ev-yes ev-no size]
    (build-popup {:comp-fn (fn [api]
                             (gmg/migrid
@@ -191,14 +191,14 @@
 (defn confirm-popup-window
   "Description:
      Confirm template in window"
-  ([message ev-yes] (confirm-popup-window message ev-yes nil [250 150]))
-  ([message ev-yes ev-no] (confirm-popup-window message ev-yes ev-no [250 150]))
+  ([message ev-yes] (confirm-popup-window message ev-yes nil [350 150]))
+  ([message ev-yes ev-no] (confirm-popup-window message ev-yes ev-no [350 150]))
   ([message ev-yes ev-no size]
    (gcomp/popup-window
     {:window-title (gtool/get-lang-basic :confirm?)
      :relative (state/state :app)
      :size size
-     :view (let [panel (gmg/migrid :v :center :center [])
+     :view (let [panel (gmg/migrid :v :center :center {:args [:background face/c-layout-background]} [])
 
                  menu (fn [] [(c/label :text (gtool/htmling message :center))
                               (gcomp/menu-bar {:buttons [[(gtool/get-lang-basic :yes)
@@ -211,6 +211,29 @@
                                                           nil
                                                           (fn [e]
                                                             (if (fn? ev-no) (ev-no))
+                                                            (.dispose (c/to-frame panel)))]]})])]
+             (c/config! panel :items (gtool/join-mig-items (menu)))
+             panel)})))
+
+(defn info-popup-window
+  "Description:
+     Confirm template in window"
+  ([message] (info-popup-window message nil))
+  ([message ev-ok
+    & {:keys [relative size]
+       :or   {relative (state/state :app)
+              size [350 150]}}]
+   (gcomp/popup-window
+    {:window-title (gtool/get-lang-header :info)
+     :relative relative
+     :size size
+     :view (let [panel (gmg/migrid :v :center :center {:args [:background face/c-layout-background]} [])
+
+                 menu (fn [] [(c/label :text (gtool/htmling message :center))
+                              (gcomp/menu-bar {:buttons [[(gtool/get-lang-basic :ok)
+                                                          nil
+                                                          (fn [e]
+                                                            (if (fn? ev-ok) (ev-ok))
                                                             (.dispose (c/to-frame panel)))]]})])]
              (c/config! panel :items (gtool/join-mig-items (menu)))
              panel)})))

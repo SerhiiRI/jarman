@@ -18,6 +18,7 @@
             [jarman.logic.state        :as state]
             [jarman.logic.session      :as session]
             [jarman.tools.swing        :as stool]
+            [jarman.gui.popup          :as popup]
             [jarman.tools.lang :refer :all]
             [jarman.tools.org  :refer :all]))
 
@@ -26,6 +27,11 @@
 ;; │  State init   │
 ;; │               │
 ;; └───────────────┘
+
+(def gstate  (atom {}))
+(def gstate! (fn [& prop]
+              (cond (= :atom (first prop)) gstate
+                    :else (deref gstate))))
 
 (defn- set-state-watcher
   "Description:
@@ -107,13 +113,14 @@
   "Description:
      State for login panel."
   []
-  (atom {:login       nil
-         :passwd      nil
-         :focus-compo nil
-         :current-databaseconnection {}
-         :databaseconnection-list  {}
-         :databaseconnection-error {}
-         }))
+  (reset! gstate {:login       nil
+                  :passwd      nil
+                  :focus-compo nil
+                  :current-databaseconnection {}
+                  :databaseconnection-list  {}
+                  :databaseconnection-error {}
+                  })
+  gstate)
 
 (defn- new-focus [dispatch! compo]
   ;; (println "\n" "New focus")
@@ -523,7 +530,7 @@
       (session/login dataconnection-m login-s passw-s)
       (if (fn? (state/state :startup))
         (do (.dispose frame) ((state/state :startup)))
-        (c/alert (gtool/get-lang-alerts :app-startup-fail) :type :info))
+        (popup/info-popup-window (gtool/get-lang-alerts :app-startup-fail) (fn []) :relative (:frame @gstate)))
       ;; -------------
       (catch Exception e
         ;; 
@@ -639,12 +646,15 @@
      :v :right :bottom
      {:gap [5 5 5 5] :args [:background face/c-compos-background :visible? show]}
      [(if log
-        (icon-template (gs/icon GoogleMaterialDesignIcons/INFO face/c-icon) (c/alert (str log)))
+        (icon-template (gs/icon GoogleMaterialDesignIcons/INFO face/c-icon)
+                         (popup/info-popup-window (str log) (fn []) :relative (:frame @gstate)))
         [])
       (icon-template (gs/icon GoogleMaterialDesignIcons/SETTINGS face/c-icon)
                           (fn [e] (c/config!
                                    (c/to-frame e)
                                    :content (configuration-panel state! dispatch! config-k))))])))
+
+
 
 (defn- config-tile
  "Description:
@@ -880,7 +890,9 @@
                        :else (deref state)))
         dispatch!   (create-disptcher state)
         login-frame (frame-login state! dispatch!)]
-
+    
+    (swap! (state! :atom) (fn [s] (assoc s :frame login-frame)))
+    
     (if (state/state :debug-mode)
       (timelife 1 (fn []
                     (swap! state #(assoc-in % [:login]  "admin"))
@@ -889,6 +901,7 @@
     
     (if (= res-validation nil)
       (-> (doto login-frame (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))))
+
 
 (defn -main [& args]
   (state/set-state :debug-mode true) ;; Set auto login
@@ -902,6 +915,9 @@
   ;; (state/set-state :invoke-login-panel st)
   ;; (st)
   (-main)
+
+
+  (popup/info-popup-window "Damn" (fn []) :relative (:frame @gstate))
   
   Start app window
   (-> (doto (seesaw.core/frame

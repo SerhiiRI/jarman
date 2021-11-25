@@ -179,6 +179,7 @@
     :unsaved-changes "Niezapiano zmian"
     :saved           "Zapisano"
     :confirm?        "Kontynuować?"
+    :ok              "OK"
     },
    
    :tips
@@ -430,6 +431,7 @@
     :unsaved-changes "Unsaved changes"
     :saved           "Saved"
     :confirm?        "Confirm?"
+    :ok              "OK"
     }
    
    :tips

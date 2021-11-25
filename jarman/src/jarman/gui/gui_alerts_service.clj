@@ -31,8 +31,6 @@
               (cond (= :atom (first prop)) state
                     :else (deref state))))
 
-;; TODO: rewrite alerts storage for sorting by id or time
-
 (defn- action-handler
   "Description:
     Invoke fn using dispatch!.
@@ -43,7 +41,7 @@
     :add-missing      (assoc-in state (:path action-m) nil)
     :test             (do (println "\nTest:n") state)
     :new-alerts-box   (assoc-in state [:alerts-box]     (:box   action-m))
-    :store-new-alerts (assoc-in state [:alerts-storage (keyword (str "index-" (:alert-index state)))] (:alert action-m))
+    :store-new-alerts (assoc-in state [:alerts-storage (:alert-index state)] (:alert action-m))
     :clear-history    (assoc-in state [:alerts-storage] {})
     :inc-index        (assoc-in state [:alert-index] (inc (:alert-index (state!))))
     :clear-index      (assoc-in state [:alert-index] 0)
@@ -57,7 +55,6 @@
     :clear-temp       (do
                         (state/set-state :temp-alerts-storage {})
                         state)))
-
 
 (defn- create-disptcher [atom-var]
   (fn [action-m]
@@ -471,8 +468,8 @@
    (reverse
     (map
      (fn [[k m]]
-       (history-part (:type m) (:header m) (:body m) (:s-popup m) (:expand m) w))
-     (:alerts-storage (state!))))))
+       (history-part (:type m) (str k ". " (:header m)) (:body m) (:s-popup m) (:expand m) w))
+     (sort (:alerts-storage (state!)))))))
 
 (defn- clear-alerts-history []
   (dispatch! {:action :clear-history})

@@ -347,8 +347,11 @@
    (load-static-main-menu))
   (i/show-delay-alerts)
   (print-header
-   "Check updates")
-  (umg/check-update :silent)
+   "Refresh avialable package list cache"
+   (umg/update-package-list-cache))
+  (print-header
+   "Check updates"
+   (umg/check-update :silent))
   (print-header
    "Check license"
    (gui-events/gui-check-license))

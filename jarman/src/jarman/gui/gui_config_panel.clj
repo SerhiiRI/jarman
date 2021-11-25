@@ -23,6 +23,9 @@
             [jarman.config.storage           :as storage]
             [jarman.config.environment       :as env]
             [jarman.logic.view-manager       :as view-manager]
+            [jarman.gui.gui-views-service    :as gvs]
+            [jarman.gui.gui-editors          :as gedit]
+            [jarman.gui.popup                :as popup]
             [jarman.config.vars :refer [setj]])
   (:import
    (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
@@ -298,40 +301,24 @@
   ;;     (catch Exception e (i/warning :create-backup-faild))))
   )
 
+;; fixme:serhii create backups and restore metadata
 (defn- create-backup-view [] (spit (io/file (storage/backup-view-dir)     (format "view_%s.clj" (timestamp))) "()"))
 (defn- create-backup-meta [] (spit (io/file (storage/backup-metadata-dir) (format "meta_%s.clj" (timestamp))) "()"))
 (defn- create-backup-data [] (spit (io/file (storage/backup-db-dir)       (format "data_%s.clj" (timestamp))) "()"))
+(defn- revert-backup-view [path] (println "Revert: " path))
 
-;;; fixme:backup - nie będzie tego
-;;
-;; (defn- restore-backup-viewclj
-;;   "Description:
-;;      Restore view.clj from backup"
-;;   [backup-path]
-;;   (if (.exists (env/get-view-clj))
-;;     (clojure.java.io/copy
-;;      (clojure.java.io/file backup-path)
-;;      (clojure.java.io/file (str (env/get-view-clj))))))
 
-;;; fixme:backup - to zrobi funkcja wyżej `create-backup-view`
-;;
-;; (defn- create-backup-viewdb
-;;   "Description:
-;;      Create copy of view form db to backup storage as view.clj"
-;;   []
-;;   (try
-;;     (let [path (str (storage/backup-view-dir) "/viewdb_" (timestamp) ".clj")]
-;;       (view-manager/loader-from-db (str (jarman.config.storage/backup-viewdb-dir) "/viewdb_" (timestamp) ".clj"))
-;;       (i/success (str (gtool/get-lang-alerts :create-backup-complete) " - " (last (split-path path)))))
-;;     (catch Exception e (i/warning :create-backup-faild))))
-
-;;; fixme:backup - żadnego restoru do bazki z pliku! ta opcja wylącznie dla develoeprów
-;;
-;; (defn- restore-backup-viewdb
-;;   "Description:
-;;      Restore view from viewdb.clj to database"
-;;   [path]
-;;   (view-manager/move-views-to-db path))
+(defn- open-backup-view
+  "Description:
+     Open backup in editor without menu
+  Example:
+     (open-backup-view ./.jarman.d/backup/view/view_backup.clj)"
+  [path]
+  (let [file-name (last (clojure.string/split path #"/"))]
+     (gvs/add-view
+      :view-id   (keyword (str "editor" file-name))
+      :title     (str "Edit:  " file-name)
+      :render-fn (fn [] (gedit/text-file-editor path nil false)))))
 
 
 (defn- backup-panel-template
@@ -341,11 +328,11 @@
                        (.repaint (state/state :views-space)))]
     (gmg/migrid
      :v
-     [(rift (doall (map (fn [name]
+     [(rift (doall (map (fn [path]
                           (gmg/migrid
                            :> :gf
                            (let [row
-                                 (c/label :text name
+                                 (c/label :text path
                                           :background face/c-compos-background
                                           :border (b/empty-border :thickness 3)
                                           :listen [:mouse-entered (fn [e] (c/config! e :background face/c-on-focus))
@@ -354,32 +341,61 @@
                                  actions
                                  (gmg/migrid
                                   :> :f
-                                  [(row-btn :title (gtool/get-lang-btns :restore)
-                                            :icon (gs/icon GoogleMaterialDesignIcons/RESTORE)
-                                            :func (fn [e]
-                                                    (c/config! (.getParent (c/to-widget e))
-                                                               :items [[(c/label :text (gtool/get-lang-btns :restoring))]])
-                                                    (timelife
-                                                     0.1
-                                                     (fn [] (backup-restore-fn name)
-                                                       (render-panel)
-                                                       (i/success (str (last (split-path name)) " - "
-                                                                       (gtool/get-lang-alerts :restore-configuration-ok))))))
-                                            :listen [:mouse-entered (fn [e] (c/config! row :background face/c-on-focus))
-                                                     :mouse-exited  (fn [e] (c/config! row :background face/c-compos-background))])                                           
+                                  [(c/label :background face/c-compos-background :border (b/empty-border :left 3))
 
-                                   (doto (row-btn :title (gtool/get-lang-btns :remove)
-                                                  :icon (gs/icon GoogleMaterialDesignIcons/DELETE)
-                                                  :func (fn [e]
+                                   ;; OPEN
+                                   (if (or (= name "Meta") (= name "View"))
+                                       (row-btn :title (gtool/get-lang-btns :open)
+                                             :icon (gs/icon GoogleMaterialDesignIcons/IMPORT_CONTACTS)
+                                             :func (fn [e]
+                                                     (open-backup-view path)
+                                                     (c/config! e :background face/c-compos-background))
+                                             :listen [:mouse-entered (fn [e] (c/config! row :background face/c-on-focus))
+                                                      :mouse-exited  (fn [e] (c/config! row :background face/c-compos-background))])
+                                       [])
+                                   
+                                   ;; REVERT
+                                   (if (= name "Meta")
+                                     (session/if-permission
+                                      :developer
+                                      (row-btn :title (gtool/get-lang-btns :restore)
+                                               :icon (gs/icon GoogleMaterialDesignIcons/RESTORE)
+                                               :func (fn [e]
+                                                       (popup/confirm-popup-window
+                                                        (str (gtool/get-lang-infos :confirm-revert-backup?) "<br>" (last (split-path path)))
+                                                        (fn []
                                                           (c/config! (.getParent (c/to-widget e))
-                                                                     :items [[(c/label :text (gtool/get-lang-btns :removing))]])
+                                                                     :items [[(c/label :text (gtool/get-lang-btns :restoring))]])
                                                           (timelife
                                                            0.1
-                                                           (fn [](backup-del-fn (last (split-path name)))
+                                                           (fn []
+                                                             (revert-backup-view path)
                                                              (render-panel)
-                                                             (i/warning (format (gtool/get-lang-alerts :removed-backup-ok) (last (split-path name)))))))
-                                                  :listen [:mouse-entered (fn [e] (c/config! row :background face/c-on-focus))
-                                                         :mouse-exited  (fn [e] (c/config! row :background face/c-compos-background))]))])]
+                                                             (i/warning (str (gtool/get-lang-alerts :restore-configuration-ok) "<br/><br/>" (last (split-path path)))))))))
+                                               :listen [:mouse-entered (fn [e] (c/config! row :background face/c-on-focus))
+                                                        :mouse-exited  (fn [e] (c/config! row :background face/c-compos-background))])
+                                      [])
+                                     [])                                           
+
+                                   ;; DELETE
+                                   (session/if-permission
+                                    :developer
+                                    (row-btn :title (gtool/get-lang-btns :remove)
+                                             :icon (gs/icon GoogleMaterialDesignIcons/DELETE)
+                                             :func (fn [e]
+                                                     (popup/confirm-popup-window
+                                                      (str (gtool/get-lang-infos :confirm-delete-backup?) "<br>" (last (split-path path)))
+                                                      (fn []
+                                                        (c/config! (.getParent (c/to-widget e))
+                                                                   :items [[(c/label :text (gtool/get-lang-btns :removing))]])
+                                                        (timelife
+                                                         0.1
+                                                         (fn [](backup-del-fn (last (split-path path)))
+                                                           (render-panel)
+                                                           (i/warning (format (gtool/get-lang-alerts :removed-backup-ok) (last (split-path path)))))))))
+                                             :listen [:mouse-entered (fn [e] (c/config! row :background face/c-on-focus))
+                                                      :mouse-exited  (fn [e] (c/config! row :background face/c-compos-background))])
+                                    [])])]
                              [row actions])))
                         
                         (reverse (sort (backup-list-fn)))))
@@ -388,30 +404,29 @@
       (gmg/migrid
        :> :center {:gap [20 0 0 0]}
        (gcomp/menu-bar {:buttons [[(gtool/get-lang-btns :create-backup) nil (fn [e] (backup-put-fn) (render-panel))]
-                                  [(gtool/get-lang-btns :clean-backup-storage) nil (fn [e] (backup-clean-fn) (render-panel))]]}))])))
+                                  (session/if-permission
+                                   :developer
+                                   [(gtool/get-lang-btns :clean-backup-storage)
+                                    nil
+                                    (fn [e]
+                                      (popup/confirm-popup-window
+                                       (str (gtool/get-lang-infos :confirm-delete-all-backups?))
+                                       (fn [] (backup-clean-fn) (render-panel))))]
+                                   nil)]}))])))
 
 
 (defn- backup-vmd []
   (let [panel (gmg/migrid :v {:gap [5 30] :args [:border (b/line-border :bottom 1 :color face/c-icon)]} [])
 
         backup-panel (gmg/migrid :v {:gap [10 0]} [])
-
-        ;; fixme:backup - do poprawy. czytaj kometarzy wyżej 
-        ;; 
-        ;; backup-view (fn [] (backup-panel-template "View"
-        ;;                                          backup-panel
-        ;;                                          storage/backup-view-list
-        ;;                                          create-backup-viewclj
-        ;;                                          storage/backup-view-clean
-        ;;                                          storage/backup-view-delete
-        ;;                                          restore-backup-viewclj))
-        ;; backup-viewdb (fn [] (backup-panel-template "Viewdb"
-        ;;                                            backup-panel
-        ;;                                            storage/backup-viewdb-list
-        ;;                                            create-backup-viewdb
-        ;;                                            storage/backup-viewdb-clean
-        ;;                                            storage/backup-viewdb-delete
-        ;;                                            restore-backup-viewdb))
+        
+        backup-view (fn [] (backup-panel-template "View"
+                                                  backup-panel
+                                                  storage/backup-view-list
+                                                  create-backup-view
+                                                  storage/backup-view-clean
+                                                  storage/backup-view-delete
+                                                  (fn [e])))
         backup-meta  (fn [] (backup-panel-template "Meta"
                                                    backup-panel
                                                    storage/backup-metadata-list
@@ -429,23 +444,27 @@
 
         options-vec-fns [;; backup-view backup-viewdb
                          backup-meta backup-db]
-        
         render-fn (fn [] 
-                    (let [options-vec     [(gtool/get-lang-btns :backup-view)
-                                           (str (gtool/get-lang-btns :backup-view) "db")
-                                           (gtool/get-lang-btns :backup-metadata)
-                                           (gtool/get-lang-btns :backup-database)]
-                          
-                          radio-group (gcomp/jradiogroup
-                                       options-vec
-                                       (fn [radio box]
-                                         (let [selected-vec (c/config box :user-data)
-                                               selected-idx (.indexOf selected-vec true)]
-                                           (swap! state #(assoc % :backup-panel-fn (nth options-vec-fns selected-idx)))
-                                           (c/config! backup-panel :items [[((nth options-vec-fns selected-idx))]])))
-                                       :horizontal true)]
-                      ;; (c/config! backup-panel :items [[(backup-view)]])
-                      [radio-group backup-panel]))]
+                    (let [radio-menu (gcomp/menu-bar
+                                      {:radio-group true 
+                                       :buttons [[(gtool/get-lang-btns :backup-view)
+                                                  nil (fn [e]
+                                                        (c/config! backup-panel :items [[(backup-view)]])
+                                                        (swap! state #(assoc % :backup-panel-fn backup-view))
+                                                        (.repaint (state/state :views-space)))]
+                                                 
+                                                 [(gtool/get-lang-btns :backup-metadata)
+                                                  nil (fn [e]
+                                                        (c/config! backup-panel :items [[(backup-meta)]])
+                                                        (swap! state #(assoc % :backup-panel-fn backup-meta))
+                                                        (.repaint (state/state :views-space)))]
+                                                 
+                                                 [(gtool/get-lang-btns :backup-database)
+                                                  nil (fn [e]
+                                                        (c/config! backup-panel :items [[(backup-db)]])
+                                                        (swap! state #(assoc % :backup-panel-fn backup-db))
+                                                        (.repaint (state/state :views-space)))]]})]
+                      [radio-menu backup-panel]))]
 
     (swap! state #(assoc % :backup-panel-fn (first options-vec-fns)))
     (c/config! panel :items (gtool/join-mig-items (render-fn)))

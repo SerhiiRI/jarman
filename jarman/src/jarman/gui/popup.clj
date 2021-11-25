@@ -17,7 +17,8 @@
    [jarman.gui.gui-migrid     :as gmg]
    [jarman.gui.gui-style      :as gs]
    [jarman.resource-lib.icon-library :as icon]
-   [jarman.tools.swing               :as stool])
+   [jarman.tools.swing               :as stool]
+   [jarman.tools.lang         :refer :all])
   (:import javax.swing.JLayeredPane
            java.awt.PointerInfo
            (java.awt.event MouseEvent)
@@ -93,7 +94,7 @@
       (c/config! root :bounds [(+ old-x move-x) (+ old-y move-y) :* :*]))))
 
 (defn- popup [{:keys [render-fn title size c-border title-icon args]
-               :or {render-fn (fn [] (c/label))
+               :or {render-fn (fn [api] (c/label))
                     title ""
                     size [400 300]
                     c-border face/c-popup-border
@@ -117,7 +118,9 @@
         md (drag-panel last-x last-y root)
         mr (fn [e] (c/config! e :cursor :default) (.repaint (jlp)))
 
-        bar (popup-bar root title :c-bg c-border :icon title-icon)]
+        bar (popup-bar root title :c-bg c-border :icon title-icon)
+
+        api {:close (fn [] (do (.remove (jlp) root) (.repaint (jlp))))}]
     
     (doall (map #(c/config! % :listen [:mouse-clicked mc
                                        :mouse-pressed mp
@@ -126,11 +129,11 @@
                 [root bar]))
     
     (.add root bar)
-    (.add root (render-fn))
+    (.add root (render-fn api))
     root))
 
 
-(defn- compo []
+(defn- compo [api]
   (gmg/migrid :v {:args [:background "#eee"]}
    (gcomp/textarea "(ﾉ◉ᗜ◉)ﾉ*:･ﾟ✧OLA NINIOO .:ヽ(⚆ o ⚆)ﾉ")))
 
@@ -165,6 +168,50 @@
 
 (defn set-demo [] (build-popup {:comp-fn compo :title "Demo"}))
 
+(defn confirm-popup
+  "Description:
+     Confirm template"
+  ([message ev-yes] (confirm-popup message ev-yes nil [250 150]))
+  ([message ev-yes ev-no] (confirm-popup message ev-yes ev-no [250 150]))
+  ([message ev-yes ev-no size]
+   (build-popup {:comp-fn (fn [api]
+                            (gmg/migrid
+                             :v :center :center
+                             [(c/label :text (gtool/htmling message :center))
+                              (gcomp/menu-bar {:buttons [[(gtool/get-lang-basic :yes) nil (fn [e]
+                                                                                            (ev-yes)
+                                                                                            ((:close api)))]
+                                                         [(gtool/get-lang-basic :no)  nil (fn [e]
+                                                                                            (if (fn? ev-no) (ev-no))
+                                                                                            ((:close api)))]]})]))
+                 :size size
+                 :title (gtool/get-lang-basic :confirm?)})
+   (timelife 0.02 #(.repaint (state/state :app)))))
 
+(defn confirm-popup-window
+  "Description:
+     Confirm template in window"
+  ([message ev-yes] (confirm-popup-window message ev-yes nil [250 150]))
+  ([message ev-yes ev-no] (confirm-popup-window message ev-yes ev-no [250 150]))
+  ([message ev-yes ev-no size]
+   (gcomp/popup-window
+    {:window-title (gtool/get-lang-basic :confirm?)
+     :relative (state/state :app)
+     :size size
+     :view (let [panel (gmg/migrid :v :center :center [])
 
+                 menu (fn [] [(c/label :text (gtool/htmling message :center))
+                              (gcomp/menu-bar {:buttons [[(gtool/get-lang-basic :yes)
+                                                          nil
+                                                          (fn [e]
+                                                            (ev-yes)
+                                                            (.dispose (c/to-frame panel)))]
+                                                         
+                                                         [(gtool/get-lang-basic :no)
+                                                          nil
+                                                          (fn [e]
+                                                            (if (fn? ev-no) (ev-no))
+                                                            (.dispose (c/to-frame panel)))]]})])]
+             (c/config! panel :items (gtool/join-mig-items (menu)))
+             panel)})))
 

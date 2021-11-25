@@ -1604,9 +1604,11 @@
   "Description:
       Bar with buttons without background.
       If you used :justify-end true then buttons will by justify to rigth.
+      If you add key :radio-group true then clicked btn will stay selected
    Example:
       (menu-bar {:buttons [[\"title1\" icon1  (fn [e] )] [\"title2\" icon2  (fn [e] )]]})
-      (menu-bar {:id :my-id :buttons [[\"title1\"  icon1 fn1] [\"title2\" icon2  fn2]]})"
+      (menu-bar {:id :my-id :buttons [[\"title1\"  icon1 fn1] [\"title2\" icon2  fn2]]})
+      (menu-bar {:buttons [[\"title1\"  icon1 fn1] [\"title2\" icon2  fn2]] :radio-group true})"
   [{:keys [id
            buttons
            offset
@@ -1617,7 +1619,8 @@
            bg
            fg
            bg-hover
-           ]
+           radio-group
+           select]
     :or {id :none
          buttons []
          offset 4
@@ -1628,36 +1631,50 @@
          bg       face/c-compos-background
          fg       face/c-foreground
          bg-hover face/c-menu-bar-on-focus
-         }}]
-  (let [btn (fn [txt ico tip onClick & args]
-              (let [[t b l r br] btn-border]
+         radio-group false
+         select nil}}]
+  (let [btn (fn [idx selected txt ico tip onClick & args]
+              (let [[t b l r br] btn-border
+                    onaction (fn [e] (do (if radio-group (do
+                                                           (doall (map #(c/config! % :user-data false :background bg) (gtool/get-parent-items e)))
+                                                           (c/config! e :user-data true :background bg-hover)
+                                                           (c/config! (gtool/getParent e) :user-data (read-string (str (name :0))))
+                                                           ))
+                                         (onClick e)))
+                    focus-lost   (fn [e] (if-not (c/config e :user-data) (c/config! e :background bg)))
+                    focus-gained (fn [e] (c/config! e :background bg-hover :cursor :hand) (.repaint (c/to-root e)))]
+                
                 (c/label
-                 ;; :font (gtool/getFont font-size)
                  :text txt
+                 :id  (keyword (str idx))
                  :tip (if (fn? tip) nil tip)
                  :icon (if ico (stool/image-scale ico icon-size) nil) 
-                 :background bg
+                 :background (if selected bg-hover bg)
                  :foreground fg
                  :focusable? true
+                 :user-data  selected
                  :border (b/empty-border :left l :right r :top t :bottom b)
-                 :listen [:mouse-entered (fn [e] (c/config! e :background bg-hover :cursor :hand) (.repaint (c/to-root e)))
-                          :mouse-exited  (fn [e] (c/config! e :background bg))
-                          :mouse-clicked onClick
-                          :focus-gained  (fn [e] (c/config! e :background bg-hover :cursor :hand) (.repaint (c/to-root e)))
-                          :focus-lost    (fn [e] (c/config! e :background bg))
-                          :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onClick e)))])))]
+                 :listen [:mouse-entered focus-gained
+                          :mouse-exited  focus-lost
+                          :mouse-clicked onaction
+                          :focus-gained  focus-gained
+                          :focus-lost    focus-lost
+                          :key-pressed   (fn [e] (if (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER) (onaction e)))])))]
     (mig-panel
      :id id
+     :user-data  (if (int? select) select nil)
      :background (new Color 0 0 0 0)
      :constraints (if justify-end
                     ["" "5px[grow, fill]0px[fill]5px" "5px[fill]5px"]
                     ["" (str offset "px[fill]0px") "5px[fill]5px"])
      :items (if (empty? (filter-nil buttons)) [[(c/label)]]
-                (if justify-end
-                  (gtool/join-mig-items (c/label) (map #(btn (first %) (second %) (nth % 2) (last %)) (filter-nil buttons)))
-                  (gtool/join-mig-items (map #(btn (first %) (second %) (nth % 2) (last %)) (filter-nil buttons))))))))
-
-
+                (let [filtered-btns (filter-nil buttons)
+                      indexs (take (count filtered-btns) (range))]
+                  (gtool/join-mig-items (if justify-end (c/label) [])
+                                        (map (fn [btn-vec idx]
+                                               (btn idx (if (int? select) (= idx select) false)
+                                                    (nth btn-vec 0) (nth btn-vec 1) (nth btn-vec 2) (last btn-vec)))
+                                             filtered-btns indexs)))))))
 
 (defn- validate-fields [cmpts-atom num]
   (condp = num

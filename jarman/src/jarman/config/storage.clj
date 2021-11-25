@@ -50,7 +50,6 @@
 (defstore document-templates (io/file (env/get-resource-dir) "dump" "documents"))
 (defstore backup-metadata    (io/file (env/get-resource-dir) "backup" "metadata"))
 (defstore backup-view        (io/file (env/get-resource-dir) "backup" "view"))
-(defstore backup-viewdb        (io/file (env/get-resource-dir) "backup" "viewdb"))
 (defstore backup-db          (io/file (env/get-resource-dir) "backup" "database"))
 
 ;;; Example usage
@@ -59,7 +58,6 @@
   (backup-metadata-list)
   (backup-metadata-put "putty" "Waka waka ee e")
 
-  (backup-viewdb-dir)
   (backup-view-dir)
   (backup-view-list)
 

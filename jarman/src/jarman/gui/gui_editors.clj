@@ -145,6 +145,7 @@
            dispose
            syntax
            file-format
+           menu
            args]
     :or {local-changes (atom {})
          store-id :code-tester
@@ -157,6 +158,7 @@
          dispose false
          syntax nil
          file-format nil
+         menu true
          args {}}}]
   (let [f-size (atom font-size)
         info-label (c/label)
@@ -175,6 +177,7 @@
                 :items [[(gmg/hmig
                           :args args
                           :hrules "[70%, fill]10px[grow, fill]"
+                          :bgap 10
                           :items
                           [[(c/label :text title
                                      :border (b/compound-border (b/line-border :bottom 1 :color "#eee")
@@ -188,44 +191,46 @@
                                                     (let [new-v (c/config e :selected-item)]
                                                       (try
                                                         (c/config! code :syntax new-v))))]))]
-                           [(gcomp/menu-bar
-                             {:justify-end true
-                              :buttons [[""
-                                         (gs/icon GoogleMaterialDesignIcons/ZOOM_IN face/c-icon 25)
-                                         "Increase font"
-                                         (fn [e]
-                                           (c/config!
-                                            code
-                                            :font (gs/getFont
-                                                   (do (reset! f-size (+ 2 @f-size))
-                                                       @f-size))))]
-                                        [""
-                                         (gs/icon GoogleMaterialDesignIcons/ZOOM_OUT face/c-icon 25)
-                                         "Decrease font"
-                                         (fn [e]
-                                           (c/config!
-                                            code
-                                            :font (gs/getFont
-                                                   (do (reset! f-size (- @f-size 2))
-                                                       @f-size))))]
-                                        (if debug
-                                          ["" (gs/icon GoogleMaterialDesignIcons/SEARCH face/c-icon 25)
-                                           "Show changes"
-                                           (fn [e] (gcomp/popup-info-window
-                                                    "Changes"
-                                                    (second (first @local-changes))
-                                                    (c/to-frame e)))]
-                                          nil)
-                                        [""
-                                         (gs/icon GoogleMaterialDesignIcons/SAVE face/c-icon)
-                                         "Save"
-                                         (fn [e]
-                                           (c/config! info-label :text (gtool/get-lang-basic :saved))
-                                           ((:saved-content (c/config code :user-data)))
-                                           (save-fn {:state local-changes :label info-label :code code}))]
-                                        (if dispose
-                                          ["" (gs/icon GoogleMaterialDesignIcons/EXIT_TO_APP face/c-icon) "Leave" (fn [e] (.dispose (c/to-frame e)))]
-                                          nil)]})]])]
+                           [(if menu
+                              (gcomp/menu-bar
+                              {:justify-end true
+                               :buttons [[""
+                                          (gs/icon GoogleMaterialDesignIcons/ZOOM_IN face/c-icon 25)
+                                          "Increase font"
+                                          (fn [e]
+                                            (c/config!
+                                             code
+                                             :font (gs/getFont
+                                                    (do (reset! f-size (+ 2 @f-size))
+                                                        @f-size))))]
+                                         [""
+                                          (gs/icon GoogleMaterialDesignIcons/ZOOM_OUT face/c-icon 25)
+                                          "Decrease font"
+                                          (fn [e]
+                                            (c/config!
+                                             code
+                                             :font (gs/getFont
+                                                    (do (reset! f-size (- @f-size 2))
+                                                        @f-size))))]
+                                         (if debug
+                                           ["" (gs/icon GoogleMaterialDesignIcons/SEARCH face/c-icon 25)
+                                            "Show changes"
+                                            (fn [e] (gcomp/popup-info-window
+                                                     "Changes"
+                                                     (second (first @local-changes))
+                                                     (c/to-frame e)))]
+                                           nil)
+                                         [""
+                                          (gs/icon GoogleMaterialDesignIcons/SAVE face/c-icon)
+                                          "Save"
+                                          (fn [e]
+                                            (c/config! info-label :text (gtool/get-lang-basic :saved))
+                                            ((:saved-content (c/config code :user-data)))
+                                            (save-fn {:state local-changes :label info-label :code code}))]
+                                         (if dispose
+                                           ["" (gs/icon GoogleMaterialDesignIcons/EXIT_TO_APP face/c-icon) "Leave" (fn [e] (.dispose (c/to-frame e)))]
+                                           nil)]})
+                              (c/label))]])]
                         [(gcomp/scrollbox code)]
                         [info-label]])]
     (gtool/set-focus code)
@@ -443,8 +448,9 @@
 
   
 (defn text-file-editor
-  ([file-path] (text-file-editor file-path nil))
-  ([file-path syntax]
+  ([file-path] (text-file-editor file-path nil true))
+  ([file-path syntax] (text-file-editor file-path syntax true))
+  ([file-path syntax menu]
    (let [file (clojure.string/split (last (clojure.string/split file-path #"/")) #"\.")
          file-name (first file)
          file-format (if (= 2 (count file)) (second file) nil)]
@@ -455,6 +461,7 @@
                    :val (slurp file-path)
                    :title (str "Edit: " (clojure.string/join "." file))
                    :syntax (rift syntax (keyword file-format))
+                   :menu menu
                    :save-fn (fn [props]
                               (try
                                 ;;(println "\nTo save:\n" (:code-tester @(:state props)))

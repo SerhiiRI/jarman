@@ -6,6 +6,7 @@
   (:require
    [jarman.faces :as face]
    [seesaw.core                      :as c]
+   [seesaw.util                      :as u]
    [jarman.tools.swing               :as stool]
    [clojure.string                   :as string]
    [jarman.logic.state               :as state]
@@ -57,7 +58,7 @@
 (defn findByID [root id] (let [found (seesaw.core/to-widget (select (to-root root) [id]))] found))
 (defn getChildren [parent] (let [children (seesaw.util/children (seesaw.core/to-widget parent))] children))
 (defn firstToWidget [list] (seesaw.core/to-widget (first list)))
-
+(defn get-parent-items [e] (u/children (.getParent (c/to-widget e))))
 ;; (def getFont
 ;;   (fn [& params] (-> {:size 12 :style :plain :name "Ubuntu Regular"}
 ;;                      ((fn [m] (let [size  (first (filter (fn [item] (if (number? item) item nil)) params))] (if (number? size) (merge m {:size size}) (conj m {})))))

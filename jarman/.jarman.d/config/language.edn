@@ -62,6 +62,7 @@
     :clean-backup-storage "Wyczyść magazyn kopii zapasowych"
     :restore            "Przywróć"
     :restoring          "Przywracanie"
+    :open               "Otwórz"
     },
    
    :header
@@ -177,6 +178,7 @@
     :select-file    "Wybierz plik..."
     :unsaved-changes "Niezapiano zmian"
     :saved           "Zapisano"
+    :confirm?        "Kontynuować?"
     },
    
    :tips
@@ -206,6 +208,9 @@
     :contact ["http://trashpanda-team.ddns.net"
               "contact.tteam@gmail.com"]
     :empty-backup-storage "Folder z kopiami zapasowymi jest pusty"
+    :confirm-delete-backup?      "Czy na pewno mam usunąć wybraną kopię?"
+    :confirm-delete-all-backups? "Czy na pewno mam usunąć wszystkie kopie?"
+    :confirm-revert-backup?      "Czy na pewno mam przywrócić wybraną kopię?"
     }
 
    :license
@@ -304,6 +309,7 @@
     :clean-backup-storage "Clean backup storage"
     :restore            "Restore"
     :restoring          "Restoring"
+    :open               "Open"
     }
    
    :header
@@ -423,6 +429,7 @@
     :select-file    "Select file..."
     :unsaved-changes "Unsaved changes"
     :saved           "Saved"
+    :confirm?        "Confirm?"
     }
    
    :tips
@@ -455,6 +462,9 @@
     :contact ["http://trashpanda-team.ddns.net"
               "contact.tteam@gmail.com"]
     :empty-backup-storage "Backup folder is empty"
+    :confirm-delete-backup?      "Are you sure you want to delete selected backup?"
+    :confirm-delete-all-backups? "Are you sure you want to delete all backups?"
+    :confirm-revert-backup?      "Are you sure you want to revert selected backup?"
     }
    
    :license

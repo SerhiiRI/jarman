@@ -95,10 +95,12 @@
              (fn [id-key state old-m new-m]
                (let [[left right same] (data/diff (get-in new-m watch-path) (get-in old-m watch-path))]
                  (if (not (and (nil? left) (nil? right)))
-                   (let [root (if (fn? root) (root) root)]
-                     (c/config! root :items (render-fn))
-                     (.revalidate (c/to-frame root))
-                     (.repaint (c/to-frame root))))))))
+                   (let [root (if (fn? root) (root) (if-not (nil? root) root false))]
+                     (if root
+                       (do
+                        (c/config! root :items (render-fn))
+                        (.revalidate (c/to-frame root))
+                        (.repaint (c/to-frame root))))))))))
 
 (comment
   (set-state {:a "a" :b "b"})

@@ -282,6 +282,7 @@
                            {:icon  (gs/icon GoogleMaterialDesignIcons/PERSON face/c-icon )
                             :title (gtool/get-lang-btns :logout)
                             :fn    (fn [e]
+                                     (state/set-state :debug-mode false)
                                      ((state/state :invoke-login-panel))
                                      (state/set-state :soft-restart nil)
                                      (.dispose (c/to-frame e)))}

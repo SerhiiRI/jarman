@@ -317,7 +317,7 @@
 (defn- open-in-popup
   [type header body s-popup expand]
   (let [pop (popup/build-popup {:size s-popup
-                                :comp-fn   (fn [] (gmg/migrid
+                                :comp-fn   (fn [api] (gmg/migrid
                                                    :v "[grow, fill]" :fg {:gap [10]}
                                                    (concat [(gmg/migrid
                                                              :v :center
@@ -485,7 +485,7 @@
         history-box (gmg/migrid :v (alerts-history-list w))]
     (popup/build-popup
      {:size [w h]
-      :comp-fn   (fn [] (gmg/migrid
+      :comp-fn   (fn [{}] (gmg/migrid
                          :v :a :gf
                          [(gcomp/min-scrollbox history-box)
                           (gcomp/button-basic "Clear"

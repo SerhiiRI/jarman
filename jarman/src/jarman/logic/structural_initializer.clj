@@ -10,7 +10,7 @@
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]))
 
-(def *system-tables* ["documents" "profile" "user" "metadata" "view" "system_session" "system_props"])
+(def system-tables ["documents" "profile" "user" "metadata" "view" "system_session" "system_props"])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SYSTEM TABLES SCHEMA ;;;

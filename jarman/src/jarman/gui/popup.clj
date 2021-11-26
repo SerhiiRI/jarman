@@ -199,7 +199,6 @@
      :relative (state/state :app)
      :size size
      :view (let [panel (gmg/migrid :v :center :center {:args [:background face/c-layout-background]} [])
-
                  menu (fn [] [(c/label :text (gtool/htmling message :center))
                               (gcomp/menu-bar {:buttons [[(gtool/get-lang-basic :yes)
                                                           nil
@@ -237,4 +236,5 @@
                                                             (.dispose (c/to-frame panel)))]]})])]
              (c/config! panel :items (gtool/join-mig-items (menu)))
              panel)})))
+
 

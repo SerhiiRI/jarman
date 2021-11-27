@@ -5,23 +5,20 @@
    [clojure.java.io :as io]
    [seesaw.core :as c]
    [seesaw.border :as b]
-   ;; Jarman toolkit
+   ;; ---
    [jarman.tools.lang :include-macros true :refer :all]
    [jarman.tools.org  :refer :all]
+   ;; ---
    [jarman.config.environment :as env]
    [jarman.config.vars :refer [defvar]]
-
-   ;; [jarman.plugin.plugin-loader :refer [do-load-plugins]]
-   [jarman.plugin.plugin :as plugin-system]
    [jarman.config.dot-jarman :refer [dot-jarman-load]]
+   ;; ---
+   [jarman.plugin.plugin :as plugin-system]
    ;; --- 
    [jarman.logic.connection :as db]
-   ;; [jarman.gui.gui-editors  :as gedit]
-   ;; [jarman.gui.gui-components :as gcomp
    [jarman.logic.sql-tool :refer [select! update! insert! delete!]]
    [jarman.logic.metadata :as mt]
-   [jarman.logic.state :as state]
-   [jarman.gui.gui-views-service :as gvs]))
+   [jarman.logic.state :as state]))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Variables ;;;

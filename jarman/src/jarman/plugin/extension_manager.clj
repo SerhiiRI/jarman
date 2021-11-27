@@ -17,7 +17,7 @@
    [jarman.tools.lang :refer :all]
    [jarman.tools.swing :as stool]
    [jarman.tools.org :refer :all]
-   [jarman.resource-lib.icon-library :as icon]
+   ;; [jarman.resource-lib.icon-library :as icon]
    [jarman.logic.state :as state]
    [jarman.logic.metadata :as mt]
    [jarman.logic.document-manager :as doc]

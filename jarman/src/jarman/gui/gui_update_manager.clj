@@ -144,6 +144,7 @@
                                                               (format (gtool/get-lang-alerts :package-downloaded)
                                                                       (:file package)) :time 7)))
                                     :underline-size 0)]))])
+           :expand :always
            :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/MOVE_TO_INBOX))
            ))
     items))

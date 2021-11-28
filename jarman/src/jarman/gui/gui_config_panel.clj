@@ -26,6 +26,7 @@
             [jarman.gui.gui-views-service    :as gvs]
             [jarman.gui.gui-editors          :as gedit]
             [jarman.gui.popup                :as popup]
+            [jarman.gui.gui-mouse-menu       :as gmm]
             [jarman.config.vars :refer [setj]])
   (:import
    (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
@@ -331,12 +332,57 @@
      [(rift (doall (map (fn [path]
                           (gmg/migrid
                            :> :gf
-                           (let [row
-                                 (c/label :text path
+                           (let [open-fn 
+                                 (fn [e]
+                                   (open-backup-view path)
+                                   (c/config! e :background face/c-compos-background))
+                                 
+                                 revert-fn
+                                 (fn [e]
+                                   (popup/confirm-popup-window
+                                    (str (gtool/get-lang-infos :confirm-revert-backup?) "<br>" (last (split-path path)))
+                                    (fn [] (revert-backup-view path)
+                                      (render-panel)
+                                      (i/warning (str (gtool/get-lang-alerts :restore-configuration-ok)
+                                                      "<br/><br/>" (last (split-path path)))))))
+
+                                 delete-fn
+                                 (fn [e]
+                                   (popup/confirm-popup-window
+                                    (str (gtool/get-lang-infos :confirm-delete-backup?) "<br>" (last (split-path path)))
+                                    (fn [](backup-del-fn (last (split-path path)))
+                                      (render-panel)
+                                      (i/warning (format (gtool/get-lang-alerts :removed-backup-ok) (last (split-path path)))))))
+
+                                 row
+                                 (c/label :text (last (split-path path))
+                                          :tip path
                                           :background face/c-compos-background
                                           :border (b/empty-border :thickness 3)
                                           :listen [:mouse-entered (fn [e] (c/config! e :background face/c-on-focus))
-                                                   :mouse-exited  (fn [e] (c/config! e :background face/c-compos-background))])
+                                                   :mouse-exited  (fn [e]
+                                                                    (c/config! e :background face/c-compos-background)
+                                                                    (.repaint (c/to-root e)))
+                                                   :mouse-clicked
+                                                   (fn [e]
+                                                     ;; RIGHT MOUSE BUTTON MENU
+                                                     (gmm/mouse-menu e
+                                                                     [(if (or (= name "Meta") (= name "View"))
+                                                                        [(gtool/get-lang-btns :open)
+                                                                         (gs/icon GoogleMaterialDesignIcons/IMPORT_CONTACTS)
+                                                                         nil
+                                                                         open-fn])
+
+                                                                      (if (= name "Meta")
+                                                                        [(gtool/get-lang-btns :restore)
+                                                                         (gs/icon GoogleMaterialDesignIcons/RESTORE)
+                                                                         nil
+                                                                         revert-fn])
+
+                                                                      [(gtool/get-lang-btns :remove)
+                                                                       (gs/icon GoogleMaterialDesignIcons/DELETE)
+                                                                       nil
+                                                                       delete-fn]]))])
 
                                  actions
                                  (gmg/migrid
@@ -347,9 +393,7 @@
                                    (if (or (= name "Meta") (= name "View"))
                                        (row-btn :title (gtool/get-lang-btns :open)
                                              :icon (gs/icon GoogleMaterialDesignIcons/IMPORT_CONTACTS)
-                                             :func (fn [e]
-                                                     (open-backup-view path)
-                                                     (c/config! e :background face/c-compos-background))
+                                             :func open-fn
                                              :listen [:mouse-entered (fn [e] (c/config! row :background face/c-on-focus))
                                                       :mouse-exited  (fn [e] (c/config! row :background face/c-compos-background))])
                                        [])
@@ -360,18 +404,7 @@
                                       :developer
                                       (row-btn :title (gtool/get-lang-btns :restore)
                                                :icon (gs/icon GoogleMaterialDesignIcons/RESTORE)
-                                               :func (fn [e]
-                                                       (popup/confirm-popup-window
-                                                        (str (gtool/get-lang-infos :confirm-revert-backup?) "<br>" (last (split-path path)))
-                                                        (fn []
-                                                          (c/config! (.getParent (c/to-widget e))
-                                                                     :items [[(c/label :text (gtool/get-lang-btns :restoring))]])
-                                                          (timelife
-                                                           0.1
-                                                           (fn []
-                                                             (revert-backup-view path)
-                                                             (render-panel)
-                                                             (i/warning (str (gtool/get-lang-alerts :restore-configuration-ok) "<br/><br/>" (last (split-path path)))))))))
+                                               :func revert-fn
                                                :listen [:mouse-entered (fn [e] (c/config! row :background face/c-on-focus))
                                                         :mouse-exited  (fn [e] (c/config! row :background face/c-compos-background))])
                                       [])
@@ -382,17 +415,7 @@
                                     :developer
                                     (row-btn :title (gtool/get-lang-btns :remove)
                                              :icon (gs/icon GoogleMaterialDesignIcons/DELETE)
-                                             :func (fn [e]
-                                                     (popup/confirm-popup-window
-                                                      (str (gtool/get-lang-infos :confirm-delete-backup?) "<br>" (last (split-path path)))
-                                                      (fn []
-                                                        (c/config! (.getParent (c/to-widget e))
-                                                                   :items [[(c/label :text (gtool/get-lang-btns :removing))]])
-                                                        (timelife
-                                                         0.1
-                                                         (fn [](backup-del-fn (last (split-path path)))
-                                                           (render-panel)
-                                                           (i/warning (format (gtool/get-lang-alerts :removed-backup-ok) (last (split-path path)))))))))
+                                             :func delete-fn
                                              :listen [:mouse-entered (fn [e] (c/config! row :background face/c-on-focus))
                                                       :mouse-exited  (fn [e] (c/config! row :background face/c-compos-background))])
                                     [])])]

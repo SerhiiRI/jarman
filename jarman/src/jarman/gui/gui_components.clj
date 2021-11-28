@@ -1641,7 +1641,9 @@
                                                            (c/config! (gtool/getParent e) :user-data (read-string (str (name :0))))
                                                            ))
                                          (onClick e)))
-                    focus-lost   (fn [e] (if-not (c/config e :user-data) (c/config! e :background bg)))
+                    focus-lost   (fn [e] (if-not (c/config e :user-data)
+                                           (do (c/config! e :background bg)
+                                               (.repaint (c/to-root e)))))
                     focus-gained (fn [e] (c/config! e :background bg-hover :cursor :hand) (.repaint (c/to-root e)))]
                 
                 (c/label

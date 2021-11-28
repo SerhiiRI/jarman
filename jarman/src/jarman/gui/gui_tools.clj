@@ -14,7 +14,8 @@
    [jarman.gui.gui-style             :as gs]
    [jarman.tools.lang                :refer :all]
    [jarman.config.conf-language]
-   ))
+   )
+  (:import (java.awt.event MouseEvent)))
 
 (import javax.swing.JLayeredPane)
 (import java.awt.Color)
@@ -77,6 +78,18 @@
                                                                                                                 (if (= (get m :style) :bold) (merge m {:style #{:bold :italic}}) (merge m {:style :italic}))
                                                                                                                 (conj m {}))))))))
 
+(defn rmb?
+  "Description:
+     Check if component was clicked with right mouse button
+  Example:
+     (rmb? e (fn [] ...))
+     (rmb? e (fn [] ...) (fn [] ...))"
+  ([ev true-fn] (rmb? ev true-fn nil))
+  ([ev true-fn false-fn]
+   (if (= (.getButton ev) MouseEvent/BUTTON3)
+     (if (fn? true-fn)  (true-fn))
+     (if (fn? false-fn) (false-fn)))))
+
 (defn get-mouse-pos
   "Description:
      Return mouse position on screen, x and y.
@@ -87,6 +100,19 @@
         screen-x  (.getX mouse-pos)
         screen-y  (.getY mouse-pos)]
     [screen-x screen-y]))
+
+(defn get-mouse-pos-onFrame
+  "Description:
+     Return global mouse position relative to frame
+  Example:
+     (get-mouse-pos-onFrame) => [650.0 430.0]"
+  []
+  (let [framePos (.getLocationOnScreen (.getContentPane (state/state :frame)))
+        fx       (.getX framePos)
+        fy       (.getY framePos)
+        [mx my]  (get-mouse-pos)]
+    [(- mx fx) (- my fy)]
+    ))
 
 (defn htmling
   "Description

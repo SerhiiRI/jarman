@@ -60,9 +60,21 @@
   "Description:
      Concat pointed state"
   [key-k vector-v]
-  (if (or (nil? (state key-k)) (vector? (state key-k)))
+  (if (or (nil?    (state key-k))
+          (vector? (state key-k)))
     (set-state key-k (vec (concat (state key-k) vector-v)))
-    (println "state/concat-state: is not vector in state"))) ;; TODO: Better exception
+    (println "state/concat-state: is not vector in state")));; TODO: Better exception
+
+(defn associn-state
+  "Description:
+     Assoc pointed state"
+  [main-k inmap-key-vec val]
+  (if (and (or (map? (state main-k))
+               (nil? (state main-k)))
+           (or (vector?  inmap-key-vec)
+               (keyword? inmap-key-vec)))
+    (let [key-path (if (keyword? inmap-key-vec) [inmap-key-vec] inmap-key-vec)]
+      (swap! atom-state #(assoc-in % (vec (concat [main-k] key-path)) val)))))
 
 (defn get-atom []
   atom-state)

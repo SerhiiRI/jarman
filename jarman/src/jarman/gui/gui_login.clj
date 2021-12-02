@@ -928,3 +928,50 @@
                                             :items [[(seesaw.core/label :text "a")]]))
         (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!)))
 
+
+
+
+;; Plan for exports
+;; Files: export-files.clj, structure_initializer.clj, document_manager.clj
+;;
+;; How working plugin import with lazy fns?
+;;
+;; Step 1: In database are template and clj file with clojure
+;; Step 2: clojure file will be creating data for exports by fn
+;; Step 3: First we compile clojure file for fn, this fn will be insert to export fns map in atom
+;; Step 4: Second, we take this fn and eval it for get data and now we using export method
+;; Template.odt + clojure.clj -> FN in middleware -> FN + EXPORT -> Complete odt document
+;;
+;; Do first ----------------
+;; Test env
+;; file with script for returning data
+;; test template
+;;
+;; Do second ---------------
+;; TODO: Upload template and script to database
+;;       TODO: expand upload component
+;;       TODO: add hash sume for checking template version
+;; TODO: Check template version and download from DB new if needed
+;; TODO: Generate export buttons
+;; TODO: Download script from DB and prepare fn for returning data
+;; TODO: Run export
+
+
+
+
+;; in jarman/templates/demo are template.odt and export_script.clj
+;; here is demo with export using runtime import clj file
+(load-file "./templates/demo/export_script.clj")
+(state/state :export)
+
+(defn template-path [path] (str "./templates/demo/" path))
+
+(defn export
+  "Run export"
+  [src-path]
+  (do (apply kaleidocs.merge/merge-doc
+             (clojure.java.io/file (template-path src-path))
+             (clojure.java.io/file (template-path (str "exp_" src-path)))
+             ((:demo (state/state :export))))))
+
+(export "template.odt")

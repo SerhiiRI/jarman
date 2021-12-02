@@ -82,6 +82,59 @@
   :document "templates\\dovidka.odt"
   :prop {:dark "rose"}})
 
+;; => "/home/aleks/Github/jarman/jarman/./.jarman.d/dump/documents"
+
+
+
+(defn demo-path [path] (str "./templates/basic/" path))
+;; Demo 1
+(do (merge-doc (clojure.java.io/file (demo-path "demo1.odt"))
+               (clojure.java.io/file (demo-path "demo_1ev.odt"))
+               ;; data
+               {"user.first_name" "Mr. Pepe"
+                "user.last_name" "Sad Frog"}))
+
+;; Demo 2
+(do (merge-doc (clojure.java.io/file (demo-path "demo2.odt"))
+               (clojure.java.io/file (demo-path "demo_2ev.odt"))
+               ;; columns
+               ["storage.name", "storage.count"]
+               ;; data
+               {"project" {"Name" "XDocReport"},
+                "user.first_name" "Mr. Pepe"
+                "user.last_name" "Sad Frog"
+                "storage"    [{"name" "Ma¶æ na ból dupy",
+                               "count" "42"},
+                              {"name" "Czopek spierdalaj",
+                               "count" "69"}]}))
+
+;; Demo 3
+(do (merge-doc (clojure.java.io/file (demo-path "demo3.odt"))
+               (clojure.java.io/file (demo-path "demo_3ev.odt"))
+               ;; columns
+               ["storage.name", "storage.count", "zamowienie.id", "zamowienie.payment"]
+               
+               ;; data
+               {"project" {"Name" "XDocReport"},
+
+                "user.first_name" "Mr. Pepe"
+                "user.last_name" "Sad Frog"
+                
+                "storage"    [{"name" "Ma¶æ na ból dupy",
+                               "count" "42"},
+                              {"name" "Czopek spierdalaj",
+                               "count" "69"}]
+                "zamowienie" [{"id" "FS 123/456",
+                               "payment" "-,42"},
+                              {"id" "FS 789/001",
+                               "payment" "-,69"}]
+
+                "company"    "Pepe The Sad Frog Co."}))
+
+
+
+
+
 (do (merge-doc (clojure.java.io/file temp-directory "test.odt")
                (clojure.java.io/file env/user-home "test.odt")
                ;; columns

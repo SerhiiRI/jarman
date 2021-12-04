@@ -378,6 +378,7 @@
 
 (defn copy-file [f-from f-out]
   (try (do
+         (fs/copy f-from f-out)
          (print-line (format "copying file =%s= to =%s=." f-from f-out)))
        (catch IOException e
          (throw (ex-info (format "I/O error, while coping =%s= to =%s= ." f-from f-out) {:type :io-exception})))
@@ -445,7 +446,7 @@
         destination-configs-dir (first env/jarman-configs-dir-list)
         destination-jarman-dot  (first env/dot-jarman-paths-list)
         destination-jarman-data (first env/dot-jarman-data-paths-list)
-        destination-jarman-executable env/jarman-exe]
+        destination-jarman-executable  env/jarman-exe]
     
     (out-update
      (print-header
@@ -483,6 +484,61 @@
        (delete-file (:file package))
        (delete-dir unzip-folder))))))
 
+(defn update-project-from-local-zip [^String path]
+  (let [;; Global configurations
+        unzip-folder (str (gensym "transact"))
+        file-path (io/file path)
+        ;; Files and folder inside unzipped
+        ;; transactional directory 
+        transact-file (make-transact-folder unzip-folder)
+        transact-jarman-plugins-dir   (transact-file env/plugin-folder-name)
+        transact-jarman-configs-dir   (transact-file env/config-folder-name)
+        transact-jarman-dot-file      (transact-file env/dot-jarman)
+        transact-jarman-dot-data-file (transact-file env/dot-jarman-data)
+        transact-jarman-executable    (transact-file env/jarman-exe)
+
+        ;; destination directories
+        destination-plugins-dir (first env/jarman-plugins-dir-list)
+        destination-configs-dir (first env/jarman-configs-dir-list)
+        destination-jarman-dot  (first env/dot-jarman-paths-list)
+        destination-jarman-data (first env/dot-jarman-data-paths-list)
+        destination-jarman-executable  env/jarman-exe]
+    (assert (and (.exists file-path)
+               (.isFile file-path)
+               (string/ends-with? (str file-path) ".zip")))
+    (out-update
+     (print-header
+      (format "Install package (%s)" (quick-timestamp))
+      (print-line (format "  install =%s=" (.getName file-path)))
+      (print-header
+       "Package"
+       (verify-file file-path)
+       (unzip (str file-path) unzip-folder)
+       (verify-file (clojure.java.io/file unzip-folder)))
+      (print-header
+       "Unpacking package"
+       (verify-file (clojure.java.io/file unzip-folder)))
+      (print-header
+       "Verifing folder"
+       (verify-file transact-jarman-plugins-dir)
+       (verify-file transact-jarman-configs-dir)
+       (verify-file transact-jarman-dot-file)
+       (verify-file transact-jarman-dot-data-file)
+       (verify-file transact-jarman-executable))
+      (print-header
+       "Verifing destinations"
+       (verify-file (clojure.java.io/file env/user-home)))
+      (print-header
+       "Copying files"
+       (copy-file transact-jarman-dot-file destination-jarman-dot)
+       (copy-file transact-jarman-dot-data-file destination-jarman-data)
+       (copy-dir transact-jarman-configs-dir destination-configs-dir)
+       (copy-dir transact-jarman-plugins-dir destination-plugins-dir)
+       (copy-file transact-jarman-executable destination-jarman-executable))
+      (print-header
+       "Remove temporary files"
+       (delete-dir unzip-folder))))))
+
 (defn clean-up-environment []
   (let [destination-plugins-dir (first env/jarman-plugins-dir-list)
         destination-configs-dir (first env/jarman-configs-dir-list)
@@ -511,30 +567,30 @@
 (defn build-package []
   (let [;; Global configurations
         unzip-folder (str (gensym "transact"))
-        ;; package params
+        ;; Package params
         version *program-vers* ;; "0.0.1"
         prog-name *program-name* ;; "jarman"
         artifact ".zip"
         package-name (format "%s-%s%s" prog-name version artifact)
         ;; Files and folder inside unzipped
-        ;; transactional directory 
+        ;; Transactional directory
         transact-file (make-transact-folder unzip-folder)
         transact-jarman-plugins-dir   (transact-file env/plugin-folder-name)
         transact-jarman-configs-dir   (transact-file env/config-folder-name)
         transact-jarman-dot-file      (transact-file env/dot-jarman)
         transact-jarman-dot-data-file (transact-file env/dot-jarman-data)
         transact-jarman-executable    (transact-file env/jarman-exe)
-        ;; original source files
+        ;; Original source files
         plugins-dir (io/file "." ".jarman.d" env/plugin-folder-name)
         configs-dir (io/file "." ".jarman.d" env/config-folder-name)
         jarman-dot  (io/file env/dot-jarman)
-        jarman-data (io/file "src" "jarman" "managment" env/dot-jarman)
+        jarman-data (io/file "src" "jarman" "managment" env/dot-jarman-data)
         jarman-executable (clojure.java.io/file env/jarman-exe)]
-
+    
     (out-update
      (print-header
       (format "Bulding PandaPackage (%s)" (quick-timestamp))
-     
+      
       (print-header
        "Testing file structure"
        (verify-file plugins-dir)
@@ -547,7 +603,7 @@
        "Making transact dir"
        (.mkdir      (clojure.java.io/file unzip-folder))
        (verify-file (clojure.java.io/file unzip-folder)))
-     
+      
       (print-header
        "Moving data to directory"
        (copy-file jarman-dot transact-jarman-dot-file)
@@ -649,7 +705,50 @@
 (defn check-package-for-update []
   (max-version (get-all-packages (deref jarman-update-repository-list))))
 
+;;;;;;;;;;;;;;;;;;;;;
+;;; CLI FUNCTIONS ;;;
+;;;;;;;;;;;;;;;;;;;;;
+
+(defn cli-print-list-of-all-packages []
+  (cl-format *out* "Packages: ~%")
+  (for [{:keys [file version uri]} (sort-by :file (show-list-of-all-packages))]
+    (cl-format *out* "~{~vA~^ ~}~%" [26 file 8 version 30 uri])))
+
+(defn cli-print-repository-list []
+  (cl-format *out* "Repositories:~%")
+  (for [repository (deref jarman-update-repository-list)]
+    (cl-format *out* "~A~%" repository)))
+
+(defn cli-print-update-candidate []
+  (cl-format *out* "Release candidate: ~%")
+  (let [{:keys [file version uri]} (max-version (show-list-of-all-packages))]
+    (cl-format *out* "~{~vA~^ ~}~%" [26 file 8 version 30 uri])))
+
+(defn cli-download-package [searched-pkg]
+  (let [package-list (show-list-of-all-packages)
+        candidate (first (filter #(= (:file %) searched-pkg) package-list))]
+    (cl-format *out* "Downloading package: ~%")
+    (let [{:keys [file version uri]} candidate]
+      (cl-format *out* "~{~vA~^ ~}~%" [26 file 8 version 30 uri])
+      (download-package candidate)
+      (cl-format *out* "done~%"))))
+
+(defn cli-install-package-by-path [path]
+  (update-project-from-local-zip path))
+
+(defn cli-build-new-package []
+  (build-package))
+
 (comment
+  (cli-print-list-of-all-packages)
+  (cli-print-repository-list)
+  (cli-print-update-candidate)
+  (cli-download-package            "jarman-1.0.0.zip")
+  (cli-install-package-by-path)
+  (cli-build-new-package)
+  
+  (update-project-from-local-zip   "./jarman-1.0.0.zip")
+  (clean-up-environment)
   ;; EXTERNAL FUNCTIONS
   (show-list-of-all-packages)
   (check-package-for-update)

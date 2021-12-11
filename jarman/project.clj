@@ -58,7 +58,8 @@
              :client+cli
              {:main jarman.core
               :aot [jarman.core
-                    jarman.gui.gui-login]
+                    jarman.gui.gui-login
+                    jarman.logic.security]
               :jar-name "jarman-client-lib.jar"
               :uberjar-name "jarman-client-standalone.jar"}
              ;; :cider

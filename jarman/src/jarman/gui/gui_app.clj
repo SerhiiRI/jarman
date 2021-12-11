@@ -9,7 +9,7 @@
    (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
    (javax.swing.table TableCellRenderer TableColumn)
    (java.awt.event MouseEvent)
-   (jarman.jarmanjcomp DateTime)
+   ;; (jarman.jarmanjcomp DateTime)
    (java.awt Color Component)
    (java.awt Dimension))
   (:require

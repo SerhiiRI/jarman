@@ -13,6 +13,7 @@
    [jarman.resource-lib.icon-library :as icon]
    [jarman.gui.gui-style             :as gs]
    [jarman.tools.lang                :refer :all]
+   [jarman.tools.org                 :refer :all]
    [jarman.config.conf-language]
    ))
 
@@ -81,8 +82,7 @@
   "Description:
      Return mouse position on screen, x and y.
   Example:
-     (get-mouse-pos) => [800.0 600.0]"
-  []
+     (get-mouse-pos) => [800.0 600.0]" []
   (let [mouse-pos (.getLocation (java.awt.MouseInfo/getPointerInfo))
         screen-x  (.getX mouse-pos)
         screen-y  (.getY mouse-pos)]
@@ -92,8 +92,7 @@
   "Description
      Build word wrap html
    Example:
-     (htmling \"Some text\" :center)
-   "
+     (htmling \"Some text\" :center)"
   [body & args] 
   (let [wrap-template-on  "width: 100%; overflow-wrap: break-word; "
         wrap-template-off "overflow: hidden; white-space: nowrap; text-overflow: ellipsis; "
@@ -111,8 +110,7 @@
   "Description
      Join items and convert to mig's items vector
    Example
-     (join-mig (list (label) (list (label) (label)))) => [[(label)] [(label)] [(label)]]
-   "
+     (join-mig (list (label) (list (label) (label)))) => [[(label)] [(label)] [(label)]]"
   (fn [& args]
     (join-vec (map #(vector %) (flatten args)))))
 
@@ -136,8 +134,8 @@
   Example:
     (repeat-listener-to-all [panel label] [:mouse-clicked ...])" 
   [items-list listen-vec]
-  (if (empty? items-list) (println "\nrepeat-listener-to-all: Items list is empty")
-      (if (empty? listen-vec) (println "\nrepeat-listener-to-all: Listeners vector is empty")
+  (if (empty? items-list) (println "repeat-listener-to-all: Items list is empty")
+      (if (empty? listen-vec) (println "repeat-listener-to-all: Listeners vector is empty")
         (doall
          (map
           #(if (sequential? %)
@@ -145,7 +143,7 @@
              (do
                (try
                  (c/config! % :listen listen-vec)
-                 (catch Exception e (println "\n" (str "Set Listener exception:\n" (.getMessage e)))))
+                 (catch Exception e (println "" (str "Set Listener exception:\n" (.getMessage e)))))
                
                (let [children (seesaw.util/children %)]
                  (if-not (empty? children)

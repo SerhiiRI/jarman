@@ -66,7 +66,8 @@
 
 (def ^:dynamic *program-name* "jarman")
 (def ^:dynamic *program-attr* ["zip" "windows.zip"])
-(def ^:dynamic *program-vers* `~(-> "project.clj" slurp read-string (nth 2)))
+;; (def ^:dynamic *program-vers* `~(-> "project.clj" slurp read-string (nth 2)))
+(def ^:dynamic *program-vers* "0.0.2")
 (def blocked-repo-list ["www.google.com"])
 
 (defn is-url? [repo-string]
@@ -106,10 +107,19 @@
     (ftp/client-cd client "jarman")
     (ftp/client-all-names client)))  
 
-(defn ftp-put-file [ftp-repo-url repo-path file-path]
-  (ftp/with-ftp [client ftp-repo-url]
-    (ftp/client-cd client repo-path)
+(defn ftp-put-file [repo-url path file-path]
+  (ftp/with-ftp [client repo-url]
+    (ftp/client-cd client path)
     (ftp/client-put client file-path)))
+
+(defn- ftp-delete-file [repo-url file-name]
+  (ftp/with-ftp [client repo-url]
+    (ftp/client-delete client (format "jarman/%s" file-name))))
+
+(comment
+  (ftp-list-files "ftp://jarman:dupa@trashpanda-team.ddns.net")
+  (ftp-put-file "ftp://jarman:dupa@trashpanda-team.ddns.net" "jarman-0.0.2.zip")
+  (ftp-delete-file "ftp://jarman:dupa@trashpanda-team.ddns.net" "jarman-0.0.2.zip"))
 
 (defn ftp-get-file
   #_([file-url]
@@ -564,6 +574,26 @@
        "Remove Executable"
        (delete-file destination-jarman-executable))))))
 
+(defn send-package [^PandaPackage package ^String repository]
+  (print-header
+   "send package to repository"
+   (cond
+     ;; Send on remote repository
+     (is-url? repository)
+     (do
+       (print-line (format "Sending package =%s= to =%s= ..." (:file package) repository))
+       (ftp-put-file repository *program-name* (:file package))
+       (print-line (format "package was successfully sended" (:file package) repository))
+       (assoc package :uri (format "%s/%s/%s" repository *program-name* (:file package))))
+     ;; Send on local file repository
+     (is-path? repository)
+     (do
+       (print-line (format "Copying package to repository =%s= to =%s= ..." (:file package) repository))
+       (copy-file (clojure.java.io/file (:file package))
+                  (clojure.java.io/file repository *program-name* (:file package)))
+       (print-line (format "package was successfully sended" (:file package) repository))
+       (assoc package :uri (clojure.java.io/file repository *program-name* (:file package)))))))
+
 (defn build-package []
   (let [;; Global configurations
         unzip-folder (str (gensym "transact"))
@@ -626,28 +656,17 @@
 
       (print-header
        "Clean temporary files"
-       (delete-dir unzip-folder)
-       (map->PandaPackage {:file package-name, :name prog-name, :version version, :artifacts artifact, :uri nil}))))))
+       (delete-dir unzip-folder))
+      
+      (print-header
+       "Pushing file into remote repository"
+       (doall
+        (for [repository (deref jarman-update-repository-list)]
+            (send-package
+             (map->PandaPackage {:file package-name, :name prog-name, :version version, :artifacts artifact, :uri nil})
+             repository))))))))
 
-(defn send-package [^PandaPackage package ^String repository]
-  (print-header
-   "send package to repository"
-   (cond
-     ;; Send on remote repository
-     (is-url? repository)
-     (do
-       (print-line (format "Sending package =%s= to =%s= ..." (:file package) repository))
-       (ftp-put-file repository *program-name* (:file package))
-       (print-line (format "package was successfully sended" (:file package) repository))
-       (assoc package :uri (format "%s/%s/%s" repository *program-name* (:file package))))
-     ;; Send on local file repository
-     (is-path? repository)
-     (do
-       (print-line (format "Copying package to repository =%s= to =%s= ..." (:file package) repository))
-       (copy-file (clojure.java.io/file (:file package))
-                  (clojure.java.io/file repository *program-name* (:file package)))
-       (print-line (format "package was successfully sended" (:file package) repository))
-       (assoc package :uri (clojure.java.io/file repository *program-name* (:file package)))))))
+
 
 
 ;;; INFORMATION ABOUT PACKAGES ;;;
@@ -738,6 +757,11 @@
 
 (defn cli-build-new-package []
   (build-package))
+
+(comment
+  (ftp-list-files "ftp://jarman:dupa@trashpanda-team.ddns.net")
+  (ftp-put-file "ftp://jarman:dupa@trashpanda-team.ddns.net" *program-name* "jarman-0.0.2.zip")
+  (ftp-delete-file "ftp://jarman:dupa@trashpanda-team.ddns.net" "jarman-0.0.2.zip"))
 
 (comment
   (cli-print-list-of-all-packages)

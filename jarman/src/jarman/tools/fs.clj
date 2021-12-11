@@ -1,6 +1,7 @@
 (ns jarman.tools.fs
   (:require [me.raynes.fs :as rafs]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [jarman.config.environment :as env]))
 
 (defn copy [uri file]
   (with-open
@@ -33,11 +34,10 @@
                 (io/copy stream saveFile)))
             (recur (.getNextEntry stream))))))))
 
-
 (defn zip [directory out-file]
  (with-open [zip (java.util.zip.ZipOutputStream. (io/output-stream out-file))]
    (doseq [f (file-seq directory) :when (.isFile f)]
-     (.putNextEntry zip (java.util.zip.ZipEntry. (.getPath f)))
+     (.putNextEntry zip (java.util.zip.ZipEntry. (clojure.string/replace-first (.getPath f) (str directory env/file-separator) "")))
      (io/copy f zip)
      (.closeEntry zip))))
 

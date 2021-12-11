@@ -48,11 +48,9 @@
    :args (vec (concat [:icon icon] (if (nil? listen) [] [:listen listen])))
    :onClick func))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; Language selection
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+;; Language selection ;;
+;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- get-language-map [] {:en "ENG" :uk "UK" :pl "PL"})
 
@@ -319,7 +317,6 @@
       :view-id   (keyword (str "editor" file-name))
       :title     (str "Edit:  " file-name)
       :render-fn (fn [] (gedit/text-file-editor path nil false)))))
-
 
 (defn- backup-panel-template
   [name backup-panel backup-list-fn backup-put-fn backup-clean-fn backup-del-fn backup-restore-fn]

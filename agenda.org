@@ -1,6 +1,6 @@
 #+TITLE: Agenda
 #+TODO: TOREVIEW(r) PROCESSING(p) TODO(t) PLANNED(s) | DONE(d)
-#+TAGS: @Julia(j) @Aleks(a) @Serhii(s)
+#+TAGS: @Aleks(a) @Serhii(s)
 #+PRIORITIES: 1 3 2
 #+PROPERTY: session *EL* 
 #+PROPERTY: cache yes
@@ -8,6 +8,12 @@
 #+STARTUP: overview
 
 * Bugtrack
+
+** TODO 007 User plugin                                             :@Serhii:
+   Add user plugin and support for Permissions
+   - [ ] GUI panel to show permission's in system
+   - [ ] Write some view for user
+
 ** TODO 006
    In varialbe list, when i click on variable i get this error
    #+begin_example

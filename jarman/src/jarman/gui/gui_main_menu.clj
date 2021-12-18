@@ -20,7 +20,8 @@
             [jarman.gui.gui-config-panel       :as gcp]
             [jarman.logic.connection           :as db]
             [jarman.logic.sql-tool :refer [select! update! insert!]]
-            [jarman.interaction :as i]))
+            [jarman.interaction :as i]
+            [jarman.logic.exporter :as exporter]))
 
 ;; (defn- expand-colors []
 ;;   [["#eeeeee" "#f7f7f7"]
@@ -381,11 +382,27 @@
                     :permission :developer
                     :fn         (fn [e]
                                   (popup/build-popup
-                                   {:comp-fn (fn []
+                                   {:comp-fn (fn [api]
                                                (gedit/code-editor
                                                 {:val "(fn [x] (println \"Nice ass\" x)"}))
                                     :title "Code in popup"
-                                    :size [500 400]}))}}})
+                                    :size [500 400]}))}
+
+    "Exporter demo" {:key        "Exporter demo"
+                     :action     :invoke
+                     :permission :developer
+                     :fn         (fn [e]
+                                   (popup/build-popup
+                                    {:comp-fn (fn [api]
+                                                (jarman.gui.gui-migrid/migrid
+                                                 :v :center :center
+                                                 (gcomp/button-basic "Export user"
+                                                                     :onClick (fn [e] (let [expor (exporter/find-exporter "Export selected user")]
+                                                                                        (if (empty? expor)
+                                                                                          (println "No exporters here")
+                                                                                          ((:invoke-popup expor))))))))
+                                     :title "Exporter Demo"
+                                     :size [200 150]}))}}})
 
 
 

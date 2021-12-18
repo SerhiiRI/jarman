@@ -955,23 +955,3 @@
 ;; TODO: Generate export buttons
 ;; TODO: Download script from DB and prepare fn for returning data
 ;; TODO: Run export
-
-
-
-
-;; in jarman/templates/demo are template.odt and export_script.clj
-;; here is demo with export using runtime import clj file
-(load-file "./templates/demo/export_script.clj")
-(state/state :export)
-
-(defn template-path [path] (str "./templates/demo/" path))
-
-(defn export
-  "Run export"
-  [src-path]
-  (do (apply kaleidocs.merge/merge-doc
-             (clojure.java.io/file (template-path src-path))
-             (clojure.java.io/file (template-path (str "exp_" src-path)))
-             ((:demo (state/state :export))))))
-
-(export "template.odt")

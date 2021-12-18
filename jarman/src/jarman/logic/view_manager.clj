@@ -339,17 +339,19 @@
          req (list 'in-ns (quote (quote jarman.logic.view-manager)))
          data (map (fn [x] (read-string (:view x))) (db/query (select! {:table_name :view}))) 
          sdata (if-not (empty? data) (concat [con req] data))
-         path  (if (nil? path)
-                 (try (str (env/get-view-clj))
-                      (catch Exception e (do (spit "./view.clj" "") "./view.clj")))
-                 path)]
-     (if-not (empty? data)
-       (do (spit path "")
-           (with-open [W (io/writer (io/file path) :append true)]
-             (doall
-              (for [s sdata]
-                (do (.write W (pp-str s))
-                    (.write W env/line-separator)))))))
+         ;; path  (if (nil? path)
+         ;;         (try (str (env/get-view-clj))
+         ;;              (catch Exception e
+         ;;                (do (spit "./view.clj" "") "./view.clj")))
+         ;;         path)
+         ]
+     ;; (if-not (empty? data)
+     ;;   (do (spit path "")
+     ;;       (with-open [W (io/writer (io/file path) :append true)]
+     ;;         (doall
+     ;;          (for [s sdata]
+     ;;            (do (.write W (pp-str s))
+     ;;                (.write W env/line-separator)))))))
      data)))
 
 (defn loader-from-view-clj
@@ -411,8 +413,9 @@
 (comment
   (do-view-load)
   ;; ----
-  (binding [*view-loader-chain-fn* (make-loader-chain loader-from-db loader-from-view-clj)
-            *view-loader-chain-fn* (make-loader-chain loader-from-view-clj loader-from-db)]
+  (binding [*view-loader-chain-fn* (make-loader-chain loader-from-view-clj loader-from-db)]
+    (do-view-load))
+  (binding [*view-loader-chain-fn* (make-loader-chain loader-from-db loader-from-view-clj)]
     (do-view-load)))
 
 (defn do-view-load
@@ -435,7 +438,6 @@
                                    :internal-message (.getMessage e)
                                    :internal-stacktrace (clojure.stacktrace/print-stack-trace e 20)}))))))))
     (return-structure-tree (deref user-menu))))
-
 
 (defn view-clean []
   (db/exec (delete! {:table_name :view})))

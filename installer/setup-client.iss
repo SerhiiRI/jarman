@@ -43,12 +43,13 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "{app}\log"; Permissions: users-full
 
 [Files]
-Source: "C:\programs\GitHub\jarman\jarman\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\programs\GitHub\jarman\jarman\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Permissions: users-full
+Source: "C:\programs\GitHub\jarman\jarman\.jarman"; DestDir: "{%HOMEPATH}"; Flags: ignoreversion onlyifdoesntexist
+Source: "C:\programs\GitHub\jarman\jarman\src\jarman\managment\.jarman.data"; DestDir: "{%HOMEPATH}"; Flags: ignoreversion onlyifdoesntexist
 Source: "C:\programs\GitHub\jarman\jarman\.jarman.d\*"; DestDir: "{%HOMEPATH}\.jarman.d"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "C:\programs\GitHub\jarman\jarman\icons\*"; DestDir: "{%HOMEPATH}\icons"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "C:\programs\GitHub\jarman\jarman\resources\*"; DestDir: "{%HOMEPATH}\resources"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "C:\programs\GitHub\jarman\jarman\.jarman"; DestDir: "{%HOMEPATH}"; Flags: ignoreversion
-Source: "C:\programs\GitHub\jarman\jarman\src\jarman\managment\.jarman.data"; DestDir: "{%HOMEPATH}"; Flags: ignoreversion
+Source: "C:\programs\GitHub\jarman\jarman\icons\*"; DestDir: "{app}\icons"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "C:\programs\GitHub\jarman\jarman\resources\*"; DestDir: "{app}\resources"; Flags: ignoreversion recursesubdirs createallsubdirs
+
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

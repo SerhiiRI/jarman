@@ -5,15 +5,17 @@
    ;; Clojure
    [clojure.string  :as s]
    [clojure.java.io :as io]
+   ;; Tools
+   [seesaw.core]
    ;; Jarman 
    [jarman.tools.lang :refer :all]
    [jarman.tools.org  :refer :all]
    [jarman.config.environment :as env]
    [jarman.config.vars :refer [setq defvar print-list-not-loaded variable-config-list]]))
 
-(def jarman ".jarman")
-(def jarman-paths-list [(io/file env/user-home jarman)
-                        (io/file "." jarman)])
+;; (def jarman ".jarman")
+;; (def jarman-paths-list [(io/file env/user-home jarman)
+;;                         (io/file "." jarman)])
 
 ;;;;;;;;;;;;;;;
 ;;; HELPERS ;;;
@@ -54,14 +56,30 @@
                "    => (setq some-global-variable {:some-value {:a 1}})\n"]))
         (fappend f "\n"))))
 
-(defn dot-jarman-load []
-  (if-let [file (first (filter #(.exists %) jarman-paths-list))]
-    (try (load-file (str file))
-         (catch Exception e (println (.getMessage e))))
-   (throw (FileNotFoundException.
-           (format "No one file [%s] doesn't exists"
-                   (clojure.string/join
-                    ", " (map str jarman-paths-list)))))))
+;; (defn dot-jarman-load []
+;;   (if-let [file (first (filter #(.exists %) jarman-paths-list))]
+;;     (try (load-file (str file))
+;;          (catch Exception e (println (.getMessage e))))
+;;     (throw (FileNotFoundException.
+;;             (format "No one file [%s] doesn't exists"
+;;                     (clojure.string/join
+;;                      ", " (map str jarman-paths-list)))))))
+
+(defn dot-jarman-load []  
+  (try 
+    (let [file (env/get-jarman)]
+      (print-line (format "evaluation of '%s'" (str file)))
+      (binding [*ns* (find-ns 'jarman.config.dot-jarman)]
+        (load-file (str file))
+        (print-line (format "file '%s' was be loaded" (str file))))
+      true)
+    (catch FileNotFoundException e
+      (seesaw.core/alert e (.getMessage e)) ;; (java.lang.System/exit 0)
+      )
+    (catch Exception e
+      (seesaw.core/alert (with-out-str (clojure.stacktrace/print-stack-trace e 20))) ;; (java.lang.System/exit 0)
+      )))
+
 
 (comment (dot-jarman-load))
 

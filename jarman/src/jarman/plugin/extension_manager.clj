@@ -41,35 +41,13 @@
 ;;; CONFIGURATIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
-(def ^:dynamic *debug-to-file* false)
-(def ^:dynamic *debug-file-name* "extension.log.org")
-
 (defvar jarman-extension-list '(aaa)
   :type clojure.lang.PersistentList
   :group :plugin-system)
 
-(def ^:private jarman-extensions-dir-list
-  "List of all plugins directory in client filesystem"
-  [(io/file env/user-home ".jarman.d" "plugins")
-   (io/file "."           ".jarman.d" "plugins")])
-
 ;;;;;;;;;;;;;;;
 ;;; HELPERS ;;; 
 ;;;;;;;;;;;;;;;
-
-(defn ^:private create-log-file []
-  (if (not (.exists (clojure.java.io/file *debug-file-name*)))
-    (spit *debug-file-name*
-          "#+TITLE: Extension manager Log file\n#+AUTHOR: Serhii Riznychuk\n#+EMAIL: sergii.riznychuk@gmail.com\n#+STARTUP: overview\n")))
-
-(defmacro ^:private with-out-debug-file [& body]
-  `(binding [*level* 0
-             *out* (if *debug-to-file*
-                     (do
-                       (create-log-file)
-                       (clojure.java.io/writer *debug-file-name* :append true))
-                     *out*)]
-     (do ~@body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; PandaExtension ;;;
@@ -140,33 +118,38 @@
 (def ^:private extension-storage-list (ref []))
 (defn          extension-storage-list-get  [] (deref extension-storage-list))
 (defn          extension-storage-list-load []
-  (if-let [loading-path (first (filter #(.exists %) jarman-extensions-dir-list))]
-    (do
-      (dosync (ref-set extension-storage-list []))   
-      (doseq [extension (deref jarman-extension-list)]
-        (let [extension-path (io/file loading-path (str extension) "package")]
-          (if (.exists extension-path)
-            (let [define-extension-body (rest (read-string (slurp (io/file loading-path (str extension) "package"))))
-                  [name description] (take 2 define-extension-body)
-                  extension-map-sequence (drop 2 define-extension-body)]
-              (assert (even? (count extension-map-sequence))
-                      (format "Odd config keywords in `%s` plugin declaration"
-                              (str extension)))
-              (dosync
-               ;; wrapp into a extension 
-               ;;=> (:verions ...) => #PandaExtension{:version ...}
-               (alter extension-storage-list conj
-                      (constructPandaExtension
-                       name
-                       description
-                       (io/file loading-path (str extension))
-                       (eval (apply hash-map extension-map-sequence))))))
-            (throw (FileNotFoundException.
-                    (format "Extension `%s` doesn't contain declaration" extension)))))))
-    (throw (FileNotFoundException.
-            (format "Any plugin loading path [%s] doesn't exists in system"
-                    (clojure.string/join
-                     ", " (map str jarman-extensions-dir-list)))))))
+  (try
+    (let [loading-path (env/get-plugins-dir)]
+      (do
+        (dosync (ref-set extension-storage-list []))   
+        (doseq [extension (deref jarman-extension-list)]
+          (let [extension-path (io/file loading-path (str extension) "package")]
+            (if (.exists extension-path)
+              (let [define-extension-body (rest (read-string (slurp (io/file loading-path (str extension) "package"))))
+                    [name description] (take 2 define-extension-body)
+                    extension-map-sequence (drop 2 define-extension-body)]
+                (assert (even? (count extension-map-sequence))
+                        (format "Odd config keywords in `%s` plugin declaration"
+                                (str extension)))
+                (dosync
+                 ;; wrapp into a extension 
+                 ;;=> (:verions ...) => #PandaExtension{:version ...}
+                 (alter extension-storage-list conj
+                        (constructPandaExtension
+                         name
+                         description
+                         (io/file loading-path (str extension))
+                         (eval (apply hash-map extension-map-sequence))))))
+              (throw (FileNotFoundException.
+                      (format "Extension `%s` doesn't contain declaration" extension))))))))
+    (catch FileNotFoundException e
+      (seesaw.core/alert e (.getMessage e))
+      ;; (java.lang.System/exit 0)
+      )
+    (catch Exception e
+      (seesaw.core/alert (with-out-str (clojure.stacktrace/print-stack-trace e 20)))
+      ;; (java.lang.System/exit 0)
+      )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; COMPILE WITH DEPENDENCIEST ;;;
@@ -226,27 +209,23 @@
            :extension-locked (remove-deps (:name extension) extension-locked)
            :extension-list   rest-extensions))))))
 
-
-
 (defn do-load-extensions
   ([]
    (extension-storage-list-load)
-   (with-out-debug-file
-     (print-header
-      (format "Loading extensions (%s)" (quick-timestamp))
-      (print-line (format "Total extensions count: ~%d~" (count (deref extension-storage-list))))
-      ;; COMPILE SEQUENTIAL 
-      ;; (doall (map do-load @extension-storage-list))
-      ;; COMPILE WITH DEPS
-      (compile-with-deps
-       :extension-loaded []
-       :extension-locked []
-       :extension-list @extension-storage-list))))
+   (print-header
+    (format "Loading extensions (%s)" (quick-timestamp))
+    (print-line (format "Total extensions count: ~%d~" (count (deref extension-storage-list))))
+    ;; COMPILE SEQUENTIAL 
+    ;; (doall (map do-load @extension-storage-list))
+    ;; COMPILE WITH DEPS
+    (compile-with-deps
+     :extension-loaded []
+     :extension-locked []
+     :extension-list @extension-storage-list)))
   ([& panda-extensions]
-   (with-out-debug-file
-     (print-header
-      (format "Reload extensions (%s)" (quick-timestamp))
-      (doall (map (fn [e] (.do-load e)) panda-extensions))))))
+   (print-header
+    (format "Reload extensions (%s)" (quick-timestamp))
+    (doall (map (fn [e] (.do-load e)) panda-extensions)))))
 
 (comment
   (extension-storage-list-load)

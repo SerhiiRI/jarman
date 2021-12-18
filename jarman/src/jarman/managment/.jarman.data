@@ -5,39 +5,6 @@
 (require '[jarman.logic.metadata])
 (require '[jarman.logic.permissions])
 
-#_(connection/connection-set
-   ;; set selected
-   (:dell-test
-    ;;------------
-    {:localhost
-     {:dbtype "mysql",
-      :host "127.0.0.1",
-      :port 3306,
-      :dbname "jarman",
-      :user "root",
-      :password "1234"},
-     :raspberry
-     {:dbtype "mysql",
-      :host "trashpanda-team.ddns.net",
-      :port 3306,
-      :dbname "jarman",
-      :user "jarman",
-      :password "dupa"}
-     :dell
-     {:dbtype "mysql",
-      :host "trashpanda-team.ddns.net",
-      :port 3307,
-      :dbname "jarman",
-      :user "root",
-      :password "1234"}
-     :dell-test
-     {:dbtype "mysql",
-      :host "trashpanda-team.ddns.net",
-      :port 3307,
-      :dbname "jarman-test",
-      :user "root",
-      :password "1234"}}))
-
 (jarman.logic.permissions/permission-groups-add
  {:ekka-all               {:doc "Allow all elements in Ekka module"}
   :ekka-servicer          {:doc "Permission for servisant's only"}

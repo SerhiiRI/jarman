@@ -111,11 +111,12 @@
 (defn print-list-not-loaded []
   (if-let [grouped-variable-list (not-empty (variable-gruop-by-group-not-loaded))]
     (do (print-line "Warning! Not used variables (:group-name|[:values-list]):")
-        (print-line (cl-format nil "~{~A~}"
-                               (for [[group-name-kwd variables-kwdx] grouped-variable-list
-                                     :let [group-name (name group-name-kwd)]]
-                                 (cl-format nil "  :~A~%~{    ~A ~%~}" group-name (map symbol (keys variables-kwdx)))))))))
-
+        (print-multiline (cl-format nil "~{~A~}"
+                                    (doall
+                                     (for [[group-name-kwd variables-kwdx] grouped-variable-list
+                                           ;; grouped-variable-list
+                                           :let [group-name (name group-name-kwd)]]
+                                       (cl-format nil "  :~A~%~{    ~A~^~%~}" group-name (map symbol (keys variables-kwdx))))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; .JARMAN MANAGER ;;;

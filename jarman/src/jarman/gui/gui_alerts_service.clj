@@ -656,7 +656,7 @@
                        (doall
                         (map
                          (fn [[typ head body]]
-                           (println "\n" typ head body)
+                           (println "gui alert service: " typ head body)
                            (try
                              (cond (= typ :success) (success head body)
                                    (= typ :warning) (warning head body)

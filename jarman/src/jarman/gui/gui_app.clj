@@ -26,6 +26,7 @@
    [jarman.logic.state              :as state]
    [jarman.logic.session            :as session]
    [jarman.logic.view-manager       :as view-manager]
+   [jarman.managment.data           :refer [do-load-jarman-data]]
    [jarman.plugin.extension-manager :refer [do-load-extensions]]
    [jarman.plugin.plugin            :refer [do-load-theme theme-selected]]
    [jarman.config.vars              :refer [setq print-list-not-loaded]]
@@ -180,6 +181,9 @@
    "Load .jarman"
    (dot-jarman-load)
    (print-list-not-loaded))
+  (print-header 
+   "Load .jarman.data"
+   (do-load-jarman-data))
   (out-extension
    (print-header
     "Load Extensions"

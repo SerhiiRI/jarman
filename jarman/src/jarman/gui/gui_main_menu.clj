@@ -23,7 +23,8 @@
             [jarman.logic.sql-tool :refer [select! update! insert!]]
             [jarman.interaction :as i]
             [jarman.logic.exporter :as exporter]
-            [jarman.gui.gui-processing-animation :as gpa]
+            [jarman.gui.gui-processing :as gpa]
+            [clojure.java.browse :as browse]
             ))
 
 ;; (defn- expand-colors []
@@ -269,6 +270,7 @@
                  :action :invoke
                  :fn      (fn [e] )}}}})
 
+
 (defn default-menu-items []
   {"Menu demo" (return-menu-items-demo)
 
@@ -418,8 +420,7 @@
                                    (gpa/async-processing
                                     (fn []
                                       (doall (map #(do (i/info %) (Thread/sleep 1000)) ["Run processing demo" "Processing 25%" "Processing 75%" "Never Gonna Give You Up"]))
-                                      (clojure.java.browse/browse-url "https://youtu.be/dQw4w9WgXcQ?list=PLz_9ihWc8S--Rodnrdcsoe93fid2xzn-X")))
-                                   )}
+                                      (browse/browse-url "https://youtu.be/dQw4w9WgXcQ?list=PLz_9ihWc8S--Rodnrdcsoe93fid2xzn-X"))))}
 
     }})
 

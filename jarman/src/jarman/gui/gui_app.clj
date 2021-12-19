@@ -31,6 +31,7 @@
    [jarman.plugin.plugin            :refer [do-load-theme theme-selected]]
    [jarman.config.vars              :refer [setq print-list-not-loaded]]
    [jarman.config.dot-jarman        :refer [dot-jarman-load]]
+   [jarman.config.conf-language     :refer [do-load-language]]
    [jarman.tools.org                :refer :all]
    [jarman.tools.lang               :refer :all]
    ;; gui 
@@ -184,6 +185,9 @@
   (print-header 
    "Load .jarman.data"
    (do-load-jarman-data))
+  (print-header 
+   "Load language.edn"
+   (do-load-language))
   (out-extension
    (print-header
     "Load Extensions"

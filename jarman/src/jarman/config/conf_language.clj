@@ -43,24 +43,23 @@
 ;;; CONFIGURATIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
-(def ^:private jarman-configs-dir-list
-  "list of all configururations directory in client filesystem"
-  [(io/file env/user-home ".jarman.d" "config")
-   (io/file           "." ".jarman.d" "config")])
-
-(defn ^:private get-language-file []
-  (let [lang-file-name "language.edn"]
-   (if-let [loading-path (first (filter #(.exists %) jarman-configs-dir-list))]
-     (if (.exists (io/file loading-path lang-file-name))
-       (io/file loading-path lang-file-name)
-       (throw (FileNotFoundException.
-               (format "Language file `%s` wasn't not found" (str (io/file loading-path lang-file-name))))))
-     (throw (FileNotFoundException.
-             "Any of \"config\" folder wasn't register in computer")))))
-
 (defn do-load-language []
-  (dosync (ref-set _language {:_global (read-string (slurp (str (get-language-file))))})) true)
-(do-load-language)
+  (try
+    (dosync (ref-set
+             _language
+             {:_global
+              (-> (env/get-configs-language-file)
+                  (slurp) (read-string))}))
+    (print-line "system languages are loaded")
+    (catch FileNotFoundException e
+      (seesaw.core/alert e (.getMessage e))
+      ;; (java.lang.System/exit 0)
+      )
+    (catch Exception e
+      (seesaw.core/alert (with-out-str (clojure.stacktrace/print-stack-trace e 20)))
+      ;; (java.lang.System/exit 0)
+      ))
+  true)
 
 (defn register-new-translation [plugin-name translation-m]
   {:pre [(map? translation-m) (keyword? plugin-name)]}

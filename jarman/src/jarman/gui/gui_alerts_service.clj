@@ -664,6 +664,5 @@
                                    :else            (info    head body))
                              (catch Exception e (str "caught exception: " (.getMessage e)))))
                          (:state-alerts new-m)))
-                       (state/set-state :state-alerts [])))))))
-  )
+                       (state/set-state :state-alerts []))))))))
 

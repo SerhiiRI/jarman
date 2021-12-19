@@ -2,6 +2,8 @@ pom.xml
 pom.xml.asc
 .projectile
 *.jar
+*.exe
+*.zip
 *.class
 /lib/
 /classes/

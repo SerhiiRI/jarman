@@ -132,3 +132,11 @@
   )
 
 
+;; TODO: Load infos about exporters form DB
+;; TODO: Download templates
+;; TODO: Check version of template
+;; TODO: Download data script for template
+;; TODO: Upload template and script
+;; TODO: Update script by editor
+;; TODO: Update template by reupload
+

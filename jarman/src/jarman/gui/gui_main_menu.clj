@@ -13,6 +13,7 @@
             [jarman.gui.gui-extension-manager  :as extension-manager]
             [jarman.gui.gui-themes-manager     :as themes-manager]
             [jarman.gui.gui-vars-listing       :as vars-listing]
+            [jarman.gui.gui-permission-listing :as permission-listing]
             [jarman.gui.gui-components         :as gcomp]
             [jarman.gui.gui-tools              :as gtool]
             [jarman.gui.popup                  :as popup]
@@ -279,9 +280,13 @@
                                               :fn extension-manager/extension-manager-panel}
     (gtool/get-lang-btns :theme-manager)     {:key (gtool/get-lang-btns :theme-manager)
                                               :fn themes-manager/theme-manager-panel}
-    (gtool/get-lang-btns :var-list-panel)    {:key (gtool/get-lang-btns :var-list-panel)
-                                              :permission :developer
-                                              :fn vars-listing/vars-listing-panel}
+    "System information"
+    {(gtool/get-lang-btns :var-list-panel)    {:key (gtool/get-lang-btns :var-list-panel)
+                                               :permission :developer
+                                               :fn vars-listing/vars-listing-panel}
+     (gtool/get-lang-btns :permission-list-panel) {:key (gtool/get-lang-btns :permission-list-panel)
+                                                   :permission :developer
+                                                   :fn permission-listing/permission-listing-panel}}
     
     ;; CURRENTLY DISSABLED
     ;; (gtool/get-lang-btns :db-visualizer)     {:key (gtool/get-lang-btns :db-visualizer)

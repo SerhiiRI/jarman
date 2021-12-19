@@ -929,31 +929,3 @@
              :content (seesaw.mig/mig-panel :constraints ["wrap 1" "0px[]0px" "0px[]0px"]
                                             :items [[(seesaw.core/label :text "a")]]))
         (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!)))
-
-
-
-
-;; Plan for exports
-;; Files: export-files.clj, structure_initializer.clj, document_manager.clj
-;;
-;; How working plugin import with lazy fns?
-;;
-;; Step 1: In database are template and clj file with clojure
-;; Step 2: clojure file will be creating data for exports by fn
-;; Step 3: First we compile clojure file for fn, this fn will be insert to export fns map in atom
-;; Step 4: Second, we take this fn and eval it for get data and now we using export method
-;; Template.odt + clojure.clj -> FN in middleware -> FN + EXPORT -> Complete odt document
-;;
-;; Do first ----------------
-;; Test env
-;; file with script for returning data
-;; test template
-;;
-;; Do second ---------------
-;; TODO: Upload template and script to database
-;;       TODO: expand upload component
-;;       TODO: add hash sume for checking template version
-;; TODO: Check template version and download from DB new if needed
-;; TODO: Generate export buttons
-;; TODO: Download script from DB and prepare fn for returning data
-;; TODO: Run export

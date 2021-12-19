@@ -1,5 +1,5 @@
 (ns jarman.logic.exporter-demo)
-(require 'jarman.logic.exporter)
+(require '[jarman.logic.exporter :as ex])
 
 (defn- suck-users
   "Get users from database"
@@ -33,5 +33,5 @@
  :name        "Export selected user"
  :description "Export data for pointed users"
  :data-fn     prepare-data
- :export-form-gui [{:component :input :text "User ID" :id :login}]
+ :export-form-gui [(ex/component :component-type :input :label "User ID" :field :login)]
  :frame-size  [250 150])

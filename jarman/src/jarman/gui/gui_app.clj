@@ -49,8 +49,8 @@
    [jarman.gui.gui-migrid           :as gmg]
    [jarman.gui.popup                :as popup]
    [jarman.gui.gui-editors          :as gedit]
-   [jarman.gui.gui-calendar         :as calendar]))
-
+   [jarman.gui.gui-calendar         :as calendar]
+   [jarman.gui.gui-processing-animation :as gpa]))
  
 ;; ┌──────────────────────────┐
 ;; │                          │
@@ -365,7 +365,10 @@
    (gui-events/gui-check-license))
   (print-header
    "Start watching state alerts"
-   (gas/start-watching-state-alerts (state/get-atom))))
+   (gas/start-watching-state-alerts (state/get-atom)))
+  (print-header
+   "Start watching processing frame"
+   (gpa/start-watch)))
 
 
 ;; ┌─────────────┐

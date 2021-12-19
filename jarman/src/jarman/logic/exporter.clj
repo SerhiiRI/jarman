@@ -27,6 +27,19 @@
      exporter-fn
      frame-size])
 
+(defn component [& {:keys [field component-type label text]}]
+  {:pre []}
+  (assert (keyword? field) "Export Document Component `:field` must be a keyword identify value for query")
+  (assert (some? component-type) "Export Document Component `:component-type` must be a keyword for choose component")
+  (assert (or (string? label) (nil? label)) "Export Document Component `:label` can be nil or string")
+  (assert (or (string? text) (nil? text))   "Export Document Component `:text` can be nil or string")
+  {:field field
+   :component-type component-type
+   :label label
+   :text text})
+
+;; (component :field :xyz :component-type :input)
+
 (defn- file-exist? [path] (.exists (io/file path)))
 
 (defn- types [] {:odt ".odt"})
@@ -36,16 +49,14 @@
   (doall
    (map
     (fn [gui-map]
-      (let [component (:component gui-map)
-            id        (:id gui-map)
-            text      (rift (:text gui-map) "")]
-        (cond (= component :input)
-              (gmg/migrid :v [(c/label :text text)
-                              (c/text  :id id
-                                       :listen [:caret-update (fn [e] (swap! props-state #(assoc % id (c/config e :text))))])])
-
-              :else (gmg/migrid :v [(c/label :text text)
-                                    (c/text :id id)]))))
+      (let [component-type (:component-type gui-map)
+            field          (:field gui-map)
+            label          (:label gui-map)]
+        (cond (= component-type :input)
+              (gmg/migrid :v [(if (empty? label) nil (c/label :text label))
+                              (c/text  :id field
+                                       :listen [:caret-update
+                                                (fn [e] (swap! props-state #(assoc % field (c/config e :text))))])]))))
     export-form-gui)))
 
 (defn- build-form
@@ -124,6 +135,8 @@
 (defn find-exporter [name]
   (first (filter #(= name (get % :name)) (system-DocExporter-list-get))))
 
+
+
 (comment
   (system-DocExporter-list-get)
   ((:invoke-popup (first (system-DocExporter-list-get))))
@@ -139,4 +152,4 @@
 ;; TODO: Upload template and script
 ;; TODO: Update script by editor
 ;; TODO: Update template by reupload
-
+;; TODO: Table upgrade: id table_name name document prop version script

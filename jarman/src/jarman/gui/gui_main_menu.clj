@@ -22,7 +22,9 @@
             [jarman.logic.connection           :as db]
             [jarman.logic.sql-tool :refer [select! update! insert!]]
             [jarman.interaction :as i]
-            [jarman.logic.exporter :as exporter]))
+            [jarman.logic.exporter :as exporter]
+            [jarman.gui.gui-processing-animation :as gpa]
+            ))
 
 ;; (defn- expand-colors []
 ;;   [["#eeeeee" "#f7f7f7"]
@@ -407,9 +409,19 @@
                                                                                           (println "No exporters here")
                                                                                           ((:invoke-popup expor))))))))
                                      :title "Exporter Demo"
-                                     :size [200 150]}))}}})
+                                     :size [200 150]}))}
 
+    "Processing..." {:key        "Processing..."
+                     :action     :invoke
+                     :permission :developer
+                     :fn         (fn [e]
+                                   (gpa/async-processing
+                                    (fn []
+                                      (doall (map #(do (i/info %) (Thread/sleep 1000)) ["Run processing demo" "Processing 25%" "Processing 75%" "Never Gonna Give You Up"]))
+                                      (clojure.java.browse/browse-url "https://youtu.be/dQw4w9WgXcQ?list=PLz_9ihWc8S--Rodnrdcsoe93fid2xzn-X")))
+                                   )}
 
+    }})
 
 (defn clean-main-menu []
   (state/set-state :main-menu []))

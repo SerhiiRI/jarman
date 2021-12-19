@@ -9,7 +9,7 @@
    (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
    (javax.swing.table TableCellRenderer TableColumn)
    (java.awt.event MouseEvent)
-   (jarman.jarmanjcomp DateTime)
+   ;; (jarman.jarmanjcomp DateTime)
    (java.awt Color Component)
    (java.awt Dimension))
   (:require
@@ -26,10 +26,12 @@
    [jarman.logic.state              :as state]
    [jarman.logic.session            :as session]
    [jarman.logic.view-manager       :as view-manager]
+   [jarman.managment.data           :refer [do-load-jarman-data]]
    [jarman.plugin.extension-manager :refer [do-load-extensions]]
    [jarman.plugin.plugin            :refer [do-load-theme theme-selected]]
    [jarman.config.vars              :refer [setq print-list-not-loaded]]
    [jarman.config.dot-jarman        :refer [dot-jarman-load]]
+   [jarman.config.conf-language     :refer [do-load-language]]
    [jarman.tools.org                :refer :all]
    [jarman.tools.lang               :refer :all]
    ;; gui 
@@ -180,6 +182,12 @@
    "Load .jarman"
    (dot-jarman-load)
    (print-list-not-loaded))
+  (print-header 
+   "Load .jarman.data"
+   (do-load-jarman-data))
+  (print-header 
+   "Load language.edn"
+   (do-load-language))
   (out-extension
    (print-header
     "Load Extensions"

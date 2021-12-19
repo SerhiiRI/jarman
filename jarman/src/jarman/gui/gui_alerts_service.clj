@@ -656,7 +656,7 @@
                        (doall
                         (map
                          (fn [[typ head body]]
-                           (println "\n" typ head body)
+                           (println "gui alert service: " typ head body)
                            (try
                              (cond (= typ :success) (success head body)
                                    (= typ :warning) (warning head body)
@@ -664,6 +664,5 @@
                                    :else            (info    head body))
                              (catch Exception e (str "caught exception: " (.getMessage e)))))
                          (:state-alerts new-m)))
-                       (state/set-state :state-alerts [])))))))
-  )
+                       (state/set-state :state-alerts []))))))))
 

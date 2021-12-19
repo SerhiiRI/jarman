@@ -1,6 +1,7 @@
 (ns jarman.gui.gui-style
   (:use seesaw.mig)
-  (:require [seesaw.core   :as c]
+  (:require [clojure.java.io :as io]
+            [seesaw.core   :as c]
             [seesaw.border :as b]
             [jarman.logic.state :as state]
             [jarman.tools.lang :refer :all]
@@ -25,24 +26,43 @@
            (javax.sound.sampled AudioSystem)            
            (javax.sound.sampled Clip)))
 
-(defn- ubuntu-font [font] (str "./resources/fonts/ubuntu/" font))
-(defn fonts []
-  {:plain    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-R.ttf")))  (float face/s-foreground))
-   :bold     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-B.ttf")))  (float face/s-foreground))
-   :bold-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-BI.ttf"))) (float face/s-foreground))
-   :italic   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-RI.ttf"))) (float face/s-foreground))
-   :light    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-L.ttf")))  (float face/s-foreground))
-   :light-i  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-LI.ttf"))) (float face/s-foreground))
-   :medium   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-M.ttf")))  (float face/s-foreground))
-   :medium-i (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-MI.ttf"))) (float face/s-foreground))
+;; (defn- ubuntu-font [font] (str "./resources/fonts/ubuntu/" font))
+;; (defn fonts []
+;;   {:plain    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-R.ttf")))  (float face/s-foreground))
+;;    :bold     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-B.ttf")))  (float face/s-foreground))
+;;    :bold-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-BI.ttf"))) (float face/s-foreground))
+;;    :italic   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-RI.ttf"))) (float face/s-foreground))
+;;    :light    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-L.ttf")))  (float face/s-foreground))
+;;    :light-i  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-LI.ttf"))) (float face/s-foreground))
+;;    :medium   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-M.ttf")))  (float face/s-foreground))
+;;    :medium-i (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-MI.ttf"))) (float face/s-foreground))
    
-   :mono     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-R.ttf")))  (float face/s-foreground))
-   :mono-b   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-B.ttf")))  (float face/s-foreground))
-   :mono-bi  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-BI.ttf"))) (float face/s-foreground))
-   :mono-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-RI.ttf"))) (float face/s-foreground))
+;;    :mono     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-R.ttf")))  (float face/s-foreground))
+;;    :mono-b   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-B.ttf")))  (float face/s-foreground))
+;;    :mono-bi  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-BI.ttf"))) (float face/s-foreground))
+;;    :mono-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-RI.ttf"))) (float face/s-foreground))
 
-   :thin      (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-Th.ttf"))) (float face/s-foreground))
-   :condensed (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-C.ttf")))  (float face/s-foreground))})
+;;    :thin      (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-Th.ttf"))) (float face/s-foreground))
+;;    :condensed (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-C.ttf")))  (float face/s-foreground))})
+
+(defn- ubuntu-font [font] (io/input-stream (io/resource (format "fonts/ubuntu/%s" font))))
+(defn fonts []
+  {:plain    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-R.ttf"))  (float face/s-foreground))
+   :bold     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-B.ttf"))  (float face/s-foreground))
+   :bold-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-BI.ttf")) (float face/s-foreground))
+   :italic   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-RI.ttf")) (float face/s-foreground))
+   :light    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-L.ttf"))  (float face/s-foreground))
+   :light-i  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-LI.ttf")) (float face/s-foreground))
+   :medium   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-M.ttf"))  (float face/s-foreground))
+   :medium-i (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-MI.ttf")) (float face/s-foreground))
+   
+   :mono     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "UbuntuMono-R.ttf"))  (float face/s-foreground))
+   :mono-b   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "UbuntuMono-B.ttf"))  (float face/s-foreground))
+   :mono-bi  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "UbuntuMono-BI.ttf")) (float face/s-foreground))
+   :mono-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "UbuntuMono-RI.ttf")) (float face/s-foreground))
+
+   :thin      (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Th.ttf")) (float face/s-foreground))
+   :condensed (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-C.ttf"))  (float face/s-foreground))})
 
 (defn- register-fonts []
   (doall (map (fn [[name-k font]] (.registerFont (GraphicsEnvironment/getLocalGraphicsEnvironment) font))

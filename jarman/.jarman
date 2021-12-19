@@ -27,7 +27,8 @@
  ;; variable
  jarman.config.conf-language/language-selected :pl
  jarman.plugin.plugin/theme-selected "Jarman Light"
- jarman.logic.view-manager/view-src :database
+ ;; jarman.logic.view-manager/view-src :database
+ jarman.logic.view-manager/view-src :view.clj
  )
 
 (setq jarman.logic.view-manager/user-menu
@@ -63,4 +64,12 @@
 (setq jarman.tools.update-manager/jarman-update-repository-list
       ["ftp://jarman:dupa@trashpanda-team.ddns.net"
        "/home/serhii/programs/jarman/jarman/test-repository"])
+
+(setq jarman.logic.connection/dataconnection-alist
+      {:jarman--localhost--3306
+       {:dbtype "mysql", :host "127.0.0.1", :port 3306, :dbname "jarman", :user "root", :password "1234"},
+       :jarman--trashpanda-team_ddns_net--3306 ;; raspberry 
+       {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3306, :dbname "jarman", :user "jarman", :password "dupa"}
+       :jarman--trashpanda-team_ddns_net--3307 ;; dell
+       {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman", :user "root", :password "misiePysie69"}})
 

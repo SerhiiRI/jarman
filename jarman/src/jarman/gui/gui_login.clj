@@ -716,7 +716,9 @@
   (let [render-fn (fn []
                     (gtool/join-mig-items
                      (rift (tiles-list-with-confs state! dispatch!) [])
-                     (rift (tile-add-new-config   state! dispatch!) [])))
+                     ;; DISABLE ADDING NEW CONFIGURATION TO LIST
+                     ;; (rift (tile-add-new-config   state! dispatch!) [])
+                     ))
         mig (gmg/hmig
              :wrap 4
              :gap [10 10 10 10]

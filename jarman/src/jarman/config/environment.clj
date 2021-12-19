@@ -120,6 +120,11 @@
   [(io/file user-home resource-folder config-folder-name)
    (io/file       "." resource-folder config-folder-name)])
 
+(defresource get-configs-language-file
+  "list of all configururations directory in client filesystem"
+  [(io/file user-home resource-folder config-folder-name "language.edn")
+   (io/file       "." resource-folder config-folder-name "language.edn")])
+
 (defresource get-resource-dir
   "list of all configururations directory in client filesystem"
   [(io/file user-home resource-folder)

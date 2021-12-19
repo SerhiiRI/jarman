@@ -117,7 +117,8 @@
                                          ["jarman" "data" "tables" (:table_name attributes)])
                     (.-file-path this))))
   (remove-data [this table_name]
-    (ftp-delete-file (get-configuration) (clojure.string/join (java.io.File/separator) ["jarman" "data" "tables" table_name (.-file-name this)])))
+    (ftp-delete-file (get-configuration) (clojure.string/join ;; (java.io.File/separator)
+                                          "/" ["jarman" "data" "tables" table_name (.-file-name this)])))
   (download [this attributes]
     (ftp-save-file (get-configuration)
                    (clojure.string/join (java.io.File/separator)

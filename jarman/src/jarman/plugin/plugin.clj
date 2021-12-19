@@ -82,7 +82,7 @@
 (defrecord ViewPlugin
     [plugin-test-spec-fn
      plugin-entry-fn
-     plugin-toolkit-fn 
+     plugin-toolkit-fn
      plugin-description
      plugin-name])
 (defn constructViewPlugin [{:keys [description toolkit name entry spec-list]}]

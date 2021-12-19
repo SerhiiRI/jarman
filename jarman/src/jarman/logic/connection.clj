@@ -12,21 +12,7 @@
            (java.sql SQLException)))
 
 (defvar dataconnection-alist
-  {:jarman--localhost--3306
-   {:dbtype "mysql",
-    :host "127.0.0.1",
-    :port 3306,
-    :dbname "jarman",
-    :user "root",
-    :password "1234"},
-   :jarman--trashpanda-team_ddns_net--3306 ;; raspberry 
-   {:dbtype "mysql",
-    :host "trashpanda-team.ddns.net",
-    :port 3306,
-    :dbname "jarman",
-    :user "jarman",
-    :password "dupa"}
-   :jarman--trashpanda-team_ddns_net--3307 ;; dell
+  {:jarman--trashpanda-team_ddns_net--3307 ;; dell
    {:dbtype "mysql",
     :host "trashpanda-team.ddns.net",
     :port 3307,

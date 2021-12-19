@@ -16,6 +16,7 @@
    ;; Jarman toolkit
    [jarman.tools.lang :refer :all]
    [jarman.tools.swing :as stool]
+   [jarman.tools.org  :refer :all]
    [jarman.resource-lib.icon-library :as icon]
    [jarman.faces              :as face]
    [jarman.gui.gui-style      :as gs]
@@ -106,7 +107,7 @@
       :clear-state          (merge state {:model-changes {} :model {:temp "temp"}})
       :set-model            (assoc-in state [:model] (grouping-model state value))
       :update-export-path   (assoc-in state [:export-path] value)
-      :test                 (do (println "\nTest") state))))
+      :test                 (do (println "Test") state))))
 
 (defn- set-state-watcher
   "Description:
@@ -201,7 +202,7 @@
                              (into {} (map (fn [[field-qualified representation]]
                                              {representation (field-qualified model-colmns)}) list-repr))))
         build-expand-fn  (fn [id scale]
-                           (println "ID::::" id)
+                           (println (format "Selected id from dialog box '%d'" id))
                            (show-table-in-expand  
                                          (model-to-repre dialog-tables
                                                          (first (dialog-select {:where [:= dialog-model-id id]}))) scale))
@@ -775,7 +776,6 @@
    vector?
    (s/coll-of verify-buttons))) ;; TODO: can we valid key value?
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; EXTERNAL INTERFAISE ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -803,8 +803,9 @@
         dispatch! (create-dispatcher state)
         state!     (fn [& prop]
                      (cond (= :atom (first prop)) state
-                           :else (deref state)))]
-    (println "\nBuilding plugin")
+                           :else (deref state)))
+        table-name (.return-table_name (:meta-obj (:plugin-toolkit (state!))))]
+    (print-line (format "Open 'table' plugin for '%s'" table-name))
     (build-plugin-gui state! dispatch!)))
 
 ;;;;;;;;;;;;

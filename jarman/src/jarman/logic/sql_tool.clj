@@ -24,7 +24,7 @@
 (def ^{:dynamic true :private true} *namespace-lib* "" "jarman.logic.sql-tool")
 (def ^{:dynamic true} *debug*      "Enable debugging" true)
 (def ^{:dynamic true} *debug-to*   "Enable debugging" (second [:output :file]))
-(def ^{:dynamic true} *debug-file* "Enable debugging" "./sql.log.clj")
+(def ^{:dynamic true} *debug-file* "Enable debugging" "./log/sql.log.clj")
 (def ^{:dynamic true} *debug-full-descript*   "Enable debugging" false)
 
 (defn- transform-namespace [symbol-op]

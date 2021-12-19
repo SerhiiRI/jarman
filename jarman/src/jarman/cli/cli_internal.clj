@@ -1,17 +1,13 @@
 (ns jarman.cli.cli-internal
   (:gen-class)
   (:require
-   ;; resource 
-   [clojure.tools.cli :refer [parse-opts]]
-   [clojure.string :as string]
-   [clojure.java.jdbc :as jdbc]
-   ;; logic
-   [jarman.tools.ftp-toolbox :as ftp]
-   [jarman.config.storage :as storage]
-   [jarman.managment.data :as data]
-   ;; developer tools 
-   [jarman.tools.swing :as stool]   
-   [jarman.tools.lang :refer :all]
+   [clojure.string                  :as string]
+   [clojure.tools.cli               :refer [parse-opts]]
+   ;; [jarman.config.storage           :as storage]
+   [jarman.managment.data           :as data]
+   [jarman.tools.swing              :as stool]
+   [jarman.tools.update-manager     :as update-manager]
+   [jarman.tools.lang               :refer :all]
    [jarman.config.dot-jarman        :refer [dot-jarman-load]]))
 
 (defn print-helpr
@@ -19,6 +15,32 @@
     show info about keys"
   [cli-opt-m]
   (println (get cli-opt-m :summary "[!] Helper not implemented")))
+
+;;;;;;;;;;;;;;;;;;;;;;
+;;; Update manager ;;;
+;;;;;;;;;;;;;;;;;;;;;;
+
+(def pkg-cli-options
+  [["-l" "--list" "List all package availabled in repositories "]
+   [nil  "--list-repo" "List all remote or local update repositories"]
+   [nil  "--update-package" "If system are outdated, then show latest stable to update package"]
+   [nil  "--build" "Build new package by the current project code base"]
+   ["-d" "--download PKGNAME" "Download package by name, for example 'jarman-0.1.1.zip'"]
+   ["-p" "--install PATH" "Install specified zip package"]])
+(defn pkg-cli [& args]
+  (let [cli-opt (parse-opts args pkg-cli-options)
+        opts (get cli-opt :options)
+        args (get cli-opt :arguments)
+        o1 (first (seq opts))
+        k1 (first o1) v1 (second o1)]
+    (case k1
+      :list            (update-manager/cli-print-list-of-all-packages)
+      :list-repo       (update-manager/cli-print-repository-list)
+      :update-package  (update-manager/cli-print-update-candidate)
+      :build           (update-manager/cli-build-new-package)
+      :download        (update-manager/cli-download-package v1)
+      :install         (update-manager/cli-install-package-by-path v1)
+      (print-helpr cli-opt))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Database manager ;;; 
@@ -106,6 +128,7 @@
         ""
         "Actions:"
         "  data       Database and data manager. Use for building or debuging project data structure"
+        "  pkg        Package manager, which help build or list available packages"
         "  structure  Manager of project structure and resources"
         "  help       Documentation"
         ""
@@ -119,6 +142,7 @@
       (if action
         (case action
           "data"      (apply data-cli rest-arguments)
+          "pkg"       (apply pkg-cli  rest-arguments)
           "structure" (apply structure-cli rest-arguments)
           "help"     (println (usage))
           (println (usage)))))))
@@ -128,6 +152,16 @@
 ;;;;;;;;;;;;;;;;
 
 (comment
+  (-main "pkg" "--list")
+  (-main "pkg" "--list-repo")
+  (-main "pkg" "--update-package")
+  (-main "pkg" "--build")
+  (-main "pkg" "--download" "jarman-0.0.1.zip")
+  (-main "pkg" "--install" "./jarman-0.0.1.zip")
+  (-main "pkg" "--help")
+  ;; ---- 
+  (-main "pkg" "-d 1.0.2")
+  ;; ----
   (-main "structure" "--refresh-fonts")
   (-main "structure" "--refresh-icons")
   (-main "structure" "--help")

@@ -332,25 +332,27 @@
 
 (defn loader-from-db
   ([] (loader-from-db nil))
-  ([path](let [con (dissoc (db/connection-get)
-                           :dbtype :user :password
-                           :useUnicode :characterEncoding)
-               req (list 'in-ns (quote (quote jarman.logic.view-manager)))
-               data (map (fn [x] (read-string (:view x))) (db/query (select! {:table_name :view}))) 
-               sdata (if-not (empty? data) (concat [con req] data))
-               path  (if (nil? path)
-                       (try (str (env/get-view-clj))
-                            (catch Exception e (do (spit "./view.clj" "") "./view.clj")))
-                       path)]
-           (println "path" path)
-           (if-not (empty? data)
-             (do (spit path "")
-                 (with-open [W (io/writer (io/file path) :append true)]
-                   (doall
-                    (for [s sdata]
-                      (do (.write W (pp-str s))
-                          (.write W env/line-separator)))))))
-           data)))
+  ([path]
+   (let [con (dissoc (db/connection-get)
+                     :dbtype :user :password
+                     :useUnicode :characterEncoding)
+         req (list 'in-ns (quote (quote jarman.logic.view-manager)))
+         data (map (fn [x] (read-string (:view x))) (db/query (select! {:table_name :view}))) 
+         sdata (if-not (empty? data) (concat [con req] data))
+         ;; path  (if (nil? path)
+         ;;         (try (str (env/get-view-clj))
+         ;;              (catch Exception e
+         ;;                (do (spit "./view.clj" "") "./view.clj")))
+         ;;         path)
+         ]
+     ;; (if-not (empty? data)
+     ;;   (do (spit path "")
+     ;;       (with-open [W (io/writer (io/file path) :append true)]
+     ;;         (doall
+     ;;          (for [s sdata]
+     ;;            (do (.write W (pp-str s))
+     ;;                (.write W env/line-separator)))))))
+     data)))
 
 (defn loader-from-view-clj
   ([] (loader-from-view-clj nil))
@@ -411,15 +413,15 @@
 (comment
   (do-view-load)
   ;; ----
-  (binding [*view-loader-chain-fn* (make-loader-chain loader-from-db loader-from-view-clj)
-            *view-loader-chain-fn* (make-loader-chain loader-from-view-clj loader-from-db)]
+  (binding [*view-loader-chain-fn* (make-loader-chain loader-from-view-clj loader-from-db)]
+    (do-view-load))
+  (binding [*view-loader-chain-fn* (make-loader-chain loader-from-db loader-from-view-clj)]
     (do-view-load)))
 
 (defn do-view-load
   "using in self `*view-loader-chain-fn*`, swapp using
   make-loader chain. deserialize view, and execute every
-  defview."
-  []
+  defview." []
   (let [data (*view-loader-chain-fn*)]
     (if (empty? data)
       (state/concat-state :state-alerts
@@ -436,7 +438,6 @@
                                    :internal-message (.getMessage e)
                                    :internal-stacktrace (clojure.stacktrace/print-stack-trace e 20)}))))))))
     (return-structure-tree (deref user-menu))))
-
 
 (defn view-clean []
   (db/exec (delete! {:table_name :view})))
@@ -482,18 +483,19 @@
 
 (defn move-views-to-db
   ([] (move-views-to-db nil))
-  ([path] (let [table-views (drop 2 (loader-from-view-clj path))]
-        (assert
-         (every? #(= 'defview (first %)) table-views)
-         "Everything(omiting connection map and `in-ns`) in view.clj MUST be only `defview`")
-        (view-clean)
-        (doall
-         (map (fn [table-view]
-                (let [table-map  (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
-                      table-name (:name table-map)]
-                  (view-set {:table_name table-name :view (str table-view) ;; (with-out-str (clojure.pprint/pprint table-view))
-                             })))
-              table-views)))))
+  ([path]
+   (let [table-views (drop 2 (loader-from-view-clj path))]
+     (assert
+      (every? #(= 'defview (first %)) table-views)
+      "Everything(omiting connection map and `in-ns`) in view.clj MUST be only `defview`")
+     (view-clean)
+     (doall
+      (map (fn [table-view]
+             (let [table-map  (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
+                   table-name (:name table-map)]
+               (view-set {:table_name table-name :view (str table-view) ;; (with-out-str (clojure.pprint/pprint table-view))
+                          })))
+           table-views)))))
 
 (comment
   (move-views-to-db))

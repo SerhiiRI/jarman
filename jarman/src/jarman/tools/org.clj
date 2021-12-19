@@ -13,7 +13,6 @@
 (defn quick-timestamp []
   (.format (java.text.SimpleDateFormat. "YYYY-MM-dd HH:mm") (java.util.Date.)))
 
-
 ;;;;;;;;;;;;;;;;;;;
 ;;; LOG STREAMS ;;;
 ;;;;;;;;;;;;;;;;;;;
@@ -35,25 +34,29 @@
 (def updt (create-log-file env/update-log-org     "Update log"))
 (def extn (create-log-file env/extension-log-org  "Extension log"))
 (def app  (create-log-file env/app-log-org        "App log"))
-(def repl (agent *out*))
-(def ^:dynamic *out-writers* #{repl app})
+;; (def repl (agent *out*))
+(def ^:dynamic *out-writers* #{app})
 
 (defn close []
   (doall (map (fn [out-agent] (send out-agent (fn [wrt] (.close wrt)))) *out-writers*)))
 
 (defmacro out-repl [& body]
-  `(binding [jarman.tools.org/*out-writers* (conj jarman.tools.org/*out-writers* repl)]
+  `(binding [jarman.tools.org/*out-writers* (conj jarman.tools.org/*out-writers* repl)
+             *level* 0]
      ~@body))
 
 (defmacro out-update [& body]
-  `(binding [jarman.tools.org/*out-writers* (conj jarman.tools.org/*out-writers* updt)]
+  `(binding [jarman.tools.org/*out-writers* (conj jarman.tools.org/*out-writers* updt)
+             *level* 0]
      ~@body))
 
 (defmacro out-extension [& body]
-  `(binding [jarman.tools.org/*out-writers* (conj jarman.tools.org/*out-writers* extn)]
+  `(binding [jarman.tools.org/*out-writers* (conj jarman.tools.org/*out-writers* extn)
+             *level* 0]
      ~@body))
 
 (defn- out [msg]
+  (.print System/out msg)
   (doall
    (for [out-agent (seq *out-writers*)]
      (send-off out-agent
@@ -62,7 +65,6 @@
                      (.flush wrt))
                  wrt))))
   nil)
-
 
 ;;;;;;;;;;;
 ;;; ORG ;;;
@@ -106,7 +108,7 @@
 
 (defmacro print-header [header & body]
   `(binding [jarman.tools.org/*level* (inc jarman.tools.org/*level*)]
-     (if (= *level* 1) (println))
+     ;; (if (= *level* 1) (println))
      (jarman.tools.org/out-header ~header)
      (do ~@body)))
 
@@ -151,7 +153,8 @@
 ;;;;;;;;;;;;;;;;;;;;
 
 (comment
-  (do(print-header
+  (do
+    (print-header
       "main thread"
       (let [some 1]
         (print-line "Some content")

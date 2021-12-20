@@ -56,13 +56,15 @@
                   :columns [{:table_name [:varchar-100 :default :null]}
                             {:view [:text :nnull :default "\"{}\""]}]}))
 
-(def documents-cols [:table_name :name :document :prop])
+(def documents-cols [:table_name :name :document :prop :version :script])
 (def documents
   (create-table! {:table_name :documents
                   :columns [{:table_name [:varchar-100 :default :null]}
                             {:name [:varchar-200 :default :null]}
                             {:document [:blob :default :null]}
-                            {:prop [:text :nnull :default "\"{}\""]}]}))
+                            {:prop [:text :nnull :default "\"{}\""]}
+                            {:version [:varchar-256 :default :null]}
+                            {:script  [:text :nnull :default "\"\""]}]}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; VALIDATOR MECHANISM ;;;

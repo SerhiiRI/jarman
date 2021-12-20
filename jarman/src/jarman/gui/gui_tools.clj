@@ -210,6 +210,12 @@
                    (> (count txt) max-len) (string/join  "" [(subs txt 0 max-len) "..."])
                    :else txt)))
 
+(defn split-path [path]
+  (let [linux (string/split path #"/")
+        windo (string/split path #"\\")]
+    (if (> (count linux) (count windo))
+      linux windo)))
+
 (defn gapser [gap]
   (cond
     (= 1 (count gap)) (let [tblr (first gap)] [tblr tblr tblr tblr])

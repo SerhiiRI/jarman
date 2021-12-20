@@ -408,7 +408,8 @@
                                                  (gcomp/button-basic "Export user"
                                                                      :onClick (fn [e] (let [expor (exporter/find-exporter "Export selected user")]
                                                                                         (if (empty? expor)
-                                                                                          (println "No exporters here")
+                                                                                          (do (println "No exporters here")
+                                                                                              (i/warning "No exports loaded"))
                                                                                           ((:invoke-popup expor))))))))
                                      :title "Exporter Demo"
                                      :size [200 150]}))}

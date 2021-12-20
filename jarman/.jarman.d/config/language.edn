@@ -85,6 +85,8 @@
     :file-no-choose "Nie wybrano pliku",
     :host "Host",
     :info "Powiadomienie",
+    :warning "Uwaga",
+    :danger "Zagrożenie",
     :installed-extentions "Zainstalowane rozszerzenia",
     :licenses "Licencje",
     :loaded-theme "Załadowana skórka",
@@ -102,8 +104,7 @@
     :update-error "Błąd aktualizacji",
     :update-manager "Menedżer aktualizacji",
     :upload-license "Dodaj nową licencję",
-    :user "Użytkownik bazy",
-    :warning "Uwaga"}
+    :user "Użytkownik bazy"}
    
    :alerts
    {:app-startup-fail "Wystąpił błąd aplikacji. Funkcja startująca nie została załadowana.",
@@ -329,7 +330,8 @@
     :warning  "Warning"
     :info     "Information"
     :success  "Success!"
-    :failed   "Niepowodzenie!"
+    :failed   "Failed!"
+    :danger   "Danger!"
     :error-sql-query "SQL query error"
     :contacts-info   "Contact"
     :physical_address "Address"

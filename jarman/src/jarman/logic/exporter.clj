@@ -8,6 +8,8 @@
             [jarman.config.storage     :as storage]
             [jarman.config.environment :as env]
             [clojure.java.io           :as io]
+            [jarman.logic.connection   :as db]
+            [jarman.logic.sql-tool :refer [select! update! insert! delete!]]
             [jarman.tools.org          :refer :all]
             [jarman.tools.lang :refer :all]))
 
@@ -16,7 +18,15 @@
 ;;;;;;;;;;;;;;;;;;
 
 (def ^:private system-ExportDocs-list (ref []))
+(def ^:private system-ExportDocs-metadata (ref []))
+
+(defn clear-storage []
+  (dosync (ref-set system-ExportDocs-list []))
+  (dosync (ref-set system-ExportDocs-metadata [])))
+
 (defn system-DocExporter-list-get [] (deref system-ExportDocs-list))
+(defn system-DocExporter-list-metadata [] (deref system-ExportDocs-metadata))
+
 (defrecord DocExporter
     [type
      name
@@ -64,10 +74,11 @@
   (if (empty? export-form-gui)
     (export-fn {}) ;; Just static export as all users or something
     (let [props-state (atom {})
-          root  (gmg/migrid :v :a :gf {:gap [5 0]} [])]
+          root  (gmg/migrid :v :a :gf {:gap [10]} [])]
       (c/config! root :items (gtool/join-mig-items
                          (gmg/migrid :v (components export-form-gui props-state))
                          (gcomp/button-basic "Export"
+                                             :underline-size 0
                                              :onClick (fn [e] (export-fn (deref props-state)))
                                              :args [:id :export-btn])))
       root)))
@@ -132,6 +143,7 @@
                  (fn [l] (let [expo (constructDocExporter args)
                                l-without-old-expo (filterv #(not= (:name expo) (:name %)) l)]
                            (conj l-without-old-expo expo))))) true)
+
 (defn find-exporter [name]
   (first (filter #(= name (get % :name)) (system-DocExporter-list-get))))
 
@@ -144,12 +156,104 @@
   ((:invoke-popup (find-exporter "Export selected user")))
   )
 
+(defn load-clj-to-var
+  "Description:
+     Load clojure code to variable"
+  [path]
+  (if (file-exist? path)
+    (prn-str (clojure.core/slurp path))))
 
-;; TODO: Load infos about exporters form DB
-;; TODO: Download templates
-;; TODO: Check version of template
-;; TODO: Download data script for template
-;; TODO: Upload template and script
-;; TODO: Update script by editor
-;; TODO: Update template by reupload
-;; TODO: Table upgrade: id table_name name document prop version script
+(defn upload-exporter
+  "Description:
+     Upload exporter. Point template path and script."
+  [{:keys [template-path script-path table-name prop]}]
+  (let [template-exist?  (file-exist? template-path)
+        x (assert template-exist? "Cannot find template")
+        template-name    (last (gtool/split-path template-path))
+        script           (load-clj-to-var script-path)
+        template-version (str (clojure.core/hash (slurp template-path)))
+        prop             (pr-str (rift prop {}))]
+    
+    (println (str "\nUpload template by path: " template-path)
+             (str "\nTemplate exist?          " template-exist?)
+             (str "\nUpload script by path:   " script-path)
+             (str "\nTemplate version:        " template-version)
+             (str "\nFor table name:          " (rift table-name "empty"))
+             (str "\nProps:                   " prop)
+             (str "\nScript:                  " (gtool/str-cutter (rift script "empty") 40)))
+
+    (jarman.logic.document-manager/insert-blob!
+     {:table_name :documents
+      :column-list [[:id :null] [:table_name :string] [:name :string] [:document :blob] [:prop :string] [:version :string] [:script :string]]
+      :values {:id nil
+               :table_name ""
+               :name     template-name
+               :document template-path
+               :prop     prop
+               :version  template-version
+               :script   script}})
+    
+   ))
+
+(comment ;; UPLOAD EXPORTER
+  (upload-exporter {:template-path (str (storage/document-templates-dir) "/Export selected user.odt")
+                    :script-path "src/jarman/logic/exporter_demo.clj"})
+  )
+
+(defn download-template-from-db
+  [id]
+  (println (format "Downloading template from DB by id `%d`" id)))
+
+(defn exporter-listing
+  "Description:
+     Listing and register plugins"
+  []
+  (let [exporters (db/query
+                   (select!
+                    {:table_name :documents}))]
+    (clear-storage)
+    (doall
+     (map
+      (fn [ex]
+        (let [local-file-path (str (storage/document-templates-dir) "/" (:name ex))
+              verified (= (str (clojure.core/hash (slurp local-file-path))) (:version ex))
+              meta {:id (:id ex) :name (:name ex) :prop (:prop ex) :version (:version ex) :local-path local-file-path}]
+          (println (str
+                    "\nID:         " (:id ex)
+                    "\nName:       " (:name ex)
+                    "\nDocument:   " (if (:document ex) true false)
+                    "\nProp:       " (:prop ex)
+                    "\nVersion:    " (:version ex)
+                    "\nScript:     " (gtool/str-cutter (:script ex) 40)
+                    "\nLocal file: " local-file-path
+                    "\nSame ver.?  " verified))
+          ;; (if-not verified (download-template-from-db (:id ex)))
+          (load-string (read-string (:script ex)))
+          (dosync (alter system-ExportDocs-metadata
+                         (fn [l] (let [l-without-old-meta (filterv #(not= (:name meta) (:name %)) l)]
+                                   (conj l-without-old-meta meta)))))))
+      exporters))))
+
+(comment ;; Listing all exporters, main
+  (exporter-listing)
+  (system-DocExporter-list-get)
+  (system-DocExporter-list-metadata)
+  )
+
+(defn delete-exporter
+  "Description:
+     Remove exporter from DB by id"
+  [id]
+  (let [name "Users list"]
+    (println (format "\nRemove exporter with id `%s` and name `%s`" id name))
+    (db/exec (delete! {:table_name :documents
+                       :where [:= :id id]}))))
+
+(comment ;; remove by id from DB
+  (delete-exporter 3)
+  )
+
+
+;; TODO: Download templates if hash as version is not same
+;; TODO: Open script by editor sucking script directly from DB and save changes to DB
+;; TODO: Update template by reupload to DB template file and hash as version

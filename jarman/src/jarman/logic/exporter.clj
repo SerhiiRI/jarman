@@ -1,6 +1,7 @@
 (ns jarman.logic.exporter
   (:gen-class)
-  (:require [seesaw.core               :as c]
+  (:require [jarman.faces              :as face]
+            [seesaw.core               :as c]
             [jarman.gui.gui-tools      :as gtool]
             [jarman.gui.gui-components :as gcomp]
             [jarman.gui.gui-migrid     :as gmg]
@@ -11,21 +12,28 @@
             [jarman.logic.connection   :as db]
             [jarman.logic.sql-tool :refer [select! update! insert! delete!]]
             [jarman.tools.org          :refer :all]
-            [jarman.tools.lang :refer :all]))
+            [jarman.tools.lang :refer :all]
+            [jarman.gui.gui-views-service :as gvs]
+            [jarman.gui.gui-style         :as gs])
+  (:import
+   (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
-;;;;;;;;;;;;;;;;;;
-;;; ViewPlugin ;;;
-;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Exporter registration
+;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def ^:private system-ExportDocs-list (ref []))
 (def ^:private system-ExportDocs-metadata (ref []))
+(def local-state (atom {}))
 
 (defn clear-storage []
   (dosync (ref-set system-ExportDocs-list []))
   (dosync (ref-set system-ExportDocs-metadata [])))
 
 (defn system-DocExporter-list-get [] (deref system-ExportDocs-list))
-(defn system-DocExporter-list-metadata [] (deref system-ExportDocs-metadata))
+(defn system-DocExporter-list-metadata-get [] (deref system-ExportDocs-metadata))
 
 (defrecord DocExporter
     [type
@@ -156,6 +164,14 @@
   ((:invoke-popup (find-exporter "Export selected user")))
   )
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Logic on DB
+;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 (defn load-clj-to-var
   "Description:
      Load clojure code to variable"
@@ -170,7 +186,7 @@
   (let [template-exist?  (file-exist? template-path)
         x (assert template-exist? "Cannot find template")
         template-name    (last (gtool/split-path template-path))
-        script           (load-clj-to-var script-path)
+        script           (if (string? script-path) (load-clj-to-var script-path) (prn-str ""))
         template-version (str (clojure.core/hash (slurp template-path)))
         prop             (pr-str (rift prop {}))]
     
@@ -237,7 +253,7 @@
 (comment ;; Listing all exporters, main
   (exporter-listing)
   (system-DocExporter-list-get)
-  (system-DocExporter-list-metadata)
+  (system-DocExporter-list-metadata-get)
   )
 
 (defn delete-exporter
@@ -254,6 +270,89 @@
   )
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Exporters managements
+;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn choosed-file? [path]
+  (let [last-path (last (gtool/split-path path))
+        is-file?  (= 2 (count (clojure.string/split last-path #"\.")))]
+    (if is-file? (slurp path))
+    is-file?))
+
+(comment
+  (choosed-file? (str (storage/document-templates-dir)))
+  )
+
+(defn- upload-middleware []
+  (let [template-path (:template-path @local-state)
+        script-path   (:script-path @local-state)]
+    (println "Upload Middleware")
+    (swap! local-state (fn [s] (-> (assoc s :template-path nil) (assoc :script-path nil))))
+    (assert (string? template-path) "Exporter Upload `template-path` must be string")
+    (assert (choosed-file? template-path) "Exporter Upload `template-path` must pointing to file")
+    (assert (or (string? script-path) (nil? script-path)) "Exporter Upload `script-path` must be string or nil")
+    (if (string? script-path) (assert (choosed-file? script-path) "Exporter Upload `script-path` must pointing to file"))
+    (println template-path script-path)
+    (upload-exporter {:template-path template-path
+                      :script-path script-path})
+    (jarman.interaction/reload-view)))
+
+(defn- add-panel []
+  (gcomp/button-expand
+   "Upload new exporter"
+   [(gmg/migrid
+     :> :fg {:gap [5] :args [:background face/c-compos-background]}
+     [(gmg/migrid :v :f :center [(c/label :text "Template") (c/label :text "Script")])
+      (gmg/migrid :v :g [(gcomp/file-chooser :state local-state
+                                          :state-path [:template-path]
+                                          :default-path (str (storage/document-templates-dir)))
+                      (gcomp/file-chooser :state local-state
+                                          :state-path [:script-path]
+                                          :default-path (str (storage/document-templates-dir)))])
+      (gmg/migrid :v :right :center {:gap [0 10]} (gcomp/button-basic "Upload" :onClick (fn [e] (upload-middleware)) :lgap 50 :rgap 50))])]
+   :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/DONUT_LARGE))))
+
+(defn- exporters-list []
+  (let [root (gmg/migrid
+              :v
+              (doall
+               (map
+                (fn [ex-map]
+                  (gmg/migrid
+                   :> {:gap [0 5] :args [:background face/c-compos-background]}
+                   [(c/label :text (:name ex-map))
+                    (gmg/migrid :> :right (gcomp/menu-bar
+                                           {:buttons [["Edit script" (gs/icon GoogleMaterialDesignIcons/EDIT) (fn [e])]
+                                                      ["Delete exporter" (gs/icon GoogleMaterialDesignIcons/DELETE)
+                                                       (fn [e]
+                                                         (delete-exporter (:id ex-map))
+                                                         (jarman.interaction/reload-view))]]}))]))
+                (system-DocExporter-list-metadata-get))))]
+    (gmg/migrid-resizer (state/state :views-space) root :exporters-list)
+    (gcomp/min-scrollbox root)))
+
+(defn- management-panel []
+  (exporter-listing)
+  (gmg/migrid :v {:gap [5 0]}
+              [(add-panel)
+               (exporters-list)]))
+
+(comment
+  (gvs/add-view
+  :view-id   :exporters-management
+  :title     "Exporters managements"
+  :render-fn (fn [] (management-panel)))
+
+  @local-state
+ )
+
+
+
+
+;; TODO: Secure upload same template name, names sholud unique but templates can be same
 ;; TODO: Download templates if hash as version is not same
 ;; TODO: Open script by editor sucking script directly from DB and save changes to DB
 ;; TODO: Update template by reupload to DB template file and hash as version

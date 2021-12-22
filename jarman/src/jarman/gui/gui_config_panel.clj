@@ -137,27 +137,6 @@
                    ;;(c/config! root :items (gtool/join-mig-items (butlast (u/children root))))
                    (.repaint (c/to-root root)))))
 
-(defn split-path [path]
-  (let [linux (string/split path #"/")
-        windo (string/split path #"\\")]
-    (if (> (count linux) (count windo))
-      linux windo)))
-
-(defn- file-exp []
-  (gmg/migrid
-   :> "[fill]5px[220::, fill]" {:gap [0 20]}
-   (let [default-path (str env/jarman-home "/licenses")
-         input (c/text :text (gtool/get-lang-basic :select-file) :border nil :editable? false :background face/c-compos-background)
-         icon  (c/label :icon (gs/icon GoogleMaterialDesignIcons/FIND_IN_PAGE face/c-icon 25)
-                        :listen [:mouse-entered gtool/hand-hover-on
-                                 :mouse-clicked
-                                 (fn [e] (let [new-path (chooser/choose-file
-                                                        :dir (.getAbsolutePath (clojure.java.io/file default-path))
-                                                        :success-fn  (fn [fc file] (.getAbsolutePath file)))]
-                                          (swap! state #(assoc % :license-file (rift new-path default-path)))
-                                          (c/config! input :text (rift (last (split-path new-path)) (gtool/get-lang-basic :select-file)))))])]
-     [icon input])))
-
 
 (defn- license-panel []
   (let [panel (gmg/migrid
@@ -168,7 +147,9 @@
      panel
      :items (gtool/join-mig-items
              (c/label :text (str (gtool/get-lang-header :upload-license) ": "))
-             (file-exp)
+             (gcomp/file-chooser :state state
+                                 :state-path [:license-file]
+                                 :default-path (str env/jarman-home "/licenses"))
              (display-btn-upload panel)))
     panel))
 
@@ -296,7 +277,7 @@
   ;;       (clojure.java.io/copy
   ;;        (clojure.java.io/file (str (env/get-view-clj)))
   ;;        (clojure.java.io/file path))
-  ;;       (i/success (str (gtool/get-lang-alerts :create-backup-complete) " - " (last (split-path path)))))
+  ;;       (i/success (str (gtool/get-lang-alerts :create-backup-complete) " - " (last (gtool/split-path path)))))
   ;;     (catch Exception e (i/warning :create-backup-faild))))
   )
 
@@ -337,22 +318,22 @@
                                  revert-fn
                                  (fn [e]
                                    (popup/confirm-popup-window
-                                    (str (gtool/get-lang-infos :confirm-revert-backup?) "<br>" (last (split-path path)))
+                                    (str (gtool/get-lang-infos :confirm-revert-backup?) "<br>" (last (gtool/split-path path)))
                                     (fn [] (revert-backup-view path)
                                       (render-panel)
                                       (i/warning (str (gtool/get-lang-alerts :restore-configuration-ok)
-                                                      "<br/><br/>" (last (split-path path)))))))
+                                                      "<br/><br/>" (last (gtool/split-path path)))))))
 
                                  delete-fn
                                  (fn [e]
                                    (popup/confirm-popup-window
-                                    (str (gtool/get-lang-infos :confirm-delete-backup?) "<br>" (last (split-path path)))
-                                    (fn [](backup-del-fn (last (split-path path)))
+                                    (str (gtool/get-lang-infos :confirm-delete-backup?) "<br>" (last (gtool/split-path path)))
+                                    (fn [](backup-del-fn (last (gtool/split-path path)))
                                       (render-panel)
-                                      (i/warning (format (gtool/get-lang-alerts :removed-backup-ok) (last (split-path path)))))))
+                                      (i/warning (format (gtool/get-lang-alerts :removed-backup-ok) (last (gtool/split-path path)))))))
 
                                  row
-                                 (c/label :text (last (split-path path))
+                                 (c/label :text (last (gtool/split-path path))
                                           :tip path
                                           :background face/c-compos-background
                                           :border (b/empty-border :thickness 3)

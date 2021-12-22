@@ -1556,6 +1556,27 @@
                :items [[icon] [input-text]])]
     panel))
 
+(defn file-chooser [& {:keys [state state-path default-path after-choose]
+                       :or {state        (atom {})
+                            state-path   [:my-path]
+                            default-path "/home"
+                            after-choose (fn [e] )}}]
+  (let []
+    (gmg/migrid
+     :> "[fill]5px[220::, fill]" {:gap [0 20]}
+     (let [input (c/text :text (gtool/get-lang-basic :select-file) :border nil :editable? false :background face/c-compos-background)
+           icon  (c/label :icon (gs/icon GoogleMaterialDesignIcons/FIND_IN_PAGE face/c-icon 25)
+                          :listen [:mouse-entered gtool/hand-hover-on
+                                   :mouse-clicked
+                                   (fn [e] (let [new-path (chooser/choose-file
+                                                           :dir (.getAbsolutePath (clojure.java.io/file default-path))
+                                                           :success-fn  (fn [fc file] (.getAbsolutePath file)))]
+                                             (swap! state #(assoc-in % state-path (rift new-path default-path)))
+                                             (c/config! input :text (rift (last (gtool/split-path new-path))
+                                                                          (gtool/get-lang-basic :select-file)))
+                                             (after-choose e)))])]
+       [icon input]))))
+
 (defn state-input-file
   "Description:
      File chooser"

@@ -173,3 +173,272 @@ Archived entries from file /home/serhii/programs/jarman/agenda.org
   - [ ] - message on save success
   - [ ] - message on save failed
   - [X] - fixed alert box permeation   
+
+* Release Roadmap
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-12-29 Wed 02:57
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Development
+  :ARCHIVE_CATEGORY: agenda
+  :END:
+   
+ #+begin_src plantuml :file issues/agenda/release-roadmap.png
+   @startgantt
+   scale 800 width
+   Project starts 2021-10-02
+   [Permission] starts 2021-10-02
+   [Permission] is colored in LawnGreen/MediumSeaGreen
+   [Permission] ends 2021-10-10
+   [Permission] is 100% completed
+   [Licenses] starts 2021-10-02
+   [Licenses] is colored in LawnGreen/MediumSeaGreen
+   [Licenses] ends 2021-10-24
+   [GUI] starts 2021-10-02
+   [GUI] is 100% completed
+   [GUI] is colored in LawnGreen/MediumSeaGreen
+   [GUI] ends 2021-10-25
+   [Exports] is colored in LawnGreen/MediumSeaGreen
+   [Exports] ends 2021-10-30
+   [Exports] starts at [GUI]'s end
+   [Ekka] starts at [Licenses]'s end
+   [Ekka] is colored in Crimson/DarkRed
+   [Ekka] ends at [Exports]'s end 
+   [Unit test] as [U] starts 2021-10-14
+   [Unit test] is colored in LightSeaGreen/MediumTurquoise
+   [Unit test] ends 2021-10-31
+   [CI/CD] as [C] lasts 2 day
+   [CI/CD] is colored in LightSeaGreen/MediumTurquoise
+   [C] starts at [U]'s end
+   @endgantt
+ #+end_src
+
+
+* DONE /Rewrite/. DB Visualizer editing [3/3]                  :@Aleks:@Serhii:
+  CLOSED: [2021-12-29 Wed 02:58] DEADLINE: <2021-10-13 Wed>
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-12-29 Wed 02:59
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Frontend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+  Old fns must be rewrite to new standards:
+  1. [X] Cannot edit table view
+  2. [X] Cannot edit metadata of table 
+  3. [X] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
+
+* DONE Frontend refactorization [7/7]
+  CLOSED: [2021-11-07 Sun 16:45] DEADLINE: <2021-10-13 Wed>
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-12-29 Wed 03:02
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Frontend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+** DONE Service Periods plugins [0/2]                                :@Aleks:
+   CLOSED: [2021-11-07 Sun 16:45]
+*** Bugs [0/2]:
+   - [ ] Service Periods and Service contract have same id in gui view service
+   - [ ] Expand with selecting component loses selected data if we click close icon without choose some row
+*** To fixed [0/3]:
+   - [-] Expand buttons [3/5]
+     - [X] Buttons must be resizable, and scaled to window width. Yes but no. Little big problem. Scrollable make problems when we resize with to smaller. It's topic for another time and task.
+     - [ ] Also in future change `+/-` icons. ~What?~
+     - [-] Cosmetics [1/4]
+       - [X] For Enterperneur use this format style "X-kom, 400 zl", money color must be pastel green.
+       - [ ] For Service Contract (contract) use this format stlye notation "30-12-2020 - 04-01-2021,  200 zl", money also in green. More readalbe will be ~2021/ 05/ 01 - 2021/ 07/ 31, 300$~
+       - [ ] For Service Months (subcontract) use ths format style notation "01-01-2020 - 04-01-2021,  100 zl", money also in pastel green. More readalbe will be ~2021/ 05/ 01 - 31, 100$~
+       - [ ] Discuss what and how should be displayed as info in expand btns and info bar.
+     - [X] Not hide expanded button, when checkbox was clicked. Julia add coments inside plugin, about this issue (find "TODO" mark)
+     - [X] make less color differencess between embaded expand buttons. Used theme face.
+   - [X] Julia call it *insert-space*, is section where we adding new service contract. Rewrite whole panel, but keep logic as we create before.
+   - [X] After you click on one month, you can edit all service contract month payments. You can edit, only if month wasn't payed. Rewrite Julia view, on your implementation. I think better be when all those month fields be in one line. ~You can pay for single subcontact too. One by one.~
+   - [X] Prices are updated when state with checkboxes (atom :subcontracts-m) will be changed. So we have refresh checkboxes and prices in runtime.
+   - [X] Added few tests.
+** DONE Table.clj [3/4]                                              :@Aleks:
+   CLOSED: [2021-11-07 Sun 16:45]
+   - [X] remove 1pixel black border for right table.
+   - [ ] rewrite expand panel
+   - [X] make icon smaller, on 10-20%
+   - [X] Move Table title to left side (nope, on center looks better), and colorize in "ocean blue" color, julia use it in login panel.
+** DONE Main view & Styling [4/4]                                    :@Aleks:
+   CLOSED: [2021-11-07 Sun 16:45]
+   - [X] Gui View Service [2/2]
+     - [X] On tabs replace non-active tab on more brighter color.
+     - [X] ON tabs replace ~x~ icon on one color.
+   - [X] Default styling [4/4]
+     - [X] Font. Set global Font's for all GUI components, becuase all plugins also must inherit those.
+     - [X] Background. Set global background for all components.
+     - [X] Foreground. Set global background for all components.
+     - [X] Set default scrollbar size.
+   - [X] change slider menu [3/3]
+     - [X] to ~close-app~ also add ~logout~
+     - [X] remove ~Change work mode~, and add optino to ~.jarman~ which will be add "key icon" to slider menu.
+     - [X] Remove ~Db visuliser~ from left bar.
+   - [X] Main Menu [5/5]
+     - [X] Levels. Add spaces inside expand buttons groups. Expand in expand.
+     - [X] Repeat colors for levels in expand button
+     - [X] Change all black font's on closelly to black. Use some *dark-gray*, with blue-direction - ~#030D1C~ as example.
+     - [X] Also for expand buttons use bold ubuntu fonts (looks little crappy).
+     - [X] Chnage ordering items in menubar. At first place user must saw all buisness tables, and next any other *setting* or *db visualizer* etc.
+
+** DONE Repair expand button [2/2]                                   :@Aleks:
+   CLOSED: [2021-10-02 sob 11:59]
+   - [X] Rainbow margin -> Space margin
+   - [X] Separate last element in inside expand
+** DONE New icons as fonts [7/7]                                     :@Aleks:
+   CLOSED: [2021-10-02 sob 11:58]
+   - [X] New fn for icon return (~gui-style/icon GoogleMaterialDesignIcons/some-icon "#000" 30)~
+   - [X] Demo to quick startup in gui_style.clj
+   - [X] Set new feature to alert system
+   - [X] Set demo alerts (access: developer, buttons will show in main menu)
+   - [X] New face for close icon, listen event mouse entered
+   - [X] Set new feature to menu bars
+   - [X] Set new feature to other if needed
+** DONE Alerts upgrade [5/5]                                         :@Aleks:
+   CLOSED: [2021-10-02 sob 11:58]
+   - [X] /Feature/. Success alert type.
+   - [X] /Feature/. TMP storage. invoking alerts after some event like loaded app.
+   - [X] /Feature/. Add simple button to alerts insted body
+   - [X] /Feature/. Add vector with fns rendering components insted body
+   - [X] /Feature/. warning alert, which notify user about update
+     - [X] Button with update manager invoking
+     - [X] Check update
+** DONE Cooperative theme standarization [1/1]
+   CLOSED: [2021-10-02 sob 12:00]
+   - [X] Main menu [2/2]
+     - [X] Better colors for levels in expand button in ~Jarman Light~
+     - [X] Better colors for levels in expand button in ~Dracula~
+
+
+* DONE /Bug./ Expand panels
+  CLOSED: [2021-11-13 Sat 06:08]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-12-29 Wed 03:02
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Frontend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+  After expand panels initilized, icon ~+~ symbol
+  but ~-~ are rendered instead.
+
+  [[file:./issues/agenda/bug_001.png]]
+   
+
+* DONE Switch into new language system [1/1]                         :@Aleks:
+  CLOSED: [2021-10-08 Fri 13:57] DEADLINE: <2021-10-13 śr.>
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-12-29 Wed 03:02
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Frontend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+  - [X] Just use new language getter functions.
+
+
+* DONE Debug space like doom popup but on bottom                     :@Aleks:
+  CLOSED: [2021-10-02 sob 12:29]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-12-29 Wed 03:03
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Frontend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+
+* DONE Одужуй!                                                       :@Julia:
+  CLOSED: [2021-10-01 pt. 04:49]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-12-29 Wed 03:03
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Backend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+
+* DONE defvar managment                                             :@Serhii:
+  CLOSED: [2021-09-25 Sat 14:46]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-12-29 Wed 03:03
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Backend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+  After app loading, we have some values in system variables, divided by group name,
+  - [X] Allow defvar declaration for all the places
+  - [X] Fix defvar spec. 
+  - [X] Save config in place in =.jarman= file
+  - [X] GUI for listing all registred config's variable
+  - [X] Debug for all variables
+  - [X] Debug for one variables
+
+* DONE /Bug/. Throw exception when .jarman fialed                     :@Serhii:
+  CLOSED: [2021-09-18 Sat 20:37]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-12-29 Wed 03:03
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Backend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+
+* DONE Move dialog plugins into the /table.clj/                        :@Julia:
+  CLOSED: [2021-09-30 czw. 06:13]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-12-29 Wed 03:03
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Backend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+
+* DONE In load circle integrate setting variable      :@Julia:@Aleks:@Serhii:
+  CLOSED: [2021-09-25 Sat 18:55]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-12-29 Wed 03:03
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Backend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+  in some load-level add manual setted variable for some systme things, that shouldn't be 
+  memberd in =.jarman=. Or thay must have some deault values which be rewrited by the 
+  =.jarman= loader.
+  #+begin_src clojure
+    ...
+    (setq language-system :en)
+    (setq supported-language [:en :pl :ua])
+    ...
+  #+end_src
+
+
+
+* DONE /Bug/. Unpin old config system                                 :@Serhii:
+  CLOSED: [2021-11-07 Sun 16:48]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-12-29 Wed 03:04
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Backend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+  - [X] Rewrite database connection list.
+    - [X] Implemnent datalist in .jarman
+    - [X] Rewrite login panel datalist editor
+  - [X] Update repository into .jarman
+
+
+* DONE check all steps of loading tables                            :@Serhii:
+  CLOSED: [2021-12-29 Wed 03:01]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2021-12-29 Wed 03:04
+  :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+  :ARCHIVE_OLPATH: Backend
+  :ARCHIVE_CATEGORY: agenda
+  :ARCHIVE_TODO: DONE
+  :END:
+  in file view-manager.clj, markup TO DO, add messages(println), if we need

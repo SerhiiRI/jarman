@@ -164,60 +164,71 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
         at clojure.lang.AFn.run(AFn.java:22)
         at java.base/java.lang.Thread.run(Thread.java:834)
    #+end_example
+
 * Development
 ** Shortcuts
    Open link file ~C-c C-o~
    [[file:docs/page/graphics.org][Shortucts]]
 
-** Release Roadmap
-   
-  #+begin_src plantuml :file issues/agenda/release-roadmap.png
-    @startgantt
-    scale 800 width
-    Project starts 2021-10-02
-    [Permission] starts 2021-10-02
-    [Permission] is colored in LawnGreen/MediumSeaGreen
-    [Permission] ends 2021-10-10
-    [Permission] is 100% completed
-    [Licenses] starts 2021-10-02
-    [Licenses] is colored in LawnGreen/MediumSeaGreen
-    [Licenses] ends 2021-10-24
-    [GUI] starts 2021-10-02
-    [GUI] is 100% completed
-    [GUI] is colored in LawnGreen/MediumSeaGreen
-    [GUI] ends 2021-10-25
-    [Exports] is colored in LawnGreen/MediumSeaGreen
-    [Exports] ends 2021-10-30
-    [Exports] starts at [GUI]'s end
-    [Ekka] starts at [Licenses]'s end
-    [Ekka] is colored in Crimson/DarkRed
-    [Ekka] ends at [Exports]'s end 
-    [Unit test] as [U] starts 2021-10-14
-    [Unit test] is colored in LightSeaGreen/MediumTurquoise
-    [Unit test] ends 2021-10-31
-    [CI/CD] as [C] lasts 2 day
-    [CI/CD] is colored in LightSeaGreen/MediumTurquoise
-    [C] starts at [U]'s end
-    @endgantt
-  #+end_src
-
 * Frontend
   
-** TODO /Bug/. Service Plugin                                          :@Aleks:
-   replace /gtool/ on /external.clj/ 
-** TODO [#1] /Rewrite/. DB Visualizer editing [2/3]            :@Aleks:@Serhii:
-   DEADLINE: <2021-10-13 Wed>
-   Old fns must be rewrite to new standards:
-   1. [X] Cannot edit table view
-   3. [X] Cannot edit metadata of table 
-   2. [ ] Cannot open DB Visualizer editor. Some info must be showed, but no information and no error about that, with previosly and next too.
-** TODO [#3] /Feature/. Update Manager [1/2]                           :@Aleks:
-   DEADLINE: <2021-10-13 śr.>
-   - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
-   - [ ] Show popup with message need hard restart
+** /Feature/. Metadata definition
+   Currently metadata declare
+   - how to create table
+   - how to manage table
+   - how to build ui for table (fields)
+
+   Metadata cover whole those problem with information about
+   - table
+   - fields
+   - fields composites
+
+   For managing UI components, and creating one we use
+   fields meta information, but for long time development
+   we shuold to resolve some practical problem with metadata
+   we faced of:
+   #+begin_src clojure
+     (field :field :ssreou :representation "number of SSREOU" :component-type [:text])
+   #+end_src
+   - field ~:component-type~
+     *Problem*: is one of most importand field, don't control in any way
+     and much part of usage this field defines in-place where must used it.
+     *Solution:* replace vector on just key or map, which describe fields. 
+     Resolving those in multimethod concept, allow to make for each some UI
+     constructor. That also mean, that you can create some UI in-place, rather
+     then use alredy defined in multimethod key.
+     *Usage*: Concept how to declaration those feadls should be look
+     #+begin_src clojure
+       {... :component-type :long-text}
+       {... :component-type :short-text}
+       {... :component-type {:type :short-text
+			     :limit 4
+			     :regex #"[\d]+"
+			     :output-type Long}}
+       {... :component-type {:type :factor
+			     :default :one
+			     :values {:one "Pierwszy"
+				      :two "Seconds"}}}
+       ;; Custom should be lovel level
+       ;; wrapper over then
+       ;; swing component
+       {... :component-type {:type :custom
+			     :validator string?
+			     :renderer #'link-to-ui-element
+			     :on-action (fn [])}}
+       
+       {... :component-type {:type :composite
+			     ...}}
+     #+end_src
+   - Lib for ~:fields~
+     with notice to previosly mentioned problem
+     create library that take one ~field~ and return some UI
+     element to putting into the template. This is something
+     like middleware that understand declaration of columns
+     inside metadata
+     
 ** TODO [#3] /Feature/. On exit event [0/1]                    :@Aleks:@Serhii:
    - [ ] Create event when close [1/3]
-     - [ ] Remove suuid /:@Serhii:/
      - [ ] Autoclose log stream's /:@Serhii:/
      - [X] Override window events
 ** PLANNED Feature. Frontend upgrade [0/4]                           :@Aleks:
@@ -249,7 +260,7 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
     - [ ] If on top mode will be off then FnSpace will be properly shifted relative to the SliderMenu and MainMenu.
     - [ ] If on top mode will be on then FnSpace will be always fitted to frame.
     - [ ] Watcher should changing size of FnSpace when global state with size of MainMenu or SliderMenu will be changed. FnSpace will be fitted to components inside app's frame.
-** PLANNED Scroll to selected in table [0/1]                         :@Aleks:
+** PLANNED /Feature/. Scroll to selected in table [0/1]                :@Aleks:
    - [ ] Scroll to selected in table
 
 ** PLANNED /Feature/. Extension Manager [1/5]                          :@Aleks:
@@ -270,14 +281,11 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
    - [X] tutorial point
    - [ ] try add more KeyEventDispachers
    - [ ] lock repeating event on hold key
-** DONE /Bug./ Expand panels
-   CLOSED: [2021-11-13 Sat 06:08]
-   After expand panels initilized, icon ~+~ symbol
-   but ~-~ are rendered instead.
-
-   [[file:./issues/agenda/bug_001.png]]
-   
-** DONE [#1] /Feature/. Interaction files [3/3]                       :@Serhii:
+** DONE /Feature/. Update Manager [2/2]                                :@Aleks:
+   CLOSED: [2021-12-29 Wed 02:59] DEADLINE: <2021-10-13 śr.>
+   - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
+   - [X] Show popup with message need hard restart
+** DONE /Feature/. Interaction files [3/3]                            :@Serhii:
    CLOSED: [2021-11-07 Sun 16:45]
    :PROPERTIES:
    :CUSTOM_ID: interaction-function-set
@@ -305,84 +313,7 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
    - [X] =faces.clj=
      Finish moving to new customization style
      
-** DONE [#1] Frontend refactorization [7/7]
-   CLOSED: [2021-11-07 Sun 16:45] DEADLINE: <2021-10-13 Wed>
-*** DONE Service Periods plugins [0/2]                               :@Aleks:
-    CLOSED: [2021-11-07 Sun 16:45]
-**** Bugs [0/2]:
-    - [ ] Service Periods and Service contract have same id in gui view service
-    - [ ] Expand with selecting component loses selected data if we click close icon without choose some row
-**** To fixed [0/3]:
-    - [-] Expand buttons [3/5]
-      - [X] Buttons must be resizable, and scaled to window width. Yes but no. Little big problem. Scrollable make problems when we resize with to smaller. It's topic for another time and task.
-      - [ ] Also in future change `+/-` icons. ~What?~
-      - [-] Cosmetics [1/4]
-	- [X] For Enterperneur use this format style "X-kom, 400 zl", money color must be pastel green.
-	- [ ] For Service Contract (contract) use this format stlye notation "30-12-2020 - 04-01-2021,  200 zl", money also in green. More readalbe will be ~2021/ 05/ 01 - 2021/ 07/ 31, 300$~
-	- [ ] For Service Months (subcontract) use ths format style notation "01-01-2020 - 04-01-2021,  100 zl", money also in pastel green. More readalbe will be ~2021/ 05/ 01 - 31, 100$~
-	- [ ] Discuss what and how should be displayed as info in expand btns and info bar.
-      - [X] Not hide expanded button, when checkbox was clicked. Julia add coments inside plugin, about this issue (find "TODO" mark)
-      - [X] make less color differencess between embaded expand buttons. Used theme face.
-    - [X] Julia call it *insert-space*, is section where we adding new service contract. Rewrite whole panel, but keep logic as we create before.
-    - [X] After you click on one month, you can edit all service contract month payments. You can edit, only if month wasn't payed. Rewrite Julia view, on your implementation. I think better be when all those month fields be in one line. ~You can pay for single subcontact too. One by one.~
-    - [X] Prices are updated when state with checkboxes (atom :subcontracts-m) will be changed. So we have refresh checkboxes and prices in runtime.
-    - [X] Added few tests.
-*** DONE Table.clj [3/4]                                             :@Aleks:
-    CLOSED: [2021-11-07 Sun 16:45]
-    - [X] remove 1pixel black border for right table.
-    - [ ] rewrite expand panel
-    - [X] make icon smaller, on 10-20%
-    - [X] Move Table title to left side (nope, on center looks better), and colorize in "ocean blue" color, julia use it in login panel.
-*** DONE Main view & Styling [4/4]                                   :@Aleks:
-    CLOSED: [2021-11-07 Sun 16:45]
-    - [X] Gui View Service [2/2]
-      - [X] On tabs replace non-active tab on more brighter color.
-      - [X] ON tabs replace ~x~ icon on one color.
-    - [X] Default styling [4/4]
-      - [X] Font. Set global Font's for all GUI components, becuase all plugins also must inherit those.
-      - [X] Background. Set global background for all components.
-      - [X] Foreground. Set global background for all components.
-      - [X] Set default scrollbar size.
-    - [X] change slider menu [3/3]
-      - [X] to ~close-app~ also add ~logout~
-      - [X] remove ~Change work mode~, and add optino to ~.jarman~ which will be add "key icon" to slider menu.
-      - [X] Remove ~Db visuliser~ from left bar.
-    - [X] Main Menu [5/5]
-      - [X] Levels. Add spaces inside expand buttons groups. Expand in expand.
-      - [X] Repeat colors for levels in expand button
-      - [X] Change all black font's on closelly to black. Use some *dark-gray*, with blue-direction - ~#030D1C~ as example.
-      - [X] Also for expand buttons use bold ubuntu fonts (looks little crappy).
-      - [X] Chnage ordering items in menubar. At first place user must saw all buisness tables, and next any other *setting* or *db visualizer* etc.
-
-*** DONE Repair expand button [2/2]                                  :@Aleks:
-CLOSED: [2021-10-02 sob 11:59]
-    - [X] Rainbow margin -> Space margin
-    - [X] Separate last element in inside expand
-*** DONE New icons as fonts [7/7]                                    :@Aleks:
-CLOSED: [2021-10-02 sob 11:58]
-    - [X] New fn for icon return (~gui-style/icon GoogleMaterialDesignIcons/some-icon "#000" 30)~
-    - [X] Demo to quick startup in gui_style.clj
-    - [X] Set new feature to alert system
-    - [X] Set demo alerts (access: developer, buttons will show in main menu)
-    - [X] New face for close icon, listen event mouse entered
-    - [X] Set new feature to menu bars
-    - [X] Set new feature to other if needed
-*** DONE Alerts upgrade [5/5]                                        :@Aleks:
-CLOSED: [2021-10-02 sob 11:58]
-    - [X] /Feature/. Success alert type.
-    - [X] /Feature/. TMP storage. invoking alerts after some event like loaded app.
-    - [X] /Feature/. Add simple button to alerts insted body
-    - [X] /Feature/. Add vector with fns rendering components insted body
-    - [X] /Feature/. warning alert, which notify user about update
-      - [X] Button with update manager invoking
-      - [X] Check update
-*** DONE Cooperative theme standarization [1/1]
-CLOSED: [2021-10-02 sob 12:00]
-    - [X] Main menu [2/2]
-      - [X] Better colors for levels in expand button in ~Jarman Light~
-      - [X] Better colors for levels in expand button in ~Dracula~
-
-** DONE [#1] /Feature/. Licenses [3/3]                         :@Aleks:@Serhii:
+** DONE /Feature/. Licenses [3/3]                              :@Aleks:@Serhii:
    CLOSED: [2021-11-07 Sun 16:46] DEADLINE: <2021-10-13 śr.>
    Related to [[Register licence mechanics]] issue.
    - [X] FAQ for licence
@@ -390,7 +321,7 @@ CLOSED: [2021-10-02 sob 12:00]
    - [X] Make template (put into some tmp file or place) [2/2]
      - [X] Alert which making hard logout from system, and inform about computer count
      - [X] Alert which inform on startup that licence is going to end
-** DONE [#1] /Feature/. Create configurations panel [1/1]
+** DONE /Feature/. Create configurations panel [1/1]
    CLOSED: [2021-11-07 Sun 16:46] DEADLINE: <2021-10-13 śr.>
    - [X] Language select box
 ** DONE /Feature/. Jarman Theme Light Style [6/6]
@@ -401,23 +332,13 @@ CLOSED: [2021-10-02 sob 12:00]
    - [X] global foreground
    - [X] removing unnessesary font override
    - [X] unifing styles in UI
-** DONE Switch into new language system [1/1]                        :@Aleks:
-   CLOSED: [2021-10-08 Fri 13:57] DEADLINE: <2021-10-13 śr.>
-   - [X] Just use new language getter functions.
-
 ** DONE /Feature/. Theme Manager [3/3]                                :@Serhii:
    CLOSED: [2021-10-02 sob 12:18] DEADLINE: <2021-10-02 sob.>
    - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [X] Make refreshing for jarman, when theme was selected
    - [X] set info about selected theme into the .jarman
 
-** DONE Debug space like doom popup but on bottom                    :@Aleks:
-CLOSED: [2021-10-02 sob 12:29]
 * Backend
-** TODO [#1] Pizdets
-   - [ ] Switching onto honey
-** TODO [#2] check all steps of loading tables                      :@Serhii:
-   in file view-manager.clj, markup TO DO, add messages(println), if we need
 ** PLANNED Service Period. sort contract list                       :@Serhii:
    - [ ] sorting contract by date
    - [ ] colorize contract by active-nonactive depend on current date
@@ -468,11 +389,11 @@ CLOSED: [2021-10-02 sob 12:29]
 ** PLANNED Rewrite test for SSQL toolkit                :@Julia:@Serhii:
    Current testable API too old. API standard was reimplemented.
    And strongly need to rewrite test cases for oll things query.
-** DONE encrypt business files                                      :@Serhii:
+** DONE /Feature./ Encrypt business files                           :@Serhii:
    CLOSED: [2021-11-13 Sat 06:07]
    - [X] create crypo toolkit
    - [X] create key-storage
-** DONE Permission system                                           :@Serhii:
+** DONE /Feature/. Permission system                                  :@Serhii:
    CLOSED: [2021-11-07 Sun 16:48]
    - [X] Rewrie user session object
      - [X] keep licence file in session.
@@ -480,13 +401,6 @@ CLOSED: [2021-10-02 sob 12:29]
    - [X] Add into /left-bar menu/, /left-menu/ functionlity that test user permission before
      render
    - [X] View plugins permission system
-** DONE /Bug/. Unpin old config system                                :@Serhii:
-   CLOSED: [2021-11-07 Sun 16:48]
-   - [X] Rewrite database connection list.
-     - [X] Implemnent datalist in .jarman
-     - [X] Rewrite login panel datalist editor
-   - [X] Update repository into .jarman
-
 ** DONE /Feature/. Macro for declaring some resource                  :@Serhii:
    CLOSED: [2021-11-07 Sun 16:49]
    Create ~define-resource~ macro for definision of file
@@ -504,7 +418,7 @@ CLOSED: [2021-10-02 sob 12:29]
    - [ ] plugin manager
    - [ ] dot jarman
    - [ ] data.clj in managment
-** DONE Register licence mechanics                                  :@Serhii:
+** DONE /Feature/. Register licence mechanics                       :@Serhii:
    CLOSED: [2021-11-07 Sun 16:49]
    - [X] Create =register-licence-file= functionality
    - [X] decrypt/uncrypt by system RSA keys
@@ -533,21 +447,6 @@ CLOSED: [2021-10-02 sob 12:29]
        (lang :dracula :theme-name)
      #+end_src
 
-** DONE Одужуй!                                                      :@Julia:
-   CLOSED: [2021-10-01 pt. 04:49]
-** DONE Move dialog plugins into the /table.clj/                       :@Julia:
-   CLOSED: [2021-09-30 czw. 06:13]
-** DONE defvar managment                                            :@Serhii:
-   CLOSED: [2021-09-25 Sat 14:46]
-   After app loading, we have some values in system variables, divided by group name,
-   - [X] Allow defvar declaration for all the places
-   - [X] Fix defvar spec. 
-   - [X] Save config in place in =.jarman= file
-   - [X] GUI for listing all registred config's variable
-   - [X] Debug for all variables
-   - [X] Debug for one variables
-** DONE /Bug/. Throw exception when .jarman fialed                    :@Serhii:
-   CLOSED: [2021-09-18 Sat 20:37]
 ** DONE /Feature/. Support Org file                                   :@Serhii:
    CLOSED: [2021-09-26 Sun 19:33]
    - [X] Create library for printing directly to org file [3/3]
@@ -556,18 +455,6 @@ CLOSED: [2021-10-02 sob 12:29]
      - [X] Move out to different places in one moment [2/2]
        - [X] file
        - [X] print
-** DONE In load circle integrate setting variable     :@Julia:@Aleks:@Serhii:
-   CLOSED: [2021-09-25 Sat 18:55]
-   in some load-level add manual setted variable for some systme things, that shouldn't be 
-   memberd in =.jarman=. Or thay must have some deault values which be rewrited by the 
-   =.jarman= loader.
-   #+begin_src clojure
-     ...
-     (setq language-system :en)
-     (setq supported-language [:en :pl :ua])
-     ...
-   #+end_src
-
 * Documentations
 ** PLANNED [#3] create jarman manifest file                         :@Serhii:
    - Note taken on [2021-09-02 чт 19:01] 

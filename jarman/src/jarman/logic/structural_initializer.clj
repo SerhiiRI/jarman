@@ -81,21 +81,21 @@
   (verify-table-columns :system_session system-session-cols)
   (verify-table-columns :system_props system-props-cols))
 
-(defn test-profile []
-  (letfn [(on-pred-profile [profile_name pred]
-            (if-let [profile-m (not-empty (db/query (select! {:table_name :profile :where [:= :name (name profile_name)]})))]
-              (pred profile-m)))]
-    (and (on-pred-profile :admin some?)
-       (on-pred-profile :developer some?)
-       (on-pred-profile :user some?))))
+;; (defn test-profile []
+;;   (letfn [(on-pred-profile [profile_name pred]
+;;             (if-let [profile-m (not-empty (db/query (select! {:table_name :profile :where [:= :name (name profile_name)]})))]
+;;               (pred profile-m)))]
+;;     (and (on-pred-profile :admin some?)
+;;        (on-pred-profile :developer some?)
+;;        (on-pred-profile :user some?))))
 
-(defn test-user []
-  (letfn [(on-test-exist [profile_name pred]
-            (if-let [profile-m (not-empty (db/query (select! {:table_name :user :where [:= :login (name profile_name)]})))]
-              (pred profile-m)))]
-    (and (on-test-exist :adm some?)
-       (on-test-exist :dev some?)
-       (on-test-exist :user some?))))
+;; (defn test-user []
+;;   (letfn [(on-test-exist [profile_name pred]
+;;             (if-let [profile-m (not-empty (db/query (select! {:table_name :user :where [:= :login (name profile_name)]})))]
+;;               (pred profile-m)))]
+;;     (and (on-test-exist :adm some?)
+;;        (on-test-exist :dev some?)
+;;        (on-test-exist :user some?))))
 
 (defn test-metadata []
   (if-let [tables-list (not-empty (mapv (comp second first) (db/query (show-tables))))]
@@ -112,34 +112,36 @@
 ;;; FILL DATA FOR TABLE ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn fill-profile []
-  (db/exec (delete! {:table_name :profile}))
-  (db/exec
-   (insert! {:table_name :profile
-             :column-list [:name :configuration]
-             :values [["admin" "{:groups [:admin]}"]
-                      ["user" "{:groups [:user]}"]
-                      ["developer" "{:groups [:dev]}"]]})))
+;;; MOVED to .jaramn.data
+;; (defn fill-profile []
+;;   (db/exec (delete! {:table_name :profile}))
+;;   (db/exec
+;;    (insert! {:table_name :profile
+;;              :column-list [:name :configuration]
+;;              :values [["admin" "{:groups [:admin-update :admin-extension :admin-dataedit :developer-manage :developer-alpha :developer :managment :ekka-servicer :ekka-payment-managment :ekka-all]}"]
+;;                       ["user" "{:groups [:admin-update :admin-extension :admin-dataedit :developer-manage :developer-alpha :developer :managment :ekka-servicer :ekka-payment-managment :ekka-all]}"]
+;;                       ["developer" "{:groups [:admin-update :admin-extension :admin-dataedit :developer-manage :developer-alpha :developer :managment :ekka-servicer :ekka-payment-managment :ekka-all]}"]]})))
 
-(defn fill-user []
-  (if-let [perm (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "admin"]})))]
-    (if (empty? (db/query (select! {:table_name :user :where [:= :login "admin"]})))
-      (db/exec
-       (insert! {:table_name :user
-                 :column-list [:login :password :first_name :last_name :id_profile :configuration]
-                 :values [["admin" "admin" "admin" "admin" (:id perm) "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}"]]}))))
-  (if-let [perm (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "developer"]})))]
-    (if (empty? (db/query (select! {:table_name :user :where [:= :login "dev"]})))
-      (db/exec
-       (insert! {:table_name :user
-                 :column-list [:login :password :first_name :last_name :id_profile :configuration]
-                 :values [["dev" "dev" "dev" "dev" (:id perm) "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}"]]}))))
-  (if-let [perm (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "user"]})))]
-    (if (empty? (db/query (select! {:table_name :user :where [:= :login "user"]})))
-      (db/exec
-       (insert! {:table_name :user
-                 :column-list [:login :password :first_name :last_name :id_profile :configuration]
-                 :values [["user" "user" "user" "user" (:id perm) "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}"]]})))))
+;;; MOVED to .jarman.data
+;; (defn fill-user []
+;;   (if-let [perm (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "admin"]})))]
+;;     (if (empty? (db/query (select! {:table_name :user :where [:= :login "admin"]})))
+;;       (db/exec
+;;        (insert! {:table_name :user
+;;                  :column-list [:login :password :first_name :last_name :id_profile :configuration]
+;;                  :values [["admin" "admin" "admin" "admin" (:id perm) "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}"]]}))))
+;;   (if-let [perm (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "developer"]})))]
+;;     (if (empty? (db/query (select! {:table_name :user :where [:= :login "dev"]})))
+;;       (db/exec
+;;        (insert! {:table_name :user
+;;                  :column-list [:login :password :first_name :last_name :id_profile :configuration]
+;;                  :values [["dev" "dev" "dev" "dev" (:id perm) "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}"]]}))))
+;;   (if-let [perm (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "user"]})))]
+;;     (if (empty? (db/query (select! {:table_name :user :where [:= :login "user"]})))
+;;       (db/exec
+;;        (insert! {:table_name :user
+;;                  :column-list [:login :password :first_name :last_name :id_profile :configuration]
+;;                  :values [["user" "user" "user" "user" (:id perm) "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}"]]})))))
 
 (defn fill-metadata []
   (doall (mt/do-create-meta-database)))
@@ -188,16 +190,18 @@
 (defn procedure-test-profile [tables-list]
   (if (verify-table-exists :profile tables-list)
     (if (verify-table-columns :profile profile-cols)
-      (if (test-profile) true (do (fill-profile) true))
+      true ;; (if (test-profile) true (do (fill-profile) true))
       {:valid? false :output "Profile table not compatible with Jarman" :table :profile})
-    (do (db/exec profile) (fill-profile) true)))
+    (do (db/exec profile) ;; (fill-profile)
+        true)))
 
 (defn procedure-test-user [tables-list]
   (if (verify-table-exists :user tables-list)
     (if (verify-table-columns :user user-cols)
-      (if (test-user) true (do (fill-user) true))
+      true ;; (if (test-user) true (do (fill-user) true))
       {:valid? false :output "User table not compatible with Jarman" :table :user})
-    (do (db/exec user) (fill-user) true)))
+    (do (db/exec user) ;; (fill-user)
+        true)))
 
 (defn procedure-test-metadata [tables-list]
   (if (verify-table-exists :metadata tables-list)
@@ -232,8 +236,8 @@
     (do (db/exec system-session) true)))
 
 (defn procedure-create-all-structure []
-  (db/exec profile)    (fill-profile) 
-  (db/exec user)       (fill-user)
+  (db/exec profile)    ;; (fill-profile) 
+  (db/exec user)       ;; (fill-user)
   (db/exec metadata)   ;; (fill-metadata) 
   (db/exec documents)
   (db/exec view)

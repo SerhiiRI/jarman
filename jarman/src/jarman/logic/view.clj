@@ -22,7 +22,7 @@
   :permission
   :ekka-all
   :actions
-  []
+  {}
   :buttons
   []
   :query
@@ -37,6 +37,8 @@
   :permission-table
   :name
   "permission dialog"
+  :permission
+  :ekka-all
   :tables
   [:permission]
   :view-columns
@@ -77,11 +79,11 @@
   :active-buttons
   [:insert :update :delete :clear :changes]
   :permission
-  [:user :developer]
+  :ekka-all
   :dialog
   {:user.id_permission [:permission :dialog-table :permission-table]}
   :actions
-  []
+  {}
   :buttons
   []
   :query
@@ -149,7 +151,7 @@
   {:cache_register.id_point_of_sale
    [:point_of_sale :dialog-table :point_of_sale-table]}
   :actions
-  []
+  {}
   :buttons
   []
   :query
@@ -194,7 +196,7 @@
   :name
   "cache_register dialog"
   :permission
-  [:admin :user :developer]
+  :ekka-all
   :tables
   [:cache_register :point_of_sale :enterprise]
   :view-columns
@@ -275,7 +277,7 @@
   :permission
   :ekka-all
   :actions
-  []
+  {}
   :buttons
   []
   :query
@@ -326,7 +328,7 @@
   :permission
   :ekka-all
   :actions
-  []
+  {}
   :buttons
   []
   :query
@@ -407,7 +409,7 @@
   {:point_of_sale.id_enterprise
    [:enterprise :dialog-table :enterprise-table]}
   :actions
-  []
+  {}
   :buttons
   []
   :query
@@ -436,7 +438,7 @@
   :name
   "point_of_sale dialog"
   :permission
-  [:admin :user :developer]
+  :ekka-all
   :tables
   [:point_of_sale :enterprise]
   :view-columns
@@ -485,7 +487,7 @@
   :permission
   :ekka-all
   :actions
-  []
+  {}
   :buttons
   []
   :query
@@ -544,7 +546,7 @@
    :point_of_sale_group_links.id_point_of_sale
    [:point_of_sale :dialog-table :point_of_sale-table]}
   :actions
-  []
+  {}
   :buttons
   []
   :query
@@ -678,7 +680,7 @@
     :dialog-bigstring
     :repair_nature_of_problem-bigstring]}
   :actions
-  []
+  {}
   :buttons
   []
   :query
@@ -858,7 +860,7 @@
   :permission
   :ekka-all
   :actions
-  []
+  {}
   :buttons
   []
   :query
@@ -905,7 +907,7 @@
   :dialog
   {}
   :actions
-  []
+  {}
   :buttons
   []
   :query
@@ -917,7 +919,7 @@
   :name
   "repair_reasons dialog"
   :permission
-  [:admin :user :developer]
+  :ekka-all
   :item-columns
   :repair_reasons.description
   :query
@@ -944,7 +946,7 @@
   :permission
   :ekka-all
   :actions
-  []
+  {}
   :buttons
   []
   :query
@@ -959,7 +961,7 @@
   :name
   "repair_technical_issue dialog"
   :permission
-  [:admin :user :developer]
+  :ekka-all
   :item-columns
   :repair_technical_issue.description
   :query
@@ -996,7 +998,7 @@
   :dialog
   {}
   :actions
-  []
+  {}
   :buttons
   []
   :query
@@ -1075,7 +1077,7 @@
   {:service_contract.id_enterprise
    [:enterprise :dialog-table :enterprise-table]}
   :actions
-  []
+  {}
   :buttons
   []
   :query
@@ -1159,7 +1161,7 @@
   {:service_contract_month.id_service_contract
    [:service_contract :dialog-table :service_contract-table]}
   :actions
-  []
+  {}
   :buttons
   []
   :query
@@ -1195,7 +1197,7 @@
   :name
   "service_contract_month dialog"
   :permission
-  [:admin :user :developer]
+  :ekka-all
   :tables
   [:service_contract_month :service_contract :enterprise]
   :view-columns

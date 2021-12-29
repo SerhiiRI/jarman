@@ -1,7 +1,8 @@
 ;; -*- mode: Clojure;-*-
 (require '[clojure.set :refer [rename-keys]])
 (require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link field-composite prop]])
-(require '[jarman.logic.connection :as connection])
+(require '[jarman.logic.sql-tool :refer [select! update! insert! alter-table! create-table! delete! drop-table show-table-columns show-tables]])
+(require '[jarman.logic.connection :as db])
 (require '[jarman.logic.metadata])
 (require '[jarman.logic.permissions])
 
@@ -202,7 +203,7 @@
        :model-insert [:permission.permission_name :permission.configuration]
        :active-buttons [:insert :update :delete :clear :changes]
        :permission :ekka-all
-       :actions []
+       :actions {}
        :buttons []
        :query
        {:table_name :permission,
@@ -214,6 +215,7 @@
       (dialog-table
        :id :permission-table
        :name "permission dialog"
+       :permission :ekka-all
        :tables [:permission]
        :view-columns [:permission.permission_name :permission.configuration]
        :query
@@ -244,10 +246,10 @@
                       :user.id_permission
                       :user.configuration]
        :active-buttons [:insert :update :delete :clear :changes]
-       :permission [:user :developer]
+       :permission :ekka-all
        :dialog
        {:user.id_permission [:permission :dialog-table :permission-table]}
-       :actions []
+       :actions {}
        :buttons []
        :query
        {:table_name :user,
@@ -305,7 +307,7 @@
        :dialog
        {:cache_register.id_point_of_sale
         [:point_of_sale :dialog-table :point_of_sale-table]}
-       :actions []
+       :actions {}
        :buttons []
        :query
        {:table_name :cache_register,
@@ -346,7 +348,7 @@
       (dialog-table
        :id :cache_register-table
        :name "cache_register dialog"
-       :permission [:admin :user :developer]
+       :permission :ekka-all
        :tables [:cache_register :point_of_sale :enterprise]
        :view-columns [:cache_register.id_point_of_sale
                       :cache_register.name
@@ -416,7 +418,7 @@
                       :documents.prop]
        :active-buttons [:insert :update :delete :clear :changes]
        :permission :ekka-all
-       :actions []
+       :actions {}
        :buttons []
        :query
        {:table_name :documents,
@@ -457,7 +459,7 @@
                       :enterprise.contacts_information]
        :active-buttons [:insert :update :delete :clear :changes]
        :permission :ekka-all
-       :actions []
+       :actions {}
        :buttons []
        :query
        {:table_name :enterprise,
@@ -524,7 +526,7 @@
        :dialog
        {:point_of_sale.id_enterprise
         [:enterprise :dialog-table :enterprise-table]}
-       :actions []
+       :actions {}
        :buttons []
        :query
        {:table_name :point_of_sale,
@@ -549,7 +551,7 @@
       (dialog-table
        :id :point_of_sale-table
        :name "point_of_sale dialog"
-       :permission [:admin :user :developer]
+       :permission :ekka-all
        :tables [:point_of_sale :enterprise]
        :view-columns [:point_of_sale.id_enterprise
                       :point_of_sale.name
@@ -587,7 +589,7 @@
        :model-insert [:point_of_sale_group.group_name :point_of_sale_group.information]
        :active-buttons [:insert :update :delete :clear :changes]
        :permission :ekka-all
-       :actions []
+       :actions {}
        :buttons []
        :query
        {:table_name :point_of_sale_group,
@@ -631,7 +633,7 @@
         [:point_of_sale_group :dialog-table :point_of_sale_group-table],
         :point_of_sale_group_links.id_point_of_sale
         [:point_of_sale :dialog-table :point_of_sale-table]}
-       :actions []
+       :actions {}
        :buttons []
        :query
        {:table_name :point_of_sale_group_links,
@@ -750,7 +752,7 @@
         [:repair_nature_of_problem
          :dialog-bigstring
          :repair_nature_of_problem-bigstring]}
-       :actions []
+       :actions {}
        :buttons []
        :query
        {:table_name :repair_contract,
@@ -916,7 +918,7 @@
        :model-insert [:repair_nature_of_problem.description]
        :active-buttons [:insert :update :delete :clear :changes]
        :permission :ekka-all
-       :actions []
+       :actions {}
        :buttons []
        :query
        {:table_name :repair_nature_of_problem,
@@ -950,7 +952,7 @@
        :permission :ekka-all
        :dialog
        {}
-       :actions []
+       :actions {}
        :buttons []
        :query
        {:table_name :repair_reasons,
@@ -958,7 +960,7 @@
       (dialog-bigstring
        :id :repair_reasons-bigstring
        :name "repair_reasons dialog"
-       :permission [:admin :user :developer]
+       :permission :ekka-all
        :item-columns
        :repair_reasons.description
        :query
@@ -976,7 +978,7 @@
        :model-insert [:repair_technical_issue.description]
        :active-buttons [:insert :update :delete :clear :changes]
        :permission :ekka-all
-       :actions []
+       :actions {}
        :buttons []
        :query
        {:table_name :repair_technical_issue,
@@ -987,7 +989,7 @@
       (dialog-bigstring
        :id :repair_technical_issue-bigstring
        :name "repair_technical_issue dialog"
-       :permission [:admin :user :developer]
+       :permission :ekka-all
        :item-columns
        :repair_technical_issue.description
        :query
@@ -1015,7 +1017,7 @@
        :permission :ekka-all
        :dialog
        {}
-       :actions []
+       :actions {}
        :buttons []
        :query
        {:table_name :seal,
@@ -1075,7 +1077,7 @@
        :dialog
        {:service_contract.id_enterprise
         [:enterprise :dialog-table :enterprise-table]}
-       :actions []
+       :actions {}
        :buttons []
        :query
        {:table_name :service_contract,
@@ -1145,7 +1147,7 @@
        :dialog
        {:service_contract_month.id_service_contract
         [:service_contract :dialog-table :service_contract-table]}
-       :actions []
+       :actions {}
        :buttons []
        :query
        {:table_name :service_contract_month,
@@ -1177,7 +1179,7 @@
       (dialog-table
        :id :service_contract_month-table
        :name "service_contract_month dialog"
-       :permission [:admin :user :developer]
+       :permission :ekka-all
        :tables [:service_contract_month :service_contract :enterprise]
        :view-columns [:service_contract_month.id_service_contract
                       :service_contract_month.service_month_start
@@ -1213,6 +1215,52 @@
          :enterprise.physical_address
          :enterprise.contacts_information]})))))
 
+;;;;;;;;;;;;;;;;;;;;;
+;;; BUISNESS DATA ;;;
+;;;;;;;;;;;;;;;;;;;;;
+
+(defn- fill-data-profile []
+  (let [join (fn ([] []) ([coll coll-to-join] (into coll coll-to-join)))
+        ;; -------
+        ADMIN-GROUPS [:admin-update :admin-extension :admin-dataedit]
+        DEVEL-GROUPS [:developer-manage :developer-alpha :developer]
+        MANAG-GROUPS [:managment]
+        EKKA-GROUPS  [:ekka-servicer :ekka-payment-managment :ekka-all]]
+    (db/exec (delete! {:table_name :profile}))
+    (db/exec
+     (insert! 
+      {:table_name :profile
+       :column-list [:name :configuration]
+       :values [["admin"     (pr-str {:groups (-> (join) (join ADMIN-GROUPS) (join DEVEL-GROUPS) (join MANAG-GROUPS) (join EKKA-GROUPS))})]
+                ["developer" (pr-str {:groups (-> (join) (join DEVEL-GROUPS) (join MANAG-GROUPS) (join EKKA-GROUPS))})]
+                ["user"      (pr-str {:groups (-> (join) (join EKKA-GROUPS))})]]}))))
+
+(defn- fill-data-user []
+  (let [adm-profile (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "admin"]})))
+        dev-profile (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "developer"]})))
+        usr-profile (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "user"]})))
+        create-user-if-not-exist 
+        (fn [login-pass profile configuration]
+         (if (empty? (db/query (select! {:table_name :user :where [:= :login login-pass]})))
+           (db/exec
+            (insert! {:table_name :user
+                      :column-list [:login :password :first_name :last_name :id_profile :configuration]
+                      :values [[login-pass login-pass login-pass login-pass (:id adm-profile) (pr-str configuration)]]}))))]
+    ;;----------------------------------
+    (when (seq adm-profile)
+      (create-user-if-not-exist "admin" adm-profile {:ftp {:login "jarman", :password "dupa", :host "trashpanda-team.ddns.net"}}))
+    ;;----------------------------------
+    (when (seq dev-profile)
+      (create-user-if-not-exist "dev" dev-profile {:ftp {:login "jarman", :password "dupa", :host "trashpanda-team.ddns.net"}}))
+    ;;----------------------------------
+    (when (seq usr-profile)
+      (create-user-if-not-exist "user" usr-profile {:ftp {:login "jarman", :password "dupa", :host "trashpanda-team.ddns.net"}}))))
+
+(defn populate-data []
+  (println "Fill profiles")
+  (fill-data-profile)
+  (println "Fill users")
+  (fill-data-user))
 
 ;;;;;;;;;;;;;;
 ;;; Events ;;;
@@ -1223,78 +1271,55 @@
 ;;; You not need to implement all, 
 ;;; only those you need for managment
 
-(defn on-install []
-  (println "Installing jarman schemas, it gonna take some time...")
-  (println "cleaning all tables.")
-  (jarman.managment.data-managment/database-delete-scheme metadata-list)
-  (println "creating system tables.")
-  (jarman.managment.data-managment/database-verify-system-tables)
-  (println "creating business tables.")
-  (jarman.managment.data-managment/database-create-scheme metadata-list)
-  (println "persisting metadata.")
-  (jarman.managment.data-managment/metadata-persist-into-database metadata-list)
-  (println "done."))
-
 (defn on-delete []
   (println "Deleting all jarman system/business shemas.")
-  (jarman.managment.data-managment/database-delete-scheme metadata-list)
-  (println "done."))
+  (jarman.managment.data-managment/database-delete-scheme metadata-list))
 
 (defn on-backup []
   (println "`on-backup` not yet impelemented"))
 
 (defn on-app-start []
   (println "Starting verifing system tables.")
-  (jarman.managment.data-managment/database-verify-system-tables)
-  (println "done."))
+  (jarman.managment.data-managment/database-verify-system-tables))
 
 (defn on-meta-persist []
   (println "Persisting metadata to database.")
-  (jarman.managment.data-managment/metadata-persist-into-database metadata-list)
-  (println "done."))
+  (jarman.managment.data-managment/metadata-persist-into-database metadata-list))
 
 (defn on-meta-clean []
   (println "Cleaning metadata from database.")
-  (jarman.managment.data-managment/database-clear-metadata)
-  (println "done."))
+  (jarman.managment.data-managment/database-clear-metadata))
 
 (defn on-meta-refresh []
   (println "Refreshing metadata structure in databse")
-  (on-meta-persist)
   (on-meta-clean)
-  (println "done."))
+  (on-meta-persist))
 
 (defn on-view-persist []
   (println "Persisting views to database.")
-  (jarman.managment.data-managment/views-persist-into-database view-list)
-  (println "done."))
+  (jarman.managment.data-managment/views-persist-into-database view-list))
 
 (defn on-view-clean []
   (println "Cleaning views from database.")
-  (jarman.logic.view-manager/view-clean)
-  (println "done."))
+  (jarman.logic.view-manager/view-clean))
 
 (defn on-view-refresh []
   (println "Refreshing views in databse")
-  (on-view-persist)
   (on-view-clean)
-  (println "done."))
+  (on-view-persist))
 
 (defn on-meta-persist []
   (println "Persisting views to database.")
-  (jarman.managment.data-managment/metadata-persist-into-database metadata-list)
-  (println "done."))
+  (jarman.managment.data-managment/metadata-persist-into-database metadata-list))
 
 (defn on-meta-clean []
   (println "Cleaning views from database.")
-  (jarman.managment.data-managment/database-clear-metadata)
-  (println "done."))
+  (jarman.managment.data-managment/database-clear-metadata))
 
 (defn on-meta-refresh []
   (println "Refreshing views in databse")
   (on-meta-persist)
-  (on-meta-clean)
-  (println "done."))
+  (on-meta-clean))
 
 (defn on-app-close []
   (println "`on-app-close` not yet impelemented"))
@@ -1319,6 +1344,21 @@
   (jarman.managment.data-managment/view-info view-list)
   (println "\n.Database Views")
   (jarman.managment.data-managment/view-info (jarman.logic.view-manager/loader-from-db)))
+
+(defn on-install []
+  (println "Installing jarman schemas, it gonna take some time...")
+  (println "cleaning all tables.")
+  (jarman.managment.data-managment/database-delete-scheme metadata-list)
+  (println "creating system tables.")
+  (jarman.managment.data-managment/database-verify-system-tables)
+  (println "creating business tables.")
+  (jarman.managment.data-managment/database-create-scheme metadata-list)
+  (println "persisting metadata.")
+  (jarman.managment.data-managment/metadata-persist-into-database metadata-list)
+  (println "Refreshing views in databse")
+  (on-view-persist)
+  (println "Populating data")
+  (populate-data))
 
 (comment
   (on-install)

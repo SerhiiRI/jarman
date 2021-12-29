@@ -129,16 +129,16 @@
                         add-full-path-cfg)])) [] plugin-list))))
 
 (defmacro defview [table-name & body]
-   (let [cfg-list (defview-prepare-config table-name body)]
+  (let [cfg-list (defview-prepare-config table-name body)]
     `(do
        ~@(for [{:keys [plugin-name plugin-config-path] :as cfg} cfg-list]
            (if-let [{:keys [plugin-toolkit-fn plugin-test-spec-fn plugin-entry-fn]}
                     (get-in (group-by :plugin-name (plugin-system/system-ViewPlugin-list-get))
                             [(symbol plugin-name) 0])]
              (do
-              (plugin-test-spec-fn cfg)
-              (global-view-configs-set plugin-config-path cfg (plugin-toolkit-fn cfg)
-                                       (eval (fn [] (plugin-entry-fn plugin-config-path global-view-configs-get))))))) nil)))
+               (plugin-test-spec-fn cfg)
+               (global-view-configs-set plugin-config-path cfg (plugin-toolkit-fn cfg)
+                                        (eval (fn [] (plugin-entry-fn plugin-config-path))))))) nil)))
 
 ;; (first (get (group-by :plugin-name (plugin-system/system-ViewPlugin-list-get))
 ;;       (symbol 'aaa)))
@@ -218,16 +218,18 @@
   (return-permission [this])
   (return-title      [this])
   (return-config     [this])
+  (return-toolkit    [this])
   (exists?           [this]))
 
 (defrecord PluginLink [plugin-path]
   IPluginQuery
-  (return-path [this] (.plugin-path this))
-  (return-entry [this] (get-in (global-view-configs-get) (conj (return-path this) :entry)))
-  (return-title [this] (get-in (global-view-configs-get) (conj (return-path this) :config :name)))
-  (return-permission [this] (get-in (global-view-configs-get) (conj (return-path this) :config :permission)))
-  (return-config [this] (get-in (global-view-configs-get) (conj (return-path this) :config)))
-  (exists? [this] (some? (get-in (global-view-configs-get) (return-path this)))))
+  (return-path        [this] (.plugin-path this))
+  (return-entry       [this] (get-in (global-view-configs-get) (conj (return-path this) :entry)))
+  (return-title       [this] (get-in (global-view-configs-get) (conj (return-path this) :config :name)))
+  (return-permission  [this] (get-in (global-view-configs-get) (conj (return-path this) :config :permission)))
+  (return-config      [this] (get-in (global-view-configs-get) (conj (return-path this) :config)))
+  (return-toolkit     [this] (get-in (global-view-configs-get) (conj (return-path this) :toolkit)))
+  (exists?            [this] (some? (get-in (global-view-configs-get) (return-path this)))))
 
 (defn isPluginLink? [^jarman.logic.view_manager.PluginLink e]
   (instance? jarman.logic.view_manager.PluginLink e))
@@ -244,6 +246,7 @@
   (.return-permission --test-link)
   (.return-title --test-link)
   (.return-config --test-link)
+  (.return-toolkit --test-link)
   (.exists? --test-link))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -333,12 +336,12 @@
 (defn loader-from-db
   ([] (loader-from-db nil))
   ([path]
-   (let [con (dissoc (db/connection-get)
-                     :dbtype :user :password
-                     :useUnicode :characterEncoding)
-         req (list 'in-ns (quote (quote jarman.logic.view-manager)))
+   (let [;; con (dissoc (db/connection-get)
+         ;;             :dbtype :user :password
+         ;;             :useUnicode :characterEncoding)
+         ;; req (list 'in-ns (quote (quote jarman.logic.view-manager)))
          data (map (fn [x] (read-string (:view x))) (db/query (select! {:table_name :view}))) 
-         sdata (if-not (empty? data) (concat [con req] data))
+         ;; sdata (if-not (empty? data) (concat [con req] data))
          ;; path  (if (nil? path)
          ;;         (try (str (env/get-view-clj))
          ;;              (catch Exception e
@@ -353,6 +356,33 @@
      ;;            (do (.write W (pp-str s))
      ;;                (.write W env/line-separator)))))))
      data)))
+
+(defn create-view-clj
+  ([] (create-view-clj nil))
+  ([path]
+   (let [con (dissoc (db/connection-get)
+                     :dbtype :user :password
+                     :useUnicode :characterEncoding)
+         req (list 'in-ns (quote (quote jarman.logic.view-manager)))
+         data (map (fn [x] (read-string (:view x))) (db/query (select! {:table_name :view}))) 
+         sdata (if-not (empty? data) (concat [con req] data))
+         path  (if (nil? path)
+                 (try (str (env/get-view-clj))
+                      (catch Exception e
+                        (do (spit "./view.clj" "") "./view.clj")))
+                 path)]
+     (if-not (empty? data)
+       (do (spit path "")
+           (with-open [W (io/writer (io/file path) :append true)]
+             (doall
+              (for [s sdata]
+                (do (.write W (pp-str s))
+                    (.write W env/line-separator)))))
+           true)
+       false))))
+
+;; (create-view-clj)
+;; normalize regex \(:plug-place\|:buttons\|:permission\|:view-columns\|:name\|:tables\|:actions\|:id\|:model-insert\|:active-buttons\|:query\|:dialog\)
 
 (defn loader-from-view-clj
   ([] (loader-from-view-clj nil))
@@ -404,7 +434,7 @@
   :type clojure.lang.Keyword
   :group :view-params)
 
-(state/set-state :view-src (deref view-src))
+;; (state/set-state :view-src (deref view-src))
 
 (def ^:dynamic *view-loader-chain-fn*
   ;;(make-loader-chain loader-from-view-clj loader-from-db)

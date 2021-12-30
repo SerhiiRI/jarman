@@ -124,9 +124,9 @@
         (println "Template file do not exist in storage. Need to download from DB.")))))
 
 (defn- exporter-in-popup
-  [exporter-fn title frame-size]
+  [gui-exporter-fn title frame-size]
   (fn [data-from-app]
-    (let [root (exporter-fn data-from-app)]
+    (let [root (gui-exporter-fn data-from-app)]
       (if root
         (jarman.gui.popup/build-popup
          {:comp-fn (fn [api]
@@ -244,7 +244,7 @@
   []
   (let [exporters (db/query
                    (select!
-                    {:table_name :documents}))]
+                    {:table_name :documents :column [:id :table_name :name :prop :version :script]}))]
     (clear-storage)
     (doall
      (map
@@ -262,14 +262,16 @@
           ;;           "\nScript:     " (gtool/str-cutter (:script ex) 40)
           ;;           "\nLocal file: " local-file-path
           ;;           "\nSame ver.?  " verified))
-          (if-not verified (do (jarman.interaction/warning "Wrong template" (format "Downloading correct template: `%s`" (:name ex)))
-                               (jarman.logic.document-manager/download-document ex)))
+          (if-not verified (do (jarman.logic.document-manager/download-document ex)
+                               (jarman.interaction/success (format "Updated template: `%s`" (:name ex)))))
           
           (if (file-exist? local-file-path)
             (do
               ;;(load-string (read-string (:script ex)))
               (try
                 (load-string (read-string (:script ex)))
+                
+                ;; TODO: Exception without stopping compilation
                 (catch Exception e
                   (jarman.interaction/warning (format "Cannot compile exporter `%s`" (:name ex)))
                   ;; (throw
@@ -323,15 +325,15 @@
 (defn- upload-middleware []
   (let [template-path (:template-path @local-state)
         script-path   (:script-path @local-state)
+        script-path   (if (string? script-path) (if (choosed-file? script-path) script-path nil) nil)
         file-name     (last (gtool/split-path template-path))
-        existing-exporters (db/query (select! {:table_name :documents :column [:name]}))]
+        existing-exporters (db/query (select! {:table_name :documents :column [:name]})) ;; Suck existing exporters
+        ]
     ;; (println "Upload Middleware")
     (if (empty? (filter #(= (:name %) file-name) existing-exporters))
       (do (assert (string? template-path) "Exporter Upload `template-path` must be string")
           (assert (choosed-file? template-path) "Exporter Upload `template-path` must pointing to file")
           (assert (or (string? script-path) (nil? script-path)) "Exporter Upload `script-path` must be string or nil")
-          (if (string? script-path) (assert (choosed-file? script-path) (format "Exporter Upload `script-path` must pointing to file. Now: `%s`" script-path)))
-          ;; (println template-path script-path)
           (swap! local-state (fn [s] (-> (assoc s :template-path nil) (assoc :script-path nil))))
           (upload-exporter {:template-path template-path
                             :script-path script-path})

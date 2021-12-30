@@ -2,6 +2,15 @@
 (require '[jarman.logic.exporter :as ex])
 (require '[jarman.tools.lang :as lang])
 
+;; Read me
+;; This scripts are inside DB next to template in .odt
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; First exporter demo
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn- suck-users
   "Get users from database"
   [{:keys [login]}]
@@ -31,23 +40,25 @@
  )
 
 (jarman.logic.exporter/register-doc-exporter
- :type        :odt
- :name        "Export selected user"
- :description "Export data for pointed users"
- :data-fn     prepare-data
- :export-form-gui [(ex/component :component-type :input :label "User ID" :field :login)]
- :frame-size  [250 150])
+ :type        :odt                            ;; Template type/extension like .odt
+ :name        "Export selected user"          ;; Here should be name of template file without extension like .odt
+ :description "Export data for pointed users" ;; Some info
+ :data-fn     prepare-data                    ;; Entry point from app to script
+ :export-form-gui [(ex/component :component-type :input :label "User name" :field :login)] ;; Components collection for exporter form, extra info
+ :frame-size  [250 150])                      ;; Popup size
 
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Second exporter demo
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
-
-(defn- prepare-data-2
+(defn- entry-point
   "Define data for mearge with odt
-   data-vec should be like [{:a 1 :b 2} {:a 3 :b 4}]"
+   {:data-from-app {:my-table-data [{:a 1 :b 2} {:a 3 :b 4}] :my-name \"Racoon\"} :props-map {:rows-counts \"1\"}}"
   [{:keys [props-map data-from-app]}]
-  ;; (println props-map data-from-app)
   (let [take-count (if (empty? (:rows-counts props-map))
                      (count (:my-table-data data-from-app))
                      (:rows-counts props-map))]
@@ -66,13 +77,13 @@
         :name     (:my-name data-from-app)}])))
 
 (comment
-  (prepare-data-2 {:data-from-app {:my-table-data [{:a 1 :b 2} {:a 3 :b 4}] :my-name "Racoon"} :props-map {:rows-counts "1"}})
+  (entry-point {:data-from-app {:my-table-data [{:a 1 :b 2} {:a 3 :b 4}] :my-name "Racoon"} :props-map {:rows-counts "1"}})
   )
 
 (jarman.logic.exporter/register-doc-exporter
- :type        :odt
- :name        "Export data from app"
- :description "Export example data from app"
- :data-fn     prepare-data-2
- :export-form-gui [(ex/component :component-type :input :label "Rows count" :field :rows-counts)]
- :frame-size  [250 150])
+ :type        :odt                            ;; Template type/extension like .odt
+ :name        "Export data from app"          ;; Here should be name of template file without extension like .odt
+ :description "Export example data from app"  ;; Some info
+ :data-fn     entry-point                     ;; Entry point from app to script
+ :export-form-gui [(ex/component :component-type :input :label "Rows count" :field :rows-counts)] ;; Components collection for exporter form, extra info
+ :frame-size  [250 150])                      ;; Popup size

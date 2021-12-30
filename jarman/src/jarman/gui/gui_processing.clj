@@ -46,7 +46,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; EXAMPLE
 
-(defn- run-processing []
+(defn run-processing []
   (if (and (not (:running @local-state)) (c/config (c/to-frame (state/state :app)) :visible?))
     (let [size [150 150]
           display (gmg/migrid
@@ -71,7 +71,7 @@
           (swap! local-state (fn [s] (-> (assoc s :running true)
                                    (assoc :dialog dialog)))))))))
 
-(defn- end-processing []
+(defn end-processing []
   (if (:running @local-state)
     (swap! local-state #(assoc % :dispose true))))
 

@@ -2,6 +2,7 @@
   (:gen-class)
   (:require [jarman.faces              :as face]
             [seesaw.core               :as c]
+            [seesaw.border             :as b]
             [jarman.gui.gui-tools      :as gtool]
             [jarman.gui.gui-components :as gcomp]
             [jarman.gui.gui-migrid     :as gmg]
@@ -190,13 +191,13 @@
         template-version (str (clojure.core/hash (slurp template-path)))
         prop             (pr-str (rift prop {}))]
     
-    (println (str "\nUpload template by path: " template-path)
-             (str "\nTemplate exist?          " template-exist?)
-             (str "\nUpload script by path:   " script-path)
-             (str "\nTemplate version:        " template-version)
-             (str "\nFor table name:          " (rift table-name "empty"))
-             (str "\nProps:                   " prop)
-             (str "\nScript:                  " (gtool/str-cutter (rift script "empty") 40)))
+    ;; (println (str "\nUpload template by path: " template-path)
+    ;;          (str "\nTemplate exist?          " template-exist?)
+    ;;          (str "\nUpload script by path:   " script-path)
+    ;;          (str "\nTemplate version:        " template-version)
+    ;;          (str "\nFor table name:          " (rift table-name "empty"))
+    ;;          (str "\nProps:                   " prop)
+    ;;          (str "\nScript:                  " (gtool/str-cutter (rift script "empty") 40)))
 
     (jarman.logic.document-manager/insert-blob!
      {:table_name :documents
@@ -216,10 +217,6 @@
                     :script-path "src/jarman/logic/exporter_demo.clj"})
   )
 
-(defn download-template-from-db
-  [id]
-  (println (format "Downloading template from DB by id `%d`" id)))
-
 (defn exporter-listing
   "Description:
      Listing and register plugins"
@@ -232,22 +229,27 @@
      (map
       (fn [ex]
         (let [local-file-path (str (storage/document-templates-dir) "/" (:name ex))
-              verified (= (str (clojure.core/hash (slurp local-file-path))) (:version ex))
+              local-file-exist? (file-exist? local-file-path)
+              verified (if local-file-exist? (= (str (clojure.core/hash (slurp local-file-path))) (:version ex)) false)
               meta {:id (:id ex) :name (:name ex) :prop (:prop ex) :version (:version ex) :local-path local-file-path}]
-          (println (str
-                    "\nID:         " (:id ex)
-                    "\nName:       " (:name ex)
-                    "\nDocument:   " (if (:document ex) true false)
-                    "\nProp:       " (:prop ex)
-                    "\nVersion:    " (:version ex)
-                    "\nScript:     " (gtool/str-cutter (:script ex) 40)
-                    "\nLocal file: " local-file-path
-                    "\nSame ver.?  " verified))
-          ;; (if-not verified (download-template-from-db (:id ex)))
-          (load-string (read-string (:script ex)))
-          (dosync (alter system-ExportDocs-metadata
-                         (fn [l] (let [l-without-old-meta (filterv #(not= (:name meta) (:name %)) l)]
-                                   (conj l-without-old-meta meta)))))))
+          ;; (println (str
+          ;;           "\nID:         " (:id ex)
+          ;;           "\nName:       " (:name ex)
+          ;;           "\nDocument:   " (if (:document ex) true false)
+          ;;           "\nProp:       " (:prop ex)
+          ;;           "\nVersion:    " (:version ex)
+          ;;           "\nScript:     " (gtool/str-cutter (:script ex) 40)
+          ;;           "\nLocal file: " local-file-path
+          ;;           "\nSame ver.?  " verified))
+          (if-not verified (do (jarman.interaction/warning "Wrong template" (format "Downloading correct template: `%s`" (:name ex)))
+                               (jarman.logic.document-manager/download-document ex)))
+          
+          (if (file-exist? local-file-path)
+            (do (load-string (read-string (:script ex)))
+                (dosync (alter system-ExportDocs-metadata
+                               (fn [l] (let [l-without-old-meta (filterv #(not= (:name meta) (:name %)) l)]
+                                         (conj l-without-old-meta meta))))))
+            (jarman.interaction/warning (format "Cannot save new tamplate: `%s`" (:name ex))))))
       exporters))))
 
 (comment ;; Listing all exporters, main
@@ -288,17 +290,22 @@
 
 (defn- upload-middleware []
   (let [template-path (:template-path @local-state)
-        script-path   (:script-path @local-state)]
+        script-path   (:script-path @local-state)
+        file-name     (last (gtool/split-path template-path))
+        existing-exporters (db/query (select! {:table_name :documents :column [:name]}))]
     (println "Upload Middleware")
-    (swap! local-state (fn [s] (-> (assoc s :template-path nil) (assoc :script-path nil))))
-    (assert (string? template-path) "Exporter Upload `template-path` must be string")
-    (assert (choosed-file? template-path) "Exporter Upload `template-path` must pointing to file")
-    (assert (or (string? script-path) (nil? script-path)) "Exporter Upload `script-path` must be string or nil")
-    (if (string? script-path) (assert (choosed-file? script-path) "Exporter Upload `script-path` must pointing to file"))
-    (println template-path script-path)
-    (upload-exporter {:template-path template-path
-                      :script-path script-path})
-    (jarman.interaction/reload-view)))
+    (if (empty? (filter #(= (:name %) file-name) existing-exporters))
+      (do (assert (string? template-path) "Exporter Upload `template-path` must be string")
+          (assert (choosed-file? template-path) "Exporter Upload `template-path` must pointing to file")
+          (assert (or (string? script-path) (nil? script-path)) "Exporter Upload `script-path` must be string or nil")
+          (if (string? script-path) (assert (choosed-file? script-path) (format "Exporter Upload `script-path` must pointing to file. Now: `%s`" script-path)))
+          ;; (println template-path script-path)
+          (swap! local-state (fn [s] (-> (assoc s :template-path nil) (assoc :script-path nil))))
+          (upload-exporter {:template-path template-path
+                            :script-path script-path})
+          (jarman.interaction/success (format "Exporter uploaded: `%s`" file-name))
+          (jarman.interaction/reload-view))
+      (jarman.interaction/warning "Name is taken. Change template name!"))))
 
 (defn- add-panel []
   (gcomp/button-expand
@@ -315,6 +322,36 @@
       (gmg/migrid :v :right :center {:gap [0 10]} (gcomp/button-basic "Upload" :onClick (fn [e] (upload-middleware)) :lgap 50 :rgap 50))])]
    :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/DONUT_LARGE))))
 
+(defn- suck-script [id]
+  (:script (first (db/query (select! {:table_name :documents :column [:script] :where [:= :id id]})))))
+
+(defn- update-script [id new-script]
+  (jarman.logic.document-manager/update-blob!
+  {:table_name :documents
+   :column-list [[:script :string]]
+   :values {:id id,
+            :script (prn-str new-script)}}))
+
+(defn- open-editor [ex]
+  (gvs/add-view
+   :view-id (keyword (str "exporter-script-editor-" (:id ex)))
+   :title "Exporter Script Editor"
+   :render-fn
+   (fn [] (jarman.gui.gui-editors/code-editor
+           {:args [:border (b/line-border :top 1 :left 1 :color "#eee")
+                   :background "#fff"]
+            :title (format "Script for `%s`" (:name ex))
+            :val (read-string (suck-script (:id ex)))
+            :save-fn (fn [state]
+                       (try
+                         (update-script (:id ex) (c/config (:code state) :text))
+                         (exporter-listing)
+                         (c/config! (:label state)
+                                    :text (gtool/get-lang-basic :saved)
+                                    :icon (gs/icon GoogleMaterialDesignIcons/DONE face/c-icon-success)
+                                    :foreground face/c-icon-success)
+                         (catch Exception e (c/config! (:label state) :text "Save error."))))}))))
+
 (defn- exporters-list []
   (let [root (gmg/migrid
               :v
@@ -325,7 +362,9 @@
                    :> {:gap [0 5] :args [:background face/c-compos-background]}
                    [(c/label :text (:name ex-map))
                     (gmg/migrid :> :right (gcomp/menu-bar
-                                           {:buttons [["Edit script" (gs/icon GoogleMaterialDesignIcons/EDIT) (fn [e])]
+                                           {:buttons [["Edit script"
+                                                       (gs/icon GoogleMaterialDesignIcons/EDIT)
+                                                       (fn [e] (open-editor ex-map))]
                                                       ["Delete exporter" (gs/icon GoogleMaterialDesignIcons/DELETE)
                                                        (fn [e]
                                                          (delete-exporter (:id ex-map))
@@ -349,10 +388,14 @@
   @local-state
  )
 
+(comment
+  (jarman.logic.document-manager/update-blob!
+  {:table_name :documents
+   :column-list [[:script :string]]
+   :values {:id 5,
+            :script (prn-str "Test")}}))
 
 
-
-;; TODO: Secure upload same template name, names sholud unique but templates can be same
-;; TODO: Download templates if hash as version is not same
-;; TODO: Open script by editor sucking script directly from DB and save changes to DB
 ;; TODO: Update template by reupload to DB template file and hash as version
+;; TODO: Fix swing bug
+;; TODO: Error when file not choose

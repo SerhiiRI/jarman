@@ -326,7 +326,8 @@
                                                       (gcomp/label-img "rc.gif" w h)
                                                       (gcomp/label-img "rc.gif" w h)])])))))} 
                            ])
-             [(gcomp/fake-focus :vgap top-offset :hgap img-scale)]))))
+             [(gcomp/fake-focus :vgap top-offset :hgap img-scale)])))
+  (jarman.gui.gui-processing/run-processing))
 
 (defn load-level-3
   "Description:
@@ -364,7 +365,8 @@
    (gui-events/gui-check-license))
   (print-header
    "Start watching state alerts"
-   (gas/start-watching-state-alerts (state/get-atom))))
+   (gas/start-watching-state-alerts (state/get-atom)))
+  (jarman.gui.gui-processing/end-processing))
 
 
 ;; ┌─────────────┐

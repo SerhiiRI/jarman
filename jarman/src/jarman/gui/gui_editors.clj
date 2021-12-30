@@ -121,8 +121,10 @@
                               (swap! local-changes (fn [state] (assoc state store-id (c/config (c/to-widget e) :text))))
                               (if-not (nil? label)
                                 (if (= (c/config (c/to-widget e) :text) @content)
-                                  (c/config! label :text "")
-                                  (c/config! label :text (gtool/get-lang-basic :unsaved-changes) :foreground face/c-red))))]
+                                  (c/config! label :text "" :icon nil)
+                                  (c/config! label :text (gtool/get-lang-basic :unsaved-changes)
+                                             :icon (gs/icon GoogleMaterialDesignIcons/WARNING face/c-icon-danger)
+                                             :foreground face/c-icon-danger))))]
      args)))
 
 ;;(seesaw.dev/show-options (seesaw.rsyntax/text-area))
@@ -161,7 +163,8 @@
          menu true
          args {}}}]
   (let [f-size (atom font-size)
-        info-label (c/label)
+        info-label (c/label :halign :right
+                            :border (b/empty-border :left 10 :right 10 :bottom 5))
         code (code-area {:args [:font (gs/getFont @f-size)
                                 :border (b/empty-border :left 10 :right 10)]
                          :label info-label
@@ -231,8 +234,9 @@
                                            ["" (gs/icon GoogleMaterialDesignIcons/EXIT_TO_APP face/c-icon) "Leave" (fn [e] (.dispose (c/to-frame e)))]
                                            nil)]})
                               (c/label))]])]
+                        [info-label]
                         [(gcomp/scrollbox code)]
-                        [info-label]])]
+                        ])]
     (gtool/set-focus code)
     editor))
 

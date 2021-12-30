@@ -101,7 +101,8 @@
                         #(conj % {:id i :table_name  t :name n :document d :prop p}))))]
    (try (while (.next res-set)
           (let [^java.lang.String
-                file-name (format "%s.odt" (string/trim (.getString res-set "name")))
+                ;; file-name (format "%s.odt" (string/trim (.getString res-set "name")))
+                file-name (format "%s" (string/trim (.getString res-set "name")))
                 ^java.io.File
                 file (clojure.java.io/file (storage/document-templates-dir) file-name)
                 ^java.io.FileInputStream
@@ -114,7 +115,7 @@
             (.close input)
             (temporary-push
              (.getLong res-set "id")
-             (.getString res-set "table")
+             (.getString res-set "table_name")
              (.getString res-set "name")
              (.getAbsolutePath file)
              (read-string (.getString res-set "prop")))))

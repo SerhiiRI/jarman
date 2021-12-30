@@ -119,7 +119,7 @@
   (db/exec
    (insert! {:table_name :profile
              :column-list [:name :configuration]
-             :values [["admin" "{:groups [:admin]}"]
+             :values [["admin" "{:groups [:admin :dev :developer :admin-update :extension-manager]}"]
                       ["user" "{:groups [:user]}"]
                       ["developer" "{:groups [:dev]}"]]})))
 

@@ -79,51 +79,62 @@
     export-form-gui)))
 
 (defn- build-form
-  [title export-form-gui export-fn]
+  [title export-form-gui export-fn data-from-app]
   (if (empty? export-form-gui)
-    (export-fn {}) ;; Just static export as all users or something
+    (if (empty? data-from-app)
+      (export-fn {}) ;; Just static export basing only on script
+      (export-fn {:data-from-app data-from-app :props-map {}}))
     (let [props-state (atom {})
           root  (gmg/migrid :v :a :gf {:gap [10]} [])]
       (c/config! root :items (gtool/join-mig-items
                          (gmg/migrid :v (components export-form-gui props-state))
                          (gcomp/button-basic "Export"
                                              :underline-size 0
-                                             :onClick (fn [e] (export-fn (deref props-state)))
+                                             :onClick (fn [e]
+                                                        (let [props {:data-from-app data-from-app
+                                                                     :props-map (deref props-state)}]
+                                                          ;; (println "Sended props\n" props)
+                                                          (export-fn props)))
                                              :args [:id :export-btn])))
       root)))
 
 (defn- exporter-get-fn
   [type exported-path data-fn template-name export-form-gui]
   "Prepare fn with exporter"
-  (fn []
+  (fn [data-from-app]
     (let [prefix         "Exported - "
           sufix          (get (types) type)
           template-src   (str (storage/document-templates-dir) "/" template-name sufix)
           exported-place (str exported-path "/" prefix template-name sufix)
           template-exist (file-exist? template-src)
-          export-fn      (fn [props-map]
+          export-fn      (fn [all-props-map]
                            (apply kaleidocs.merge/merge-doc
                                   (clojure.java.io/file template-src)
                                   (clojure.java.io/file exported-place)
-                                  (data-fn props-map)))]
+                                  (data-fn all-props-map))
+                           (jarman.interaction/success (format "Exported: `%s`\nInto: "
+                                                               (str template-name sufix)
+                                                               exported-place)))]
       (println "Exporter log")
       (println (format "Template src:   '%s'" template-src))
       (println (format "Exported place: '%s'" exported-place))
       (println (format "Template exist: '%s'" template-exist))
       (if template-exist
-        (build-form template-name export-form-gui export-fn)
+        (build-form template-name export-form-gui export-fn data-from-app)
         (println "Template file do not exist in storage. Need to download from DB.")))))
 
 (defn- exporter-in-popup
   [exporter-fn title frame-size]
-  (fn []
-    (jarman.gui.popup/build-popup
-     {:comp-fn (fn [api] (exporter-fn)
-                 (let [root (exporter-fn)]
-                   (c/config! (c/select root [:#export-btn]) :listen [:mouse-clicked (fn [e] ((:close api)))])
-                   root))
-      :title title
-      :size frame-size})))
+  (fn [data-from-app]
+    (let [root (exporter-fn data-from-app)]
+      (if root
+        (jarman.gui.popup/build-popup
+         {:comp-fn (fn [api]
+                     (c/config! (c/select root [:#export-btn])
+                                :listen [:mouse-clicked (fn [e] ((:close api)))])
+                     root)
+          :title title
+          :size frame-size})))))
 
 (defn- constructDocExporter [{:keys [type name description data-fn export-form-gui override-form frame-size]}]
   (assert (keyword? type)       "Export Document `:type` must be a keyword")
@@ -133,8 +144,8 @@
   (assert (vector? export-form-gui) "Export Document `:export-form-params` must be a vector")
   (assert (or (fn? override-form) (nil? override-form)) "Export Document `:override-form` must be a function with component")
   (assert (vector? frame-size)  "Export Document `:frame-size` must be a vector")
-  (let [exporter-fn   (exporter-get-fn type env/user-home data-fn name export-form-gui)
-        exporter-popup-fn (exporter-in-popup exporter-fn name frame-size)]
+  (let [gui-exporter-fn   (exporter-get-fn type env/user-home data-fn name export-form-gui)
+        invoke-popup-fn (exporter-in-popup gui-exporter-fn name frame-size)]
     (map->DocExporter
      {:type            type
       :name            name
@@ -142,9 +153,10 @@
       :data-fn         data-fn
       :export-form-gui export-form-gui
       :override-form   override-form
-      :exporter-fn     exporter-fn
-      :invoke-popup    exporter-popup-fn
+      :gui-exporter-fn gui-exporter-fn
+      :invoke-popup    invoke-popup-fn
       :frame-size      frame-size})))
+
 
 (defn register-doc-exporter
   [& {:as args}]
@@ -157,12 +169,21 @@
   (first (filter #(= name (get % :name)) (system-DocExporter-list-get))))
 
 
-
 (comment
   (system-DocExporter-list-get)
-  ((:invoke-popup (first (system-DocExporter-list-get))))
+  ((:invoke-popup (first (system-DocExporter-list-get))){})
+  
   (find-exporter "Export selected user")
-  ((:invoke-popup (find-exporter "Export selected user")))
+  ((:invoke-popup (find-exporter "Export selected user")) {})
+
+  (find-exporter "Export data from app")
+  ((:gui-exporter-fn (find-exporter "Export data from app"))
+   {:my-table-data [{:a 1 :b 2} {:a 3 :b 4}]
+    :my-name "Racoon"})
+  
+  ((:invoke-popup (find-exporter "Export data from app"))
+   {:my-table-data [{:a 1 :b 2} {:a 3 :b 4}]
+    :my-name "Racoon"})
   )
 
 
@@ -245,10 +266,21 @@
                                (jarman.logic.document-manager/download-document ex)))
           
           (if (file-exist? local-file-path)
-            (do (load-string (read-string (:script ex)))
+            (do
+              ;;(load-string (read-string (:script ex)))
+              (try
+                (load-string (read-string (:script ex)))
+                (catch Exception e
+                  (jarman.interaction/warning (format "Cannot compile exporter `%s`" (:name ex)))
+                  ;; (throw
+                  ;;  (ex-info (format "Failure compiling (exporter `%s`)" (:name ex))
+                  ;;           {:type :exporter-error
+                  ;;            :internal-message (.getMessage e)
+                  ;;            :internal-stacktrace (clojure.stacktrace/print-stack-trace e 20)}))
+                  ))
                 (dosync (alter system-ExportDocs-metadata
-                               (fn [l] (let [l-without-old-meta (filterv #(not= (:name meta) (:name %)) l)]
-                                         (conj l-without-old-meta meta))))))
+                                 (fn [l] (let [l-without-old-meta (filterv #(not= (:name meta) (:name %)) l)]
+                                           (conj l-without-old-meta meta))))))
             (jarman.interaction/warning (format "Cannot save new tamplate: `%s`" (:name ex))))))
       exporters))))
 
@@ -293,7 +325,7 @@
         script-path   (:script-path @local-state)
         file-name     (last (gtool/split-path template-path))
         existing-exporters (db/query (select! {:table_name :documents :column [:name]}))]
-    (println "Upload Middleware")
+    ;; (println "Upload Middleware")
     (if (empty? (filter #(= (:name %) file-name) existing-exporters))
       (do (assert (string? template-path) "Exporter Upload `template-path` must be string")
           (assert (choosed-file? template-path) "Exporter Upload `template-path` must pointing to file")
@@ -320,7 +352,8 @@
                                           :state-path [:script-path]
                                           :default-path (str (storage/document-templates-dir)))])
       (gmg/migrid :v :right :center {:gap [0 10]} (gcomp/button-basic "Upload" :onClick (fn [e] (upload-middleware)) :lgap 50 :rgap 50))])]
-   :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/DONUT_LARGE))))
+   :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/DONUT_LARGE))
+   :expand true))
 
 (defn- suck-script [id]
   (:script (first (db/query (select! {:table_name :documents :column [:script] :where [:= :id id]})))))
@@ -373,17 +406,20 @@
     (gmg/migrid-resizer (state/state :views-space) root :exporters-list)
     (gcomp/min-scrollbox root)))
 
-(defn- management-panel []
+(defn management-panel []
   (exporter-listing)
   (gmg/migrid :v {:gap [5 0]}
               [(add-panel)
                (exporters-list)]))
 
-(comment
+(defn invode-exporters-manager []
   (gvs/add-view
-  :view-id   :exporters-management
-  :title     "Exporters managements"
-  :render-fn (fn [] (management-panel)))
+   :view-id   :exporters-management
+   :title     "Exporters managements"
+   :render-fn (fn [] (management-panel))))
+
+(comment
+  
 
   @local-state
  )
@@ -397,5 +433,3 @@
 
 
 ;; TODO: Update template by reupload to DB template file and hash as version
-;; TODO: Fix swing bug
-;; TODO: Error when file not choose

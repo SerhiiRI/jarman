@@ -156,6 +156,15 @@
           (vtm ncoll nmap)))
       m)) some-coll {}))
 
+(defn convert-map-keys-to-str
+  "Description:
+     Convert keys in map to strings
+   Example:
+     {:a 1 :b 2}
+     ;; => {\"a\" \"1\" \"b\" \"2\"}"
+  [basic-map]
+  (doall (into {} (map (fn [[k v]] {(name k) v}) basic-map))))
+
 (defn left-merge
   "Description
      Merge for map.

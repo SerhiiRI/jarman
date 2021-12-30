@@ -1568,13 +1568,15 @@
            icon  (c/label :icon (gs/icon GoogleMaterialDesignIcons/FIND_IN_PAGE face/c-icon 25)
                           :listen [:mouse-entered gtool/hand-hover-on
                                    :mouse-clicked
-                                   (fn [e] (let [new-path (chooser/choose-file
-                                                           :dir (.getAbsolutePath (clojure.java.io/file default-path))
-                                                           :success-fn  (fn [fc file] (.getAbsolutePath file)))]
-                                             (swap! state #(assoc-in % state-path (rift new-path default-path)))
-                                             (c/config! input :text (rift (last (gtool/split-path new-path))
-                                                                          (gtool/get-lang-basic :select-file)))
-                                             (after-choose e)))])]
+                                   (fn [e] (try
+                                             (let [new-path (chooser/choose-file
+                                                             :dir (.getAbsolutePath (clojure.java.io/file default-path))
+                                                             :success-fn  (fn [fc file] (.getAbsolutePath file)))]
+                                               (swap! state #(assoc-in % state-path (rift new-path default-path)))
+                                               (c/config! input :text (rift (last (gtool/split-path new-path))
+                                                                            (gtool/get-lang-basic :select-file)))
+                                               (after-choose e))
+                                             (catch Exception e nil)))])]
        [icon input]))))
 
 (defn state-input-file

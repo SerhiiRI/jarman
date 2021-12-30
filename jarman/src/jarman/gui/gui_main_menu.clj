@@ -285,6 +285,8 @@
                                               :fn extension-manager/extension-manager-panel}
     (gtool/get-lang-btns :theme-manager)     {:key (gtool/get-lang-btns :theme-manager)
                                               :fn themes-manager/theme-manager-panel}
+    "Exporters manager"                      {:key :exporters-manager
+                                              :fn jarman.logic.exporter/management-panel}
     "System information"
     {(gtool/get-lang-btns :var-list-panel)    {:key (gtool/get-lang-btns :var-list-panel)
                                                :permission :developer
@@ -410,9 +412,38 @@
                                                                                         (if (empty? expor)
                                                                                           (do (println "No exporters here")
                                                                                               (i/warning "No exports loaded"))
-                                                                                          ((:invoke-popup expor))))))))
+                                                                                          ((:invoke-popup expor) {})))))))
                                      :title "Exporter Demo"
                                      :size [200 150]}))}
+    
+    "Exporter demo 2" {:key        "Exporter demo 2"
+                       :action     :invoke
+                       :permission :developer
+                       :fn         (fn [e]
+                                     (popup/build-popup
+                                      {:comp-fn (fn [api]
+                                                  (jarman.gui.gui-migrid/migrid
+                                                   :v :center :center
+                                                   (gcomp/button-basic "Export data"
+                                                                       :onClick (fn [e] (let [expor (exporter/find-exporter "Export data from app")]
+                                                                                          (if (empty? expor)
+                                                                                            (do (println "No exporters here")
+                                                                                                (i/warning "No exports loaded"))
+                                                                                            ((:invoke-popup expor)
+                                                                                             {:my-table-data [{:a 1 :b 2} {:a 3 :b 4}]
+                                                                                              :my-name "Racoon"})))))))
+                                       :title "Exporter Demo"
+                                       :size [200 150]}))}
+    
+    "Exporter demo 3" {:key        "Exporter demo 3"
+                       :permission :developer
+                       :fn         (fn [] (let [expor (exporter/find-exporter "Export data from app")]
+                                             (if (empty? expor)
+                                               (do (println "No exporters here")
+                                                   (i/warning "No exports loaded"))
+                                               ((:gui-exporter-fn expor)
+                                                {:my-table-data [{:a 1 :b 2} {:a 3 :b 4}]
+                                                 :my-name "Racoon"}))))}
 
     "Processing..." {:key        "Processing..."
                      :action     :invoke

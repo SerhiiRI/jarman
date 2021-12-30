@@ -176,7 +176,7 @@
         editor (gmg/hmig
                 :args args
                 :wrap 1
-                :vrules "[fill]0px[grow, fill]0px[fill]"
+                :vrules "[fill]0px[fill]0px[grow, fill]"
                 :items [[(gmg/hmig
                           :args args
                           :hrules "[70%, fill]10px[grow, fill]"

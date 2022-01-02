@@ -13,11 +13,12 @@
    (java.awt Color Component)
    (java.awt Dimension))
   (:require
-   [clojure.string    :as string]
-   [seesaw.swingx     :as swingx]
-   [seesaw.core       :as c]
-   [seesaw.util       :as u]
-   [seesaw.border     :as b]
+   [clojure.spec.alpha  :as s]
+   [clojure.string      :as string]
+   [seesaw.swingx       :as swingx]
+   [seesaw.core         :as c]
+   [seesaw.util         :as u]
+   [seesaw.border       :as b]
    ;; external funcionality
    [jarman.faces                    :as face]
    [jarman.interaction              :as i]
@@ -178,6 +179,9 @@
   "Description:
     Load configuration"
   []
+  (print-header
+   "Set spec/assert checking"
+   (s/check-asserts true))
   (print-header 
    "Load .jarman"
    (dot-jarman-load)

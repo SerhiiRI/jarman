@@ -58,7 +58,10 @@
     :jarman.plugin.spec/permission
     :jarman.plugin.table/tables]
    :opt-un
-   [:jarman.plugin.spec/plug-place :jarman.plugin.table/view-columns])"
+   [:jarman.plugin.spec/plug-place :jarman.plugin.table/view-columns])
+
+  See
+   (s/check-asserts?)"
   [plugin-name plugin-key-list]
  (let [klist (vec (concat (default-system-view-plugin-spec-list) plugin-key-list))
        gruoped-spec (group-by second

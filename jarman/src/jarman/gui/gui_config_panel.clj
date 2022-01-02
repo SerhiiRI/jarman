@@ -137,10 +137,7 @@
                    (.repaint (c/to-root root)))))
 
 (defn split-path [path]
-  (let [linux (string/split path #"/")
-        windo (string/split path #"\\")]
-    (if (> (count linux) (count windo))
-      linux windo)))
+  (string/split path (re-pattern env/file-separator)))
 
 (defn- file-exp []
   (gmg/migrid

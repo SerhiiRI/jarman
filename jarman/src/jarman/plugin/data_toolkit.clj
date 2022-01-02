@@ -25,6 +25,7 @@
 (s/def ::view-columns ::keyword-list)
 (s/def ::query map?)
 
+
 ;;;;;;;;;;;;;;;;;;;
 ;;; SQL TOOLKIT ;;;
 ;;;;;;;;;;;;;;;;;;;
@@ -220,18 +221,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; METADATA TOOLKIT ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
-;;heyy
+
 (defn- metadata-toolkit-constructor [configuration toolkit-map]
   (if-let [table-metadata (first (mt/getset! (:table_name configuration)))]
     (let [meta-obj (mt/->TableMetadata table-metadata)]
-      {;;:table-meta   ((comp :table :prop) table-metadata)
-       :meta-obj meta-obj
-     ;;  :columns-meta ((comp :columns :prop) table-metadata)
-     ;;  :columns-group (fn [model] (.group meta-obj model))
-     ;;  :columns-ungroup (fn [model] (.ungroup meta-obj model))
-     ;;  :columns-meta-join (.return-columns-join meta-obj)
+      {:meta-obj meta-obj
+       ;;  :table-meta   ((comp :table :prop) table-metadata)
+       ;;  :columns-meta ((comp :columns :prop) table-metadata)
+       ;;  :columns-group (fn [model] (.group meta-obj model))
+       ;;  :columns-ungroup (fn [model] (.ungroup meta-obj model))
+       ;;  :columns-meta-join (.return-columns-join meta-obj)
        })))
-
 
 
 ;;;;;;;;;;;;
@@ -241,7 +241,7 @@
 (defn- export-toolkit-constructor [configuration toolkit-map]
   (if-let [select-expression (:select-expression toolkit-map)]
     {:export-select-expression (fn [] (select-expression :column nil :inner-join nil :where nil))
-     :export-select (fn [] (db/query (select-expression :column nil :inner-join nil :where nil)))}))
+     :export-select  (fn [] (db/query (select-expression :column nil :inner-join nil :where nil)))}))
 
 (defn- document-toolkit-constructor [configuration toolkit-map]
   (let [table-name (:table_name configuration)]
@@ -253,8 +253,8 @@
 
 (defn data-toolkit-pipeline [configuration other-toolkit-map]
   (let [rule-react-on (fn [f & ks] (fn [m] (if (every? (fn [k] (some? (k configuration))) ks) (into m (f configuration m)) m)))
-        sql-crud-toolkit   (rule-react-on sql-crud-toolkit-constructor :query :table_name)
-        metadata-toolkit   (rule-react-on metadata-toolkit-constructor :table_name)
+        sql-crud-toolkit   (rule-react-on sql-crud-toolkit-constructor  :query :table_name)
+        metadata-toolkit   (rule-react-on metadata-toolkit-constructor  :table_name)
         supply-sql-toolkit (rule-react-on supply-sql-action-constructor :table_name)
         ;; export-sql-toolkit (rule-react-on export-toolkit-constructor :query)
         ;; document-toolkit (rule-react-on document-toolkit-constructor :table_name)

@@ -28,6 +28,10 @@
 ;; │ Basic components   │
 ;; │                    │________________________________________
 ;; └────────────────────�                                     
+
+;; fixme:aleks, those colors should be a faces.
+;; usage:
+;; - plugin.table.dialog-bigstring/dialog-bigstring-item
 (def dark-grey-color "#676d71")
 (def blue-color "#256599")
 (def light-light-grey-color "#e1e1e1")
@@ -342,7 +346,6 @@
      :items (comps-fn comps))))
 
 
-
 (defn input-text
   "Description:
     Text component converted to c/text component with placeholder. Placehlder will be default value.
@@ -377,8 +380,7 @@
            underline-off false
            halign :left
            args []}}]
-  (let [          
-        fn-get-data     (fn [e key] (get-in (c/config e :user-data) [key]))
+  (let [fn-get-data     (fn [e key] (get-in (c/config e :user-data) [key]))
         fn-assoc        (fn [e key val] (assoc-in (c/config e :user-data) [key] val))
         newBorder (if underline-off (fn [_] (b/empty-border :thicness 0))
                     (fn [underline-color]
@@ -778,8 +780,6 @@
                                    )
                    :focus-gained (fn [e] (c/config! e :border ((gtool/get-user-data e :border-fn) border-color-focus)))
                    :focus-lost   (fn [e] (c/config! e :border ((gtool/get-user-data e :border-fn) border-color-unfocus)))]]))
-
-
 
 (defn select-box
   "Description

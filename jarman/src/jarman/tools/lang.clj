@@ -16,8 +16,9 @@
 ;;; ** get-key-paths-recur with key-paths implementation
 ;;; * as-debug->> 
 (ns jarman.tools.lang
-  (:use clojure.reflect seesaw.core)
-  (:require [clojure.string :as string]
+  ;; (:use seesaw.core)
+  (:require [clojure.reflect :as reflect]
+            [clojure.string :as string]
             [clojure.pprint :as pprint]
             [clojure.java.io :as io]))
 
@@ -111,7 +112,7 @@
    (rift []   \"zero\")    => \"zero\"
    (rift \"\" \"zero\")    => \"zero\"
    (rift nil  \"zero\")    => \"zero\"
-   (rift [1]  \"zero\")    => 1
+   (rift [1]  \"zero\")    => [1]
    (rift (- 3 2) \"zero\") => 1
    (rift \"A\"   \"zero\") => \"A\"
    (rift #object \"zero\") => #object"
@@ -144,6 +145,9 @@
              (fn-to-invoke)
              (catch Exception e (println (str "\nException in timelife: " title "\n" (str (.getMessage e)))))))))))))
 
+;;; fixme:serhii
+;;; 1. delete or rewrite function
+;;     with additional documentation
 (defn coll-to-map
   "Description:
      Convert collection to map"
@@ -162,8 +166,7 @@
      Merge from right map to left map only by keys in left map.
      If key is not inside right map then use left map value.
    Example:
-     (left-merge {:a \"a\" :b \"b\"} {:a \"1\" :c \"3\"}) => {:a \"1\", :b \"b\"}
-   "
+     (left-merge {:a \"a\" :b \"b\"} {:a \"1\" :c \"3\"}) => {:a \"1\", :b \"b\"}"
   [map-coll-orgin map-col-to-join]
   ((fn l-merge [coll-keys coll-orgin]
     (if (empty? coll-keys)
@@ -173,6 +176,8 @@
            (l-merge (drop 1 coll-keys)))))
    (keys map-coll-orgin) map-coll-orgin))
 
+;; fixme:lang
+;; 1. rename. 
 (defn vemap
   "Description:
     vector empty map
@@ -182,31 +187,35 @@
     (vemap [:a :b])
       => {:a nil, :b nil}
     (vemap [:a :b] \"nice\")
-      => {:a \"nice\", :b \"nice\"}
-  "
+      => {:a \"nice\", :b \"nice\"}"
   ([coll] (vemap coll nil))
   ([coll val] (into {} (map (fn [k] {k val}) coll))))
 
+;; fixme:lang
+;; 1. rename on something like `remove-kv-on-nil`
 (defn cnmap
   "Description:
      cut nil map
      Just cut parts with nil in value.
    Example:
      (cnmap {:a nil :b \"a\"})
-     ;; => {:b \"a\"}
-   "
+     ;; => {:b \"a\"}"
   [coll-map]
   (into {} (filter #(not (nil? (second %))) coll-map)))
 
-(defn v-tim
+;; fixme:lang
+;; 1. Rewrite on reduce with `reduced` function.
+;;    or usign (loop []... (recur..))
+;; 2. Consider to delete those function and rewrite
+;;    on 'clojure.alpha.spec library aproach.
+(defn verify-types-in-map
   "Description:
      Verify - types in map
      Set two map, first with kye and type check fn, second with key and value.
      Fn return true or false.
    Example:
      (verify-types-in-map {:a string?} {:a \"Pepe\"}) => true
-     (verify-types-in-map {:a string?} {:a :pepe}) => false
-  "
+     (verify-types-in-map {:a string?} {:a :pepe}) => false"
   [m-rules m-valid]
   (let [tf-list (doall
                  (map
@@ -219,9 +228,8 @@
     (empty?
      (filter #(false? %) tf-list))))
 
-
 (defmacro join
-  "(filter-nil [nil 1 nil 3 4]) ;=> [1 3 4]"
+  "(join \",\" [1 2 3]) ;=> '1,2,3'"
   [delimiter col]
   `(clojure.string/join ~delimiter ~col))
 
@@ -230,12 +238,7 @@
   [delimiter s]
   `(clojure.string/split ~s ~delimiter ))
 
-(defn all-methods
-  "Print methods for object/class, in argument"
-  [some-object]
-  (->> some-object
-       reflect :members (filter :return-type) (map :name) sort (map #(str "." %))
-       distinct (map symbol)))
+
 
 (defn random-unique-id
   "Description
@@ -395,7 +398,6 @@
   (let [let-binding-forms (reduce (fn [acc bnd] (concat acc (macroexpand-1 `(where-binding-form ~bnd)))) [] binding)]
     `(let [~@let-binding-forms]
        ~@body)))
-
 
 (defmacro wlet
   "Description
@@ -743,3 +745,28 @@
   {:pre [(symbol? ns)]}
   (filter (comp some? :arglists meta)
           (vals (ns-publics ns))))
+
+;;;;;;;;;;;;;;;;
+;;; REFLECTS ;;;
+;;;;;;;;;;;;;;;;
+
+(defn inspect-object-methods
+  "Print methods for object/class, in argument"
+  [object]
+  (->> object
+       reflect/reflect :members (filter :return-type) (map :name) sort (map #(str "." %))
+       distinct (map symbol)))
+
+(defn inspect-object
+  "nicer output for reflecting on an object's methods"
+  [object]
+  (let [reflection (reflect/reflect object)
+        members (sort-by :name (:members reflection))]
+    (println "Class:" (.getClass object))
+    (println "Bases:" (:bases reflection))
+    (println "---------------------\nConstructors:")
+    (doseq [constructor (filter #(instance? clojure.reflect.Constructor %) members)]
+      (println (:name constructor) "(" (string/join ", " (:parameter-types constructor)) ")"))
+    (println "---------------------\nMethods:")
+    (doseq [method (filter #(instance? clojure.reflect.Method %) members)]
+      (println (:name method) "(" (string/join ", " (:parameter-types method)) ") ;=>" (:return-type method)))))

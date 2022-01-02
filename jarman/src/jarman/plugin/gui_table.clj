@@ -12,7 +12,6 @@
    ;; jarman tool
    [jarman.logic.metadata :as db-meta]))
 
-
 (defn get-refs [table-name]
   (let [[c-name repr] (first (d/q '[:find (pull ?f [:table_name]) ?r
                              :in $ ?n 
@@ -66,7 +65,9 @@
          :table (gui-table table-model)}))))
 
 
-(comment (gui-table-model-columns ["user" "permission"]
-                                  [:user.id :user.login :user.password :user.first_name :user.last_name :permission.id :permission.permission_name :permission.configuration]))
+(comment
+  (gui-table-model-columns
+   ["user" "permission"]
+   [:user.id :user.login :user.password :user.first_name :user.last_name :permission.id :permission.permission_name :permission.configuration]))
 
 

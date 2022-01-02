@@ -39,6 +39,7 @@
 ;;; CONFIGURATIONS ;;; 
 ;;;;;;;;;;;;;;;;;;;;;;
 
+;;; DEPRECATED
 (def ^{:dynamic true :private true} *not-allowed-to-edition-tables* ["user" "permission"])
 (def column-type-data       :date)
 (def column-type-time       :time)
@@ -70,6 +71,38 @@
                                         column-comp-file
                                         column-comp-ftp-file
                                         column-type-nil])
+
+;;; NEW
+;; `CT` (long: `Component-Type`)
+(def CT-TEXT      :text)
+(def CT-DATE      :date)
+(def CT-TEXTAREA  :textarea)
+(def CT-SELECT    :selectbox)
+(def CT-CHECK     :checkbox)
+(def CT-CODE      :code)
+(def CT-LINK      :link)
+(def CT-URL       :comp-url)
+(def CT-FILE      :comp-file)
+(def CT-FTP-FILE  :comp-ftp)
+(def COMPONENT-TYPES
+  {CT-TEXT       {:actions #{:on-change :on-cursor-update}}
+   CT-TEXTAREA   {:actions #{:on-change :on-cursor-update}}
+   CT-CODE       {:actions #{:on-change}}
+   CT-DATE       {:actions #{:on-change}}
+   CT-SELECT     {:actions #{:on-сhange :on-select}}
+   CT-CHECK      {:actions #{:on-сhange :on-check}}
+   CT-LINK       {:actions #{:on-change}}
+   CT-URL        {:actions #{:on-change}}
+   CT-FILE       {:actions #{:on-change}}
+   CT-FTP-FILE   {:actions #{:on-change}}})
+(def COMPONENT-DISCT
+  (into (hash-set) (keys COMPONENT-TYPES)))
+(defn ct-contain-action? [ct-type action]
+  {:pre [(keyword? ct-type)
+         (keyword? action)
+         (some? (COMPONENT-DISCT ct-type))]}
+  (some? ((get-in COMPONENT-TYPES [ct-type :actions] #{}) action)))
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; RULE FILTRATOR ;;;
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -1334,6 +1367,149 @@
 
 (defn isTableMetadata? [^jarman.logic.metadata.TableMetadata e]
   (instance? jarman.logic.metadata.TableMetadata e))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Metadata Structure ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+(defprotocol IMetaFieldList
+  (return [this])
+  (update-key [this kv f] [this kv pred f])
+  (update-events [this event-map]))
+(declare metaFieldList)
+(defrecord MetaFieldList [fx]
+  IMetaFieldList
+  (return [this] fx)
+  (update-key [this kv f]
+    (metaFieldList
+     (for [field fx]
+       (assoc-in field kv (f field)))))
+  (update-key [this kv pred f]
+    (metaFieldList
+     (for [field fx]
+       (if (pred field)
+         (assoc-in field kv (f field))
+         field))))
+  (update-events [this event-map]
+    (metaFieldList
+     (for [field fx]
+       (if-let [selected-actions (not-empty (select-keys event-map (get-in COMPONENT-TYPES [(-> field :component-type :type) :actions] #{})))]
+         (reduce (fn [acc [action-key f]]
+                   (assoc-in acc [:component-type action-key] (f field)))
+                 field selected-actions)
+         field)))))
+
+(defn metaFieldList [metafield-col]
+  {:pre [(sequential? metafield-col)]}
+  (MetaFieldList. metafield-col))
+(defn isMetaFieldList? [^jarman.logic.metadata.MetaFieldList e]
+  (instance? jarman.logic.metadata.MetaFieldList e))
+
+(comment
+  (def m
+    [{:description "table_name",
+      :private? false,
+      :default-value nil,
+      :editable? true,
+      :field :table_name,
+      :column-type [:varchar-120 :default :null],
+      :component-type {:type CT-SELECT
+                       :value "0"
+                       :on-change
+                       (fn [e]
+                         ;; (dispatch!
+                         ;;  {:action :update-changes
+                         ;;   :path   [:field-qualified]
+                         ;;   :value  (c/value (c/to-widget e))})
+                         )
+                       ;;  :background face/c-input-bg
+                       :font-size 14
+                       :char-limit 0
+                       :placeholder ""
+                       :border [10 10 5 5 2]
+                       ;; :border-color-unfocus face/c-underline
+                       ;; :border-color-focus face/c-underline-on-focus
+                       :start-underline nil
+                       :args []},
+      :representation "table_name",
+      :constructor-var nil,
+      :field-qualified :seal.table_name}
+     {:description "table_name",
+      :private? false,
+      :default-value nil,
+      :editable? true,
+      :field :table_name,
+      :column-type [:varchar-120 :default :null],
+      :component-type {:type CT-CHECK
+                       :value "0"
+                       :on-change
+                       (fn [e]
+                         ;; (dispatch!
+                         ;;  {:action :update-changes
+                         ;;   :path   [:field-qualified]
+                         ;;   :value  (c/value (c/to-widget e))})
+                         )
+                       ;;  :background face/c-input-bg
+                       :font-size 14
+                       :char-limit 0
+                       :placeholder ""
+                       :border [10 10 5 5 2]
+                       ;; :border-color-unfocus face/c-underline
+                       ;; :border-color-focus face/c-underline-on-focus
+                       :start-underline nil
+                       :args []},
+      :representation "table_name",
+      :constructor-var nil,
+      :field-qualified :seal.table_name}
+     {:description "table_name",
+      :private? false,
+      :default-value nil,
+      :editable? true,
+      :field :table_name,
+      :column-type [:varchar-120 :default :null],
+      :component-type {:type CT-TEXT
+                       :value "0"
+                       :on-change
+                       (fn [e]
+                         ;; (dispatch!
+                         ;;  {:action :update-changes
+                         ;;   :path   [:field-qualified]
+                         ;;   :value  (c/value (c/to-widget e))})
+                         )
+                       ;;  :background face/c-input-bg
+                       :font-size 14
+                       :char-limit 0
+                       :placeholder ""
+                       :border [10 10 5 5 2]
+                       ;; :border-color-unfocus face/c-underline
+                       ;; :border-color-focus face/c-underline-on-focus
+                       :start-underline nil
+                       :args []},
+      :representation "table_name",
+      :constructor-var nil,
+      :field-qualified :seal.table_name}])
+
+  ;; exapmle updating some keys
+  (map (fn [field]
+         (if-let [f (get-in field [:component-type :on-cursor-update] (fn [x] (println "crap")))]
+           (f 10)))
+       (-> (metaFieldList m)
+           (.update-key [:field]
+                        (fn [field] (name (:field field))))
+           (.update-key [:component-type :on-cursor-update]
+                        (fn [field] (ct-contain-action? (-> field :component-type :type) :on-cursor-update))
+                        (fn [field] (fn cursor-update [e] (println {:cursort-update e}))))
+           (.return)))
+
+  ;; Updating all events for all metatadata columns
+  (.update-events
+   (MetaFieldList. m)
+   {:on-cursor-update (fn [field] (fn on-cursor [e] (println {:on-cursor-update e})))
+    :on-check         (fn [field] (fn on-ckeck  [e] (println {:on-check e})))
+    :on-change        (fn [field] (fn on-change [e] (println {:on-change e})))
+    :on-select        (fn [field] (fn on-select [e] (println {:on-select e})))}))
 
 ;;;;;;;;;;;;;;;;
 ;;; On meta! ;;;

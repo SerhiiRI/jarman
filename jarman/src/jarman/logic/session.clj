@@ -149,7 +149,8 @@
 (defn build-user [login password]
   (where
    ((m (-> {:table_name :user
-            :column [:#as_is :user.id :user.login :user.last_name :user.first_name
+            :column [:#as_is :user.id
+                     :user.login :user.last_name :user.first_name
                      :user.configuration :profile.name :profile.configuration]
             :inner-join [:user->profile]
             :where [:and [:= :login login] [:= :password password]]}
@@ -254,16 +255,19 @@
    (defn session []
      builded-session)))
 
+;; (.get-user (session))
+;; (.allow-groups (session))
 (comment
   ;; TMP USER
   (login-test)
   ;; TEST LOGIN 
   (try
     (.get-user (login {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman", :user "root", :password "misiePysie69", :useUnicode true, :characterEncoding "UTF-8"}
-                      "dev" "dev"))
+                      "admin" "admin"))
     (catch clojure.lang.ExceptionInfo e
       (print-error (.getMessage e))
-      (ex-data e))))
+      (ex-data e)))
+  (.get-user (session)))
 
 (defmacro when-permission
   "Description

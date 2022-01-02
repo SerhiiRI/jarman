@@ -1,6 +1,6 @@
 (ns jarman.gui.gui-login
   (:gen-class)
-  (:import (java.awt Dimension)
+  (:import (java.awt Dimension Toolkit)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons))
   (:require [clojure.string            :as string]
             [seesaw.core               :as c]
@@ -525,6 +525,7 @@
         [(get-in (state!) [:databaseconnection-list databaseconnection-id-k])
          (get-in (state!) [:login] nil)
          (get-in (state!) [:passwd] nil)]]
+    (println "S login" [login-s passw-s])
     (try
       ;; -------------
       (session/login dataconnection-m login-s passw-s)
@@ -897,15 +898,22 @@
     
     (if (state/state :debug-mode)
       (timelife 1 (fn []
-                    (swap! state #(assoc-in % [:login]  "admin"))
-                    (swap! state #(assoc-in % [:passwd] "admin"))
-                    (try-to-login state! dispatch! login-frame :jarman--trashpanda-team_ddns_net--3307))))
+                    (dosync
+                     (swap! state
+                            #(-> %
+                                 (assoc :login "admin")
+                                 (assoc :passwd "admin")))
+                     (try-to-login state! dispatch! login-frame :jarman--trashpanda-team_ddns_net--3307)))))
     
     (if (= res-validation nil)
       (-> (doto login-frame (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))))
 
 
 (defn -main [& args]
+  (let [xToolkit (Toolkit/getDefaultToolkit)
+        awtApp   (.getDeclaredField (.getClass xToolkit) "awtAppClassName")]
+    (.setAccessible awtApp true)
+    (.set awtApp xToolkit "Jarman"))
   (state/set-state :debug-mode true) ;; Set auto login
   (app/load-level-0)
   (app/load-level-1 nil)
@@ -917,8 +925,6 @@
   ;; (state/set-state :invoke-login-panel st)
   ;; (st)
   (-main)
-
-
   (popup/info-popup-window "Damn" (fn []) :relative (:frame @gstate))
   
   Start app window

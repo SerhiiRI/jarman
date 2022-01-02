@@ -1,0 +1,36 @@
+{:pl
+ {:ui
+  {:buttons
+   {}
+   
+   :header
+   {:plugin-name "Table wtyczka"}
+   
+   :alerts
+   {:empty-plugin-config "pusty obiekt konfiguracji tabeli"
+    :empty-plugin-toolkit "pusty obiekt narzędzi tabeli"
+    :table-model-error "pomyłka tworzenia danych"
+    :overriding-action-undef "niezdefiniowane dzialania dla akcji"}
+
+   :infos
+   {}}}
+ 
+ :en
+ {:ui
+  {:buttons
+   {}
+   
+   :header
+   {:plugin-name "Table plugin"}
+
+   :alerts
+   {:empty-plugin-config "empty table configuration object"
+    :empty-plugin-toolkit "empty table toolkit object"
+    :table-model-error "bad table model"
+    :overriding-action-undef "undefinied action for custom event"}
+
+   :tips
+   {}
+   
+   :infos
+   {}}}}

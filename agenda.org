@@ -9,9 +9,9 @@
 
 * Bugtrack
 
-** TODO 007 User plugin                                             :@Serhii:
+** PROCESSING 007 User plugin                                       :@Serhii:
    Add user plugin and support for Permissions
-   - [ ] GUI panel to show permission's in system
+   - [X] GUI panel to show permission's in system
    - [ ] Write some view for user
 
 ** TODO 006
@@ -172,6 +172,63 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
 
 * Frontend
   
+** /Feature/. Replacement for gui_components
+   Example of argument
+   #+begin_src clojure
+     [{:keys
+       [;; -- component parameters
+	value placeholder font-size background char-limit
+	border border-color-focus border-color-unfocus
+	start-underline
+	;; -- events 
+	on-change
+	on-caret-update
+	on-focus-gained
+	on-focus-lost
+	on-...
+	;; -- swing comp args
+	args]
+       :or
+       {value                ""
+	placeholder          ""
+	font-size            face/font-size
+	border-color-focus   face/c-underline-on-focus
+	border-color-unfocus face/c-underline
+	background           face/c-input-bg
+	border               [10 10 5 5 2] 
+	char-limit           0         
+	start-underline      nil
+     
+	on-change            (fn [e] e)
+	on-caret-update      (fn [e] e)
+	on-focus-gained      (fn [e] e)
+	on-focus-lost        (fn [e] e)
+	on-...
+     
+	args                 []}}]
+   #+end_src
+   
+   *Rules*
+   1) not used ~[& {}]~ args, only ~[{}]~
+   2) every element MUST have at least one function argument ~on-change~.
+   3) every element have his own properties. But look at 6)
+   4) every element have his own actions. But loot at 6)
+      For example one element can have ~on-change~ (what currently common for most),
+      ~on-cursor-change~ (what can be for text-based interactive component), etc..
+   5) every element MUST have ~args~ param for override some swing params.
+   6) *WARNING*! try to make unique key for action/property characteristic.
+      Example. We have action ~:on-cursor-change~ which describe a changing curret.
+      But you couldn't use those key for describing 'switching items' actions in
+      ListBox component. Try to call switching items in some unique name.
+
+      *Rule*: /name/ should discribe /behavior/.
+
+   *Ideas*
+   1) Maybe will fine for makin some macros, which do description of arguments
+      in easy way.
+   2) Maybe will be fine to add some validation for arguments, and make
+      debug machinizm.
+
 ** /Feature/. Metadata definition
    Currently metadata declare
    - how to create table
@@ -204,21 +261,24 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
        {... :component-type {:type :short-text
 			     :limit 4
 			     :regex #"[\d]+"
-			     :output-type Long}}
+			     :function Long}}
        {... :component-type {:type :factor
 			     :default :one
 			     :values {:one "Pierwszy"
-				      :two "Seconds"}}}
+				      :two "Drugi"}}}
        ;; Custom should be lovel level
        ;; wrapper over then
        ;; swing component
        {... :component-type {:type :custom
+			     :component :button
 			     :validator string?
 			     :renderer #'link-to-ui-element
 			     :on-action (fn [])}}
        
        {... :component-type {:type :composite
-			     ...}}
+			     ...}
+	:columns[{... :component-type :long-text}
+		 {... :component-type :short-text}]}
      #+end_src
    - Lib for ~:fields~
      with notice to previosly mentioned problem

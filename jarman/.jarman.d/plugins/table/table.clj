@@ -4,7 +4,7 @@
    [clojure.data :as data]
    [clojure.string :as string]
    [clojure.spec.alpha :as s]
-   [clojure.pprint :as pprint]
+   [clojure.pprint :refer [cl-format]]
    [clojure.java.jdbc :as jdbc]
    ;; Seesaw components
    [seesaw.core   :as c]
@@ -116,64 +116,92 @@
     get all columns, if columns belongs to composite components,
     it groups them
   Example:
-    (grouping-model state {:seal.id 83, :seal.ftp_file_path \"/home/julia/test.txt\", :seal.datetime_of_remove #inst \"2021-09-22T21:00:00.000000000-00:00\", 
-                           :seal.site_name \"pop\", :seal.ftp_login nil...})
-    => {:seal.id 82, :seal.site #jarman.logic.composite_components.Link{:text \"pop\", :link nil}, :seal.datetime_of_remove #inst \"2021-09-22T21:00:00.000000000-00:00\", 
-       :seal.ftp_file #jarman.logic.composite_components.FtpFile{:login nil, :password nil, :file-name \"test.txt\", :file-path \"/home/julia/test.txt\"}}"
-  [state table-model] (.group (:meta-obj (:plugin-toolkit state)) table-model))
+   (grouping-model
+     state {:seal.id 83,
+            :seal.datetime_of_remove #inst \"2021-09-22T21:00:00.000000000-00:00\", 
+            :seal.site_name \"pop\",
+            :seal.ftp_file_path \"/home/julia/test.txt\"
+            :seal.ftp_login nil})
+   ;;=>
+    '{:seal.id 82,
+      :seal.datetime_of_remove #inst \"2021-09-22T21:00:00.000000000-00:00\",
+      :seal.site     #Link{:text \"pop\", :link nil}
+      :seal.ftp_file #FtpFile{:login nil,
+                              :password nil,
+                              :file-name \"test.txt\",
+                              :file-path \"/home/julia/test.txt\"}}"
+  [state table-model] (-> state :plugin-toolkit :meta-obj (.group table-model)))
 
-;; (grouping-model
-;;  state {:seal.id 83,
-;;         :seal.datetime_of_remove #inst "2021-09-22T21:00:00.000000000-00:00", 
-;;         :seal.site_name "pop",
-;;         :seal.ftp_file_path "/home/julia/test.txt"
-;;         :seal.ftp_login nil})
-;; '{:seal.id 82,
-;;   :seal.datetime_of_remove #inst "2021-09-22T21:00:00.000000000-00:00",
-;;   :seal.site     #Link{:text "pop", :link nil}
-;;   :seal.ftp_file #FtpFile{:login nil,
-;;                           :password nil,
-;;                           :file-name "test.txt",
-;;                           :file-path "/home/julia/test.txt"}}
+(comment
+  (with-test-environ [:seal :table :seal]
+   (let [x
+         (grouping-model
+          (state!) {:seal.id 83,
+                    :seal.datetime_of_remove #inst "2021-09-22T21:00:00.000000000-00:00", 
+                    :seal.site_name "pop",
+                    :seal.ftp_file_path "/home/julia/test.txt"
+                    :seal.ftp_login nil})]
+     (ungrouping-model (state!) x))))
 
-(defn ungrouping-model 
+(defn ungrouping-model
   "Description:
     ungroup columns of composite components
   Example:
     (ungrouping-model state {:seal.loc_file #jarman.logic.composite_components.File{:file-name \"test.txt\", :file nil}})
     => {:seal.file_name \"test.txt\", :seal.file nil}"
-  [state table-model] (.ungroup (:meta-obj (:plugin-toolkit state)) table-model))
+  [state table-model] (-> state :plugin-toolkit :meta-obj (.ungroup table-model)))
 
 (defn- update-comp-changes 
   "Description:
     Prepare data for update column of composite component
    Example:
     (update-comp-changes state [:seal.ftp_file] {:file-name test.txt})
-    => #jarman.logic.composite_components.FtpFile{:login nil, :password nil, :file-name test.txt, :file-path /home/julia/test.txt}"
+      => #FtpFile{:login nil, :password nil, :file-name test.txt, :file-path /home/julia/test.txt}"
   [state k-path value]
   (let [meta-obj (:meta-obj (:plugin-toolkit state))
-        k-field  (first k-path)]  (k-field (.group (.find-field-qualified meta-obj k-field)
-                                                   (merge (reduce (fn [acc [k v]] (if (nil? v) acc (conj acc {k v}))) {}
-                                                                  (ungrouping-model state  {k-field (get-in state (join-vec [:model-changes] k-path))}))
-                                                          (first (map (fn [[k v]] {(keyword (str (first (string/split (name k-field) #"\.")) "."
-                                                                                                 (name (first (.find-field-by-comp-var meta-obj k k-field))))) v})
-                                                                      value)))))))
+        k-field  (first k-path)]
+    (k-field (.group (.find-field-qualified meta-obj k-field)
+                     (merge (reduce (fn [acc [k v]] (if (nil? v) acc (conj acc {k v}))) {}
+                                    (ungrouping-model state  {k-field (get-in state (join-vec [:model-changes] k-path))}))
+                            (first (map (fn [[k v]] {(keyword (str (first (string/split (name k-field) #"\.")) "."
+                                                                  (name (first (.find-field-by-comp-var meta-obj k k-field))))) v})
+                                        value)))))))
+
+(comment
+ (defn- update-comp-changes
+   "Description:
+    Prepare data for update column of composite component
+   Example:
+    (update-comp-changes state [:seal.ftp_file] {:file-name test.txt})
+    => #jarman.logic.composite_components.FtpFile{:login nil, :password nil, :file-name test.txt, :file-path /home/julia/test.txt}"
+   [state k-path value]
+   (let [meta-obj (:meta-obj (:plugin-toolkit state))
+         k-field  (first k-path)
+         ^jarman.logic.metadata.FieldComposite composite-field (.find-field-qualified meta-obj k-field)]
+     (k-field (.group composite-field
+                      (merge (reduce (fn [acc [k v]] (if (nil? v) acc (conj acc {k v}))) {}
+                                     (ungrouping-model state  {k-field (get-in state (join-vec [:model-changes] k-path))}))
+                             (first (map (fn [[k v]] {(keyword (str (first (string/split (name k-field) #"\.")) "."
+                                                                   (name (first (.find-field-by-comp-var meta-obj k k-field))))) v})
+                                         value))))))))
+
+(comment
+  (with-test-environ [:seal :table :seal]
+    (.group (.find-field-qualified table-meta :seal.site))))
 
 ;;;;;;;;;;;;;;;;
 ;;; dispatch ;;;
 ;;;;;;;;;;;;;;;;
 
 (defn action-handler
-  "Description:
-    Invoke fn using dispatch!.
-  Example:
-    (@state {:action :test})"
   [state action-m]
   (let [meta-obj (:meta-obj (:plugin-toolkit state))
+        action   (:action action-m)
         value    (:value action-m)
         k-path   (:path action-m)
         k-field  (first k-path)]
-    (case (:action action-m)
+    (when (:debug? action-m) (cl-format *out* "AH:~@[ (act ~A)~]~@[ (pth ~A)~]~@[ (val ~A)~]~%" action k-path (pr-str value)))
+    (case action
       :refresh-state        (merge state {:insert-mode value :model {} :model-changes {}})
       :switch-insert-update (assoc-in state [:insert-mode] value)
       :table-render         (merge state {:table-render value :model (grouping-model state {})})
@@ -186,7 +214,7 @@
       :clear-state          (merge state {:model-changes {} :model {:temp "temp"}})
       :set-model            (assoc-in state [:model] (grouping-model state value))
       :update-export-path   (assoc-in state [:export-path] value)
-      :test                 (do (println "Test") state))))
+      state)))
 
 (defn- create-dispatcher [atom-var]
   (fn [action-m]
@@ -221,8 +249,7 @@
   "Description:
     Vertical panel with use watcher on state. Panel can rerender components inside when state was changed.
   Exception:
-    (jvpanel state! dispatch! (fn [] component) [:path-to-state])
-  "
+    (jvpanel state! dispatch! (fn [] component) [:path-to-state])"
   [state! dispatch! render-fn watch-path & props]
   (let [props (rift props [])
         root (apply c/vertical-panel props)]
@@ -238,8 +265,7 @@
     Get model-data for build view, return mig-panel with labels (representation and value of column)
    Example
     (show-table-in-expand \"Permission name\" \"user\", Configuration \"{}\"} 2)
-     => object, JPanel
-  "
+     => object, JPanel"
   [model-data scale] 
   (let [border      (b/compound-border (b/empty-border :left 4)) 
         font-size   (* 11 scale)
@@ -431,8 +457,7 @@
 
 (defn- export-button
   "Description:
-    Export panel invoker. Invoke as popup window.
-  "
+    Export panel invoker. Invoke as popup window."
   [state! dispatch!]
   (let [{plugin-toolkit :plugin-toolkit
          table-model    :model} (state!)]
@@ -631,29 +656,34 @@
          editable?       (:editable?       meta-field-information)
          comp-types      (:component-type  meta-field-information)
          val             (cond
-                           (not (nil? (key (:model         (state!))))) (key (:model         (state!)))
-                           (not (nil? (key (:model-changes (state!))))) (key (:model-changes (state!))))
-         val             (if (mt/isComponent? val)
-                           val (str val))
+                           (not (nil? (field-qualified (:model         (state!))))) (field-qualified (:model         (state!)))
+                           (not (nil? (field-qualified (:model-changes (state!))))) (field-qualified (:model-changes (state!))))
+         val             (if (mt/isComponent? val) val (str val))
          func            (fn [e]
                            (dispatch!
                             {:action :update-changes
                              :path   [(rift field-qualified :unqualifited)]
                              :value  (c/value (c/to-widget e))}))
-         comp-func       (fn [e col-key] 
+         comp-func       (fn [e col-key]
                            (do (dispatch!
                                 {:action :update-comps-changes
-                                 ;;:state-update
-                                 :compn-obj  val
+                                 ;; :state-update
+                                 :compn-obj val
                                  :path   [(rift field-qualified :unqualifited)]
-                                 :value ;;(assoc (key (:model-changes (state!))) col-key (c/value (c/to-widget e)))
+                                 :value ;; (assoc (key (:model-changes (state!))) col-key (c/value (c/to-widget e)))
                                  {col-key (c/value (c/to-widget e))}})))
-         comp-func-save  (fn [e] (dispatch! {:action :download-comp :value (c/value (c/to-widget e)) :v-obj val}))
+         comp-func-save  (fn [e] (dispatch!
+                                 {:action :download-comp
+                                  :value (c/value (c/to-widget e))
+                                  :v-obj val}))
          comp (gcomp/inpose-label
             title
             (cond
               (= mt/column-type-linking (first comp-types))
-              (input-related-popup-table {:val val :state! state! :field-qualified field-qualified :dispatch! dispatch!})
+              (input-related-popup-table {:val val
+                                          :state! state!
+                                          :field-qualified field-qualified
+                                          :dispatch! dispatch!})
              
               (or (= mt/column-type-data (first comp-types))
                  (= mt/column-type-datatime (first comp-types)))
@@ -688,6 +718,140 @@
               (gcomp/state-input-text {:func func :val val})))]
      (.add panel comp))))
 
+(comment
+  (with-test-environ [:seal :table :seal]
+    (let [on-change
+          (fn [field]
+            (fn [v]
+              (do (dispatch!
+                   {:action :update-changes
+                    :path   [(rift field :unqualifited)]
+                    :value  v
+                    :debug? true}))))
+          on-downld
+          (fn [field]
+            (fn [v]
+              (do (dispatch!
+                   {:action :download-chuj
+                    :path   [(rift field :unqualifited)]
+                    :value  v
+                    :debug? true}))))]
+      (doto (c/frame
+             :content
+             (seesaw.mig/mig-panel
+              :background  face/c-compos-background-darker
+              :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
+              :border (b/empty-border :thickness 10)
+              :items [[(seesaw.core/label :text "site" :font (gtool/getFont :bold 20))]
+                      [(ccomp/url-panel    {:on-change (on-change :seal.site) :default {}})]
+                      ;; [(seesaw.core/label :text "file" :font (gtool/getFont :bold 20))]
+                      ;; [(ccomp/file-panel   {:on-change (on-change :seal.file) :on-download (on-downld :seal.file) :default {} :mode false ;; (:insert-mode (state!))
+                      ;;                       })]
+                      ;; [(seesaw.core/label :text "ftpf" :font (gtool/getFont :bold 20))]
+                      ;; [(ccomp/ftp-panel    {:on-change (on-change :seal.ftp-file) :on-download (on-downld :seal.ftp-file) :default {} :mode false ;;  (:insert-mode (state!))
+                      ;;                       })]
+                      ])
+             :title "Jarman" :size [1000 :by 800])
+        (.setLocationRelativeTo nil) c/pack! c/show!)))
+  
+  (with-test-environ [:seal :table :seal]
+    (let [val nil
+          comp-func
+          (fn [e col-key]
+            (do (dispatch!
+                 {:action :update-comps-changes
+                  ;; :state-update
+                  :compn-obj val
+                  :path   [:seal.ftp_file]
+                  :value ;; (assoc (key (:model-changes (state!))) col-key (c/value (c/to-widget e)))
+                  {col-key (c/value (c/to-widget e))}})))]
+      (-> (doto (c/frame
+                 :title "Jarman"
+                 :size [1000 :by 800]
+                 :content (ccomp/url-panel {:func comp-func
+                                            :val val}))
+            (.setLocationRelativeTo nil) c/pack! c/show!))))
+  
+
+
+  (with-test-environ [:seal :table :seal]
+    (let [component-container
+          (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
+                          :border (b/empty-border :thickness 10)
+                          :items [[(c/label)]])]
+      (convert-model-to-components-list state! dispatch! component-container (:model-insert plugin-config))))
+  
+  (view-manager/defview seal
+    (table
+     :id :seal
+     :name "seal"
+     :tables [:seal]
+     :view-columns [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove]
+     :model-insert [:seal.seal_number               
+                    :seal.datetime_of_use
+                    :seal.datetime_of_remove
+                    :seal.site
+                    :seal.loc_file
+                    :seal.ftp_file]
+     :active-buttons [:insert :update :delete :clear :changes]
+     :permission :ekka-all
+     :dialog {}
+     :actions {:upload-docs-to-db
+               (fn [state! dispatch!] (println (-> (state!) :plugin-toolkit :meta-obj .return-table_name)))}
+     :buttons [{:form-model :model-insert, 
+                :action :upload-docs-to-db, 
+                :title "Upload document"}]
+     :query {:table_name :seal,
+             :column
+             [:#as_is
+              :seal.id
+              :seal.seal_number
+              :seal.datetime_of_use
+              :seal.datetime_of_remove
+              :seal.site_name
+              :seal.site_url
+              :seal.file_name
+              :seal.file
+              :seal.ftp_file_name
+              :seal.ftp_file_path]}))
+
+  (view-manager/defview seal
+    (table
+     ;; Plugin configuration
+     :id :seal
+     :name :seal
+     :permission :ekka-all
+     ;; Meta/Model information 
+     :tables          [:seal]
+     :active-buttons  [:insert :update :delete :clear :changes]
+     :model           [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove :seal.site :seal.loc_file :seal.ftp_file]
+     :dialogs {:user.id_permission [:permission :dialog-table :permission-table]}
+     ;; Plugin-customization
+     :custom-configs {:layout 3/10}
+     :custom-actions {:upload-docs-to-db  (fn [state! dispatch!] (println (-> (state!) :plugin-toolkit :meta-obj .return-table_name)))}
+     :custom-buttons [{:form-model :model-insert :action :upload-docs-to-db :title "Upload document"}]
+     :custom-queries
+     {:default
+      {:table-columns [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove]
+       :table-query 
+       {:table_name :seal,
+        :column
+        [:#as_is
+         :seal.id
+         :seal.seal_number
+         :seal.datetime_of_use
+         :seal.datetime_of_remove
+         :seal.site_name
+         :seal.site_url
+         :seal.file_name
+         :seal.file
+         :seal.ftp_file_name
+         :seal.ftp_file_path]}}}))
+  
+  (with-test-environ [:seal :table :seal]
+    ;; (-> plugin-config :view-columns)
+    (generate-custom-buttons state! dispatch! :model-insert)))
+
 (defn group-m-vec-by-key
   "Description:
      Convert [{:x a :field-qualified b}{:d w :field-qualified f}] => {:b {:x a :field-qualified b} :f {:d w :field-qualified f}}"
@@ -711,7 +875,7 @@
          ;;        => {:A {:field A ...} :B {:field B ...}}
          ;; 
          meta-columns-m (into {} (doall (map (fn [m] {(keyword (:field-qualified m)) m}) meta-columns)))]
-     (doall (for [[k-or-m] model-defview
+     (doall (for [k-or-m model-defview
                   :let [meta-information (if (keyword? k-or-m) (k-or-m meta-columns-m) k-or-m)]]
               (cond
                 (map?     k-or-m) (convert-map-to-component state! dispatch! panel meta-information)
@@ -1278,5 +1442,4 @@
                  :title \"Upload document\"}
                {:form-model :model-update...}...]"
     :doc "This is an vector of optional buttons which do some logic bainded by acition key, discribed in `:action`"}]])
-
 

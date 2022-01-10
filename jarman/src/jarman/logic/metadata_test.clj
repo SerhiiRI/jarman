@@ -1,6 +1,18 @@
-;;;;;;;;;;;;;;;;;;
-;; test segment ;;
-;;;;;;;;;;;;;;;;;;
+(ns jarman.logic.metadata-test
+  (:require
+   [clojure.data :as data]
+   [clojure.string :as string]
+   [jarman.config.storage :as storage]
+   [jarman.config.environment :as env]
+   [jarman.tools.lang :refer :all]
+   [jarman.logic.connection :as db]
+   [datascript.core :as d]
+   [jarman.logic.metadata                  :refer :all]
+   [jarman.logic.sql-tool                  :refer [select! update! insert! alter-table! create-table! delete! show-table-columns ssql-type-parser]]
+   [jarman.managment.data-metadata-shorts  :refer [table field table-link field-link field-composite prop]])
+  (:import (java.util Date)
+           (java.text SimpleDateFormat)
+           (jarman.logic.metadata TableMetadata)))
 
 (comment
   (require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link field-composite prop]])
@@ -30,13 +42,13 @@
              (field :field :datetime_of_use :component-type [:datetime :date :text])
              (field :field :datetime_of_remove :component-type [:datetime :date :text])]
             :columns-composite
-            [(field-composite :field :site :component-type [:comp-url] :constructor #'jarman.logic.composite-components/map->Link
+            [(field-composite :field :site :component-type [:comp-url] :constructor #'jarman.logic.metadata/map->Link
                               :columns [(field :field :site_name :constructor-var :text :component-type [:text])
                                         (field :field :site_url :constructor-var :link :component-type [:text])])
-             (field-composite :field :loc_file :component-type [:comp-file] :constructor #'jarman.logic.composite-components/map->File
+             (field-composite :field :loc_file :component-type [:comp-file] :constructor #'jarman.logic.metadata/map->File
                               :columns [(field :field :file_name :constructor-var :file-name :component-type [:text])
                                         (field :field :file :constructor-var :file  :component-type [:blob])])
-             (field-composite :field :ftp_file :component-type [:comp-ftp] :constructor #'jarman.logic.composite-components/map->FtpFile
+             (field-composite :field :ftp_file :component-type [:comp-ftp] :constructor #'jarman.logic.metadata/map->FtpFile
                               :columns [(field :field :ftp_file_name :constructor-var :file-name :component-type [:text])
                                         (field :field :ftp_file_path :constructor-var :file-path :component-type [:text])])])}
           ;;(first (getset! :seal))

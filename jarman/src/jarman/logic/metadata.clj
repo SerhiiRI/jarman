@@ -92,9 +92,9 @@
    CT-SELECT     {:actions #{:on-сhange :on-select}}
    CT-CHECK      {:actions #{:on-сhange :on-check}}
    CT-LINK       {:actions #{:on-change}}
-   CT-URL        {:actions #{:on-change}}
-   CT-FILE       {:actions #{:on-change}}
-   CT-FTP-FILE   {:actions #{:on-change}}})
+   CT-URL        {:actions #{:on-change :on-open} :constructor #'jarman.logic.metadata/map->Link}
+   CT-FILE       {:actions #{:on-change :on-save} :constructor #'jarman.logic.metadata/map->File}
+   CT-FTP-FILE   {:actions #{:on-change :on-save} :constructor #'jarman.logic.metadata/map->FtpFile}})
 (def COMPONENT-DISCT
   (into (hash-set) (keys COMPONENT-TYPES)))
 (defn ct-contain-action? [ct-type action]
@@ -102,6 +102,9 @@
          (keyword? action)
          (some? (COMPONENT-DISCT ct-type))]}
   (some? ((get-in COMPONENT-TYPES [ct-type :actions] #{}) action)))
+(defn ct-composite? [ct-type]
+  {:pre [(keyword? ct-type) (some? (COMPONENT-DISCT ct-type))]}
+  (some? (get-in COMPONENT-TYPES [ct-type :constructor])))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; RULE FILTRATOR ;;;
@@ -1224,8 +1227,9 @@
     (first (filter (fn [field-m]
                      (= (:field-qualified field-m) field-name-qualified-kwd)) (.return-columns this))))
   (find-field-by-comp-var [this field-comp-var field-name-qualified-kwd]
-    (reduce (fn [acc column] (if (= (:constructor-var column) field-comp-var)
-                               (conj acc (:field column)) acc)) []
+    (reduce (fn [acc column]
+              (if (= (:constructor-var column) field-comp-var)
+                (conj acc (:field column)) acc)) []
             (:columns (:m this))))
 
   IField
@@ -1417,13 +1421,6 @@
       :column-type [:varchar-120 :default :null],
       :component-type {:type CT-SELECT
                        :value "0"
-                       :on-change
-                       (fn [e]
-                         ;; (dispatch!
-                         ;;  {:action :update-changes
-                         ;;   :path   [:field-qualified]
-                         ;;   :value  (c/value (c/to-widget e))})
-                         )
                        ;;  :background face/c-input-bg
                        :font-size 14
                        :char-limit 0
@@ -1444,13 +1441,6 @@
       :column-type [:varchar-120 :default :null],
       :component-type {:type CT-CHECK
                        :value "0"
-                       :on-change
-                       (fn [e]
-                         ;; (dispatch!
-                         ;;  {:action :update-changes
-                         ;;   :path   [:field-qualified]
-                         ;;   :value  (c/value (c/to-widget e))})
-                         )
                        ;;  :background face/c-input-bg
                        :font-size 14
                        :char-limit 0
@@ -1471,14 +1461,6 @@
       :column-type [:varchar-120 :default :null],
       :component-type {:type CT-TEXT
                        :value "0"
-                       :on-change
-                       (fn [e]
-                         ;; (dispatch!
-                         ;;  {:action :update-changes
-                         ;;   :path   [:field-qualified]
-                         ;;   :value  (c/value (c/to-widget e))})
-                         )
-                       ;;  :background face/c-input-bg
                        :font-size 14
                        :char-limit 0
                        :placeholder ""
@@ -1506,10 +1488,19 @@
   ;; Updating all events for all metatadata columns
   (.update-events
    (MetaFieldList. m)
-   {:on-cursor-update (fn [field] (fn on-cursor [e] (println {:on-cursor-update e})))
-    :on-check         (fn [field] (fn on-ckeck  [e] (println {:on-check e})))
+   {:on-cursor-update (fn [field] (fn on-cursor [e] (println {:on-cursor e})))
+    :on-check         (fn [field] (fn on-ckeck  [e] (println {:on-check  e})))
     :on-change        (fn [field] (fn on-change [e] (println {:on-change e})))
-    :on-select        (fn [field] (fn on-select [e] (println {:on-select e})))}))
+    :on-select        (fn [field] (fn on-select [e] (println {:on-select e})))})
+
+  (.update-events
+   (MetaFieldList. m)
+   [{:component-type [CT-TEXT CT-TEXTAREA]
+     :event :on-cursor-update} (fn [field] (fn on-cursor [e] (println {:on-cursor e})))
+    :on-check         (fn [field] (fn on-ckeck  [e] (println {:on-check  e})))
+    :on-change        (fn [field] (fn on-change [e] (println {:on-change e})))
+    :on-select        (fn [field] (fn on-select [e] (println {:on-select e})))]))
+
 
 ;;;;;;;;;;;;;;;;
 ;;; On meta! ;;;

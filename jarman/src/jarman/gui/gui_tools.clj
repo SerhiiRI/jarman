@@ -60,23 +60,34 @@
 (defn getChildren [parent] (let [children (seesaw.util/children (seesaw.core/to-widget parent))] children))
 (defn firstToWidget [list] (seesaw.core/to-widget (first list)))
 (defn get-parent-items [e] (u/children (.getParent (c/to-widget e))))
+
 ;; (def getFont
 ;;   (fn [& params] (-> {:size 12 :style :plain :name "Ubuntu Regular"}
 ;;                      ((fn [m] (let [size  (first (filter (fn [item] (if (number? item) item nil)) params))] (if (number? size) (merge m {:size size}) (conj m {})))))
 ;;                      ((fn [m] (let [name  (first (filter (fn [item] (if (string? item) item nil)) params))] (if (string? name) (merge m {:name name}) (conj m {})))))
-;;                      ((fn [m] (let [style (first (filter (fn [item] (if (= item :bold) item nil)) params))] (if (= style :bold) (merge m {:style :bold}) (conj m {})))))
+;;                      ((fn [m] (let [style (first (filter (fn [item] (if (= item :bold) item nil)) params))] (if (= style :bold) (merge m {:name "Ubuntu bold"}) (conj m {})))))
 ;;                      ((fn [m] (let [style (first (filter (fn [item] (if (= item :italic) item nil)) params))] (if (= style :italic)
 ;;                                                                                                                 (if (= (get m :style) :bold) (merge m {:style #{:bold :italic}}) (merge m {:style :italic}))
 ;;                                                                                                                 (conj m {}))))))))
 
-(def getFont
-  (fn [& params] (-> {:size 12 :style :plain :name "Ubuntu Regular"}
-                     ((fn [m] (let [size  (first (filter (fn [item] (if (number? item) item nil)) params))] (if (number? size) (merge m {:size size}) (conj m {})))))
-                     ((fn [m] (let [name  (first (filter (fn [item] (if (string? item) item nil)) params))] (if (string? name) (merge m {:name name}) (conj m {})))))
-                     ((fn [m] (let [style (first (filter (fn [item] (if (= item :bold) item nil)) params))] (if (= style :bold) (merge m {:name "Ubuntu bold"}) (conj m {})))))
-                     ((fn [m] (let [style (first (filter (fn [item] (if (= item :italic) item nil)) params))] (if (= style :italic)
-                                                                                                                (if (= (get m :style) :bold) (merge m {:style #{:bold :italic}}) (merge m {:style :italic}))
-                                                                                                                (conj m {}))))))))
+
+(defn getFont [& params]
+  {:pre [(every? #(or (number? %) (#{:bold :italic :italic-bold} %) (string? %)) params)]}
+  (let [default-font-style {:size 12 :style :plain :name "Ubuntu Regular"}
+        to-bold          #(assoc %1 :name  "Ubuntu bold")
+        to-italic        #(assoc %1 :style :italic)
+        to-italic-bold   #(assoc %1 :style #{:bold :italic})
+        change-name      #(assoc %1 :name %2)
+        change-size      #(assoc %1 :size %2)]
+    (reduce
+     (fn [acc p]
+       (cond-> acc
+         (string?         p)   (change-name p)
+         (number?         p)   (change-size p)
+         (= :bold         p)   (to-bold)
+         (= :italic       p)   (to-italic)
+         (= :italic-bold  p)   (to-italic-bold)))
+     default-font-style params)))
 
 (defn get-mouse-pos
   "Description:

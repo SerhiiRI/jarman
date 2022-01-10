@@ -44,24 +44,23 @@
    :field-qualified field-qualified
    :constructor-var constructor-var})
 
-(defn field-composite [& {:keys [field
-                                 field-qualified
-                                 description
-                                 representation
-                                 column-type
+(defn field-composite [& {:keys [column-type
+                                 columns
                                  component-type
                                  default-value
-                                 constructor
-                                 columns
+                                 description
+                                 editable?
+                                 field
+                                 field-qualified
                                  private?
-                                 editable?]}]
+                                 representation]}]
   {:pre [(some? field)]}
   (if (nil? field)
     (assert false (format "Coposite column has bad declaration. `:field` cannot be nil")))
   ;; (if (nil? field-qualified)
   ;;   (assert false (format "Coposite column `%s` has bad declaration. `:field-qualified` cannot be nil" (str field))))
-  (if (nil? constructor)
-    (assert false (format "Coposite column `%s` has bad declaration. `:constructor` cannot be nil" (str field-qualified))))
+  ;; (if (nil? constructor)
+  ;;   (assert false (format "Coposite column `%s` has bad declaration. `:constructor` cannot be nil" (str field-qualified))))
   (if (not (every? #(keyword? (:constructor-var %)) columns))
     (assert false (format "Coposite column `%s` has bad declaration. One or more embaded columns not contain `:constructor-var` param" (str field-qualified))))
   {:description (if description description (name field))
@@ -73,7 +72,6 @@
    :component-type component-type
    :representation (if representation representation (name field))
    :field-qualified field-qualified
-   :constructor constructor
    :columns columns})
 
 (defn field-link [& {:keys [field-qualified key-table description private? default-value editable? field column-type foreign-keys component-type representation]

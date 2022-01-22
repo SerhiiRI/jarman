@@ -23,14 +23,33 @@
         panel))))
 
 (defmacro wrapp-components [wrapper & components-list]
-  `(do ~@(for [component components-list]
-           (list 'def (symbol (name component)) (list wrapper component)))))
+  `(do ~@(for [component components-list
+               :let [panel-symbol   (symbol (name component))]]
+           `(do
+              (def ~panel-symbol (~wrapper ~component))
+              (alter-meta! (var ~panel-symbol)
+                           assoc
+                           :doc (:doc (meta (var ~component))))))
+       true))
 
 (wrapp-components event-panel-wrapper
  seesaw.mig/mig-panel
  seesaw.core/vertical-panel
  seesaw.core/horizontal-panel
- seesaw.core/grid-panel)
+ seesaw.core/grid-panel
+ seesaw.core/border-panel
+ seesaw.core/box-panel)
+
+
+(do
+  (def mig-panel (event-panel-wrapper seesaw.mig/mig-panel))
+  (alter-meta!
+   (resolve mig-panel)
+   (fn [m]
+     (merge
+      m
+      {:doc (:doc (meta (resolve 'seesaw.mig/mig-panel)))}))))
+
 
 (comment
   (def st (satom {}))

@@ -1,0 +1,84 @@
+* Keybindings
+
+** Overrinding, and relaoding all KeyMap
+
+   #+begin_src clojure
+     (import javax.swing.text.DefaultEditorKit)
+     (import javax.swing.text.JTextComponent)
+     (import javax.swing.KeyStroke)
+     (import java.awt.event.KeyEvent)
+     (import java.awt.event.InputEvent)
+     (import javax.swing.text.Keymap)
+     (import javax.swing.Action)
+     
+     (let [someTextComponent (javax.swing.JTextField. "suka")
+	   ;; defultKeymap (JTextComponent/getKeymap JTextComponent/DEFAULT_KEYMAP)
+	   ^Keymap keymap (.getKeymap someTextComponent)
+	   actions (.getActions someTextComponent)]
+       (do
+	 (JTextComponent/loadKeymap
+	  keymap
+	  (into-array
+	   JTextComponent$KeyBinding
+	   (list
+	    (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_A InputEvent/CTRL_MASK) DefaultEditorKit/beginLineAction)
+	    (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_E InputEvent/CTRL_MASK) DefaultEditorKit/endLineAction)
+	    (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_B InputEvent/CTRL_MASK) DefaultEditorKit/backwardAction)
+	    (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_F InputEvent/CTRL_MASK) DefaultEditorKit/forwardAction)
+	    (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_B InputEvent/ALT_MASK)  DefaultEditorKit/previousWordAction)
+	    (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_F InputEvent/ALT_MASK)  DefaultEditorKit/nextWordAction)
+	    (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_P InputEvent/CTRL_MASK) DefaultEditorKit/upAction)
+	    (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_N InputEvent/CTRL_MASK) DefaultEditorKit/downAction)))
+	  actions)
+	 someTextComponent))     
+   #+end_src
+   
+** Register any KeyAction
+
+   #+begin_src clojure
+     (let [someTextComponent                (javax.swing.JTextField. "any text")
+	   ^javax.swing.InputMap  keyMap    (.getInputMap someTextComponent)
+	   ^javax.swing.ActionMap actionMap (.getActionMap someTextComponent)]
+       (do
+	 (.put keyMap (KeyStroke/getKeyStroke KeyEvent/VK_E InputEvent/CTRL_MASK) "my-custom-event")
+	 (.put keyMap (KeyStroke/getKeyStroke "F2")                               "my-custom-event")
+	 ;; And now register event with ID name
+	 ;; `my-custom-event`
+	 (.put actionMap "my-custom-event"
+	       (proxy [javax.swing.AbstractAction] []
+		 (^void actionPerformed [^java.awt.event.ActionEvent event]
+		  (println "Handle Action!"))))
+	 someTextComponent))
+   #+end_src
+   
+** Global overrings
+
+   Each Swing component has an /InputMap/ that is shared by all components of the same type. Changes to this /InputMap/ will affect all components.
+
+   For example all /JTextAreas/ share a ~focusInputMap~. To disable the ability to select all the text using Control-A you can use code like:
+
+   #+begin_src java
+     InputMap im = (InputMap) UIManager.get("TextArea.focusInputMap");
+     KeyStroke keyStroke = KeyStroke.getKeyStroke("control A");
+     im.put(keyStroke, "none"); 
+   #+end_src
+
+   the same example but in clojure, for replace in every TextEditor some =Ctrl+E= shortcut
+
+   #+begin_src clojure
+     (import java.awt.event.InputEvent)
+     (import java.awt.event.KeyEvent)
+     (import javax.swing.text.DefaultEditorKit)
+     (import javax.swing.InputMap)
+     (import javax.swing.UIManager)
+     (import javax.swing.KeyStroke)
+     
+     (let [^InputMap inputMap (UIManager/get "TextArea.focusInputMap")]
+       (.put inputMap (KeyStroke/getKeyStroke KeyEvent/VK_E InputEvent/CTRL_MASK) DefaultEditorKit/endLineAction))
+   #+end_src
+
+   You can check out [[https://tips4java.wordpress.com/2008/10/09/uimanager-defaults/][UIManager]] Defaults to see which InputMaps are implemented for a given Swing component.
+   Frame and Dialog don't appear in the UIManager so I don't know if InputMaps are supported for them or not. You can try adding ~Dialog.ancestorInputMap~ and creating your own bindings to see if this works.
+
+   Otherwise you can try using ~RootPane.ancestorInputMap~ although I would guess this InputMap would be shared by frames and dialogs.
+   You can also check out Escape Key and Dialog for an Action that is bound to the InputMap of a JRootPane.

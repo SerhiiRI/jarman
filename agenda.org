@@ -165,13 +165,7 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
         at java.base/java.lang.Thread.run(Thread.java:834)
    #+end_example
 
-* Development
-** Shortcuts
-   Open link file ~C-c C-o~
-   [[file:docs/page/graphics.org][Shortucts]]
-
 * Frontend
-  
 ** /Feature/. Replacement for gui_components
    Example of argument
    #+begin_src clojure

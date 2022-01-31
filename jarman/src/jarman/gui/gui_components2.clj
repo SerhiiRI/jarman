@@ -1,202 +1,171 @@
+;;  _____ ___  ____   ___  
+;; |_   _/ _ \|  _ \ / _ \ 
+;;   | || | | | | | | | | |
+;;   | || |_| | |_| | |_| |
+;;   |_| \___/|____/ \___/ 
+;; -------------------------
+;; Markers:
+;;  [ ] todo
+;;  [W] work in progress
+;;  [X] done
+;;  [-] Cenceled
+;; -------------------------
+;; fixme:serhii:aleks gui-components2 central
+;;  [ ] create some standarization for all font's 
+;;  [-] all wrapper's and any type of action should be extenralize outta here
+;;  [X] common component router namespaces
+;;  [X] keyboard sequence Action like in Emacs
+;;  [X] wrote some demo's on bottom of 'jarman.gui.gui-components2
+;;  [ ] delete deprecated java objects
+;;  [ ] create quick text popup which dispose or chnage in every keyboard click
+;;  [ ] define 'jarman.gui.jsgl.actions with definition of test keyboard Actions.
+
 (ns jarman.gui.gui-components2
-  (:require [seesaw.core    :as c]
-            [seesaw.border  :as b]
-            [seesaw.chooser :as chooser]
-            ;; Jarman
-            [jarman.tools.lang     :refer :all]
-            [jarman.faces          :as face]
-            [jarman.gui.gui-style  :as gui-style]
-            [jarman.gui.core       :refer [satom register!]]
-            [jarman.gui.gui-tools  :as gui-tool]
-            [jarman.gui.gui-panel  :refer [event-wrapper]])
-  (:import ;; (java.awt Color)
-           ;; (java.awt Dimension)
-           ;; (jarman.jarmanjcomp CustomScrollBar)
-           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
+  (:require
+   [potemkin.namespaces :refer [import-vars]]
+   [jarman.gui.components.common]
+   [jarman.gui.components.system]
+   [jarman.gui.components.datetime]
+   [jarman.gui.components.calendar]
+   [jarman.gui.components.composites]
+   [jarman.gui.components.panels]
+   [jarman.gui.managment :refer [register-custom-component]]))
 
-;;; fixme:aleks button arguments
-;;; Warning! first fix `fixme` in `text` below, after change `button`
-;;; 1. rename arguments, like in input field below
-;;;    - `tgap` `bgap`... to one `border` vector with left-right-top-bottom
-;;;    - the same problems with backgrounds and underlines
-;;; 2. remake wrapper
-(defn button [& {:keys [value tgap bgap lgap rgap halign tip bg bg-hover underline-size underline-focus underline flip-border
-                       on-click on-focus-gain on-focus-lost on-mouse-enter on-mouse-exit args]    
-                :or   {value ""
-                       tgap 10 bgap 10 lgap 10 rgap 10
-                       tip    ""
-                       halign :center
-                       bg              face/c-btn-bg
-                       bg-hover        face/c-btn-bg-focus
-                       underline-focus face/c-btn-underline-on-focus
-                       underline       face/c-btn-underline
-                       underline-size  face/s-btn-underline
-                       flip-border     false
+;;   ____ ___  __  __ ____   ___  _   _ _____ _   _ _____
+;;  / ___/ _ \|  \/  |  _ \ / _ \| \ | | ____| \ | |_   _|
+;; | |  | | | | |\/| | |_) | | | |  \| |  _| |  \| | | |
+;; | |__| |_| | |  | |  __/| |_| | |\  | |___| |\  | | |
+;;  \____\___/|_|  |_|_|    \___/|_| \_|_____|_| \_| |_|
+;;  ____   ___  _   _ _____ _____ ____
+;; |  _ \ / _ \| | | |_   _| ____|  _ \
+;; | |_) | | | | | | | | | |  _| | |_) |
+;; |  _ <| |_| | |_| | | | | |___|  _ <
+;; |_| \_\\___/ \___/  |_| |_____|_| \_\
+;;
 
-                       on-click        (fn [e] e)
-                       on-focus-gain   (fn [e] e)
-                       on-focus-lost   (fn [e] e)
-                       on-mouse-enter  (fn [e] e)
-                       on-mouse-exit   (fn [e] e)
-                       
-                       args []}}]
-  (blet
-   (apply c/label
-          :text value
-          :focusable? true
-          :halign halign
-          :tip tip
-          :listen
-          [:mouse-clicked
-           (fn [e]
-             (on-click e)
-             (gui-tool/switch-focus))
-           :mouse-entered
-           (fn [e]
-             (c/config! e :border (new-border underline-focus) :background bg-hover :cursor :hand)
-             (.repaint (c/to-root e))
-             (on-mouse-enter e))
-           :mouse-exited
-           (fn [e]
-             (c/config! e :border (new-border underline) :background bg)
-             (.repaint (c/to-root e))
-             (on-mouse-exit e))
-           :focus-gained
-           (fn [e]
-             (c/config! e :border (new-border underline-focus) :background bg-hover :cursor :hand)
-             (on-focus-gain e))
-           :focus-lost
-           (fn [e]
-             (c/config! e :border (new-border underline) :background bg)
-             (on-focus-lost e))
-           :key-pressed
-           (fn [e]
-             (when (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER)
-               (on-click e)
-               (gui-tool/switch-focus)))]
-          :background bg
-          :border (new-border underline)
-          args)
-   [new-border
-    (fn [underline-color]
-      (b/compound-border (b/empty-border :bottom bgap :top tgap :left lgap :right rgap)
-                         (b/line-border (if flip-border :top :bottom) underline-size :color underline-color)))]))
+(import-vars
 
-(defn text
-  [& {:keys [value border border-color-focus border-color-unfocus placeholder font-size background char-limit start-underline
-             on-change on-focus-gain on-focus-lost on-caret-update
-             args]
-      :or   {value                 ""
-             border                [10 10 5 5 2]
-             border-color-focus    face/c-underline-on-focus
-             border-color-unfocus  face/c-underline
-             placeholder           ""
-             background            face/c-input-bg
-             start-underline       nil
-             char-limit            0
-             
-             on-change             (fn [e] e)
-             on-focus-gain         (fn [e] e)
-             on-focus-lost         (fn [e] e)
-             on-caret-update       (fn [e] e)
+ ;; -- STATEFULL PANELS
+ [jarman.gui.components.panels
+  border-panel box-panel
+  vertical-panel horizontal-panel
+  grid-panel
+  mig-panel]
 
-             args []}}]
-  (let [;; fixme:aleks gui-components2/text input field
-        ;; 1. `get-user-data`, `set-user-data` can be removed?
-        ;; 2. write macro for border. Logic is understandable, but 
-        ;;    it can be look better. Or you can make binding withou
-        ;;    `nth`, than, go on!
-        last-v          (atom "")
-        get-user-data   (fn [e k]   (get-in   (c/config e :user-data) [k]))
-        set-user-data   (fn [e k v] (assoc-in (c/config e :user-data) [k] v))
-        new-border      (fn [underline-color]
-                          (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
-                                             (b/line-border :bottom (nth border 4) :color underline-color)))]
-    (-> 
-     (partial c/text
-        :text       (if (empty? value) placeholder (str value))
-        :background background
-        :border     (new-border (rift start-underline border-color-unfocus))
-        :user-data  {:placeholder placeholder :value "" :edit? false :type :input :border-fn new-border}
-        :listen
-        [:focus-gained
-         (fn [e]
-           (c/config! e :border (new-border border-color-focus))
-           (cond (= (c/value e) placeholder) (c/config! e :text ""))
-           (c/config! e :user-data (set-user-data e :edit? true))
-           (on-focus-gain e))
-         :focus-lost
-         (fn [e]
-           (c/config! e :border (new-border border-color-unfocus))
-           (cond (= (c/value e) "") (c/config! e :text placeholder))
-           (c/config! e :user-data (set-user-data e :edit? false))
-           (on-focus-lost e))
-         :caret-update
-         (fn [e]
-           (let [new-v (c/value (c/to-widget e))]
-             (if (and (> (count new-v) char-limit) (< 0 char-limit))
-               (c/invoke-later (c/config! e :text @last-v))
-               (do
-                 (reset! last-v new-v)
-                 (c/config! e :user-data (set-user-data e :value (if (= placeholder @last-v) "" @last-v)))
-                 (on-change e)))))])
-     (apply args))))
+ ;; -- SIMPLE COMPONENTS
+ [jarman.gui.components.common
+  label button combobox
+  text textarea codearea]
 
-(defn event-component-wrapper [component-type component]
-  (fn [& {:keys [event-hook-atom event-hook] :as arguments}]
-    (let [clean-arg (dissoc arguments :event-hook :event-hook-atom)]
-      (let [panel (apply component (interleave (keys clean-arg) (vals clean-arg)))
-            panel-hash (keyword (str component-type (.hashCode panel)))]
-        (if event-hook (register! event-hook-atom panel-hash (partial event-hook panel)))
-        panel))))
+ ;; -- SYSTEM COMPONENTS
+ [jarman.gui.components.system
+  input-file
+  file-dialog]
 
-(defn status-input-file
-  "Description:
-     File choser, button with icon, when path is selected it changes background color"
-  [& {:keys [value selection-mode on-change] :or {value "" selection-mode false on-change (fn [e] e)}}]
-  (let [state             (satom {:status :not-selected})
-        not-choosed-icon  (gui-style/icon GoogleMaterialDesignIcons/ATTACHMENT        face/c-icon 17)
-        choosed-icond     (gui-style/icon GoogleMaterialDesignIcons/INSERT_DRIVE_FILE face/c-icon 17)
-        icon-chooser      (fn [compn path] (if-not (empty? path)
-                                            (c/config! compn :icon choosed-icond :tip path)
-                                            (c/config! compn :icon not-choosed-icon :tip "Please choose")))
-        icon-button       (button :text ""
-                                  :tgap 4 :bgap 4 :lgap 0 :rgap 0
-                                  :args [:icon not-choosed-icon]
-                                  :on-click
-                                  (fn [e] 
-                                    #dbg (let [new-path (chooser/choose-file
-                                                         :selection-mode (if selection-mode :dirs-only :files-only)
-                                                         :suggested-name value
-                                                         :success-fn  (fn [fc file] (.getAbsolutePath file)))]
-                                           (icon-chooser (.getComponent e) new-path)
-                                           (on-change (seesaw.core/label :text new-path)))))]
-    (icon-chooser icon-button value)
-    icon-button))
+ ;; -- CALENDAR COMPONENT
+ [jarman.gui.components.calendar
+  calendar
+  calendar-label]
+
+ ;; -- DATETIME COMPONENT
+ [jarman.gui.components.datetime
+  datetime
+  datetime-label]
+
+ ;; -- COMPOSITE COMPONENTS
+ [jarman.gui.components.composites
+  url-panel
+  file-panel])
+
+;;  ____  _____ ____ ___ ____ _____ _____ ____
+;; |  _ \| ____/ ___|_ _/ ___|_   _| ____|  _ \
+;; | |_) |  _|| |  _ | |\___ \ | | |  _| | |_) |
+;; |  _ <| |__| |_| || | ___) || | | |___|  _ <
+;; |_| \_\_____\____|___|____/ |_| |_____|_| \_\
+;;   ____ ___  __  __ ____   ___  _   _ _____ _   _ _____ _
+;;  / ___/ _ \|  \/  |  _ \ / _ \| \ | | ____| \ | |_   _( )___
+;; | |  | | | | |\/| | |_) | | | |  \| |  _| |  \| | | | |// __|
+;; | |__| |_| | |  | |  __/| |_| | |\  | |___| |\  | | |   \__ \
+;;  \____\___/|_|  |_|_|    \___/|_| \_|_____|_| \_| |_|   |___/
+;;
+
+(register-custom-component :id :jsgl-label           :component label          :actions (get-comp-actions 'label))
+(register-custom-component :id :jsgl-button          :component button         :actions (get-comp-actions 'button))
+(register-custom-component :id :jsgl-combobox        :component combobox       :actions (get-comp-actions 'combobox))
+(register-custom-component :id :jsgl-text            :component text           :actions (get-comp-actions 'text))
+(register-custom-component :id :jsgl-textarea        :component textarea       :actions (get-comp-actions 'textarea))
+(register-custom-component :id :jsgl-codearea        :component codearea       :actions (get-comp-actions 'codearea))
+(register-custom-component :id :jsgl-input-file      :component input-file     :actions (get-comp-actions 'input-file))
+(register-custom-component :id :jsgl-file-dialog     :component file-dialog    :actions (get-comp-actions 'file-dialog))
+(register-custom-component :id :jsgl-calendar        :component calendar       :actions (get-comp-actions 'calendar))
+(register-custom-component :id :jsgl-calendar-label  :component calendar-label :actions (get-comp-actions 'calendar-label))
+(register-custom-component :id :jsgl-datetime        :component datetime       :actions (get-comp-actions 'datetime))
+(register-custom-component :id :jsgl-datetime-label  :component datetime-label :actions (get-comp-actions 'datetime-label))
+(register-custom-component :id :jsgl-url-panel       :component url-panel      :actions (get-comp-actions 'url-panel)       :constructor  jarman.logic.metadata/map->Link)
+(register-custom-component :id :jsgl-file-panel      :component file-panel     :actions (get-comp-actions 'file-panel)      :constructor  jarman.logic.metadata/map->File)
+
+;;  ____  _____ __  __  ___
+;; |  _ \| ____|  \/  |/ _ \
+;; | | | |  _| | |\/| | | | |
+;; | |_| | |___| |  | | |_| |
+;; |____/|_____|_|  |_|\___/
+;;
 
 
 (comment
-  (c/frame
-   :content
-   (seesaw.mig/mig-panel
-    :background  face/c-compos-background-darker
-    :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
-    :border (b/empty-border :thickness 10)
-    :items [[(seesaw.core/label :text "site" :font (gtool/getFont :bold 20))]
-            [(ccomp/url-panel    {:on-change (on-change :seal.site) :default {}})]
-            ;; [(seesaw.core/label :text "file" :font (gtool/getFont :bold 20))]
-            ;; [(ccomp/file-panel   {:on-change (on-change :seal.file) :on-download (on-downld :seal.file) :default {} :mode false ;; (:insert-mode (state!))
-            ;;                       })]
-            ;; [(seesaw.core/label :text "ftpf" :font (gtool/getFont :bold 20))]
-            ;; [(ccomp/ftp-panel    {:on-change (on-change :seal.ftp-file) :on-download (on-downld :seal.ftp-file) :default {} :mode false ;;  (:insert-mode (state!))
-            ;;                       })]
-            ])
-   :title "Jarman" :size [1000 :by 800])
-  
-  (-> (doto (seesaw.core/frame
-             :title "Jarman" 
-             :content (status-input-file))
-        (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
+  ;; SOME HELPERS
+  (seesaw.dev/show-events  (javax.swing.JFrame.))
+  (seesaw.dev/show-events  (seesaw.core/combobox))
+  (seesaw.dev/show-options (gui-panels/grid-panel))
+  (seesaw.dev/show-options (seesaw.core/combobox))
+  ;; IMPORTS  
+  (require
+   '[seesaw.dev]
+   '[seesaw.core          :as c]
+   '[seesaw.border        :as b]
+   '[jarman.gui.gui-tools :as gtool]
+   '[jarman.faces         :as face])
+  ;; ----------------------------
+  ;; jarman.gui.components.common
+  (doto (seesaw.core/frame
+         :title "Jarman" 
+         :content (seesaw.mig/mig-panel
+                   :background  face/c-compos-background-darker
+                   :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
+                   :border (b/empty-border :thickness 10)
+                   :items [[(label :value "(label) test component")]
+                           [(button :value "(button) test component ")]
+                           [(text :value "(text) input field which (support (Emacs)) keybindings")]
+                           [(textarea :value "(textarea) multiline text-area field\n which (support (Emacs)) keybindings\nand wrapped through the scroll-\nbar")]
+                           [(codearea :value ";;(codearea) which (support\n;; (Emacs)) keybindings\n\n(fn [x] \n\t(label :value \"Some test label\"))" :language :clojure)]
+                           [(combobox :value "A" :model ["A" "B" "C"])]
+                           [(combobox :value 1 :model [1 2 3])]]))
+    (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!)
+  ;; ----------------------------
+  ;; jarman.gui.components.system
+  (doto (seesaw.core/frame
+         :title "Jarman" 
+         :content (seesaw.mig/mig-panel
+                   :background  face/c-compos-background-darker
+                   :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
+                   :border (b/empty-border :thickness 10)
+                   :items [[(seesaw.core/label :text "Begin Chooser")]
+                           [(input-file)]
+                           [(seesaw.core/label :text "End Chooser")]]))
+    (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!)
+  ;; ----------------------------
+  ;; jarman.gui.components.<calendar/datetime>
+  (doto (seesaw.core/frame
+         :title "Jarman"
+         :content (seesaw.mig/mig-panel
+                   :background  face/c-compos-background-darker
+                   :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
+                   :border (b/empty-border :thickness 10)
+                   :items [[(seesaw.core/label :text "Calendar Component" :font (jarman.gui.gui-tools/getFont :bold 20))]
+                           [(calendar-label :value "2020-10-01 10:22")]
+                           [(seesaw.core/label :text "DateTime Component" :font (jarman.gui.gui-tools/getFont :bold 20))]
+                           [(datetime-label :value "2020-10-01 10:22")]]))
+    (.setLocationRelativeTo nil)
+    seesaw.core/pack! seesaw.core/show!)
+
   )
-
-

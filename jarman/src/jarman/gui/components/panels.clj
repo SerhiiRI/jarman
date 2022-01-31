@@ -1,4 +1,4 @@
-(ns jarman.gui.gui-panel
+(ns jarman.gui.components.panels
   (:require
    ;; Jarman
    [jarman.tools.lang :refer :all]
@@ -8,7 +8,19 @@
    ;; GUI
    [jarman.gui.core :refer [satom register!]]))
 
-(defn event-wrapper [component-type component]
+;;  ____ _____  _  _____ _____          
+;; / ___|_   _|/ \|_   _| ____|         
+;; \___ \ | | / _ \ | | |  _|           
+;;  ___) || |/ ___ \| | | |___          
+;; |____/ |_/_/   \_\_| |_____|         
+;;  ____   _    _   _ _____ _     ____  
+;; |  _ \ / \  | \ | | ____| |   / ___| 
+;; | |_) / _ \ |  \| |  _| | |   \___ \ 
+;; |  __/ ___ \| |\  | |___| |___ ___) |
+;; |_| /_/   \_\_| \_|_____|_____|____/ 
+;; 
+
+(defn- event-wrapper [component-type component]
   (fn [& {:keys [event-hook-atom event-hook] :as arguments}]
     (let [clean-arg (dissoc arguments :event-hook :event-hook-atom)]
       (let [component (apply component (interleave (keys clean-arg) (vals clean-arg)))
@@ -16,7 +28,7 @@
         (if event-hook (register! event-hook-atom component-hash (partial event-hook component)))
         component))))
 
-(defn event-panel-wrapper [component]
+(defn- event-panel-wrapper [component]
   (fn [& {:keys [event-hook-atom event-hook] :as arguments}]
     (let [clean-arg (dissoc arguments :event-hook :event-hook-atom)]
       (let [panel (apply component (interleave (keys clean-arg) (vals clean-arg)))
@@ -24,14 +36,15 @@
         (if event-hook (register! event-hook-atom panel-hash (partial event-hook panel)))
         panel))))
 
-(defmacro wrapp-components [wrapper & components-list]
+(defmacro ^:private wrapp-components [wrapper & components-list]
   `(do ~@(for [component components-list
                :let [panel-symbol   (symbol (name component))]]
            `(do
               (def ~panel-symbol (~wrapper ~component))
               (alter-meta! (var ~panel-symbol)
                            assoc
-                           :doc (:doc (meta (var ~component))))))
+                           :doc (:doc (meta (var ~component)))
+                           :arglists (:arglists (meta (var ~component))))))
        true))
 
 (wrapp-components event-panel-wrapper
@@ -89,8 +102,7 @@
                       (fn [panel a old-st new-st]
                         (seesaw.core/config! center-label :text (str (:value new-st))))))]
                   [(f-label "changes")]]))
-    (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!)
-  )
+    (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
 
 
 

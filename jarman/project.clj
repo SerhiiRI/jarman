@@ -15,6 +15,7 @@
                  [com.github.vlsi.mxgraph/jgraphx "4.2.2"]
                  [seesaw "1.5.0"]
                  ;; other
+                 [potemkin "0.4.5"]
                  [buddy/buddy-core "1.10.1"]
                  [kaleidocs/merge "0.3.0"]
                  [me.raynes/fs "1.4.6"]

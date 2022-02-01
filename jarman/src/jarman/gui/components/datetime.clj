@@ -26,6 +26,13 @@
 ;; | |___ / ___ \| |___| |___| |\  | |_| / ___ \|  _ < 
 ;;  \____/_/   \_\_____|_____|_| \_|____/_/   \_\_| \_\
 
+
+(declare datetime)
+(declare datetime-label)
+(declare create-body-panel)
+(declare create-footer-panel)
+(declare create-title-panel)
+
 (defn datetime
   [& {:keys [^String value
              ^clojure.lang.IFn on-click]

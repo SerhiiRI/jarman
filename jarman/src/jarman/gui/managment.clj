@@ -2,7 +2,7 @@
   (:require [clojure.string]
             [jarman.tools.lang :refer [blet]]))
 
-(defn- get-comp-actions [symb]
+(defn get-comp-actions [symb]
  (->> ((comp :keys first rest first :arglists meta resolve) symb)
       (keep #(when (clojure.string/starts-with? (str %) "on-") (keyword %)))
       (apply hash-set)))

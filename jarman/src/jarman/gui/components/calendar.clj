@@ -1,60 +1,19 @@
 (ns jarman.gui.components.calendar
   ;; ---
   (:require
-   ;; [clojure.string :as string]
-   ;; [clojure.pprint :refer [cl-format]]
    ;; ;; Seesaw
    [seesaw.core    :as c]
    [seesaw.border  :as b]
-   ;; [seesaw.chooser :as chooser]
    ;; ;; Jarman
    [jarman.tools.lang     :refer :all]
    [jarman.faces          :as face]
    [jarman.gui.core       :refer [satom register! cursor]]
    [jarman.gui.components.panels :as gui-panels]
-   [jarman.gui.components.common :refer [label button]]
-   ;; [jarman.gui.gui-tools      :as gui-tool]
-   ;; [jarman.gui.gui-panel      :as gui-panels]
-   ;; [jarman.config.environment :as env]
-   ;; [clojure.java.io           :as io]
-   )
-  ;; ---
+   [jarman.gui.components.common :refer [label button]])
   (:import
    [java.util Date Calendar]
    [javax.swing SwingUtilities]
-   [java.awt Point Toolkit]
-   ;; [jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons]
-   ;;          ;; Swing/AWT
-   ;;          [java.awt FileDialog Color]
-   ;;          [javax.swing.text
-   ;;           DefaultEditorKit
-   ;;           JTextComponent
-   ;;           JTextComponent$KeyBinding]
-   ;;          [javax.swing
-   ;;           JComponent
-   ;;           KeyStroke
-   ;;           AbstractAction
-   ;;           PopupFactory
-   ;;           Action]
-   ;;          [java.awt.event
-   ;;           KeyEvent
-   ;;           InputEvent
-   ;;           ActionEvent]
-   ;;          [org.fife.ui.rtextarea
-   ;;           RTextScrollPane
-   ;;           RTextAreaEditorKit
-   ;;           RTextAreaEditorKit$IncreaseFontSizeAction
-   ;;           RTextAreaEditorKit$DecreaseFontSizeAction]
-   ;;          [org.fife.ui.rsyntaxtextarea
-   ;;           RSyntaxTextArea
-   ;;           SyntaxScheme
-   ;;           Token]
-   ;; (import [javax.swing JLabel JPanel SwingUtilities]
-   ;;         [java.text SimpleDateFormat]
-   ;;         [java.util Date Calendar]
-   ;;         [java.awt BorderLayout Point Toolkit])
-            )
-  )
+   [java.awt Point Toolkit]))
 
 
 ;;   ____    _    _     _____ _   _ ____    _    ____  
@@ -63,8 +22,6 @@
 ;; | |___ / ___ \| |___| |___| |\  | |_| / ___ \|  _ < 
 ;;  \____/_/   \_\_____|_____|_| \_|____/_/   \_\_| \_\
 ;;                                                                               
-
-
 
 (declare calendar)
 (declare calendar-label)

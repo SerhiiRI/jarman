@@ -29,7 +29,8 @@
    [jarman.gui.components.calendar]
    [jarman.gui.components.composites]
    [jarman.gui.components.panels]
-   [jarman.gui.managment :refer [register-custom-component]]))
+   [jarman.gui.managment :refer [register-custom-component
+                                 get-comp-actions]]))
 
 ;;   ____ ___  __  __ ____   ___  _   _ _____ _   _ _____
 ;;  / ___/ _ \|  \/  |  _ \ / _ \| \ | | ____| \ | |_   _|

@@ -166,7 +166,18 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
    #+end_example
 
 * Common Dev
-** TODO /Feature/. defvar->defcustom in common ns. 
+** PLANNED /refactor/. Create /jarman.gui.swing/
+  should be common namespace that contain all the
+  tools for working with swing.
+** TODO /refactor/. Create /jarman.lang/
+  decompose =jarman.tools.lang=, and move all to the
+  jarman.lang with keeping the.
+** TODO /Feature/. defvar->defcustom in common ns.
+  define all
+  - defvar
+  - setq
+  - setj
+  - define-key... in /jarman.core/ or /jarman.lang/
 ** TODO /Feature/. Replacement for gui_components
    Example of argument
    #+begin_src clojure

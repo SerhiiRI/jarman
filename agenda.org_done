@@ -442,3 +442,220 @@ Archived entries from file /home/serhii/programs/jarman/agenda.org
   :ARCHIVE_TODO: DONE
   :END:
   in file view-manager.clj, markup TO DO, add messages(println), if we need
+
+* DONE /Feature./ Encrypt business files                              :@Serhii:
+   CLOSED: [2021-11-13 Sat 06:07]
+:PROPERTIES:
+:ARCHIVE_TIME: 2022-03-16 Wed 08:08
+:ARCHIVE_FILE: ~/programs/jarman/agenda.org
+:ARCHIVE_OLPATH: Backend
+:ARCHIVE_CATEGORY: agenda
+:ARCHIVE_TODO: DONE
+:END:
+   - [X] create crypo toolkit
+   - [X] create key-storage
+
+* DONE /Feature/. Permission system                                   :@Serhii:
+   CLOSED: [2021-11-07 Sun 16:48]
+:PROPERTIES:
+:ARCHIVE_TIME: 2022-03-16 Wed 08:08
+:ARCHIVE_FILE: ~/programs/jarman/agenda.org
+:ARCHIVE_OLPATH: Backend
+:ARCHIVE_CATEGORY: agenda
+:ARCHIVE_TODO: DONE
+:END:
+   - [X] Rewrie user session object
+     - [X] keep licence file in session.
+     - [X] Make testing on permission
+   - [X] Add into /left-bar menu/, /left-menu/ functionlity that test user permission before
+     render
+   - [X] View plugins permission system
+
+* DONE /Feature/. Macro for declaring some resource                   :@Serhii:
+   CLOSED: [2021-11-07 Sun 16:49]
+:PROPERTIES:
+:ARCHIVE_TIME: 2022-03-16 Wed 08:08
+:ARCHIVE_FILE: ~/programs/jarman/agenda.org
+:ARCHIVE_OLPATH: Backend
+:ARCHIVE_CATEGORY: agenda
+:ARCHIVE_TODO: DONE
+:END:
+   Create ~define-resource~ macro for definision of file
+   #+begin_src clojure
+     (define-resource jarman
+       (io/file "."           ".jarman")
+       (io/file env/user-home ".jarman"))
+     ;;=>
+     (def jarman-file-list
+       (io/file "."           ".jarman")
+       (io/file env/user-home ".jarman"))
+     (defn get-jarman [] (first-exist jarman-dot-file-list))
+   #+end_src
+   - [ ] fix update manager, because it strongly depend on old variable
+   - [ ] plugin manager
+   - [ ] dot jarman
+   - [ ] data.clj in managment
+
+* DONE /Feature/. Register licence mechanics                          :@Serhii:
+   CLOSED: [2021-11-07 Sun 16:49]
+:PROPERTIES:
+:ARCHIVE_TIME: 2022-03-16 Wed 08:09
+:ARCHIVE_FILE: ~/programs/jarman/agenda.org
+:ARCHIVE_OLPATH: Backend
+:ARCHIVE_CATEGORY: agenda
+:ARCHIVE_TODO: DONE
+:END:
+   - [X] Create =register-licence-file= functionality
+   - [X] decrypt/uncrypt by system RSA keys
+   - [X] Checking login user in system, limited by the licence
+
+* DONE /Feature/. Rewrite plugin system                               :@Serhii:
+   CLOSED: [2021-11-07 Sun 16:49] DEADLINE: <2021-09-09 Thu>
+:PROPERTIES:
+:ARCHIVE_TIME: 2022-03-16 Wed 08:09
+:ARCHIVE_FILE: ~/programs/jarman/agenda.org
+:ARCHIVE_OLPATH: Backend
+:ARCHIVE_CATEGORY: agenda
+:ARCHIVE_TODO: DONE
+:END:
+   - [X] Add ~:deps~ key into ~package~
+     - [X] create package compiling sequence
+   - [X] View plugin
+     - [X] Registration function.
+       - [X] Remove duplications of loaded plugins
+   - [X] Theme plugin [4/4]
+     with relation to [[themes plugin system]]
+     - [X] Theme declaration
+     - [X] Merge two theme face lists
+     - [X] Registration function
+     - [X] GUI Theme manager
+   - [X] Rename PandaPackage to PandaExtension
+   - [X] Languages support
+     [[file:jarman/src/jarman/gui/gui_tools.clj::208][lang in system]]
+     #+begin_src clojure
+       ;; src/jarman/gui/gui_tools.clj:208
+       (defvar selected-lang :ua)
+       ;;
+       (lang :accept)
+       (lang :dracula :theme-name)
+     #+end_src
+
+
+* DONE /Feature/. Support Org file                                    :@Serhii:
+   CLOSED: [2021-09-26 Sun 19:33]
+:PROPERTIES:
+:ARCHIVE_TIME: 2022-03-16 Wed 08:09
+:ARCHIVE_FILE: ~/programs/jarman/agenda.org
+:ARCHIVE_OLPATH: Backend
+:ARCHIVE_CATEGORY: agenda
+:ARCHIVE_TODO: DONE
+:END:
+   - [X] Create library for printing directly to org file [3/3]
+     - [X] Printing lib
+     - [X] printing by level
+     - [X] Move out to different places in one moment [2/2]
+       - [X] file
+       - [X] print
+
+* DONE /Feature/. Update Manager [2/2]                                 :@Aleks:
+   CLOSED: [2021-12-29 Wed 02:59] DEADLINE: <2021-10-13 śr.>
+:PROPERTIES:
+:ARCHIVE_TIME: 2022-03-16 Wed 08:09
+:ARCHIVE_FILE: ~/programs/jarman/agenda.org
+:ARCHIVE_OLPATH: Frontend
+:ARCHIVE_CATEGORY: agenda
+:ARCHIVE_TODO: DONE
+:END:
+   - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
+   - [X] Show popup with message need hard restart
+
+* DONE /Feature/. Interaction files [3/3]                             :@Serhii:
+   CLOSED: [2021-11-07 Sun 16:45]
+   :PROPERTIES:
+   :CUSTOM_ID: interaction-function-set
+   :ARCHIVE_TIME: 2022-03-16 Wed 08:09
+   :ARCHIVE_FILE: ~/programs/jarman/agenda.org
+   :ARCHIVE_OLPATH: Frontend
+   :ARCHIVE_CATEGORY: agenda
+   :ARCHIVE_TODO: DONE
+   :END:
+   - [X] =interaction.clj= [5/5]
+     implement file with simple proxy function where every funciton is just wrapper
+     with spec and good to read docs.
+     - [X] add function =open file in tab= as arg will be file path [4/4]
+       - [X] Open file
+       - [X] Auto syntax by extension file
+       - [X] Manual syntax set
+       - [X] Change syntax in runtime with combobx
+     - [X] invoke alert [info warning danger]
+     - [X] Hard restart. Recompiling plugin and clean-up global state
+       - [X] Write doc
+     - [X] Soft restart. Reaload gui
+       - [X] Write doc
+     - [X] Restart. The same as hard without state.
+       - [X] Write doc
+   - [X] Doom debugger [4/4]
+     - [X] Container on bottom
+     - [X] Resize in runtime
+     - [X] Open/New, Hide, Close
+     - [X] Ricardo inside
+   - [X] =faces.clj=
+     Finish moving to new customization style
+     
+
+* DONE /Feature/. Licenses [3/3]                               :@Aleks:@Serhii:
+   CLOSED: [2021-11-07 Sun 16:46] DEADLINE: <2021-10-13 śr.>
+:PROPERTIES:
+:ARCHIVE_TIME: 2022-03-16 Wed 08:09
+:ARCHIVE_FILE: ~/programs/jarman/agenda.org
+:ARCHIVE_OLPATH: Frontend
+:ARCHIVE_CATEGORY: agenda
+:ARCHIVE_TODO: DONE
+:END:
+   Related to [[Register licence mechanics]] issue.
+   - [X] FAQ for licence
+   - [X] insert licence GUI menu
+   - [X] Make template (put into some tmp file or place) [2/2]
+     - [X] Alert which making hard logout from system, and inform about computer count
+     - [X] Alert which inform on startup that licence is going to end
+
+* DONE /Feature/. Create configurations panel [1/1]
+   CLOSED: [2021-11-07 Sun 16:46] DEADLINE: <2021-10-13 śr.>
+:PROPERTIES:
+:ARCHIVE_TIME: 2022-03-16 Wed 08:09
+:ARCHIVE_FILE: ~/programs/jarman/agenda.org
+:ARCHIVE_OLPATH: Frontend
+:ARCHIVE_CATEGORY: agenda
+:ARCHIVE_TODO: DONE
+:END:
+   - [X] Language select box
+
+* DONE /Feature/. Jarman Theme Light Style [6/6]
+   CLOSED: [2021-10-08 Fri 13:55] DEADLINE: <2021-10-08 pt.>
+:PROPERTIES:
+:ARCHIVE_TIME: 2022-03-16 Wed 08:09
+:ARCHIVE_FILE: ~/programs/jarman/agenda.org
+:ARCHIVE_OLPATH: Frontend
+:ARCHIVE_CATEGORY: agenda
+:ARCHIVE_TODO: DONE
+:END:
+   - [X] rewrite styles config
+   - [X] global font
+   - [X] global background
+   - [X] global foreground
+   - [X] removing unnessesary font override
+   - [X] unifing styles in UI
+
+* DONE /Feature/. Theme Manager [3/3]                                 :@Serhii:
+   CLOSED: [2021-10-02 sob 12:18] DEADLINE: <2021-10-02 sob.>
+:PROPERTIES:
+:ARCHIVE_TIME: 2022-03-16 Wed 08:09
+:ARCHIVE_FILE: ~/programs/jarman/agenda.org
+:ARCHIVE_OLPATH: Frontend
+:ARCHIVE_CATEGORY: agenda
+:ARCHIVE_TODO: DONE
+:END:
+   - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
+   - [X] Make refreshing for jarman, when theme was selected
+   - [X] set info about selected theme into the .jarman
+

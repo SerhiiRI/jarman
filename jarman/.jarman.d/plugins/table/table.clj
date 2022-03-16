@@ -216,6 +216,50 @@
       :update-export-path   (assoc-in state [:export-path] value)
       state)))
 
+
+(defn action-print [m]
+  (cl-format *out* "Action Hendler(~A):~%  Action~20T~A~%  --------~20T--------~%~{  ~A~20T~A~%~}" 
+             (.getTime (java.util.Date.))
+             (get m :action)
+             (as-> m $
+               (dissoc $ :debug? :action)
+               (mapcat (fn [[k v]] (vector (name k) (pr-str v))) $))))
+
+(defn debug-print [m]
+  (cl-format *out* "=======DEBUG=======================~%")
+  (action-print m))
+
+(defn error-print [m reason]
+  (cl-format *out* "=======ERROR=======================~%")
+  (cl-format *out* "")
+  (action-print))
+
+(defn action-reset-model [state] {})
+(defn action-assoc-in-model [state {:keys [path k value]}] (assoc-in state [:model-changes k] value))
+(defn action-update-in-model [state k func] (update-in state [:model-changes k] func))
+(defn action-handler [state event-map]
+  ;; (let [meta-obj (:meta-obj (:plugin-toolkit state))
+  ;;       ;; k-field  (first k-path)
+  ;;       ]
+  ;;   (debug-print event-map)
+  ;;   (case action
+  ;;     :model-update            (action-update-in-model state event-map)
+  ;;     ;; :refresh-state        (merge state {:insert-mode value :model {} :model-changes {}})
+  ;;     ;; :switch-insert-update (assoc-in state [:insert-mode] value)
+  ;;     ;; :table-render         (merge state {:table-render value :model (grouping-model state {})})
+  ;;     ;; :add-missing          (assoc-in state k-path nil)
+  ;;     ;; :state-update         (assoc-in state k-path value)
+  ;;     ;; :update-changes       (assoc-in state (join-vec [:model-changes] k-path) value)
+  ;;     ;; :update-comps-changes (assoc-in state (join-vec [:model-changes] k-path) (update-comp-changes state k-path value))
+  ;;     ;; :download-comp        (do (.download (:v-obj action-m) {:local-path value :table_name (.return-table_name meta-obj)
+  ;;     ;;                                                         :model-data (ungrouping-model state (:model state))}) state)
+  ;;     ;; :clear-state          (merge state {:model-changes {} :model {:temp "temp"}})
+  ;;     ;; :set-model            (assoc-in state [:model] (grouping-model state value))
+  ;;     ;; :update-export-path   (assoc-in state [:export-path] value)
+  ;;     state))
+  )
+
+
 (defn- create-dispatcher [atom-var]
   (fn [action-m]
     (swap! atom-var (fn [state] (action-handler state action-m)))))
@@ -738,19 +782,21 @@
                     :debug? true}))))]
       (doto (c/frame
              :content
-             (seesaw.mig/mig-panel
-              :background  face/c-compos-background-darker
-              :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
-              :border (b/empty-border :thickness 10)
-              :items [[(seesaw.core/label :text "site" :font (gtool/getFont :bold 20))]
-                      [(ccomp/url-panel    {:on-change (on-change :seal.site) :default {}})]
-                      ;; [(seesaw.core/label :text "file" :font (gtool/getFont :bold 20))]
-                      ;; [(ccomp/file-panel   {:on-change (on-change :seal.file) :on-download (on-downld :seal.file) :default {} :mode false ;; (:insert-mode (state!))
-                      ;;                       })]
-                      ;; [(seesaw.core/label :text "ftpf" :font (gtool/getFont :bold 20))]
-                      ;; [(ccomp/ftp-panel    {:on-change (on-change :seal.ftp-file) :on-download (on-downld :seal.ftp-file) :default {} :mode false ;;  (:insert-mode (state!))
-                      ;;                       })]
-                      ])
+             (c/scrollable
+              (seesaw.mig/mig-panel
+               :background  face/c-compos-background-darker
+               :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
+               :border (b/empty-border :thickness 10)
+               :items [[(seesaw.core/label :text "site" :font (gtool/getFont :bold 20))]
+                       [(ccomp/url-panel :on-change (on-change :seal.site) :default {})]
+                       [(seesaw.core/label :text "file" :font (gtool/getFont :bold 20))]
+                       [(ccomp/file-panel :on-change (on-change :seal.file) :on-download (on-downld :seal.file) :default {} :selection-mode :load-nothing)]
+                       ;; [(seesaw.core/label :text "ftpf" :font (gtool/getFont :bold 20))]
+                       ;; [(ccomp/ftp-panel    {:on-change (on-change :seal.ftp-file) :on-download (on-downld :seal.ftp-file) :default {} :mode false ;;  (:insert-mode (state!))
+                       ;;                       })]
+                       ])
+              ;; :vscroll false
+              )
              :title "Jarman" :size [1000 :by 800])
         (.setLocationRelativeTo nil) c/pack! c/show!)))
   
@@ -868,12 +914,12 @@
          ;;  {...}...]
          ;;
          meta-columns (.return-columns-join table-meta)
-         ;; 
+         ;;
          ;; For comfort of usage, group meta-table vector
          ;; by the :field-qualified keyword. 
          ;; Convert [{:field A ...} {:field B ...}]
          ;;        => {:A {:field A ...} :B {:field B ...}}
-         ;; 
+         ;;
          meta-columns-m (into {} (doall (map (fn [m] {(keyword (:field-qualified m)) m}) meta-columns)))]
      (doall (for [k-or-m model-defview
                   :let [meta-information (if (keyword? k-or-m) (k-or-m meta-columns-m) k-or-m)]]
@@ -881,52 +927,259 @@
                 (map?     k-or-m) (convert-map-to-component state! dispatch! panel meta-information)
                 (keyword? k-or-m) (convert-key-to-component state! dispatch! panel meta-information)))))))
 
-(comment
-  (with-test-environ [:seal :table :seal]
-    (let [component-container
-          (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
-                          :border (b/empty-border :thickness 10)
-                          :items [[(c/label)]])]
-      (convert-model-to-components-list state! dispatch! component-container (:model-insert plugin-config))))
+(defn meta-to-component [fm]
+  (jarman.gui.gui-components2/border-panel
+   :north (jarman.gui.gui-components2/label :value (get fm :representation))
+   :south (jarman.gui.managment/transform-to-object (get fm :component-type))))
+
+;; (comment
+;;   (with-test-environ [:seal :table :seal]
+;;     (let [component-container
+;;           (smig/mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
+;;                           :border (b/empty-border :thickness 10)
+;;                           :items [[(c/label)]])]
+;;       (convert-model-to-components-list state! dispatch! component-container (:model-insert plugin-config))))
   
-  (view-manager/defview seal
-    (table
-     :id :seal
-     :name "seal"
-     :tables [:seal]
-     :view-columns [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove]
-     :model-insert [:seal.seal_number               
-                    :seal.datetime_of_use
-                    :seal.datetime_of_remove
-                    :seal.site
-                    :seal.loc_file
-                    :seal.ftp_file]
-     :active-buttons [:insert :update :delete :clear :changes]
-     :permission :ekka-all
-     :dialog {}
-     :actions {:upload-docs-to-db
-               (fn [state! dispatch!] (println (-> (state!) :plugin-toolkit :meta-obj .return-table_name)))}
-     :buttons [{:form-model :model-insert, 
-                :action :upload-docs-to-db, 
-                :title "Upload document"}]
-     :query {:table_name :seal,
-             :column
-             [:#as_is
-              :seal.id
-              :seal.seal_number
-              :seal.datetime_of_use
-              :seal.datetime_of_remove
-              :seal.site_name
-              :seal.site_url
-              :seal.file_name
-              :seal.file
-              :seal.ftp_file_name
-              :seal.ftp_file_path]}))
+;;   (view-manager/defview seal
+;;     (table
+;;      :id :seal
+;;      :name "seal"
+;;      :tables [:seal]
+;;      :view-columns [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove]
+;;      :model-insert [:seal.seal_number               
+;;                     :seal.datetime_of_use
+;;                     :seal.datetime_of_remove
+;;                     :seal.site
+;;                     :seal.loc_file
+;;                     :seal.ftp_file]
+;;      :active-buttons [:insert :update :delete :clear :changes]
+;;      :permission :ekka-all
+;;      :dialog {}
+;;      :actions {:upload-docs-to-db
+;;                (fn [state! dispatch!] (println (-> (state!) :plugin-toolkit :meta-obj .return-table_name)))}
+;;      :buttons [{:form-model :model-insert, 
+;;                 :action :upload-docs-to-db, 
+;;                 :title "Upload document"}]
+;;      :query {:table_name :seal,
+;;              :column
+;;              [:#as_is
+;;               :seal.id
+;;               :seal.seal_number
+;;               :seal.datetime_of_use
+;;               :seal.datetime_of_remove
+;;               :seal.site_name
+;;               :seal.site_url
+;;               :seal.file_name
+;;               :seal.file
+;;               :seal.ftp_file_name
+;;               :seal.ftp_file_path]}))
   
-  (with-test-environ [:seal :table :seal]
-    ;; (-> plugin-config :view-columns)
-    (generate-custom-buttons state! dispatch! :model-insert))
-  )
+;;   (with-test-environ [:seal :table :seal]
+;;     ;; (-> plugin-config :view-columns)
+;;     (generate-custom-buttons state! dispatch! :model-insert))
+
+;;   jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj
+
+  
+;;   (c/frame
+;;    :content
+;;    (c/scrollable
+;;     (seesaw.mig/mig-panel
+;;      :background  face/c-compos-background-darker
+;;      :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
+;;      :border (b/empty-border :thickness 10)
+;;      :items [[(seesaw.core/label :text "site" :font (gtool/getFont :bold 20))]
+;;              ]))
+;;    :title "Jarman" :size [1000 :by 800])
+  
+;;   (with-test-environ [:seal :table :seal]
+;;     (jarman.gui.managment/transform-to-object
+;;      ({:type :jsgl-text
+;;        :value "0"
+;;        :font-size 14
+;;        :char-limit 0
+;;        :placeholder ""
+;;        :border [10 10 5 5 2]
+;;        :on-click (fn [e] e)
+;;        ;; :border-color-unfocus face/c-underline
+;;        ;; :border-color-focus face/c-underline-on-focus
+;;        :start-underline nil
+;;        :args []}))))
+
+(comment 
+ (let [components (jarman.gui.managment/system-Components-list-group-get)
+      
+       model-change
+       (list (fn [m]
+               (if (= (:field-qualified m) :seal.table_name)
+                 (deep-merge-with (comp second list) m {:component-type {:on-change (fn [e] (str "CHUJ" (c/text e)))}})
+                 m)))]
+   (defn populate-dispatch! [meta-field]
+     (let [{:keys [type] :as comp-meta} (get meta-field :component-type)]
+       (reduce (fn [acc-m event-keyword]
+                 (if (contains? comp-meta event-keyword)
+                   (update-in acc-m [:component-type :on-change] (fn [f] (wrapp-dispatch! f meta-field))) acc-m))
+               meta-field (get-in components [type :actions]))))
+   (defn pre-populate-action! [meta-field]
+     (reduce (fn [acc-m f] (f acc-m)) meta-field model-change))
+   (quick-frame
+    (->> [{:field :table_name
+           :field-qualified :seal.table_name
+           :representation "Table name"
+           :component-type
+           {:type :jsgl-text
+            :value "0"
+            :font-size 14
+            :char-limit 0
+            :placeholder ""
+            :border [10 10 5 5 2]
+            :on-change (fn [e] (c/text e))
+            :start-underline nil
+            :args []}}]
+         (reduce
+          (fn [acc field]
+            (->> field
+                 (pre-populate-action!)
+                 (populate-dispatch!)
+                 (conj acc))) [])))))
+
+(defn convert-model-to-components-list2
+  "Description
+     Switch fn to convert by map or keyword"
+  [state! dispatch! model-defview]
+  (with-state
+    (let [model-changes (or (get plugin-config :model-change) [])
+          ;;
+          ;; {:jsgl-text #<Component{...}
+          ;;  :jsgl-selectbox #<Com...}
+          ;;
+          components (jarman.gui.managment/system-Components-list-group-get)
+          ;;
+          ;; [{:field-qualified :user.login :description "login"... }
+          ;;  {:field-qualified :user.password ... }
+          ;;  {...}...]
+          ;;
+          meta-columns (.return-columns-join table-meta)
+          ;;
+          ;; For comfort of usage, group meta-table vector
+          ;; by the :field-qualified keyword. 
+          ;; Convert [{:field A ...} {:field B ...}]
+          ;;        => {:A {:field A ...} :B {:field B ...}}
+          ;;
+          ;; meta-columns-m (into {} (doall (map (fn [m] {(keyword (:field-qualified m)) m}) meta-columns)))
+          meta-columns-m (group-by-apply (comp keyword :field-qualified) meta-columns :apply-group first)]
+      ;; --------------------
+      (wlet
+       (doall (for [k-or-m model-defview]
+                (let [meta-information (if (keyword? k-or-m) (k-or-m meta-columns-m) k-or-m)]
+                  (-> meta-information
+                      pre-populate-action!
+                      populate-dispatch!
+                      meta-to-component))))
+       ;; -------------------
+       ((populate-dispatch!
+         (fn [meta-field]
+           (let [{:keys [type] :as comp-meta} (get meta-field :component-type)]
+             (reduce
+              (fn [acc-m event-keyword]
+                (if (contains? comp-meta event-keyword)
+                  (update-in acc-m [:component-type event-keyword]
+                             (fn [f]
+                               (fn [e]
+                                 (dispatch!
+                                  {:debug? true
+                                   :type :model-change
+                                   :model-field (get meta-field :field-qualified)
+                                   :model-value ((eval f) e)})))) acc-m))
+              meta-field (get-in components [type :actions])))))
+        (pre-populate-action!
+         (fn [meta-field]
+           (reduce (fn [acc-m f] (f acc-m)) meta-field model-changes))))))))
+;; jjjjjjjjjjjjjjj
+;; (with-test-environ [:seal :table :seal]
+;;     ;; (-> plugin-config :view-columns)
+;;   (let
+;;       [;; Define strategy for generated form
+;;        ;; fixme:aleks doc
+;;        ;;  `:model-insert` - fixme:aleks doc
+;;        ;;  `:model-update` - fixme:aleks doc
+;;        current-model-stategy (if (or (:insert-mode (state!)) (nil? (:model-update plugin-config))) :model-insert :model-update)
+;;        ;; return :field-qualified for fields, that should be used in some way.
+;;        model-defview (current-model-stategy plugin-config)]
+;;     (quick-frame
+;;      (convert-model-to-components-list2 state! dispatch! model-defview))))
+
+
+
+
+
+
+(defn choose-screen! [^javax.swing.JFrame frame ^Number screen-n]
+  ;; S(Screen), F(Frame), H(Height), W(Width)
+  ;; +------------------[screen-n]---
+  ;; | 
+  ;; |    V
+  ;; |     x=S-X+(S-W/2)-(F-W/2)
+  ;; |     y=F-H+(S-H/2)-(F-H/2)
+  ;; |
+  (where
+   ((^java.awt.GraphicsEnvironment ge (java.awt.GraphicsEnvironment/getLocalGraphicsEnvironment))
+    (^"[Ljava.awt.GraphicsDevice;" gd (.getScreenDevices ge))
+    (screen screen-n if2 #(< -1 % (alength gd)) screen-n 0)
+    (S-X (.. (aget gd screen) getDefaultConfiguration getBounds -x))
+    (S-Y (.. frame getY))
+    (S-H (.. (aget gd screen) getDefaultConfiguration getBounds -height))
+    (S-W (.. (aget gd screen) getDefaultConfiguration getBounds -width))
+    (F-H (.  frame getWidth))
+    (F-W (.  frame getHeight))
+    (relative-y S-H do #(- (/ % 2) (/ F-H 2)) do long)
+    (relative-x S-W do #(- (/ % 2) (/ F-W 2)) do long))
+   (doto frame
+     (.setLocation
+      (+ relative-x S-X)
+      (+ relative-y S-Y)))))
+
+
+
+(defn quick-frame [items]
+ (-> 
+  (c/frame
+   :content
+   (c/scrollable
+    (seesaw.mig/mig-panel
+     :background  face/c-compos-background-darker
+     :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
+     :border (b/empty-border :thickness 10)
+     :items (mapv vector items)))
+   :title "Jarman" :size [1000 :by 800])
+  (c/pack!)
+  (choose-screen! 1)
+  (c/show!)))
+
+;; (map
+;;  (comp
+;;   vector
+;;   jarman.gui.managment/transform-to-object
+;;   :component-type
+;;   wrapp-into-state)
+;;  [{:description "Table name",
+;;    :private? false,
+;;    :default-value nil,
+;;    :editable? true,
+;;    :field :table_name,
+;;    :column-type [:varchar-120 :default :null],
+;;    :component-type {:type :jsgl-text
+;;                     :value "0"
+;;                     :font-size 14
+;;                     :char-limit 0
+;;                     :placeholder ""
+;;                     :border [10 10 5 5 2]
+;;                     :on-click (fn [e] e)
+;;                     :start-underline nil
+;;                     :args []},
+;;    :representation "Table name",
+;;    :constructor-var nil,
+;;    :field-qualified :seal.table_name}])
 
 (defn generate-custom-buttons
   "Description:
@@ -956,6 +1209,7 @@
              :message-head [:header :plugin-name]
              :message-body [:alerts :overriding-action-undef]})))))))))
 
+
 (comment
   (with-test-environ [:seal :table :seal]
     ;; (-> plugin-config :view-columns)
@@ -968,12 +1222,21 @@
      :name "seal"
      :tables [:seal]
      :view-columns [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove]
-     :model-insert [:seal.seal_number
-                    :seal.datetime_of_use
-                    :seal.datetime_of_remove
-                    :seal.site
-                    :seal.loc_file
-                    :seal.ftp_file]
+     ;; :model-insert [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove :seal.site :seal.loc_file :seal.ftp_file]
+     :model-insert [{:field :seal_number
+                     :field-qualified :seal.seal_number
+                     :representation "Seal Number"
+                     :component-type
+                     {:type :jsgl-text
+                      :value "0"
+                      :font-size 14
+                      :char-limit 0
+                      :placeholder ""
+                      :border [10 10 5 5 2]
+                      :on-change (fn [e] (seesaw.core/text e))
+                      :start-underline nil
+                      :args []}}]
+     :model-change []
      :active-buttons [:insert :update :delete :clear :changes]
      :permission :ekka-all
      :dialog {}
@@ -1000,6 +1263,10 @@
     ;; (-> plugin-config :view-columns)
     (generate-custom-buttons
      state! dispatch! :model-insert))
+
+  (with-test-environ [:seal :table :seal]
+    ;; (-> plugin-config :view-columns)
+    (:model-change plugin-config))
   )
 
 

@@ -7,8 +7,8 @@
 #+ARCHIVE: %s_done::
 #+STARTUP: overview
 
+* Note
 * Bugtrack
-
 ** PROCESSING 007 User plugin                                       :@Serhii:
    Add user plugin and support for Permissions
    - [X] GUI panel to show permission's in system
@@ -165,8 +165,9 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
         at java.base/java.lang.Thread.run(Thread.java:834)
    #+end_example
 
-* Frontend
-** /Feature/. Replacement for gui_components
+* Common Dev
+** TODO /Feature/. defvar->defcustom in common ns. 
+** TODO /Feature/. Replacement for gui_components
    Example of argument
    #+begin_src clojure
      [{:keys
@@ -223,7 +224,7 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
    2) Maybe will be fine to add some validation for arguments, and make
       debug machinizm.
 
-** /Feature/. Metadata definition
+** TODO /Feature/. Metadata definition
    Currently metadata declare
    - how to create table
    - how to manage table
@@ -286,8 +287,6 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
      - [ ] Autoclose log stream's /:@Serhii:/
      - [X] Override window events
 ** PLANNED Feature. Frontend upgrade [0/4]                           :@Aleks:
-*** Global shortcut (inside state) and focus pointer
-    - [ ] Create storage for key-binding and fns to invoke. Functions should be from interaction.clj. Some like {~:C-r_s~ soft-restart ~:C-s~ save-changes}
 *** Slider menu [0/7]
     - [ ] Move icon buttons to one transparent vertical layout - SliderBox.
     - [ ] SliderBox should be on JLayeredPane.
@@ -335,64 +334,6 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
    - [X] tutorial point
    - [ ] try add more KeyEventDispachers
    - [ ] lock repeating event on hold key
-** DONE /Feature/. Update Manager [2/2]                                :@Aleks:
-   CLOSED: [2021-12-29 Wed 02:59] DEADLINE: <2021-10-13 śr.>
-   - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
-   - [X] Show popup with message need hard restart
-** DONE /Feature/. Interaction files [3/3]                            :@Serhii:
-   CLOSED: [2021-11-07 Sun 16:45]
-   :PROPERTIES:
-   :CUSTOM_ID: interaction-function-set
-   :END:
-   - [X] =interaction.clj= [5/5]
-     implement file with simple proxy function where every funciton is just wrapper
-     with spec and good to read docs.
-     - [X] add function =open file in tab= as arg will be file path [4/4]
-       - [X] Open file
-       - [X] Auto syntax by extension file
-       - [X] Manual syntax set
-       - [X] Change syntax in runtime with combobx
-     - [X] invoke alert [info warning danger]
-     - [X] Hard restart. Recompiling plugin and clean-up global state
-       - [X] Write doc
-     - [X] Soft restart. Reaload gui
-       - [X] Write doc
-     - [X] Restart. The same as hard without state.
-       - [X] Write doc
-   - [X] Doom debugger [4/4]
-     - [X] Container on bottom
-     - [X] Resize in runtime
-     - [X] Open/New, Hide, Close
-     - [X] Ricardo inside
-   - [X] =faces.clj=
-     Finish moving to new customization style
-     
-** DONE /Feature/. Licenses [3/3]                              :@Aleks:@Serhii:
-   CLOSED: [2021-11-07 Sun 16:46] DEADLINE: <2021-10-13 śr.>
-   Related to [[Register licence mechanics]] issue.
-   - [X] FAQ for licence
-   - [X] insert licence GUI menu
-   - [X] Make template (put into some tmp file or place) [2/2]
-     - [X] Alert which making hard logout from system, and inform about computer count
-     - [X] Alert which inform on startup that licence is going to end
-** DONE /Feature/. Create configurations panel [1/1]
-   CLOSED: [2021-11-07 Sun 16:46] DEADLINE: <2021-10-13 śr.>
-   - [X] Language select box
-** DONE /Feature/. Jarman Theme Light Style [6/6]
-   CLOSED: [2021-10-08 Fri 13:55] DEADLINE: <2021-10-08 pt.>
-   - [X] rewrite styles config
-   - [X] global font
-   - [X] global background
-   - [X] global foreground
-   - [X] removing unnessesary font override
-   - [X] unifing styles in UI
-** DONE /Feature/. Theme Manager [3/3]                                :@Serhii:
-   CLOSED: [2021-10-02 sob 12:18] DEADLINE: <2021-10-02 sob.>
-   - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
-   - [X] Make refreshing for jarman, when theme was selected
-   - [X] set info about selected theme into the .jarman
-
-* Backend
 ** PLANNED Service Period. sort contract list                       :@Serhii:
    - [ ] sorting contract by date
    - [ ] colorize contract by active-nonactive depend on current date
@@ -440,75 +381,6 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
 
 *** Акт виконаних робіт
 	-   створити
-** PLANNED Rewrite test for SSQL toolkit                :@Julia:@Serhii:
-   Current testable API too old. API standard was reimplemented.
-   And strongly need to rewrite test cases for oll things query.
-** DONE /Feature./ Encrypt business files                           :@Serhii:
-   CLOSED: [2021-11-13 Sat 06:07]
-   - [X] create crypo toolkit
-   - [X] create key-storage
-** DONE /Feature/. Permission system                                  :@Serhii:
-   CLOSED: [2021-11-07 Sun 16:48]
-   - [X] Rewrie user session object
-     - [X] keep licence file in session.
-     - [X] Make testing on permission
-   - [X] Add into /left-bar menu/, /left-menu/ functionlity that test user permission before
-     render
-   - [X] View plugins permission system
-** DONE /Feature/. Macro for declaring some resource                  :@Serhii:
-   CLOSED: [2021-11-07 Sun 16:49]
-   Create ~define-resource~ macro for definision of file
-   #+begin_src clojure
-     (define-resource jarman
-       (io/file "."           ".jarman")
-       (io/file env/user-home ".jarman"))
-     ;;=>
-     (def jarman-file-list
-       (io/file "."           ".jarman")
-       (io/file env/user-home ".jarman"))
-     (defn get-jarman [] (first-exist jarman-dot-file-list))
-   #+end_src
-   - [ ] fix update manager, because it strongly depend on old variable
-   - [ ] plugin manager
-   - [ ] dot jarman
-   - [ ] data.clj in managment
-** DONE /Feature/. Register licence mechanics                       :@Serhii:
-   CLOSED: [2021-11-07 Sun 16:49]
-   - [X] Create =register-licence-file= functionality
-   - [X] decrypt/uncrypt by system RSA keys
-   - [X] Checking login user in system, limited by the licence
-** DONE /Feature/. Rewrite plugin system                              :@Serhii:
-   CLOSED: [2021-11-07 Sun 16:49] DEADLINE: <2021-09-09 Thu>
-   - [X] Add ~:deps~ key into ~package~
-     - [X] create package compiling sequence
-   - [X] View plugin
-     - [X] Registration function.
-       - [X] Remove duplications of loaded plugins
-   - [X] Theme plugin [4/4]
-     with relation to [[themes plugin system]]
-     - [X] Theme declaration
-     - [X] Merge two theme face lists
-     - [X] Registration function
-     - [X] GUI Theme manager
-   - [X] Rename PandaPackage to PandaExtension
-   - [X] Languages support
-     [[file:jarman/src/jarman/gui/gui_tools.clj::208][lang in system]]
-     #+begin_src clojure
-       ;; src/jarman/gui/gui_tools.clj:208
-       (defvar selected-lang :ua)
-       ;;
-       (lang :accept)
-       (lang :dracula :theme-name)
-     #+end_src
-
-** DONE /Feature/. Support Org file                                   :@Serhii:
-   CLOSED: [2021-09-26 Sun 19:33]
-   - [X] Create library for printing directly to org file [3/3]
-     - [X] Printing lib
-     - [X] printing by level
-     - [X] Move out to different places in one moment [2/2]
-       - [X] file
-       - [X] print
 * Documentations
 ** PLANNED [#3] create jarman manifest file                         :@Serhii:
    - Note taken on [2021-09-02 чт 19:01] 

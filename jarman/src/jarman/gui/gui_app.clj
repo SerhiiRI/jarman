@@ -27,6 +27,7 @@
    [jarman.logic.state              :as state]
    [jarman.logic.session            :as session]
    [jarman.logic.view-manager       :as view-manager]
+   [jarman.logic.connection         :refer [do-connect-to-database]]
    [jarman.managment.data           :refer [do-load-jarman-data]]
    [jarman.plugin.extension-manager :refer [do-load-extensions]]
    [jarman.plugin.plugin            :refer [do-load-theme theme-selected]]
@@ -175,6 +176,7 @@
 ;; └─────────────┘
 
 ;; before central swing-component build
+;; fixme:serhii load-levels need to be configurable through the parameters
 (defn load-level-0
   "Description:
     Load configuration"
@@ -186,6 +188,11 @@
    "Load .jarman"
    (dot-jarman-load)
    (print-list-not-loaded))
+  ;; --- SHOULD BE DELETED--------\
+  (print-header                 ;;|
+   "connect jarman to database" ;;|
+   (do-connect-to-database))    ;;|
+  ;; -----------------------------/
   (print-header 
    "Load .jarman.data"
    (do-load-jarman-data))
@@ -229,7 +236,6 @@
       (.dispose (seesaw.core/to-frame (state/state :app)))
       (catch Exception e nil ;;(println "Last pos is nil")
              ))))
-
 
 (defn load-level-2
   "Description:

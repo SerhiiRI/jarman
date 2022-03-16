@@ -617,6 +617,21 @@
         (apply merge-with m maps)
         (apply f maps))) maps))
 
+(defn group-by-apply
+  [f coll & {:keys [apply-item apply-group]
+             :or {apply-group (fn [e] e)
+                  apply-item (fn [e] e)}}]
+  (let [result (transient {})]
+    (->> coll
+         (reduce
+          (fn [ret x]
+            (let [k (f x)]
+              (assoc! ret k (conj (get ret k []) (apply-item x))))) (transient {}))
+         (persistent!)
+         (reduce-kv
+          (fn [ret k v]
+            (assoc! ret k (apply-group v))) (transient {}))
+         (persistent!))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; `as-debug->>` threading macro ;;;

@@ -98,6 +98,13 @@
                            :mode :load-file)
                     (on-download @state)))])))
 
+;;  ____  _____ __  __  ___
+;; |  _ \| ____|  \/  |/ _ \
+;; | | | |  _| | |\/| | | | |
+;; | |_| | |___| |  | | |_| |
+;; |____/|_____|_|  |_|\___/
+;;
+
 (comment
   (doto (seesaw.core/frame
          :title "Jarman" 

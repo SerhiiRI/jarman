@@ -1,10 +1,10 @@
 (ns jarman.gui.components.calendar
   ;; ---
   (:require
-   ;; ;; Seesaw
+   ;; Seesaw
    [seesaw.core    :as c]
    [seesaw.border  :as b]
-   ;; ;; Jarman
+   ;; Jarman
    [jarman.tools.lang     :refer :all]
    [jarman.faces          :as face]
    [jarman.gui.core       :refer [satom register! cursor]]
@@ -48,7 +48,7 @@
     (dispatch (fn dispatch [k f] (fn [e] (swap! state #(update % k (fn [cal] (f cal))))))))
    (gui-panels/border-panel
     :border (b/empty-border :bottom 1 :top 1 :left 1 :right 1)
-    ;; :north  (create-title-panel state dispatch date-formater)
+    :north  (create-title-panel state dispatch date-formater)
     ;; :center (create-body-panel state dispatch week-start-day)
     :north  (create-title-panel (cursor [:date] state) date-formater on-click)
     :center (create-body-panel  (cursor [:date] state) date-formater on-click week-start-day)
@@ -74,25 +74,25 @@
       (.add java.util.Calendar/MONTH 1))))
 
 
-#_(defn create-title-panel [^jarman.gui.core.SwingAtom state ^clojure.lang.IFn dispatch ^java.text.SimpleDateFormat date-formater]
-  (where
-   ((center     (label :value (.format date-formater (.getTime (get (deref state) :date)))))
-    (prev-year  (label :value "<<" :tip "Previos Year"  :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (dispatch :date calendar-minus-year)))
-    (next-year  (label :value ">>" :tip "Next Year"     :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (dispatch :date calendar-plus-year)))
-    (prev-month (label :value "<"  :tip "Previos Month" :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (dispatch :date calendar-minus-month)))
-    (next-month (label :value ">"  :tip "Next Month"    :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (dispatch :date calendar-plus-month))))
-   (gui-panels/border-panel
-    :west prev-year
-    :east next-year
-    :center
-    (gui-panels/border-panel
-     :west prev-month
-     :east next-month
-     :center center
-     :event-hook-atom state
-     :event-hook
-     (fn [_ _ _ {date :date}]
-       (c/config! center :text (.format date-formater (.getTime date))))))))
+;; (defn create-title-panel [^jarman.gui.core.SwingAtom state ^clojure.lang.IFn dispatch ^java.text.SimpleDateFormat date-formater]
+;;   (where
+;;    ((center     (label :value (.format date-formater (.getTime (get (deref state) :date)))))
+;;     (prev-year  (label :value "<<" :tip "Previos Year"  :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (dispatch :date calendar-minus-year)))
+;;     (next-year  (label :value ">>" :tip "Next Year"     :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (dispatch :date calendar-plus-year)))
+;;     (prev-month (label :value "<"  :tip "Previos Month" :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (dispatch :date calendar-minus-month)))
+;;     (next-month (label :value ">"  :tip "Next Month"    :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (dispatch :date calendar-plus-month))))
+;;    (gui-panels/border-panel
+;;     :west prev-year
+;;     :east next-year
+;;     :center
+;;     (gui-panels/border-panel
+;;      :west prev-month
+;;      :east next-month
+;;      :center center
+;;      :event-hook-atom state
+;;      :event-hook
+;;      (fn [_ _ _ {date :date}]
+;;        (c/config! center :text (.format date-formater (.getTime date))))))))
 
 
 (defn create-title-panel [^jarman.gui.core.Cursor state ^java.text.SimpleDateFormat date-formater on-click]

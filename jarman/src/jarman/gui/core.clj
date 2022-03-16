@@ -31,7 +31,7 @@
   (swap [a f x y more]
     (swap! clojure-atom (fn [v] (apply f v x y more))))
   (reset [a new-value]
-    (reset! a new-value))
+    (reset! clojure-atom new-value))
 
   clojure.lang.IMeta
   (meta [_]
@@ -147,6 +147,7 @@
   ([path] (fn [a] (cursor path a)))
   ([path a] (if (seq path) (Cursor. path a) a)))
 
+;; fixme reset!
 (comment
   (def x (satom {:a {}}))
   (def x-cursor (cursor [:a] x))
@@ -154,5 +155,7 @@
   (register! x-cursor :local  (fn [a old new] (println "LOCAL:"  new)))
   (swap! x-cursor assoc :cursor-a 10)
   (swap! x        assoc :global 1)
+  (reset! x-cursor        11)
+  (reset! x        {:suka 1})
   (deref x-cursor)
   (deref x))

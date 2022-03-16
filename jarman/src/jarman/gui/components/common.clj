@@ -9,7 +9,8 @@
    ;; Jarman
    [jarman.tools.lang     :refer :all]
    [jarman.faces          :as face]
-   [jarman.gui.gui-tools  :as gui-tool])
+   [jarman.gui.gui-tools  :as gui-tool]
+   [jarman.gui.components.swing :as swing])
   (:import
    [java.awt Color]
    [javax.swing PopupFactory Action KeyStroke]
@@ -213,6 +214,12 @@
       (.put actionMap RTextAreaEditorKit/rtaDecreaseFontSizeAction (RTextAreaEditorKit$DecreaseFontSizeAction.))      
       someTextComponent)))
 
+;; (DefaultEditorKit/pasteAction)
+
+
+
+;; {#(KeyStroke "Shift+F") "s-expr-forward"
+;;  #(KeyStroke "Alt+F") "move-word-forward"}
 (defn wrapp-emacs-keymap [someTextComponent]
   ;; fixme:aleks:serhii
   ;; 1. [ ] (KeyStroke/getKeyStroke KeyEvent/VK_R, InputEvent/CTRL_MASK, false) getAction("findBackward")
@@ -368,6 +375,8 @@
        (.getActions someTextComponent))
       someTextComponent)))
 
+
+
 (comment
   (-> (doto (c/frame
              :content
@@ -456,7 +465,7 @@
      (apply args)
      (wrapp-emacs-keymap))))
 
-(defn- scrollbox
+(defn scrollbox
   [component
    & {:keys [args
              hbar-size
@@ -524,17 +533,154 @@
       ;; (on-chage text-area)
       (scrollbox text-area :minimum-size [50 :by 100]))))
 
-(defn show-componet-actions
-  "Example
-    (show-componet-actions (text :value \"\"))
-    (show-componet-actions (wrapp-emacs-keymap-rtext (seesaw.rsyntax/text-area :text \"\")))"
-  [component]
-  {:pre [(instance? javax.swing.JComponent component)]}
-  (println
-   (cl-format nil "ActionMap:~%~{  ~A~%~}Actions:~%~{  ~A~%~}"
-              (->> (.keys (.getActionMap component)) (into []) (sort))
-              (->> (.getActions component) (map (fn [a] (.getValue a Action/NAME))) (into []) (sort)))))
-;; (show-componet-actions (wrapp-emacs-keymap-rtext (seesaw.rsyntax/text-area :text "")))
+
+(comment
+ (import 'java.awt.event.KeyAdapter)
+ (import 'java.awt.event.KeyEvent)
+
+ (defn- char->modifier [c]
+   (cond
+     (= c \C) InputEvent/CTRL_MASK
+     (= c \M) InputEvent/ALT_MASK
+     (= c \S) InputEvent/SHIFT_MASK
+     :else 0))
+
+ (defn- kbd->KeyStroke [^String keybinding]
+   (if-let [[_ modifiers symb] (re-matches #"(?:(C|M|S|C-M|M-S|C-S|C-M-S)-)?(.)" keybinding)]
+     (KeyStroke/getKeyStroke
+      (KeyEvent/getExtendedKeyCodeForChar (int (first (seq symb))))
+      (if-not (some? modifiers) 0
+              (->> (seq modifiers)
+                   (remove (hash-set \-))
+                   (map char->modifier)
+                   (reduce bit-or))))
+     (throw (ex-info (format "keybinding <%s> has bad pattern" keybinding)
+                     {:keybinding keybinding
+                      :re-pattern #"(?:(C|M|S|C-M|M-S|C-S|C-M-S)-)?(.)"}))))
+
+ (defn kbd [^String keybinding]
+   (mapv kbd->KeyStroke (clojure.string/split keybinding #"\s+")))
+
+ (KeyEvent/getKeyText KeyEvent/VK_BACK_SLASH)
+
+ (defn KeyStroke->kbd [^KeyStroke keystroke]
+   (let [code (.getKeyCode keystroke)
+         modf (.getModifiers keystroke)]
+     ;; [(clojure.string/lower-case (KeyEvent/getKeyText code))
+     ;;  modf]
+     (apply str
+            (cond-> []
+              (= (bit-and modf InputEvent/CTRL_DOWN_MASK) InputEvent/CTRL_DOWN_MASK) (conj "C-")
+              (= (bit-and modf InputEvent/ALT_DOWN_MASK) InputEvent/ALT_DOWN_MASK) (conj "M-")
+              (= (bit-and modf InputEvent/SHIFT_MASK) InputEvent/SHIFT_MASK) (conj "S-")
+              true (conj (clojure.string/lower-case (KeyEvent/getKeyText code)))))))
+
+ java.awt.event.InputEvent/SHIFT_DOWN_MASK
+ java.awt.event.InputEvent/CTRL_DOWN_MASK
+ java.awt.event.InputEvent/SHIFT_MASK
+ java.awt.event.InputEvent/META_DOWN_MASK
+ java.awt.event.InputEvent/ALT_DOWN_MASK
+
+ InputEvent/SHIFT_MASK
+
+ (def key-map-list []
+   )
+ (deref global-key-map)
+ (map println (return-all-key-map (deref global-key-map)))
+
+ (defn return-all-key-map [l & {:keys [pref]}]
+   (apply concat
+          (for [[k f] (seq l)]
+            (let [kb (if pref (str pref " " (KeyStroke->kbd k)) (KeyStroke->kbd k))]
+              (if (map? f)
+                (concat
+                 [(cl-format nil "~20A prefix command" kb)]
+                 (return-all-key-map f :pref kb))
+                [(cl-format nil "~20A fn" kb)])))))
+
+ (def global-key-map (atom {}))
+ (defn define-key [^clojure.lang.PersistentVector kb-stroke-vec ^clojure.lang.IFn action]
+   (swap! global-key-map assoc-in kb-stroke-vec action))
+ (defn find-action [^clojure.lang.PersistentVector kb-stroke-vec]
+   (get-in (deref global-key-map) kb-stroke-vec nil))
+
+
+
+
+
+
+ (define-key (kbd "C-c C-p f") (fn [] (c/alert "you pressed C-c C-p f")))
+ (define-key (kbd "C-c C-p s s") (fn [] (c/alert "you pressed C-c C-a s s")))
+ (define-key (kbd "C-c C-p s d") (fn [] (c/alert "you pressed C-c C-a s d")))
+ (define-key (kbd "C-c s") (fn [] (c/alert "you pressed C-c s")))
+ (define-key (kbd "C-s") (fn [] (c/alert "you pressed C-s")))
+ 
+ (-> (seesaw.core/frame
+      :title "Jarman"
+      :content
+      (let [s (atom [])
+            event-map {(KeyStroke/getKeyStroke KeyEvent/VK_X InputEvent/ALT_MASK)
+                       (KeyStroke/getKeyStroke KeyEvent/VK_X 0)}
+            k (c/label :text "0" :font {:size 20})
+            ;; u (c/label :text "0" :font {:size 20})
+            ;; z (c/label :text "0" :font {:size 20})
+            ;; v (c/text
+            ;;    :listen
+            ;;    [:key-pressed
+            ;;     (fn [^KeyEvent e]
+            ;;       (println (.getModifiers e) (.getKeyCode e))
+            ;;       (c/text! m (str (.getModifiers e)))
+            ;;       (c/text! k (str (.getKeyCode e))))])
+            p (c/vertical-panel
+               :items [ ;; v
+                       (c/label :text "Keybindings            :" :font {:size 20})
+                       k
+                       ])
+            ]
+        (.setFocusable p true)
+        (.addKeyListener
+         p (proxy [KeyAdapter] []
+             (^void keyPressed [^KeyEvent e]
+              (when-not (#{KeyEvent/VK_CONTROL KeyEvent/VK_ALT KeyEvent/VK_SHIFT KeyEvent/VK_WINDOWS}
+                         (.getKeyCode (KeyStroke/getKeyStrokeForEvent e)))
+                ;; (println (.getKeyCode (KeyStroke/getKeyStrokeForEvent e)))
+                (swap! s conj (KeyStroke/getKeyStrokeForEvent e))
+                (let [act (find-action @s)
+                      txt (cl-format nil "~{~A~^ ~}" (map KeyStroke->kbd @s))]
+                  (println )
+                  (c/text! k txt)
+                  (cond 
+                    (nil? act) (reset! s [])
+                    (fn? act) (do (reset! s []) (act))
+                    (map? act) s)))
+              ;; (c/text! z (str (KeyStroke/getKeyStrokeForEvent e)))
+              ;; (c/text! u (str (.getModifiers e)))
+              ;; (c/text! k (str (.getKeyCode e)))
+              )))
+        p))
+     (swing/choose-screen! 0)
+     (seesaw.core/pack!)
+     (seesaw.core/show!))
+ (seesaw.dev/show-events (c/vertical-panel))
+
+ (-> (seesaw.core/frame
+      :title "Jarman"
+      :content (-> (seesaw.mig/mig-panel :items [[(c/label "chujnia")]])
+                   (wrapp-command-action
+                    :action (fn [e]
+                              (c/alert "SOME"))))
+      )
+     (swing/choose-screen! 1)
+     (seesaw.core/pack!)
+     (seesaw.core/show!)))
+
+(defn wrapp-command-action [component & {:keys [action]}]
+  (swing/wrapp-component-inputmap
+   component
+   {:id "run-action1"
+    :key  (KeyStroke/getKeyStroke KeyEvent/VK_X InputEvent/ALT_MASK)
+    :action action})
+  component)
 
 (defn codearea
   "Description:

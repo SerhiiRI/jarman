@@ -64,7 +64,6 @@
          :title "Jarman" :size [1000 :by 800]
          :content
          (mig-panel
-          :items [[(f-label "Any")] [(f-label "changes")]]
           :event-hook-atom st
           :event-hook
           (fn [panel a old state]
@@ -74,8 +73,6 @@
               :else                            (seesaw.core/config! panel :items [[(f-label "nothing")]])))))
     (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!)
 
-  
-  (seesaw.core)
   (swap! st assoc :value nil)
   (swap! st assoc :value 1)
   (swap! st assoc :value 2)

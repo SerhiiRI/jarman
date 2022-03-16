@@ -1,16 +1,19 @@
 (ns plugin.table.composite-components
   (:require
    [clojure.string :as s]
+   [clojure.java.io :as io]
    [seesaw.core   :as c]
    [jarman.tools.lang :refer [in?]]
    [jarman.gui.gui-tools :as gtool]
    [jarman.gui.core :refer [register! satom]]
    [jarman.gui.gui-panel :refer [mig-panel]]
+   [jarman.gui.gui-style :as gui-style]
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-components2]
    [jarman.faces              :as face]
    [jarman.logic.composite-components :as ccomp]
-   [jarman.logic.metadata]))
+   [jarman.logic.metadata])
+  (:import [jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; helper functions for building panel ;;;
@@ -26,7 +29,7 @@
   (gcomp/state-input-text {:func (fn [e] (func e defr-key))
                            :val  (defr-key val)}))
 
-(defn f-label [text] (seesaw.core/label :text text :font (gtool/getFont 20)))
+(defn f-label [text] (seesaw.core/label :text text :font (gtool/getFont 15)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; panels with composite components ;;;
@@ -52,41 +55,82 @@
 
 (comment
   ;; WIP
- (defn url-panel [{:keys [default on-change] :or {on-change (fn [e]) default {}}}]
-   (let [a (satom (jarman.logic.metadata/map->Link default))
-         text-params (fn [k] [:on-change (fn [e] (swap! a assoc k (c/value e)) (on-change @a)) :text (k @a)])]
-     (mig-panel 
-      :background  face/c-compos-background-darker
-      :constraints ["wrap 1" "10px[95:, fill, grow]10px" "10px[]10px"]
-      :items [[(f-label "text:")] [(apply jarman.gui.gui-components2/text (text-params :text))]
-              [(f-label "url:")]  [(apply jarman.gui.gui-components2/text (text-params :link))]])))
+  (defn url-panel [& {:keys [default on-change] :or {on-change (fn [e]) default {}}}]
+    (let [a (satom (jarman.logic.metadata/map->Link default))
+          text-params (fn [k] [:on-change (fn [e] (swap! a assoc k (c/value e)) (on-change @a)) :text (k @a)])]
+      (mig-panel 
+       :background  face/c-compos-background-darker
+       :constraints ["wrap 1" "10px[95:, fill, grow]10px" "10px[]10px"]
+       :items [[(f-label "text:")] [(apply jarman.gui.gui-components2/text (text-params :text))]
+               [(f-label "url:")]  [(apply jarman.gui.gui-components2/text (text-params :link))]])))
 
- (defn file-panel
-   [{:keys [default on-change on-download mode] :or {on-change (fn [e]) on-download (fn [e]) default {} mode nil}}]
-   (let [state (satom (jarman.logic.metadata/map->File default))
-         unselected-file? (atom true)
-         text-params (fn [k] {:func (fn [e] (swap! sratom assoc k (c/value e)) (on-change @sratom)) :val (k @sratom)})
-         sratom-download (fn [] {:func (fn [e] (on-download @sratom)) :val ""})]
-     (let [l-name     (f-label "File name")
-           l-file     (f-label "File path")
-           l-save     (f-label "Save file")
-           f-name     (gcomp/state-input-text  (sratom-kf :file-name))
-           path-file  (gcomp/status-input-file (sratom-kf :file))
-           path-save  (gcomp/status-input-file (sratom-download))
-           panel      (if (deref unselected-file?)
-                        (build-main-panel [[l-name] [l-file]                    [f-name] [path-file]                      ])
-                        (build-main-panel [[l-name] [l-file "split 2"] [l-save] [f-name] [path-file "split 2"] [path-save]]))]
-       (seesaw.core/config!
-        path-file :listen
-        [:property-change
-         (fn [e]
-           (let [file-name (last (s/split (.getToolTipText path-file) (re-pattern (java.io.File/separator))))]
-             (if-not (empty? file-name)
-               (do (seesaw.core/config! f-name :text file-name)
-                   (.revalidate panel)
-                   (.repaint panel))
-               (seesaw.core/config! f-name :text (:file-name val)))))])
-       panel))))
+  ;; 
+  (defn file-panel
+    [& {:keys [default on-change on-download selection-mode] :or {on-change (fn [e]) on-download (fn [e]) default {} mode nil}}]
+    (let [selection-mode (if (and (= :save-file selection-mode) (empty? default)) :save-nothing selection-mode)
+          state (satom (jarman.logic.metadata/map->File (assoc default :mode selection-mode)))
+          f-name     (fn [] (jarman.gui.gui-components2/text
+                            :value (:file-name @state)
+                            :on-change (fn [e]
+                                         (swap! state assoc :file-name (c/value e))
+                                         (on-change @state))))
+          path-file  (fn [] (jarman.gui.gui-components2/input-file
+                            :value (:file @state)
+                            :on-change (fn [e]
+                                         (swap! state assoc
+                                                :file e
+                                                :file-name (.getName (io/file e))
+                                                :mode :load-file)
+                                         (on-change @state))))
+          path-save  (fn [] (jarman.gui.gui-components2/input-file
+                            :value (:file @state)
+                            :icon (gui-style/icon GoogleMaterialDesignIcons/INSERT_DRIVE_FILE face/c-icon 17)
+                            :on-change (fn [e]
+                                         (println "Starting to download file(%s) into the (%s)" (:file @state) (str e))
+                                         (swap! state assoc
+                                                :download-to (.getName (io/file e))
+                                                :mode :load-file)
+                                         (on-download @state))))]
+      (mig-panel
+       :background  face/c-compos-background-darker
+       :constraints ["wrap 2" "10px[95:, fill, grow]10px" "10px[]10px"]
+       :items
+       (case (:mode @state)
+         :load-nothing  [[(f-label "File path")] [(path-file)]]
+         :load-file     [[(f-label "File name")] [(f-label "File path")] [(f-name)] [(path-file)]]
+         :save-nothing  [[(f-label "Nothing to save")]]
+         :save-file     [[(f-label "File name")] [(f-label "File") "split 2"] [(f-label "Save file to")]
+                         [(f-name)             ] [(path-file) "split 2"]      [(path-save)]]
+         [[(f-label "Unexpected state")]])
+       :event-hook-atom state
+       :event-hook
+       (fn [panel a old new]
+         (println (into {} new))
+         (case (:mode new)
+           :load-nothing  (c/config! panel :items [[(f-label "File path")] [(path-file)]])
+           :load-file     (c/config! panel :items [[(f-label "File name")] [(f-label "File path")] [(f-name)] [(path-file)]])
+           :save-nothing  (c/config! panel :items [[(f-label "Nothing to save")]])
+           :save-file     (c/config! panel :items [[(f-label "File name")] [(f-label "File") "split 2"] [(f-label "Save file to")]
+                                                   [(f-name)             ] [(path-file) "split 2"]      [(path-save)]])
+           (c/config! panel :items [[(f-label "Unexpected state")]]))))))
+
+  (-> (doto (seesaw.core/frame
+             :title "Jarman" 
+             :content (file-panel :default (jarman.logic.metadata/map->File
+                                            {:file-name "kupa" :file "bliat"}) :selection-mode :save-file
+                                  :on-change (fn [e] (println "on-chnage " (str e)))
+                                  :on-download (fn [e] (println "on-download " (str e)))))
+        (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
+
+  (-> (doto (seesaw.core/frame
+             :title "Jarman" 
+             :content (file-panel :default (jarman.logic.metadata/map->File
+                                            {}) :selection-mode :load-nothing
+                                  :on-change (fn [e] (println "on-chnage " (str e)))
+                                  :on-download (fn [e] (println "on-download " (str e)))))
+        (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
+)
+
 
 (comment
   (require 'jarman.gui.gui-components2)
@@ -184,7 +228,7 @@
         panel      (if mode  (build-main-panel (gtool/join-mig-items [l-name l-file f-name path-file]))
                        (build-main-panel [[l-name] [l-file "split 2"] [l-save] [f-name] [path-file "split 2"] [path-save]]))]
     (seesaw.core/config! path-file :listen [:property-change (fn [e]
-                                                              (let [file-name  (last (s/split (.getToolTipText path-file)
+                                                              (let [file-name  (last (s/split (.getToolTipText path-file) 
                                                                                               (re-pattern (java.io.File/separator))))]
                                                                 (if-not (empty? file-name)
                                                                   (do (seesaw.core/config! f-name :text file-name)
@@ -227,17 +271,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; test view for composite components ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment (let [state (atom {})
-               mig   (fn [items](seesaw.core/scrollable (seesaw.mig/mig-panel
-                                                         :constraints ["wrap 1" "150px[]0px" "100px[]0px"]
-                                                         :items [[items]])))
-               ;; panel-ftp  (mig (url-panel {}))
-               ;; panel-ftp  (mig (file-panel {}))
-               panel-ftp  (mig (ftp-panel {}))]
-           (-> (doto (seesaw.core/frame
-                      :title "DEBUG WINDOW" :undecorated? false
-                      :minimum-size [450 :by 450]
-                      :size [450 :by 450]
-                      :content panel-ftp)
-                 (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))))
+(comment
+  (let [state (atom {})
+        mig   (fn [items](seesaw.core/scrollable (seesaw.mig/mig-panel
+                                                 :constraints ["wrap 1" "150px[]0px" "100px[]0px"]
+                                                 :items [[items]])))
+        ;; panel-ftp  (mig (url-panel {}))
+        ;; panel-ftp  (mig (file-panel {}))
+        panel-ftp  (mig (ftp-panel {}))]
+    (-> (doto (seesaw.core/frame
+               :title "DEBUG WINDOW" :undecorated? false
+               :minimum-size [450 :by 450]
+               :size [450 :by 450]
+               :content panel-ftp)
+          (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))))
 

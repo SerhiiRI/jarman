@@ -116,6 +116,34 @@
       state)))
 
 
+(view-manager/defview seal
+    (table
+     :id :seal
+     :name "seal"
+     :tables [:seal]
+     :view-columns [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove]
+     :model-insert [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove :seal.site :seal.loc_file :seal.ftp_file]
+     :active-buttons [:insert :update :delete :clear :changes]
+     :permission :ekka-all
+     :dialog {}
+     :actions {:upload-docs-to-db
+               (fn [state! dispatch!] (println (-> (state!) :plugin-toolkit :meta-obj .return-table_name)))}
+     :buttons [{:form-model :model-insert, 
+                :action :upload-docs-to-db, 
+                :title "Upload document"}]
+     :query {:table_name :seal,
+             :column
+             [:#as_is
+              :seal.id
+              :seal.seal_number
+              :seal.datetime_of_use
+              :seal.datetime_of_remove
+              :seal.site_name
+              :seal.site_url
+              :seal.file_name
+              :seal.file
+              :seal.ftp_file_name
+              :seal.ftp_file_path]}))
 
 (comment
   ;; new configuration design
@@ -127,13 +155,18 @@
      :name :seal
      :permission :ekka-all
      ;; Meta/Model information 
-     :tables          [:seal]
-     :active-buttons  [:insert :update :delete :clear :changes]
-     :model           [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove :seal.site :seal.loc_file :seal.ftp_file]
-     :dialogs         {:user.id_permission [:permission :dialog-table :permission-table]}
+     :tables       [:seal]
+     :model-list   [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove :seal.site :seal.loc_file :seal.ftp_file]
+     :model-change [;; (fn [f] (= (:field-qualified f) :seal.seal_number)
+                    ;;   (update f :component-type
+                    ;;           {}))
+                    ]
+     :dialogs {:user.id_permission [:permission :dialog-table :permission-table]}
+     :actions #{:insert :update :delete :clear :changes}
      ;; Plugin-customization
      :custom-configs {:layout 3/10}
-     :custom-actions {:upload-docs-to-db  (fn [state! dispatch!] (println (-> (state!) :plugin-toolkit :meta-obj .return-table_name)))}
+     :custom-actions {:upload-docs-to-db
+                      (fn [state! dispatch!] (println (-> (state!) :plugin-toolkit :meta-obj .return-table_name)))}
      :custom-buttons [{:form-model :model-insert :action :upload-docs-to-db :title "Upload document"}]
      :custom-queries
      {:default

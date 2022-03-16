@@ -867,8 +867,6 @@
                              (login-icons state! dispatch!)])]
     (switch-focus state!)
     panel))
-
-
  
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
@@ -893,9 +891,7 @@
                        :else (deref state)))
         dispatch!   (create-disptcher state)
         login-frame (frame-login state! dispatch!)]
-    
     (swap! (state! :atom) (fn [s] (assoc s :frame login-frame)))
-    
     (if (state/state :debug-mode)
       (timelife 1 (fn []
                     (dosync
@@ -903,11 +899,10 @@
                             #(-> %
                                  (assoc :login "admin")
                                  (assoc :passwd "admin")))
-                     (try-to-login state! dispatch! login-frame :jarman--trashpanda-team_ddns_net--3307)))))
+                     (try-to-login state! dispatch! login-frame :jarman--localhost--3306)))))
     
     (if (= res-validation nil)
       (-> (doto login-frame (.setLocationRelativeTo nil)) seesaw.core/pack! seesaw.core/show!))))
-
 
 (defn -main [& args]
   (let [xToolkit (Toolkit/getDefaultToolkit)

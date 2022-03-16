@@ -11,14 +11,8 @@
            (java.text SimpleDateFormat)
            (java.sql SQLException)))
 
-(defvar dataconnection-alist
-  {:jarman--trashpanda-team_ddns_net--3307 ;; dell
-   {:dbtype "mysql",
-    :host "trashpanda-team.ddns.net",
-    :port 3307,
-    :dbname "jarman",
-    :user "root",
-    :password "misiePysie69"}}
+(defvar dataconnection-saved nil)
+(defvar dataconnection-alist {}
   :name "Datasources"
   :doc "Connection map list"
   :type clojure.lang.PersistentArrayMap
@@ -133,12 +127,14 @@
       :password \"1234\"}"
   [] (deref *connection*))
 
-;;; FOR DEBUG CONNECTION
-(connection-set
- ;; set selected
- (:jarman--trashpanda-team_ddns_net--3307
-  ;;------------
-  (deref dataconnection-alist)))
+(defn do-connect-to-database []
+  (assert (not-empty (deref dataconnection-alist)) "Error. Variable `jarman.logic.connection/dataconnection-alist` cannot be empty")
+  (assert (some? (deref dataconnection-saved)) "Error. Unsetted `jarman.logic.connection/dataconnection-saved` var")
+  (-> (connection-set
+       (get (deref dataconnection-alist)
+            (deref dataconnection-saved)))
+      (test-connection))
+  true)
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; JDBC WRAPPERS ;;; 

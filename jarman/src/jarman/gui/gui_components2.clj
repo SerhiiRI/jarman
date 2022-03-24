@@ -16,9 +16,9 @@
 ;;  [X] common component router namespaces
 ;;  [X] keyboard sequence Action like in Emacs
 ;;  [X] wrote some demo's on bottom of 'jarman.gui.gui-components2
-;;  [ ] delete deprecated java objects
+;;  [X] delete deprecated java objects
 ;;  [ ] create quick text popup which dispose or chnage in every keyboard click
-;;  [ ] define 'jarman.gui.jsgl.actions with definition of test keyboard Actions.
+;;  [X] define 'jarman.gui.jsgl.actions with definition of test keyboard Actions.
 
 (ns jarman.gui.gui-components2
   (:require
@@ -29,6 +29,7 @@
    [jarman.gui.components.calendar]
    [jarman.gui.components.composites]
    [jarman.gui.components.panels]
+   [jarman.gui.components.listbox]
    [jarman.gui.managment :refer [register-custom-component
                                  get-comp-actions]]))
 
@@ -76,7 +77,11 @@
  ;; -- COMPOSITE COMPONENTS
  [jarman.gui.components.composites
   url-panel
-  file-panel])
+  file-panel]
+
+ ;; -- LISTBOX COMPONENT
+ [jarman.gui.components.listbox
+  select-panel])
 
 ;;  ____  _____ ____ ___ ____ _____ _____ ____
 ;; |  _ \| ____/ ___|_ _/ ___|_   _| ____|  _ \
@@ -104,6 +109,7 @@
 (register-custom-component :id :jsgl-datetime-label  :component datetime-label :actions (get-comp-actions 'datetime-label))
 (register-custom-component :id :jsgl-url-panel       :component url-panel      :actions (get-comp-actions 'url-panel)       :constructor  jarman.logic.metadata/map->Link)
 (register-custom-component :id :jsgl-file-panel      :component file-panel     :actions (get-comp-actions 'file-panel)      :constructor  jarman.logic.metadata/map->File)
+(register-custom-component :id :jsgl-listbox         :component file-panel     :actions (get-comp-actions 'file-panel)      :constructor  jarman.logic.metadata/map->File)
 
 ;;  ____  _____ __  __  ___
 ;; |  _ \| ____|  \/  |/ _ \

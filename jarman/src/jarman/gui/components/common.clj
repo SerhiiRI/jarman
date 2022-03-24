@@ -10,7 +10,9 @@
    [jarman.tools.lang     :refer :all]
    [jarman.faces          :as face]
    [jarman.gui.gui-tools  :as gui-tool]
-   [jarman.gui.components.swing :as swing])
+   [jarman.gui.components.swing :as swing]
+   [jarman.gui.components.swing-context :refer :all]
+   [jarman.gui.components.swing-keyboards :refer [define-key kbd kvc wrapp-keymap]])
   (:import
    [java.awt Color]
    [javax.swing PopupFactory Action KeyStroke]
@@ -19,6 +21,7 @@
     JTextComponent
     JTextComponent$KeyBinding]
    [java.awt.event
+    KeyAdapter
     KeyEvent
     InputEvent
     ActionEvent]
@@ -45,6 +48,47 @@
 ;;  \____\___/|_|  |_|_|    \___/|_| \_|_____|_| \_| |_| |____/ 
 ;; 
 
+;; keyboard configuration keymap wrappers
+(defn patch-emacs-keymap [keymap]
+  (-> keymap
+      (define-key (kbd "C-a")        DefaultEditorKit/beginLineAction)
+      (define-key (kbd "C-e")        DefaultEditorKit/endLineAction)
+      (define-key (kbd "C-b")        DefaultEditorKit/backwardAction)
+      (define-key (kbd "left")       DefaultEditorKit/backwardAction)
+      (define-key (kbd "C-f")        DefaultEditorKit/forwardAction)
+      (define-key (kbd "right")      DefaultEditorKit/forwardAction)
+      (define-key (kbd "M-b")        DefaultEditorKit/previousWordAction)
+      (define-key (kbd "M-f")        DefaultEditorKit/nextWordAction)
+      (define-key (kbd "C-p")        DefaultEditorKit/upAction)
+      (define-key (kbd "up")         DefaultEditorKit/upAction)
+      (define-key (kbd "C-n")        DefaultEditorKit/downAction)
+      (define-key (kbd "down")       DefaultEditorKit/downAction)
+      (define-key (kbd "C-v")        DefaultEditorKit/pageDownAction)
+      (define-key (kbd "C-u")        DefaultEditorKit/pageUpAction)
+      (define-key (kbd "C-d")        DefaultEditorKit/deleteNextCharAction)
+      (define-key (kbd "delete")     DefaultEditorKit/deleteNextCharAction)
+      (define-key (kbd "C-h")        DefaultEditorKit/deletePrevCharAction)
+      (define-key (kbd "backspace")  DefaultEditorKit/deletePrevCharAction)
+      (define-key (kbd "C-o")        DefaultEditorKit/insertBreakAction)
+      (define-key (kbd "C-m")        DefaultEditorKit/insertBreakAction)
+      (define-key (kbd "C-y")        DefaultEditorKit/pasteAction)
+      (define-key (kbd "C-w")        DefaultEditorKit/cutAction)
+      (define-key (kbd "M-w")        DefaultEditorKit/copyAction)
+      (define-key (kbd "M-space")    DefaultEditorKit/selectAllAction)
+      (define-key (kbd "C-S-right")  DefaultEditorKit/selectionNextWordAction)
+      (define-key (kbd "C-S-left")   DefaultEditorKit/selectionPreviousWordAction)
+      (define-key (kbd "M-S-period") DefaultEditorKit/endAction)
+      (define-key (kbd "M-S-comma")  DefaultEditorKit/beginAction)
+      (define-key (kbd "C-M-f")      'jarman.gui.components.swing-actions/s-expr-forward)
+      (define-key (kbd "C-M-b")      'jarman.gui.components.swing-actions/s-expr-backward)
+      (define-key (kbd "C-k")        'jarman.gui.components.swing-actions/delete-to-end-of-line)
+      (define-key (kbd "C-g")        'jarman.gui.components.swing-actions/unselect-selected-text)
+      (define-key (kbd "M-p")        'jarman.gui.components.swing-actions/show-full-text-popup)))
+
+(defn patch-rtext-keymap [keymap]
+  (-> keymap
+      (define-key (kbd "C-+") jarman.gui.components.swing-actions/rtext-increase-font-size)
+      (define-key (kbd "C--") jarman.gui.components.swing-actions/rtext-decrease-font-size)))
 
 ;; fixme:aleks create label
 ;; - we shuld have to type of labels. Label as button,
@@ -180,203 +224,6 @@
       (b/compound-border (b/empty-border :bottom bgap :top tgap :left lgap :right rgap)
                          (b/line-border (if flip-border :top :bottom) underline-size :color underline-color)))]))
 
-(defn- indexOfBracket [txt open-bracket close-bracket]
-  (loop [stack 0 index 0 found false [t-char & t-rest-char] txt]
-    ;; (println stack index t-char)
-    (cond
-      ;; ---
-      (< stack 0) -1
-      ;; --
-      (and found (= stack 0)) (dec index)
-      ;; ---
-      (= t-char close-bracket)
-      (if (= stack 1) (recur (dec stack) (inc index) found t-rest-char) (recur (dec stack) (inc index) found t-rest-char))
-      ;; ---
-      (= t-char open-bracket)
-      (recur (inc stack) (inc index) true t-rest-char)
-      ;; ---
-      (empty? t-rest-char) -1
-      ;; ---
-      :else
-      (recur stack (inc index) found t-rest-char))))
-
-(def default-editor-kit-action-map
-  (reduce (fn [acc action] (into acc {(.getValue action Action/NAME) action})) {} (.getActions (DefaultEditorKit.))))
-
-(defn wrapp-emacs-keymap-rtext [someTextComponent]
-  {:pre [(instance? org.fife.ui.rsyntaxtextarea.RSyntaxTextArea someTextComponent)]}
-  (let [^javax.swing.InputMap  keyMap    (.getInputMap someTextComponent)
-        ^javax.swing.ActionMap actionMap (.getActionMap someTextComponent)]
-    (do
-      (.put keyMap (KeyStroke/getKeyStroke KeyEvent/VK_EQUALS (bit-or InputEvent/CTRL_MASK InputEvent/SHIFT_MASK)) RTextAreaEditorKit/rtaIncreaseFontSizeAction)
-      (.put actionMap RTextAreaEditorKit/rtaIncreaseFontSizeAction (RTextAreaEditorKit$IncreaseFontSizeAction.))
-      (.put keyMap (KeyStroke/getKeyStroke KeyEvent/VK_MINUS  (bit-or InputEvent/CTRL_MASK InputEvent/SHIFT_MASK)) RTextAreaEditorKit/rtaDecreaseFontSizeAction)
-      (.put actionMap RTextAreaEditorKit/rtaDecreaseFontSizeAction (RTextAreaEditorKit$DecreaseFontSizeAction.))      
-      someTextComponent)))
-
-;; (DefaultEditorKit/pasteAction)
-
-
-
-;; {#(KeyStroke "Shift+F") "s-expr-forward"
-;;  #(KeyStroke "Alt+F") "move-word-forward"}
-(defn wrapp-emacs-keymap [someTextComponent]
-  ;; fixme:aleks:serhii
-  ;; 1. [ ] (KeyStroke/getKeyStroke KeyEvent/VK_R, InputEvent/CTRL_MASK, false) getAction("findBackward")
-  ;; 2. [ ] (KeyStroke/getKeyStroke KeyEvent/VK_S, InputEvent/CTRL_MASK, false) getAction("findForward")
-  ;; 3. [ ] Rework selection on cursor keeping mechanic
-  ;; 4. [W] For `Alt+P` show tooltip(or something like that) with full text passed in it, replace `PopupFactory`
-  ;; 5. [X] Jump to end of text and to the begin
-  ;; 6. [X] Stacking brackets s-expression searcher
-  ;; 7. [ ] refactor , make more modulatiry 
-  {:pre [(instance? javax.swing.text.JTextComponent someTextComponent)]}
-  (let [r-brackets {\[ \], \" \", \' \', \( \), \< \>}
-        l-brackets {\] \[, \" \", \' \', \) \(, \> \<}
-        excepts-chars #{\space \tab \newline}
-        ^javax.swing.InputMap  keyMap    (.getInputMap someTextComponent)
-        ^javax.swing.ActionMap actionMap (.getActionMap someTextComponent)]
-    (do
-      (.put keyMap (KeyStroke/getKeyStroke KeyEvent/VK_F (bit-or InputEvent/CTRL_MASK InputEvent/ALT_MASK))  "s-expr-forward")
-      (.put keyMap (KeyStroke/getKeyStroke KeyEvent/VK_B (bit-or InputEvent/CTRL_MASK InputEvent/ALT_MASK))  "s-expr-backward")
-      (.put keyMap (KeyStroke/getKeyStroke KeyEvent/VK_P InputEvent/ALT_MASK)  "show-full-text-popup")
-      (.put keyMap (KeyStroke/getKeyStroke KeyEvent/VK_K InputEvent/CTRL_MASK) "delete-to-end-of-line")
-      (.put keyMap (KeyStroke/getKeyStroke KeyEvent/VK_G InputEvent/CTRL_MASK) "unselect-selected-text")
-      (.put (.getActionMap someTextComponent)                                  "s-expr-forward"
-            (proxy [javax.swing.AbstractAction] []
-              (^void actionPerformed [^java.awt.event.ActionEvent event]
-               (let [component (^JTextComponent .getSource event)]
-                 (let [t (.getText component)
-                       currentCursor (.getCaretPosition component)
-                       [a b] (split-at currentCursor t)]
-                   (let [offset (reduce (fn [acc b-char]
-                                          (if (excepts-chars b-char)
-                                            (inc acc)
-                                            (reduced acc))) 0 b)] 
-                     (let [bracket (nth b offset)]
-                       (if ((set (keys r-brackets)) (nth b offset))
-                         (let [i (.indexOf (drop (inc offset) b) (get r-brackets bracket))]
-                           (if (> i 0)
-                             (.setCaretPosition component (+ currentCursor i 2 offset))))
-                         (println "TODO move word-forward")))
-                     (let [bracket (nth b offset)]
-                       (cond
-                         ;;---
-                         (#{\[ \( \<} bracket)
-                         (let [i (indexOfBracket (drop offset b) bracket (get r-brackets bracket))]
-                           (if (> i 0)
-                             (let [position (+ currentCursor i offset 1)]
-                               ;; (println (str (nth t (dec position)) (nth t position) (nth t (inc position))))
-                               ;; (println " ^ ")
-                               (.setCaretPosition component position))))
-                         
-                         (#{\" \'} bracket)
-                         (let [i (.indexOf (drop (inc offset) b) (get r-brackets bracket))]
-                           (if (> i 0)
-                             (let [position (+ currentCursor i 2 offset)]
-                               ;; (println (str (nth t (dec position)) (nth t position) (nth t (inc position))))
-                               ;; (println " ^ ")
-                               (.setCaretPosition component position))))
-                         :else
-                         (if-let [^Action action (get default-editor-kit-action-map DefaultEditorKit/nextWordAction)]
-                           (.actionPerformed action event))))))))))
-      (.put (.getActionMap someTextComponent)                                  "s-expr-backward"
-            (proxy [javax.swing.AbstractAction] []
-              (^void actionPerformed [^java.awt.event.ActionEvent event]
-               (let [component (^JTextComponent .getSource event)]
-                 (let [t (.getText component)
-                       currentCursor (.getCaretPosition component)
-                       [a _] (split-at currentCursor t)
-                       a (reverse a)]
-                   (let [offset (reduce (fn [acc a-char]
-                                          (if (excepts-chars a-char)
-                                            (inc acc)
-                                            (reduced acc))) 0 a)]
-                     (let [bracket (nth a offset)]
-                       (cond
-                         ;;---
-                         (#{\] \) \>} bracket)
-                         (let [i (indexOfBracket (drop offset a) bracket (get l-brackets bracket))]
-                           (if (> i 0)
-                             (let [position (- (count a) (+ i offset 1))]
-                               ;; (println (str (nth t (dec position)) (nth t position) (nth t (inc position))))
-                               ;; (println " ^ ")
-                               (.setCaretPosition component position))))
-                         
-                         (#{\" \'} bracket)
-                         (let [i (.indexOf (drop (inc offset) a) (get l-brackets bracket))]
-                           (if (> i 0)
-                             (let [position (- (count a) (+ i 2 offset))]
-                               ;; (println (str (nth t (dec position)) (nth t position) (nth t (inc position))))
-                               ;; (println " ^ ")
-                               (.setCaretPosition component position))))
-                         :else
-                         (if-let [^Action action (get default-editor-kit-action-map DefaultEditorKit/previousWordAction)]
-                           (.actionPerformed action event))))))))))
-      (.put (.getActionMap someTextComponent)                                  "unselect-selected-text"
-            (proxy [javax.swing.AbstractAction] []
-              (^void actionPerformed [^java.awt.event.ActionEvent event]
-               (let [component (^JTextComponent .getSource event)]
-                 (.setCaretPosition component 0)))))
-      (.put (.getActionMap someTextComponent)                                  "show-full-text-popup"
-            (proxy [javax.swing.AbstractAction] []
-              (^void actionPerformed [^java.awt.event.ActionEvent event]
-               (let [component (^JTextComponent .getSource event)]
-                 ;; (print " W: " (.. component getSize getWidth) " H: " (.. component getSize getHeight))
-                 ;; (print " X: " (.. component getLocationOnScreen getX))
-                 ;; (println " Y: " (.. component getLocationOnScreen getY))
-                 (let [^PopupFactory popup-factory (PopupFactory/getSharedInstance)]
-                   (let [p (.getPopup popup-factory component
-                                      (c/label :text (.getText component) :background "#d9ecff")
-                                      (.. component getLocationOnScreen getX)
-                                      (- (+ (.. component getLocationOnScreen getY) (.. component getSize getHeight)) 2))]
-                     (.show p)))))))
-      (.put (.getActionMap someTextComponent)                                  "delete-to-end-of-line"
-            (proxy [javax.swing.AbstractAction] []
-              (^void actionPerformed [^java.awt.event.ActionEvent event]
-               (let [component (^JTextComponent .getSource event)
-                     last-curret-position (.getCaretPosition component)]
-                 ;; (println (.getCaretPosition component))
-                 (let [[a b] (map (partial apply str) (split-at (.getCaretPosition component) (.getText component)))]
-                   (.setText component (str a (if (= (first b) \newline)
-                                                (string/replace-first b #"\n" "")
-                                                (string/replace-first b #"[^\n]+" ""))))
-                   (.setCaretPosition component last-curret-position))
-                 ;; (.setText )
-                 ))))
-      (JTextComponent/loadKeymap
-       (.getKeymap someTextComponent)
-       (into-array
-        JTextComponent$KeyBinding
-        (list
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_A InputEvent/CTRL_MASK)      DefaultEditorKit/beginLineAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_E InputEvent/CTRL_MASK)      DefaultEditorKit/endLineAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_B InputEvent/CTRL_MASK)      DefaultEditorKit/backwardAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_F InputEvent/CTRL_MASK)      DefaultEditorKit/forwardAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_B InputEvent/ALT_MASK)       DefaultEditorKit/previousWordAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_F InputEvent/ALT_MASK)       DefaultEditorKit/nextWordAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_P InputEvent/CTRL_MASK)      DefaultEditorKit/upAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_N InputEvent/CTRL_MASK)      DefaultEditorKit/downAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_V InputEvent/CTRL_MASK)      DefaultEditorKit/pageDownAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_U InputEvent/CTRL_MASK)      DefaultEditorKit/pageUpAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_D InputEvent/CTRL_MASK)      DefaultEditorKit/deleteNextCharAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_H InputEvent/CTRL_MASK)      DefaultEditorKit/deletePrevCharAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_O InputEvent/CTRL_MASK)      DefaultEditorKit/insertBreakAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_M InputEvent/CTRL_MASK)      DefaultEditorKit/insertBreakAction)
-         
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_Y InputEvent/CTRL_MASK)      DefaultEditorKit/pasteAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_W InputEvent/CTRL_MASK)      DefaultEditorKit/cutAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_W InputEvent/ALT_MASK)       DefaultEditorKit/copyAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_SPACE InputEvent/ALT_MASK)   DefaultEditorKit/selectAllAction)
-         
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_RIGHT   (bit-or InputEvent/CTRL_MASK InputEvent/SHIFT_MASK)) DefaultEditorKit/selectionNextWordAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_LEFT    (bit-or InputEvent/CTRL_MASK InputEvent/SHIFT_MASK)) DefaultEditorKit/selectionPreviousWordAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_PERIOD  (bit-or InputEvent/ALT_MASK InputEvent/SHIFT_MASK)) DefaultEditorKit/endAction)
-         (JTextComponent$KeyBinding. (KeyStroke/getKeyStroke KeyEvent/VK_COMMA   (bit-or InputEvent/ALT_MASK InputEvent/SHIFT_MASK)) DefaultEditorKit/beginAction)))
-       (.getActions someTextComponent))
-      someTextComponent)))
-
-
-
 (comment
   (-> (doto (c/frame
              :content
@@ -463,7 +310,9 @@
                  (c/config! e :user-data (set-user-data e :value (if (= placeholder @last-v) "" @last-v)))
                  (on-change e)))))])
      (apply args)
-     (wrapp-emacs-keymap))))
+     (wrapp-keymap
+      (-> (global-keymap) (patch-emacs-keymap))
+      jarman.gui.components.swing-actions/default-editor-kit-action-map))))
 
 (defn scrollbox
   [component
@@ -514,7 +363,9 @@
   (let [newBorder (fn [underline-color]
                     (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
                                        (b/line-border :bottom (nth border 4) :color underline-color)))]
-    (let [text-area (c/to-widget (wrapp-emacs-keymap (javax.swing.JTextArea.)))]
+    (let [text-area (c/to-widget (wrapp-keymap (javax.swing.JTextArea.)
+                                  (-> (global-keymap) (patch-emacs-keymap))
+                                  jarman.gui.components.swing-actions/default-editor-kit-action-map))]
       (c/config!
        text-area
        :text (rift value "")
@@ -532,155 +383,6 @@
                         (on-change e))])
       ;; (on-chage text-area)
       (scrollbox text-area :minimum-size [50 :by 100]))))
-
-
-(comment
- (import 'java.awt.event.KeyAdapter)
- (import 'java.awt.event.KeyEvent)
-
- (defn- char->modifier [c]
-   (cond
-     (= c \C) InputEvent/CTRL_MASK
-     (= c \M) InputEvent/ALT_MASK
-     (= c \S) InputEvent/SHIFT_MASK
-     :else 0))
-
- (defn- kbd->KeyStroke [^String keybinding]
-   (if-let [[_ modifiers symb] (re-matches #"(?:(C|M|S|C-M|M-S|C-S|C-M-S)-)?(.)" keybinding)]
-     (KeyStroke/getKeyStroke
-      (KeyEvent/getExtendedKeyCodeForChar (int (first (seq symb))))
-      (if-not (some? modifiers) 0
-              (->> (seq modifiers)
-                   (remove (hash-set \-))
-                   (map char->modifier)
-                   (reduce bit-or))))
-     (throw (ex-info (format "keybinding <%s> has bad pattern" keybinding)
-                     {:keybinding keybinding
-                      :re-pattern #"(?:(C|M|S|C-M|M-S|C-S|C-M-S)-)?(.)"}))))
-
- (defn kbd [^String keybinding]
-   (mapv kbd->KeyStroke (clojure.string/split keybinding #"\s+")))
-
- (KeyEvent/getKeyText KeyEvent/VK_BACK_SLASH)
-
- (defn KeyStroke->kbd [^KeyStroke keystroke]
-   (let [code (.getKeyCode keystroke)
-         modf (.getModifiers keystroke)]
-     ;; [(clojure.string/lower-case (KeyEvent/getKeyText code))
-     ;;  modf]
-     (apply str
-            (cond-> []
-              (= (bit-and modf InputEvent/CTRL_DOWN_MASK) InputEvent/CTRL_DOWN_MASK) (conj "C-")
-              (= (bit-and modf InputEvent/ALT_DOWN_MASK) InputEvent/ALT_DOWN_MASK) (conj "M-")
-              (= (bit-and modf InputEvent/SHIFT_MASK) InputEvent/SHIFT_MASK) (conj "S-")
-              true (conj (clojure.string/lower-case (KeyEvent/getKeyText code)))))))
-
- java.awt.event.InputEvent/SHIFT_DOWN_MASK
- java.awt.event.InputEvent/CTRL_DOWN_MASK
- java.awt.event.InputEvent/SHIFT_MASK
- java.awt.event.InputEvent/META_DOWN_MASK
- java.awt.event.InputEvent/ALT_DOWN_MASK
-
- InputEvent/SHIFT_MASK
-
- (def key-map-list []
-   )
- (deref global-key-map)
- (map println (return-all-key-map (deref global-key-map)))
-
- (defn return-all-key-map [l & {:keys [pref]}]
-   (apply concat
-          (for [[k f] (seq l)]
-            (let [kb (if pref (str pref " " (KeyStroke->kbd k)) (KeyStroke->kbd k))]
-              (if (map? f)
-                (concat
-                 [(cl-format nil "~20A prefix command" kb)]
-                 (return-all-key-map f :pref kb))
-                [(cl-format nil "~20A fn" kb)])))))
-
- (def global-key-map (atom {}))
- (defn define-key [^clojure.lang.PersistentVector kb-stroke-vec ^clojure.lang.IFn action]
-   (swap! global-key-map assoc-in kb-stroke-vec action))
- (defn find-action [^clojure.lang.PersistentVector kb-stroke-vec]
-   (get-in (deref global-key-map) kb-stroke-vec nil))
-
-
-
-
-
-
- (define-key (kbd "C-c C-p f") (fn [] (c/alert "you pressed C-c C-p f")))
- (define-key (kbd "C-c C-p s s") (fn [] (c/alert "you pressed C-c C-a s s")))
- (define-key (kbd "C-c C-p s d") (fn [] (c/alert "you pressed C-c C-a s d")))
- (define-key (kbd "C-c s") (fn [] (c/alert "you pressed C-c s")))
- (define-key (kbd "C-s") (fn [] (c/alert "you pressed C-s")))
- 
- (-> (seesaw.core/frame
-      :title "Jarman"
-      :content
-      (let [s (atom [])
-            event-map {(KeyStroke/getKeyStroke KeyEvent/VK_X InputEvent/ALT_MASK)
-                       (KeyStroke/getKeyStroke KeyEvent/VK_X 0)}
-            k (c/label :text "0" :font {:size 20})
-            ;; u (c/label :text "0" :font {:size 20})
-            ;; z (c/label :text "0" :font {:size 20})
-            ;; v (c/text
-            ;;    :listen
-            ;;    [:key-pressed
-            ;;     (fn [^KeyEvent e]
-            ;;       (println (.getModifiers e) (.getKeyCode e))
-            ;;       (c/text! m (str (.getModifiers e)))
-            ;;       (c/text! k (str (.getKeyCode e))))])
-            p (c/vertical-panel
-               :items [ ;; v
-                       (c/label :text "Keybindings            :" :font {:size 20})
-                       k
-                       ])
-            ]
-        (.setFocusable p true)
-        (.addKeyListener
-         p (proxy [KeyAdapter] []
-             (^void keyPressed [^KeyEvent e]
-              (when-not (#{KeyEvent/VK_CONTROL KeyEvent/VK_ALT KeyEvent/VK_SHIFT KeyEvent/VK_WINDOWS}
-                         (.getKeyCode (KeyStroke/getKeyStrokeForEvent e)))
-                ;; (println (.getKeyCode (KeyStroke/getKeyStrokeForEvent e)))
-                (swap! s conj (KeyStroke/getKeyStrokeForEvent e))
-                (let [act (find-action @s)
-                      txt (cl-format nil "~{~A~^ ~}" (map KeyStroke->kbd @s))]
-                  (println )
-                  (c/text! k txt)
-                  (cond 
-                    (nil? act) (reset! s [])
-                    (fn? act) (do (reset! s []) (act))
-                    (map? act) s)))
-              ;; (c/text! z (str (KeyStroke/getKeyStrokeForEvent e)))
-              ;; (c/text! u (str (.getModifiers e)))
-              ;; (c/text! k (str (.getKeyCode e)))
-              )))
-        p))
-     (swing/choose-screen! 0)
-     (seesaw.core/pack!)
-     (seesaw.core/show!))
- (seesaw.dev/show-events (c/vertical-panel))
-
- (-> (seesaw.core/frame
-      :title "Jarman"
-      :content (-> (seesaw.mig/mig-panel :items [[(c/label "chujnia")]])
-                   (wrapp-command-action
-                    :action (fn [e]
-                              (c/alert "SOME"))))
-      )
-     (swing/choose-screen! 1)
-     (seesaw.core/pack!)
-     (seesaw.core/show!)))
-
-(defn wrapp-command-action [component & {:keys [action]}]
-  (swing/wrapp-component-inputmap
-   component
-   {:id "run-action1"
-    :key  (KeyStroke/getKeyStroke KeyEvent/VK_X InputEvent/ALT_MASK)
-    :action action})
-  component)
 
 (defn codearea
   "Description:
@@ -821,8 +523,9 @@
      (where 
       ((rTextScrollPane
         (-> rTextArea
-            (wrapp-emacs-keymap)
-            (wrapp-emacs-keymap-rtext)
+            (wrapp-keymap
+             (-> (global-keymap) (patch-emacs-keymap) (patch-rtext-keymap))
+             jarman.gui.components.swing-actions/default-rtext-editor-kit-action-map)
             (RTextScrollPane.)))
        (rTextScrollPaneGutter (.getGutter rTextScrollPane)))
       (doto rTextScrollPaneGutter
@@ -912,8 +615,49 @@
 ;;
 
 (comment
-  (seesaw.dev/show-options (c/frame))
+  ;;;;;;;;;;
+  ;; 
+  (doto (seesaw.core/frame
+         :title "Jarman"
+         :content
+         (text :value "(label) test component"))
+    ;; (swing/choose-screen! 1)
+    (.setLocationRelativeTo nil)
+    (seesaw.core/pack!)
+    (seesaw.core/show!))
+  ;; 
+  ;;;;;;;;;;;
+  ;;
+  (doto (seesaw.core/frame
+         :title "Jarman"
+         :content
+         (let [input-keymap (-> (global-keymap) (patch-emacs-keymap))
+               input-action jarman.gui.components.swing-actions/default-editor-kit-action-map
+               l0 (c/label :text "Keybindings          :" :font {:size 20})
+               s1 (c/label :text "|")
+               l1 (c/label :text "-----------" :font {:size 20})
+               l2 (c/label :text "-----------" :font {:size 20})
+               t1 (c/text  :text "one (text) fdosaf" :background "#aec")
+               l3 (c/label :text "-----------" :font {:size 20})
+               l4 (c/label :text "-----------" :font {:size 20})
+               t2 (c/text  :text "next text" :background "#aec")
+               p  (c/vertical-panel :items [l0 s1 l1 l2 t1 l3 l4 t2])]
+           (.setFocusable p true)
+           ;; (.setParent (.getInputMap t1) nil)
+           ;; (.remove (.getActionMap t1) DefaultEditorKit/insertContentAction)
+           ;; (describe-keymap input-keymap)
+           (wrapp-keymap t1
+                         (-> (global-keymap) (patch-emacs-keymap))
+                         jarman.gui.components.swing-actions/default-editor-kit-action-map)
+           (wrapp-keymap p)
+           p))
+    ;; (swing/choose-screen! 1)
+    (.setLocationRelativeTo nil)
+    (seesaw.core/pack!)
+    (seesaw.core/show!)))
 
+(comment
+  (seesaw.dev/show-options (c/frame))
   ;; All components
   (-> (doto (seesaw.core/frame
              :title "Jarman" 
@@ -925,7 +669,7 @@
                                [(button :value "(button) test component ")]
                                [(text :value "(text) input field which (support (Emacs)) keybindings")]
                                [(textarea :value "(textarea) multiline text-area field\n which (support (Emacs)) keybindings\nand wrapped through the scroll-\nbar")]
-                               [(codearea :value ";;(codearea) which (support\n;; (Emacs)) keybindings\n\n(fn [x] \n\t(label :value \"Some test label\"))" :language :clojure)]
+                               ;; [(codearea :value ";;(codearea) which (support\n;; (Emacs)) keybindings\n\n(fn [x] \n\t(label :value \"Some test label\"))" :language :clojure)]
                                [(combobox :value "A" :model ["A" "B" "C"])]
                                [(combobox :value 1 :model [1 2 3])]]))
         (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
@@ -950,5 +694,4 @@
                       [(seesaw.core/label :text \"another label\")]])
              :title \"Jarman\" :size [1000 :by 800])
         (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!)))" :language :clojure) :north]]))
-        (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!))
-  )
+        (.setLocationRelativeTo nil) seesaw.core/pack! seesaw.core/show!)))

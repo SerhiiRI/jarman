@@ -101,6 +101,8 @@
   [connection-map]
   (dosync (ref-set *connection* (merge connection-map {:useUnicode true :characterEncoding "UTF-8"}))))
 
+(comment (connection-set (get (deref dataconnection-alist) :jarman--localhost--3306)))
+
 (defn connection-wrapp
   "Description
     Wrapp connection like 

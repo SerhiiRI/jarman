@@ -34,9 +34,10 @@
 ;;; - into local file `f` use `database-recreate-metadata-to-file` func
 
 (defn database-recreate-metadata-to-db
-  [] (metadata/do-create-meta-database))
+  [] (metadata/do-create-meta-for-existing-tables))
 
-(defn database-recreate-metadata-to-file
+;; fixme: serhii keep order in the current metadata
+#_(defn database-recreate-metadata-to-file
   "Descriptions
     Create metadata maps and put it to file
   Example 
@@ -48,7 +49,7 @@
 ;;; in `METADATA` table in database
 
 (defn database-clear-metadata
-  ([] (metadata/do-clear-meta)))
+  ([] (metadata/database-delete-all-metadata)))
 
 ;;; Function test all system tabeles, which declarated in `*system-tables`
 ;;; Under 'testing' mean next algrithm:
@@ -70,17 +71,10 @@
 (defn- database-list-all-tables []
   (mapv (comp second first) (db/query (sql/show-tables))))
 
-;; (map (fn [[l v]]
-;;        [(clojure.string/upper-case (str l)) v])
-;;      (sort-by first (seq (group-by first (database-list-all-tables)))))
-
-;;; scheme up/down functionality
-
 (defn database-create-scheme [metadata-v]
-  ;; (sinit/procedure-test-all)
-  (doall (for [m metadata-v]
-           (do ;; (metadata/update-meta metadata)
-               (db/exec (metadata/create-table-by-meta m))))))
+  (doall
+   (for [m metadata-v]
+     (db/exec (metadata/create-table-by-meta m)))))
 
 (defn database-delete-business-scheme [metadata-v]
   (doall
@@ -107,9 +101,7 @@
 ;;; if nil - make insert, and oposite
 
 (defn metadata-persist-into-database [metadata-v]
-  (doall
-   (for [m metadata-v]
-     (metadata/create-one-meta m (:table_name m)))))
+  (doall (map metadata/database-update-metadata-table metadata-v)))
 
 (defn metadata-info [metadata-v]
   (let [f-offset #(cl-format nil "~,,v<~A~>" %1 %2)]
@@ -184,7 +176,7 @@
   (database-info)
   (metadata-info all-tables)
   (database-recreate-metadata-to-db)
-  (database-recreate-metadata-to-file "some.edn")
+  ;; (database-recreate-metadata-to-file "some.edn")
   (metadata-persist-into-database all-tables)
   (metadata-get-tables all-tables)
   (database-verify-system-tables)

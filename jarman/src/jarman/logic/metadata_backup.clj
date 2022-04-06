@@ -60,7 +60,7 @@
    ;; clean-up oldest files 
    ;; (backup-keep-10-last-modified)
    ;;; make a backup
-   [metadata-list (vec (getset!))
+   [metadata-list (vec (return-metadata))
     tables-list (map :table metadata-list)
     date-format "YYYY-MM-dd HH:mm:ss"
     backup-metadata
@@ -106,7 +106,7 @@
 
 
 (defn metadata-get [table]
-  (first (getset! table)))
+  (first (return-metadata table)))
 
 (defn metadata-set [metadata]
   (update-meta metadata))
@@ -125,19 +125,19 @@
 (defn recur-find-front-path [ml]
   {:tbl ((comp :field :table :prop) ml)
    :ref (if ((comp :front-references :ref :table :prop) ml)
-          (mapv #(recur-find-front-path (first (getset! %)))
+          (mapv #(recur-find-front-path (first (return-metadata %)))
                 ((comp :front-references :ref :table :prop) ml)))})
 
 (defn recur-find-columns-path [ml & {:keys [table-name]}]
   (into {(if table-name table-name (keyword ((comp :field :table :prop) ml))) ((comp :columns :prop) ml)}
         (if ((comp :front-references :ref :table :prop) ml)
           ;; reduce #(if (some? ) into) {}
-          (map #(recur-find-columns-path (first (getset! %)) :table_name ((comp :front-references :ref :table :prop) ml)) 
+          (map #(recur-find-columns-path (first (return-metadata %)) :table_name ((comp :front-references :ref :table :prop) ml)) 
                ((comp :front-references :ref :table :prop) ml)))))
 
-;; (recur-find-columns-path (first (getset! :repair_contract)))
+;; (recur-find-columns-path (first (return-metadata :repair_contract)))
 ;; (defn make-column-list [table-name]
-;;   (if-let [table-meta (first (getset! table-name))]
+;;   (if-let [table-meta (first (return-metadata table-name))]
 ;;     (->> (recur-find-columns-path table-meta)
 ;;          (map (fn [[table-name columns]]
 ;;                 (println table-name)
@@ -146,11 +146,11 @@
 ;; (make-column-list :repair_contract)
 ;; (quick-front-paths :repair_contract)
 (defn quick-front-paths [table-name]
-  (if-let [table-meta (first (getset! table-name))]
+  (if-let [table-meta (first (return-metadata table-name))]
     (recur-find-front-path table-meta)))
 
-;; (recur-find-columns-path (first (getset! :repair_contract)))
-;; (recur-find-columns-path (first (getset! :repair_contract)))
-;; (map :field-qualified ((comp :columns :prop)(first (getset! :repair_contract))))
+;; (recur-find-columns-path (first (return-metadata :repair_contract)))
+;; (recur-find-columns-path (first (return-metadata :repair_contract)))
+;; (map :field-qualified ((comp :columns :prop)(first (return-metadata :repair_contract))))
 ;; :cache_register->cache_register->point_of_sale->enterpreneur
-;; (clojure.pprint/pprint (first(getset! :user)))
+;; (clojure.pprint/pprint (first(return-metadata :user)))

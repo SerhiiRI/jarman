@@ -12,1446 +12,214 @@
   :ekka-payment-managment {:doc "Permission for all elements in Ekka module"}})
 
 (def metadata-list
-  [{:id nil,
-    :table_name "documents",
+  [{:table_name "documents",
     :prop
-    {:table
-     {:field "documents",
-      :representation "documents",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
+    (prop
+     :table (table :field :documents :representation "Documents")
      :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :table_name,
-       :column-type {:stype "varchar(100)", :tname :varchar, :tspec nil, :tlimit 100, :tnull true, :textra "", :tdefault nil, :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 100},
-       :representation "Table name",
-       :field-qualified :documents.table_name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :name,
-       :column-type {:stype "varchar(200)", :tname :varchar, :tspec nil, :tlimit 200, :tnull true, :textra "", :tdefault nil, :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 200},
-       :representation "Name",
-       :field-qualified :documents.name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :document,
-       :column-type {:stype "blob", :tname :blob, :tspec nil, :tlimit nil, :tnull true, :textra "", :tdefault nil, :tkey ""},
-       :component {:type :jsgl-text, :value ""},
-       :representation "Document",
-       :field-qualified :documents.document}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :prop,
-       :column-type '{:stype "text",
-                      :tname :text,
-                      :tspec nil,
-                      :tlimit nil,
-                      :tnull false,
-                      :textra "",
-                      :tdefault "'{}'",
-                      :tkey ""},
-       :component {:type :jsgl-textarea, :value "'{}'"},
-       :representation "Prop",
-       :field-qualified :documents.prop}]}}
-   {:id nil,
-    :table_name "profile",
+     [(field :field :table_name :component {:type :jsgl-text, :value ""})
+      (field :field :name :component {:type :jsgl-text, :value ""})
+      (field :field :document :component {:type :jsgl-file-dialog})
+      (field :field :prop :component {:type :jsgl-codearea, :value "{}"})])}
+   ;; ----------------------------------------------------
+   {:table_name "profile",
     :prop
-    {:table
-     {:field "profile",
-      :representation "profile",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
+    (prop
+     :table (table :field :profile :representation "Profile")
      :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :name,
-       :column-type
-       {:stype "varchar(20)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 20},
-       :representation "Name",
-       :field-qualified :profile.name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :configuration,
-       :column-type
-       {:stype "tinytext",
-        :tname :tinytext,
-        :tspec nil,
-        :tlimit nil,
-        :tnull false,
-        :textra "",
-        :tdefault "'{}'",
-        :tkey ""},
-       :component {:type :jsgl-textarea, :value "'{}'"},
-       :representation "Configuration",
-       :field-qualified :profile.configuration}]}}
-   {:id nil,
-    :table_name "user",
+     [(field :field :name
+             :column-type [:varchar-20 :default :null]
+             :component {:type :jsgl-text, :value ""})
+      (field :field :configuration
+             :column-type [:tinytext :nnull :default "'{}'"]
+             :component {:type :jsgl-codearea, :value "{}"})])}
+   ;; ----------------------------------------------------
+   {:table_name "user",
     :prop
-    {:table
-     {:field "user",
-      :representation "user",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
+    (prop
+     :table (table :field :user :representation "User"),
      :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :login,
-       :column-type
-       {:stype "varchar(100)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 100,
-        :tnull false,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 100},
-       :representation "Login",
-       :field-qualified :user.login}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :password,
-       :column-type
-       {:stype "varchar(100)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 100,
-        :tnull false,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 100},
-       :representation "Password",
-       :field-qualified :user.password}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :first_name,
-       :column-type
-       {:stype "varchar(100)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 100,
-        :tnull false,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 100},
-       :representation "First name",
-       :field-qualified :user.first_name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :last_name,
-       :column-type
-       {:stype "varchar(100)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 100,
-        :tnull false,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 100},
-       :representation "Last name",
-       :field-qualified :user.last_name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :configuration,
-       :column-type
-       {:stype "text",
-        :tname :text,
-        :tspec nil,
-        :tlimit nil,
-        :tnull false,
-        :textra "",
-        :tdefault "'{}'",
-        :tkey ""},
-       :component {:type :jsgl-textarea, :value "'{}'"},
-       :representation "Configuration",
-       :field-qualified :user.configuration}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_profile,
-       :column-type
-       {:stype "bigint(120) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 120,
-        :tnull false,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_profile :profile} {:delete :cascade, :update :cascade}],
-       :representation "Id profile",
-       :field-qualified :user.id_profile,
-       :key-table :profile}]}}
-   {:id nil,
-    :table_name "enterprise",
+     [(field :field :login :component {:type :jsgl-text, :value ""})
+      (field :field :password :component {:type :jsgl-text, :value ""})
+      (field :field :first_name :component {:type :jsgl-text, :value ""})
+      (field :field :last_name :component {:type :jsgl-text, :value ""})
+      (field :field :configuration :component {:type :jsgl-codearea, :value "{}"})
+      (field-link :field :id_profile :component {:type :jsgl-link}
+                  :foreign-keys [{:id_profile :profile} {:delete :cascade, :update :cascade}]
+                  :key-table :profile)])}
+   ;; ----------------------------------------------------
+   {:table_name "enterprise",
     :prop
-    {:table
-     {:field "enterprise",
-      :representation "enterprise",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
+    (prop
+     :table (table :field :enterprise :representation "Enterprise"),
      :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :ssreou,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Ssreou",
-       :field-qualified :enterprise.ssreou}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :name,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Name",
-       :field-qualified :enterprise.name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :ownership_form,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Ownership form",
-       :field-qualified :enterprise.ownership_form}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :vat_certificate,
-       :column-type
-       {:stype "text",
-        :tname :text,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-textarea, :value ""},
-       :representation "Vat certificate",
-       :field-qualified :enterprise.vat_certificate}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :individual_tax_number,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Individual tax number",
-       :field-qualified :enterprise.individual_tax_number}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :director,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Director",
-       :field-qualified :enterprise.director}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :accountant,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Accountant",
-       :field-qualified :enterprise.accountant}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :legal_address,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Legal address",
-       :field-qualified :enterprise.legal_address}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :physical_address,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Physical address",
-       :field-qualified :enterprise.physical_address}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :contacts_information,
-       :column-type
-       {:stype "mediumtext",
-        :tname :mediumtext,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-textarea, :value ""},
-       :representation "Contacts information",
-       :field-qualified :enterprise.contacts_information}]}}
-   {:id nil,
-    :table_name "point_of_sale",
+     [(field :field :ssreou :representation "number of SSREOU" :component {:type :jsgl-text, :value ""})
+      (field :field :name :component {:type :jsgl-text, :value ""})
+      (field :field :ownership_form :component {:type :jsgl-text, :value ""})
+      (field :field :vat_certificate :component {:type :jsgl-textarea, :value ""})
+      (field :field :individual_tax_number :component {:type :jsgl-text, :value ""})
+      (field :field :director :component {:type :jsgl-text, :value ""})
+      (field :field :accountant :component {:type :jsgl-text, :value ""})
+      (field :field :legal_address :component {:type :jsgl-text, :value ""})
+      (field :field :physical_address :component {:type :jsgl-text, :value ""})
+      (field :field :contacts_information :column-type [:mediumtext :default :null] :component {:type :jsgl-textarea, :value ""})])}
+   ;; ----------------------------------------------------
+   {:table_name "point_of_sale",
     :prop
-    {:table
-     {:field "point_of_sale",
-      :representation "point_of_sale",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
+    (prop
+     :table (table :field :point_of_sale :representation "point_of_sale"),
      :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_enterprise,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys [{:id_enterprise :enterprise} {:update :cascade}],
-       :representation "Id enterprise",
-       :field-qualified :point_of_sale.id_enterprise,
-       :key-table :enterprise}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :name,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Name",
-       :field-qualified :point_of_sale.name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :physical_address,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Physical address",
-       :field-qualified :point_of_sale.physical_address}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :telefons,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Telefons",
-       :field-qualified :point_of_sale.telefons}]}}
-   {:id nil,
-    :table_name "cache_register",
+     [(field-link :field :id_enterprise :component {:type :jsgl-link}
+                  :foreign-keys [{:id_enterprise :enterprise} {:update :cascade}]
+                  :key-table :enterprise)
+      (field :field :name :component {:type :jsgl-text, :value ""})
+      (field :field :physical_address :component {:type :jsgl-text, :value ""})
+      (field :field :telefons :component {:type :jsgl-text, :value ""})])}
+   ;; ----------------------------------------------------
+   {:table_name "cache_register",
     :prop
-    {:table
-     {:field "cache_register",
-      :representation "cache_register",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
+    (prop
+     :table (table :field :cache_register :representation "cache_register"),
      :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_point_of_sale,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_point_of_sale :point_of_sale}
-        {:delete :cascade, :update :cascade}],
-       :representation "Id point of sale",
-       :field-qualified :cache_register.id_point_of_sale,
-       :key-table :point_of_sale}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :name,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Name",
-       :field-qualified :cache_register.name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :serial_number,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Serial number",
-       :field-qualified :cache_register.serial_number}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :fiscal_number,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Fiscal number",
-       :field-qualified :cache_register.fiscal_number}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :manufacture_date,
-       :column-type
-       {:stype "date",
-        :tname :date,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-calendar-label, :value nil},
-       :representation "Manufacture date",
-       :field-qualified :cache_register.manufacture_date}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :first_registration_date,
-       :column-type
-       {:stype "date",
-        :tname :date,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-calendar-label, :value nil},
-       :representation "First registration date",
-       :field-qualified :cache_register.first_registration_date}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :is_working,
-       :column-type
-       {:stype "tinyint(1)",
-        :tname :tinyint,
-        :tspec nil,
-        :tlimit 1,
-        :tnull true,
-        :textra "",
-        :tdefault "0",
-        :tkey ""},
-       :component {:type :jsgl-checkbox, :value "0"},
-       :representation "Is working",
-       :field-qualified :cache_register.is_working}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :version,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Version",
-       :field-qualified :cache_register.version}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :dev_id,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Dev id",
-       :field-qualified :cache_register.dev_id}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :producer,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Producer",
-       :field-qualified :cache_register.producer}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :modem,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Modem",
-       :field-qualified :cache_register.modem}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :modem_model,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Modem model",
-       :field-qualified :cache_register.modem_model}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :modem_serial_number,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Modem serial number",
-       :field-qualified :cache_register.modem_serial_number}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :modem_phone_number,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Modem phone number",
-       :field-qualified :cache_register.modem_phone_number}]}}
-   {:id nil,
-    :table_name "point_of_sale_group",
+     [(field-link :field :id_point_of_sale :component {:type :jsgl-link}
+                  :key-table :point_of_sale
+                  :foreign-keys [{:id_point_of_sale :point_of_sale}
+                                 {:delete :cascade, :update :cascade}])
+      (field :field :name :component {:type :jsgl-text, :value ""})
+      (field :field :serial_number :component {:type :jsgl-text, :value ""})
+      (field :field :fiscal_number :component {:type :jsgl-text, :value ""})
+      (field :field :manufacture_date :component {:type :jsgl-datetime-label})
+      (field :field :first_registration_date :component {:type :jsgl-datetime-label})
+      (field :field :is_working :component {:type :jsgl-checkbox})
+      (field :field :version :component {:type :jsgl-text, :value ""})
+      (field :field :dev_id :component {:type :jsgl-text, :value ""})
+      (field :field :producer :component {:type :jsgl-text, :value ""})
+      (field :field :modem :component {:type :jsgl-text, :value ""})
+      (field :field :modem_model :component {:type :jsgl-text, :value ""})
+      (field :field :modem_serial_number :component {:type :jsgl-text, :value ""})
+      (field :field :modem_phone_number :component {:type :jsgl-text, :value ""})])}
+   ;; ----------------------------------------------------
+   {:table_name "point_of_sale_group",
     :prop
-    {:table
-     {:field "point_of_sale_group",
-      :representation "point_of_sale_group",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
+    (prop
+     :table (table :field "point_of_sale_group" :representation "point_of_sale_group"),
      :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :group_name,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Group name",
-       :field-qualified :point_of_sale_group.group_name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :information,
-       :column-type
-       {:stype "text",
-        :tname :text,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-textarea, :value ""},
-       :representation "Information",
-       :field-qualified :point_of_sale_group.information}]}}
-   {:id nil,
-    :table_name "point_of_sale_group_links",
+     [(field :field :group_name :component {:type :jsgl-text, :value ""})
+      (field :field :information :component {:type :jsgl-textarea, :value ""})])}
+   ;; ----------------------------------------------------
+   {:table_name "point_of_sale_group_links",
     :prop
-    {:table
-     {:field "point_of_sale_group_links",
-      :representation "point_of_sale_group_links",
-      :description nil,
-      :is-system? true,
-      :is-linker? true,
-      :allow-modifing? false,
-      :allow-deleting? false,
-      :allow-linking? false},
+    (prop
+     :table (table-link :field :point_of_sale_group_links :representation "Point of sale gruop selection")
      :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_point_of_sale_group,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_point_of_sale_group :point_of_sale_group}
-        {:delete :cascade, :update :cascade}],
-       :representation "Id point of sale group",
-       :field-qualified
-       :point_of_sale_group_links.id_point_of_sale_group,
-       :key-table :point_of_sale_group}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_point_of_sale,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys [{:id_point_of_sale :point_of_sale}],
-       :representation "Id point of sale",
-       :field-qualified :point_of_sale_group_links.id_point_of_sale,
-       :key-table :point_of_sale}]}}
-   {:id nil,
-    :table_name "seal",
+     [(field-link
+       :field :id_point_of_sale_group :component {:type :jsgl-link} :key-table :point_of_sale_group
+       :foreign-keys [{:id_point_of_sale_group :point_of_sale_group} {:delete :cascade, :update :cascade}])
+      (field-link
+       :field :id_point_of_sale :component {:type :jsgl-link} :key-table :point_of_sale
+       :foreign-keys [{:id_point_of_sale :point_of_sale}])])}
+   ;; ----------------------------------------------------
+   ;; {:table_name "seal",
+   ;;  :prop
+   ;;  (prop
+   ;;   :table (table :field "seal" :representation "seal"),
+   ;;   :columns
+   ;;   [(field :field :seal_number :component-type [:text])
+   ;;    (field :field :datetime_of_use :component-type [:datetime :date :text])
+   ;;    (field :field :datetime_of_remove :component-type [:datetime :date :text])]
+   ;;   :columns-composite
+   ;;   [(field-composite :field :site :component-type [:comp-url] :constructor #'jarman.logic.metadata/map->Link
+   ;;                     :columns [(field :field :site_name :constructor-var :text :component-type [:text])
+   ;;                               (field :field :site_url :constructor-var :link :component-type [:text])])
+   ;;    (field-composite :field :loc_file :component-type [:comp-file] :constructor #'jarman.logic.metadata/map->File
+   ;;                     :columns [(field :field :file_name :constructor-var :file-name :component-type [:text])
+   ;;                               (field :field :file :constructor-var :file  :component-type [:blob])])
+   ;;    (field-composite :field :ftp_file :component-type [:comp-ftp] :constructor #'jarman.logic.metadata/map->FtpFile
+   ;;                     :columns [(field :field :ftp_file_name :constructor-var :file-name :component-type [:text])
+   ;;                               (field :field :ftp_file_path :constructor-var :file-path :component-type [:text])])])}
+   {:table_name "seal",
     :prop
-    {:table
-     {:field "seal",
-      :representation "seal",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
+    (prop
+     :table (table :field "seal" :representation "seal"),
      :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :seal_number,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Seal number",
-       :field-qualified :seal.seal_number}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :datetime_of_use,
-       :column-type
-       {:stype "datetime",
-        :tname :datetime,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-datetime-label, :value nil},
-       :representation "Datetime of use",
-       :field-qualified :seal.datetime_of_use}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :datetime_of_remove,
-       :column-type
-       {:stype "datetime",
-        :tname :datetime,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-datetime-label, :value nil},
-       :representation "Datetime of remove",
-       :field-qualified :seal.datetime_of_remove}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :site_name,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Site name",
-       :field-qualified :seal.site_name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :site_url,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Site url",
-       :field-qualified :seal.site_url}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :file_name,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "File name",
-       :field-qualified :seal.file_name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :file,
-       :column-type
-       {:stype "blob",
-        :tname :blob,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value ""},
-       :representation "File",
-       :field-qualified :seal.file}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :ftp_file_name,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Ftp file name",
-       :field-qualified :seal.ftp_file_name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :ftp_file_path,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Ftp file path",
-       :field-qualified :seal.ftp_file_path}]}}
-   {:id nil,
-    :table_name "repair_reasons",
+     [(field :field :seal_number :component {:type :jsgl-text, :value ""})
+      (field :field :datetime_of_use :component {:type :jsgl-datetime-label})
+      (field :field :datetime_of_remove :component {:type :jsgl-datetime-label})]
+     :columns-composite
+     [(field-composite
+       :field :site :component-type {:type :jsgl-url-panel}
+       :columns [(field :field :site_name :constructor-var :text :component {:type :jsgl-text, :value ""})
+                 (field :field :site_url :constructor-var :link :component {:type :jsgl-text, :value ""})])
+      (field-composite
+       :field :loc_file :component-type {:type :jsgl-file-panel}
+       :columns [(field :field :file_name :constructor-var :file-name :component {:type :jsgl-text, :value ""})
+                 (field :field :file :constructor-var :file :component {:type :jsgl-file-dialog})])
+      ;; (field-composite :field :ftp_file :component-type [:comp-ftp]
+      ;;                  :columns [(field :field :ftp_file_name :constructor-var :file-name :component-type [:text])
+      ;;                            (field :field :ftp_file_path :constructor-var :file-path :component-type [:text])])
+      ])}
+   ;; ----------------------------------------------------
+   #_(comment
+    {:table_name "repair_reasons",
+     :prop
+     (prop :table (table :field "repair_reasons" :representation "repair_reasons"),
+           :columns [(field :field :description :component-type [:text])])}
+    ;; ----------------------------------------------------
+    {:table_name "repair_technical_issue",
+     :prop
+     (prop :table (table :field "repair_technical_issue" :representation "repair_technical_issue"),
+           :columns [(field :field :description :component-type [:text])])}
+    ;; ----------------------------------------------------
+    {:table_name "repair_nature_of_problem",
+     :prop
+     (prop :table (table :field "repair_nature_of_problem" :representation "repair_nature_of_problem"),
+           :columns [(field :field :description :component-type [:text])])}
+    ;; ----------------------------------------------------
+    {:table_name "repair_contract",
+     :prop
+     (prop
+      :table (table :field "repair_contract" :representation "repair_contract"),
+      :columns
+      [(field-link :field :id_cache_register :component-type [:link]
+                   :foreign-keys [{:id_cache_register :cache_register} {:delete :cascade, :update :cascade}] :key-table :cache_register)
+       (field-link :field :id_old_seal :component-type [:link]
+                   :foreign-keys [{:id_old_seal :seal} {:delete :null, :update :null}] :key-table :seal)
+       (field-link :field :id_new_seal :component-type [:link]
+                   :foreign-keys [{:id_new_seal :seal} {:delete :null, :update :null}] :key-table :seal)
+       (field-link :field :id_repair_reasons :component-type [:link]
+                   :foreign-keys [{:id_repair_reasons :repair_reasons} {:delete :null, :update :null}] :key-table :repair_reasons)
+       (field-link :field :id_repair_technical_issue :component-type [:link]
+                   :foreign-keys [{:id_repair_technical_issue :repair_technical_issue} {:delete :null, :update :null}] :key-table :repair_technical_issue)
+       (field-link :field :id_repair_nature_of_problem :component-type [:link]
+                   :foreign-keys [{:id_repair_nature_of_problem :repair_nature_of_problem} {:delete :null, :update :null}] :key-table :repair_nature_of_problem)
+       (field :field :repair_date :component-type [:date :datetime :text])
+       (field :field :cache_register_register_date :component-type [:date :datetime :text])])})
+   ;; ----------------------------------------------------
+   {:table_name "service_contract",
     :prop
-    {:table
-     {:field "repair_reasons",
-      :representation "repair_reasons",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
+    (prop
+     :table (table :field "service_contract" :representation "Service contracts"),
      :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :description,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Description",
-       :field-qualified :repair_reasons.description}]}}
-   {:id nil,
-    :table_name "repair_technical_issue",
+     [(field-link :field :id_enterprise :component {:type :jsgl-link}
+                  :key-table :enterprise
+                  :foreign-keys [{:id_enterprise :enterprise}
+                                 {:delete :cascade, :update :cascade}])
+      (field :field :contract_start_term :component {:type :jsgl-calendar-label})
+      (field :field :contract_end_term :component {:type :jsgl-calendar-label})])}
+   ;; ----------------------------------------------------
+   {:table_name "service_contract_month",
     :prop
-    {:table
-     {:field "repair_technical_issue",
-      :representation "repair_technical_issue",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
+    (prop
+     :table (table :field "service_contract_month" :representation "Service Contract Month"),
      :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :description,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Description",
-       :field-qualified :repair_technical_issue.description}]}}
-   {:id nil,
-    :table_name "repair_nature_of_problem",
-    :prop
-    {:table
-     {:field "repair_nature_of_problem",
-      :representation "repair_nature_of_problem",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
-     :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :description,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Description",
-       :field-qualified :repair_nature_of_problem.description}]}}
-   {:id nil,
-    :table_name "repair_contract",
-    :prop
-    {:table
-     {:field "repair_contract",
-      :representation "repair_contract",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
-     :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_cache_register,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_cache_register :cache_register}
-        {:delete :cascade, :update :cascade}],
-       :representation "Id cache register",
-       :field-qualified :repair_contract.id_cache_register,
-       :key-table :cache_register}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_old_seal,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_old_seal :seal} {:delete :null, :update :null}],
-       :representation "Id old seal",
-       :field-qualified :repair_contract.id_old_seal,
-       :key-table :seal}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_new_seal,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_new_seal :seal} {:delete :null, :update :null}],
-       :representation "Id new seal",
-       :field-qualified :repair_contract.id_new_seal,
-       :key-table :seal}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_repair_reasons,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_repair_reasons :repair_reasons}
-        {:delete :null, :update :null}],
-       :representation "Id repair reasons",
-       :field-qualified :repair_contract.id_repair_reasons,
-       :key-table :repair_reasons}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_repair_technical_issue,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_repair_technical_issue :repair_technical_issue}
-        {:delete :null, :update :null}],
-       :representation "Id repair technical issue",
-       :field-qualified :repair_contract.id_repair_technical_issue,
-       :key-table :repair_technical_issue}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_repair_nature_of_problem,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_repair_nature_of_problem :repair_nature_of_problem}
-        {:delete :null, :update :null}],
-       :representation "Id repair nature of problem",
-       :field-qualified :repair_contract.id_repair_nature_of_problem,
-       :key-table :repair_nature_of_problem}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :repair_date,
-       :column-type
-       {:stype "date",
-        :tname :date,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-calendar-label, :value nil},
-       :representation "Repair date",
-       :field-qualified :repair_contract.repair_date}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :cache_register_register_date,
-       :column-type
-       {:stype "date",
-        :tname :date,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-calendar-label, :value nil},
-       :representation "Cache register register date",
-       :field-qualified :repair_contract.cache_register_register_date}]}}
-   {:id nil,
-    :table_name "service_contract",
-    :prop
-    {:table
-     {:field "service_contract",
-      :representation "service_contract",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
-     :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_enterprise,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_enterprise :enterprise}
-        {:delete :cascade, :update :cascade}],
-       :representation "Id enterprise",
-       :field-qualified :service_contract.id_enterprise,
-       :key-table :enterprise}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :contract_start_term,
-       :column-type
-       {:stype "date",
-        :tname :date,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-calendar-label, :value nil},
-       :representation "Contract start term",
-       :field-qualified :service_contract.contract_start_term}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :contract_end_term,
-       :column-type
-       {:stype "date",
-        :tname :date,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-calendar-label, :value nil},
-       :representation "Contract end term",
-       :field-qualified :service_contract.contract_end_term}]}}
-   {:id nil,
-    :table_name "service_contract_month",
-    :prop
-    {:table
-     {:field "service_contract_month",
-      :representation "service_contract_month",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
-     :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :service_month_start,
-       :column-type
-       {:stype "date",
-        :tname :date,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-calendar-label, :value nil},
-       :representation "Service month start",
-       :field-qualified :service_contract_month.service_month_start}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :service_month_end,
-       :column-type
-       {:stype "date",
-        :tname :date,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-calendar-label, :value nil},
-       :representation "Service month end",
-       :field-qualified :service_contract_month.service_month_end}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :money_per_month,
-       :column-type
-       {:stype "float",
-        :tname :float,
-        :tspec nil,
-        :tlimit nil,
-        :tnull false,
-        :textra "",
-        :tdefault "0",
-        :tkey ""},
-       :component {:type :jsgl-float, :value "0"},
-       :representation "Money per month",
-       :field-qualified :service_contract_month.money_per_month}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :was_payed,
-       :column-type
-       {:stype "tinyint(1)",
-        :tname :tinyint,
-        :tspec nil,
-        :tlimit 1,
-        :tnull true,
-        :textra "",
-        :tdefault "0",
-        :tkey ""},
-       :component {:type :jsgl-checkbox, :value "0"},
-       :representation "Was payed",
-       :field-qualified :service_contract_month.was_payed}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_service_contract,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_service_contract :service_contract}
-        {:delete :cascade, :update :cascade}],
-       :representation "Id service contract",
-       :field-qualified :service_contract_month.id_service_contract,
-       :key-table :service_contract}]}}])
+     [(field :field :service_month_start :component {:type :jsgl-calendar-label})
+      (field :field :service_month_end :component {:type :jsgl-calendar-label})
+      (field :field :money_per_month :component {:type :jsgl-float})
+      (field :field :was_payed :component {:type :jsgl-checkbox})
+      (field-link :field :id_service_contract :component {:type :jsgl-link}
+                  :key-table :service_contract
+                  :foreign-keys [{:id_service_contract :service_contract}
+                                 {:delete :cascade, :update :cascade}])])}])
 
 (def view-list
   (quote
@@ -2602,7 +1370,7 @@
   (println "\n.jarman.data Metadata:")
   (jarman.managment.data-managment/metadata-info metadata-list)
   (println "\nDatabase Metadata:")
-  (jarman.managment.data-managment/metadata-info (jarman.logic.metadata/return-metadata))
+  (jarman.managment.data-managment/metadata-info (jarman.logic.metadata/getset))
   (println "\n.jarman.data Views")
   (jarman.managment.data-managment/view-info view-list)
   (println "\n.Database Views")

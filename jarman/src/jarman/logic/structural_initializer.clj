@@ -5,7 +5,8 @@
    [clojure.string :as string]
    [jarman.logic.connection :as db]
    [jarman.logic.sql-tool :refer [select! update! insert! alter-table! create-table! delete! drop-table show-table-columns show-tables]]
-   [jarman.logic.metadata :as mt]
+   ;; [jarman.logic.metadata :as mt]
+   [jarman.logic.metadata :refer [do-create-meta-for-existing-tables]]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]))
@@ -144,7 +145,7 @@
 ;;                  :values [["user" "user" "user" "user" (:id perm) "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}"]]})))))
 
 (defn fill-metadata []
-  (doall (mt/do-create-meta-database)))
+  (doall (do-create-meta-for-existing-tables)))
 
 (defn hard-reload-struct []
   ;; for make it uncoment section belove
@@ -206,7 +207,7 @@
 (defn procedure-test-metadata [tables-list]
   (if (verify-table-exists :metadata tables-list)
     (if (verify-table-columns :metadata metadata-cols)
-      (if-not (test-metadata) (do (mt/do-create-meta-database) true) true)
+      (if-not (test-metadata) (do (do-create-meta-for-existing-tables) true) true)
       {:valid? false :output "Metadata table not compatible with Jarman" :table :metadata})
     (do (db/exec metadata) ;; (fill-metadata)
         true)))
@@ -267,6 +268,4 @@
              (procedure-test-view tables-list)])
     ;; create whole jarman infrastructure
     (procedure-create-all-structure)))
-
-
 

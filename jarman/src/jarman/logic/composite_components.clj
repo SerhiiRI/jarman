@@ -6,7 +6,7 @@
             [jarman.logic.session :as session]
             [jarman.logic.document-manager :refer [update-blob! select-blob!]]
             [jarman.logic.metadata])
-  (:import  [jarman.logic.metadata FtpFile Link File]))
+  (:import  [jarman.logic.metadata_composite_types FtpFile Link File]))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; FTP FUNCTIONS ;;;

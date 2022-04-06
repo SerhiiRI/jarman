@@ -51,7 +51,7 @@
              (field-composite :field :ftp_file :component-type [:comp-ftp] :constructor #'jarman.logic.metadata/map->FtpFile
                               :columns [(field :field :ftp_file_name :constructor-var :file-name :component-type [:text])
                                         (field :field :ftp_file_path :constructor-var :file-path :component-type [:text])])])}
-          ;;(first (getset! :seal))
+          ;;(first (return-metadata :seal))
           ))
 
   (def ftp-composite-field (nth (return-columns-composite-wrapp s) 2))

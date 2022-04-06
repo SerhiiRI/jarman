@@ -191,7 +191,7 @@
   [configuration toolkit-map]
   (where ((query-fn db/query)
           (exec-fn  db/exec)
-          (table-metadata configuration do :table_name do mt/getset! do first)
+          (table-metadata configuration do :table_name do mt/return-metadata do first)
           (id_column (t-f-tf (:table_name configuration) :id))
           (table-name ((comp :field :table :prop) table-metadata))
           (columns ((comp :columns :prop) table-metadata) map :field)
@@ -223,7 +223,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- metadata-toolkit-constructor [configuration toolkit-map]
-  (if-let [table-metadata (first (mt/getset! (:table_name configuration)))]
+  (if-let [table-metadata (first (mt/return-metadata (:table_name configuration)))]
     (let [meta-obj (mt/->TableMetadata table-metadata)]
       {:meta-obj meta-obj
        ;;  :table-meta   ((comp :table :prop) table-metadata)

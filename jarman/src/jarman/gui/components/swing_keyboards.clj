@@ -15,7 +15,7 @@
 ;;; Low-level keyboard operations ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmacro make-inputmap-wrapper
+(defmacro ^:depr make-inputmap-wrapper
   "Description
     Create function that generate wrapper 
     for some JComponent, which add or override
@@ -51,7 +51,7 @@
                          (~action event#))))))
          ~'component))))
 
-(defn wrapp-component-inputmap
+(defn ^:depr wrapp-component-inputmap
   "Description
     Create function that generate wrapper 
     for some JComponent, which add or override
@@ -97,7 +97,6 @@
     (instance? javax.swing.text.JTextComponent component)
     (assoc :Actions (->> (.getActions component) (map (fn [a] (.getValue a Action/NAME))) (into (sorted-set))))))
 
-
 (defn keybindings-action-keystroke-map
   "Example
     (keybindings-action-keystroke-map (text :value \"\"))
@@ -124,15 +123,13 @@
        (if-let [key-bind (get action-key-map e nil)] 
          (conj acc [e key-bind])
          (conj acc [e nil])))
-     [])
-    (into (array-map)))))
+     []))))
 
 (defn keybindings-action-keystroke-map-binded-only [component]
  (where
   ((keyMap (.getInputMap component)))
   (->> (seq (.allKeys keyMap))
-       (map #(vector (.get keyMap %) %))
-       (into {}))))
+       (map #(vector (.get keyMap %) %)))))
 
 (defn keybindings-action-keystroke-map-print [component]
   {:pre [(instance? javax.swing.JComponent component)]}
@@ -164,7 +161,8 @@
 
 (defn component-unregister-keybindings
   ([component]
-   (component-unregister-keybindings component (keybindings-action-keystroke-map-binded-only component)))
+   (doto component
+     (component-unregister-keybindings (keybindings-action-keystroke-map-binded-only component))))
   ([component keybindings]
    (let [^javax.swing.InputMap keyMap (.getInputMap component)]
      (doall (map #(.put keyMap (second %) "none") keybindings))
@@ -199,6 +197,7 @@
       "comma"  KeyEvent/VK_COMMA
       "backspace" KeyEvent/VK_BACK_SPACE
       "delete"    KeyEvent/VK_DELETE
+      "escape"    KeyEvent/VK_ESCAPE
       nil)))
 
 (defn- kbd->KeyStroke
@@ -209,7 +208,7 @@
     (kbd->KeyStroke \"C-M-space\")
        => #object[javax.swing.KeyStroke \"ctrl alt pressed SPACE\"]"
   [^String keybinding]
-  (let [pattern #"(?:(C|M|S|C-M|M-S|C-S|C-M-S)-)?(.|up|down|space|right|left|period|comma|backspace|delete)"]
+  (let [pattern #"(?:(C|M|S|C-M|M-S|C-S|C-M-S)-)?(.|up|down|space|right|left|period|comma|backspace|delete|escape)"]
    (if-let [[_ modifiers symb] (re-matches pattern keybinding)]
      (KeyStroke/getKeyStroke
       (char->symbol symb)
@@ -448,7 +447,7 @@
                    (.getKeyCode (KeyStroke/getKeyStrokeForEvent e))))
              (with-keymap keymap
                (global-key-vec-buffer-put (KeyStroke/getKeyStrokeForEvent e))
-               (println (.getSource e))
+               ;; (println (.getSource e))
                (if-let [action (lookup-keymap-action keymap)]
                  (with-active-event e
                    ;; (swing-keyboards/describe-keymap (active-keymap))

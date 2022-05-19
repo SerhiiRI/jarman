@@ -1,3 +1,9 @@
+;;   ____ ___  ____  _____
+;;  / ___/ _ \|  _ \| ____|
+;; | |  | | | | |_) |  _|
+;; | |__| |_| |  _ <| |___
+;;  \____\___/|_| \_\_____|
+;;
 (ns jarman.gui.core
   (:require
    ;; Clojure
@@ -9,10 +15,19 @@
    [jarman.tools.org  :refer :all]
    [jarman.config.environment :as env]))
 
+(declare register!)
+(declare unregister!)
+
 (defprotocol IEventHookRegister
   (register      [this k f])
   (unregister    [this k])
   (getEventHooks [this]))
+
+(defn register! [a k f]
+  (.register a k f))
+
+(defn unregister! [a k]
+  (.unregister a k))
 
 (deftype ^:private SwingAtom
     [^{:tag clojure.lang.Ref :private true} eventHooks
@@ -127,12 +142,6 @@
   (unregister [this k]
     (.unregister swing-atom k)))
 
-(defn register! [a k f]
-  (.register a k f))
-
-(defn unregister! [a k]
-  (.unregister a k))
-
 (defn satom
   ([default]
    (let [clojure-atom (atom default) event-hook-m (ref {})]
@@ -147,8 +156,70 @@
   ([path] (fn [a] (cursor path a)))
   ([path a] (if (seq path) (Cursor. path a) a)))
 
-;; fixme reset!
+
+(defn- invoke-on-hooks [v m]
+  (doall
+   (doseq [f (vals m)]
+     (f v))) v)
+
+(defrecord Event [f eventHooks]
+  clojure.lang.IFn
+  (invoke [this] (doto (f) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1] (doto (f arg1) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2] (doto (f arg1 arg2) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3] (doto (f arg1 arg2 arg3) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4] (doto (f arg1 arg2 arg3 arg4) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5] (doto (f arg1 arg2 arg3 arg4 arg5) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5 arg6] (doto (f arg1 arg2 arg3 arg4 arg5 arg6) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5 arg6 arg7] (doto (f arg1 arg2 arg3 arg4 arg5 arg6 arg7) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8] (doto (f arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9] (doto (f arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10] (doto (f arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11] (doto (f arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12] (doto (f arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13] (doto (f arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14] (doto (f arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14 arg15] (doto (f arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14 arg15) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14 arg15 arg16] (doto (f arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14 arg15 arg16) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14 arg15 arg16 arg17] (doto (f arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14 arg15 arg16 arg17) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14 arg15 arg16 arg17 arg18] (doto (f arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14 arg15 arg16 arg17 arg18) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14 arg15 arg16 arg17 arg18 arg19] (doto (f arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14 arg15 arg16 arg17 arg18 arg19) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14 arg15 arg16 arg17 arg18 arg19 arg20] (doto (f arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14 arg15 arg16 arg17 arg18 arg19 arg20) (invoke-on-hooks (deref eventHooks))))
+  (invoke [this arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14 arg15 arg16 arg17 arg18 arg19 arg20 args] (doto (apply f arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14 arg15 arg16 arg17 arg18 arg19 arg20 args) (invoke-on-hooks (deref eventHooks))))
+  (applyTo [this args] (clojure.lang.AFn/applyToHelper this args))
+  IEventHookRegister
+  (getEventHooks [this]
+    (deref eventHooks))
+  (register [this k f]
+    (dosync
+     (alter eventHooks assoc k (fn [v] (f v)))) k)
+  (unregister [this k]
+    (dosync (alter eventHooks dissoc k)) k)
+  java.util.concurrent.Callable
+  (call [this] (.invoke this))
+  java.lang.Runnable
+  (run [this] (.invoke this)))
+(defn isEvent? [^jarman.gui.core.Event e] (instance? jarman.gui.core.Event e))
+(defn event
+  ([] identity)
+  ([lambda]
+   (let [event-hook-m (ref {})]
+     (Event. lambda event-hook-m))))
+(defmacro fe [args & body]
+   `(event (fn ~args ~@body)))
+
+
+;;  ____  _____ __  __  ___
+;; |  _ \| ____|  \/  |/ _ \
+;; | | | |  _| | |\/| | | | |
+;; | |_| | |___| |  | | |_| |
+;; |____/|_____|_|  |_|\___/
+
 (comment
+  ;;;;;;;;;;;
+  ;; Satom ;;
+  ;;;;;;;;;;;
+
   (def x (satom {:a {}}))
   (def x-cursor (cursor [:a] x))
   (register! x        :global (fn [a old new] (println "GLOBAL:" new)))
@@ -158,4 +229,18 @@
   (reset! x-cursor        11)
   (reset! x        {:suka 1})
   (deref x-cursor)
-  (deref x))
+  (deref x)
+
+  ;;;;;;;;;
+  ;; Eta ;;
+  ;;;;;;;;;
+
+  ;; or
+  (def z (event (fn [a b c] [a b c])))
+  ;; or
+  (def z (fe [a b c]
+            [a b c]))
+  ;; pin external event
+  (register! z :A (fn [v] (println "RETURNED VALUE -> " v)))
+  ;; invoke
+  (z 1 2 3))

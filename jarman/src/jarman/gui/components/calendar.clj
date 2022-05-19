@@ -41,6 +41,8 @@
                               (try
                                 (.parse (java.text.SimpleDateFormat. "yyyy-MM-dd") value)
                                 (catch java.text.ParseException e
+                                  (java.util.Date.))
+                                (catch java.lang.NullPointerException e
                                   (java.util.Date.))))
                     
                     x))
@@ -48,7 +50,7 @@
     (dispatch (fn dispatch [k f] (fn [e] (swap! state #(update % k (fn [cal] (f cal))))))))
    (gui-panels/border-panel
     :border (b/empty-border :bottom 1 :top 1 :left 1 :right 1)
-    :north  (create-title-panel state dispatch date-formater)
+    ;; :north  (create-title-panel state dispatch date-formater)
     ;; :center (create-body-panel state dispatch week-start-day)
     :north  (create-title-panel (cursor [:date] state) date-formater on-click)
     :center (create-body-panel  (cursor [:date] state) date-formater on-click week-start-day)
@@ -97,11 +99,11 @@
 
 (defn create-title-panel [^jarman.gui.core.Cursor state ^java.text.SimpleDateFormat date-formater on-click]
   (where
-   ((center     (label :value (.format date-formater (.getTime (deref state)))))
-    (prev-year  (label :value "<<" :tip "Previos Year"  :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-minus-year))))
-    (next-year  (label :value ">>" :tip "Next Year"     :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-plus-year))))
-    (prev-month (label :value "<"  :tip "Previos Month" :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-minus-month))))
-    (next-month (label :value ">"  :tip "Next Month"    :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-plus-month)))))
+   ((center     (button :value (.format date-formater (.getTime (deref state)))))
+    (prev-year  (button :value "<<" :tip "Previos Year"  :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-minus-year))))
+    (next-year  (button :value ">>" :tip "Next Year"     :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-plus-year))))
+    (prev-month (button :value "<"  :tip "Previos Month" :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-minus-month))))
+    (next-month (button :value ">"  :tip "Next Month"    :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-plus-month)))))
    (gui-panels/border-panel
     :west prev-year
     :east next-year
@@ -127,14 +129,14 @@
     (current-month? (= month (.get setted java.util.Calendar/MONTH)))
     (current-day?   (and current-month?
                        (= day (.get setted java.util.Calendar/DAY_OF_MONTH)))))
-   (label :value    (str day) 
-          :on-click on-click
-          :args [:foreground
-                 (cond
-                   current-day? "#A36"
-                   is-weekend? "#3AA"
-                   current-month? "#000"
-                   :else "#AAA")])))
+   (button :value    (str day) 
+           :on-click on-click
+           :args [:foreground
+                  (cond
+                    current-day? "#A36"
+                    is-weekend? "#3AA"
+                    current-month? "#000"
+                    :else "#AAA")])))
 
 #_(defn create-body-panel [^jarman.gui.core.SwingAtom state ^clojure.lang.IFn dispatch week-day-start]
   (where 
@@ -206,7 +208,7 @@
 (defn- create-footer-panel []
   (where
    ((data-formater (java.text.SimpleDateFormat. "yyyy-MM-dd")))
-   (label :value (str "Today is: " (.format data-formater (Date.))))))
+   (button :value (str "Today is: " (.format data-formater (Date.))))))
 
 ;;;;;;;;;;;;;;;;;;;
 ;;;; POPUP DEMO ;;;
@@ -233,8 +235,8 @@
   (let [clean-arg (dissoc args :value :on-click)
         apply-arg (interleave (keys clean-arg) (vals clean-arg))]
    (apply
-    label
-    :value (:value args)
+    button
+    :value (rift (:value args) "<unselected>")
     :on-click (fn [e]
                 (let [component (c/to-widget e)
                       show (Point. 0 (.getHeight component))
@@ -256,7 +258,7 @@
 ;; | | | |  _| | |\/| | | | |
 ;; | |_| | |___| |  | | |_| |
 ;; |____/|_____|_|  |_|\___/ 
-;;                            
+;;                           
 
 (comment
   (seesaw.dev/show-options (seesaw.core/combobox))

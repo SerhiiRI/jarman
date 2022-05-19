@@ -11,7 +11,7 @@
     RTextAreaEditorKit$DecreaseFontSizeAction]))
 
 (def default-editor-kit-action-map
-  (let [component (seesaw.core/text)
+  (let [component (seesaw.core/text :multi-line? true :wrap-lines? true)
         action-map (.getActionMap component)]
     (cond-> (hash-map)
       ;; ---
@@ -29,7 +29,7 @@
        ;; ---
        (instance? javax.swing.JComponent component)
        (into (map #(.get action-map %) (.keys action-map)) )
-       ;; --- 
+       ;; ---
        (instance? javax.swing.text.JTextComponent component)
        (into (->> (.getActions component) (map (fn [a] (vector (.getValue a Action/NAME) a))))))
      (assoc RTextAreaEditorKit/rtaIncreaseFontSizeAction (RTextAreaEditorKit$IncreaseFontSizeAction.))
@@ -37,7 +37,6 @@
 
 (def rtext-increase-font-size RTextAreaEditorKit/rtaIncreaseFontSizeAction)
 (def rtext-decrease-font-size RTextAreaEditorKit/rtaDecreaseFontSizeAction)
-
 
 (declare s-expr-forward)
 (declare s-expr-backward)

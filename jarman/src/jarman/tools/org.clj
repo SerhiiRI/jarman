@@ -11,7 +11,7 @@
 ;;;;;;;;;;;;;;;
 
 (defn quick-timestamp []
-  (.format (java.text.SimpleDateFormat. "YYYY-MM-dd HH:mm") (java.util.Date.)))
+  (.format (java.text.SimpleDateFormat. "YYYY-MM-dd HH:mm:ss SSS") (java.util.Date.)))
 
 ;;;;;;;;;;;;;;;;;;;
 ;;; LOG STREAMS ;;;
@@ -56,7 +56,8 @@
      ~@body))
 
 (defn- out [msg]
-  (.print System/out msg)
+  ;; (.print System/out msg)
+  (print msg) (flush)
   (doall
    (for [out-agent (seq *out-writers*)]
      (send-off out-agent

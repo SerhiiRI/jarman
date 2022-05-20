@@ -6,6 +6,8 @@
 (require '[jarman.logic.metadata])
 (require '[jarman.logic.permissions])
 
+;; ^    \(:id\|:name\|:plug-place\|:tables\|:view-columns\|:model-insert\|:active-buttons\|:permission\|:dialog\|:actions\|:buttons\|:query\)$
+
 (jarman.logic.permissions/permission-groups-add
  {:ekka-all               {:doc "Allow all elements in Ekka module"}
   :ekka-servicer          {:doc "Permission for servisant's only"}
@@ -133,15 +135,7 @@
        :default-value nil,
        :editable? true,
        :field :login,
-       :column-type
-       {:stype "varchar(100)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 100,
-        :tnull false,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
+       :column-type {:stype "varchar(100)", :tname :varchar, :tspec nil, :tlimit 100, :tnull false, :textra "", :tdefault nil, :tkey ""},
        :component {:type :jsgl-text, :value "", :char-limit 100},
        :representation "Login",
        :field-qualified :user.login}
@@ -184,15 +178,7 @@
        :default-value nil,
        :editable? true,
        :field :last_name,
-       :column-type
-       {:stype "varchar(100)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 100,
-        :tnull false,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
+       :column-type {:stype "varchar(100)", :tname :varchar, :tspec nil, :tlimit 100, :tnull false, :textra "", :tdefault nil, :tkey ""},
        :component {:type :jsgl-text, :value "", :char-limit 100},
        :representation "Last name",
        :field-qualified :user.last_name}
@@ -201,16 +187,8 @@
        :default-value nil,
        :editable? true,
        :field :configuration,
-       :column-type
-       {:stype "text",
-        :tname :text,
-        :tspec nil,
-        :tlimit nil,
-        :tnull false,
-        :textra "",
-        :tdefault "'{}'",
-        :tkey ""},
-       :component {:type :jsgl-textarea, :value "'{}'"},
+       :column-type {:stype "text", :tname :text, :tspec nil, :tlimit nil, :tnull false, :textra "", :tdefault "'{}'", :tkey ""},
+       :component {:type :jsgl-textarea, :value "{}"},
        :representation "Configuration",
        :field-qualified :user.configuration}
       {:description nil,
@@ -873,15 +851,7 @@
        :default-value nil,
        :editable? true,
        :field :seal_number,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
+       :column-type {:stype "varchar(120)", :tname :varchar, :tspec nil, :tlimit 120, :tnull true, :textra "", :tdefault nil, :tkey ""},
        :component {:type :jsgl-text, :value "", :char-limit 120},
        :representation "Seal number",
        :field-qualified :seal.seal_number}
@@ -890,15 +860,7 @@
        :default-value nil,
        :editable? true,
        :field :datetime_of_use,
-       :column-type
-       {:stype "datetime",
-        :tname :datetime,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
+       :column-type {:stype "datetime", :tname :datetime, :tspec nil, :tlimit nil, :tnull true, :textra "", :tdefault nil, :tkey ""},
        :component {:type :jsgl-datetime-label, :value nil},
        :representation "Datetime of use",
        :field-qualified :seal.datetime_of_use}
@@ -919,108 +881,56 @@
        :component {:type :jsgl-datetime-label, :value nil},
        :representation "Datetime of remove",
        :field-qualified :seal.datetime_of_remove}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :site_name,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Site name",
-       :field-qualified :seal.site_name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :site_url,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Site url",
-       :field-qualified :seal.site_url}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :file_name,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "File name",
-       :field-qualified :seal.file_name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :file,
-       :column-type
-       {:stype "blob",
-        :tname :blob,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value ""},
-       :representation "File",
-       :field-qualified :seal.file}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :ftp_file_name,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Ftp file name",
-       :field-qualified :seal.ftp_file_name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :ftp_file_path,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Ftp file path",
-       :field-qualified :seal.ftp_file_path}]}}
+      {:representation "Site",
+       :field-qualified :seal.site
+       :component {:type :jsgl-url-panel :on-change '(fn [e] e)},
+       :columns
+       [{:field :site_name
+         :field-qualified :seal.site_name
+         :constructor-var :text
+         :column-type {:stype "varchar(120)", :tname :varchar, :tspec nil, :tlimit 120, :tnull true, :textra "", :tdefault nil, :tkey ""},
+         :component {:type :jsgl-text, :value "Title", :char-limit 120},
+         :representation "Site name"}
+        {:field :site_url,
+         :field-qualified :seal.site_url,
+         :constructor-var :link
+         :column-type {:stype "varchar(120)", :tname :varchar, :tspec nil, :tlimit 120, :tnull true, :textra "", :tdefault nil, :tkey ""},
+         :component {:type :jsgl-text, :value "https://", :char-limit 120},
+         :representation "Site url"}]}
+      {:representation "Database File"
+       :field :db_file
+       :field-qualified :seal.db_file
+       :component {:type :jsgl-file-panel}
+       :columns
+       [{:field :file_name
+         :field-qualified :seal.file_name
+         :representation "File name",
+         :constructor-var :file-name
+         :column-type {:stype "varchar(120)", :tname :varchar, :tspec nil, :tlimit 120, :tnull true, :textra "", :tdefault nil, :tkey ""},
+         :component {:type :jsgl-text, :value "", :char-limit 120}}
+        {:field :file
+         :field-qualified :seal.file
+         :representation "File"
+         :constructor-var :file
+         :column-type {:stype "blob", :tname :blob, :tspec nil, :tlimit nil, :tnull true, :textra "", :tdefault nil, :tkey ""}
+         :component {:type :jsgl-stub}}]}
+      {:representation "Database File"
+       :field :ftp_file
+       :field-qualified :seal.ftp_file
+       :component {:type :jsgl-stub}
+       :columns
+       [{:field :ftp_file_name
+         :field-qualified :seal.ftp_file_name
+         :column-type {:stype "varchar(120)", :tname :varchar, :tspec nil, :tlimit 120, :tnull true, :textra "", :tdefault nil, :tkey ""}
+         :constructor-var :file-name
+         :component {:type :jsgl-text, :value "", :char-limit 120},
+         :representation "Ftp file name"}
+        {:field :ftp_file_path
+         :field-qualified :seal.ftp_file_path
+         :representation "Ftp file path"
+         :column-type {:stype "varchar(120)", :tname :varchar, :tspec nil, :tlimit 120, :tnull true, :textra "", :tdefault nil, :tkey ""}
+         :constructor-var :file-path
+         :component {:type :jsgl-text, :value "", :char-limit 120}}]}]}}
    {:id nil,
     :table_name "repair_reasons",
     :prop
@@ -1453,7 +1363,152 @@
        :field-qualified :service_contract_month.id_service_contract,
        :key-table :service_contract}]}}])
 
+
 (def view-list
+  (quote
+   ((defview user
+      (table
+       :id :user
+       :name "user"
+       :permission :ekka-all
+       :tables [:user :permission]
+       :model-configurations
+       {:insert
+        {:fields
+         [[:user.login [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+          [:user.password [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+          [:user.first_name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+          [:user.last_name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+          [:user.configuration [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+          [:user.id_profile [(fn [m] (assoc-in m [:component :plugin-path] [:profile :dialog-table :profile-dialog]))]]]
+         :additional
+         [{:type :jsgl-button, :value "Do insert!", :on-click :insert-action}]}
+        :update
+        {:fields
+         [[:user.login [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+          [:user.password [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+          [:user.first_name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+          [:user.last_name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+          [:user.configuration [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+          [:user.id_profile [(fn [m] (assoc-in m [:component :plugin-path] [:profile :dialog-table :profile-dialog]))]]]
+         :additional
+         [{:type :jsgl-button :value "Do delete!" :on-click :delete-action}
+          {:type :jsgl-button :value "Do update!" :on-click :update-action}]}}
+       :actions
+       {:insert-action
+        (fn [state! dispatch!]
+          ;; (jarman.tools.org/print-line "INSERT!")
+          (jarman.logic.connection/exec
+           (jarman.logic.sql-tool/insert!
+            {:table_name :user
+             :set (jarman.logic.metadata/convert_model->flattfields
+                   (:model-changes (state!)) :user)}))
+          (dispatch! {:route :main-table :action :refresh-to-bottom})
+          (dispatch! {:action :switch-plugin-ui-mode :debug true :plugin-ui-mode :insert :erease-selected? true
+                      :model (jarman.logic.metadata/convert_metadata->model
+                              (.return-table_name (-> (state!) :plugin-toolkit :meta-obj)))}))
+        :delete-action
+        (fn [state! dispatch!]
+          ;; (jarman.tools.org/print-line "INSERT!")
+          (if (get-in (state!) [:model-changes :user.id])
+            (do
+              (jarman.logic.connection/exec
+               (jarman.logic.sql-tool/delete!
+                {:table_name :user
+                 :where [:= :user.id (get-in (state!) [:model-changes :user.id])]}))
+              (dispatch! {:route :main-table :action :refresh})
+              (dispatch! {:action :switch-plugin-ui-mode :debug true :plugin-ui-mode :insert :erease-selected? true
+                          :model (jarman.logic.metadata/convert_metadata->model
+                                  (.return-table_name (-> (state!) :plugin-toolkit :meta-obj)))}))
+            (jarman.interaction/danger "Delete user action" "ID is empty for model")))
+        :update-action
+        (fn [state! dispatch!]
+          ;; (println "UPDATE!")
+          (if (get-in (state!) [:model-changes :user.id_profile])
+            (do
+              (jarman.logic.connection/exec
+               (jarman.logic.sql-tool/update!
+                {:table_name :user
+                 :set (jarman.logic.metadata/convert_model->flattfields
+                       (:model-changes (state!)) :user)
+                 :where [:= :user.id (get-in (state!) [:model-changes :user.id])]}))
+              (dispatch! {:route :main-table :action :refresh}))
+            (jarman.interaction/danger "Update user action" "ID is empty for model")))}
+       :view-configurations
+       {:socket-id :main-table
+        :type :jsgl-database-table
+        :tables  [:user :profile]
+        :columns
+        [:user.login
+         :user.password
+         :user.first_name
+         :user.last_name
+         :user.configuration
+         :profile.name
+         :profile.configuration]
+        :socket-refreshable-query
+        {:table_name :user,
+         :column
+         [:#as_is
+          :user.id
+          :user.login
+          :user.password
+          :user.first_name
+          :user.last_name
+          :user.configuration
+          :user.id_profile
+          :profile.name
+          :profile.configuration]
+         :inner-join :user->profile}}))
+
+    (defview profile
+      (table
+       :id :profile
+       :name "profile"
+       :tables [:profile]
+       :permission :ekka-all
+
+       :model-configurations
+       {:insert
+        {:fields
+         [[:profile.name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+          [:profile.configuration [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]]}
+        :update
+        {:fields
+         [[:profile.name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+          [:profile.configuration [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]]}}
+      
+       :view-configurations
+       {:socket-id :main-table
+        :type :jsgl-database-table
+        :tables  [:profile]
+        :columns [:profile.name :profile.configuration]
+        :socket-refreshable-query
+        {:table_name :profile,
+         :column [:#as_is :profile.id :profile.name :profile.configuration]}})
+     
+      (dialog-table
+       :id :profile-dialog
+       :name "Profile dialog"
+       :permission :ekka-all
+       :tables [:profile]
+       :view-configurations
+       {:type :jsgl-database-table
+        :tables  [:profile]
+        :columns [:profile.name :profile.configuration]
+        :data 
+        (fn []
+          (vec
+           (jarman.logic.connection/query
+            (jarman.logic.sql-tool/select!
+             {:table_name :profile,
+              :column
+              [:#as_is
+               :profile.id
+               :profile.name
+               :profile.configuration]}))))})))))
+
+#_(def view-list
   (quote
    ((defview
       permission
@@ -2581,8 +2636,8 @@
 
 (defn on-meta-refresh []
   (println "Refreshing views in databse")
-  (on-meta-persist)
-  (on-meta-clean))
+  (on-meta-clean)
+  (on-meta-persist))
 
 (defn on-app-close []
   (println "`on-app-close` not yet impelemented"))

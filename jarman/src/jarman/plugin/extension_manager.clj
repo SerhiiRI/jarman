@@ -22,8 +22,7 @@
    [jarman.logic.metadata :as mt]
    [jarman.logic.document-manager :as doc]
    [jarman.plugin.spec :as spec]
-   [jarman.plugin.data-toolkit :as query-toolkit]
-   [jarman.plugin.gui-table :as gtable]
+   [jarman.plugin.toolkits :as toolkits]
    [jarman.plugin.plugin]
    ;; -------------------
    

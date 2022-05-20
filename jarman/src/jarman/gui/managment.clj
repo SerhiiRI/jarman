@@ -46,10 +46,13 @@
   (if-let [{:keys [id component actions constructor]} (get (system-Components-list-group-get) type nil)]
     (apply component (-> component-meta
                          (dissoc :type)
-                         ((partial apply concat))))))
+                         ((partial apply concat))))
+    (throw (ex-info (format "Comopnent with `%s` doesn't register in system." (str type))
+                    {:metafield component-meta
+                             :type type}))))
 
-(group-by-apply :id (deref system-Components-list)
-                :apply-item :actions
-                :apply-group first)
+;; (group-by-apply :id (deref system-Components-list)
+;;                 :apply-item :actions
+;;                 :apply-group first)
 
 

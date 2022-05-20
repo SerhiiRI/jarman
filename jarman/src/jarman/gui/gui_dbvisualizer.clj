@@ -971,7 +971,7 @@
                                                                                          (let [table-name (first save-xy)
                                                                                                table-name (if (nil? table-name) nil (keyword table-name))
                                                                                                xy         (rift (second save-xy) nil)]
-                                                                                           (let [meta (first (mt/getset! table-name))
+                                                                                           (let [meta (first (mt/return-metadata table-name))
                                                                                                  new-meta (assoc-in meta [:prop :table :bounds] xy)]
                                                                                              (mt/update-meta new-meta)))))
                                                                                      (state/state :dbv-bounds)))

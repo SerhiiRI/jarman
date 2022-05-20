@@ -617,7 +617,6 @@
 
     vpanel))
 
-
 (defn- icon-template
   [ico onClick]
   (c/label ;; configuration panel

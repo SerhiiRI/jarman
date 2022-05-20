@@ -29,7 +29,7 @@
            (java.text SimpleDateFormat)))
 
 ;; (defn quick-path [table]
-;;   (mt/recur-find-path (first (mt/getset! (keyword table)))))
+;;   (mt/recur-find-path (first (mt/return-metadata (keyword table)))))
 
 ;; (defmacro ^:private make-name [entity suffix]
 ;;   `(symbol (str ~entity ~suffix)))
@@ -37,7 +37,7 @@
 
 ;; (defn get-view-column-meta [table-list column-list]
 ;;   (->> table-list
-;;        (mapcat (fn [t] (vec ((comp :columns :prop) (first (mt/getset! t))))))
+;;        (mapcat (fn [t] (vec ((comp :columns :prop) (first (mt/return-metadata t))))))
 ;;        (filter (fn [c] (in? column-list (keyword (:field-qualified c)))))))
 
 ;; (defn- model-column [column]
@@ -98,8 +98,8 @@
 ;;            restore-config#  (fn [] (reset! config# backup-config#))
 ;;            ktable#    (:table-name @config#)
 ;;            ;; stable#    (str @config#)
-;;            tblmeta#   ((comp :table :prop) (first (mt/getset! ktable#)))
-;;            colmeta#   ((comp :columns :prop) (first (mt/getset! ktable#)))
+;;            tblmeta#   ((comp :table :prop) (first (mt/return-metadata ktable#)))
+;;            colmeta#   ((comp :columns :prop) (first (mt/return-metadata ktable#)))
 ;;            operations# (construct-sql ktable# (:data @config#))
 
 ;;            view#      (:view @config#)

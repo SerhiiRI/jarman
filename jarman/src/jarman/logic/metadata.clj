@@ -5,7 +5,7 @@
 ;; |_|  |_|_____| |_/_/_  \_\____/_/_ _\_\_/_/__ \_\
 ;; |  \/  |  / \  | \ | |  / \  / ___| ____|  _ \   
 ;; | |\/| | / _ \ |  \| | / _ \| |  _|  _| | |_) |  
-;; | |  | |/ ___ \| |\  |/ ___ \ |_| | |___|  _ <   
+;; | |  | |/ ___ \| |\  |/ ___ \ |_| | |___|  _ <
 ;; |_|  |_/_/   \_\_| \_/_/   \_\____|_____|_| \_\
 ;; =================================================
 
@@ -24,7 +24,16 @@
   database-delete-metadata-by-table-name
   database-delete-all-metadata
   database-update-metadata-table
-  ->TableMetadata]
+  to-field
+  to-field-link
+  to-field-composite
+  ->TableMetadata
+  ->Field
+  ->FieldLink
+  ->FieldComposite
+  convert_metadata->model
+  convert_model->flattfields
+  convert_flattfields->model]
  
  [jarman.logic.metadata-composite-types
   ->Link map->Link isLink?

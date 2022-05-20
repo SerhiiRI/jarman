@@ -6,7 +6,7 @@
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]
    [jarman.logic.connection :as db]
-   [datascript.core :as d]
+   ;; [datascript.core :as d]
    [jarman.logic.sql-tool
     :refer [select! update! insert!
             alter-table! create-table! delete!
@@ -96,7 +96,10 @@
   (metadata-reload! [this]
     (metadata-set! this
      (->> (db/query (select! {:table_name :metadata}))
-          (mapv #(update % :prop read-string))
+          (mapv #(try
+                   (update % :prop read-string)
+                   (catch Exception e
+                     (throw (ex-info (format "Error parsing for `%s`" (:table_name %)) {:metadata %})))))
           (doall)))))
 
 (def ^:private global-metadata-container (MetadataContainer. nil))
@@ -117,11 +120,18 @@
         (filterv (fn [metadata] (contains? tables-names (get metadata :table_name))) $ ))
       $)))
 
-(defn return-metadata-grouped [& tables]
+(defn return-metadata-grouped []
   (group-by-apply
    (fn [m] (keyword (get-in m [:prop :table :field])))
    (return-metadata)
    :apply-group first))
+
+(defn reload-metadata []
+  (metadata-reload! global-metadata-container))
+
+(comment
+  (return-metadata)
+  (reload-metadata))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Make references ;;;
@@ -168,6 +178,11 @@
 ;;; OBJECT SYSTEM ;;;
 ;;;;;;;;;;;;;;;;;;;;;
 
+(declare wrapp-cols-metadata-types)
+
+(defprotocol IPrimitive
+  (to-primive [this]))
+
 (defprotocol IFieldSearch
   (find-field           [this field-name-kwd])
   (find-field-qualified [this field-name-qualified-kwd])
@@ -189,33 +204,26 @@
   (return-key-table       [this]))
 
 (defprotocol IColumns
-  (return-columns [this]))
+  (return-columns [this])
+  (return-columns-k-v [this]))
+
+(defprotocol IColumnsExtended
+  (return-columns-smpl [this])
+  (return-columns-link [this])
+  (return-columns-composite [this])
+  (return-columns-flatten [this]))
 
 (defprotocol IGroup
   (group                  [this m])
   (ungroup                [this m]))
-
-(defprotocol IFieldComposite
-  (return-constructor     [this]))
 
 (defprotocol IMetadata
   (return-table_name [this])
   (return-id [this])
   (return-prop [this])
   (return-table [this])
-  (return-columns-composite [this])
-  (return-columns-join [this])
-  (return-columns-flatten [this])
-  (return-columns-wrapp [this])
-  (return-columns-composite-wrapp [this])
-  (return-columns-join-wrapp [this])
-  (return-columns-flatten-wrapp [this])
   (exists? [this])
-  ;; (persist [this])
-  (refresh [this])
-  ;; (diff-changes [this changed])
-  ;; (diff-changes-apply [this changed])
-  )
+  (refresh [this]))
 
 (defrecord Field [m]
   IField
@@ -227,7 +235,9 @@
   (return-component       [this] (get (.m this) :component))
   (return-default-value   [this] (get (.m this) :default-value))
   (return-private?        [this] (get (.m this) :private?))
-  (return-editable?       [this] (get (.m this) :editable?)))
+  (return-editable?       [this] (get (.m this) :editable?))
+  IPrimitive
+  (to-primive [this] m))
 
 (defrecord FieldLink [m]
   IField
@@ -243,18 +253,22 @@
 
   IFieldReference
   (return-foreign-keys    [this] (get (.m this) :foreign-keys))
-  (return-key-table       [this] (get (.m this) :key-table)))
+  (return-key-table       [this] (get (.m this) :key-table))
+
+  IPrimitive
+  (to-primive [this] m))
 
 (defrecord FieldComposite [m group-fn ungroup-fn]
 
   IFieldSearch
-  (find-field           [this field-name-kwd]
+  (find-field [this field-name-kwd]
     (first (filter (fn [field-m]
                      (= (:field field-m) field-name-kwd)) (.return-columns this))))
   
   (find-field-qualified [this field-name-qualified-kwd]
     (first (filter (fn [field-m]
                      (= (:field-qualified field-m) field-name-qualified-kwd)) (.return-columns this))))
+
   (find-field-by-comp-var [this field-comp-var field-name-qualified-kwd]
     (reduce (fn [acc column]
               (if (= (:constructor-var column) field-comp-var)
@@ -266,18 +280,21 @@
   (return-field-qualified [this] (get (.m this) :field-qualified))
   (return-description     [this] (get (.m this) :description))
   (return-representation  [this] (get (.m this) :representation))
+  (return-component       [this] (get (.m this) :component))
   (return-private?        [this] (get (.m this) :private?))
   (return-editable?       [this] (get (.m this) :editable?))
   
   IColumns
-  (return-columns         [this] (get (.m this) :columns))
-
-  IFieldComposite
-  (return-constructor     [this] (get (.m this) :constructor))
+  (return-columns         [this] (wrapp-cols-metadata-types (get (.m this) :columns)))
+  (return-columns-k-v     [this] (group-by-apply #(.return-field-qualified %) (.return-columns this)
+                                                 :apply-group first))
 
   IGroup
   (group                  [this data-m] ((.group-fn this) data-m))
-  (ungroup                [this data-m] ((.ungroup-fn this) data-m)))
+  (ungroup                [this data-m] ((.ungroup-fn this) data-m))
+
+  IPrimitive
+  (to-primive             [this] m))
 
 (defn isField? [^jarman.logic.metadata_core.Field e]
   (instance? jarman.logic.metadata_core.Field e))
@@ -291,31 +308,20 @@
 (defn to-field-link [m]
   (FieldLink. m))
 (defn to-field-composite [field]
-  (let [{field-list :fields-list var-list :var-list :as all}
-        ;; {:mapp        { :seal.site_name :text, :seal.site_url :link }
-        ;;  :demapp      { :text :seal.site_name, :link :seal.site_url }
-        ;;  :fields-list [ :seal.site_name :seal.site_url ]
-        ;;  :var-list    [ :text :link ]}
+  (let [{:keys [mapp demapp var-template field-template var-list field-list]}
         (reduce (fn [a f]
                   (-> a
-                      (update :fields-list conj (:field-qualified f))
-                      (update :var-list conj (:constructor-var f))
-                      (update :mapp into {(:field-qualified f) (:constructor-var f)})
-                      (update :demapp into {(:constructor-var f) (:field-qualified f)})))
-                {:mapp {} :demapp {} :fields-list [] :var-list []}
+                      (update :field-list      conj  (:field-qualified f))
+                      (update :var-list        conj  (:constructor-var f))
+                      (update :var-template    into {(:field-qualified f) nil})
+                      (update :field-template  into {(:constructor-var f) nil})
+                      (update :mapp            into {(:field-qualified f) (:constructor-var f)})
+                      (update :demapp          into {(:constructor-var f) (:field-qualified f)})))
+                {:mapp {} :demapp {} :var-template {} :field-template {} :var-list [] :field-list []}
                 (:columns field))
-        make-mapp   (fn [e] (clojure.set/rename-keys (select-keys e field-list) (:mapp all)))
-        make-demapp (fn [e] (clojure.set/rename-keys e                          (:demapp all)))
-        from-flatt (fn [m]
-                     (-> (reduce (fn [acc f] (dissoc acc f)) m field-list)
-                         (assoc-in [(:field-qualified field)]
-                                   ((eval (:constructor field)) (make-mapp m)))))
-        to-flatt   (fn [m]
-                     (if-not (contains? m (:field-qualified field)) m
-                             (let [composite-flatt (make-demapp (get-in m [(:field-qualified field)]))
-                                   m (dissoc m (:field-qualified field))
-                                   m (merge m composite-flatt)] m)))]
-    (->FieldComposite field from-flatt to-flatt)))
+        make-mapp   (fn [e] (merge field-template (clojure.set/rename-keys (select-keys e field-list) mapp)))
+        make-demapp (fn [e] (merge var-template   (clojure.set/rename-keys (select-keys e var-list) demapp)))]
+    (->FieldComposite field make-mapp make-demapp)))
 
 (defn- wrapp-cols-metadata-types [cols]
   (map (fn [c] (cond
@@ -337,56 +343,43 @@
     (reduce (fn [acc column] (if (= (:constructor-var column) field-comp-var)
                               (conj acc (:field column)) acc)) []
             (:columns (:m (.find-field-qualified this field-name-qualified-kwd)))))
-  
+
+
   IColumns
-  (return-columns    [this]
-    (vec (get-in (.m this) [:prop :columns] [])))
+  (return-columns [this]
+    (vec (wrapp-cols-metadata-types (get-in (.m this) [:prop :columns] []))))
+  (return-columns-k-v [this]
+    (group-by-apply #(.return-field-qualified %) (.return-columns this)
+                    :apply-group first))
+
+
+  IColumnsExtended
+  (return-columns-smpl [this]
+    (vec (wrapp-cols-metadata-types (->> (get-in (.m this) [:prop :columns] [])
+                                         (remove #(contains? % :key-table))
+                                         (remove #(contains? % :columns))))))
+  (return-columns-link [this]
+    (vec (wrapp-cols-metadata-types (->> (get-in (.m this) [:prop :columns] [])
+                                         (filter #(contains? % :key-table))))))
+  (return-columns-composite [this]
+    (vec (wrapp-cols-metadata-types (->> (get-in (.m this) [:prop :columns] [])
+                                         (filter #(contains? % :columns))))))
+  (return-columns-flatten [this]
+    (vec (concat (.return-columns this)
+                 (.return-columns-links this)
+                 (mapcat #(.return-columns %) (.return-columns-composite this)))))
   
   IMetadata
   (return-prop       [this] (get (.m this) :prop nil))
   (return-id         [this] (get (.m this) :id nil))
   (return-table_name [this] (get (.m this) :table_name nil))
   (return-table      [this] (get-in (.m this) [:prop :table] nil))
-
-  (return-columns-wrapp [this]
-    (vec (wrapp-cols-metadata-types (get-in (.m this) [:prop :columns] []))))
-  (return-columns-composite-wrapp [this]
-    (vec (wrapp-cols-metadata-types (get-in (.m this) [:prop :columns-composite] []))))
-  (return-columns-join-wrapp [this]
-    (vec (concat (.return-columns-wrapp this)
-                 (.return-columns-composite-wrapp this))))
-  (return-columns-flatten-wrapp [this]
-    (vec (concat (.return-columns-wrapp this)
-                 (mapcat #(wrapp-cols-metadata-types (.return-columns %))
-                         (.return-columns-composite-wrapp this)))))
-  
-  (return-columns-composite [this]
-    (vec (get-in (.m this) [:prop :columns-composite] [])))
-  (return-columns-join [this]
-    (vec (concat (.return-columns this) (.return-columns-composite this))))
-  (return-columns-flatten [this]
-    (vec (concat (.return-columns this) (mapcat :columns (.return-columns-composite this)))))
-  
   (exists? [this]
     (if (not-empty (jarman.logic.metadata-core/return-metadata (.return-table-name this)))
       true))
   (refresh [this]
     (if (.exists? this)
       (set! (.m this) (first (jarman.logic.metadata-core/return-metadata (.return-table-name this))))))
-  ;; (persist [this]
-  ;;   (jarman.logic.metadata/update-meta (.m this)))
-  ;; (diff-changes [this changed]
-  ;;   (if changed
-  ;;     (let [metadata-original (.m this)
-  ;;           metadata-changed (.m changed)]
-  ;;       (jarman.logic.metadata/apply-table metadata-original metadata-changed))))
-  ;; (diff-changes-apply [this changed]
-  ;;   (if changed
-  ;;     (let [metadata-original (.m this)
-  ;;           metadata-changed (.m changed)]
-  ;;       (jarman.logic.metadata/do-change
-  ;;        (jarman.logic.metadata/apply-table metadata-original metadata-changed)
-  ;;        metadata-original metadata-changed))))
   IGroup
   (group [this m]
     (reduce
@@ -430,4 +423,104 @@
           (--do-table-frontend-recursion
            (first (return-metadata (--get-foreight-table-by-column reference)))
            on-recur-action :back-ref table-meta :column-ref reference))))))
+
+(defn model-build [meta-fields]
+  (into {}
+        (map (fn [f]
+               (vector
+                (return-field-qualified f)
+                (cond
+                  (isField? f) (-> f return-component :value)
+                  (isFieldLink? f) nil
+                  (isFieldComposite? f) (group f (model-build (return-columns f )))))) meta-fields)))
+
+(defn convert_metadata->model
+  "Example
+  (convert_metadata->model :profile :seal)
+    =>
+    {:profile.configuration \"'{}'\",
+     :seal.site {:text \"Title\", :link \"https://\"},
+     :seal.datetime_of_remove nil,
+     :seal.ftp_file {:file-name \"\", :file-path \"\"},
+     :seal.id nil,
+     :profile.id nil,
+     :seal.seal_number \"\",
+     :seal.db_file {:file-name \"\", :file nil},
+     :seal.datetime_of_use nil,
+     :profile.name \"\"}"
+  [& tables]
+  (let [MX (map ->TableMetadata (apply return-metadata tables))
+        IDX (map #(hash-map (keyword (format "%s.id" (.return-table_name %))) nil) MX)]
+    (into {}
+          (concat (mapcat (fn [M] (model-build (return-columns M))) MX)
+                  IDX))))
+
+(defn convert_flattfields->model
+  "Example
+    (convert_flattfields->model
+     {:seal.ftp_file_path \"\",
+     :seal.datetime_of_remove nil,
+     :seal.site_name \"Title\",
+     :seal.file nil,
+     :seal.ftp_file_name \"\",
+     :seal.seal_number \"\",
+     :seal.file_name \"\",
+     :seal.datetime_of_use nil,
+     :seal.site_url \"https://\"}
+      :seal)
+     ;; =>
+       {:seal.seal_number \"\",
+       :seal.datetime_of_use nil,
+       :seal.datetime_of_remove nil,
+       :seal.site {:text \"Title\", :link \"https://\"},
+       :seal.db_file {:file-name \"\", :file nil},
+       :seal.ftp_file {:file-name \"\", :file-path \"\"},
+       :seal.id nil}"
+  [model & tables]
+  (if (empty? tables) {}
+      (let [MX  (map ->TableMetadata (apply return-metadata tables))
+            COLVEC (into {}
+                         (concat
+                          (map return-columns-k-v MX)
+                          (map #(hash-map
+                                 (keyword (format "%s.id" (.return-table_name %)))
+                                 (to-field-link {:field :id :field-qualified (keyword (format "%s.id" (.return-table_name %)))})) MX)))]
+        (reduce (fn [acc [field-qualified field-meta]]
+                  (if (isFieldComposite? field-meta)
+                    (assoc acc field-qualified (.group field-meta model))
+                    (assoc acc field-qualified (get model field-qualified))))
+                {} COLVEC))))
+
+(defn convert_model->flattfields
+  "Example
+  (convert_model->flatt-fields
+    {:seal.id nil,
+     :seal.seal_number \"\",
+     :seal.datetime_of_use nil,
+     :seal.datetime_of_remove nil,
+     :seal.site {:text \"Title\", :link \"https://\"},
+     :seal.db_file {:file-name \"\", :file nil},
+     :seal.ftp_file {:file-name \"\", :file-path \"\"}
+     :profile.id 1
+     :profile.name \"\"
+     :profile.configuration \"\"}
+    :seal)
+       => {:seal.ftp_file_path \"\",
+           :seal.datetime_of_remove nil,
+           :seal.site_name \"Title\",
+           :seal.file nil,
+           :seal.ftp_file_name \"\",
+           :seal.seal_number \"\",
+           :seal.file_name \"\",
+           :seal.datetime_of_use nil,
+           :seal.site_url \"https://\"}"
+  [model & tables]
+  (if (empty? tables) {}
+   (let [MX (map ->TableMetadata (apply return-metadata tables))
+         DIC (->> MX (map return-columns-k-v) (into {}))]
+     (->> model
+          (map (fn [[k v]]
+                 (if-let [f (get DIC k)]
+                   (if (isFieldComposite? f) (ungroup f v) [k v]))))
+          (into {})))))
 

@@ -15,7 +15,6 @@
    [jarman.gui.gui-style      :as gs]
    [jarman.plugin.spec        :as spec]
    [jarman.interaction        :as i]
-   [jarman.plugin.data-toolkit       :as query-toolkit]
    [jarman.resource-lib.icon-library :as icon]
    [plugin.service-period.service-period-library :as req]
    ;; external

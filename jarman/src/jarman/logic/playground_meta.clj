@@ -70,7 +70,7 @@
             (doall (for [t ["documents" "permission" "user" "enterpreneur"
                             "point_of_sale" "cache_register" "point_of_sale_group"
                             "point_of_sale_group_links" "repair_contract" "seal" "service_contract"]]
-               (db/exec (metadata/create-table-by-meta (first (metadata/getset! t)))))))))))
+               (db/exec (metadata/create-table-by-meta (first (metadata/return-metadata t)))))))))))
 
 (defn create-scheme []
   (db/exec metadata)

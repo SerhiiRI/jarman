@@ -538,9 +538,12 @@
               actions []
               expand  nil}}]
    (print-header
-    "Ivoke info frame"
-    (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions))
-    (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions))))
+    "Ivoke INFO frame"
+    (print-line (cl-format nil "Header. ~A" header))
+    (print-line (cl-format nil "Body. ~A" body))
+    (print-line "frame configurations: ")
+    (print-src "clojure" (pr-str (copy-locals type time s-popup expand actions))))
+   (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
 
 (defn warning
   "Description:
@@ -557,8 +560,11 @@
               actions []
               expand  nil}}]
    (print-header
-    "Ivoke warning frame"
-    (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
+    "Ivoke WARNING frame"
+    (print-line (cl-format nil "Header. ~A" header))
+    (print-line (cl-format nil "Body. ~A" body))
+    (print-line "frame configurations: ")
+    (print-src "clojure" (pr-str (copy-locals type time s-popup expand actions))))
    (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
 
 (defn danger
@@ -576,8 +582,11 @@
               actions []
               expand  nil}}]
    (print-header
-    "Ivoke danger frame"
-    (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
+    "Ivoke DANGER frame"
+    (print-line (cl-format nil "Header. ~A" header))
+    (print-line (cl-format nil "Body. ~A" body))
+    (print-line "frame configurations: ")
+    (print-src "clojure" (pr-str (copy-locals type time s-popup expand actions))))
    (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
 
 (defn success
@@ -595,8 +604,11 @@
               actions []
               expand  nil}}]
    (print-header
-    "Ivoke success frame"
-    (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
+    "Ivoke SUCCESS frame"
+    (print-line (cl-format nil "Header. ~A" header))
+    (print-line (cl-format nil "Body. ~A" body))
+    (print-line "frame configurations: ")
+    (print-src "clojure" (pr-str (copy-locals type time s-popup expand actions))))
    (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
 
 ;; Using alerts, alert examples

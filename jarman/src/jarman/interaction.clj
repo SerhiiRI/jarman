@@ -1,12 +1,26 @@
+;;  _       _                      _   _             
+;; (_)_ __ | |_ ___ _ __ __ _  ___| |_(_) ___  _ __  
+;; | | '_ \| __/ _ \ '__/ _` |/ __| __| |/ _ \| '_ \ 
+;; | | | | | ||  __/ | | (_| | (__| |_| | (_) | | | |
+;; |_|_| |_|\__\___|_|  \__,_|\___|\__|_|\___/|_| |_|
+;; =================================================
+;; fixme:
+;; - [ ] most logic overthrow by the potemkin
+;; - [ ] clean-up whole file, and rewrite 'ns declaration
+;; - [ ] add demo on bottom of file
+;; - [ ] EVERY event should be printed like success/danger... 
+
 (ns jarman.interaction)
+(require '[potemkin.namespaces :refer [import-vars]])
 (require '[jarman.gui.gui-alerts-service :as gas])
 (require '[jarman.gui.gui-views-service  :as gvs])
 (require '[jarman.gui.gui-editors        :as gedit])
 (require '[jarman.gui.gui-components     :as gcomp])
 (require '[jarman.gui.gui-tools          :as gtool])
 (require '[jarman.tools.org :refer :all])
+(require '[jarman.tools.lang :refer :all])
 (require '[clojure.pprint :refer [cl-format]])
-
+(require '[jarman.gui.components.swing-keyboards :refer [kbd global-set-key]])
 
 ;; ┌──────────────────┐
 ;; │                  │
@@ -50,65 +64,11 @@
 ;; │  Alerts wraper   │
 ;; │                  │
 ;; └──────────────────┘
-(defn info
-  "Description:
-    Wraper.
-    Invoke alert box on Jarman."
-  ([body] (info :info body))
-  ([header body
-    & {:keys [type time s-popup actions expand]
-       :or   {type :alert
-              time 5
-              s-popup [300 320]
-              actions []
-              expand  nil}}]
-   (gas/info header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
-
-(defn warning
-  "Description:
-    Wraper.
-    Invoke alert box on Jarman."
-  ([body] (warning :warning body))
-  ([header body
-    & {:keys [type time s-popup actions expand]
-       :or   {type :warning
-              time 5
-              s-popup [300 320]
-              actions []
-              expand  nil}}]
-   (gas/warning header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
-
-(defn danger
-  "Description:
-    Wraper.
-    Invoke alert box on Jarman."
-  ([body] (danger :danger body))
-  ([header body
-    & {:keys [type time s-popup actions expand]
-       :or   {type :danger
-              time 5
-              s-popup [300 320]
-              actions []
-              expand  nil}}]
-   (print-header
-    "Ivoke danger frame"
-    (print-line (cl-format nil "~@{~A~^, ~}" header body type time s-popup expand actions)))
-   (gas/danger header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
 
 
-(defn success
-  "Description:
-    Wraper.
-      Invoke alert box on Jarman."
-  ([body] (success :success body))
-  ([header body
-    & {:keys [type time s-popup actions expand]
-       :or   {type :success
-              time 5
-              s-popup [300 320]
-              actions []
-              expand  nil}}]
-   (gas/success header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
+(import-vars
+ [jarman.gui.gui-alerts-service
+  success danger warning info])
 
 (defn restart-alert []
   (danger :need-reload
@@ -130,7 +90,6 @@
                   :type    type
                   :time    time
                   :actions actions))
-
 
 (defn show-delay-alerts [] (gas/load-temp-alerts))
 
@@ -174,16 +133,13 @@
       :render-fn (fn [] (gedit/text-file-editor file-path syntax))))))
 
 (comment
-  (editor "./test/test-file.txt" :clojure)
-  ) 
-
+  (editor "./test/test-file.txt" :clojure)) 
 
 ;; ┌──────────────────┐
 ;; │                  │
 ;; │  Doom debugger   │
 ;; │                  │
 ;; └──────────────────┘
-
 
 (defn open-doom
   "Description:
@@ -203,7 +159,25 @@
   (open-doom (seesaw.core/label :text "Pepe Dance"))
   (hide-doom)
   (open-doom)
-  (rm-doom)
-  )
+  (rm-doom))
+
+(comment
+  (global-set-key (kbd "M-x") (fn []
+                                (println "Open doom")
+                                (open-doom
+                                 (jarman.gui.components.listbox/select-panel
+                                  :string-list
+                                  (map str (.listFiles (clojure.java.io/file jarman.config.environment/user-home)))
+                                  :on-select (fn [t] (println "CHOSE=> " t))))))
+  (global-set-key (kbd "C-g") (fn []
+                                (println "Remove doom")
+                                (rm-doom))))
 
 
+;;  ____  _____ __  __  ___
+;; |  _ \| ____|  \/  |/ _ \
+;; | | | |  _| | |\/| | | | |
+;; | |_| | |___| |  | | |_| |
+;; |____/|_____|_|  |_|\___/
+;; =========================
+;; ... TODO ....

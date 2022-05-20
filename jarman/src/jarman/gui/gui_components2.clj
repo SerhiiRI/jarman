@@ -30,6 +30,8 @@
    [jarman.gui.components.composites]
    [jarman.gui.components.panels]
    [jarman.gui.components.listbox]
+   [jarman.gui.components.database-table]
+   [jarman.gui.components.error]
    [jarman.gui.managment :refer [register-custom-component
                                  get-comp-actions]]))
 
@@ -51,11 +53,11 @@
  [jarman.gui.components.panels
   border-panel box-panel
   vertical-panel horizontal-panel
-  grid-panel
-  mig-panel]
+  grid-panel mig-panel]
 
  ;; -- SIMPLE COMPONENTS
  [jarman.gui.components.common
+  stub
   label button combobox
   text textarea codearea]
 
@@ -81,7 +83,13 @@
 
  ;; -- LISTBOX COMPONENT
  [jarman.gui.components.listbox
-  select-panel])
+  select-panel]
+
+ [jarman.gui.components.database-table
+  database-table]
+
+ [jarman.gui.components.error
+  catch-error-panel])
 
 ;;  ____  _____ ____ ___ ____ _____ _____ ____
 ;; |  _ \| ____/ ___|_ _/ ___|_   _| ____|  _ \
@@ -95,7 +103,15 @@
 ;;  \____\___/|_|  |_|_|    \___/|_| \_|_____|_| \_| |_|   |___/
 ;;
 
+;; todo
+;; [ ] :jsgl-digit
+;; [ ] :jsgl-float
+;; [ ] :jsgl-ckeckbox
+;; [ ] :jsgl-ftp-file
+;; [ ] :jsgl-link
+(register-custom-component :id :jsgl-stub            :component stub           :actions #{})
 (register-custom-component :id :jsgl-label           :component label          :actions (get-comp-actions 'label))
+(register-custom-component :id :jsgl-link            :component stub           :actions (get-comp-actions 'stub))
 (register-custom-component :id :jsgl-button          :component button         :actions (get-comp-actions 'button))
 (register-custom-component :id :jsgl-combobox        :component combobox       :actions (get-comp-actions 'combobox))
 (register-custom-component :id :jsgl-text            :component text           :actions (get-comp-actions 'text))
@@ -109,7 +125,8 @@
 (register-custom-component :id :jsgl-datetime-label  :component datetime-label :actions (get-comp-actions 'datetime-label))
 (register-custom-component :id :jsgl-url-panel       :component url-panel      :actions (get-comp-actions 'url-panel)       :constructor  jarman.logic.metadata/map->Link)
 (register-custom-component :id :jsgl-file-panel      :component file-panel     :actions (get-comp-actions 'file-panel)      :constructor  jarman.logic.metadata/map->File)
-(register-custom-component :id :jsgl-listbox         :component file-panel     :actions (get-comp-actions 'file-panel)      :constructor  jarman.logic.metadata/map->File)
+(register-custom-component :id :jsgl-listbox         :component select-panel   :actions (get-comp-actions 'listbox))
+(register-custom-component :id :jsgl-database-table  :component database-table :actions (get-comp-actions 'database-table))
 
 ;;  ____  _____ __  __  ___
 ;; |  _ \| ____|  \/  |/ _ \

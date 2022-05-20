@@ -1,9 +1,14 @@
 (ns jarman.gui.components.swing
   (:require
-   [seesaw.core]
+   [seesaw.core :as c]
+   [seesaw.border  :as b]
+   [seesaw.mig]
+   [jarman.faces              :as face]
+   ;; --
    [clojure.pprint :refer [cl-format]]
    [jarman.tools.lang :refer :all])
   (:import
+   [java.awt GraphicsEnvironment GraphicsDevice]
    [javax.swing Action KeyStroke]
    [javax.swing AbstractAction InputMap ActionMap]
    [java.awt.event KeyEvent InputEvent ActionEvent]))
@@ -37,6 +42,31 @@
       (+ relative-x S-X)
       (+ relative-y S-Y)))))
 
+(defn active-screens []
+ (let [env (GraphicsEnvironment/getLocalGraphicsEnvironment)
+       device-count (count (.getScreenDevices env))]
+   (for [[idx ^GraphicsDevice device] (map-indexed vector (.getScreenDevices env))]
+     {:idx idx
+      :width        (.. device getDisplayMode getWidth)
+      :height       (.. device getDisplayMode getHeight)
+      :refresh-rate (.. device getDisplayMode getRefreshRate)
+      :bit-depth    (.. device getDisplayMode getBitDepth)
+      :idSting      (.. device getIDstring)
+      :bound-height (.. device getDefaultConfiguration getBounds -height)
+      :bound-width  (.. device getDefaultConfiguration getBounds -width)})))
 
-
+(defn quick-frame [items]
+ (-> 
+  (c/frame
+   :content
+   (c/scrollable
+    (seesaw.mig/mig-panel
+     :background  face/c-compos-background-darker
+     :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
+     :border (b/empty-border :thickness 10)
+     :items (mapv vector items)))
+   :title "Jarman" :size [1000 :by 800])
+  (c/pack!)
+  (jarman.gui.components.swing/choose-screen! 0)
+  (c/show!)))
 

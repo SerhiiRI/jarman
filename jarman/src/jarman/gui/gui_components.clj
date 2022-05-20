@@ -50,13 +50,7 @@
                        (b/line-border :top line-size :color line-color)
                        (b/empty-border :left l :right r :top t :bottom b))))))
 
-(defn fake-focus
-  [& {:keys [args
-             vgap
-             hgap]
-      :or {args []
-           vgap 0
-           hgap 0}}]
+(defn fake-focus [& {:keys [args vgap hgap] :or {args [] vgap 0 hgap 0}}]
   (apply 
    c/label 
    :focusable? true
@@ -1235,7 +1229,6 @@
             exbtn))
         (c/config! mig :id id :items [[(expand-btn onClick)] [expand-box]])))))
 
-
 (defn expand-input
   [{:keys [panel onClick title]
     :or {panel (seesaw.core/vertical-panel :items (list (c/label :text "heyy")))
@@ -1308,9 +1301,9 @@
 
 ;; BUTTON EXPAND
 (def view (fn [] (button-expand "Expand"
-                                (button-expand-child "Expanded")
-                                (button-expand-child "Don't touch me." :onClick (fn [e] (c/config! (c/to-widget e) :text "FAQ 🖕( ͡° ᴗ ͡°)🖕" ;; :font (gtool/getFont 14 :name "calibri")
-                                                                                                   ))))))
+                               (button-expand-child "Expanded")
+                               (button-expand-child "Don't touch me." :onClick (fn [e] (c/config! (c/to-widget e) :text "FAQ 🖕( ͡° ᴗ ͡°)🖕" ;; :font (gtool/getFont 14 :name "calibri")
+                                                                                                 ))))))
 
 (def label-img
   (fn [file-path w h]

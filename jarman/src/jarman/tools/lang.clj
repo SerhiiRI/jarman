@@ -745,21 +745,13 @@
      (recur (dissoc-in m ks) ks' kss)
      (dissoc-in m ks))))
 
-
-;;; FUZZY SEARCHING
-(comment
-  (require '[clj-fuzzy.metrics :as fuzzy])
-  (let [searching-word "genera"]
-   (->> (return-public-functions 'jarman.logic.security)
-        (mapv (comp name symbol))
-        (mapv #(vector % (fuzzy/levenshtein searching-word %)))
-        (sort-by second))))
-
-
 (defn return-public-functions [ns]
   {:pre [(symbol? ns)]}
   (filter (comp some? :arglists meta)
           (vals (ns-publics ns))))
+
+(defmacro copy-locals [& vars]
+  `(hash-map ~@(mapcat (fn [x] [(keyword (name x)) x]) vars)))
 
 ;;;;;;;;;;;;;;;;
 ;;; REFLECTS ;;;

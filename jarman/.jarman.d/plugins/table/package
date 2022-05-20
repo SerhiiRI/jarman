@@ -8,5 +8,5 @@
   :keywords     '("table" "view")
   :url          '("https://github.com/emacs-dashboard/emacs-dashboard")
   :language     '(language)
-  :loading-seq  '(composite_components dialog_bigstring dialog_table table))
+  :loading-seq  '(helpers table_socket table view))
 

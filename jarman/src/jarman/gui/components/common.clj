@@ -35,7 +35,6 @@
     SyntaxScheme
     Token]))
 
-
 ;;  ____ _____  _    _   _ ____    _    ____ _____              
 ;; / ___|_   _|/ \  | \ | |  _ \  / \  |  _ \_   _|             
 ;; \___ \ | | / _ \ |  \| | | | |/ _ \ | |_) || |               
@@ -67,7 +66,7 @@
       (define-key (kbd "C-u")        DefaultEditorKit/pageUpAction)
       (define-key (kbd "C-d")        DefaultEditorKit/deleteNextCharAction)
       (define-key (kbd "delete")     DefaultEditorKit/deleteNextCharAction)
-      (define-key (kbd "C-h")        DefaultEditorKit/deletePrevCharAction)
+      ;; (define-key (kbd "C-h")        DefaultEditorKit/deletePrevCharAction)
       (define-key (kbd "backspace")  DefaultEditorKit/deletePrevCharAction)
       (define-key (kbd "C-o")        DefaultEditorKit/insertBreakAction)
       (define-key (kbd "C-m")        DefaultEditorKit/insertBreakAction)
@@ -94,7 +93,7 @@
 ;; - we shuld have to type of labels. Label as button,
 ;;   and label with text, customizing and event reaction
 ;; - idiomatically it shuld'n be a button, more text
-(defn label
+#_(defn label
   [& {:keys [value tgap bgap lgap rgap halign tip bg bg-hover underline-size underline-focus underline flip-border
              on-click on-focus-gain on-focus-lost on-mouse-enter on-mouse-exit args]    
       :or   {tgap 10 bgap 10 lgap 10 rgap 10
@@ -156,6 +155,25 @@
     (fn [underline-color]
       (b/compound-border (b/empty-border :bottom bgap :top tgap :left lgap :right rgap)
                          (b/line-border (if flip-border :top :bottom) underline-size :color underline-color)))]))
+
+(defn stub [& args]
+  (c/label :text (format "STUB: %s" (pr-str args))
+           :background face/c-red))
+
+(defn label
+  [& {:keys [value halign tip bg args]
+      :or   {value           ""
+             tip             ""
+             halign          :left
+             bg              face/c-layout-background
+             args []}}]
+  (apply c/label
+         :text value
+         :halign halign
+         :tip tip
+         :background bg
+         args))
+
 ;;; fixme:aleks button arguments
 ;;; Warning! first fix `fixme` in `text` below, after change `button`
 ;;; 1. rename arguments, like in input field below
@@ -223,7 +241,6 @@
     (fn [underline-color]
       (b/compound-border (b/empty-border :bottom bgap :top tgap :left lgap :right rgap)
                          (b/line-border (if flip-border :top :bottom) underline-size :color underline-color)))]))
-
 (comment
   (-> (doto (c/frame
              :content
@@ -290,28 +307,30 @@
         :listen
         [:focus-gained
          (fn [e]
-           (c/config! e :border (new-border border-color-focus))
-           (cond (= (c/value e) placeholder) (c/config! e :text ""))
-           (c/config! e :user-data (set-user-data e :edit? true))
+           ;; (c/config! e :border (new-border border-color-focus))
+           ;; (cond (= (c/value e) placeholder) (c/config! e :text ""))
+           ;; (c/config! e :user-data (set-user-data e :edit? true))
            (on-focus-gain e))
          :focus-lost
          (fn [e]
-           (c/config! e :border (new-border border-color-unfocus))
-           (cond (= (c/value e) "") (c/config! e :text placeholder))
-           (c/config! e :user-data (set-user-data e :edit? false))
+           ;; (c/config! e :border (new-border border-color-unfocus))
+           ;; (cond (= (c/value e) "") (c/config! e :text placeholder))
+           ;; (c/config! e :user-data (set-user-data e :edit? false))
            (on-focus-lost e))
          :caret-update
          (fn [e]
-           (let [new-v (c/value (c/to-widget e))]
-             (if (and (> (count new-v) char-limit) (< 0 char-limit))
-               (c/invoke-later (c/config! e :text @last-v))
-               (do
-                 (reset! last-v new-v)
-                 (c/config! e :user-data (set-user-data e :value (if (= placeholder @last-v) "" @last-v)))
-                 (on-change e)))))])
+           ;; (let [new-v (c/value (c/to-widget e))]
+           ;;   (if (and (> (count new-v) char-limit) (< 0 char-limit))
+           ;;     ;; (c/invoke-later (c/config! e :text @last-v))
+           ;;     (do
+           ;;       (reset! last-v new-v)
+           ;;       (c/config! e :user-data (set-user-data e :value (if (= placeholder @last-v) "" @last-v)))
+           ;;       (on-change e))))
+           (on-change e)
+           )])
      (apply args)
      (wrapp-keymap
-      (-> (global-keymap) (patch-emacs-keymap))
+      (-> (active-keymap) (patch-emacs-keymap))
       jarman.gui.components.swing-actions/default-editor-kit-action-map))))
 
 (defn scrollbox
@@ -343,6 +362,7 @@
              ;; placeholder
              ;; font-size
              background ;; char-limit start-underline
+             enabled?
              on-change on-focus-gain on-focus-lost on-caret-update
              args]
       :or   {value                 ""
@@ -351,6 +371,7 @@
              border-color-unfocus  face/c-underline
              ;; placeholder           ""
              background            face/c-input-bg
+             enabled?              true
              ;; start-underline       nil
              ;; char-limit            0
              
@@ -363,26 +384,28 @@
   (let [newBorder (fn [underline-color]
                     (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
                                        (b/line-border :bottom (nth border 4) :color underline-color)))]
-    (let [text-area (c/to-widget (wrapp-keymap (javax.swing.JTextArea.)
-                                  (-> (global-keymap) (patch-emacs-keymap))
-                                  jarman.gui.components.swing-actions/default-editor-kit-action-map))]
-      (c/config!
-       text-area
-       :text (rift value "")
-       :minimum-size [50 :by 100]
-       :background background
-       :border (newBorder border-color-unfocus)
-       :listen
-       [:focus-gained (fn [e]
-                        (c/config! e :border (newBorder border-color-focus))
-                        (on-focus-gain e))
-        :focus-lost   (fn [e]
-                        (c/config! e :border (newBorder border-color-unfocus))
-                        (on-focus-lost e))
-        :caret-update (fn [e]
-                        (on-change e))])
-      ;; (on-chage text-area)
-      (scrollbox text-area :minimum-size [50 :by 100]))))
+    (->
+     (partial c/text
+        :text (rift value "")
+        :minimum-size [50 :by 100]
+        :background background
+        :border (newBorder border-color-unfocus)
+        :enabled? enabled?
+        :wrap-lines? true
+        :multi-line? true
+        :listen
+        [:focus-gained (fn [e]
+                         (c/config! e :border (newBorder border-color-focus))
+                         (on-focus-gain e))
+         :focus-lost   (fn [e]
+                         (c/config! e :border (newBorder border-color-unfocus))
+                         (on-focus-lost e))
+         :caret-update (fn [e]
+                         (on-change e))])
+     (apply args)
+     (wrapp-keymap (-> (active-keymap) (patch-emacs-keymap))
+                   jarman.gui.components.swing-actions/default-editor-kit-action-map)
+     (scrollbox :minimum-size [50 :by 100]))))
 
 (defn codearea
   "Description:
@@ -524,7 +547,7 @@
       ((rTextScrollPane
         (-> rTextArea
             (wrapp-keymap
-             (-> (global-keymap) (patch-emacs-keymap) (patch-rtext-keymap))
+             (-> (active-keymap) (patch-emacs-keymap) (patch-rtext-keymap))
              jarman.gui.components.swing-actions/default-rtext-editor-kit-action-map)
             (RTextScrollPane.)))
        (rTextScrollPaneGutter (.getGutter rTextScrollPane)))
@@ -631,7 +654,7 @@
   (doto (seesaw.core/frame
          :title "Jarman"
          :content
-         (let [input-keymap (-> (global-keymap) (patch-emacs-keymap))
+         (let [input-keymap (-> (active-keymap) (patch-emacs-keymap))
                input-action jarman.gui.components.swing-actions/default-editor-kit-action-map
                l0 (c/label :text "Keybindings          :" :font {:size 20})
                s1 (c/label :text "|")
@@ -647,7 +670,7 @@
            ;; (.remove (.getActionMap t1) DefaultEditorKit/insertContentAction)
            ;; (describe-keymap input-keymap)
            (wrapp-keymap t1
-                         (-> (global-keymap) (patch-emacs-keymap))
+                         (-> (active-keymap) (patch-emacs-keymap))
                          jarman.gui.components.swing-actions/default-editor-kit-action-map)
            (wrapp-keymap p)
            p))

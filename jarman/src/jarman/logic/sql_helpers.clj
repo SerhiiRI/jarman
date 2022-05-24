@@ -54,25 +54,25 @@
                             {:date date-formatter
                              :datetime datetime-formatter})
        [{:date (java.util.Date.)
-         :datetime (java.util.Date.)}]))
+         :datetime (java.util.Date.)}])
 
-(->> (db/query
-      (sql-tool/select!
-       {:table_name :seal,
-        :column
-        [:#as_is
-         :seal.id
-         :seal.seal_number
-         :seal.datetime_of_use
-         :seal.datetime_of_remove
-         :seal.site_name
-         :seal.site_url
-         :seal.file_name
-         ;; :seal.file
-         :seal.ftp_file_name
-         ;; :seal.ftp_file_path
-         ]}))
-     (map (result-transformer-fn
-           {:seal.datetime_of_use datetime-formatter
-            :seal.datetime_of_remove datetime-formatter})))
+  (->> (db/query
+        (sql-tool/select!
+         {:table_name :seal,
+          :column
+          [:#as_is
+           :seal.id
+           :seal.seal_number
+           :seal.datetime_of_use
+           :seal.datetime_of_remove
+           :seal.site_name
+           :seal.site_url
+           :seal.file_name
+           ;; :seal.file
+           :seal.ftp_file_name
+           ;; :seal.ftp_file_path
+           ]}))
+       (map (result-transformer-fn
+             {:seal.datetime_of_use datetime-formatter
+              :seal.datetime_of_remove datetime-formatter}))))
 

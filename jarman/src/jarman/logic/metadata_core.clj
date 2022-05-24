@@ -130,7 +130,7 @@
   (metadata-reload! global-metadata-container))
 
 (comment
-  (return-metadata)
+  (return-metadata :seal)
   (reload-metadata))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -365,8 +365,8 @@
     (vec (wrapp-cols-metadata-types (->> (get-in (.m this) [:prop :columns] [])
                                          (filter #(contains? % :columns))))))
   (return-columns-flatten [this]
-    (vec (concat (.return-columns this)
-                 (.return-columns-links this)
+    (vec (concat (.return-columns-smpl this)
+                 (.return-columns-link this)
                  (mapcat #(.return-columns %) (.return-columns-composite this)))))
   
   IMetadata

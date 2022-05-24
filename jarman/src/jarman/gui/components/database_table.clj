@@ -36,12 +36,13 @@
 (defn table-model-by-metadata-information
   [^clojure.lang.PersistentVector model-tables-v
    ^clojure.lang.PersistentVector model-field-qualified-v]
-  (as-> model-tables-v E
-    (apply metadata/return-metadata E)
-    (mapcat (comp :columns :prop) E)
-    (group-by-apply :field-qualified E :apply-group first)
+  (as-> model-tables-v MX
+    (apply metadata/return-metadata MX)
+    (mapcat (fn [M] (-> M  metadata/->TableMetadata .return-columns-flatten)) MX)
+    (map    (fn [M] (-> M .to-primive)) MX)
+    (group-by-apply :field-qualified MX :apply-group first)
     (for [col-qualified model-field-qualified-v
-          :let [col-metadata (if (map? col-qualified) col-qualified (get E col-qualified nil))]]
+          :let [col-metadata (if (map? col-qualified) col-qualified (get MX col-qualified nil))]]
       (do (assert (some? col-metadata) (cl-format nil "Column `~A` not exist in any of selected tables: ~{`~A`~^, ~}."  col-qualified model-tables-v))
           {:key  (:field-qualified col-metadata)
            :text (:representation col-metadata)}))))

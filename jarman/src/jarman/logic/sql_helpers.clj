@@ -21,6 +21,58 @@
      :expression-sql-fn (fn [id] (sql-tool/select! (cfg id)))
      :expression-cfg-fn (fn [id] (cfg id))}))
 
-(build-select-simple-data-by-the-id :user)
+;; (build-select-simple-data-by-the-id :user)
 
+
+(defn date-formatter [^java.util.Date date]
+  (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") date))
+(defn datetime-formatter [^java.util.Date date]
+  (.format (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm") date))
+(defn result-transformer-f [m tranformer-m]
+  (persistent!
+   (reduce (fn [acc [k transformer]]
+             (assoc! acc k (transformer (get acc k))))
+           (transient m) tranformer-m)))
+(defn result-transformer-l [tranformer-m m]
+  (persistent!
+   (reduce (fn [acc [k transformer]]
+             (assoc! acc k (transformer (get acc k))))
+           (transient m) tranformer-m)))
+(defn result-transformer-fn [tranformer-m]
+  (fn [m]
+   (persistent!
+    (reduce (fn [acc [k transformer]]
+              (assoc! acc k (transformer (get acc k))))
+            (transient m) tranformer-m))))
+
+
+
+
+
+(comment
+  (map #(result-transformer %
+                            {:date date-formatter
+                             :datetime datetime-formatter})
+       [{:date (java.util.Date.)
+         :datetime (java.util.Date.)}]))
+
+(->> (db/query
+      (sql-tool/select!
+       {:table_name :seal,
+        :column
+        [:#as_is
+         :seal.id
+         :seal.seal_number
+         :seal.datetime_of_use
+         :seal.datetime_of_remove
+         :seal.site_name
+         :seal.site_url
+         :seal.file_name
+         ;; :seal.file
+         :seal.ftp_file_name
+         ;; :seal.ftp_file_path
+         ]}))
+     (map (result-transformer-fn
+           {:seal.datetime_of_use datetime-formatter
+            :seal.datetime_of_remove datetime-formatter})))
 

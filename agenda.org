@@ -7,7 +7,6 @@
 #+ARCHIVE: %s_done::
 #+STARTUP: overview
 
-* Note
 * Bugtrack
 ** PROCESSING 007 User plugin                                       :@Serhii:
    Add user plugin and support for Permissions
@@ -178,7 +177,8 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
   - setq
   - setj
   - define-key... in /jarman.core/ or /jarman.lang/
-** TODO /Feature/. Replacement for gui_components
+** DONE /Feature/. Replacement for gui_components
+CLOSED: [2022-05-24 Tue 06:13]
    Example of argument
    #+begin_src clojure
      [{:keys
@@ -235,7 +235,8 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
    2) Maybe will be fine to add some validation for arguments, and make
       debug machinizm.
 
-** TODO /Feature/. Metadata definition
+** DONE /Feature/. Metadata definition
+CLOSED: [2022-05-24 Tue 06:14]
    Currently metadata declare
    - how to create table
    - how to manage table
@@ -393,16 +394,3 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
 *** Акт виконаних робіт
 	-   створити
 * Documentations
-** PLANNED [#3] create jarman manifest file                         :@Serhii:
-   - Note taken on [2021-09-02 чт 19:01] 
-     After making first release of Jarman and finishing plugin system write
-     Manifest which must explain to us and others:
-     
-     - what idea of program evolution 
-     - which things must be scalled, what must be classificated
-        as Core and unchanged with no reason part of jarman
-     - strategy and aims   
-
-       
-
-   

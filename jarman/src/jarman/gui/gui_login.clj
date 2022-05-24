@@ -654,8 +654,6 @@
                                    (c/to-frame e)
                                    :content (configuration-panel state! dispatch! config-k))))])))
 
-
-
 (defn- config-tile
  "Description:
     State component.
@@ -748,7 +746,6 @@
      :v :a {:gap [10]}
      (doall (map #(label-body %) (gtool/get-lang-infos :contact))))]))
 
-
 (defn- info-logo
   "Description:
      Generate label with logo icon."
@@ -785,7 +782,6 @@
     (let [return-btn (return-to-login state! dispatch!)]
       (switch-focus state! dispatch! return-btn)
       return-btn)]))
-
 
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │

@@ -270,9 +270,10 @@
 
 (defn text
   [& {:keys [value border border-color-focus border-color-unfocus placeholder font-size background char-limit start-underline
-             on-change on-focus-gain on-focus-lost on-caret-update
+             on-change on-focus-gain on-focus-lost on-caret-update value-setter
              args]
       :or   {value                 ""
+             value-setter          str
              border                [10 10 5 5 2]
              border-color-focus    face/c-underline-on-focus
              border-color-unfocus  face/c-underline
@@ -300,7 +301,7 @@
                                              (b/line-border :bottom (nth border 4) :color underline-color)))]
     (-> 
      (partial c/text
-        :text       (if (empty? value) placeholder (str value))
+        :text       (if (empty? value) placeholder (value-setter value))
         :background background
         :border     (new-border (rift start-underline border-color-unfocus))
         :user-data  {:placeholder placeholder :value "" :edit? false :type :input :border-fn new-border}
@@ -364,8 +365,10 @@
              background ;; char-limit start-underline
              enabled?
              on-change on-focus-gain on-focus-lost on-caret-update
+             value-setter
              args]
       :or   {value                 ""
+             value-setter          str
              border                [10 10 5 5 2]
              border-color-focus    face/c-underline-on-focus
              border-color-unfocus  face/c-underline
@@ -386,7 +389,7 @@
                                        (b/line-border :bottom (nth border 4) :color underline-color)))]
     (->
      (partial c/text
-        :text (rift value "")
+        :text (value-setter (rift value ""))
         :minimum-size [50 :by 100]
         :background background
         :border (newBorder border-color-unfocus)
@@ -424,9 +427,11 @@
              ;; placeholder
              ;; font-size
              background ;; char-limit start-underline
-             on-change on-focus-gain on-focus-lost ;; on-caret-update
+             on-change on-focus-gain on-focus-lost
+             value-setter
              args]
       :or   {value                 ""
+             value-setter          str
              language              :plain
              ;; border                [10 10 5 5 2]
              border-color-focus    face/c-underline-on-focus

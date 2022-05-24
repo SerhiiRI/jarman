@@ -27,6 +27,12 @@
 ;;  \____/_/   \_\_____|_____|_| \_|____/_/   \_\_| \_\
 
 
+(defn date-setter [value]
+  (cond
+    (instance? java.lang.String value) value
+    (instance? java.util.Date value) (.format (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm") value)
+    :else value))
+
 (declare datetime)
 (declare datetime-label)
 (declare create-body-panel)
@@ -35,19 +41,21 @@
 
 (defn datetime
   [& {:keys [^String value
-             ^clojure.lang.IFn on-click]
-      :or {on-click (fn [e] e)}}]
+             ^clojure.lang.IFn on-click
+             ^clojure.lang.IFn value-setter]
+      :or {on-click (fn [e] e)
+           value-setter date-setter}}]
   (where
    ((date-formater (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm"))
     (week-start-day  1) ;; [1-7]
     (calendar-obj (let [x (java.util.Calendar/getInstance)]
                     (.setTime x
                               (try
-                                (.parse (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm") value)
+                                (.parse (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm") (value-setter value))
                                 (catch java.text.ParseException e
-                                  (java.util.Date.))))
-                    
-                    x))
+                                  (java.util.Date.))
+                                (catch java.lang.NullPointerException e
+                                  (java.util.Date.)))) x))
     (state    (satom {:date calendar-obj}))
     (dispatch (fn dispatch [k f] (fn [e] (swap! state #(update % k (fn [cal] (f cal))))))))
    (gui-panels/border-panel
@@ -105,11 +113,11 @@
    ;; YEAR-MONTH CONTROLLER
    :south
    (where
-    ((center     (label :value (.format date-formater (.getTime (deref state)))))
-     (prev-year  (label :value "<<" :tip "Previos Year"  :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-minus-year))))
-     (next-year  (label :value ">>" :tip "Next Year"     :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-plus-year))))
-     (prev-month (label :value "<"  :tip "Previos Month" :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-minus-month))))
-     (next-month (label :value ">"  :tip "Next Month"    :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-plus-month)))))
+    ((center     (button :value (.format date-formater (.getTime (deref state)))))
+     (prev-year  (button :value "<<" :tip "Previos Year"  :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-minus-year))))
+     (next-year  (button :value ">>" :tip "Next Year"     :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-plus-year))))
+     (prev-month (button :value "<"  :tip "Previos Month" :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-minus-month))))
+     (next-month (button :value ">"  :tip "Next Month"    :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-plus-month)))))
     (gui-panels/border-panel
      :west prev-year
      :east next-year
@@ -136,7 +144,7 @@
     (current-month? (= month (.get setted java.util.Calendar/MONTH)))
     (current-day?   (and current-month?
                        (= day (.get setted java.util.Calendar/DAY_OF_MONTH)))))
-   (label :value    (str day) 
+   (button :value    (str day) 
           :on-click on-click
           :args [:foreground
                  (cond
@@ -186,17 +194,17 @@
 (defn- create-footer-panel []
   (where
    ((data-formater (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm")))
-   (label :value (str "Today is: " (.format data-formater (Date.))))))
+   (button :value (str "Today is: " (.format data-formater (Date.))))))
 
 
 ;;;;;;;;;;;;;;;;;;;
 ;;;; POPUP DEMO ;;;
 ;;;;;;;;;;;;;;;;;;;
 
-(defn- datetime-popup [& {:keys [x y value on-click]
+(defn- datetime-popup [& {:keys [x y value on-click value-setter]
                          :or {on-click (fn [e] e) x 0 y 0}}]
   (let [popup (javax.swing.JWindow. (javax.swing.JFrame. "Calendar"))
-        calendar (datetime :value value :on-click (fn [e] (on-click e) (.hide popup)))]
+        calendar (datetime :value value :on-click (fn [e] (on-click e) (.hide popup)) :value-setter value-setter)]
     (-> (doto popup
           (.setFocusableWindowState false)
           (.setType java.awt.Window$Type/POPUP)
@@ -210,12 +218,12 @@
 ;;; CALENDAR UI ;;;
 ;;;;;;;;;;;;;;;;;;;
 
-(defn datetime-label [& {:keys [on-click] :or {on-click (fn [e] e)}:as args}]
+(defn datetime-label [& {:keys [value on-click value-setter] :or {on-click (fn [e] e) value-setter date-setter}:as args}]
   (let [clean-arg (dissoc args :value :on-click)
         apply-arg (interleave (keys clean-arg) (vals clean-arg))]
    (apply
-    label
-    :value (:value args)
+    button
+    :value (if (:value args) (value-setter (:value args)) "<unselected>")
     :on-click (fn [e]
                 (let [component (c/to-widget e)
                       show (Point. 0 (.getHeight component))
@@ -227,6 +235,7 @@
                       x (if (> x (- (.-width size)  212)) (- (.-width size) 212) x)
                       y (if (> y (- (.-height size) 165)) (- y 165) y)]
                   (datetime-popup :value (c/value component)
+                                  :value-setter value-setter
                                   :on-click (fn [e] (on-click e) (c/config! component :text e))
                                   :x x :y y)))
     apply-arg)))
@@ -237,7 +246,7 @@
 ;; | | | |  _| | |\/| | | | |
 ;; | |_| | |___| |  | | |_| |
 ;; |____/|_____|_|  |_|\___/ 
-;;                            
+;;
 
 (comment
   (seesaw.dev/show-options (seesaw.core/combobox))
@@ -251,6 +260,8 @@
                        :items [[(seesaw.core/label :text "Calendar Component" :font (jarman.gui.gui-tools/getFont :bold 20))]
                                [(datetime :value "2020-10-01 10:22")]
                                [(seesaw.core/label :text "Calendar as label" :font (jarman.gui.gui-tools/getFont :bold 20))]
+                               [(datetime-label :value nil)]
+                               [(datetime-label :value (java.util.Date.))]
                                [(datetime-label :value "2020-10-01 10:22" :on-click (fn [e] (println "some click for external feature")))]]))
         (.setLocationRelativeTo nil)
         seesaw.core/pack! seesaw.core/show!))

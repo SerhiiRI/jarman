@@ -9,7 +9,7 @@
    [jarman.faces          :as face]
    [jarman.gui.core       :refer [satom register! cursor]]
    [jarman.gui.components.panels :as gui-panels]
-   [jarman.gui.components.common :refer [label button]])
+   [jarman.gui.components.common :refer [button]])
   (:import
    [java.util Date Calendar]
    [javax.swing SwingUtilities]
@@ -29,23 +29,29 @@
 (declare create-footer-panel)
 (declare create-title-panel)
 
+(defn date-setter [value]
+  (cond
+    (instance? java.lang.String value) value
+    (instance? java.util.Date value) (.format (java.text.SimpleDateFormat. "YYYY-MM-dd") value)
+    :else value))
+
 (defn calendar
   [& {:keys [^String value
-             ^clojure.lang.IFn on-click]
-      :or {on-click (fn [e] e)}}]
+             ^clojure.lang.IFn on-click
+             ^clojure.lang.IFn value-setter]
+      :or {on-click (fn [e] e)
+           value-setter date-setter}}]
   (where
    ((date-formater (java.text.SimpleDateFormat. "yyyy-MM-dd"))
-    (week-start-day  1) ;; [1-7]
+    (week-start-day 1) ;; [1-7]
     (calendar-obj (let [x (java.util.Calendar/getInstance)]
                     (.setTime x
                               (try
-                                (.parse (java.text.SimpleDateFormat. "yyyy-MM-dd") value)
+                                (.parse (java.text.SimpleDateFormat. "yyyy-MM-dd") (value-setter value))
                                 (catch java.text.ParseException e
                                   (java.util.Date.))
                                 (catch java.lang.NullPointerException e
-                                  (java.util.Date.))))
-                    
-                    x))
+                                  (java.util.Date.)))) x))
     (state    (satom {:date calendar-obj}))
     (dispatch (fn dispatch [k f] (fn [e] (swap! state #(update % k (fn [cal] (f cal))))))))
    (gui-panels/border-panel
@@ -214,10 +220,10 @@
 ;;;; POPUP DEMO ;;;
 ;;;;;;;;;;;;;;;;;;;
 
-(defn- calendar-popup [& {:keys [x y value on-click]
+(defn- calendar-popup [& {:keys [x y value value-setter on-click]
                          :or {on-click (fn [e] e) x 0 y 0}}]
   (let [popup (javax.swing.JWindow. (javax.swing.JFrame. "Calendar"))
-        calendar (calendar :value value :on-click (fn [e] (on-click e) (.hide popup)))]
+        calendar (calendar :value value :on-click (fn [e] (on-click e) (.hide popup)) :value-setter value-setter)]
     (-> (doto popup
           (.setFocusableWindowState false)
           (.setType java.awt.Window$Type/POPUP)
@@ -231,26 +237,28 @@
 ;;; CALENDAR UI ;;;
 ;;;;;;;;;;;;;;;;;;;
 
-(defn calendar-label [& {:keys [on-click] :or {on-click (fn [e] e)}:as args}]
-  (let [clean-arg (dissoc args :value :on-click)
+
+(defn calendar-label [& {:keys [value on-click value-setter] :or {on-click (fn [e] e) value-setter date-setter} :as args}]
+  (let [clean-arg (dissoc args :value :value-setter :on-click)
         apply-arg (interleave (keys clean-arg) (vals clean-arg))]
-   (apply
-    button
-    :value (rift (:value args) "<unselected>")
-    :on-click (fn [e]
-                (let [component (c/to-widget e)
-                      show (Point. 0 (.getHeight component))
-                      _ (SwingUtilities/convertPointToScreen show component)
-                      ^java.awt.Dimension size (.getScreenSize (Toolkit/getDefaultToolkit))
-                      x (.-x show)
-                      y (.-y show)
-                      x (if (< x 0) 0 x)
-                      x (if (> x (- (.-width size)  212)) (- (.-width size) 212) x)
-                      y (if (> y (- (.-height size) 165)) (- y 165) y)]
-                  (calendar-popup :value (c/value component)
-                                  :on-click (fn [e] (on-click e) (c/config! component :text e))
-                                  :x x :y y)))
-    apply-arg)))
+    (apply
+     button
+     :value (if (:value args) (value-setter (:value args)) "<unselected>")
+     :on-click (fn [e]
+                 (let [component (c/to-widget e)
+                       show (Point. 0 (.getHeight component))
+                       _ (SwingUtilities/convertPointToScreen show component)
+                       ^java.awt.Dimension size (.getScreenSize (Toolkit/getDefaultToolkit))
+                       x (.-x show)
+                       y (.-y show)
+                       x (if (< x 0) 0 x)
+                       x (if (> x (- (.-width size)  212)) (- (.-width size) 212) x)
+                       y (if (> y (- (.-height size) 165)) (- y 165) y)]
+                   (calendar-popup :value (c/value component)
+                                   :value-setter value-setter
+                                   :on-click (fn [e] (on-click e) (c/config! component :text e))
+                                   :x x :y y)))
+     apply-arg)))
 
 
 ;;  ____  _____ __  __  ___  
@@ -272,7 +280,9 @@
                        :items [[(seesaw.core/label :text "Calendar Component" :font (jarman.gui.gui-tools/getFont :bold 20))]
                                [(calendar :value "2020-10-01")]
                                [(seesaw.core/label :text "Calendar as label" :font (jarman.gui.gui-tools/getFont :bold 20))]
-                               [(calendar-label :value "2020-10-01" :on-click (fn [e] (println "some click for external feature")))]]))
+                               [(calendar-label :value "2020-10-01" :on-click (fn [e] (println "some click for external feature")))]
+                               [(calendar-label :value (java.util.Date.) :on-click (fn [e] (println "some click for external feature")))]
+                               [(calendar-label :value nil :on-click (fn [e] (println "some click for external feature")))]]))
         (.setLocationRelativeTo nil)
         seesaw.core/pack! seesaw.core/show!))
   ;; 

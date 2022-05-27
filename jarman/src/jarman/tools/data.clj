@@ -25,65 +25,6 @@
             (assoc! ret k (apply-group v))) (transient {}))
          (persistent!))))
 
-(let [s '({:firstname "Adam"
-           :lastname  "Smith"
-           :diagnosis "COVID-19"
-           :treated   true}
-          {:firstname "Joseph"
-           :lastname  "Goodman"
-           :diagnosis "COVID-19"
-           :treated   true}
-          {:firstname "Werner"
-           :lastname  "Ziegler"
-           :diagnosis "COVID-19"
-           :treated   false}
-          {:firstname "Boris"
-           :lastname  "Henry"
-           :diagnosis "Healthy"
-           :treated   false}
-          {:firstname "Johnny"
-           :lastname  "Grayhand"
-           :diagnosis "COVID-76"
-           :treated   false})]
-  (group-by-apply :diagnosis s 
-                  :apply-group (partial clojure.pprint/cl-format nil "~{~A~^,~}")
-                  :apply-item #(clojure.string/upper-case (get % :lastname))))
-
-(defmacro factor-group [data group-data bindings & body]
-  `(for [[~(apply hash-map bindings) ~group-data]
-         (group-by #(select-keys % ~(mapv second (partition 2 bindings))) ~data)]
-     (do ~@body)))
-
-(def all-patients
- '({:firstname "Adam"
-   :lastname  "Smith"
-   :diagnosis "COVID-19"
-   :treated   true}
-  {:firstname "Joseph"
-   :lastname  "Goodman"
-   :diagnosis "COVID-19"
-   :treated   true}
-  {:firstname "Werner"
-   :lastname  "Ziegler"
-   :diagnosis "COVID-19"
-   :treated   false}
-  {:firstname "Boris"
-   :lastname  "Henry"
-   :diagnosis "Healthy"
-   :treated   false}
-  {:firstname "Johnny"
-   :lastname  "Grayhand"
-   :diagnosis "COVID-76"
-   :treated   false}))
 
 
-(factor-group
- all-patients patients-group [treated? :treated disease-name :diagnosis]
- ;; (println " начало обработки группы пациентов с диагнозом " disease-name
- ;;          (if treated? ", подвергавшихся лечению" ", НЕ подвергавшихся лечению"))
- ;; (println " количество пациентов в группе - " (count patients-group))
- ;; (println " фамилии пациентов - " (clojure.string/join ", " (map :lastname patients-group)))
- ;; (count patients-group)
- ;; patients-group
- disease-name
- )
+

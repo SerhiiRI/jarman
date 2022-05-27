@@ -19,7 +19,7 @@
    [jarman.resource-lib.icon-library :as ico]
    [jarman.tools.swing :as stool]
    [jarman.gui.gui-components :refer :all :as gcomp]
-   [jarman.gui.gui-calendar :as calendar]
+   ;; [jarman.gui.gui-calendar :as calendar]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]

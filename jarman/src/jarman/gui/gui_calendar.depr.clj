@@ -1,4 +1,4 @@
-(ns jarman.gui.gui-calendar
+(ns jarman.gui.gui-calendar.depr
   (:use seesaw.core
         seesaw.border
         seesaw.dev

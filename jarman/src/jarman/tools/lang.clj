@@ -1,20 +1,10 @@
-;;; File contain some usefull functions, hacks, or examples
-;;; Contens:
-;;; * Helper functions - quick usefull hacks
-;;; ** in?
-;;; ** filter-nil
-;;; ** join 
-;;; ** split
-;;; ** all-methods
-;;; ** blet
-;;; ** cond-let
-;;; * where macro
-;;; * TODO: railway
-;;; * Map-type toolkit
-;;; ** head/tail destruction for maps
-;;; ** cond-contain test if key in map
-;;; ** get-key-paths-recur with key-paths implementation
-;;; * as-debug->> 
+;;;  _                   
+;;; | | __ _ _ __   __ _ 
+;;; | |/ _` | '_ \ / _` |
+;;; | | (_| | | | | (_| |
+;;; |_|\__,_|_| |_|\__, |
+;;;                |___/
+;;; ---------------------
 (ns jarman.tools.lang
   ;; (:use seesaw.core)
   (:require [clojure.reflect :as reflect]
@@ -125,6 +115,7 @@
     (map? con)        (if (empty? con) els con)
     :else con))
 
+;; fixme:julia just fuck off those stupid function, or move it to some not public NS. 
 (defn timelife
   "Description:
     Run fn after some time.
@@ -145,7 +136,7 @@
              (fn-to-invoke)
              (catch Exception e (println (str "\nException in timelife: " title "\n" (str (.getMessage e)))))))))))))
 
-;;; fixme:serhii
+;;; fixme:julia
 ;;; 1. delete or rewrite function
 ;;     with additional documentation
 (defn coll-to-map
@@ -160,6 +151,8 @@
           (vtm ncoll nmap)))
       m)) some-coll {}))
 
+;; fixme:julia, investigate need/usage those function and concider
+;; to delete those function too
 (defn left-merge
   "Description
      Merge for map.
@@ -176,7 +169,7 @@
            (l-merge (drop 1 coll-keys)))))
    (keys map-coll-orgin) map-coll-orgin))
 
-;; fixme:lang
+;; fixme:julia lang
 ;; 1. rename. 
 (defn vemap
   "Description:
@@ -191,8 +184,8 @@
   ([coll] (vemap coll nil))
   ([coll val] (into {} (map (fn [k] {k val}) coll))))
 
-;; fixme:lang
-;; 1. rename on something like `remove-kv-on-nil`
+;; fixme:julia
+;; rename ofr remove those function 
 (defn cnmap
   "Description:
      cut nil map
@@ -203,7 +196,7 @@
   [coll-map]
   (into {} (filter #(not (nil? (second %))) coll-map)))
 
-;; fixme:lang
+;; fixme:julia remove or renmame those functions
 ;; 1. Rewrite on reduce with `reduced` function.
 ;;    or usign (loop []... (recur..))
 ;; 2. Consider to delete those function and rewrite
@@ -504,7 +497,8 @@
   [f col]
   `(first (filter ~f ~col)))
 
-(defmacro map-partial
+;; fixme:julia, remove
+#_(defmacro map-partial
   "Example
     (map-partial [1 2 3] [:a :b :c]) => [[1 :a] [2 :b] [3 :c]]"
   [f & body] `(map (comp vec concat list) ~@body))
@@ -518,15 +512,19 @@
   (let [fx-gets (for [m maps] `(get-in ~m ~path nil))] 
     `(~f ~@fx-gets)))
 
+;; fixme:julia, remove those
 (defn Y-Combinator []
   (((fn [f] (f f))
     (fn [f]
       (fn [s n]
         (if (not (empty? n))
           ((f f) (+ s (second (first n))) (rest n))
-          s
-          )))) 0 (seq {:a 1 :b 1 :c 1})))
+          s)))) 0 (seq {:a 1 :b 1 :c 1})))
 
+;; fixme:julia
+;; 1. this extrimelly usefull function in really hard cases.
+;;    Create for function `get-key-paths-recur` and `key-paths` another namespace
+;; 2. Check usages. Concider replacement or archiving this part of code.
 (defn get-key-paths-recur [& {:keys [map-part end-path-func path sequence?]}]
   ;; If `map-part` is nil, then eval function
   ;; end-path-func. Otherwise destruct `map-part`
@@ -637,6 +635,7 @@
 ;;; `as-debug->>` threading macro ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; fixme:julia archive this code, is useless on this project
 (defn ^:private sexpression-walk-and-replace
   "Example
     (sexpression-walk-and-replace '! 'DUPA '(let [a 2] (:pets (+ a !))))
@@ -653,6 +652,7 @@
                (sexpression-walk-and-replace what on-what (rest l)))))
     (if (= l what) on-what l)))
 
+;; fixme:julia archive this code
 (defmacro as-debug->>
   "Description
     do the same what to do `as->>` but make debug
@@ -680,7 +680,6 @@
              `~(sexpression-walk-and-replace alias-name acc sexp))
            var-replace-to
            wrapp-functor-list)))
-
 
 (defn update-existing
   "Updates a value in a map given a key and a function, if and only if the key

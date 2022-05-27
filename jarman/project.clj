@@ -7,7 +7,7 @@
                  [org.clojure/data.csv "1.0.0"]
                  [org.clojure/data.json "2.4.0"]
                  [org.clojure/data.xml "0.0.8"]
-                 [org.clojure/java.jdbc "0.7.10"]
+                 [org.clojure/java.jdbc "0.7.12"]
                  [org.clojure/tools.cli "1.0.194"]
                  ;; gui
                  [com.github.jiconfont/jiconfont-google_material_design_icons "2.2.0.2"]

@@ -36,63 +36,46 @@
 ;;     transforming to the real UI component, every :on-<action> event cover over the
 ;;     `dispatch` function which send result of event to global state Map.
 ;;
-
 (ns plugin.table.table
   (:require
    ;; Clojure toolkit
-   ;; [clojure.data :as data]
-   ;; [clojure.string :as string]
-   ;; [clojure.spec.alpha :as s]
+   ;; [clojure.data :as data], [clojure.string :as string], [clojure.spec.alpha :as s]
    [clojure.pprint :refer [cl-format]]
    [clojure.java.jdbc :as jdbc]
    ;; Seesaw components
-   [seesaw.core   :as c]
-   ;; [seesaw.dev :as sdev]
-   [seesaw.mig :as smig]
-   ;; [seesaw.swingx  :as swingx]
-   ;; [seesaw.chooser :as chooser]
+   [seesaw.core    :as c]
+   [seesaw.mig     :as smig]
    [seesaw.border  :as b]
-   ;; Jarman toolkit
+   ;; Jarman styles
+   [jarman.faces                :as face]
+   ;; Jarman tools
    [jarman.tools.lang :refer :all]
    [jarman.tools.org  :refer :all]
+
    ;; [jarman.tools.swing :as stool]
    ;; [jarman.resource-lib.icon-library :as icon]
-   [jarman.faces              :as face]
    ;; [jarman.gui.gui-style      :as gs]
-   [jarman.gui.gui-tools      :as gtool]
-   ;; [jarman.gui.gui-editors    :as gedit]
-   [jarman.gui.gui-components :as gcomp]
-   ;; [jarman.gui.gui-migrid     :as gmg]
-   ;;[jarman.gui.gui-calendar   :as calendar]
-   [jarman.gui.core :refer [satom register! cursor fe]]
+   [jarman.gui.core          :refer [satom register! cursor fe]]
+   [jarman.gui.gui-tools        :as gtool]
+   [jarman.gui.gui-components   :as gcomp] ;; should be deprecated
    [jarman.gui.gui-components2  :as gui-component]
    [jarman.gui.components.swing :as swing]
    [jarman.gui.components.error :as error]
    [jarman.gui.components.swing-context :as swing-context]
    [jarman.gui.components.swing-keyboards :as swing-keyboards]
    [jarman.gui.components.component-reciever :as reciever]
-   ;; [jarman.gui.popup :as popup]
-   ;; [jarman.logic.state :as state]
-   ;; [jarman.logic.metadata :as mt]
    [jarman.logic.metadata   :as metadata]
    [jarman.logic.sql-tool   :as sql-tool]
    [jarman.logic.connection :as db]
-   ;; [jarman.logic.document-manager :as doc]
-   ;; [jarman.plugin.spec :as spec]
-   [jarman.plugin.toolkits :as toolkits]
-   ;; [jarman.plugin.gui-table :as gtable]
    [jarman.logic.view-manager :as view-manager]
-   ;; external toolkit
-   ;; [jarman.interaction :as i]
-   ;; locals
+   [jarman.plugin.toolkits :as toolkits]
+   ;; Jarman interaction
+   [jarman.interaction :as interaction]
+   ;; Local imports
    [plugins.table.helpers :as helpers]
    [plugins.table.table-socket :as table-socket])
   #_(:import
-   ;; (java.awt Dimension BorderLayout)
-   ;; (java.util Date)
-   ;; (java.text SimpleDateFormat)
-   ;; (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
-   ))
+     (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
 ;; state actions
 (declare create-dispatcher)
@@ -554,93 +537,6 @@
                      :panel (relation-modal-helper-panel key-table new-s)
                      :onClick (loading-dialog)})]))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Actions for buttons ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-#_(defn insert-data
-  "Description:
-    insert to db all columns from model-changes in state
-  Attention:
-    we can not add record (composite component) without main-model(simple columns, not composite)"
-  ([state!]
-   (let [{plugin-toolkit :plugin-toolkit
-          model-changes  :model-changes} (state!)]
-     (if-not (empty? model-changes)
-       (let [grouped-model  (group-clms model-changes)
-             fcomps-colmns  (get grouped-model true)
-             sm-colmns      (get grouped-model nil)
-             id-insert      (if (empty? sm-colmns)
-                              (do (i/info (gtool/get-lang-alerts :success)  "Model can not be empty, please enter at least one simple field"))
-                              (:generated_key
-                               (try (jdbc/execute! @jarman.logic.connection/*connection*
-                                                   ((:insert-expression plugin-toolkit)
-                                                    (ungrouping-model (state!) (apply hash-map
-                                                                                      (apply concat sm-colmns))))
-                                                   {:return-keys true})
-                                    (catch Exception e (i/warning (gtool/get-lang-alerts :error) (.getMessage e))))))]
-         (if-not (nil? id-insert)
-           (update-comp-col state! id-insert fcomps-colmns))
-         (println "INSERT MODEL CHANGES ___" model-changes ">>>" id-insert))))))
-
-#_(defn update-data [state! dispatch!]
-  (let [{plugin-toolkit :plugin-toolkit
-         table-model    :model
-         model-changes  :model-changes} (state!)]
-    (if-not (empty? model-changes)
-      (let [grouped-model  (group-clms model-changes)
-            fcomps-colmns  (get grouped-model true)
-            sm-colmns      (get grouped-model nil)
-            table-id (first (:model-columns plugin-toolkit))
-            update-m (into {table-id (table-id table-model)} (ungrouping-model (state!) (apply hash-map
-                                                                                               (apply concat sm-colmns))))]
-        ((:update plugin-toolkit) update-m)
-          (update-comp-col state! table-id fcomps-colmns)
-          ;; (try
-          ;;   ((:update plugin-toolkit) update-m)
-          ;;   (update-comp-col state! table-id fcomps-colmns)
-          ;;   (catch Exception e (popup/build-popup {:title "Warning" :size [300 200] :comp-fn (fn [] (c/label :text "Wrong data to update!"))})))
-          (dispatch! {:action :refresh-state :value true})))))
-
-#_(defn- delete-data [state! dispatch!]
-  (let [{plugin-toolkit :plugin-toolkit
-         table-model    :model} (state!)
-        meta-obj        (:meta-obj plugin-toolkit)
-        table_name      (.return-table_name meta-obj)
-        column-name     (keyword (str table_name  ".id"))
-        to-delete       {column-name
-                         (column-name table-model)}]
-    (println "Run Delete:" ((:delete plugin-toolkit) to-delete))
-    (doall (map (fn [[k v]] (if (mt/isComponentFiles? v) (.remove-data v table_name))) table-model))
-    (dispatch! {:action :refresh-state :value true})
-    ((:table-render (state!)))))
-
-;; (defn get-missed-props
-;;   "Description:
-;;      Return not binded map, just cut this what exist.
-;;    Example:
-;;      (get-missed-key {:a a} {:a a :b c :d e})
-;;        => {:b c, :d e}"
-;;   [binded-map orgin-map]
-;;   (->> (map #(first %) orgin-map)
-;;        (filter (fn [orgin-key] (not (in? (map #(first %) binded-map) orgin-key))))
-;;        (into {} (map #(into {% (% orgin-map)})))))
-
-;; (defn merge-binded-props
-;;   "Description:
-;;      Get map where are binded keys, get properties for component and create new map with properties.
-;;    Example:
-;;      (merge-binded-props {:title \"mytitle\" :value \"pepe\"} {:title :custom-key})
-;;        => {:custom-key \"mytitle\" :value \"pepe\"}"
-;;   [props-map binded-list]
-;;   (let [binded (doall
-;;                 (into {} (map #(let [orginal-key (first %)
-;;                                      binded-key  (second %)]
-;;                                  {binded-key (orginal-key props-map)})
-;;                               binded-list)))]
-;;     (into binded (get-missed-props binded props-map))))
-
-
 ;;;;;;;;;;;;;;;;;;
 ;; Form Builder ;;
 ;;;;;;;;;;;;;;;;;;
@@ -693,47 +589,6 @@
                (b/line-border :bottom 1 :color face/c-underline)
                (b/empty-border :top 10))))))
 
-#_(defn build-insert-layout [state! dispatch! model-configuration]
-  (with-state
-    (let [{:keys [fields additional]} model-configuration]
-      (where
-       ((clean-button-on-click
-         (fe [state! dispatch!]
-            (do
-              (print-line "build-insert-layout: clear")
-              (dispatch! {:action :switch-plugin-ui-mode
-                          :erease-selected? true
-                          :debug true :plugin-ui-mode :insert
-                          :model (metadata/convert_metadata->model
-                                  (.return-table_name table-meta))}))))
-        (components-from-metadata #(metafield->swing-component state! dispatch! fields))
-        (addtional-buttons        (metacomponent-with-action->swing-component state! dispatch! additional))
-        (insert-only-component    (metacomponent-with-action->swing-component
-                                   state! dispatch!
-                                   [{:type :jsgl-button, :value "To defaults", :on-click clean-button-on-click}])))
-       (gui-component/mig-panel
-        :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
-        :border (b/empty-border :thickness 10)
-        :items (vec (concat [[(information-header state!)]]
-                            (map vector (components-from-metadata))
-                            [[(gcomp/hr 10)]]
-                            (map vector addtional-buttons)
-                            [[(gcomp/hr 10)]]
-                            (map vector insert-only-component)))
-        :event-hook
-        {:insert-layout-renderer
-         {:event clean-button-on-click
-          :hook
-          (fn [panel _]
-            (c/config!
-             panel :items
-             (vec (concat [[(information-header state!)]]
-                          (map vector (components-from-metadata))
-                          [[(gcomp/hr 10)]]
-                          (map vector addtional-buttons)
-                          [[(gcomp/hr 10)]]
-                          (map vector insert-only-component)))))}})))))
-
 (defn build-insert-layout [state! dispatch! model-configuration]
   (with-state
     (let [{:keys [fields additional]} model-configuration]
@@ -759,21 +614,7 @@
                             [[(gcomp/hr 10)]]
                             (map vector addtional-buttons)
                             [[(gcomp/hr 10)]]
-                            (map vector insert-only-component)))
-        ;; :event-hook
-        ;; {:insert-layout-renderer
-        ;;  {:event clean-button-on-click
-        ;;   :hook
-        ;;   (fn [panel _]
-        ;;     (c/config!
-        ;;      panel :items
-        ;;      (vec (concat [[(information-header state!)]]
-        ;;                   (map vector (components-from-metadata))
-        ;;                   [[(gcomp/hr 10)]]
-        ;;                   (map vector addtional-buttons)
-        ;;                   [[(gcomp/hr 10)]]
-        ;;                   (map vector insert-only-component)))))}}
-        )))))
+                            (map vector insert-only-component))))))))
 
 ;; add expand segment which show selected element
 (defn build-update-layout [state! dispatch! model-configuration]
@@ -859,10 +700,10 @@
       :south input-panel
       :north (gui-component/horizontal-panel
               :items (keep identity
-                      [insert-ui-layout-button
-                       update-ui-layout-button
-                       export-ui-layout-button
-                       print-state-debug]))
+                           [insert-ui-layout-button
+                            update-ui-layout-button
+                            export-ui-layout-button
+                            print-state-debug]))
       :event-hook
       {:panel-tab-switching-event
        {:atom state
@@ -885,12 +726,11 @@
                                      (eval data)
                                      ((comp vec jarman.logic.connection/query jarman.logic.sql-tool/select!)
                                       (get *t :socket-refreshable-query)))))
-                (assoc *t :on-select (fn [e]
-                                       (dispatch! {:action :switch-plugin-ui-mode :plugin-ui-mode :update
-                                                   :debug? true :message "TABLE CLICK UPDATE"
-                                                   :model (metadata/convert_flattfields->model
-                                                           e (.return-table_name table-meta))})
-                                       )))))
+                (if (nil? (get table-config :on-select))
+                  (do (interaction/info "Table" "Empty `:on-select` event for table. Please select event") *t)
+                  (update *t :on-select (fn [f] (fn [e]
+                                                 (println "on-select event!")
+                                                 ((eval f) state! dispatch! e))))))))
       (main-table-socket (table-socket/create-table-socket (:socket-id table-config) table table-config)))
      (dispatch! {:action :jack-in-socket :socket main-table-socket})
      (smig/mig-panel
@@ -1015,6 +855,10 @@
      [(build-layout state! dispatch!)]))
 
   (with-test-environ [:profile :table :profile]
+    (swing/quick-frame
+     [(build-layout state! dispatch!)]))
+
+  (with-test-environ [:seal :table :seal]
     (swing/quick-frame
      [(build-layout state! dispatch!)]))
 

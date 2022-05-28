@@ -34,3 +34,56 @@ build/jarman-client+cli:
 test:
 	lein test
 
+
+cli/jarman/pkg/list:
+	@lein jarman pkg --list
+cli/jarman/pkg/list-repo:
+	@lein jarman pkg --list-repo
+cli/jarman/pkg/update-package:
+	@lein jarman pkg --update-package
+cli/jarman/pkg/build:
+	@lein jarman pkg --build
+cli/jarman/pkg/help:
+	@lein jarman pkg --help
+
+cli/jarman/structure/refresh-fonts:
+	@lein jarman structure --refresh-fonts
+cli/jarman/structure/refresh-icons:
+	@lein jarman structure --refresh-icons
+cli/jarman/structure/help:
+	@lein jarman structure --help
+
+cli/jarman/data/install:
+	@lein jarman data --install
+cli/jarman/data/delete:
+	@lein jarman data --delete
+cli/jarman/data/backup:
+	@lein jarman data --backup
+cli/jarman/data/app-start:
+	@lein jarman data --app-start
+cli/jarman/data/app-close:
+	@lein jarman data --app-close
+cli/jarman/data/crash:
+	@lein jarman data --crash
+cli/jarman/data/log:
+	@lein jarman data --log
+cli/jarman/data/clear:
+	@lein jarman data --clear
+cli/jarman/data/info:
+	@lein jarman data --info
+cli/jarman/data/meta-clean:
+	@lein jarman data --meta-clean
+cli/jarman/data/meta-persist:
+	@lein jarman data --meta-persist
+cli/jarman/data/meta-refresh:
+	@lein jarman data --meta-refresh
+cli/jarman/data/view-clean:
+	@lein jarman data --view-clean
+cli/jarman/data/view-persist:
+	@lein jarman data --view-persist
+cli/jarman/data/view-refresh:
+	@lein jarman data --view-refresh
+cli/jarman/data/help:
+	@lein jarman data --help
+
+

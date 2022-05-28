@@ -17,6 +17,7 @@ help:
 	@echo -e "\tproject/gen-font-lib - generating clojure font lib"
 	@echo -e "\tproject/gen-icon-lib - generating clojure icon lib"
 	@echo -e "\tbuild/jarman-client - building uberjar for central GUI client"
+	@echo -e "\tcli/... - various cli commands. Check cli_internal.clj"
 	@echo -e "\thelp - print this message"
 
 project/gen-font-lib: project.clj

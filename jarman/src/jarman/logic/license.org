@@ -8,7 +8,7 @@
   | tenant | tenant-id | creation-date | expiration-date | limitation           |
   |--------+-----------+---------------+-----------------+----------------------|
   |        |           | <l11>         | <l11>           | <l5>                 |
-  | EKKA   | EKKA-1    | 10-01-2021    | 10-09-2021      | {:computer-count 10} |
+  | EKKA   | EKKA-1    | 10-01-2021    | 10-11-2022      | {:computer-count 10} |
   | EKKA   | EKKA-2    | 10-01-2021    | 30-11-2021      | {:computer-count 10} |
   | EKKA   | EKKA-3    | 10-01-2021    | 10-11-2022      | {:computer-count 10} |
   | PASICH | PASICH-1  | 01-10-2021    | 01-06-2022      | {:computer-count 5}  |
@@ -30,7 +30,7 @@
 * Managment
 
   
-  #+header: :var tennat-id="PASICH-1"
+  #+header: :var tennat-id="EKKA-1"
   #+name: make-license-file
   #+begin_src clojure :noweb yes :results file
     ;; <<licenses-m>>
@@ -38,17 +38,19 @@
   #+end_src
 
   #+RESULTS: make-license-file
-  [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE_PASICH-1_2021-11-07]]
+  [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE_EKKA-1_2022-03-24]]
 
 
   #+begin_src clojure :results value
     (list-licenses-files)
   #+end_src
+
   #+RESULTS:
   | tenant | tenant-id | creation-date | expiration-date | file-path                   |
   | EKKA   | EKKA-1    |    10-01-2021 |      10-09-2021 | [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE_EKKA-1_2021-11-07][LICENSE_EKKA-1_2021-11-07]]   |
   | EKKA   | EKKA-3    |    10-01-2021 |      10-11-2022 | [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE_EKKA-3_2021-11-07][LICENSE_EKKA-3_2021-11-07]]   |
   | EKKA   | EKKA-2    |    10-01-2021 |      30-11-2021 | [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE_EKKA-2_2021-11-07][LICENSE_EKKA-2_2021-11-07]]   |
+  | EKKA   | EKKA-1    |    10-01-2021 |      10-09-2022 | [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE_EKKA-1_2022-03-24][LICENSE_EKKA-1_2022-03-24]]   |
   | PASICH | PASICH-1  |    01-10-2021 |      01-06-2022 | [[file:/home/serhii/programs/jarman/jarman/licenses/LICENSE_PASICH-1_2021-11-07][LICENSE_PASICH-1_2021-11-07]] |
 
 
@@ -71,14 +73,14 @@
   :   tenant            EKKA 
   :   id tenant         EKKA-1 
   :   creation date     10-01-2021 
-  :   expiration date   10-09-2021 
+  :   expiration date   10-09-2022 
   :   limitation        {:computer-count 10} 
   : </license params>
   
   Manually Apply license by the ~tenant-id~. 
 
   #+name: choose-license 
-  #+begin_src clojure :noweb yes :var tennat-id="EKKA-2" :results output
+  #+begin_src clojure :noweb yes :var tennat-id="EKKA-1" :results output
     ;; (ns jarman.logic.session)
     ;; <<licenses-m>>
     (set-license (get licenses-m tennat-id nil))
@@ -88,9 +90,9 @@
   #+RESULTS: choose-license
   : <license params>
   :   tenant            EKKA 
-  :   id tenant         EKKA-2 
+  :   id tenant         EKKA-1 
   :   creation date     10-01-2021 
-  :   expiration date   30-11-2021 
+  :   expiration date   10-09-2022 
   :   limitation        {:computer-count 10} 
   : </license params>
 

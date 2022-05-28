@@ -1,6 +1,6 @@
 #+TITLE: Agenda
 #+TODO: TOREVIEW(r) PROCESSING(p) TODO(t) PLANNED(s) | DONE(d)
-#+TAGS: @Aleks(a) @Serhii(s)
+#+TAGS: @Aleks(a) @Serhii(s) @Julia(j)
 #+PRIORITIES: 1 3 2
 #+PROPERTY: session *EL* 
 #+PROPERTY: cache yes
@@ -8,12 +8,7 @@
 #+STARTUP: overview
 
 * Bugtrack
-** PROCESSING 007 User plugin                                       :@Serhii:
-   Add user plugin and support for Permissions
-   - [X] GUI panel to show permission's in system
-   - [ ] Write some view for user
-
-** TODO 006
+** TODO 006 variable list error
    In varialbe list, when i click on variable i get this error
    #+begin_example
    Exception in thread "AWT-EventQueue-1" clojure.lang.ArityException: Wrong number of args (1) passed to: jarman.gui.gui-vars-listing/var-content/fn--19067/fn--19068
@@ -60,10 +55,10 @@
         at java.desktop/java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:101)
         at java.desktop/java.awt.EventDispatchThread.run(EventDispatchThread.java:90)
    #+end_example
-** TODO 005                                                          :@Aleks:
+** TODO 005 Metadata fix styles
    Metadata Editor, fix style, and Reload Metadata inside cache.
-** TODO 004 Monospace Font for View Editors                          :@Aleks:
-** TODO 003
+** TODO 004 Monospace Font for View Editors
+** TODO 003 no license NullPointer
    When i *NOT* choosed license file, i saw NullPointer.
    #+begin_src 
 Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
@@ -105,52 +100,9 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
         at java.desktop/java.awt.EventQueue$5.run(EventQueue.java:745)
         at java.desktop/java.awt.EventQueue$5.run(EventQueue.java:743)
    #+end_src
-** TODO 002                                                          :@Aleks:
+** TODO 001 no settings
 
-   WHen i clicked on table.clj related table, iside preview of relation, i get this message 
-   
-   #+begin_example
-   Exception in thread "AWT-EventQueue-1" clojure.lang.ArityException: Wrong number of args (1) passed to: plugin.table.table/input-related-popup-table/fn--749/fn--750
-        at clojure.lang.AFn.throwArity(AFn.java:429)
-        at clojure.lang.AFn.invoke(AFn.java:32)
-        at jarman.gui.popup$popup.invokeStatic(popup.clj:132)
-        at jarman.gui.popup$popup.invoke(popup.clj:96)
-        at jarman.gui.popup$build_popup.invokeStatic(popup.clj:159)
-        at jarman.gui.popup$build_popup.invoke(popup.clj:151)
-        at plugin.table.table$input_related_popup_table$fn__749.invoke(table.clj:214)
-        at seesaw.event$fire.invokeStatic(event.clj:263)
-        at seesaw.event$fire.invoke(event.clj:262)
-        at seesaw.event$fn$reify__2782.mouseClicked(event.clj:290)
-        at java.desktop/java.awt.Component.processMouseEvent(Component.java:6638)
-        at java.desktop/javax.swing.JComponent.processMouseEvent(JComponent.java:3342)
-        at seesaw.core.proxy$javax.swing.JPanel$Tag$fd407141.processMouseEvent(Unknown Source)
-        at java.desktop/java.awt.Component.processEvent(Component.java:6400)
-        at java.desktop/java.awt.Container.processEvent(Container.java:2263)
-        at seesaw.core.proxy$javax.swing.JPanel$Tag$fd407141.processEvent(Unknown Source)
-        at java.desktop/java.awt.Component.dispatchEventImpl(Component.java:5011)
-        at java.desktop/java.awt.Container.dispatchEventImpl(Container.java:2321)
-        at java.desktop/java.awt.Component.dispatchEvent(Component.java:4843)
-        at java.desktop/java.awt.LightweightDispatcher.retargetMouseEvent(Container.java:4918)
-        at java.desktop/java.awt.LightweightDispatcher.processMouseEvent(Container.java:4556)
-        at java.desktop/java.awt.LightweightDispatcher.dispatchEvent(Container.java:4488)
-        at java.desktop/java.awt.Container.dispatchEventImpl(Container.java:2307)
-        at java.desktop/java.awt.Window.dispatchEventImpl(Window.java:2772)
-        at java.desktop/java.awt.Component.dispatchEvent(Component.java:4843)
-        at java.desktop/java.awt.EventQueue.dispatchEventImpl(EventQueue.java:772)
-        at java.desktop/java.awt.EventQueue$4.run(EventQueue.java:721)
-        at java.desktop/java.awt.EventQueue$4.run(EventQueue.java:715)
-        at java.base/java.security.AccessController.doPrivileged(Native Method)
-        at java.base/java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(ProtectionDomain.java:85)
-        at java.base/java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(ProtectionDomain.java:95)
-        at java.desktop/java.awt.EventQueue$5.run(EventQueue.java:745)
-        at java.desktop/java.awt.EventQueue$5.run(EventQueue.java:743)
-        at java.base/java.security.AccessController.doPrivileged(Native Method)
-        at java.base/java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(ProtectionDomain.java:85)
-   #+end_example
-   
-** TODO 001                                                          :@Aleks:
-
-   When i click on Settings i get this message:
+   When i click on Settings menu tab I got those message:
    #+begin_example
    Exception in thread "Thread-14" java.lang.NullPointerException
         at clojure.lang.Reflector.invokeNoArgInstanceMember(Reflector.java:426)
@@ -164,136 +116,16 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
         at java.base/java.lang.Thread.run(Thread.java:834)
    #+end_example
 
-* Common Dev
-** PLANNED /refactor/. Create /jarman.gui.swing/
+* Common thread 
+** PROCESSING /Refactor/. Create /jarman.gui.swing/
   should be common namespace that contain all the
   tools for working with swing.
-** TODO /refactor/. Create /jarman.lang/
-  decompose =jarman.tools.lang=, and move all to the
+** TODO /Refactor/. Create /jarman.lang/
+  - =jarman.tools.lang=
+  - =jarman.tools.org=
+    
+decompose =jarman.tools.lang=, and move all to the
   jarman.lang with keeping the.
-** TODO /Feature/. defvar->defcustom in common ns.
-  define all
-  - defvar
-  - setq
-  - setj
-  - define-key... in /jarman.core/ or /jarman.lang/
-** DONE /Feature/. Replacement for gui_components
-CLOSED: [2022-05-24 Tue 06:13]
-   Example of argument
-   #+begin_src clojure
-     [{:keys
-       [;; -- component parameters
-	value placeholder font-size background char-limit
-	border border-color-focus border-color-unfocus
-	start-underline
-	;; -- events 
-	on-change
-	on-caret-update
-	on-focus-gained
-	on-focus-lost
-	on-...
-	;; -- swing comp args
-	args]
-       :or
-       {value                ""
-	placeholder          ""
-	font-size            face/font-size
-	border-color-focus   face/c-underline-on-focus
-	border-color-unfocus face/c-underline
-	background           face/c-input-bg
-	border               [10 10 5 5 2] 
-	char-limit           0         
-	start-underline      nil
-     
-	on-change            (fn [e] e)
-	on-caret-update      (fn [e] e)
-	on-focus-gained      (fn [e] e)
-	on-focus-lost        (fn [e] e)
-	on-...
-     
-	args                 []}}]
-   #+end_src
-   
-   *Rules*
-   1) not used ~[& {}]~ args, only ~[{}]~
-   2) every element MUST have at least one function argument ~on-change~.
-   3) every element have his own properties. But look at 6)
-   4) every element have his own actions. But loot at 6)
-      For example one element can have ~on-change~ (what currently common for most),
-      ~on-cursor-change~ (what can be for text-based interactive component), etc..
-   5) every element MUST have ~args~ param for override some swing params.
-   6) *WARNING*! try to make unique key for action/property characteristic.
-      Example. We have action ~:on-cursor-change~ which describe a changing curret.
-      But you couldn't use those key for describing 'switching items' actions in
-      ListBox component. Try to call switching items in some unique name.
-
-      *Rule*: /name/ should discribe /behavior/.
-
-   *Ideas*
-   1) Maybe will fine for makin some macros, which do description of arguments
-      in easy way.
-   2) Maybe will be fine to add some validation for arguments, and make
-      debug machinizm.
-
-** DONE /Feature/. Metadata definition
-CLOSED: [2022-05-24 Tue 06:14]
-   Currently metadata declare
-   - how to create table
-   - how to manage table
-   - how to build ui for table (fields)
-
-   Metadata cover whole those problem with information about
-   - table
-   - fields
-   - fields composites
-
-   For managing UI components, and creating one we use
-   fields meta information, but for long time development
-   we shuold to resolve some practical problem with metadata
-   we faced of:
-   #+begin_src clojure
-     (field :field :ssreou :representation "number of SSREOU" :component-type [:text])
-   #+end_src
-   - field ~:component-type~
-     *Problem*: is one of most importand field, don't control in any way
-     and much part of usage this field defines in-place where must used it.
-     *Solution:* replace vector on just key or map, which describe fields. 
-     Resolving those in multimethod concept, allow to make for each some UI
-     constructor. That also mean, that you can create some UI in-place, rather
-     then use alredy defined in multimethod key.
-     *Usage*: Concept how to declaration those feadls should be look
-     #+begin_src clojure
-       {... :component-type :long-text}
-       {... :component-type :short-text}
-       {... :component-type {:type :short-text
-			     :limit 4
-			     :regex #"[\d]+"
-			     :function Long}}
-       {... :component-type {:type :factor
-			     :default :one
-			     :values {:one "Pierwszy"
-				      :two "Drugi"}}}
-       ;; Custom should be lovel level
-       ;; wrapper over then
-       ;; swing component
-       {... :component-type {:type :custom
-			     :component :button
-			     :validator string?
-			     :renderer #'link-to-ui-element
-			     :on-action (fn [])}}
-       
-       {... :component-type {:type :composite
-			     ...}
-	:columns[{... :component-type :long-text}
-		 {... :component-type :short-text}]}
-     #+end_src
-   - Lib for ~:fields~
-     with notice to previosly mentioned problem
-     create library that take one ~field~ and return some UI
-     element to putting into the template. This is something
-     like middleware that understand declaration of columns
-     inside metadata
-     
 ** TODO [#3] /Feature/. On exit event [0/1]                    :@Aleks:@Serhii:
    - [ ] Create event when close [1/3]
      - [ ] Autoclose log stream's /:@Serhii:/
@@ -325,9 +157,6 @@ CLOSED: [2022-05-24 Tue 06:14]
     - [ ] If on top mode will be off then FnSpace will be properly shifted relative to the SliderMenu and MainMenu.
     - [ ] If on top mode will be on then FnSpace will be always fitted to frame.
     - [ ] Watcher should changing size of FnSpace when global state with size of MainMenu or SliderMenu will be changed. FnSpace will be fitted to components inside app's frame.
-** PLANNED /Feature/. Scroll to selected in table [0/1]                :@Aleks:
-   - [ ] Scroll to selected in table
-
 ** PLANNED /Feature/. Extension Manager [1/5]                          :@Aleks:
    - [X] Related to [[#alert-boxes-replacement]], fix alert boxes.
    - [ ] *FUTURE* Show extension file-tree. Alow editing file through the jarman [0/2]
@@ -340,16 +169,10 @@ CLOSED: [2022-05-24 Tue 06:14]
      - [ ] *FUTURE* replace param in =.jarman=.
    - [ ] *FUTURE* Extention searching/install template, because repository we currently doesnt have
      You will managed plugins as list of PandaPackage records.
-** PLANNED /Feature/. Global event on key pressed             :@Julia:@Aleks:
-   - [X] Proxy for KeyEventDispacher for add global event on key pressed
-   - [X] add and remove own KeyEventDispacher
-   - [X] tutorial point
-   - [ ] try add more KeyEventDispachers
-   - [ ] lock repeating event on hold key
 ** PLANNED Service Period. sort contract list                       :@Serhii:
    - [ ] sorting contract by date
    - [ ] colorize contract by active-nonactive depend on current date
-** PLANNED Ekka todo#1 chages                         :@Julia:@Aleks:@Serhii:
+** Ekka todo#1 chages                                 :@Julia:@Aleks:@Serhii:
 *** Підприємець
     -   ЄДРПОУ - 10 цифр довжина з переду нулями
     -   Форма власності - комбобокс
@@ -393,4 +216,3 @@ CLOSED: [2022-05-24 Tue 06:14]
 
 *** Акт виконаних робіт
 	-   створити
-* Documentations

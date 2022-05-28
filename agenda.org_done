@@ -659,3 +659,147 @@ Archived entries from file /home/serhii/programs/jarman/agenda.org
    - [X] Make refreshing for jarman, when theme was selected
    - [X] set info about selected theme into the .jarman
 
+
+* DONE /Feature/. Replacement for gui_components
+CLOSED: [2022-05-24 Tue 06:13]
+:PROPERTIES:
+:ARCHIVE_TIME: 2022-05-28 Sat 02:23
+:ARCHIVE_FILE: ~/programs/jarman/agenda.org
+:ARCHIVE_OLPATH: Common thread
+:ARCHIVE_CATEGORY: agenda
+:ARCHIVE_TODO: DONE
+:END:
+   Example of argument
+   #+begin_src clojure
+     [{:keys
+       [;; -- component parameters
+	value placeholder font-size background char-limit
+	border border-color-focus border-color-unfocus
+	start-underline
+	;; -- events 
+	on-change
+	on-caret-update
+	on-focus-gained
+	on-focus-lost
+	on-...
+	;; -- swing comp args
+	args]
+       :or
+       {value                ""
+	placeholder          ""
+	font-size            face/font-size
+	border-color-focus   face/c-underline-on-focus
+	border-color-unfocus face/c-underline
+	background           face/c-input-bg
+	border               [10 10 5 5 2] 
+	char-limit           0         
+	start-underline      nil
+     
+	on-change            (fn [e] e)
+	on-caret-update      (fn [e] e)
+	on-focus-gained      (fn [e] e)
+	on-focus-lost        (fn [e] e)
+	on-...
+     
+	args                 []}}]
+   #+end_src
+   
+   *Rules*
+   1) not used ~[& {}]~ args, only ~[{}]~
+   2) every element MUST have at least one function argument ~on-change~.
+   3) every element have his own properties. But look at 6)
+   4) every element have his own actions. But loot at 6)
+      For example one element can have ~on-change~ (what currently common for most),
+      ~on-cursor-change~ (what can be for text-based interactive component), etc..
+   5) every element MUST have ~args~ param for override some swing params.
+   6) *WARNING*! try to make unique key for action/property characteristic.
+      Example. We have action ~:on-cursor-change~ which describe a changing curret.
+      But you couldn't use those key for describing 'switching items' actions in
+      ListBox component. Try to call switching items in some unique name.
+
+      *Rule*: /name/ should discribe /behavior/.
+
+   *Ideas*
+   1) Maybe will fine for makin some macros, which do description of arguments
+      in easy way.
+   2) Maybe will be fine to add some validation for arguments, and make
+      debug machinizm.
+
+
+* DONE /Feature/. Metadata definition
+CLOSED: [2022-05-24 Tue 06:14]
+:PROPERTIES:
+:ARCHIVE_TIME: 2022-05-28 Sat 02:23
+:ARCHIVE_FILE: ~/programs/jarman/agenda.org
+:ARCHIVE_OLPATH: Common thread
+:ARCHIVE_CATEGORY: agenda
+:ARCHIVE_TODO: DONE
+:END:
+   Currently metadata declare
+   - how to create table
+   - how to manage table
+   - how to build ui for table (fields)
+
+   Metadata cover whole those problem with information about
+   - table
+   - fields
+   - fields composites
+
+   For managing UI components, and creating one we use
+   fields meta information, but for long time development
+   we shuold to resolve some practical problem with metadata
+   we faced of:
+   #+begin_src clojure
+     (field :field :ssreou :representation "number of SSREOU" :component-type [:text])
+   #+end_src
+   - field ~:component-type~
+     *Problem*: is one of most importand field, don't control in any way
+     and much part of usage this field defines in-place where must used it.
+     *Solution:* replace vector on just key or map, which describe fields. 
+     Resolving those in multimethod concept, allow to make for each some UI
+     constructor. That also mean, that you can create some UI in-place, rather
+     then use alredy defined in multimethod key.
+     *Usage*: Concept how to declaration those feadls should be look
+     #+begin_src clojure
+       {... :component-type :long-text}
+       {... :component-type :short-text}
+       {... :component-type {:type :short-text
+			     :limit 4
+			     :regex #"[\d]+"
+			     :function Long}}
+       {... :component-type {:type :factor
+			     :default :one
+			     :values {:one "Pierwszy"
+				      :two "Drugi"}}}
+       ;; Custom should be lovel level
+       ;; wrapper over then
+       ;; swing component
+       {... :component-type {:type :custom
+			     :component :button
+			     :validator string?
+			     :renderer #'link-to-ui-element
+			     :on-action (fn [])}}
+       
+       {... :component-type {:type :composite
+			     ...}
+	:columns[{... :component-type :long-text}
+		 {... :component-type :short-text}]}
+     #+end_src
+   - Lib for ~:fields~
+     with notice to previosly mentioned problem
+     create library that take one ~field~ and return some UI
+     element to putting into the template. This is something
+     like middleware that understand declaration of columns
+     inside metadata
+     
+
+* DONE /Feature/. Scroll to selected in table [1/1]                   :@Serhii:
+CLOSED: [2022-05-28 Sat 02:26]
+:PROPERTIES:
+:ARCHIVE_TIME: 2022-05-28 Sat 02:26
+:ARCHIVE_FILE: ~/programs/jarman/agenda.org
+:ARCHIVE_OLPATH: Common thread
+:ARCHIVE_CATEGORY: agenda
+:ARCHIVE_TODO: DONE
+:END:
+   - [X] Scroll to selected in table

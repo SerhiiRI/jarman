@@ -161,8 +161,12 @@
   (jdbc/execute! @*connection* s))
 (defn query [s]
   (jdbc/query @*connection* s))
+(defn exec-ret! [s]
+  (:generated_key (jdbc/execute! @*connection* s {:return-keys true})))
 (defn exec! [s]
   (sqlerr (jdbc/execute! @*connection* s)))
 (defn query! [s]
   (sqlerr (jdbc/query @*connection* s)))
+(defn exec-ret! [s]
+  (sqlerr (jdbc/execute! @*connection* s)))
 

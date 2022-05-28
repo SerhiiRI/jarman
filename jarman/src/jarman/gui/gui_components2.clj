@@ -104,11 +104,13 @@
 ;;
 
 ;; todo
+;; [ ] to all components add :value-setter key
 ;; [ ] :jsgl-digit
 ;; [ ] :jsgl-float
 ;; [ ] :jsgl-ckeckbox
 ;; [ ] :jsgl-ftp-file
-;; [ ] :jsgl-link
+;; [ ] :jsgl-simple-table
+;; [ ] :jsgl-style-text JTextPane
 (register-custom-component :id :jsgl-stub            :component stub           :actions #{})
 (register-custom-component :id :jsgl-label           :component label          :actions (get-comp-actions 'label))
 (register-custom-component :id :jsgl-link            :component stub           :actions (get-comp-actions 'stub))

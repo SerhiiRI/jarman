@@ -9,7 +9,7 @@
 ;; - [ ] clean-up whole file, and rewrite 'ns declaration
 ;; - [ ] add demo on bottom of file
 ;; - [ ] EVERY event should be printed like success/danger... 
-
+;; - [ ] all plugin and component declaration push into the interaction namespace
 (ns jarman.interaction)
 (require '[potemkin.namespaces :refer [import-vars]])
 (require '[jarman.gui.gui-alerts-service :as gas])

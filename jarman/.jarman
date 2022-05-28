@@ -59,7 +59,7 @@
         aaa
         ;; reall plugins
         table
-        service_period
+        ;; service_period
         ;; theme plugins
         dracula jarman_almost_white))
 

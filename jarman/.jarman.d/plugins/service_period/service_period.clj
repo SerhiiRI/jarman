@@ -1,3 +1,21 @@
+;;                      _          
+;;  ___  ___ _ ____   _(_) ___ ___ 
+;; / __|/ _ \ '__\ \ / / |/ __/ _ \
+;; \__ \  __/ |   \ V /| | (_|  __/
+;; |___/\___|_|    \_/ |_|\___\___|
+;;  _ __   ___ _ __(_) ___   __| | 
+;; | '_ \ / _ \ '__| |/ _ \ / _` | 
+;; | |_) |  __/ |  | | (_) | (_| | 
+;; | .__/ \___|_|  |_|\___/ \__,_| 
+;; |_|                             
+;; ================================
+;; Status: TEMPORARLY DISABLED
+;; Markers: [ ] todo [X] done [W] WIP
+;; fixme:
+;; - [ ] rework whole plugin with similar table.clj logic
+;; - [ ] temporarly uncompillable for a reason of deprecated `calndr` component
+;;       in new gui version, you should replace this panel on
+;;       jarman/gui/components/(calendar|datetime) element
 (ns plugins.service-period.service-period
   (:require
    [jarman.faces              :as face]
@@ -8,7 +26,7 @@
    [jarman.gui.gui-tools      :as gtool]
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-migrid     :as gmg]
-   [jarman.gui.gui-calendar   :as calndr]
+   ;; [jarman.gui.gui-calendar   :as calndr]
    [jarman.logic.sql-tool     :refer [select!]]
    [jarman.logic.connection   :as db]
    [jarman.logic.state        :as state]
@@ -35,7 +53,7 @@
     :add-missing  (assoc-in state (:path action-m) nil)
     :test         (do (println "\nTest:n") state)
     ;; ------------------------------------------------
-))
+    ))
 
 (defn create-disptcher [atom-var]
   (fn [action-m]

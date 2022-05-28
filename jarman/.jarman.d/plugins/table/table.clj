@@ -14,19 +14,19 @@
 ;; `metafield-uuid` - is unique name for metadata column which represent column in database
 ;; `metafield` - one column in metadata, which represent one or more column's in database
 ;;     Example:
-;;      {:field :seal_number     /---------------`metafield-uuid`
+;;      {:field :seal_number     .---------------`metafield-uuid`
 ;;                              V
 ;;       :field-qualified :seal.datetime_of_remove
 ;;       :representation "Seal Number"
-;;           /------------------------------`ui-component`
+;;           .------------------------------`ui-component`
 ;;          V
 ;;       :component {:type :jsgl-text  <-------- `component-id`
 ;;                   :value ""
 ;;                   :font-size 14
 ;;                   :char-limit 0
 ;;                   :placeholder ""
-;;                   :border [10 10 5 5 2]       `action-event`
-;;                        /---------------------/
+;;                   :border [10 10 5 5 2]       .`action-event`
+;;                        .---------------------'
 ;;                       V
 ;;                   :on-change (fn [e] (seesaw.core/text e))
 ;;                   :start-underline nil
@@ -51,7 +51,6 @@
    ;; Jarman tools
    [jarman.tools.lang :refer :all]
    [jarman.tools.org  :refer :all]
-
    ;; [jarman.tools.swing :as stool]
    ;; [jarman.resource-lib.icon-library :as icon]
    ;; [jarman.gui.gui-style      :as gs]
@@ -68,7 +67,6 @@
    [jarman.logic.sql-tool   :as sql-tool]
    [jarman.logic.connection :as db]
    [jarman.logic.view-manager :as view-manager]
-   [jarman.plugin.toolkits :as toolkits]
    ;; Jarman interaction
    [jarman.interaction :as interaction]
    ;; Local imports
@@ -748,32 +746,41 @@
 ;;; PLUGIN DEFINITION ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn table-toolkit-pipeline [configuration]
-  (toolkits/jack-in-metadata-table {} configuration))
+(defn common-toolkit-pipeline [configuration]
+  (wlet
+   ;; ------------
+   ;; Constructor
+   (cond-> {}
+     ;; Jack in TableMetadata Object if it exist
+     table-metadata (assoc :meta-obj (metadata/->TableMetadata table-metadata)))
+   ;; ------------
+   ;; Settings
+   ((table-metadata (some-> configuration (get :table_name) (metadata/return-metadata) (first))))))
 
 (defn table-entry [plugin-path]
   (where
    ((state!    (create-state-connector (satom (create-state-template plugin-path))))
     (dispatch! (state! {:action :dispatch})))
    (print-header
-    (format "Open 'table' plugin for '%s'" (->> (state!) :plugin-toolkit :meta-obj .return-table_name))
+    (format "Open 'table' plugin by path '%s'" ;; (->> (state!) :plugin-toolkit :meta-obj .return-table_name)
+            (str plugin-path))
     (build-layout state! dispatch!))))
 
-(defn dialog-table-toolkit-pipeline [configuration] (toolkits/jack-in-metadata-table {} configuration))
-(defn dialog-table-entry [plugin-path])
+(defn dialog-table-entry [plugin-path]
+  (print-header (format "Open 'dialog-table' plugin for '%s'" (str plugin-path))))
 
 (jarman.plugin.plugin/register-custom-view-plugin
  :name 'table
  :description "Plugin allow to editing One table from database"
  :entry table-entry
- :toolkit table-toolkit-pipeline
+ :toolkit common-toolkit-pipeline
  :spec-list [])
 
 (jarman.plugin.plugin/register-custom-view-plugin
  :name 'dialog-table
  :description "Dialog table"
  :entry dialog-table-entry
- :toolkit dialog-table-toolkit-pipeline
+ :toolkit common-toolkit-pipeline
  :spec-list [])
 
 ;;  _____ _____ ____ _____ _
@@ -782,7 +789,6 @@
 ;;   | | | |___ ___) || |   \__ \
 ;;   |_| |_____|____/ |_|   |___/
 ;;
-
 (comment
   ;; DIALOG TABLE
   (dialog-table :plugin-path [:profile :dialog-table :profile-dialog]
@@ -848,7 +854,7 @@
                   :debug true
                   :model {:user.login "A", :user.password "B", :user.first_name "C", :user.last_name "A", :user.configuration "'{}'", :user.id_profile 2, :user.id 1}})
     (swing/quick-frame
-     [(build-input-form state! dispatch!)]))
+      [(build-input-form state! dispatch!)]))
 
   (with-test-environ [:user :table :user]
     (swing/quick-frame

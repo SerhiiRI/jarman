@@ -95,8 +95,6 @@
          :model (jarman.logic.metadata/convert_flattfields->model
                  e :seal)}))}))
 
-
-
 (jarman.logic.view-manager/defview user
   (table
    :id :user

@@ -247,8 +247,12 @@
 (defn create-table-by-meta [metadata]
   (let [metadata (if (metadata-core/isTableMetadata? metadata) metadata (TableMetadata. metadata) )
         all-columns (.return-columns-flatten metadata)]
-    (let [smpl-fields (filter (comp not some? (partial re-matches #"meta.*") name :field) all-columns)
-          idfl-fields (filter (comp some? (partial re-matches #"id_.*") name :field) all-columns)
+    (let [smpl-fields (->> all-columns
+                       (map #(.to-primive %))
+                       (filter (comp not some? (partial re-matches #"meta.*") name :field)))
+          idfl-fields (->> all-columns
+                       (map #(.to-primive %))
+                       (filter (comp some? (partial re-matches #"id_.*") name :field) ))
           fkeys-fields (vec (eduction (filter :foreign-keys) (map :foreign-keys) idfl-fields))]
       (create-table!
        {:table_name (keyword (.return-table_name metadata))

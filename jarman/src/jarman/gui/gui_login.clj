@@ -497,14 +497,14 @@
 
 ;; ARGUMENTS
 ;; +--------------1-+                                
-;; |{:type mysql...}|-----\                                    +-3-----------
+;; |{:type mysql...}|-----.                                    +-3-----------
 ;; +----------------+     |     +---------------2-+ (if erorr) | ExceptionInfo.
 ;; |login: user     |-----+---->| (session/login) |----------->| <msg>
 ;; +----------------+     |     +-----------------+            | {:type :no-connection...
-;; |passwd: 1234    |-----/           | (if ok)                |  :translation [...]}
+;; |passwd: 1234    |-----'           | (if ok)                |  :translation [...]}
 ;; +----------------+                 | this object            +---------------
 ;;             +---------------3-+    | redefine (session)
-;;             | #<Obj Session>  |<---/ function which 
+;;             | #<Obj Session>  |<---' function which
 ;;             +-----------------+      return (Session.)
 ;;                                      object
 
@@ -842,7 +842,7 @@
      [(c/label :icon (stool/image-scale (gs/icon GoogleMaterialDesignIcons/VPN_KEY face/c-icon) 40))
       (passwd-input dispatch!)])]))
 
-(defn login-panel 
+(defn login-panel
   "Description:
      Build and return to frame form for login panel.
   Example:

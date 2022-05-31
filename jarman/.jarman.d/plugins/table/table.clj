@@ -766,6 +766,14 @@
             (str plugin-path))
     (build-layout state! dispatch!))))
 
+(print-header
+  "SOme header"
+  (print-line "some event 1")
+
+  (print-line "some event 2")
+  (print-src "clojure"
+    (pr-str "fdsajlkdfjsa")))
+
 (defn dialog-table-entry [plugin-path]
   (print-header (format "Open 'dialog-table' plugin for '%s'" (str plugin-path))))
 

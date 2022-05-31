@@ -116,18 +116,36 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
         at java.base/java.lang.Thread.run(Thread.java:834)
    #+end_example
 
-* Common thread 
-** PROCESSING /Refactor/. Create /jarman.gui.swing/
-  should be common namespace that contain all the
-  tools for working with swing.
-** TODO /Refactor/. Create /jarman.lang/
-  - =jarman.tools.lang=
-  - =jarman.tools.org=
+* Common thread
+** application context
+   - plugin
+   - views
+   - themes
+   - gui-components
+   - session
+   - gui parts
+** TODO /Refactor/. =.jarman= loading
+  Fix loading stage, =.jarman= should be loaded after plugin was compiled.
+** TODO /Refactor/. jarman.tools cleaning                              :@Julia:
+  - [ ] =jarman.tools=, should be replaced on =jarman.lib= with subfolders
+  - [ ] =jarman.tools.lang= [0/2]
+    - [ ] clean and archive unnecessary function
+    - [ ] push onto top-level
+  - [ ] =jarman.tools.org=. Push onto top-level
+  - [ ] =jarman.tools.swing=.
+    This namespace should be divided. New place for any swing
+    toolkit's is =jarman.gui.swing=. 
+    - [ ] move =jarman.gui.components.swing= to =jarman.gui.swing=.
+    - [ ] push some swing toolkit to this namespace.
+    - [ ] rename this namespace to something like /resource-connector/.
+      it will be deprecated too. So we need to replace this whole
+      mechanism onto new approach, and UNPIN mentioned ns from another
+      as much as we can.
     
 decompose =jarman.tools.lang=, and move all to the
   jarman.lang with keeping the.
 ** TODO [#3] /Feature/. On exit event [0/1]                    :@Aleks:@Serhii:
-   - [ ] Create event when close [1/3]
+   - [ ] Create event when close [1/2]
      - [ ] Autoclose log stream's /:@Serhii:/
      - [X] Override window events
 ** PLANNED Feature. Frontend upgrade [0/4]                           :@Aleks:

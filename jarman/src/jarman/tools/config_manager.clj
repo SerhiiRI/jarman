@@ -1,3 +1,11 @@
+;; DEPRECATED NAMESPACE
+;; DEPRECATED NAMESPACE
+;; DEPRECATED NAMESPACE
+;; DEPRECATED NAMESPACE
+;; DEPRECATED NAMESPACE
+;; DEPRECATED NAMESPACE
+;; DEPRECATED NAMESPACE
+;; DEPRECATED NAMESPACE 
 ;; How to use it?
 ;; config-manager is simply function for managing configuration of application.
 ;;
@@ -27,6 +35,7 @@
               (last xs)))]
     (reduce m maps)))
 
+;; should be used from jarman.lang
 (defn deep-merge-with
   "Recursively merges maps. Applies function f when we have duplicate keys."
   [f & maps]

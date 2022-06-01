@@ -15,10 +15,6 @@
 ;;
 ;;    => (setq some-global-variable {:some-value {:a 1}})
 
-;; (require 'jarman.logic.view-manager)
-;; (require 'jarman.tools.update-manager)
-;; (require 'jarman.plugin.extension-manager)
-;; (require 'jarman.config.conf-language)
 (require 'jarman.variables)
 (require '[jarman.config.vars :refer [setq variable-config-list]])
 

@@ -15,23 +15,20 @@
 ;;
 ;;    => (setq some-global-variable {:some-value {:a 1}})
 
-(require 'jarman.logic.view-manager)
-(require 'jarman.tools.update-manager)
-(require 'jarman.plugin.extension-manager)
-(require 'jarman.config.conf-language)
+(require 'jarman.variables)
 (require '[jarman.config.vars :refer [setq variable-config-list]])
 
 (variable-config-list
  ;; This section will be fild automatically
  ;; This setting's discribe setted by the user
  ;; variable
- jarman.config.conf-language/language-selected :pl
- jarman.plugin.plugin/theme-selected "Jarman Light"
+ jarman.variables/language-selected :pl
+ jarman.variables/theme-selected "Jarman Light"
  ;; jarman.logic.view-manager/view-src :database
- jarman.logic.view-manager/view-src :view.clj
- jarman.logic.connection/dataconnection-saved :jarman--localhost--3306)
+ jarman.variables/view-src :view.clj
+ jarman.variables/dataconnection-saved :jarman--localhost--3306)
 
-(setq jarman.logic.view-manager/user-menu
+(setq jarman.variables/user-menu
       {"Admin space"
        {"User table"                [:user :table :user]
         "Permission edit"           [:profile :table :profile]
@@ -54,20 +51,11 @@
        ;;  "Service contract month"    [:service_contract_month :table :service_contract_month]}
        })
 
-(setq jarman.plugin.extension-manager/jarman-extension-list
-      '(;; test plugins
-        aaa
-        ;; reall plugins
-        table
-        ;; service_period
-        ;; theme plugins
-        dracula jarman_almost_white))
-
-(setq jarman.tools.update-manager/jarman-update-repository-list
+(setq jarman.variables/jarman-update-repository-list
       ["ftp://jarman:dupa@trashpanda-team.ddns.net"
        "/home/serhii/programs/jarman/jarman/test-repository"])
 
-(setq jarman.logic.connection/dataconnection-alist
+(setq jarman.variables/dataconnection-alist
       {:jarman--localhost--3306
        {:dbtype "mysql", :host "127.0.0.1", :port 3306, :dbname "jarman", :user "root", :password "1234"},
        :jarman--trashpanda-team_ddns_net--3306 ;; raspberry 

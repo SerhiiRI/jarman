@@ -19,9 +19,10 @@
             [jarman.gui.popup                  :as popup]
             [jarman.gui.gui-editors            :as gedit]
             [jarman.gui.gui-config-panel       :as gcp]
+            [jarman.gui.gui-alerts-service     :as gas]
             [jarman.logic.connection           :as db]
             [jarman.logic.sql-tool :refer [select! update! insert!]]
-            [jarman.interaction :as i]))
+            ))
 
 ;; (defn- expand-colors []
 ;;   [["#eeeeee" "#f7f7f7"]
@@ -307,25 +308,25 @@
                              :action     :invoke
                              :permission :developer
                              :fn         (fn [e]
-                                           (i/info "Czym jest Lorem Ipsum?"
+                                           (gas/info "Czym jest Lorem Ipsum?"
                                                    "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}
                      "Warning" {:key        "test-warning"
                                 :action     :invoke
                                 :permission :developer
                                 :fn         (fn [e]
-                                              (i/warning "Czym jest Lorem Ipsum?"
+                                              (gas/warning "Czym jest Lorem Ipsum?"
                                                       "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}
                      "Danger" {:key        "test-danger"
                                :action     :invoke
                                :permission :developer
                                :fn         (fn [e]
-                                             (i/danger "Czym jest Lorem Ipsum?"
+                                             (gas/danger "Czym jest Lorem Ipsum?"
                                                        "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}
                      "Success" {:key       "test-success"
                                :action     :invoke
                                :permission :developer
                                :fn         (fn [e]
-                                             (i/success "Czym jest Lorem Ipsum?"
+                                             (gas/success "Czym jest Lorem Ipsum?"
                                                         "Lorem Ipsum jest tekstem stosowanym jako przykładowy wypełniacz w przemyśle."))}
                      "Update" {:key       "test-update"
                                :action     :invoke
@@ -369,12 +370,12 @@
     "File editor" {:key        "demo-file-editor"
                    :action     :invoke
                    :permission :developer
-                   :fn (fn [e] (i/editor "./test/test-file.txt"))}
+                   :fn (fn [e] (gedit/editor "./test/test-file.txt"))}
 
     "File editor clj" {:key        "demo-file-editor-clj"
                    :action     :invoke
                    :permission :developer
-                   :fn (fn [e] (i/editor "./test/test-file.clj"))}
+                   :fn (fn [e] (gedit/editor "./test/test-file.clj"))}
     
     "Popup demo" {:key        "popup-demo"
                   :action     :invoke

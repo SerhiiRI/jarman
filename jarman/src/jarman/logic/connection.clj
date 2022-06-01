@@ -11,13 +11,6 @@
            (java.text SimpleDateFormat)
            (java.sql SQLException)))
 
-(defvar dataconnection-saved nil)
-(defvar dataconnection-alist {}
-  :name "Datasources"
-  :doc "Connection map list"
-  :type clojure.lang.PersistentArrayMap
-  :group :database)
-
 ;;; HELPER FUNCION ;;;
 (defn test-connection [db-spec]
   ;; {:pre [(spec/valid? ::db-connector-scheme db-spec)]}
@@ -103,7 +96,7 @@
 
 (comment (connection-set (get (deref dataconnection-alist) :jarman--localhost--3306)))
 
-(defn connection-wrapp
+#_(defn connection-wrapp
   "Description
     Wrapp connection like 
      {:dbtype \"mysql\",
@@ -130,11 +123,11 @@
   [] (deref *connection*))
 
 (defn do-connect-to-database []
-  (assert (not-empty (deref dataconnection-alist)) "Error. Variable `jarman.logic.connection/dataconnection-alist` cannot be empty")
-  (assert (some? (deref dataconnection-saved)) "Error. Unsetted `jarman.logic.connection/dataconnection-saved` var")
+  (assert (not-empty (deref jarman.variables/dataconnection-alist)) "Error. Variable `jarman.logic.connection/dataconnection-alist` cannot be empty")
+  (assert (some? (deref jarman.variables/dataconnection-saved)) "Error. Unsetted `jarman.logic.connection/dataconnection-saved` var")
   (-> (connection-set
-       (get (deref dataconnection-alist)
-            (deref dataconnection-saved)))
+       (get (deref jarman.variables/dataconnection-alist)
+            (deref jarman.variables/dataconnection-saved)))
       (test-connection))
   true)
 
@@ -158,15 +151,15 @@
 
 ;;; simple query depend on `*connection*`
 (defn exec [s]
-  (jdbc/execute! @*connection* s))
+  (jdbc/execute! (connection-get) s))
 (defn query [s]
-  (jdbc/query @*connection* s))
+  (jdbc/query (connection-get) s))
 (defn exec-ret! [s]
-  (:generated_key (jdbc/execute! @*connection* s {:return-keys true})))
+  (:generated_key (jdbc/execute! (connection-get) s {:return-keys true})))
 (defn exec! [s]
-  (sqlerr (jdbc/execute! @*connection* s)))
+  (sqlerr (jdbc/execute! (connection-get) s)))
 (defn query! [s]
-  (sqlerr (jdbc/query @*connection* s)))
+  (sqlerr (jdbc/query (connection-get) s)))
 (defn exec-ret! [s]
-  (sqlerr (jdbc/execute! @*connection* s)))
+  (sqlerr (jdbc/execute! (connection-get) s)))
 

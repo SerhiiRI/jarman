@@ -471,12 +471,25 @@
                                                     :text "Some error: Can not save."))))})))))
 
 
+(defn editor
+  "Description:
+    Set path to directory and file name
+  Example:
+    (editor \"./test/test-file\")"
+  ([file-path] (editor file-path nil))
+  ([file-path syntax]
+   (let [file-name (last (clojure.string/split file-path #"/"))]
+     (gvs/add-view
+      :view-id   (keyword (str "editor" file-name))
+      :title     (str "Edit:  " file-name)
+      :render-fn (fn [] (text-file-editor file-path syntax))))))
+
 (comment
   (let [frame (seesaw.core/frame
-               :title "Demo"
-               :minimum-size [500 :by 500]
-               :size [500 :by 500]
-               :content (text-file-editor "./test/test-file.txt"))
+                :title "Demo"
+                :minimum-size [500 :by 500]
+                :size [500 :by 500]
+                :content (text-file-editor "./test/test-file.txt"))
         ]
     (doto
         frame

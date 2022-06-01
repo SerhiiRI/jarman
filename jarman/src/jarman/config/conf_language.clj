@@ -3,8 +3,7 @@
    [clojure.java.io :as io]
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]
-   [jarman.tools.org  :refer :all]
-   [jarman.config.vars :refer [defvar]])
+   [jarman.tools.org  :refer :all])
   (:import (java.io IOException FileNotFoundException)))
 
 ;;;;;;;;;;;;
@@ -18,18 +17,6 @@
   :dracula - plugin translations
   ... all another key represent plugins"
   (ref {}))
-
-(defvar language-selected :en
-  :name "Language"
-  :doc "Define translation language to jarman"
-  :type clojure.lang.Keyword
-  :group :view-params)
-
-(defvar language-supported [:en :pl :ua]
-  :name "Supported Languages"
-  :doc "Define supported language inside jarman"
-  :type clojure.lang.PersistentVector
-  :group :view-params)
 
 ;;;;;;;;;;;;;;;;;;;;
 ;;; DEBUG HEADER ;;;
@@ -83,7 +70,7 @@
     `plang`"
   [& translation-path]
   (let [d "<null>"
-        p (into [:_global (deref language-selected)] translation-path)
+        p (into [:_global (deref jarman.variables/language-selected)] translation-path)
         l (get-in @_language p d)]
     (when (deref debug)
       (print-header
@@ -104,7 +91,7 @@
     `lang`"
   [plugin & translation-path]
   (let [d "<null>"
-        p (into [plugin (deref language-selected)] translation-path)
+        p (into [plugin (deref jarman.variables/language-selected)] translation-path)
         l (get-in @_language p d)]
     (when (deref debug)
       (print-header

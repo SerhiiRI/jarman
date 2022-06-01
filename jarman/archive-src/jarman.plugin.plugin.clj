@@ -1,4 +1,5 @@
-(ns jarman.plugin.plugin
+;; jarman.plugin.plugin -> 
+(ns jarman.application.collector-view-plugins
   (:require [jarman.config.environment :as env]
             [jarman.tools.lang :refer :all]
             [clojure.spec.alpha :as s]
@@ -6,7 +7,7 @@
             [jarman.tools.org :refer :all]
             [jarman.config.vars :refer [defvar setj setq]]))
 
-(declare register-custom-view-plugin)
+(declare register-view-plugin)
 (declare register-custom-theme-plugin)
 
 (defvar theme-selected "Jarman Light"
@@ -100,7 +101,7 @@
     :plugin-description description
     :plugin-name name}))
 
-(defn register-custom-view-plugin [& {:as args}]
+(defn register-view-plugin [& {:as args}]
   (dosync (alter system-ViewPlugin-list
                  (fn [l] (let [plugin (constructViewPlugin args)
                               l-without-old-plugin

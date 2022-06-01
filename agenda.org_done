@@ -803,3 +803,14 @@ CLOSED: [2022-05-28 Sat 02:26]
 :ARCHIVE_TODO: DONE
 :END:
    - [X] Scroll to selected in table
+
+* DONE /Refactor/. =.jarman= loading
+CLOSED: [2022-06-01 Wed 03:28]
+:PROPERTIES:
+:ARCHIVE_TIME: 2022-06-01 Wed 03:28
+:ARCHIVE_FILE: ~/programs/jarman/agenda.org
+:ARCHIVE_OLPATH: Common thread
+:ARCHIVE_CATEGORY: agenda
+:ARCHIVE_TODO: DONE
+:END:
+Fix loading stage, =.jarman= should be loaded after plugin was compiled.

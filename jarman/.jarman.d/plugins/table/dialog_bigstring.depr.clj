@@ -15,7 +15,7 @@
    [jarman.logic.connection :as db]
    [jarman.logic.sql-tool :refer [select!]]
    ;; external
-   [jarman.external :refer [register-custom-view-plugin]]))
+   [jarman.external :refer [register-view-plugin]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; plugin SPEC patters ;;;
@@ -109,7 +109,7 @@
 ;;; BIND ;;;
 ;;;;;;;;;;;;
 
-(register-custom-view-plugin
+(register-view-plugin
  :name 'dialog-bigstring 
  :description "Dialog for selecting some ONE item by ONE column in `:query` model"
  :entry dialog-bigstring-entry

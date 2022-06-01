@@ -13,7 +13,7 @@
    [jarman.config.vars :refer [defvar]]
    [jarman.config.dot-jarman :refer [dot-jarman-load]]
    ;; ---
-   [jarman.plugin.plugin :as plugin-system]
+   [jarman.application.collector-custom-view-plugins :as plugin-system]
    ;; --- 
    [jarman.logic.connection :as db]
    [jarman.logic.sql-tool :refer [select! update! insert! delete!]]
@@ -28,12 +28,6 @@
   (dot-jarman-load)
   (deref user-menu)
   (deref jarman-plugin-list))
-
-(defvar user-menu {}
-  :name "Buisness menu"
-  :doc "Left side user menu"
-  :type clojure.lang.PersistentArrayMap
-  :group :plugin-system)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GLOBAL DEFVIEW MAP ;;;
@@ -198,8 +192,8 @@
 
 (comment
   (do-view-load)
-  (return-structure-tree (deref user-menu))
-  (return-structure-flat (deref user-menu))
+  (return-structure-tree (deref jarman.variables/user-menu))
+  (return-structure-flat (deref jarman.variables/user-menu))
   (global-view-configs-clean)
   (global-view-configs-get)
   
@@ -428,14 +422,6 @@
     (global-view-configs-clean)
     (load-data-recur nil loaders)))
 
-(defvar view-src :database
-  :name "Defviews src"
-  :doc  "Source of defviews. View.clj or database [:view.clj :database]."
-  :type clojure.lang.Keyword
-  :group :view-params)
-
-;; (state/set-state :view-src (deref view-src))
-
 (def ^:dynamic *view-loader-chain-fn*
   ;;(make-loader-chain loader-from-view-clj loader-from-db)
   (make-loader-chain loader-from-db loader-from-view-clj))
@@ -467,7 +453,7 @@
                                   {:type :view-plugin-error
                                    :internal-message (.getMessage e)
                                    :internal-stacktrace (clojure.stacktrace/print-stack-trace e 20)}))))))))
-    (return-structure-tree (deref user-menu))))
+    (return-structure-tree (deref jarman.variables/user-menu))))
 
 (defn view-clean []
   (db/exec (delete! {:table_name :view})))

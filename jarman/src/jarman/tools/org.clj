@@ -154,6 +154,7 @@
 ;;;;;;;;;;;;;;;;;;;;
 
 (comment
+  ;; SIMPLE PRINTING
   (do
     (print-header
       "main thread"
@@ -184,5 +185,29 @@
           "third level"
           (print-line "Another code example")
           (print-src "clojure" (slurp "src/jarman/faces.clj"))
-          (print-line "The end"))))))))
+          (print-line "The end")))))))
+
+  ;; ERROR PRINTING
+  (try
+    ;; JVM Error
+    ;; (throw (IOException. "fuck"))
+    ;; Clojure Error
+    (throw (ex-info "suak" {:a :2}))
+    ;; -----------------------
+    (catch clojure.lang.ExceptionInfo e
+      {:message (.getMessage e)
+       :data (ex-data e)
+       :stack (with-out-str (clojure.stacktrace/print-stack-trace e 10))})
+    (catch Exception e
+      {:message (.getMessage e)
+       :stacktrace (with-out-str (clojure.stacktrace/print-stack-trace e 10))}))
+
+  (try
+    ;; JVM Error
+    (throw (IOException. "fuck"))
+    ;; Clojure Error
+    (throw (ex-info "suak" {:a :2}))
+    ;; -----------------------
+    (catch clojure.lang.ExceptionInfo e (print-error e))
+    (catch Exception e (print-error e))))
 

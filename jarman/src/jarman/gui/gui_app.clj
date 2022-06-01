@@ -21,16 +21,16 @@
    [seesaw.border       :as b]
    ;; external funcionality
    [jarman.faces                    :as face]
-   [jarman.interaction              :as i]
-   [jarman.external                 :as e]
+   [jarman.variables]
    ;; logic
    [jarman.logic.state              :as state]
    [jarman.logic.session            :as session]
    [jarman.logic.view-manager       :as view-manager]
    [jarman.logic.connection         :refer [do-connect-to-database]]
    [jarman.managment.data           :refer [do-load-jarman-data]]
-   [jarman.plugin.extension-manager :refer [do-load-extensions]]
-   [jarman.plugin.plugin            :refer [do-load-theme theme-selected]]
+   ;; [jarman.plugin.extension-manager :refer [do-load-extensions]]
+   [jarman.application.extension-manager :refer [do-load-extensions]]
+   [jarman.application.collector-custom-themes :refer [do-load-theme]]
    [jarman.config.vars              :refer [setq print-list-not-loaded]]
    [jarman.config.dot-jarman        :refer [dot-jarman-load]]
    [jarman.config.conf-language     :refer [do-load-language]]
@@ -52,7 +52,7 @@
    [jarman.gui.popup                :as popup]
    [jarman.gui.gui-editors          :as gedit]
    ;; [jarman.gui.gui-calendar         :as calendar]
-   ))
+   [jarman.interaction]))
 
  
 ;; ┌──────────────────────────┐
@@ -185,15 +185,11 @@
   (print-header
    "Set spec/assert checking"
    (s/check-asserts true))
-  (print-header 
-   "Load .jarman"
-   (dot-jarman-load)
-   (print-list-not-loaded))
-  ;; --- SHOULD BE DELETED--------\
-  (print-header                 ;;|
-   "connect jarman to database" ;;|
-   (do-connect-to-database))    ;;|
-  ;; -----------------------------/
+  ;; ;; --- SHOULD BE DELETED--------.
+  ;; (print-header                 ;;|
+  ;;  "connect jarman to database" ;;|
+  ;;  (do-connect-to-database))    ;;|
+  ;; ;; -----------------------------'
   (print-header 
    "Load .jarman.data"
    (do-load-jarman-data))
@@ -203,7 +199,11 @@
   (out-extension
    (print-header
     "Load Extensions"
-    (do-load-extensions))))
+    (do-load-extensions)))
+  (print-header
+   "Load .jarman"
+   (dot-jarman-load)
+   (print-list-not-loaded)))
 
 ;; after swing component was builded
 (defn load-level-1
@@ -218,7 +218,7 @@
   ;; from integrated into jarman ns's.
   (if (nil? (state/state :theme-first-load))
     (do
-      (do-load-theme (deref theme-selected))
+      (do-load-theme (deref jarman.variables/theme-selected))
       (state/set-state :theme-first-load true)
       (print-header "First theme loaded"))
 
@@ -251,30 +251,30 @@
              (menu/menu-slider img-scale top-offset
                           [{:icon  (gs/icon GoogleMaterialDesignIcons/INFO face/c-icon)
                             :title (gtool/get-lang-btns :messages-history)
-                            :fn    (fn [e] (i/show-alerts-history))}
+                            :fn    (fn [e] (gas/show-alerts-history))}
                            
                            {:icon  (gs/icon GoogleMaterialDesignIcons/DASHBOARD face/c-icon)
                             :title (gtool/get-lang-btns :reload-active-view)
                             :fn    (fn [e] (try
-                                             (i/reload-view)
+                                             (gvs/reload-view)
                                              (catch Exception e (str "Can not reload. Storage is empty."))))}
 
                            {:icon  (gs/icon GoogleMaterialDesignIcons/REFRESH face/c-icon)
                             :title "Soft Restart"
-                            :fn    (fn [e] (i/soft-restart))}
+                            :fn    (fn [e] (gvs/soft-restart))}
                            
                            {:icon  (gs/icon GoogleMaterialDesignIcons/CACHED face/c-icon)
                             :title "Restart"
-                            :fn    (fn [e] (i/restart))}
+                            :fn    (fn [e] (gvs/restart))}
 
                            {:icon  (gs/icon GoogleMaterialDesignIcons/SETTINGS_BACKUP_RESTORE face/c-icon)
                             :title "Hard Restart"
-                            :fn    (fn [e] (i/restart))}
+                            :fn    (fn [e] (gvs/restart))}
 
                            {:icon  (gs/icon GoogleMaterialDesignIcons/LANGUAGE face/c-icon)
                             :title "Reload language"
                             :fn    (fn [e] (jarman.config.conf-language/do-load-language)
-                                     (i/success "Reloaded languages"))}
+                                     (gas/success "Reloaded languages"))}
                            
                            {:icon  (gs/icon GoogleMaterialDesignIcons/LIST face/c-icon)
                             :title "Reload main menu"
@@ -327,9 +327,9 @@
                             :title "Doom"
                             :fn    (fn [e]
                                      (if (state/state :doom)
-                                       (i/rm-doom)
+                                       (gcomp/rm-doom)
                                        (let [h (/ (second @(state/state :atom-app-size)) 2) w h]
-                                           (i/open-doom
+                                           (gcomp/open-doom
                                             (gmg/migrid
                                              :v :center :bottom
                                              [(c/label :text "RICARDOOM" :font (gs/getFont 30))
@@ -364,7 +364,7 @@
   (print-header
    "Load static main menu"
    (load-static-main-menu))
-  (i/show-delay-alerts)
+  (gas/show-delay-alerts)
   (print-header
    "Refresh avialable package list cache"
    (umg/update-package-list-cache))
@@ -419,5 +419,5 @@
   (state/set-state :soft-restart false)
   (state/set-state :theme-name "Jarman Light")
   (state/state :theme-name)
-  (i/info "Info" "Test"))
+  (gas/info "Info" "Test"))
 

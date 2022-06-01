@@ -4,7 +4,7 @@
             [clojure.data :as data]))
 
 (def atom-state (atom {}))
-
+;; (deref atom-state)
 (defn set-state
   "Description:
      Set new state or update existing.

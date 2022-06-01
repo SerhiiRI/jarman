@@ -289,7 +289,7 @@
   ([^clojure.lang.PersistentArrayMap metafield]
    (jarman.gui.gui-components2/border-panel
     :north (jarman.gui.gui-components2/label :value (get metafield :representation))
-    :south (jarman.gui.managment/transform-to-object (get metafield :component))))
+    :south (interaction/metacomponent->component (get metafield :component))))
   ([^clojure.lang.PersistentArrayMap metafield component]
    (jarman.gui.gui-components2/border-panel
     :north (jarman.gui.gui-components2/label :value (get metafield :representation))
@@ -312,7 +312,7 @@
           ;; {:jsgl-text #<Component{...}
           ;;  :jsgl-selectbox #<Com...}
           ;;
-          components (jarman.gui.managment/system-Components-list-group-get)
+          components (interaction/metacomponents-get)
           ;;
           ;; [{:field-qualified :user.login :description "login"... }
           ;;  {:field-qualified :user.password ... }
@@ -407,12 +407,12 @@
   [state! dispatch! additional-buttons]
   (with-state
     (where
-     ((components (jarman.gui.managment/system-Components-list-group-get))
+     ((components (interaction/metacomponents-get))
       (plugin-actions (:actions plugin-config)))
      (wlet
       (->> additional-buttons
            (map populate-custom-action)
-           (map jarman.gui.managment/transform-to-object)
+           (map interaction/metacomponent->component)
            (doall))
       ((populate-custom-action
         (fn [metacomponent]
@@ -475,7 +475,7 @@
                    (assoc  :on-select (fn [e]
                                         (on-select (get e kwd-model-id-column nil))
                                         (seesaw.core/return-from-dialog swing-dialog e)))
-                   jarman.gui.managment/transform-to-object
+                   interaction/metacomponent->component
                    error/catch-error-panel) $
            (c/scrollable $ :hscroll :as-needed :vscroll :as-needed)
            (gui-component/border-panel :north label-text :center $)
@@ -717,7 +717,7 @@
   (with-state
     (where
      ((table-config (plugin-config :view-configurations))
-      (table (jarman.gui.managment/transform-to-object
+      (table (interaction/metacomponent->component
               (as-> table-config *t
                 (update *t :data (fn [data]
                                    (if data
@@ -766,17 +766,25 @@
             (str plugin-path))
     (build-layout state! dispatch!))))
 
+(print-header
+  "SOme header"
+  (print-line "some event 1")
+
+  (print-line "some event 2")
+  (print-src "clojure"
+    (pr-str "fdsajlkdfjsa")))
+
 (defn dialog-table-entry [plugin-path]
   (print-header (format "Open 'dialog-table' plugin for '%s'" (str plugin-path))))
 
-(jarman.plugin.plugin/register-custom-view-plugin
+(jarman.interaction/register-view-plugin
  :name 'table
  :description "Plugin allow to editing One table from database"
  :entry table-entry
  :toolkit common-toolkit-pipeline
  :spec-list [])
 
-(jarman.plugin.plugin/register-custom-view-plugin
+(jarman.interaction/register-view-plugin
  :name 'dialog-table
  :description "Dialog table"
  :entry dialog-table-entry

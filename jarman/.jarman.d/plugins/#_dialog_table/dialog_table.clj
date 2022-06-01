@@ -27,7 +27,7 @@
    [jarman.plugin.spec :as spec]
    [jarman.plugin.gui-table :as gtable]
    [jarman.plugin.data-toolkit :as query-toolkit]
-   [jarman.plugin.plugin]))
+   [jarman.interaction]))
 
 (defn- popup-table [table-fn id]
   (let [dialog (c/custom-dialog :modal? true :width 600 :height 400 :title "Select component")
@@ -56,7 +56,7 @@
 ;;; BIND ;;;
 ;;;;;;;;;;;;
 
-(jarman.plugin.plugin/register-custom-view-plugin
+(jarman.interaction/register-view-plugin
  :name 'dialog-table 
  :description "Dialog table"
  :entry dialog-table-entry

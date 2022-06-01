@@ -1,51 +1,16 @@
-(ns jarman.plugin.extension-manager
+(ns jarman.application.extension-manager
+  ;; -------------------
   (:require
-   ;; -------------------
-   [clojure.data :as data]
-   [clojure.string :as string]
-   [clojure.spec.alpha :as s]
-   [clojure.pprint :as pprint]
-   [clojure.java.jdbc :as jdbc]
-   ;; Seesaw components
-   [seesaw.core   :as c]
-   [seesaw.dev :as sdev]
-   [seesaw.mig :as smig]
-   [seesaw.swingx  :as swingx]
-   [seesaw.chooser :as chooser]
-   [seesaw.border  :as b]
-   ;; Jarman toolkit
-   [jarman.tools.lang :refer :all]
-   [jarman.tools.swing :as stool]
-   [jarman.tools.org :refer :all]
-   ;; [jarman.resource-lib.icon-library :as icon]
-   [jarman.logic.state :as state]
-   [jarman.logic.metadata :as mt]
-   [jarman.logic.document-manager :as doc]
-   [jarman.plugin.spec :as spec]
-   [jarman.plugin.plugin]
-   ;; -------------------
-   
-   [clojure.java.io :as io] 
-   [clojure.string]
    [clojure.pprint :refer [cl-format]]
+   [clojure.java.io :as io]
    [jarman.config.environment :as env]
-   [jarman.config.conf-language :refer [register-new-translation]]
    [jarman.tools.lang :refer :all]
+   [jarman.tools.org  :refer :all]
+   [jarman.config.conf-language :refer [register-new-translation]]
    [jarman.config.vars :refer [defvar]])
-  (:import (java.io IOException FileNotFoundException)))
-
-
-;;;;;;;;;;;;;;;;;;;;;;
-;;; CONFIGURATIONS ;;;
-;;;;;;;;;;;;;;;;;;;;;;
-
-(defvar jarman-extension-list '(aaa)
-  :type clojure.lang.PersistentList
-  :group :plugin-system)
-
-;;;;;;;;;;;;;;;
-;;; HELPERS ;;; 
-;;;;;;;;;;;;;;;
+  ;; -------------------
+  (:import
+   [java.io IOException FileNotFoundException]))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; PandaExtension ;;;
@@ -66,7 +31,6 @@
      (when-not (.exists file)
        (throw (FileNotFoundException.
                (format "Extension `%s`. Language file `%s` not exist" extension-name (str file))))))))
-
 
 (defprotocol IPluginLoader
   (do-load [this])
@@ -113,14 +77,19 @@
 ;;; SYSTEM VARS, LOADERS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn get-extension-list []
+ (->> (.listFiles (io/file (env/get-plugins-dir)))
+   (map #(-> % .getName))
+   (filter #(not (re-matches #"#_.+" %)))))
+
 (def ^:private extension-storage-list (ref []))
 (defn          extension-storage-list-get  [] (deref extension-storage-list))
 (defn          extension-storage-list-load []
   (try
     (let [loading-path (env/get-plugins-dir)]
       (do
-        (dosync (ref-set extension-storage-list []))   
-        (doseq [extension (deref jarman-extension-list)]
+        (dosync (ref-set extension-storage-list []))
+        (doseq [extension (get-extension-list)]
           (let [extension-path (io/file loading-path (str extension) "package")]
             (if (.exists extension-path)
               (let [define-extension-body (rest (read-string (slurp (io/file loading-path (str extension) "package"))))
@@ -130,7 +99,7 @@
                         (format "Odd config keywords in `%s` plugin declaration"
                                 (str extension)))
                 (dosync
-                 ;; wrapp into a extension 
+                 ;; wrapp into a extension
                  ;;=> (:verions ...) => #PandaExtension{:version ...}
                  (alter extension-storage-list conj
                         (constructPandaExtension
@@ -185,13 +154,13 @@
       (if (seq (:dependencies extension))
         (if (was-loaded? (first (:dependencies extension)) extension-loaded)
           (do
-            ;; 
+            ;;
             (compile-with-deps
              :extension-loaded extension-loaded
              :extension-locked extension-locked
              :extension-list   (conj rest-extensions (update-in extension [:dependencies] rest))))
           (do
-            ;; 
+            ;;
             (was-locked? extension extension-locked)
             (compile-with-deps
              :extension-loaded extension-loaded
@@ -213,7 +182,7 @@
    (print-header
     (format "Loading extensions (%s)" (quick-timestamp))
     (print-line (format "Total extensions count: ~%d~" (count (deref extension-storage-list))))
-    ;; COMPILE SEQUENTIAL 
+    ;; COMPILE SEQUENTIAL
     ;; (doall (map do-load @extension-storage-list))
     ;; COMPILE WITH DEPS
     (compile-with-deps
@@ -264,10 +233,10 @@
       (let [[extension & rest-extensions] extension-list]
         (if (seq (:d extension))
           (do
-            
+
             (if (was-loaded? (first (:d extension)) loaded)
               (do
-                
+
                 (ext-load :loaded loaded
                           :locked locked
                           :extension-list (conj rest-extensions (update-in extension [:d] rest))))
@@ -310,5 +279,3 @@
               :d ["2"]}))
   (println "Loading:")
   (ext-load :loaded [] :locked [] :extension-list xs2))
-  
-

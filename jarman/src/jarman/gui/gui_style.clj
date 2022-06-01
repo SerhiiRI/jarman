@@ -5,7 +5,6 @@
             [seesaw.border :as b]
             [jarman.logic.state :as state]
             [jarman.tools.lang :refer :all]
-            [jarman.gui.builtin-themes.jarman-light]
             [jarman.faces :as face])
   (:import (javax.swing.text SimpleAttributeSet)
            (javax.swing.plaf ColorUIResource)

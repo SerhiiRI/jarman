@@ -2,8 +2,8 @@
 (ns plugin.jarman-almost-white.blue)
 (require '[plugin.jarman-almost-white.jarman-almost-white :refer
            [with-colors theme-binder]])
-(require '[jarman.external :refer
-           [register-custom-theme-plugin
+(require '[jarman.interaction :refer
+           [register-theme
             custom-theme-set-faces]])
 
 (def ^:private blue-scheme
@@ -29,7 +29,7 @@
                         ["#cbdbe7" "#bacfdf" "#b9cfdf"]]})
 
 
-(register-custom-theme-plugin
+(register-theme
  :name "Almost White Blue"
  :description  "Jarman Almost White with Blue theme"
  :loader

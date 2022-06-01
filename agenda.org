@@ -117,16 +117,7 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
    #+end_example
 
 * Common thread
-** application context
-   - plugin
-   - views
-   - themes
-   - gui-components
-   - session
-   - gui parts
-** TODO /Refactor/. =.jarman= loading
-  Fix loading stage, =.jarman= should be loaded after plugin was compiled.
-** TODO /Refactor/. jarman.tools cleaning                              :@Julia:
+** TODO /Refactor/. =jarman.tools= cleaning                            :@Julia:
   - [ ] =jarman.tools=, should be replaced on =jarman.lib= with subfolders
   - [ ] =jarman.tools.lang= [0/2]
     - [ ] clean and archive unnecessary function

@@ -4,98 +4,63 @@
 ;; | | | | | ||  __/ | | (_| | (__| |_| | (_) | | | |
 ;; |_|_| |_|\__\___|_|  \__,_|\___|\__|_|\___/|_| |_|
 ;; =================================================
-;; fixme:
-;; - [ ] most logic overthrow by the potemkin
-;; - [ ] clean-up whole file, and rewrite 'ns declaration
-;; - [ ] add demo on bottom of file
-;; - [ ] EVERY event should be printed like success/danger... 
-;; - [ ] all plugin and component declaration push into the interaction namespace
-(ns jarman.interaction)
-(require '[potemkin.namespaces :refer [import-vars]])
-(require '[jarman.gui.gui-alerts-service :as gas])
-(require '[jarman.gui.gui-views-service  :as gvs])
-(require '[jarman.gui.gui-editors        :as gedit])
-(require '[jarman.gui.gui-components     :as gcomp])
-(require '[jarman.gui.gui-tools          :as gtool])
-(require '[jarman.tools.org :refer :all])
-(require '[jarman.tools.lang :refer :all])
-(require '[clojure.pprint :refer [cl-format]])
-(require '[jarman.gui.components.swing-keyboards :refer [kbd global-set-key]])
 
-;; ┌──────────────────┐
-;; │                  │
-;; │  App restart     │
-;; │                  │
-;; └──────────────────┘
-
-(defn restart
-  "Description:
-    Restart app without cleaning global state
-    All loading lvls will be invoked
-    App will sturtup again with creating new frame"
-  [] (gvs/restart))
-
-(defn soft-restart
-  "Description:
-    Restart app without rebuild frame and global state
-    Soft restart do not invoke loding lvl-0 (plugins will not recompiling)
-    Theme will be loaded again"
-  [] (gvs/soft-restart))
-
-(defn hard-restart
-  "Description:
-    Restart app with cleaning global state
-    All loading lvls will be invoked
-    App will sturtup again with creating new frame"
-  [] (gvs/hard-restart))
-
-
-(defn reload-view
-  "Description:
-    Reload active view on right app space (next to menu)"
-  [] (try
-       (gvs/reload-view)
-       (catch Exception e (str "Can not reload. Storage is empty."))))
-
-
-
-;; ┌──────────────────┐
-;; │                  │
-;; │  Alerts wraper   │
-;; │                  │
-;; └──────────────────┘
-
+(ns jarman.interaction
+  (:require
+   [potemkin.namespaces :refer [import-vars]]
+   [jarman.gui.gui-alerts-service]
+   [jarman.gui.gui-views-service]
+   [jarman.gui.gui-editors]
+   [jarman.gui.gui-components]
+   [jarman.gui.gui-tools]
+   [jarman.gui.components.swing-keyboards]
+   [jarman.application.collector-custom-metacomponents]
+   [jarman.application.collector-custom-view-plugins]
+   [jarman.application.collector-custom-themes]))
 
 (import-vars
- [jarman.gui.gui-alerts-service
-  success danger warning info])
+  [jarman.gui.components.swing-keyboards
+   kbd kvc global-set-key define-key]
+  
+  [jarman.config.conf-language
+   plang lang]
+  
+  [jarman.gui.gui-alerts-service
+   success danger warning info
+   delay-alert show-delay-alerts show-alerts-history]
 
-(defn restart-alert []
-  (danger :need-reload
-          [{:title (gtool/get-lang-btns :reload-app)
-            :func (fn [api] (restart))}]
-          :time 0))
+  [jarman.gui.gui-views-service
+   restart soft-restart hard-restart reload-view]
 
-(defn delay-alert
-  [header body
-   & {:keys [type time s-popup expand actions]
-      :or   {type :alert
-             time 3
-             s-popup [300 320]
-             actions []
-             expand  nil}}]
-  (gas/temp-alert header body
-                  :s-popup s-popup
-                  :expand  expand
-                  :type    type
-                  :time    time
-                  :actions actions))
+  [jarman.gui.gui-components
+   open-doom hide-doom rm-doom]
 
-(defn show-delay-alerts [] (gas/load-temp-alerts))
+  [jarman.gui.gui-editors
+   editor]
 
-(defn show-alerts-history [] (gas/history-in-popup))
+  [jarman.gui.faces-system
+   custom-theme-set-faces]
 
-;; Using alerts
+  [jarman.application.collector-custom-view-plugins
+   register-view-plugin]
+  
+  [jarman.application.collector-custom-themes
+   register-theme]
+
+  [jarman.application.collector-custom-metacomponents
+   metacomponent->component
+   register-metacomponent
+   metacomponents-get])
+
+
+;;  ____  _____ __  __  ___
+;; |  _ \| ____|  \/  |/ _ \
+;; | | | |  _| | |\/| | | | |
+;; | |_| | |___| |  | | |_| |
+;; |____/|_____|_|  |_|\___/
+;; =========================
+;; --- clean-up later ---
+
 (comment
   (info    "Test 1" "Info box")
   (warning "Test 2" "Warning box")
@@ -107,53 +72,10 @@
 
   (delay-alert "TEMP1" "It'a an TEMP alert invoking later.")
   (delay-alert "TEMP2" "It'a an TEMP alert invoking later.")
-  (show-delay-alerts)
-  )
-
-
-
-;; ┌──────────────────┐
-;; │                  │
-;; │  File editor     │
-;; │                  │
-;; └──────────────────┘
-
-
-(defn editor
-  "Description:
-    Set path to directory and file name
-  Example:
-    (editor \"./test/test-file\")"
-  ([file-path] (editor file-path nil))
-  ([file-path syntax]
-   (let [file-name (last (clojure.string/split file-path #"/"))]
-     (gvs/add-view
-      :view-id   (keyword (str "editor" file-name))
-      :title     (str "Edit:  " file-name)
-      :render-fn (fn [] (gedit/text-file-editor file-path syntax))))))
+  (show-delay-alerts))
 
 (comment
   (editor "./test/test-file.txt" :clojure)) 
-
-;; ┌──────────────────┐
-;; │                  │
-;; │  Doom debugger   │
-;; │                  │
-;; └──────────────────┘
-
-(defn open-doom
-  "Description:
-    Open doom debugger or open doom debugger with set new component inside"
-  ([] (gcomp/doom))
-  ([compo] (gcomp/doom compo)))
-
-(defn hide-doom
-  "Hide doom without deleting last component"
-  [] (gcomp/doom-hide))
-
-(defn rm-doom
-  "Close doom and remove component inside"
-  [] (gcomp/doom-rm))
 
 (comment
   (open-doom (seesaw.core/label :text "Pepe Dance"))
@@ -173,11 +95,3 @@
                                 (println "Remove doom")
                                 (rm-doom))))
 
-
-;;  ____  _____ __  __  ___
-;; |  _ \| ____|  \/  |/ _ \
-;; | | | |  _| | |\/| | | | |
-;; | |_| | |___| |  | | |_| |
-;; |____/|_____|_|  |_|\___/
-;; =========================
-;; ... TODO ....

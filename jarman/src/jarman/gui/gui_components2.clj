@@ -32,8 +32,8 @@
    [jarman.gui.components.listbox]
    [jarman.gui.components.database-table]
    [jarman.gui.components.error]
-   [jarman.gui.managment :refer [register-custom-component
-                                 get-comp-actions]]))
+   [jarman.application.collector-custom-metacomponents
+    :refer [register-metacomponent get-comp-actions]]))
 
 ;;   ____ ___  __  __ ____   ___  _   _ _____ _   _ _____
 ;;  / ___/ _ \|  \/  |  _ \ / _ \| \ | | ____| \ | |_   _|
@@ -111,24 +111,24 @@
 ;; [ ] :jsgl-ftp-file
 ;; [ ] :jsgl-simple-table
 ;; [ ] :jsgl-style-text JTextPane
-(register-custom-component :id :jsgl-stub            :component stub           :actions #{})
-(register-custom-component :id :jsgl-label           :component label          :actions (get-comp-actions 'label))
-(register-custom-component :id :jsgl-link            :component stub           :actions (get-comp-actions 'stub))
-(register-custom-component :id :jsgl-button          :component button         :actions (get-comp-actions 'button))
-(register-custom-component :id :jsgl-combobox        :component combobox       :actions (get-comp-actions 'combobox))
-(register-custom-component :id :jsgl-text            :component text           :actions (get-comp-actions 'text))
-(register-custom-component :id :jsgl-textarea        :component textarea       :actions (get-comp-actions 'textarea))
-(register-custom-component :id :jsgl-codearea        :component codearea       :actions (get-comp-actions 'codearea))
-(register-custom-component :id :jsgl-input-file      :component input-file     :actions (get-comp-actions 'input-file))
-(register-custom-component :id :jsgl-file-dialog     :component file-dialog    :actions (get-comp-actions 'file-dialog))
-(register-custom-component :id :jsgl-calendar        :component calendar       :actions (get-comp-actions 'calendar))
-(register-custom-component :id :jsgl-calendar-label  :component calendar-label :actions (get-comp-actions 'calendar-label))
-(register-custom-component :id :jsgl-datetime        :component datetime       :actions (get-comp-actions 'datetime))
-(register-custom-component :id :jsgl-datetime-label  :component datetime-label :actions (get-comp-actions 'datetime-label))
-(register-custom-component :id :jsgl-url-panel       :component url-panel      :actions (get-comp-actions 'url-panel)       :constructor  jarman.logic.metadata/map->Link)
-(register-custom-component :id :jsgl-file-panel      :component file-panel     :actions (get-comp-actions 'file-panel)      :constructor  jarman.logic.metadata/map->File)
-(register-custom-component :id :jsgl-listbox         :component select-panel   :actions (get-comp-actions 'listbox))
-(register-custom-component :id :jsgl-database-table  :component database-table :actions (get-comp-actions 'database-table))
+(register-metacomponent :id :jsgl-stub            :component stub           :actions #{})
+(register-metacomponent :id :jsgl-label           :component label          :actions (get-comp-actions 'label))
+(register-metacomponent :id :jsgl-link            :component stub           :actions (get-comp-actions 'stub))
+(register-metacomponent :id :jsgl-button          :component button         :actions (get-comp-actions 'button))
+(register-metacomponent :id :jsgl-combobox        :component combobox       :actions (get-comp-actions 'combobox))
+(register-metacomponent :id :jsgl-text            :component text           :actions (get-comp-actions 'text))
+(register-metacomponent :id :jsgl-textarea        :component textarea       :actions (get-comp-actions 'textarea))
+(register-metacomponent :id :jsgl-codearea        :component codearea       :actions (get-comp-actions 'codearea))
+(register-metacomponent :id :jsgl-input-file      :component input-file     :actions (get-comp-actions 'input-file))
+(register-metacomponent :id :jsgl-file-dialog     :component file-dialog    :actions (get-comp-actions 'file-dialog))
+(register-metacomponent :id :jsgl-calendar        :component calendar       :actions (get-comp-actions 'calendar))
+(register-metacomponent :id :jsgl-calendar-label  :component calendar-label :actions (get-comp-actions 'calendar-label))
+(register-metacomponent :id :jsgl-datetime        :component datetime       :actions (get-comp-actions 'datetime))
+(register-metacomponent :id :jsgl-datetime-label  :component datetime-label :actions (get-comp-actions 'datetime-label))
+(register-metacomponent :id :jsgl-url-panel       :component url-panel      :actions (get-comp-actions 'url-panel)       :constructor  jarman.logic.metadata/map->Link)
+(register-metacomponent :id :jsgl-file-panel      :component file-panel     :actions (get-comp-actions 'file-panel)      :constructor  jarman.logic.metadata/map->File)
+(register-metacomponent :id :jsgl-listbox         :component select-panel   :actions (get-comp-actions 'listbox))
+(register-metacomponent :id :jsgl-database-table  :component database-table :actions (get-comp-actions 'database-table))
 
 ;;  ____  _____ __  __  ___
 ;; |  _ \| ____|  \/  |/ _ \

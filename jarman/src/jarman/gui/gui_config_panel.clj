@@ -1,34 +1,42 @@
 (ns jarman.gui.gui-config-panel
-  (:require [clojure.string     :as string]
-            [clojure.java.io    :as io]
-            ;; [clojure.core.async :refer [thread]]
-            [seesaw.swingx      :as swingx]
-            [seesaw.core        :as c]
-            [seesaw.util        :as u]
-            [seesaw.border      :as b]
-            ;; external funcionality
-            [jarman.faces                    :as face]
-            [jarman.interaction              :as i]
-            ;; logic
-            [jarman.logic.state              :as state]
-            [jarman.logic.session            :as session]
-            [jarman.tools.org                :refer :all]
-            [jarman.tools.lang               :refer :all]
-            ;; gui 
-            [jarman.gui.gui-components       :as gcomp]
-            [jarman.gui.gui-tools            :as gtool]
-            [jarman.gui.gui-style            :as gs]
-            [jarman.gui.gui-migrid           :as gmg]
-            [seesaw.chooser                  :as chooser]
-            [jarman.config.storage           :as storage]
-            [jarman.config.environment       :as env]
-            [jarman.logic.view-manager       :as view-manager]
-            [jarman.gui.gui-views-service    :as gvs]
-            [jarman.gui.gui-editors          :as gedit]
-            [jarman.gui.popup                :as popup]
-            [jarman.config.vars :refer [setj]])
+  (:require
+   [clojure.string     :as string]
+   [clojure.java.io    :as io]
+   ;; [clojure.core.async :refer [thread]]
+   [seesaw.swingx      :as swingx]
+   [seesaw.core        :as c]
+   [seesaw.util        :as u]
+   [seesaw.border      :as b]
+   ;; external funcionality
+   [jarman.faces                    :as face]
+   ;; logic
+   [jarman.logic.state              :as state]
+   [jarman.logic.session            :as session]
+   [jarman.tools.org                :refer :all]
+   [jarman.tools.lang               :refer :all]
+   ;; gui 
+   [jarman.gui.gui-components       :as gcomp]
+   [jarman.gui.gui-tools            :as gtool]
+   [jarman.gui.gui-style            :as gs]
+   [jarman.gui.gui-migrid           :as gmg]
+   [seesaw.chooser                  :as chooser]
+   [jarman.config.storage           :as storage]
+   [jarman.config.environment       :as env]
+   [jarman.logic.view-manager       :as view-manager]
+   [jarman.gui.gui-views-service    :as gvs]
+   [jarman.gui.gui-editors          :as gedit]
+   [jarman.gui.popup                :as popup]
+   [jarman.gui.gui-alerts-service   :as gas]
+   [jarman.config.vars :refer [setj]])
   (:import
-   (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
+   [jiconfont.icons.google_material_design_icons
+    GoogleMaterialDesignIcons]))
+
+(defn restart-alert []
+  (gas/danger :need-reload
+    [{:title (gtool/get-lang-btns :reload-app)
+      :func (fn [api] (gvs/restart))}]
+    :time 0))
 
 (def state (atom {:lang            nil
                   :license-file    nil
@@ -67,8 +75,8 @@
   (row-btn :func (fn [e]
                    (if-not (nil? (:lang @state))
                      (do
-                       (setj jarman.config.conf-language/language-selected (:lang @state))
-                       (i/restart-alert)))
+                       (setj jarman.variables/language-selected (:lang @state))
+                       (restart-alert)))
                    (c/config! root :items (gtool/join-mig-items (butlast (u/children root))))
                    (.repaint (c/to-root root)))))
 
@@ -77,7 +85,7 @@
   (let [panel (gmg/migrid
                :> "[fill]10px[200, fill]10px[grow,fill]10px[fill]"
                {:gap [5 10 30 30] :args [:border (b/line-border :bottom 1 :color face/c-icon)]} [])
-        selected-lang-fn #(deref jarman.config.conf-language/language-selected)]
+        selected-lang-fn #(deref jarman.variables/language-selected)]
     (c/config!
      panel
      :items (gtool/join-mig-items
@@ -114,7 +122,7 @@
            (let [default-path (str env/jarman-home "/licenses")
                  license-file-path (:license-file @state)]
              (if (= default-path license-file-path)
-               (i/warning (gtool/get-lang-header :file-no-choose)
+               (gas/warning (gtool/get-lang-header :file-no-choose)
                           (gtool/get-lang-alerts :choose-file-and-try-again)
                           :time 4)
                (try
@@ -124,15 +132,15 @@
                      (session/gui-slurp-and-set-license-file license-file-path)
                      (load-license)
                      
-                     (i/success (gtool/get-lang-header :success)
+                     (gas/success (gtool/get-lang-header :success)
                                 (gtool/get-lang-alerts :new-license-instaled)
                                 :time 3))
                    (do
-                     (i/warning (gtool/get-lang-header :file-no-choose)
+                     (gas/warning (gtool/get-lang-header :file-no-choose)
                                 (gtool/get-lang-alerts :choose-file-and-try-again)
                                 :time 4)))
                  (catch Exception e
-                   (i/danger (apply gtool/get-lang (:translation (ex-data e))) (.getMessage e) :time 10)))))
+                   (gas/danger (apply gtool/get-lang (:translation (ex-data e))) (.getMessage e) :time 10)))))
                    ;;(c/config! root :items (gtool/join-mig-items (butlast (u/children root))))
                    (.repaint (c/to-root root)))))
 
@@ -159,7 +167,7 @@
   (let [panel (gmg/migrid
                :> :fgf {:gap [5 30] ;; :args [:border (b/line-border :bottom 1 :color face/c-icon)]
                         } [])
-        selected-lang-fn #(deref jarman.config.conf-language/language-selected)]
+        selected-lang-fn #(deref jarman.variables/language-selected)]
     (c/config!
      panel
      :items (gtool/join-mig-items
@@ -203,7 +211,7 @@
 
 
 (defn- viewclj-or-viewdb []
-  (swap! state #(assoc % :tmp-view-src (rift (state/state :view-src) (deref jarman.logic.view-manager/view-src))))
+  (swap! state #(assoc % :tmp-view-src (rift (state/state :view-src) (deref jarman.variables/view-src))))
   (let [panel (gmg/migrid :> {:gap [5 10 30 30] :args [:border (b/line-border :bottom 1 :color face/c-icon)]} [])
         
         render-fn (fn [] (c/label)
@@ -227,9 +235,9 @@
                                     (row-btn
                                      :func (fn [e]
                                              (state/set-state :view-src (:tmp-view-src @state))
-                                             (setj jarman.logic.view-manager/view-src (:tmp-view-src @state))
-                                             (i/success [:alerts :changes-saved] (format (gtool/get-lang-alerts :new-view-src) (:tmp-view-src @state)))
-                                             (i/restart-alert))))]
+                                             (setj jarman.variables/view-src (:tmp-view-src @state))
+                                             (gas/success [:alerts :changes-saved] (format (gtool/get-lang-alerts :new-view-src) (:tmp-view-src @state)))
+                                             (restart-alert))))]
                       [radio-group save-btn]))]
     (c/config! panel :items (gtool/join-mig-items (render-fn)))
     panel))
@@ -292,8 +300,8 @@
   ;;       (clojure.java.io/copy
   ;;        (clojure.java.io/file (str (env/get-view-clj)))
   ;;        (clojure.java.io/file path))
-  ;;       (i/success (str (gtool/get-lang-alerts :create-backup-complete) " - " (last (split-path path)))))
-  ;;     (catch Exception e (i/warning :create-backup-faild))))
+  ;;       (gas/success (str (gtool/get-lang-alerts :create-backup-complete) " - " (last (split-path path)))))
+  ;;     (catch Exception e (gas/warning :create-backup-faild))))
   )
 
 ;; fixme:serhii create backups and restore metadata
@@ -365,7 +373,7 @@
                                                            (fn []
                                                              (revert-backup-view path)
                                                              (render-panel)
-                                                             (i/warning (str (gtool/get-lang-alerts :restore-configuration-ok) "<br/><br/>" (last (split-path path)))))))))
+                                                             (gas/warning (str (gtool/get-lang-alerts :restore-configuration-ok) "<br/><br/>" (last (split-path path)))))))))
                                                :listen [:mouse-entered (fn [e] (c/config! row :background face/c-on-focus))
                                                         :mouse-exited  (fn [e] (c/config! row :background face/c-compos-background))])
                                       [])
@@ -386,7 +394,7 @@
                                                          0.1
                                                          (fn [](backup-del-fn (last (split-path path)))
                                                            (render-panel)
-                                                           (i/warning (format (gtool/get-lang-alerts :removed-backup-ok) (last (split-path path)))))))))
+                                                           (gas/warning (format (gtool/get-lang-alerts :removed-backup-ok) (last (split-path path)))))))))
                                              :listen [:mouse-entered (fn [e] (c/config! row :background face/c-on-focus))
                                                       :mouse-exited  (fn [e] (c/config! row :background face/c-compos-background))])
                                     [])])]

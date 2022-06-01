@@ -3,23 +3,15 @@
    [clojure.string :as string]
    [clojure.test :refer :all]
    [jarman.faces                    :as face]
-   [jarman.plugin.extension-manager :refer [do-load-extensions]]
-   [jarman.plugin.plugin            :refer [do-load-theme theme-selected]]
+   [jarman.application.extension-manager :refer [do-load-extensions]]
+   [jarman.application.collector-custom-themes :refer [do-load-theme]]
    [jarman.config.dot-jarman        :refer [dot-jarman-load]]
-   [jarman.config.vars              :refer [defvar setq]]
-   ))
+   [jarman.config.vars              :refer [defvar setq]]))
 
-(dot-jarman-load)
-(setq jarman.plugin.extension-manager/jarman-extension-list
-      '(;; test plugins
-        aaa
-        ;; reall plugins
-        table service_period
-        ;; theme plugins
-        dracula jarman_almost_white))
-(println (deref jarman.plugin.extension-manager/jarman-extension-list))
-(do-load-extensions)
-(do-load-theme (deref theme-selected))
+(comment
+ (dot-jarman-load)
+ (do-load-extensions)
+ (do-load-theme (deref jarman.variables/theme-selected)))
 
 (def test-enterprises-m
  {:1

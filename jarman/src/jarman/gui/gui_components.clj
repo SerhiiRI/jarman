@@ -1900,6 +1900,20 @@
         (.repaint JLP)
         ))))
 
+(defn open-doom
+  "Description:
+    Open doom debugger or open doom debugger with set new component inside"
+  ([] (doom))
+  ([compo] (doom compo)))
+
+(defn hide-doom
+  "Hide doom without deleting last component"
+  [] (doom-hide))
+
+(defn rm-doom
+  "Close doom and remove component inside"
+  [] (doom-rm))
+
 (comment
   (doom (let [w 220 h 220]
          (gmg/migrid

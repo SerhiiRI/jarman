@@ -12,8 +12,8 @@
    [jarman.gui.gui-tools      :as gtool]
    [jarman.gui.gui-style      :as gs]
    [jarman.gui.gui-migrid     :as gmg]
+   [jarman.gui.gui-alerts-service :as gas]
    [jarman.config.vars :as vars]
-   [jarman.interaction :as i]
    [jarman.gui.popup   :as popup]
    [jarman.logic.state :as state])
   (:import (java.io IOException FileNotFoundException)
@@ -29,11 +29,11 @@
      ;;          {:current-temperature {:value 25 :unit :celsius}})
      (do ~@body)
      (catch clojure.lang.ExceptionInfo e#
-       (i/warning "Plagin Manager" (.getMessage e#) :time 7)
+       (gas/warning "Plagin Manager" (.getMessage e#) :time 7)
        ;; (c/alert (str "Update Manager effrror: " (.getMessage e#) " Type:" (name (:type (ex-data e#)))))
        )
      (catch Exception e#
-       (i/warning "Plagin Manager" (.getMessage e#) :time 7)
+       (gas/warning "Plagin Manager" (.getMessage e#) :time 7)
        ;; (c/alert (str "Update Manager Main error: " (.getMessage e#)))
        )))
 

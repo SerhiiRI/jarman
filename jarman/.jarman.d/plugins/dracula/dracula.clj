@@ -1,9 +1,8 @@
 ;; -*- mode: clojure; mode: rainbow;  mode: yafolding; -*-
 ;; add-file-local-variable-prop-line -> mode -> some mode
 (ns plugin.dracula.dracula)
-(require '[jarman.external :refer
-           [register-custom-theme-plugin
-            custom-theme-set-faces]])
+(require '[jarman.interaction :refer
+           [register-theme custom-theme-set-faces]])
 
 (def ^:private dracula-color-scheme
   {"black-strong"       "#20222b"
@@ -51,7 +50,7 @@
      ~@body))
 
 
-(register-custom-theme-plugin
+(register-theme
   :name "Dracula"
   :description "Dracula theme"
   :loader
@@ -208,7 +207,7 @@
 ;;     (def some-system-faces local-color-variable))
 ;;
 ;; 3. Register as plugin
-;;   (register-custom-theme-plugin
+;;   (register-theme
 ;;     :name "My theme" :description "Some description"
 ;;     :loader my-theme-loader )
 
@@ -246,7 +245,7 @@
 
 ;; First example
 (comment
-  (register-custom-theme-plugin
+  (register-theme
   :name "Dracula"
   :description "Dracula theme"
   :loader

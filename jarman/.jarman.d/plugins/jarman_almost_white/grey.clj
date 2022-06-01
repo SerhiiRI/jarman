@@ -2,8 +2,8 @@
 (ns plugin.jarman-almost-white.gray)
 (require '[plugin.jarman-almost-white.jarman-almost-white :refer
            [with-colors theme-binder]])
-(require '[jarman.external :refer
-           [register-custom-theme-plugin
+(require '[jarman.interaction :refer
+           [register-theme
             custom-theme-set-faces]])
 
 (def ^:private grey-scheme
@@ -28,7 +28,7 @@
    "expand-btn-colors" [["#dddddd" "#dddddd" "#eeeeee"]
                         ["#cccccc" "#bcbcbc" "#bbbbbb"]]})
 
-(register-custom-theme-plugin
+(register-theme
  :name "Almost White Grey"
  :description  "Jarman Almost White with Grey theme"
  :loader

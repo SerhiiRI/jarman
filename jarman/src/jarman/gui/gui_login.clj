@@ -78,7 +78,7 @@
     :update-pass  (assoc-in state [:passwd] (:value action-m))
 
     ;; Load list of databaseconnections
-    :load-databaseconnection-list (-> (assoc-in state [:databaseconnection-list] @conn/dataconnection-alist)
+    :load-databaseconnection-list (-> (assoc-in state [:databaseconnection-list] @jarman.variables/dataconnection-alist)
                                   (assoc-in [:databaseconnection-error] {}))
 
     ;; Set error for tail if cannot login.
@@ -95,8 +95,8 @@
 
     ;; Remove databaseconnection from databaseconnection-list by key.
     :rm-databaseconnection (let [cuted-databaseconfig-list (dissoc (:databaseconnection-list state) (:connection-k action-m))]
-                             (vars/setq conn/dataconnection-alist cuted-databaseconfig-list)
-                             (-> (assoc-in state [:databaseconnection-list] @conn/dataconnection-alist)
+                             (vars/setq jarman.variables/dataconnection-alist cuted-databaseconfig-list)
+                             (-> (assoc-in state [:databaseconnection-list] @jarman.variables/dataconnection-alist)
                                  (assoc-in [:databaseconnection-error] {})))
 
     ;; Hold element for focus. Inside value is component.
@@ -320,7 +320,7 @@
                    config-k)]
     (if (validate-fields inputs config-k)
       (do
-        (vars/setq conn/dataconnection-alist (assoc-in (:databaseconnection-list (state!)) [config-k] (:current-databaseconnection (state!))))
+        (vars/setq jarman.variables/dataconnection-alist (assoc-in (:databaseconnection-list (state!)) [config-k] (:current-databaseconnection (state!))))
         "yes")
       (gtool/get-lang-alerts :incorrect-input-fields))))
 

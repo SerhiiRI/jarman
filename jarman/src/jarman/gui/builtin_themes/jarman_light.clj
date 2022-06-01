@@ -2,7 +2,7 @@
 ;; add-file-local-variable-prop-line -> mode -> some mode
 
 (ns jarman.gui.builtin-themes.jarman-ligth)
-(require 'jarman.plugin.plugin)
+(require 'jarman.interaction)
 (require 'jarman.gui.faces-system)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -80,7 +80,7 @@
 ;;; REGISTRATION ;;;
 ;;;;;;;;;;;;;;;;;;;;
 
-(jarman.plugin.plugin/register-custom-theme-plugin
+(jarman.interaction/register-theme
   :name "Jarman Light"
   :description "Built-in jarman default light theme"
   :loader
@@ -221,7 +221,7 @@
 
  ;; First example
   (comment
-    (jarman.plugin.plugin/register-custom-theme-plugin
+    (jarman.interaction/register-theme
      :name "Jarman Light"
      :description "Built-in jarman default light theme"
      :loader

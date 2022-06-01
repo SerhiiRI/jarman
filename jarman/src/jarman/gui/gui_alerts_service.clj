@@ -198,8 +198,6 @@
   (refresh-box)
   (timelife 0.2 #(refresh-box-bounds)))
 
-;; (jarman.interaction/info "T" "T" :time 0)
-;; (jarman.interaction/info "T" "T" :time 2)
 ;; (count (seesaw.util/children (:alerts-box (state!))))
 ;; (c/config (:alerts-box (state!)) :bounds)
 ;; (refresh-box-bounds)
@@ -610,6 +608,25 @@
     (print-line "frame configurations: ")
     (print-src "clojure" (pr-str (copy-locals type time s-popup expand actions))))
    (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
+
+(defn delay-alert
+  [header body
+   & {:keys [type time s-popup expand actions]
+      :or   {type :alert
+             time 3
+             s-popup [300 320]
+             actions []
+             expand  nil}}]
+  (temp-alert header body
+    :s-popup s-popup
+    :expand  expand
+    :type    type
+    :time    time
+    :actions actions))
+
+(defn show-delay-alerts [] (load-temp-alerts))
+
+(defn show-alerts-history [] (history-in-popup))
 
 ;; Using alerts, alert examples
 (comment

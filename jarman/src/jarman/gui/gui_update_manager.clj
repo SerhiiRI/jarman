@@ -5,14 +5,14 @@
    [seesaw.table  :as table]
    [seesaw.border  :as b]
    ;; gui
-   [jarman.faces                 :as face]
-   [jarman.gui.gui-components    :as gcomp]
-   [jarman.gui.gui-tools         :as gtool]
-   [jarman.gui.gui-migrid        :as gmg]
-   [jarman.gui.gui-views-service :as gvs]
-   [jarman.gui.gui-style         :as gs]
+   [jarman.faces                  :as face]
+   [jarman.gui.gui-components     :as gcomp]
+   [jarman.gui.gui-tools          :as gtool]
+   [jarman.gui.gui-migrid         :as gmg]
+   [jarman.gui.gui-views-service  :as gvs]
+   [jarman.gui.gui-alerts-service :as gas]
+   [jarman.gui.gui-style          :as gs]
    ;; environtemnt variables
-   [jarman.interaction :as i]
    [jarman.tools.org :refer :all]
    [jarman.tools.update-manager :as update-manager]
    [jarman.gui.popup   :as popup])
@@ -31,12 +31,12 @@
        (do
          (out-update
           (print-error e#))
-         (i/danger (gtool/get-lang-header :update-error) (.getMessage e#) :time 7)))
+         (gas/danger (gtool/get-lang-header :update-error) (.getMessage e#) :time 7)))
      (catch Exception e#
        (do
          (out-update
           (print-error e#))
-         (i/danger (gtool/get-lang-header :update-error) (.getMessage e#) :time 7)))))
+         (gas/danger (gtool/get-lang-header :update-error) (.getMessage e#) :time 7)))))
 
 (defn setColumnWidth [^javax.swing.JTable table & {:keys [column size]}]
   (let [^javax.swing.table.TableColumnModel column-model (.getColumnModel table)
@@ -107,10 +107,12 @@
               (gmg/migrid
                :> :f {:args [:border (b/line-border :top 2 :color face/c-layout-background)]}
                (gcomp/button-basic (gtool/get-lang-btns :clean-environment)
-                                   :onClick (fn [_] (try-catch-alert
-                                                     (update-manager/procedure-clean-env)
-                                                     (i/info (gtool/get-lang-header :update-manager)
-                                                             (gtool/get-lang-alerts :config-deleted) :time 7)))
+                 :onClick (fn [_] (try-catch-alert
+                                   (update-manager/procedure-clean-env)
+                                   (gas/info
+                                     (gtool/get-lang-header :update-manager)
+                                     (gtool/get-lang-alerts :config-deleted)
+                                     :time 7)))
                                    :underline-size 0)))]))
          ;; :font (gs/getFont :bold 16)
          :expand :always
@@ -133,14 +135,14 @@
                [(gcomp/button-basic (gtool/get-lang-btns :install)
                                     :onClick (fn [_] (try-catch-alert
                                                       (update-manager/procedure-update package)
-                                                      (i/info (gtool/get-lang-header :update-manager)
+                                                      (gas/info (gtool/get-lang-header :update-manager)
                                                               (format (gtool/get-lang-alerts :plugin-installed)
                                                                       (:version package)) :time 7)))
                                     :underline-size 0)
                 (gcomp/button-basic (gtool/get-lang-btns :download)
                                     :onClick (fn [_] (try-catch-alert
                                                       (update-manager/download-package package)
-                                                      (i/info (gtool/get-lang-header :update-manager)
+                                                      (gas/info (gtool/get-lang-header :update-manager)
                                                               (format (gtool/get-lang-alerts :package-downloaded)
                                                                       (:file package)) :time 7)))
                                     :underline-size 0)]))])
@@ -169,7 +171,7 @@
                                             (gtool/get-lang-btns :downgrade))
                                           :onClick (fn [_] (try-catch-alert
                                                             (update-manager/procedure-update pkg)
-                                                            (i/info (gtool/get-lang-header :update-manager)
+                                                            (gas/info (gtool/get-lang-header :update-manager)
                                                                     (format (gtool/get-lang-alerts :downgrade-success)
                                                                             update-manager/*program-vers*
                                                                             (:version pkg)) :time 7)))
@@ -177,7 +179,7 @@
                       (gcomp/button-basic (gtool/get-lang-btns :download)
                                           :onClick (fn [_] (try-catch-alert
                                                             (update-manager/download-package pkg)
-                                                            (i/info (gtool/get-lang-header :update-manager)
+                                                            (gas/info (gtool/get-lang-header :update-manager)
                                                                     (format (gtool/get-lang-alerts :package-downloaded)
                                                                             (:file pkg)) :time 7)))
                                           :underline-size 0)]))))
@@ -211,31 +213,32 @@
 (defn alert-update-available
   ([] (alert-update-available nil))
   ([update-info]
-   (i/warning (gtool/get-lang-header :avaliable-updates)
-              [{:title (gtool/get-lang-btns :check-updates)
-                :func (fn [api]
-                        (gvs/add-view
-                         :view-id  :update-manager
-                         :title    (gtool/get-lang-header :update-manager)
-                         :render-fn update-manager-panel)
-                        ((:rm-alert api)))}
-               {:title (gtool/get-lang-btns :later)
-                :func (fn [api] ((:rm-alert api)))}]
-              :expand (if update-info
-                        (fn [] (gmg/migrid
-                                :v :f :f {:gap [10 0]}
-                                [(c/label
-                                  :text
-                                  (gtool/htmling
-                                   (str
-                                    "<table>"
-                                    "<tr><td>Name</td><td>" (:name      update-info)
-                                    "<tr><td>File</td><td>" (:file      update-info)
-                                    "<tr><td>Ver</td><td>"  (:version   update-info)
-                                    "<tr><td>Type</td><td>" (:artifacts update-info)
-                                    "</table>")))]))
-                        nil)
-              :time 0)))
+   (gas/warning
+     (gtool/get-lang-header :avaliable-updates)
+     [{:title (gtool/get-lang-btns :check-updates)
+       :func (fn [api]
+               (gvs/add-view
+                 :view-id  :update-manager
+                 :title    (gtool/get-lang-header :update-manager)
+                 :render-fn update-manager-panel)
+               ((:rm-alert api)))}
+      {:title (gtool/get-lang-btns :later)
+       :func (fn [api] ((:rm-alert api)))}]
+     :expand (if update-info
+               (fn [] (gmg/migrid
+                       :v :f :f {:gap [10 0]}
+                       [(c/label
+                          :text
+                          (gtool/htmling
+                            (str
+                              "<table>"
+                              "<tr><td>Name</td><td>" (:name      update-info)
+                              "<tr><td>File</td><td>" (:file      update-info)
+                              "<tr><td>Ver</td><td>"  (:version   update-info)
+                              "<tr><td>Type</td><td>" (:artifacts update-info)
+                              "</table>")))]))
+               nil)
+     :time 0)))
 
 (defn check-update
   ([] (check-update :basic))
@@ -245,8 +248,9 @@
        (alert-update-available update-info)
        (if (= mode :silent)
          (print-header "System is updated. No avaliable updates.")
-         (i/success (gtool/get-lang-header :system-updated)
-                    (gtool/get-lang-alerts :no-updates)))))))
+         (gas/success
+           (gtool/get-lang-header :system-updated)
+           (gtool/get-lang-alerts :no-updates)))))))
 
 (comment
   (check-update)

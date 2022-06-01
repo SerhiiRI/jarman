@@ -36,7 +36,7 @@
    [jarman.resource-lib.icon-library :as icon]
    [plugin.service-period.service-period-library :as req]
    ;; external
-   [jarman.external :refer [register-custom-view-plugin]])
+   [jarman.external :refer [register-view-plugin]])
   (:import
    (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 
@@ -1337,7 +1337,7 @@
 ;;; BIND ;;;
 ;;;;;;;;;;;;
 
-(register-custom-view-plugin
+(register-view-plugin
  :name 'service-period
  :description "Plugin for service contracts of enterprise"
  :entry service-period-entry

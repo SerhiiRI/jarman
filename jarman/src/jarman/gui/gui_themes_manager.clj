@@ -13,14 +13,12 @@
    [jarman.gui.gui-style         :as gs]
    ;; environtemnt variables
    [jarman.logic.state :as state]
-   [jarman.interaction :as i]
+   [jarman.gui.gui-alerts-service :as i]
    [jarman.tools.org :refer :all]
-   [jarman.plugin.plugin :as plugin]
+   [jarman.application.collector-custom-themes]
    [jarman.gui.popup      :as popup])
   (:import (java.io IOException FileNotFoundException)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPER FUNCTIONS ;;;
@@ -110,7 +108,7 @@
                      [(gcomp/button-basic (gtool/get-lang-btns :apply)
                                     :onClick (fn [_] (try-catch-alert
                                                       (state/set-state :theme-name (:theme-name thm))
-                                                      (i/soft-restart)))
+                                                      (gvs/soft-restart)))
                                     :underline-size 0)]))))
                 :hscroll-off true)]
               :before-title #(c/label :icon (gs/icon GoogleMaterialDesignIcons/FORMAT_PAINT))
@@ -124,8 +122,8 @@
    :v {:gap [5 0]}
    (gtool/join-mig-items
     (-> (startup-components)
-        (supply-currently-loaded (plugin/selected-theme-get))
-        (supply-content-all-themes (plugin/system-ThemePlugin-list-get))))))
+        (supply-currently-loaded (jarman.application.collector-custom-themes/selected-theme-get))
+        (supply-content-all-themes (jarman.application.collector-custom-themes/system-ThemePlugin-list-get))))))
 
 (comment
   (-> (c/frame :content (theme-manager-panel))

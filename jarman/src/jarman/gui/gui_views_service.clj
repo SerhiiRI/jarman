@@ -301,15 +301,17 @@
   ([view-id] (reload-view view-id false))
   ([view-id display?]
    ;;(println "\nView reloading")
-   (let [views  (:views  (state!))]
-     (let [swap-m (get views view-id)]
-       (if-not (empty? swap-m)
-         (if (fn? (:render-fn swap-m))
+   (try
+     (let [views  (:views  (state!))]
+       (let [swap-m (get views view-id)]
+         (if-not (empty? swap-m)
+           (if (fn? (:render-fn swap-m))
              (let [compo ((:render-fn swap-m))]
                (dispatch! {:action :reload
                            :path   [:views view-id :component]
                            :value  compo})
                (if display? (c/config! (:space (state!)) :items [[compo]]))
-               ((:repaint (state!))))))))))
+               ((:repaint (state!))))))))
+     (catch Exception e (str "Can not reload. Storage is empty.")))))
 
 (defn get-view-space [] (:space (state!)))

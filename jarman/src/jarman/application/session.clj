@@ -1,4 +1,41 @@
-(ns jarman.logic.session
+;;  ____  _____ ____ ____ ___ ___  _   _ 
+;; / ___|| ____/ ___/ ___|_ _/ _ \| \ | |
+;; \___ \|  _| \___ \___ \| | | | |  \| |
+;;  ___) | |___ ___) |__) | | |_| | |\  |
+;; |____/|_____|____/____/___\___/|_| \_|
+;; --------------------------------------
+;; All this file generate one function that
+;; call `session` and it obtain all information
+;; about the licenses, additional instance params,
+;; user object.
+;;
+;;           .---> #<`License`>
+;;          /       {:tenant "A",
+;;         /         :tenant-id "A",
+;;        /          :creation-date "10-01-2021",
+;;       /           :expiration-date "10-11-2023",
+;;  (get-license)    :limitation {:computer-count 10}}
+;;     / 
+;;    /                        .->  #<`SessionParams`>
+;;   '          .-(get-params)/      {:m {"firm-name" "Ekka Service"}}
+;;   |         /
+;; (session)--'        
+;;   |
+;;    \
+;;  (get-user)
+;;       \ 
+;;        '----> #<`User`>
+;;                 { .----- from `user` table
+;;                  :id 1,
+;;                  :login "admin",
+;;                  :first-name "admin",
+;;                  :last-name "admin",
+;;                  :user-configuration {:ftp ...},        .--- Permission groups, for info go
+;;                   .----- from `profile` table          /     to `jarman.application.permissions`
+;;                  :profile-name "admin",               V
+;;                  :profile-configuration {:groups [:admin-update ...]}}
+;; 
+(ns jarman.application.session
   (:require
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]
@@ -12,6 +49,9 @@
    [jarman.tools.org      :refer :all])
   (:import [java.util Base64 Date]))
 
+
+(declare login)
+(declare session)
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; PERMISSION SYSTEM ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -58,14 +98,14 @@
 ;; crypting licenses
 (defn decrypt-license [s]
   (when (some? s)
-   (try
-     (read-string (decrypt-local s))
-     (catch Exception e
-       (print-error e)
-       (throw (ex-info "Error when decrypt license, please check key-pair"
-                       {:type :error-parsing-license
-                        :message-head [:header :licenses]
-                        :message-body [:alerts :error-parsing-license]}))))))
+    (try
+      (read-string (decrypt-local s))
+      (catch Exception e
+        (print-error e)
+        (throw (ex-info "Error when decrypt license, please check key-pair"
+                 {:type :error-parsing-license
+                  :message-head [:header :licenses]
+                  :message-body [:alerts :error-parsing-license]}))))))
 
 (defn encrypt-license [m]
   (encrypt-local (pr-str m)))
@@ -74,7 +114,7 @@
   (->> {:table_name :system_props
         :column     [:value]
         :where      [:and [:= :name "license"]]}
-       select! c/query first :value))
+    select! c/query first :value))
 
 (defn spit-license-file [m]
   (let [{:keys [tenant-id]} m
@@ -200,17 +240,13 @@
              {:type :not-valid-connection
               :message-head [:header :database]
               :message-body [:alerts :configuration-incorrect]
-              :attr {:connection connection :login login :password password}
-              ;; :message-body [:license :bad-connection-settings]
-              }))
+              :attr {:connection connection :login login :password password}}))
   (if-not (c/test-connection connection)
     (ex-info (format "Problem with testing connection %s" (str connection))
              {:type :no-connection-to-database
               :message-head [:header :database]
               :message-body [:alerts :connection-problem]
-              :attr {:connection connection :login login :password password}
-              ;; :message-body [:license :cannot-connect-db]
-              }))
+              :attr {:connection connection :login login :password password}}))
   (c/connection-set connection)
   (let [builded-session
         (->  
@@ -225,38 +261,36 @@
 (defn login-test []
   (let [builded-session
     (build-session
-     {:user
-      (let [m {:user.id 2,
-               :user.login "dev",
-               :user.last_name "dev",
-               :user.first_name "dev",
-               :user.configuration
-               {:ftp {:login "jarman",
-                      :password "dupa",
-                      :host "trashpanda-team.ddns.net"}},
-               :profile.name "developer",
-               :profile.configuration
-               {:groups [:admin-update :admin-extension
-                         :admin-dataedit :developer
-                         :ekka-all]}}]
-        (User. (:user.id m) (:user.login m)
-               (:user.first_name m) (:user.last_name m)
-               (:user.configuration m) (:profile.name m)
-               (:profile.configuration m)))
-      :license
-      (let [m {:tenant "EKKA",
-               :tenant-id "EKKA-2",
-               :creation-date "10-01-2021",
-               :expiration-date "30-11-2021",
-               :limitation {:computer-count 10}}]
-        (License. (:tenant m) (:tenant-id m) (:creation-date m) (:expiration-date m) (:limitation m)))
-      :params
-      (SessionParams. {"tennat" "ekka", "contact-person" "Julia Burmich"})})]
+      {:user
+       (let [m {:user.id 2,
+                :user.login "dev",
+                :user.last_name "dev",
+                :user.first_name "dev",
+                :user.configuration
+                {:ftp {:login "jarman",
+                       :password "dupa",
+                       :host "trashpanda-team.ddns.net"}},
+                :profile.name "developer",
+                :profile.configuration
+                {:groups [:admin-update :admin-extension
+                          :admin-dataedit :developer
+                          :ekka-all]}}]
+         (User. (:user.id m) (:user.login m)
+           (:user.first_name m) (:user.last_name m)
+           (:user.configuration m) (:profile.name m)
+           (:profile.configuration m)))
+       :license
+       (let [m {:tenant "EKKA",
+                :tenant-id "EKKA-2",
+                :creation-date "10-01-2021",
+                :expiration-date "30-11-2021",
+                :limitation {:computer-count 10}}]
+         (License. (:tenant m) (:tenant-id m) (:creation-date m) (:expiration-date m) (:limitation m)))
+       :params
+       (SessionParams. {"tennat" "ekka", "contact-person" "Julia Burmich"})})]
    (defn session []
      builded-session)))
 
-;; (.get-user (session))
-;; (.allow-groups (session))
 (comment
   ;; TMP USER
   (login-test)
@@ -282,7 +316,7 @@
   See
    `if-permission`"
   [permission-group & body]
-  `(when (.allow-permission? (jarman.logic.session/session) ~permission-group)
+  `(when (.allow-permission? (jarman.application.session/session) ~permission-group)
      ~@body))
 
 (defmacro if-permission
@@ -298,15 +332,7 @@
   See
    `when-permission`"
   [permission-group if-true if-false]
-  `(if (.allow-permission? (jarman.logic.session/session) ~permission-group)
+  `(if (.allow-permission? (jarman.application.session/session) ~permission-group)
      ~if-true
      ~if-false))
-
-;;;;;;;;;;;;;;;;;
-;;; DATE CALC ;;;
-;;;;;;;;;;;;;;;;;
-
-(defn calc-date-distance [^Date start-date ^Date end-date]
-  (let [diff (- (.getTime end-date) (.getTime start-date))]
-    (/ diff (* 24 60 60 1000))))
 

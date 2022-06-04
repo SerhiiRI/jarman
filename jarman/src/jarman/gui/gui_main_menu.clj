@@ -6,7 +6,7 @@
             [jarman.tools.lang :refer :all]
             [jarman.tools.swing  :as stool]
             [jarman.logic.state                :as state]
-            [jarman.logic.session              :as session]
+            [jarman.application.session              :as session]
             [jarman.logic.view-manager         :as vmg]
             [jarman.gui.gui-views-service      :as gvs]
             [jarman.gui.gui-update-manager     :as update-manager]

@@ -31,7 +31,7 @@
             [jarman.logic.state :as state]
             [jarman.plugin.plugin :as plug]
             [jarman.logic.view-manager :as vmg]
-            [jarman.logic.session :as session]
+            [jarman.application.session :as session]
             [jarman.interaction :as i]))
 
 (def dark-grey-color "#676d71")

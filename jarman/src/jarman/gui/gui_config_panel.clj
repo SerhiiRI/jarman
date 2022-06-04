@@ -11,7 +11,7 @@
    [jarman.faces                    :as face]
    ;; logic
    [jarman.logic.state              :as state]
-   [jarman.logic.session            :as session]
+   [jarman.application.session            :as session]
    [jarman.tools.org                :refer :all]
    [jarman.tools.lang               :refer :all]
    ;; gui 

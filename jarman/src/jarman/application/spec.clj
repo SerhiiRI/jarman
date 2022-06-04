@@ -1,12 +1,11 @@
-(ns jarman.plugin.spec
+(ns jarman.application.spec
   (:require
    [clojure.spec.alpha :as s]
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all :as lang]))
 
-(s/def :jarman.plugin.spec/keyword    keyword?)
-(s/def :jarman.plugin.spec/keyword-list (s/and sequential? #(every? keyword? %)))
-(s/def :jarman.plugin.spec/permission :jarman.plugin.spec/keyword)
-(s/def :jarman.plugin.spec/plug-place :jarman.plugin.spec/keyword-list)
-(s/def :jarman.plugin.spec/name       string?)
+(s/def :jarman.application.spec/keyword    keyword?)
+(s/def :jarman.application.spec/keyword-list (s/and sequential? #(every? keyword? %)))
+(s/def :jarman.application.spec/permission :jarman.application.spec/keyword)
+(s/def :jarman.application.spec/name       string?)
 

@@ -122,13 +122,14 @@
       :password \"1234\"}"
   [] (deref *connection*))
 
-(defn do-connect-to-database []
+#_(defn do-connect-to-database []
   (assert (not-empty (deref jarman.variables/dataconnection-alist)) "Error. Variable `jarman.logic.connection/dataconnection-alist` cannot be empty")
   (assert (some? (deref jarman.variables/dataconnection-saved)) "Error. Unsetted `jarman.logic.connection/dataconnection-saved` var")
   (-> (connection-set
-       (get (deref jarman.variables/dataconnection-alist)
-            (deref jarman.variables/dataconnection-saved)))
-      (test-connection))
+        (get
+          (deref jarman.variables/dataconnection-alist)
+          (deref jarman.variables/dataconnection-saved)))
+    (test-connection))
   true)
 
 ;;;;;;;;;;;;;;;;;;;;;

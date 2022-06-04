@@ -24,9 +24,9 @@
    [jarman.variables]
    ;; logic
    [jarman.logic.state              :as state]
-   [jarman.logic.session            :as session]
+   [jarman.application.session            :as session]
    [jarman.logic.view-manager       :as view-manager]
-   [jarman.logic.connection         :refer [do-connect-to-database]]
+   ;; [jarman.logic.connection         :refer [do-connect-to-database]]
    [jarman.managment.data           :refer [do-load-jarman-data]]
    ;; [jarman.plugin.extension-manager :refer [do-load-extensions]]
    [jarman.application.extension-manager :refer [do-load-extensions]]
@@ -185,11 +185,6 @@
   (print-header
    "Set spec/assert checking"
    (s/check-asserts true))
-  ;; ;; --- SHOULD BE DELETED--------.
-  ;; (print-header                 ;;|
-  ;;  "connect jarman to database" ;;|
-  ;;  (do-connect-to-database))    ;;|
-  ;; ;; -----------------------------'
   (print-header 
    "Load .jarman.data"
    (do-load-jarman-data))

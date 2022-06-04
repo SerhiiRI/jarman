@@ -290,6 +290,3 @@
     :field-qualified :service_contract.id_enterpreneur,
     :key-table :enterpreneur}))
 
-
-
-

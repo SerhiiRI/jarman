@@ -16,7 +16,7 @@
             [jarman.gui.gui-style      :as gs]
             [jarman.logic.connection   :as conn]
             [jarman.logic.state        :as state]
-            [jarman.logic.session      :as session]
+            [jarman.application.session      :as session]
             [jarman.tools.swing        :as stool]
             [jarman.gui.popup          :as popup]
             [jarman.tools.lang :refer :all]
@@ -510,7 +510,7 @@
 
 (defn- try-to-login
   "Description:
-     Run `jarman.logic.session/login` function inside. That function
+     Run `jarman.application.session/login` function inside. That function
     create Session object which can be accesed by the `session` function
     from the same ns.
      If `login` function eval successfully - close login-panel and run jarman.

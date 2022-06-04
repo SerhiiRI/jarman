@@ -3,7 +3,7 @@
             [me.raynes.fs :as fs]
             [jarman.logic.connection :as db]
             [jarman.logic.sql-tool :refer [show-tables]]
-            [jarman.logic.session :as session]
+            [jarman.application.session :as session]
             [jarman.logic.document-manager :refer [update-blob! select-blob!]]
             [jarman.logic.metadata])
   (:import  [jarman.logic.metadata_composite_types FtpFile Link File]))

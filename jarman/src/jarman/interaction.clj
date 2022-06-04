@@ -19,12 +19,12 @@
    [jarman.application.collector-custom-themes]))
 
 (import-vars
-  [jarman.gui.components.swing-keyboards
-   kbd kvc global-set-key define-key]
-  
   [jarman.config.conf-language
    plang lang]
   
+  [jarman.gui.components.swing-keyboards
+   kbd kvc global-set-key define-key]
+
   [jarman.gui.gui-alerts-service
    success danger warning info
    delay-alert show-delay-alerts show-alerts-history]

@@ -8,17 +8,17 @@
 (defn default-system-view-plugin-spec-list []
   (list
    [:name
-    {:spec [:jarman.plugin.spec/name :req-un],
+    {:spec [:jarman.application.spec/name :req-un],
      :examples "Table editor",
      :doc "It's plugin-view name, which use as component label text"}]
    [:permission
-    {:spec [:jarman.plugin.spec/permission :req-un]
+    {:spec [:jarman.application.spec/permission :req-un]
      :examples "[:user :admin]"
      :doc "Key to select of possible permissions, put this key in vec
            (if you don't enter this key, you will have global key
             from defview, in another way you will have [:user])"}]
    [:plug-place
-    {:spec [:jarman.plugin.spec/plug-place :opt-un]
+    {:spec [:jarman.application.spec/plug-place :opt-un]
      :examples [:#tables-view-plugin]
      :doc "This key indicates place for component"}]))
 
@@ -40,11 +40,11 @@
   ;; =>
   (s/key
    :req-un
-   [:jarman.plugin.spec/name
-    :jarman.plugin.spec/permission
+   [:jarman.application.spec/name
+    :jarman.application.spec/permission
     :jarman.plugin.table/tables]
    :opt-un
-   [:jarman.plugin.spec/plug-place :jarman.plugin.table/view-columns])
+   [:jarman.application.spec/plug-place :jarman.plugin.table/view-columns])
 
   See
    (s/check-asserts?)"

@@ -9,7 +9,7 @@
             [seesaw.util   :as u]
             [seesaw.mig    :as smig]
             ;; Dev tools
-            [jarman.logic.session :as session]
+            [jarman.application.session :as session]
             ;; resource 
             [jarman.resource-lib.icon-library :as icon]
             [jarman.gui.gui-style :as gs]

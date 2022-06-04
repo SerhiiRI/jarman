@@ -2,12 +2,16 @@
   (:require
    [jarman.tools.lang :refer :all]
    [jarman.tools.org  :refer :all]
-   [jarman.logic.session :as session]
+   [jarman.application.session :as session]
    [jarman.gui.gui-tools :as gtool]
    [jarman.gui.gui-alerts-service :as gas])
   (:import
    [java.util Date]
    [java.text ParseException SimpleDateFormat]))
+
+(defn calc-date-distance [^Date start-date ^Date end-date]
+  (let [diff (- (.getTime end-date) (.getTime start-date))]
+    (/ diff (* 24 60 60 1000))))
 
 (defn gui-check-license []
   (where
@@ -28,7 +32,7 @@
      (where
       ((license-end  (.parse formater (:expiration-date license)))
        (current-date (Date.))
-       (days         (session/calc-date-distance current-date license-end) do int)
+       (days         (calc-date-distance current-date license-end) do int)
        (outdated?    (> 0 days))
        (message
         (cond

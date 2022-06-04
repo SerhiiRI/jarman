@@ -12,7 +12,7 @@
    [jarman.gui.gui-tools      :as gtool]
    [jarman.gui.gui-style      :as gs]
    [jarman.gui.gui-migrid     :as gmg]
-   [jarman.logic.permissions  :as permission]
+   [jarman.application.permissions  :as permission]
    [jarman.gui.popup   :as popup]
    [jarman.logic.state :as state])
   (:import (java.io IOException FileNotFoundException)

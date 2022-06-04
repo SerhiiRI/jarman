@@ -1,14 +1,13 @@
 ;; -*- mode: Clojure;-*-
 (require '[clojure.set :refer [rename-keys]])
-(require '[jarman.managment.data-metadata-shorts :refer [table field table-link field-link field-composite prop]])
 (require '[jarman.logic.sql-tool :refer [select! update! insert! alter-table! create-table! delete! drop-table show-table-columns show-tables]])
 (require '[jarman.logic.connection :as db])
 (require '[jarman.logic.metadata])
-(require '[jarman.logic.permissions])
+(require '[jarman.application.permissions])
 
 ;; ^    \(:id\|:name\|:plug-place\|:tables\|:view-columns\|:model-insert\|:active-buttons\|:permission\|:dialog\|:actions\|:buttons\|:query\)$
 
-(jarman.logic.permissions/permission-groups-add
+(jarman.application.permissions/permission-groups-add
  {:ekka-all               {:doc "Allow all elements in Ekka module"}
   :ekka-servicer          {:doc "Permission for servisant's only"}
   :ekka-payment-managment {:doc "Permission for all elements in Ekka module"}})

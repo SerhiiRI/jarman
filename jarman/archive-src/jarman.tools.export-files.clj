@@ -1,21 +1,23 @@
 (ns jarman.tools.export-files
-  (:use seesaw.core
-        seesaw.border
-        seesaw.dev
-        seesaw.mig
-        seesaw.font
-        seesaw.chooser
-        clojure.walk)
-  (:require [clojure.string :as string]
-            [jarman.tools.swing :as stool]
-            [jarman.gui.gui-tools :refer :all]
-            [jarman.resource-lib.icon-library :as icon]
-            [jarman.config.environment :as env]
-            [jarman.config.storage :as strg]
-            [kaleidocs.merge :refer [merge-doc]]
-            [clojure.java.io :as io]
-            [jarman.logic.document-manager :as doc]
-            [clojure.java.io :refer [file output-stream input-stream]])
+  (:use
+   seesaw.core
+   seesaw.border
+   seesaw.dev
+   seesaw.mig
+   seesaw.font
+   seesaw.chooser
+   clojure.walk)
+  (:require
+   [clojure.string :as string]
+   [jarman.tools.swing :as stool]
+   [jarman.gui.gui-tools :refer :all]
+   [jarman.resource-lib.icon-library :as icon]
+   [jarman.config.environment :as env]
+   [jarman.config.storage :as strg]
+   [kaleidocs.merge :refer [merge-doc]]
+   [clojure.java.io :as io]
+   [jarman.logic.document-manager :as doc]
+   [clojure.java.io :refer [file output-stream input-stream]])
   ;; (:import [org.odftoolkit.odfdom.doc OdfTextDocument]
   ;;          [org.odftoolkit.simple.common.navigation TextNavigation])
   )

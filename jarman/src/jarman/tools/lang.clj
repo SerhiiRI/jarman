@@ -1,5 +1,5 @@
-;;;  _                   
-;;; | | __ _ _ __   __ _ 
+;;;  _
+;;; | | __ _ _ __   __ _
 ;;; | |/ _` | '_ \ / _` |
 ;;; | | (_| | | | | (_| |
 ;;; |_|\__,_|_| |_|\__, |
@@ -35,7 +35,7 @@
     (= x col)))
 
 (defn in-r?
-  "Is the `in?` fucntion but with reverse arguemnts 
+  "Is the `in?` fucntion but with reverse arguemnts
   (in? 1 [1 2 3 4 5 6])
    (in? 1 1)"
   [x col]
@@ -85,7 +85,7 @@
                    (concat %1 (r-unwrapper [] %2))) result example))
       (r-unwrapper [] vects))))
 
-(defn to-hashkey 
+(defn to-hashkey
   "Description:
       Set some :key and get hashkey like :key => :#key.
    Example:
@@ -109,18 +109,18 @@
   [con els]
   (cond
     (nil? con)        els
-    (number? con)     (if (zero?  con) els con)
+    (number? con)     con
     (sequential? con) (if (empty? con) els con)
     (string? con)     (if (empty? con) els con)
     (map? con)        (if (empty? con) els con)
     :else con))
 
-;; fixme:julia just fuck off those stupid function, or move it to some not public NS. 
+;; fixme:julia just fuck off those stupid function, or move it to some not public NS.
 (defn timelife
   "Description:
     Run fn after some time.
     Set time, 1 is a 1 sec
-    Set fn 
+    Set fn
   Example:
     (timelife (1 ))"
   ([time fn-to-invoke]
@@ -170,7 +170,7 @@
    (keys map-coll-orgin) map-coll-orgin))
 
 ;; fixme:julia lang
-;; 1. rename. 
+;; 1. rename.
 (defn vemap
   "Description:
     vector empty map
@@ -185,7 +185,7 @@
   ([coll val] (into {} (map (fn [k] {k val}) coll))))
 
 ;; fixme:julia
-;; rename ofr remove those function 
+;; rename ofr remove those function
 (defn cnmap
   "Description:
      cut nil map
@@ -245,11 +245,11 @@
 (defmacro blet
   "Description
     Let with binding in last sexp, otherwise in first block
-  
+
   Example
     (blet (+ a b) [a 1 b 2]) ;; => 3
     (blet (+ a b) (- a b) [a 1 b 2]) ;; => -1
-  
+
   Spec
     (blet <calcaulation>+ <binding-spec>{1})"
   [& arguments]
@@ -267,10 +267,10 @@
 
   Example
     (cond-let [T \"something\"]
-	string?     \"is string\"
-	boolean?    \"is boolean\"
-	(number? T) \"is number \"  
-	:else nil)"
+        string?     \"is string\"
+        boolean?    \"is boolean\"
+        (number? T) \"is number \"
+        :else nil)"
   [binding & body]
   (let [var-name (first binding)
         cond-list
@@ -318,8 +318,8 @@
 (defmacro action-linier-preprocess
   "Description
     Make some pipeline managment to control over instruction
-  
-  Example 
+
+  Example
     (action-linier-preprocess reduce [1 2 3] (+ 0));; => 6
     (action-linier-preprocess map [1 2 3] (inc));; => (2 3 4)
     (action-linier-preprocess filter [1 2 3] (number?));; => (1 2 3)
@@ -395,7 +395,7 @@
 (defmacro wlet
   "Description
     Is where with binding block on end of expresion
-  
+
   Example
     (wlet (+ a b) ((a 1) (b 2)) ;; => 3
     (wlet (+ a b) (- a b) ((a 1) (b 2))) ;; => -1
@@ -414,7 +414,7 @@
       (temp [1 2 3 4] filter odd?) ;; => (1 3)
       (temp [1 2 3 4] map odd?) ;; (true false true false)
       (temp [1 2 3 4] reduce + 0) ;; 10
-      (temp 4 doto println))) 
+      (temp 4 doto println)))
   Spec
     (wlet <calcaulation>+ <binding-spec>{1})"
   [& arguments]
@@ -427,8 +427,8 @@
 (defmacro first-key
   "Description:
     Get the first key of some map
-  
-  Examples:  
+
+  Examples:
   (first-key {:a 1 :b 2}) => :a
   (first-key {})          => nil"
   [m]
@@ -437,8 +437,8 @@
 (defmacro map-first
   "Description:
     The same as `first` function for list.
-  
-  Examples:  
+
+  Examples:
   (map-first {:a 1 :b 2}) => {:a 1}
   (map-first {})          => nil"
   [m]
@@ -448,11 +448,11 @@
 (defmacro map-rest
   "Description:
     The same as `rest` function for list.
-  
+
   Examples:
   (map-rest {:a 1 :b 2 :c 1}) => {:b 2, :c 1}
   (map-rest {})               => nil"
-  [m] 
+  [m]
   `(let [mf# (rest (seq ~m))]
      (if (not-empty mf#) (into {} mf#))))
 
@@ -460,15 +460,15 @@
   "Description:
     For map return vector of two map, where first
     is head, and second is tail.
-  
+
   Example:
     (map-destruct {:a 1 :b 2 :c 3}) => [{:a 1} {:b 2, :c 3}]
     (map-destruct {:a 1})           => [{:a 1} nil]
     (map-destruct {})               => [nil nil]
-  
+
   See related:
     (`jarman.logic.metadata/map-first`, `jarman.logic.metadata/map-rest`)"
-  [m] 
+  [m]
   `(let [sm# ~m]
      (if-let [m-head# (map-first sm#)]
        (let [m-tail# (map-rest sm#)]
@@ -491,7 +491,7 @@
 (defmacro find-column
   "Descripion
     Short macro for geting first value of lazy seq.
-  
+
   Example
     (find-column #(= % 2) [1 2 3 4])"
   [f col]
@@ -505,11 +505,11 @@
 
 (defmacro get-apply
   "Apply one function to maps
-  
+
   Example
     (get-apply + [:a] {:a 1} {:a 1}) ;; => 2"
   [f path & maps]
-  (let [fx-gets (for [m maps] `(get-in ~m ~path nil))] 
+  (let [fx-gets (for [m maps] `(get-in ~m ~path nil))]
     `(~f ~@fx-gets)))
 
 ;; fixme:julia, remove those
@@ -532,11 +532,11 @@
   (if (nil? map-part) (end-path-func path)
       (let [[head tail] (map-destruct map-part)
             map-first-key (first-key head)
-            value-of-first-key (map-first-key head) 
+            value-of-first-key (map-first-key head)
             ;; shortlambda
             vconcat (comp vec concat)]
         (cond
-          
+
           ;; Do recusion if it Hashmap
           (map? value-of-first-key)
           (get-key-paths-recur
@@ -579,7 +579,7 @@
   "Description
     Get vector's of all keys from map linking it in path.
     If `sequence?` optionaly parameter is set on true - searching deep include also list's
-  
+
   Example
     (key-paths {:a 1 :b {:t 2 :f 2} :c [{:t 3} {:f 3}]})
       ;;=> [[:a]
@@ -614,6 +614,14 @@
       (if (every? map? maps)
         (apply merge-with m maps)
         (apply f maps))) maps))
+
+(defn sort-by-index
+  "Example
+   (sort-by-index identity [3 1 2 0] [\\d \\b \\c \\a])
+    ;; => {0 \\a, 1 \\b, 2 \\c, 3 \\d}"
+  [f index-col v-col]
+  {:pre [(= (count index-col) (count v-col))]}
+  (into (sorted-map) (zipmap index-col v-col)))
 
 (defn group-by-apply
   [f coll & {:keys [apply-item apply-group]
@@ -657,20 +665,20 @@
   "Description
     do the same what to do `as->>` but make debug
     macros unwrapp for clear reading what to do
-  
+
   Example
     For this test data:
     (def owners [{:owner \"Jimmy\"
                   :pets (ref [{:name \"Rex\"
                                :type :dog}
                               {:name \"Sniffles\"
-                               :type :hamster}])} 
-                 {:owner \"Jacky\" 
-                  :pets (ref [{:name \"Spot\" 
+                               :type :hamster}])}
+                 {:owner \"Jacky\"
+                  :pets (ref [{:name \"Spot\"
                                :type :mink}
-                              {:name \"Puff\" 
+                              {:name \"Puff\"
                               :type :magic-dragon}])}])
-   Make macro expand: 
+   Make macro expand:
      (as-debug->> owners ! (nth ! 0) (:pets !) (deref !) (! 1) (! :type))
    And you take unbloated expression without let...
      ;;=> (((deref (:pets (nth owners 0))) 1) :type)

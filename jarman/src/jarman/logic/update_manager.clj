@@ -790,6 +790,6 @@
 (comment
   ;; BUILDING NEW PACKAGE
   (build-package)
-  (send-package #jarman.tools.update_manager.PandaPackage{:file "jarman-0.0.1.zip", :name "jarman", :version "0.0.1", :artifacts ".zip", :uri nil}
+  (send-package #jarman.logic.update_manager.PandaPackage{:file "jarman-0.0.1.zip", :name "jarman", :version "0.0.1", :artifacts ".zip", :uri nil}
                (first jarman-update-repository-list)))
 

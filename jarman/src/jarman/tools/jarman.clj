@@ -1,4 +1,4 @@
-(ns jarman.tools.jarman)
+(ns codesnippets)
 
 (defn gen-context-tree
   ([] (gen-context-tree (symbol (str *ns*))))
@@ -94,11 +94,7 @@
             (swap! offset (fn [_] (inc (:h-size e))))
             (pc (apply str (repeat @offset "*")) (format " %s" (:header e)))))
         ))))nil)
-
 ;; (hard-context-tree "./src/jarman/config/init.clj")
-
-
-
 
 (defn for-you-with-love
   ([] (for-you-with-love "no bo wiesz tak szbyciej"))
@@ -117,3 +113,4 @@
         (concat [v \space] (seq text) [\space v \newline])
         (concat [v] (vec (repeat (+ l 2) \space)) [v \newline])
         (concat [bl] (vec (repeat (+ l 2) h)) [br \newline])))))))
+

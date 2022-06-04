@@ -14,7 +14,7 @@
    [jarman.gui.gui-style          :as gs]
    ;; environtemnt variables
    [jarman.tools.org :refer :all]
-   [jarman.tools.update-manager :as update-manager]
+   [jarman.logic.update-manager :as update-manager]
    [jarman.gui.popup   :as popup])
   (:import (java.io IOException FileNotFoundException)
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))

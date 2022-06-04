@@ -6,8 +6,8 @@
    ;; [jarman.config.storage           :as storage]
    [jarman.managment.data           :as data]
    [jarman.tools.swing              :as stool]
-   [jarman.tools.update-manager     :as update-manager]
    [jarman.tools.lang               :refer :all]
+   [jarman.logic.update-manager     :as update-manager]
    [jarman.config.dot-jarman        :refer [dot-jarman-load]]))
 
 (defn print-helpr

@@ -1,4 +1,4 @@
-(ns jarman.tools.update-manager
+(ns jarman.logic.update-manager
   (:require
    ;; clojure lib
    [clojure.string :as string]

@@ -7,7 +7,7 @@
    [jarman.variables]
    [jarman.managment.data           :as data]
    [jarman.tools.swing              :as stool]
-   [jarman.tools.lang               :refer :all]
+   [jarman.lang                     :refer :all]
    [jarman.logic.update-manager     :as update-manager]
    [jarman.config.dot-jarman        :refer [dot-jarman-load]]))
 

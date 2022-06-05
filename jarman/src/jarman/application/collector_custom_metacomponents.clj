@@ -1,7 +1,7 @@
 ;; jarman.gui.managment ->
 (ns jarman.application.collector-custom-metacomponents
   (:require [clojure.string]
-            [jarman.tools.lang :refer [blet group-by-apply]]))
+            [jarman.lang :refer [blet group-by-apply]]))
 
 ;;; ARGUMENT METADATA GETTER ;;;
 

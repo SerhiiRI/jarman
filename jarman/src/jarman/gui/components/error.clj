@@ -7,7 +7,7 @@
 (ns jarman.gui.components.error
   (:require
    [clojure.pprint :refer [cl-format]]
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.tools.org :refer :all]
    ;; gui components 
    [jarman.gui.components.panels :as panels]

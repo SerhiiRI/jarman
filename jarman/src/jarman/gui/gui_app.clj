@@ -35,7 +35,7 @@
    [jarman.config.dot-jarman        :refer [dot-jarman-load]]
    [jarman.config.conf-language     :refer [do-load-language]]
    [jarman.tools.org                :refer :all]
-   [jarman.tools.lang               :refer :all]
+   [jarman.lang                     :refer :all]
    ;; gui 
    [jarman.gui.builtin-themes.jarman-light]
    [jarman.gui.gui-views-service    :as gvs]

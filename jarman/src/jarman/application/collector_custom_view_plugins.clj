@@ -1,6 +1,6 @@
 (ns jarman.application.collector-custom-view-plugins
   (:require
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.tools.org :refer :all]
    [clojure.spec.alpha :as s]
    ))

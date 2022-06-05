@@ -10,7 +10,7 @@
    [me.raynes.fs :as gfs]
    ;; local functionality
    [jarman.config.vars :refer [defvar]]
-   [jarman.tools.lang :refer [in?]]
+   [jarman.lang :refer [in?]]
    [jarman.tools.fs :as fs]
    [jarman.tools.org :refer [print-header print-line out-update print-multiline print-example]]
    ;; environtemnt variables

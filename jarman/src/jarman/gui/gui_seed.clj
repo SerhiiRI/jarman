@@ -14,7 +14,7 @@
             ;; deverloper tools 
             [jarman.tools.swing :as stool]
             [jarman.logic.state :as state]
-            [jarman.tools.lang :refer :all]
+            [jarman.lang :refer :all]
             [jarman.logic.changes-service :as cs]
             [jarman.gui.popup :as popup]
             ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER

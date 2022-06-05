@@ -11,7 +11,7 @@
             [seesaw.rsyntax]
             [jarman.faces :as face]
             [jarman.tools.swing    :as stool]
-            [jarman.tools.lang     :refer :all]
+            [jarman.lang           :refer :all]
             [jarman.logic.state    :as state]
             [jarman.gui.gui-tools  :as gtool]
             [jarman.gui.gui-migrid :as gmg]

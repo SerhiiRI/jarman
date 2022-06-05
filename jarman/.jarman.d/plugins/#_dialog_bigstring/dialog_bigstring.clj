@@ -6,7 +6,7 @@
    ;; Dev tools
    [seesaw.border]
    [seesaw.mig]
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.gui.gui-tools :as gtool]
    [jarman.gui.gui-components :as gcomp]
    [jarman.plugin.spec :as spec]

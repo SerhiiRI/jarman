@@ -12,7 +12,7 @@
             [jarman.logic.state               :as state]
             [clojure.string                   :as string]
             [jarman.resource-lib.icon-library :as icon]
-            [jarman.tools.lang                :refer :all]))
+            [jarman.lang                      :refer :all]))
 
 
 ;; Defrecord for elements in alerts-storage

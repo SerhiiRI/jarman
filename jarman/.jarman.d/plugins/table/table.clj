@@ -49,7 +49,7 @@
    ;; Jarman styles
    [jarman.faces                :as face]
    ;; Jarman tools
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.tools.org  :refer :all]
    ;; [jarman.tools.swing :as stool]
    ;; [jarman.resource-lib.icon-library :as icon]

@@ -45,7 +45,7 @@
    [jarman.logic.connection :as c]
    [jarman.logic.sql-tool :refer [select! insert! update! delete!]]
    [jarman.logic.security :refer [encrypt-local decrypt-local]]
-   [jarman.tools.lang     :refer :all]
+   [jarman.lang           :refer :all]
    [jarman.tools.org      :refer :all])
   (:import [java.util Base64 Date]))
 

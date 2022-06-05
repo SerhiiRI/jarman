@@ -7,7 +7,7 @@
    [seesaw.core    :as c]
    [seesaw.border  :as b]
    ;; Jarman
-   [jarman.tools.lang            :refer :all]
+   [jarman.lang                  :refer :all]
    [jarman.tools.fuzzy-search]
    [jarman.faces                 :as face]
    [jarman.gui.gui-tools         :as gui-tool]

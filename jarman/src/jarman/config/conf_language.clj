@@ -2,7 +2,7 @@
   (:require
    [clojure.java.io :as io]
    [jarman.config.environment :as env]
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.tools.org  :refer :all])
   (:import (java.io IOException FileNotFoundException)))
 

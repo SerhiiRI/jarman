@@ -5,7 +5,7 @@
    [clojure.java.io :as io]
    [cemerick.pomegranate :as pomagranate]
    [jarman.config.environment :as env]
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.tools.org  :refer :all]
    [jarman.config.conf-language :refer [register-new-translation]]
    [jarman.config.vars :refer [defvar]])

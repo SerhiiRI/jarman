@@ -7,7 +7,7 @@
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons))
   (:require
    [jarman.faces  :as face]
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [seesaw.core :as c]
    [jarman.resource-lib.icon-library :as icon]
    [jarman.gui.gui-style             :as gs]

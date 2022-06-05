@@ -3,7 +3,7 @@
    [clojure.pprint :refer [cl-format]]
    [seesaw.core :as c]
    [seesaw.swingx :as swingx]
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    ;; DB interaction
    [jarman.logic.metadata :as metadata]
    [jarman.logic.connection :as db]

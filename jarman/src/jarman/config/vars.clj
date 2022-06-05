@@ -10,7 +10,7 @@
    [clojure.pprint :refer [cl-format]]
    ;; [clojure.data    :as cl-data]
    ;; Jarman 
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.tools.org  :refer :all]
    [jarman.config.environment :as env]))
 

@@ -19,7 +19,7 @@
             [jarman.application.session      :as session]
             [jarman.tools.swing        :as stool]
             [jarman.gui.popup          :as popup]
-            [jarman.tools.lang :refer :all]
+            [jarman.lang       :refer :all]
             [jarman.tools.org  :refer :all]))
 
 ;; ┌───────────────┐

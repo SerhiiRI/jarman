@@ -12,7 +12,7 @@
    [jarman.logic.state               :as state]
    [jarman.resource-lib.icon-library :as icon]
    [jarman.gui.gui-style             :as gs]
-   [jarman.tools.lang                :refer :all]
+   [jarman.lang                      :refer :all]
    [jarman.tools.org                 :refer :all]
    [jarman.config.conf-language]
    ))

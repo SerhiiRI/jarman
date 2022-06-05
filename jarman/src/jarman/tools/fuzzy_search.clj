@@ -1,6 +1,6 @@
 (ns jarman.tools.fuzzy-search
   (:require [clojure.pprint :as pprint]
-            [jarman.tools.lang :refer :all]
+            [jarman.lang :refer :all]
             [clj-fuzzy.metrics :as fuzzy]))
 
 (defn- to-score-map

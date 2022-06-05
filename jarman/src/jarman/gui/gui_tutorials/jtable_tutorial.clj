@@ -9,7 +9,7 @@
            (javax.swing.table TableCellRenderer TableColumn TableCellEditor DefaultTableModel)
            (java.awt Color Component BorderLayout)
            (java.awt.event MouseAdapter))
-  (:require [jarman.tools.lang :refer :all]
+  (:require [jarman.lang :refer :all]
             [jarman.gui.swing.table :as stable]))
 
 

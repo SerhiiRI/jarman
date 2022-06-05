@@ -6,7 +6,7 @@
    [clojure.string    :as string]
    [clojure.pprint    :refer [pprint cl-format]]
    ;; -----------
-   [jarman.tools.lang            :refer :all]
+   [jarman.lang                  :refer :all]
    [jarman.config.storage        :as storage]
    [jarman.config.environment    :as env]
    [jarman.logic.sql-tool        :as sql]

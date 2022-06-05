@@ -4,7 +4,7 @@
    [clojure.pprint :refer [cl-format]]
    [clojure.java.io :as io]
    [jarman.config.environment :as env]
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.tools.org  :refer :all]))
 
 (java.security.Security/addProvider (org.bouncycastle.jce.provider.BouncyCastleProvider.))

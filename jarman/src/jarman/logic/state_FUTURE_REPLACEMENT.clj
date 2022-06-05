@@ -1,7 +1,7 @@
 (ns jarman.logic.state2
   (:require [seesaw.core :as c]
             [clojure.data :as data]
-            [jarman.tools.lang :refer :all]))
+            [jarman.lang :refer :all]))
 
 (def ^:private global-gui-component-state (atom {}))
 (def ^:dynamic *session-frame* nil)

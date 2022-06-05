@@ -3,7 +3,7 @@
             [seesaw.core    :as c]
             [jarman.faces   :as face]
             [jarman.tools.org  :refer :all]
-            [jarman.tools.lang :refer :all]
+            [jarman.lang       :refer :all]
             [jarman.tools.swing  :as stool]
             [jarman.logic.state                :as state]
             [jarman.application.session              :as session]

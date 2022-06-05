@@ -3,7 +3,7 @@
    [clojure.string :as s]
    [clojure.java.io :as io]
    [seesaw.core   :as c]
-   [jarman.tools.lang :refer [in?]]
+   [jarman.lang :refer [in?]]
    [jarman.gui.gui-tools :as gtool]
    [jarman.gui.core :refer [register! satom]]
    [jarman.gui.gui-panel :refer [mig-panel]]

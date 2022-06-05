@@ -20,7 +20,7 @@
 (ns jarman.logic.metadata-sql-converter
   (:require
    [clojure.string :as string]
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.logic.connection :as db]
    ;; [jarman.logic.metadata-toolbox :refer [not-allowed-rules allowed-rules]]
    ;; [datascript.core :as d]

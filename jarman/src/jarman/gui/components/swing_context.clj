@@ -1,5 +1,5 @@
 (ns jarman.gui.components.swing-context
-  (:require [jarman.tools.lang :refer :all])
+  (:require [jarman.lang :refer :all])
   (:import [javax.swing KeyStroke]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

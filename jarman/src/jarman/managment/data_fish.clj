@@ -8,7 +8,7 @@
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.logic.structural-initializer :as sinit]
-   [jarman.tools.lang :refer :all])
+   [jarman.lang :refer :all])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 

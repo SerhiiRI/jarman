@@ -11,7 +11,7 @@
 
 (ns jarman.logic.metadata
   (:require
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [potemkin.namespaces :refer [import-vars]]
    [jarman.logic.metadata-core]
    [jarman.logic.metadata-sql-converter]

@@ -2,7 +2,7 @@
   (:require
    [clojure.spec.alpha :as s]
    [jarman.config.environment :as env]
-   [jarman.tools.lang :refer :all :as lang]))
+   [jarman.lang :refer :all :as lang]))
 
 (s/def :jarman.application.spec/keyword    keyword?)
 (s/def :jarman.application.spec/keyword-list (s/and sequential? #(every? keyword? %)))

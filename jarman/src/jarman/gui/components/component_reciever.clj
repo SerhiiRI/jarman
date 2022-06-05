@@ -2,7 +2,7 @@
   (:require
    [clojure.pprint :refer [cl-format]]
    ;; ---
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.tools.org :refer :all]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;

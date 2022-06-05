@@ -16,7 +16,7 @@
             [jarman.faces                     :as face]
             [jarman.resource-lib.icon-library :as icon]
             [jarman.gui.gui-migrid            :as gmg]
-            [jarman.tools.lang                :refer :all]
+            [jarman.lang                      :refer :all]
             [clojure.pprint                   :refer [cl-format]]
             [jarman.tools.org :refer :all]))
 

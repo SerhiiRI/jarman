@@ -3,7 +3,7 @@
   (:require [jarman.faces  :as face]
             [seesaw.core   :as c]
             [seesaw.border :as b]
-            [jarman.tools.lang :refer :all]
+            [jarman.lang :refer :all]
             [jarman.gui.gui-tools     :as gtool]
             [jarman.logic.state       :as state]))
 

@@ -10,7 +10,7 @@
    [jarman.config.storage :as storage]
    [jarman.managment.data :as data]
    ;; developer tools 
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.config.dot-jarman :refer [dot-jarman-load]]))
 
 (defn print-helpr

@@ -8,7 +8,7 @@
    [seesaw.chooser  :as chooser]
    ;; Jarman
    [jarman.faces          :as face]
-   [jarman.tools.lang     :refer :all]
+   [jarman.lang           :refer :all]
    [jarman.config.environment :as env]
    [jarman.gui.core       :refer [satom register! cursor]]
    [jarman.gui.gui-style  :as gui-style]

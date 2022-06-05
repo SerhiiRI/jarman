@@ -4,7 +4,7 @@
    [seesaw.core    :as c]
    [seesaw.border  :as b]
    ;; ;; Jarman
-   [jarman.tools.lang     :refer :all]
+   [jarman.lang           :refer :all]
    [jarman.faces          :as face]
    [jarman.gui.core       :refer [satom register! cursor]]
    [jarman.gui.components.panels :as gui-panels]

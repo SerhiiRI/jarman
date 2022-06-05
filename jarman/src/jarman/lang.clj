@@ -5,7 +5,7 @@
 ;;; |_|\__,_|_| |_|\__, |
 ;;;                |___/
 ;;; ---------------------
-(ns jarman.tools.lang
+(ns jarman.lang
   ;; (:use seesaw.core)
   (:require [clojure.reflect :as reflect]
             [clojure.string :as string]

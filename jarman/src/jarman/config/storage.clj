@@ -4,7 +4,7 @@
   (:require [clojure.string :as s]
             [clojure.java.io :as io]
             [me.raynes.fs :as fs]
-            [jarman.tools.lang :refer :all]
+            [jarman.lang :refer :all]
             [jarman.config.environment :as env]))
 
 ;;; Function 

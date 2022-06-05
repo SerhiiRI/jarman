@@ -19,7 +19,7 @@
 (ns plugins.service-period.service-period
   (:require
    [jarman.faces              :as face]
-   [jarman.tools.lang         :refer :all] 
+   [jarman.lang               :refer :all]
    [clojure.spec.alpha        :as s]
    [seesaw.core               :as c]
    [seesaw.border             :as b]

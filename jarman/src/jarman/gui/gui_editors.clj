@@ -14,7 +14,7 @@
             [jarman.gui.gui-migrid         :as gmg]
             [jarman.gui.gui-alerts-service :as gas]
             [jarman.faces                  :as face]
-            [jarman.tools.lang             :refer :all]
+            [jarman.lang                   :refer :all]
             [jarman.tools.org              :refer :all]
             [jarman.logic.state            :as state]
             [jarman.logic.metadata         :as mt]

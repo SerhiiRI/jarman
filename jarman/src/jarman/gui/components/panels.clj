@@ -1,7 +1,7 @@
 (ns jarman.gui.components.panels
   (:require
    ;; Jarman
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    ;; Seesaw
    [seesaw.mig]
    [seesaw.core]

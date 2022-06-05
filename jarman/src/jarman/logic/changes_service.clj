@@ -2,7 +2,7 @@
   (:use seesaw.core
         seesaw.dev)
   (:require
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.gui.gui-tools :as gtool]))
 
 ;; ┌────────────────────┐

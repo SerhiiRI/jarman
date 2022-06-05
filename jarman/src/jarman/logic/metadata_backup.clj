@@ -5,7 +5,7 @@
    ;; [clojure.string :as string]
    ;; [jarman.config.storage :as storage]
    ;; [jarman.config.environment :as env]
-   ;; [jarman.tools.lang :refer :all]
+   ;; [jarman.lang :refer :all]
    ;; [jarman.logic.connection :as db]
    ;; [datascript.core :as d]
    ;; [jarman.logic.sql-tool :refer [select! update! insert!

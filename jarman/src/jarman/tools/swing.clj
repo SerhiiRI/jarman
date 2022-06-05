@@ -13,7 +13,7 @@
   (:use clojure.reflect
         seesaw.core)
   (:require [clojure.string :as string]
-            [jarman.tools.lang :as lang]
+            [jarman.lang :as lang]
             [clojure.java.io :as io]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

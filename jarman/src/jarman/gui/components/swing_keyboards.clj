@@ -2,7 +2,7 @@
   (:require
    [seesaw.core]
    [clojure.pprint :refer [cl-format]]
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.gui.components.swing-actions]
    [jarman.gui.components.swing-context :as swing-context :refer :all])
   (:import

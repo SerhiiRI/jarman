@@ -10,7 +10,7 @@
    [kaleidocs.merge :refer [merge-doc]]
    ;; Jarman toolkit
    [jarman.logic.connection :as db]
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
    [jarman.logic.sql-tool :refer [select! update! insert! delete!]])

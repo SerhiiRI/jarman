@@ -9,7 +9,7 @@
    [jarman.logic.metadata :refer [do-create-meta-for-existing-tables]]
    [jarman.config.storage :as storage]
    [jarman.config.environment :as env]
-   [jarman.tools.lang :refer :all]))
+   [jarman.lang :refer :all]))
 
 (def system-tables ["documents" "profile" "user" "metadata" "view" "system_session" "system_props"])
 

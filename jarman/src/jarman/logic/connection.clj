@@ -5,7 +5,7 @@
    [clojure.java.jdbc :as jdbc]
    [clojure.spec.alpha :as s]
    ;; jarmans
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.config.vars :refer [defvar]])
   (:import (java.util Date)
            (java.text SimpleDateFormat)

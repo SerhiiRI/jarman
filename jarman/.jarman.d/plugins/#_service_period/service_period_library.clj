@@ -6,7 +6,7 @@
    [seesaw.core :as c]
    [seesaw.border :as b]
    ;; Jarman toolkit
-   [jarman.tools.lang :include-macros true :refer :all]
+   [jarman.lang :include-macros true :refer :all]
    [jarman.config.environment :as env]
    ;; --- 
    [jarman.logic.connection :as db]

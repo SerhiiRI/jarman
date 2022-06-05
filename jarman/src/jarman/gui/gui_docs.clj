@@ -14,7 +14,7 @@
    [seesaw.chooser :as chooser]
    ;; Jarman toolkit
    [jarman.logic.connection :as db]
-   [jarman.tools.lang :refer :all :as lang]
+   [jarman.lang :refer :all :as lang]
    [jarman.gui.gui-tools :refer :all :as gtool]
    [jarman.resource-lib.icon-library :as ico]
    [jarman.tools.swing :as stool]

@@ -9,7 +9,7 @@
    [seesaw.core]
    ;; Jarman
    [jarman.variables]
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.tools.org  :refer :all]
    [jarman.config.environment :as env]
    [jarman.config.vars :refer [setq defvar print-list-not-loaded variable-config-list]]))

@@ -11,7 +11,7 @@
    [seesaw.swingx :as swingx]
    [seesaw.chooser :as chooser]
    ;; Jarman toolkit
-   [jarman.tools.lang :refer :all]
+   [jarman.lang :refer :all]
    [jarman.tools.swing :as stool]
    [jarman.gui.gui-tools :as gtool]
    [jarman.gui.gui-seed :as gseed]

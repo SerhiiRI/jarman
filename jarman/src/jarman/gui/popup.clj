@@ -18,7 +18,7 @@
    [jarman.gui.gui-style      :as gs]
    [jarman.resource-lib.icon-library :as icon]
    [jarman.tools.swing               :as stool]
-   [jarman.tools.lang         :refer :all])
+   [jarman.lang                      :refer :all])
   (:import javax.swing.JLayeredPane
            java.awt.PointerInfo
            (java.awt.event MouseEvent)

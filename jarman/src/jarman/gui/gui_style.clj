@@ -4,7 +4,7 @@
             [seesaw.core   :as c]
             [seesaw.border :as b]
             [jarman.logic.state :as state]
-            [jarman.tools.lang :refer :all]
+            [jarman.lang :refer :all]
             [jarman.faces :as face])
   (:import (javax.swing.text SimpleAttributeSet)
            (javax.swing.plaf ColorUIResource)

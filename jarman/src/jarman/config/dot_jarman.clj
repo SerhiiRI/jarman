@@ -7,7 +7,8 @@
    [clojure.java.io :as io]
    ;; Tools
    [seesaw.core]
-   ;; Jarman 
+   ;; Jarman
+   [jarman.variables]
    [jarman.tools.lang :refer :all]
    [jarman.tools.org  :refer :all]
    [jarman.config.environment :as env]

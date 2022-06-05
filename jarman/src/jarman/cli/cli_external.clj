@@ -1,11 +1,12 @@
 (ns jarman.cli.cli-external
   (:gen-class)
   (:require
-   ;; resource 
+   ;; clojure
    [clojure.tools.cli :refer [parse-opts]]
    [clojure.string :as string]
    [clojure.java.jdbc :as jdbc]
    ;; logic
+   [jarman.variables]
    [jarman.config.storage :as storage]
    [jarman.managment.data :as data]
    ;; developer tools 

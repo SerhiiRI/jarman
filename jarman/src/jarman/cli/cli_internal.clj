@@ -4,6 +4,7 @@
    [clojure.string                  :as string]
    [clojure.tools.cli               :refer [parse-opts]]
    ;; [jarman.config.storage           :as storage]
+   [jarman.variables]
    [jarman.managment.data           :as data]
    [jarman.tools.swing              :as stool]
    [jarman.tools.lang               :refer :all]

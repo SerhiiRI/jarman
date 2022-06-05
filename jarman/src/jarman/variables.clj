@@ -1,6 +1,21 @@
 (ns jarman.variables
   (:require [jarman.config.vars :refer [defvar]]))
 
+;; fixme:serhii
+;; rework on something like assoc list
+(defvar jarman-update-repository-list
+  ["ftp://jarman:dupa@trashpanda-team.ddns.net"]
+  :doc "List of update reposiotries"
+  :type clojure.lang.PersistentList
+  :group :update-system)
+
+(defvar jarman-library-repository-list
+  {"central" "https://repo1.maven.org/maven2/"
+   "clojars" "https://clojars.org/repo"}
+  :doc "List of update reposiotries"
+  :type clojure.lang.PersistentList
+  :group :update-system)
+
 (defvar dataconnection-saved nil
   :name "Selected Datasource"
   :doc "Is DB configuration key form `dataconnection-alist`"
@@ -43,7 +58,4 @@
   :type clojure.lang.PersistentVector
   :group :view-params)
 
-(defvar jarman-update-repository-list ["ftp://jarman:dupa@trashpanda-team.ddns.net"]
-  :doc "List of update reposiotries"
-  :type clojure.lang.PersistentList
-  :group :update-system)
+

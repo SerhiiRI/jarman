@@ -14,6 +14,7 @@
    [jarman.tools.fs :as fs]
    [jarman.tools.org :refer [print-header print-line out-update print-multiline print-example]]
    ;; environtemnt variables
+   [jarman.variables :as variables]
    [jarman.config.environment :as env])
   (:import (java.io IOException FileNotFoundException)))
 
@@ -657,7 +658,7 @@
       (print-header
        "Pushing file into remote repository"
        (doall
-        (for [repository (deref jarman.variables/jarman-update-repository-list)]
+        (for [repository (deref variables/jarman-update-repository-list)]
             (send-package
              (map->PandaPackage {:file package-name, :name prog-name, :version version, :artifacts artifact, :uri nil})
              repository))))))))
@@ -694,20 +695,20 @@
 
 (defn procedure-package []
   (let [package (build-package)]
-    (doall (map (partial send-package package) (deref jarman.variables/jarman-update-repository-list)))
+    (doall (map (partial send-package package) (deref variables/jarman-update-repository-list)))
     (delete-file (clojure.java.io/file (:file package)))
     package))
 
 (defn procedure-update
   ([]
-   (let [package-list (get-all-packages (deref jarman.variables/jarman-update-repository-list))]
+   (let [package-list (get-all-packages (deref variables/jarman-update-repository-list))]
      (info-packages package-list)
      (update-project (max-version package-list))))
   ([package]
    (update-project package)))
 
 (defn procedure-info []
-  (let [package-list (get-filtered-packages (deref jarman.variables/jarman-update-repository-list))]
+  (let [package-list (get-filtered-packages (deref variables/jarman-update-repository-list))]
     (info-packages package-list)
     package-list))
 
@@ -715,10 +716,10 @@
   (clean-up-environment) true)
 
 (defn show-list-of-all-packages []
-  (get-all-packages (deref jarman.variables/jarman-update-repository-list)))
+  (get-all-packages (deref variables/jarman-update-repository-list)))
 
 (defn check-package-for-update []
-  (max-version (get-all-packages (deref jarman.variables/jarman-update-repository-list))))
+  (max-version (get-all-packages (deref variables/jarman-update-repository-list))))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; CLI FUNCTIONS ;;;
@@ -731,7 +732,7 @@
 
 (defn cli-print-repository-list []
   (cl-format *out* "Repositories:~%")
-  (for [repository (deref jarman.variables/jarman-update-repository-list)]
+  (for [repository (deref variables/jarman-update-repository-list)]
     (cl-format *out* "~A~%" repository)))
 
 (defn cli-print-update-candidate []
@@ -780,10 +781,10 @@
 
 (comment
   ;; INTERNAL FUNCTIONALITY 
-  (def --tmp-package-list-- (get-all-packages (deref jarman.variables/jarman-update-repository-list)))
+  (def --tmp-package-list-- (get-all-packages (deref variables/jarman-update-repository-list)))
   (max-version --tmp-package-list--)
   (update-project (max-version --tmp-package-list--))
-  (update-project (max-version (get-all-packages (deref jarman.variables/jarman-update-repository-list))))
+  (update-project (max-version (get-all-packages (deref variables/jarman-update-repository-list))))
   ;; unzip test
   (unzip "ftp://jarman:bliatdoit@192.168.1.69//jarman/jarman-1.0.4.zip" "kupa.zip"))
 

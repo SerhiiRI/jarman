@@ -13,6 +13,7 @@
                  [com.github.jiconfont/jiconfont-google_material_design_icons "2.2.0.2"]
                  [com.github.jiconfont/jiconfont-swing "1.0.1"]
                  [com.github.vlsi.mxgraph/jgraphx "4.2.2"]
+                 [clj-commons/pomegranate "1.2.1"]
                  [seesaw "1.5.0"]
                  ;; other
                  [potemkin "0.4.5"]

@@ -3,6 +3,7 @@
   (:require
    [clojure.pprint :refer [cl-format]]
    [clojure.java.io :as io]
+   [cemerick.pomegranate :as pomagranate]
    [jarman.config.environment :as env]
    [jarman.tools.lang :refer :all]
    [jarman.tools.org  :refer :all]
@@ -11,6 +12,7 @@
   ;; -------------------
   (:import
    [java.io IOException FileNotFoundException]))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; PandaExtension ;;;
@@ -34,35 +36,48 @@
 
 (defprotocol IPluginLoader
   (do-load [this])
-  (do-load-translation [this]))
+  (do-load-translation [this])
+  (do-load-deps [this]))
 (defrecord PandaExtension [name description extension-path version authors license keywords url dependencies loading-seq language]
   IPluginLoader
   (do-load-translation [this]
     (when (seq language)
       (print-line (format "loading languages from extension ~%s~" name))
       (register-new-translation
-       (keyword name)
-       (reduce (fn [acc-m translation-file]
-                 (print-line (format "merge file ~%s~ " (str translation-file)))
-                 (deep-merge-with #(second %&) acc-m (read-string (slurp (str translation-file)))))
-               {} language))))
+        (keyword name)
+        (reduce (fn [acc-m translation-file]
+                  (print-line (format "merge file ~%s~ " (str translation-file)))
+                  (deep-merge-with #(second %&) acc-m (read-string (slurp (str translation-file)))))
+          {} language))))
+  (do-load-deps [this]
+    (print-header (format "loading deps ~%s~" name)
+      (if-let [deps (not-empty (filter (comp not string?) dependencies))]
+        (do
+          (print-line deps)
+          (print-line "check or download...")
+          (doall
+            (map
+              #(print-line (first %))
+              (pomagranate/add-dependencies
+                :coordinates deps
+                :repositories (deref jarman.variables/jarman-library-repository-list))))))))
   (do-load [this]
-    (print-header
-     (format "load ~%s~" name)
-     ;; Testing language and sources files
-     (assert-sources name loading-seq)
-     (assert-languages name language)
-     (.do-load-translation this)
-     ;; Compiling source files
-     (doall
-      (doseq [f loading-seq]
-        (print-header
-         (format "compiling ~%s~" (str f))
-         (let [file-output (with-out-str (load-file (str f)))]
-           (if (not-empty file-output)
-             (do
-               (print-line "plugin compiling output")
-               (print-example file-output))))))))))
+    (print-header (format "load ~%s~" name)
+      ;; Testing language and sources files
+      (assert-sources name loading-seq)
+      (assert-languages name language)
+      (.do-load-translation this)
+      (.do-load-deps this)
+      ;; Compiling source files
+      (doall
+        (doseq [f loading-seq]
+          (print-header
+            (format "compiling ~%s~" (str f))
+            (let [file-output (with-out-str (load-file (str f)))]
+              (if (not-empty file-output)
+                (do
+                  (print-line "plugin compiling output")
+                  (print-example file-output))))))))))
 
 (defn constructPandaExtension [name description path extension-m]
   (-> extension-m
@@ -96,27 +111,26 @@
                     [name description] (take 2 define-extension-body)
                     extension-map-sequence (drop 2 define-extension-body)]
                 (assert (even? (count extension-map-sequence))
-                        (format "Odd config keywords in `%s` plugin declaration"
-                                (str extension)))
+                  (format "Odd config keywords in `%s` plugin declaration"
+                    (str extension)))
                 (dosync
-                 ;; wrapp into a extension
-                 ;;=> (:verions ...) => #PandaExtension{:version ...}
-                 (alter extension-storage-list conj
-                        (constructPandaExtension
-                         name
-                         description
-                         (io/file loading-path (str extension))
-                         (eval (apply hash-map extension-map-sequence))))))
+                  ;; wrapp into a extension
+                  ;;=> (:verions ...) => #PandaExtension{:version ...}
+                  (alter extension-storage-list conj
+                    (constructPandaExtension
+                      name
+                      description
+                      (io/file loading-path (str extension))
+                      (eval (apply hash-map extension-map-sequence))))))
               (throw (FileNotFoundException.
-                      (format "Extension `%s` doesn't contain declaration" extension))))))))
-    (catch FileNotFoundException e
-      (seesaw.core/alert e (.getMessage e))
-      ;; (java.lang.System/exit 0)
-      )
-    (catch Exception e
-      (seesaw.core/alert (with-out-str (clojure.stacktrace/print-stack-trace e 20)))
-      ;; (java.lang.System/exit 0)
-      )))
+                       (format "Extension `%s` doesn't contain declaration" extension))))))))
+    ;; (catch FileNotFoundException e
+    ;;   (seesaw.core/alert e (print-error e)) ;; (java.lang.System/exit 0)
+    ;;   )
+    ;; (catch Exception e
+    ;;   (seesaw.core/alert (print-error e)) ;; (java.lang.System/exit 0)
+    ;;   )
+    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; COMPILE WITH DEPENDENCIEST ;;;
@@ -145,14 +159,16 @@
   [& {:keys [extension-loaded
              extension-locked
              extension-list]}]
-  (print-line "Extension loading debug")
-  (print-line (cl-format nil "loaded (~{~a~^,~})" (map :name extension-loaded)))
-  (print-line (cl-format nil "locked (~{~a~^,~})" (map :name extension-locked)))
-  (print-line (cl-format nil "waiter (~{~a~^,~})" (map :name extension-list)))
+  (comment
+   (print-line "jarman.application.extension-manager/compile-with-deps: loading debug")
+   (print-line (cl-format nil "loaded (~{~a~^,~})" (map :name extension-loaded)))
+   (print-line (cl-format nil "locked (~{~a~^,~})" (map :name extension-locked)))
+   (print-line (cl-format nil "waiter (~{~a~^,~})" (map :name extension-list))))
   (when (seq extension-list)
-    (let [[extension & rest-extensions] extension-list]
-      (if (seq (:dependencies extension))
-        (if (was-loaded? (first (:dependencies extension)) extension-loaded)
+    (let [[extension & rest-extensions] extension-list
+          jarman-deps (filter string? (:dependencies extension))]
+      (if (seq jarman-deps)
+        (if (was-loaded? (first jarman-deps) extension-loaded)
           (do
             ;;
             (compile-with-deps
@@ -165,7 +181,7 @@
             (compile-with-deps
              :extension-loaded extension-loaded
              :extension-locked (conj extension-locked extension)
-             :extension-list   (replace-on-first (first (:dependencies extension)) extension-list))))
+             :extension-list   (replace-on-first (first jarman-deps) extension-list))))
         (do
           ;; COMPILE EXTENSION
           (.do-load extension)
@@ -181,14 +197,14 @@
    (extension-storage-list-load)
    (print-header
     (format "Loading extensions (%s)" (quick-timestamp))
-    (print-line (format "Total extensions count: ~%d~" (count (deref extension-storage-list))))
+    (print-line (format "Total extensions count: ~%d~" (count (extension-storage-list-get))))
     ;; COMPILE SEQUENTIAL
     ;; (doall (map do-load @extension-storage-list))
     ;; COMPILE WITH DEPS
     (compile-with-deps
      :extension-loaded []
      :extension-locked []
-     :extension-list @extension-storage-list)))
+     :extension-list (extension-storage-list-get))))
   ([& panda-extensions]
    (print-header
     (format "Reload extensions (%s)" (quick-timestamp))

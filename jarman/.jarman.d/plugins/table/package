@@ -4,7 +4,8 @@
   :authors      '(("Serhii Riznychuk" "serhii.riznychuk@gmail.com")
                   ("Julia Burmych"    "cutyBurMICH77@somewhere.com"))
   :license      '("EPL-2.0" "https://www.eclipse.org/legal/epl-2.0/")
-  :dependencies '("aaa")
+  :dependencies '("aaa"
+                  [org.apache.poi/poi "5.2.2"])
   :keywords     '("table" "view")
   :url          '("https://github.com/emacs-dashboard/emacs-dashboard")
   :language     '(language)

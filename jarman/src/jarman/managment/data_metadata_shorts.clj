@@ -1,7 +1,7 @@
 (ns jarman.managment.data-metadata-shorts
   (:require
    [clojure.string :as string]
-   [jarman.tools.org :refer :all]))
+   [jarman.org :refer :all]))
 
 (defn check-metafield-standart-version-01
   "Example:  

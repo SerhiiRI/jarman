@@ -1,7 +1,7 @@
 (ns jarman.logic.sql-helpers
   (:require [jarman.logic.metadata   :as metadata]
             [jarman.logic.sql-tool   :as sql-tool]
-            [jarman.tools.org :refer :all]
+            [jarman.org :refer :all]
             [jarman.logic.connection :as db]
             [jarman.config.environment :as env])
   (:import (java.sql PreparedStatement Connection Types)

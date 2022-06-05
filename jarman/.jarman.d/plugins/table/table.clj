@@ -50,7 +50,7 @@
    [jarman.faces                :as face]
    ;; Jarman tools
    [jarman.lang :refer :all]
-   [jarman.tools.org  :refer :all]
+   [jarman.org  :refer :all]
    ;; [jarman.tools.swing :as stool]
    ;; [jarman.resource-lib.icon-library :as icon]
    ;; [jarman.gui.gui-style      :as gs]
@@ -355,8 +355,8 @@
                   (reduce (fn [acc fn-meta-transformer]
                             (fn-meta-transformer acc)
                             ;; (catch Exception e
-                            ;;   (jarman.tools.org/print-error e)
-                            ;;   (jarman.tools.org/print-error "PROBLEM WITH =>" meta-information)
+                            ;;   (jarman.org/print-error e)
+                            ;;   (jarman.org/print-error "PROBLEM WITH =>" meta-information)
                             ;;   e)
                             )
                           meta-information fn-pipeline))))

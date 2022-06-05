@@ -18,7 +18,7 @@
             [jarman.gui.gui-migrid            :as gmg]
             [jarman.lang                      :refer :all]
             [clojure.pprint                   :refer [cl-format]]
-            [jarman.tools.org :refer :all]))
+            [jarman.org :refer :all]))
 
 ;; ┌─────────────────┐
 ;; │                 │

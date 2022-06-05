@@ -1,7 +1,7 @@
 (ns jarman.gui.gui-events
   (:require
    [jarman.lang :refer :all]
-   [jarman.tools.org  :refer :all]
+   [jarman.org  :refer :all]
    [jarman.application.session :as session]
    [jarman.gui.gui-tools :as gtool]
    [jarman.gui.gui-alerts-service :as gas])

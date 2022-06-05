@@ -13,7 +13,7 @@
    [jarman.resource-lib.icon-library :as icon]
    [jarman.gui.gui-style             :as gs]
    [jarman.lang                      :refer :all]
-   [jarman.tools.org                 :refer :all]
+   [jarman.org                       :refer :all]
    [jarman.config.conf-language]
    ))
 

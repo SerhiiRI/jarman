@@ -1,5 +1,5 @@
 (ns jarman.gui.faces-system)
-(require '[jarman.tools.org :refer :all])
+(require '[jarman.org :refer :all])
 
 ;;;;;;;;;;;;
 ;;; CORE ;;;

@@ -8,7 +8,7 @@
   (:require
    [clojure.pprint :refer [cl-format]]
    [jarman.lang :refer :all]
-   [jarman.tools.org :refer :all]
+   [jarman.org :refer :all]
    ;; gui components 
    [jarman.gui.components.panels :as panels]
    [jarman.gui.components.common :as common])
@@ -18,14 +18,14 @@
   `(try (do
           ~@body)
         (catch ExceptionInfo e#
-          (jarman.tools.org/print-error e#)
+          (jarman.org/print-error e#)
           (panels/vertical-panel
            :items
            [(common/textarea :value (cl-format nil "ExceptionInfo:~A~%Timestamp:~A~%" (.getMessage e#) (quick-timestamp)))
             (common/textarea :value (cl-format nil "Map Info:~%~{~{ ~A~^ - ~} ~%~}" (seq (ex-data e#))))
             (common/textarea :value (with-out-str (clojure.stacktrace/print-stack-trace e# 20)))]))
         (catch Exception e#
-          (jarman.tools.org/print-error e#)
+          ('jarman.org/print-error e#)
           (panels/vertical-panel
            :items
            [(common/textarea :value (cl-format nil "ExceptionInfo:~A~%Timestamp:~A~%" (.getMessage e#) (quick-timestamp)))

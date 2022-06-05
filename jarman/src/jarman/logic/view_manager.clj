@@ -7,7 +7,7 @@
    [seesaw.border :as b]
    ;; ---
    [jarman.lang :include-macros true :refer :all]
-   [jarman.tools.org  :refer :all]
+   [jarman.org  :refer :all]
    ;; ---
    [jarman.config.environment :as env]
    [jarman.config.vars :refer [defvar]]

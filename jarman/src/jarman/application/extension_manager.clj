@@ -6,7 +6,7 @@
    [cemerick.pomegranate :as pomagranate]
    [jarman.config.environment :as env]
    [jarman.lang :refer :all]
-   [jarman.tools.org  :refer :all]
+   [jarman.org  :refer :all]
    [jarman.config.conf-language :refer [register-new-translation]]
    [jarman.config.vars :refer [defvar]])
   ;; -------------------

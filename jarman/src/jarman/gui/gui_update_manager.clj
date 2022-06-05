@@ -13,7 +13,7 @@
    [jarman.gui.gui-alerts-service :as gas]
    [jarman.gui.gui-style          :as gs]
    ;; environtemnt variables
-   [jarman.tools.org :refer :all]
+   [jarman.org :refer :all]
    [jarman.logic.update-manager :as update-manager]
    [jarman.gui.popup   :as popup])
   (:import (java.io IOException FileNotFoundException)

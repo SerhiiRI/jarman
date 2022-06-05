@@ -37,7 +37,7 @@
                   :model (jarman.logic.metadata/convert_metadata->model :seal)}))
     :delete-action
     (fn [state! dispatch!]
-      ;; (jarman.tools.org/print-line "INSERT!")
+      ;; (jarman.org/print-line "INSERT!")
       (if (get-in (state!) [:model-changes :seal.id])
         (do
           (do ;; jarman.logic.connection/exec
@@ -126,7 +126,7 @@
    :actions
    {:insert-action
     (fn [state! dispatch!]
-      ;; (jarman.tools.org/print-line "INSERT!")
+      ;; (jarman.org/print-line "INSERT!")
       (jarman.logic.connection/exec
        (jarman.logic.sql-tool/insert!
         {:table_name :user
@@ -138,7 +138,7 @@
                           (.return-table_name (-> (state!) :plugin-toolkit :meta-obj)))}))
     :delete-action
     (fn [state! dispatch!]
-      ;; (jarman.tools.org/print-line "INSERT!")
+      ;; (jarman.org/print-line "INSERT!")
       (if (get-in (state!) [:model-changes :user.id])
         (do
           (jarman.logic.connection/exec

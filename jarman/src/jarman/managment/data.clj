@@ -2,7 +2,7 @@
   (:require
    [clojure.java.io :as io]
    [seesaw.core]
-   [jarman.tools.org :refer :all]
+   [jarman.org :refer :all]
    [jarman.config.environment :as env])
   (:import
    [java.io FileNotFoundException]))

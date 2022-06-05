@@ -24,7 +24,7 @@
    [jarman.logic.connection :as db]
    ;; [jarman.logic.metadata-toolbox :refer [not-allowed-rules allowed-rules]]
    ;; [datascript.core :as d]
-   [jarman.tools.org :refer :all]
+   [jarman.org :refer :all]
    [jarman.logic.metadata-core :as metadata-core]
    [jarman.logic.sql-tool
     :refer [select! update! insert!

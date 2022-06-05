@@ -5,7 +5,7 @@
    [clojure.java.io :as io]
    [jarman.config.environment :as env]
    [jarman.lang :refer :all]
-   [jarman.tools.org  :refer :all]))
+   [jarman.org  :refer :all]))
 
 (java.security.Security/addProvider (org.bouncycastle.jce.provider.BouncyCastleProvider.))
 

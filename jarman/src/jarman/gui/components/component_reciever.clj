@@ -3,7 +3,7 @@
    [clojure.pprint :refer [cl-format]]
    ;; ---
    [jarman.lang :refer :all]
-   [jarman.tools.org :refer :all]))
+   [jarman.org :refer :all]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HELPER MACROSES ;;;

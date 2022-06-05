@@ -9,7 +9,7 @@
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-tools      :as gtool]
    [jarman.application.extension-manager :as extension-manager]
-   [jarman.tools.org    :refer :all]
+   [jarman.org            :refer :all]
    [jarman.gui.gui-migrid :as gmg]
    [jarman.gui.gui-style  :as gs]
    [jarman.gui.popup      :as popup]

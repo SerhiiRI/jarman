@@ -14,7 +14,7 @@
    ;; environtemnt variables
    [jarman.logic.state :as state]
    [jarman.gui.gui-alerts-service :as i]
-   [jarman.tools.org :refer :all]
+   [jarman.org :refer :all]
    [jarman.application.collector-custom-themes]
    [jarman.gui.popup      :as popup])
   (:import (java.io IOException FileNotFoundException)

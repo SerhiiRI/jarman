@@ -17,7 +17,7 @@
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-tools      :as gtool]
    [jarman.logic.state        :as state]
-   [jarman.tools.org          :refer :all]))
+   [jarman.org                :refer :all]))
 
 ;; ┌───────────────────────────┐
 ;; │                           │

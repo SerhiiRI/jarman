@@ -12,7 +12,7 @@
    ;; logic
    [jarman.logic.state              :as state]
    [jarman.application.session            :as session]
-   [jarman.tools.org                :refer :all]
+   [jarman.org                      :refer :all]
    [jarman.lang                     :refer :all]
    ;; gui 
    [jarman.gui.gui-components       :as gcomp]

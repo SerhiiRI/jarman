@@ -34,7 +34,7 @@
    [jarman.config.vars              :refer [setq print-list-not-loaded]]
    [jarman.config.dot-jarman        :refer [dot-jarman-load]]
    [jarman.config.conf-language     :refer [do-load-language]]
-   [jarman.tools.org                :refer :all]
+   [jarman.org                      :refer :all]
    [jarman.lang                     :refer :all]
    ;; gui 
    [jarman.gui.builtin-themes.jarman-light]

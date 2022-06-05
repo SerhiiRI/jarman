@@ -12,7 +12,7 @@
    [jarman.config.vars :refer [defvar]]
    [jarman.lang :refer [in?]]
    [jarman.tools.fs :as fs]
-   [jarman.tools.org :refer [print-header print-line out-update print-multiline print-example]]
+   [jarman.org :refer [print-header print-line out-update print-multiline print-example]]
    ;; environtemnt variables
    [jarman.variables :as variables]
    [jarman.config.environment :as env])

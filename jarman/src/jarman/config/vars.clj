@@ -11,7 +11,7 @@
    ;; [clojure.data    :as cl-data]
    ;; Jarman 
    [jarman.lang :refer :all]
-   [jarman.tools.org  :refer :all]
+   [jarman.org  :refer :all]
    [jarman.config.environment :as env]))
 
 ;;;;;;;;;;;;;;;;

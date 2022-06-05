@@ -1,6 +1,6 @@
 (ns jarman.application.collector-custom-themes
   (:require
-   [jarman.tools.org   :refer :all]
+   [jarman.org         :refer :all]
    [jarman.config.vars :refer [defvar setj setq]]))
 
 (def ^:private selected-theme (atom nil))

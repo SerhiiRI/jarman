@@ -15,7 +15,7 @@
             [jarman.gui.gui-alerts-service :as gas]
             [jarman.faces                  :as face]
             [jarman.lang                   :refer :all]
-            [jarman.tools.org              :refer :all]
+            [jarman.org                    :refer :all]
             [jarman.logic.state            :as state]
             [jarman.logic.metadata         :as mt]
             [jarman.logic.sql-tool  :refer [select! update! insert!]]

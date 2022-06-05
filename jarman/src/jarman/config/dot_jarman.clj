@@ -10,7 +10,7 @@
    ;; Jarman
    [jarman.variables]
    [jarman.lang :refer :all]
-   [jarman.tools.org  :refer :all]
+   [jarman.org  :refer :all]
    [jarman.config.environment :as env]
    [jarman.config.vars :refer [setq defvar print-list-not-loaded variable-config-list]]))
 

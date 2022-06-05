@@ -1,4 +1,4 @@
-(ns jarman.tools.org)
+(ns jarman.org)
 (require '[clojure.pprint  :refer [cl-format]])
 (require '[clojure.string  :refer [split]])
 (require '[clojure.java.io :as io])
@@ -41,17 +41,17 @@
   (doall (map (fn [out-agent] (send out-agent (fn [wrt] (.close wrt)))) *out-writers*)))
 
 (defmacro out-repl [& body]
-  `(binding [jarman.tools.org/*out-writers* (conj jarman.tools.org/*out-writers* repl)
+  `(binding [jarman.org/*out-writers* (conj jarman.org/*out-writers* repl)
              *level* 0]
      ~@body))
 
 (defmacro out-update [& body]
-  `(binding [jarman.tools.org/*out-writers* (conj jarman.tools.org/*out-writers* updt)
+  `(binding [jarman.org/*out-writers* (conj jarman.org/*out-writers* updt)
              *level* 0]
      ~@body))
 
 (defmacro out-extension [& body]
-  `(binding [jarman.tools.org/*out-writers* (conj jarman.tools.org/*out-writers* extn)
+  `(binding [jarman.org/*out-writers* (conj jarman.org/*out-writers* extn)
              *level* 0]
      ~@body))
 
@@ -84,7 +84,7 @@
 
 (defn out-example [s]
   (out-line "#+begin_example")
-  (binding [jarman.tools.org/*level* (inc jarman.tools.org/*level*)]
+  (binding [jarman.org/*level* (inc jarman.org/*level*)]
     (doall
      (for [line (split-newline s)]
        (out-line line))))
@@ -92,7 +92,7 @@
 
 (defn out-src [lang s]
   (out-line (cl-format nil "#+begin_src ~A" (str lang)))
-  (binding [jarman.tools.org/*level* (inc jarman.tools.org/*level*)]
+  (binding [jarman.org/*level* (inc jarman.org/*level*)]
     (doall
      (for [line (split-newline s)]
        (out-line line))))
@@ -101,30 +101,30 @@
 (defn out-multiline [s]
   (doall
    (for [line (split-newline s)]
-     (jarman.tools.org/out-line line))))
+     (jarman.org/out-line line))))
 
 ;;;;;;;;;;;;;;;;;
 ;;; FUNCTIONS ;;;
 ;;;;;;;;;;;;;;;;;
 
 (defmacro print-header [header & body]
-  `(binding [jarman.tools.org/*level* (inc jarman.tools.org/*level*)]
+  `(binding [jarman.org/*level* (inc jarman.org/*level*)]
      ;; (if (= *level* 1) (println))
-     (jarman.tools.org/out-header ~header)
+     (jarman.org/out-header ~header)
      (do ~@body)))
 
 (defmacro print-line
-  ([] `(jarman.tools.org/out-line ""))
-  ([s] `(jarman.tools.org/out-line ~s)))
+  ([] `(jarman.org/out-line ""))
+  ([s] `(jarman.org/out-line ~s)))
 
 (defmacro print-example [s]
-  `(jarman.tools.org/out-example ~s))
+  `(jarman.org/out-example ~s))
 
 (defmacro print-src [lang s]
-  `(jarman.tools.org/out-src ~lang ~s))
+  `(jarman.org/out-src ~lang ~s))
 
 (defmacro print-multiline [s]
-  `(jarman.tools.org/out-multiline ~s))
+  `(jarman.org/out-multiline ~s))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; ERROR MESSAGE ;;;

@@ -12,7 +12,7 @@
    [clojure.pprint :refer [cl-format]]
    ;; Jarman
    [jarman.lang :refer :all]
-   [jarman.tools.org  :refer :all]
+   [jarman.org  :refer :all]
    [jarman.config.environment :as env]))
 
 (declare register!)

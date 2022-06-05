@@ -20,7 +20,7 @@
             [jarman.tools.swing        :as stool]
             [jarman.gui.popup          :as popup]
             [jarman.lang       :refer :all]
-            [jarman.tools.org  :refer :all]))
+            [jarman.org        :refer :all]))
 
 ;; ┌───────────────┐
 ;; │               │

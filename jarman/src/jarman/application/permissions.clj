@@ -37,7 +37,7 @@
   (:require
    [clojure.pprint    :refer [cl-format]]
    [jarman.lang :refer :all]
-   [jarman.tools.org  :refer :all]))
+   [jarman.org  :refer :all]))
 
 (defn- print-permission [permission-m]
   (print-multiline

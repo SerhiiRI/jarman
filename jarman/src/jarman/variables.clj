@@ -1,8 +1,6 @@
 (ns jarman.variables
   (:require [jarman.config.vars :refer [defvar]]))
 
-;; fixme:serhii
-;; rework on something like assoc list
 (defvar jarman-update-repository-list
   ["ftp://jarman:dupa@trashpanda-team.ddns.net"]
   :doc "List of update reposiotries"

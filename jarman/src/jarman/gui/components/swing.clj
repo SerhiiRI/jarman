@@ -1,17 +1,12 @@
 (ns jarman.gui.components.swing
   (:require
-   [seesaw.core :as c]
-   [seesaw.border  :as b]
    [seesaw.mig]
-   [jarman.faces              :as face]
-   ;; --
-   [clojure.pprint :refer [cl-format]]
-   [jarman.lang :refer :all])
+   [seesaw.core]
+   [seesaw.border]
+   [jarman.lang :refer :all]
+   [jarman.faces :as face])
   (:import
-   [java.awt GraphicsEnvironment GraphicsDevice]
-   [javax.swing Action KeyStroke]
-   [javax.swing AbstractAction InputMap ActionMap]
-   [java.awt.event KeyEvent InputEvent ActionEvent]))
+   [java.awt GraphicsEnvironment GraphicsDevice]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SCREEN SETTINGS ;;;
@@ -57,16 +52,45 @@
 
 (defn quick-frame [items]
  (-> 
-  (c/frame
+  (seesaw.core/frame
    :content
-   (c/scrollable
+   (seesaw.core/scrollable
     (seesaw.mig/mig-panel
      :background  face/c-compos-background-darker
      :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
-     :border (b/empty-border :thickness 10)
+     :border (seesaw.border/empty-border :thickness 10)
      :items (mapv vector items)))
    :title "Jarman" :size [1000 :by 800])
-  (c/pack!)
+  (seesaw.core/pack!)
   (jarman.gui.components.swing/choose-screen! 0)
-  (c/show!)))
+  (seesaw.core/show!)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; AWT/Swing helpers ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; cutted from 'jarman.gui.components.swing
+(defn ^sun.awt.image.ToolkitImage image-scale
+  "Function scale image by percent size.
+  Return `sun.awt.image.ToolkitImage` type.
+
+  Example:
+    (image-scale \"/path/to/photo\" 100)
+
+  See more:
+    javadoc `sun.awt.image.ToolkitImage`
+    javadoc `sun.awt.Image`"
+  ([image-path]
+   (if (instance? javax.swing.ImageIcon image-path) image-path
+     (seesaw.icon/icon (clojure.java.io/file image-path))))
+  ([image-path percent]
+   (if (instance? javax.swing.ImageIcon image-path) image-path
+    (let [image (.getImage (seesaw.icon/icon (clojure.java.io/file image-path)))
+          scaler (comp int #(Math/ceil %) #(* % (/ percent 100.0)))]
+      (doto (javax.swing.ImageIcon.)
+        (.setImage (.getScaledInstance image
+                                       (scaler (.getWidth image))
+                                       (scaler (.getHeight image))
+                                       java.awt.Image/SCALE_SMOOTH)))))))
+
 

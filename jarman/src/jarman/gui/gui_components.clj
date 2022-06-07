@@ -10,7 +10,7 @@
             [seesaw.mig    :as smig]
             [seesaw.rsyntax]
             [jarman.faces :as face]
-            [jarman.tools.swing    :as stool]
+            [jarman.gui.components.swing    :as stool]
             [jarman.lang           :refer :all]
             [jarman.logic.state    :as state]
             [jarman.gui.gui-tools  :as gtool]
@@ -276,7 +276,7 @@
            frame-hover true
            c-border-focus face/c-icon-btn-focus}}]
   (let [ico-off (rift icon-off icon-on)
-        ico-fn (fn [i](jarman.tools.swing/image-scale i size))
+        ico-fn (fn [i](jarman.gui.components.swing/image-scale i size))
         [t b l r] margin
         border-fn (fn [frame-color] (b/compound-border
                                          (b/empty-border :top t :bottom b :left l :right r)

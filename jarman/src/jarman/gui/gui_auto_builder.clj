@@ -62,7 +62,7 @@
 ;;                           :constraints ["wrap 1" "0px[grow, fill]0px" "5px[grow, fill]0px"]
 ;;                           :items [[(seesaw.core/label :text "SEARCH"
 ;;                                                       :halign :center
-;;                                                       :icon (jarman.tools.swing/image-scale
+;;                                                       :icon (jarman.gui.components.swing/image-scale
 ;;                                                              jarman.resource-lib.icon-library/loupe-blue-64-png 30))]
 ;;                                   [(seesaw.core/text :text ""
 ;;                                                      :halign :center
@@ -93,16 +93,16 @@
 ;;          :constraints ["wrap 1" "0px[grow, fill]0px" "5px[grow, fill]0px"]
 ;;          :items
 ;;          [[text-label]
-;;           [(seesaw.core/label :icon (jarman.tools.swing/image-scale
+;;           [(seesaw.core/label :icon (jarman.gui.components.swing/image-scale
 ;;                                      jarman.resource-lib.icon-library/basket-grey1-64-png 40)
 ;;                               :tip "UOJOJOJOJ"
 ;;                               :listen [:mouse-entered (fn [e] (seesaw.core/config!
 ;;                                                                e :cursor :hand
-;;                                                                :icon (jarman.tools.swing/image-scale
+;;                                                                :icon (jarman.gui.components.swing/image-scale
 ;;                                                                       jarman.resource-lib.icon-library/basket-blue1-64-png 40)))
 ;;                                        :mouse-exited  (fn [e] (seesaw.core/config!
 ;;                                                                e :cursor :default
-;;                                                                :icon (jarman.tools.swing/image-scale
+;;                                                                :icon (jarman.gui.components.swing/image-scale
 ;;                                                                       jarman.resource-lib.icon-library/basket-grey1-64-png 40)))
 ;;                                        :mouse-clicked (fn [e]
 ;;                                                         (seesaw.core/config! text-label :text "<- empty ->"))])]])]
@@ -121,7 +121,7 @@
 ;;                                               :items
 ;;                                               [[(seesaw.core/label :text "SEARCH"
 ;;                                                       :halign :center
-;;                                                       :icon (jarman.tools.swing/image-scale
+;;                                                       :icon (jarman.gui.components.swing/image-scale
 ;;                                                              jarman.resource-lib.icon-library/loupe-blue-64-png 30))]
 ;;                                                [(seesaw.core/text :text ""
 ;;                                                                   :halign :center
@@ -141,13 +141,13 @@
 (def auto-builder--table-view
   (fn [controller]
     (let [
-          ico-open (jarman.tools.swing/image-scale jarman.resource-lib.icon-library/plus-64-png 28)
-          ico-close (jarman.tools.swing/image-scale jarman.resource-lib.icon-library/minus-grey-64-png 28)
+          ico-open (jarman.gui.components.swing/image-scale jarman.resource-lib.icon-library/plus-64-png 28)
+          ico-close (jarman.gui.components.swing/image-scale jarman.resource-lib.icon-library/minus-grey-64-png 28)
           form-panel (seesaw.mig/mig-panel
                       :constraints ["wrap 1" "0px[300:, grow, fill]0px" "15px[fill]0px"]
                       :items [[(seesaw.core/label :text "SEARCH"
                                                   :halign :center
-                                                  :icon (jarman.tools.swing/image-scale
+                                                  :icon (jarman.gui.components.swing/image-scale
                                                          jarman.resource-lib.icon-library/loupe-blue-64-png 30))]
                               [(seesaw.core/text :text ""
                                                  :halign :center

@@ -1,4 +1,4 @@
-(ns jarman.tools.export-files
+(ns jarman.lib.export-files
   (:use
    seesaw.core
    seesaw.border
@@ -9,7 +9,7 @@
    clojure.walk)
   (:require
    [clojure.string :as string]
-   [jarman.tools.swing :as stool]
+   [jarman.gui.components.swing :as stool]
    [jarman.gui.gui-tools :refer :all]
    [jarman.resource-lib.icon-library :as icon]
    [jarman.config.environment :as env]

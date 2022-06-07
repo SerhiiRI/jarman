@@ -8,7 +8,7 @@
    ;; for datascript
    [clojure.set :as set]
    [datascript.core :as d]
-   ;;jarman-tools
+   ;;jarman.lib
    [jarman.managment.db-managment :as db-meta]))
 
 ;;;;;;;;;;;;;;

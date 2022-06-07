@@ -6,7 +6,7 @@
    [jarman.logic.connection :as db]
    [jarman.logic.sql-tool :as toolbox :include-macros true :refer :all]
    [jarman.logic.metadata :as metadata]
-   [jarman.tools.lang :refer :all])
+   [jarman.lang :refer :all])
   (:import (java.util Date)
            (java.text SimpleDateFormat)))
 

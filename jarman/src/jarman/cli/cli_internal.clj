@@ -6,7 +6,7 @@
    ;; [jarman.config.storage           :as storage]
    [jarman.variables]
    [jarman.managment.data           :as data]
-   [jarman.tools.swing              :as stool]
+   [jarman.lib.lib-icon-font-generator  :as stool]
    [jarman.lang                     :refer :all]
    [jarman.logic.update-manager     :as update-manager]
    [jarman.config.dot-jarman        :refer [dot-jarman-load]]))

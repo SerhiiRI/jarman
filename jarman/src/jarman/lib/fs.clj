@@ -1,4 +1,4 @@
-(ns jarman.tools.fs
+(ns jarman.lib.fs
   (:require [me.raynes.fs :as rafs]
             [clojure.java.io :as io]
             [jarman.config.environment :as env]))

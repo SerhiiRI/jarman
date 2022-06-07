@@ -12,7 +12,7 @@
             [jarman.gui.gui-tools :as gtool]
             [jarman.gui.gui-alerts-service :as gas]
             ;; deverloper tools 
-            [jarman.tools.swing :as stool]
+            [jarman.gui.components.swing :as stool]
             [jarman.logic.state :as state]
             [jarman.lang :refer :all]
             [jarman.logic.changes-service :as cs]

@@ -1,5 +1,5 @@
 (ns jarman.config.tools
-  (:require [jarman.tools.lang :refer :all]))
+  (:require [jarman.lang :refer :all]))
 
 (def ^:private offset-char "| ")
 (defn- block? [m] (= (:type m) :block))

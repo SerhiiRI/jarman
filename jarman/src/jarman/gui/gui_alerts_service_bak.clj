@@ -5,7 +5,7 @@
   (:require [seesaw.core                      :as c]
             [seesaw.border                    :as b]
             [jarman.faces                     :as face]
-            [jarman.tools.swing               :as stool]
+            [jarman.gui.components.swing               :as stool]
             [jarman.gui.gui-style             :as gs]
             [jarman.gui.gui-tools             :as gtool]
             [jarman.gui.gui-components        :as gcomp]

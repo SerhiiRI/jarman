@@ -7,7 +7,7 @@
    [jarman.faces :as face]
    [seesaw.core                      :as c]
    [seesaw.util                      :as u]
-   [jarman.tools.swing               :as stool]
+   [jarman.gui.components.swing      :as stool]
    [clojure.string                   :as string]
    [jarman.logic.state               :as state]
    [jarman.resource-lib.icon-library :as icon]

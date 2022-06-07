@@ -10,14 +10,14 @@
    [clojure.string :as string]
    [seesaw.util :as u]
    [jarman.gui.gui-tools :as gtool]
-   [jarman.tools.swing :as stool]
+   [jarman.gui.components.swing :as stool]
    [jarman.resource-lib.icon-library :as icon]
    [jarman.logic.state :as state]
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-migrid     :as gmg]
    [jarman.gui.gui-style      :as gs]
    [jarman.resource-lib.icon-library :as icon]
-   [jarman.tools.swing               :as stool]
+   [jarman.gui.components.swing               :as stool]
    [jarman.lang                      :refer :all])
   (:import javax.swing.JLayeredPane
            java.awt.PointerInfo

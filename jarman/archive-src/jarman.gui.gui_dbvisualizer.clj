@@ -22,9 +22,9 @@
             [jarman.gui.gui-style :as gs]
             
             ;; deverloper tools 
-            [jarman.tools.swing :as stool]
+            [jarman.gui.components.swing :as stool]
             [jarman.logic.metadata :as mt]
-            [jarman.tools.lang :refer :all]
+            [jarman.lang :refer :all]
            
             ;; [jarman.logic.view :as view]
             ;; [jarman.gui.gui-docs :as docs]

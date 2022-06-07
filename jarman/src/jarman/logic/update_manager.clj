@@ -11,7 +11,7 @@
    ;; local functionality
    [jarman.config.vars :refer [defvar]]
    [jarman.lang :refer [in?]]
-   [jarman.tools.fs :as fs]
+   [jarman.lib.fs :as fs]
    [jarman.org :refer [print-header print-line out-update print-multiline print-example]]
    ;; environtemnt variables
    [jarman.variables :as variables]

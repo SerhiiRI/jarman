@@ -4,7 +4,7 @@
             [jarman.faces   :as face]
             [jarman.org     :refer :all]
             [jarman.lang       :refer :all]
-            [jarman.tools.swing  :as stool]
+            [jarman.gui.components.swing  :as stool]
             [jarman.logic.state                :as state]
             [jarman.application.session              :as session]
             [jarman.logic.view-manager         :as vmg]

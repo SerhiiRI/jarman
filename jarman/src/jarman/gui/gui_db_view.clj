@@ -9,7 +9,7 @@
             [jarman.gui.gui-style             :as gs]
             [jarman.faces :as face]
             [jarman.gui.gui-tools             :as gtool]
-            [jarman.tools.swing               :as stool]
+            [jarman.gui.components.swing               :as stool]
             [jarman.gui.gui-alerts-service    :refer :all]))
 
 (import javax.swing.JLayeredPane)

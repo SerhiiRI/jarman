@@ -1,31 +1,22 @@
-;;; File contain some usefull functions, hacks, or examples
-;;; Contens:
-;;; * Parameterss configurations
-;;; * AWT/Swing helpers
-;;; * Icons library generator
-;;; * Fonts library generator
-;;; * Font debug, tool
-;;; * Map-type toolkit
-;;; ** head/tail destruction for maps
-;;; ** cond-contain test if key in map
-;;; ** key-paths
-(ns jarman.tools.swing
-  (:use clojure.reflect
-        seesaw.core)
-  (:require [clojure.string :as string]
-            [jarman.lang :as lang]
-            [clojure.java.io :as io]))
+(ns jarman.lib.lib-icon-font-generator
+  (:require
+   [seesaw.core]
+   [clojure.string :as string]
+   [jarman.lang :as lang]
+   [clojure.java.io :as io]
+   [jarman.gui.components.swing :as swing]))
+
+(def ^:dynamic *icon-path* "pack icon directory" "icons/main")
+(def ^:dynamic *icon-library* "final library class-path file" "src/jarman/resource_lib/icon_library.clj")
+(def ^:dynamic *acceptable-icon-file-format*     ["png" "img"])
+
+(def ^:dynamic *font-path* "font directory"      "resources/fonts/")
+(def ^:dynamic *font-library* "final library class-path file" "src/jarman/resource_lib/font_library.clj")
+(def ^:dynamic *acceptable-font-file-format*     ["ttf"])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Paramters configuration ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def ^:dynamic *icon-library* "final library class-path file" "src/jarman/resource_lib/icon_library.clj")
-(def ^:dynamic *font-library* "final library class-path file" "src/jarman/resource_lib/font_library.clj")
-(def ^:dynamic *font-path* "font directory"      "resources/fonts/")
-(def ^:dynamic *icon-path* "pack icon directory" "icons/main")
-(def ^:dynamic *acceptable-icon-file-format*     ["png" "img"])
-(def ^:dynamic *acceptable-font-file-format*     ["ttf"])
 
 (defn namespace-for-path-name
   "Description
@@ -42,58 +33,6 @@
           (lang/join "." (lang/filter-nil (if project-file-offset
                                   [project-file-root project-file-offset project-file-name]
                                   [project-file-root project-file-name])))) (println "Error generation namespace. Not validated name:" f)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; AWT/Swing helpers ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; LITTLE BIT DEPRECATED
-;; (defn ^sun.awt.image.ToolkitImage image-scale
-;;   "Function scale image by percent size.
-;;   Return `sun.awt.image.ToolkitImage` type.
-
-;;   Example:
-;;     (image-scale \"/path/to/photo\" 100)
-
-;;   See more:
-;;     javadoc `sun.awt.image.ToolkitImage`
-;;     javadoc `sun.awt.Image`"
-;;   ([image-path]
-;;    {:pre [(not (empty? image-path))]}
-;;    (seesaw.icon/icon (clojure.java.io/file image-path)))
-;;   ([image-path percent]
-;;    {:pre [(not (empty? image-path))]}
-;;    (let [image (.getImage (seesaw.icon/icon (clojure.java.io/file image-path)))
-;;          scaler (comp int #(Math/ceil %) #(* % (/ percent 100.0)))]
-;;      (doto (javax.swing.ImageIcon.)
-;;        (.setImage (.getScaledInstance image
-;;                          (scaler (.getWidth image))
-;;                          (scaler (.getHeight image))
-;;                          java.awt.Image/SCALE_SMOOTH))))))
-
-(defn ^sun.awt.image.ToolkitImage image-scale
-  "Function scale image by percent size.
-  Return `sun.awt.image.ToolkitImage` type.
-
-  Example:
-    (image-scale \"/path/to/photo\" 100)
-
-  See more:
-    javadoc `sun.awt.image.ToolkitImage`
-    javadoc `sun.awt.Image`"
-  ([image-path]
-   (if (instance? javax.swing.ImageIcon image-path) image-path
-     (seesaw.icon/icon (clojure.java.io/file image-path))))
-  ([image-path percent]
-   (if (instance? javax.swing.ImageIcon image-path) image-path
-    (let [image (.getImage (seesaw.icon/icon (clojure.java.io/file image-path)))
-          scaler (comp int #(Math/ceil %) #(* % (/ percent 100.0)))]
-      (doto (javax.swing.ImageIcon.)
-        (.setImage (.getScaledInstance image
-                                       (scaler (.getWidth image))
-                                       (scaler (.getHeight image))
-                                       java.awt.Image/SCALE_SMOOTH)))))))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Icons library generator ;;;
@@ -154,9 +93,9 @@
                                                                 :items [(seesaw.core/text :text (str icon-symbol-name)
                                                                                           :border (seesaw.border/empty-border :right 10)
                                                                                           :halign :right)
-                                                                        (seesaw.core/label :icon (seesaw.icon/icon (image-scale icon-file (get-scale-percent (str icon-symbol-name))))
+                                                                        (seesaw.core/label :icon (seesaw.icon/icon (swing/image-scale icon-file (get-scale-percent (str icon-symbol-name))))
                                                                                            :listen [:mouse-clicked (fn [e]
-                                                                                                                     (print (prn-str `(~'image-scale ~icon-symbol-name 100))))])]))
+                                                                                                                     (print (prn-str `(~'swing/image-scale ~icon-symbol-name 100))))])]))
                                                              (get-icon-data)))))
         seesaw.core/pack!
         seesaw.core/show!)))
@@ -177,19 +116,14 @@
   (if (or (lang/in? (seq "1234567890-=_") (first (.getName file-name))) (not (some #(= \. %) (seq (.getName file-name))))) nil
           (let [frmt (last (clojure.string/split (str file-name) #"\."))]
             (lang/in? *acceptable-font-file-format* frmt))))
-;; => Syntax error compiling at (src/jarman/tools/swing.clj:160:11).
+;; => Syntax error compiling at (src/jarman.gui.components.swing.clj:160:11).
 ;;    No such namespace: lang
-
-;; => Syntax error compiling at (src/jarman/tools/swing.clj:160:11).
+;; => Syntax error compiling at (src/jarman.gui.components.swing.clj:160:11).
 ;;    No such namespace: lang
-
-;; => Syntax error compiling at (src/jarman/tools/swing.clj:160:11).
+;; => Syntax error compiling at (src/jarman.gui.components.swing.clj:160:11).
 ;;    No such namespace: lang
-
-;; => Syntax error compiling at (src/jarman/tools/swing.clj:160:11).
+;; => Syntax error compiling at (src/jarman.gui.components.swing.clj:160:11).
 ;;    No such namespace: lang
-
-
 
 (defn- get-font-data []
   (for [font-file (sort-by #(.getName %) (filter is-font-supported? (.listFiles (clojure.java.io/file *font-path*))))]
@@ -255,4 +189,3 @@
       seesaw.core/show!))
 
 
-;; (debug-font-panel)

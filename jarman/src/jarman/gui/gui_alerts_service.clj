@@ -7,7 +7,7 @@
   (:require [clojure.string                   :as string]
             [seesaw.core                      :as c]
             [seesaw.border                    :as b]
-            [jarman.tools.swing               :as stool]
+            ;; [jarman.gui.components.swing               :as stool]
             [jarman.gui.gui-style             :as gs]
             [jarman.gui.gui-tools             :as gtool]
             [jarman.gui.gui-components        :as gcomp]
@@ -520,6 +520,13 @@
 ;;  Interactions base
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; (comment
+;;   {:type :incorrect-login-or-password
+;;    :message-head [:header :user]
+;;    :message-body [:alerts :incorrect-login-or-pass]
+;;    :attr {:connection (c/connection-get) :login login :password password}})
+;; (defmulti error-to-danger-box [e] (class e))
 
 (defn info
   "Description:

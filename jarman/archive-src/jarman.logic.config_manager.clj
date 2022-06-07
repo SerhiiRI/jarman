@@ -21,7 +21,7 @@
 ;;    (configuration) 
 ;;    (configuration [:blue]) 
 ;;    (configuration [:blue] "#00A")
-(ns jarman.tools.config-manager
+(ns jarman.lib.config-manager
   (:gen-class)
   (:require [clojure.string :as string]
             [clojure.java.io :as io]))

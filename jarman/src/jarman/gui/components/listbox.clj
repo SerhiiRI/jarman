@@ -8,7 +8,7 @@
    [seesaw.border  :as b]
    ;; Jarman
    [jarman.lang                  :refer :all]
-   [jarman.tools.fuzzy-search]
+   [jarman.lib.fuzzy-search]
    [jarman.faces                 :as face]
    [jarman.gui.gui-tools         :as gui-tool]
    [jarman.gui.components.panels :as gui-panels]
@@ -66,7 +66,7 @@
                                             :pattern t
                                             :choise 0
                                             :list (->> words
-                                                       (jarman.tools.fuzzy-search/dice t)
+                                                       (jarman.lib.fuzzy-search/dice t)
                                                        (sort-by :value)
                                                        (reverse)
                                                        (mapv :model)))))))
@@ -103,7 +103,7 @@
                                          :pattern (c/value (c/to-widget e))
                                          :choise 0
                                          :list (->> string-list
-                                                    (jarman.tools.fuzzy-search/dice (c/value (c/to-widget e)))
+                                                    (jarman.lib.fuzzy-search/dice (c/value (c/to-widget e)))
                                                     (sort-by :value)
                                                     (reverse)
                                                     (mapv :model)))))

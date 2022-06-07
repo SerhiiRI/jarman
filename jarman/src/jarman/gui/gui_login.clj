@@ -17,7 +17,7 @@
             [jarman.logic.connection   :as conn]
             [jarman.logic.state        :as state]
             [jarman.application.session      :as session]
-            [jarman.tools.swing        :as stool]
+            [jarman.gui.components.swing        :as stool]
             [jarman.gui.popup          :as popup]
             [jarman.lang       :refer :all]
             [jarman.org        :refer :all]))

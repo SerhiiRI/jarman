@@ -18,14 +18,14 @@
             [jarman.gui.gui-tools         :as gtool]
             [jarman.gui.gui-components    :as gcomp]
             [jarman.gui.gui-style         :as gs]
-            [jarman.tools.swing           :as stool]
+            [jarman.gui.components.swing           :as stool]
             [jarman.logic.state           :as state]
             [jarman.gui.gui-seed          :as gseed]
             [jarman.gui.gui-editors       :as gedit]
             [jarman.gui.gui-views-service :as gvs]
             [jarman.interaction :as i]
             ;; deverloper tools 
-            [jarman.tools.lang :refer :all])
+            [jarman.lang :refer :all])
   (:import
    (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)))
 

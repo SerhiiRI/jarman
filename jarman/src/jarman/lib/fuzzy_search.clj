@@ -1,4 +1,4 @@
-(ns jarman.tools.fuzzy-search
+(ns jarman.lib.fuzzy-search
   (:require [clojure.pprint :as pprint]
             [jarman.lang :refer :all]
             [clj-fuzzy.metrics :as fuzzy]))

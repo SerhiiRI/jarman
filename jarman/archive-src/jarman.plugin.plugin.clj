@@ -1,10 +1,10 @@
 ;; jarman.plugin.plugin -> 
 (ns jarman.application.collector-view-plugins
   (:require [jarman.config.environment :as env]
-            [jarman.tools.lang :refer :all]
+            [jarman.lang :refer :all]
             [clojure.spec.alpha :as s]
             [clojure.java.io :as io]
-            [jarman.tools.org :refer :all]
+            [jarman.org :refer :all]
             [jarman.config.vars :refer [defvar setj setq]]))
 
 (declare register-view-plugin)

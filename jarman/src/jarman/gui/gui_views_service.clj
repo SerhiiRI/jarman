@@ -13,7 +13,7 @@
    [jarman.gui.gui-style             :as gs]
    [jarman.faces                     :as face]
    [seesaw.util                      :as u]
-   [jarman.tools.swing        :as stool]
+   [jarman.gui.components.swing        :as stool]
    [jarman.gui.gui-components :as gcomp]
    [jarman.gui.gui-tools      :as gtool]
    [jarman.logic.state        :as state]

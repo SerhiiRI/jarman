@@ -17,7 +17,7 @@
    [jarman.lang :refer :all :as lang]
    [jarman.gui.gui-tools :refer :all :as gtool]
    [jarman.resource-lib.icon-library :as ico]
-   [jarman.tools.swing :as stool]
+   [jarman.gui.components.swing :as stool]
    [jarman.gui.gui-components :refer :all :as gcomp]
    ;; [jarman.gui.gui-calendar :as calendar]
    [jarman.config.storage :as storage]
@@ -177,7 +177,7 @@
 ;;                               :items [[(c/label)]])
 ;;         x nil ;;--------Chooser component parts
 ;;         input-text (gcomp/input-text :args [:text "" :font (gtool/getFont  :name "Monospaced")])
-;;         icon (c/label :icon (jarman.tools.swing/image-scale ico/enter-64-png 30)
+;;         icon (c/label :icon (jarman.gui.components.swing/image-scale ico/enter-64-png 30)
 ;;                       :border (sborder/empty-border :thickness 8)
 ;;                       :listen [:mouse-clicked (fn [e] (let [new-path (chooser/choose-file :success-fn  (fn [fc file] (.getAbsolutePath file)))]
 ;;                                                         (c/config! input-text :text new-path)))])

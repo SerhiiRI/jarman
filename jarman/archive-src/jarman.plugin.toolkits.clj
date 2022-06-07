@@ -8,7 +8,7 @@
    ;; Jarman toolkit
    ;; [jarman.logic.document-manager :as doc]
    ;; [jarman.logic.connection :as db]
-   ;; [jarman.tools.lang :include-macros true :refer :all]
+   ;; [jarman.lang :include-macros true :refer :all]
    ;; [jarman.config.environment :as env]
    ;; [jarman.logic.sql-tool :refer [select! update! delete! insert!]]
    [jarman.logic.metadata :as mt])

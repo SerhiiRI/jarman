@@ -13,7 +13,7 @@
             [jarman.config.config-manager :as conf]
             [jarman.resource-lib.icon-library :as icon]
             [clojure.java.jdbc :as jdbc]
-            [jarman.tools.swing :as stool]
+            [jarman.gui.components.swing :as stool]
             [jarman.gui.gui-app :as app]
             [jarman.gui.gui-components :as components]
             [jarman.logic.connection :as c]

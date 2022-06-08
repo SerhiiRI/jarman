@@ -1,24 +1,25 @@
 (ns jarman.gui.gui-alerts-service
-  (:import (java.awt Color)
-           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
-           (java.awt.event MouseEvent))
-  (:use seesaw.dev
-        seesaw.mig)
-  (:require [clojure.string                   :as string]
-            [seesaw.core                      :as c]
-            [seesaw.border                    :as b]
-            ;; [jarman.gui.components.swing               :as stool]
-            [jarman.gui.gui-style             :as gs]
-            [jarman.gui.gui-tools             :as gtool]
-            [jarman.gui.gui-components        :as gcomp]
-            [jarman.gui.popup                 :as popup]
-            [jarman.logic.state               :as state]
-            [jarman.faces                     :as face]
-            [jarman.resource-lib.icon-library :as icon]
-            [jarman.gui.gui-migrid            :as gmg]
-            [jarman.lang                      :refer :all]
-            [clojure.pprint                   :refer [cl-format]]
-            [jarman.org :refer :all]))
+  (:import
+   (java.awt Color)
+   (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
+   (java.awt.event MouseEvent)
+   (clojure.lang ExceptionInfo))  
+  (:require
+   [clojure.string                   :as string]
+   [clojure.pprint                   :refer [cl-format]]
+   [seesaw.core                      :as c]
+   [seesaw.mig                       :as seesaw-mig]
+   [seesaw.border                    :as b]
+   [jarman.gui.gui-style             :as gs]
+   [jarman.gui.gui-tools             :as gtool]
+   [jarman.gui.gui-components        :as gcomp]
+   [jarman.gui.popup                 :as popup]
+   [jarman.logic.state               :as state]
+   [jarman.faces                     :as face]
+   [jarman.resource-lib.icon-library :as icon]
+   [jarman.gui.gui-migrid            :as gmg]
+   [jarman.lang                      :refer :all]
+   [jarman.org :refer :all]))
 
 ;; ┌─────────────────┐
 ;; │                 │
@@ -131,13 +132,12 @@
   (c/label))
 
 (defn- new-alerts-box []
-  (let [mig (mig-panel :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, bottom]0px[fill]5px"]
-                       :opaque? false
-                       :bounds [50 0 (:box-w (state!)) 300]
-                       :background (Color. 0 0 0 0)
-                       ;;:border (b/line-border :thickness 1 :color "#fff")
-                       :items [[(alerts-box-top-bar)]])]
-    mig))
+  (seesaw-mig/mig-panel
+    :constraints ["wrap 1" "0px[grow, fill]0px" "0px[grow, bottom]0px[fill]5px"]
+    :opaque? false
+    :bounds [50 0 (:box-w (state!)) 300]
+    :background (Color. 0 0 0 0)
+    :items [[(alerts-box-top-bar)]]))
 
 (defn- rm-alerts-box
   "Description:
@@ -166,8 +166,6 @@
     (dispatch! {:action :new-alerts-box
                 :box    (new-alerts-box)}))
   (.add (state/state :app) (:alerts-box (state!)) (Integer. 999)))
-
-
 
 ;; ┌──────────────────────┐
 ;; │                      │
@@ -515,18 +513,12 @@
  )
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;  Interactions base
 ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; (comment
-;;   {:type :incorrect-login-or-password
-;;    :message-head [:header :user]
-;;    :message-body [:alerts :incorrect-login-or-pass]
-;;    :attr {:connection (c/connection-get) :login login :password password}})
-;; (defmulti error-to-danger-box [e] (class e))
+
+
 
 (defn info
   "Description:
@@ -615,6 +607,38 @@
     (print-line "frame configurations: ")
     (print-src "clojure" (pr-str (copy-locals type time s-popup expand actions))))
    (alert header body :type type :time time :s-popup s-popup :expand expand :actons actions)))
+
+(defn error-to-alert [e]
+  (cond
+    (= (class e) clojure.lang.ExceptionInfo)
+    (let [{:keys [type plugin message-head message-body attr]} (ex-data e)
+          message-head (cl-format nil "~@[~A. ~]~A"
+                         (when plugin (name plugin))
+                         (apply gtool/get-lang message-head))
+          message-body (cl-format nil "~A~%~@[Attributes~%~A~]Stacktrace:~%~A~%"
+                         (apply gtool/get-lang message-body)
+                         (when (not-empty attr) (cl-format nil "~{~{~A~^ - ~} ~%~}" (seq (ex-data e))))
+                         (with-out-str (clojure.stacktrace/print-stack-trace e 10)))]
+      (danger message-head message-body :time 10))
+    (instance? Exception e)
+    (let [message-head (.getMessage e)
+          message-body (with-out-str (clojure.stacktrace/print-stack-trace e 20))]
+      (danger message-head message-body :time 10))
+    :else (print-error "Undefnied error type")))
+
+(comment
+ (try
+   #_(throw (ex-info "SUKA"
+              {:type :incorrect-login-or-password
+               :message-head [:header :user]
+               :plugin :chuj
+               :message-body [:alerts :incorrect-login-or-pass]
+               :attr {:connection "fdsa" :dfsa {:A 10 :b 29}}}))
+   (do (/ 0 0))
+   (catch ExceptionInfo e
+     (println (error-to-alert e)))
+   (catch java.lang.ArithmeticException e
+     (println (error-to-alert e)))))
 
 (defn delay-alert
   [header body

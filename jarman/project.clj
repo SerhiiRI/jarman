@@ -45,9 +45,9 @@
   :uberjar-name "jarman-standalone.jar"
   :java-source-paths ["src/java"]
   :javac-options     ["-Xlint:unchecked"]
-  :jvm-options ["-Dswing.aatext=true"
-                "-Dawt.useSystemAAFontSettings=on"
-                "-Dsun.java2d.xrender=true"]
+  :jvm-opts ["-Dswing.aatext=true"
+             "-Dawt.useSystemAAFontSettings=on"
+             "-Dsun.java2d.xrender=true"]
   :profiles {:user
              {:plugins [[lein-launch4j "0.1.2"]]
               :launch4j-install-dir "../installer"

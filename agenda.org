@@ -117,25 +117,17 @@ Exception in thread "AWT-EventQueue-1" java.lang.NullPointerException
    #+end_example
 
 * Common thread
-** TODO /Refactor/. =jarman.tools= cleaning                            :@Julia:
-  - [ ] =jarman.tools=, should be replaced on =jarman.lib= with subfolders
-  - [ ] =jarman.tools.lang= [0/2]
-    - [ ] clean and archive unnecessary function
-    - [ ] push onto top-level
-  - [ ] =jarman.tools.org=. Push onto top-level
-  - [ ] =jarman.tools.swing=.
-    This namespace should be divided. New place for any swing
-    toolkit's is =jarman.gui.swing=. 
-    - [ ] move =jarman.gui.components.swing= to =jarman.gui.swing=.
-    - [ ] push some swing toolkit to this namespace.
-    - [ ] rename this namespace to something like /resource-connector/.
-      it will be deprecated too. So we need to replace this whole
-      mechanism onto new approach, and UNPIN mentioned ns from another
-      as much as we can.
-    
-decompose =jarman.tools.lang=, and move all to the
-  jarman.lang with keeping the.
+** TODO [#1] /Refactor/. gui-components replacement                    :@Julia:
+   gui-components namespace is fucked, and we should move most components from it to
+   gui-components2 with docuementations, discription's and new attribute approach.
+   In this ticket fill three list's:
+   - Components that never used
+     - <function name>...
+   - Components moved or replaced by gui-components2
+   - Components what might be deleted/replaced/rewrited
+
 ** TODO [#3] /Feature/. On exit event [0/1]                    :@Aleks:@Serhii:
+   On production with
    - [ ] Create event when close [1/2]
      - [ ] Autoclose log stream's /:@Serhii:/
      - [X] Override window events
@@ -181,6 +173,44 @@ decompose =jarman.tools.lang=, and move all to the
 ** PLANNED Service Period. sort contract list                       :@Serhii:
    - [ ] sorting contract by date
    - [ ] colorize contract by active-nonactive depend on current date
+** /Investigation/. db connection                                     :@Serhii:
+   Mark all internal usages of database connection.
+
+   DB - =src/jarman/logic/connection=
+   SSQL - =src/jarman/logic/sql_tool.clj=
+
+   | NAMESPACE                                    | SSQL  | DB    | UNUSED |
+   |----------------------------------------------+-------+-------+--------|
+   | jarman.lib.key_value_tool.clj                | true  | false | true   |
+   | jarman.logic.aleks_playground.clj            | true  | true  | true   |
+   | jarman.logic.julia_playground.clj            | true  | true  | true   |
+   | jarman.logic.metadata.clj                    | true  | true  | true   |
+   | jarman.plugin.toolkits.clj                   | true  | true  | true   |
+   | jarman/application/session.clj               | true  | true  |        |
+   | jarman/gui/components/component_reciever.clj | true  | true  |        |
+   | jarman/gui/components/database_table.clj     | true  | true  |        |
+   | jarman/gui/components/dialog.clj             | true  | true  |        |
+   | jarman/gui/components/simple_table.clj       | true  | true  |        |
+   | jarman/gui/gui_app.clj                       | false | true  |        |
+   | jarman/gui/gui_docs.clj                      | true  | true  |        |
+   | jarman/gui/gui_editors.clj                   | true  | true  |        |
+   | jarman/gui/gui_grafh.clj                     | false | true  |        |
+   | jarman/gui/gui_login.clj                     | false | true  |        |
+   | jarman/gui/gui_main_menu.clj                 | true  | true  |        |
+   | jarman/logic/composite_components.clj        | true  | true  |        |
+   | jarman/logic/document_manager.clj            | true  | true  |        |
+   | jarman/logic/metadata_backup.clj             | true  | true  |        |
+   | jarman/logic/metadata_core.clj               | true  | true  |        |
+   | jarman/logic/metadata_diff_algorythm.clj     | false | true  |        |
+   | jarman/logic/metadata_sql_converter.clj      | true  | true  |        |
+   | jarman/logic/metadata_test.clj               | true  | true  |        |
+   | jarman/logic/sql_helpers.clj                 | true  | true  |        |
+   | jarman/logic/structural_initializer.clj      | true  | true  |        |
+   | jarman/logic/view_manager.clj                | true  | true  |        |
+   | jarman/managment/data_fish.clj               | true  | true  |        |
+   | jarman/managment/data_managment.clj          | true  | true  |        |
+   | jarman/managment/ekka.fish.org               | true  | true  |        |
+   
 ** Ekka todo#1 chages                                 :@Julia:@Aleks:@Serhii:
 *** Підприємець
     -   ЄДРПОУ - 10 цифр довжина з переду нулями

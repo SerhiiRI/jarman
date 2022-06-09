@@ -814,3 +814,30 @@ CLOSED: [2022-06-01 Wed 03:28]
 :ARCHIVE_TODO: DONE
 :END:
 Fix loading stage, =.jarman= should be loaded after plugin was compiled.
+
+* DONE /Refactor/. =jarman.tools= cleaning                               :@Julia:
+CLOSED: [2022-06-08 Wed 08:30]
+:PROPERTIES:
+:ARCHIVE_TIME: 2022-06-08 Wed 08:30
+:ARCHIVE_FILE: ~/programs/jarman/agenda.org
+:ARCHIVE_OLPATH: Common thread
+:ARCHIVE_CATEGORY: agenda
+:ARCHIVE_TODO: DONE
+:END:
+  - [X] =jarman.tools=, should be replaced on =jarman.lib= with subfolders
+  - [X] =jarman.tools.lang= [2/2]
+    - [X] clean and archive unnecessary function
+    - [X] push onto top-level
+  - [X] =jarman.tools.org=. Push onto top-level
+  - [X] =jarman.tools.swing=.
+    This namespace should be divided. New place for any swing
+    toolkit's is =jarman.gui.swing=. 
+    - [X] move =jarman.gui.components.swing= to =jarman.gui.swing=.
+    - [X] push some swing toolkit to this namespace.
+    - [X] rename this namespace to something like /resource-connector/.
+      it will be deprecated too. So we need to replace this whole
+      mechanism onto new approach, and UNPIN mentioned ns from another
+      as much as we can.
+    
+decompose =jarman.tools.lang=, and move all to the
+  jarman.lang with keeping the.

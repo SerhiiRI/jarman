@@ -11,7 +11,24 @@
 
 (def ^:private jarman-light-theme
   "Standart jarman color preset"
-  {"clouds"           "#ecf0f1"
+  {"font-light"               "Ubuntu Light"
+   "font-regular"             "Ubuntu Regular"
+   "font-medium"              "Ubuntu Medium"
+   "font-bold"                "Ubuntu Bold"
+   "font-italic-light"        "Ubuntu Light Italic"
+   "font-italic-regular"      "Ubuntu Italic"
+   "font-italic-medium"       "Ubuntu Medium Italic"
+   "font-italic-bold"         "Ubuntu Bold Italic"
+   "font-mono-light"          "JetBrains Mono Light"
+   "font-mono-regular"        "JetBrains Mono Regular"
+   "font-mono-medium"         "JetBrains Mono Medium"
+   "font-mono-bold"           "JetBrains Mono Bold"
+   "font-mono-italic-light"   "JetBrains Mono Light Italic"
+   "font-mono-italic-regular" "JetBrains Mono Italic"
+   "font-mono-italic-medium"  "JetBrains Mono Medium Italic"
+   "font-mono-italic-bold"    "JetBrains Mono Bold Italic"
+
+   "clouds"           "#ecf0f1"
    "silver"           "#dfe4ea"
    "concrete"         "#95a5a6"
    "asbestos"         "#7f8c8d"
@@ -63,12 +80,11 @@
                        ;; ["#ececec" "#ececec" "#f7f7f7"]
                         ["#e0e0e0" "#e0e0e0" "#efefef"]
                         ["#d5d5d5" "#d5d5d5" "#dfdfdf"]
-                        ["#c5c5c5" "#c5c5c5" "#cfcfcf"]
-                        ]})
+                        ["#c5c5c5" "#c5c5c5" "#cfcfcf"]]})
 
 ;;;;;;;;;;;;;;
 ;;; HELPER ;;;
-;;;;;;;;;;;;;; 
+;;;;;;;;;;;;;;
 
 (defmacro ^:private with-jarman-ligth-vars
   [& body]
@@ -86,138 +102,156 @@
   :loader
   (with-jarman-ligth-vars
     (jarman.gui.faces-system/custom-theme-set-faces
-     '( ;; -- Theme binder --
-       ;; Default colors
-       c-white                     clouds
-       c-black                     jarman-blue-strong
-       c-red                       pomegranate
-       c-orange                    carrot
-       c-yellow                    sun-flower
-       c-green                     green-sea
-       c-light-blue                jarman-blue
-       c-strong-blue               jarman-blue-dark
-       c-purple                    wisteria
-       
-       ;; Default styles  !!! Do not using in code, do not add new here !!!
-       c-foreground               jarman-blue-strong
-       c-foreground-title         jarman-blue-strong
-       s-foreground               font-size
-       c-caret                    jarman-blue-dark
+      '(;; -- Theme binder --
 
-       c-layout-background        gray-light-2
-       c-layout-background-light  gray-light-3
-       
-       c-compos-background        white
-       c-compos-background-light  gray-super-light
-       c-compos-background-dark   gray
-       c-compos-background-darker gray-dark-light
-       
-       c-background-detail        c-layout-background
+        ;; Fonts
+        f-light                     font-light
+        f-regular                   font-regular
+        f-medium                    font-medium
+        f-bold                      font-bold
+        f-italic-light              font-italic-light
+        f-italic-regular            font-italic-regular
+        f-italic-medium             font-italic-medium
+        f-italic-bold               font-italic-bold
+        f-mono-light                font-mono-light
+        f-mono-regular              font-mono-regular
+        f-mono-medium               font-mono-medium
+        f-mono-bold                 font-mono-bold
+        f-mono-italic-light         font-mono-italic-light
+        f-mono-italic-regular       font-mono-italic-regular
+        f-mono-italic-medium        font-mono-italic-medium
+        f-mono-italic-bold          font-mono-italic-bold
 
-       c-border                   jarman-blue-light
-       c-border-warning           sun-flower
-       c-border-danger            alizarin
-       c-border-success           emerald
-       
-       c-on-focus                 jarman-blue-light
-       c-on-focus-light           gray-super-light
-       c-on-focus-dark            gray-dark-light
-       c-on-focus-detail          c-layout-background
-        
-       c-underline                gray
-       c-underline-detail         c-layout-background
-       c-underline-light          gray-light-3
-       c-underline-on-focus       c-border
-       c-underline-on-focus-light jarman-blue-light
-       s-underline                underline-size
-       
-       ;; Icon color
-       c-icon                     jarman-blue-dark
-       s-icon                     icon-size
-       c-icon-focus               belize-hole
-       c-icon-close-focus         c-border-danger
-       c-icon-info                c-border
-       c-icon-warning             c-border-warning
-       c-icon-danger              c-border-danger
-       c-icon-success             c-border-success
-       
-       cvv-button-expand          expand-btn-colors ;; expand button lvls colors
-       
-       ;;----------------------------------
-       ;;Custom elements  !!! Do not repeat in code! Create new per component !!!
-       
-       ;; main menu
-       c-main-menu-bg        c-layout-background-light
-       c-main-menu-vhr       c-main-menu-bg       
+        ;; Default colors
+        c-white                     clouds
+        c-black                     jarman-blue-strong
+        c-red                       pomegranate
+        c-orange                    carrot
+        c-yellow                    sun-flower
+        c-green                     green-sea
+        c-light-blue                jarman-blue
+        c-strong-blue               jarman-blue-dark
+        c-purple                    wisteria
 
-       ;; menu bars
-       c-icon-btn-focus      c-on-focus-dark
-       c-menu-bar-on-focus   c-on-focus
-       
-       ;; button
-       c-btn-bg              c-compos-background-light
-       c-btn-bg-focus        c-on-focus
-       c-btn-foreground      c-foreground
-       c-btn-underline       c-underline
-       c-btn-underline-on-focus c-underline-on-focus
-       s-btn-underline       s-underline
-       
-       ;; slider menu
-       c-slider-bg                 c-layout-background
-       c-slider-fg                 c-foreground
-       c-slider-bg-on-focus        c-compos-background
-       c-slider-underline          c-underline-detail
-       c-slider-underline-on-focus c-underline-on-focus-light
+        ;; Default styles  !!! Do not using in code, do not add new here !!!
+        c-foreground               jarman-blue-strong
+        c-foreground-title         jarman-blue-strong
+        s-foreground               font-size
+        c-caret                    jarman-blue-dark
 
-       ;; view service
-       c-tab-active          c-background-detail
-       c-tabbar-bg           c-on-focus-light
-       c-tab-underline       c-underline-light
-       s-tab-underline       underline-tabbar-size
-      
-       ;; table
-       c-table-select-row-fg c-foreground
-       c-table-select-row-bg c-on-focus
-       c-table-select-cell   c-foreground
+        c-layout-background        gray-light-2
+        c-layout-background-light  gray-light-3
 
-       ;; table header
-       c-table-header-bg     c-background-detail
-       c-table-header-fg     c-foreground
-       c-table-header-border c-compos-background
+        c-compos-background        white
+        c-compos-background-light  gray-super-light
+        c-compos-background-dark   gray
+        c-compos-background-darker gray-dark-light
 
-       ;; inputs
-       c-input-bg            c-compos-background
-       c-input-header        c-foreground
+        c-background-detail        c-layout-background
 
-       ;; expand item in iputs
-       c-item-expand-left    c-compos-background-darker
-       c-item-expand-right   cyan-light
+        c-border                   jarman-blue-light
+        c-border-warning           sun-flower
+        c-border-danger            alizarin
+        c-border-success           emerald
 
-       ;; min-scrollbox
-       c-min-scrollbox-bg    gray
- 
-       ;; expand button
-       c-btn-expand-bg       c-compos-background
-       c-btn-expand-fg       c-foreground-title
-       c-btn-expand-offset   c-compos-background
+        c-on-focus                 jarman-blue-light
+        c-on-focus-light           gray-super-light
+        c-on-focus-dark            gray-dark-light
+        c-on-focus-detail          c-layout-background
 
-       ;; alert
-       c-alert-bg             c-compos-background-light
-       c-alert-fg             c-foreground
-       c-alert-alert-border   c-border
-       c-alert-warning-border c-border-warning
-       c-alert-danger-border  c-border-danger
-       c-alert-timelife       timelife-alert-popup
-       c-alert-success-border c-border-success
-       c-alert-history-focus  c-on-focus-light
-       c-alert-btn-bg         c-layout-background-light
-       c-alert-btn-bg-focus   c-layout-background
+        c-underline                gray
+        c-underline-detail         c-layout-background
+        c-underline-light          gray-light-3
+        c-underline-on-focus       c-border
+        c-underline-on-focus-light jarman-blue-light
+        s-underline                underline-size
 
-       ;; popup box
-       c-popup-body-background c-compos-background
-       c-popup-head-background c-compos-background-darker
-       c-popup-border          c-border
-       ))))
+        ;; Icon color
+        c-icon                     jarman-blue-dark
+        s-icon                     icon-size
+        c-icon-focus               belize-hole
+        c-icon-close-focus         c-border-danger
+        c-icon-info                c-border
+        c-icon-warning             c-border-warning
+        c-icon-danger              c-border-danger
+        c-icon-success             c-border-success
+
+        cvv-button-expand          expand-btn-colors ;; expand button lvls colors
+
+        ;;----------------------------------
+        ;;Custom elements  !!! Do not repeat in code! Create new per component !!!
+
+        ;; main menu
+        c-main-menu-bg        c-layout-background-light
+        c-main-menu-vhr       c-main-menu-bg
+
+        ;; menu bars
+        c-icon-btn-focus      c-on-focus-dark
+        c-menu-bar-on-focus   c-on-focus
+
+        ;; button
+        c-btn-bg              c-compos-background-light
+        c-btn-bg-focus        c-on-focus
+        c-btn-foreground      c-foreground
+        c-btn-underline       c-underline
+        c-btn-underline-on-focus c-underline-on-focus
+        s-btn-underline       s-underline
+
+        ;; slider menu
+        c-slider-bg                 c-layout-background
+        c-slider-fg                 c-foreground
+        c-slider-bg-on-focus        c-compos-background
+        c-slider-underline          c-underline-detail
+        c-slider-underline-on-focus c-underline-on-focus-light
+
+        ;; view service
+        c-tab-active          c-background-detail
+        c-tabbar-bg           c-on-focus-light
+        c-tab-underline       c-underline-light
+        s-tab-underline       underline-tabbar-size
+
+        ;; table
+        c-table-select-row-fg c-foreground
+        c-table-select-row-bg c-on-focus
+        c-table-select-cell   c-foreground
+
+        ;; table header
+        c-table-header-bg     c-background-detail
+        c-table-header-fg     c-foreground
+        c-table-header-border c-compos-background
+
+        ;; inputs
+        c-input-bg            c-compos-background
+        c-input-header        c-foreground
+
+        ;; expand item in iputs
+        c-item-expand-left    c-compos-background-darker
+        c-item-expand-right   cyan-light
+
+        ;; min-scrollbox
+        c-min-scrollbox-bg    gray
+
+        ;; expand button
+        c-btn-expand-bg       c-compos-background
+        c-btn-expand-fg       c-foreground-title
+        c-btn-expand-offset   c-compos-background
+
+        ;; alert
+        c-alert-bg             c-compos-background-light
+        c-alert-fg             c-foreground
+        c-alert-alert-border   c-border
+        c-alert-warning-border c-border-warning
+        c-alert-danger-border  c-border-danger
+        c-alert-timelife       timelife-alert-popup
+        c-alert-success-border c-border-success
+        c-alert-history-focus  c-on-focus-light
+        c-alert-btn-bg         c-layout-background-light
+        c-alert-btn-bg-focus   c-layout-background
+
+        ;; popup box
+        c-popup-body-background c-compos-background
+        c-popup-head-background c-compos-background-darker
+        c-popup-border          c-border))))
 
  ;; First example
   (comment
@@ -227,7 +261,7 @@
      :loader
      (with-jarman-light-vars
        (jarman.gui.faces-system/custom-theme-set-faces
-        '( ;; -- Theme binder -- 
+        '( ;; -- Theme binder --
           underscore-panel     clouds
           button-border-top    underscore-panel
           button-border-bottom underscore-panel

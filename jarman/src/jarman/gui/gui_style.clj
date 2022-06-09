@@ -4,6 +4,8 @@
             [seesaw.core   :as c]
             [seesaw.border :as b]
             [jarman.logic.state :as state]
+            [jarman.gui.components.swing :as swing]
+            [jarman.config.environment :as env]
             [jarman.lang :refer :all]
             [jarman.faces :as face])
   (:import (javax.swing.text SimpleAttributeSet)
@@ -25,47 +27,75 @@
            (javax.sound.sampled AudioSystem)            
            (javax.sound.sampled Clip)))
 
-;; (defn- ubuntu-font [font] (str "./resources/fonts/ubuntu/" font))
-;; (defn fonts []
-;;   {:plain    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-R.ttf")))  (float face/s-foreground))
-;;    :bold     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-B.ttf")))  (float face/s-foreground))
-;;    :bold-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-BI.ttf"))) (float face/s-foreground))
-;;    :italic   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-RI.ttf"))) (float face/s-foreground))
-;;    :light    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-L.ttf")))  (float face/s-foreground))
-;;    :light-i  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-LI.ttf"))) (float face/s-foreground))
-;;    :medium   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-M.ttf")))  (float face/s-foreground))
-;;    :medium-i (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-MI.ttf"))) (float face/s-foreground))
-   
-;;    :mono     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-R.ttf")))  (float face/s-foreground))
-;;    :mono-b   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-B.ttf")))  (float face/s-foreground))
-;;    :mono-bi  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-BI.ttf"))) (float face/s-foreground))
-;;    :mono-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "UbuntuMono-RI.ttf"))) (float face/s-foreground))
-
-;;    :thin      (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-Th.ttf"))) (float face/s-foreground))
-;;    :condensed (.deriveFont (Font/createFont Font/TRUETYPE_FONT (File. (ubuntu-font "Ubuntu-C.ttf")))  (float face/s-foreground))})
-
 (defn- ubuntu-font [font] (io/input-stream (io/resource (format "fonts/ubuntu/%s" font))))
-(defn fonts []
-  {:plain    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-R.ttf"))  (float face/s-foreground))
-   :bold     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-B.ttf"))  (float face/s-foreground))
-   :bold-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-BI.ttf")) (float face/s-foreground))
-   :italic   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-RI.ttf")) (float face/s-foreground))
-   :light    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-L.ttf"))  (float face/s-foreground))
-   :light-i  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-LI.ttf")) (float face/s-foreground))
-   :medium   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-M.ttf"))  (float face/s-foreground))
-   :medium-i (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-MI.ttf")) (float face/s-foreground))
+;; DEPRECATED and REPLACED by the face system
+
+;; (defn fonts []
+;;   {:plain    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-R.ttf"))  (float face/s-foreground))
+;;    :bold     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-B.ttf"))  (float face/s-foreground))
+;;    :bold-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-BI.ttf")) (float face/s-foreground))
+;;    :italic   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-RI.ttf")) (float face/s-foreground))
+;;    :light    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-L.ttf"))  (float face/s-foreground))
+;;    :light-i  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-LI.ttf")) (float face/s-foreground))
+;;    :medium   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-M.ttf"))  (float face/s-foreground))
+;;    :medium-i (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-MI.ttf")) (float face/s-foreground))
    
-   :mono     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "UbuntuMono-R.ttf"))  (float face/s-foreground))
-   :mono-b   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "UbuntuMono-B.ttf"))  (float face/s-foreground))
-   :mono-bi  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "UbuntuMono-BI.ttf")) (float face/s-foreground))
-   :mono-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "UbuntuMono-RI.ttf")) (float face/s-foreground))
+;;    :mono     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "UbuntuMono-R.ttf"))  (float face/s-foreground))
+;;    :mono-b   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "UbuntuMono-B.ttf"))  (float face/s-foreground))
+;;    :mono-bi  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "UbuntuMono-BI.ttf")) (float face/s-foreground))
+;;    :mono-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "UbuntuMono-RI.ttf")) (float face/s-foreground))
 
-   :thin      (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Th.ttf")) (float face/s-foreground))
-   :condensed (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-C.ttf"))  (float face/s-foreground))})
+;;    :thin      (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Th.ttf")) (float face/s-foreground))
+;;    :condensed (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-C.ttf"))  (float face/s-foreground))})
 
-(defn- register-fonts []
-  (doall (map (fn [[name-k font]] (.registerFont (GraphicsEnvironment/getLocalGraphicsEnvironment) font))
-              (fonts))))
+;; (defn fonts []
+;;   {:plain    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Regular.ttf"))  (float face/s-foreground))
+;;    :bold     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Regular.ttf"))  (float face/s-foreground))
+;;    :bold-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Regular.ttf"))  (float face/s-foreground))
+;;    :italic   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Regular.ttf"))  (float face/s-foreground))
+;;    :light    (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Regular.ttf"))  (float face/s-foreground))
+;;    :light-i  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Regular.ttf"))  (float face/s-foreground))
+;;    :medium   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Regular.ttf"))  (float face/s-foreground))
+;;    :medium-i (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Regular.ttf"))  (float face/s-foreground))
+
+;;    :mono     (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Regular.ttf"))  (float face/s-foreground))
+;;    :mono-b   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Regular.ttf"))  (float face/s-foreground))
+;;    :mono-bi  (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Regular.ttf"))  (float face/s-foreground))
+;;    :mono-i   (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Regular.ttf"))  (float face/s-foreground))
+
+;;    :thin      (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Regular.ttf")) (float face/s-foreground))
+;;    :condensed (.deriveFont (Font/createFont Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-Regular.ttf")) (float face/s-foreground))})
+
+
+
+(defn fonts []
+  (comment
+    ;; WARNING!!!
+    ;; ENABLE WHEN YOU'LL WOULD FIND ALL USAGES
+    (catch-component-trace "Deprecated function usage `font`, `getFont`"))
+  (let [f (Font. face/f-regular Font/PLAIN face/s-foreground)]
+   {:plain    f
+    :bold     f
+    :bold-i   f
+    :italic   f
+    :light    f
+    :light-i  f
+    :medium   f
+    :medium-i f
+   
+    :mono     f
+    :mono-b   f
+    :mono-bi  f
+    :mono-i   f
+
+    :thin     f
+    :condensed f}))
+
+;; replaced by
+;;    `jarman.gui.components.swing/register-fonts`
+;; (defn- register-fonts []
+;;   (doall (map (fn [[name-k font]] (.registerFont (GraphicsEnvironment/getLocalGraphicsEnvironment) font))
+;;            (java.awt.Font/createFont java.awt.Font/TRUETYPE_FONT (ubuntu-font "Ubuntu-C.ttf")))))
 
 (defn hex-to-rgb 
   "Description:
@@ -154,28 +184,12 @@
   (UIManager/put "ScrollBar.width" (Integer. 12)))
 
 (defn update-table-header
-  [& {:keys [c-fg
-             c-bg
-             c-border
-             tgap
-             lgap
-             bgap
-             rgap
-             tgap-in
-             lgap-in
-             bgap-in
-             rgap-in]
+  [& {:keys [c-fg c-bg c-border tgap lgap bgap rgap tgap-in lgap-in bgap-in rgap-in]
       :or {c-fg face/c-table-header-fg
            c-bg face/c-table-header-bg
            c-border face/c-table-header-border
-           tgap 0
-           lgap 0
-           bgap 0
-           rgap 1
-           tgap-in 2
-           lgap-in 2
-           bgap-in 2
-           rgap-in 2}}]
+           tgap 0 lgap 0 bgap 0 rgap 1
+           tgap-in 2 lgap-in 2 bgap-in 2 rgap-in 2}}]
   (UIManager/put "TableHeader.foreground" (hex-color c-fg))
   (UIManager/put "TableHeader.background" (hex-color c-bg))
   (UIManager/put "TableHeader.cellBorder" (BorderFactory/createCompoundBorder
@@ -183,31 +197,57 @@
                                            (BorderFactory/createEmptyBorder tgap-in lgap-in bgap-in rgap-in))))
 
 (defn update-table
-  [& {:keys [c-select-fg
-             c-select-bg
-             c-focus-cell
-             tgap
-             lgap
-             bgap
-             rgap]
+  [& {:keys [c-select-fg c-select-bg c-focus-cell tgap lgap bgap rgap]
       :or {c-select-fg  face/c-table-select-row-fg
            c-select-bg  face/c-table-select-row-bg
            c-focus-cell face/c-table-select-cell
-           tgap 3
-           lgap 3
-           bgap 3
-           rgap 3}}]
+           tgap 3 lgap 3 bgap 3 rgap 3}}]
   (UIManager/put "Table.selectionForeground"      (hex-color c-select-fg))
   (UIManager/put "Table.selectionBackground"      (hex-color c-select-bg))
   (UIManager/put "Table.focusCellHighlightBorder" (BorderFactory/createLineBorder (hex-color c-focus-cell))))
 
-
-(defn update-fonts
+;; deleted
+#_(defn update-fonts
   ([]                (update-fonts (:plain (fonts)) (compo-list-suffix (all-compos) ".font")))
   ([font]            (update-fonts font (compo-list-suffix (all-compos) ".font")))
   ([font compo-list] (do
                        (register-fonts)
                        (doall (map #(UIManager/put % font) compo-list)))))
+
+(defn update-fonts
+  ;; ([]                (update-fonts (:plain (fonts)) (compo-list-suffix (all-compos) ".font")))
+  ;; ([font]            (update-fonts font (compo-list-suffix (all-compos) ".font")))
+  ([]
+   (where
+     ((font (Font. face/f-regular Font/PLAIN face/s-foreground))
+      (compo-list (compo-list-suffix (all-compos) ".font")))
+     (swing/register-fonts env/resource-fonts)
+     (doall
+       (doseq [^String component-prop compo-list]
+         (UIManager/put component-prop font))))))
+
+(comment
+ (swing/quick-frame
+   [(seesaw.core/label :text "Some text i should to place here" :font (Font. Font/SERIF Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "Ubuntu Light" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "Ubuntu Regular" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "Ubuntu Medium" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "Ubuntu Bold" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "Ubuntu Light Italic" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "Ubuntu Italic" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "Ubuntu Medium Italic" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "Ubuntu Bold Italic" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "JetBrains Mono Light" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "JetBrains Mono Regular" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "JetBrains Mono Medium" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "JetBrains Mono Bold" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "JetBrains Mono ExtraBold" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "JetBrains Mono Light Italic" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "JetBrains Mono Italic" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "JetBrains Mono Medium Italic" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "JetBrains Mono Bold Italic" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font (Font. "JetBrains Mono ExtraBold Italic" Font/PLAIN 20))
+    (seesaw.core/label :text "Some text i should to place here" :font {:name "JetBrains Mono ExtraBold Italic" :size 20})]))
 
 (defn update-layouts-background
   ([]                (update-layouts-background (resrc-hex-color face/c-layout-background) (compo-list-suffix (layouts-list) ".background")))
@@ -249,8 +289,7 @@
   (update-compos-background)
   (update-scrollbar)
   (update-table-header)
-  (update-table)
-  )
+  (update-table))
 
 
 ;; ┌───────────────────────────┐

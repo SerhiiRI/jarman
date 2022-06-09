@@ -4,7 +4,8 @@
    [seesaw.core]
    [seesaw.border]
    [jarman.lang :refer :all]
-   [jarman.faces :as face])
+   [jarman.faces :as face]
+   [clojure.java.io])
   (:import
    [java.awt GraphicsEnvironment GraphicsDevice]))
 
@@ -56,7 +57,7 @@
    :content
    (seesaw.core/scrollable
     (seesaw.mig/mig-panel
-     :background  face/c-compos-background-darker
+     :background  "#dddddd"
      :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
      :border (seesaw.border/empty-border :thickness 10)
      :items (mapv vector items)))
@@ -92,5 +93,22 @@
                                        (scaler (.getWidth image))
                                        (scaler (.getHeight image))
                                        java.awt.Image/SCALE_SMOOTH)))))))
+
+(defn register-fonts
+  "Description
+    Register system font
+  
+  Example
+    (register-fonts
+     [(clojure.java.io/resource \"fonts/ubuntu/Ubuntu-MediumItalic.ttf\")
+      (clojure.java.io/resource \"fonts/ubuntu/Ubuntu-Medium.ttf\")
+      (clojure.java.io/resource \"fonts/ubuntu/Ubuntu-Regular.ttf\")])"
+  [font-files]
+  (let [^GraphicsEnvironment ge (java.awt.GraphicsEnvironment/getLocalGraphicsEnvironment)]
+    (doall
+      (doseq [font font-files]
+        (.registerFont ge
+          (java.awt.Font/createFont java.awt.Font/TRUETYPE_FONT
+            (clojure.java.io/input-stream font)))))))
 
 

@@ -16,6 +16,23 @@
 ;;; helper function ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
+(defmacro catch-component-trace [message]
+  `(do
+     (println "_______________________________")
+     (println ~message)
+     (let [[~'trace-head & ~'trace-rest]
+           (doall (->> (seq (.getStackTrace (Thread/currentThread)))
+                    (map #(.getClassName %))
+                    (filter (partial re-matches #"jarman.*"))
+                    (distinct)))]
+       (println "-> " ~'trace-head)
+       (print (pprint/cl-format nil "~{~A~%~}"~'trace-rest)))
+     (println ".")))
+
+(defn slurp-lines [f]
+  (-> (slurp f)
+      (clojure.string/split-lines)))
+
 (defn pp-str
   "Example:
    [{:a \"yellow\", :b \"pink\"} {:a \"yellow\", :b \"pink\"} {:a \"yellow\", :b \"pink\"} {:a \"green\", :b \"red\"}]

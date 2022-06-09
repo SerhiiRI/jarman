@@ -169,11 +169,11 @@
 ;;; Font debug, tool ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn show-fonts "Funkcja wyświetla listę dostępnych czcionek, ale nie zwraca ich."
-  [] (map println (.. java.awt.GraphicsEnvironment getLocalGraphicsEnvironment getAvailableFontFamilyNames)))
+(defn get-fonts-families
+  [] (lazy-seq (map identity (.. java.awt.GraphicsEnvironment getLocalGraphicsEnvironment getAvailableFontFamilyNames))))
 
-(defn get-fonts "Funkcja zwraca nazy dostęnych czcionek."
-  [] (map identity (.. java.awt.GraphicsEnvironment getLocalGraphicsEnvironment getAvailableFontFamilyNames)))
+(defn get-fonts
+  [] (lazy-seq (map #(.getFontName % ) (.. java.awt.GraphicsEnvironment getLocalGraphicsEnvironment getAllFonts))))
 
 (defn debug-font-panel "Funkcja wyświetla okienko z czcionkami w swoim formacie."
   [& {:keys [txt size] :or {txt "Przykładowy tekst. Приклад тексту." size 16}}]

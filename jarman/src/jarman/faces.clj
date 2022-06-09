@@ -1,9 +1,32 @@
 (ns jarman.faces)
 (require '[jarman.gui.faces-system :refer [define-face faces-list-out-all faces-list-out-all-with-values]])
 
+;; f-...   font
 ;; s-...   size
 ;; c-...   color
 ;; cvv-...  colors in vectors like [[#aaa #bbb] [#ccc #ddd]]
+
+;;; Fonts
+;;; Base font
+(define-face f-light)
+(define-face f-regular)
+(define-face f-medium)
+(define-face f-bold)
+
+(define-face f-italic-light)
+(define-face f-italic-regular)
+(define-face f-italic-medium)
+(define-face f-italic-bold)
+
+(define-face f-mono-light)
+(define-face f-mono-regular)
+(define-face f-mono-medium)
+(define-face f-mono-bold)
+
+(define-face f-mono-italic-light)
+(define-face f-mono-italic-regular)
+(define-face f-mono-italic-medium)
+(define-face f-mono-italic-bold)
 
 ;;; UI elemnt colors
 ;;; Base color-palette

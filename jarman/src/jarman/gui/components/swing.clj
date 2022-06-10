@@ -3,11 +3,16 @@
    [seesaw.mig]
    [seesaw.core]
    [seesaw.border]
+   [seesaw.color]
    [jarman.lang :refer :all]
    [jarman.faces :as face]
    [clojure.java.io])
   (:import
-   [java.awt GraphicsEnvironment GraphicsDevice]))
+   [java.awt GraphicsEnvironment GraphicsDevice Font MouseInfo]
+   [jiconfont.swing IconFontSwing]
+   ;; [jiconfont IconFont DefaultIconCode]
+   ;; [jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons]
+   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SCREEN SETTINGS ;;;
@@ -111,4 +116,24 @@
           (java.awt.Font/createFont java.awt.Font/TRUETYPE_FONT
             (clojure.java.io/input-stream font)))))))
 
+(defn font
+  ([font-name]
+   (Font. font-name Font/PLAIN face/s-foreground))
+  ([font-name size-num]
+   (Font. font-name Font/PLAIN size-num)))
 
+(defn icon
+  ([ico]       (icon ico face/c-icon 20))
+  ([ico color] (icon ico color 20))
+  ([ico color size]
+   (IconFontSwing/buildIcon ico size (seesaw.color/color color))))
+
+(defn get-mouse-pos
+  "Description:
+     Return mouse position on screen, x and y.
+  Example:
+     (get-mouse-pos) => [800.0 600.0]" []
+  (let [mouse-pos (.getLocation (MouseInfo/getPointerInfo))
+        screen-x  (.getX mouse-pos)
+        screen-y  (.getY mouse-pos)]
+    [screen-x screen-y]))

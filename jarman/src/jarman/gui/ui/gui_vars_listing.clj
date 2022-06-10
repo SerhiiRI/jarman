@@ -1,4 +1,4 @@
-(ns jarman.gui.gui-vars-listing
+(ns jarman.gui.ui.gui-vars-listing
   (:require
    ;; swing tools
    [seesaw.core   :as c]

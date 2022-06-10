@@ -1,4 +1,4 @@
-(ns jarman.gui.gui-extension-manager
+(ns jarman.gui.ui.gui-extension-manager
   (:require
    ;; swing tools
    [seesaw.core   :as c]

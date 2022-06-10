@@ -1,4 +1,4 @@
-(ns jarman.gui.gui-config-panel
+(ns jarman.gui.ui.gui-config-panel
   (:require
    [clojure.string     :as string]
    [clojure.java.io    :as io]

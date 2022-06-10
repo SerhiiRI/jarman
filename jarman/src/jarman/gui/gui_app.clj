@@ -40,7 +40,6 @@
    [jarman.gui.builtin-themes.jarman-light]
    [jarman.gui.gui-views-service    :as gvs]
    [jarman.gui.gui-alerts-service   :as gas]
-   [jarman.gui.gui-update-manager   :as umg]
    [jarman.gui.gui-components       :as gcomp]
    [jarman.gui.gui-tools            :as gtool]
    [jarman.gui.gui-style            :as gs]
@@ -51,6 +50,7 @@
    [jarman.gui.gui-migrid           :as gmg]
    [jarman.gui.popup                :as popup]
    [jarman.gui.gui-editors          :as gedit]
+   [jarman.gui.ui.gui-update-manager   :as gui-update-manager]
    ;; [jarman.gui.gui-calendar         :as calendar]
    [jarman.interaction]))
 
@@ -314,10 +314,6 @@
                                      (state/set-state :soft-restart nil)
                                      (.dispose (c/to-frame e)))}
 
-                           {:icon  (gs/icon GoogleMaterialDesignIcons/STARS face/c-icon)
-                            :title "Shooting Stars"
-                            :fn    (fn [e] (gs/shooting-stars))}
-
                            {:icon  (gs/icon GoogleMaterialDesignIcons/BUG_REPORT face/c-icon)
                             :title "Doom"
                             :fn    (fn [e]
@@ -362,10 +358,10 @@
   (gas/show-delay-alerts)
   (print-header
    "Refresh avialable package list cache"
-   (umg/update-package-list-cache))
+   (gui-update-manager/update-package-list-cache))
   (print-header
    "Check updates"
-   (umg/check-update :silent))
+   (gui-update-manager/check-update :silent))
   (print-header
    "Check license"
    (gui-events/gui-check-license))

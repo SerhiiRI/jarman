@@ -1,4 +1,4 @@
-(ns jarman.gui.gui-permission-listing
+(ns jarman.gui.ui.gui-permission-listing
   (:require
    ;; swing tools
    [seesaw.core   :as c]

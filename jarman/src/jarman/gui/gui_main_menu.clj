@@ -1,28 +1,30 @@
+;; -*- mode: clojure; mode: rainbow; -*-
 (ns jarman.gui.gui-main-menu
-  (:require [clojure.string :as string]
-            [seesaw.core    :as c]
-            [jarman.faces   :as face]
-            [jarman.org     :refer :all]
-            [jarman.lang       :refer :all]
-            [jarman.gui.components.swing  :as stool]
-            [jarman.logic.state                :as state]
-            [jarman.application.session              :as session]
-            [jarman.logic.view-manager         :as vmg]
-            [jarman.gui.gui-views-service      :as gvs]
-            [jarman.gui.gui-update-manager     :as update-manager]
-            [jarman.gui.gui-extension-manager  :as extension-manager]
-            [jarman.gui.gui-themes-manager     :as themes-manager]
-            [jarman.gui.gui-vars-listing       :as vars-listing]
-            [jarman.gui.gui-permission-listing :as permission-listing]
-            [jarman.gui.gui-components         :as gcomp]
-            [jarman.gui.gui-tools              :as gtool]
-            [jarman.gui.popup                  :as popup]
-            [jarman.gui.gui-editors            :as gedit]
-            [jarman.gui.gui-config-panel       :as gcp]
-            [jarman.gui.gui-alerts-service     :as gas]
-            [jarman.logic.connection           :as db]
-            [jarman.logic.sql-tool :refer [select! update! insert!]]
-            ))
+  (:require
+   [seesaw.core                          :as seesaw]
+   [jarman.org                           :refer :all]
+   [jarman.lang                          :refer :all]
+   [jarman.faces                         :as face]
+   [jarman.logic.state                   :as state]
+   [jarman.logic.connection              :as db]
+   [jarman.logic.sql-tool                :as sql]
+   [jarman.application.session           :as session]
+   [jarman.logic.view-manager            :as vmg]
+   ;; ---------------------------------------
+   [jarman.gui.gui-views-service         :as gvs]
+   [jarman.gui.gui-components            :as gcomp]
+   [jarman.gui.gui-tools                 :as gtool]
+   [jarman.gui.popup                     :as popup]
+   [jarman.gui.gui-editors               :as gedit]
+   [jarman.gui.gui-alerts-service        :as gas]
+   [jarman.gui.components.swing          :as swing]
+   ;; ---------------------------------------
+   [jarman.gui.ui.gui-update-manager     :as gui-update-manager]
+   [jarman.gui.ui.gui-extension-manager  :as gui-extension-manager]
+   [jarman.gui.ui.gui-themes-manager     :as gui-themes-manager]
+   [jarman.gui.ui.gui-vars-listing       :as gui-vars-listing]
+   [jarman.gui.ui.gui-permission-listing :as gui-permission-listing]
+   [jarman.gui.ui.gui-config-panel       :as gui-config-panel]))
 
 ;; (defn- expand-colors []
 ;;   [["#eeeeee" "#f7f7f7"]
@@ -98,7 +100,7 @@
 (defn- part-expand [bulid-expand-by-map k v lvl]
   (let [depper (filter-nil (bulid-expand-by-map v :lvl (inc lvl)))]
     (if (empty? depper)
-      (if (= lvl 0) (c/label) nil)
+      (if (= lvl 0) (seesaw/label) nil)
       (gcomp/button-expand
        (str k)
        depper
@@ -151,7 +153,7 @@
            (map? v) (if (nil? (:key v))
                       (part-expand bulid-expand-by-map k v lvl)
                       (part-button k v lvl))
-           :else (c/label :text "Uncorrect comp"))))
+           :else (seesaw/label :text "Uncorrect comp"))))
      plugin-m))))
 
 
@@ -177,7 +179,7 @@
   (doall
    (map (fn [m] (keyword (:table_name m)))
         (db/query
-         (select!
+         (sql/select!
           {:table_name :metadata
            :column [:table_name]})))))
 
@@ -209,7 +211,7 @@
   (doall
    (map (fn [m] (keyword (:table_name m)))
         (db/query
-         (select!
+         (sql/select!
           {:table_name :view
            :column [:table_name]})))))
 
@@ -272,28 +274,22 @@
 
    "Administration"
    {(gtool/get-lang-btns :settings)          {:key (gtool/get-lang-btns :settings)
-                                              :fn  gcp/config-panel}
+                                              :fn gui-config-panel/config-panel}
     (gtool/get-lang-btns :update-manager)    {:key (gtool/get-lang-btns :update-manager)
                                               :permission :admin-update
-                                              :fn update-manager/update-manager-panel}
+                                              :fn gui-update-manager/update-manager-panel}
     (gtool/get-lang-btns :extension-manager) {:key (gtool/get-lang-btns :extension-manager)
                                               :permission :admin-extension
-                                              :fn extension-manager/extension-manager-panel}
+                                              :fn gui-extension-manager/extension-manager-panel}
     (gtool/get-lang-btns :theme-manager)     {:key (gtool/get-lang-btns :theme-manager)
-                                              :fn themes-manager/theme-manager-panel}
+                                              :fn gui-themes-manager/theme-manager-panel}
     "System information"
-    {(gtool/get-lang-btns :var-list-panel)    {:key (gtool/get-lang-btns :var-list-panel)
-                                               :permission :developer
-                                               :fn vars-listing/vars-listing-panel}
+    {(gtool/get-lang-btns :var-list-panel)        {:key (gtool/get-lang-btns :var-list-panel)
+                                                   :permission :developer
+                                                   :fn gui-vars-listing/vars-listing-panel}
      (gtool/get-lang-btns :permission-list-panel) {:key (gtool/get-lang-btns :permission-list-panel)
                                                    :permission :developer
-                                                   :fn permission-listing/permission-listing-panel}}
-    
-    ;; CURRENTLY DISSABLED
-    ;; (gtool/get-lang-btns :db-visualizer)     {:key (gtool/get-lang-btns :db-visualizer)
-    ;;                                           :permission :admin-dataedit
-    ;;                                           :fn dbv/create-view--db-view}
-    }
+                                                   :fn gui-permission-listing/permission-listing-panel}}}
 
    "Metadata Editors" (metadata-editors-in-main-menu)
    "View edit"        (view-editors-in-main-menu)
@@ -331,7 +327,7 @@
                      "Update" {:key       "test-update"
                                :action     :invoke
                                :permission :developer
-                               :fn         (fn [e] (update-manager/check-update))}}
+                               :fn         (fn [e] (gui-update-manager/check-update))}}
     
     ;; "Select table"   {:key        "select-table"
     ;;                   :action     :invoke
@@ -348,7 +344,7 @@
                                      {:window-title "Text multiline"
                                       :relative (state/state :app)
                                       :size [250 250]
-                                      :view (c/text
+                                      :view (seesaw/text
                                              :text "Some text"
                                              :size [300 :by 300]
                                              :editable? true
@@ -411,7 +407,7 @@
     (doall
      (map
       (fn [m index]
-        (gtool/slider-ico-btn (stool/image-scale (:icon m) scale)
+        (gtool/slider-ico-btn (swing/image-scale (:icon m) scale)
                               index scale (:title m)
                               :onClick (:fn m)
                               :top-offset offset))

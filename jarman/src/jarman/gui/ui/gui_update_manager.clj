@@ -1,4 +1,4 @@
-(ns jarman.gui.gui-update-manager
+(ns jarman.gui.ui.gui-update-manager
   (:require
    ;; swing tools
    [seesaw.core   :as c]

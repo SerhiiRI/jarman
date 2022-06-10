@@ -107,7 +107,6 @@
       (state/set-state :soft-restart true)
       (state/rm-state  :doom)
       (state/rm-state  :doom-compo)
-      (state/rm-state  :shooting-stars)
       (state/rm-state  :soft-restart)
       (.dispose (state/state :frame))
       (state/rm-state  :frame)

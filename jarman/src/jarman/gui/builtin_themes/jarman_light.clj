@@ -1,9 +1,8 @@
 ;; -*- mode: clojure; mode: rainbow;  mode: yafolding; -*-
 ;; add-file-local-variable-prop-line -> mode -> some mode
-
-(ns jarman.gui.builtin-themes.jarman-ligth)
-(require 'jarman.interaction)
-(require 'jarman.gui.faces-system)
+(ns jarman.gui.builtin-themes.jarman-ligth
+  (:require [jarman.interaction]
+            [jarman.gui.faces-system]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; COLOR DEFINITIONS ;;;
@@ -28,56 +27,55 @@
    "font-mono-italic-medium"  "JetBrains Mono Medium Italic"
    "font-mono-italic-bold"    "JetBrains Mono Bold Italic"
 
-   "clouds"           "#ecf0f1"
-   "silver"           "#dfe4ea"
-   "concrete"         "#95a5a6"
-   "asbestos"         "#7f8c8d"
-   "wet-asphalt"      "#34495e"
-   "midnight-blue"    "#2c3e50"
+   "clouds"             "#ecf0f1"
+   "silver"             "#dfe4ea"
+   "concrete"           "#95a5a6"
+   "asbestos"           "#7f8c8d"
+   "wet-asphalt"        "#34495e"
+   "midnight-blue"      "#2c3e50"
 
-   "turquoise"        "#1abc9c"
-   "green-sea"        "#16a085"
+   "turquoise"          "#1abc9c"
+   "green-sea"          "#16a085"
 
-   "emerald"          "#2ecc71"
-   "nephritis"        "#27ae60"
-   "cyan-light"       "#E2FBDE"
-   "peter-river"      "#2492db"
-   "belize-hole"      "#0a74b9"
+   "emerald"            "#2ecc71"
+   "nephritis"          "#27ae60"
+   "cyan-light"         "#E2FBDE"
+   "peter-river"        "#2492db"
+   "belize-hole"        "#0a74b9"
 
-   "amethyst"         "#9b59b6"
-   "wisteria"         "#8e44ad"
+   "amethyst"           "#9b59b6"
+   "wisteria"           "#8e44ad"
 
-   "sun-flower"       "#f1c40f"
-   "orange"           "#d98c10"
+   "sun-flower"         "#f1c40f"
+   "orange"             "#d98c10"
 
-   "carrot"           "#e67e22"
-   "pumpkin"          "#d35400"
+   "carrot"             "#e67e22"
+   "pumpkin"            "#d35400"
 
-   "alizarin"         "#e74c3c"
-   "pomegranate"      "#c0392b"
+   "alizarin"           "#e74c3c"
+   "pomegranate"        "#c0392b"
 
-   "gray"              "#C7C9D1"
-   "gray-dark"         "#bbbbbb"
-   "gray-dark-2"       "#aaaaaa"
-   "gray-dark-light"   "#dddddd"
-   "gray-light-2"      "#e8e9ec"
-   "gray-light-3"      "#f8f9fb"
-   "gray-super-light"  "#fefefe"
-   "white"             "#ffffff"
-   "jarman-blue"       "#3d85c6"
-   "jarman-blue-green" "#2c7375"
-   "jarman-blue-dark"  "#206494"
-   "jarman-blue-light" "#96c1ea"
-   "jarman-blue-strong""#0a2436"
-   "jarman-super-dark" "#020020"
+   "gray"               "#C7C9D1"
+   "gray-dark"          "#bbbbbb"
+   "gray-dark-2"        "#aaaaaa"
+   "gray-dark-light"    "#dddddd"
+   "gray-light-2"       "#e8e9ec"
+   "gray-light-3"       "#f8f9fb"
+   "gray-super-light"   "#fefefe"
+   "white"              "#ffffff"
+   "jarman-blue"        "#3d85c6"
+   "jarman-blue-green"  "#2c7375"
+   "jarman-blue-dark"   "#206494"
+   "jarman-blue-light"  "#96c1ea"
+   "jarman-blue-strong" "#0a2436"
+   "jarman-super-dark"  "#020020"
 
-   "font-size"               14.0
-   "icon-size"               20
-   "underline-size"          2
-   "underline-tabbar-size"   1
-   "timelife-alert-popup"    3
-   "expand-btn-colors" [["#e8e9ec""#e8e9ec" "#f1f1f3"]
-                       ;; ["#ececec" "#ececec" "#f7f7f7"]
+   "font-size"              14.0
+   "icon-size"              20
+   "underline-size"         2
+   "underline-tabbar-size"  1
+   "timelife-alert-popup"   3
+   "expand-btn-colors" [["#e8e9ec" "#e8e9ec" "#f1f1f3"] ;; ["#ececec" "#ececec" "#f7f7f7"]
                         ["#e0e0e0" "#e0e0e0" "#efefef"]
                         ["#d5d5d5" "#d5d5d5" "#dfdfdf"]
                         ["#c5c5c5" "#c5c5c5" "#cfcfcf"]]})
@@ -101,7 +99,7 @@
   :description "Built-in jarman default light theme"
   :loader
   (with-jarman-ligth-vars
-    (jarman.gui.faces-system/custom-theme-set-faces
+    (jarman.interaction/custom-theme-set-faces
       '(;; -- Theme binder --
 
         ;; Fonts
@@ -253,17 +251,3 @@
         c-popup-head-background c-compos-background-darker
         c-popup-border          c-border))))
 
- ;; First example
-  (comment
-    (jarman.interaction/register-theme
-     :name "Jarman Light"
-     :description "Built-in jarman default light theme"
-     :loader
-     (with-jarman-light-vars
-       (jarman.gui.faces-system/custom-theme-set-faces
-        '( ;; -- Theme binder --
-          underscore-panel     clouds
-          button-border-top    underscore-panel
-          button-border-bottom underscore-panel
-          ;;button-border-left   silver
-          )))))

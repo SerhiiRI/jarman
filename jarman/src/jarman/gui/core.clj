@@ -156,7 +156,6 @@
   ([path] (fn [a] (cursor path a)))
   ([path a] (if (seq path) (Cursor. path a) a)))
 
-
 (defn- invoke-on-hooks [v m]
   (doall
    (doseq [f (vals m)]

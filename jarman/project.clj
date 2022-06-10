@@ -16,6 +16,7 @@
                  [clj-commons/pomegranate "1.2.1"]
                  [seesaw "1.5.0"]
                  ;; other
+                 [com.fzakaria/slf4j-timbre "0.3.21"]
                  [potemkin "0.4.5"]
                  [buddy/buddy-core "1.10.1"]
                  [kaleidocs/merge "0.3.0"]

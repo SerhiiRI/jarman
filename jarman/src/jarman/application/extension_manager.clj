@@ -50,17 +50,18 @@
                   (deep-merge-with #(second %&) acc-m (read-string (slurp (str translation-file)))))
           {} language))))
   (do-load-deps [this]
-    (print-header (format "loading deps ~%s~" name)
-      (if-let [deps (not-empty (filter (comp not string?) dependencies))]
-        (do
-          (print-line deps)
-          (print-line "check or download...")
-          (doall
-            (map
-              #(print-line (first %))
-              (pomagranate/add-dependencies
-                :coordinates deps
-                :repositories (deref jarman.variables/jarman-library-repository-list))))))))
+    ;; (print-header (format "loading deps ~%s~" name)
+    ;;   (if-let [deps (not-empty (filter (comp not string?) dependencies))]
+    ;;     (do
+    ;;       (print-line deps)
+    ;;       (print-line "check or download...")
+    ;;       (doall
+    ;;         (map
+    ;;           #(print-line (first %))
+    ;;           (pomagranate/add-dependencies
+    ;;             :coordinates deps
+    ;;             :repositories (deref jarman.variables/jarman-library-repository-list)))))))
+    )
   (do-load [this]
     (print-header (format "load ~%s~" name)
       ;; Testing language and sources files

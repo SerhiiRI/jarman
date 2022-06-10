@@ -16,7 +16,9 @@
             [jarman.config.environment :as env]
             [jarman.lang :refer :all]
             [jarman.faces :as face])
-  (:import (javax.swing.text SimpleAttributeSet)
+  (:import (jiconfont.swing IconFontSwing)
+           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
+           (javax.swing.text SimpleAttributeSet)
            (javax.swing.plaf ColorUIResource)
            (javax.swing UIManager)
            (javax.swing BorderFactory)

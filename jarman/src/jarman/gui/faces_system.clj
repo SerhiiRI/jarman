@@ -1,5 +1,5 @@
-(ns jarman.gui.faces-system)
-(require '[jarman.org :refer :all])
+(ns jarman.gui.faces-system
+  (:require [jarman.org :refer :all]))
 
 ;;;;;;;;;;;;
 ;;; CORE ;;;
@@ -10,9 +10,9 @@
   {:pre [(symbol? face-variable-name)]}
   (let [face-variable-ref `(var ~face-variable-name)]
     `(do
-      (declare ~face-variable-name)
-      (swap! faces-storage conj ~face-variable-ref)
-      ~face-variable-ref)))
+       (declare ~face-variable-name)
+       (swap! faces-storage conj ~face-variable-ref)
+       ~face-variable-ref)))
 
 ;;;;;;;;;;;;;;;
 ;;; HELPERS ;;;

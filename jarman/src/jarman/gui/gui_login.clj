@@ -1,26 +1,28 @@
 (ns jarman.gui.gui-login
   (:gen-class)
-  (:import (java.awt Dimension Toolkit)
-           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons))
-  (:require [clojure.string            :as string]
-            [seesaw.core               :as c]
-            [seesaw.border             :as b]
-            [seesaw.util               :as u]
-            [jarman.resource-lib.icon-library :as icon]
-            [jarman.faces              :as face]
-            [jarman.config.vars        :as vars]
-            [jarman.gui.gui-app        :as app] ;; Need for startup by state
-            [jarman.gui.gui-tools      :as gtool]
-            [jarman.gui.gui-components :as gcomp]
-            [jarman.gui.gui-migrid     :as gmg]
-            [jarman.gui.gui-style      :as gs]
-            [jarman.logic.connection   :as conn]
-            [jarman.logic.state        :as state]
-            [jarman.application.session      :as session]
-            [jarman.gui.components.swing        :as stool]
-            [jarman.gui.popup          :as popup]
-            [jarman.lang       :refer :all]
-            [jarman.org        :refer :all]))
+  (:import
+   [java.awt Dimension Toolkit]
+   [jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons])
+  (:require
+   [clojure.string            :as string]
+   [seesaw.core               :as c]
+   [seesaw.border             :as b]
+   [seesaw.util               :as u]
+   [jarman.resource-lib.icon-library :as icon]
+   [jarman.faces              :as face]
+   [jarman.config.vars        :as vars]
+   [jarman.gui.gui-app        :as app] ;; Need for startup by state
+   [jarman.gui.gui-tools      :as gtool]
+   [jarman.gui.gui-components :as gcomp]
+   [jarman.gui.gui-migrid     :as gmg]
+   [jarman.gui.gui-style      :as gs]
+   [jarman.logic.connection   :as conn]
+   [jarman.logic.state        :as state]
+   [jarman.application.session      :as session]
+   [jarman.gui.components.swing        :as stool]
+   [jarman.gui.popup          :as popup]
+   [jarman.lang       :refer :all]
+   [jarman.org        :refer :all]))
 
 ;; ┌───────────────┐
 ;; │               │

@@ -1,8 +1,7 @@
 ;; -*- mode: clojure; mode: rainbow;  mode: yafolding; -*-
 ;; add-file-local-variable-prop-line -> mode -> some mode
 (ns jarman.gui.builtin-themes.jarman-ligth
-  (:require [jarman.interaction]
-            [jarman.gui.faces-system]))
+  (:require [jarman.interaction]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; COLOR DEFINITIONS ;;;

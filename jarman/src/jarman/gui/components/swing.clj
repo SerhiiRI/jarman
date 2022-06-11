@@ -57,19 +57,16 @@
       :bound-width  (.. device getDefaultConfiguration getBounds -width)})))
 
 (defn quick-frame [items]
- (-> 
-  (seesaw.core/frame
-   :content
-   (seesaw.core/scrollable
-    (seesaw.mig/mig-panel
-     :background  "#dddddd"
-     :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
-     :border (seesaw.border/empty-border :thickness 10)
-     :items (mapv vector items)))
-   :title "Jarman" :size [1000 :by 800])
-  (seesaw.core/pack!)
-  (jarman.gui.components.swing/choose-screen! 0)
-  (seesaw.core/show!)))
+  (-> (seesaw.core/frame
+        ;; :minimum-size [500 :by 500]
+        :title "Jarman"
+        :content
+        (seesaw.core/vertical-panel
+          :background  "#dddddd"
+          :items items))
+    (seesaw.core/pack!)
+    (jarman.gui.components.swing/choose-screen! 0)
+    (seesaw.core/show!)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; AWT/Swing helpers ;;;

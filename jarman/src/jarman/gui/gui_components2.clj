@@ -57,8 +57,10 @@
 
  ;; -- SIMPLE COMPONENTS
  [jarman.gui.components.common
-  stub
-  label button combobox
+  label-h1 label-h2 label-h3
+  label-h4 label-h5 label-h6
+  label label-link label-info
+  button combobox stub
   text textarea codearea]
 
  ;; -- SYSTEM COMPONENTS
@@ -104,10 +106,10 @@
 ;;
 
 ;; todo
-;; [ ] to all components add :value-setter key
+;; [x] to all components add :value-setter key
+;; [x] :jsgl-ckeckbox
 ;; [ ] :jsgl-digit
 ;; [ ] :jsgl-float
-;; [ ] :jsgl-ckeckbox
 ;; [ ] :jsgl-ftp-file
 ;; [ ] :jsgl-simple-table
 ;; [ ] :jsgl-style-text JTextPane

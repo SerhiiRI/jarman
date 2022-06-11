@@ -69,6 +69,12 @@
    "jarman-blue-strong" "#0a2436"
    "jarman-super-dark"  "#020020"
 
+   "font-h1"                34
+   "font-h2"                30
+   "font-h3"                26
+   "font-h4"                22
+   "font-h5"                19
+   "font-h6"                17
    "font-size"              14.0
    "icon-size"              20
    "underline-size"         2
@@ -131,9 +137,15 @@
         c-purple                    wisteria
 
         ;; Default styles  !!! Do not using in code, do not add new here !!!
+        s-foreground-h1            font-h1
+        s-foreground-h2            font-h2
+        s-foreground-h3            font-h3
+        s-foreground-h4            font-h4
+        s-foreground-h5            font-h5
+        s-foreground-h6            font-h6
+        s-foreground               font-size
         c-foreground               jarman-blue-strong
         c-foreground-title         jarman-blue-strong
-        s-foreground               font-size
         c-caret                    jarman-blue-dark
 
         c-layout-background        gray-light-2

@@ -41,14 +41,21 @@
 (define-face c-purple)
 
 ;;; Global default styles
+(define-face c-caret)
 (define-face c-foreground)
 (define-face c-foreground-title)
+(define-face s-foreground-h1)
+(define-face s-foreground-h2)
+(define-face s-foreground-h3)
+(define-face s-foreground-h4)
+(define-face s-foreground-h5)
+(define-face s-foreground-h6)
 (define-face s-foreground)
-(define-face c-caret)
 
 (define-face c-layout-background)
 (define-face c-layout-background-light)
 
+;; composite components
 (define-face c-compos-background)
 (define-face c-compos-background-light)
 (define-face c-compos-background-dark)

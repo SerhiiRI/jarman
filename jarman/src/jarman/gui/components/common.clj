@@ -66,7 +66,6 @@
       (define-key (kbd "C-u")        DefaultEditorKit/pageUpAction)
       (define-key (kbd "C-d")        DefaultEditorKit/deleteNextCharAction)
       (define-key (kbd "delete")     DefaultEditorKit/deleteNextCharAction)
-      ;; (define-key (kbd "C-h")        DefaultEditorKit/deletePrevCharAction)
       (define-key (kbd "backspace")  DefaultEditorKit/deletePrevCharAction)
       (define-key (kbd "C-o")        DefaultEditorKit/insertBreakAction)
       (define-key (kbd "C-m")        DefaultEditorKit/insertBreakAction)
@@ -89,82 +88,21 @@
       (define-key (kbd "C-+") jarman.gui.components.swing-actions/rtext-increase-font-size)
       (define-key (kbd "C--") jarman.gui.components.swing-actions/rtext-decrease-font-size)))
 
-#_(defn label
-  [& {:keys [value tgap bgap lgap rgap halign tip bg bg-hover underline-size underline-focus underline flip-border
-             on-click on-focus-gain on-focus-lost on-mouse-enter on-mouse-exit args]
-      :or   {tgap 10 bgap 10 lgap 10 rgap 10
-             value           ""
-             tip             ""
-             halign          :center
-             bg              face/c-btn-bg
-             bg-hover        face/c-btn-bg-focus
-             underline-focus face/c-btn-underline-on-focus
-             underline       face/c-btn-underline
-             underline-size  face/s-btn-underline
-             flip-border     false
-
-             on-click        (fn [e] e)
-             on-focus-gain   (fn [e] e)
-             on-focus-lost   (fn [e] e)
-             on-mouse-enter  (fn [e] e)
-             on-mouse-exit   (fn [e] e)
-
-             args []}}]
-  (blet
-   (apply c/label
-          :text value
-          :focusable? true
-          :halign halign
-          :tip tip
-          :listen
-          [:mouse-clicked
-           (fn [e]
-             (on-click e)
-             (gui-tool/switch-focus))
-           :mouse-entered
-           (fn [e]
-             (c/config! e :border (new-border underline-focus) :background bg-hover :cursor :hand)
-             (.repaint (c/to-root e))
-             (on-mouse-enter e))
-           :mouse-exited
-           (fn [e]
-             (c/config! e :border (new-border underline) :background bg)
-             (.repaint (c/to-root e))
-             (on-mouse-exit e))
-           :focus-gained
-           (fn [e]
-             (c/config! e :border (new-border underline-focus) :background bg-hover :cursor :hand)
-             (on-focus-gain e))
-           :focus-lost
-           (fn [e]
-             (c/config! e :border (new-border underline) :background bg)
-             (on-focus-lost e))
-           :key-pressed
-           (fn [e]
-             (when (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER)
-               (on-click e)
-               (gui-tool/switch-focus)))]
-          :background bg
-          :border (new-border underline)
-          args)
-   [new-border
-    (fn [underline-color]
-      (b/compound-border (b/empty-border :bottom bgap :top tgap :left lgap :right rgap)
-                         (b/line-border (if flip-border :top :bottom) underline-size :color underline-color)))]))
-
 (defn stub [& args]
   (c/label
     :text (format "STUB: %s" (pr-str args))
+    :border (swing/border
+              {:a 10 :color face/c-red})
     :background face/c-red))
 
 (defn label
   [& {:keys [value halign tooltip foreground-hover foreground background font on-click args]
-      :or   {value       ""
-             halign      :left
+      :or   {value            ""
+             halign           :left
              foreground-hover face/c-on-focus
-             foreground  face/c-foreground
-             background  face/c-layout-background
-             font        {:name face/f-regular :size face/s-foreground}
+             foreground       face/c-foreground
+             background       face/c-layout-background
+             font             {:name face/f-regular :size face/s-foreground}
              args []}}]
   (apply
     c/label
@@ -194,107 +132,108 @@
 (def label-link (partial label :font {:name face/f-italic-regular :size face/s-foreground}))
 (def label-info (partial label :font {:name face/f-italic-regular :size face/s-foreground}))
 
-;;; fixme:aleks button arguments
-;;; Warning! first fix `fixme` in `text` below, after change `button`
-;;; 1. rename arguments, like in input field below
-;;;    - `tgap` `bgap`... to one `border` vector with left-right-top-bottom
-;;;    - the same problems with backgrounds and underlines
 (defn button
-  [& {:keys [value
-             tgap bgap lgap rgap flip-border
-             halign tooltip foreground foreground-hover background background-hover underline-size underline-focus underline font
+  [& {:keys [value font
+             border border-focus
+             foreground foreground-hover
+             background background-hover
              on-click on-focus-gain on-focus-lost on-mouse-enter on-mouse-exit
-             args]
+             halign tooltip args]
       :or   {value ""
-             tgap 10 bgap 10 lgap 10 rgap 10
-             halign          :center
+             halign           :center
              foreground       face/c-foreground
              foreground-hover face/c-foreground
              background       face/c-btn-bg
              background-hover face/c-btn-bg-focus
-             underline-focus  face/c-btn-underline-on-focus
-             underline        face/c-btn-underline
-             underline-size   face/s-btn-underline
-             flip-border      false
+             border           (swing/border
+                                {:b 10 :t 10 :l 10 :r 10}
+                                {:b face/s-btn-underline :color face/c-btn-underline})
+             border-focus     (swing/border
+                                {:b 10 :t 10 :l 10 :r 10}
+                                {:b face/s-btn-underline :color face/c-btn-underline-on-focus})
              font             {:name face/f-regular :size face/s-foreground}
-
-             on-click        (fn [e] e)
-             on-focus-gain   (fn [e] e)
-             on-focus-lost   (fn [e] e)
-             on-mouse-enter  (fn [e] e)
-             on-mouse-exit   (fn [e] e)
-
-             args []}}]
-  (let [new-border
-        (fn [underline-color]
-          (b/compound-border (b/empty-border :bottom bgap :top tgap :left lgap :right rgap)
-            (b/line-border (if flip-border :top :bottom) underline-size :color underline-color)))]
-    (apply c/label
-      :text value
-      :focusable? true
-      :halign halign
-      :foreground foreground
-      :font font
-      :listen
-      [:mouse-clicked (fn [e] (on-click e) (gui-tool/switch-focus))
-       :mouse-entered (fn [e]
-                        (c/config! e :border (new-border underline-focus) :cursor :hand
-                          :background background-hover :foreground foreground-hover)
-                        (.repaint (c/to-root e))
-                        (on-mouse-enter e))
-       :mouse-exited (fn [e]
-                       (c/config! e :border (new-border underline):background background :foreground foreground)
-                       (.repaint (c/to-root e))
-                       (on-mouse-exit e))
-       :focus-gained (fn [e]
-                       (c/config! e :border (new-border underline-focus) :cursor :hand
-                         :background background-hover :foreground foreground-hover)
-                       (on-focus-gain e))
-       :focus-lost (fn [e] (c/config! e :border (new-border underline) :background background)
-                     (on-focus-lost e))
-       :key-pressed (fn [e]
-                      (when (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER)
-                        (on-click e)
-                        (gui-tool/switch-focus)))]
-      :background background
-      :border (new-border underline)
-      (cond-> args
-        ;; ------
-        tooltip
-        (into [:tip tooltip])))))
+             on-click         (fn [e] e)
+             on-focus-gain    (fn [e] e)
+             on-focus-lost    (fn [e] e)
+             on-mouse-enter   (fn [e] e)
+             on-mouse-exit    (fn [e] e)
+             args             []}}]
+  (apply c/label
+    :text value
+    :focusable? true
+    :halign halign
+    :foreground foreground
+    :font font
+    :listen
+    [:mouse-clicked (fn [e] (on-click e) (gui-tool/switch-focus))
+     :mouse-entered (fn [e]
+                      (c/config! e :border border-focus :cursor :hand
+                        :background background-hover :foreground foreground-hover)
+                      (.repaint (c/to-root e))
+                      (on-mouse-enter e))
+     :mouse-exited (fn [e]
+                     (c/config! e :border border
+                       :background background :foreground foreground)
+                     (.repaint (c/to-root e))
+                     (on-mouse-exit e))
+     :focus-gained (fn [e]
+                     (c/config! e :border border-focus :cursor :hand
+                       :background background-hover :foreground foreground-hover)
+                     (on-focus-gain e))
+     :focus-lost (fn [e] (c/config! e :border border :background background)
+                   (on-focus-lost e))
+     :key-pressed (fn [e]
+                    (when (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER)
+                      (on-click e)
+                      (gui-tool/switch-focus)))]
+    :background background
+    :border border
+    (cond-> args
+      ;; ------
+      tooltip
+      (into [:tip tooltip]))))
 
 (defn checkbox
-  [& {:keys [value value-setter value-text border on-click tooltip font args]
-      :or   {value nil
-             value-text nil
-             value-setter identity
-             on-click (fn [e] e)
-             font {:name face/f-regular :size face/s-foreground}
-             args []}}]
+  [& {:keys[value value-setter value-text border on-click tooltip font args]
+      :or  {value nil
+            value-text nil
+            value-setter identity
+            on-click (fn [e] e)
+            font    {:name face/f-regular :size face/s-foreground}
+            border  (swing/border {:h 10 :v 5})
+            args []}}]
   (apply
     c/checkbox
     :selected? (value-setter value)
-    :text (str value-text)
-    :font font
-    :border (b/empty-border :top 15)
-    :listen [:mouse-clicked
-             (fn [e]
-               (on-click e))]
+    :text      (str value-text)
+    :font      font
+    :border    border
+    :listen    [:mouse-clicked
+                (fn [e]
+                  (on-click e))]
     (cond-> args
       ;; ------
       tooltip
       (into [:tip tooltip]))))
 
 (defn text
-  [& {:keys [value border border-color-focus border-color-unfocus font-size background char-limit start-underline tooltip font
-             on-change on-focus-gain on-focus-lost on-caret-update value-setter
+  [& {:keys [value value-setter
+             border border-focus foreground background tooltip font
+             on-change on-focus-gain on-focus-lost on-caret-update
              args]
       :or   {value                 ""
              value-setter          str
-             border                [10 10 5 5 2]
+             ;; border                [10 10 5 5 2]
+             border               (swing/border
+                                    {:h 10 :v 5}
+                                    {:b 2 :color face/c-underline})
+             border-focus         (swing/border
+                                    {:h 10 :v 5}
+                                    {:b 2 :color face/c-underline-on-focus})
+
              border-color-focus    face/c-underline-on-focus
              border-color-unfocus  face/c-underline
-             foreground            face/c-input-
+             foreground            face/c-foreground
              background            face/c-input-bg
              font                  {:name face/f-regular :size face/s-foreground}
 
@@ -306,29 +245,26 @@
              args []}}]
   (let [;; fixme:aleks gui-components2/text input field
         ;; 1. `get-user-data`, `set-user-data` can be removed?
-
         ;; last-v          (atom "")
         get-user-data   (fn [e k]   (get-in   (c/config e :user-data) [k]))
-        set-user-data   (fn [e k v] (assoc-in (c/config e :user-data) [k] v))
-        new-border      (fn [underline-color]
-                          (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
-                                             (b/line-border :bottom (nth border 4) :color underline-color)))]
+        set-user-data   (fn [e k v] (assoc-in (c/config e :user-data) [k] v))]
     (->
-     (partial c/text
+      (partial c/text
         :text       (str (value-setter value))
+        :foreground foreground
         :background background
-        :border     (new-border (rift start-underline border-color-unfocus))
-        :user-data  {:value "" :edit? false :type :input :border-fn new-border}
+        :border     border
+        :user-data  {:value "" :edit? false :type :input}
         :font       font
         :listen
         [:focus-gained
          (fn [e]
-           (c/config! e :border (new-border border-color-focus))
+           (c/config! e :border border-focus)
            (c/config! e :user-data (set-user-data e :edit? true))
            (on-focus-gain e))
          :focus-lost
          (fn [e]
-           (c/config! e :border (new-border border-color-unfocus))
+           (c/config! e :border border)
            (c/config! e :user-data (set-user-data e :edit? false))
            (on-focus-lost e))
          :caret-update
@@ -370,17 +306,18 @@
     scr))
 
 (defn textarea
-  [& {:keys [value border border-color-focus border-color-unfocus
-             foreground background ;; char-limit start-underline
-             enabled? font tooltip
+  [& {:keys [value value-setter border border-focus
+             foreground background enabled? font tooltip
              on-change on-focus-gain on-focus-lost on-caret-update
-             value-setter
              args]
       :or   {value                 ""
              value-setter          str
-             border                [10 10 5 5 2]
-             border-color-focus    face/c-underline-on-focus
-             border-color-unfocus  face/c-underline
+             border               (swing/border
+                                    {:h 10 :v 5}
+                                    {:b 2 :color face/c-underline})
+             border-focus         (swing/border
+                                    {:h 10 :v 5}
+                                    {:b 2 :color face/c-underline-on-focus})
              foreground            face/c-foreground
              background            face/c-input-bg
              enabled?              true
@@ -394,35 +331,32 @@
              on-caret-update       (fn [e] e)
 
              args []}}]
-  (let [newBorder (fn [underline-color]
-                    (b/compound-border (b/empty-border :left (nth border 0) :right (nth border 1) :top (nth border 2) :bottom (nth border 3))
-                                       (b/line-border :bottom (nth border 4) :color underline-color)))]
-    (->
-     (partial c/text
-        :text (value-setter (rift value ""))
-        :minimum-size [50 :by 100]
-        :background background
-        :border (newBorder border-color-unfocus)
-        :enabled? enabled?
-        :wrap-lines? true
-        :multi-line? true
-        :font font
-        :listen
-        [:focus-gained (fn [e]
-                         (c/config! e :border (newBorder border-color-focus))
-                         (on-focus-gain e))
-         :focus-lost   (fn [e]
-                         (c/config! e :border (newBorder border-color-unfocus))
-                         (on-focus-lost e))
-         :caret-update (fn [e]
-                         (on-change e))])
-     (apply
-       (cond-> args
-         tooltip
-         (into [:tip tooltip])))
-     (wrapp-keymap (-> (active-keymap) (patch-emacs-keymap))
-                   jarman.gui.components.swing-actions/default-editor-kit-action-map)
-     (scrollbox :minimum-size [50 :by 100]))))
+  (->
+    (partial c/text
+      :text (value-setter (rift value ""))
+      :minimum-size [50 :by 100]
+      :background background
+      :border border
+      :enabled? enabled?
+      :wrap-lines? true
+      :multi-line? true
+      :font font
+      :listen
+      [:focus-gained (fn [e]
+                       (c/config! e :border border-focus)
+                       (on-focus-gain e))
+       :focus-lost   (fn [e]
+                       (c/config! e :border border)
+                       (on-focus-lost e))
+       :caret-update (fn [e]
+                       (on-change e))])
+    (apply
+      (cond-> args
+        tooltip
+        (into [:tip tooltip])))
+    (wrapp-keymap (-> (active-keymap) (patch-emacs-keymap))
+      jarman.gui.components.swing-actions/default-editor-kit-action-map)
+    (scrollbox :minimum-size [50 :by 100])))
 
 (defn codearea
   "Description:
@@ -430,34 +364,26 @@
     To check avaliable languages eval (seesaw.dev/show-options (seesaw.rsyntax/text-area)).
     Default language is Clojure.
   Example:
-  ;; fixme:aleks
-    (state-code-area {})
-    (state-code-area :syntax :css)
-  "
-  [& {:keys [value value-setter
-             language font
-             ;; border
-             border-color-focus border-color-unfocus
-             ;; font-size
-             ;; char-limit start-underline
-             on-change on-focus-gain on-focus-lost
 
+    (state-code-area {})
+    (state-code-area :syntax :css)"
+  [& {:keys [value value-setter
+             language font border border-focus
+             on-change on-focus-gain on-focus-lost
              args]
       :or   {value                 ""
              value-setter          str
              language              :plain
-             ;; border                [10 10 5 5 2]
-             border-color-focus    face/c-underline-on-focus
-             border-color-unfocus  face/c-underline
-             ;; background            face/c-input-bg
-             ;; start-underline       nil
-             ;; char-limit            0
              font                  {:name face/f-mono-regular :size face/s-foreground}
+             border                (swing/border
+                                     {:h 10 :v 5}
+                                     {:b 2 :color face/c-underline})
+             border-focus          (swing/border
+                                     {:h 10 :v 5}
+                                     {:b 2 :color face/c-underline-on-focus})
              on-change             (fn [e] e)
              on-focus-gain         (fn [e] e)
              on-focus-lost         (fn [e] e)
-             ;; on-caret-update       (fn [e] e)
-
              args []}}]
   (let [border-fn (fn [color] (b/line-border  :bottom 2 :color color))]
     (where
@@ -474,9 +400,9 @@
               :syntax language
               :font font
               ;; :background background
-              :border (border-fn border-color-unfocus)
-              :listen [:focus-gained (fn [e] (c/config! e :border (border-fn border-color-focus)) (on-focus-gain e))
-                       :focus-lost   (fn [e] (c/config! e :border (border-fn border-color-unfocus)) (on-focus-lost e))
+              :border border
+              :listen [:focus-lost   (fn [e] (c/config! e :border border) (on-focus-lost e))
+                       :focus-gained (fn [e] (c/config! e :border border-focus) (on-focus-gain e))
                        :caret-update (fn [e] (on-change e))] args))
       ;; ---
       (scheme (.getSyntaxScheme rTextArea))
@@ -578,39 +504,41 @@
       rTextScrollPane))))
 
 (defn combobox
-  [& {:keys [value model
-             tgap bgap lgap rgap
-             halign tooltip background background-hover
-             underline-size underline-focus underline flip-border font
+  [& {:keys [value value-setter model
+             border border-focus font halign tooltip background background-hover
              on-select on-click on-focus-gain on-focus-lost on-mouse-enter on-mouse-exit
              args]
-      :or   {value            ""
-             tgap 10 bgap 10 lgap 10 rgap 10
+      :or   {value-setter     identity
              model            []
              background       face/c-btn-bg
              background-hover face/c-btn-bg-focus
-             underline-focus  face/c-btn-underline-on-focus
-             underline        face/c-btn-underline
-             underline-size   face/s-btn-underline
-             flip-border      false
-             font            {:name face/f-mono-regular :size face/s-foreground}
-
-             on-select       (fn [e] e)
-             on-click        (fn [e] e)
-             on-focus-gain   (fn [e] e)
-             on-focus-lost   (fn [e] e)
-             on-mouse-enter  (fn [e] e)
-             on-mouse-exit   (fn [e] e)
+             font             {:name face/f-mono-regular :size face/s-foreground}
+             border           (swing/border {:h 10 :v 2} {:b 2 :color face/c-underline})
+             border-focus     (swing/border {:h 10 :v 2} {:b 2 :color face/c-underline-on-focus})
+             on-select        (fn [e] e)
+             on-click         (fn [e] e)
+             on-focus-gain    (fn [e] e)
+             on-focus-lost    (fn [e] e)
+             on-mouse-enter   (fn [e] e)
+             on-mouse-exit    (fn [e] e)
 
              args []}}]
-  (blet
-   (apply
+  [;; fixme: implement self cell-render
+   ;; renderer (seesaw.cells/default-list-cell-renderer
+   ;;           (fn [renderer {:keys [this focus? selected?] :as info}]
+   ;;             (let [e this]
+   ;;               (cond
+   ;;                 focus? (seesaw.core/config! e :background bg-hover)
+   ;;                 selected? (seesaw.core/config! e :background bg)
+   ;;                 :else (seesaw.core/config! e :background bg))) nil))
+   ]
+  (apply
     seesaw.core/combobox
     :model model
-    :selected-item value
+    :selected-item (value-setter value)
     :focusable? true
     :background background
-    :border (new-border underline)
+    :border border
     :font font
     :listen
     [:selection
@@ -622,37 +550,25 @@
        (gui-tool/switch-focus))
      :mouse-entered
      (fn [e]
-       (c/config! e :border (new-border underline-focus) :background background-hover :cursor :hand)
+       (c/config! e :border border-focus :background background-hover :cursor :hand)
        (.repaint (c/to-root e))
        (on-mouse-enter e))
      :mouse-exited
      (fn [e]
-       (c/config! e :border (new-border underline) :background background)
+       (c/config! e :border border :background background)
        (.repaint (c/to-root e))
        (on-mouse-exit e))
      :focus-gained
      (fn [e]
-       (c/config! e :border (new-border underline-focus) :background background-hover :cursor :hand)
+       (c/config! e :border border-focus :background background-hover :cursor :hand)
        (on-focus-gain e))
      :focus-lost
      (fn [e]
-       (c/config! e :border (new-border underline) :background background)
+       (c/config! e :border border :background background)
        (on-focus-lost e))]
     (cond-> args
       tooltip
-      (into [:tip tooltip])))
-   [;; fixme: implement self cell-render
-    ;; renderer (seesaw.cells/default-list-cell-renderer
-    ;;           (fn [renderer {:keys [this focus? selected?] :as info}]
-    ;;             (let [e this]
-    ;;               (cond
-    ;;                 focus? (seesaw.core/config! e :background bg-hover)
-    ;;                 selected? (seesaw.core/config! e :background bg)
-    ;;                 :else (seesaw.core/config! e :background bg))) nil))
-    new-border
-    (fn [underline-color]
-      (b/compound-border (b/empty-border :bottom bgap :top tgap :left lgap :right rgap)
-                         (b/line-border (if flip-border :top :bottom) underline-size :color underline-color)))]))
+      (into [:tip tooltip]))))
 
 ;;  ____  _____ __  __  ___
 ;; |  _ \| ____|  \/  |/ _ \

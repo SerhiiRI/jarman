@@ -779,8 +779,7 @@
         (info-logo))
         (rift (about-panel (gtool/get-lang-infos :info-panel-about)) [])
         (rift (faq-panel   (gtool/get-lang-infos :info-panel-faq))  [])
-        (rift (contact-info) [])
-       ]))
+        (rift (contact-info) [])]))
     (let [return-btn (return-to-login state! dispatch!)]
       (switch-focus state! dispatch! return-btn)
       return-btn)]))

@@ -134,3 +134,43 @@
         screen-x  (.getX mouse-pos)
         screen-y  (.getY mouse-pos)]
     [screen-x screen-y]))
+
+(defn ^:private border-from-config [m]
+  (where
+    ((alias-map {:b :bottom :t :top :l :left :r :right})
+     (border-color (:color m))
+     (border-fn
+       (if border-color
+         (partial seesaw.border/line-border :color border-color)
+         (partial seesaw.border/empty-border))))
+    (->> (select-keys m [:b :t :l :r :a :h :v])
+     (reduce
+       (fn [cfg [direction v]]
+         (case direction
+           :a (reduced {:bottom v :top v :left v :right v})
+           :h (assoc cfg :left v :right v)
+           :v (assoc cfg :bottom v :top v)
+           (assoc cfg (direction alias-map) v))) {})
+     (mapcat identity)
+     (apply border-fn))))
+
+(defn border
+  "Description
+    Small wrapper for creating combinded borders
+
+  Used Aliaces
+     :b - :bottom
+     :t - :top
+     :l - :left
+     :r - :right
+     :h - :horizontal(:left+:right)
+     :v - :vertical(:top+:bottom)
+     :a - all directions
+
+  Example
+    (border
+      {:b 2 :t 2 :l 2 :r 10 :color nil}
+      {:a 2 :color \"#931\"})" [& v]
+  (if (= 1 (count v)) (border-from-config (first v))
+      (apply seesaw.border/compound-border (mapv border-from-config v))))
+

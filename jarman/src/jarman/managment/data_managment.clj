@@ -7,6 +7,7 @@
    [clojure.pprint    :refer [pprint cl-format]]
    ;; -----------
    [jarman.lang                  :refer :all]
+   [jarman.org                   :refer :all]
    [jarman.config.storage        :as storage]
    [jarman.config.environment    :as env]
    [jarman.logic.sql-tool        :as sql]
@@ -154,7 +155,14 @@
   (println "Views:")
   (doall
    (for [table-view view-list]
-     (let [table-map  (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
+     (let [table-view  table-view
+           table-map   (try (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
+                            (catch IllegalArgumentException e
+                              (print-error e)
+                              (throw (ex-info "Error in generating view info. Invalid arguments for convert collection to map. Must be coll with even count."
+                                              {:type :invalid-arguments-in-views
+                                               :message-head [:header :error]
+                                               :message-body [:alerts :invalid-arguments-in-views]}))))
            view-plugins (map (comp str first) (drop 2 table-view))
            table-name (:name table-map)]
        (println (cl-format nil "~70<  ~A~;~{~A~^, ~}~>" table-name view-plugins))))) true)
@@ -167,9 +175,15 @@
     (view-manager/view-clean)
     (doall
      (for [table-view view-list]
-          (let [table-map  (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
-                table-name (:name table-map)]
-            (view-manager/view-set {:table_name table-name :view (str table-view)}))))))
+       (let [table-map  (try (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
+                             (catch IllegalArgumentException e
+                               (print-error e)
+                               (throw (ex-info "Error in generating view info. Invalid arguments for convert collection to map. Must be coll with even count."
+                                               {:type :invalid-arguments-in-views
+                                                :message-head [:header :error]
+                                                :message-body [:alerts :invalid-arguments-in-views]}))))             
+             table-name (:name table-map)]
+         (view-manager/view-set {:table_name table-name :view (str table-view)}))))))
 
 (comment
   (views-persist-into-database)

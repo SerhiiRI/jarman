@@ -36,7 +36,7 @@
              time 0}}]
   (if-not (nil? obj) (set-focus obj))
   (if (> time 0)
-    (timelife time (fn []
+    (stool/timelife time (fn []
                      (if-not (nil? @jarman-focus-now)
                        (.requestFocus @jarman-focus-now)
                        (reset! jarman-focus-now nil))))

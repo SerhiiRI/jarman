@@ -316,13 +316,13 @@
           150 130 5
           (- (/ (first @(state/state :atom-app-size)) 2) 250)
           0.05)
-        (timelife 1 #(move-in-time-x JLP dub2
+        (swing/timelife 1 #(move-in-time-x JLP dub2
                        -150
                        (- (second @(state/state :atom-app-size)) 130)
                        150 130 5
                        (- (/ (first @(state/state :atom-app-size)) 2) 350)
                        0.05))
-        (timelife 2 #(move-in-time-x JLP dub3
+        (swing/timelife 2 #(move-in-time-x JLP dub3
                        -150
                        (- (second @(state/state :atom-app-size)) 130)
                        150 130 5
@@ -335,26 +335,26 @@
           150 130 -5
           (+ (/ (first @(state/state :atom-app-size)) 2) 100)
           0.05)
-        (timelife 1 #(move-in-time-x JLP dub5
+        (swing/timelife 1 #(move-in-time-x JLP dub5
                        (first @(state/state :atom-app-size))
                        (- (second @(state/state :atom-app-size)) 130)
                        150 130 -5
                        (+ (/ (first @(state/state :atom-app-size)) 2) 200)
                        0.05))
-        (timelife 2 #(move-in-time-x JLP dub6
+        (swing/timelife 2 #(move-in-time-x JLP dub6
                        (first @(state/state :atom-app-size))
                        (- (second @(state/state :atom-app-size)) 130)
                        150 130 -5
                        (+ (/ (first @(state/state :atom-app-size)) 2) 300)
                        0.05))
 
-        (timelife 2 #(move-in-time-y JLP hb
+        (swing/timelife 2 #(move-in-time-y JLP hb
                        (- (/ (first @(state/state :atom-app-size)) 2) 150)
                        -150
                        300 150 5
                        -20
                        0.05))
-        (timelife 3 #(move-in-time-y JLP cake
+        (swing/timelife 3 #(move-in-time-y JLP cake
                        (- (/ (first @(state/state :atom-app-size)) 2) 100)
                        (second @(state/state :atom-app-size))
                        200 200 -5
@@ -373,7 +373,7 @@
               clip    (javax.sound.sampled.AudioSystem/getClip)]
           (.open clip audioIn)
           (.start clip))
-        (timelife 33
+        (swing/timelife 33
           #(do
              (.remove JLP dub1)
              (.remove JLP dub2)

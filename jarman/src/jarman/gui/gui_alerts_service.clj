@@ -13,6 +13,7 @@
    [jarman.gui.gui-style             :as gs]
    [jarman.gui.gui-tools             :as gtool]
    [jarman.gui.gui-components        :as gcomp]
+   [jarman.gui.components.swing      :as stool]
    [jarman.gui.popup                 :as popup]
    [jarman.logic.state               :as state]
    [jarman.faces                     :as face]
@@ -194,7 +195,7 @@
 (defn add-to-alerts-box [item]
   (.add (:alerts-box (state!)) item)
   (refresh-box)
-  (timelife 0.2 #(refresh-box-bounds)))
+  (stool/timelife 0.2 #(refresh-box-bounds)))
 
 ;; (count (seesaw.util/children (:alerts-box (state!))))
 ;; (c/config (:alerts-box (state!)) :bounds)

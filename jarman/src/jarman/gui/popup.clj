@@ -186,7 +186,7 @@
                                                                                             ((:close api)))]]})]))
                  :size size
                  :title (gtool/get-lang-basic :confirm?)})
-   (timelife 0.02 #(.repaint (state/state :app)))))
+   (stool/timelife 0.02 #(.repaint (state/state :app)))))
 
 (defn confirm-popup-window
   "Description:

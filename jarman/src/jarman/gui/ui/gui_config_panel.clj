@@ -19,6 +19,7 @@
    [jarman.gui.gui-tools            :as gtool]
    [jarman.gui.gui-style            :as gs]
    [jarman.gui.gui-migrid           :as gmg]
+   [jarman.gui.components.swing     :as stool]
    [seesaw.chooser                  :as chooser]
    [jarman.config.storage           :as storage]
    [jarman.config.environment       :as env]
@@ -368,7 +369,7 @@
                                                         (fn []
                                                           (c/config! (.getParent (c/to-widget e))
                                                                      :items [[(c/label :text (gtool/get-lang-btns :restoring))]])
-                                                          (timelife
+                                                          (stool/timelife
                                                            0.1
                                                            (fn []
                                                              (revert-backup-view path)
@@ -390,7 +391,7 @@
                                                       (fn []
                                                         (c/config! (.getParent (c/to-widget e))
                                                                    :items [[(c/label :text (gtool/get-lang-btns :removing))]])
-                                                        (timelife
+                                                        (stool/timelife
                                                          0.1
                                                          (fn [](backup-del-fn (last (split-path path)))
                                                            (render-panel)

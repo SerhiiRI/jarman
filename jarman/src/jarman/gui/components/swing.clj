@@ -108,10 +108,30 @@
   [font-files]
   (let [^GraphicsEnvironment ge (java.awt.GraphicsEnvironment/getLocalGraphicsEnvironment)]
     (doall
-      (doseq [font font-files]
-        (.registerFont ge
-          (java.awt.Font/createFont java.awt.Font/TRUETYPE_FONT
-            (clojure.java.io/input-stream font)))))))
+     (doseq [font font-files]
+       (.registerFont ge
+                      (java.awt.Font/createFont java.awt.Font/TRUETYPE_FONT
+                                                (clojure.java.io/input-stream font)))))))
+
+(defn timelife
+  "Description:
+    Run fn after some time.
+    Set time, 1 is a 1 sec
+    Set fn
+  Example:
+    (timelife (1 ))"
+  ([time fn-to-invoke]
+   (timelife time fn-to-invoke ""))
+  ([time fn-to-invoke title]
+   (.start
+    (Thread.
+     (fn []
+       (if (>= time 0)
+         (do
+           (Thread/sleep (* 1000 time))
+           (try
+             (fn-to-invoke)
+             (catch Exception e (println (str "\nException in timelife: " title "\n" (str (.getMessage e)))))))))))))
 
 (defn font
   ([font-name]

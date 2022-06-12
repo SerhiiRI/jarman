@@ -507,7 +507,13 @@
      (view-clean)
      (doall
       (map (fn [table-view]
-             (let [table-map  (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
+             (let [table-map  (try (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
+                                   (catch IllegalArgumentException e
+                                     (print-error e)
+                                     (throw (ex-info "Error in generating view info. Invalid arguments for convert collection to map. Must be coll with even count."
+                                                     {:type :invalid-arguments-in-views
+                                                      :message-head [:header :error]
+                                                      :message-body [:alerts :invalid-arguments-in-views]}))))
                    table-name (:name table-map)]
                (view-set {:table_name table-name :view (str table-view) ;; (with-out-str (clojure.pprint/pprint table-view))
                           })))

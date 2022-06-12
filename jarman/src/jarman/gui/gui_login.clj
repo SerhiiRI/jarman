@@ -131,9 +131,9 @@
 
 (defn- switch-focus
   ([state!]
-   (timelife 0.01 (fn []
-                   (let [to-focus (:current-focus (state!))]
-                     (if to-focus (.requestFocus to-focus))))))
+   (stool/timelife 0.01 (fn []
+                          (let [to-focus (:current-focus (state!))]
+                            (if to-focus (.requestFocus to-focus))))))
   ([state! dispatch! compo]
    (new-focus dispatch! compo)
    (switch-focus state!)))
@@ -889,7 +889,7 @@
         login-frame (frame-login state! dispatch!)]
     (swap! (state! :atom) (fn [s] (assoc s :frame login-frame)))
     (if (state/state :debug-mode)
-      (timelife 1 (fn []
+      (stool/timelife 1 (fn []
                     (dosync
                      (swap! state
                             #(-> %

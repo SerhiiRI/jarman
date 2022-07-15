@@ -1,0 +1,36 @@
+* CSV managment hints
+
+ #+begin_src clojure
+   (require '[clojure.data.csv :as csv]
+     '[clojure.java.io :as io])
+
+   (def woman-names
+     (with-open [reader (io/reader "imiona_zenskie.csv")]
+       (->> (csv/read-csv reader)
+	 (doall)
+	 (rest)
+	 (map (fn [[a b c]] [a (Integer/parseInt c)]))
+	 (sort-by second)
+	 (reverse)
+	 (map first))))
+
+   (def man-names
+     (with-open [reader (io/reader "imiona_meskie.csv")]
+       (->> (csv/read-csv reader)
+	 (doall)
+	 (rest)
+	 (map (fn [[a b c]] [a (Integer/parseInt c)]))
+	 (sort-by second)
+	 (reverse)
+	 (map first))))
+
+   (with-open [writer (io/writer "female_names_pl.csv")]
+     (csv/write-csv writer 
+       (->> (take 300 woman-names)
+	 (map vector))))
+
+   (with-open [writer (io/writer "male_names_pl.csv")]
+     (csv/write-csv writer
+       (->> (take 300 man-names)
+	 (map vector))))
+ #+end_src

@@ -78,6 +78,7 @@
     :dbname "Baza danych",
     :dbtype "Typ połączenia",
     :error "Błąd",
+    :error-input "Błąd wprowadzenia"
     :error-sql-query "Błąd SQL",
     :extension-manager "Menedżer rozszerzeń",
     :failed "Niepowodzenie!",
@@ -126,7 +127,8 @@
     :error-parsing-license "Bląd parsowania pliku licencji",
     :field-is-empty "Pole jest puste!",
     :incorrect-input-fields "Nie wszystkie pola są prawidłowo wypełnione!",
-    :incorrect-login-or-pass "Nieprawidłowy login lub hasło. Upewnij się czy posiadasz dobre dane logowania.",
+    :incorrect-login-or-pass "Nieprawidłowy login lub hasło. Upewnij się czy posiadasz dobre dane logowania."
+    :incorrect-field-pattern-cl "Wartość '~A' nie odpowiada~@[ '~A'~] szablonu"
     :information "Informacja",
     :invalid-date-time-interval-info "Pole z datą nie może pozostać puste. Data początkowa musi być wcześniejsza niż data zakończenia.",
     :invalid-arguments-in-views "Błąd podczas generowania informacji o widoku. Nieprawidłowe argumenty konwersji kolekcji na mapę."
@@ -326,11 +328,12 @@
     :password "DB password"
     :contact  "Contact"
     :faq      "FAQ"
-    :error    "Error"
     :warning  "Warning"
     :info     "Information"
     :success  "Success!"
     :failed   "Niepowodzenie!"
+    :error    "Error"
+    :error-input "Input error"
     :error-sql-query "SQL query error"
     :contacts-info   "Contact"
     :physical_address "Address"
@@ -381,6 +384,7 @@
     :field-is-empty "Field is empty!",
     :incorrect-input-fields "Not all fields are correct!",
     :incorrect-login-or-pass "Incorrect login or password. Please check if your login informations are correct.",
+    :incorrect-field-pattern-cl "Value '~A' not match to~@[ '~A'~] template."
     :information "Information",
     :invalid-date-time-interval-info "Fields with date cannot be empty. Start day must be earlier than end date.",
     :invalid-arguments-in-views "Error in generating view info. Invalid arguments for convert collection to map. Must be coll with even count."

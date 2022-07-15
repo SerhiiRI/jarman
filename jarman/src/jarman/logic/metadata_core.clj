@@ -151,7 +151,7 @@
 
 
 (defn- --recur-make-references [^clojure.lang.Atom meta-list ^String table-name & {:keys [back-ref]}]
-  (if-let [[index metadata] (find-column (fn [[i m]] (= table-name (get-in m [:prop :table :field]))) (deref meta-list))]
+  (if-let [[index metadata] (first (filter (fn [[i m]] (= table-name (get-in m [:prop :table :field]))) (deref meta-list)))]
     (let [front-refs (filter :foreign-keys (get-in metadata [:prop :columns]))]
       (if (empty? front-refs)
         (do

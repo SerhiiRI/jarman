@@ -465,7 +465,7 @@
     (let [fx ((comp :columns :prop) original)
           yx ((comp :columns :prop) changed)]
       (apply concat (for [[yi y] (map-indexed vector yx)]
-                      (let [[fi f] (find-column #(= (:field (second %)) (:field y)) (map-indexed vector fx))]
+                      (let [[fi f] (first (filter #(= (:field (second %)) (:field y)) (map-indexed vector fx)))]
                         (map #(% [:prop :columns fi] [:prop :columns yi]) (f-diff-prop-columns-fields f y)))))))
   ;; (apply-f-diff
   ;;  (change-fields user-original user-changed)

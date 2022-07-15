@@ -33,7 +33,8 @@
   ->FieldComposite
   convert_metadata->model
   convert_model->flattfields
-  convert_flattfields->model]
+  convert_flattfields->model
+  reload-metadata]
  
  [jarman.logic.metadata-composite-types
   ->Link map->Link isLink?
@@ -62,5 +63,7 @@
 
 (comment
   (do-create-meta-for-existing-tables)
-  (debug-regenerate-new-metadata))
+  (debug-regenerate-new-metadata)
+  (reload-metadata)
+  (return-metadata))
 

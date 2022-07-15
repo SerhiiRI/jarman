@@ -16,6 +16,20 @@
 ;;; helper function ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
+(defmacro exception->
+  "When expr is not nil, threads it into the first form (via ->),
+  and when that result is not nil, through the next etc"
+  {:added "1.5"}
+  [expr & forms]
+  (let [g (gensym)
+        steps (map (fn [step] `(if (instance? java.lang.Exception ~g) ~g (-> ~g ~step)))
+                   forms)]
+    `(let [~g ~expr
+           ~@(interleave (repeat g) (butlast steps))]
+       ~(if (empty? steps)
+          g
+          (last steps)))))
+
 (defmacro catch-component-trace [message]
   `(do
      (println "_______________________________")
@@ -92,16 +106,6 @@
                     (parameter-default-v)
                     parameter-default-v)))))
 
-(def all-vec-to-floor
-  "(all-vec-to-floor ([:a] ([:d :x] [:e :y] ([:z])))) ;; => ([:a] [:d :x] [:e :y] [:z])"
-  (fn [vects]
-    (do
-      (defn r-unwrapper [result example]
-        (reduce #(if (vector? %2)
-                   (conj %1 %2)
-                   (concat %1 (r-unwrapper [] %2))) result example))
-      (r-unwrapper [] vects))))
-
 (defn to-hashkey
   "Description:
       Set some :key and get hashkey like :key => :#key.
@@ -131,38 +135,6 @@
     (string? con)     (if (empty? con) els con)
     (map? con)        (if (empty? con) els con)
     :else con))
-
-(defn coll-to-map
-  "Description:
-     Convert collection to map.
-   Example:
-     (coll-to-map [:a 2 :b 4])) => {:a 2 :b 4}
-     (coll-to-map (list 1 2 3)) => IllegalArgumentException
-     (coll-to-map nil) => {}"
-  [coll]
-  (apply hash-map coll))
-
-(defn coll-of-keys->map
-  "Description:
-    vector empty map
-    Create from vector or list map with nil value.
-    Second arg - default value for map.
-  Example:
-    (coll-of-keys->map [:a :b])
-      => {:a nil, :b nil}
-    (coll-of-keys->map [:a :b] \"nice\")
-      => {:a \"nice\", :b \"nice\"}"
-  ([coll] (coll-of-keys->map coll nil))
-  ([coll val] (into {} (map (fn [k] {k val}) coll))))
-
-(defn rm-nil-in-map
-  "Description:
-     cut nil map
-     Remove values with nil in map.
-   Example:
-     (cnmap {:a nil :b \"a\"}) => {:b \"a\"}"
-  [coll-map]
-  (into {} (filter (comp some? val) coll-map)))
 
 (defmacro join
   "(join \",\" [1 2 3]) ;=> '1,2,3'"
@@ -428,16 +400,6 @@
   [m & body]
   `(condp (fn [kk# mm#] (contains? mm# kk#)) ~m
      ~@body))
-
-(defmacro find-column
-  "Descripion
-    Short macro for geting first value of lazy seq.
-
-  Example
-    (find-column #(= % 2) [1 2 3 4])"
-  [f col]
-  `(first (filter ~f ~col)))
-
 
 (defmacro get-apply
   "Apply one function to maps

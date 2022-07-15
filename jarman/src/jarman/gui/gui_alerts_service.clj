@@ -612,14 +612,15 @@
 (defn error-to-alert [e]
   (cond
     (= (class e) clojure.lang.ExceptionInfo)
-    (let [{:keys [type plugin message-head message-body attr]} (ex-data e)
+    (let [{:keys [type plugin attr message-head message-body print-stacktrace? print-attribute?]
+           :or {print-stacktrace? true print-attribute? true}} (ex-data e)
           message-head (cl-format nil "~@[~A. ~]~A"
                          (when plugin (name plugin))
                          (apply gtool/get-lang message-head))
-          message-body (cl-format nil "~A~%~@[Attributes~%~A~]Stacktrace:~%~A~%"
-                         (apply gtool/get-lang message-body)
-                         (when (not-empty attr) (cl-format nil "~{~{~A~^ - ~} ~%~}" (seq (ex-data e))))
-                         (with-out-str (clojure.stacktrace/print-stack-trace e 10)))]
+          message-body (cl-format nil "~A~@[~%~Attributes~%~A~]~@[~%Stacktrace:~%~A~]"
+                         (if (string? message-body) message-body (apply gtool/get-lang message-body))
+                         (when print-attribute?  (cl-format nil "~{~{~A~^ - ~} ~%~}" (seq (ex-data e))))
+                         (when print-stacktrace? (with-out-str (clojure.stacktrace/print-stack-trace e 10))))]
       (danger message-head message-body :time 10))
     (instance? Exception e)
     (let [message-head (.getMessage e)

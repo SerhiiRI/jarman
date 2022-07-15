@@ -217,21 +217,19 @@
       (state/set-state :theme-first-load true)
       (print-header "First theme loaded"))
 
-    (print-header
-     "Apply selected theme" 
+    (print-header "Apply selected theme"
      (do-load-theme (state/state :theme-name))))
   
-  (print-header
-   "apply default global style" 
-   (gs/load-style))
+  (print-header "apply default global style"
+    (gs/load-style))
 
-  (if (= false (state/state :soft-restart))
-    (try
-      (reset! relative-pos [(.x (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))
-                            (.y (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))])
-      (.dispose (seesaw.core/to-frame (state/state :app)))
-      (catch Exception e nil ;;(println "Last pos is nil")
-             ))))
+  (print-header "set XY position on screen for main frame"
+    (if (= false (state/state :soft-restart))
+      (try
+        (reset! relative-pos [(.x (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))
+                              (.y (.getLocationOnScreen (seesaw.core/to-frame (state/state :app))))])
+        (.dispose (seesaw.core/to-frame (state/state :app)))
+        (catch Exception e (println "Last pos is nil"))))))
 
 (defn load-level-2
   "Description:
@@ -320,28 +318,25 @@
                                      (if (state/state :doom)
                                        (gcomp/rm-doom)
                                        (let [h (/ (second @(state/state :atom-app-size)) 2) w h]
-                                           (gcomp/open-doom
-                                            (gmg/migrid
+                                         (gcomp/open-doom
+                                           (gmg/migrid
                                              :v :center :bottom
                                              [(c/label :text "RICARDOOM" :font (gs/getFont 30))
                                               (gmg/migrid
-                                               :> :f [(gcomp/label-img "rc.gif" w h)
-                                                      (gcomp/label-img "rc.gif" w h)
-                                                      (gcomp/label-img "rc.gif" w h)])])))))} 
-                           ])
+                                                :> :f [(gcomp/label-img "rc.gif" w h)
+                                                       (gcomp/label-img "rc.gif" w h)
+                                                       (gcomp/label-img "rc.gif" w h)])])))))}])
              [(gcomp/fake-focus :vgap top-offset :hgap img-scale)]))))
 
 (defn load-level-3
   "Description:
     Try display frame in same place when reloading. Next set to frame login@permission."
   [relative-pos]
-  (if-not (nil? @relative-pos)
-    (.setLocation (seesaw.core/to-frame (state/state :app)) (first @relative-pos) (second @relative-pos)))
-  ;; TODO TO DEBUG!!!!
-  ;; (session/login {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3307, :dbname "jarman", :user "root", :password "misiePysie69", :useUnicode true, :characterEncoding "UTF-8"}
-  ;;        "dev" "dev")
-  (let [{:keys [login profile-name]} (.get-user (session/session))]
-    (gseed/extend-frame-title (str ", " login "@" profile-name))))
+  (print-header "Display frame in same place where login frame was"
+   (if-not (nil? @relative-pos)
+     (.setLocation (seesaw.core/to-frame (state/state :app)) (first @relative-pos) (second @relative-pos)))
+   (let [{:keys [login profile-name]} (.get-user (session/session))]
+     (gseed/extend-frame-title (str ", " login "@" profile-name)))))
 
 (defn load-level-4
   "Description:

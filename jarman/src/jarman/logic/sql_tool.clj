@@ -1,3 +1,17 @@
+;;  _____ ___  ____   ___
+;; |_   _/ _ \|  _ \ / _ \
+;;   | || | | | | | | | | |
+;;   | || |_| | |_| | |_| |
+;;   |_| \___/|____/ \___/
+;; -------------------------
+;; Markers:
+;;  [ ] todo
+;;  [W] work in progress
+;;  [X] done
+;;  [-] Cenceled
+;; -------------------------
+;;  [ ] subselection
+;;  [ ] union selection
 (ns jarman.logic.sql-tool
   (:gen-class)
   (:refer-clojure :exclude [update])
@@ -7,6 +21,7 @@
    [clojure.string :as string]
    [clojure.java.io :as io]
    [clojure.pprint :refer [cl-format pprint]]))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; configuration rules ;;;

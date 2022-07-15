@@ -27,6 +27,8 @@
      :expression-cfg-fn (fn [id] (cfg id))}))
 
 ;; (build-select-simple-data-by-the-id :user)
+;; ((:expression-cfg-fn (build-select-simple-data-by-the-id :user)) 1)
+;; => {:table_name :user, :where [:= :user.id 1], :column (:#as_is :user.first_name :user.last_name :user.work_type :user.act :user.section :user.teta_nr)}
 
 
 (defn date-formatter [^java.util.Date date]

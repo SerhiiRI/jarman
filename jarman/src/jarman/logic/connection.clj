@@ -94,7 +94,9 @@
   [connection-map]
   (dosync (ref-set *connection* (merge connection-map {:useUnicode true :characterEncoding "UTF-8"}))))
 
-(comment (connection-set (get (deref dataconnection-alist) :jarman--localhost--3306)))
+(comment (connection-set (get (deref jarman.variables/dataconnection-alist) :jarman--localhost--3306))
+         (connection-set (get (deref jarman.variables/dataconnection-alist) :hrtime--localhost--3306))
+         (deref jarman.variables/dataconnection-saved))
 
 #_(defn connection-wrapp
   "Description

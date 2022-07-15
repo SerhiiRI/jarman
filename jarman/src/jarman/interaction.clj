@@ -26,7 +26,7 @@
    kbd kvc global-set-key define-key]
 
   [jarman.gui.gui-alerts-service
-   success danger warning info
+   success danger warning info error-to-alert
    delay-alert show-delay-alerts show-alerts-history]
 
   [jarman.gui.gui-views-service

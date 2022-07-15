@@ -134,62 +134,6 @@
                (global-view-configs-set plugin-config-path cfg (plugin-toolkit-fn cfg)
                                         (eval (fn [] (plugin-entry-fn plugin-config-path))))))) nil)))
 
-;; (first (get (group-by :plugin-name (plugin-system/system-ViewPlugin-list-get))
-;;       (symbol 'aaa)))
-;; '(:plugin-test-spec-fn :plugin-entry-fn :plugin-toolkit-fn :plugin-description :plugin-name)
-
-;; (defview permission
-;;   (aaa
-;;    :id :permission
-;;    :name "permission"
-;;    :plug-place [:#tables-view-plugin]))
-
-;; (global-view-configs-clean)
-;; (global-view-configs-get)
-
-;;;;;;;;;;;;;;;;;;;;;
-;;; DEBUG SEGMENT ;;; 
-;;;;;;;;;;;;;;;;;;;;;
-
-(comment
-  (defview permission
-    (table
-     :id :permission
-     :name "permission"
-     :plug-place [:#tables-view-plugin]
-     :tables [:permission]
-     :view-columns [:permission.permission_name :permission.configuration]
-     :model-insert [:permission.permission_name :permission.configuration]
-     :active-buttons [:insert :update :delete :clear :changes]
-     :permission [:admin :user :developer]
-     :actions []
-     :buttons []
-     :query
-     {:table_name :permission,
-      :column
-      [:#as_is
-       :permission.id
-       :permission.permission_name
-       :permission.configuration]})
-    (dialog-table
-     :id :permission-table
-     :name "permission dialog"
-     :permission [:admin :user :developer]
-     :tables [:permission]
-     :view-columns [:permission.permission_name :permission.configuration]
-     :query
-     {:table_name :permission,
-      :column
-      [:#as_is
-       :permission.id
-       :permission.permission_name
-       :permission.configuration]})))
-
-;;; ---------------------------------------
-;;; eval this function and take a look what
-;;; you get in that configuration
-;;; ---------------------------------------
-
 (comment
   (do-view-load)
   (return-structure-tree (deref jarman.variables/user-menu))
@@ -334,7 +278,7 @@
          ;;             :dbtype :user :password
          ;;             :useUnicode :characterEncoding)
          ;; req (list 'in-ns (quote (quote jarman.logic.view-manager)))
-         data (map (fn [x] (read-string (:view x))) (db/query (select! {:table_name :view}))) 
+         data (map (fn [x] (read-string (:view x))) (db/query (select! {:table_name :jarman_view}))) 
          ;; sdata (if-not (empty? data) (concat [con req] data))
          ;; path  (if (nil? path)
          ;;         (try (str (env/get-view-clj))
@@ -358,7 +302,7 @@
                      :dbtype :user :password
                      :useUnicode :characterEncoding)
          req (list 'in-ns (quote (quote jarman.logic.view-manager)))
-         data (map (fn [x] (read-string (:view x))) (db/query (select! {:table_name :view}))) 
+         data (map (fn [x] (read-string (:view x))) (db/query (select! {:table_name :jarman_view}))) 
          sdata (if-not (empty? data) (concat [con req] data))
          path  (if (nil? path)
                  (try (str (env/get-view-clj))
@@ -456,7 +400,7 @@
     (return-structure-tree (deref jarman.variables/user-menu))))
 
 (defn view-clean []
-  (db/exec (delete! {:table_name :view})))
+  (db/exec (delete! {:table_name :jarman_view})))
 
 (defn view-get
   "Description
@@ -466,7 +410,7 @@
     {:id 2, :table_name \"user\", :view   \"(defview user (table :name \"user\"......))})"
   [table-name]
   (first (db/query
-          (select! {:table_name :view :where [:= :table_name (name table-name)]}))))
+          (select! {:table_name :jarman_view :where [:= :table_name (name table-name)]}))))
 
 (defn view-set
   "Description
@@ -476,10 +420,10 @@
   [view]
   (let [table-name (:table_name view)
         table-view (:view view)
-        id-t       (:id (first (db/query (select! {:table_name :view :where [:= :table_name table-name]}))))]   
+        id-t       (:id (first (db/query (select! {:table_name :jarman_view :where [:= :table_name table-name]}))))]   
     (if (nil? id-t)
-      (db/exec (insert! {:table_name :view :set {:table_name table-name, :view table-view}}))
-      (db/exec (update! {:table_name :view :set {:view table-view} :where [:= :id id-t]}))) ;; TODO: Serhii: Update crashing: Don't know how to create ISeq from: java.math.BigInteger
+      (db/exec (insert! {:table_name :jarman_view :set {:table_name table-name, :view table-view}}))
+      (db/exec (update! {:table_name :jarman_view :set {:view table-view} :where [:= :id id-t]}))) ;; TODO: Serhii: Update crashing: Don't know how to create ISeq from: java.math.BigInteger
     ;;(loader-from-db)
     (println "Inserting view: " table-name)))
 
@@ -507,7 +451,7 @@
      (view-clean)
      (doall
       (map (fn [table-view]
-             (let [table-map  (try (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
+             (let [table-map  (try (apply hash-map (drop 1 (first (filter #(sequential? %) table-view))))
                                    (catch IllegalArgumentException e
                                      (print-error e)
                                      (throw (ex-info "Error in generating view info. Invalid arguments for convert collection to map. Must be coll with even count."

@@ -1,24 +1,29 @@
 (ns jarman.gui.gui-seed
-  (:use seesaw.core
-        seesaw.border
-        seesaw.dev
-        seesaw.mig)
-  (:require [clojure.string :as string]
-            ;; resource 
-            [jarman.resource-lib.icon-library :as icon]
-            [jarman.gui.gui-style :as gs]
-            [jarman.faces         :as face]
-            ;; logics
-            [jarman.gui.gui-tools :as gtool]
-            [jarman.gui.gui-alerts-service :as gas]
-            ;; deverloper tools 
-            [jarman.gui.components.swing :as stool]
-            [jarman.logic.state :as state]
-            [jarman.lang :refer :all]
-            [jarman.logic.changes-service :as cs]
-            [jarman.gui.popup :as popup]
-            ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
-            [jarman.gui.components.swing-keyboards :refer [kbd global-set-key wrapp-keymap]])
+  (:use
+   seesaw.core
+   seesaw.border
+   seesaw.dev
+   seesaw.mig)
+  (:require
+   [jarman.lang :refer :all]
+   [jarman.org  :refer :all]
+   [clojure.string :as string]
+   ;; resource 
+   [jarman.resource-lib.icon-library :as icon]
+   [jarman.gui.gui-style :as gs]
+   [jarman.faces         :as face]
+   ;; logics
+   [jarman.gui.gui-tools :as gtool]
+   [jarman.gui.gui-alerts-service :as gas]
+   ;; deverloper tools 
+   [jarman.gui.components.swing :as stool]
+   [jarman.logic.state :as state]
+   
+   [jarman.logic.changes-service :as cs]
+   [jarman.gui.popup :as popup]
+   ;; TEMPORARY!!!! MUST BE REPLACED BY CONFIG_MANAGER
+   [jarman.gui.components.swing-keyboards :refer [kbd global-set-key wrapp-keymap]]
+   )
   (:import javax.swing.JLayeredPane
            (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
            (java.awt.event WindowAdapter)
@@ -116,20 +121,23 @@
                 size @(state/state :atom-app-size)
                 undecorated? false}}]
     (let [set-items (if-not (sequential? items) (list items) items)]
-      (do
+      (print-header "gui_seed: building the Main(content) panel"
         (state/set-state :app (build-main-panel set-items))
         (gas/start :soft (state/state :soft-restart))
         (if (and (state/state :soft-restart)
                  (not (nil? (state/state :frame))))
           (do
+            (print-line "setting size from (state :atom-app-size) and load content from (state :app)")
             (config! (state/state :frame) :content (state/state :app))
             (config! (state/state :frame) :size [(first size) :by (second size)]))
           (do
+            (print-line "frame doesn't exist in state, creating new frame")
             (state/set-state :frame (new-frame title items size undecorated?))
+            (print-line "setting size from (state :atom-app-size) and load content from (state :app)")
             (let [jframe (state/state :frame)]
               (-> (doto jframe (.setLocationRelativeTo nil) pack! show!))
               (config! jframe  :icon  (gs/icon GoogleMaterialDesignIcons/DATE_RANGE face/c-icon)
-                       :size [(first size) :by (second size)]))))))))
+                :size [(first size) :by (second size)]))))))))
 
 (defn extend-frame-title 
   [title]

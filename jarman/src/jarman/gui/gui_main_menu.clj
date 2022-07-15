@@ -135,7 +135,6 @@
     ;; or return nil
     (do (print-line (format "permission denied for '%s'" k))
       nil)))
-
 ;;((state/state :startup))
 
 (defn bulid-expand-by-map
@@ -156,7 +155,6 @@
            :else (seesaw/label :text "Uncorrect comp"))))
      plugin-m))))
 
-
 ;; ┌─────────────────────────────────────┐
 ;; │                                     │
 ;; │     Metadata and View editors       │
@@ -174,8 +172,7 @@
      Pull up from DB names of tables as key.
    Example:
      (pullup-metadata-names)
-     ;; => (:documents :profile ...)"
-  []
+     ;; => (:documents :profile ...)" []
   (doall
    (map (fn [m] (keyword (:table_name m)))
         (db/query
@@ -189,30 +186,29 @@
      Compatibility with main menu map.
    Example:
      (metadata-editors-in-main-menu)
-     ;; => {\"documents\" {:key ...}}"
-  []
+     ;; => {\"documents\" {:key ...}}" []
   (into {}(doall
-          (map
-           (fn [k]
-             {(str (name k))
-              {:key    (str "edit-metadata-" (str (name k)))
-               :action :invoke
-               :fn      (fn [e] (gedit/view-metadata-editor k))}})
-           (pullup-metadata-names)))))
+            (map
+              (fn [k]
+                {(str (name k))
+                 {:key    (str "edit-metadata-" (str (name k)))
+                  :action :invoke
+                  :fn      (fn [e] (gedit/view-metadata-editor k))}})
+              (pullup-metadata-names)))))
 
 ;; (pullup-view-names)
+;; fixme: organize view functionality in one place
 (defn- pullup-view-names
   "Description:
      Pull up from DB names of tables as key.
    Example:
      (pullup-view-names)
-     ;; => (:documents :profile ...)"
-  []
+     ;; => (:documents :profile ...)" []
   (doall
    (map (fn [m] (keyword (:table_name m)))
         (db/query
          (sql/select!
-          {:table_name :view
+          {:table_name :jarman_view
            :column [:table_name]})))))
 
 (defn- view-editors-in-main-menu
@@ -397,7 +393,6 @@
 (defn add-to-main-tree [components-coll]
   (let [path [:main-menu]]
     (swap! (state/get-atom) (fn [state] (assoc-in state path (concat (state path) components-coll))))))
-
 
 (defn menu-slider
   "Description:

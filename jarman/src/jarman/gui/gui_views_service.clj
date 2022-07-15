@@ -155,13 +155,11 @@
                  :active nil})
   (initialize-repaint state))
 
-
 ;; ┌───────────────────────────┐
 ;; │                           │
 ;; │ Views and tabs controller │
 ;; │                           │
 ;; └───────────────────────────┘
-
 
 (defn- swap-view
   "Description:
@@ -233,7 +231,6 @@
                    (:views (state!))))]
     (gtool/join-mig-items (reverse tabs))))
 
-
 (defn- rm-view [view-id-k]
   ;;(println "\nRemoving")
   (dispatch! {:action :rm-view
@@ -247,7 +244,6 @@
   (dispatch! {:action :active
               :value  view-id-k}))
 
-
 (defn start
   "Description:
      Clear state atom and set new state template. You need to point space for views and space for tabs.
@@ -259,7 +255,6 @@
   (create-state-template space bar)
   (set-state-watcher state! dispatch! space swap-view     [:active] :view-space)
   (set-state-watcher state! dispatch! bar   rerender-tabs [:active] :tabs-bar))
-
 
 (defn add-view
   "Description:
@@ -285,8 +280,7 @@
         (dispatch! {:action :active
                     :value  view-id}))
       (do (println "Switch"))))
-  ((:repaint (state!)))
-  )
+  ((:repaint (state!))))
 
 
 (defn reload-view

@@ -111,8 +111,6 @@
       (info (gtool/get-lang-header :installed-extentions))
       (info "-- empty --"))))
 
-(extension-manager/extension-storage-list-load)
-
 (defn extension-manager-panel []
   (gmg/migrid
     :v {:gap [5 0]}

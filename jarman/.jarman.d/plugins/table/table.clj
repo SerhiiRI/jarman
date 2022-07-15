@@ -196,7 +196,12 @@
     (debug? (get payload :debug? false)))
    (when debug? (print-line
                  (cl-format nil ";; --- DISPATCH! ~A ~A ~%;; ~A" action (quick-timestamp)
-                            (pr-str (dissoc payload :debug?)))))
+                   (pr-str
+                     (-> payload
+                       (dissoc :debug?)
+                       (update :model-value (fn [v] (if-not (instance? Exception v) v
+                                                     (cl-format nil "EXCEPTION: ~A"
+                                                       (get (ex-data v) :message-body))))))))))
    (if route
      (action-handler-route-invoker route state payload)
      (case action
@@ -288,12 +293,14 @@
 (defn- meta-to-component
   ([^clojure.lang.PersistentArrayMap metafield]
    (jarman.gui.gui-components2/border-panel
-    :north (jarman.gui.gui-components2/label :value (get metafield :representation))
-    :south (interaction/metacomponent->component (get metafield :component))))
+     :north (jarman.gui.gui-components2/label :value (get metafield :representation))
+     :south (-> (interaction/metacomponent->component (get metafield :component))
+              (swing/wrapp-tooltip (swing/tooltip<-metadata metafield)))))
   ([^clojure.lang.PersistentArrayMap metafield component]
    (jarman.gui.gui-components2/border-panel
-    :north (jarman.gui.gui-components2/label :value (get metafield :representation))
-    :south component)))
+     :north (jarman.gui.gui-components2/label :value (get metafield :representation))
+     :south (-> component
+              (swing/wrapp-tooltip (swing/tooltip<-metadata metafield))))))
 
 (defn- guard-component!? [^clojure.lang.PersistentArrayMap metafield]
   (when-not (and (map?     (get-in metafield [:component]))
@@ -314,8 +321,8 @@
           ;;
           components (interaction/metacomponents-get)
           ;;
-          ;; [{:field-qualified :user.login :description "login"... }
-          ;;  {:field-qualified :user.password ... }
+          ;; [{:field-qualified :jarman_user.login :description "login"... }
+          ;;  {:field-qualified :jarman_user.password ... }
           ;;  {...}...]
           ;;
           meta-columns (map #(.to-primive %) (.return-columns table-meta))
@@ -336,7 +343,7 @@
       (wlet
        (doall (for [k-or-m-or-v model-defview]
                 (let [meta-information (cond
-                                         (map? k-or-m-or-v) k-or-m-or-v
+                                         (map? k-or-m-or-v) (eval k-or-m-or-v)
                                          (keyword? k-or-m-or-v) (k-or-m-or-v meta-columns-m)
                                          (vector? k-or-m-or-v) (let [[kwd fn-applyers] k-or-m-or-v]
                                                                  (reduce (fn [acc f] ((eval f) acc)) (kwd meta-columns-m) fn-applyers))
@@ -401,42 +408,66 @@
                               (map (fn [f] {(.return-field-qualified f) (:value (.return-component f))}))
                               (into {}) (.group meta-composite))))))))))))
 
+#_(comment
+ (with-test-environ [:jarman_user :table :jarman_user]
+   (dispatch! {:debug true :action :set-model-selected
+               :value
+               {:jarman_user.first_name "Ivan"
+                :jarman_user.last_name "Popov"}})
+   (dispatch! {:debug true :action :set-model-changes
+               :value
+               {:jarman_user.first_name "Ivan"
+                :jarman_user.last_name "Popov"}})
+   (println (:model-changes (state!)))
+   (println (:model-selected (state!)))
+   ;; jjjjjjjjjjjjjj
+   (swing/quick-frame
+     (let [{:keys [fields additional]} (get-in plugin-config [:model-configurations :update])]
+       (metafield->swing-component state! dispatch! fields)))))
+
+#_(swing/quick-frame
+  [(-> (gui-component/text :value "SSSSSSSSSSSSSSSSSS")
+     (swing/wrapp-tooltip "AAAAAAAAAAAAAAAAAAAAAAAAAAA")
+     (swing-keyboards/wrapp-keymap
+       (-> (swing-context/active-keymap)
+         (swing-keyboards/define-key (swing-keyboards/kbd "C-h m") (fn [] (c/alert "SOME"))))))])
+
 (defn metacomponent-with-action->swing-component
   "Description:
      Get buttons and actions from defview and create clickable button."
   [state! dispatch! additional-buttons]
   (with-state
     (where
-     ((components (interaction/metacomponents-get))
-      (plugin-actions (:actions plugin-config)))
-     (wlet
-      (->> additional-buttons
-           (map populate-custom-action)
-           (map interaction/metacomponent->component)
-           (doall))
-      ((populate-custom-action
-        (fn [metacomponent]
-          (let [type (:type metacomponent)]
-            (reduce
-             (fn [acc-m event-keyword]
-               (if (contains? metacomponent event-keyword)
-                 (update acc-m event-keyword
-                         (fn [action-multitype-fn]
-                           (cond
-                             ;; ---
-                             (keyword? action-multitype-fn)
-                             (if-let [action-fn (get plugin-actions action-multitype-fn)]
-                               (fn [e] (action-fn state! dispatch!))
-                               (throw (ex-info (format "generate-custom-buttons: Action by id `%s` doesn't exist"
-                                                       action-multitype-fn) {})))
-                             ;; ---
-                             (list? action-multitype-fn)
-                             (let [action-fn (eval action-multitype-fn)] (fn [e] (action-fn state! dispatch!)))
-                             ;; ---
-                             (ifn? action-multitype-fn)
-                             (fn [e] (action-multitype-fn state! dispatch!)))))
-                 acc-m))
-             metacomponent (get-in components [type :actions]))))))))))
+      ((components (interaction/metacomponents-get))
+       (plugin-actions (:actions plugin-config)))
+      (wlet
+        (->> additional-buttons
+          (map populate-custom-action)
+          (map interaction/metacomponent->component)
+          (doall))
+        ((populate-custom-action
+           (fn [metacomponent]
+             (let [type (:type metacomponent)]
+               (reduce
+                 (fn [acc-m event-keyword]
+                   (if (contains? metacomponent event-keyword)
+                     (update acc-m event-keyword
+                       (fn [action-multitype-fn]
+                         (cond
+                           ;; ---
+                           (keyword? action-multitype-fn)
+                           (if-let [action-fn (get plugin-actions action-multitype-fn)]
+                             (fn [e] (action-fn state! dispatch!))
+                             (throw (ex-info (format "generate-custom-buttons: Action by id `%s` doesn't exist"
+                                               action-multitype-fn) {})))
+                           ;; ---
+                           (list? action-multitype-fn)
+                           (let [action-fn (eval action-multitype-fn)] (fn [e] (action-fn state! dispatch!)))
+                           ;; ---
+                           (ifn? action-multitype-fn)
+                           (fn [e] (action-multitype-fn state! dispatch!)))))
+                     acc-m))
+                 metacomponent (get-in components [type :actions]))))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; GUI components ;;;
@@ -449,15 +480,30 @@
     (c/scrollable
      (let [{:keys [model run-sql-fn]} (helpers/build-select-simple-data-by-the-id table-name-kwd)
            rows (seq (clojure.set/rename-keys (run-sql-fn id) model))
-           t (c/table :model [:columns [{:key :representation :text "FField"} {:key :value :text "VValue"}] :rows rows])]
+           t (c/table
+               :preferred-size [200 :by 100]
+               :model [:columns [{:key :representation :text "FField"} {:key :value :text "VValue"}] :rows rows])]
        (c/config! t :show-horizontal-lines? false)
        (c/config! t :show-vertical-lines? false)
        t))))
 
+#_(with-test-environ [:card :table :card]
+  (swing/quick-frame
+    [(build-layout state! dispatch!)]))
+
+#_(with-test-environ [:registration :table :registration]
+  (swing/quick-frame
+    [(build-layout state! dispatch!)]))
+
 (defn- dialog-table [& {:keys [plugin-path on-select] :or {on-select identity}}]
   (with-external-plugin plugin-path
     (let [kwd-model-id-column (help-return-id-column-for-table table-meta)
-          swing-dialog (seesaw.core/custom-dialog :modal? true :width 600 :height 400 :title "Select component")
+          swing-dialog (if-let [event (swing-context/active-event)] 
+                         (let [component (c/to-widget event)
+                               l (.getLocationOnScreen component)]
+                           (doto (seesaw.core/custom-dialog
+                                   :modal? true :width 600 :height 400 :title "Select component")
+                             (.setLocation l))))
           label-text (gui-component/label :halign :center :value (str "Return from " (-> table-meta .return-table :representation)))]
       ;; Add additional keyboard shourtcuts
       ;; ------------------------------
@@ -501,15 +547,16 @@
      (fn []
        (fn [e]
          (print-line "table-ui-expand-metafield: open dialog")
-         (dialog-table
-          :plugin-path plugin-path
-          :on-select
-          (fn [id-of-model]
-            (dispatch!
-             {:debug? true
-              :action :update-model-changes
-              :model-field field-qualified
-              :model-value id-of-model})))))))
+         (swing-context/with-active-event e
+          (dialog-table
+            :plugin-path plugin-path
+            :on-select
+            (fn [id-of-model]
+              (dispatch!
+                {:debug? true
+                 :action :update-model-changes
+                 :model-field field-qualified
+                 :model-value id-of-model}))))))))
    ;; -----------------------------
    ;; TESTS
    (when-not (some? plugin-path)
@@ -517,28 +564,55 @@
    ;; -----------------------------
    ;; GUI COMPOSE
    (jarman.gui.gui-components2/border-panel
-    :north (jarman.gui.gui-components2/label :value (get metafield :representation))
-    :south
-    (gui-component/vertical-panel
-     :event-hook-id :suka
-     :event-hook-atom (state! {:action :cursor :path [:model-changes field-qualified]})
-     :items
-     [(gcomp/expand-input
-       {:title (loading-title)
-        :panel (relation-modal-helper-panel key-table (load-value-from-model))
-        :onClick (loading-dialog)})]
-     :event-hook
-     (fn [panel a old-s new-s]
-       (c/config! panel :items
-                  [(gcomp/expand-input
-                    {:title (loading-title)
-                     :panel (relation-modal-helper-panel key-table new-s)
-                     :onClick (loading-dialog)})]))))))
+     :north (jarman.gui.gui-components2/label :value (get metafield :representation))
+     :south
+     (gui-component/vertical-panel
+       :event-hook-id :suka
+       :event-hook-atom (state! {:action :cursor :path [:model-changes field-qualified]})
+       :items
+       [(->
+          (gcomp/expand-input
+            {:title (loading-title)
+             :panel (relation-modal-helper-panel key-table (load-value-from-model))
+             :onClick (loading-dialog)}))]
+       :event-hook
+       (fn [panel a old-s new-s]
+         (c/config! panel :items
+           [(gcomp/expand-input
+              {:title (loading-title)
+               :panel (relation-modal-helper-panel key-table new-s)
+               :onClick (loading-dialog)})]))))))
+
+(comment
+ (with-test-environ [:jarman_user :table :jarman_user]
+   (table-ui-expand-metafield state! dispatch!
+     {:description nil,
+      :private? false,
+      :default-value nil,
+      :editable? true,
+      :field :id_jarman_profile,
+      :column-type
+      {:stype "bigint(120) unsigned",
+       :tname :bigint,
+       :tspec :unsigned,
+       :tlimit 120,
+       :tnull false,
+       :textra "",
+       :tdefault nil,
+       :tkey "MUL"},
+      :component {:type :jsgl-link
+                  :plugin-path [:profile :dialog-table :profile]},
+      :foreign-keys
+      [{:id_jarman_profile :profile} {:delete :cascade, :update :cascade}],
+      :representation "Id profile",
+      :field-qualified :jarman_user.id_jarman_profile,
+      :key-table :profile})))
 
 ;;;;;;;;;;;;;;;;;;
 ;; Form Builder ;;
 ;;;;;;;;;;;;;;;;;;
 
+;; rework 
 #_(defn- custom-icon-bar
   [state! dispatch! & {:keys [more-front]}]
   (let [icos [{:icon-off (gs/icon GoogleMaterialDesignIcons/CLEAR_ALL face/c-icon)
@@ -578,14 +652,15 @@
     (;; gmg/migrid :v "[grow, center]"
      gui-component/border-panel
      :center
-     (gui-component/label
+     (gui-component/label-h3
       :value (->> table-meta .return-table :representation)
       :halign :left
-      :args [:font (gtool/getFont 15 :bold)]
       :foreground face/c-foreground-title
-      :border (b/compound-border
-               (b/line-border :bottom 1 :color face/c-underline)
-               (b/empty-border :top 10))))))
+      :border
+      (swing/border
+        {:b 10 :t 10 :l 5 :r 5 :color nil}
+        {:b 1 :t 1 :color face/c-green}
+        {:b 3})))))
 
 (defn build-insert-layout [state! dispatch! model-configuration]
   (with-state
@@ -694,24 +769,26 @@
        (smig/mig-panel
         :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
         :items [[(build-insert-layout state! dispatch! (get-in plugin-config [:model-configurations current-model-stategy]))]])))
-     (gui-component/border-panel
-      :south input-panel
-      :north (gui-component/horizontal-panel
-              :items (keep identity
-                           [insert-ui-layout-button
-                            update-ui-layout-button
-                            export-ui-layout-button
-                            print-state-debug]))
-      :event-hook
-      {:panel-tab-switching-event
-       {:atom state
-        :hook
-        (fn [panel state-atom old-state new-state]
-          (case (:mode new-state)
-            :insert (c/config! input-panel :items [[(build-insert-layout state! dispatch! (get-in plugin-config [:model-configurations (:mode new-state)]))]])
-            :update (c/config! input-panel :items [[(build-update-layout state! dispatch! (get-in plugin-config [:model-configurations (:mode new-state)]))]])
-            :export (c/config! input-panel :items [[(build-export-layout state! dispatch! (get-in plugin-config [:model-configurations (:mode new-state)]))]])
-            (throw (ex-info "Udefinied mode!" {:plugin-ui-mode new-state}))))}}))))
+     (c/scrollable
+      (gui-component/border-panel
+        :center (gui-component/vertical-panel
+                  :items [input-panel])
+        :north (gui-component/horizontal-panel
+                 :items (keep identity
+                          [insert-ui-layout-button
+                           update-ui-layout-button
+                           export-ui-layout-button
+                           print-state-debug]))
+        :event-hook
+        {:panel-tab-switching-event
+         {:atom state
+          :hook
+          (fn [panel state-atom old-state new-state]
+            (case (:mode new-state)
+              :insert (c/config! input-panel :items [[(build-insert-layout state! dispatch! (get-in plugin-config [:model-configurations (:mode new-state)]))]])
+              :update (c/config! input-panel :items [[(build-update-layout state! dispatch! (get-in plugin-config [:model-configurations (:mode new-state)]))]])
+              :export (c/config! input-panel :items [[(build-export-layout state! dispatch! (get-in plugin-config [:model-configurations (:mode new-state)]))]])
+              (throw (ex-info "Udefinied mode!" {:plugin-ui-mode new-state}))))}})))))
 
 (defn build-layout [state! dispatch!]
   (with-state
@@ -729,17 +806,18 @@
                   (update *t :on-select (fn [f] (fn [e]
                                                  (println "on-select event!")
                                                  ((eval f) state! dispatch! e))))))))
+      (scroll (c/scrollable
+                table
+                :hscroll :as-needed
+                :vscroll :as-needed
+                :border (seesaw.border/line-border :thickness 0 :color "#fff")))
       (main-table-socket (table-socket/create-table-socket (:socket-id table-config) table table-config)))
      (dispatch! {:action :jack-in-socket :socket main-table-socket})
      (smig/mig-panel
       :constraints ["" "0px[shrink 0, fill]0px[grow, fill]0px" "0px[grow, fill]0px"]
       :items [[(c/left-right-split
                 (build-input-form state! dispatch!)
-                (c/scrollable
-                 table
-                 :hscroll :as-needed
-                 :vscroll :as-needed
-                 :border (seesaw.border/line-border :thickness 0 :color "#fff"))
+                scroll
                 :divider-location 200)]]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -765,14 +843,6 @@
     (format "Open 'table' plugin by path '%s'" ;; (->> (state!) :plugin-toolkit :meta-obj .return-table_name)
             (str plugin-path))
     (build-layout state! dispatch!))))
-
-(print-header
-  "SOme header"
-  (print-line "some event 1")
-
-  (print-line "some event 2")
-  (print-src "clojure"
-    (pr-str "fdsajlkdfjsa")))
 
 (defn dialog-table-entry [plugin-path]
   (print-header (format "Open 'dialog-table' plugin for '%s'" (str plugin-path))))
@@ -802,7 +872,7 @@
   (dialog-table :plugin-path [:profile :dialog-table :profile-dialog]
                 :on-select (fn [e] (println "ID :+> "e)))
   ;;
-  (with-test-environ [:user :table :user]
+  (with-test-environ [:jarman_user :table :jarman_user]
     (swing/quick-frame
      [(table-ui-expand-metafield
        state! dispatch!
@@ -810,7 +880,7 @@
         :private? false,
         :default-value nil,
         :editable? true,
-        :field :id_profile,
+        :field :id_jarman_profile,
         :column-type
         {:stype "bigint(120) unsigned",
          :tname :bigint,
@@ -823,52 +893,62 @@
         :component {:type :jsgl-link
                     :plugin-path [:profile :dialog-table :profile-dialog]},
         :foreign-keys
-        [{:id_profile :profile} {:delete :cascade, :update :cascade}],
+        [{:id_jarman_profile :profile} {:delete :cascade, :update :cascade}],
         :representation "Id profile",
-        :field-qualified :user.id_profile,
+        :field-qualified :jarman_user.id_jarman_profile,
         :key-table :profile})]))
   ;; description panel
-  (with-test-environ [:user :table :user]
+  (with-test-environ [:jarman_user :table :jarman_user]
     (swing/quick-frame [(relation-modal-helper-panel :profile 1)]))
 
-  (with-test-environ [:user :table :user]
+  (with-test-environ [:jarman_user :table :jarman_user]
     (swing/quick-frame [(relation-modal-helper-panel :profile nil)]))
 
-  (with-test-environ [:user :table :user]
+  (with-test-environ [:jarman_user :table :jarman_user]
     (dispatch! {:debug true :action :set-model-selected
                 :value
-                {:user.first_name "Ivan"
-                 :user.last_name "Popov"}})
+                {:jarman_user.first_name "Ivan"
+                 :jarman_user.last_name "Popov"}})
     (dispatch! {:debug true :action :set-model-changes
                 :value
-                {:user.first_name "Ivan"
-                 :user.last_name "Popov"}})
+                {:jarman_user.first_name "Ivan"
+                 :jarman_user.last_name "Popov"}})
     (println (:model-changes (state!)))
     (println (:model-selected (state!)))
     (swing/quick-frame
      (let [{:keys [fields additional]} (get-in plugin-config [:model-configurations :update])]
        (metafield->swing-component state! dispatch! fields))))
 
-  (with-test-environ [:user :table :user]
+  (with-test-environ [:jarman_user :table :jarman_user]
     (dispatch! {:debug true :action :set-model-selected
                 :value
-                {:user.first_name "Ivan"
-                 :user.last_name "Popov"}})
+                {:jarman_user.first_name "Ivan"
+                 :jarman_user.last_name "Popov"}})
     (dispatch! {:debug true :action :set-model-changes
                 :value
-                {:user.first_name "Ivan"
-                 :user.last_name "Popov"}})
+                {:jarman_user.first_name "Ivan"
+                 :jarman_user.last_name "Popov"}})
     #_(dispatch! {:action :switch-plugin-ui-mode :plugin-ui-mode :update
                   :debug true
-                  :model {:user.login "A", :user.password "B", :user.first_name "C", :user.last_name "A", :user.configuration "'{}'", :user.id_profile 2, :user.id 1}})
+                  :model {:jarman_user.login "A", :jarman_user.password "B", :jarman_user.first_name "C", :jarman_user.last_name "A", :jarman_user.configuration "'{}'", :jarman_user.id_jarman_profile 2, :jarman_user.id 1}})
     (swing/quick-frame
       [(build-input-form state! dispatch!)]))
 
+  
+  
   (with-test-environ [:user :table :user]
     (swing/quick-frame
-     [(build-layout state! dispatch!)]))
+      [(build-layout state! dispatch!)]))
 
-  (with-test-environ [:profile :table :profile]
+  (with-test-environ [:card :table :card]
+    (swing/quick-frame
+      [(build-layout state! dispatch!)]))
+
+  (with-test-environ [:jarman_user :table :jarman_user]
+    (swing/quick-frame
+      [(build-layout state! dispatch!)]))
+
+  (with-test-environ [:jarman_profile :table :jarman_profile]
     (swing/quick-frame
      [(build-layout state! dispatch!)]))
 
@@ -877,13 +957,13 @@
      [(build-layout state! dispatch!)]))
 
   (swing/quick-frame
-   [(table-entry [:user :table :user])])
+   [(table-entry [:jarman_user :table :jarman_user])])
 
-  (with-test-environ [:user :table :user]
+  (with-test-environ [:jarman_user :table :jarman_user]
     (swing/quick-frame
      [(meta-to-component
        {:field :date-label,
-        :field-qualified :user.date-label
+        :field-qualified :jarman_user.date-label
         :representation "Date label"
         :component {:type :jsgl-calendar-label,
                     :on-change (fn [e] (println e))

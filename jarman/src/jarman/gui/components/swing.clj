@@ -5,8 +5,14 @@
    [seesaw.border]
    [seesaw.color]
    [jarman.lang :refer :all]
+   [jarman.org  :refer :all]
    [jarman.faces :as face]
-   [clojure.java.io])
+   [clojure.java.io]
+   [clojure.pprint]
+   [jarman.gui.components.swing-context :as swing-context]
+   [jarman.gui.components.swing-table-utils]
+   [jarman.gui.components.swing-debug-utils]
+   [potemkin.namespaces :refer [import-vars]])
   (:import
    [java.awt GraphicsEnvironment GraphicsDevice Font MouseInfo]
    [jiconfont.swing IconFontSwing]
@@ -14,59 +20,13 @@
    ;; [jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons]
    ))
 
-;;;;;;;;;;;;;;;;;;;;;;;
-;;; SCREEN SETTINGS ;;;
-;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn choose-screen! [^javax.swing.JFrame frame ^Number screen-n]
-  ;; S(Screen), F(Frame), H(Height), W(Width)
-  ;; +------------------[screen-n]---
-  ;; | 
-  ;; |    V
-  ;; |     x=S-X+(S-W/2)-(F-W/2)
-  ;; |     y=F-H+(S-H/2)-(F-H/2)
-  ;; |
-  (where
-   ((^java.awt.GraphicsEnvironment ge (java.awt.GraphicsEnvironment/getLocalGraphicsEnvironment))
-    (^"[Ljava.awt.GraphicsDevice;" gd (.getScreenDevices ge))
-    (screen screen-n if2 #(< -1 % (alength gd)) screen-n 0)
-    (S-X (.. (aget gd screen) getDefaultConfiguration getBounds -x))
-    (S-Y (.. frame getY))
-    (S-H (.. (aget gd screen) getDefaultConfiguration getBounds -height))
-    (S-W (.. (aget gd screen) getDefaultConfiguration getBounds -width))
-    (F-H (.  frame getWidth))
-    (F-W (.  frame getHeight))
-    (relative-y S-H do #(- (/ % 2) (/ F-H 2)) do long)
-    (relative-x S-W do #(- (/ % 2) (/ F-W 2)) do long))
-   (doto frame
-     (.setLocation
-      (+ relative-x S-X)
-      (+ relative-y S-Y)))))
-
-(defn active-screens []
- (let [env (GraphicsEnvironment/getLocalGraphicsEnvironment)
-       device-count (count (.getScreenDevices env))]
-   (for [[idx ^GraphicsDevice device] (map-indexed vector (.getScreenDevices env))]
-     {:idx idx
-      :width        (.. device getDisplayMode getWidth)
-      :height       (.. device getDisplayMode getHeight)
-      :refresh-rate (.. device getDisplayMode getRefreshRate)
-      :bit-depth    (.. device getDisplayMode getBitDepth)
-      :idSting      (.. device getIDstring)
-      :bound-height (.. device getDefaultConfiguration getBounds -height)
-      :bound-width  (.. device getDefaultConfiguration getBounds -width)})))
-
-(defn quick-frame [items]
-  (-> (seesaw.core/frame
-        ;; :minimum-size [500 :by 500]
-        :title "Jarman"
-        :content
-        (seesaw.core/vertical-panel
-          :background  "#dddddd"
-          :items items))
-    (seesaw.core/pack!)
-    (jarman.gui.components.swing/choose-screen! 0)
-    (seesaw.core/show!)))
+(import-vars
+  [jarman.gui.components.swing-debug-utils
+   choose-screen! active-screens quick-frame]
+  
+  [jarman.gui.components.swing-table-utils
+   wrapp-adjustment-listener])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; AWT/Swing helpers ;;;
@@ -131,7 +91,19 @@
            (Thread/sleep (* 1000 time))
            (try
              (fn-to-invoke)
-             (catch Exception e (println (str "\nException in timelife: " title "\n" (str (.getMessage e)))))))))))))
+             (catch Exception e (print-error e))))))))))
+
+(defn dimension
+  ([^java.awt.Dimension dimension]
+   (java.awt.Dimension. dimension))
+  ([^Long width, ^Long height]
+   (java.awt.Dimension. width height)))
+
+(defn point
+  ([^java.awt.Point point]
+   (java.awt.Point. point))
+  ([^Long x, ^Long y]
+   (java.awt.Point. x y)))
 
 (defn font
   ([font-name]
@@ -193,4 +165,61 @@
       {:a 2 :color \"#931\"})" [& v]
   (if (= 1 (count v)) (border-from-config (first v))
       (apply seesaw.border/compound-border (mapv border-from-config v))))
+
+(def ^:dynamic *formatter-tooltip-text-length* 50)
+(defn tooltip<-metadata [^clojure.lang.PersistentArrayMap metadata]
+  (let [{:keys [description representation]} metadata]
+    (clojure.pprint/cl-format nil "<html>~@[~A~]~@[~A~]</html>"
+      (when representation
+        (str "<b>" (identity "Representation") "</b><br>" " <p style='margin-left: 5px;'>" representation "<p>"))
+      (when description
+        (str "<b>" (identity "Description") "</b><br>" " <p style='margin-left: 5px;'>"
+          (->> description
+            (partition-all *formatter-tooltip-text-length*)
+            (map (partial apply str))
+            (clojure.string/join "<br>")) "<p>")))))
+
+(defn wrapp-tooltip [^javax.swing.JComponent component ^String tooltip]
+  {:pre [(instance? javax.swing.JComponent component)]}
+  (if (empty? tooltip) component
+      (do
+        (if (instance? javax.swing.JScrollPane component)
+          (.setToolTipText (.. component getViewport getView) tooltip)
+          (.setToolTipText component tooltip))
+        component)))
+
+(defn wrapp-focus-listener
+  [^javax.swing.JComponent component
+   & {:keys [focus-lost-fn focus-gained-fn]
+      :or {focus-lost-fn (fn []) focus-gained-fn (fn [])}}]
+  (doto component
+   (.addFocusListener 
+     (proxy [java.awt.event.FocusListener] []
+       (^void focusLost [^java.awt.event.FocusEvent e]
+        (swing-context/with-active-event e
+          (focus-lost-fn)))
+       (^void focusGained [^java.awt.event.FocusEvent e]
+        (swing-context/with-active-event e
+          (focus-gained-fn)))))))
+
+(defn wrapp-carret-listener
+  [^javax.swing.text.JTextComponent component & {:keys [caret-update-fn] :or {caret-update-fn (fn [])}}]
+  (doto component
+   (.addCaretListener
+     (proxy [javax.swing.event.CaretListener] []
+       (^void caretUpdate [^javax.swing.event.CaretEvent e]
+        (swing-context/with-active-event e
+          (caret-update-fn)))))))
+
+(defn popup-frame [^String title ^javax.swing.JComponent content
+                   & {:keys [width height] :or {width 350 height 200}}]
+  (-> (doto (javax.swing.JFrame. title)
+        (.setUndecorated true)
+        (.setAutoRequestFocus false)
+        (.setFocusableWindowState false)
+        (.setType java.awt.Window$Type/POPUP)
+        (.setPreferredSize (dimension width height))
+        (.setLocationByPlatform true)
+        (.setContentPane content)
+        (.setVisible false))))
 

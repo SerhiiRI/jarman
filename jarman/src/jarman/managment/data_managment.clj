@@ -156,7 +156,7 @@
   (doall
    (for [table-view view-list]
      (let [table-view  table-view
-           table-map   (try (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
+           table-map   (try (apply hash-map (drop 1 (first (filter #(sequential? %) table-view))))
                             (catch IllegalArgumentException e
                               (print-error e)
                               (throw (ex-info "Error in generating view info. Invalid arguments for convert collection to map. Must be coll with even count."
@@ -175,7 +175,7 @@
     (view-manager/view-clean)
     (doall
      (for [table-view view-list]
-       (let [table-map  (try (coll-to-map (drop 1 (first (filter #(sequential? %) table-view))))
+       (let [table-map  (try (apply hash-map (drop 1 (first (filter #(sequential? %) table-view))))
                              (catch IllegalArgumentException e
                                (print-error e)
                                (throw (ex-info "Error in generating view info. Invalid arguments for convert collection to map. Must be coll with even count."
@@ -197,6 +197,7 @@
   (database-clear-metadata)
   (database-delete-business-scheme all-tables)
   (database-delete-scheme all-tables)
-  (database-create-scheme all-tables))
+  (database-create-scheme all-tables)
+)
 
 

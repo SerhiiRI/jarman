@@ -1,6 +1,7 @@
 (ns jarman.application.extension-manager
   ;; -------------------
   (:require
+   [dynapath.defaults]
    [clojure.pprint :refer [cl-format]]
    [clojure.java.io :as io]
    [cemerick.pomegranate :as pomagranate]
@@ -50,18 +51,21 @@
                   (deep-merge-with #(second %&) acc-m (read-string (slurp (str translation-file)))))
           {} language))))
   (do-load-deps [this]
-    ;; (print-header (format "loading deps ~%s~" name)
-    ;;   (if-let [deps (not-empty (filter (comp not string?) dependencies))]
-    ;;     (do
-    ;;       (print-line deps)
-    ;;       (print-line "check or download...")
-    ;;       (doall
-    ;;         (map
-    ;;           #(print-line (first %))
-    ;;           (pomagranate/add-dependencies
-    ;;             :coordinates deps
-    ;;             :repositories (deref jarman.variables/jarman-library-repository-list)))))))
-    )
+    (print-header
+      (format "CURRENTLY DISABLED! loading deps ~%s~" name)
+      nil
+      ;; (if-let [deps (not-empty (filter (comp not string?) dependencies))]
+      ;;   (do
+      ;;     (print-line deps)
+      ;;     (print-line "check or download...")
+      ;;     (print-line (count (pomagranate/classloader-hierarchy)))
+      ;;     (doall
+      ;;       (map
+      ;;         #(print-line (first %))
+      ;;         (pomagranate/add-dependencies
+      ;;           :coordinates deps
+      ;;           :repositories (deref jarman.variables/jarman-library-repository-list))))))
+      ))
   (do-load [this]
     (print-header (format "load ~%s~" name)
       ;; Testing language and sources files
@@ -108,7 +112,9 @@
         (doseq [extension (get-extension-list)]
           (let [extension-path (io/file loading-path (str extension) "package")]
             (if (.exists extension-path)
-              (let [define-extension-body (rest (read-string (slurp (io/file loading-path (str extension) "package"))))
+              (let [slurped-file (read-string (slurp (io/file loading-path (str extension) "package")))
+                    _ (assert (sequential? slurped-file))
+                    define-extension-body (rest slurped-file )
                     [name description] (take 2 define-extension-body)
                     extension-map-sequence (drop 2 define-extension-body)]
                 (assert (even? (count extension-map-sequence))

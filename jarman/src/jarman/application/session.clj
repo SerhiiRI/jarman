@@ -111,7 +111,7 @@
   (encrypt-local (pr-str m)))
 
 (defn load-license []
-  (->> {:table_name :system_props
+  (->> {:table_name :jarman_system_props
         :column     [:value]
         :where      [:and [:= :name "license"]]}
     select! c/query first :value))
@@ -144,11 +144,11 @@
           m (cond-> m
               (string? (get m :limitation)) (update :limitation read-string))]
       (if-let [existing-profile (load-license)]
-        (c/exec (update! {:table_name :system_props :set {:name "license" :value (encrypt-license m)} :where [:= :name "license"]}))
-        (c/exec (insert! {:table_name :system_props :column-list [:name :value] :values ["license" (encrypt-license m)]}))))
+        (c/exec (update! {:table_name :jarman_system_props :set {:name "license" :value (encrypt-license m)} :where [:= :name "license"]}))
+        (c/exec (insert! {:table_name :jarman_system_props :column-list [:name :value] :values ["license" (encrypt-license m)]}))))
     (print-line "Not selected license to update")))
 (defn delete-license []
-  (c/exec (delete! {:table_name :system_props :where [:= :name "license"]})))
+  (c/exec (delete! {:table_name :jarman_system_props :where [:= :name "license"]})))
 (defn gui-slurp-and-set-license-file [license-file-path]
   (set-license (slurp-license-file license-file-path)))
 
@@ -188,20 +188,20 @@
 
 (defn build-user [login password]
   (where
-   ((m (-> {:table_name :user
-            :column [:#as_is :user.id
-                     :user.login :user.last_name :user.first_name
-                     :user.configuration :profile.name :profile.configuration]
-            :inner-join [:user->profile]
+   ((m (-> {:table_name :jarman_user
+            :column [:#as_is :jarman_user.id
+                     :jarman_user.login :jarman_user.last_name :jarman_user.first_name
+                     :jarman_user.configuration :jarman_profile.name :jarman_profile.configuration]
+            :inner-join [:jarman_user->jarman_profile]
             :where [:and [:= :login login] [:= :password password]]}
            select! c/query first
-           (update-existing-in [:user.configuration]    read-string)
-           (update-existing-in [:profile.configuration] read-string))))
+           (update-existing-in [:jarman_user.configuration]    read-string)
+           (update-existing-in [:jarman_profile.configuration] read-string))))
    (if m
-     (User. (:user.id m) (:user.login m)
-            (:user.first_name m) (:user.last_name m)
-            (:user.configuration m) (:profile.name m)
-            (:profile.configuration m))
+     (User. (:jarman_user.id m) (:jarman_user.login m)
+            (:jarman_user.first_name m) (:jarman_user.last_name m)
+            (:jarman_user.configuration m) (:jarman_profile.name m)
+            (:jarman_profile.configuration m))
      (throw (ex-info "Cannot build `User` object in session. Select on user-table return nil"
                      {:type :incorrect-login-or-password
                       :message-head [:header :user]
@@ -220,7 +220,7 @@
                           :message-body [:alerts :error-parsing-license]})))))
 
 (defn build-session-param []
-  (->> {:table_name :system_props
+  (->> {:table_name :jarman_system_props
         :column [:name :value]
         :where [:<> :name "license"]}
        select! c/query (mapv (comp vec vals)) (into {}) (SessionParams.)))
@@ -230,7 +230,7 @@
     (Session. (:user m) (:license m) (:params m))
     (throw (ex-info "session map is empty, this error you shuldn't see"
                     {:type :session-map-is-empty
-                     :message-head [:header :user]
+                     :message-head [:header :jarman_user]
                      :message-body [:alerts :undefinied-login-error]}))))
 
 (defn session [] nil)
@@ -262,23 +262,23 @@
   (let [builded-session
     (build-session
       {:user
-       (let [m {:user.id 2,
-                :user.login "dev",
-                :user.last_name "dev",
-                :user.first_name "dev",
-                :user.configuration
+       (let [m {:jarman_user.id 2,
+                :jarman_user.login "dev",
+                :jarman_user.last_name "dev",
+                :jarman_user.first_name "dev",
+                :jarman_user.configuration
                 {:ftp {:login "jarman",
                        :password "dupa",
                        :host "trashpanda-team.ddns.net"}},
-                :profile.name "developer",
-                :profile.configuration
+                :jarman_profile.name "developer",
+                :jarman_profile.configuration
                 {:groups [:admin-update :admin-extension
                           :admin-dataedit :developer
                           :ekka-all]}}]
-         (User. (:user.id m) (:user.login m)
-           (:user.first_name m) (:user.last_name m)
-           (:user.configuration m) (:profile.name m)
-           (:profile.configuration m)))
+         (User. (:jarman_user.id m) (:jarman_user.login m)
+           (:jarman_user.first_name m) (:jarman_user.last_name m)
+           (:jarman_user.configuration m) (:jarman_profile.name m)
+           (:jarman_profile.configuration m)))
        :license
        (let [m {:tenant "EKKA",
                 :tenant-id "EKKA-2",

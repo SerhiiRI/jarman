@@ -11,7 +11,7 @@
    [jarman.config.environment :as env]
    [jarman.lang :refer :all]))
 
-(def system-tables ["documents" "profile" "user" "metadata" "view" "system_session" "system_props"])
+(def system-tables ["metadata" "jarman_documents" "jarman_profile" "jarman_user" "jarman_view" "jarman_system_session" "jarman_system_props"])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SYSTEM TABLES SCHEMA ;;;
@@ -25,41 +25,41 @@
 
 (def system-session-cols [:suuid])
 (def system-session
-  (create-table! {:table_name :system_session
+  (create-table! {:table_name :jarman_system_session
                   :columns [{:suuid [:varchar-400 :default :null]}]}))
 
 (def system-props-cols [:name :value])
 (def system-props
-  (create-table! {:table_name :system_props
+  (create-table! {:table_name :jarman_system_props
                   :columns [{:name [:varchar-256 :default :null]}
                             {:value [:text :default :null]}]}))
 
 (def profile-cols [:name :configuration])
 (def profile
-  (create-table! {:table_name :profile
+  (create-table! {:table_name :jarman_profile
                   :columns [{:name [:varchar-20 :default :null]}
                             {:configuration [:tinytext :nnull :default "\"{}\""]}]}))
 
-(def user-cols [:login :password :first_name :last_name :id_profile :configuration])
+(def user-cols [:login :password :first_name :last_name :id_jarman_profile :configuration])
 (def user
-  (create-table! {:table_name :user
+  (create-table! {:table_name :jarman_user
                   :columns [{:login [:varchar-100 :nnull]}
                             {:password [:varchar-100 :nnull]}
                             {:first_name [:varchar-100 :nnull]}
                             {:last_name [:varchar-100 :nnull]}
                             {:configuration [:text :nnull :default "'{}'"]}
-                            {:id_profile [:bigint-120-unsigned :nnull]}]
-                  :foreign-keys [{:id_profile :profile} {:delete :cascade :update :cascade}]}))
+                            {:id_jarman_profile [:bigint-120-unsigned :nnull]}]
+                  :foreign-keys [{:id_jarman_profile :jarman_profile} {:delete :cascade :update :cascade}]}))
 
-(def view-cols [:table_name :view])
+(def view-cols [:table_name :jarman_view])
 (def view
-  (create-table! {:table_name :view
+  (create-table! {:table_name :jarman_view
                   :columns [{:table_name [:varchar-100 :default :null]}
-                            {:view [:text :nnull :default "\"{}\""]}]}))
+                            {:jarman_view [:text :nnull :default "\"{}\""]}]}))
 
 (def documents-cols [:table_name :name :document :prop])
 (def documents
-  (create-table! {:table_name :documents
+  (create-table! {:table_name :jarman_documents
                   :columns [{:table_name [:varchar-100 :default :null]}
                             {:name [:varchar-200 :default :null]}
                             {:document [:blob :default :null]}
@@ -74,29 +74,13 @@
     (reduce #(and %1 (in? column-list %2)) true (mapv name table-columns))))
 
 (defn verify-tables []
-  (verify-table-columns :user user-cols)
-  (verify-table-columns :profile profile-cols)
-  (verify-table-columns :documents documents-cols)
+  (verify-table-columns :jarman_user user-cols)
+  (verify-table-columns :jarman_profile profile-cols)
+  (verify-table-columns :jarman_documents documents-cols)
   (verify-table-columns :metadata metadata-cols)
-  (verify-table-columns :view view-cols)
-  (verify-table-columns :system_session system-session-cols)
-  (verify-table-columns :system_props system-props-cols))
-
-;; (defn test-profile []
-;;   (letfn [(on-pred-profile [profile_name pred]
-;;             (if-let [profile-m (not-empty (db/query (select! {:table_name :profile :where [:= :name (name profile_name)]})))]
-;;               (pred profile-m)))]
-;;     (and (on-pred-profile :admin some?)
-;;        (on-pred-profile :developer some?)
-;;        (on-pred-profile :user some?))))
-
-;; (defn test-user []
-;;   (letfn [(on-test-exist [profile_name pred]
-;;             (if-let [profile-m (not-empty (db/query (select! {:table_name :user :where [:= :login (name profile_name)]})))]
-;;               (pred profile-m)))]
-;;     (and (on-test-exist :adm some?)
-;;        (on-test-exist :dev some?)
-;;        (on-test-exist :user some?))))
+  (verify-table-columns :jarman_view view-cols)
+  (verify-table-columns :jarman_system_session system-session-cols)
+  (verify-table-columns :jarman_system_props system-props-cols))
 
 (defn test-metadata []
   (if-let [tables-list (not-empty (mapv (comp second first) (db/query (show-tables))))]
@@ -113,48 +97,17 @@
 ;;; FILL DATA FOR TABLE ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; MOVED to .jaramn.data
-;; (defn fill-profile []
-;;   (db/exec (delete! {:table_name :profile}))
-;;   (db/exec
-;;    (insert! {:table_name :profile
-;;              :column-list [:name :configuration]
-;;              :values [["admin" "{:groups [:admin-update :admin-extension :admin-dataedit :developer-manage :developer-alpha :developer :managment :ekka-servicer :ekka-payment-managment :ekka-all]}"]
-;;                       ["user" "{:groups [:admin-update :admin-extension :admin-dataedit :developer-manage :developer-alpha :developer :managment :ekka-servicer :ekka-payment-managment :ekka-all]}"]
-;;                       ["developer" "{:groups [:admin-update :admin-extension :admin-dataedit :developer-manage :developer-alpha :developer :managment :ekka-servicer :ekka-payment-managment :ekka-all]}"]]})))
-
-;;; MOVED to .jarman.data
-;; (defn fill-user []
-;;   (if-let [perm (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "admin"]})))]
-;;     (if (empty? (db/query (select! {:table_name :user :where [:= :login "admin"]})))
-;;       (db/exec
-;;        (insert! {:table_name :user
-;;                  :column-list [:login :password :first_name :last_name :id_profile :configuration]
-;;                  :values [["admin" "admin" "admin" "admin" (:id perm) "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}"]]}))))
-;;   (if-let [perm (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "developer"]})))]
-;;     (if (empty? (db/query (select! {:table_name :user :where [:= :login "dev"]})))
-;;       (db/exec
-;;        (insert! {:table_name :user
-;;                  :column-list [:login :password :first_name :last_name :id_profile :configuration]
-;;                  :values [["dev" "dev" "dev" "dev" (:id perm) "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}"]]}))))
-;;   (if-let [perm (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "user"]})))]
-;;     (if (empty? (db/query (select! {:table_name :user :where [:= :login "user"]})))
-;;       (db/exec
-;;        (insert! {:table_name :user
-;;                  :column-list [:login :password :first_name :last_name :id_profile :configuration]
-;;                  :values [["user" "user" "user" "user" (:id perm) "{:ftp {:login \"jarman\", :password \"dupa\" :host \"trashpanda-team.ddns.net\"}}"]]})))))
-
 (defn fill-metadata []
   (doall (do-create-meta-for-existing-tables)))
 
 (defn hard-reload-struct []
   ;; for make it uncoment section belove
   ;; map db/exec
-  [(drop-table :user) user
-   (drop-table :profile) profile
-   (drop-table :view) view
+  [(drop-table :jarman_user) user
+   (drop-table :jarman_profile) profile
+   (drop-table :jarman_view) view
    (drop-table :metadata) metadata
-   (drop-table :documents) documents])
+   (drop-table :jarman_documents) documents])
 
 ;;;;;;;;;;;;;;;;
 ;;; STRATEGY ;;;
@@ -189,18 +142,18 @@
   (in? table-list (name table-name)))
 
 (defn procedure-test-profile [tables-list]
-  (if (verify-table-exists :profile tables-list)
-    (if (verify-table-columns :profile profile-cols)
+  (if (verify-table-exists :jarman_profile tables-list)
+    (if (verify-table-columns :jarman_profile profile-cols)
       true ;; (if (test-profile) true (do (fill-profile) true))
-      {:valid? false :output "Profile table not compatible with Jarman" :table :profile})
+      {:valid? false :output "Profile table not compatible with Jarman" :table :jarman_profile})
     (do (db/exec profile) ;; (fill-profile)
         true)))
 
 (defn procedure-test-user [tables-list]
-  (if (verify-table-exists :user tables-list)
-    (if (verify-table-columns :user user-cols)
+  (if (verify-table-exists :jarman_user tables-list)
+    (if (verify-table-columns :jarman_user user-cols)
       true ;; (if (test-user) true (do (fill-user) true))
-      {:valid? false :output "User table not compatible with Jarman" :table :user})
+      {:valid? false :output "User table not compatible with Jarman" :table :jarman_user})
     (do (db/exec user) ;; (fill-user)
         true)))
 
@@ -213,46 +166,46 @@
         true)))
 
 (defn procedure-test-documents [tables-list]
-  (if (verify-table-exists :documents tables-list)
-    (if (verify-table-columns :documents documents-cols)
-      true {:valid? false :output "Documents table not compatible with Jarman" :table :documents})
+  (if (verify-table-exists :jarman_documents tables-list)
+    (if (verify-table-columns :jarman_documents documents-cols)
+      true {:valid? false :output "Documents table not compatible with Jarman" :table :jarman_documents})
     (do (db/exec documents) true)))
 
 (defn procedure-test-view [tables-list]
-  (if (verify-table-exists :view tables-list)
-    (if (verify-table-columns :view view-cols)
-      true {:valid? false :output "View table not compatible with Jarman" :table :view})
+  (if (verify-table-exists :jarman_view tables-list)
+    (if (verify-table-columns :jarman_view view-cols)
+      true {:valid? false :output "View table not compatible with Jarman" :table :jarman_view})
     (do (db/exec view) true)))
 
 (defn procedure-test-system-session [tables-list]
-  (if (verify-table-exists :system_session tables-list)
-    (if (verify-table-columns :system_session system-session-cols)
-      true {:valid? false :output "System table not compatible with Jarman" :table :system_session})
+  (if (verify-table-exists :jarman_system_session tables-list)
+    (if (verify-table-columns :jarman_system_session system-session-cols)
+      true {:valid? false :output "System table not compatible with Jarman" :table :jarman_system_session})
     (do (db/exec system-session) true)))
 
 (defn procedure-test-system-props [tables-list]
-  (if (verify-table-exists :system_props tables-list)
-    (if (verify-table-columns :system_props system-props-cols)
-      true {:valid? false :output "System table not compatible with Jarman" :table :system_props})
-    (do (db/exec system-session) true)))
+  (if (verify-table-exists :jarman_system_props tables-list)
+    (if (verify-table-columns :jarman_system_props system-props-cols)
+      true {:valid? false :output "System table not compatible with Jarman" :table :jarman_system_props})
+    (do (db/exec system-props) true)))
 
 (defn procedure-create-all-structure []
-  (db/exec profile)    ;; (fill-profile) 
-  (db/exec user)       ;; (fill-user)
-  (db/exec metadata)   ;; (fill-metadata) 
+  (db/exec profile)
+  (db/exec user)
+  (db/exec metadata)
   (db/exec documents)
   (db/exec view)
   (db/exec system-session)
   (db/exec system-props))
 
 (defn procedure-delete-all-structure []
-  (db/exec (drop-table :user))
-  (db/exec (drop-table :profile))
+  (db/exec (drop-table :jarman_user))
+  (db/exec (drop-table :jarman_profile))
   (db/exec (drop-table :metadata))
-  (db/exec (drop-table :documents))
-  (db/exec (drop-table :view))
-  (db/exec (drop-table :system_session))
-  (db/exec (drop-table :system_props)))
+  (db/exec (drop-table :jarman_documents))
+  (db/exec (drop-table :jarman_view))
+  (db/exec (drop-table :jarman_system_session))
+  (db/exec (drop-table :jarman_system_props)))
 
 (defn procedure-test-all []
   ;; if some tables exist?

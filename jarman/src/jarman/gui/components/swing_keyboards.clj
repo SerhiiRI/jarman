@@ -17,11 +17,11 @@
 
 (defmacro ^:depr make-inputmap-wrapper
   "Description
-    Create function that generate wrapper 
+    Create function that generate wrapper
     for some JComponent, which add or override
     InputMap/ActionMap for specyfic component
 
-  Example 
+  Example
     (def action-wrapper
       (make-key-wrapper
        {:id \"run-action1\"
@@ -32,7 +32,7 @@
         :key  (KeyStroke/getKeyStroke KeyEvent/VK_F InputEvent/ALT_MASK)
         :action (fn [^ActionEvent event]
                   (c/alert \"Second Action\"))}))
-  
+
      (-> (mig-panel) (action-wrapper))"
   [& map-list]
   (let [key-list (map #(select-keys % [:id :key]) map-list)
@@ -53,11 +53,11 @@
 
 (defn ^:depr wrapp-component-inputmap
   "Description
-    Create function that generate wrapper 
+    Create function that generate wrapper
     for some JComponent, which add or override
     InputMap/ActionMap for specyfic component
 
-  Example 
+  Example
     (-> (mig-panel)
       (wrapp-component-inputmap
        {:id \"run-action1\"
@@ -114,13 +114,13 @@
       ;; ---
       (instance? javax.swing.JComponent component)
       (into (->> (.keys (.getActionMap component))))
-      ;; --- 
+      ;; ---
       (instance? javax.swing.text.JTextComponent component)
       (into (->> (.getActions component) (map (fn [a] (.getValue a Action/NAME))))))
     (seq)
     (reduce
      (fn [acc e]
-       (if-let [key-bind (get action-key-map e nil)] 
+       (if-let [key-bind (get action-key-map e nil)]
          (conj acc [e key-bind])
          (conj acc [e nil])))
      []))))
@@ -143,7 +143,7 @@
    (seesaw.core/grid-panel
     :border "Keybindings"
     :columns 2
-    :items 
+    :items
     (->> (keybindings-action-keystroke-map component)
          (sort-by first)
          (mapcat (fn [[action keystroke]]
@@ -155,7 +155,7 @@
       ;; ---
       (instance? javax.swing.JComponent component)
       (into (map #(.get action-map %) (.keys action-map)) )
-      ;; --- 
+      ;; ---
       (instance? javax.swing.text.JTextComponent component)
       (into (->> (.getActions component) (map (fn [a] (vector (.getValue a Action/NAME) a))))))))
 
@@ -204,7 +204,7 @@
   "Description
     Transform emacs notation into the KeyStroke object
 
-  Example 
+  Example
     (kbd->KeyStroke \"C-M-space\")
        => #object[javax.swing.KeyStroke \"ctrl alt pressed SPACE\"]"
   [^String keybinding]
@@ -225,7 +225,7 @@
   "Description
     Transform KeyStroke to readable emacs notation
 
-  Example 
+  Example
     (KeyStroke->kbd
      (KeyStroke/getKeyStroke
       KeyEvent/VK_SPACE
@@ -248,7 +248,7 @@
   See
    `kvc` - opposite function
 
-  Example 
+  Example
   (kbd \"C-c C-p s s\")
     => [#obj[KeyStroke \"ctrl pressed C\"]
         #obj[KeyStroke \"ctrl pressed P\"]
@@ -259,12 +259,12 @@
 
 (defn kvc
   "Translate KeyStroke vector sequence to readable
-  Emacs keybinding shortcut 
-  
+  Emacs keybinding shortcut
+
   See
    `kbd - opposite function
 
-  Example 
+  Example
   (kvc
     [(KeyStroke/getKeyStroke \"ctrl pressed C\")
      (KeyStroke/getKeyStroke \"ctrl pressed P\")
@@ -275,17 +275,17 @@
   (cl-format nil "~{~A~^ ~}" (map KeyStroke->kbd key-vec)))
 
 (defn define-key
-  "Description 
-    add some shortcuts to keymap which specified as first 
+  "Description
+    add some shortcuts to keymap which specified as first
     argument (define-key keymap [KeyStroke...] action)
 
     The action can be different types
-     symbol - link on function 
+     symbol - link on function
      string - that mean \"run some action\" though the name
      list - mean some expression under the quote
-     fn - function 
+     fn - function
 
-  Example 
+  Example
     (-> {}
       (define-key (kbd \"C-x C-c\") 'jarman.gui.components.common/describe-functions)
       (define-key (kbd \"M-x\")     'jarman.gui.components.common/execute-extended-command)
@@ -308,11 +308,11 @@
   "Description
    Define keybinding in the Global Keymap
 
-  See 
+  See
     `define-key`
     `current-keymap`
 
-  Example 
+  Example
     (global-set-key (kbd \"C-c C-p s d\") '(fn [] (seesaw.core/alert \"you pressed C-c C-a s d\")))
     (global-set-key (kbd \"C-c s\") '(fn [] (seesaw.core/alert \"you pressed C-c s\")))
     (global-set-key (kbd \"C-s\") (fn [] (seesaw.core/alert \"you pressed C-s\")))"
@@ -336,10 +336,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- action-representation [kbd-seq action]
-  (cond 
+  (cond
     (nil? action) ""
     (symbol? action) (str action)
-    (string? action) (format "action.%s" action) 
+    (string? action) (format "action.%s" action)
     (or (fn? action) (sequential? action)) "<lambda>"
     :else (throw (ex-info (format "Bad action type <%s>" kbd-seq)
                           {:action action}))))
@@ -383,8 +383,8 @@
 ;;; KEYMAP COMPONENT WRAPPER's ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn invoke-action [& {:keys [event action actionmap]}]
-  (cond 
+#_(defn invoke-action [& {:keys [event action actionmap]}]
+  (cond
     (nil? action)
     (global-key-vec-buffer-reset)
     ;; ---
@@ -395,7 +395,7 @@
     (do
       (global-key-vec-buffer-reset)
       (if-let [action-fn (get actionmap action)]
-       (.actionPerformed action-fn 
+       (.actionPerformed action-fn
                          (java.awt.event.ActionEvent. (.getSource event) (.intValue (System/currentTimeMillis)) nil))
        (throw (ex-info (format "The action %s doesn't have any invokers" (str action))
                        {:action action :actionmap (keys actionmap)}))))
@@ -417,6 +417,40 @@
     (do (apply (eval action) []) (global-key-vec-buffer-reset))
     ;; ---
     :else (throw (ex-info (format "Bad action type <%s>" (global-key-vec-buffer-kbd))
+                   {:key (global-key-vec-buffer) :action action}))))
+
+(defn invoke-action [& {:keys [event action actionmap]}]
+  (cond
+    (nil? action)
+    nil
+    ;; ---
+    (map? action)
+    nil
+    ;; ---
+    (string? action)
+    (do
+      (if-let [action-fn (get actionmap action)]
+       (.actionPerformed action-fn
+                         (java.awt.event.ActionEvent. (.getSource event) (.intValue (System/currentTimeMillis)) nil))
+       (throw (ex-info (format "The action %s doesn't have any invokers" (str action))
+                       {:action action :actionmap (keys actionmap)}))))
+    ;; ---
+    (instance? javax.swing.AbstractAction action)
+    (do
+      (.actionPerformed action
+                        (java.awt.event.ActionEvent.
+                         (.getSource event) (.intValue (System/currentTimeMillis)) nil)))
+    ;; ---
+    (fn? action)
+    (do (apply action []))
+    ;; ---
+    (symbol? action)
+    (do (apply (eval action) []))
+    ;; ---
+    (and (sequential? action) (= (first action ) 'fn))
+    (do (apply (eval action) []))
+    ;; ---
+    :else (throw (ex-info (format "Bad action type <%s>" (global-key-vec-buffer-kbd))
                           {:key (global-key-vec-buffer) :action action}))))
 
 (defn wrapp-keymap
@@ -424,7 +458,7 @@
    (wrapp-keymap component (swing-context/global-keymap) {}))
   ([component keymap]
    (wrapp-keymap component keymap {}))
-  ([component keymap actionmap] 
+  ([component keymap actionmap & {:keys [key-typed-fn] :or {key-typed-fn (fn [])}}]
    (let [input-action jarman.gui.components.swing-actions/default-editor-kit-action-map]
      ;; ---
      ;; (swing-keyboards/describe-keymap (active-keymap))
@@ -438,13 +472,18 @@
         (proxy [KeyAdapter] []
           ;; ---------------
           (^void keyTyped [^KeyEvent e]
-           (when (not-empty (global-key-vec-buffer))
-             (.consume e)))
+           (with-active-event e
+            (if-let [action (lookup-keymap-action keymap)]
+              (do (.consume e)
+                  (when-not (map? action)
+                    (global-key-vec-buffer-reset)))
+              (do (key-typed-fn)
+                  (global-key-vec-buffer-reset)))))
           ;; ---------------
           (^void keyPressed [^KeyEvent e]
            (when-not
                (and (#{KeyEvent/VK_WINDOWS KeyEvent/VK_CONTROL KeyEvent/VK_ALT KeyEvent/VK_SHIFT}
-                   (.getKeyCode (KeyStroke/getKeyStrokeForEvent e))))
+                    (.getKeyCode (KeyStroke/getKeyStrokeForEvent e))))
              (with-keymap keymap
                (global-key-vec-buffer-put (KeyStroke/getKeyStrokeForEvent e))
                ;; (println (.getSource e))
@@ -452,10 +491,18 @@
                  (with-active-event e
                    ;; (swing-keyboards/describe-keymap (active-keymap))
                    (invoke-action
-                    :event e
-                    :action action
-                    :actionmap actionmap))
-                 (global-key-vec-buffer-reset)))))))))))
+                     :event e
+                     :action action
+                     :actionmap actionmap))
+                 ;; (global-key-vec-buffer-reset)
+                 ))))))))))
+
+;; (jarman.gui.components.swing/quick-frame
+;;  [(jarman.gui.components.common/label-h3 :value "-------DEBUG---------")
+;;   (wrapp-keymap (jarman.gui.components.common/text :value "suka")
+;;     (-> (jarman.gui.components.swing-context/global-keymap)
+;;       (jarman.gui.components.common/patch-emacs-keymap))
+;;     jarman.gui.components.swing-actions/default-editor-kit-action-map)])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; fixme:serhii               ;;;
@@ -475,7 +522,7 @@
 (defn describe-bindings-jframe []
   (println "ACTION => describe-functions *DIALOG")
   (if-let [keymap (active-keymap)]
-    (-> 
+    (->
      (seesaw.core/dialog
       :option-type :default
       :content (helper-panel keymap))
@@ -488,8 +535,8 @@
 (global-set-key (kbd "C-h j")           'jarman.gui.components.swing-keyboards/describe-bindings-jframe)
 (global-set-key (kbd "C-h t")           '(fn [e] (println "Un SYMBOL function")))
 (global-set-key (kbd "C-c C-p f")       '(fn [] (seesaw.core/alert "you pressed C-c C-p f")))
-(global-set-key (kbd "C-c C-p s s")     '(fn [] (seesaw.core/alert "you pressed C-c C-a s s")))
-(global-set-key (kbd "C-c C-p s d")     '(fn [] (seesaw.core/alert "you pressed C-c C-a s d")))
+(global-set-key (kbd "C-c C-p s s")     '(fn [] (seesaw.core/alert "you pressed C-c C-p s s")))
+(global-set-key (kbd "C-c C-p s d")     '(fn [] (seesaw.core/alert "you pressed C-c C-p s d")))
 (global-set-key (kbd "C-c s")           '(fn [] (seesaw.core/alert "you pressed C-c s")))
 (global-set-key (kbd "C-c f")            (fn [] (seesaw.core/alert "you pressed C-c f")))
 

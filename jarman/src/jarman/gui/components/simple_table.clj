@@ -46,10 +46,11 @@
           {:key  (:field-qualified col-metadata)
            :text (:representation col-metadata)}))))
 
-(defn table [& {:keys [tables columns on-select custom-renderers data] :or {data [] on-select (fn [v])}}]
+(defn simple-table [& {:keys [model data on-select custom-renderers] :or {data [] on-select (fn [v])}}]
+  {:pre [(sequential? model)]}
   (where
-   ((col-index (->> columns (map-indexed vector) (mapcat reverse) (apply hash-map)))
-    (t (c/table :model [:columns (table-model-by-metadata-information tables columns) :rows data])))
+   ((col-index (->> model (map :key) (map-indexed vector) (mapcat reverse) (apply hash-map)))
+    (t (c/table :model [:columns model :rows data])))
    ;; --- adding custom column renderers
    (doseq [[column-key column-renderer-fn] custom-renderers]
      (if-let [column-index (get col-index column-key nil)]
@@ -68,19 +69,20 @@
    (c/config! t :show-horizontal-lines? true)
    t))
 
-(defn change-model! [^JTable table & {:keys [tables columns custom-renderers data] :or {data []}}]
-  (c/config! table :model [:columns (table-model-by-metadata-information tables columns) :rows data])
+(defn change-model! [^JTable table & {:keys [model custom-renderers data] :or {data []}}]
+  {:pre [(sequential? model)]}
+  (c/config! table :model [:columns model :rows data])
   (where
-   ((col-index (->> columns (map-indexed vector) (mapcat reverse) (apply hash-map))))
-   (doseq [[column-key column-renderer-fn] custom-renderers]
-     (if-let [column-index (get col-index column-key nil)]
-       (let [select-with-column-key (. (. table getColumnModel) getColumn column-index)]
-         (.setCellRenderer
-          select-with-column-key
-          (proxy [TableCellRenderer] []
-            (^Component getTableCellRendererComponent [^JTable table, ^Object value, isSelected, hasFocus, row, column]
-             (column-renderer-fn table value isSelected hasFocus row column)))))
-       (println (format "Error! column key `%s` for override rendering doesn't found" (str column-key))))))
+    ((col-index (->> model (map :key) (map-indexed vector) (mapcat reverse) (apply hash-map))))
+    (doseq [[column-key column-renderer-fn] custom-renderers]
+      (if-let [column-index (get col-index column-key nil)]
+        (let [select-with-column-key (. (. table getColumnModel) getColumn column-index)]
+          (.setCellRenderer
+            select-with-column-key
+            (proxy [TableCellRenderer] []
+              (^Component getTableCellRendererComponent [^JTable table, ^Object value, isSelected, hasFocus, row, column]
+               (column-renderer-fn table value isSelected hasFocus row column)))))
+        (println (format "Error! column key `%s` for override rendering doesn't found" (str column-key))))))
   table)
 
 (defn scrollToRegionByRowColumnIndex! [^JTable table, ^long rowIndex, ^long vColIndex]
@@ -138,40 +140,44 @@
   (def rand-data
     (->> (cycle (vec (db/query (select!
                                 {:limit 1
-                                 :table_name :user
-                                 :column [:#as_is :user.login :user.password :user.first_name :user.last_name :user.configuration :user.id_profile :profile.name :profile.configuration]
-                                 :inner-join :user->profile}))))
+                                 :table_name :jarman_user
+                                 :column [:#as_is :jarman_user.login :jarman_user.password :jarman_user.first_name :jarman_user.last_name :jarman_user.configuration :jarman_user.id_profile :jarman_profile.name :jarman_profile.configuration]
+                                 :inner-join :jarman_user->jarman_profile}))))
          (take 100)
          (map (fn [x] (assoc x
-                            :user.login (apply str (take 40 (repeatedly #(char (+ (rand 26) 65)))))
-                            :user.password (rand-nth [true false])
-                            :user.first_name (* (rand) (rand-int 10000)))))))
+                            :jarman_user.login (apply str (take 40 (repeatedly #(char (+ (rand 26) 65)))))
+                            :jarman_user.password (rand-nth [true false])
+                            :jarman_user.first_name (* (rand) (rand-int 10000)))))))
 
   ;; ==============
   ;; TABLE INSTANCE
 
   (def t
-    (table
-     :tables  [:user :profile]
-     :columns [:user.login :user.password :user.first_name :user.last_name :profile.name]
-     :data rand-data
-     :custom-renderers
-     {:user.password
-      (fn [^JTable table, ^Object value, isSelected, hasFocus, row, column]
-        (cond->
-            (c/label
-             :font {:name "monospaced"}
-             :h-text-position :right
-             :text (if value "[X]" "[ ]"))
-          isSelected (c/config! :background (.getSelectionBackground table))))
-      :user.first_name
-      (fn [^JTable table, ^Object value, isSelected, hasFocus, row, column]
-        (cond->
-            (c/label
-             :font {:name "monospaced"}
-             :h-text-position :right
-             :text (format "%.2f $(buks)" value))
-          isSelected (c/config! :background (.getSelectionBackground table))))}))
+    (simple-table
+      :model
+      [{:key :jarman_user.login, :text "Login"}
+       {:key :jarman_user.password, :text "Password"}
+       {:key :jarman_user.first_name, :text "First name"}
+       {:key :jarman_user.last_name, :text "Last name"}
+       {:key :jarman_profile.name, :text "Name"}]
+      :data rand-data
+      :custom-renderers
+      {:jarman_user.password
+       (fn [^JTable table, ^Object value, isSelected, hasFocus, row, column]
+         (cond->
+             (c/label
+               :font {:name "monospaced"}
+               :h-text-position :right
+               :text (if value "[X]" "[ ]"))
+           isSelected (c/config! :background (.getSelectionBackground table))))
+       :jarman_user.first_name
+       (fn [^JTable table, ^Object value, isSelected, hasFocus, row, column]
+         (cond->
+             (c/label
+               :font {:name "monospaced"}
+               :h-text-position :right
+               :text (format "%.2f $(buks)" value))
+           isSelected (c/config! :background (.getSelectionBackground table))))}))
 
   ;; debug frame
   (-> (doto (seesaw.core/frame
@@ -197,47 +203,69 @@
 
   ;; config 1. 
   (change-model! t
-                 :tables  [:user :profile]
-                 :columns [:user.login :user.password :user.first_name :user.last_name :profile.name]
-                 :data rand-data
-                 :custom-renderers
-                 {:user.password
-                  (fn [^JTable table, ^Object value, isSelected, hasFocus, row, column]
-                    (cond->
-                        (c/label
-                         :font {:name "monospaced"}
-                         :h-text-position :right
-                         :text (if value "[X]" "[ ]"))
-                      isSelected (c/config! :background (.getSelectionBackground table))))
-                  :user.first_name
-                  (fn [^JTable table, ^Object value, isSelected, hasFocus, row, column]
-                    (cond->
-                        (c/label
-                         :font {:name "monospaced"}
-                         :h-text-position :right
-                         :text (format "%.2f $(buks)" value))
-                      isSelected (c/config! :background (.getSelectionBackground table))))})
+    :model
+    [{:key :jarman_user.login, :text "Login"}
+     {:key :jarman_user.password, :text "Password"}
+     {:key :jarman_user.first_name, :text "First name"}
+     {:key :jarman_user.last_name, :text "Last name"}
+     {:key :jarman_profile.name, :text "Name"}]
+    :data rand-data
+    :custom-renderers
+    {:jarman_user.password
+     (fn [^JTable table, ^Object value, isSelected, hasFocus, row, column]
+       (cond->
+           (c/label
+             :font {:name "monospaced"}
+             :h-text-position :right
+             :text (if value "[X]" "[ ]"))
+         isSelected (c/config! :background (.getSelectionBackground table))))
+     :jarman_user.first_name
+     (fn [^JTable table, ^Object value, isSelected, hasFocus, row, column]
+       (cond->
+           (c/label
+             :font {:name "monospaced"}
+             :h-text-position :right
+             :text (format "%.2f $(buks)" value))
+         isSelected (c/config! :background (.getSelectionBackground table))))})
   ;; config 2. 
   (change-model! t
-                 :tables [:user :profile]
-                 :columns [:user.login :user.first_name :user.last_name :profile.name]
-                 :data    (vec
-                           (db/query
-                            (select!
-                             {:limit 1
-                              :table_name :user
-                              :column [:#as_is :user.login :user.password :user.first_name :user.last_name :user.configuration :user.id_profile :profile.name :profile.configuration]
-                              :inner-join :user->profile}))))
+    :model
+    [{:key :jarman_user.login, :text "Login"}
+     {:key :jarman_user.first_name, :text "First name"}
+     {:key :jarman_user.last_name, :text "Last name"}
+     {:key :jarman_profile.name, :text "Name"}]
+    :data    (vec
+               (db/query
+                 (select!
+                   {:limit 1
+                    :table_name :jarman_user
+                    :column [:#as_is :jarman_user.login :jarman_user.password :jarman_user.first_name :jarman_user.last_name :jarman_user.configuration :jarman_user.id_profile :jarman_profile.name :jarman_profile.configuration]
+                    :inner-join :jarman_user->jarman_profile}))))
   ;; config 3. 
   (change-model! t
-                 :tables [:user :profile]
-                 :columns [:user.login :user.first_name :user.last_name :profile.name :user.configuration]
-                 :data (vec
-                        (db/query
-                         (select!
-                          {:table_name :user
-                           :column [:#as_is :user.login :user.password :user.first_name :user.last_name :user.configuration :user.id_profile :profile.name :profile.configuration]
-                           :inner-join :user->profile})))))
+    :model
+    [{:key :jarman_user.login, :text "Login"}
+     {:key :jarman_user.first_name, :text "First name"}
+     {:key :jarman_user.last_name, :text "Last name"}
+     {:key :jarman_profile.name, :text "Name"}
+     {:key :jarman_user.configuration, :text "User configuration"}]
+    :tables [:jarman_user :jarman_profile]
+    :columns [:jarman_user.login :jarman_user.first_name :jarman_user.last_name :jarman_profile.name :jarman_user.configuration]
+    :data (vec
+            (db/query
+              (select!
+                {:table_name :jarman_user
+                 :column
+                 [:#as_is
+                  :jarman_user.login
+                  :jarman_user.password
+                  :jarman_user.first_name
+                  :jarman_user.last_name
+                  :jarman_user.configuration
+                  :jarman_user.id_profile
+                  :jarman_profile.name
+                  :jarman_profile.configuration]
+                 :inner-join :jarman_user->jarman_profile})))))
 
 
 

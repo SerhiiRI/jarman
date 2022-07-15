@@ -1,8 +1,8 @@
-;;  _____ ___  ____   ___  
-;; |_   _/ _ \|  _ \ / _ \ 
+;;  _____ ___  ____   ___
+;; |_   _/ _ \|  _ \ / _ \
 ;;   | || | | | | | | | | |
 ;;   | || |_| | |_| | |_| |
-;;   |_| \___/|____/ \___/ 
+;;   |_| \___/|____/ \___/
 ;; -------------------------
 ;; Markers:
 ;;  [ ] todo
@@ -11,15 +11,14 @@
 ;;  [-] Cenceled
 ;; -------------------------
 ;; fixme:serhii:aleks gui-components2 central
-;;  [ ] create some standarization for all font's 
-;;  [-] all wrapper's and any type of action should be extenralize outta here
+;;  [X] create some standarization for all font's
+;;  [x] all wrapper's and any type of action should be extenralize outta here
 ;;  [X] common component router namespaces
 ;;  [X] keyboard sequence Action like in Emacs
 ;;  [X] wrote some demo's on bottom of 'jarman.gui.gui-components2
 ;;  [X] delete deprecated java objects
-;;  [ ] create quick text popup which dispose or chnage in every keyboard click
 ;;  [X] define 'jarman.gui.jsgl.actions with definition of test keyboard Actions.
-
+;;  [X] create quick text popup which dispose or chnage in every keyboard click
 (ns jarman.gui.gui-components2
   (:require
    [potemkin.namespaces :refer [import-vars]]
@@ -29,8 +28,8 @@
    [jarman.gui.components.calendar]
    [jarman.gui.components.composites]
    [jarman.gui.components.panels]
-   [jarman.gui.components.listbox]
    [jarman.gui.components.database-table]
+   [jarman.gui.components.simple-table]
    [jarman.gui.components.error]
    [jarman.application.collector-custom-metacomponents
     :refer [register-metacomponent get-comp-actions]]))
@@ -61,7 +60,11 @@
   label-h4 label-h5 label-h6
   label label-link label-info
   button combobox stub
-  text textarea codearea]
+  text textarea codearea
+  ;; ----
+  parse-float parse-digit
+  check-field-re    check-field-fn
+  check-field-float check-field-digit]
 
  ;; -- SYSTEM COMPONENTS
  [jarman.gui.components.system
@@ -83,12 +86,11 @@
   url-panel
   file-panel]
 
- ;; -- LISTBOX COMPONENT
- [jarman.gui.components.listbox
-  select-panel]
-
  [jarman.gui.components.database-table
   database-table]
+
+ [jarman.gui.components.simple-table
+  simple-table]
 
  [jarman.gui.components.error
   catch-error-panel])
@@ -106,12 +108,7 @@
 ;;
 
 ;; todo
-;; [x] to all components add :value-setter key
-;; [x] :jsgl-ckeckbox
-;; [ ] :jsgl-digit
-;; [ ] :jsgl-float
 ;; [ ] :jsgl-ftp-file
-;; [ ] :jsgl-simple-table
 ;; [ ] :jsgl-style-text JTextPane
 (register-metacomponent :id :jsgl-stub            :component stub           :actions #{})
 (register-metacomponent :id :jsgl-label           :component label          :actions (get-comp-actions 'label))
@@ -129,8 +126,9 @@
 (register-metacomponent :id :jsgl-datetime-label  :component datetime-label :actions (get-comp-actions 'datetime-label))
 (register-metacomponent :id :jsgl-url-panel       :component url-panel      :actions (get-comp-actions 'url-panel)       :constructor  jarman.logic.metadata/map->Link)
 (register-metacomponent :id :jsgl-file-panel      :component file-panel     :actions (get-comp-actions 'file-panel)      :constructor  jarman.logic.metadata/map->File)
-(register-metacomponent :id :jsgl-listbox         :component select-panel   :actions (get-comp-actions 'listbox))
+;; (register-metacomponent :id :jsgl-listbox         :component select-panel   :actions (get-comp-actions 'listbox))
 (register-metacomponent :id :jsgl-database-table  :component database-table :actions (get-comp-actions 'database-table))
+(register-metacomponent :id :jsgl-simple-table    :component simple-table   :actions (get-comp-actions 'simple-table))
 
 ;;  ____  _____ __  __  ___
 ;; |  _ \| ____|  \/  |/ _ \
@@ -145,7 +143,7 @@
   (seesaw.dev/show-events  (seesaw.core/combobox))
   (seesaw.dev/show-options (gui-panels/grid-panel))
   (seesaw.dev/show-options (seesaw.core/combobox))
-  ;; IMPORTS  
+  ;; IMPORTS
   (require
    '[seesaw.dev]
    '[seesaw.core          :as c]
@@ -155,7 +153,7 @@
   ;; ----------------------------
   ;; jarman.gui.components.common
   (doto (seesaw.core/frame
-         :title "Jarman" 
+         :title "Jarman"
          :content (seesaw.mig/mig-panel
                    :background  face/c-compos-background-darker
                    :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
@@ -171,7 +169,7 @@
   ;; ----------------------------
   ;; jarman.gui.components.system
   (doto (seesaw.core/frame
-         :title "Jarman" 
+         :title "Jarman"
          :content (seesaw.mig/mig-panel
                    :background  face/c-compos-background-darker
                    :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
@@ -193,6 +191,4 @@
                            [(seesaw.core/label :text "DateTime Component" :font (jarman.gui.gui-tools/getFont :bold 20))]
                            [(datetime-label :value "2020-10-01 10:22")]]))
     (.setLocationRelativeTo nil)
-    seesaw.core/pack! seesaw.core/show!)
-
-  )
+    seesaw.core/pack! seesaw.core/show!))

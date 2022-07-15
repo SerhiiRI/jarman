@@ -3,6 +3,8 @@
   (:require
    [clojure.string :as string]
    [clojure.pprint :refer [cl-format]]
+   [clojure.core.async :as async]
+   [jarman.lib.fuzzy-search]
    ;; Seesaw
    [seesaw.core    :as c]
    [seesaw.border  :as b]
@@ -10,6 +12,9 @@
    [jarman.lang           :refer :all]
    [jarman.faces          :as face]
    [jarman.gui.gui-tools  :as gui-tool]
+   [jarman.config.conf-language :refer [lang]]
+   [jarman.gui.core :refer [satom]]
+   [jarman.gui.components.panels :as panels]
    [jarman.gui.components.swing :as swing]
    [jarman.gui.components.swing-context :refer :all]
    [jarman.gui.components.swing-keyboards :refer [define-key kbd kvc wrapp-keymap]])
@@ -46,6 +51,37 @@
 ;; | |__| |_| | |  | |  __/| |_| | |\  | |___| |\  | | |  ___) |
 ;;  \____\___/|_|  |_|_|    \___/|_| \_|_____|_| \_| |_| |____/
 ;;
+
+;; some common exceptions
+(defn exception-incorrect-field [value pattern attr]
+  (ex-info "text input field exception"
+    {:print-stacktrace? false
+     :print-attribute? false
+     :attr attr
+     :type :incorrect-field-pattern
+     :message-head [:header :error-input]
+     :message-body (cl-format nil
+                     (lang :ui :alerts :incorrect-field-pattern-cl)
+                     value pattern)}))
+
+;; some helper for text processing
+(defn parse-float [string] (Double/parseDouble string))
+(defn parse-digit [string] (Long/parseLong string))
+(defn is-string-float? [string] (re-matches #"[0-9]+(?:\.[0-9]+)?" string))
+(defn is-string-digit? [string] (re-matches #"[0-9]+" string))
+(defn check-field-float [string]
+  (if (is-string-float? string) string
+      (exception-incorrect-field string "float [0-9](.[0-9])" {})))
+(defn check-field-digit [string]
+  (if (some? (is-string-float? string)) string
+      (exception-incorrect-field string "digit [0-9]" {})))
+(defn check-field-re [^String string ^java.util.regex.Pattern regex ^String pattern-name]
+  (if (some? (re-matches regex string)) string
+      (exception-incorrect-field string pattern-name {})))
+(defn check-field-fn [^String string ^clojure.lang.IFn f ^String pattern-name]
+  (if (true? (f string)) string
+      (exception-incorrect-field string pattern-name {})))
+
 
 ;; keyboard configuration keymap wrappers
 (defn patch-emacs-keymap [keymap]
@@ -88,6 +124,27 @@
       (define-key (kbd "C-+") jarman.gui.components.swing-actions/rtext-increase-font-size)
       (define-key (kbd "C--") jarman.gui.components.swing-actions/rtext-decrease-font-size)))
 
+(defn patch-select-context-choise [keymap & {:keys [on-prev on-next on-enter on-esc]}]
+  (-> keymap
+    (define-key (kbd "C-p")
+      (fn [] (let [^JTextComponent component (active-component)]
+              (on-prev (.getText component)))))
+    (define-key (kbd "C-n")
+      (fn [] (let [^JTextComponent component (active-component)]
+              (on-next (.getText component)))))
+    (define-key (kbd "C-m")
+      (fn [] (let [^JTextComponent component (active-component)]
+              (on-enter (.getText component)))))
+    (define-key [(KeyStroke/getKeyStroke KeyEvent/VK_ENTER 0)]
+      (fn [] (let [^JTextComponent component (active-component)]
+              (on-enter (.getText component)))))
+    (define-key (kbd "escape")
+      (fn [] (on-esc)
+        (.consume (active-event))))
+    (define-key (kbd "C-g")
+      (fn [] (on-esc)
+        (.consume (active-event))))))
+
 (defn stub [& args]
   (c/label
     :text (format "STUB: %s" (pr-str args))
@@ -96,7 +153,7 @@
     :background face/c-red))
 
 (defn label
-  [& {:keys [value halign tooltip foreground-hover foreground background font on-click args]
+  [& {:keys [value halign tooltip foreground-hover foreground background font on-click border args]
       :or   {value            ""
              halign           :left
              foreground-hover face/c-on-focus
@@ -116,6 +173,9 @@
       tooltip
       (into [:tip tooltip])
       ;; ------
+      border
+      (into [:border border])
+      ;; ------
       on-click
       (into
         [:listen
@@ -123,14 +183,18 @@
           :mouse-exited  (fn [e] (c/config! e :foreground foreground) (.repaint (c/to-root e)))
           :mouse-clicked (fn [e] (on-click e))]]))))
 
-(def label-h1   (partial label :font {:name face/f-regular :size face/s-foreground-h1}))
-(def label-h2   (partial label :font {:name face/f-regular :size face/s-foreground-h2}))
-(def label-h3   (partial label :font {:name face/f-regular :size face/s-foreground-h3}))
-(def label-h4   (partial label :font {:name face/f-regular :size face/s-foreground-h4}))
-(def label-h5   (partial label :font {:name face/f-regular :size face/s-foreground-h5}))
-(def label-h6   (partial label :font {:name face/f-regular :size face/s-foreground-h6}))
-(def label-link (partial label :font {:name face/f-italic-regular :size face/s-foreground}))
-(def label-info (partial label :font {:name face/f-italic-regular :size face/s-foreground}))
+(def label-h1   (fn [& {:as args}] (apply label (flatten (seq (merge {:font {:name face/f-regular :size face/s-foreground-h1}} args))))))
+(def label-h2   (fn [& {:as args}] (apply label (flatten (seq (merge {:font {:name face/f-regular :size face/s-foreground-h2}} args))))))
+(def label-h3   (fn [& {:as args}] (apply label (flatten (seq (merge {:font {:name face/f-regular :size face/s-foreground-h3}} args))))))
+(def label-h4   (fn [& {:as args}] (apply label (flatten (seq (merge {:font {:name face/f-regular :size face/s-foreground-h4}} args))))))
+(def label-h5   (fn [& {:as args}] (apply label (flatten (seq (merge {:font {:name face/f-regular :size face/s-foreground-h5}} args))))))
+(def label-h6   (fn [& {:as args}] (apply label (flatten (seq (merge {:font {:name face/f-regular :size face/s-foreground-h6}} args))))))
+(def label-link (fn [& {:as args}] (apply label (flatten (seq (merge {:font {:name face/f-italic-regular :size face/s-foreground}} args))))))
+(def label-info (fn [& {:as args}] (apply label (flatten (seq (merge {:font {:name face/f-italic-regular :size face/s-foreground}} args))))))
+
+(comment
+  (swing/quick-frame
+    [(label-h1 :value "some")]))
 
 (defn button
   [& {:keys [value font
@@ -202,28 +266,32 @@
             font    {:name face/f-regular :size face/s-foreground}
             border  (swing/border {:h 10 :v 5})
             args []}}]
-  (apply
-    c/checkbox
-    :selected? (value-setter value)
-    :text      (str value-text)
-    :font      font
-    :border    border
-    :listen    [:mouse-clicked
-                (fn [e]
-                  (on-click e))]
-    (cond-> args
-      ;; ------
-      tooltip
-      (into [:tip tooltip]))))
+  (-> (apply
+     c/checkbox
+     :selected? (value-setter value)
+     :text      (str value-text)
+     :font      font
+     :border    border
+     :listen    [:mouse-clicked
+                 (fn [e]
+                   (on-click e))]
+     args
+     ;; (cond-> args
+     ;;   ;; ------
+     ;;   tooltip
+     ;;   (into [:tip tooltip]))
+     )
+   (swing/wrapp-tooltip tooltip)))
 
+(declare wrapp-autocompletition-popup)
 (defn text
   [& {:keys [value value-setter
              border border-focus foreground background tooltip font
              on-change on-focus-gain on-focus-lost on-caret-update
+             completion-list completion-size
              args]
       :or   {value                 ""
              value-setter          str
-             ;; border                [10 10 5 5 2]
              border               (swing/border
                                     {:h 10 :v 5}
                                     {:b 2 :color face/c-underline})
@@ -236,6 +304,8 @@
              foreground            face/c-foreground
              background            face/c-input-bg
              font                  {:name face/f-regular :size face/s-foreground}
+             completion-list       nil
+             completion-size       10
 
              on-change             (fn [e] e)
              on-focus-gain         (fn [e] e)
@@ -248,7 +318,7 @@
         ;; last-v          (atom "")
         get-user-data   (fn [e k]   (get-in   (c/config e :user-data) [k]))
         set-user-data   (fn [e k v] (assoc-in (c/config e :user-data) [k] v))]
-    (->
+    (as-> 
       (partial c/text
         :text       (str (value-setter value))
         :foreground foreground
@@ -277,14 +347,18 @@
            ;;       (c/config! e :user-data (set-user-data e :value (if (= placeholder @last-v) "" @last-v)))
            ;;       (on-change e))))
            (on-change e)
-           )])
-     (apply
-       (cond-> args
-         tooltip
-         (into [:tip tooltip])))
-     (wrapp-keymap
-      (-> (active-keymap) (patch-emacs-keymap))
-      jarman.gui.components.swing-actions/default-editor-kit-action-map))))
+           )]) T
+      (apply T args)
+      (swing/wrapp-tooltip T tooltip)
+      (if (empty? completion-list)
+        (wrapp-keymap T
+          (-> (active-keymap) (patch-emacs-keymap))
+          jarman.gui.components.swing-actions/default-editor-kit-action-map)
+        (wrapp-autocompletition-popup T
+          :completion-value-list completion-list
+          :completion-list-size completion-size)))))
+
+
 
 (defn scrollbox
   [component
@@ -294,11 +368,10 @@
       :or {args []
            hbar-size 12
            vbar-size 12}}]
-
   (let [scr (apply c/scrollable component :border nil args)]  ;; speed up scrolling
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setBorder scr nil)
-;;    for hide scroll
+    ;; for hide scroll
     (.setUnitIncrement (.getVerticalScrollBar scr) 20)
     (.setUnitIncrement (.getHorizontalScrollBar scr) 20)
     (.setPreferredSize (.getVerticalScrollBar scr) (java.awt.Dimension. vbar-size 0))
@@ -342,18 +415,19 @@
       :multi-line? true
       :font font
       :listen
-      [:focus-gained (fn [e]
-                       (c/config! e :border border-focus)
-                       (on-focus-gain e))
-       :focus-lost   (fn [e]
-                       (c/config! e :border border)
-                       (on-focus-lost e))
-       :caret-update (fn [e]
-                       (on-change e))])
-    (apply
-      (cond-> args
-        tooltip
-        (into [:tip tooltip])))
+      [:focus-gained
+       (fn [e]
+         (c/config! e :border border-focus)
+         (on-focus-gain e))
+       :focus-lost
+       (fn [e]
+         (c/config! e :border border)
+         (on-focus-lost e))
+       :caret-update
+       (fn [e]
+         (on-change e))])
+    (apply args)
+    (swing/wrapp-tooltip tooltip)
     (wrapp-keymap (-> (active-keymap) (patch-emacs-keymap))
       jarman.gui.components.swing-actions/default-editor-kit-action-map)
     (scrollbox :minimum-size [50 :by 100])))
@@ -511,10 +585,10 @@
       :or   {value-setter     identity
              model            []
              background       face/c-btn-bg
-             background-hover face/c-btn-bg-focus
+             ;; background-hover face/c-btn-bg-focus
              font             {:name face/f-mono-regular :size face/s-foreground}
-             border           (swing/border {:h 10 :v 2} {:b 2 :color face/c-underline})
-             border-focus     (swing/border {:h 10 :v 2} {:b 2 :color face/c-underline-on-focus})
+             border           (swing/border {:h 0 :v 2} {:b 2 :color face/c-underline})
+             border-focus     (swing/border {:h 0 :v 2} {:b 2 :color face/c-underline-on-focus})
              on-select        (fn [e] e)
              on-click         (fn [e] e)
              on-focus-gain    (fn [e] e)
@@ -532,43 +606,54 @@
    ;;                 selected? (seesaw.core/config! e :background bg)
    ;;                 :else (seesaw.core/config! e :background bg))) nil))
    ]
-  (apply
-    seesaw.core/combobox
-    :model model
-    :selected-item (value-setter value)
-    :focusable? true
-    :background background
-    :border border
-    :font font
-    :listen
-    [:selection
-     (fn [e]
-       (on-select (c/selection e)))
-     :mouse-clicked
-     (fn [e]
-       (on-click (c/selection e))
-       (gui-tool/switch-focus))
-     :mouse-entered
-     (fn [e]
-       (c/config! e :border border-focus :background background-hover :cursor :hand)
-       (.repaint (c/to-root e))
-       (on-mouse-enter e))
-     :mouse-exited
-     (fn [e]
-       (c/config! e :border border :background background)
-       (.repaint (c/to-root e))
-       (on-mouse-exit e))
-     :focus-gained
-     (fn [e]
-       (c/config! e :border border-focus :background background-hover :cursor :hand)
-       (on-focus-gain e))
-     :focus-lost
-     (fn [e]
-       (c/config! e :border border :background background)
-       (on-focus-lost e))]
-    (cond-> args
-      tooltip
-      (into [:tip tooltip]))))
+  (-> (apply
+        seesaw.core/combobox
+        :model model
+        :selected-item (value-setter value)
+        :focusable? true
+        :background background
+        :border border
+        :font font
+        :listen
+        [:selection
+         (fn [e]
+           (on-select (c/selection e)))
+         :mouse-clicked
+         (fn [e]
+           (on-click (c/selection e))
+           (gui-tool/switch-focus))
+         :mouse-entered
+         (fn [e]
+           ;; (c/config! e :border border-focus :background background-hover :cursor :hand)
+           (c/config! e :cursor :hand)
+           (.repaint (c/to-root e))
+           (on-mouse-enter e))
+         :mouse-exited
+         (fn [e]
+           ;; (c/config! e :border border :background background)
+           (.repaint (c/to-root e))
+           (on-mouse-exit e))
+         :focus-gained
+         (fn [e]
+           ;; (c/config! e :border border-focus :background background-hover :cursor :hand)
+           (c/config! e :cursor :hand)
+           (on-focus-gain e))
+         :focus-lost
+         (fn [e]
+           ;; (c/config! e :border border :background background)
+           (on-focus-lost e))]
+        args)
+    (swing/wrapp-tooltip tooltip)))
+
+;; (swing/quick-frame
+;;   [(seesaw.mig/mig-panel
+;;      :background  face/c-compos-background-darker
+;;      :constraints ["wrap 1" "0px[grow, fill]0px" "0px[fill, top]0px"]
+;;      :border (b/empty-border :thickness 10)
+;;      :items [[(combobox :value "A" :model ["A" "B" "C"]
+;;                 :on-select (fn [e] (println e)))]
+;;              [(combobox :value 1 :model [1 2 3]
+;;                 :on-select (fn [e] (println e)))]])])
 
 ;;  ____  _____ __  __  ___
 ;; |  _ \| ____|  \/  |/ _ \
@@ -619,6 +704,8 @@
     (seesaw.core/pack!)
     (seesaw.core/show!)))
 
+
+
 (comment
   (seesaw.dev/show-options (c/frame))
 
@@ -633,7 +720,7 @@
        :border (b/empty-border :thickness 10)
        :items [[(seesaw.core/label :text "some label")]
                [(seesaw.core/label :text "another label")]])])
-
+  
   (swing/quick-frame
     [(seesaw.mig/mig-panel
        :background  face/c-compos-background-darker
@@ -715,3 +802,150 @@
      (seesaw.core/label :text "Some text i should to place here" :font (Font. "JetBrains Mono Bold Italic" Font/PLAIN 20))
      (seesaw.core/label :text "Some text i should to place here" :font (Font. "JetBrains Mono ExtraBold Italic" Font/PLAIN 20))
      (seesaw.core/label :text "Some text i should to place here" :font {:name "JetBrains Mono ExtraBold Italic" :size 20})]))
+
+;;;;;;;;;;;;;;;;;;;;
+;;; AUTOCOMPLETE ;;;
+;;;;;;;;;;;;;;;;;;;;
+
+(defn- dispatch-select [on-select state txt]
+  (on-select (nth (:list @state) (:choise @state) nil)))
+
+(defn- dispatch-move-next [state txt]
+  (swap! state
+    (fn [s] (if (< (:choise s) (count (:whole-list s)))
+             (update s :choise inc) s))))
+
+(defn- dispatch-move-prev [state txt]
+  (swap! state
+    (fn [s] (if (< 0 (:choise s))
+             (update s :choise dec) s))))
+
+(defn- candidate-label [word selected selected-char]
+  (let [t (c/styled-text :text word
+                         :styles [[:selected :color (Color/decode "#00AAAA")]]
+                         :background (if selected :aliceblue :white)
+                         :editable? false
+                         :listen [:mouse-clicked (fn [e]
+                                                   (println (c/value (c/to-widget e))))])]
+    (doall
+     (for [c selected-char]
+       (c/style-text! t :selected c 1)))
+    t))
+
+(defn- wrapp-completion-popup-controller
+  [^javax.swing.text.JTextComponent component
+   ^jarman.gui.core.SwingAtom state
+   ^javax.swing.JWindow popup-window
+   ^clojure.lang.IFn on-select]
+  (doto component
+    (swing/wrapp-carret-listener
+      :caret-update-fn
+      (fn []
+        (let [value (c/value (active-component))]
+          (if (<= 3 (count value)) 
+           (async/thread
+             (swap! state assoc
+               :pattern value
+               :choise 0
+               :list 
+               (do "Seraching:"
+                   (time
+                     (->> (:whole-list @state)
+                       (jarman.lib.fuzzy-search/dice value)
+                       (mapv :model))))))))))
+    (swing/wrapp-focus-listener
+      :focus-lost-fn
+      (fn [] (doto popup-window
+              (.dispose) (.setVisible false)))
+      :focus-gained-fn
+      (fn [] (doto popup-window
+              (.pack) (.setVisible false))))
+    (wrapp-keymap
+      (-> (global-keymap)
+        (patch-emacs-keymap)
+        (patch-select-context-choise
+          :on-next  (partial dispatch-move-next state)
+          :on-prev  (partial dispatch-move-prev state)
+          :on-enter (partial dispatch-select on-select state)
+          :on-esc   (fn [] (.setVisible popup-window false))))
+      jarman.gui.components.swing-actions/default-editor-kit-action-map
+      :key-typed-fn
+      (fn []
+        (let [^javax.swing.text.JTextComponent component (active-component)
+              ^javax.swing.text.Caret carret (.getCaret component)
+              ^java.awt.Point p (.getMagicCaretPosition carret)
+              pn (when p (new java.awt.Point p))]
+          (when p
+            (.setVisible popup-window true)
+            (javax.swing.SwingUtilities/convertPointToScreen pn component)
+            (set! (. pn -y) (+ 24 (.y pn)))
+            (.setLocation popup-window pn)))))))
+
+(defn- candidate-panel [^jarman.gui.core.SwingAtom state completion-value-list completion-list-size]
+  (seesaw.core/scrollable
+    (panels/vertical-panel
+      :items
+      (conj
+        (map #(candidate-label % false []) (take (dec completion-list-size) (drop 1 completion-value-list)))
+        (candidate-label (first completion-value-list) true []))
+      :event-hook-atom state
+      :event-hook
+      (fn [panel _ _ a]
+        (seesaw.core/invoke-now
+          (c/config!
+            panel :items
+            (let [letters (into (into #{} (:pattern a)) (clojure.string/upper-case (:pattern a)))
+                  results
+                  (let [zone completion-list-size
+                        choose (:choise a)]
+                    (if (>= choose zone)
+                      (take-last zone (take (inc choose) (:list a)))
+                      (take zone (:list a))))]
+              (pmap
+                (fn [word]
+                  (->> (map-indexed vector word)
+                    (reduce
+                      (fn [acc [index letter]]
+                        (if (letters letter) (conj acc index) acc)) [])
+                    (candidate-label word (= (nth (:list a) (:choise a)) word))))
+                results))))))
+    :hscroll :never 
+    :vscroll :never))
+
+(defn wrapp-autocompletition-popup
+  [^javax.swing.text.JTextComponent component
+   & {:keys [completion-value-list completion-list-size on-select]
+      :or {on-select (fn [^String candidate-value] (c/text! component candidate-value))
+           completion-list-size 10
+           completion-value-list []}}]
+  (let [state (satom {:pattern "", :choise 0, :list completion-value-list :whole-list completion-value-list})
+        popup (swing/popup-frame "Autocomplete"
+                (candidate-panel state completion-value-list completion-list-size)
+                :width 200)]
+    (wrapp-completion-popup-controller component state popup on-select)))
+
+(comment
+  (require
+    '[clojure.data.csv]
+    '[clojure.java.io]
+    '[jarman.config.environment])
+  ;; ------------
+  (def x
+    (concat
+      (with-open [reader (clojure.java.io/reader "female_names_pl.csv")]
+        (->> (clojure.data.csv/read-csv reader)
+          (doall) (pmap first)))
+      (with-open [reader (clojure.java.io/reader "male_names_pl.csv")]
+        (->> (clojure.data.csv/read-csv reader)
+          (doall) (pmap first)))))
+  (def x (map str (.listFiles (clojure.java.io/file jarman.config.environment/user-home))))
+ ;; ------------
+ (swing/quick-frame
+   [(jarman.gui.components.common/label-h4 :value "Yeah boi! take look on those shit!")
+    (wrapp-autocompletition-popup
+      (text :value "" :on-change (fn [e] (println (c/value (c/to-widget e)))))
+      :completion-value-list x
+      :completion-list-size 10)
+    (text :value "another text box")]))
+
+

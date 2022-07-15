@@ -18,51 +18,42 @@
 
 (defn dice [search-word words]
   (->> words
-       (mapv to-score-map)
-       (mapv #(assoc % :value (fuzzy/dice search-word (:text %))))
-       (sort-by :value)
-       (reverse)))
+    (pmap (comp #(assoc % :value (fuzzy/dice search-word (:text %))) to-score-map))
+    (sort-by :value)
+    (reverse)))
 
 (defn levenshtein [search-word words]
   (->> words
-       (mapv to-score-map)
-       (mapv #(assoc % :value (fuzzy/levenshtein search-word (:text %))))
-       (sort-by :value)))
+    (pmap (comp #(assoc % :value (fuzzy/levenshtein search-word (:text %))) to-score-map))
+    (sort-by :value)))
 
 (defn hamming [search-word words]
   (->> words
-       (mapv to-score-map)
-       (mapv #(assoc % :value (rift (fuzzy/hamming search-word (:text %)) 10000)))
-       (sort-by :value)))
+    (pmap (comp #(assoc % :value (rift (fuzzy/hamming search-word (:text %)) 10000)) to-score-map))
+    (sort-by :value)))
 
 (defn jaccard [search-word words]
   (->> words
-       (mapv to-score-map)
-       (mapv #(assoc % :value (fuzzy/jaccard search-word (:text %))))
-       (sort-by :value)))
+    (pmap (comp #(assoc % :value (fuzzy/jaccard search-word (:text %))) to-score-map))
+    (sort-by :value)))
 
 (defn jaro [search-word words]
   (->> words
-       (mapv to-score-map)
-       (mapv #(assoc % :value (fuzzy/jaro search-word (:text %))))
-       (sort-by :value)
-       (reverse)))
+    (pmap (comp #(assoc % :value (fuzzy/jaro search-word (:text %))) to-score-map))
+    (sort-by :value)
+    (reverse)))
 
 (defn jaro-winkler [search-word words]
   (->> words
-       (mapv to-score-map)
-       (mapv #(assoc % :value (fuzzy/jaro-winkler search-word (:text %))))
-       (sort-by :value)
-       (reverse)))
+    (pmap (comp #(assoc % :value (fuzzy/jaro-winkler search-word (:text %))) to-score-map))
+    (sort-by :value)
+    (reverse)))
 
 (defn tversky [search-word words]
   (->> words
-       (mapv to-score-map)
-       (mapv #(assoc % :value (fuzzy/tversky search-word (:text %))))
-       (sort-by :value)
-       (reverse)))
-
-
+    (pmap (comp #(assoc % :value (fuzzy/tversky search-word (:text %))) to-score-map))
+    (sort-by :value)
+    (reverse)))
 
 
 ;;  ____  _____ __  __  ___

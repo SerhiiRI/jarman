@@ -65,6 +65,7 @@
    (c/listen t :selection (fn [e] (when-not (.getValueIsAdjusting e)
                                    (on-select (seesaw.table/value-at t (c/selection t))))))
    ;; (c/config! :horizontal-scroll-enabled? true)
+   (.setAutoResizeMode t JTable/AUTO_RESIZE_ALL_COLUMNS)
    (.setColumnSelectionAllowed t false)
    (c/config! t :show-grid? false)
    (c/config! t :show-horizontal-lines? true)
@@ -73,16 +74,16 @@
 (defn change-model! [^JTable table & {:keys [tables columns custom-renderers data] :or {data []}}]
   (c/config! table :model [:columns (table-model-by-metadata-information tables columns) :rows data])
   (where
-   ((col-index (->> columns (map-indexed vector) (mapcat reverse) (apply hash-map))))
-   (doseq [[column-key column-renderer-fn] custom-renderers]
-     (if-let [column-index (get col-index column-key nil)]
-       (let [select-with-column-key (. (. table getColumnModel) getColumn column-index)]
-         (.setCellRenderer
-          select-with-column-key
-          (proxy [TableCellRenderer] []
-            (^Component getTableCellRendererComponent [^JTable table, ^Object value, isSelected, hasFocus, row, column]
-             (column-renderer-fn table value isSelected hasFocus row column)))))
-       (println (format "Error! column key `%s` for override rendering doesn't found" (str column-key))))))
+    ((col-index (->> columns (map-indexed vector) (mapcat reverse) (apply hash-map))))
+    (doseq [[column-key column-renderer-fn] custom-renderers]
+      (if-let [column-index (get col-index column-key nil)]
+        (let [select-with-column-key (. (. table getColumnModel) getColumn column-index)]
+          (.setCellRenderer
+            select-with-column-key
+            (proxy [TableCellRenderer] []
+              (^Component getTableCellRendererComponent [^JTable table, ^Object value, isSelected, hasFocus, row, column]
+               (column-renderer-fn table value isSelected hasFocus row column)))))
+        (println (format "Error! column key `%s` for override rendering doesn't found" (str column-key))))))
   table)
 
 (defn scrollToRegionByRowColumnIndex! [^JTable table, ^long rowIndex, ^long vColIndex]
@@ -183,10 +184,6 @@
       (c/scrollable t :hscroll :as-needed
         :vscroll :as-needed
         :border (seesaw.border/line-border :thickness 0 :color "#fff")))
-    (.addAdjustmentListener (.getVerticalScrollBar s)
-      (AdjustmentListener (fn [a b]
-                            (println "EVETN " a b))))
-
     ;; debug frame
     (-> (doto (seesaw.core/frame
                 :title "Jarman" 

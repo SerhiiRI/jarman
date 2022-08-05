@@ -38,7 +38,9 @@
    [org.fife.ui.rsyntaxtextarea
     RSyntaxTextArea
     SyntaxScheme
-    Token]))
+    Token]
+   [jiconfont.icons.google_material_design_icons
+    GoogleMaterialDesignIcons]))
 
 ;;  ____ _____  _    _   _ ____    _    ____ _____
 ;; / ___|_   _|/ \  | \ | |  _ \  / \  |  _ \_   _|
@@ -202,7 +204,7 @@
              foreground foreground-hover
              background background-hover
              on-click on-focus-gain on-focus-lost on-mouse-enter on-mouse-exit
-             halign tooltip args]
+             halign icon tooltip args]
       :or   {value ""
              halign           :center
              foreground       face/c-foreground
@@ -210,10 +212,11 @@
              background       face/c-btn-bg
              background-hover face/c-btn-bg-focus
              border           (swing/border
-                                {:b 10 :t 10 :l 10 :r 10}
-                                {:b face/s-btn-underline :color face/c-btn-underline})
+                                {:b 6 :t 7 :l 7 :r 7}
+                                {:b face/s-btn-underline :color face/c-btn-bg ;; "#F5f5f5" ;; face/c-btn-underline
+                                 })
              border-focus     (swing/border
-                                {:b 10 :t 10 :l 10 :r 10}
+                                {:b 6 :t 7 :l 7 :r 7}
                                 {:b face/s-btn-underline :color face/c-btn-underline-on-focus})
              font             {:name face/f-regular :size face/s-foreground}
              on-click         (fn [e] e)
@@ -255,7 +258,79 @@
     (cond-> args
       ;; ------
       tooltip
-      (into [:tip tooltip]))))
+      (into [:tip tooltip])
+      ;; ------
+      icon
+      (into [:icon icon]))))
+
+(defn button-stroke
+  [& {:keys [value font
+             border border-focus
+             foreground foreground-hover
+             background background-hover
+             on-click on-focus-gain on-focus-lost on-mouse-enter on-mouse-exit
+             halign tooltip icon args]
+      :or   {value ""
+             halign           :center
+             foreground       face/c-foreground
+             foreground-hover face/c-foreground
+             background       face/c-btn-bg
+             background-hover face/c-btn-bg ;; face/c-btn-bg-focus
+             border           (swing/border
+                                {:b 6 :t 6 :l 6 :r 6}
+                                {:a 1 :color face/c-btn-bg})
+             border-focus     (swing/border
+                                {:b 6 :t 6 :l 6 :r 6}
+                                {:type :stroke :thickness 1.0 :color face/c-foreground})
+             font             {:name face/f-regular :size face/s-foreground}
+             on-click         (fn [e] e)
+             on-focus-gain    (fn [e] e)
+             on-focus-lost    (fn [e] e)
+             on-mouse-enter   (fn [e] e)
+             on-mouse-exit    (fn [e] e)
+             args             []}}]
+  (apply c/label
+    :text value
+    :focusable? true
+    :halign halign
+    :foreground foreground
+    :font font
+    :listen
+    [:mouse-clicked (fn [e] (on-click e) (gui-tool/switch-focus))
+     :mouse-entered (fn [e]
+                      (c/config! e :border border-focus :cursor :hand
+                        :background background-hover
+                        :foreground foreground-hover)
+                      (.repaint (c/to-root e))
+                      (on-mouse-enter e))
+     :mouse-exited (fn [e]
+                     (c/config! e :border border
+                       :background background
+                       :foreground foreground)
+                     (.repaint (c/to-root e))
+                     (on-mouse-exit e))
+     :focus-gained (fn [e]
+                     (c/config! e :border border-focus :cursor :hand
+                       :background background-hover
+                       :foreground foreground-hover)
+                     (on-focus-gain e))
+     :focus-lost (fn [e] (c/config! e :border border
+                          :foreground foreground
+                          :background background)
+                   (on-focus-lost e))
+     :key-pressed (fn [e]
+                    (when (= (.getKeyCode e) java.awt.event.KeyEvent/VK_ENTER)
+                      (on-click e)
+                      (gui-tool/switch-focus)))]
+    :background background
+    :border border
+    (cond-> args
+      ;; ------
+      tooltip
+      (into [:tip tooltip])
+      ;; ------
+      icon
+      (into [:icon icon]))))
 
 (defn checkbox
   [& {:keys[value value-setter value-text border on-click tooltip font args]
@@ -357,8 +432,6 @@
         (wrapp-autocompletition-popup T
           :completion-value-list completion-list
           :completion-list-size completion-size)))))
-
-
 
 (defn scrollbox
   [component
@@ -587,8 +660,10 @@
              background       face/c-btn-bg
              ;; background-hover face/c-btn-bg-focus
              font             {:name face/f-mono-regular :size face/s-foreground}
-             border           (swing/border {:h 0 :v 2} {:b 2 :color face/c-underline})
-             border-focus     (swing/border {:h 0 :v 2} {:b 2 :color face/c-underline-on-focus})
+             border           (swing/border {:h 0 :v 0};;  {:b 2 :color face/c-underline}
+                                )
+             border-focus     (swing/border {:h 0 :v 0};; {:b 2 :color face/c-underline-on-focus}
+                                )
              on-select        (fn [e] e)
              on-click         (fn [e] e)
              on-focus-gain    (fn [e] e)
@@ -946,6 +1021,42 @@
       (text :value "" :on-change (fn [e] (println (c/value (c/to-widget e)))))
       :completion-value-list x
       :completion-list-size 10)
-    (text :value "another text box")]))
+    (text :value "another text box")])
+
+ (swing/quick-frame
+   [(jarman.gui.gui-components2/border-panel
+      :north (label :value "SSSSSSSSSSSSSSSS"
+               :border (swing/border
+                         {:a 10}
+                         {:type :stroke :thickness 1.0 :color "#222"}
+                         {:a 10}))
+      :center (label :value "SSSSSSSSSSSSSSSS"
+                :border (swing/border
+                          {:a 4}
+                          {:type :stroke :thickness 1.0 :color "#222"}
+                          {:a 5}))
+      :south (label :value "SSSSSSSSSSSSSSSS"
+               :border (swing/border
+                         {:type :title :title "SHUK" :color "#222" :title-color "#222"}
+                         {:a 4}))
+      :border
+      (swing/border
+        {:a 10}
+        {:type :title :title "Panel" :color "#222" :title-color "#222"}
+        {:a 10}))])
+ 
+ (swing/quick-frame
+   [(label :value "dkjflsdjflasjdlfjasdlfjlasjfljasdl")
+    (button :value "on-click")
+    (button :value "on-click")
+    (button :value "on-click")
+    (button :value "on-click")
+    (button :value "on-click")
+    (button-stroke :value "on-click")
+    (button-stroke :value "on-click")
+    (button-stroke :value "on-click")
+    (button-stroke :value "on-click")
+    (button-stroke :value "on-click")
+    (label :value "dkjflsdjflasjdlfjasdlfjlasjfljasdl")]))
 
 

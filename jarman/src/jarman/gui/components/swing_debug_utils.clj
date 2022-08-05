@@ -45,14 +45,14 @@
        :bound-width  (.. device getDefaultConfiguration getBounds -width)})))
 
 (defn quick-frame [items]
-  (-> (seesaw.core/frame
-        ;; :minimum-size [500 :by 500]
-        :title "Jarman"
-        :content
-        (seesaw.core/vertical-panel
-          :background  "#dddddd"
-          :items items))
+  (-> (doto (seesaw.core/frame
+              ;; :minimum-size [500 :by 500]
+              :title "Jarman"
+              :content
+              (seesaw.core/vertical-panel
+                :background  "#dddddd"
+                :items items))
+        (.setLocation (.getLocation (java.awt.MouseInfo/getPointerInfo))))
     (seesaw.core/pack!)
-    (choose-screen! 0)
     (seesaw.core/show!)))
 

@@ -1,32 +1,40 @@
 (ns jarman.gui.components.swing
   (:require
+   [clojure.java.io]
+   [clojure.pprint]
    [seesaw.mig]
    [seesaw.core]
    [seesaw.border]
    [seesaw.color]
    [jarman.lang :refer :all]
    [jarman.org  :refer :all]
-   [jarman.faces :as face]
-   [clojure.java.io]
-   [clojure.pprint]
-   [jarman.gui.components.swing-context :as swing-context]
+   [jarman.faces   :as face]
+   [jarman.gui.components.swing-context]
+   [jarman.gui.components.swing-common]
    [jarman.gui.components.swing-table-utils]
    [jarman.gui.components.swing-debug-utils]
+   [jarman.gui.components.swing-border]
    [potemkin.namespaces :refer [import-vars]])
   (:import
    [java.awt GraphicsEnvironment GraphicsDevice Font MouseInfo]
    [jiconfont.swing IconFontSwing]
+   [javax.swing BorderFactory]
    ;; [jiconfont IconFont DefaultIconCode]
    ;; [jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons]
    ))
-
 
 (import-vars
   [jarman.gui.components.swing-debug-utils
    choose-screen! active-screens quick-frame]
   
   [jarman.gui.components.swing-table-utils
-   wrapp-adjustment-listener])
+   wrapp-adjustment-listener]
+
+  [jarman.gui.components.swing-common
+   dimension point font icon]
+
+  [jarman.gui.components.swing-border
+   border])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; AWT/Swing helpers ;;;
@@ -93,78 +101,38 @@
              (fn-to-invoke)
              (catch Exception e (print-error e))))))))))
 
-(defn dimension
-  ([^java.awt.Dimension dimension]
-   (java.awt.Dimension. dimension))
-  ([^Long width, ^Long height]
-   (java.awt.Dimension. width height)))
-
-(defn point
-  ([^java.awt.Point point]
-   (java.awt.Point. point))
-  ([^Long x, ^Long y]
-   (java.awt.Point. x y)))
-
-(defn font
-  ([font-name]
-   (Font. font-name Font/PLAIN face/s-foreground))
-  ([font-name size-num]
-   (Font. font-name Font/PLAIN size-num)))
-
-(defn icon
-  ([ico]       (icon ico face/c-icon 20))
-  ([ico color] (icon ico color 20))
-  ([ico color size]
-   (IconFontSwing/buildIcon ico size (seesaw.color/color color))))
-
 (defn get-mouse-pos
-  "Description:
+  "Description
      Return mouse position on screen, x and y.
-  Example:
+  Example
      (get-mouse-pos) => [800.0 600.0]" []
   (let [mouse-pos (.getLocation (MouseInfo/getPointerInfo))
         screen-x  (.getX mouse-pos)
         screen-y  (.getY mouse-pos)]
     [screen-x screen-y]))
 
-(defn ^:private border-from-config [m]
-  (where
-    ((alias-map {:b :bottom :t :top :l :left :r :right})
-     (border-color (:color m))
-     (border-fn
-       (if border-color
-         (partial seesaw.border/line-border :color border-color)
-         (partial seesaw.border/empty-border))))
-    (->> (select-keys m [:b :t :l :r :a :h :v])
-     (reduce
-       (fn [cfg [direction v]]
-         (case direction
-           :a (reduced {:bottom v :top v :left v :right v})
-           :h (assoc cfg :left v :right v)
-           :v (assoc cfg :bottom v :top v)
-           (assoc cfg (direction alias-map) v))) {})
-     (mapcat identity)
-     (apply border-fn))))
+(comment
+ (defn empty-border 
+   "Create an empty border. The following properties are supported:
+  
+    :thickness The thickness of the border (all sides) in pixels. This property
+               is only used if :top, :bottom, etc are omitted. Defaults to 1.
+  
+    :top       Thickness of the top border in pixels. Defaults to 0.
+    :left      Thickness of the left border in pixels. Defaults to 0.
+    :bottom    Thickness of the bottom border in pixels. Defaults to 0.
+    :right     Thickness of the right border in pixels. Defaults to 0.
+  Examples:
+      ; Create an empty 10 pixel border
+      (empty-border :thickness 10)
+      ; Create an empty border 5 pixels on top and left, 0 on other sides
+      (empty-border :left 5 :top 5)"
+   [& {:keys [thickness top left bottom right]}]
+   (if (or top left bottom right)
+     (BorderFactory/createEmptyBorder (or top 0) (or left 0) (or bottom 0) (or right 0))
+     (let [t (or thickness 1)]
+       (BorderFactory/createEmptyBorder t t t t)))))
 
-(defn border
-  "Description
-    Small wrapper for creating combinded borders
-
-  Used Aliaces
-     :b - :bottom
-     :t - :top
-     :l - :left
-     :r - :right
-     :h - :horizontal(:left+:right)
-     :v - :vertical(:top+:bottom)
-     :a - all directions
-
-  Example
-    (border
-      {:b 2 :t 2 :l 2 :r 10 :color nil}
-      {:a 2 :color \"#931\"})" [& v]
-  (if (= 1 (count v)) (border-from-config (first v))
-      (apply seesaw.border/compound-border (mapv border-from-config v))))
 
 (def ^:dynamic *formatter-tooltip-text-length* 50)
 (defn tooltip<-metadata [^clojure.lang.PersistentArrayMap metadata]
@@ -196,10 +164,10 @@
    (.addFocusListener 
      (proxy [java.awt.event.FocusListener] []
        (^void focusLost [^java.awt.event.FocusEvent e]
-        (swing-context/with-active-event e
+        (jarman.gui.components.swing-context/with-active-event e
           (focus-lost-fn)))
        (^void focusGained [^java.awt.event.FocusEvent e]
-        (swing-context/with-active-event e
+        (jarman.gui.components.swing-context/with-active-event e
           (focus-gained-fn)))))))
 
 (defn wrapp-carret-listener
@@ -208,7 +176,7 @@
    (.addCaretListener
      (proxy [javax.swing.event.CaretListener] []
        (^void caretUpdate [^javax.swing.event.CaretEvent e]
-        (swing-context/with-active-event e
+        (jarman.gui.components.swing-context/with-active-event e
           (caret-update-fn)))))))
 
 (defn popup-frame [^String title ^javax.swing.JComponent content

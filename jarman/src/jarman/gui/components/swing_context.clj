@@ -22,9 +22,9 @@
 ;;; CONTEX VARIABLES ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def ^{:dynamic true :type javax.swing.JComponent} *active-commponent* nil) 
-(def ^{:dynamic true :type javax.swing.JPanel} *active-default* nil) 
-(def ^{:dynamic true :type javax.swing.JFrame} *active-frame* nil)
+(def ^{:dynamic true :type javax.swing.JComponent} *active-component* nil)
+#_(def ^{:dynamic true :type javax.swing.JPanel} *active-default* nil)
+#_(def ^{:dynamic true :type javax.swing.JFrame} *active-frame* nil)
 (def ^{:dynamic true :type java.util.EventObject} *active-event* nil)
 (def ^{:dynamic true :type clojure.lang.PersistentHashMap} *active-keymap* nil)
 (def ^{:dynamic true :type clojure.lang.PersistentHashMap} *active-metadata* nil)
@@ -32,14 +32,11 @@
 (defn ^clojure.lang.PersistentHashMap active-metadata [] (rift *active-metadata*))
 (defn ^javax.swing.JComponent active-component [] *active-commponent*)
 (defn ^java.util.EventObject active-event [] *active-event*)
-(defn ^javax.swing.JPanel active-default [] *active-default*)
-(defn ^javax.swing.JFrame active-frame [] *active-frame*)
+#_(defn ^javax.swing.JPanel active-default [] *active-default*)
+#_(defn ^javax.swing.JFrame active-frame [] *active-frame*)
 (defmacro with-keymap       [keymap & body]
   `(binding [*active-keymap* ~keymap] ~@body))
 (defmacro with-active-event [event & body]
-  `(binding [*active-event* ~event
-             *active-commponent* (.getSource ~event)
-             *active-default* (.getContentPane (javax.swing.SwingUtilities/getRoot (.getSource ~event)))
-             *active-frame* (javax.swing.SwingUtilities/getRoot (.getSource ~event))]
+  `(binding [*active-event* (instance? java.util.EventObject ~event)
+             *active-component* (when *active-event* (.getSource ~event))]
      ~@body))
-

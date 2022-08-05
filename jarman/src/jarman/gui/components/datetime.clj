@@ -8,7 +8,8 @@
    [jarman.faces          :as face]
    [jarman.gui.core       :refer [satom register! cursor]]
    [jarman.gui.components.panels :as gui-panels]
-   [jarman.gui.components.common :refer [label button combobox]])
+   [jarman.gui.components.common :refer [label label-info label-link button button-stroke combobox]]
+   [jarman.gui.components.swing :as swing])
   (:import
    [java.util Date Calendar]
    [javax.swing SwingUtilities]
@@ -59,12 +60,13 @@
     (state    (satom {:date calendar-obj}))
     (dispatch (fn dispatch [k f] (fn [e] (swap! state #(update % k (fn [cal] (f cal))))))))
    (gui-panels/border-panel
-    :border (b/empty-border :bottom 1 :top 1 :left 1 :right 1)
-    ;; :north  (create-title-panel state dispatch date-formater)
-    ;; :center (create-body-panel state dispatch week-start-day)
-    :north  (create-title-panel (cursor [:date] state) date-formater on-click)
-    :center (create-body-panel  (cursor [:date] state) date-formater on-click week-start-day)
-    :south  (create-footer-panel))))
+     :background face/c-btn-bg
+     ;; :border (b/empty-border :bottom 1 :top 1 :left 1 :right 1)
+     ;; :north  (create-title-panel state dispatch date-formater)
+     ;; :center (create-body-panel state dispatch week-start-day)
+     :north  (create-title-panel (cursor [:date] state) date-formater on-click)
+     :center (create-body-panel  (cursor [:date] state) date-formater on-click week-start-day)
+     :south  (create-footer-panel))))
 
 ;;; TITLE PANEL ;;;
 
@@ -95,43 +97,48 @@
     (doto new-calendar
       (.set java.util.Calendar/MINUTE minutes))))
 
-
 (defn- create-title-panel [^jarman.gui.core.Cursor state ^java.text.SimpleDateFormat date-formater on-click]
   (gui-panels/border-panel
    ;; TIME CONTROLLER
    :north
    (where
-    ((sep-label    (label :value "hour/minut"))
-     (hour-combo   (combobox :value (.get (deref state) Calendar/HOUR_OF_DAY) :model (vec (range 0 24)) :tip "hours"
-                             :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-select (fn [e] (swap! state calendar-change-hour e))))
-     (minut-combo  (combobox :value (.get (deref state) Calendar/MINUTE) :model (vec (range 0 24)) :tip "Minutes"
-                             :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-select (fn [e] (swap! state calendar-change-minute e)))))
-    (gui-panels/border-panel
-     :west hour-combo
-     :center sep-label
-     :east minut-combo))
+     ((cencel       (button-stroke :value "X" :halign :center :background face/c-red :border (swing/border {:h 5})))
+      (sep-label    (label :value "hour/minut" :halign :center :background face/c-btn-bg :border (swing/border {:h 5})))
+      (hour-combo   (combobox :value (some-> (deref state) (.get Calendar/HOUR_OF_DAY) long) :model (vec (range 0 24)) :tip "hours"
+                      :on-select (fn [e] (swap! state calendar-change-hour e))))
+      (minut-combo  (combobox :value (some-> (deref state) (.get Calendar/MINUTE) long) :model (vec (range 0 60)) :tip "Minutes"
+                      :on-select (fn [e] (swap! state calendar-change-minute e)))))
+     ;; (gui-panels/border-panel
+     ;;   :background face/c-btn-bg
+     ;;   :west hour-combo
+     ;;   :center sep-label
+     ;;   :east minut-combo)
+     (gui-panels/flow-panel :background face/c-btn-bg :align :right :items [sep-label hour-combo minut-combo]))
    ;; YEAR-MONTH CONTROLLER
    :south
    (where
-    ((center     (button :value (.format date-formater (.getTime (deref state)))))
-     (prev-year  (button :value "<<" :tip "Previos Year"  :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-minus-year))))
-     (next-year  (button :value ">>" :tip "Next Year"     :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-plus-year))))
-     (prev-month (button :value "<"  :tip "Previos Month" :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-minus-month))))
-     (next-month (button :value ">"  :tip "Next Month"    :tgap 2 :lgap 10 :bgap 0 :rgap 10 :on-click (fn [e] (swap! state calendar-plus-month)))))
-    (gui-panels/border-panel
-     :west prev-year
-     :east next-year
-     :center
+     ((border           (swing/border {:a 5}))
+      (border-focus     (swing/border {:a 5})) 
+      (center     (label :value (.format date-formater (.getTime (deref state))) :halign :center :font (swing/font face/f-mono-bold) :background face/c-btn-bg))
+      (prev-year  (button :value "<<" :tip "Previos Year"  :on-click (fn [e] (swap! state calendar-minus-year)) :font (swing/font face/f-mono-bold) :border border :border-focus border-focus))
+      (next-year  (button :value ">>" :tip "Next Year"     :on-click (fn [e] (swap! state calendar-plus-year)) :font (swing/font face/f-mono-bold) :border border :border-focus border-focus))
+      (prev-month (button :value "<"  :tip "Previos Month" :on-click (fn [e] (swap! state calendar-minus-month)) :font (swing/font face/f-mono-bold) :border border :border-focus border-focus))
+      (next-month (button :value ">"  :tip "Next Month"    :on-click (fn [e] (swap! state calendar-plus-month)) :font (swing/font face/f-mono-bold) :border border :border-focus border-focus)))
      (gui-panels/border-panel
-      :west prev-month
-      :east next-month
-      :center center
-      :event-hook-atom state
-      :event-hook
-      (fn [_ _ _ date]
-        (println "TITLE BAR -> " date)
-        (c/config! center :text (.format date-formater (.getTime date)))))))))
-
+       :background face/c-btn-bg
+       :west prev-year
+       :east next-year
+       :center
+       (gui-panels/border-panel
+         :background face/c-btn-bg
+         :west prev-month
+         :east next-month
+         :center center
+         :event-hook-atom state
+         :event-hook
+         (fn [_ _ _ date]
+           (println "TITLE BAR -> " date)
+           (c/config! center :text (.format date-formater (.getTime date)))))))))
 
 ;;; BODY PANEL ;;;
 
@@ -144,16 +151,14 @@
     (current-month? (= month (.get setted java.util.Calendar/MONTH)))
     (current-day?   (and current-month?
                        (= day (.get setted java.util.Calendar/DAY_OF_MONTH)))))
-   (button :value    (str day) 
-          :on-click on-click
-          :args [:foreground
-                 (cond
+   (button-stroke
+     :value    (str day)
+     :on-click on-click
+     :foreground (cond
                    current-day? "#A36"
                    is-weekend? "#3AA"
                    current-month? "#000"
-                   :else "#AAA")])))
-
-
+                   :else "#AAA"))))
 
 (defn create-body-panel [^jarman.gui.core.Cursor state  ^java.text.SimpleDateFormat date-formater on-click week-day-start]
   (where 
@@ -167,20 +172,21 @@
           (.add tmpcal java.util.Calendar/DAY_OF_MONTH (- week-day-start index))
           (.add tmpcal java.util.Calendar/DAY_OF_MONTH (- week-day-start index 7)))
         (concat
-         (map (partial c/label :text)
+         (map (partial c/label :background face/c-btn-bg :text)
               (let [days ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]]
                 (concat (drop week-day-start days) (take week-day-start days))))
          (map (fn [r]
                 (.add tmpcal java.util.Calendar/DAY_OF_MONTH 1)
                 (let [day-date (.clone tmpcal)]
-                  (day-numb tmpcal original (fn [_]
-                                              (on-click (.format date-formater (.getTime day-date)))
-                                              (swap! state (constantly day-date))))))
+                  (day-numb tmpcal original
+                    (fn [_]
+                      (on-click (.format date-formater (.getTime day-date)))
+                      (swap! state (constantly day-date))))))
               (range 42)))))))
    (gui-panels/grid-panel
     :rows 7
     :columns 7
-    :preferred-size [300 :by 300]
+    ;; :preferred-size [300 :by 300]
     :items (create-items (.clone (deref state)))
     :event-hook-atom state
     :event-hook
@@ -194,8 +200,9 @@
 (defn- create-footer-panel []
   (where
    ((data-formater (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm")))
-   (button :value (str "Today is: " (.format data-formater (Date.))))))
-
+   (label-info
+     :value (str "Today is: " (.format data-formater (Date.)))
+     :border (swing/border {:v 10 :l 5}))))
 
 ;;;;;;;;;;;;;;;;;;;
 ;;;; POPUP DEMO ;;;
@@ -226,14 +233,19 @@
     :value (if (:value args) (value-setter (:value args)) "<unselected>")
     :on-click (fn [e]
                 (let [component (c/to-widget e)
-                      show (Point. 0 (.getHeight component))
-                      _ (SwingUtilities/convertPointToScreen show component)
-                      ^java.awt.Dimension size (.getScreenSize (Toolkit/getDefaultToolkit))
-                      x (.-x show)
-                      y (.-y show)
-                      x (if (< x 0) 0 x)
-                      x (if (> x (- (.-width size)  212)) (- (.-width size) 212) x)
-                      y (if (> y (- (.-height size) 165)) (- y 165) y)]
+                      ;; ---------------
+                      ;; show (Point. 0 (.getHeight component))
+                      ;; _ (SwingUtilities/convertPointToScreen show component)
+                      ;; ^java.awt.Dimension size (.getScreenSize (Toolkit/getDefaultToolkit))
+                      ;; x (.-x show)
+                      ;; y (.-y show)
+                      ;; x (if (< x 0) 0 x)
+                      ;; x (if (> x (- (.-width size)  212)) (- (.-width size) 212) x)
+                      ;; y (if (> y (- (.-height size) 165)) (- y 165) y)
+                      ;; ----------------
+                      screen-point (.getLocationOnScreen component)
+                      x (.-x screen-point)
+                      y (.-y screen-point)]
                   (datetime-popup :value (c/value component)
                                   :value-setter value-setter
                                   :on-click (fn [e] (on-click e) (c/config! component :text e))
@@ -249,6 +261,15 @@
 ;;
 
 (comment
+  (jarman.gui.components.swing/quick-frame
+    [(datetime :value "2020-10-01 10:22")
+     (let [x (java.util.Calendar/getInstance)]
+       ;; (.parse (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm") "2014-10-20 10:33")
+       (.setTime x (Date.))
+       (.get x Calendar/MINUTE)
+       (combobox :value (some-> (.get x Calendar/HOUR_OF_DAY) long) :model (vec (range 0 60)) :tip "Minutes"
+         :tgap 2 :lgap 10 :bgap 0 :rgap 10))])
+  
   (seesaw.dev/show-options (seesaw.core/combobox))
   (seesaw.dev/show-events  (seesaw.core/combobox))
   (-> (doto (seesaw.core/frame
@@ -264,6 +285,4 @@
                                [(datetime-label :value (java.util.Date.))]
                                [(datetime-label :value "2020-10-01 10:22" :on-click (fn [e] (println "some click for external feature")))]]))
         (.setLocationRelativeTo nil)
-        seesaw.core/pack! seesaw.core/show!))
-  ;; 
-  )
+        seesaw.core/pack! seesaw.core/show!)))

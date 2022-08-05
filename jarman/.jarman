@@ -26,12 +26,12 @@
  jarman.variables/theme-selected "Jarman Light"
  ;; jarman.logic.view-manager/view-src :database
  jarman.variables/view-src :view.clj
- jarman.variables/dataconnection-saved :jarman--localhost--3306)
+ jarman.variables/dataconnection-saved :hrtime--localhost--3306)
 
 (setq jarman.variables/user-menu
       {"Admin space"
-       {"User table"                [:user :table :user]
-        "Permission edit"           [:profile :table :profile]
+       {"User table"                [:jarman_user :table :jarman_user]
+        "Permission edit"           [:jarman_profile :table :jarman_profile]
 	"ULLL"                      [:permission :fff :fff]}
        ;; "Sale structure"
        ;; {"Enterprise"                [:enterprise :table :enterprise]
@@ -57,7 +57,9 @@
 
 (setq jarman.variables/dataconnection-alist
       {:jarman--localhost--3306
-       {:dbtype "mysql", :host "127.0.0.1", :port 3306, :dbname "jarman", :user "root", :password "1234"},
+       {:dbtype "mysql", :host "127.0.0.1", :port 3306, :dbname "jarman", :user "root", :password "1234"}
+       :hrtime--localhost--3306
+       {:dbtype "mysql", :host "127.0.0.1", :port 3306, :dbname "hrtime", :user "root", :password "1234"},
        :jarman--trashpanda-team_ddns_net--3306 ;; raspberry 
        {:dbtype "mysql", :host "trashpanda-team.ddns.net", :port 3306, :dbname "jarman", :user "jarman", :password "dupa"}
        :jarman--trashpanda-team_ddns_net--3307 ;; dell

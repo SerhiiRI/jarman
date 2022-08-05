@@ -417,7 +417,7 @@
                                     :<> (apply define-operator-v function args)
                                     :!= (apply define-operator-v (symbol '<>) args)
                                     :like (apply define-operator-v (symbol 'LIKE) args)
-                                    :in (apply define-operator-v (symbol 'LIKE) args)
+                                    :in (apply define-operator-v (symbol 'IN) args)
                                     :between (apply between-operator-v args)
                                     (if (and (symbol? function) (resolve function))
                                       (where-procedure-parser-v where-clause)

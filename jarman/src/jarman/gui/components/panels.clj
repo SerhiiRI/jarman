@@ -104,12 +104,14 @@
        true))
 
 (wrapp-components event-panel-wrapper
- seesaw.mig/mig-panel
- seesaw.core/vertical-panel
- seesaw.core/horizontal-panel
- seesaw.core/grid-panel
- seesaw.core/border-panel
- seesaw.core/box-panel)
+  seesaw.mig/mig-panel
+  seesaw.core/vertical-panel
+  seesaw.core/horizontal-panel
+  seesaw.core/grid-panel
+  seesaw.core/grid-bag-panel
+  seesaw.core/border-panel
+  seesaw.core/box-panel
+  seesaw.core/flow-panel)
 
 ;;  ____  _____ __  __  ___
 ;; |  _ \| ____|  \/  |/ _ \

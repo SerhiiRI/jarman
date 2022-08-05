@@ -31,6 +31,7 @@
    [jarman.gui.components.database-table]
    [jarman.gui.components.simple-table]
    [jarman.gui.components.error]
+   [jarman.gui.components.filters]
    [jarman.application.collector-custom-metacomponents
     :refer [register-metacomponent get-comp-actions]]))
 
@@ -59,9 +60,8 @@
   label-h1 label-h2 label-h3
   label-h4 label-h5 label-h6
   label label-link label-info
-  button combobox stub
+  button button-stroke combobox stub
   text textarea codearea
-  ;; ----
   parse-float parse-digit
   check-field-re    check-field-fn
   check-field-float check-field-digit]
@@ -86,14 +86,20 @@
   url-panel
   file-panel]
 
+ ;; --
  [jarman.gui.components.database-table
   database-table]
 
+ ;; --
  [jarman.gui.components.simple-table
   simple-table]
 
+ ;; --
  [jarman.gui.components.error
-  catch-error-panel])
+  catch-error-panel]
+
+ [jarman.gui.components.filters
+  in-filter date-filter])
 
 ;;  ____  _____ ____ ___ ____ _____ _____ ____
 ;; |  _ \| ____/ ___|_ _/ ___|_   _| ____|  _ \
@@ -114,6 +120,7 @@
 (register-metacomponent :id :jsgl-label           :component label          :actions (get-comp-actions 'label))
 (register-metacomponent :id :jsgl-link            :component stub           :actions (get-comp-actions 'stub))
 (register-metacomponent :id :jsgl-button          :component button         :actions (get-comp-actions 'button))
+(register-metacomponent :id :jsgl-button-stoke    :component button-stroke  :actions (get-comp-actions 'button-stroke))
 (register-metacomponent :id :jsgl-combobox        :component combobox       :actions (get-comp-actions 'combobox))
 (register-metacomponent :id :jsgl-text            :component text           :actions (get-comp-actions 'text))
 (register-metacomponent :id :jsgl-textarea        :component textarea       :actions (get-comp-actions 'textarea))
@@ -126,9 +133,10 @@
 (register-metacomponent :id :jsgl-datetime-label  :component datetime-label :actions (get-comp-actions 'datetime-label))
 (register-metacomponent :id :jsgl-url-panel       :component url-panel      :actions (get-comp-actions 'url-panel)       :constructor  jarman.logic.metadata/map->Link)
 (register-metacomponent :id :jsgl-file-panel      :component file-panel     :actions (get-comp-actions 'file-panel)      :constructor  jarman.logic.metadata/map->File)
-;; (register-metacomponent :id :jsgl-listbox         :component select-panel   :actions (get-comp-actions 'listbox))
 (register-metacomponent :id :jsgl-database-table  :component database-table :actions (get-comp-actions 'database-table))
 (register-metacomponent :id :jsgl-simple-table    :component simple-table   :actions (get-comp-actions 'simple-table))
+(register-metacomponent :id :jsgl-filter-in       :component in-filter      :actions (get-comp-actions 'in-filter))
+(register-metacomponent :id :jsgl-filter-between  :component date-filter    :actions (get-comp-actions 'date-filter))
 
 ;;  ____  _____ __  __  ___
 ;; |  _ \| ____|  \/  |/ _ \

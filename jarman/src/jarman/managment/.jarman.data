@@ -5,20 +5,18 @@
 (require '[jarman.logic.metadata])
 (require '[jarman.application.permissions])
 
-;; ^    \(:id\|:name\|:plug-place\|:tables\|:view-columns\|:model-insert\|:active-buttons\|:permission\|:dialog\|:actions\|:buttons\|:query\)$
+;; ^[[:blank:]]\(:id\|:name\|:plug-place\|:tables\|:view-columns\|:model-insert\|:active-buttons\|:permission\|:dialog\|:actions\|:buttons\|:query\)$
 
 (jarman.application.permissions/permission-groups-add
- {:ekka-all               {:doc "Allow all elements in Ekka module"}
-  :ekka-servicer          {:doc "Permission for servisant's only"}
-  :ekka-payment-managment {:doc "Permission for all elements in Ekka module"}})
+  {:hrtime-all {:doc "Allow all elements in Ekka module"}})
 
 (def metadata-list
   [{:id nil,
-    :table_name "documents",
+    :table_name "jarman_profile",
     :prop
     {:table
-     {:field "documents",
-      :representation "documents",
+     {:field "jarman_profile",
+      :representation "jarman_profile",
       :description nil,
       :is-system? false,
       :is-linker? false,
@@ -26,55 +24,20 @@
       :allow-deleting? true,
       :allow-linking? true},
      :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :table_name,
-       :column-type {:stype "varchar(100)", :tname :varchar, :tspec nil, :tlimit 100, :tnull true, :textra "", :tdefault nil, :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 100},
-       :representation "Table name",
-       :field-qualified :documents.table_name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :name,
-       :column-type {:stype "varchar(200)", :tname :varchar, :tspec nil, :tlimit 200, :tnull true, :textra "", :tdefault nil, :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 200},
-       :representation "Name",
-       :field-qualified :documents.name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :document,
-       :column-type {:stype "blob", :tname :blob, :tspec nil, :tlimit nil, :tnull true, :textra "", :tdefault nil, :tkey ""},
-       :component {:type :jsgl-text, :value ""},
-       :representation "Document",
-       :field-qualified :documents.document}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :prop,
-       :column-type '{:stype "text",
-                      :tname :text,
-                      :tspec nil,
-                      :tlimit nil,
-                      :tnull false,
-                      :textra "",
-                      :tdefault "'{}'",
-                      :tkey ""},
-       :component {:type :jsgl-textarea, :value "'{}'"},
-       :representation "Prop",
-       :field-qualified :documents.prop}]}}
+     [{:representation "Name", :field-qualified :jarman_profile.name
+       :description nil, :private? false, :default-value nil, :editable? true, :field :name,
+       :column-type {:stype "varchar(20)", :tname :varchar, :tspec nil, :tlimit 20, :tnull true, :textra "", :tdefault nil, :tkey ""},
+       :component {:type :jsgl-text, :value "", :char-limit 20}}
+      {:representation "Configuration", :field-qualified :jarman_profile.configuration
+       :description nil, :private? false, :default-value nil, :editable? true, :field :configuration,
+       :column-type {:stype "tinytext", :tname :tinytext, :tspec nil, :tlimit nil, :tnull false, :textra "", :tdefault "{}", :tkey ""},
+       :component {:type :jsgl-textarea, :value "{}"}}]}}
    {:id nil,
-    :table_name "profile",
+    :table_name "jarman_user",
     :prop
     {:table
-     {:field "profile",
-      :representation "profile",
+     {:field "jarman_user",
+      :representation "jarman_user",
       :description nil,
       :is-system? false,
       :is-linker? false,
@@ -86,36 +49,59 @@
        :private? false,
        :default-value nil,
        :editable? true,
-       :field :name,
-       :column-type
-       {:stype "varchar(20)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 20},
-       :representation "Name",
-       :field-qualified :profile.name}
+       :field :login,
+       :column-type {:stype "varchar(100)", :tname :varchar, :tspec nil, :tlimit 100, :tnull false, :textra "", :tdefault nil, :tkey ""},
+       :component {:type :jsgl-text, :value "", :char-limit 100},
+       :representation "Login",
+       :field-qualified :jarman_user.login}
+      {:description nil,
+       :private? false,
+       :default-value nil,
+       :editable? true,
+       :field :password,
+       :column-type {:stype "varchar(100)", :tname :varchar, :tspec nil, :tlimit 100, :tnull false, :textra "", :tdefault nil, :tkey ""},
+       :component {:type :jsgl-text, :value "", :char-limit 100},
+       :representation "Password",
+       :field-qualified :jarman_user.password}
+      {:description nil,
+       :private? false,
+       :default-value nil,
+       :editable? true,
+       :field :first_name,
+       :column-type {:stype "varchar(100)", :tname :varchar, :tspec nil, :tlimit 100, :tnull false, :textra "", :tdefault nil, :tkey ""},
+       :component {:type :jsgl-text, :value "", :char-limit 100},
+       :representation "First name",
+       :field-qualified :jarman_user.first_name}
+      {:description nil,
+       :private? false,
+       :default-value nil,
+       :editable? true,
+       :field :last_name,
+       :column-type {:stype "varchar(100)", :tname :varchar, :tspec nil, :tlimit 100, :tnull false, :textra "", :tdefault nil, :tkey ""},
+       :component {:type :jsgl-text, :value "", :char-limit 100},
+       :representation "Last name",
+       :field-qualified :jarman_user.last_name}
       {:description nil,
        :private? false,
        :default-value nil,
        :editable? true,
        :field :configuration,
-       :column-type
-       {:stype "tinytext",
-        :tname :tinytext,
-        :tspec nil,
-        :tlimit nil,
-        :tnull false,
-        :textra "",
-        :tdefault "'{}'",
-        :tkey ""},
+       :column-type {:stype "text", :tname :text, :tspec nil, :tlimit nil, :tnull false, :textra "", :tdefault "'{}'", :tkey ""},
        :component {:type :jsgl-textarea, :value "'{}'"},
        :representation "Configuration",
-       :field-qualified :profile.configuration}]}}
+       :field-qualified :jarman_user.configuration}
+      {:description nil,
+       :private? false,
+       :default-value nil,
+       :editable? true,
+       :field :id_jarman_profile,
+       :column-type {:stype "bigint(120) unsigned", :tname :bigint, :tspec :unsigned, :tlimit 120, :tnull false, :textra "", :tdefault nil, :tkey "MUL"},
+       :component {:type :jsgl-link},
+       :foreign-keys [{:id_jarman_profile :jarman_profile} {:delete :cascade, :update :cascade}],
+       :representation "Id profile",
+       :field-qualified :jarman_user.id_jarman_profile,
+       :key-table :jarman_profile}]}}
+
    {:id nil,
     :table_name "user",
     :prop
@@ -133,42 +119,8 @@
        :private? false,
        :default-value nil,
        :editable? true,
-       :field :login,
-       :column-type {:stype "varchar(100)", :tname :varchar, :tspec nil, :tlimit 100, :tnull false, :textra "", :tdefault nil, :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 100},
-       :representation "Login",
-       :field-qualified :user.login}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :password,
-       :column-type
-       {:stype "varchar(100)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 100,
-        :tnull false,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 100},
-       :representation "Password",
-       :field-qualified :user.password}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
        :field :first_name,
-       :column-type
-       {:stype "varchar(100)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 100,
-        :tnull false,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
+       :column-type {:stype "varchar(100)", :tname :varchar, :tspec nil, :tlimit 100, :tnull true, :textra "", :tdefault nil, :tkey ""},
        :component {:type :jsgl-text, :value "", :char-limit 100},
        :representation "First name",
        :field-qualified :user.first_name}
@@ -177,45 +129,53 @@
        :default-value nil,
        :editable? true,
        :field :last_name,
-       :column-type {:stype "varchar(100)", :tname :varchar, :tspec nil, :tlimit 100, :tnull false, :textra "", :tdefault nil, :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 100},
+       :column-type {:stype "varchar(50)", :tname :varchar, :tspec nil, :tlimit 50, :tnull true, :textra "", :tdefault nil, :tkey ""},
+       :component {:type :jsgl-text, :value "", :char-limit 50},
        :representation "Last name",
        :field-qualified :user.last_name}
       {:description nil,
        :private? false,
        :default-value nil,
        :editable? true,
-       :field :configuration,
-       :column-type {:stype "text", :tname :text, :tspec nil, :tlimit nil, :tnull false, :textra "", :tdefault "'{}'", :tkey ""},
-       :component {:type :jsgl-textarea, :value "{}"},
-       :representation "Configuration",
-       :field-qualified :user.configuration}
+       :field :work_type,
+       :column-type {:stype "varchar(30)", :tname :varchar, :tspec nil, :tlimit 30, :tnull true, :textra "", :tdefault nil, :tkey ""},
+       :component {:type :jsgl-text, :value "", :char-limit 30},
+       :representation "Work type",
+       :field-qualified :user.work_type}
       {:description nil,
        :private? false,
        :default-value nil,
        :editable? true,
-       :field :id_profile,
-       :column-type
-       {:stype "bigint(120) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 120,
-        :tnull false,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_profile :profile} {:delete :cascade, :update :cascade}],
-       :representation "Id profile",
-       :field-qualified :user.id_profile,
-       :key-table :profile}]}}
+       :field :act,
+       :column-type {:stype "varchar(15)", :tname :varchar, :tspec nil, :tlimit 15, :tnull true, :textra "", :tdefault nil, :tkey ""},
+       :component {:type :jsgl-text, :value "", :char-limit 15},
+       :representation "Act",
+       :field-qualified :user.act}
+      {:description nil,
+       :private? false,
+       :default-value nil,
+       :editable? true,
+       :field :section,
+       :column-type {:stype "varchar(3)", :tname :varchar, :tspec nil, :tlimit 3, :tnull true, :textra "", :tdefault nil, :tkey ""},
+       :component {:type :jsgl-text, :value "", :char-limit 3},
+       :representation "Section",
+       :field-qualified :user.section}
+      {:description nil,
+       :private? false,
+       :default-value nil,
+       :editable? true,
+       :field :teta_nr,
+       :column-type {:stype "varchar(10)", :tname :varchar, :tspec nil, :tlimit 10, :tnull true, :textra "", :tdefault nil, :tkey ""},
+       :component {:type :jsgl-text, :value "", :char-limit 10},
+       :representation "Teta nr",
+       :field-qualified :user.teta_nr}]}}
+
    {:id nil,
-    :table_name "enterprise",
+    :table_name "card",
     :prop
     {:table
-     {:field "enterprise",
-      :representation "enterprise",
+     {:field "card",
+      :representation "card",
       :description nil,
       :is-system? false,
       :is-linker? false,
@@ -227,178 +187,38 @@
        :private? false,
        :default-value nil,
        :editable? true,
-       :field :ssreou,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Ssreou",
-       :field-qualified :enterprise.ssreou}
+       :field :rfid,
+       :column-type {:stype "varchar(20)", :tname :varchar, :tspec nil, :tlimit 20, :tnull true, :textra "", :tdefault nil, :tkey ""},
+       :component {:type :jsgl-text, :value "", :char-limit 20},
+       :representation "RFID",
+       :field-qualified :card.rfid}
       {:description nil,
        :private? false,
        :default-value nil,
        :editable? true,
-       :field :name,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Name",
-       :field-qualified :enterprise.name}
+       :field :card_nr,
+       :column-type {:stype "varchar(20)", :tname :varchar, :tspec nil, :tlimit 20, :tnull true, :textra "", :tdefault nil, :tkey ""},
+       :component {:type :jsgl-text, :value "", :char-limit 20},
+       :representation "Card nr",
+       :field-qualified :card.card_nr}
       {:description nil,
        :private? false,
        :default-value nil,
        :editable? true,
-       :field :ownership_form,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Ownership form",
-       :field-qualified :enterprise.ownership_form}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :vat_certificate,
-       :column-type
-       {:stype "text",
-        :tname :text,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-textarea, :value ""},
-       :representation "Vat certificate",
-       :field-qualified :enterprise.vat_certificate}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :individual_tax_number,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Individual tax number",
-       :field-qualified :enterprise.individual_tax_number}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :director,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Director",
-       :field-qualified :enterprise.director}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :accountant,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Accountant",
-       :field-qualified :enterprise.accountant}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :legal_address,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Legal address",
-       :field-qualified :enterprise.legal_address}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :physical_address,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Physical address",
-       :field-qualified :enterprise.physical_address}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :contacts_information,
-       :column-type
-       {:stype "mediumtext",
-        :tname :mediumtext,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-textarea, :value ""},
-       :representation "Contacts information",
-       :field-qualified :enterprise.contacts_information}]}}
+       :field :id_user,
+       :column-type {:stype "bigint(120) unsigned", :tname :bigint, :tspec :unsigned, :tlimit 120, :tnull true, :textra "", :tdefault nil, :tkey "MUL"},
+       :component {:type :jsgl-link},
+       :foreign-keys [{:id_user :user} {:delete :null, :update :null}],
+       :representation "Id user",
+       :field-qualified :card.id_user,
+       :key-table :user}]}}
+   
    {:id nil,
-    :table_name "point_of_sale",
+    :table_name "registration",
     :prop
     {:table
-     {:field "point_of_sale",
-      :representation "point_of_sale",
+     {:field "registration",
+      :representation "registration",
       :description nil,
       :is-system? false,
       :is-linker? false,
@@ -410,2127 +230,188 @@
        :private? false,
        :default-value nil,
        :editable? true,
-       :field :id_enterprise,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys [{:id_enterprise :enterprise} {:update :cascade}],
-       :representation "Id enterprise",
-       :field-qualified :point_of_sale.id_enterprise,
-       :key-table :enterprise}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :name,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Name",
-       :field-qualified :point_of_sale.name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :physical_address,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Physical address",
-       :field-qualified :point_of_sale.physical_address}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :telefons,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Telefons",
-       :field-qualified :point_of_sale.telefons}]}}
-   {:id nil,
-    :table_name "cache_register",
-    :prop
-    {:table
-     {:field "cache_register",
-      :representation "cache_register",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
-     :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_point_of_sale,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_point_of_sale :point_of_sale}
-        {:delete :cascade, :update :cascade}],
-       :representation "Id point of sale",
-       :field-qualified :cache_register.id_point_of_sale,
-       :key-table :point_of_sale}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :name,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Name",
-       :field-qualified :cache_register.name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :serial_number,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Serial number",
-       :field-qualified :cache_register.serial_number}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :fiscal_number,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Fiscal number",
-       :field-qualified :cache_register.fiscal_number}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :manufacture_date,
-       :column-type
-       {:stype "date",
-        :tname :date,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-calendar-label, :value nil},
-       :representation "Manufacture date",
-       :field-qualified :cache_register.manufacture_date}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :first_registration_date,
-       :column-type
-       {:stype "date",
-        :tname :date,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-calendar-label, :value nil},
-       :representation "First registration date",
-       :field-qualified :cache_register.first_registration_date}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :is_working,
-       :column-type
-       {:stype "tinyint(1)",
-        :tname :tinyint,
-        :tspec nil,
-        :tlimit 1,
-        :tnull true,
-        :textra "",
-        :tdefault "0",
-        :tkey ""},
-       :component {:type :jsgl-checkbox, :value "0"},
-       :representation "Is working",
-       :field-qualified :cache_register.is_working}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :version,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Version",
-       :field-qualified :cache_register.version}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :dev_id,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Dev id",
-       :field-qualified :cache_register.dev_id}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :producer,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Producer",
-       :field-qualified :cache_register.producer}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :modem,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Modem",
-       :field-qualified :cache_register.modem}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :modem_model,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Modem model",
-       :field-qualified :cache_register.modem_model}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :modem_serial_number,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Modem serial number",
-       :field-qualified :cache_register.modem_serial_number}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :modem_phone_number,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Modem phone number",
-       :field-qualified :cache_register.modem_phone_number}]}}
-   {:id nil,
-    :table_name "point_of_sale_group",
-    :prop
-    {:table
-     {:field "point_of_sale_group",
-      :representation "point_of_sale_group",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
-     :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :group_name,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Group name",
-       :field-qualified :point_of_sale_group.group_name}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :information,
-       :column-type
-       {:stype "text",
-        :tname :text,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-textarea, :value ""},
-       :representation "Information",
-       :field-qualified :point_of_sale_group.information}]}}
-   {:id nil,
-    :table_name "point_of_sale_group_links",
-    :prop
-    {:table
-     {:field "point_of_sale_group_links",
-      :representation "point_of_sale_group_links",
-      :description nil,
-      :is-system? true,
-      :is-linker? true,
-      :allow-modifing? false,
-      :allow-deleting? false,
-      :allow-linking? false},
-     :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_point_of_sale_group,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_point_of_sale_group :point_of_sale_group}
-        {:delete :cascade, :update :cascade}],
-       :representation "Id point of sale group",
-       :field-qualified
-       :point_of_sale_group_links.id_point_of_sale_group,
-       :key-table :point_of_sale_group}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_point_of_sale,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys [{:id_point_of_sale :point_of_sale}],
-       :representation "Id point of sale",
-       :field-qualified :point_of_sale_group_links.id_point_of_sale,
-       :key-table :point_of_sale}]}}
-   {:id nil,
-    :table_name "seal",
-    :prop
-    {:table
-     {:field "seal",
-      :representation "seal",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
-     :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :seal_number,
-       :column-type {:stype "varchar(120)", :tname :varchar, :tspec nil, :tlimit 120, :tnull true, :textra "", :tdefault nil, :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Seal number",
-       :field-qualified :seal.seal_number}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :datetime_of_use,
+       :field :datetime,
        :column-type {:stype "datetime", :tname :datetime, :tspec nil, :tlimit nil, :tnull true, :textra "", :tdefault nil, :tkey ""},
        :component {:type :jsgl-datetime-label, :value nil},
-       :representation "Datetime of use",
-       :field-qualified :seal.datetime_of_use}
+       :representation "Datetime",
+       :field-qualified :registration.datetime}
       {:description nil,
        :private? false,
        :default-value nil,
        :editable? true,
-       :field :datetime_of_remove,
-       :column-type
-       {:stype "datetime",
-        :tname :datetime,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-datetime-label, :value nil},
-       :representation "Datetime of remove",
-       :field-qualified :seal.datetime_of_remove}
-      {:representation "Site",
-       :field-qualified :seal.site
-       :component {:type :jsgl-url-panel :on-change '(fn [e] e)},
-       :columns
-       [{:field :site_name
-         :field-qualified :seal.site_name
-         :constructor-var :text
-         :column-type {:stype "varchar(120)", :tname :varchar, :tspec nil, :tlimit 120, :tnull true, :textra "", :tdefault nil, :tkey ""},
-         :component {:type :jsgl-text, :value "Title", :char-limit 120},
-         :representation "Site name"}
-        {:field :site_url,
-         :field-qualified :seal.site_url,
-         :constructor-var :link
-         :column-type {:stype "varchar(120)", :tname :varchar, :tspec nil, :tlimit 120, :tnull true, :textra "", :tdefault nil, :tkey ""},
-         :component {:type :jsgl-text, :value "https://", :char-limit 120},
-         :representation "Site url"}]}
-      {:representation "Database File"
-       :field :db_file
-       :field-qualified :seal.db_file
-       :component {:type :jsgl-file-panel}
-       :columns
-       [{:field :file_name
-         :field-qualified :seal.file_name
-         :representation "File name",
-         :constructor-var :file-name
-         :column-type {:stype "varchar(120)", :tname :varchar, :tspec nil, :tlimit 120, :tnull true, :textra "", :tdefault nil, :tkey ""},
-         :component {:type :jsgl-text, :value "", :char-limit 120}}
-        {:field :file
-         :field-qualified :seal.file
-         :representation "File"
-         :constructor-var :file
-         :column-type {:stype "blob", :tname :blob, :tspec nil, :tlimit nil, :tnull true, :textra "", :tdefault nil, :tkey ""}
-         :component {:type :jsgl-stub}}]}
-      {:representation "Database File"
-       :field :ftp_file
-       :field-qualified :seal.ftp_file
-       :component {:type :jsgl-stub}
-       :columns
-       [{:field :ftp_file_name
-         :field-qualified :seal.ftp_file_name
-         :column-type {:stype "varchar(120)", :tname :varchar, :tspec nil, :tlimit 120, :tnull true, :textra "", :tdefault nil, :tkey ""}
-         :constructor-var :file-name
-         :component {:type :jsgl-text, :value "", :char-limit 120},
-         :representation "Ftp file name"}
-        {:field :ftp_file_path
-         :field-qualified :seal.ftp_file_path
-         :representation "Ftp file path"
-         :column-type {:stype "varchar(120)", :tname :varchar, :tspec nil, :tlimit 120, :tnull true, :textra "", :tdefault nil, :tkey ""}
-         :constructor-var :file-path
-         :component {:type :jsgl-text, :value "", :char-limit 120}}]}]}}
-   {:id nil,
-    :table_name "repair_reasons",
-    :prop
-    {:table
-     {:field "repair_reasons",
-      :representation "repair_reasons",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
-     :columns
-     [{:description nil,
+       :field :direction,
+       :column-type {:stype "varchar(3)", :tname :varchar, :tspec nil, :tlimit 3, :tnull true, :textra "", :tdefault nil, :tkey ""},
+       :component {:type :jsgl-text, :value "", :char-limit 3},
+       :representation "Direction",
+       :field-qualified :registration.direction}
+      {:description nil,
        :private? false,
        :default-value nil,
        :editable? true,
-       :field :description,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Description",
-       :field-qualified :repair_reasons.description}]}}
-   {:id nil,
-    :table_name "repair_technical_issue",
-    :prop
-    {:table
-     {:field "repair_technical_issue",
-      :representation "repair_technical_issue",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
-     :columns
-     [{:description nil,
+       :field :id_user,
+       :column-type {:stype "bigint(120) unsigned", :tname :bigint, :tspec :unsigned, :tlimit 120, :tnull true, :textra "", :tdefault nil, :tkey ""},
+       :component {:type :jsgl-digit, :value 0, :num-limit 120},
+       :representation "Id user",
+       :field-qualified :registration.id_user}
+      {:description nil,
        :private? false,
        :default-value nil,
        :editable? true,
-       :field :description,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Description",
-       :field-qualified :repair_technical_issue.description}]}}
-   {:id nil,
-    :table_name "repair_nature_of_problem",
-    :prop
-    {:table
-     {:field "repair_nature_of_problem",
-      :representation "repair_nature_of_problem",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
-     :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :description,
-       :column-type
-       {:stype "varchar(120)",
-        :tname :varchar,
-        :tspec nil,
-        :tlimit 120,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-text, :value "", :char-limit 120},
-       :representation "Description",
-       :field-qualified :repair_nature_of_problem.description}]}}
-   {:id nil,
-    :table_name "repair_contract",
-    :prop
-    {:table
-     {:field "repair_contract",
-      :representation "repair_contract",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
-     :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_cache_register,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
+       :field :id_card,
+       :column-type {:stype "bigint(120) unsigned", :tname :bigint, :tspec :unsigned, :tlimit 120, :tnull true, :textra "", :tdefault nil, :tkey "MUL"},
        :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_cache_register :cache_register}
-        {:delete :cascade, :update :cascade}],
-       :representation "Id cache register",
-       :field-qualified :repair_contract.id_cache_register,
-       :key-table :cache_register}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_old_seal,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_old_seal :seal} {:delete :null, :update :null}],
-       :representation "Id old seal",
-       :field-qualified :repair_contract.id_old_seal,
-       :key-table :seal}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_new_seal,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_new_seal :seal} {:delete :null, :update :null}],
-       :representation "Id new seal",
-       :field-qualified :repair_contract.id_new_seal,
-       :key-table :seal}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_repair_reasons,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_repair_reasons :repair_reasons}
-        {:delete :null, :update :null}],
-       :representation "Id repair reasons",
-       :field-qualified :repair_contract.id_repair_reasons,
-       :key-table :repair_reasons}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_repair_technical_issue,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_repair_technical_issue :repair_technical_issue}
-        {:delete :null, :update :null}],
-       :representation "Id repair technical issue",
-       :field-qualified :repair_contract.id_repair_technical_issue,
-       :key-table :repair_technical_issue}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_repair_nature_of_problem,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_repair_nature_of_problem :repair_nature_of_problem}
-        {:delete :null, :update :null}],
-       :representation "Id repair nature of problem",
-       :field-qualified :repair_contract.id_repair_nature_of_problem,
-       :key-table :repair_nature_of_problem}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :repair_date,
-       :column-type
-       {:stype "date",
-        :tname :date,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-calendar-label, :value nil},
-       :representation "Repair date",
-       :field-qualified :repair_contract.repair_date}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :cache_register_register_date,
-       :column-type
-       {:stype "date",
-        :tname :date,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-calendar-label, :value nil},
-       :representation "Cache register register date",
-       :field-qualified :repair_contract.cache_register_register_date}]}}
-   {:id nil,
-    :table_name "service_contract",
-    :prop
-    {:table
-     {:field "service_contract",
-      :representation "service_contract",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
-     :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_enterprise,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_enterprise :enterprise}
-        {:delete :cascade, :update :cascade}],
-       :representation "Id enterprise",
-       :field-qualified :service_contract.id_enterprise,
-       :key-table :enterprise}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :contract_start_term,
-       :column-type
-       {:stype "date",
-        :tname :date,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-calendar-label, :value nil},
-       :representation "Contract start term",
-       :field-qualified :service_contract.contract_start_term}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :contract_end_term,
-       :column-type
-       {:stype "date",
-        :tname :date,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-calendar-label, :value nil},
-       :representation "Contract end term",
-       :field-qualified :service_contract.contract_end_term}]}}
-   {:id nil,
-    :table_name "service_contract_month",
-    :prop
-    {:table
-     {:field "service_contract_month",
-      :representation "service_contract_month",
-      :description nil,
-      :is-system? false,
-      :is-linker? false,
-      :allow-modifing? true,
-      :allow-deleting? true,
-      :allow-linking? true},
-     :columns
-     [{:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :service_month_start,
-       :column-type
-       {:stype "date",
-        :tname :date,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-calendar-label, :value nil},
-       :representation "Service month start",
-       :field-qualified :service_contract_month.service_month_start}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :service_month_end,
-       :column-type
-       {:stype "date",
-        :tname :date,
-        :tspec nil,
-        :tlimit nil,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey ""},
-       :component {:type :jsgl-calendar-label, :value nil},
-       :representation "Service month end",
-       :field-qualified :service_contract_month.service_month_end}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :money_per_month,
-       :column-type
-       {:stype "float",
-        :tname :float,
-        :tspec nil,
-        :tlimit nil,
-        :tnull false,
-        :textra "",
-        :tdefault "0",
-        :tkey ""},
-       :component {:type :jsgl-float, :value "0"},
-       :representation "Money per month",
-       :field-qualified :service_contract_month.money_per_month}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :was_payed,
-       :column-type
-       {:stype "tinyint(1)",
-        :tname :tinyint,
-        :tspec nil,
-        :tlimit 1,
-        :tnull true,
-        :textra "",
-        :tdefault "0",
-        :tkey ""},
-       :component {:type :jsgl-checkbox, :value "0"},
-       :representation "Was payed",
-       :field-qualified :service_contract_month.was_payed}
-      {:description nil,
-       :private? false,
-       :default-value nil,
-       :editable? true,
-       :field :id_service_contract,
-       :column-type
-       {:stype "bigint(20) unsigned",
-        :tname :bigint,
-        :tspec :unsigned,
-        :tlimit 20,
-        :tnull true,
-        :textra "",
-        :tdefault nil,
-        :tkey "MUL"},
-       :component {:type :jsgl-link},
-       :foreign-keys
-       [{:id_service_contract :service_contract}
-        {:delete :cascade, :update :cascade}],
-       :representation "Id service contract",
-       :field-qualified :service_contract_month.id_service_contract,
-       :key-table :service_contract}]}}])
+       :foreign-keys [{:id_card :card} {:delete :null, :update :null}],
+       :representation "Id card",
+       :field-qualified :registration.id_card,
+       :key-table :card}]}}
+   
+   ])
 
 
 (def view-list
   (quote
-   ((defview user
-      (table
-       :id :user
-       :name "user"
-       :permission :ekka-all
-       :tables [:user :permission]
-       :model-configurations
-       {:insert
-        {:fields
-         [[:user.login [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
-          [:user.password [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
-          [:user.first_name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
-          [:user.last_name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
-          [:user.configuration [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
-          [:user.id_profile [(fn [m] (assoc-in m [:component :plugin-path] [:profile :dialog-table :profile-dialog]))]]]
-         :additional
-         [{:type :jsgl-button, :value "Do insert!", :on-click :insert-action}]}
-        :update
-        {:fields
-         [[:user.login [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
-          [:user.password [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
-          [:user.first_name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
-          [:user.last_name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
-          [:user.configuration [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
-          [:user.id_profile [(fn [m] (assoc-in m [:component :plugin-path] [:profile :dialog-table :profile-dialog]))]]]
-         :additional
-         [{:type :jsgl-button :value "Do delete!" :on-click :delete-action}
-          {:type :jsgl-button :value "Do update!" :on-click :update-action}]}}
-       :actions
-       {:insert-action
-        (fn [state! dispatch!]
-          ;; (jarman.org/print-line "INSERT!")
-          (jarman.logic.connection/exec
-           (jarman.logic.sql-tool/insert!
-            {:table_name :user
-             :set (jarman.logic.metadata/convert_model->flattfields
-                   (:model-changes (state!)) :user)}))
-          (dispatch! {:route :main-table :action :refresh-to-bottom})
-          (dispatch! {:action :switch-plugin-ui-mode :debug true :plugin-ui-mode :insert :erease-selected? true
-                      :model (jarman.logic.metadata/convert_metadata->model
-                              (.return-table_name (-> (state!) :plugin-toolkit :meta-obj)))}))
-        :delete-action
-        (fn [state! dispatch!]
-          ;; (jarman.org/print-line "INSERT!")
-          (if (get-in (state!) [:model-changes :user.id])
-            (do
-              (jarman.logic.connection/exec
-               (jarman.logic.sql-tool/delete!
-                {:table_name :user
-                 :where [:= :user.id (get-in (state!) [:model-changes :user.id])]}))
-              (dispatch! {:route :main-table :action :refresh})
-              (dispatch! {:action :switch-plugin-ui-mode :debug true :plugin-ui-mode :insert :erease-selected? true
-                          :model (jarman.logic.metadata/convert_metadata->model
-                                  (.return-table_name (-> (state!) :plugin-toolkit :meta-obj)))}))
-            (jarman.interaction/danger "Delete user action" "ID is empty for model")))
-        :update-action
-        (fn [state! dispatch!]
-          ;; (println "UPDATE!")
-          (if (get-in (state!) [:model-changes :user.id_profile])
-            (do
-              (jarman.logic.connection/exec
-               (jarman.logic.sql-tool/update!
-                {:table_name :user
+    ((defview user
+       (table
+         :id :jarman_user
+         :name "user"
+         :permission :ekka-all
+         :tables [:jarman_user :permission]
+         :model-configurations
+         {:insert
+          {:fields
+           [[:jarman_user.login [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+            [:jarman_user.password [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+            [:jarman_user.first_name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+            [:jarman_user.last_name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+            [:jarman_user.configuration [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+            [:jarman_user.id_jarman_profile [(fn [m] (assoc-in m [:component :plugin-path] [:jarman_profile :dialog-table :jarman_profile-dialog]))]]]
+           :additional
+           [{:type :jsgl-button, :value "Do insert!", :on-click :insert-action}]}
+          :update
+          {:fields
+           [[:jarman_user.login [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+            [:jarman_user.password [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+            [:jarman_user.first_name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+            [:jarman_user.last_name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+            [:jarman_user.configuration [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+            [:jarman_user.id_jarman_profile [(fn [m] (assoc-in m [:component :plugin-path] [:jarman_profile :dialog-table :jarman_profile-dialog]))]]]
+           :additional
+           [{:type :jsgl-button :value "Do delete!" :on-click :delete-action}
+            {:type :jsgl-button :value "Do update!" :on-click :update-action}]}}
+         :actions
+         {:insert-action
+          (fn [state! dispatch!]
+            ;; (jarman.org/print-line "INSERT!")
+            (jarman.logic.connection/exec
+              (jarman.logic.sql-tool/insert!
+                {:table_name :jarman_user
                  :set (jarman.logic.metadata/convert_model->flattfields
-                       (:model-changes (state!)) :user)
-                 :where [:= :user.id (get-in (state!) [:model-changes :user.id])]}))
-              (dispatch! {:route :main-table :action :refresh}))
-            (jarman.interaction/danger "Update user action" "ID is empty for model")))}
-       :view-configurations
-       {:socket-id :main-table
-        :type :jsgl-database-table
-        :tables  [:user :profile]
-        :columns
-        [:user.login
-         :user.password
-         :user.first_name
-         :user.last_name
-         :user.configuration
-         :profile.name
-         :profile.configuration]
-        :socket-refreshable-query
-        {:table_name :user,
-         :column
-         [:#as_is
-          :user.id
-          :user.login
-          :user.password
-          :user.first_name
-          :user.last_name
-          :user.configuration
-          :user.id_profile
-          :profile.name
-          :profile.configuration]
-         :inner-join :user->profile}}))
+                        (:model-changes (state!)) :jarman_user)}))
+            (dispatch! {:route :main-table :action :refresh-to-bottom})
+            (dispatch! {:action :switch-plugin-ui-mode :debug true :plugin-ui-mode :insert :erease-selected? true
+                        :model (jarman.logic.metadata/convert_metadata->model
+                                 (.return-table_name (-> (state!) :plugin-toolkit :meta-obj)))}))
+          :delete-action
+          (fn [state! dispatch!]
+            ;; (jarman.org/print-line "INSERT!")
+            (if (get-in (state!) [:model-changes :jarman_user.id])
+              (do
+                (jarman.logic.connection/exec
+                  (jarman.logic.sql-tool/delete!
+                    {:table_name :jarman_user
+                     :where [:= :jarman_user.id (get-in (state!) [:model-changes :jarman_user.id])]}))
+                (dispatch! {:route :main-table :action :refresh})
+                (dispatch! {:action :switch-plugin-ui-mode :debug true :plugin-ui-mode :insert :erease-selected? true
+                            :model (jarman.logic.metadata/convert_metadata->model
+                                     (.return-table_name (-> (state!) :plugin-toolkit :meta-obj)))}))
+              (jarman.interaction/danger "Delete user action" "ID is empty for model")))
+          :update-action
+          (fn [state! dispatch!]
+            ;; (println "UPDATE!")
+            (if (get-in (state!) [:model-changes :jarman_user.id_jarman_profile])
+              (do
+                (jarman.logic.connection/exec
+                  (jarman.logic.sql-tool/update!
+                    {:table_name :jarman_user
+                     :set (jarman.logic.metadata/convert_model->flattfields
+                            (:model-changes (state!)) :jarman_user)
+                     :where [:= :jarman_user.id (get-in (state!) [:model-changes :jarman_user.id])]}))
+                (dispatch! {:route :main-table :action :refresh}))
+              (jarman.interaction/danger "Update user action" "ID is empty for model")))}
+         :view-configurations
+         {:socket-id :main-table
+          :type :jsgl-database-table
+          :tables  [:jarman_user :jarman_profile]
+          :columns
+          [:jarman_user.login
+           :jarman_user.password
+           :jarman_user.first_name
+           :jarman_user.last_name
+           :jarman_user.configuration
+           :jarman_profile.name
+           :jarman_profile.configuration]
+          :socket-refreshable-query
+          {:table_name :jarman_user,
+           :column
+           [:#as_is
+            :jarman_user.id
+            :jarman_user.login
+            :jarman_user.password
+            :jarman_user.first_name
+            :jarman_user.last_name
+            :jarman_user.configuration
+            :jarman_user.id_jarman_profile
+            :jarman_profile.name
+            :jarman_profile.configuration]
+           :inner-join :jarman_user->jarman_profile}}))
 
-    (defview profile
-      (table
-       :id :profile
-       :name "profile"
-       :tables [:profile]
-       :permission :ekka-all
+     (defview profile
+       (table
+         :id :jarman_profile
+         :name "profile"
+         :tables [:jarman_profile]
+         :permission :ekka-all
 
-       :model-configurations
-       {:insert
-        {:fields
-         [[:profile.name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
-          [:profile.configuration [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]]}
-        :update
-        {:fields
-         [[:profile.name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
-          [:profile.configuration [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]]}}
-      
-       :view-configurations
-       {:socket-id :main-table
-        :type :jsgl-database-table
-        :tables  [:profile]
-        :columns [:profile.name :profile.configuration]
-        :socket-refreshable-query
-        {:table_name :profile,
-         :column [:#as_is :profile.id :profile.name :profile.configuration]}})
-     
-      (dialog-table
-       :id :profile-dialog
-       :name "Profile dialog"
-       :permission :ekka-all
-       :tables [:profile]
-       :view-configurations
-       {:type :jsgl-database-table
-        :tables  [:profile]
-        :columns [:profile.name :profile.configuration]
-        :data 
-        (fn []
-          (vec
-           (jarman.logic.connection/query
-            (jarman.logic.sql-tool/select!
-             {:table_name :profile,
-              :column
-              [:#as_is
-               :profile.id
-               :profile.name
-               :profile.configuration]}))))})))))
+         :model-configurations
+         {:insert
+          {:fields
+           [[:jarman_profile.name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+            [:jarman_profile.configuration [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]]}
+          :update
+          {:fields
+           [[:jarman_profile.name [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]
+            [:jarman_profile.configuration [(fn [m] (assoc-in m [:component :on-change] (fn [e] (seesaw.core/text e))))]]]}}
+         
+         :view-configurations
+         {:socket-id :main-table
+          :type :jsgl-database-table
+          :tables  [:jarman_profile]
+          :columns [:jarman_profile.name :jarman_profile.configuration]
+          :socket-refreshable-query
+          {:table_name :jarman_profile,
+           :column [:#as_is :jarman_profile.id :jarman_profile.name :jarman_profile.configuration]}})
+       
+       (dialog-table
+         :id :jarman_profile-dialog
+         :name "Profile dialog"
+         :permission :ekka-all
+         :tables [:jarman_profile]
+         :view-configurations
+         {:type :jsgl-database-table
+          :tables  [:jarman_profile]
+          :columns [:jarman_profile.name :jarman_profile.configuration]
+          :data 
+          (fn []
+            (vec
+              (jarman.logic.connection/query
+                (jarman.logic.sql-tool/select!
+                  {:table_name :jarman_profile,
+                   :column
+                   [:#as_is
+                    :jarman_profile.id
+                    :jarman_profile.name
+                    :jarman_profile.configuration]}))))})))))
 
-#_(def view-list
-  (quote
-   ((defview
-      permission
-      (table
-       :id :permission
-       :name "permission"
-       :plug-place [:#tables-view-plugin]
-       :tables [:permission]
-       :view-columns [:permission.permission_name :permission.configuration]
-       :model-insert [:permission.permission_name :permission.configuration]
-       :active-buttons [:insert :update :delete :clear :changes]
-       :permission :ekka-all
-       :actions {}
-       :buttons []
-       :query
-       {:table_name :permission,
-        :column
-        [:#as_is
-         :permission.id
-         :permission.permission_name
-         :permission.configuration]})
-      (dialog-table
-       :id :permission-table
-       :name "permission dialog"
-       :permission :ekka-all
-       :tables [:permission]
-       :view-columns [:permission.permission_name :permission.configuration]
-       :query
-       {:table_name :permission,
-        :column
-        [:#as_is
-         :permission.id
-         :permission.permission_name
-         :permission.configuration]}))
-
-    (defview
-      user
-      (table
-       :id :user
-       :name "user"
-       :plug-place [:#tables-view-plugin]
-       :tables [:user :permission]
-       :view-columns [:user.login
-                      :user.password
-                      :user.first_name
-                      :user.last_name
-                      :user.configuration
-                      :permission.permission_name]
-       :model-insert [:user.login
-                      :user.password
-                      :user.first_name
-                      :user.last_name
-                      :user.id_permission
-                      :user.configuration]
-       :active-buttons [:insert :update :delete :clear :changes]
-       :permission :ekka-all
-       :dialog
-       {:user.id_permission [:permission :dialog-table :permission-table]}
-       :actions {}
-       :buttons []
-       :query
-       {:table_name :user,
-        :inner-join [:user->permission],
-        :column
-        [:#as_is
-         :user.id
-         :user.login
-         :user.password
-         :user.first_name
-         :user.last_name
-         :user.configuration
-         :user.id_permission
-         :permission.id
-         :permission.permission_name
-         :permission.configuration]}))
-
-    (defview
-      cache_register
-      (table
-       :id :cache_register
-       :name "cache_register"
-       :plug-place [:#tables-view-plugin]
-       :tables [:cache_register :point_of_sale :enterprise]
-       :view-columns [:cache_register.id_point_of_sale
-                      :cache_register.name
-                      :cache_register.serial_number
-                      :cache_register.fiscal_number
-                      :cache_register.manufacture_date
-                      :cache_register.first_registration_date
-                      :cache_register.is_working
-                      :cache_register.version
-                      :cache_register.dev_id
-                      :cache_register.producer
-                      :cache_register.modem
-                      :cache_register.modem_model
-                      :cache_register.modem_serial_number
-                      :cache_register.modem_phone_number]
-       :model-insert [:cache_register.id_point_of_sale
-                      :cache_register.name
-                      :cache_register.serial_number
-                      :cache_register.fiscal_number
-                      :cache_register.manufacture_date
-                      :cache_register.first_registration_date
-                      :cache_register.is_working
-                      :cache_register.version
-                      :cache_register.dev_id
-                      :cache_register.producer
-                      :cache_register.modem
-                      :cache_register.modem_model
-                      :cache_register.modem_serial_number
-                      :cache_register.modem_phone_number]
-       :active-buttons [:insert :update :delete :clear :changes]
-       :permission :ekka-all
-       :dialog
-       {:cache_register.id_point_of_sale
-        [:point_of_sale :dialog-table :point_of_sale-table]}
-       :actions {}
-       :buttons []
-       :query
-       {:table_name :cache_register,
-        :inner-join
-        [:cache_register->point_of_sale :point_of_sale->enterprise],
-        :column
-        [:#as_is
-         :cache_register.id
-         :cache_register.id_point_of_sale
-         :cache_register.name
-         :cache_register.serial_number
-         :cache_register.fiscal_number
-         :cache_register.manufacture_date
-         :cache_register.first_registration_date
-         :cache_register.is_working
-         :cache_register.version
-         :cache_register.dev_id
-         :cache_register.producer
-         :cache_register.modem
-         :cache_register.modem_model
-         :cache_register.modem_serial_number
-         :cache_register.modem_phone_number
-         :point_of_sale.id
-         :point_of_sale.id_enterprise
-         :point_of_sale.name
-         :point_of_sale.physical_address
-         :point_of_sale.telefons
-         :enterprise.id
-         :enterprise.ssreou
-         :enterprise.ownership_form
-         :enterprise.vat_certificate
-         :enterprise.individual_tax_number
-         :enterprise.director
-         :enterprise.accountant
-         :enterprise.legal_address
-         :enterprise.physical_address
-         :enterprise.contacts_information]})
-      (dialog-table
-       :id :cache_register-table
-       :name "cache_register dialog"
-       :permission :ekka-all
-       :tables [:cache_register :point_of_sale :enterprise]
-       :view-columns [:cache_register.id_point_of_sale
-                      :cache_register.name
-                      :cache_register.serial_number
-                      :cache_register.fiscal_number
-                      :cache_register.manufacture_date
-                      :cache_register.first_registration_date
-                      :cache_register.is_working
-                      :cache_register.version
-                      :cache_register.dev_id
-                      :cache_register.producer
-                      :cache_register.modem
-                      :cache_register.modem_model
-                      :cache_register.modem_serial_number
-                      :cache_register.modem_phone_number]
-       :query
-       {:table_name :cache_register,
-        :inner-join
-        [:cache_register->point_of_sale :point_of_sale->enterprise],
-        :column
-        [:#as_is
-         :cache_register.id
-         :cache_register.id_point_of_sale
-         :cache_register.name
-         :cache_register.serial_number
-         :cache_register.fiscal_number
-         :cache_register.manufacture_date
-         :cache_register.first_registration_date
-         :cache_register.is_working
-         :cache_register.version
-         :cache_register.dev_id
-         :cache_register.producer
-         :cache_register.modem
-         :cache_register.modem_model
-         :cache_register.modem_serial_number
-         :cache_register.modem_phone_number
-         :point_of_sale.id
-         :point_of_sale.id_enterprise
-         :point_of_sale.name
-         :point_of_sale.physical_address
-         :point_of_sale.telefons
-         :enterprise.id
-         :enterprise.ssreou
-         :enterprise.ownership_form
-         :enterprise.vat_certificate
-         :enterprise.individual_tax_number
-         :enterprise.director
-         :enterprise.accountant
-         :enterprise.legal_address
-         :enterprise.physical_address
-         :enterprise.contacts_information]}))
-
-    (defview
-      documents
-      (table
-       :id :documents
-       :name "documents"
-       :plug-place [:#tables-view-plugin]
-       :tables [:documents]
-       :view-columns [:documents.table_name
-                      :documents.name
-                      :documents.document
-                      :documents.prop]
-       :model-insert [:documents.table_name
-                      :documents.name
-                      :documents.document
-                      :documents.prop]
-       :active-buttons [:insert :update :delete :clear :changes]
-       :permission :ekka-all
-       :actions {}
-       :buttons []
-       :query
-       {:table_name :documents,
-        :column
-        [:#as_is
-         :documents.id
-         :documents.table_name
-         :documents.name
-         :documents.document
-         :documents.prop]}))
-
-    (defview
-      enterprise
-      (table
-       :id :enterprise
-       :name "enterprise"
-       :plug-place [:#tables-view-plugin]
-       :tables [:enterprise]
-       :view-columns [:enterprise.ssreou
-                      :enterprise.name
-                      :enterprise.ownership_form
-                      :enterprise.vat_certificate
-                      :enterprise.individual_tax_number
-                      :enterprise.director
-                      :enterprise.accountant
-                      :enterprise.legal_address
-                      :enterprise.physical_address
-                      :enterprise.contacts_information]
-       :model-insert [:enterprise.ssreou
-                      :enterprise.name
-                      :enterprise.ownership_form
-                      :enterprise.vat_certificate
-                      :enterprise.individual_tax_number
-                      :enterprise.director
-                      :enterprise.accountant
-                      :enterprise.legal_address
-                      :enterprise.physical_address
-                      :enterprise.contacts_information]
-       :active-buttons [:insert :update :delete :clear :changes]
-       :permission :ekka-all
-       :actions {}
-       :buttons []
-       :query
-       {:table_name :enterprise,
-        :column
-        [:#as_is
-         :enterprise.id
-         :enterprise.ssreou
-         :enterprise.name
-         :enterprise.ownership_form
-         :enterprise.vat_certificate
-         :enterprise.individual_tax_number
-         :enterprise.director
-         :enterprise.accountant
-         :enterprise.legal_address
-         :enterprise.physical_address
-         :enterprise.contacts_information]})
-      (dialog-table
-       :id :enterprise-table
-       :name "enterprise dialog"
-       :tables [:enterprise]
-       :view-columns [:enterprise.ssreou
-                      :enterprise.name
-                      :enterprise.ownership_form
-                      :enterprise.vat_certificate
-                      :enterprise.individual_tax_number
-                      :enterprise.director
-                      :enterprise.accountant
-                      :enterprise.legal_address
-                      :enterprise.physical_address
-                      :enterprise.contacts_information]
-       :query
-       {:table_name :enterprise,
-        :column
-        [:#as_is
-         :enterprise.id
-         :enterprise.ssreou
-         :enterprise.name
-         :enterprise.ownership_form
-         :enterprise.vat_certificate
-         :enterprise.individual_tax_number
-         :enterprise.director
-         :enterprise.accountant
-         :enterprise.legal_address
-         :enterprise.physical_address
-         :enterprise.contacts_information]}))
-
-    (defview
-      point_of_sale
-      (table
-       :id :point_of_sale
-       :name "point_of_sale"
-       :plug-place [:#tables-view-plugin]
-       :tables [:point_of_sale :enterprise]
-       :view-columns [:point_of_sale.id_enterprise
-                      :point_of_sale.name
-                      :point_of_sale.physical_address
-                      :point_of_sale.telefons]
-       :model-insert [:point_of_sale.id_enterprise
-                      :point_of_sale.name
-                      :point_of_sale.physical_address
-                      :point_of_sale.telefons]
-       :active-buttons [:insert :update :delete :clear :changes]
-       :permission :ekka-all
-       :dialog
-       {:point_of_sale.id_enterprise
-        [:enterprise :dialog-table :enterprise-table]}
-       :actions {}
-       :buttons []
-       :query
-       {:table_name :point_of_sale,
-        :inner-join [:point_of_sale->enterprise],
-        :column
-        [:#as_is
-         :point_of_sale.id
-         :point_of_sale.id_enterprise
-         :point_of_sale.name
-         :point_of_sale.physical_address
-         :point_of_sale.telefons
-         :enterprise.id
-         :enterprise.ssreou
-         :enterprise.ownership_form
-         :enterprise.vat_certificate
-         :enterprise.individual_tax_number
-         :enterprise.director
-         :enterprise.accountant
-         :enterprise.legal_address
-         :enterprise.physical_address
-         :enterprise.contacts_information]})
-      (dialog-table
-       :id :point_of_sale-table
-       :name "point_of_sale dialog"
-       :permission :ekka-all
-       :tables [:point_of_sale :enterprise]
-       :view-columns [:point_of_sale.id_enterprise
-                      :point_of_sale.name
-                      :point_of_sale.physical_address
-                      :point_of_sale.telefons]
-       :query
-       {:table_name :point_of_sale,
-        :inner-join [:point_of_sale->enterprise],
-        :column
-        [:#as_is
-         :point_of_sale.id
-         :point_of_sale.id_enterprise
-         :point_of_sale.name
-         :point_of_sale.physical_address
-         :point_of_sale.telefons
-         :enterprise.id
-         :enterprise.ssreou
-         :enterprise.ownership_form
-         :enterprise.vat_certificate
-         :enterprise.individual_tax_number
-         :enterprise.director
-         :enterprise.accountant
-         :enterprise.legal_address
-         :enterprise.physical_address
-         :enterprise.contacts_information]}))
-
-    (defview
-      point_of_sale_group
-      (table
-       :id :point_of_sale_group
-       :name "point_of_sale_group"
-       :plug-place [:#tables-view-plugin]
-       :tables [:point_of_sale_group]
-       :view-columns [:point_of_sale_group.group_name :point_of_sale_group.information]
-       :model-insert [:point_of_sale_group.group_name :point_of_sale_group.information]
-       :active-buttons [:insert :update :delete :clear :changes]
-       :permission :ekka-all
-       :actions {}
-       :buttons []
-       :query
-       {:table_name :point_of_sale_group,
-        :column
-        [:#as_is
-         :point_of_sale_group.id
-         :point_of_sale_group.group_name
-         :point_of_sale_group.information]})
-      (dialog-table
-       :id :point_of_sale_group-table
-       :name "point_of_sale_group dialog"
-       :permission :ekka-all
-       :tables [:point_of_sale_group]
-       :view-columns [:point_of_sale_group.group_name :point_of_sale_group.information]
-       :query
-       {:table_name :point_of_sale_group,
-        :column
-        [:#as_is
-         :point_of_sale_group.id
-         :point_of_sale_group.group_name
-         :point_of_sale_group.information]}))
-
-    (defview
-      point_of_sale_group_links
-      (table
-       :id :point_of_sale_group_links
-       :name "point_of_sale_group_links"
-       :plug-place [:#tables-view-plugin]
-       :tables [:point_of_sale_group_links
-                :point_of_sale_group
-                :point_of_sale
-                :enterprise]
-       :view-columns [:point_of_sale_group_links.id_point_of_sale_group
-                      :point_of_sale_group_links.id_point_of_sale]
-       :model-insert [:point_of_sale_group_links.id_point_of_sale_group
-                      :point_of_sale_group_links.id_point_of_sale]
-       :active-buttons [:insert :update :delete :clear :changes]
-       :permission :ekka-all
-       :dialog
-       {:point_of_sale_group_links.id_point_of_sale_group
-        [:point_of_sale_group :dialog-table :point_of_sale_group-table],
-        :point_of_sale_group_links.id_point_of_sale
-        [:point_of_sale :dialog-table :point_of_sale-table]}
-       :actions {}
-       :buttons []
-       :query
-       {:table_name :point_of_sale_group_links,
-        :inner-join
-        [:point_of_sale_group_links->point_of_sale_group
-         :point_of_sale_group_links->point_of_sale
-         :point_of_sale->enterprise],
-        :column
-        [:#as_is
-         :point_of_sale_group_links.id
-         :point_of_sale_group_links.id_point_of_sale_group
-         :point_of_sale_group_links.id_point_of_sale
-         :point_of_sale_group.id
-         :point_of_sale_group.group_name
-         :point_of_sale_group.information
-         :point_of_sale.id
-         :point_of_sale.id_enterprise
-         :point_of_sale.name
-         :point_of_sale.physical_address
-         :point_of_sale.telefons
-         :enterprise.id
-         :enterprise.ssreou
-         :enterprise.ownership_form
-         :enterprise.vat_certificate
-         :enterprise.individual_tax_number
-         :enterprise.director
-         :enterprise.accountant
-         :enterprise.legal_address
-         :enterprise.physical_address
-         :enterprise.contacts_information]})
-      (dialog-table
-       :id :point_of_sale_group_links-table
-       :name "point_of_sale_group_links dialog"
-       :permission :ekka-all
-       :tables [:point_of_sale_group_links
-                :point_of_sale_group
-                :point_of_sale
-                :enterprise]
-       :view-columns [:point_of_sale_group_links.id_point_of_sale_group
-                      :point_of_sale_group_links.id_point_of_sale]
-       :query
-       {:table_name :point_of_sale_group_links,
-        :inner-join
-        [:point_of_sale_group_links->point_of_sale_group
-         :point_of_sale_group_links->point_of_sale
-         :point_of_sale->enterprise],
-        :column
-        [:#as_is
-         :point_of_sale_group_links.id
-         :point_of_sale_group_links.id_point_of_sale_group
-         :point_of_sale_group_links.id_point_of_sale
-         :point_of_sale_group.id
-         :point_of_sale_group.group_name
-         :point_of_sale_group.information
-         :point_of_sale.id
-         :point_of_sale.id_enterprise
-         :point_of_sale.name
-         :point_of_sale.physical_address
-         :point_of_sale.telefons
-         :enterprise.id
-         :enterprise.ssreou
-         :enterprise.ownership_form
-         :enterprise.vat_certificate
-         :enterprise.individual_tax_number
-         :enterprise.director
-         :enterprise.accountant
-         :enterprise.legal_address
-         :enterprise.physical_address
-         :enterprise.contacts_information]}))
-
-    (defview
-      repair_contract
-      (table
-       :id :repair_contract
-       :name "repair_contract"
-       :plug-place [:#tables-view-plugin]
-       :tables [:repair_contract
-                :cache_register
-                :point_of_sale
-                :enterprise
-                :old_seal
-                :new_seal
-                :repair_reasons
-                :repair_technical_issue
-                :repair_nature_of_problem]
-       :view-columns [:repair_contract.id_cache_register
-                      :repair_contract.id_old_seal
-                      :repair_contract.id_new_seal
-                      :repair_contract.id_repair_reasons
-                      :repair_contract.id_repair_technical_issue
-                      :repair_contract.id_repair_nature_of_problem
-                      :repair_contract.repair_date
-                      :repair_contract.cache_register_register_date]
-       :model-insert [:repair_contract.id_cache_register
-                      :repair_contract.id_old_seal
-                      :repair_contract.id_new_seal
-                      :repair_contract.id_repair_reasons
-                      :repair_contract.id_repair_technical_issue
-                      :repair_contract.id_repair_nature_of_problem
-                      :repair_contract.repair_date
-                      :repair_contract.cache_register_register_date]
-       :active-buttons [:insert :update :delete :clear :changes]
-       :permission :ekka-all
-       :dialog
-       {:repair_contract.id_cache_register
-        [:cache_register :dialog-table :cache_register-table],
-        :repair_contract.id_old_seal [:seal :dialog-table :seal-table],
-        :repair_contract.id_new_seal [:seal :dialog-table :seal-table],
-        :repair_contract.id_repair_reasons
-        [:repair_reasons :dialog-bigstring :repair_reasons-bigstring],
-        :repair_contract.id_repair_technical_issue
-        [:repair_technical_issue
-         :dialog-bigstring
-         :repair_technical_issue-bigstring],
-        :repair_contract.id_repair_nature_of_problem
-        [:repair_nature_of_problem
-         :dialog-bigstring
-         :repair_nature_of_problem-bigstring]}
-       :actions {}
-       :buttons []
-       :query
-       {:table_name :repair_contract,
-        :left-join
-        [:repair_contract->cache_register
-         :cache_register->point_of_sale
-         :point_of_sale->enterprise
-         :repair_contract.id_old_seal->seal*old_seal.id
-         :repair_contract.id_new_seal->seal*new_seal.id
-         :repair_contract->repair_reasons
-         :repair_contract->repair_technical_issue
-         :repair_contract->repair_nature_of_problem],
-        :column
-        [:#as_is
-         :repair_contract.id
-         :repair_contract.id_cache_register
-         :repair_contract.id_old_seal
-         :repair_contract.id_new_seal
-         :repair_contract.id_repair_reasons
-         :repair_contract.id_repair_technical_issue
-         :repair_contract.id_repair_nature_of_problem
-         :repair_contract.repair_date
-         :repair_contract.cache_register_register_date
-         :cache_register.id
-         :cache_register.id_point_of_sale
-         :cache_register.name
-         :cache_register.serial_number
-         :cache_register.fiscal_number
-         :cache_register.manufacture_date
-         :cache_register.first_registration_date
-         :cache_register.is_working
-         :cache_register.version
-         :cache_register.dev_id
-         :cache_register.producer
-         :cache_register.modem
-         :cache_register.modem_model
-         :cache_register.modem_serial_number
-         :cache_register.modem_phone_number
-         :point_of_sale.id
-         :point_of_sale.id_enterprise
-         :point_of_sale.name
-         :point_of_sale.physical_address
-         :point_of_sale.telefons
-         :enterprise.id
-         :enterprise.ssreou
-         :enterprise.ownership_form
-         :enterprise.vat_certificate
-         :enterprise.individual_tax_number
-         :enterprise.director
-         :enterprise.accountant
-         :enterprise.legal_address
-         :enterprise.physical_address
-         :enterprise.contacts_information
-         :old_seal.id
-         :old_seal.seal_number
-         :old_seal.datetime_of_use
-         :old_seal.datetime_of_remove
-         :new_seal.id
-         :new_seal.seal_number
-         :new_seal.datetime_of_use
-         :new_seal.datetime_of_remove
-         :repair_reasons.id
-         :repair_reasons.description
-         :repair_technical_issue.id
-         :repair_technical_issue.description
-         :repair_nature_of_problem.id
-         :repair_nature_of_problem.description]})
-      (dialog-table
-       :id :repair_contract-table
-       :name "repair_contract dialog"
-       :tables [:repair_contract
-                :cache_register
-                :point_of_sale
-                :enterprise
-                :old_seal
-                :new_seal
-                :repair_reasons
-                :repair_technical_issue
-                :repair_nature_of_problem]
-       :view-columns [:repair_contract.id_cache_register
-                      :repair_contract.id_old_seal
-                      :repair_contract.id_new_seal
-                      :repair_contract.id_repair_reasons
-                      :repair_contract.id_repair_technical_issue
-                      :repair_contract.id_repair_nature_of_problem
-                      :repair_contract.repair_date
-                      :repair_contract.cache_register_register_date]
-       :query
-       {:table_name :repair_contract,
-        :left-join
-        [:repair_contract->cache_register
-         :cache_register->point_of_sale
-         :point_of_sale->enterprise
-         :repair_contract.id_old_seal->seal.id
-         :repair_contract.id_new_seal->seal.id
-         :repair_contract->repair_reasons
-         :repair_contract->repair_technical_issue
-         :repair_contract->repair_nature_of_problem],
-        :column
-        [:#as_is
-         :repair_contract.id
-         :repair_contract.id_cache_register
-         :repair_contract.id_old_seal
-         :repair_contract.id_new_seal
-         :repair_contract.id_repair_reasons
-         :repair_contract.id_repair_technical_issue
-         :repair_contract.id_repair_nature_of_problem
-         :repair_contract.repair_date
-         :repair_contract.cache_register_register_date
-         :cache_register.id
-         :cache_register.id_point_of_sale
-         :cache_register.name
-         :cache_register.serial_number
-         :cache_register.fiscal_number
-         :cache_register.manufacture_date
-         :cache_register.first_registration_date
-         :cache_register.is_working
-         :cache_register.version
-         :cache_register.dev_id
-         :cache_register.producer
-         :cache_register.modem
-         :cache_register.modem_model
-         :cache_register.modem_serial_number
-         :cache_register.modem_phone_number
-         :point_of_sale.id
-         :point_of_sale.id_enterprise
-         :point_of_sale.name
-         :point_of_sale.physical_address
-         :point_of_sale.telefons
-         :enterprise.id
-         :enterprise.ssreou
-         :enterprise.ownership_form
-         :enterprise.vat_certificate
-         :enterprise.individual_tax_number
-         :enterprise.director
-         :enterprise.accountant
-         :enterprise.legal_address
-         :enterprise.physical_address
-         :enterprise.contacts_information
-         :old_seal.id
-         :old_seal.seal_number
-         :old_seal.datetime_of_use
-         :old_seal.datetime_of_remove
-         :new_seal.id
-         :new_seal.seal_number
-         :new_seal.datetime_of_use
-         :new_seal.datetime_of_remove
-         :repair_reasons.id
-         :repair_reasons.description
-         :repair_technical_issue.id
-         :repair_technical_issue.description
-         :repair_nature_of_problem.id
-         :repair_nature_of_problem.description]}))
-
-    (defview
-      repair_nature_of_problem
-      (table
-       :id :repair_nature_of_problem
-       :name "repair_nature_of_problem"
-       :plug-place [:#tables-view-plugin]
-       :tables [:repair_nature_of_problem]
-       :view-columns [:repair_nature_of_problem.description]
-       :model-insert [:repair_nature_of_problem.description]
-       :active-buttons [:insert :update :delete :clear :changes]
-       :permission :ekka-all
-       :actions {}
-       :buttons []
-       :query
-       {:table_name :repair_nature_of_problem,
-        :column
-        [:#as_is
-         :repair_nature_of_problem.id
-         :repair_nature_of_problem.description]})
-      (dialog-bigstring
-       :id :repair_nature_of_problem-bigstring
-       :name "repair_nature_of_problem dialog"
-       :permission :ekka-all
-       :item-columns
-       :repair_nature_of_problem.description
-       :query
-       {:table_name :repair_nature_of_problem,
-        :column
-        [:#as_is
-         :repair_nature_of_problem.id
-         :repair_nature_of_problem.description]}))
-
-    (defview
-      repair_reasons
-      (table
-       :id :repair_reasons
-       :name "repair_reasons"
-       :plug-place [:#tables-view-plugin]
-       :tables [:repair_reasons]
-       :view-columns [:repair_reasons.description]
-       :model-insert [:repair_reasons.description]
-       :active-buttons [:insert :update :delete :clear :changes]
-       :permission :ekka-all
-       :dialog
-       {}
-       :actions {}
-       :buttons []
-       :query
-       {:table_name :repair_reasons,
-        :column [:#as_is :repair_reasons.id :repair_reasons.description]})
-      (dialog-bigstring
-       :id :repair_reasons-bigstring
-       :name "repair_reasons dialog"
-       :permission :ekka-all
-       :item-columns
-       :repair_reasons.description
-       :query
-       {:table_name :repair_reasons,
-        :column [:#as_is :repair_reasons.id :repair_reasons.description]}))
-
-    (defview
-      repair_technical_issue
-      (table
-       :id :repair_technical_issue
-       :name "repair_technical_issue"
-       :plug-place [:#tables-view-plugin]
-       :tables [:repair_technical_issue]
-       :view-columns [:repair_technical_issue.description]
-       :model-insert [:repair_technical_issue.description]
-       :active-buttons [:insert :update :delete :clear :changes]
-       :permission :ekka-all
-       :actions {}
-       :buttons []
-       :query
-       {:table_name :repair_technical_issue,
-        :column
-        [:#as_is
-         :repair_technical_issue.id
-         :repair_technical_issue.description]})
-      (dialog-bigstring
-       :id :repair_technical_issue-bigstring
-       :name "repair_technical_issue dialog"
-       :permission :ekka-all
-       :item-columns
-       :repair_technical_issue.description
-       :query
-       {:table_name :repair_technical_issue,
-        :column
-        [:#as_is
-         :repair_technical_issue.id
-         :repair_technical_issue.description]}))
-
-    (defview
-      seal
-      (table
-       :id :seal
-       :name "seal"
-       :plug-place [:#tables-view-plugin]
-       :tables [:seal]
-       :view-columns [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove]
-       :model-insert [:seal.seal_number
-                      :seal.datetime_of_use
-                      :seal.datetime_of_remove
-                      :seal.site
-                      :seal.loc_file
-                      :seal.ftp_file]
-       :active-buttons [:insert :update :delete :clear :changes]
-       :permission :ekka-all
-       :dialog
-       {}
-       :actions {}
-       :buttons []
-       :query
-       {:table_name :seal,
-        :column
-        [:#as_is
-         :seal.id
-         :seal.seal_number
-         :seal.datetime_of_use
-         :seal.datetime_of_remove
-         :seal.site_name
-         :seal.site_url
-         :seal.file_name
-         :seal.file
-         :seal.ftp_file_name
-         :seal.ftp_file_path]})
-      (dialog-table
-       :id :seal-table
-       :name "seal dialog"
-       :permission :ekka-all
-       :tables [:seal]
-       :view-columns [:seal.seal_number :seal.datetime_of_use :seal.datetime_of_remove]
-       :query
-       {:table_name :seal,
-        :column
-        [:#as_is
-         :seal.id
-         :seal.seal_number
-         :seal.datetime_of_use
-         :seal.datetime_of_remove
-         :seal.site_name
-         :seal.site_url
-         :seal.file_name
-         :seal.file
-         :seal.ftp_file_name
-         :seal.ftp_file_path]}))
-
-    (defview
-      service_contract
-      (service-period
-       :id :service_contract
-       :permission :ekka-all
-       :name "service_contract"
-       :plug-place [:#tables-view-plugin])
-      (table
-       :id :service_contract
-       :name "service_contract"
-       :plug-place [:#tables-view-plugin]
-       :tables [:service_contract :enterprise]
-       :view-columns [:service_contract.id_enterprise
-                      :service_contract.contract_start_term
-                      :service_contract.contract_end_term]
-       :model-insert [:service_contract.id_enterprise
-                      :service_contract.contract_start_term
-                      :service_contract.contract_end_term]
-       :active-buttons [:insert :update :delete :clear :changes]
-       :permission :ekka-all
-       :dialog
-       {:service_contract.id_enterprise
-        [:enterprise :dialog-table :enterprise-table]}
-       :actions {}
-       :buttons []
-       :query
-       {:table_name :service_contract,
-        :inner-join [:service_contract->enterprise],
-        :column
-        [:#as_is
-         :service_contract.id
-         :service_contract.id_enterprise
-         :service_contract.contract_start_term
-         :service_contract.contract_end_term
-         :enterprise.id
-         :enterprise.ssreou
-         :enterprise.ownership_form
-         :enterprise.vat_certificate
-         :enterprise.individual_tax_number
-         :enterprise.director
-         :enterprise.accountant
-         :enterprise.legal_address
-         :enterprise.physical_address
-         :enterprise.contacts_information]})
-      (dialog-table
-       :id :service_contract-table
-       :name "service_contract dialog"
-       :tables [:service_contract :enterprise]
-       :view-columns [:service_contract.id_enterprise
-                      :service_contract.contract_start_term
-                      :service_contract.contract_end_term]
-       :query
-       {:table_name :service_contract,
-        :inner-join [:service_contract->enterprise],
-        :column
-        [:#as_is
-         :service_contract.id
-         :service_contract.id_enterprise
-         :service_contract.contract_start_term
-         :service_contract.contract_end_term
-         :enterprise.id
-         :enterprise.ssreou
-         :enterprise.ownership_form
-         :enterprise.vat_certificate
-         :enterprise.individual_tax_number
-         :enterprise.director
-         :enterprise.accountant
-         :enterprise.legal_address
-         :enterprise.physical_address
-         :enterprise.contacts_information]}))
-
-    (defview
-      service_contract_month
-      (table
-       :id :service_contract_month
-       :name "service_contract_month"
-       :plug-place [:#tables-view-plugin]
-       :tables [:service_contract_month :service_contract :enterprise]
-       :view-columns [:service_contract_month.id_service_contract
-                      :service_contract_month.service_month_start
-                      :service_contract_month.service_month_end
-                      :service_contract_month.money_per_month
-                      :service_contract_month.was_payed]
-       :model-insert [:service_contract_month.id_service_contract
-                      :service_contract_month.service_month_start
-                      :service_contract_month.service_month_end
-                      :service_contract_month.money_per_month
-                      :service_contract_month.was_payed]
-       :active-buttons [:insert :update :delete :clear :changes]
-       :permission :ekka-all
-       :dialog
-       {:service_contract_month.id_service_contract
-        [:service_contract :dialog-table :service_contract-table]}
-       :actions {}
-       :buttons []
-       :query
-       {:table_name :service_contract_month,
-        :inner-join
-        [:service_contract_month->service_contract
-         :service_contract->enterprise],
-        :column
-        [:#as_is
-         :service_contract_month.id
-         :service_contract_month.id_service_contract
-         :service_contract_month.service_month_start
-         :service_contract_month.service_month_end
-         :service_contract_month.money_per_month
-         :service_contract_month.was_payed
-         :service_contract.id
-         :service_contract.id_enterprise
-         :service_contract.contract_start_term
-         :service_contract.contract_end_term
-         :enterprise.id
-         :enterprise.ssreou
-         :enterprise.ownership_form
-         :enterprise.vat_certificate
-         :enterprise.individual_tax_number
-         :enterprise.director
-         :enterprise.accountant
-         :enterprise.legal_address
-         :enterprise.physical_address
-         :enterprise.contacts_information]})
-      (dialog-table
-       :id :service_contract_month-table
-       :name "service_contract_month dialog"
-       :permission :ekka-all
-       :tables [:service_contract_month :service_contract :enterprise]
-       :view-columns [:service_contract_month.id_service_contract
-                      :service_contract_month.service_month_start
-                      :service_contract_month.service_month_end
-                      :service_contract_month.money_per_month
-                      :service_contract_month.was_payed]
-       :query
-       {:table_name :service_contract_month,
-        :inner-join
-        [:service_contract_month->service_contract
-         :service_contract->enterprise],
-        :column
-        [:#as_is
-         :service_contract_month.id
-         :service_contract_month.id_service_contract
-         :service_contract_month.service_month_start
-         :service_contract_month.service_month_end
-         :service_contract_month.money_per_month
-         :service_contract_month.was_payed
-         :service_contract.id
-         :service_contract.id_enterprise
-         :service_contract.contract_start_term
-         :service_contract.contract_end_term
-         :service_contract.money_per_month
-         :enterprise.id
-         :enterprise.ssreou
-         :enterprise.ownership_form
-         :enterprise.vat_certificate
-         :enterprise.individual_tax_number
-         :enterprise.director
-         :enterprise.accountant
-         :enterprise.legal_address
-         :enterprise.physical_address
-         :enterprise.contacts_information]})))))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; BUISNESS DATA ;;;
@@ -2542,36 +423,37 @@
         ADMIN-GROUPS [:admin-update :admin-extension :admin-dataedit]
         DEVEL-GROUPS [:developer-manage :developer-alpha :developer]
         MANAG-GROUPS [:managment]
-        EKKA-GROUPS  [:ekka-servicer :ekka-payment-managment :ekka-all]]
-    (db/exec (delete! {:table_name :profile}))
+        HRTIME-GROUPS  [:hrtime-all]]
+    (db/exec (delete! {:table_name :jarman_profile}))
     (db/exec
      (insert! 
-      {:table_name :profile
+      {:table_name :jarman_profile
        :column-list [:name :configuration]
-       :values [["admin"     (pr-str {:groups (-> (join) (join ADMIN-GROUPS) (join DEVEL-GROUPS) (join MANAG-GROUPS) (join EKKA-GROUPS))})]
-                ["developer" (pr-str {:groups (-> (join) (join DEVEL-GROUPS) (join MANAG-GROUPS) (join EKKA-GROUPS))})]
-                ["user"      (pr-str {:groups (-> (join) (join EKKA-GROUPS))})]]}))))
+       :values [["admin"     (pr-str {:groups (-> (join) (join ADMIN-GROUPS) (join DEVEL-GROUPS) (join MANAG-GROUPS) (join HRTIME-GROUPS))})]
+                ["developer" (pr-str {:groups (-> (join) (join DEVEL-GROUPS) (join MANAG-GROUPS) (join HRTIME-GROUPS))})]
+                ["user"      (pr-str {:groups (-> (join) (join HRTIME-GROUPS))})]]}))))
 
 (defn- fill-data-user []
-  (let [adm-profile (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "admin"]})))
-        dev-profile (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "developer"]})))
-        usr-profile (first (db/query (select! {:table_name :profile :column [:id] :where [:= :name "user"]})))
+  (let [profile
+        {"admin" (first (db/query (select! {:table_name :jarman_profile :column [:id] :where [:= :name "admin"]})))
+         "dev"   (first (db/query (select! {:table_name :jarman_profile :column [:id] :where [:= :name "developer"]})))
+         "user"  (first (db/query (select! {:table_name :jarman_profile :column [:id] :where [:= :name "user"]})))}
         create-user-if-not-exist 
-        (fn [login-pass profile configuration]
-         (if (empty? (db/query (select! {:table_name :user :where [:= :login login-pass]})))
+        (fn [login-pass configuration]
+         (if (empty? (db/query (select! {:table_name :jarman_user :where [:= :login login-pass]})))
            (db/exec
-            (insert! {:table_name :user
-                      :column-list [:login :password :first_name :last_name :id_profile :configuration]
-                      :values [[login-pass login-pass login-pass login-pass (:id adm-profile) (pr-str configuration)]]}))))]
+            (insert! {:table_name :jarman_user
+                      :column-list [:login :password :first_name :last_name :id_jarman_profile :configuration]
+                      :values [[login-pass login-pass login-pass login-pass (get-in profile [login-pass :id]) (pr-str configuration)]]}))))]
     ;;----------------------------------
-    (when (seq adm-profile)
-      (create-user-if-not-exist "admin" adm-profile {:ftp {:login "jarman", :password "dupa", :host "trashpanda-team.ddns.net"}}))
+    (when (get profile "admin")
+      (create-user-if-not-exist "admin" {}))
     ;;----------------------------------
-    (when (seq dev-profile)
-      (create-user-if-not-exist "dev" dev-profile {:ftp {:login "jarman", :password "dupa", :host "trashpanda-team.ddns.net"}}))
+    (when (get profile "dev")
+      (create-user-if-not-exist "dev" {}))
     ;;----------------------------------
-    (when (seq usr-profile)
-      (create-user-if-not-exist "user" usr-profile {:ftp {:login "jarman", :password "dupa", :host "trashpanda-team.ddns.net"}}))))
+    (when (get profile "user")
+      (create-user-if-not-exist "user" {}))))
 
 (defn populate-data []
   (println "Fill profiles")
@@ -2693,7 +575,13 @@
   (on-meta-clean)
   (on-view-refresh)
   (on-view-persist)
-  (on-view-clean))
+  (on-view-clean)
+
+  (for [table ["jarman_user", "jarman_profile"]]
+    (db/exec
+      (drop-table table)))
+  (jarman.managment.data-managment/database-verify-system-tables)
+  (populate-data))
 
 (comment
   (jarman.managment.data-managment/view-info view-list)

@@ -28,6 +28,7 @@
 
    "clouds"             "#ecf0f1"
    "silver"             "#dfe4ea"
+   "smoke-white"        "#f5f5f5"
    "concrete"           "#95a5a6"
    "asbestos"           "#7f8c8d"
    "wet-asphalt"        "#34495e"
@@ -126,7 +127,7 @@
         f-mono-italic-bold          font-mono-italic-bold
 
         ;; Default colors
-        c-white                     clouds
+        c-white                     white
         c-black                     jarman-blue-strong
         c-red                       pomegranate
         c-orange                    carrot
@@ -148,8 +149,8 @@
         c-foreground-title         jarman-blue-strong
         c-caret                    jarman-blue-dark
 
-        c-layout-background        gray-light-2
-        c-layout-background-light  gray-light-3
+        c-layout-background        gray-light-2 ;; "#e8e9ec"
+        c-layout-background-light  gray-light-3 ;; "#f8f9fb"
 
         c-compos-background        white
         c-compos-background-light  gray-super-light
@@ -200,7 +201,7 @@
 
         ;; button
         c-btn-bg              c-compos-background-light
-        c-btn-bg-focus        c-on-focus
+        c-btn-bg-focus        smoke-white
         c-btn-foreground      c-foreground
         c-btn-underline       c-underline
         c-btn-underline-on-focus c-underline-on-focus

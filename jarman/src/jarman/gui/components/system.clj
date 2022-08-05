@@ -31,13 +31,13 @@
       :parent (seesaw.core/frame :title \"Jarman\" :content (c/label :text \"empty\"))
       :title \"Choose porn image\"
       :mode :load)"
-  [& {:keys [parent title mode directory search-pattern] :or {parent (c/frame) directory env/user-home mode :load}}]
+  [& {:keys [file parent title mode directory search-pattern] :or {parent (c/frame) directory env/user-home mode :load}}]
     {:pre [(#{:load :save} mode) (string? title) (some? parent)]}
     (let [file-dialog-modes {:load FileDialog/LOAD :save FileDialog/SAVE}]
-      (let [dialog
-            (doto (FileDialog. parent title (mode file-dialog-modes))
-              (.setDirectory directory)
-              (.setVisible true))]
+      (let [dialog (FileDialog. parent title (mode file-dialog-modes))]
+        (.setDirectory dialog directory)
+        (when file (.setFile dialog file))
+        (.setVisible dialog true)
         (str (io/file (.getDirectory dialog) (.getFile dialog))))))
 
 (defn input-file

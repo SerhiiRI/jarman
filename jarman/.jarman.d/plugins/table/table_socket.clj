@@ -14,12 +14,17 @@
    [javax.swing.table TableCellRenderer]
    [java.awt Component Rectangle Point]))
 
-(def ^:private autoloading-range 100)
+(def ^:private autoloading-range 50)
 
-
-(defn- build-where [where-clause filter-list]
-  (let [where-clause (if where-clause [:and where-clause] [:and])]
-    (into where-clause filter-list)))
+(defn- build-where [filter-list]
+  (some->> filter-list
+    (reduce
+      (fn [acc filter-sql]
+        (if filter-sql
+          (conj acc filter-sql)
+          acc)) [])
+    (not-empty)
+    (into [:and])))
 
 (defn re-query [ssql-query]
   (vec (db/query (select! ssql-query))))
@@ -41,22 +46,29 @@
     final-table-definition))
 
 (defn- load-more [{:keys [component storage payload]}]
-  (let [loading-range (get payload :loading-range autoloading-range)
-        query (update (get storage :socket-refreshable-query)
-                :limit #(mapv (partial + loading-range) (rift (if (number? %) [0 %] %) [0 loading-range])))
-        new-state
-        (-> storage
-          (update :data into (re-query query))
-          (assoc :socket-refreshable-query query))]
-    (apply table/change-model! component (apply concat new-state))
-    new-state))
+  (if (some? (get-in storage [:socket-refreshable-query :limit]))
+    (do (print-line "loading more elements...")
+     (let [loading-range (get payload :loading-range autoloading-range)
+           query (update (get storage :socket-refreshable-query)
+                   :limit #(if (number? %)
+                             [(+ % loading-range) loading-range]
+                             (let [[offset _] %]
+                               [(+ offset loading-range) loading-range])))
+           new-state
+           (-> storage
+             (update :data into (re-query query))
+             (assoc :socket-refreshable-query query))]
+       (apply table/change-model! component (apply concat new-state))
+       new-state))
+    storage))
 
 (defn- filter-results [{:keys [component storage payload]}]
-  (if-let [filter-list (not-empty (:filter-list payload))]
-    (let [query
+  (if-let [filter-list (not-empty (filter some? (:filter-list payload)))]
+    (let [where-statement (build-where filter-list)
+          query
           (-> (get storage :socket-refreshable-query)
-            (update :where build-where filter-list)
-            (assoc :limit [0 100]))
+            (assoc :where where-statement)
+            (assoc :limit [0 autoloading-range]))
           updated-storage
           (-> storage
             (assoc :data (re-query query))
@@ -64,11 +76,17 @@
       (apply table/change-model! component (apply concat updated-storage))
       updated-storage)
     (do
-      (print-line "Empty filters!")
-      (update storage :socket-refreshable-query
-        dissoc :where))))
-
-;; HANDLER
+      (print-line "Reset filters! Empty filters!")
+      (let [query
+            (-> (get storage :socket-refreshable-query)
+              (dissoc :where)
+              (assoc :limit [0 autoloading-range]))
+            updated-storage
+            (-> storage
+              (assoc :data (re-query query))
+              (assoc :socket-refreshable-query query))]
+        (apply table/change-model! component (apply concat updated-storage))
+        updated-storage))))
 
 (defn- table-action-handler [{:keys [component storage payload]}]
   (action-case (get payload :action)
@@ -137,7 +155,7 @@
                   :left-join [:registration->card
                               :registration->user]
                   :order [:registration.datetime :desc]
-                  :limit 50}))))
+                  :limit [0 50]}))))
     
     (def socket-table
       (create-table-socket
@@ -164,7 +182,7 @@
           :left-join [:registration->card
                       :registration->user]
           :order [:registration.datetime :desc]
-          :limit 50}
+          :limit [0 50]}
          :data []}))
 
     ;; (socket-table :socket-handler-events)

@@ -4,35 +4,36 @@
 ;;  ___) || |   | | | |___| |___  \__ \
 ;; |____/ |_|   |_| |_____|_____| |___/
 ;; ------------------------------------
-
 (ns jarman.gui.gui-style
   (:use seesaw.mig)
-  (:require [clojure.java.io :as io]
-            [seesaw.core   :as c]
-            [seesaw.border :as b]
-            [seesaw.color :refer [color]]
-            [jarman.logic.state :as state]
-            [jarman.gui.components.swing :as swing]
-            [jarman.config.environment :as env]
-            [jarman.lang :refer :all]
-            [jarman.faces :as face])
-  (:import (jiconfont.swing IconFontSwing)
-           (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
-           (javax.swing.text SimpleAttributeSet)
-           (javax.swing.plaf ColorUIResource)
-           (javax.swing UIManager)
-           (javax.swing BorderFactory)
-           (java.awt MouseInfo)
-           (java.awt Font)
-           (java.awt Color)
-           (java.io File)
-           (java.nio.file Files)
-           (java.awt GraphicsEnvironment)
-           (java.io InputStream)
-           (javax.swing JLayeredPane)
-           (javax.sound.sampled AudioInputStream)
-           (javax.sound.sampled AudioSystem)
-           (javax.sound.sampled Clip)))
+  (:require
+   [clojure.java.io :as io]
+   [seesaw.core   :as c]
+   [seesaw.border :as b]
+   [seesaw.color :refer [color]]
+   [jarman.logic.state :as state]
+   [jarman.gui.components.swing :as swing]
+   [jarman.config.environment :as env]
+   [jarman.lang :refer :all]
+   [jarman.faces :as face])
+  (:import
+   (jiconfont.swing IconFontSwing)
+   (jiconfont.icons.google_material_design_icons GoogleMaterialDesignIcons)
+   (javax.swing.text SimpleAttributeSet)
+   (javax.swing.plaf ColorUIResource)
+   (javax.swing UIManager)
+   (javax.swing BorderFactory)
+   (java.awt MouseInfo)
+   (java.awt Font)
+   (java.awt Color)
+   (java.io File)
+   (java.nio.file Files)
+   (java.awt GraphicsEnvironment)
+   (java.io InputStream)
+   (javax.swing JLayeredPane)
+   (javax.sound.sampled AudioInputStream)
+   (javax.sound.sampled AudioSystem)
+   (javax.sound.sampled Clip)))
 
 (defn- swing-compos-list "Description: Default swing layout." []
   ["Button" "ToggleButton" "RadioButton" "CheckBox" "ColorChooser"
